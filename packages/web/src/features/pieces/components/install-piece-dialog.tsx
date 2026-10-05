@@ -188,7 +188,15 @@ const InstallPieceDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          form.reset();
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <AnimatedIconButton
           {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}

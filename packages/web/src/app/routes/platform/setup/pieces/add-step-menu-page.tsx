@@ -3,13 +3,11 @@ import {
   apId,
   PieceSelectorTabConfig,
   PieceSelectorTabSection,
-  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
-  Crown,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -33,7 +31,6 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/custom/sortable';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -56,11 +53,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
-  PlanBadge,
-  PLATFORM_FEATURES,
-  useFeatureGate,
-} from '@/features/billing';
-import {
   PieceIcon,
   pieceSelectorCustomization,
   PIECE_SELECTOR_TAB_ICON_OPTIONS,
@@ -77,7 +69,6 @@ const borderlessInputClass =
 
 export function AddStepMenuPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const enabled = platform.plan.managePiecesEnabled;
   const hasCustomMenu = (platform.pieceSelectorConfig?.tabs.length ?? 0) > 0;
   const savedTabs = hasCustomMenu
     ? platform.pieceSelectorConfig?.tabs ?? []
@@ -87,12 +78,8 @@ export function AddStepMenuPage() {
   const [previewTabId, setPreviewTabId] = useState<string | null>(null);
   const { pieces } = piecesHooks.usePieces({
     includeHidden: true,
+    skipProjectFilter: true,
   });
-  const upgrade = useFeatureGate({
-    locked: !enabled,
-    feature: PLATFORM_FEATURES.pieces,
-  });
-  const { capture } = useTelemetry();
   const saveMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
     platformId: platform.id,
     onError: (error) => {
@@ -194,68 +181,40 @@ export function AddStepMenuPage() {
     >
       <Page
         footer={
-          enabled ? (
-            <SaveBar
-              dirty={dirty}
-              saving={saveMutation.isPending}
-              invalid={validationError !== null}
-              error={dirty ? validationError ?? serverError : null}
-              onDiscard={discard}
-              saveControl={AdminControl.PIECES_SELECTOR_SUBMIT}
-            />
-          ) : undefined
+          <SaveBar
+            dirty={dirty}
+            saving={saveMutation.isPending}
+            invalid={validationError !== null}
+            error={dirty ? validationError ?? serverError : null}
+            onDiscard={discard}
+            saveControl={AdminControl.PIECES_SELECTOR_SUBMIT}
+          />
         }
       >
-        <AdminPageHeader
-          page="addStepMenu"
-          badge={
-            enabled ? undefined : (
-              <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
-            )
-          }
-        >
-          {enabled ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={t('More actions')}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  {...adminControl(AdminControl.PIECES_SELECTOR_RESET_CONFIRM)}
-                  disabled={!hasCustomMenu || busy}
-                  onSelect={resetToDefault}
-                >
-                  <RotateCcw />
-                  {t('Reset to default')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button
-              type="button"
-              onClick={() => {
-                capture({
-                  name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
-                  payload: {
-                    feature: PLATFORM_FEATURES.pieces.featureKey,
-                    control: AdminControl.PIECES_SELECTOR_OPEN,
-                  },
-                });
-                upgrade.open();
-              }}
-            >
-              <Crown />
-              {t('Upgrade')}
-            </Button>
-          )}
+        <AdminPageHeader page="addStepMenu">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={t('More actions')}
+              >
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                {...adminControl(AdminControl.PIECES_SELECTOR_RESET_CONFIRM)}
+                disabled={!hasCustomMenu || busy}
+                onSelect={resetToDefault}
+              >
+                <RotateCcw />
+                {t('Reset to default')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </AdminPageHeader>
 
         <PageColumns
@@ -267,10 +226,7 @@ export function AddStepMenuPage() {
                 'Drag to reorder. Rename a tab, give it an icon, or hide it. Custom tabs hold the pieces you pick, in sections.',
               )}
             >
-              <fieldset
-                disabled={!enabled}
-                className="flex flex-col gap-2 p-5 disabled:opacity-60"
-              >
+              <div className="flex flex-col gap-2 p-5">
                 <Sortable
                   value={tabs}
                   onValueChange={(next) => setTabs(() => next)}
@@ -300,7 +256,7 @@ export function AddStepMenuPage() {
                   <PlusIcon />
                   {t('Add custom tab')}
                 </Button>
-              </fieldset>
+              </div>
             </Panel>
           }
           aside={
@@ -312,9 +268,8 @@ export function AddStepMenuPage() {
             />
           }
         />
-        {upgrade.dialog}
       </Page>
-      <UnsavedChangesGuard dirty={enabled && dirty} />
+      <UnsavedChangesGuard dirty={dirty} />
     </form>
   );
 }
@@ -553,6 +508,7 @@ const TabCard = ({
           variant="ghost"
           size="icon-xs"
           className="shrink-0 text-gray-9"
+          aria-label={t('Drag to reorder')}
         >
           <GripVerticalIcon />
         </SortableDragHandle>
@@ -566,6 +522,7 @@ const TabCard = ({
         <Input
           value={tab.title ?? ''}
           placeholder={placeholder}
+          aria-label={t('Tab name')}
           onChange={(e) => onChange({ title: e.target.value })}
           className={cn(borderlessInputClass, 'flex-1 font-medium')}
         />
@@ -576,7 +533,8 @@ const TabCard = ({
           size="icon-sm"
           className="shrink-0 text-gray-11"
           onClick={() => onChange({ hidden: !tab.hidden })}
-          title={tab.hidden ? t('Show tab') : t('Hide tab')}
+          aria-label={tab.hidden ? t('Show tab') : t('Hide tab')}
+          aria-pressed={tab.hidden}
         >
           {tab.hidden ? <EyeOffIcon /> : <EyeIcon />}
         </Button>
@@ -588,7 +546,8 @@ const TabCard = ({
             size="icon-sm"
             className="shrink-0 text-gray-11"
             onClick={() => setExpanded((prev) => !prev)}
-            title={t('Pieces & sections')}
+            aria-label={t('Pieces & sections')}
+            aria-expanded={expanded}
           >
             <ChevronDownIcon
               className={cn('transition-transform', {
@@ -619,6 +578,7 @@ const TabCard = ({
                 <Input
                   value={section.title}
                   placeholder={t('Section name')}
+                  aria-label={t('Section name')}
                   onChange={(e) =>
                     updateSection(section.id, { title: e.target.value })
                   }
@@ -637,7 +597,7 @@ const TabCard = ({
                   size="icon-sm"
                   className="shrink-0 text-gray-11 hover:text-danger-11"
                   onClick={() => removeSection(section.id)}
-                  title={t('Delete section')}
+                  aria-label={t('Delete section')}
                 >
                   <XIcon />
                 </Button>
@@ -718,6 +678,7 @@ const TabIconPicker = ({
           variant="ghost"
           size="icon-sm"
           className="shrink-0 text-gray-12"
+          aria-label={t('Change icon')}
         >
           {iconNode}
         </Button>
@@ -796,6 +757,7 @@ const PiecePickerButton = ({
                         variant="ghost"
                         size="icon-xs"
                         className="shrink-0 text-gray-9"
+                        aria-label={t('Drag to reorder')}
                       >
                         <GripVerticalIcon />
                       </SortableDragHandle>
@@ -814,6 +776,9 @@ const PiecePickerButton = ({
                         size="icon-xs"
                         className="shrink-0"
                         onClick={() => togglePiece(piece.name)}
+                        aria-label={t('Remove {name}', {
+                          name: piece.displayName,
+                        })}
                       >
                         <XIcon />
                       </Button>

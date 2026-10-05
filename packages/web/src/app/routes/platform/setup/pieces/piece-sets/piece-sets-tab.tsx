@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Copy, Crown, Layers, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { Copy, Layers, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -25,12 +25,7 @@ import { Page } from '@/components/custom/page';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  PlanBadge,
-  PLATFORM_FEATURES,
-  TIER_LABELS,
-  useFeatureGate,
-} from '@/features/billing';
+import { Skeleton } from '@/components/ui/skeleton';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { projectHooks } from '@/features/projects';
@@ -40,7 +35,7 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
-import { pieceSetSamples, SAMPLE_PROJECT_COUNTS } from './piece-set-samples';
+import { pieceSetSamples } from './piece-set-samples';
 
 export function PieceSetsTab() {
   const navigate = useNavigate();
@@ -59,20 +54,14 @@ export function PieceSetsTab() {
     isError,
     refetch,
   } = pieceSetQueries.useAllPieceSets();
-  const { data: platformsData } = projectHooks.useProjectsForPlatforms();
+  const { data: platformsData, isLoading: projectsLoading } =
+    projectHooks.useProjectsForPlatforms();
   const { mutateAsync: deleteSet } = pieceSetMutations.useDeletePieceSet();
   const { pieces: catalog } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
     enabled: locked,
-  });
-  const upgrade = useFeatureGate({
-    locked,
-    feature: PLATFORM_FEATURES.pieces,
-  });
-  const lockedReason = t('Available on the {tier} plan', {
-    tier: TIER_LABELS[PLATFORM_FEATURES.pieces.tier],
   });
 
   const pieceSets = useMemo(
@@ -87,7 +76,7 @@ export function PieceSetsTab() {
   const projectCounts = useMemo(
     () =>
       locked
-        ? SAMPLE_PROJECT_COUNTS
+        ? pieceSetSamples.sampleProjectCounts()
         : countProjectsPerSet({
             pieceSets,
             projects: platformsData?.flatMap((p) => p.projects),
@@ -145,18 +134,27 @@ export function PieceSetsTab() {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Applies to')} />
       ),
-      cell: ({ row }) => (
-        <MutedCell>
-          {row.original.isDefault
-            ? t('Every other project')
-            : t(
-                '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
-                {
-                  count: projectCounts.get(row.original.id) ?? 0,
-                },
-              )}
-        </MutedCell>
-      ),
+      cell: ({ row }) => {
+        const count = projectCounts.get(row.original.id);
+        if (row.original.isDefault) {
+          return <MutedCell>{t('Every other project')}</MutedCell>;
+        }
+        if (count === undefined) {
+          return projectsLoading ? (
+            <Skeleton className="h-4 w-20" />
+          ) : (
+            <MutedCell>{null}</MutedCell>
+          );
+        }
+        return (
+          <MutedCell>
+            {t(
+              '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
+              { count },
+            )}
+          </MutedCell>
+        );
+      },
     },
     {
       id: 'newPieces',
@@ -211,16 +209,12 @@ export function PieceSetsTab() {
                 icon: Pencil,
                 onSelect: () => setEditingSet(row.original),
                 control: AdminControl.PIECE_SETS_EDIT_OPEN,
-                disabled: locked,
-                disabledReason: lockedReason,
               },
               {
                 label: t('Duplicate'),
                 icon: Copy,
                 onSelect: () => setDuplicatingSet(row.original),
                 control: AdminControl.PIECE_SETS_DUPLICATE_OPEN,
-                disabled: locked,
-                disabledReason: lockedReason,
               },
               {
                 label: t('Delete'),
@@ -229,8 +223,6 @@ export function PieceSetsTab() {
                 hidden: row.original.isDefault,
                 onSelect: () => setDeletingSet(row.original),
                 control: AdminControl.PIECE_SETS_DELETE_OPEN,
-                disabled: locked,
-                disabledReason: lockedReason,
               },
             ]}
           />
@@ -239,12 +231,7 @@ export function PieceSetsTab() {
     },
   ];
 
-  const newSetButton = locked ? (
-    <Button onClick={upgrade.open}>
-      <Crown />
-      {t('New policy')}
-    </Button>
-  ) : (
+  const newSetButton = (
     <Button
       {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
       onClick={() => setCreating(true)}
@@ -257,24 +244,7 @@ export function PieceSetsTab() {
 
   return (
     <Page>
-      <AdminPageHeader
-        page="piecePolicies"
-        badge={
-          locked ? (
-            <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
-          ) : undefined
-        }
-        description={
-          locked
-            ? t(
-                'Open a sample policy and try allowing or blocking pieces. Saving needs an upgrade.',
-              )
-            : undefined
-        }
-      >
-        {newSetButton}
-        {upgrade.dialog}
-      </AdminPageHeader>
+      <AdminPageHeader page="piecePolicies">{newSetButton}</AdminPageHeader>
       <ListToolbar
         search={<ListSearch placeholder={t('Search by name or embed key')} />}
       />

@@ -27,11 +27,13 @@ function apply({
       });
     case 'newPieces':
       return withConfig(pieceSet, {
-        pieces: setNewPiecesMode({
-          current: pieceSet.config.pieces,
-          include: change.include,
-          knownPieceNames: change.knownPieceNames,
-        }),
+        pieces:
+          change.restore ??
+          setNewPiecesMode({
+            current: pieceSet.config.pieces,
+            include: change.include,
+            knownPieceNames: change.knownPieceNames,
+          }),
       });
     case 'requiredMode':
       return withConfig(pieceSet, { requiredActionsMode: change.mode });
@@ -107,6 +109,7 @@ function inverse({
         type: 'newPieces',
         include: previous.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL,
         knownPieceNames: change.knownPieceNames,
+        restore: previous.config.pieces,
       };
     case 'requiredMode':
       return {
@@ -251,7 +254,12 @@ export const pieceSetChanges = {
 
 export type PieceSetChange =
   | { type: 'visibility'; visible: Record<string, boolean>; label?: string }
-  | { type: 'newPieces'; include: boolean; knownPieceNames: string[] }
+  | {
+      type: 'newPieces';
+      include: boolean;
+      knownPieceNames: string[];
+      restore?: PieceSelection;
+    }
   | { type: 'requiredMode'; mode: RequiredActionsMode }
   | {
       type: 'required';

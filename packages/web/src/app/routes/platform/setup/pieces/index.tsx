@@ -89,6 +89,7 @@ export const PiecesListTab = () => {
   } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
+    skipProjectFilter: true,
   });
   const { data: oauthApps, refetch: refetchOAuthApps } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
@@ -98,15 +99,21 @@ export const PiecesListTab = () => {
 
   const allPieces = useMemo(() => pieces ?? [], [pieces]);
   const counts = useMemo(
-    () => ({
-      all: allPieces.length,
-      official: allPieces.filter((p) => p.pieceType === PieceType.OFFICIAL)
-        .length,
-      custom: allPieces.filter((p) => p.pieceType === PieceType.CUSTOM).length,
-      pinned: allPieces.filter((p) => platform.pinnedPieces.includes(p.name))
-        .length,
-    }),
-    [allPieces, platform.pinnedPieces],
+    () =>
+      isLoading
+        ? undefined
+        : {
+            all: allPieces.length,
+            official: allPieces.filter(
+              (p) => p.pieceType === PieceType.OFFICIAL,
+            ).length,
+            custom: allPieces.filter((p) => p.pieceType === PieceType.CUSTOM)
+              .length,
+            pinned: allPieces.filter((p) =>
+              platform.pinnedPieces.includes(p.name),
+            ).length,
+          },
+    [isLoading, allPieces, platform.pinnedPieces],
   );
   const visiblePieces = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -288,14 +295,14 @@ export const PiecesListTab = () => {
             value={segment}
             onValueChange={setSegment}
             options={[
-              { value: 'all', label: t('All'), count: counts.all },
+              { value: 'all', label: t('All'), count: counts?.all },
               {
                 value: 'official',
                 label: t('Official'),
-                count: counts.official,
+                count: counts?.official,
               },
-              { value: 'custom', label: t('Custom'), count: counts.custom },
-              { value: 'pinned', label: t('Pinned'), count: counts.pinned },
+              { value: 'custom', label: t('Custom'), count: counts?.custom },
+              { value: 'pinned', label: t('Pinned'), count: counts?.pinned },
             ]}
           />
         }

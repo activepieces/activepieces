@@ -141,15 +141,18 @@ export const aiProviderMutations = {
       {
         queryKey: aiProviderKeys.configs,
         scope: 'ai-chat-provider',
-        mutationFn: ({ providerId, displayName }) =>
+        mutationFn: ({ providerId, displayName, enabled = true }) =>
           aiProviderApi.update(providerId, {
             displayName,
-            enabledForChat: true,
+            enabledForChat: enabled,
           }),
         apply: ({ current, vars }) =>
           current.map((provider) => ({
             ...provider,
-            enabledForChat: provider.id === vars.providerId,
+            enabledForChat:
+              vars.enabled === false
+                ? provider.enabledForChat && provider.id !== vars.providerId
+                : provider.id === vars.providerId,
           })),
         invalidate: [aiProviderKeys.projectProviders],
         success: ({ vars }) =>
@@ -158,7 +161,7 @@ export const aiProviderMutations = {
           const before = previous?.find((provider) => provider.enabledForChat);
           return before
             ? { providerId: before.id, displayName: before.name }
-            : vars;
+            : { ...vars, enabled: false };
         },
         errorTitle: t("Couldn't change the chat key"),
       },
@@ -227,4 +230,5 @@ type UpsertAiProviderOptions = {
 export type ChatProviderChoice = {
   providerId: string;
   displayName: string;
+  enabled?: boolean;
 };

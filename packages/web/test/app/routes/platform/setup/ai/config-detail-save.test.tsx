@@ -159,13 +159,16 @@ describe('ConfigDetail save (manual models)', () => {
   let root: Root;
   let onSave: ReturnType<typeof vi.fn>;
 
-  const render = ({ saveError }: { saveError?: string } = {}) => {
+  const render = ({
+    saveError,
+    config = gatewayConfig,
+  }: { saveError?: string; config?: AIProviderWithoutSensitiveData } = {}) => {
     onSave = vi.fn().mockResolvedValue(undefined);
     act(() => {
       root.render(
         <MemoryRouter>
           <ConfigDetail
-            config={gatewayConfig}
+            config={config}
             info={{
               provider: AIProviderName.CLOUDFLARE_GATEWAY,
               name: 'Cloudflare AI Gateway',
@@ -288,6 +291,18 @@ describe('ConfigDetail save (manual models)', () => {
         },
       ],
     });
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId, IMAGE_MODEL_ID]);
+  });
+
+  it('keeps unsaved edits when the credentials are replaced, and takes the new name', () => {
+    render();
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    render({ config: { ...gatewayConfig, name: 'Renamed gateway key' } });
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.displayName).toBe('Renamed gateway key');
     expect(request.modelIds).toEqual([TEXT_MODEL.modelId, IMAGE_MODEL_ID]);
   });
 });

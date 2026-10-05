@@ -4,14 +4,7 @@ import {
   RequiredActionsMode,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Boxes,
-  Copy,
-  Crown,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
+import { Boxes, Copy, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
@@ -22,7 +15,6 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { listFormat } from '@/components/custom/list/list-format';
 import { Page, PageColumns, PageHeader } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
-import { SaveBar } from '@/components/custom/settings-parts';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -45,20 +37,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  PlanBadge,
-  PLATFORM_FEATURES,
-  TIER_LABELS,
-  useFeatureGate,
-  useLockedSave,
-} from '@/features/billing';
-import {
   ChangePieceSet,
-  pieceSetChanges,
   pieceSetMutations,
   pieceSetQueries,
 } from '@/features/piece-sets';
@@ -74,7 +53,7 @@ import {
   PieceSetProjectsDialog,
   usePieceSetProjects,
 } from './piece-set-projects-dialog';
-import { pieceSetSamples } from './piece-set-samples';
+import { pieceSetSamples, SampleProject } from './piece-set-samples';
 import {
   PublishingRuleSentence,
   RequiredActionRow,
@@ -145,12 +124,20 @@ function LivePieceSetDetails({ id }: { id: string }) {
 
 function LivePieceSetEditor({ pieceSet }: { pieceSet: PieceSet }) {
   const { mutateAsync } = pieceSetMutations.useChangePieceSet(pieceSet.id);
+  const { assignedProjects, isLoading } = usePieceSetProjects(pieceSet);
   const change: ChangePieceSet = (next) =>
     mutateAsync(next).then(
       () => true,
       () => false,
     );
-  return <PieceSetDetails pieceSet={pieceSet} onChange={change} />;
+  return (
+    <PieceSetDetails
+      pieceSet={pieceSet}
+      onChange={change}
+      assignedProjects={assignedProjects}
+      projectsLoading={isLoading}
+    />
+  );
 }
 
 function SamplePieceSetDetails({ id }: { id: string }) {
@@ -169,32 +156,12 @@ function SamplePieceSetDetails({ id }: { id: string }) {
   if (!sample) {
     return <Navigate to={backLink().to} replace />;
   }
-  return <TryPieceSetEditor key={sample.id} sample={sample} />;
-}
-
-function TryPieceSetEditor({ sample }: { sample: PieceSet }) {
-  const [draft, setDraft] = useState(sample);
-  const lockedSave = useLockedSave({ feature: PLATFORM_FEATURES.pieces });
-  const dirty = !pieceSetChanges.sameConfig(draft.config, sample.config);
-  const change: ChangePieceSet = async (next) => {
-    setDraft((current) =>
-      pieceSetChanges.apply({ pieceSet: current, change: next }),
-    );
-    return true;
-  };
   return (
     <PieceSetDetails
-      pieceSet={draft}
-      onChange={change}
-      locked
-      footer={
-        <SaveBar
-          dirty={dirty}
-          saving={false}
-          onDiscard={() => setDraft(sample)}
-          locked={lockedSave}
-        />
-      }
+      pieceSet={sample}
+      onChange={async () => false}
+      assignedProjects={pieceSetSamples.sampleProjects(sample.id)}
+      projectsLoading={false}
     />
   );
 }
@@ -214,13 +181,13 @@ function PieceSetDetailsSkeleton() {
 function PieceSetDetails({
   pieceSet,
   onChange,
-  locked = false,
-  footer,
+  assignedProjects,
+  projectsLoading,
 }: {
   pieceSet: PieceSet;
   onChange: ChangePieceSet;
-  locked?: boolean;
-  footer?: React.ReactNode;
+  assignedProjects: SampleProject[];
+  projectsLoading: boolean;
 }) {
   const navigate = useNavigate();
   const [assigning, setAssigning] = useState(false);
@@ -232,18 +199,7 @@ function PieceSetDetails({
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { assignedProjects, isLoading: projectsLoading } =
-    usePieceSetProjects(pieceSet);
   const { mutateAsync: deleteSet } = pieceSetMutations.useDeletePieceSet();
-  const upgrade = useFeatureGate({
-    locked,
-    feature: PLATFORM_FEATURES.pieces,
-  });
-  const lockedReason = locked
-    ? t('Available on the {tier} plan', {
-        tier: TIER_LABELS[PLATFORM_FEATURES.pieces.tier],
-      })
-    : null;
 
   const [editingRequired, setEditingRequired] = useState(false);
   const includesNewPieces =
@@ -274,81 +230,62 @@ function PieceSetDetails({
   ].filter((part) => part !== null);
 
   return (
-    <Page footer={footer}>
+    <Page>
       <PageHeader
         back={backLink()}
         title={pieceSet.name}
         badge={
-          <>
-            {pieceSet.isDefault && (
-              <Badge variant="outline">{t('Default')}</Badge>
-            )}
-            {locked && <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />}
-          </>
+          pieceSet.isDefault ? (
+            <Badge variant="outline">{t('Default')}</Badge>
+          ) : undefined
         }
         description={<span>{metaParts.join(' · ')}</span>}
       >
-        {locked ? (
-          <Button onClick={upgrade.open}>
-            <Crown />
-            {t('Upgrade')}
-          </Button>
-        ) : (
-          <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label={t('More actions')}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-44">
-                <DropdownMenuItem
-                  {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
-                  onSelect={() => setDuplicating(true)}
-                >
-                  <Copy />
-                  {t('Duplicate')}
-                </DropdownMenuItem>
-                {!pieceSet.isDefault && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}
-                      variant="destructive"
-                      onSelect={() => setDeleting(true)}
-                    >
-                      <Trash2 />
-                      {t('Delete')}
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
-              {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
               variant="outline"
-              onClick={() => setEditing(true)}
+              size="icon"
+              aria-label={t('More actions')}
             >
-              <Pencil />
-              {t('Edit details')}
+              <MoreHorizontal />
             </Button>
-          </>
-        )}
-        {upgrade.dialog}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-44">
+            <DropdownMenuItem
+              {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
+              onSelect={() => setDuplicating(true)}
+            >
+              <Copy />
+              {t('Duplicate')}
+            </DropdownMenuItem>
+            {!pieceSet.isDefault && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}
+                  variant="destructive"
+                  onSelect={() => setDeleting(true)}
+                >
+                  <Trash2 />
+                  {t('Delete')}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
+          variant="outline"
+          onClick={() => setEditing(true)}
+        >
+          <Pencil />
+          {t('Edit details')}
+        </Button>
       </PageHeader>
 
       <PageColumns
-        main={
-          <PieceSetPiecesTab
-            pieceSet={pieceSet}
-            onChange={onChange}
-            locked={locked}
-          />
-        }
+        main={<PieceSetPiecesTab pieceSet={pieceSet} onChange={onChange} />}
         aside={
           <Panel flush>
             <RailSection title={t('Applies to')}>
@@ -391,18 +328,15 @@ function PieceSetDetails({
                   </p>
                 )
               )}
-              <LockedTooltip reason={lockedReason}>
-                <Button
-                  {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
-                  variant="outline"
-                  size="sm"
-                  className="self-start"
-                  disabled={locked}
-                  onClick={() => setAssigning(true)}
-                >
-                  {t('Change projects')}
-                </Button>
-              </LockedTooltip>
+              <Button
+                {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => setAssigning(true)}
+              >
+                {t('Change projects')}
+              </Button>
             </RailSection>
 
             <RailSection title={t('New pieces')}>
@@ -459,9 +393,6 @@ function PieceSetDetails({
                   ? t('Require an action')
                   : t('Edit actions')}
               </Button>
-              <p className="text-xs text-gray-11">
-                {t('Saved on the policy. Publishing does not check it yet.')}
-              </p>
             </RailSection>
 
             <RailSection title={t('Embed key')}>
@@ -544,26 +475,6 @@ function RailSection({
 
 function backLink() {
   return { to: '/platform/pieces/policies', label: t('Piece policies') };
-}
-
-function LockedTooltip({
-  reason,
-  children,
-}: {
-  reason: string | null;
-  children: React.ReactNode;
-}) {
-  if (reason === null) {
-    return <>{children}</>;
-  }
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex self-start">{children}</span>
-      </TooltipTrigger>
-      <TooltipContent>{reason}</TooltipContent>
-    </Tooltip>
-  );
 }
 
 PieceSetDetailsPage.displayName = 'PieceSetDetailsPage';

@@ -28,8 +28,8 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { pieceSetFormErrors } from './piece-set-form-errors';
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: formErrors.required }),
-  key: z.string().optional(),
+  name: z.string().trim().min(1, { message: formErrors.required }),
+  key: z.string().trim().min(1, { message: formErrors.required }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -75,10 +75,7 @@ const EditPieceSetForm = ({
     updateSet(
       {
         id,
-        request: {
-          name,
-          key: key || undefined,
-        },
+        request: { name, key },
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -108,7 +105,7 @@ const EditPieceSetForm = ({
           name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('Embed key (optional)')}</FormLabel>
+              <FormLabel>{t('Embed key')}</FormLabel>
               <FormControl>
                 <Input placeholder={t('e.g. sales')} {...field} />
               </FormControl>
@@ -138,7 +135,7 @@ const EditPieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}
             type="submit"
             loading={isPending}
-            disabled={!form.formState.isDirty}
+            disabled={!form.formState.isDirty || !form.formState.isValid}
           >
             {t('Save')}
           </Button>

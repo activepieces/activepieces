@@ -253,7 +253,9 @@ function PieceComponentVisibilitySheetContent({
         <div className="flex shrink-0 flex-col gap-2 border-b p-5">
           <Tabs
             value={mode}
-            onValueChange={(value) => setMode(value as VisibilityMode)}
+            onValueChange={(value) =>
+              setMode(value === 'selected' ? 'selected' : 'all')
+            }
           >
             <TabsList className="w-full">
               <TabsTrigger value="all" className="flex-1">

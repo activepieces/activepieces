@@ -79,7 +79,7 @@ export default function PlatformConnectionsPage() {
   const { data: summary } = platformAppConnectionsQueries.useSummary();
   const { data: owners } = platformAppConnectionsQueries.useOwners();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
-  const { pieces } = piecesHooks.usePieces({});
+  const { pieces } = piecesHooks.usePieces({ skipProjectFilter: true });
   const {
     mutate: revalidate,
     isPending: testing,

@@ -11,6 +11,7 @@ import { Fact, FactList } from '@/components/custom/fact-list';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { listFormat } from '@/components/custom/list/list-format';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -26,6 +27,7 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { getProjectName } from '@/features/projects';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { projectConnectionsPath } from '@/lib/route-utils';
+import { cn } from '@/lib/utils';
 
 import { ConnectionStatus, ownerLabel } from './connection-cells';
 
@@ -74,6 +76,7 @@ function ConnectionContent({
 }) {
   const { summary } = piecesHooks.usePieceSummary({
     name: connection.pieceName,
+    skipProjectFilter: true,
   });
   const isGlobal = connection.scope === AppConnectionScope.PLATFORM;
   const visible = actions.filter((action) => !action.hidden);
@@ -89,7 +92,11 @@ function ConnectionContent({
           showTooltip={false}
         />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <SheetTitle className="truncate">{connection.displayName}</SheetTitle>
+          <TextWithTooltip tooltipMessage={connection.displayName}>
+            <SheetTitle className="truncate">
+              {connection.displayName}
+            </SheetTitle>
+          </TextWithTooltip>
           <SheetDescription className="truncate">
             {[
               summary?.displayName ?? connection.pieceName,
@@ -195,7 +202,7 @@ function ConnectionContent({
               variant={action.destructive ? 'destructive' : 'outline'}
               disabled={action.disabled}
               onClick={action.onSelect}
-              className={action.destructive ? 'sm:ml-auto' : undefined}
+              className={cn(action.destructive && 'sm:ml-auto')}
             >
               {action.icon && <action.icon />}
               {action.label}

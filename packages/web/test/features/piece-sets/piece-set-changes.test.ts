@@ -5,7 +5,10 @@ import {
 } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
-import { pieceSetChanges } from '@/features/piece-sets/utils/piece-set-changes';
+import {
+  PieceSetChange,
+  pieceSetChanges,
+} from '@/features/piece-sets/utils/piece-set-changes';
 
 const pieceSet = (config: Partial<PieceSet['config']> = {}): PieceSet => ({
   id: 'ps_1',
@@ -149,6 +152,26 @@ describe('pieceSetChanges.inverse', () => {
         change: { type: 'requiredMode', mode: RequiredActionsMode.ANY },
       }),
     ).toEqual({ type: 'requiredMode', mode: RequiredActionsMode.ALL });
+  });
+
+  it('restores exceptions for pieces that left the catalog when undoing new-pieces mode', () => {
+    const previous = pieceSet({
+      pieces: {
+        mode: PieceSelectionMode.INCLUDE_ALL,
+        exceptions: ['slack', 'retired-piece'],
+      },
+    });
+    const change: PieceSetChange = {
+      type: 'newPieces',
+      include: false,
+      knownPieceNames: ['slack', 'gmail'],
+    };
+    const flipped = pieceSetChanges.apply({ pieceSet: previous, change });
+    const undone = pieceSetChanges.apply({
+      pieceSet: flipped,
+      change: pieceSetChanges.inverse({ previous, change }),
+    });
+    expect(undone.config.pieces).toEqual(previous.config.pieces);
   });
 });
 

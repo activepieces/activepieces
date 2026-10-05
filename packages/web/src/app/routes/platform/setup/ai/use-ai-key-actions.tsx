@@ -31,7 +31,6 @@ export function useAiKeyActions({
   >(undefined);
   const [deleting, setDeleting] =
     useState<AIProviderWithoutSensitiveData | null>(null);
-  const [credentialsVersion, setCredentialsVersion] = useState(0);
 
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider();
@@ -68,9 +67,7 @@ export function useAiKeyActions({
     toast.success(t('Saved'));
     if (createdId) {
       onConnected?.(createdId);
-      return;
     }
-    setCredentialsVersion((version) => version + 1);
   };
 
   const dialogs = (
@@ -111,7 +108,6 @@ export function useAiKeyActions({
       recheckProvider(config.id),
     isRechecking,
     askToDelete: setDeleting,
-    credentialsVersion,
     dialogs,
   };
 }

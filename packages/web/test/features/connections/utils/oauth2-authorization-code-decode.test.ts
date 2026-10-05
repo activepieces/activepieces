@@ -1,9 +1,8 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, expect, it } from 'vitest';
-
 import { AppConnectionType } from '@activepieces/shared';
+import { describe, expect, it } from 'vitest';
 
 import { OAuth2App, oauth2Utils } from '@/features/connections';
 
@@ -34,9 +33,7 @@ const RAW_PAGE: RedirectPageFixture = {
 };
 
 function dispatchCodeMessage({ code, origin }: DispatchParams): void {
-  window.dispatchEvent(
-    new MessageEvent('message', { data: { code }, origin }),
-  );
+  window.dispatchEvent(new MessageEvent('message', { data: { code }, origin }));
 }
 
 function openPopupAwaitingCode(page: RedirectPageFixture): Promise<string> {
@@ -73,11 +70,14 @@ describe.each([DECODING_PAGE, RAW_PAGE])(
       ['an invalid percent escape', 'abc%zzdef'],
       ['base64 padding and separators', '4/0AVMBsJj+xyz='],
       ['nothing that needs encoding', 'plainSafeCode-123_456.789'],
-    ])('reaches the token exchange unchanged with %s', async (_, issuedCode) => {
-      expect(await codeReachingTokenExchange({ issuedCode, page })).toBe(
-        issuedCode,
-      );
-    });
+    ])(
+      'reaches the token exchange unchanged with %s',
+      async (_, issuedCode) => {
+        expect(await codeReachingTokenExchange({ issuedCode, page })).toBe(
+          issuedCode,
+        );
+      },
+    );
   },
 );
 

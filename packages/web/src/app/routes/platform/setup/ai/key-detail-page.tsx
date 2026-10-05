@@ -1,7 +1,7 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -34,6 +34,7 @@ export function AIKeyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
+  const leavingOnPurpose = useRef(false);
   const {
     data: providers,
     isLoading,
@@ -44,7 +45,10 @@ export function AIKeyDetailPage() {
   const actions = useAiKeyActions({
     refetch,
     onConnected: (createdId) => navigate(`/platform/ai/keys/${createdId}`),
-    onDeleted: () => navigate('/platform/ai'),
+    onDeleted: () => {
+      leavingOnPurpose.current = true;
+      navigate('/platform/ai');
+    },
   });
   const [saveError, setSaveError] = useState<string | null>(null);
   const { mutateAsync: updateProvider, isPending: isSaving } =
@@ -129,7 +133,7 @@ export function AIKeyDetailPage() {
   return (
     <>
       <ConfigDetail
-        key={`${config.id}:${actions.credentialsVersion}`}
+        key={config.id}
         config={config}
         info={info}
         projects={projects}
@@ -145,6 +149,8 @@ export function AIKeyDetailPage() {
         onReplaceCredentials={() => actions.replaceCredentials(config)}
         isRechecking={actions.isRechecking}
         onRecheck={() => actions.recheck(config)}
+        onDiscard={() => setSaveError(null)}
+        leavingOnPurpose={leavingOnPurpose}
       />
       {actions.dialogs}
     </>

@@ -10,6 +10,7 @@ import {
   ListSearch,
   ListToolbar,
 } from '@/components/custom/list/list-toolbar';
+import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,7 +22,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Switch } from '@/components/ui/switch';
-import { PlanLockedPanel, PLATFORM_FEATURES } from '@/features/billing';
 import { ChangePieceSet } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -32,7 +32,6 @@ import { PieceComponentVisibilitySheet } from '../piece-component-visibility-she
 export const PieceSetPiecesTab = ({
   pieceSet,
   onChange,
-  locked,
 }: PieceSetPiecesTabProps) => {
   const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
     includeHidden: true,
@@ -49,19 +48,22 @@ export const PieceSetPiecesTab = ({
   const accessOf = (piece: PieceMetadataModelSummary): PieceAccess =>
     pieceAccess({ pieceSet, piece });
   const counts = useMemo(
-    () => ({
-      all: allPieces.length,
-      allowed: allPieces.filter(
-        (piece) => pieceAccess({ pieceSet, piece }) === 'allowed',
-      ).length,
-      limited: allPieces.filter(
-        (piece) => pieceAccess({ pieceSet, piece }) === 'limited',
-      ).length,
-      blocked: allPieces.filter(
-        (piece) => pieceAccess({ pieceSet, piece }) === 'blocked',
-      ).length,
-    }),
-    [allPieces, pieceSet],
+    () =>
+      isLoading
+        ? undefined
+        : {
+            all: allPieces.length,
+            allowed: allPieces.filter(
+              (piece) => pieceAccess({ pieceSet, piece }) === 'allowed',
+            ).length,
+            limited: allPieces.filter(
+              (piece) => pieceAccess({ pieceSet, piece }) === 'limited',
+            ).length,
+            blocked: allPieces.filter(
+              (piece) => pieceAccess({ pieceSet, piece }) === 'blocked',
+            ).length,
+          },
+    [isLoading, allPieces, pieceSet],
   );
   const visiblePieces = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -113,22 +115,15 @@ export const PieceSetPiecesTab = ({
     );
 
   return (
-    <PlanLockedPanel
-      feature={PLATFORM_FEATURES.pieces}
-      locked={locked}
-      whenLocked="try"
+    <Panel
       flush
       title={t('Pieces')}
-      description={
-        locked
-          ? t(
-              'Try allowing and blocking pieces. Only you see this, and it is not saved.',
-            )
-          : t('Every piece on the platform, and what this policy allows of it.')
-      }
+      description={t(
+        'Every piece on the platform, and what this policy allows of it.',
+      )}
     >
       <ListToolbar
-        className="border-b p-5"
+        className="overflow-x-auto border-b p-5"
         search={
           <ListSearch
             placeholder={t('Search pieces')}
@@ -144,10 +139,10 @@ export const PieceSetPiecesTab = ({
               setSelected([]);
             }}
             options={[
-              { value: 'all', label: t('All'), count: counts.all },
-              { value: 'allowed', label: t('Allowed'), count: counts.allowed },
-              { value: 'limited', label: t('Limited'), count: counts.limited },
-              { value: 'blocked', label: t('Blocked'), count: counts.blocked },
+              { value: 'all', label: t('All'), count: counts?.all },
+              { value: 'allowed', label: t('Allowed'), count: counts?.allowed },
+              { value: 'limited', label: t('Limited'), count: counts?.limited },
+              { value: 'blocked', label: t('Blocked'), count: counts?.blocked },
             ]}
           />
         }
@@ -245,8 +240,9 @@ export const PieceSetPiecesTab = ({
                   if (
                     allowed &&
                     event.target === event.currentTarget &&
-                    event.key === 'Enter'
+                    (event.key === 'Enter' || event.key === ' ')
                   ) {
+                    event.preventDefault();
                     setManagingPiece(piece);
                   }
                 }}
@@ -331,7 +327,7 @@ export const PieceSetPiecesTab = ({
           onChange={onChange}
         />
       )}
-    </PlanLockedPanel>
+    </Panel>
   );
 };
 
@@ -400,5 +396,4 @@ type Segment = PieceAccess | 'all';
 type PieceSetPiecesTabProps = {
   pieceSet: PieceSet;
   onChange: ChangePieceSet;
-  locked: boolean;
 };

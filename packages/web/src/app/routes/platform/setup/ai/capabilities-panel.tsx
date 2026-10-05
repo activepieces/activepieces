@@ -15,7 +15,9 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { SettingRow } from '@/components/custom/panel';
 import { StatusDot } from '@/components/custom/status-dot';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   aiToolConfigMutations,
   aiToolConfigQueries,
@@ -31,13 +33,12 @@ import {
 
 export function CapabilityRows({
   providers,
-  allowWrite,
 }: {
   providers: AIProviderWithoutSensitiveData[];
-  allowWrite: boolean;
 }) {
   const {
     data: configs,
+    isLoading,
     isError,
     refetch,
   } = aiToolConfigQueries.useAiToolConfigs();
@@ -77,7 +78,7 @@ export function CapabilityRows({
                 ? chatProvider
                 : undefined
             }
-            allowWrite={allowWrite}
+            isLoading={isLoading}
             onSaved={() => refetch()}
           />
         );
@@ -91,14 +92,14 @@ function CapabilityRow({
   config,
   providers,
   chatProviderFallback,
-  allowWrite,
+  isLoading,
   onSaved,
 }: {
   capabilityInfo: AiToolCapabilityInfo;
   config?: AiToolConfigWithoutSensitiveData;
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
-  allowWrite: boolean;
+  isLoading: boolean;
   onSaved: () => void;
 }) {
   const [disconnectOpen, setDisconnectOpen] = useState(false);
@@ -149,13 +150,21 @@ function CapabilityRow({
       title={capabilityInfo.name}
       description={capabilityInfo.description}
     >
-      <StatusDot
-        tone={isNil(sourceName) ? 'neutral' : 'success'}
-        className="hidden max-w-56 sm:inline-flex"
-      >
-        <span className="truncate">{statusText}</span>
-      </StatusDot>
-      {allowWrite && (
+      {isLoading ? (
+        <Skeleton className="hidden h-4 w-32 sm:block" />
+      ) : (
+        <StatusDot
+          tone={isNil(sourceName) ? 'neutral' : 'success'}
+          className="hidden max-w-56 sm:inline-flex"
+        >
+          <TextWithTooltip tooltipMessage={statusText}>
+            <span className="truncate">{statusText}</span>
+          </TextWithTooltip>
+        </StatusDot>
+      )}
+      {isLoading ? (
+        <Skeleton className="h-8 w-16 rounded-lg" />
+      ) : (
         <div className="flex items-center gap-1">
           <AiCapabilityDialog
             capabilityInfo={capabilityInfo}

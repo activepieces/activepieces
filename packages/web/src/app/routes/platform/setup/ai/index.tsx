@@ -43,9 +43,7 @@ import {
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 import { aiKeyFormat } from './ai-key-format';
 import { CapabilityRows } from './capabilities-panel';
@@ -64,8 +62,6 @@ export default function AIProvidersPage() {
 
 function AIPage() {
   const navigate = useNavigate();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const {
     data: providers,
@@ -92,7 +88,7 @@ function AIPage() {
   return (
     <Page width="narrow">
       <AdminPageHeader page="aiProviders">
-        {allowWrite && hasKeys && (
+        {hasKeys && (
           <Button
             onClick={() => actions.connect()}
             {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
@@ -128,7 +124,6 @@ function AIPage() {
                     key={key.id}
                     config={key}
                     projects={projects}
-                    allowWrite={allowWrite}
                     onOpen={() => openKey(key.id)}
                     onRecheck={() => actions.recheck(key)}
                     onReplace={() => actions.replaceCredentials(key)}
@@ -139,7 +134,6 @@ function AIPage() {
             </Panel>
           ) : (
             <FirstProviderPanel
-              allowWrite={allowWrite}
               onPick={(provider) => actions.connect(provider)}
             />
           )}
@@ -153,17 +147,9 @@ function AIPage() {
               )}
             >
               <SettingRows>
-                {hasKeys && (
-                  <ChatModelRow
-                    providers={allProviders}
-                    allowWrite={allowWrite}
-                  />
-                )}
+                {hasKeys && <ChatModelRow providers={allProviders} />}
                 {showCapabilities && (
-                  <CapabilityRows
-                    providers={allProviders}
-                    allowWrite={allowWrite}
-                  />
+                  <CapabilityRows providers={allProviders} />
                 )}
               </SettingRows>
             </Panel>
@@ -176,10 +162,8 @@ function AIPage() {
 }
 
 function FirstProviderPanel({
-  allowWrite,
   onPick,
 }: {
-  allowWrite: boolean;
   onPick: (provider?: AIProviderName) => void;
 }) {
   const featured = FEATURED_PROVIDERS.map((provider) =>
@@ -196,7 +180,6 @@ function FirstProviderPanel({
         {featured.map((info) => (
           <ProviderTile
             key={info.provider}
-            disabled={!allowWrite}
             onClick={() => onPick(info.provider)}
             controlId={AdminControl.AI_PROVIDER_OPEN}
           >
@@ -205,7 +188,6 @@ function FirstProviderPanel({
           </ProviderTile>
         ))}
         <ProviderTile
-          disabled={!allowWrite}
           onClick={() => onPick()}
           controlId={AdminControl.AI_PROVIDER_KEY_OPEN}
         >
@@ -227,12 +209,10 @@ function FirstProviderPanel({
 }
 
 function ProviderTile({
-  disabled,
   onClick,
   controlId,
   children,
 }: {
-  disabled: boolean;
   onClick: () => void;
   controlId: AdminControl;
   children: React.ReactNode;
@@ -241,9 +221,8 @@ function ProviderTile({
     <button
       {...adminControl(controlId)}
       type="button"
-      disabled={disabled}
       onClick={onClick}
-      className="flex h-12 min-w-0 items-center gap-3 rounded-xl border px-3 text-left text-sm font-medium text-gray-12 outline-hidden transition-colors hover:bg-gray-2 focus-visible:ring-2 focus-visible:ring-accent-8 disabled:pointer-events-none disabled:opacity-50"
+      className="flex h-12 min-w-0 items-center gap-3 rounded-xl border px-3 text-left text-sm font-medium text-gray-12 outline-hidden transition-colors hover:bg-gray-2 focus-visible:ring-2 focus-visible:ring-accent-8"
     >
       {children}
     </button>
@@ -252,10 +231,8 @@ function ProviderTile({
 
 function ChatModelRow({
   providers,
-  allowWrite,
 }: {
   providers: AIProviderWithoutSensitiveData[];
-  allowWrite: boolean;
 }) {
   const chatKey = providers.find((provider) => provider.enabledForChat);
   const { mutate: setChatProvider } = aiProviderMutations.useSetChatProvider();
@@ -266,14 +243,13 @@ function ChatModelRow({
       description={t('The key that answers in chat, for everyone.')}
     >
       <Select
-        value={chatKey?.id}
+        value={chatKey?.id ?? ''}
         onValueChange={(id) => {
           const row = providers.find((config) => config.id === id);
           if (row && row.id !== chatKey?.id) {
             setChatProvider({ providerId: row.id, displayName: row.name });
           }
         }}
-        disabled={!allowWrite}
       >
         <SelectTrigger className="w-56" aria-label={t('Chat')}>
           <SelectValue placeholder={t('Choose a key')} />
@@ -301,7 +277,6 @@ function ChatModelRow({
 function KeyRow({
   config,
   projects,
-  allowWrite,
   onOpen,
   onRecheck,
   onReplace,
@@ -309,7 +284,6 @@ function KeyRow({
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
-  allowWrite: boolean;
   onOpen: () => void;
   onRecheck: () => void;
   onReplace: () => void;
@@ -319,22 +293,19 @@ function KeyRow({
   const scopeDetails = scopeDetailsOf({ config, projects });
   return (
     <Item
-      role={allowWrite ? 'button' : undefined}
-      tabIndex={allowWrite ? 0 : undefined}
-      onClick={allowWrite ? onOpen : undefined}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
       onKeyDown={(event) => {
         if (
-          allowWrite &&
           event.target === event.currentTarget &&
-          event.key === 'Enter'
+          (event.key === 'Enter' || event.key === ' ')
         ) {
+          event.preventDefault();
           onOpen();
         }
       }}
-      className={cn(
-        'items-center border-x-0 border-b-0 px-5 outline-hidden',
-        allowWrite && 'cursor-pointer hover:bg-gray-2 focus-visible:bg-gray-2',
-      )}
+      className="cursor-pointer items-center border-x-0 border-b-0 px-5 outline-hidden hover:bg-gray-2 focus-visible:bg-gray-2"
     >
       {info && (
         <ItemMedia>
@@ -372,31 +343,29 @@ function KeyRow({
       </ItemContent>
       <ItemActions>
         <KeyStatusBadge status={config.status} />
-        {allowWrite && (
-          <RowMenu
-            items={[
-              {
-                label: t('Recheck'),
-                icon: RefreshCw,
-                control: AdminControl.AI_PROVIDER_KEY_RECHECK_RUN,
-                onSelect: onRecheck,
-              },
-              {
-                label: t('Replace credentials'),
-                icon: KeyRound,
-                control: AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN,
-                onSelect: onReplace,
-              },
-              {
-                label: t('Delete key'),
-                icon: Trash2,
-                destructive: true,
-                control: AdminControl.AI_PROVIDER_KEY_DELETE_OPEN,
-                onSelect: onDelete,
-              },
-            ]}
-          />
-        )}
+        <RowMenu
+          items={[
+            {
+              label: t('Recheck'),
+              icon: RefreshCw,
+              control: AdminControl.AI_PROVIDER_KEY_RECHECK_RUN,
+              onSelect: onRecheck,
+            },
+            {
+              label: t('Replace credentials'),
+              icon: KeyRound,
+              control: AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN,
+              onSelect: onReplace,
+            },
+            {
+              label: t('Delete key'),
+              icon: Trash2,
+              destructive: true,
+              control: AdminControl.AI_PROVIDER_KEY_DELETE_OPEN,
+              onSelect: onDelete,
+            },
+          ]}
+        />
       </ItemActions>
     </Item>
   );

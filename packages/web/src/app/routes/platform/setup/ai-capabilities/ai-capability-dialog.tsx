@@ -17,6 +17,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -153,7 +154,12 @@ function CapabilityForm({
   });
   const source = form.watch('source');
   const selectedAiProvider = aiProviders.find((p) => p.id === source);
-  const { data: models = [] } = aiProviderQueries.useConfigModels(
+  const {
+    data: models = [],
+    isLoading: modelsLoading,
+    isError: modelsError,
+    refetch: refetchModels,
+  } = aiProviderQueries.useConfigModels(
     needsModel ? selectedAiProvider?.id : undefined,
   );
   const imageModels = isNil(selectedAiProvider)
@@ -294,10 +300,22 @@ function CapabilityForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('Image model')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={modelsLoading || imageModels.length === 0}
+                >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t('Choose a model')}>
+                      <SelectValue
+                        placeholder={
+                          modelsLoading
+                            ? t('Loading models…')
+                            : imageModels.length === 0
+                            ? t('This key has no image models')
+                            : t('Choose a model')
+                        }
+                      >
                         {selectedModel && (
                           <span className="flex min-w-0 items-baseline gap-2">
                             <span className="truncate">
@@ -324,6 +342,12 @@ function CapabilityForm({
                     ))}
                   </SelectContent>
                 </Select>
+                {modelsError && (
+                  <DataFetchErrorState
+                    entity={t('models')}
+                    onRetry={refetchModels}
+                  />
+                )}
                 <FormMessage />
               </FormItem>
             )}

@@ -5,6 +5,7 @@ import {
   PlatformAppConnectionsListItem,
 } from '@activepieces/shared';
 import {
+  keepPreviousData,
   QueryClient,
   useMutation,
   useQuery,
@@ -53,7 +54,7 @@ export const platformAppConnectionsQueries = {
         scopeFilterEnabled,
       ),
       staleTime: 0,
-      gcTime: 0,
+      placeholderData: keepPreviousData,
       queryFn: () => {
         const cursor = searchParams.get(CURSOR_QUERY_PARAM);
         const limit = searchParams.get(LIMIT_QUERY_PARAM);

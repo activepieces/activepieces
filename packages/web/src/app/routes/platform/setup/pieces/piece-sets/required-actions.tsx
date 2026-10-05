@@ -31,6 +31,7 @@ import {
 import { ChangePieceSet } from '@/features/piece-sets';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { cn } from '@/lib/utils';
 
 import { SheetSaveForm } from '../sheet-save-form';
 
@@ -80,9 +81,7 @@ export function PublishingRuleSentence({
                 className="items-start"
               >
                 <Check
-                  className={
-                    option.value === mode ? 'mt-0.5' : 'mt-0.5 opacity-0'
-                  }
+                  className={cn('mt-0.5', option.value !== mode && 'opacity-0')}
                 />
                 <span className="flex flex-col">
                   <span className="font-medium">{option.label()}</span>
@@ -107,7 +106,10 @@ export function RequiredActionRow({
   action: RequiredAction;
   onRemove?: () => void;
 }) {
-  const { summary } = piecesHooks.usePieceSummary({ name: action.pieceName });
+  const { summary } = piecesHooks.usePieceSummary({
+    name: action.pieceName,
+    skipProjectFilter: true,
+  });
   const { pieceModel } = piecesHooks.usePiece({ name: action.pieceName });
   const actionLabel =
     pieceModel?.actions[action.actionName]?.displayName ?? action.actionName;
@@ -230,7 +232,7 @@ function RequiredActionsEditor({
           <SheetTitle>{t('Publishing rule')}</SheetTitle>
           <SheetDescription>
             {t(
-              'Actions every flow on this policy must use before it can be published. Saved now; publishing does not check it yet.',
+              'Actions every flow on this policy must use before it can be published.',
             )}
           </SheetDescription>
         </SheetHeader>

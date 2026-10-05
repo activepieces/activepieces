@@ -64,20 +64,26 @@ export function ModelSelectionPanel({
       accessorKey: 'name',
       header: () => (
         <div className="flex items-center gap-2.5">
-          <Checkbox checked={allRowsSelected} onCheckedChange={toggleRows} />
+          <Checkbox
+            aria-label={t('Select all models on this page')}
+            checked={allRowsSelected}
+            onCheckedChange={toggleRows}
+          />
           <span>{t('Model')}</span>
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
           <Checkbox
+            aria-label={t('Select {name}', { name: row.original.name })}
             checked={selectedIds.includes(row.original.id)}
-            className="pointer-events-none"
+            onClick={(event) => event.stopPropagation()}
+            onCheckedChange={() => toggleModel(row.original.id)}
           />
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.id !== row.original.name && (
-              <span className="font-mono text-sm text-gray-11">
+              <span className="font-mono text-xs text-gray-11">
                 {row.original.id}
               </span>
             )}

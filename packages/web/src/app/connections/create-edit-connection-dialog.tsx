@@ -286,7 +286,7 @@ function CreateOrEditConnectionSection({
             </div>
           ) : (
             <DialogFooter className="mt-0">
-              <div className="mx-5 flex gap-2 w-full">
+              <div className="flex w-full flex-wrap gap-2 px-5">
                 {showTryAnotherMethodButton && (
                   <Button
                     variant="outline"
@@ -298,7 +298,9 @@ function CreateOrEditConnectionSection({
                 )}
                 <div className="grow"></div>
                 <DialogClose asChild>
-                  <Button variant="outline">{t('Cancel')}</Button>
+                  <Button type="button" variant="outline">
+                    {t('Cancel')}
+                  </Button>
                 </DialogClose>
                 <Button
                   onClick={(e) =>
@@ -423,8 +425,9 @@ function CreateOrEditConnectionDialog({
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)} key={piece.name}>
       <DialogContent
+        size="lg"
         onInteractOutside={(e) => e.preventDefault()}
-        className="max-h-[70vh] px-0 min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
+        className="max-h-[85vh] overflow-y-auto px-0"
       >
         {loadingPiecesOAuth2AppsMap && hasOAuth2PieceAuth(piece) ? (
           <>

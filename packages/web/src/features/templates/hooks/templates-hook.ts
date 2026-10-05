@@ -144,6 +144,7 @@ export const templatesMutations = {
       Template
     >({
       queryKey: templateKeys.platformCustom,
+      scope: 'platform-template-status',
       mutationFn: ({ template, status }) =>
         templatesApi.update(template.id, {
           status,

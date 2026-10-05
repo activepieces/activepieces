@@ -105,7 +105,7 @@ const CreatePieceSetForm = ({
               </FormControl>
               <FormDescription>
                 {t(
-                  'The embed SDK passes this key to put a project on this policy.',
+                  'The embed SDK passes this key to put a project on this policy. Leave it empty to make one from the name.',
                 )}
               </FormDescription>
               <FormMessage />
@@ -129,6 +129,7 @@ const CreatePieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_CREATE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isValid}
           >
             {t('Create')}
           </Button>

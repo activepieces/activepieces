@@ -310,7 +310,10 @@ const PlatformTemplatesPage = () => {
 };
 
 function TemplatePieces({ names }: { names: string[] }) {
-  const { summaries } = piecesHooks.usePieceSummariesByNames({ names });
+  const { summaries } = piecesHooks.usePieceSummariesByNames({
+    names,
+    skipProjectFilter: true,
+  });
   if (summaries.length === 0) {
     return <MutedCell>{null}</MutedCell>;
   }

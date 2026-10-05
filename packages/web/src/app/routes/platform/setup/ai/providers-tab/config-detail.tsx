@@ -14,7 +14,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Activity, KeyRound } from 'lucide-react';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { z } from 'zod';
 
 import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
@@ -61,6 +61,8 @@ export function ConfigDetail({
   onReplaceCredentials,
   isRechecking,
   onRecheck,
+  onDiscard,
+  leavingOnPurpose,
 }: {
   config: AIProviderWithoutSensitiveData;
   info: AiProviderInfo;
@@ -72,10 +74,18 @@ export function ConfigDetail({
   onReplaceCredentials: () => void;
   isRechecking: boolean;
   onRecheck: () => void;
+  onDiscard?: () => void;
+  leavingOnPurpose?: React.RefObject<boolean>;
 }) {
-  const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
-  const leavingOnPurpose = useRef(false);
+  const neverLeavingOnPurpose = useRef(false);
+  const saved = draftOf(config);
+  const [draft, setDraft] = useState<ConfigDraft>(saved);
+  const [base, setBase] = useState<ConfigDraft>(saved);
   const saveInFlight = useRef(false);
+  if (!sameDraft(base, saved)) {
+    setBase(saved);
+    setDraft(rebaseDraft({ draft, base, saved }));
+  }
 
   const manualModels = providerCredentials.usesManualModels({
     provider: config.provider,
@@ -100,7 +110,7 @@ export function ConfigDetail({
         type: AIProviderModelType.TEXT,
       })),
   ];
-  const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
+  const dirty = !sameDraft(draft, saved);
   const statusDetail = config.statusReason;
   const nameMissing = draft.name.trim().length === 0;
   const enabledModelCount = manualModels
@@ -222,7 +232,10 @@ export function ConfigDetail({
               saving={isSaving}
               invalid={nameMissing}
               error={saveError}
-              onDiscard={() => setDraft(draftOf(config))}
+              onDiscard={() => {
+                setDraft(saved);
+                onDiscard?.();
+              }}
               saveControl={AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT}
             />
           </form>
@@ -389,7 +402,7 @@ export function ConfigDetail({
 
       <UnsavedChangesGuard
         dirty={dirty}
-        standDown={leavingOnPurpose}
+        standDown={leavingOnPurpose ?? neverLeavingOnPurpose}
         blockSearchChanges
       />
     </Page>
@@ -419,6 +432,31 @@ function ScopeTabs({
       </SelectContent>
     </Select>
   );
+}
+
+function sameDraft(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function rebaseDraft({
+  draft,
+  base,
+  saved,
+}: {
+  draft: ConfigDraft;
+  base: ConfigDraft;
+  saved: ConfigDraft;
+}): ConfigDraft {
+  const pick = <K extends keyof ConfigDraft>(key: K): ConfigDraft[K] =>
+    sameDraft(draft[key], base[key]) ? saved[key] : draft[key];
+  return {
+    name: pick('name'),
+    modelScope: pick('modelScope'),
+    modelIds: pick('modelIds'),
+    models: pick('models'),
+    projectScope: pick('projectScope'),
+    projectIds: pick('projectIds'),
+  };
 }
 
 function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {

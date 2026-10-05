@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { SkeletonList } from '@/components/custom/skeleton-list';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -41,15 +42,16 @@ const NewConnectionDialog = React.memo(
     const [selectedPiece, setSelectedPiece] = useState<
       PieceMetadataModelSummary | undefined
     >(undefined);
-    const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({});
+    const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
+      skipProjectFilter: isGlobalConnection,
+    });
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredPieces = pieces?.filter((piece) => {
-      return (
-        !isNil(piece.auth) &&
-        piece.displayName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
+    const query = searchTerm.trim().toLowerCase();
+    const filteredPieces = (pieces ?? []).filter(
+      (piece) =>
+        !isNil(piece.auth) && piece.displayName.toLowerCase().includes(query),
+    );
 
     const clickPiece = (name: string) => {
       setDialogTypesOpen(false);
@@ -84,54 +86,46 @@ const NewConnectionDialog = React.memo(
           <DialogTrigger asChild>{children}</DialogTrigger>
           <DialogContent
             size="lg"
-            className="h-[680px] max-h-[680px] flex flex-col"
+            className="flex h-[85vh] max-h-[680px] flex-col"
           >
             <DialogHeader>
               <DialogTitle>{t('New Connection')}</DialogTitle>
             </DialogHeader>
-            <div className="mb-4">
-              <Input
-                placeholder={t('Search')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <ScrollArea className="grow overflow-y-auto">
-              {isError && (
+            <Input
+              autoFocus
+              aria-label={t('Search pieces')}
+              placeholder={t('Search pieces')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <ScrollArea className="min-h-0 grow">
+              {isError ? (
                 <DataFetchErrorState entity={t('pieces')} onRetry={refetch} />
-              )}
-              {isLoading && (
-                <SkeletonList numberOfItems={4} className="h-12 rounded-xl" />
-              )}
-              <div className="grid grid-cols-4 gap-4">
-                {!isLoading &&
-                  !isError &&
-                  filteredPieces &&
-                  filteredPieces.length === 0 && (
-                    <div className="text-sm text-gray-11">
-                      {t('No pieces found')}
-                    </div>
-                  )}
-                {!isLoading &&
-                  filteredPieces &&
-                  filteredPieces.map((piece, index) => (
-                    <div
-                      key={index}
-                      onClick={() => clickPiece(piece.name)}
-                      {...adminControl(AdminControl.CONNECTIONS_PIECE_OPEN)}
-                      className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-gray-4 hover:text-gray-12 cursor-pointer rounded-lg"
-                    >
-                      <LogoPlate
-                        className="size-[52px] p-1.5"
-                        src={piece.logoUrl}
-                        alt=""
-                      />
-                      <div className="mt-2 text-center">
-                        {piece.displayName}
-                      </div>
-                    </div>
+              ) : isLoading ? (
+                <SkeletonList numberOfItems={6} className="h-12 rounded-xl" />
+              ) : filteredPieces.length === 0 ? (
+                <p className="text-sm text-gray-11">{t('No pieces found')}</p>
+              ) : (
+                <ul className="grid grid-cols-1 gap-2 p-0.5 sm:grid-cols-2">
+                  {filteredPieces.map((piece) => (
+                    <li key={piece.name} className="min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => clickPiece(piece.name)}
+                        {...adminControl(AdminControl.CONNECTIONS_PIECE_OPEN)}
+                        className="flex h-12 w-full min-w-0 items-center gap-3 rounded-xl border px-3 text-left text-sm font-medium text-gray-12 outline-hidden hover:bg-gray-3 focus-visible:ring-2 focus-visible:ring-accent-8"
+                      >
+                        <LogoPlate size="sm" src={piece.logoUrl} alt="" />
+                        <TextWithTooltip tooltipMessage={piece.displayName}>
+                          <span className="min-w-0 truncate">
+                            {piece.displayName}
+                          </span>
+                        </TextWithTooltip>
+                      </button>
+                    </li>
                   ))}
-              </div>
+                </ul>
+              )}
             </ScrollArea>
             <DialogFooter>
               <DialogClose asChild>

@@ -1,15 +1,13 @@
-import {
-  PROJECT_COLOR_PALETTE,
-  Project,
-  ProjectType,
-} from '@activepieces/shared';
+import { Project, ProjectType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { FolderOpen, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 
 import { SelectedOnlyButton } from '../components/selected-only-button';
@@ -63,24 +61,28 @@ export function ProjectSelectionPanel({
       accessorKey: 'name',
       header: () => (
         <div className="flex items-center gap-2.5">
-          <Checkbox checked={allRowsSelected} onCheckedChange={toggleRows} />
+          <Checkbox
+            aria-label={t('Select all projects on this page')}
+            checked={allRowsSelected}
+            onCheckedChange={toggleRows}
+          />
           <span>{t('Project')}</span>
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
           <Checkbox
+            aria-label={t('Select {name}', { name: row.original.displayName })}
             checked={selectedIds.includes(row.original.id)}
-            className="pointer-events-none"
+            onClick={(event) => event.stopPropagation()}
+            onCheckedChange={() => toggleProject(row.original.id)}
           />
-          <ProjectSwatch project={row.original} />
-          <span className="text-sm font-medium">
+          <ProjectAvatar project={row.original} size="sm" />
+          <span className="min-w-0 truncate text-sm font-medium">
             {row.original.displayName}
           </span>
           {row.original.type === ProjectType.PERSONAL && (
-            <span className="rounded-full bg-gray-3 px-1.5 py-px text-sm text-gray-11">
-              {t('Personal')}
-            </span>
+            <Badge variant="outline">{t('Personal')}</Badge>
           )}
         </div>
       ),
@@ -135,24 +137,6 @@ export function ProjectSelectionPanel({
         onPageChange={setPage}
       />
     </div>
-  );
-}
-
-function ProjectSwatch({ project }: { project: Project }) {
-  const palette = project.icon?.color
-    ? PROJECT_COLOR_PALETTE[project.icon.color]
-    : undefined;
-  return (
-    <span
-      className="flex size-5 shrink-0 items-center justify-center rounded-md bg-gray-3 text-sm font-medium"
-      style={
-        palette
-          ? { backgroundColor: palette.color, color: palette.textColor }
-          : undefined
-      }
-    >
-      {project.displayName.charAt(0).toUpperCase()}
-    </span>
   );
 }
 

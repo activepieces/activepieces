@@ -4,8 +4,10 @@ import { t } from 'i18next';
 import { KeyRound, Pin, PinOff, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
+import { Fact, FactList } from '@/components/custom/fact-list';
 import { EMPTY_VALUE, MutedCell } from '@/components/custom/list/list-cells';
 import { StatusDot } from '@/components/custom/status-dot';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -64,7 +66,9 @@ function PieceDetailContent({
         />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2">
-            <SheetTitle className="truncate">{piece.displayName}</SheetTitle>
+            <TextWithTooltip tooltipMessage={piece.displayName}>
+              <SheetTitle className="truncate">{piece.displayName}</SheetTitle>
+            </TextWithTooltip>
             <Badge variant="outline">
               {isCustom ? t('Custom') : t('Official')}
             </Badge>
@@ -106,7 +110,7 @@ function PieceDetailContent({
             </LockableButton>
           )}
         </div>
-        <dl className="flex flex-col rounded-2xl bg-panel px-5 shadow-edge">
+        <FactList>
           <Fact label={t('Version')}>{piece.version}</Fact>
           <Fact label={t('Type')}>
             {isCustom ? t('Custom') : t('Official')}
@@ -120,12 +124,11 @@ function PieceDetailContent({
             </Fact>
           )}
           {piece.description && (
-            <div className="flex flex-col gap-1 border-t border-gray-6 py-3">
-              <dt className="text-sm text-gray-11">{t('Description')}</dt>
-              <dd className="text-sm text-gray-12">{piece.description}</dd>
-            </div>
+            <Fact label={t('Description')} stacked>
+              <span className="font-normal">{piece.description}</span>
+            </Fact>
           )}
-        </dl>
+        </FactList>
       </SheetBody>
       {isCustom && (
         <SheetFooter>
@@ -142,23 +145,6 @@ function PieceDetailContent({
         </SheetFooter>
       )}
     </>
-  );
-}
-
-function Fact({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-t border-gray-6 py-3 first:border-t-0">
-      <dt className="text-sm text-gray-11">{label}</dt>
-      <dd className="text-right text-sm font-medium text-gray-12 tabular-nums">
-        {children}
-      </dd>
-    </div>
   );
 }
 

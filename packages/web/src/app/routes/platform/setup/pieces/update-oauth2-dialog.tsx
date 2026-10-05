@@ -1,3 +1,4 @@
+import { formErrors } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
@@ -191,7 +192,7 @@ const RemovePieceOAuth2Dialog = ({
       })}
       errorTitle={t("Couldn't remove the OAuth app")}
       onConfirm={async () => {
-        const app = oauth2App ?? (await refetch()).data;
+        const app = oauth2App ?? (await refetch({ throwOnError: true })).data;
         if (app) {
           await deleteOAuth2App(app.id);
         }
@@ -207,8 +208,8 @@ const emptyOAuth2FormValues = (): OAuth2FormValues => ({
 });
 
 const OAuth2FormValues = z.object({
-  clientId: z.string().min(1),
-  clientSecret: z.string().min(1),
+  clientId: z.string().trim().min(1, { message: formErrors.required }),
+  clientSecret: z.string().trim().min(1, { message: formErrors.required }),
 });
 
 export { ConfigurePieceOAuth2Dialog, RemovePieceOAuth2Dialog };

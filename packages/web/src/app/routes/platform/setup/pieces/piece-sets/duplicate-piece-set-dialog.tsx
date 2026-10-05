@@ -101,6 +101,7 @@ const DuplicatePieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isValid}
           >
             {t('Duplicate')}
           </Button>

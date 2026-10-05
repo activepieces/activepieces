@@ -28,7 +28,10 @@ export function ConnectionNameCell({
   pieceName: string;
   displayName: string;
 }) {
-  const { summary } = piecesHooks.usePieceSummary({ name: pieceName });
+  const { summary } = piecesHooks.usePieceSummary({
+    name: pieceName,
+    skipProjectFilter: true,
+  });
   return (
     <NameCell
       media={

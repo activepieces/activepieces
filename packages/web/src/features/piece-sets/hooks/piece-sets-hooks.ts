@@ -153,6 +153,11 @@ export const pieceSetMutations = {
           ),
         );
       },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't update the projects"),
+        }),
       onSettled: () => refreshAfterProjectChange({ queryClient }),
     });
   },

@@ -4466,5 +4466,16 @@
   "embedPurposeOwnership": "Proves you own the domain",
   "embedPurposeSsl": "Lets us issue the SSL certificate",
   "Connections read credentials from HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur or 1Password when a flow runs. Nothing secret is stored here.": "Connections read credentials from HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur or 1Password when a flow runs. Nothing secret is stored here.",
-  "HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur and 1Password": "HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur and 1Password"
+  "HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur and 1Password": "HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur and 1Password",
+  "Actions every flow on this policy must use before it can be published.": "Actions every flow on this policy must use before it can be published.",
+  "The embed SDK passes this key to put a project on this policy. Leave it empty to make one from the name.": "The embed SDK passes this key to put a project on this policy. Leave it empty to make one from the name.",
+  "Couldn't update the projects": "Couldn't update the projects",
+  "{name} reconnected": "{name} reconnected",
+  "Couldn't replace the connections": "Couldn't replace the connections",
+  "Loading models\u2026": "Loading models\u2026",
+  "This key has no image models": "This key has no image models",
+  "Select all projects on this page": "Select all projects on this page",
+  "Select all models on this page": "Select all models on this page",
+  "Change icon": "Change icon",
+  "Drag to reorder": "Drag to reorder"
 }
