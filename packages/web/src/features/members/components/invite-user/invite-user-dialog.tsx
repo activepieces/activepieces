@@ -293,9 +293,9 @@ const InviteUserDialogInternal = ({
   }
 
   const dialogTitle = hasLinks
-    ? t('Invitation Links')
+    ? t('Invitation links')
     : isPlatformInvite
-    ? t('Invite to platform')
+    ? t('Invite people')
     : t('Add Members');
 
   const dialogDescription = getDialogDescription({
@@ -321,7 +321,6 @@ const InviteUserDialogInternal = ({
           }}
         >
           <DialogContent
-            className="sm:max-w-[475px]"
             onEscapeKeyDown={(e) => {
               if (suggestionsOpen) e.preventDefault();
             }}
@@ -341,7 +340,7 @@ const InviteUserDialogInternal = ({
                     control={form.control}
                     name="emails"
                     render={({ field }) => (
-                      <FormItem className="grid gap-2">
+                      <FormItem>
                         <Label htmlFor="emails">{t('Emails')}</Label>
                         <UserSuggestionsPopover
                           value={field.value}
@@ -385,7 +384,7 @@ const InviteUserDialogInternal = ({
                   <div className="flex flex-col gap-3">
                     {resultsWithLinks.map((result) => (
                       <div key={result.id} className="flex flex-col gap-1">
-                        <Label className="text-sm">{result.email}</Label>
+                        <Label>{result.email}</Label>
                         <CopyToClipboardInput
                           useInput={true}
                           textToCopy={result.link!}
@@ -403,7 +402,7 @@ const InviteUserDialogInternal = ({
                       onClick={copyAllLinks}
                     >
                       <CopyIcon height={15} width={15} />
-                      {t('Copy All')}
+                      {t('Copy all')}
                     </Button>
                     <Button
                       type="button"
@@ -462,7 +461,7 @@ function getDialogDescription({
 
   if (invitationType === InvitationType.PLATFORM) {
     const base = t(
-      'Invite team members to collaborate and build amazing flows together.',
+      'Each person gets a link that works for 7 days.',
     );
     return isSmtpConfigured
       ? base
@@ -528,7 +527,7 @@ function InviteUserDialogFallback({
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-[420px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{t('Something went wrong')}</DialogTitle>
           <DialogDescription>

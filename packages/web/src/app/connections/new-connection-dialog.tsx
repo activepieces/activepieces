@@ -79,7 +79,10 @@ const NewConnectionDialog = React.memo(
           }}
         >
           <DialogTrigger asChild>{children}</DialogTrigger>
-          <DialogContent className="min-w-[700px] max-w-[700px] h-[680px] max-h-[680px] flex flex-col">
+          <DialogContent
+            size="lg"
+            className="h-[680px] max-h-[680px] flex flex-col"
+          >
             <DialogHeader>
               <DialogTitle>{t('New Connection')}</DialogTitle>
             </DialogHeader>
@@ -90,7 +93,7 @@ const NewConnectionDialog = React.memo(
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <ScrollArea className="grow overflow-y-auto ">
+            <ScrollArea className="grow overflow-y-auto">
               <div className="grid grid-cols-4 gap-4">
                 {(isLoading ||
                   (filteredPieces && filteredPieces.length === 0)) && (

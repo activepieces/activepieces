@@ -210,14 +210,14 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
         <div className="flex flex-col gap-2.5 rounded-lg border p-3">
           {summaryText && (
             <TextWithTooltip tooltipMessage={summaryText}>
-              <p className="line-clamp-2 text-xs text-gray-11">{summaryText}</p>
+              <p className="line-clamp-2 text-sm text-gray-11">{summaryText}</p>
             </TextWithTooltip>
           )}
 
           {(!isNil(modelLabel) || toolChips.length > 0) && (
             <div className="flex flex-wrap items-center gap-1.5">
               {!isNil(modelLabel) && (
-                <Badge variant="accent" className="font-normal">
+                <Badge variant="secondary" className="font-normal">
                   {modelLabel}
                 </Badge>
               )}
@@ -236,7 +236,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
 
           <p
             className={cn(
-              'text-xs',
+              'text-sm',
               isNil(blockedReason) ? 'text-gray-11' : 'text-warning-11',
             )}
           >

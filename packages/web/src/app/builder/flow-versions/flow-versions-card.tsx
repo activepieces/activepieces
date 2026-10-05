@@ -56,7 +56,7 @@ const FlowVersionDetailsCard = React.memo(
       <CardListItem interactive={false} className="px-4">
         {showAvatar && flowVersion.updatedByUser && (
           <UserAvatar
-            size={45}
+            size={32}
             withoutBorder={true}
             name={
               flowVersion.updatedByUser.firstName +
@@ -81,8 +81,8 @@ const FlowVersionDetailsCard = React.memo(
           {selected && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="size-10 flex justify-center items-center">
-                  <EyeIcon className="w-5 h-5 "></EyeIcon>
+                <div className="flex size-8 items-center justify-center">
+                  <EyeIcon className="size-4" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>{t('Viewing')}</TooltipContent>
@@ -100,7 +100,7 @@ const FlowVersionDetailsCard = React.memo(
             open={dropdownMenuOpen}
           >
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" disabled={isPending} size={'icon'}>
+              <Button variant="ghost" disabled={isPending} size="icon-sm">
                 <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>
@@ -109,7 +109,7 @@ const FlowVersionDetailsCard = React.memo(
                 onClick={() => viewVersion(flowVersion)}
                 className="w-full"
               >
-                <Eye className="mr-2 h-4 w-4" />
+                <Eye />
                 <span>{t('View')}</span>
               </DropdownMenuItem>
               {flowVersion.state !== FlowVersionState.DRAFT && (
@@ -127,7 +127,7 @@ const FlowVersionDetailsCard = React.memo(
                     }}
                     disabled={!userHasPermissionToWriteFlow}
                   >
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <Pencil />
                     <span>{t('Use as Draft')}</span>
                   </DropdownMenuItem>
                 </OverwriteDraftDialog>

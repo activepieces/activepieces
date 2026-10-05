@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { agentsApi } from '@/features/agents/api/agents';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { api } from '@/lib/api';
@@ -26,22 +26,21 @@ export const DeleteAgentDialog = ({
   const stillInUse = (usage?.total ?? 0) > 0;
 
   return (
-    <ConfirmationDeleteDialog
+    <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t('Delete {name}', { name: agent.displayName })}
-      message={t(
+      title={t('Delete {name}?', { name: agent.displayName })}
+      description={t(
         'Its instructions, its tools, and every conversation held with it are deleted for good. Any draft flow step using it will break.',
       )}
-      warning={
+      consequence={
         stillInUse && usage !== undefined && withUsage !== undefined ? (
           <FlowsUsingAgent usage={usage} projectId={withUsage.projectId} />
         ) : undefined
       }
       confirmDisabled={stillInUse}
-      entityName={agent.displayName}
-      buttonText={t('Delete')}
-      mutationFn={async () => {
+      confirmLabel={t('Delete')}
+      onConfirm={async () => {
         await agentsApi.delete(agent.id);
         queryClient.removeQueries({ queryKey: ['agents', 'one', agent.id] });
         void queryClient.invalidateQueries({ queryKey: ['agents'] });
@@ -58,7 +57,7 @@ export const DeleteAgentDialog = ({
       }
     >
       {children}
-    </ConfirmationDeleteDialog>
+    </ConfirmDialog>
   );
 };
 

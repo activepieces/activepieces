@@ -12,7 +12,7 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
     <div
       data-powered-by-branding="true"
       className={cn('bottom-0 right-3 pointer-events-none z-40', position, {
-        '-mt-[30px]': position === 'sticky',
+        'h-0': position === 'sticky',
         'mr-5': position === 'sticky',
       })}
     >
@@ -21,6 +21,7 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
           'justify-end text-gray-11 text-sm items-center flex gap-1 transition group ',
           {
             'justify-center': position === 'static',
+            '-translate-y-7.5': position === 'sticky',
           },
         )}
       >

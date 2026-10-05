@@ -156,7 +156,7 @@ export const PredefinedInputsForm = () => {
       <ScrollArea className="h-full">
         <div className="flex items-start border-b gap-3 p-4">
           <LogoPlate
-            className="size-11 rounded-sm p-1.5"
+            className="size-11 rounded-md p-1.5"
             border
             src={selectedPiece?.logoUrl}
             alt=""
@@ -166,7 +166,7 @@ export const PredefinedInputsForm = () => {
               {selectedAction?.displayName}
             </div>
             {selectedAction?.description && (
-              <p className="mt-0.5 text-xs text-gray-11 line-clamp-2">
+              <p className="mt-0.5 text-sm text-gray-11 line-clamp-2">
                 {selectedAction.description}
               </p>
             )}

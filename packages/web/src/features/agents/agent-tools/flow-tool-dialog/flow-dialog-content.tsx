@@ -100,7 +100,7 @@ export const FlowDialogContent = ({
                   </div>
 
                   {helperText && (
-                    <div className="text-xs text-gray-11 truncate">
+                    <div className="text-sm text-gray-11 truncate">
                       {helperText}
                     </div>
                   )}
@@ -126,7 +126,7 @@ export const FlowDialogContent = ({
             <Workflow className="size-7 text-gray-11" />
           </div>
 
-          <div className="text-base font-semibold text-gray-12">
+          <div className="text-sm font-semibold text-gray-12">
             {t('No flows found')}
           </div>
 

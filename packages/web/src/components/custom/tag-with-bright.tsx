@@ -17,7 +17,6 @@ export const TagWithBright = ({
   prefix,
   title,
   color,
-  size = 'sm',
 }: TagWithBrightProps) => {
   return (
     <>
@@ -33,9 +32,7 @@ export const TagWithBright = ({
       `}</style>
       <Badge
         variant="outline"
-        className={`border-0 h-fit relative overflow-hidden ${
-          size === 'sm' ? 'text-xs px-2 py-1' : 'text-sm'
-        }`}
+        className="relative overflow-hidden border-0"
         style={{
           backgroundColor: color,
           color: brandColors.onPrimaryFor({ hex: color }),
@@ -50,14 +47,10 @@ export const TagWithBright = ({
             transform: 'translateX(-100%)',
           }}
         />
-        {index === 0 && (
-          <LineChart className="relative font-medium mr-1.5 w-3.5 h-3.5" />
-        )}
-        {index === 1 && (
-          <Clock className="relative font-medium mr-1.5 w-3.5 h-3.5" />
-        )}
-        {prefix && <span className="relative font-medium mr-1">{prefix}</span>}
-        <span className="relative font-bold">{title}</span>
+        {index === 0 && <LineChart className="relative" />}
+        {index === 1 && <Clock className="relative" />}
+        {prefix && <span className="relative font-medium">{prefix}</span>}
+        <span className="relative font-semibold">{title}</span>
       </Badge>
     </>
   );

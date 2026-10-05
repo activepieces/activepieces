@@ -38,7 +38,7 @@ export const OutOfSeatsDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[420px]">
+        <DialogContent size="sm">
           <DialogHeader>
             <div className="flex size-10 items-center justify-center rounded-full bg-accent-3">
               <Users className="size-5 text-accent-11" />

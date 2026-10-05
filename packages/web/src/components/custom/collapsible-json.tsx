@@ -1,7 +1,8 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { CodeSnippet } from '@/components/custom/code-snippet';
+import { cn } from '@/lib/utils';
 
 export function CollapsibleJson({
   json,
@@ -17,29 +18,22 @@ export function CollapsibleJson({
     typeof json === 'string' ? json : JSON.stringify(json, null, 2);
 
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={cn('flex flex-col gap-2', className)}>
       <button
         onClick={toggleVisibility}
-        className="flex items-center gap-2 text-sm font-medium text-gray-11 hover:text-gray-12 transition-colors"
+        className="flex items-center gap-2 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
       >
         {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="size-4" />
         ) : (
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="size-4" />
         )}
         {label}
       </button>
 
       {isOpen && (
         <div className="flex flex-col gap-2 min-w-0">
-          <div className="relative min-w-0">
-            <pre className="bg-gray-3/50 whitespace-pre-wrap break-all rounded-md px-4 py-4 text-xs overflow-x-auto max-w-full">
-              <code>{jsonString}</code>
-            </pre>
-            <div className="absolute top-2 right-2">
-              <CopyButton textToCopy={jsonString} />
-            </div>
-          </div>
+          <CodeSnippet code={jsonString} />
           {description && <p className="text-xs text-gray-11">{description}</p>}
         </div>
       )}

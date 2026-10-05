@@ -38,7 +38,7 @@ export const ImageWithFallback = ({
           className="absolute inset-0 flex items-center justify-center"
         >
           {fallback ?? (
-            <span className="text-[0.6em] font-semibold leading-none">
+            <span className="text-sm font-semibold leading-none">
               {monogram}
             </span>
           )}

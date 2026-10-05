@@ -28,7 +28,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -57,6 +57,7 @@ import { ShareTemplateDialog } from '@/features/flows/components/share-template-
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { cn } from '@/lib/utils';
 
+import { automationColumns } from '../lib/columns';
 import { TreeItem } from '../lib/types';
 
 import { CreateNewMenu, CreateInFolderKind } from './create-new-menu';
@@ -144,7 +145,7 @@ export const AutomationsTableRow = ({
   return (
     <>
       <div
-        className="w-10 shrink-0 pl-4 pr-1 flex items-center"
+        className="w-11 shrink-0 pl-5 pr-1 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
@@ -161,7 +162,7 @@ export const AutomationsTableRow = ({
             <TooltipTrigger asChild>
               <button
                 onClick={onTogglePin}
-                className="p-0.5 rounded hover:bg-gray-3 transition-colors"
+                className="p-0.5 rounded-md hover:bg-gray-3 transition-colors"
               >
                 <Star
                   className={cn(
@@ -179,7 +180,7 @@ export const AutomationsTableRow = ({
           </Tooltip>
         )}
       </div>
-      <div className="flex-1 min-w-[200px] pl-2 pr-2 flex items-center">
+      <div className={cn(automationColumns.name, 'px-2')}>
         <div
           className="relative flex items-center gap-2 min-w-0"
           style={{ paddingLeft: item.depth * 24 }}
@@ -201,10 +202,10 @@ export const AutomationsTableRow = ({
           </TextWithTooltip>
         </div>
       </div>
-      <div className="w-[230px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.details}>
         <RowItemDetails item={item} />
       </div>
-      <div className="w-[200px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.modified}>
         {item.data && (
           <FormattedDate
             date={new Date(item.data.updated)}
@@ -213,18 +214,21 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[250px] shrink-0 px-2 flex items-center overflow-hidden">
+        <div className={automationColumns.owner}>
           <RowItemOwner item={item} />
         </div>
       )}
       <div
-        className="w-[160px] shrink-0 px-2 flex items-center gap-2"
+        className={automationColumns.status}
         onClick={(e) => e.stopPropagation()}
       >
         {isFlowItem(item) && (
           <>
             <FlowStatusToggle flow={item.data} />
-            <FlowCreatedByBadge createdBy={item.data.createdBy} />
+            <FlowCreatedByBadge
+              createdBy={item.data.createdBy}
+              className="hidden @xl:inline-flex"
+            />
           </>
         )}
         {isAgentItem(item) &&
@@ -235,7 +239,7 @@ export const AutomationsTableRow = ({
           ))}
       </div>
       <div
-        className="w-[80px] shrink-0 px-2 flex items-center justify-end gap-1"
+        className={automationColumns.actions}
         onClick={(e) => e.stopPropagation()}
       >
         {item.type === 'folder' && onCreateInFolder && (
@@ -269,11 +273,11 @@ export const AutomationsTableRow = ({
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  size="icon-sm"
+                  className="hidden opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 @xl:inline-flex"
                   aria-label={t('Create inside folder')}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus />
                 </Button>
               </TooltipTrigger>
             </CreateNewMenu>
@@ -286,11 +290,10 @@ export const AutomationsTableRow = ({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="icon-sm"
               disabled={isAgentItem(item) && !userHasPermissionToWriteAgent}
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -303,13 +306,13 @@ export const AutomationsTableRow = ({
                   toast.success(t('URL copied to clipboard'));
                 }}
               >
-                <Link className="h-4 w-4 mr-2" />
+                <Link />
                 {t('Copy URL')}
               </DropdownMenuItem>
             )}
 
             <DropdownMenuItem onClick={onRename}>
-              <Pencil className="h-4 w-4 mr-2" />
+              <Pencil />
               {t('Rename')}
             </DropdownMenuItem>
 
@@ -318,11 +321,7 @@ export const AutomationsTableRow = ({
                 onClick={() => onDuplicate(item.data)}
                 disabled={isDuplicating}
               >
-                {isDuplicating ? (
-                  <LoadingSpinner className="mr-2" />
-                ) : (
-                  <Copy className="h-4 w-4 mr-2" />
-                )}
+                {isDuplicating ? <LoadingSpinner /> : <Copy />}
                 {isDuplicating ? t('Duplicating...') : t('Duplicate')}
               </DropdownMenuItem>
             )}
@@ -334,21 +333,21 @@ export const AutomationsTableRow = ({
                   setIsMoveOpen(true);
                 }}
               >
-                <CornerUpLeft className="h-4 w-4 mr-2" />
+                <CornerUpLeft />
                 {t('Move To')}
               </DropdownMenuItem>
             )}
 
             {isFlowItem(item) && !embedState.hideExportAndImportFlow && (
               <DropdownMenuItem onClick={() => onExportFlow(item.data)}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download />
                 {t('Export')}
               </DropdownMenuItem>
             )}
 
             {isTableItem(item) && (
               <DropdownMenuItem onClick={() => onExportTable(item.data)}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download />
                 {t('Export')}
               </DropdownMenuItem>
             )}
@@ -359,7 +358,7 @@ export const AutomationsTableRow = ({
                 flowVersionId={item.data.version.id}
               >
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Share2 className="h-4 w-4 mr-2" />
+                  <Share2 />
                   {t('Share')}
                 </DropdownMenuItem>
               </ShareTemplateDialog>
@@ -371,27 +370,26 @@ export const AutomationsTableRow = ({
                 onSelect={() => setIsDeleteAgentOpen(true)}
                 className="text-danger-11 focus:text-danger-11"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 />
                 {t('Delete')}
               </DropdownMenuItem>
             ) : (
-              <ConfirmationDeleteDialog
-                title={t('Delete {type}', { type: item.type })}
-                message={t('Deleting "{name}" cannot be undone.', {
+              <ConfirmDialog
+                title={t('Delete {name}?', { name: item.name })}
+                description={t('Deleting "{name}" cannot be undone.', {
                   name: item.name,
                 })}
-                mutationFn={async () => onDelete()}
-                entityName={item.type}
-                buttonText={t('Delete')}
+                onConfirm={async () => onDelete()}
+                confirmLabel={t('Delete')}
               >
                 <DropdownMenuItem
                   onSelect={(e) => e.preventDefault()}
                   className="text-danger-11 focus:text-danger-11"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 />
                   {t('Delete')}
                 </DropdownMenuItem>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

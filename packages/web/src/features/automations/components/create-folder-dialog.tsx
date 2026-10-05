@@ -106,7 +106,7 @@ export const CreateFolderDialog = ({
                     required
                     id="folder"
                     placeholder={t('Folder Name')}
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>

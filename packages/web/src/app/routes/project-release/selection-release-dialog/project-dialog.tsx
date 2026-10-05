@@ -98,7 +98,7 @@ export function ProjectSelectionDialog({
           }
         }}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent size="sm">
           <DialogHeader>
             <DialogTitle>{t('Create Release')}</DialogTitle>
           </DialogHeader>

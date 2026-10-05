@@ -2,7 +2,6 @@ import { Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Bell, Trash, UserRound } from 'lucide-react';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +13,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
+import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -43,10 +43,10 @@ export const TeamProjectAlerts = () => {
   return (
     <>
       <Alert variant="default">
-        <Bell className="inline w-4 h-4 text-warning-11" />
+        <Bell className="text-warning-11" />
         <div className="flex flex-col gap-1">
           <AlertTitle>{t('Frequency')}</AlertTitle>
-          <AlertDescription className="text-sm">
+          <AlertDescription>
             {t(
               'You’ll get an email if any flow fails. Only the first failure per flow each day sends an alert. Other failures are summarized in a daily email.',
             )}
@@ -91,16 +91,16 @@ export const TeamProjectAlerts = () => {
       <div>
         {alertsLoading && (
           <div className="flex items-center justify-center py-8">
-            <LoadingSpinner className="w-6 h-6" />
+            <Spinner className="size-6 text-gray-11" />
           </div>
         )}
         {alertsError && (
-          <div className="text-center text-danger-11 py-8 text-sm">
+          <div className="py-8 text-center text-sm text-danger-11">
             {t('Error, please try again.')}
           </div>
         )}
         {alertsData && alertsData.length === 0 && (
-          <div className="text-center text-gray-11 py-8 text-sm">
+          <div className="py-8 text-center text-sm text-gray-11">
             {t('No emails added yet.')}
           </div>
         )}
@@ -119,12 +119,12 @@ export const TeamProjectAlerts = () => {
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="size-8 p-0 hover:bg-danger-3"
+                        size="icon-sm"
+                        className="hover:bg-danger-3"
                         onClick={() => deleteAlert(alert)}
                         disabled={writeAlertPermission === false}
                       >
-                        <Trash className="size-4 text-danger-11" />
+                        <Trash className="text-danger-11" />
                       </Button>
                     </TooltipTrigger>
                     {writeAlertPermission === false && (

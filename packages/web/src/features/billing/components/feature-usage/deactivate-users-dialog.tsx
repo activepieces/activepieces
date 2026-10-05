@@ -36,7 +36,7 @@ export const DeactivateUsersDialog = ({
 }: DeactivateUsersDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] gap-4">
+      <DialogContent>
         <DeactivateUsersForm
           key={open ? 'deactivate-open' : 'deactivate-closed'}
           targetSeats={targetSeats}
@@ -161,7 +161,7 @@ function DeactivateUsersForm({
       </span>
 
       {!isNil(warning) && (
-        <span className="text-xs text-danger-11">{warning}</span>
+        <span className="text-sm text-danger-11">{warning}</span>
       )}
 
       <DialogFooter>
@@ -200,12 +200,12 @@ function SelectableEmailList({
   }
 
   const list = (
-    <ScrollArea className={cn('rounded-md border', maxHeightClass)}>
+    <ScrollArea className={cn('rounded-xl border', maxHeightClass)}>
       <div className="flex flex-col p-1">
         {items.map((item) => (
           <label
             key={item.id}
-            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-3"
+            className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-3"
           >
             <Checkbox
               checked={selectedIds.has(item.id)}
@@ -230,7 +230,7 @@ function SelectableEmailList({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <span className="text-xs font-medium text-gray-11">{heading}</span>
       {list}
     </div>

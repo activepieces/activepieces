@@ -27,11 +27,6 @@ const ReconnectButtonDialog = ({
   hasPermission,
 }: ReconnectButtonDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { pieceModel, isLoading } = piecesHooks.usePiece({
-    name: connection.pieceName,
-    version: connection.pieceVersion,
-    enabled: open,
-  });
 
   return (
     <>
@@ -55,23 +50,54 @@ const ReconnectButtonDialog = ({
           )}
         </TooltipContent>
       </Tooltip>
-      {open && !isLoading && pieceModel && (
-        <CreateOrEditConnectionDialog
-          reconnectConnection={connection}
-          isGlobalConnection={connection.scope === AppConnectionScope.PLATFORM}
-          piece={pieceModel}
-          open={open}
-          key={`CreateOrEditConnectionDialog-open-${open}`}
-          setOpen={(open, connection) => {
-            setOpen(open);
-            if (connection) {
-              onConnectionCreated();
-            }
-          }}
-        />
-      )}
+      <ReconnectConnectionDialog
+        connection={connection}
+        open={open}
+        onOpenChange={setOpen}
+        onConnectionCreated={onConnectionCreated}
+      />
     </>
   );
 };
 
-export { ReconnectButtonDialog };
+const ReconnectConnectionDialog = ({
+  connection,
+  open,
+  onOpenChange,
+  onConnectionCreated,
+}: ReconnectConnectionDialogProps) => {
+  const { pieceModel, isLoading } = piecesHooks.usePiece({
+    name: connection.pieceName,
+    version: connection.pieceVersion,
+    enabled: open,
+  });
+
+  if (!open || isLoading || !pieceModel) {
+    return null;
+  }
+
+  return (
+    <CreateOrEditConnectionDialog
+      reconnectConnection={connection}
+      isGlobalConnection={connection.scope === AppConnectionScope.PLATFORM}
+      piece={pieceModel}
+      open={open}
+      key={`CreateOrEditConnectionDialog-open-${open}`}
+      setOpen={(open, connection) => {
+        onOpenChange(open);
+        if (connection) {
+          onConnectionCreated();
+        }
+      }}
+    />
+  );
+};
+
+type ReconnectConnectionDialogProps = {
+  connection: AppConnectionWithoutSensitiveData;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConnectionCreated: () => void;
+};
+
+export { ReconnectButtonDialog, ReconnectConnectionDialog };

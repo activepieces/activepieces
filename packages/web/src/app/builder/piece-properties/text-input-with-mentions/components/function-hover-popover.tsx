@@ -269,8 +269,8 @@ export function FunctionTooltipCard({
       onMouseLeave={onMouseLeave}
     >
       {fnDef.deprecated && (
-        <div className="flex items-center gap-1.5 text-[11px]">
-          <span className="px-1.5 py-0.5 rounded bg-warning-4 text-warning-11 font-semibold uppercase tracking-wide text-[10px]">
+        <div className="flex items-center gap-1.5 text-sm">
+          <span className="px-1.5 py-0.5 rounded-md bg-warning-4 text-warning-11 font-semibold text-sm">
             {t('Deprecated')}
           </span>
           {fnDef.deprecated.replacement && (
@@ -284,11 +284,11 @@ export function FunctionTooltipCard({
           )}
         </div>
       )}
-      <p className="text-[12px] text-gray-12 leading-snug">
+      <p className="text-sm text-gray-12 leading-snug">
         {t(fnDef.description)}
       </p>
       {argNames.length > 0 && currentArgIndex != null && (
-        <div className="flex flex-wrap gap-x-0.5 gap-y-0.5 text-[12px] font-mono bg-gray-4 rounded px-2 py-1">
+        <div className="flex flex-wrap gap-x-0.5 gap-y-0.5 text-sm font-mono bg-gray-4 rounded-md px-2 py-1">
           <span className="text-accent-11">{fnDef.name}(</span>
           {argNames.map((arg, i) => (
             <React.Fragment key={i}>
@@ -308,13 +308,11 @@ export function FunctionTooltipCard({
         </div>
       )}
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold text-gray-12/70 uppercase tracking-wide">
-          Example
-        </p>
-        <code className="block bg-gray-4 rounded px-2 py-1.5 text-[11px] font-mono text-gray-12 break-all leading-relaxed">
+        <p className="text-sm font-semibold text-gray-12/70 ">Example</p>
+        <code className="block bg-gray-4 rounded-md px-2 py-1.5 text-sm font-mono text-gray-12 break-all leading-relaxed">
           {t(fnDef.example)}
         </code>
-        <code className="flex items-center gap-1.5 bg-gray-4 rounded px-2 py-1.5 text-[11px] font-mono break-all leading-relaxed">
+        <code className="flex items-center gap-1.5 bg-gray-4 rounded-md px-2 py-1.5 text-sm font-mono break-all leading-relaxed">
           <span className="text-gray-12/60 shrink-0">↳</span>
           <span className="text-success-11">{t(fnDef.exampleResult)}</span>
         </code>

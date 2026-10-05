@@ -6,7 +6,7 @@ import React from 'react';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
-import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
+import { SidebarMenuButton } from '@/components/ui/sidebar';
 import {
   PLATFORM_FEATURES,
   useFeatureGate,
@@ -54,28 +54,19 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
   switch (variant) {
     case 'icon':
       return (
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn('h-6 w-6 hover:bg-gray-4', className)}
-        >
+        <Button variant="ghost" size="icon-xs" className={className}>
           {locked ? <Crown className="text-accent-11" /> : <Plus />}
         </Button>
       );
     case 'full':
       return crown ? (
-        <Button size="sm" className={cn('has-[>svg]:px-2.5', className)}>
+        <Button className={className}>
           {crown}
-          {t('New Project')}
+          {t('New project')}
         </Button>
       ) : (
-        <AnimatedIconButton
-          icon={PlusIcon}
-          iconSize={16}
-          size="sm"
-          className={className}
-        >
-          {t('New Project')}
+        <AnimatedIconButton icon={PlusIcon} iconSize={20} className={className}>
+          {t('New project')}
         </AnimatedIconButton>
       );
     case 'sidebar-menu':

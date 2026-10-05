@@ -50,18 +50,6 @@ export const globalConnectionsQueries = {
 };
 
 export const globalConnectionsMutations = {
-  useBulkDeleteGlobalConnections: (refetch: () => void) =>
-    useMutation({
-      mutationFn: async (ids: string[]) => {
-        await Promise.all(ids.map((id) => globalConnectionsApi.delete(id)));
-      },
-      onSuccess: () => {
-        refetch();
-      },
-      onError: () => {
-        internalErrorToast();
-      },
-    }),
   useUpdateGlobalConnection: (
     refetch: () => void,
     setIsOpen: (isOpen: boolean) => void,

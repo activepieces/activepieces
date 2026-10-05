@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { CornerDownLeft, X } from 'lucide-react';
 import React, {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -11,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { Button } from '@/components/ui/button';
 import {
   CommandDialog,
   CommandGroup,
@@ -19,10 +21,22 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+} from '@/components/ui/empty';
+import { Kbd } from '@/components/ui/kbd';
+import { Skeleton } from '@/components/ui/skeleton';
 import { projectCollectionUtils } from '@/features/projects';
+
+import { AccountSettingsDialog } from '../account-settings';
+import { ProjectSettingsDialog } from '../project-settings';
 
 import { recordAccess, type AccessedItemType } from './access-history';
 import { SearchResultRow } from './search-result-item';
+import { type ProjectSettingsTab } from './settings-index';
 import {
   type SearchResultItem,
   useGlobalSearchResults,
@@ -47,22 +61,47 @@ function SkeletonRows() {
   return (
     <>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-2 px-2 py-2">
-          <div className="size-4 shrink-0 animate-pulse rounded bg-gray-3" />
-          <div className="h-3.5 flex-1 animate-pulse rounded bg-gray-3" />
-          <div className="h-3.5 w-24 animate-pulse rounded bg-gray-3" />
+        <div key={i} className="flex items-center gap-2 p-2">
+          <Skeleton className="size-4 shrink-0 rounded-md" />
+          <Skeleton className="h-3.5 flex-1 rounded-md" />
+          <Skeleton className="h-3.5 w-24 rounded-md" />
         </div>
       ))}
     </>
   );
 }
 
+type SettingsDialogState =
+  | { dialog: 'project'; tab: ProjectSettingsTab }
+  | { dialog: 'account' }
+  | null;
+
+function ProjectSettingsFromSearch({
+  tab,
+  onClose,
+}: {
+  tab: ProjectSettingsTab;
+  onClose: () => void;
+}) {
+  const { project } = projectCollectionUtils.useCurrentProject();
+  return (
+    <ProjectSettingsDialog
+      open={true}
+      onClose={onClose}
+      initialTab={tab}
+      initialValues={{ projectName: project.displayName }}
+    />
+  );
+}
+
 function GlobalSearchDialogContent({
   open,
   onOpenChange,
+  onOpenSettings,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onOpenSettings: (state: SettingsDialogState) => void;
 }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -93,7 +132,17 @@ function GlobalSearchDialogContent({
 
   const handleSelectResult = useCallback(
     (item: SearchResultItem) => {
-      if (item.type !== 'folder') {
+      const target = item.settingsTarget;
+      if (target && target.type !== 'route') {
+        handleOpenChange(false);
+        onOpenSettings(
+          target.type === 'project-settings'
+            ? { dialog: 'project', tab: target.tab }
+            : { dialog: 'account' },
+        );
+        return;
+      }
+      if (!target && item.type !== 'folder') {
         recordAccess({
           id: item.id,
           type: item.type as AccessedItemType,
@@ -109,7 +158,7 @@ function GlobalSearchDialogContent({
       }
       navigateToItem(item.type, item.href);
     },
-    [navigateToItem],
+    [navigateToItem, handleOpenChange, onOpenSettings],
   );
 
   const hasQuery = debouncedSearch.length > 0;
@@ -130,11 +179,11 @@ function GlobalSearchDialogContent({
       shouldFilter={false}
       commandValue={commandValue}
       onCommandValueChange={setCommandValue}
-      className="sm:max-w-[620px] h-[70vh] flex flex-col"
+      className="flex h-[70vh] flex-col sm:max-w-[620px]"
     >
       <div className="relative">
         <CommandInput
-          placeholder={t('Search pages, flows, tables...')}
+          placeholder={t('Search pages, settings, flows, tables...')}
           value={search}
           onValueChange={setSearch}
           containerClassName="border-b-0"
@@ -142,7 +191,7 @@ function GlobalSearchDialogContent({
         {search && (
           <button
             type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12 transition-colors"
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-11 transition-colors hover:text-gray-12"
             onClick={() => setSearch('')}
           >
             <X className="size-3.5" />
@@ -150,18 +199,18 @@ function GlobalSearchDialogContent({
         )}
       </div>
 
-      <CommandList className="flex-1 min-h-0 max-h-none overflow-y-auto!">
+      <CommandList className="max-h-none min-h-0 flex-1 overflow-y-auto!">
         {noResults && (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <p className="text-sm text-gray-11">{t('No results found.')}</p>
-            <button
-              type="button"
-              className="text-xs text-accent-11 underline hover:no-underline"
-              onClick={() => setSearch('')}
-            >
-              {t('Clear search')}
-            </button>
-          </div>
+          <Empty className="py-16">
+            <EmptyHeader>
+              <EmptyDescription>{t('No results found.')}</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="link" onClick={() => setSearch('')}>
+                {t('Clear search')}
+              </Button>
+            </EmptyContent>
+          </Empty>
         )}
 
         {groups.map((group, idx) => (
@@ -176,7 +225,7 @@ function GlobalSearchDialogContent({
                     key={item.id}
                     value={item.id}
                     onSelect={() => handleSelectResult(item)}
-                    className="group flex items-center data-[selected=true]:bg-gray-4"
+                    className="group"
                   >
                     <SearchResultRow
                       item={item}
@@ -191,26 +240,18 @@ function GlobalSearchDialogContent({
         ))}
       </CommandList>
 
-      <div className="flex items-center gap-4 border-t bg-gray-3/50 px-4 py-2.5 text-[11px] text-gray-11">
+      <div className="flex items-center gap-4 border-t bg-gray-2 px-4 py-2.5 text-xs text-gray-11">
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1 font-mono">
-            ↑
-          </kbd>
-          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1 font-mono">
-            ↓
-          </kbd>
+          <Kbd>↑</Kbd>
+          <Kbd>↓</Kbd>
           {t('to navigate')}
         </span>
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1 font-mono">
-            ↵
-          </kbd>
+          <Kbd>↵</Kbd>
           {t('to select')}
         </span>
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1.5 font-mono text-[10px]">
-            esc
-          </kbd>
+          <Kbd>esc</Kbd>
           {t('to close')}
         </span>
       </div>
@@ -224,6 +265,8 @@ export function GlobalSearchProvider({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [settingsDialog, setSettingsDialog] =
+    useState<SettingsDialogState>(null);
   const { embedState } = useEmbedding();
   const { hideGlobalSearch } = embedState;
 
@@ -245,8 +288,24 @@ export function GlobalSearchProvider({
     <GlobalSearchContext.Provider value={{ open, setOpen }}>
       {children}
       {!hideGlobalSearch && (
-        <GlobalSearchDialogContent open={open} onOpenChange={setOpen} />
+        <GlobalSearchDialogContent
+          open={open}
+          onOpenChange={setOpen}
+          onOpenSettings={setSettingsDialog}
+        />
       )}
+      {settingsDialog?.dialog === 'project' && (
+        <Suspense fallback={null}>
+          <ProjectSettingsFromSearch
+            tab={settingsDialog.tab}
+            onClose={() => setSettingsDialog(null)}
+          />
+        </Suspense>
+      )}
+      <AccountSettingsDialog
+        open={settingsDialog?.dialog === 'account'}
+        onClose={() => setSettingsDialog(null)}
+      />
     </GlobalSearchContext.Provider>
   );
 }

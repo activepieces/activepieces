@@ -62,7 +62,7 @@ export const AgentStructuredOutput = ({
                           {field.displayName}
                         </span>
                         {field.description && (
-                          <span className="text-xs text-gray-11">
+                          <span className="text-sm text-gray-11">
                             {field.description}
                           </span>
                         )}

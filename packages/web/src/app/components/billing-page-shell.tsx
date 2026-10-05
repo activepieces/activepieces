@@ -7,7 +7,8 @@ import {
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Spinner } from '@/components/ui/spinner';
 import { billingQueries } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -31,7 +32,7 @@ export function BillingPageShell({
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={lockTitle}
       lockDescription={t(
-        'Switch to the Enterprise edition to access billing and usage management.',
+        'See which projects spent what on runs and AI, manage seats and invoices, and top up before credits run out.',
       )}
       lockDocumentationUrl={LOCK_DOCUMENTATION_URL}
     >
@@ -51,20 +52,28 @@ function BillingPageContent({
     data: info,
     isLoading,
     isError,
+    refetch,
   } = billingQueries.usePlatformSubscription(platform.id);
 
-  if (isLoading || isNil(info)) {
+  if (isError && !isLoading) {
     return (
-      <div className="h-full flex items-center justify-center w-full">
-        <LoadingSpinner />
+      <div
+        role="alert"
+        aria-label={errorMessage}
+        className="flex h-full w-full items-center justify-center"
+      >
+        <DataFetchErrorState
+          entity={t('billing information')}
+          onRetry={refetch}
+        />
       </div>
     );
   }
 
-  if (isError) {
+  if (isLoading || isNil(info)) {
     return (
-      <div className="h-full flex items-center justify-center w-full">
-        {errorMessage}
+      <div className="flex h-full w-full items-center justify-center">
+        <Spinner />
       </div>
     );
   }

@@ -20,7 +20,7 @@ import { extractPieceNamesAndCoreMetadata } from '../utils/step-utils';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center rounded-md bg-gray-1 border border-solid text-xs select-none',
+  'flex items-center justify-center rounded-md bg-gray-1 border border-solid text-sm select-none',
   {
     variants: {
       size: {

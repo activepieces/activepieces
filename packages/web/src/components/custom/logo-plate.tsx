@@ -11,8 +11,8 @@ const logoPlateVariants = cva(
     variants: {
       size: {
         xxs: 'size-4',
-        xs: 'size-6.25',
-        sm: 'size-7.5',
+        xs: 'size-6',
+        sm: 'size-8',
         md: 'size-9',
         lg: 'size-10',
         xl: 'size-12',
@@ -29,8 +29,8 @@ const logoPlatePadding = cva('', {
   variants: {
     size: {
       xxs: 'p-px',
-      xs: 'p-1.25',
-      sm: 'p-1.25',
+      xs: 'p-1',
+      sm: 'p-1.5',
       md: 'p-1.75',
       lg: 'p-2',
       xl: 'p-3',

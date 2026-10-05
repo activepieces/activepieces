@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -118,7 +119,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       {hasAnnualOption && (
         <Tabs
           value={billingCycle}
@@ -194,7 +195,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
 
 function PlanColumnSkeleton() {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border p-5">
+    <Card className="px-4">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-6 w-24" />
         <Skeleton className="h-4 w-full" />
@@ -208,7 +209,7 @@ function PlanColumnSkeleton() {
           <Skeleton key={index} className="h-4 w-full" />
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -244,16 +245,11 @@ function PlanColumn({
     });
 
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-4 rounded-xl border p-5',
-        entry.highlighted && 'border-accent-9 shadow-sm',
-      )}
-    >
+    <Card className="px-4" isSelected={!!entry.highlighted}>
       <div className="flex flex-col gap-2">
         <h3
           className={cn(
-            'text-lg font-semibold',
+            'text-base font-semibold',
             entry.highlighted && 'text-accent-11',
           )}
         >
@@ -266,12 +262,12 @@ function PlanColumn({
         {!isNil(pricing) && (
           <>
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold">{pricing.amount}</span>
+              <span className="text-2xl font-semibold">{pricing.amount}</span>
               {!isNil(pricing.suffix) && (
                 <span className="text-sm text-gray-11">{pricing.suffix}</span>
               )}
               {!isNil(pricing.freeMonths) && (
-                <Badge variant="accent" className="rounded-sm">
+                <Badge variant="secondary">
                   {t(
                     '{count, plural, =1 {1 free month} other {# free months}}',
                     {
@@ -282,7 +278,7 @@ function PlanColumn({
               )}
             </div>
             {!isNil(pricing.annualNote) && (
-              <span className="text-xs text-gray-11">{pricing.annualNote}</span>
+              <span className="text-sm text-gray-11">{pricing.annualNote}</span>
             )}
           </>
         )}
@@ -306,7 +302,7 @@ function PlanColumn({
 
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium">{t(entry.featuresHeader)}</span>
-        <ul className="flex flex-col gap-2.5">
+        <ul className="flex flex-col gap-2">
           {features.map((feature) => (
             <li
               key={feature.label}
@@ -328,7 +324,7 @@ function PlanColumn({
           ))}
         </ul>
       </div>
-    </div>
+    </Card>
   );
 }
 

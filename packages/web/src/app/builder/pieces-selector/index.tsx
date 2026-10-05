@@ -48,17 +48,17 @@ const getTabsList = (
     {
       value: PieceSelectorTabType.EXPLORE,
       name: t('Explore'),
-      icon: <LayoutGridIcon className="size-5" />,
+      icon: <LayoutGridIcon className="size-4" />,
     },
     {
       value: PieceSelectorTabType.APPS,
       name: t('Apps'),
-      icon: <PuzzleIcon className="size-5" />,
+      icon: <PuzzleIcon className="size-4" />,
     },
     {
       value: PieceSelectorTabType.UTILITY,
       name: t('Utility'),
-      icon: <WrenchIcon className="size-5" />,
+      icon: <WrenchIcon className="size-4" />,
     },
   ];
 
@@ -71,14 +71,14 @@ const getTabsList = (
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
-      icon: <SparklesIcon className="size-5" />,
+      icon: <SparklesIcon className="size-4" />,
     });
   }
   if (replaceOrAddAction) {
     baseTabs.push({
       value: PieceSelectorTabType.APPROVALS,
       name: t('Approvals'),
-      icon: <CheckCircle2Icon className="size-5" />,
+      icon: <CheckCircle2Icon className="size-4" />,
     });
   }
   return baseTabs;
@@ -218,7 +218,7 @@ const PieceSelectorContent = ({
               e.preventDefault();
             }
           }}
-          className="w-[340px] md:w-[600px] p-0 shadow-lg"
+          className="w-[340px] p-0 md:w-[600px]"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -239,7 +239,7 @@ const PieceSelectorContent = ({
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
-              className=" flex flex-row max-h-[300px]"
+              className="flex max-h-[300px] flex-row"
               style={{
                 height: listHeight + 'px',
               }}

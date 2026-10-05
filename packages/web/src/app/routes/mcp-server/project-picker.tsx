@@ -36,14 +36,14 @@ export function ProjectPicker({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-9 gap-2 px-3">
+        <Button variant="outline">
           <span className="text-gray-11">{t('Project')}</span>
           {selectedProject ? (
             <ApProjectDisplay
               title={getProjectName(selectedProject)}
               icon={selectedProject.icon}
               projectType={selectedProject.type}
-              iconClassName="size-4.5 text-xss"
+              iconClassName="size-4.5 text-sm"
               titleClassName="font-medium"
               maxLengthToNotShowTooltip={24}
             />
@@ -64,7 +64,7 @@ export function ProjectPicker({
               title={getProjectName(project)}
               icon={project.icon}
               projectType={project.type}
-              iconClassName="size-4.5 text-xss"
+              iconClassName="size-4.5 text-sm"
               maxLengthToNotShowTooltip={24}
             />
             <Check

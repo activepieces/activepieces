@@ -3,22 +3,27 @@ import {
   brandColors,
   formErrors,
   HEX_COLOR_PATTERN,
-  ThemeHexColor,
   PlatformThemeColors,
   StatusColors,
   StatusScale,
+  ThemeHexColor,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Upload, X } from 'lucide-react';
+import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
-import { FeatureBanner } from '@/app/components/feature-banner';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ColorPicker } from '@/components/custom/color-picker';
+import { LogoPlate } from '@/components/custom/logo-plate';
+import { Page } from '@/components/custom/page';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -29,20 +34,24 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemFooter,
-  ItemTitle,
-} from '@/components/ui/item';
-import { Label } from '@/components/ui/label';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { PlanBadge } from '@/features/billing/components/plan-badge';
+import { TIER_LABELS } from '@/features/billing/utils/feature-tier';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { brandSeed } from '@/lib/brand-seed';
+import { cn } from '@/lib/utils';
 
 import { ColorPreview, ColorTone } from './color-preview';
 
-export const AppearanceSection = () => {
+export const AppearanceSection = ({
+  ownerRow,
+  panels,
+  dangerZone,
+}: AppearanceSectionProps) => {
   const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
@@ -50,7 +59,7 @@ export const AppearanceSection = () => {
   const initialColor = HEX_COLOR_PATTERN.test(platform.primaryColor)
     ? platform.primaryColor
     : branding.colors.primary.default;
-
+  const [images, setImages] = useState<BrandImages>({});
   const storedStatusColors = brandingLocked
     ? branding.statusColors
     : platform.themeColors?.status;
@@ -80,6 +89,11 @@ export const AppearanceSection = () => {
     'statusColors.success',
   ]);
   const savedColor = branding.colors.primary.default;
+  const imagesChanged = Object.values(images).some((image) => !isNil(image));
+  const { isDirty, errors } = form.formState;
+  const hasFieldErrors = Object.keys(errors).some((field) => field !== 'root');
+  const dirty = isDirty || imagesChanged;
+  const serverError = form.formState.errors.root?.serverError?.message;
 
   useEffect(() => {
     if (brandingLocked) {
@@ -111,26 +125,33 @@ export const AppearanceSection = () => {
     success: t('Success'),
   };
 
-  const [fileInputsKey, setFileInputsKey] = useState(0);
-  const [hasChosenFiles, setHasChosenFiles] = useState(false);
-  const { isDirty, errors } = form.formState;
-  const hasFieldErrors = Object.keys(errors).some((field) => field !== 'root');
-  const hasChanges = isDirty || hasChosenFiles;
-  const clearChosenFiles = () => {
-    setHasChosenFiles(false);
-    setFileInputsKey((key) => key + 1);
+  const setImage = ({
+    kind,
+    file,
+  }: {
+    kind: BrandImageKind;
+    file: File | null;
+  }) => {
+    setImages((previous) => {
+      const current = previous[kind];
+      if (current) {
+        URL.revokeObjectURL(current.url);
+      }
+      return {
+        ...previous,
+        [kind]: file ? { file, url: URL.createObjectURL(file) } : undefined,
+      };
+    });
   };
 
-  const logoRef = useRef<HTMLInputElement>(null);
-  const iconRef = useRef<HTMLInputElement>(null);
-  const faviconRef = useRef<HTMLInputElement>(null);
+  const discard = () => {
+    BRAND_IMAGES.forEach(({ kind }) => setImage({ kind, file: null }));
+    form.reset();
+  };
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
       form.clearErrors('root.serverError');
-      const logo = logoRef.current?.files?.[0];
-      const icon = iconRef.current?.files?.[0];
-      const favicon = faviconRef.current?.files?.[0];
       const { name, color, statusColors } = form.getValues();
 
       const formdata = new FormData();
@@ -148,9 +169,10 @@ export const AppearanceSection = () => {
             }),
           ),
         );
-        if (logo) formdata.append('fullLogo', logo);
-        if (icon) formdata.append('logoIcon', icon);
-        if (favicon) formdata.append('favIcon', favicon);
+        BRAND_IMAGES.forEach(({ kind, field }) => {
+          const image = images[kind];
+          if (image) formdata.append(field, image.file);
+        });
       }
 
       await platformApi.updateWithFormData(formdata, platform.id);
@@ -160,7 +182,7 @@ export const AppearanceSection = () => {
       ]);
     },
     onSuccess: () => {
-      clearChosenFiles();
+      BRAND_IMAGES.forEach(({ kind }) => setImage({ kind, file: null }));
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
       form.reset(form.getValues());
     },
@@ -173,89 +195,102 @@ export const AppearanceSection = () => {
   });
 
   return (
-    <div className="grid gap-4">
-      <Form {...form}>
-        <form
-          className="grid space-y-4 mt-4"
-          onSubmit={form.handleSubmit(() => updatePlatform())}
+    <Form {...form}>
+      <form
+        className="flex min-h-0 flex-1 flex-col"
+        onSubmit={form.handleSubmit(() => updatePlatform())}
+      >
+        <Page
+          width="narrow"
+          footer={
+            dirty || serverError ? (
+              <>
+                <span
+                  className={cn(
+                    'flex-1 text-sm',
+                    serverError ? 'text-danger-11' : 'text-gray-11',
+                  )}
+                >
+                  {serverError ?? t('You have unsaved changes')}
+                </span>
+                <Button type="button" variant="outline" onClick={discard}>
+                  {t('Discard')}
+                </Button>
+                <Button
+                  type="submit"
+                  loading={isPending}
+                  disabled={hasFieldErrors}
+                >
+                  {t('Save')}
+                </Button>
+              </>
+            ) : undefined
+          }
         >
-          <div className="max-w-[600px] grid space-y-4">
-            <FormField
-              name="name"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
-                  <Input
-                    {...field}
-                    required
-                    id="name"
-                    placeholder={t('Platform Name')}
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <AdminPageHeader page="general" />
 
-            {brandingLocked && (
-              <FeatureBanner
-                message={t(
-                  'Your logo, colors and favicon are part of custom branding.',
+          <Panel title={t('Platform')} flush>
+            <SettingRows>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <SettingRow
+                    title={<label htmlFor="name">{t('Platform name')}</label>}
+                    description={
+                      fieldState.error ? (
+                        <span className="text-danger-11">
+                          {t(fieldState.error.message ?? '')}
+                        </span>
+                      ) : (
+                        t('Shown in the sidebar, emails and the sign-in page.')
+                      )
+                    }
+                  >
+                    <Input
+                      {...field}
+                      id="name"
+                      aria-invalid={!!fieldState.error}
+                      className="w-56"
+                    />
+                  </SettingRow>
                 )}
               />
+              {ownerRow}
+            </SettingRows>
+          </Panel>
+
+          <Panel
+            title={t('Branding')}
+            description={t(
+              'Your logo and colours replace ours everywhere, including sign-in and emails.',
             )}
-
-            <div className="grid space-y-2">
-              <Label htmlFor="logoFile">{t('Logo')}</Label>
-              <Input
-                type="file"
-                key={fileInputsKey}
-                ref={logoRef}
-                onChange={() => setHasChosenFiles(true)}
-                defaultFileName={platform.fullLogoUrl}
-                accept="image/*"
-                id="logoFile"
-                disabled={brandingLocked}
-                className="rounded-sm"
-              />
-            </div>
-            <div className="grid space-y-2">
-              <Label htmlFor="iconFile">{t('Icon')}</Label>
-              <Input
-                type="file"
-                key={fileInputsKey}
-                ref={iconRef}
-                onChange={() => setHasChosenFiles(true)}
-                defaultFileName={platform.logoIconUrl}
-                accept="image/*"
-                id="iconFile"
-                disabled={brandingLocked}
-                className="rounded-sm"
-              />
-            </div>
-            <div className="grid space-y-2">
-              <Label htmlFor="faviconFile">{t('Favicon')}</Label>
-              <Input
-                type="file"
-                key={fileInputsKey}
-                ref={faviconRef}
-                onChange={() => setHasChosenFiles(true)}
-                defaultFileName={platform.favIconUrl}
-                accept="image/*"
-                id="faviconFile"
-                disabled={brandingLocked}
-                className="rounded-sm"
-              />
-            </div>
-
-            <Item variant="outline">
-              <ItemContent>
-                <ItemTitle>{t('Colors')}</ItemTitle>
-                <ItemDescription>
+            action={brandingLocked ? <PlanBadge tier="enterprise" /> : null}
+            flush
+          >
+            <SettingRows>
+              {BRAND_IMAGES.map((image) => (
+                <BrandImageRow
+                  key={image.kind}
+                  title={t(image.title)}
+                  hint={t(image.hint)}
+                  currentUrl={platform[image.urlKey]}
+                  selected={images[image.kind]}
+                  disabled={brandingLocked}
+                  onSelect={(file) => setImage({ kind: image.kind, file })}
+                />
+              ))}
+            </SettingRows>
+            <div className="flex flex-col gap-4 border-t border-gray-6 p-5">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-12">
+                  {t('Colors')}
+                </span>
+                <span className="text-xs text-gray-11">
                   {t('Your brand and status colors.')}
-                </ItemDescription>
-              </ItemContent>
-              <ItemFooter className="@container block">
+                </span>
+              </div>
+              <div className="@container">
                 <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -300,48 +335,16 @@ export const AppearanceSection = () => {
                     />
                   ))}
                 </div>
-              </ItemFooter>
-            </Item>
-
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-            <div className="flex items-center justify-between gap-3 pt-2">
-              <span className="text-sm text-gray-11">
-                {hasChanges && (
-                  <span className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-warning-9" />
-                    {t('You have unsaved changes')}
-                  </span>
-                )}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={!hasChanges || isPending}
-                  onClick={() => {
-                    form.reset();
-                    clearChosenFiles();
-                  }}
-                >
-                  {t('Cancel')}
-                </Button>
-                <Button
-                  type="submit"
-                  loading={isPending}
-                  disabled={!hasChanges || hasFieldErrors}
-                >
-                  {t('Save')}
-                </Button>
               </div>
             </div>
-          </div>
-        </form>
-      </Form>
-    </div>
+          </Panel>
+
+          {panels}
+
+          {dangerZone}
+        </Page>
+      </form>
+    </Form>
   );
 };
 
@@ -359,18 +362,20 @@ const ColorRow = ({
   return (
     <FormItem className="flex flex-col gap-3 space-y-0 rounded-lg border border-gray-6 p-3">
       <div className="flex items-center gap-3">
-        <ColorPicker
-          side="top"
-          aria-label={label}
-          disabled={disabled}
-          value={shownColor}
-          onChange={onChange}
-          className="shrink-0"
-        />
+        <LockedHint locked={disabled}>
+          <ColorPicker
+            side="top"
+            aria-label={label}
+            disabled={disabled}
+            value={shownColor}
+            onChange={onChange}
+            className="shrink-0"
+          />
+        </LockedHint>
         <div className="flex min-w-0 flex-1 flex-col">
           <FormLabel className="font-normal">{label}</FormLabel>
           <span className="text-xs text-gray-11">
-            <span className="font-mono uppercase">{shownColor}</span>
+            <span className="font-mono">{shownColor.toUpperCase()}</span>
             {isDefault && ` · ${t('Default')}`}
           </span>
         </div>
@@ -391,6 +396,118 @@ const ColorRow = ({
   );
 };
 
+const BrandImageRow = ({
+  title,
+  hint,
+  currentUrl,
+  selected,
+  disabled,
+  onSelect,
+}: BrandImageRowProps) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <SettingRow
+      title={title}
+      description={selected ? selected.file.name : hint}
+    >
+      <LogoPlate
+        src={selected?.url ?? currentUrl}
+        alt={title}
+        size="md"
+        border
+      />
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        disabled={disabled}
+        onChange={(event) => {
+          onSelect(event.target.files?.[0] ?? null);
+          event.target.value = '';
+        }}
+      />
+      <LockedHint locked={disabled}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload />
+          {t('Upload')}
+        </Button>
+      </LockedHint>
+      {selected && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('Undo')}
+          onClick={() => onSelect(null)}
+        >
+          <X />
+        </Button>
+      )}
+    </SettingRow>
+  );
+};
+
+const LockedHint = ({
+  locked,
+  children,
+}: {
+  locked: boolean;
+  children: React.ReactNode;
+}) => {
+  if (!locked) {
+    return <>{children}</>;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0} className="flex items-center gap-2">
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        {t('Available on the {tier} plan', { tier: TIER_LABELS.enterprise })}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+const PlatformAppearanceSchema = z.object({
+  name: z.string().min(1, formErrors.required),
+  color: ThemeHexColor,
+  statusColors: PlatformThemeColors.shape.status.unwrap(),
+});
+
+const BRAND_IMAGES: BrandImageSpec[] = [
+  {
+    kind: 'logo',
+    field: 'fullLogo',
+    urlKey: 'fullLogoUrl',
+    title: 'Logo',
+    hint: 'The full logo in the sidebar, emails and the sign-in page.',
+  },
+  {
+    kind: 'icon',
+    field: 'logoIcon',
+    urlKey: 'logoIconUrl',
+    title: 'Icon',
+    hint: 'The square mark used where the full logo does not fit.',
+  },
+  {
+    kind: 'favicon',
+    field: 'favIcon',
+    urlKey: 'favIconUrl',
+    title: 'Favicon',
+    hint: 'The small icon in the browser tab.',
+  },
+];
+
 function withStatusColors({
   themeColors,
   statusColors,
@@ -407,13 +524,30 @@ function withStatusColors({
   };
 }
 
-const PlatformAppearanceSchema = z.object({
-  name: z.string().min(1, formErrors.required),
-  color: ThemeHexColor,
-  statusColors: PlatformThemeColors.shape.status.unwrap(),
-});
-
 type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;
+
+type BrandImageKind = 'logo' | 'icon' | 'favicon';
+
+type BrandImageSelection = { file: File; url: string };
+
+type BrandImages = Partial<Record<BrandImageKind, BrandImageSelection>>;
+
+type BrandImageSpec = {
+  kind: BrandImageKind;
+  field: 'fullLogo' | 'logoIcon' | 'favIcon';
+  urlKey: 'fullLogoUrl' | 'logoIconUrl' | 'favIconUrl';
+  title: string;
+  hint: string;
+};
+
+type BrandImageRowProps = {
+  title: string;
+  hint: string;
+  currentUrl: string;
+  selected: BrandImageSelection | undefined;
+  disabled: boolean;
+  onSelect: (file: File | null) => void;
+};
 
 type ColorRowProps = {
   tone: ColorTone;
@@ -424,4 +558,10 @@ type ColorRowProps = {
   disabled: boolean;
   onChange: (color: string | undefined) => void;
   onReset: () => void;
+};
+
+type AppearanceSectionProps = {
+  ownerRow?: React.ReactNode;
+  panels?: React.ReactNode;
+  dangerZone?: React.ReactNode;
 };

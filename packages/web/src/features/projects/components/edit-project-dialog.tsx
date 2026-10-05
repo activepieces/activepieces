@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,7 +29,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
@@ -67,12 +67,9 @@ export function EditProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full">
+      <DialogContent size="sm">
         <DialogHeader>
-          {' '}
-          <DialogTitle>
-            {t('Edit')} {initialValues?.projectName}
-          </DialogTitle>
+          <DialogTitle>{t('Edit project')}</DialogTitle>
         </DialogHeader>
 
         {!globalConnectionsEnabled || !isLoadingConnections ? (
@@ -142,7 +139,7 @@ const EditProjectForm = ({
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
+        className="flex flex-col gap-4"
         onSubmit={form.handleSubmit((values) => {
           mutate({
             projectId,
@@ -160,12 +157,11 @@ const EditProjectForm = ({
           name="displayName"
           render={({ field }) => (
             <FormItem>
-              <Label htmlFor="displayName">{t('Project Name')}</Label>
+              <Label htmlFor="displayName">{t('Name')}</Label>
               <Input
                 {...field}
                 id="displayName"
-                placeholder={t('Project Name')}
-                className="rounded-sm"
+                placeholder={t('Customer success')}
               />
               <FormMessage />
             </FormItem>
@@ -186,7 +182,6 @@ const EditProjectForm = ({
                     {...field}
                     id="externalId"
                     placeholder={t('org-3412321')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -199,9 +194,9 @@ const EditProjectForm = ({
             <FormField
               name="sensitive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                <FormItem className="flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="sensitive">{t('Sensitive project')}</Label>
                     <FormDescription>
                       {t(
                         'When enabled, publishing flows in this project requires approval.',
@@ -224,7 +219,7 @@ const EditProjectForm = ({
             name="globalConnectionExternalIds"
             render={({ field }) => (
               <FormItem>
-                <Label>{t('Global Connections')}</Label>
+                <Label>{t('Global connections')}</Label>
                 <MultiSelectPieceProperty
                   placeholder={t('Select global connections')}
                   options={globalConnections.map((connection) => ({
@@ -244,7 +239,7 @@ const EditProjectForm = ({
           />
         )}
 
-        <DialogFooter className="justify-end mt-6">
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>

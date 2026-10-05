@@ -31,7 +31,7 @@ export function GlobalSearchCommand() {
       <span className="flex-1 text-left text-gray-11 group-data-[collapsible=icon]:hidden">
         {t('Search...')}
       </span>
-      <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-gray-3 py-0.5 px-1 font-mono text-[9px] font-medium sm:flex group-data-[collapsible=icon]:hidden!">
+      <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border bg-gray-3 py-0.5 px-1 font-mono text-sm font-medium sm:flex group-data-[collapsible=icon]:hidden!">
         {isMac ? '⌘' : 'Ctrl'}&nbsp;K
       </kbd>
     </Button>

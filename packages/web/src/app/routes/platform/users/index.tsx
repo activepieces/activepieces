@@ -1,15 +1,29 @@
-import {
-  UserInvitation,
-  UserStatus,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
+import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Crown, User } from 'lucide-react';
+import {
+  CircleMinus,
+  Crown,
+  Pencil,
+  RotateCcw,
+  Trash2,
+  UserPlus,
+  Users,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
+import {
+  CountTabs,
+  ListSearch,
+  ListToolbar,
+} from '@/components/custom/list/list-toolbar';
+import { RowMenuItem } from '@/components/custom/list/row-menu';
+import { useUrlParam } from '@/components/custom/list/use-url-param';
+import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useSeatLimitGuard } from '@/features/billing';
@@ -19,23 +33,27 @@ import {
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
 
-import { UserActions } from './actions/user-actions';
-import { createUsersTableColumns } from './columns';
-
-export type UserRowData =
-  | {
-      id: string;
-      type: 'user';
-      data: UserWithMetaInformation;
-    }
-  | {
-      id: string;
-      type: 'invitation';
-      data: UserInvitation;
-    };
+import {
+  createUsersTableColumns,
+  PersonStatus,
+  personName,
+  statusOf,
+  UserRowData,
+} from './columns';
+import { UserSheet } from './user-sheet';
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<UserRowData | null>(null);
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') ?? '';
+  const roleFilter = searchParams.getAll('role');
+  const [statusFilter, setStatusFilter] = useUrlParam<StatusFilter>({
+    key: 'status',
+    fallback: 'all',
+    allowed: STATUS_FILTERS,
+  });
   const {
     isOutOfSeats,
     ensureSeatsAvailable,
@@ -43,139 +61,229 @@ export default function UsersPage() {
     seatLimitDialog,
   } = useSeatLimitGuard();
 
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    isError: usersError,
-    refetch: refetchUsers,
-  } = platformUserHooks.useUsers();
-
-  const {
-    data: invitationsData,
-    isLoading: invitationsLoading,
-    isError: invitationsError,
-    refetch: refetchInvitations,
-  } = platformUserHooks.usePlatformInvitations();
-
+  const users = platformUserHooks.useUsers();
+  const invitations = platformUserHooks.usePlatformInvitations();
   const refetch = () => {
-    refetchUsers();
-    refetchInvitations();
+    users.refetch();
+    invitations.refetch();
   };
 
-  const combinedData: UserRowData[] = useMemo(() => {
-    const users: UserRowData[] =
-      usersData?.data?.map((user) => ({
-        id: user.id,
-        type: 'user' as const,
-        data: user,
-      })) ?? [];
+  const allRows: UserRowData[] = useMemo(
+    () => [
+      ...(users.data?.data ?? []).map(
+        (user): UserRowData => ({ id: user.id, type: 'user', data: user }),
+      ),
+      ...(invitations.data ?? []).map(
+        (invitation): UserRowData => ({
+          id: invitation.id,
+          type: 'invitation',
+          data: invitation,
+        }),
+      ),
+    ],
+    [users.data, invitations.data],
+  );
 
-    const pendingInvitations: UserRowData[] =
-      invitationsData?.map((invitation) => ({
-        id: invitation.id,
-        type: 'invitation' as const,
-        data: invitation,
-      })) ?? [];
+  const counts = useMemo(
+    () =>
+      allRows.reduce<Record<PersonStatus, number>>(
+        (acc, row) => {
+          const status = statusOf({ row });
+          return { ...acc, [status]: acc[status] + 1 };
+        },
+        { active: 0, invited: 0, deactivated: 0 },
+      ),
+    [allRows],
+  );
 
-    return [...users, ...pendingInvitations];
-  }, [usersData, invitationsData]);
+  const rows = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return allRows.filter(
+      (row) =>
+        (statusFilter === 'all' || statusOf({ row }) === statusFilter) &&
+        (roleFilter.length === 0 ||
+          roleFilter.includes(row.data.platformRole ?? PlatformRole.MEMBER)) &&
+        (query.length === 0 ||
+          (personName({ row }) ?? '').toLowerCase().includes(query) ||
+          row.data.email.toLowerCase().includes(query)),
+    );
+  }, [allRows, search, statusFilter, roleFilter]);
 
-  const isLoading = usersLoading || invitationsLoading;
-  const isError = usersError || invitationsError;
+  const openRow = allRows.find((row) => row.id === openId) ?? null;
 
-  const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
+  const { mutate: updateStatus } = platformUserMutations.useUpdateUserStatus({
+    onSuccess: refetch,
+    onError: (error) => {
+      if (!handleSeatLimitError(error)) {
+        internalErrorToast();
+      }
+    },
+  });
+  const { mutateAsync: deleteUser } = platformUserMutations.useDeleteUser({
     onSuccess: refetch,
   });
-
-  const { mutate: deleteInvitation } =
+  const { mutateAsync: deleteInvitation } =
     platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
 
-  const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
-    platformUserMutations.useUpdateUserStatus({
-      onSuccess: refetch,
-      onError: (error) => {
-        if (!handleSeatLimitError(error)) {
-          internalErrorToast();
-        }
-      },
-    });
-
-  const handleDelete = (id: string, isInvitation: boolean) => {
-    if (isInvitation) {
-      deleteInvitation(id);
-    } else {
-      deleteUser(id);
+  const openInvite = () => {
+    if (ensureSeatsAvailable(1)) {
+      setInviteOpen(true);
     }
   };
 
-  const handleToggleStatus = (userId: string, currentStatus: UserStatus) => {
-    updateUserStatus({
-      userId,
-      status:
-        currentStatus === UserStatus.ACTIVE
-          ? UserStatus.INACTIVE
-          : UserStatus.ACTIVE,
-    });
+  const menuItems = (row: UserRowData): RowMenuItem[] => {
+    if (row.type === 'invitation') {
+      return [
+        {
+          label: t('Revoke invitation'),
+          icon: Trash2,
+          destructive: true,
+          onSelect: () => setDeleting(row),
+        },
+      ];
+    }
+    const isActive = row.data.status === UserStatus.ACTIVE;
+    const isAdmin = row.data.platformRole === PlatformRole.ADMIN;
+    return [
+      { label: t('Edit'), icon: Pencil, onSelect: () => setOpenId(row.id) },
+      {
+        label: isActive ? t('Deactivate') : t('Activate'),
+        icon: isActive ? CircleMinus : RotateCcw,
+        disabled: isAdmin,
+        disabledReason: t('Admins stay active. Change the role first.'),
+        onSelect: () =>
+          updateStatus({
+            userId: row.data.id,
+            status: isActive ? UserStatus.INACTIVE : UserStatus.ACTIVE,
+          }),
+      },
+      {
+        label: t('Delete'),
+        icon: Trash2,
+        destructive: true,
+        onSelect: () => setDeleting(row),
+      },
+    ];
   };
 
-  const columns = createUsersTableColumns();
+  const columns = createUsersTableColumns({ menuItems });
+  const filtered =
+    search.trim().length > 0 || statusFilter !== 'all' || roleFilter.length > 0;
 
   return (
     <>
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
-          title={t('Users')}
-          description={t(
-            'Manage, delete, activate and deactivate users on platform',
-          )}
+      <Page>
+        <AdminPageHeader page="users">
+          <Button onClick={openInvite}>
+            {isOutOfSeats ? <Crown /> : <UserPlus />}
+            {t('Invite people')}
+          </Button>
+        </AdminPageHeader>
+        <ListToolbar
+          search={<ListSearch placeholder={t('Search name or email')} />}
+          tabs={
+            <CountTabs
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+              options={[
+                { value: 'all', label: t('Everyone'), count: allRows.length },
+                { value: 'active', label: t('Active'), count: counts.active },
+                {
+                  value: 'invited',
+                  label: t('Invited'),
+                  count: counts.invited,
+                },
+                {
+                  value: 'deactivated',
+                  label: t('Deactivated'),
+                  count: counts.deactivated,
+                },
+              ]}
+            />
+          }
+          filters={
+            <DataTableFilter
+              type="select"
+              title={t('Role')}
+              accessorKey="role"
+              options={[
+                { label: t('Admin'), value: PlatformRole.ADMIN },
+                { label: t('Operator'), value: PlatformRole.OPERATOR },
+                { label: t('Member'), value: PlatformRole.MEMBER },
+              ]}
+            />
+          }
         />
         <DataTable
-          emptyStateTextTitle={t('No users found')}
-          emptyStateTextDescription={t('Start inviting users to your project')}
-          emptyStateIcon={<User className="size-14" />}
+          emptyStateTextTitle={
+            filtered ? t('Nobody matches') : t('Nobody here yet')
+          }
+          emptyStateTextDescription={
+            filtered
+              ? t('Try a different name or clear a filter.')
+              : t('Invite the people who will build and run flows.')
+          }
+          emptyStateIcon={<Users />}
+          emptyStateAction={
+            filtered ? undefined : (
+              <Button onClick={openInvite}>
+                <UserPlus />
+                {t('Invite people')}
+              </Button>
+            )
+          }
           columns={columns}
-          page={{
-            data: combinedData,
-            next: usersData?.next || null,
-            previous: usersData?.previous || null,
-          }}
-          hidePagination={true}
-          isLoading={isLoading}
-          isError={isError}
+          page={{ data: rows, next: null, previous: null }}
+          clientPagination
+          hidePagination={rows.length <= PAGE_SIZE}
+          onRowClick={(row) => setOpenId(row.id)}
+          isLoading={users.isLoading || invitations.isLoading}
+          isError={users.isError || invitations.isError}
           errorStateEntity={t('users')}
           onRetry={refetch}
-          toolbarButtons={[
-            <Button
-              key="invite"
-              className="gap-2"
-              size="sm"
-              onClick={() => {
-                if (ensureSeatsAvailable(1)) {
-                  setInviteOpen(true);
-                }
-              }}
-            >
-              {isOutOfSeats ? (
-                <Crown className="size-4 shrink-0 text-on-accent/90" />
-              ) : (
-                <UserRoundPlusIcon size={16} />
-              )}
-              <span className="text-sm font-medium">{t('Invite')}</span>
-            </Button>,
-          ]}
-          actions={[
-            (row) => (
-              <UserActions
-                row={row}
-                isUpdatingStatus={isUpdatingStatus}
-                onDelete={handleDelete}
-                onToggleStatus={handleToggleStatus}
-                onUpdate={refetch}
-              />
-            ),
-          ]}
         />
-      </div>
+      </Page>
+      <UserSheet
+        row={openRow}
+        onOpenChange={(open) => !open && setOpenId(null)}
+        onSaved={refetch}
+        onDelete={setDeleting}
+        onSeatLimitError={handleSeatLimitError}
+      />
+      {deleting && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDeleting(null)}
+          title={
+            deleting.type === 'invitation'
+              ? t('Revoke the invitation for {email}?', {
+                  email: deleting.data.email,
+                })
+              : t('Delete {name}?', {
+                  name: personName({ row: deleting }) ?? deleting.data.email,
+                })
+          }
+          description={
+            deleting.type === 'invitation'
+              ? t('The link in their email stops working.')
+              : t('Their account is removed from the platform for good.')
+          }
+          confirmLabel={
+            deleting.type === 'invitation' ? t('Revoke') : t('Delete')
+          }
+          typeToConfirm={
+            deleting.type === 'invitation' ? undefined : deleting.data.email
+          }
+          onConfirm={async () => {
+            if (deleting.type === 'invitation') {
+              await deleteInvitation(deleting.id);
+            } else {
+              await deleteUser(deleting.data.id);
+            }
+            setOpenId(null);
+          }}
+        />
+      )}
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
@@ -185,3 +293,8 @@ export default function UsersPage() {
     </>
   );
 }
+
+const PAGE_SIZE = 10;
+const STATUS_FILTERS = ['all', 'active', 'invited', 'deactivated'] as const;
+
+type StatusFilter = (typeof STATUS_FILTERS)[number];

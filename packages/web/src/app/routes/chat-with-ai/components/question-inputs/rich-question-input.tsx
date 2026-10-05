@@ -77,7 +77,7 @@ function MultiChoiceInput({
             <span className="flex-1 min-w-0 leading-snug">
               <span className="block truncate">{option.label}</span>
               {option.description && (
-                <span className="block truncate text-xs text-gray-11">
+                <span className="block truncate text-sm text-gray-11">
                   {option.description}
                 </span>
               )}
@@ -107,13 +107,13 @@ function SliderInput({
   return (
     <div className="px-1">
       <div className="mb-4 flex items-baseline justify-between">
-        <span className="text-2xl font-semibold tabular-nums text-gray-12">
+        <span className="text-xl font-semibold tabular-nums text-gray-12">
           {value}
           {unit ? (
-            <span className="ms-1 text-base text-gray-11">{unit}</span>
+            <span className="ms-1 text-sm text-gray-11">{unit}</span>
           ) : null}
         </span>
-        <span className="text-xs tabular-nums text-gray-11">
+        <span className="text-sm tabular-nums text-gray-11">
           {min}
           {' – '}
           {max}
@@ -176,7 +176,7 @@ function ColorInput({
           value={value}
           maxLength={7}
           onChange={(e) => onChange(e.target.value)}
-          className="h-8 w-28 font-mono text-sm uppercase"
+          className="h-8 w-28 font-mono text-sm "
         />
       </div>
     </div>

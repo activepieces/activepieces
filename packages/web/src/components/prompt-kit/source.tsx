@@ -39,7 +39,7 @@ function FaviconOrGlobe({ url, size }: { url: string; size: 'sm' | 'md' }) {
     <LogoPlate
       src={favicon}
       alt=""
-      className={cn(imgSize, 'rounded-sm')}
+      className={cn(imgSize, 'rounded-md')}
       fallback={<Globe className={globeSize} />}
     />
   );
@@ -56,7 +56,7 @@ function Source({ href, title, className }: SourceProps) {
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs transition-colors hover:bg-gray-3 no-underline',
+            'inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-sm transition-colors hover:bg-gray-3 no-underline',
             className,
           )}
         >
@@ -70,14 +70,14 @@ function Source({ href, title, className }: SourceProps) {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <FaviconOrGlobe url={href} size="md" />
-            <span className="text-xs text-gray-11 truncate">{domain}</span>
+            <span className="text-sm text-gray-11 truncate">{domain}</span>
           </div>
           {title && (
             <p className="text-sm font-medium leading-snug line-clamp-2">
               {title}
             </p>
           )}
-          <p className="text-xs text-gray-11 truncate">{href}</p>
+          <p className="text-sm text-gray-11 truncate">{href}</p>
         </div>
       </HoverCardContent>
     </HoverCard>

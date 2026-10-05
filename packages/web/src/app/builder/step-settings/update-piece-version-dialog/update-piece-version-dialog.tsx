@@ -67,8 +67,7 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="size-6"
+            size="icon-xs"
             onClick={handleOpen}
             loading={isLoading}
           >
@@ -240,7 +239,7 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
                   type="button"
                   variant="link"
                   size="sm"
-                  className="h-auto p-0 text-xs"
+                  className="h-auto p-0 text-sm"
                   onClick={() => {
                     setShowAllVersions((v) => !v);
                     setVersionSelectOpen(true);

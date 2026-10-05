@@ -132,17 +132,17 @@ const ArrayPieceProperty = React.memo(
               {fields.map((field, index) => (
                 <div
                   className={cn(
-                    'p-4 border rounded-md flex flex-col',
+                    'flex flex-col rounded-xl border p-3',
                     GAP_SIZE_FOR_STEP_SETTINGS,
                   )}
                   key={'array-item-' + field.id}
                 >
                   <div className="flex justify-between">
-                    <div className="font-semibold"> #{index + 1}</div>
+                    <div className="text-sm font-semibold"> #{index + 1}</div>
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="size-8 shrink-0"
+                      size="icon-sm"
+                      className="shrink-0"
                       onClick={() => {
                         remove(index);
                       }}

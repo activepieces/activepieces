@@ -102,7 +102,9 @@ function TeamProjectLimitContent({
         <ul className="flex flex-col gap-2">
           {feature.bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
+              <span className="flex h-lh shrink-0 items-center">
+                <Check className="size-4 text-accent-11" />
+              </span>
               <span>{t(bullet)}</span>
             </li>
           ))}

@@ -6,10 +6,11 @@ import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { LockedAlert } from '@/components/custom/locked-alert';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -27,7 +28,7 @@ import { piecesUtils } from './pieces-utils';
 
 const COLLAPSED_ROW_LIMIT = 6;
 const COLLAPSED_ROW_HEIGHT = 50;
-const PIECE_SETS_LIST_ROUTE = '/platform/pieces/piece-sets';
+const PIECE_SETS_LIST_ROUTE = '/platform/pieces/policies';
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function PiecesPanel({
@@ -85,13 +86,13 @@ export function PiecesPanel({
       ) : isError ? (
         <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border px-4 py-10 text-sm text-gray-11">
+        <Card className="px-5 py-10 text-gray-11">
           {isSearching
             ? t('No piece or action matches your search.')
             : t('No pieces are reachable in this project.')}
-        </div>
+        </Card>
       ) : (
-        <div className="rounded-lg border">
+        <Card className="gap-0 py-0">
           <VirtualizedList
             items={visibleRows}
             estimateSize={COLLAPSED_ROW_HEIGHT}
@@ -107,12 +108,12 @@ export function PiecesPanel({
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-gray-3/40"
+              className="h-10 w-full border-t px-5 text-sm font-medium hover:bg-gray-3"
             >
               {t('Show {count} more pieces', { count: hiddenCount })}
             </button>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );
@@ -192,12 +193,12 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
   if (!platform.plan.managePiecesEnabled) {
     return (
       <LockedAlert
-        title={t('Control Pieces')}
+        title={t('Control pieces')}
         description={t(
-          'Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.',
+          'Every piece below is reachable by any connected client. Restricting the list with a piece policy is an enterprise feature.',
         )}
         button={
-          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="basic" />
+          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="ghost" />
         }
       />
     );
@@ -205,7 +206,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
 
   return (
     <Alert
-      variant="primary"
+      variant="info"
       className="flex flex-wrap items-center gap-x-3 gap-y-2"
     >
       <Info />
@@ -226,11 +227,11 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
           <Link
             to={
               pieceSetId
-                ? `/platform/pieces/piece-sets/${pieceSetId}`
+                ? `/platform/pieces/policies/${pieceSetId}`
                 : PIECE_SETS_LIST_ROUTE
             }
           >
-            {pieceSet?.name ?? t('Review piece set')}
+            {pieceSet?.name ?? t('Review piece policy')}
             <ExternalLink className="size-3.5" />
           </Link>
         </Button>

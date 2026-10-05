@@ -54,7 +54,7 @@ export function KeepPlanDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[420px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>
             {t('Keep the {plan} plan?', { plan: planName })}
@@ -70,7 +70,7 @@ export function KeepPlanDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2 rounded-lg border p-4 text-sm">
+        <div className="flex flex-col gap-2 rounded-xl border p-4 text-sm">
           {!isNil(priceLabel) && (
             <DetailRow label={t('Price')} value={priceLabel} />
           )}

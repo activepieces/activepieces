@@ -56,7 +56,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
   return (
     <ScrollArea className="overflow-y-auto">
       <div className="px-4 py-3 border-b">
-        <div className="relative border rounded-sm">
+        <div className="relative border rounded-md">
           <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
           <Input
             placeholder={t('Search')}
@@ -95,7 +95,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
             >
               <div className="flex gap-2">
                 <LogoPlate
-                  className="size-9 rounded-sm p-1.5"
+                  className="size-9 rounded-md p-1.5"
                   border
                   src={selectedPiece.logoUrl}
                   alt={selectedPiece.displayName}
@@ -108,14 +108,14 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
                     </span>
 
                     {isDisabled && (
-                      <span className="text-xs text-gray-11">
+                      <span className="text-sm text-gray-11">
                         {t('(Already added)')}
                       </span>
                     )}
                   </div>
 
                   {action.description && (
-                    <div className="text-xs text-gray-11 mt-0.5 line-clamp-2">
+                    <div className="text-sm text-gray-11 mt-0.5 line-clamp-2">
                       {action.description}
                     </div>
                   )}

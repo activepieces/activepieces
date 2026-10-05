@@ -3,20 +3,28 @@ import {
   PLATFORM_WIDE_PROJECT_FILTER_VALUE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckIcon, FolderOpen, Plug, User } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckIcon,
+  ExternalLink,
+  FolderOpen,
+  Plug,
+  User,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
   DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -29,7 +37,6 @@ import { userHooks } from '@/hooks/user-hooks';
 import { mcpClientDisplay } from '../mcp-client-display';
 import { mcpGrantsMutations, mcpGrantsQueries } from '../mcp-grants-hooks';
 import { useMcpNav } from '../mcp-nav';
-import { PageBand } from '../page-band';
 
 import { buildGrantsColumns } from './grants-columns';
 
@@ -78,29 +85,30 @@ export function GrantsTab() {
     (data?.data.length ?? 0) === 0
   ) {
     return (
-      <PageBand className="py-8">
-        <Empty className="border border-dashed py-20">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <Plug />
-            </EmptyMedia>
-            <EmptyTitle>{t('Nothing has connected yet')}</EmptyTitle>
-            <EmptyDescription>
-              {t(
-                'When a client signs in with the link, it appears here with what it can reach.',
-              )}
-            </EmptyDescription>
-            <Button className="mt-4" onClick={() => nav.showTab('connect')}>
-              {t('Set it up in your client')} →
-            </Button>
-          </EmptyHeader>
-        </Empty>
-      </PageBand>
+      <Empty className="flex-none border py-16">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Plug />
+          </EmptyMedia>
+          <EmptyTitle>{t('Nothing has connected yet')}</EmptyTitle>
+          <EmptyDescription>
+            {t(
+              'When a client signs in with the link, it appears here with what it can reach.',
+            )}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button onClick={() => nav.showTab('connect')}>
+            {t('Set it up in your client')}
+            <ArrowRight />
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 
   return (
-    <PageBand className="flex flex-col gap-2 py-8">
+    <>
       <DataTable
         columns={columns}
         page={data}
@@ -110,26 +118,22 @@ export function GrantsTab() {
         onRetry={refetch}
         filters={buildFilters({ projects, members: users?.data ?? [] })}
         selectColumn={true}
-        bordered={true}
         toolbarButtons={[
           <span key="expiry" className="text-sm text-gray-11">
-            {t('each expires 30 days after sign-in')}
+            {t('Each expires 30 days after sign-in')}
           </span>,
         ]}
         bulkActions={[
           {
             render: (rows, resetSelection) => (
-              <ConfirmationDeleteDialog
+              <ConfirmDialog
                 title={t('Revoke access')}
-                message={t(
+                description={t(
                   'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
                   { entityName: t('revokedGrants', { count: rows.length }) },
                 )}
-                entityName={t('revokedGrants', { count: rows.length })}
-                buttonText={t('Revoke')}
-                isDanger
-                showToast={false}
-                mutationFn={async () => {
+                confirmLabel={t('Revoke')}
+                onConfirm={async () => {
                   await revoke.mutateAsync(rows.map((row) => row.id));
                   resetSelection();
                 }}
@@ -137,16 +141,16 @@ export function GrantsTab() {
                 <Button variant="destructive" size="sm">
                   {t('revokeSelectedCount', { count: rows.length })}
                 </Button>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             ),
           },
         ]}
         emptyStateTextTitle={t('No connections match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}
-        emptyStateIcon={<Plug className="size-10" />}
+        emptyStateIcon={<Plug />}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-gray-11">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-gray-11">
         <span>
           {t(
             'Two rows for one client is normal — signing in again creates a second connection. Revoking one leaves the other alive.',
@@ -156,12 +160,13 @@ export function GrantsTab() {
           href={DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="font-semibold text-accent-11 hover:underline"
+          className="flex items-center gap-1 font-medium text-accent-11 hover:underline"
         >
-          {t('How connecting works')} ↗
+          {t('Read the docs')}
+          <ExternalLink className="size-3.5" />
         </a>
       </div>
-    </PageBand>
+    </>
   );
 }
 

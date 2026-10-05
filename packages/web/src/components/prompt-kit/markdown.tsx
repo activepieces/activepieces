@@ -208,7 +208,7 @@ const HEADING_CLASSES: Record<HeadingTag, string> = {
   h3: 'text-sm font-semibold mt-4 first:mt-0 mb-2',
   h4: 'text-sm font-semibold mt-4 first:mt-0 mb-1',
   h5: 'text-sm font-semibold text-gray-11 mt-3 first:mt-0 mb-1',
-  h6: 'text-xs font-semibold uppercase tracking-wide text-gray-11 mt-3 first:mt-0 mb-1',
+  h6: 'text-sm font-semibold text-gray-11 mt-3 first:mt-0 mb-1',
 };
 
 const INITIAL_COMPONENTS: Partial<Components> = {
@@ -303,7 +303,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       return (
         <span
           className={cn(
-            'bg-gray-3 text-gray-12 rounded px-1.5 py-0.5 font-mono text-[0.85em]',
+            'bg-gray-3 text-gray-12 rounded-md px-1.5 py-0.5 font-mono text-sm',
             className,
           )}
           {...props}
@@ -319,7 +319,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     return (
       <CodeBlock className={className}>
         <CodeBlockGroup className="border-b px-3 py-1.5">
-          <span className="text-xs text-gray-11 font-mono">
+          <span className="text-sm text-gray-11 font-mono">
             {language !== 'plaintext' ? language : ''}
           </span>
           <CopyButton

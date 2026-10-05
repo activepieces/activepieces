@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
@@ -49,20 +50,32 @@ import { handlerFlowBuilder } from '../lib/handler-flow-builder';
 import { useEventLabels } from '../lib/use-event-labels';
 
 interface EventDestinationDialogProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   destination: EventDestination | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const EventDestinationDialog = ({
   children,
   destination,
+  open,
+  onOpenChange,
 }: EventDestinationDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : uncontrolledOpen;
+  const setIsOpen = (next: boolean) => {
+    if (!isControlled) {
+      setUncontrolledOpen(next);
+    }
+    onOpenChange?.(next);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl gap-2">
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+      <DialogContent size="lg">
         <EventDestinationForm
           key={isOpen ? 'open' : 'closed'}
           destination={destination}
@@ -227,28 +240,31 @@ const EventDestinationForm = ({
 
   return (
     <>
-      <DialogTitle>
-        {destination ? t('Edit Destination') : t('New Destination')}
-      </DialogTitle>
-      <DialogDescription>
-        {destination
-          ? t('Update the webhook endpoint and event subscriptions.')
-          : t(
-              'Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any other channel.',
-            )}
-      </DialogDescription>
+      <DialogHeader>
+        <DialogTitle>
+          {destination ? t('Edit destination') : t('New destination')}
+        </DialogTitle>
+        <DialogDescription>
+          {destination
+            ? t('Change where events are sent and which events go there.')
+            : t(
+                'Each chosen event is posted to a URL you own. A flow on this platform can route it on to Slack, email or a ticket.',
+              )}
+        </DialogDescription>
+      </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex flex-col gap-4"
+        >
           <FormField
             control={form.control}
             name="events"
             render={({ field }) => (
               <FormItem>
-                <FormLabel showRequiredIndicator className="text-base">
-                  {t('Events')}
-                </FormLabel>
+                <FormLabel>{t('Events')}</FormLabel>
                 <ScrollArea
-                  className="h-48 rounded-md "
+                  className="h-48 rounded-md"
                   viewPortClassName="px-0"
                 >
                   <div className="grid grid-cols-2 gap-2">
@@ -293,14 +309,14 @@ const EventDestinationForm = ({
             name="url"
             render={({ field }) => (
               <FormItem>
-                <FormLabel showRequiredIndicator>{t('Webhook URL')}</FormLabel>
+                <FormLabel>{t('Webhook URL')}</FormLabel>
                 <FormControl>
                   <Input placeholder="https://example.com/webhook" {...field} />
                 </FormControl>
                 {!destination && (
                   <div className="flex flex-col gap-1 pt-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-gray-11">
+                      <span className="text-sm text-gray-11">
                         {t(
                           'Or generate an internal flow to handle the selected events:',
                         )}
@@ -313,14 +329,12 @@ const EventDestinationForm = ({
                         disabled={isImporting || isCreating}
                         loading={isImporting}
                       >
-                        <Sparkles className="size-4" />
+                        <Sparkles />
                         {t('Generate handler flow')}
                       </Button>
                     </div>
-                    <span className="text-xs text-gray-11">
-                      {t(
-                        "Don't forget to publish your flow before creating the alert.",
-                      )}
+                    <span className="text-sm text-gray-11">
+                      {t('Publish the flow before you create the destination.')}
                     </span>
                   </div>
                 )}
@@ -343,9 +357,10 @@ const EventDestinationForm = ({
                   type="button"
                   variant="outline"
                   disabled={isTestingButtonDisabled}
+                  loading={isTesting}
                 >
-                  {isTesting ? t('Testing...') : t('Test webhook')}
-                  <ChevronDown className="size-4" />
+                  {t('Send test event')}
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -369,7 +384,7 @@ const EventDestinationForm = ({
               disabled={isSubmitDisabled}
               loading={isSaving}
             >
-              {destination ? t('Save changes') : t('Create alert')}
+              {destination ? t('Save') : t('Create')}
             </Button>
           </DialogFooter>
         </form>

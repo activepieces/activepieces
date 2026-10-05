@@ -21,7 +21,7 @@ export const ReadMoreDescription = ({
   };
 
   return (
-    <p className="text-gray-11 text-xs whitespace-pre-wrap">
+    <p className="text-gray-11 text-sm whitespace-pre-wrap">
       {beginText}
       {itCanOverflow && (
         <>

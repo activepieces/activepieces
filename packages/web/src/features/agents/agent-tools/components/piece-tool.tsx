@@ -84,7 +84,7 @@ export const AgentPieceToolComponent = ({
           <Skeleton className="h-4 w-32" />
         </div>
 
-        <Skeleton className="h-4 w-4 rounded-sm" />
+        <Skeleton className="h-4 w-4 rounded-md" />
       </div>
     );
   }
@@ -131,7 +131,7 @@ export const AgentPieceToolComponent = ({
             </span>
           </div>
           {!isNil(account) && (
-            <span className="ms-3 flex min-w-0 shrink items-center gap-1.5 text-xs text-gray-11">
+            <span className="ms-3 flex min-w-0 shrink items-center gap-1.5 text-sm text-gray-11">
               <span
                 className={cn(
                   'size-[6px] shrink-0 rounded-full',
@@ -166,7 +166,7 @@ export const AgentPieceToolComponent = ({
                   ${disabled ? 'opacity-50 pointer-events-none' : ''}
                 `}
               >
-                <span className="text-xs font-medium">
+                <span className="text-sm font-medium">
                   {toolName || tool.toolName}
                 </span>
 

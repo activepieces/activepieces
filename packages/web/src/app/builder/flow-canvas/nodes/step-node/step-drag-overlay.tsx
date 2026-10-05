@@ -37,7 +37,7 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   return (
     <div
       className={
-        'p-4 absolute left-0 top-0 cursor-grabbing z-50  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-gray-1 cursor-grabbing'
+        'p-4 absolute left-0 top-0 cursor-grabbing z-50  opacity-75  flex items-center justify-center rounded-xl border border-solid border bg-gray-1 cursor-grabbing'
       }
       style={{
         left,

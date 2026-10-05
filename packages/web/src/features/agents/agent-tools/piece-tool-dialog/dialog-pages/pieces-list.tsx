@@ -26,7 +26,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b">
-        <div className="relative border rounded-sm">
+        <div className="relative border rounded-md">
           <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
           <Input
             placeholder={t('Search')}
@@ -57,7 +57,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
                 className="p-2 flex items-center gap-x-2 hover:bg-gray-4 cursor-pointer rounded-lg"
               >
                 <LogoPlate
-                  className="size-9 rounded-sm p-1.5"
+                  className="size-9 rounded-md p-1.5"
                   border
                   src={piece.logoUrl}
                   alt={piece.displayName}

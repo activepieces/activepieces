@@ -105,7 +105,7 @@ export function ProjectPickerCard({
   }
 
   const titleNode = (
-    <span className="block text-base font-semibold leading-snug text-gray-12">
+    <span className="block text-sm font-semibold leading-snug text-gray-12">
       {title}
     </span>
   );

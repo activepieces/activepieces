@@ -25,7 +25,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formUtils } from '@/features/pieces';
-import { cn } from '@/lib/utils';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { DynamicValueToggleButton } from './dynamic-value-toggle-button';
@@ -57,9 +56,9 @@ function AutoFormFieldWrapper({
     >
       <FormItem className="flex flex-col">
         {(!hideLabel || placeBeforeLabelText) && (
-          <FormLabel className="flex items-center gap-1 h-7.5 max-h-7.5">
+          <FormLabel className="flex h-8 items-center gap-1">
             {placeBeforeLabelText && !dynamicInputModeToggled && children}
-            <div className={cn(!placeBeforeLabelText && 'pt-1')}>
+            <div>
               <span>
                 {isAuthProperty ? t('Connection') : property.displayName}
               </span>{' '}
@@ -125,7 +124,7 @@ function AutoFormFielWrapperErrorBoundary({
   return (
     <ErrorBoundary
       fallbackRender={() => (
-        <div className="text-sm  flex items-center justify-between">
+        <div className="flex items-center justify-between text-sm">
           <div className="text-danger-11">
             {t('input value is invalid, please contact support')}
           </div>

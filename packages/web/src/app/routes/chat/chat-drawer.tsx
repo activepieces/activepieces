@@ -68,20 +68,18 @@ export const ChatDrawer = () => {
       dismissible={false}
       modal={false}
     >
-      <DrawerContent className="w-[500px] overflow-x-hidden">
-        <DrawerHeader>
-          <div className="p-4">
-            <div className="flex items-center gap-1">
-              <Button
-                variant="basic"
-                size={'icon'}
-                className="text-gray-12"
-                onClick={() => setChatDrawerOpenSource(null)}
-              >
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-              <DrawerTitle>Chat</DrawerTitle>
-            </div>
+      <DrawerContent className="w-[500px] overflow-x-hidden data-[vaul-drawer-direction=right]:sm:max-w-[500px]">
+        <DrawerHeader className="border-b border-gray-6 p-4">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size={'icon'}
+              className="text-gray-12"
+              onClick={() => setChatDrawerOpenSource(null)}
+            >
+              <ArrowRight className="h-5 w-5" />
+            </Button>
+            <DrawerTitle>Chat</DrawerTitle>
           </div>
         </DrawerHeader>
         <div className="flex-1 overflow-hidden">

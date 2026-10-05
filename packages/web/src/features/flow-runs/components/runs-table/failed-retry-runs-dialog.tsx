@@ -35,20 +35,20 @@ export const FailedRetryRunsDialog = ({
   );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Failed Retries')}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[400px]">
-          <ul className="flex flex-col gap-3 pr-3">
+          <ul className="flex flex-col gap-2">
             {failedRuns.map((run) => {
               const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
               return (
                 <li
                   key={run.id}
-                  className="flex items-start justify-between gap-3 rounded-md border p-3"
+                  className="flex items-start justify-between gap-3 rounded-xl border px-3 py-2.5"
                 >
-                  <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex min-w-0 flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-sm font-medium">
                       <Icon
                         className={cn('size-4 shrink-0', {
@@ -79,7 +79,7 @@ export const FailedRetryRunsDialog = ({
                   </div>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon-sm"
                     className="shrink-0"
                     onClick={() =>
                       openNewWindow(
@@ -89,7 +89,7 @@ export const FailedRetryRunsDialog = ({
                       )
                     }
                   >
-                    <ExternalLink className="size-4" />
+                    <ExternalLink />
                     <span className="sr-only">{t('Open run')}</span>
                   </Button>
                 </li>

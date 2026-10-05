@@ -2,6 +2,8 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TrendingUp } from 'lucide-react';
 
+import { impactRunsUtils } from '../lib/impact-runs-utils';
+
 import { AnalyticsAreaChart } from './analytics-area-chart';
 
 type RunsChartProps = {
@@ -9,12 +11,11 @@ type RunsChartProps = {
 };
 
 export function RunsChart({ report }: RunsChartProps) {
-  const chartData =
-    report?.runs
-      .map((data) => ({ date: data.day, runs: data.runs }))
-      .sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-      ) ?? [];
+  const chartData = report
+    ? impactRunsUtils
+        .runsByDay(report)
+        .map(({ date, value }) => ({ date, runs: value }))
+    : [];
 
   return (
     <AnalyticsAreaChart
@@ -26,7 +27,7 @@ export function RunsChart({ report }: RunsChartProps) {
       gradientId="fillRuns"
       chartData={chartData}
       isLoading={!report}
-      emptyIcon={<TrendingUp className="h-10 w-10 text-gray-9" />}
+      emptyIcon={<TrendingUp />}
       emptyText={t(
         'No runs recorded yet. Data will appear here once your flows start running.',
       )}

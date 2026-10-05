@@ -6,18 +6,20 @@ export function ProviderLogo({
   size = 'md',
 }: {
   info: AiProviderInfo;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }) {
-  if (!info.logoUrl) {
-    return size === 'sm' ? null : (
-      <div className="size-8 shrink-0 rounded-lg bg-gray-3" />
-    );
+  if (size === 'sm') {
+    return info.logoUrl ? (
+      <LogoPlate src={info.logoUrl} alt={info.name} size="xxs" />
+    ) : null;
   }
   return (
     <LogoPlate
-      src={info.logoUrl}
+      src={info.logoUrl || undefined}
       alt={info.name}
-      className={size === 'sm' ? 'size-4' : 'size-8 rounded-lg p-2'}
+      size={size === 'lg' ? 'lg' : 'xs'}
+      border
+      className={size === 'lg' ? 'rounded-xl' : undefined}
     />
   );
 }

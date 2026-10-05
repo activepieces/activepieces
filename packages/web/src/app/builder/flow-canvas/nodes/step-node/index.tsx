@@ -133,7 +133,7 @@ const ApStepCanvasNode = React.memo(
         }}
         onContextMenu={(e) => handleContextMenu(e)}
         className={cn(
-          'transition-all rounded-md border border-solid border-gray-6 relative overflow-visible  group',
+          'group relative overflow-visible rounded-xl border border-solid border-gray-6 transition-all',
           {
             'border-accent-9': isSelected,
             'bg-gray-1': !isDragging,
@@ -183,7 +183,7 @@ const ApStepCanvasNode = React.memo(
                 </div>
               ) : (
                 <div
-                  className="flex items-center justify-center h-full w-full gap-[10px]"
+                  className="flex h-full w-full items-center justify-center gap-2.5"
                   onClick={(e) => handleStepClick(e)}
                 >
                   <StepNodeLogo
@@ -224,7 +224,7 @@ const ApStepCanvasNode = React.memo(
             </div>
           )}
           {isHorizontal && !readonly && !isDragging && (
-            <div className="absolute top-0 right-0  translate-x-[30px] z-10">
+            <div className="absolute top-0 right-0 z-10 translate-x-[30px]">
               <StepNodeChevron onClickOverride={chevronClickOverride} />
             </div>
           )}

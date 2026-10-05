@@ -3,7 +3,7 @@ import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { Spinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { Switch } from '../../../components/ui/switch';
@@ -69,12 +69,12 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
         </TooltipContent>
       </Tooltip>
       {isLoading ? (
-        <LoadingSpinner />
+        <Spinner className="text-gray-11" />
       ) : (
         isFlowPublished && (
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <div className="p-2 rounded-full ">
+              <div className="rounded-full p-2">
                 {flowsUtils.flowStatusIconRenderer(flow)}
               </div>
             </TooltipTrigger>

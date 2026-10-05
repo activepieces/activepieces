@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
-import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
 import { isStepFileUrl } from '@/lib/dom-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
@@ -29,7 +29,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
     if (depth >= MAX_NESTED_DEPTH) {
       return (
         <div
-          className="py-1.5 text-xs text-gray-11 italic"
+          className="py-1.5 text-sm text-gray-11 italic"
           style={{ paddingLeft, paddingRight: 16 }}
         >
           {label}: {t('Too deep to display')}
@@ -51,11 +51,11 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
           className="flex items-center gap-3 py-1.5 hover:bg-gray-4/50 cursor-pointer w-full text-left"
           style={{ paddingLeft, paddingRight: 16 }}
         >
-          <div className="shrink-0 w-4 h-4 flex items-center justify-center text-gray-11">
+          <div className="shrink-0 size-4 flex items-center justify-center text-gray-11">
             {expanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="size-3.5" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="size-3.5" />
             )}
           </div>
           <FieldTypeIcon value={value} />

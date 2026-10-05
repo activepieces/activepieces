@@ -20,7 +20,7 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
   const floor = floorExplanation({ input, ranked });
 
   return (
-    <div className="flex flex-col gap-2 p-3 rounded-lg border">
+    <div className="flex flex-col gap-2 rounded-xl border p-3">
       <span className="text-xs font-medium text-gray-11">
         {t('How sure the model was')}
       </span>
@@ -47,7 +47,7 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
             })}
           />
           <span
-            className={cn('text-xs w-10 shrink-0 text-right tabular-nums', {
+            className={cn('text-sm w-10 shrink-0 text-right tabular-nums', {
               'font-medium text-accent-11': route.chosen,
               'text-gray-11': !route.chosen,
             })}
@@ -62,7 +62,7 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
         </span>
       )}
       {!isNil(floor) && (
-        <div className="flex items-start gap-2 border-t pt-2 text-xs text-gray-11">
+        <div className="flex items-start gap-2 border-t pt-2 text-sm text-gray-11">
           <Info className="size-3.5 shrink-0 mt-0.5" />
           <span>
             {t(

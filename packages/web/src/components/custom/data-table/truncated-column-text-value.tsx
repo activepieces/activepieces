@@ -10,14 +10,7 @@ const TruncatedColumnTextValue = ({
 }) => {
   return (
     <TextWithTooltip tooltipMessage={value}>
-      <div
-        className={cn(
-          'text-left truncate max-w-[120px] 2xl:max-w-[250px]',
-          className,
-        )}
-      >
-        {value}
-      </div>
+      <div className={cn('min-w-0 truncate text-left', className)}>{value}</div>
     </TextWithTooltip>
   );
 };

@@ -7,6 +7,14 @@ import { useDebounce } from 'use-debounce';
 import { VariableDialog } from '@/app/variables/variable-dialog';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { variablesQueries } from '@/features/variables/hooks/variables-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -39,7 +47,7 @@ const VariablesTab = () => {
 
   return (
     <div className="flex flex-col gap-2 h-full">
-      <div className="flex items-center gap-2 px-5">
+      <div className="flex items-center gap-2 px-4">
         <SearchInput
           onChange={setSearch}
           value={search}
@@ -50,10 +58,10 @@ const VariablesTab = () => {
             type="button"
             size="sm"
             variant="outline"
-            className="shrink-0 gap-1.5"
+            className="shrink-0"
             onClick={() => setCreateOpen(true)}
           >
-            <Plus className="w-4 h-4" />
+            <Plus />
             {t('New')}
           </Button>
         )}
@@ -67,44 +75,45 @@ const VariablesTab = () => {
         )}
 
         {!isLoading && variables.length === 0 && (
-          <div className="flex items-center justify-center gap-2 mt-5 flex-col px-6">
+          <Empty>
             {debouncedSearch ? (
-              <>
-                <SearchXIcon className="w-[35px] h-[35px]" />
-                <div className="text-center font-semibold">
-                  {t('No matching variables')}
-                </div>
-                <div className="text-center text-sm text-gray-11">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <SearchXIcon />
+                </EmptyMedia>
+                <EmptyTitle>{t('No matching variables')}</EmptyTitle>
+                <EmptyDescription>
                   {t('Try adjusting your search')}
-                </div>
-              </>
+                </EmptyDescription>
+              </EmptyHeader>
             ) : (
               <>
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-3 text-accent-11">
-                  <Variable className="w-5 h-5" />
-                </div>
-                <div className="text-center font-semibold">
-                  {t('No variables yet')}
-                </div>
-                <div className="text-center text-sm text-gray-11 max-w-[280px]">
-                  {t(
-                    'Create a variable to reference a value from any step input.',
-                  )}
-                </div>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Variable />
+                  </EmptyMedia>
+                  <EmptyTitle>{t('No variables yet')}</EmptyTitle>
+                  <EmptyDescription>
+                    {t(
+                      'Create a variable to reference a value from any step input.',
+                    )}
+                  </EmptyDescription>
+                </EmptyHeader>
                 {canWrite && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="mt-2 gap-1.5"
-                    onClick={() => setCreateOpen(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t('New variable')}
-                  </Button>
+                  <EmptyContent>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setCreateOpen(true)}
+                    >
+                      <Plus />
+                      {t('New variable')}
+                    </Button>
+                  </EmptyContent>
                 )}
               </>
             )}
-          </div>
+          </Empty>
         )}
 
         {!isLoading && variables.length > 0 && (
@@ -129,11 +138,11 @@ const VariablesTab = () => {
                 className={cn(
                   'group w-full max-w-full select-none focus:outline-hidden',
                   'hover:bg-gray-4 focus:bg-gray-4',
-                  'cursor-pointer flex items-center gap-3 px-5 py-3',
+                  'flex h-10 cursor-pointer items-center gap-2 px-4',
                 )}
               >
-                <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
-                  <Variable className="w-4 h-4" />
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
+                  <Variable className="size-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-sm truncate">

@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -134,7 +135,7 @@ const ProjectReleasesPage = () => {
       cell: ({ row }) => {
         return (
           <div
-            className="flex items-center justify-center z-10"
+            className="flex items-center justify-end"
             onClick={(e) => e.stopPropagation()}
           >
             <Tooltip>
@@ -142,7 +143,7 @@ const ProjectReleasesPage = () => {
                 <ApplyButton
                   onSuccess={refetch}
                   variant="ghost"
-                  className="size-8 p-0"
+                  size="icon-sm"
                   request={{
                     projectId: authenticationSession.getProjectId()!,
                     type: ProjectReleaseType.ROLLBACK,
@@ -150,7 +151,7 @@ const ProjectReleasesPage = () => {
                   }}
                   defaultName={row.original.name}
                 >
-                  <Undo2 className="size-4" />
+                  <Undo2 />
                 </ApplyButton>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
@@ -162,7 +163,7 @@ const ProjectReleasesPage = () => {
   ];
 
   return (
-    <div className="flex-col w-full gap-4">
+    <Page>
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}
@@ -183,12 +184,9 @@ const ProjectReleasesPage = () => {
           >
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button
-                  className="w-full"
-                  disabled={!doesUserHavePermissionToWriteRelease}
-                >
+                <Button disabled={!doesUserHavePermissionToWriteRelease}>
                   {t('Create Release')}
-                  <ChevronDown className="h-3 w-4 ml-2" />
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -202,10 +200,8 @@ const ProjectReleasesPage = () => {
                       projectId: authenticationSession.getProjectId()!,
                     }}
                   >
-                    <div className="flex flex-row gap-2 items-center">
-                      <GitBranch className="size-4" />
-                      <span>{t('From Git')}</span>
-                    </div>
+                    <GitBranch />
+                    <span>{t('From Git')}</span>
                   </ApplyButton>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" asChild>
@@ -215,10 +211,8 @@ const ProjectReleasesPage = () => {
                     className="w-full justify-start"
                     ReleaseType={ProjectReleaseType.PROJECT}
                   >
-                    <div className="flex flex-row gap-2 items-center">
-                      <FolderOpenDot className="size-4" />
-                      <span>{t('From Project')}</span>
-                    </div>
+                    <FolderOpenDot />
+                    <span>{t('From Project')}</span>
                   </SelectionButton>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -234,7 +228,7 @@ const ProjectReleasesPage = () => {
           navigate(`/releases/${row.id}`);
         }}
       />
-    </div>
+    </Page>
   );
 };
 
