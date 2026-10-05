@@ -74,7 +74,7 @@ function getStatusText({
     case FlowRunStatus.INTERNAL_ERROR:
       return t('Run failed with an internal error, contact support.');
     case FlowRunStatus.CANCELED:
-      return t('Run Cancelled');
+      return t('Run Canceled');
   }
 }
 

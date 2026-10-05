@@ -354,7 +354,7 @@ export const PiecesListTab = () => {
           onOpenChange={(open) => !open && setDeleteTarget(null)}
           title={t('Delete {name}?', { name: deleteTarget.displayName })}
           description={t(
-            'The piece is removed from the catalogue and no project can add it to a flow again.',
+            'The piece is removed from the catalog and no project can add it to a flow again.',
           )}
           consequence={t('Every step using it fails.')}
           confirmLabel={t('Delete piece')}

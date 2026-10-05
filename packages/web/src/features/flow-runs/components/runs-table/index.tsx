@@ -348,7 +348,7 @@ export const RunsTable = () => {
                 hasPermission={userHasPermissionToRetryRun}
               >
                 <MessageTooltip
-                  message={t('Only paused or queued runs can be cancelled')}
+                  message={t('Only paused or queued runs can be canceled')}
                   isDisabled={allCancellable}
                 >
                   <Button

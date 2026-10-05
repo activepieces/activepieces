@@ -270,10 +270,10 @@ export const AppearanceSection = ({
             description={
               brandingLocked
                 ? t(
-                    'Try your logo and colours here. Only you see the preview, and it is not saved.',
+                    'Try your logo and colors here. Only you see the preview, and it is not saved.',
                   )
                 : t(
-                    'Your logo and colours replace ours everywhere, including sign-in and emails.',
+                    'Your logo and colors replace ours everywhere, including sign-in and emails.',
                   )
             }
             flush

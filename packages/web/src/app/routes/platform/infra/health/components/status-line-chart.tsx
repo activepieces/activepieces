@@ -39,7 +39,7 @@ const SERIES: Array<{ status: FlowRunStatus; label: string; color: string }> = [
   },
   {
     status: FlowRunStatus.CANCELED,
-    label: 'Cancelled',
+    label: 'Canceled',
     color: 'var(--gray-9)',
   },
 ];

@@ -168,7 +168,7 @@ const ADMIN_PAGES: Record<
   }),
   billing: () => ({
     title: t('Plan'),
-    description: t('Your plan, credits, seats and licence key.'),
+    description: t('Your plan, credits, seats and license key.'),
   }),
   usage: () => ({
     title: t('Usage'),

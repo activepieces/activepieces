@@ -25,7 +25,7 @@ function groups(): PermissionGroup[] {
         {
           key: 'folders',
           label: t('Folders'),
-          hint: t('Organise flows into folders.'),
+          hint: t('Organize flows into folders.'),
           view: Permission.READ_FOLDER,
           edit: Permission.WRITE_FOLDER,
         },
