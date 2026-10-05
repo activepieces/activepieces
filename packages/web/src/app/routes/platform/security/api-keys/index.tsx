@@ -1,13 +1,14 @@
 import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
+import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { ExternalLink, KeyRound, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
-import { DataTable } from '@/components/custom/data-table';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DateCell, NameCell } from '@/components/custom/list/list-cells';
 import { RowMenu } from '@/components/custom/list/row-menu';
@@ -32,6 +33,7 @@ const ApiKeysPage = () => {
   );
   const [creating, setCreating] = useState(false);
   const { mutateAsync: revokeKey } = apiKeyMutations.useDeleteApiKey();
+  const columns = useMemo(() => apiKeyColumns({ onRevoke: setRevoking }), []);
   const newKey = (
     <Button
       {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
@@ -78,67 +80,7 @@ const ApiKeysPage = () => {
         )}
         emptyStateIcon={<KeyRound />}
         emptyStateAction={newKey}
-        columns={[
-          {
-            accessorKey: 'displayName',
-            size: 420,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Key')} />
-            ),
-            cell: ({ row }) => (
-              <NameCell
-                media={
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
-                    <KeyRound />
-                  </span>
-                }
-                title={row.original.displayName}
-                sub={
-                  <span className="font-mono">
-                    {maskedKey(row.original.truncatedValue)}
-                  </span>
-                }
-              />
-            ),
-          },
-          {
-            accessorKey: 'created',
-            size: 112,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Created')} />
-            ),
-            cell: ({ row }) => (
-              <DateCell value={row.original.created} mode="short" />
-            ),
-          },
-          {
-            accessorKey: 'lastUsedAt',
-            size: 148,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Last used')} />
-            ),
-            cell: ({ row }) => <DateCell value={row.original.lastUsedAt} />,
-          },
-          {
-            id: 'actions',
-            size: 56,
-            cell: ({ row }) => (
-              <div className="flex justify-end">
-                <RowMenu
-                  items={[
-                    {
-                      label: t('Revoke'),
-                      icon: Trash2,
-                      destructive: true,
-                      control: AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
-                      onSelect: () => setRevoking(row.original),
-                    },
-                  ]}
-                />
-              </div>
-            ),
-          },
-        ]}
+        columns={columns}
         page={{ data: keys, next: null, previous: null }}
         hidePagination={true}
         isLoading={!isSample && isLoading}
@@ -176,6 +118,72 @@ const ApiKeysPage = () => {
     </Page>
   );
 };
+
+function apiKeyColumns({
+  onRevoke,
+}: {
+  onRevoke: (key: ApiKeyResponseWithoutValue) => void;
+}): ColumnDef<RowDataWithActions<ApiKeyResponseWithoutValue>>[] {
+  return [
+    {
+      accessorKey: 'displayName',
+      size: 420,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Key')} />
+      ),
+      cell: ({ row }) => (
+        <NameCell
+          media={
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
+              <KeyRound />
+            </span>
+          }
+          title={row.original.displayName}
+          sub={
+            <span className="font-mono">
+              {maskedKey(row.original.truncatedValue)}
+            </span>
+          }
+        />
+      ),
+    },
+    {
+      accessorKey: 'created',
+      size: 112,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created')} />
+      ),
+      cell: ({ row }) => <DateCell value={row.original.created} mode="short" />,
+    },
+    {
+      accessorKey: 'lastUsedAt',
+      size: 148,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Last used')} />
+      ),
+      cell: ({ row }) => <DateCell value={row.original.lastUsedAt} />,
+    },
+    {
+      id: 'actions',
+      size: 56,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <RowMenu
+            items={[
+              {
+                label: t('Revoke'),
+                icon: Trash2,
+                destructive: true,
+                control: AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
+                onSelect: () => onRevoke(row.original),
+              },
+            ]}
+          />
+        </div>
+      ),
+    },
+  ];
+}
 
 function maskedKey(truncatedValue: string): string {
   return `sk-…${truncatedValue.slice(-4)}`;

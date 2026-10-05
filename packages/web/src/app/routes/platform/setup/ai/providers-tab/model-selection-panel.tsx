@@ -2,11 +2,12 @@ import { AIProviderModel } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Search, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 
 import { SelectedOnlyButton } from '../components/selected-only-button';
 import { pageSlice, TablePagination } from '../components/table-pagination';
@@ -43,55 +44,63 @@ export function ModelSelectionPanel({
   const allRowsSelected =
     rows.length > 0 && rows.every((model) => selectedIds.includes(model.id));
 
-  const toggleModel = (modelId: string) => {
+  const toggleModel = useStableCallback((modelId: string) => {
     onChange(
       selectedIds.includes(modelId)
         ? selectedIds.filter((id) => id !== modelId)
         : [...selectedIds, modelId],
     );
-  };
-  const toggleRows = () => {
+  });
+  const toggleRows = useStableCallback(() => {
     const rowIds = rows.map((model) => model.id);
     onChange(
       allRowsSelected
         ? selectedIds.filter((id) => !rowIds.includes(id))
         : [...new Set([...selectedIds, ...rowIds])],
     );
-  };
+  });
 
-  const columns: ColumnDef<RowDataWithActions<AIProviderModel>>[] = [
-    {
-      accessorKey: 'name',
-      header: () => (
-        <div className="flex items-center gap-2.5">
-          <Checkbox
-            aria-label={t('Select all models on this page')}
-            checked={allRowsSelected}
-            onCheckedChange={toggleRows}
-          />
-          <span>{t('Model')}</span>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2.5">
-          <Checkbox
-            aria-label={t('Select {name}', { name: row.original.name })}
-            checked={selectedIds.includes(row.original.id)}
-            onClick={(event) => event.stopPropagation()}
-            onCheckedChange={() => toggleModel(row.original.id)}
-          />
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">{row.original.name}</span>
-            {row.original.id !== row.original.name && (
-              <span className="font-mono text-xs text-gray-11">
-                {row.original.id}
-              </span>
-            )}
+  const isSelected = useStableCallback((id: string) =>
+    selectedIds.includes(id),
+  );
+  const isPageSelected = useStableCallback(() => allRowsSelected);
+
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<AIProviderModel>>[] => [
+      {
+        accessorKey: 'name',
+        header: () => (
+          <div className="flex items-center gap-2.5">
+            <Checkbox
+              aria-label={t('Select all models on this page')}
+              checked={isPageSelected()}
+              onCheckedChange={toggleRows}
+            />
+            <span>{t('Model')}</span>
           </div>
-        </div>
-      ),
-    },
-  ];
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2.5">
+            <Checkbox
+              aria-label={t('Select {name}', { name: row.original.name })}
+              checked={isSelected(row.original.id)}
+              onClick={(event) => event.stopPropagation()}
+              onCheckedChange={() => toggleModel(row.original.id)}
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">{row.original.name}</span>
+              {row.original.id !== row.original.name && (
+                <span className="font-mono text-xs text-gray-11">
+                  {row.original.id}
+                </span>
+              )}
+            </div>
+          </div>
+        ),
+      },
+    ],
+    [isSelected, isPageSelected, toggleModel, toggleRows],
+  );
 
   return (
     <div className="flex flex-col gap-3">

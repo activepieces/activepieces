@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Crown, Plus, Trash2, Unplug } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
@@ -44,6 +44,7 @@ import {
 } from '@/features/platform-admin';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { projectConnectionsPath } from '@/lib/route-utils';
 
@@ -111,12 +112,14 @@ export default function PlatformConnectionsPage() {
     delete: (row) => setPending({ kind: 'delete', connections: [row] }),
     upgrade: upgrade.open,
   };
-  const actionsFor = (connection: PlatformAppConnectionsListItem) =>
-    connectionActionsUtils.connectionActions({
-      connection,
-      globalLocked,
-      handlers: actionHandlers,
-    });
+  const actionsFor = useStableCallback(
+    (connection: PlatformAppConnectionsListItem) =>
+      connectionActionsUtils.connectionActions({
+        connection,
+        globalLocked,
+        handlers: actionHandlers,
+      }),
+  );
 
   const selectLens = (next: Lens) =>
     setSearchParams(
@@ -134,74 +137,75 @@ export default function PlatformConnectionsPage() {
       { replace: true },
     );
 
-  const columns: ColumnDef<
-    RowDataWithActions<PlatformAppConnectionsListItem>
-  >[] = [
-    {
-      accessorKey: 'displayName',
-      size: 300,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Connection')} />
-      ),
-      cell: ({ row }) => (
-        <ConnectionNameCell
-          pieceName={row.original.pieceName}
-          displayName={row.original.displayName}
-        />
-      ),
-    },
-    {
-      id: 'where',
-      size: 220,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Where')} />
-      ),
-      cell: ({ row }) => <WhereCell connection={row.original} />,
-    },
-    {
-      id: 'usedBy',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Used by')} />
-      ),
-      cell: ({ row }) => <UsedByCell connection={row.original} />,
-    },
-    {
-      id: 'owner',
-      size: 160,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} />
-      ),
-      cell: ({ row }) => (
-        <MutedCell>{ownerLabel({ owner: row.original.owner })}</MutedCell>
-      ),
-    },
-    {
-      id: 'status',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
-      ),
-      cell: ({ row }) => <ConnectionStatus status={row.original.status} />,
-    },
-    {
-      id: 'updated',
-      size: 130,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Updated')} />
-      ),
-      cell: ({ row }) => <DateCell value={row.original.updated} />,
-    },
-    {
-      id: 'actions',
-      size: 56,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <RowMenu items={actionsFor(row.original)} />
-        </div>
-      ),
-    },
-  ];
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<PlatformAppConnectionsListItem>>[] => [
+      {
+        accessorKey: 'displayName',
+        size: 300,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Connection')} />
+        ),
+        cell: ({ row }) => (
+          <ConnectionNameCell
+            pieceName={row.original.pieceName}
+            displayName={row.original.displayName}
+          />
+        ),
+      },
+      {
+        id: 'where',
+        size: 220,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Where')} />
+        ),
+        cell: ({ row }) => <WhereCell connection={row.original} />,
+      },
+      {
+        id: 'usedBy',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Used by')} />
+        ),
+        cell: ({ row }) => <UsedByCell connection={row.original} />,
+      },
+      {
+        id: 'owner',
+        size: 160,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Owner')} />
+        ),
+        cell: ({ row }) => (
+          <MutedCell>{ownerLabel({ owner: row.original.owner })}</MutedCell>
+        ),
+      },
+      {
+        id: 'status',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Status')} />
+        ),
+        cell: ({ row }) => <ConnectionStatus status={row.original.status} />,
+      },
+      {
+        id: 'updated',
+        size: 130,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Updated')} />
+        ),
+        cell: ({ row }) => <DateCell value={row.original.updated} />,
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <RowMenu items={actionsFor(row.original)} />
+          </div>
+        ),
+      },
+    ],
+    [actionsFor],
+  );
 
   const bulkActions: BulkAction<PlatformAppConnectionsListItem>[] = [
     {

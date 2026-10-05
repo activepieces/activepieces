@@ -20,6 +20,8 @@ import {
 
 import { flagsHooks } from './flags-hooks';
 
+const PLATFORM_STALE_TIME_MS = 10 * 1000;
+
 export const platformHooks = {
   useDeletePlatform: () => {
     const navigate = useNavigate();
@@ -41,11 +43,7 @@ export const platformHooks = {
   },
   useCurrentPlatform: () => {
     const currentPlatformId = authenticationSession.getPlatformId();
-    const query = useSuspenseQuery({
-      queryKey: ['platform', currentPlatformId],
-      queryFn: platformApi.getCurrentPlatform,
-      staleTime: 10 * 1000,
-    });
+    const query = useSuspenseQuery(currentPlatformQueryOptions());
     return {
       platform: query.data,
       refetch: async () => {
@@ -112,6 +110,14 @@ export const platformHooks = {
   },
 };
 
+function currentPlatformQueryOptions() {
+  return {
+    queryKey: ['platform', authenticationSession.getPlatformId()],
+    queryFn: platformApi.getCurrentPlatform,
+    staleTime: PLATFORM_STALE_TIME_MS,
+  };
+}
+
 function isRejectedLicenseKey(error: unknown): boolean {
   const status = api.isError(error) ? error.response?.status : undefined;
   return (
@@ -120,6 +126,8 @@ function isRejectedLicenseKey(error: unknown): boolean {
     status < StatusCodes.INTERNAL_SERVER_ERROR
   );
 }
+
+export { currentPlatformQueryOptions };
 
 export type UseUpdateLicenseKeyParams = {
   queryClient: QueryClient;

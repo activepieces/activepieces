@@ -1,7 +1,14 @@
 import { ApplicationEventName } from '@activepieces/shared';
-import { t } from 'i18next';
+import { TFunction } from 'i18next';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const useEventLabels = (): EventLabelsMap => {
+  const { t } = useTranslation();
+  return useMemo(() => buildEventLabels({ t }), [t]);
+};
+
+const buildEventLabels = ({ t }: { t: TFunction }): EventLabelsMap => {
   return {
     [ApplicationEventName.AGENT_CREATED]: { label: t('Agent created') },
     [ApplicationEventName.AGENT_UPDATED]: { label: t('Agent updated') },

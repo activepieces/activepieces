@@ -98,138 +98,143 @@ export function PieceSetsTab() {
   const openSet = (set: PieceSet) =>
     navigate(`/platform/pieces/policies/${set.id}`);
 
-  const columns: ColumnDef<RowDataWithActions<PieceSet>>[] = [
-    {
-      accessorKey: 'name',
-      size: 400,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Policy')} />
-      ),
-      cell: ({ row }) => (
-        <NameCell
-          stacked
-          title={row.original.name}
-          badge={
-            row.original.isDefault ? (
-              <Badge variant="outline">{t('Default')}</Badge>
-            ) : undefined
-          }
-          sub={selectionSentence(row.original)}
-        />
-      ),
-    },
-    {
-      accessorKey: 'key',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Embed key')} />
-      ),
-      cell: ({ row }) => (
-        <MutedCell className="font-mono text-xs">{row.original.key}</MutedCell>
-      ),
-    },
-    {
-      id: 'appliesTo',
-      size: 170,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Applies to')} />
-      ),
-      cell: ({ row }) => {
-        const count = projectCounts.get(row.original.id);
-        if (row.original.isDefault) {
-          return <MutedCell>{t('Every other project')}</MutedCell>;
-        }
-        if (count === undefined) {
-          return projectsLoading ? (
-            <Skeleton className="h-4 w-20" />
-          ) : (
-            <MutedCell>{null}</MutedCell>
-          );
-        }
-        return (
-          <MutedCell>
-            {t(
-              '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
-              { count },
-            )}
-          </MutedCell>
-        );
-      },
-    },
-    {
-      id: 'newPieces',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('New pieces')} />
-      ),
-      cell: ({ row }) =>
-        row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL ? (
-          <StatusDot tone="success">{t('Allowed')}</StatusDot>
-        ) : (
-          <StatusDot tone="neutral">{t('Blocked')}</StatusDot>
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<PieceSet>>[] => [
+      {
+        accessorKey: 'name',
+        size: 400,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Policy')} />
         ),
-    },
-    {
-      id: 'required',
-      size: 160,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Required')} />
-      ),
-      cell: ({ row }) => {
-        const count = (row.original.config.requiredActions ?? []).length;
-        return count === 0 ? (
-          <MutedCell>{null}</MutedCell>
-        ) : (
-          <span className="flex min-w-0 items-center gap-1.5 text-gray-12">
-            <Star className="size-3.5 shrink-0 fill-current text-warning-11" />
-            <span className="truncate">
-              {t('requiredActionsCount', { count })}
-            </span>
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'updated',
-      size: 132,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Updated')} />
-      ),
-      cell: ({ row }) => <DateCell value={row.original.updated} />,
-    },
-    {
-      id: 'actions',
-      size: 56,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <RowMenu
-            items={[
-              {
-                label: t('Edit details'),
-                icon: Pencil,
-                onSelect: () => setEditingSet(row.original),
-                control: AdminControl.PIECE_SETS_EDIT_OPEN,
-              },
-              {
-                label: t('Duplicate'),
-                icon: Copy,
-                onSelect: () => setDuplicatingSet(row.original),
-                control: AdminControl.PIECE_SETS_DUPLICATE_OPEN,
-              },
-              {
-                label: t('Delete'),
-                icon: Trash2,
-                destructive: true,
-                hidden: row.original.isDefault,
-                onSelect: () => setDeletingSet(row.original),
-                control: AdminControl.PIECE_SETS_DELETE_OPEN,
-              },
-            ]}
+        cell: ({ row }) => (
+          <NameCell
+            stacked
+            title={row.original.name}
+            badge={
+              row.original.isDefault ? (
+                <Badge variant="outline">{t('Default')}</Badge>
+              ) : undefined
+            }
+            sub={selectionSentence(row.original)}
           />
-        </div>
-      ),
-    },
-  ];
+        ),
+      },
+      {
+        accessorKey: 'key',
+        size: 150,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Embed key')} />
+        ),
+        cell: ({ row }) => (
+          <MutedCell className="font-mono text-xs">
+            {row.original.key}
+          </MutedCell>
+        ),
+      },
+      {
+        id: 'appliesTo',
+        size: 170,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Applies to')} />
+        ),
+        cell: ({ row }) => {
+          const count = projectCounts.get(row.original.id);
+          if (row.original.isDefault) {
+            return <MutedCell>{t('Every other project')}</MutedCell>;
+          }
+          if (count === undefined) {
+            return projectsLoading ? (
+              <Skeleton className="h-4 w-20" />
+            ) : (
+              <MutedCell>{null}</MutedCell>
+            );
+          }
+          return (
+            <MutedCell>
+              {t(
+                '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
+                { count },
+              )}
+            </MutedCell>
+          );
+        },
+      },
+      {
+        id: 'newPieces',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('New pieces')} />
+        ),
+        cell: ({ row }) =>
+          row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL ? (
+            <StatusDot tone="success">{t('Allowed')}</StatusDot>
+          ) : (
+            <StatusDot tone="neutral">{t('Blocked')}</StatusDot>
+          ),
+      },
+      {
+        id: 'required',
+        size: 160,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Required')} />
+        ),
+        cell: ({ row }) => {
+          const count = (row.original.config.requiredActions ?? []).length;
+          return count === 0 ? (
+            <MutedCell>{null}</MutedCell>
+          ) : (
+            <span className="flex min-w-0 items-center gap-1.5 text-gray-12">
+              <Star className="size-3.5 shrink-0 fill-current text-warning-11" />
+              <span className="truncate">
+                {t('requiredActionsCount', { count })}
+              </span>
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'updated',
+        size: 132,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Updated')} />
+        ),
+        cell: ({ row }) => <DateCell value={row.original.updated} />,
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <RowMenu
+              items={[
+                {
+                  label: t('Edit details'),
+                  icon: Pencil,
+                  onSelect: () => setEditingSet(row.original),
+                  control: AdminControl.PIECE_SETS_EDIT_OPEN,
+                },
+                {
+                  label: t('Duplicate'),
+                  icon: Copy,
+                  onSelect: () => setDuplicatingSet(row.original),
+                  control: AdminControl.PIECE_SETS_DUPLICATE_OPEN,
+                },
+                {
+                  label: t('Delete'),
+                  icon: Trash2,
+                  destructive: true,
+                  hidden: row.original.isDefault,
+                  onSelect: () => setDeletingSet(row.original),
+                  control: AdminControl.PIECE_SETS_DELETE_OPEN,
+                },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+    [projectCounts, projectsLoading],
+  );
 
   const newSetButton = (
     <Button

@@ -51,7 +51,7 @@ export default function ImpactPage() {
   const activeTab = (searchParams.get('tab') as TabValue) || 'analytics';
 
   const { data: projects } = projectCollectionUtils.useAll();
-  const { data, isLoading, isError } =
+  const { data, isLoading, isError, refetch } =
     platformAnalyticsHooks.useAnalyticsTimeBased(
       selectedTimePeriod,
       selectedProjectId,
@@ -188,7 +188,7 @@ export default function ImpactPage() {
 
           <TabsContent value="analytics" className="flex flex-col gap-4">
             {isError ? (
-              <DataFetchErrorState entity={t('analytics')} />
+              <DataFetchErrorState entity={t('analytics')} onRetry={refetch} />
             ) : (
               <>
                 <Summary report={report ?? undefined} />
@@ -202,6 +202,7 @@ export default function ImpactPage() {
               report={report}
               isLoading={isLoading}
               isError={isError}
+              onRetry={refetch}
               projects={projects}
             />
           </TabsContent>

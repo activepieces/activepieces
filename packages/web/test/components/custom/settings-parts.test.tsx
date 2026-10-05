@@ -14,11 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-import {
-  ChipListField,
-  isToastInteraction,
-  SaveBar,
-} from '@/components/custom/settings-parts';
+import { ChipListField, SaveBar } from '@/components/custom/settings-parts';
 
 const saveBar = (props: Partial<React.ComponentProps<typeof SaveBar>> = {}) =>
   render(
@@ -195,25 +191,5 @@ describe('ChipListField', () => {
 
     expect(onAdd).not.toHaveBeenCalled();
     expect(screen.getByText('Already in the list')).toBeDefined();
-  });
-});
-
-describe('isToastInteraction', () => {
-  it('is true only for clicks inside the toaster', () => {
-    const toaster = document.createElement('ol');
-    toaster.setAttribute('data-sonner-toaster', '');
-    const undo = document.createElement('button');
-    toaster.appendChild(undo);
-    const outside = document.createElement('div');
-    document.body.append(toaster, outside);
-
-    const eventOn = (target: Element) => {
-      const event = new Event('pointerdown');
-      Object.defineProperty(event, 'target', { value: target });
-      return event;
-    };
-
-    expect(isToastInteraction(eventOn(undo))).toBe(true);
-    expect(isToastInteraction(eventOn(outside))).toBe(false);
   });
 });

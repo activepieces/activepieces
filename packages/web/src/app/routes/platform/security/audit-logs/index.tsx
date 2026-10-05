@@ -6,6 +6,7 @@ import {
   ApplicationEventName,
   summarizeApplicationEvent,
 } from '@activepieces/shared';
+import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   Bot,
@@ -22,11 +23,11 @@ import {
   Workflow,
 } from 'lucide-react';
 import * as React from 'react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
-import { DataTable } from '@/components/custom/data-table';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
 import { Fact, FactList } from '@/components/custom/fact-list';
@@ -70,11 +71,15 @@ export default function AuditLogsPage() {
   const eventLabels = useEventLabels();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { data: users } = platformUserHooks.useUsers();
-  const userNames = new Map(
-    (users?.data ?? []).map((user) => [
-      user.id,
-      `${user.firstName} ${user.lastName}`.trim() || user.email,
-    ]),
+  const userNames = useMemo(
+    () =>
+      new Map(
+        (users?.data ?? []).map((user) => [
+          user.id,
+          `${user.firstName} ${user.lastName}`.trim() || user.email,
+        ]),
+      ),
+    [users?.data],
   );
 
   const {
@@ -88,8 +93,82 @@ export default function AuditLogsPage() {
   const filtered = FILTER_PARAMS.some(
     (param) => searchParams.getAll(param).length > 0,
   );
-  const actorName = (event: ApplicationEvent) =>
-    (event.userId ? userNames.get(event.userId) : undefined) ?? event.userEmail;
+  const actorName = useCallback(
+    (event: ApplicationEvent) =>
+      (event.userId ? userNames.get(event.userId) : undefined) ??
+      event.userEmail,
+    [userNames],
+  );
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<ApplicationEvent>>[] => [
+      {
+        accessorKey: 'created',
+        size: 148,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('When')} />
+        ),
+        cell: ({ row }) => <DateCell value={row.original.created} />,
+      },
+      {
+        accessorKey: 'action',
+        size: 440,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Event')} />
+        ),
+        cell: ({ row }) => (
+          <NameCell
+            stacked
+            media={<EventIcon event={row.original} />}
+            title={
+              eventSentence(row.original) ||
+              eventLabel({ action: row.original.action, eventLabels })
+            }
+            sub={eventLabel({ action: row.original.action, eventLabels })}
+          />
+        ),
+      },
+      {
+        accessorKey: 'userId',
+        size: 200,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Actor')} />
+        ),
+        cell: ({ row }) => (
+          <PersonCell name={actorName(row.original) ?? t('System')} />
+        ),
+      },
+      {
+        accessorKey: 'projectId',
+        size: 170,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Project')} />
+        ),
+        cell: ({ row }) =>
+          row.original.projectId ? (
+            <Link
+              to={`/projects/${row.original.projectId}`}
+              onClick={(event) => event.stopPropagation()}
+              className="block w-fit max-w-full truncate text-gray-12 hover:underline"
+            >
+              {projectLabel(row.original)}
+            </Link>
+          ) : (
+            <MutedCell>{projectLabel(row.original)}</MutedCell>
+          ),
+      },
+      {
+        accessorKey: 'ip',
+        size: 140,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('IP')} />
+        ),
+        cell: ({ row }) => (
+          <MutedCell className="font-mono text-xs">{row.original.ip}</MutedCell>
+        ),
+      },
+    ],
+    [eventLabels, actorName],
+  );
   const table = (
     <DataTable
       emptyStateTextTitle={filtered ? t('No events match') : t('No events yet')}
@@ -103,75 +182,7 @@ export default function AuditLogsPage() {
       emptyStateIcon={<History />}
       onRowClick={(event) => setSelectedEvent(event)}
       rowControl={AdminControl.AUDIT_LOG_EVENT_OPEN}
-      columns={[
-        {
-          accessorKey: 'created',
-          size: 148,
-          header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('When')} />
-          ),
-          cell: ({ row }) => <DateCell value={row.original.created} />,
-        },
-        {
-          accessorKey: 'action',
-          size: 440,
-          header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Event')} />
-          ),
-          cell: ({ row }) => (
-            <NameCell
-              stacked
-              media={<EventIcon event={row.original} />}
-              title={
-                eventSentence(row.original) ||
-                eventLabel({ action: row.original.action, eventLabels })
-              }
-              sub={eventLabel({ action: row.original.action, eventLabels })}
-            />
-          ),
-        },
-        {
-          accessorKey: 'userId',
-          size: 200,
-          header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Actor')} />
-          ),
-          cell: ({ row }) => (
-            <PersonCell name={actorName(row.original) ?? t('System')} />
-          ),
-        },
-        {
-          accessorKey: 'projectId',
-          size: 170,
-          header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Project')} />
-          ),
-          cell: ({ row }) =>
-            row.original.projectId ? (
-              <Link
-                to={`/projects/${row.original.projectId}`}
-                onClick={(event) => event.stopPropagation()}
-                className="block w-fit max-w-full truncate text-gray-12 hover:underline"
-              >
-                {projectLabel(row.original)}
-              </Link>
-            ) : (
-              <MutedCell>{projectLabel(row.original)}</MutedCell>
-            ),
-        },
-        {
-          accessorKey: 'ip',
-          size: 140,
-          header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('IP')} />
-          ),
-          cell: ({ row }) => (
-            <MutedCell className="font-mono text-xs">
-              {row.original.ip}
-            </MutedCell>
-          ),
-        },
-      ]}
+      columns={columns}
       page={rows}
       isLoading={isSample ? false : isLoading}
       isError={isSample ? false : isError}

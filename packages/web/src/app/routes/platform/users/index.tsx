@@ -31,6 +31,7 @@ import {
   platformUserHooks,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -127,7 +128,7 @@ export default function UsersPage() {
     }
   };
 
-  const menuItems = (row: UserRowData): RowMenuItem[] => {
+  const menuItems = useStableCallback((row: UserRowData): RowMenuItem[] => {
     if (row.type === 'invitation') {
       return [
         {
@@ -178,9 +179,12 @@ export default function UsersPage() {
         onSelect: () => setDeleting(row),
       },
     ];
-  };
+  });
 
-  const columns = createUsersTableColumns({ menuItems });
+  const columns = useMemo(
+    () => createUsersTableColumns({ menuItems }),
+    [menuItems],
+  );
   const filtered =
     search.trim().length > 0 || statusFilter !== 'all' || roleFilter.length > 0;
 

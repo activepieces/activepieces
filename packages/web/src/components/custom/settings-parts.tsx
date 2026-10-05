@@ -277,14 +277,7 @@ function ChipListField({
   );
 }
 
-function isToastInteraction(event: Event): boolean {
-  return (
-    event.target instanceof Element &&
-    event.target.closest('[data-sonner-toaster]') !== null
-  );
-}
-
-export { SaveBar, DangerZone, CopyField, ChipListField, isToastInteraction };
+export { SaveBar, DangerZone, CopyField, ChipListField };
 
 export type SaveBarProps = {
   dirty: boolean;

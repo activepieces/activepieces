@@ -19,14 +19,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { PlanLockedPanel, PLATFORM_FEATURES } from '@/features/billing';
 import { PieceIcon } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 export const PieceDetailSheet = ({
   piece,
@@ -54,6 +49,34 @@ function PieceDetailContent({
   actions: PieceRowActions;
 }) {
   const isCustom = piece.pieceType === PieceType.CUSTOM;
+  const manageButtons = (
+    <div className="flex flex-wrap gap-2">
+      <ManageButton
+        control={AdminControl.PIECES_PIN_RUN}
+        onClick={actions.onTogglePin}
+      >
+        {actions.pinned ? <PinOff /> : <Pin />}
+        {actions.pinned ? t('Unpin from step picker') : t('Pin to step picker')}
+      </ManageButton>
+      {actions.oauthStatus !== 'none' && (
+        <ManageButton
+          control={AdminControl.PIECES_OAUTH_CONFIGURE_OPEN}
+          onClick={actions.onConfigureOAuth}
+        >
+          <KeyRound />
+          {actions.oauthStatus === 'configured'
+            ? t('Change OAuth app')
+            : t('Set up OAuth app')}
+        </ManageButton>
+      )}
+      {actions.oauthStatus === 'configured' && (
+        <ManageButton onClick={actions.onRemoveOAuth}>
+          <Trash2 />
+          {t('Remove OAuth app')}
+        </ManageButton>
+      )}
+    </div>
+  );
   return (
     <>
       <SheetHeader className="flex-row items-center gap-3">
@@ -77,39 +100,18 @@ function PieceDetailContent({
         </div>
       </SheetHeader>
       <SheetBody>
-        <div className="flex flex-wrap gap-2">
-          <LockableButton
-            control={AdminControl.PIECES_PIN_RUN}
-            lockedReason={actions.isEnabled ? null : actions.lockedReason}
-            onClick={actions.onTogglePin}
+        {actions.isEnabled ? (
+          manageButtons
+        ) : (
+          <PlanLockedPanel
+            feature={PLATFORM_FEATURES.pieces}
+            locked
+            whenLocked="preview"
+            title={t('Manage this piece')}
           >
-            {actions.pinned ? <PinOff /> : <Pin />}
-            {actions.pinned
-              ? t('Unpin from step picker')
-              : t('Pin to step picker')}
-          </LockableButton>
-          {actions.oauthStatus !== 'none' && (
-            <LockableButton
-              control={AdminControl.PIECES_OAUTH_CONFIGURE_OPEN}
-              lockedReason={actions.isEnabled ? null : actions.lockedReason}
-              onClick={actions.onConfigureOAuth}
-            >
-              <KeyRound />
-              {actions.oauthStatus === 'configured'
-                ? t('Change OAuth app')
-                : t('Set up OAuth app')}
-            </LockableButton>
-          )}
-          {actions.oauthStatus === 'configured' && (
-            <LockableButton
-              lockedReason={actions.isEnabled ? null : actions.lockedReason}
-              onClick={actions.onRemoveOAuth}
-            >
-              <Trash2 />
-              {t('Remove OAuth app')}
-            </LockableButton>
-          )}
-        </div>
+            {manageButtons}
+          </PlanLockedPanel>
+        )}
         <FactList>
           <Fact label={t('Version')}>{piece.version}</Fact>
           <Fact label={t('Type')}>
@@ -130,61 +132,46 @@ function PieceDetailContent({
           )}
         </FactList>
       </SheetBody>
-      {isCustom && (
+      {isCustom && actions.isEnabled && (
         <SheetFooter>
-          <LockableButton
+          <ManageButton
             control={AdminControl.PIECES_DELETE_OPEN}
-            lockedReason={actions.isEnabled ? null : actions.lockedReason}
             className="w-full text-danger-11 hover:text-danger-11"
             size="default"
             onClick={actions.onDelete}
           >
             <Trash2 />
             {t('Delete piece')}
-          </LockableButton>
+          </ManageButton>
         </SheetFooter>
       )}
     </>
   );
 }
 
-function LockableButton({
+function ManageButton({
   control,
-  lockedReason,
   onClick,
   className,
   size = 'sm',
   children,
 }: {
   control?: AdminControl;
-  lockedReason: string | null;
   onClick: () => void;
   className?: string;
   size?: 'sm' | 'default';
   children: React.ReactNode;
 }) {
-  const button = (
+  return (
     <Button
       {...adminControl(control)}
       variant="outline"
       size={size}
       className={className}
-      disabled={lockedReason !== null}
       onClick={onClick}
     >
       {children}
     </Button>
-  );
-  if (lockedReason === null) {
-    return button;
-  }
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className={cn('inline-flex', className)}>{button}</span>
-      </TooltipTrigger>
-      <TooltipContent>{lockedReason}</TooltipContent>
-    </Tooltip>
   );
 }
 
@@ -207,7 +194,6 @@ export type PieceRowActions = {
   pinned: boolean;
   oauthStatus: OAuthStatus;
   isEnabled: boolean;
-  lockedReason: string;
   onTogglePin: () => void;
   onConfigureOAuth: () => void;
   onRemoveOAuth: () => void;

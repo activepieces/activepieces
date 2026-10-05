@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { Paperclip } from 'lucide-react';
 import * as React from 'react';
 
-import { SelectUtilButton } from '@/components/custom/select-util-button';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { inputClass } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,11 @@ function FileInput({
   defaultFileName,
   ref,
   onChange,
+  id,
+  disabled,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
+  'aria-label': ariaLabel,
   ...props
 }: FileInputProps) {
   const [fileName, setFileName] = React.useState<string | null>(null);
@@ -18,12 +23,17 @@ function FileInput({
 
   React.useImperativeHandle(ref, () => inputRef.current!);
 
+  const shownName = fileName || defaultFileName || null;
+
   return (
     <>
       <input
         type="file"
         className="hidden"
+        tabIndex={-1}
+        aria-hidden
         ref={inputRef}
+        disabled={disabled}
         {...props}
         onChange={(event) => {
           const file = event.target.files?.[0];
@@ -31,28 +41,27 @@ function FileInput({
           onChange?.(event);
         }}
       />
-      <div
+      <button
+        type="button"
+        id={id}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
         onClick={() => inputRef.current?.click()}
         className={cn(
           inputClass,
-          'flex cursor-pointer items-center',
+          'flex cursor-pointer items-center gap-2 text-left',
           className,
         )}
       >
-        <input
-          data-slot="input"
-          className={cn('grow cursor-pointer bg-transparent outline-hidden', {
-            'text-gray-11': !fileName,
-          })}
-          value={fileName || defaultFileName || t('Select a file')}
-          readOnly
-        />
-        <SelectUtilButton
-          onClick={(event) => event.preventDefault()}
-          tooltipText={fileName ? fileName : t('Select a file')}
-          Icon={Paperclip}
-        />
-      </div>
+        <TextWithTooltip tooltipMessage={shownName ?? ''}>
+          <span className={cn('min-w-0 grow', !shownName && 'text-gray-11')}>
+            {shownName ?? t('Select a file')}
+          </span>
+        </TextWithTooltip>
+        <Paperclip aria-hidden className="size-4 shrink-0 text-gray-11" />
+      </button>
     </>
   );
 }

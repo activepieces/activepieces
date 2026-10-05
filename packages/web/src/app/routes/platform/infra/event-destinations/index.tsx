@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
@@ -107,7 +108,7 @@ const EventDestinationsPage = () => {
     }),
   );
 
-  const menuItems = (row: DestinationRow): RowMenuItem[] => [
+  const menuItems = useStableCallback((row: DestinationRow): RowMenuItem[] => [
     {
       label: t('Edit'),
       icon: Pencil,
@@ -137,7 +138,11 @@ const EventDestinationsPage = () => {
       onSelect: () =>
         void eventDestinationsCollectionUtils.deleteWithUndo(row.destination),
     },
-  ];
+  ]);
+  const columns = useMemo(
+    () => eventDestinationColumns({ eventLabels, menuItems }),
+    [eventLabels, menuItems],
+  );
 
   const newButton = (
     <Button
@@ -157,7 +162,7 @@ const EventDestinationsPage = () => {
       )}
       emptyStateIcon={<Webhook />}
       emptyStateAction={newButton}
-      columns={eventDestinationColumns({ eventLabels, menuItems })}
+      columns={columns}
       page={{ data: rows, next: null, previous: null }}
       hidePagination={true}
       onRowClick={(row) => openEditor(row.destination)}

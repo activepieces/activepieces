@@ -2,7 +2,7 @@ import { ProjectType, UserWithMetaInformation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowUpRight, Bell, Folder, Pencil, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -96,36 +96,45 @@ export default function ProjectsPage() {
     await projectCollectionUtils.refetchProjects();
   };
 
-  const switchInto = async (project: ProjectRow) => {
-    await projectCollectionUtils.setCurrentProject(project.id);
-    navigate('/');
-  };
+  const switchInto = useCallback(
+    async (project: ProjectRow) => {
+      await projectCollectionUtils.setCurrentProject(project.id);
+      navigate('/');
+    },
+    [navigate],
+  );
 
-  const menuItems = (project: ProjectRow): RowMenuItem[] => [
-    {
-      label: t('Open project'),
-      icon: ArrowUpRight,
-      onSelect: () => switchInto(project),
-    },
-    {
-      label: t('Edit'),
-      icon: Pencil,
-      control: AdminControl.PROJECTS_EDIT_OPEN,
-      onSelect: () => setEditing(project),
-    },
-    { label: t('Alerts'), icon: Bell, onSelect: () => setOpenId(project.id) },
-    {
-      label: t('Delete'),
-      icon: Trash2,
-      destructive: true,
-      disabled: project.id === currentProjectId,
-      disabledReason: t('You are in this project. Switch to another first.'),
-      control: AdminControl.PROJECTS_DELETE_OPEN,
-      onSelect: () => setDeleting([project]),
-    },
-  ];
+  const menuItems = useCallback(
+    (project: ProjectRow): RowMenuItem[] => [
+      {
+        label: t('Open project'),
+        icon: ArrowUpRight,
+        onSelect: () => switchInto(project),
+      },
+      {
+        label: t('Edit'),
+        icon: Pencil,
+        control: AdminControl.PROJECTS_EDIT_OPEN,
+        onSelect: () => setEditing(project),
+      },
+      { label: t('Alerts'), icon: Bell, onSelect: () => setOpenId(project.id) },
+      {
+        label: t('Delete'),
+        icon: Trash2,
+        destructive: true,
+        disabled: project.id === currentProjectId,
+        disabledReason: t('You are in this project. Switch to another first.'),
+        control: AdminControl.PROJECTS_DELETE_OPEN,
+        onSelect: () => setDeleting([project]),
+      },
+    ],
+    [currentProjectId, switchInto],
+  );
 
-  const columns = projectsTableColumns({ menuItems });
+  const columns = useMemo(
+    () => projectsTableColumns({ menuItems }),
+    [menuItems],
+  );
 
   const bulkActions: BulkAction<ProjectRow>[] = [
     {

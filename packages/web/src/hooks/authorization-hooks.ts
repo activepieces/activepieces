@@ -1,22 +1,25 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, PlatformRole } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { authenticationApi } from '@/api/authentication-api';
-import { platformApi } from '@/api/platforms-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { currentPlatformQueryOptions } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 export const useAuthorization = (projectId?: string) => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
+  const queryClient = useQueryClient();
 
   const platformId = authenticationSession.getPlatformId();
   const scopedProjectId = projectId ?? authenticationSession.getProjectId();
   const { data: projectRole, isLoading } = useQuery({
     queryKey: ['project-role', scopedProjectId],
     queryFn: async () => {
-      const platform = await platformApi.getCurrentPlatform();
+      const platform = await queryClient.ensureQueryData(
+        currentPlatformQueryOptions(),
+      );
       if (platform.plan.projectRolesEnabled) {
         const projectRole = await authenticationApi.getCurrentProjectRole({
           projectId: scopedProjectId ?? '',

@@ -33,6 +33,7 @@ import { Button } from '@/components/ui/button';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { DeleteRoleDialog } from './delete-role-dialog';
@@ -81,7 +82,7 @@ const ProjectRolePage = () => {
   const openRole = (role: ProjectRole) =>
     navigate(`/platform/users/roles/${role.id}`);
 
-  const menuItems = (role: ProjectRole): RowMenuItem[] => {
+  const menuItems = useStableCallback((role: ProjectRole): RowMenuItem[] => {
     const isBuiltIn = role.type === RoleType.DEFAULT;
     return [
       {
@@ -107,74 +108,79 @@ const ProjectRolePage = () => {
         onSelect: () => setDeleting(role),
       },
     ];
-  };
+  });
 
-  const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
-    {
-      id: 'name',
-      size: 280,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Role')} />
-      ),
-      cell: ({ row }) => (
-        <NameCell
-          media={
-            <RoleAvatar
-              name={row.original.name}
-              tone={roleCopy.projectRoleTone(row.original.name)}
-              className="size-6 rounded-md text-xs"
-            />
-          }
-          title={row.original.name}
-        />
-      ),
-    },
-    {
-      id: 'type',
-      size: 112,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Type')} />
-      ),
-      cell: ({ row }) => (
-        <MutedCell>
-          {row.original.type === RoleType.DEFAULT ? t('Built in') : t('Custom')}
-        </MutedCell>
-      ),
-    },
-    {
-      id: 'summary',
-      size: 420,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('What it allows')} />
-      ),
-      cell: ({ row }) => (
-        <MutedCell>
-          {roleCopy.plainSummary({ permissions: row.original.permissions })}
-        </MutedCell>
-      ),
-    },
-    {
-      id: 'people',
-      size: 96,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('People')}
-          className="justify-end"
-        />
-      ),
-      cell: ({ row }) => <NumberCell value={row.original.userCount} />,
-    },
-    {
-      id: 'actions',
-      size: 56,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <RowMenu items={menuItems(row.original)} />
-        </div>
-      ),
-    },
-  ];
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<ProjectRole>>[] => [
+      {
+        id: 'name',
+        size: 280,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Role')} />
+        ),
+        cell: ({ row }) => (
+          <NameCell
+            media={
+              <RoleAvatar
+                name={row.original.name}
+                tone={roleCopy.projectRoleTone(row.original.name)}
+                className="size-6 rounded-md text-xs"
+              />
+            }
+            title={row.original.name}
+          />
+        ),
+      },
+      {
+        id: 'type',
+        size: 112,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Type')} />
+        ),
+        cell: ({ row }) => (
+          <MutedCell>
+            {row.original.type === RoleType.DEFAULT
+              ? t('Built in')
+              : t('Custom')}
+          </MutedCell>
+        ),
+      },
+      {
+        id: 'summary',
+        size: 420,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('What it allows')} />
+        ),
+        cell: ({ row }) => (
+          <MutedCell>
+            {roleCopy.plainSummary({ permissions: row.original.permissions })}
+          </MutedCell>
+        ),
+      },
+      {
+        id: 'people',
+        size: 96,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('People')}
+            className="justify-end"
+          />
+        ),
+        cell: ({ row }) => <NumberCell value={row.original.userCount} />,
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <RowMenu items={menuItems(row.original)} />
+          </div>
+        ),
+      },
+    ],
+    [menuItems],
+  );
 
   const filtered = search.trim().length > 0 || kind !== 'all';
 

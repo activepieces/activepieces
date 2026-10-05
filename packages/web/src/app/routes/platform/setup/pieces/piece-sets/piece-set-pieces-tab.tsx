@@ -123,7 +123,7 @@ export const PieceSetPiecesTab = ({
       )}
     >
       <ListToolbar
-        className="overflow-x-auto border-b p-5"
+        className="border-b p-5"
         search={
           <ListSearch
             placeholder={t('Search pieces')}

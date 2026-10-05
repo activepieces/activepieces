@@ -2,7 +2,7 @@ import { SigningKey } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Download, Key, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -42,73 +42,78 @@ export const SigningKeysPanel = ({
     </Button>
   );
 
-  const columns: ColumnDef<RowDataWithActions<SigningKey>>[] = [
-    {
-      accessorKey: 'displayName',
-      size: 400,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Key')} />
-      ),
-      cell: ({ row }) => (
-        <NameCell
-          stacked
-          title={row.original.displayName}
-          sub={
-            <span className="flex min-w-0 items-center gap-1">
-              <span className="truncate font-mono">{row.original.id}</span>
-              <CopyButton
-                textToCopy={row.original.id}
-                variant="ghost"
-                size="icon-xs"
-                tooltipSide="right"
-                aria-label={t('Copy key ID')}
-              />
-            </span>
-          }
-        />
-      ),
-    },
-    {
-      accessorKey: 'algorithm',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Algorithm')} />
-      ),
-      cell: ({ row }) => <MutedCell>{row.original.algorithm}</MutedCell>,
-    },
-    {
-      accessorKey: 'created',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
-      ),
-      cell: ({ row }) => <DateCell value={row.original.created} mode="short" />,
-    },
-    {
-      id: 'actions',
-      size: 56,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <RowMenu
-            items={[
-              {
-                label: t('Download public key'),
-                icon: Download,
-                onSelect: () => downloadPublicKey(row.original),
-              },
-              {
-                label: t('Delete'),
-                icon: Trash2,
-                destructive: true,
-                control: AdminControl.EMBEDDING_SIGNING_KEY_DELETE_OPEN,
-                onSelect: () => setDeleting(row.original),
-              },
-            ]}
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<SigningKey>>[] => [
+      {
+        accessorKey: 'displayName',
+        size: 400,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Key')} />
+        ),
+        cell: ({ row }) => (
+          <NameCell
+            stacked
+            title={row.original.displayName}
+            sub={
+              <span className="flex min-w-0 items-center gap-1">
+                <span className="truncate font-mono">{row.original.id}</span>
+                <CopyButton
+                  textToCopy={row.original.id}
+                  variant="ghost"
+                  size="icon-xs"
+                  tooltipSide="right"
+                  aria-label={t('Copy key ID')}
+                />
+              </span>
+            }
           />
-        </div>
-      ),
-    },
-  ];
+        ),
+      },
+      {
+        accessorKey: 'algorithm',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Algorithm')} />
+        ),
+        cell: ({ row }) => <MutedCell>{row.original.algorithm}</MutedCell>,
+      },
+      {
+        accessorKey: 'created',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Created')} />
+        ),
+        cell: ({ row }) => (
+          <DateCell value={row.original.created} mode="short" />
+        ),
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <RowMenu
+              items={[
+                {
+                  label: t('Download public key'),
+                  icon: Download,
+                  onSelect: () => downloadPublicKey(row.original),
+                },
+                {
+                  label: t('Delete'),
+                  icon: Trash2,
+                  destructive: true,
+                  control: AdminControl.EMBEDDING_SIGNING_KEY_DELETE_OPEN,
+                  onSelect: () => setDeleting(row.original),
+                },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <PageSection

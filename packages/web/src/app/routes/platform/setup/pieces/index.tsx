@@ -7,7 +7,7 @@ import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Crown, KeyRound, Package, Pin, PinOff, Trash2 } from 'lucide-react';
+import { KeyRound, Package, Pin, PinOff, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -39,18 +39,13 @@ import {
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
 import { Page } from '@/components/custom/page';
-import { Button } from '@/components/ui/button';
+import { SettingRow, SettingRows } from '@/components/custom/panel';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  PlanBadge,
-  PLATFORM_FEATURES,
-  TIER_LABELS,
-  useFeatureGate,
-} from '@/features/billing';
+import { PlanLockedPanel, PLATFORM_FEATURES } from '@/features/billing';
 import { oauthAppsQueries, PiecesOAuth2AppsMap } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -61,6 +56,7 @@ import {
 } from '@/features/pieces';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl } from '@/lib/admin-control';
 
 export const PiecesListTab = () => {
@@ -132,162 +128,182 @@ export const PiecesListTab = () => {
 
   const openPiece =
     allPieces.find((piece) => piece.name === openPieceName) ?? null;
-  const lockedReason = t('Available on the {tier} plan', {
-    tier: TIER_LABELS[PLATFORM_FEATURES.pieces.tier],
-  });
 
   const onOAuthChanged = () => {
     refetchPieces();
     refetchOAuthApps();
   };
 
-  const actionsFor = (piece: PieceMetadataModelSummary): PieceRowActions => ({
-    pinned: platform.pinnedPieces.includes(piece.name),
-    oauthStatus: oauthStatusOf({ piece, oauthApps }),
-    isEnabled,
-    lockedReason,
-    onTogglePin: () =>
-      togglePin({
-        pieceName: piece.name,
-        displayName: piece.displayName,
-        pinned: !platform.pinnedPieces.includes(piece.name),
-      }),
-    onConfigureOAuth: () =>
-      setOauthTarget({ name: piece.name, displayName: piece.displayName }),
-    onRemoveOAuth: () =>
-      setRemoveOauthTarget({
-        name: piece.name,
-        displayName: piece.displayName,
-      }),
-    onDelete: () => setDeleteTarget(piece),
-  });
+  const actionsFor = useStableCallback(
+    (piece: PieceMetadataModelSummary): PieceRowActions => ({
+      pinned: platform.pinnedPieces.includes(piece.name),
+      oauthStatus: oauthStatusOf({ piece, oauthApps }),
+      isEnabled,
+      onTogglePin: () =>
+        togglePin({
+          pieceName: piece.name,
+          displayName: piece.displayName,
+          pinned: !platform.pinnedPieces.includes(piece.name),
+        }),
+      onConfigureOAuth: () =>
+        setOauthTarget({ name: piece.name, displayName: piece.displayName }),
+      onRemoveOAuth: () =>
+        setRemoveOauthTarget({
+          name: piece.name,
+          displayName: piece.displayName,
+        }),
+      onDelete: () => setDeleteTarget(piece),
+    }),
+  );
 
-  const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
-    {
-      accessorKey: 'displayName',
-      size: 360,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Piece')} />
-      ),
-      cell: ({ row }) => (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="w-fit max-w-full min-w-0">
-              <NameCell
-                media={
-                  <PieceIcon
-                    size="xs"
-                    border
-                    displayName={row.original.displayName}
-                    logoUrl={row.original.logoUrl}
-                    showTooltip={false}
-                  />
-                }
-                title={row.original.displayName}
-              />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" align="start" className="font-mono">
-            {row.original.name}
-          </TooltipContent>
-        </Tooltip>
-      ),
-    },
-    {
-      accessorKey: 'version',
-      size: 112,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Version')} />
-      ),
-      cell: ({ row }) => (
-        <MutedCell className="tabular-nums">{row.original.version}</MutedCell>
-      ),
-    },
-    {
-      id: 'components',
-      size: 208,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Actions and triggers')}
-        />
-      ),
-      cell: ({ row }) => (
-        <MutedCell className="tabular-nums">
-          {componentsSummary({
-            actions: row.original.actions,
-            triggers: row.original.triggers,
-          })}
-        </MutedCell>
-      ),
-    },
-    {
-      accessorKey: 'projectUsage',
-      size: 128,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Used in projects')}
-          className="justify-end"
-        />
-      ),
-      cell: ({ row }) => <NumberCell value={row.original.projectUsage} />,
-    },
-    {
-      id: 'oauth',
-      size: 152,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('OAuth app')} />
-      ),
-      cell: ({ row }) => (
-        <OAuthStatusCell
-          status={oauthStatusOf({ piece: row.original, oauthApps })}
-        />
-      ),
-    },
-    {
-      id: 'actions',
-      size: 56,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <PieceRowMenu
-            actions={actionsFor(row.original)}
-            piece={row.original}
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] => [
+      {
+        accessorKey: 'displayName',
+        size: 360,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Piece')} />
+        ),
+        cell: ({ row }) => (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-fit max-w-full min-w-0">
+                <NameCell
+                  media={
+                    <PieceIcon
+                      size="xs"
+                      border
+                      displayName={row.original.displayName}
+                      logoUrl={row.original.logoUrl}
+                      showTooltip={false}
+                    />
+                  }
+                  title={row.original.displayName}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="start" className="font-mono">
+              {row.original.name}
+            </TooltipContent>
+          </Tooltip>
+        ),
+      },
+      {
+        accessorKey: 'version',
+        size: 112,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Version')} />
+        ),
+        cell: ({ row }) => (
+          <MutedCell className="tabular-nums">{row.original.version}</MutedCell>
+        ),
+      },
+      {
+        id: 'components',
+        size: 208,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Actions and triggers')}
           />
-        </div>
-      ),
-    },
-  ];
+        ),
+        cell: ({ row }) => (
+          <MutedCell className="tabular-nums">
+            {componentsSummary({
+              actions: row.original.actions,
+              triggers: row.original.triggers,
+            })}
+          </MutedCell>
+        ),
+      },
+      {
+        accessorKey: 'projectUsage',
+        size: 128,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Used in projects')}
+            className="justify-end"
+          />
+        ),
+        cell: ({ row }) => <NumberCell value={row.original.projectUsage} />,
+      },
+      {
+        id: 'oauth',
+        size: 152,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('OAuth app')} />
+        ),
+        cell: ({ row }) => (
+          <OAuthStatusCell
+            status={oauthStatusOf({ piece: row.original, oauthApps })}
+          />
+        ),
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <PieceRowMenu
+              actions={actionsFor(row.original)}
+              piece={row.original}
+            />
+          </div>
+        ),
+      },
+    ],
+    [oauthApps, actionsFor],
+  );
 
   const filtered = search.trim() !== '' || segment !== 'all';
-  const upgradeGate = useFeatureGate({
-    locked: !isEnabled,
-    feature: PLATFORM_FEATURES.pieces,
-  });
 
   return (
     <Page fill>
-      <AdminPageHeader
-        page="pieces"
-        badge={
-          isEnabled ? undefined : (
-            <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
-          )
-        }
-      >
-        {!isEnabled && (
-          <Button variant="outline" onClick={upgradeGate.open}>
-            <Crown />
-            {t('Upgrade')}
-          </Button>
-        )}
-        {upgradeGate.dialog}
+      <AdminPageHeader page="pieces">
         <PiecesHeaderMenu />
         <InstallPieceDialog
           onInstallPiece={() => refetchPieces()}
           scope={PieceScope.PLATFORM}
         />
       </AdminPageHeader>
+      {!isEnabled && (
+        <PlanLockedPanel
+          feature={PLATFORM_FEATURES.pieces}
+          locked
+          whenLocked="preview"
+          title={t('Piece management')}
+          description={t(
+            'Browsing the catalog is free. Managing it comes with the plan.',
+          )}
+          flush
+          className="shrink-0"
+        >
+          <SettingRows>
+            <SettingRow
+              icon={<Pin />}
+              title={t('Pin to step picker')}
+              description={t(
+                'Put the pieces your builders use most at the top of the step picker.',
+              )}
+            />
+            <SettingRow
+              icon={<KeyRound />}
+              title={t('Your own OAuth apps')}
+              description={t(
+                'Connections sign in through your OAuth app instead of ours.',
+              )}
+            />
+            <SettingRow
+              icon={<Package />}
+              title={t('Private pieces')}
+              description={t(
+                'Install packed archives built for your internal systems, and remove custom pieces.',
+              )}
+            />
+          </SettingRows>
+        </PlanLockedPanel>
+      )}
       <ListToolbar
         search={<ListSearch placeholder={t('Search pieces')} />}
         tabs={
@@ -403,8 +419,7 @@ function PieceRowMenu({
           icon: actions.pinned ? PinOff : Pin,
           onSelect: actions.onTogglePin,
           control: AdminControl.PIECES_PIN_RUN,
-          disabled: locked,
-          disabledReason: actions.lockedReason,
+          hidden: locked,
         },
         {
           label:
@@ -414,9 +429,7 @@ function PieceRowMenu({
           icon: KeyRound,
           onSelect: actions.onConfigureOAuth,
           control: AdminControl.PIECES_OAUTH_CONFIGURE_OPEN,
-          hidden: actions.oauthStatus === 'none',
-          disabled: locked,
-          disabledReason: actions.lockedReason,
+          hidden: locked || actions.oauthStatus === 'none',
         },
         {
           label: t('Delete piece'),
@@ -424,9 +437,7 @@ function PieceRowMenu({
           onSelect: actions.onDelete,
           control: AdminControl.PIECES_DELETE_OPEN,
           destructive: true,
-          hidden: piece.pieceType !== PieceType.CUSTOM,
-          disabled: locked,
-          disabledReason: actions.lockedReason,
+          hidden: locked || piece.pieceType !== PieceType.CUSTOM,
         },
       ]}
     />

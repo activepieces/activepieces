@@ -104,20 +104,22 @@ function CountTabs<T extends string>({
           onValueChange(match.value);
         }
       }}
-      className={className}
+      className={cn('max-w-full min-w-0', className)}
     >
-      <TabsList>
-        {options.map((option) => (
-          <TabsTrigger key={option.value} value={option.value}>
-            {option.label}
-            {option.count !== undefined && (
-              <span className="text-gray-11 tabular-nums">
-                {listFormat.count(option.count)}
-              </span>
-            )}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="max-w-full scrollbar-none overflow-x-auto rounded-xl">
+        <TabsList className="w-max">
+          {options.map((option) => (
+            <TabsTrigger key={option.value} value={option.value}>
+              {option.label}
+              {option.count !== undefined && (
+                <span className="text-gray-11 tabular-nums">
+                  {listFormat.count(option.count)}
+                </span>
+              )}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
     </Tabs>
   );
 }

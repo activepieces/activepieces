@@ -13,11 +13,7 @@ import { Fact, FactList } from '@/components/custom/fact-list';
 import { useGuardedClose } from '@/components/custom/leave-without-saving';
 import { listFormat } from '@/components/custom/list/list-format';
 import { Panel } from '@/components/custom/panel';
-import {
-  ChipListField,
-  isToastInteraction,
-  SaveBar,
-} from '@/components/custom/settings-parts';
+import { ChipListField, SaveBar } from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -101,10 +97,6 @@ function ProjectSheetContent({
     onClose,
   });
   const guardDismiss = (event: Event) => {
-    if (isToastInteraction(event)) {
-      event.preventDefault();
-      return;
-    }
     if (limit.dirty) {
       event.preventDefault();
       requestClose();

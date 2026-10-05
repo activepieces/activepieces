@@ -2,6 +2,7 @@ import { AlertDialog as AlertDialogPrimitive } from 'radix-ui';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useMenuFocusReturn } from '@/hooks/use-menu-focus-return';
 import { cn } from '@/lib/utils';
 
 function AlertDialog({
@@ -45,8 +46,11 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = 'md',
+  onCloseAutoFocus,
+  children,
   ...props
 }: AlertDialogContentProps) {
+  const focusReturn = useMenuFocusReturn({ onCloseAutoFocus });
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
@@ -57,8 +61,12 @@ function AlertDialogContent({
           'group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl bg-panel p-5 text-gray-12 shadow-over duration-100 outline-none data-[size=md]:max-w-lg data-[size=sm]:max-w-[400px] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
           className,
         )}
+        onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         {...props}
-      />
+      >
+        {focusReturn.capture}
+        {children}
+      </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   );
 }

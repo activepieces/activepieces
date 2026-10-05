@@ -41,6 +41,7 @@ import {
   templatesMutations,
 } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
@@ -91,119 +92,126 @@ const PlatformTemplatesPage = () => {
     [knownCategories, templates, category],
   );
 
-  const setTemplateStatus = ({
-    template,
-    nextStatus,
-  }: {
-    template: Template;
-    nextStatus: TemplateStatus;
-  }) =>
-    setStatus({
+  const setTemplateStatus = useStableCallback(
+    ({
       template,
-      status: nextStatus,
-      previousStatus: template.status,
-    });
+      nextStatus,
+    }: {
+      template: Template;
+      nextStatus: TemplateStatus;
+    }) =>
+      setStatus({
+        template,
+        status: nextStatus,
+        previousStatus: template.status,
+      }),
+  );
 
-  const columns: ColumnDef<RowDataWithActions<Template>>[] = [
-    {
-      accessorKey: 'name',
-      size: 360,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Template')} />
-      ),
-      cell: ({ row }) => (
-        <NameCell
-          stacked
-          title={row.original.name}
-          badge={
-            row.original.status === TemplateStatus.ARCHIVED ? (
-              <Badge variant="outline">{t('Archived')}</Badge>
-            ) : undefined
-          }
-          sub={row.original.summary}
-        />
-      ),
-    },
-    {
-      id: 'pieces',
-      size: 136,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Pieces')} />
-      ),
-      cell: ({ row }) => <TemplatePieces names={row.original.pieces} />,
-    },
-    {
-      id: 'categories',
-      size: 220,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Categories')} />
-      ),
-      cell: ({ row }) => <TagsCell tags={row.original.categories} />,
-    },
-    {
-      accessorKey: 'author',
-      size: 160,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Author')} />
-      ),
-      cell: ({ row }) => <MutedCell>{row.original.author}</MutedCell>,
-    },
-    {
-      accessorKey: 'created',
-      size: 112,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
-      ),
-      cell: ({ row }) => <DateCell value={row.original.created} mode="short" />,
-    },
-    {
-      accessorKey: 'updated',
-      size: 132,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Updated')} />
-      ),
-      cell: ({ row }) => <DateCell value={row.original.updated} />,
-    },
-    {
-      id: 'actions',
-      size: 56,
-      cell: ({ row }) => {
-        const archived = row.original.status === TemplateStatus.ARCHIVED;
-        return (
-          <div className="flex justify-end">
-            <RowMenu
-              items={[
-                {
-                  label: t('Edit'),
-                  icon: Pencil,
-                  onSelect: () => setEditing(row.original),
-                  control: AdminControl.TEMPLATES_EDIT_OPEN,
-                },
-                {
-                  label: archived ? t('Publish') : t('Archive'),
-                  icon: archived ? CheckCircle2 : Archive,
-                  onSelect: () =>
-                    setTemplateStatus({
-                      template: row.original,
-                      nextStatus: archived
-                        ? TemplateStatus.PUBLISHED
-                        : TemplateStatus.ARCHIVED,
-                    }),
-                },
-                {
-                  label: t('Delete'),
-                  icon: Trash2,
-                  destructive: true,
-                  onSelect: () => setDeleting([row.original]),
-                  control: AdminControl.TEMPLATES_DELETE_OPEN,
-                },
-              ]}
-            />
-          </div>
-        );
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<Template>>[] => [
+      {
+        accessorKey: 'name',
+        size: 360,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Template')} />
+        ),
+        cell: ({ row }) => (
+          <NameCell
+            stacked
+            title={row.original.name}
+            badge={
+              row.original.status === TemplateStatus.ARCHIVED ? (
+                <Badge variant="outline">{t('Archived')}</Badge>
+              ) : undefined
+            }
+            sub={row.original.summary}
+          />
+        ),
       },
-    },
-  ];
+      {
+        id: 'pieces',
+        size: 136,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Pieces')} />
+        ),
+        cell: ({ row }) => <TemplatePieces names={row.original.pieces} />,
+      },
+      {
+        id: 'categories',
+        size: 220,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Categories')} />
+        ),
+        cell: ({ row }) => <TagsCell tags={row.original.categories} />,
+      },
+      {
+        accessorKey: 'author',
+        size: 160,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Author')} />
+        ),
+        cell: ({ row }) => <MutedCell>{row.original.author}</MutedCell>,
+      },
+      {
+        accessorKey: 'created',
+        size: 112,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Created')} />
+        ),
+        cell: ({ row }) => (
+          <DateCell value={row.original.created} mode="short" />
+        ),
+      },
+      {
+        accessorKey: 'updated',
+        size: 132,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Updated')} />
+        ),
+        cell: ({ row }) => <DateCell value={row.original.updated} />,
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => {
+          const archived = row.original.status === TemplateStatus.ARCHIVED;
+          return (
+            <div className="flex justify-end">
+              <RowMenu
+                items={[
+                  {
+                    label: t('Edit'),
+                    icon: Pencil,
+                    onSelect: () => setEditing(row.original),
+                    control: AdminControl.TEMPLATES_EDIT_OPEN,
+                  },
+                  {
+                    label: archived ? t('Publish') : t('Archive'),
+                    icon: archived ? CheckCircle2 : Archive,
+                    onSelect: () =>
+                      setTemplateStatus({
+                        template: row.original,
+                        nextStatus: archived
+                          ? TemplateStatus.PUBLISHED
+                          : TemplateStatus.ARCHIVED,
+                      }),
+                  },
+                  {
+                    label: t('Delete'),
+                    icon: Trash2,
+                    destructive: true,
+                    onSelect: () => setDeleting([row.original]),
+                    control: AdminControl.TEMPLATES_DELETE_OPEN,
+                  },
+                ]}
+              />
+            </div>
+          );
+        },
+      },
+    ],
+    [setTemplateStatus],
+  );
 
   const bulkActions: BulkAction<Template>[] = [
     {

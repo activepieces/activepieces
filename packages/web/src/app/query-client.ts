@@ -6,6 +6,7 @@ import { useManagePlanDialogStore } from '@/features/billing';
 import { api } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 import { mutationFeedback } from '@/lib/mutation-feedback';
+import { queryRetry } from '@/lib/query-retry';
 
 function isHandledSessionExpiry(error: unknown): boolean {
   if (!api.isError(error)) {
@@ -39,6 +40,12 @@ function reportQueryFailure(error: unknown, queryHash: string): void {
 }
 
 export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: queryRetry.shouldRetry,
+      retryDelay: queryRetry.delay,
+    },
+  },
   queryCache: new QueryCache({
     onError: (error, query) => {
       reportQueryFailure(error, query.queryHash);

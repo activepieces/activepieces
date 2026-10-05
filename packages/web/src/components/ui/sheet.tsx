@@ -3,6 +3,8 @@ import { Dialog as SheetPrimitive } from 'radix-ui';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useMenuFocusReturn } from '@/hooks/use-menu-focus-return';
+import { toastInteraction } from '@/lib/toast-interaction';
 import { cn } from '@/lib/utils';
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -50,6 +52,8 @@ function SheetContent({
   size = 'md',
   showCloseButton = true,
   overlayClassName,
+  onInteractOutside,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left';
@@ -57,6 +61,7 @@ function SheetContent({
   showCloseButton?: boolean;
   overlayClassName?: string;
 }) {
+  const focusReturn = useMenuFocusReturn({ onCloseAutoFocus });
   return (
     <SheetPortal>
       <SheetOverlay className={overlayClassName} />
@@ -69,8 +74,11 @@ function SheetContent({
           (side === 'left' || side === 'right') && SHEET_SIZES[size],
           className,
         )}
+        onInteractOutside={toastInteraction.ignore(onInteractOutside)}
+        onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         {...props}
       >
+        {focusReturn.capture}
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close data-slot="sheet-close" asChild>

@@ -3,6 +3,8 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useMenuFocusReturn } from '@/hooks/use-menu-focus-return';
+import { toastInteraction } from '@/lib/toast-interaction';
 import { cn } from '@/lib/utils';
 
 function Dialog({
@@ -53,8 +55,11 @@ function DialogContent({
   showCloseButton = true,
   showOverlay = true,
   overlayClassName,
+  onInteractOutside,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & DialogContentProps) {
+  const focusReturn = useMenuFocusReturn({ onCloseAutoFocus });
   return (
     <DialogPortal>
       {showOverlay && <DialogOverlay className={overlayClassName} />}
@@ -66,8 +71,11 @@ function DialogContent({
           DIALOG_SIZES[size],
           className,
         )}
+        onInteractOutside={toastInteraction.ignore(onInteractOutside)}
+        onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         {...props}
       >
+        {focusReturn.capture}
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>

@@ -4477,5 +4477,12 @@
   "Select all projects on this page": "Select all projects on this page",
   "Select all models on this page": "Select all models on this page",
   "Change icon": "Change icon",
-  "Drag to reorder": "Drag to reorder"
+  "Drag to reorder": "Drag to reorder",
+  "Browsing the catalog is free. Managing it comes with the plan.": "Browsing the catalog is free. Managing it comes with the plan.",
+  "Put the pieces your builders use most at the top of the step picker.": "Put the pieces your builders use most at the top of the step picker.",
+  "Your own OAuth apps": "Your own OAuth apps",
+  "Connections sign in through your OAuth app instead of ours.": "Connections sign in through your OAuth app instead of ours.",
+  "Private pieces": "Private pieces",
+  "Install packed archives built for your internal systems, and remove custom pieces.": "Install packed archives built for your internal systems, and remove custom pieces.",
+  "Manage this piece": "Manage this piece"
 }

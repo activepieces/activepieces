@@ -15,10 +15,7 @@ import { Fact, FactList } from '@/components/custom/fact-list';
 import { useGuardedClose } from '@/components/custom/leave-without-saving';
 import { InitialsTile } from '@/components/custom/list/list-cells';
 import { listFormat } from '@/components/custom/list/list-format';
-import {
-  isToastInteraction,
-  SaveBar,
-} from '@/components/custom/settings-parts';
+import { SaveBar } from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -80,14 +77,7 @@ export function UserSheet({
         />
       )}
       {row?.type === 'invitation' && (
-        <SheetContent
-          size="sm"
-          onInteractOutside={(event) => {
-            if (isToastInteraction(event)) {
-              event.preventDefault();
-            }
-          }}
-        >
+        <SheetContent size="sm">
           <PersonSheetHeader row={row} />
           <SheetBody>
             <FactList>
@@ -168,10 +158,6 @@ function UserSheetContent({
   const serverError = form.formState.errors.root?.serverError?.message;
   const { requestClose, dialog } = useGuardedClose({ dirty, onClose });
   const guardDismiss = (event: Event) => {
-    if (isToastInteraction(event)) {
-      event.preventDefault();
-      return;
-    }
     if (dirty) {
       event.preventDefault();
       requestClose();
