@@ -8,6 +8,22 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Supabase New Row only fires for its own table, and Update Row leaves untouched fields alone
+
+From Supabase 0.5.0, New Row only starts a flow for INSERT events on the table and schema chosen in the trigger. Before, it ran for any event posted to its URL, so a webhook set up on several tables or for updates and deletes started the flow for all of them, and updates and deletes failed the run. Other tables and other event types are now skipped. If the new optional Webhook Secret is set, a request without a matching `x-webhook-secret` header fails the run.
+
+Update Row no longer writes values the user did not set. Boolean columns become a Keep current value / True / False choice, and JSON and list columns left empty are no longer written as `{}` and `[]`. A value that resolves to empty or null, such as a mapped field that is null in the trigger data, is skipped rather than written as NULL. An Update Row step with nothing left to write now fails with `Fill in at least one field to update.` instead of sending an empty update.
+
+The connection check now asks Supabase whether the API key is valid. A wrong key used to pass the check and only failed when a step ran. Self-hosted and custom-domain project URLs, and the new `sb_publishable_…` and `sb_secret_…` keys, are now accepted.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### What you need to do
+
+- If one Supabase webhook URL served several tables, add one New Row trigger per table and point each table's webhook at its own trigger.
+- Open each Update Row step after upgrading. Steps saved earlier stored `false` for every boolean column, and they keep writing `false` until you set those columns to Keep current value. A JSON or list column you cleared by entering `{}` or `[]` is no longer cleared; send that value with the Custom API Call action instead.
+- Connections that were saved with a wrong key keep failing as before; replace the key with one from Project Settings → API Keys.
+
 #### Helm chart 0.5.0 uses the cluster's default StorageClass again
 
 Chart 0.4.0 set the app's cache volume to the `local-path` StorageClass whenever `persistence.storageClassName` was unset, which only exists on k3s-style clusters, so new installs elsewhere stayed `Pending`. From 0.5.0 an unset value uses the cluster's default StorageClass again, as chart 0.3.x did. A StatefulSet's volume class cannot change after it is created, so `helm upgrade` keeps the class your release already uses.
