@@ -14,6 +14,7 @@ import { z } from 'zod';
 
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -165,36 +166,27 @@ function ConnectProviderForm({
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
                   <FormLabel>{t('Provider')}</FormLabel>
-                  <Select
+                  <SearchableSelect
                     value={field.value}
-                    onValueChange={(selected) => {
-                      const next = selected as AIProviderName;
+                    placeholder={t('Select provider')}
+                    disabled={editing !== undefined}
+                    options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
+                      value: candidate.provider,
+                      label: candidate.name,
+                    }))}
+                    valuesRendering={(value) => (
+                      <ProviderOption provider={value} />
+                    )}
+                    onChange={(next) => {
+                      if (next === null) {
+                        return;
+                      }
                       field.onChange(next);
                       form.setValue('credentials', emptyCredentialsOf(next));
                       form.setValue('headers', {});
                       form.setValue('name', defaultNameOf(next));
                     }}
-                    disabled={editing !== undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Select provider')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SUPPORTED_AI_PROVIDERS.map((candidate) => (
-                        <SelectItem
-                          key={candidate.provider}
-                          value={candidate.provider}
-                        >
-                          <div className="flex items-center gap-2">
-                            <ProviderLogo info={candidate} size="sm" />
-                            <span>{candidate.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -361,6 +353,21 @@ function SecretInput({
       >
         {visible ? <EyeOff /> : <Eye />}
       </Button>
+    </div>
+  );
+}
+
+function ProviderOption({ provider }: { provider: unknown }) {
+  const info = SUPPORTED_AI_PROVIDERS.find(
+    (candidate) => candidate.provider === provider,
+  );
+  if (!info) {
+    return null;
+  }
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <ProviderLogo info={info} size="sm" />
+      <span className="truncate">{info.name}</span>
     </div>
   );
 }

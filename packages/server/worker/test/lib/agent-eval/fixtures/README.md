@@ -70,6 +70,8 @@ runs the chat turn(s), and checks the result with **assertions** (deterministic)
 | `maxQuestionCards` | `n`, optional `toolNames[]` | At most `n` question cards shown. By default counts any tool whose name matches `question` or `quick_repl`; override with `toolNames` to count specific tools. |
 | `calledBefore` | `a`, `b` | Tool `a` was called before tool `b` (fails if either never ran). |
 | `reachedToolWithin` | `toolName`, `n` | `toolName` was first called at tool-call order ≤ `n`. |
+| `neverCalledTool` | `toolName` | `toolName` was never called. |
+| `noToolArgMatches` | `pattern`, optional `toolName` | No call (of `toolName`, if set) had arguments matching the case-insensitive regex `pattern`. Use it for hard "never sent to X" checks. |
 
 ## Judge dimensions (subjective quality)
 
