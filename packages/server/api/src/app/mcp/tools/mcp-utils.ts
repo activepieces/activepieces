@@ -252,6 +252,15 @@ async function dropUnknownInputProps(params: DetectUnknownInputPropsParams): Pro
     return { input: knownInput, unknownKeys, message }
 }
 
+async function keepKnownInputProps({ callerInput, ...params }: DetectUnknownInputPropsParams & { callerInput: Record<string, unknown> }): Promise<{ input: Record<string, unknown>, error: McpToolResult | null }> {
+    const { input, unknownKeys } = await dropUnknownInputProps(params)
+    const callerSentUnknownKey = unknownKeys.some((key) => key in callerInput)
+    if (callerSentUnknownKey) {
+        return { input, error: await rejectUnknownInputProps({ ...params, input: callerInput }) }
+    }
+    return { input, error: null }
+}
+
 const MAX_PROP_DEPTH = 3
 
 function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
@@ -815,6 +824,7 @@ export const mcpUtils = {
     detectUnknownInputProps,
     rejectUnknownInputProps,
     dropUnknownInputProps,
+    keepKnownInputProps,
     buildPropSummaries,
     buildExampleInput,
     buildRequiredInputs,
