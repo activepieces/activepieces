@@ -183,8 +183,12 @@ const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
     empty_branch: 'Empty Branches',
 }
 
+function blockingIssues(issues: ValidationIssue[]): ValidationIssue[] {
+    return issues.filter(i => i.severity !== 'info')
+}
+
 function hasNoBlockingIssues(issues: ValidationIssue[]): boolean {
-    return issues.every(i => i.severity === 'info')
+    return blockingIssues(issues).length === 0
 }
 
 function formatInfoNotes(infoIssues: ValidationIssue[]): string[] {
@@ -251,5 +255,5 @@ type ValidationResult = {
 
 export const flowValidation = {
     validateFlow,
-    hasNoBlockingIssues,
+    blockingIssues,
 }

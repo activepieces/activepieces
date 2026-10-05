@@ -1,5 +1,4 @@
-import { apId } from '@activepieces/core-utils'
-import { FlowActionType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowActionType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -8,6 +7,7 @@ import { apCheckSolutionTool } from '../../../../src/app/mcp/tools/ap-check-solu
 import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
 import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
 import { db } from '../../../helpers/db'
+import { mockProjectScopedMcpServer } from '../../../helpers/mcp-flow'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -107,10 +107,11 @@ describe('ap_check_solution', () => {
         await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { orderId: '{{trigger.body.id}}' }, waitForResponse: true })
 
         const result = await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })
+        const report = structured(result)
 
-        expect(structured(result).flowCount).toBe(2)
-        expect(structured(result).issues).toEqual([])
-        expect(structured(result).ok).toBe(true)
+        expect(report.flowCount).toBe(2)
+        expect(report.issues).toEqual([])
+        expect(report.ok).toBe(true)
         expect(text(result)).toContain('every connection checks out')
     })
 
@@ -119,7 +120,7 @@ describe('ap_check_solution', () => {
         const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })
         await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { customer: 'x' }, waitForResponse: true })
 
-        const messages = structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
+        const messages = await issueMessages(mcp)
 
         expect(messages).toContainEqual(expect.stringContaining('does not send orderId'))
         expect(messages).toContainEqual(expect.stringContaining('has no Return Response step'))
@@ -136,7 +137,7 @@ describe('ap_check_solution', () => {
             steps: [],
         })
 
-        const messages = structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
+        const messages = await issueMessages(mcp)
 
         expect(messages).toContainEqual(expect.stringContaining('writes fields the table does not have: not_a_field'))
         expect(messages).toContainEqual(expect.stringContaining('targets a flow that does not exist'))
@@ -146,12 +147,7 @@ describe('ap_check_solution', () => {
     it('reports a call with no payload and a string "true" wait, as the action treats them', async () => {
         const { mcp, table } = await createSolutionBase()
         const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })
-        await apBuildFlowTool({ mcp }, log).execute({
-            flowName: 'Receive order',
-            folderName: SOLUTION_FOLDER,
-            trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
-            steps: [{ type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflow.externalId, mode: 'simple', flowProps: {}, waitForResponse: 'true' } }],
-        })
+        await buildFlow({ mcp, flowName: 'Receive order', steps: [{ type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflow.externalId, mode: 'simple', flowProps: {}, waitForResponse: 'true' } }] })
 
         const messages = await issueMessages(mcp)
 
@@ -161,15 +157,10 @@ describe('ap_check_solution', () => {
 
     it('checks a single raw record object and skips a table chosen by expression', async () => {
         const { mcp, table } = await createSolutionBase()
-        await apBuildFlowTool({ mcp }, log).execute({
-            flowName: 'Store orders',
-            folderName: SOLUTION_FOLDER,
-            trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
-            steps: [
-                { type: FlowActionType.PIECE, displayName: 'Save raw', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: table.externalId, records: '{"Order id": "1", "Customer": "x"}' } },
-                { type: FlowActionType.PIECE, displayName: 'Save dynamic', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: '{{trigger.tableId}}', values: { values: [] } } },
-            ],
-        })
+        await buildFlow({ mcp, flowName: 'Store orders', steps: [
+            { type: FlowActionType.PIECE, displayName: 'Save raw', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: table.externalId, records: '{"Order id": "1", "Customer": "x"}' } },
+            { type: FlowActionType.PIECE, displayName: 'Save dynamic', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: '{{trigger.tableId}}', values: { values: [] } } },
+        ] })
 
         const messages = await issueMessages(mcp)
 
@@ -179,12 +170,7 @@ describe('ap_check_solution', () => {
 
     it('reports the template and branch problems ap_validate_flow finds', async () => {
         const { mcp } = await createSolutionBase()
-        await apBuildFlowTool({ mcp }, log).execute({
-            flowName: 'Broken reference',
-            folderName: SOLUTION_FOLDER,
-            trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
-            steps: [{ type: FlowActionType.CODE, displayName: 'Use missing step', sourceCode: 'export const code = async (inputs) => inputs', input: { value: "{{missing_step['output'].id}}" } }],
-        })
+        await buildFlow({ mcp, flowName: 'Broken reference', steps: [{ type: FlowActionType.CODE, displayName: 'Use missing step', sourceCode: 'export const code = async (inputs) => inputs', input: { value: '{{missing_step[\'output\'].id}}' } }] })
 
         const messages = await issueMessages(mcp)
 
@@ -194,7 +180,7 @@ describe('ap_check_solution', () => {
     it('asks for ap_create_folder when the folder does not exist', async () => {
         const ctx = await createTestContext(app)
 
-        const result = await apCheckSolutionTool({ mcp: makeMcp(ctx.project.id) }, log).execute({ folderName: 'Nowhere' })
+        const result = await apCheckSolutionTool({ mcp: mockProjectScopedMcpServer(ctx) }, log).execute({ folderName: 'Nowhere' })
 
         expect(text(result)).toContain('ap_create_folder')
     })
@@ -202,7 +188,7 @@ describe('ap_check_solution', () => {
 
 async function createSolutionBase(): Promise<{ mcp: ProjectScopedMcpServer, table: { externalId: string, fieldExternalId: string } }> {
     const ctx = await createTestContext(app)
-    const mcp = makeMcp(ctx.project.id)
+    const mcp = mockProjectScopedMcpServer(ctx)
     await apCreateFolderTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })
     const created = await apCreateTableTool(mcp, log).execute({ name: 'Orders', folderName: SOLUTION_FOLDER, fields: [{ name: 'Order id', type: 'TEXT' }] })
     const table = z.object({ externalId: z.string(), fields: z.array(z.object({ externalId: z.string() })) }).parse(created.structuredContent)
@@ -223,13 +209,17 @@ async function buildSubflow({ mcp, withResponse, writeField, tableExternalId }: 
 }
 
 async function buildCaller({ mcp, subflowExternalId, payload, waitForResponse }: { mcp: ProjectScopedMcpServer, subflowExternalId: string, payload: Record<string, string>, waitForResponse: boolean }): Promise<void> {
+    await buildFlow({ mcp, flowName: 'Receive order', steps: [
+        { type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflowExternalId, mode: 'simple', flowProps: { payload }, waitForResponse } },
+    ] })
+}
+
+async function buildFlow({ mcp, flowName, steps }: { mcp: ProjectScopedMcpServer, flowName: string, steps: unknown[] }): Promise<void> {
     await apBuildFlowTool({ mcp }, log).execute({
-        flowName: 'Receive order',
+        flowName,
         folderName: SOLUTION_FOLDER,
         trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
-        steps: [
-            { type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflowExternalId, mode: 'simple', flowProps: { payload }, waitForResponse } },
-        ],
+        steps,
     })
 }
 
@@ -243,19 +233,6 @@ function structured(result: { structuredContent?: unknown }): { ok: boolean, flo
 
 function text(result: { content: Array<{ type: 'text', text: string }> }): string {
     return result.content.map((c) => c.text).join('\n')
-}
-
-function makeMcp(projectId: string): ProjectScopedMcpServer {
-    return {
-        id: apId(),
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        projectId,
-        platformId: null,
-        type: McpServerType.PROJECT,
-        token: apId(),
-        disabledTools: null,
-    }
 }
 
 const SOLUTION_FOLDER = 'Order intake'
