@@ -41,11 +41,11 @@ export const getClickupTaskComments = createAction({
       currentPage.length >= COMMENTS_PER_PAGE &&
       pagesFetched < MAX_PAGES
     ) {
-      const oldest = findOldestComment({ comments: currentPage });
+      const lastOnPage = currentPage[currentPage.length - 1];
       const nextPage = await fetchCommentsPage({
         taskId: task_id,
         accessToken,
-        cursor: { start: String(oldest.date), start_id: oldest.id },
+        cursor: { start: String(lastOnPage.date), start_id: lastOnPage.id },
       });
       pagesFetched += 1;
       currentPage = nextPage.comments ?? [];
@@ -79,16 +79,6 @@ async function fetchCommentsPage({
     cursor
   );
   return response.body;
-}
-
-function findOldestComment({
-  comments,
-}: {
-  comments: ClickUpComment[];
-}): ClickUpComment {
-  return comments.reduce((oldest, comment) =>
-    Number(comment.date) < Number(oldest.date) ? comment : oldest
-  );
 }
 
 const COMMENTS_PER_PAGE = 25;
