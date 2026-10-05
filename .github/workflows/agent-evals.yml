@@ -83,6 +83,7 @@ jobs:
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || 'regression' }}
+      CHAT_EVAL_REPEATS: 3
     steps:
       - uses: actions/checkout@v5
 
