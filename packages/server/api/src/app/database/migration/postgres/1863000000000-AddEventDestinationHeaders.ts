@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddEventDestinationHeaders1861000000000 implements Migration {
-    name = 'AddEventDestinationHeaders1861000000000'
+export class AddEventDestinationHeaders1863000000000 implements Migration {
+    name = 'AddEventDestinationHeaders1863000000000'
     breaking = false
     release = '0.93.0'
 
