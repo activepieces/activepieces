@@ -33,6 +33,8 @@ export const listBuckets = createAction({
                 public: bucket.public,
                 created_at: bucket.created_at,
                 updated_at: bucket.updated_at,
+                file_size_limit: bucket.file_size_limit ?? null,
+                allowed_mime_types: bucket.allowed_mime_types ?? null,
             })),
         };
     },

@@ -33,10 +33,11 @@ export const listUsers = createAction({
         const { page, perPage } = context.propsValue;
         const { url, apiKey } = context.auth.props;
         const supabase = createClient(url, apiKey);
+        const usersPerPage = perPage || 50;
 
         const { data, error } = await supabase.auth.admin.listUsers({
             page: page || 1,
-            perPage: perPage || 50,
+            perPage: usersPerPage,
         });
 
         if (error) {
@@ -52,6 +53,7 @@ export const listUsers = createAction({
                 last_sign_in_at: user.last_sign_in_at ?? null,
                 confirmed_at: user.confirmed_at ?? null,
             })),
+            has_more: data.users.length === usersPerPage,
         };
     },
 });
