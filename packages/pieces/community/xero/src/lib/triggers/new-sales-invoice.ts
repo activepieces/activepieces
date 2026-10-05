@@ -1,13 +1,9 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { xeroAuth } from '../..';
-import { createHmac } from 'crypto';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
 import { props } from '../common/props';
+import { xeroSamples } from '../common/samples';
+import { xeroWebhook } from '../common/trigger-state';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroNewSalesInvoice = createTrigger({
   auth: xeroAuth,
@@ -16,29 +12,12 @@ export const xeroNewSalesInvoice = createTrigger({
   displayName: 'New Sales Invoice',
   description: 'Fires when a new sales invoice (Accounts Receivable) is created.',
   aiMetadata: {
-    description: 'Fires when a new sales invoice (Accounts Receivable, Type ACCREC) is created in the connected Xero organisation. Delivered through a Xero webhook on the INVOICE category filtered to CREATE events; the full invoice is fetched and only ACCREC (sales) invoices are emitted, so bills (ACCPAY) are excluded. Each item is the full invoice (number, status, contact, line items, totals). Represents a brand-new sales invoice, not an update to an existing one.',
+    description:
+      'Fires once per sales invoice (Type ACCREC) created in the connected Xero organisation, delivered by a Xero webhook (INVOICE category, CREATE events) that you set up on your own Xero app; bills (ACCPAY) are skipped when Fetch Full Invoice is on, and duplicates are dropped. Each item is the full invoice, or the raw webhook event when Fetch Full Invoice is off.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
-    webhookInstructions: Property.MarkDown({
-      value: `
-To use this trigger, manually configure a Xero webhook for your app:
-
-1. Go to Xero Developer > My Apps > [Your App] > Webhooks.
-2. Select the Invoice category.
-3. Set the Delivery URL to:
-\n\n\`\`\`text
-{{webhookUrl}}
-\`\`\`
-4. Click Save, then click Validate "Intent to receive".
-5. Copy the Webhook Key from the Webhooks page and paste it into the Webhook Key field below.
-6. Optionally set Organization ID (Tenant ID) to only accept events from a specific org.
-
-Notes:
-- Keep this trigger enabled so the URL remains active.
-- We verify Xero's x-xero-signature header using your Webhook Key.
-      `,
-    }),
+    webhookInstructions: Property.MarkDown({ value: xeroWebhook.instructions({ category: 'Invoice' }) }),
     tenant_id: props.tenant_id,
     webhook_key: Property.ShortText({
       displayName: 'Webhook Key',
@@ -47,89 +26,36 @@ Notes:
     }),
     fetch_full_invoice: Property.Checkbox({
       displayName: 'Fetch Full Invoice',
-      description: 'Fetch the full invoice and ensure Type is ACCREC (recommended).',
+      description: 'Fetch the full invoice and ensure Type is ACCREC (recommended). If disabled, the output is the raw webhook event and bills are not filtered out.',
       required: false,
       defaultValue: true,
     }),
   },
-  sampleData: {
-    InvoiceID: '243216c5-369e-4056-ac67-05388f86dc81',
-    Type: 'ACCREC',
-    InvoiceNumber: 'INV-0001',
-    Status: 'AUTHORISED',
+  outputSchema: xeroOutputSchemas.invoice,
+  sampleData: xeroSamples.invoice,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.HEADER_PRESENT,
+    paramName: xeroWebhook.handshakeConfiguration.paramName,
   },
-  async onEnable(): Promise<void> {
-    // Manual webhook setup by user
+  async onHandshake(context) {
+    return xeroWebhook.handshake({ payload: context.payload, webhookKey: context.propsValue.webhook_key });
   },
-  async onDisable(): Promise<void> {
-    // Manual webhook lifecycle
+  async onEnable() {
+    return;
   },
-  async run(context: any) {
-    const { webhook_key, tenant_id, fetch_full_invoice } = context.propsValue as any;
-
-    const signatureHeader = context.payload.headers['x-xero-signature'] as string | undefined;
-    const rawBody = context.payload.rawBody as string | undefined;
-    if (!signatureHeader || !rawBody) {
-      return [];
-    }
-
-    const computed = createHmac('sha256', webhook_key).update(rawBody).digest('base64');
-    if (computed !== signatureHeader) {
-      return [];
-    }
-
-    const body = context.payload.body as any;
-    const events: any[] = body?.events ?? [];
-    if (!Array.isArray(events) || events.length === 0) {
-      return [];
-    }
-
-    // Filter to INVOICE CREATE events (new invoices), optional tenant match
-    const filtered = events.filter((e) => {
-      const isInvoice = e.eventCategory === 'INVOICE';
-      const isCreate = e.eventType === 'CREATE';
-      const tenantOk = tenant_id ? e.tenantId === tenant_id : true;
-      return isInvoice && isCreate && tenantOk;
+  async onDisable() {
+    return;
+  },
+  async run(context) {
+    return xeroWebhook.processDelivery({
+      payload: context.payload,
+      webhookKey: context.propsValue.webhook_key,
+      tenantId: context.propsValue.tenant_id,
+      accessToken: context.auth.access_token,
+      store: context.store,
+      resource: { category: 'INVOICE', path: 'Invoices', eventTypes: ['CREATE'] },
+      fetchFull: context.propsValue.fetch_full_invoice !== false,
+      accept: (record) => record['Type'] === 'ACCREC',
     });
-    if (filtered.length === 0) {
-      return [];
-    }
-
-    // If not fetching full invoice, we cannot verify ACCREC from event alone; return events
-    if (!fetch_full_invoice) {
-      return filtered;
-    }
-
-    // Fetch each invoice and only return ACCREC (sales) invoices
-    const results: any[] = [];
-    for (const ev of filtered) {
-      try {
-        const req: HttpRequest = {
-          method: HttpMethod.GET,
-          url: ev.resourceUrl,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: (context.auth as any).access_token,
-          },
-          headers: {
-            'Xero-Tenant-Id': ev.tenantId,
-            Accept: 'application/json',
-          },
-        };
-        const resp = await httpClient.sendRequest<any>(req);
-        if (resp.status === 200) {
-          const inv = resp.body?.Invoices?.[0] ?? resp.body;
-          if (inv?.Type === 'ACCREC') {
-            results.push(inv);
-          }
-        }
-      } catch {
-        // ignore errors, move on
-      }
-    }
-
-    return results;
   },
 });
-
-
