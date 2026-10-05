@@ -61,6 +61,7 @@ export const supabase = createPiece({
       baseUrl: (auth) => auth?.props?.url || '',
       auth: supabaseAuth,
       authMapping: async (auth) => ({
+        apikey: auth.props.apiKey,
         Authorization: `Bearer ${auth.props.apiKey}`,
       }),
     }),
