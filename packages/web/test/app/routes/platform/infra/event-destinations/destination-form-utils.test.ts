@@ -341,6 +341,41 @@ describe('destinationFormUtils header conversion', () => {
     ]);
   });
 
+  it('lists the saved events in one fixed order, so the form starts clean', () => {
+    expect(
+      destinationFormUtils.toDefaultValues({
+        destination: makeDestination({
+          events: [
+            ApplicationEventName.FLOW_DELETED,
+            ApplicationEventName.FLOW_CREATED,
+          ],
+        }),
+        kind: 'webhook',
+      }).events,
+    ).toEqual([
+      ApplicationEventName.FLOW_CREATED,
+      ApplicationEventName.FLOW_DELETED,
+    ]);
+  });
+
+  it('gives the same event list back after an event is cleared and selected again', () => {
+    const saved = destinationFormUtils.inCanonicalOrder([
+      ApplicationEventName.FLOW_CREATED,
+      ApplicationEventName.FLOW_DELETED,
+      ApplicationEventName.USER_SIGNED_IN,
+    ]);
+    const cleared = saved.filter(
+      (event) => event !== ApplicationEventName.FLOW_CREATED,
+    );
+
+    expect(
+      destinationFormUtils.inCanonicalOrder([
+        ...cleared,
+        ApplicationEventName.FLOW_CREATED,
+      ]),
+    ).toEqual(saved);
+  });
+
   it('starts a new OpenTelemetry destination on Protobuf with no headers', () => {
     expect(
       destinationFormUtils.toDefaultValues({ destination: null, kind: 'otel' }),

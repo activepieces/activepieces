@@ -10,6 +10,7 @@ import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
+import { destinationFormUtils } from '../lib/destination-form-utils';
 import type { DestinationFormValues } from '../lib/destination-form-utils';
 import { eventGroupUtils } from '../lib/event-groups';
 import { buildEventLabels } from '../lib/event-labels';
@@ -70,7 +71,11 @@ export const EventsStep = ({
           const remaining = field.value.filter(
             (value) => !events.includes(value),
           );
-          field.onChange(shouldSelect ? [...remaining, ...events] : remaining);
+          field.onChange(
+            destinationFormUtils.inCanonicalOrder(
+              shouldSelect ? [...remaining, ...events] : remaining,
+            ),
+          );
         };
         const isScopeSelected =
           scopeEvents.length > 0 &&

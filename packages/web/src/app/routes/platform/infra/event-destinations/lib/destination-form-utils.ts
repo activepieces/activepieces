@@ -23,10 +23,16 @@ function toDefaultValues({
 }): DestinationFormValues {
   return {
     url: destination?.url ?? '',
-    events: destination?.events ?? [],
+    events: inCanonicalOrder(destination?.events ?? []),
     headers: toHeaderRows(destination?.headers),
     format: destination?.format ?? destinationKinds.defaultFormatOf(kind),
   };
+}
+
+function inCanonicalOrder(
+  events: ApplicationEventName[],
+): ApplicationEventName[] {
+  return ALL_EVENT_NAMES.filter((event) => events.includes(event));
 }
 
 function toHeaderRows(
@@ -290,6 +296,7 @@ function findValueIssue({
 
 export const destinationFormUtils = {
   toDefaultValues,
+  inCanonicalOrder,
   toHeaderRequest,
   toTestHeaders,
   findTestHeaderBlocker,
@@ -306,6 +313,8 @@ export const destinationFormUtils = {
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/';
 
 const VALUE_CHECK_HEADER_NAME = 'X-Value-Check';
+
+const ALL_EVENT_NAMES = Object.values(ApplicationEventName);
 
 export type TestHeaderBlocker = 'blankValue' | 'invalidHeader';
 
