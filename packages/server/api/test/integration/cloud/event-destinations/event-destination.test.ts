@@ -784,6 +784,37 @@ describe('Event Destinations API', () => {
             postSpy.mockRestore()
         })
 
+        it('should refuse to keep a stored value whose URL changed outside of an update, until the value is typed again', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: 'Bearer secret' },
+            })
+            const id = created?.json().id
+            await db.update('event_destination', id, { url: 'https://moved-by-an-older-build.example/collect' })
+
+            const toggled = await ctx.post(`/v1/event-destinations/${id}`, { enabled: false })
+            expect(toggled?.statusCode).toBe(StatusCodes.OK)
+
+            const kept = await ctx.post(`/v1/event-destinations/${id}`, {
+                url: 'https://moved-by-an-older-build.example/collect',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: null },
+            })
+            expect(kept?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(kept?.json().code).toBe(ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS)
+
+            const retyped = await ctx.post(`/v1/event-destinations/${id}`, {
+                url: 'https://moved-by-an-older-build.example/collect',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: 'Bearer retyped' },
+            })
+            expect(retyped?.statusCode).toBe(StatusCodes.OK)
+            const stored = await db.findOneByOrFail<{ headers: { url: string } }>('event_destination', { id })
+            expect(stored.headers.url).toBe('https://moved-by-an-older-build.example/collect')
+        })
+
         it('should reject two header names that differ only in letter case', async () => {
             const ctx = await createEnabledContext()
 

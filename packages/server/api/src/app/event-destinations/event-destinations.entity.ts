@@ -6,7 +6,10 @@ import { EncryptedObject } from '../helper/encryption'
 
 type WithoutHeaders<T> = T extends unknown ? Omit<T, 'headers'> : never
 
-export const StoredEventDestinationHeaders = z.record(z.string(), EncryptedObject)
+export const StoredEventDestinationHeaders = z.object({
+    url: z.string(),
+    values: z.record(z.string(), EncryptedObject),
+})
 
 export type StoredEventDestinationHeaders = z.infer<typeof StoredEventDestinationHeaders>
 

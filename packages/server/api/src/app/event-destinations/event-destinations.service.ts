@@ -82,7 +82,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             url: request.url,
             enabled: request.enabled ?? true,
             format,
-            headers: await toStoredHeaders({ requested: request.headers, stored: {} }),
+            headers: await toStoredHeaders({ requested: request.headers, stored: null, url: request.url }),
         }
         const saved = await eventDestinationRepo().save(entity)
         return maskHeaders({ row: saved, log })
@@ -98,17 +98,19 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             const url = rest.url ?? stored.url
             const format = rest.format ?? stored.format
             assertWebhookUrlSupportsFormat({ url, format })
-            const storedHeaderCiphertexts = parseStoredHeaders({ headers: stored.headers, destinationId: stored.id, log })
+            const storedHeaders = parseStoredHeaders({ headers: stored.headers, destinationId: stored.id, log })
             assertUrlChangeRebindsStoredHeaders({
                 requested: requestedHeaders,
-                stored: storedHeaderCiphertexts,
-                urlChanged: url !== stored.url,
+                stored: storedHeaders,
+                url,
+                rowUrl: stored.url,
             })
             const headers = requestedHeaders === undefined
                 ? undefined
                 : await toStoredHeaders({
                     requested: requestedHeaders,
-                    stored: storedHeaderCiphertexts,
+                    stored: storedHeaders,
+                    url,
                 })
             await repo.update({ id, platformId }, {
                 ...rest,
@@ -217,7 +219,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         if (isNil(destination)) {
             return null
         }
-        return decryptHeaders({ headers: destination.headers, destinationId: destination.id, log })
+        return decryptBoundHeaders({ headers: destination.headers, destinationId: destination.id, destinationUrl: destination.url, log })
     },
     test: async ({ platformId, projectId, url, event, format, headers }: TestParams): Promise<TestPlatformEventDestinationResponse> => {
         const eventToTest = event ?? ApplicationEventName.FLOW_CREATED
@@ -253,30 +255,23 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
 })
 
 
-function parseStoredHeaders({ headers, destinationId, log }: ParseStoredHeadersParams): StoredEventDestinationHeaders {
+function parseStoredHeaders({ headers, destinationId, log }: ParseStoredHeadersParams): StoredEventDestinationHeaders | null {
     if (isNil(headers)) {
-        return {}
+        return null
     }
     const parsed = StoredEventDestinationHeaders.safeParse(headers)
     if (!parsed.success) {
         log.warn({ destination: { id: destinationId } }, '[eventDestinationService#parseStoredHeaders] Stored headers are unreadable and are treated as empty')
-        return {}
+        return null
     }
     return parsed.data
 }
 
-function assertUrlChangeRebindsStoredHeaders({ requested, stored, urlChanged }: AssertUrlChangeRebindsStoredHeadersParams): void {
-    const storedNames = Object.keys(stored)
-    if (!urlChanged || storedNames.length === 0) {
+function assertUrlChangeRebindsStoredHeaders({ requested, stored, url, rowUrl }: AssertUrlChangeRebindsStoredHeadersParams): void {
+    if (isNil(stored)) {
         return
     }
-    const requestedByLowerName = byLowerCaseName(requested ?? {})
-    const carriedOverNames = requested === undefined
-        ? storedNames
-        : storedNames.filter((name) => {
-            const lowerName = name.toLowerCase()
-            return requestedByLowerName.has(lowerName) && isNil(requestedByLowerName.get(lowerName))
-        })
+    const carriedOverNames = carriedOverHeaderNames({ requested, stored, url, rowUrl })
     if (carriedOverNames.length === 0) {
         return
     }
@@ -286,11 +281,26 @@ function assertUrlChangeRebindsStoredHeaders({ requested, stored, urlChanged }: 
     })
 }
 
-async function toStoredHeaders({ requested, stored }: ToStoredHeadersParams): Promise<StoredEventDestinationHeaders | null> {
+function carriedOverHeaderNames({ requested, stored, url, rowUrl }: CarriedOverHeaderNamesParams): string[] {
+    const storedNames = Object.keys(stored.values)
+    if (requested === undefined) {
+        return url === rowUrl ? [] : storedNames
+    }
+    if (requested === null || url === stored.url) {
+        return []
+    }
+    const requestedByLowerName = byLowerCaseName(requested)
+    return storedNames.filter((name) => {
+        const lowerName = name.toLowerCase()
+        return requestedByLowerName.has(lowerName) && isNil(requestedByLowerName.get(lowerName))
+    })
+}
+
+async function toStoredHeaders({ requested, stored, url }: ToStoredHeadersParams): Promise<StoredEventDestinationHeaders | null> {
     if (isNil(requested)) {
         return null
     }
-    const storedByLowerName = byLowerCaseName(stored)
+    const storedByLowerName = byLowerCaseName(stored?.values ?? {})
     const entries = await Promise.all(
         Object.entries(requested).map(async ([key, value]): Promise<[string, EncryptedObject] | null> => {
             if (!isNil(value)) {
@@ -301,23 +311,30 @@ async function toStoredHeaders({ requested, stored }: ToStoredHeadersParams): Pr
         }),
     )
     const resolved = entries.filter((entry): entry is [string, EncryptedObject] => !isNil(entry))
-    return resolved.length === 0 ? null : Object.fromEntries(resolved)
+    return resolved.length === 0 ? null : { url, values: Object.fromEntries(resolved) }
 }
 
 function byLowerCaseName<T>(headers: Record<string, T>): Map<string, T> {
     return new Map(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]))
 }
 
-async function decryptHeaders({ headers, destinationId, log }: DecryptHeadersParams): Promise<EventDestinationHeaders> {
+async function decryptBoundHeaders({ headers, destinationId, destinationUrl, log }: DecryptBoundHeadersParams): Promise<EventDestinationHeaders | null> {
     const stored = parseStoredHeaders({ headers, destinationId, log })
+    if (isNil(stored)) {
+        return {}
+    }
+    if (stored.url !== destinationUrl) {
+        log.warn({ destination: { id: destinationId } }, '[eventDestinationService#decryptBoundHeaders] Stored headers belong to another URL and are not sent, so the event is dropped until the values are saved again')
+        return null
+    }
     const entries = await Promise.all(
-        Object.entries(stored).map(async ([key, value]): Promise<[string, string]> => [key, await encryptUtils.decryptString(value)]),
+        Object.entries(stored.values).map(async ([key, value]): Promise<[string, string]> => [key, await encryptUtils.decryptString(value)]),
     )
     return Object.fromEntries(entries)
 }
 
 function maskHeaders({ row, log }: MaskHeadersParams): EventDestination {
-    const keys = Object.keys(parseStoredHeaders({ headers: row.headers, destinationId: row.id, log }))
+    const keys = Object.keys(parseStoredHeaders({ headers: row.headers, destinationId: row.id, log })?.values ?? {})
     return {
         ...row,
         headers: keys.length === 0
@@ -365,13 +382,16 @@ const dispatchEventToDestination = async ({
     body,
 }: DispatchEventParams): Promise<void> => {
     if (!isNil(internalFlowId)) {
-        const { data: headers, error } = await tryCatch(() => decryptHeaders({ headers: storedHeaders, destinationId, log }))
+        const { data: headers, error } = await tryCatch(() => decryptBoundHeaders({ headers: storedHeaders, destinationId, destinationUrl, log }))
         if (error !== null) {
             log.error({
                 destination: { id: destinationId },
                 flow: { id: internalFlowId },
                 error: error.message,
             }, '[eventDestinationService#dispatchEventToDestination] Stored headers could not be decrypted, dropping the event for the internal handler flow')
+            return
+        }
+        if (isNil(headers)) {
             return
         }
         await dispatchToInternalFlow({
@@ -620,16 +640,24 @@ type ParseStoredHeadersParams = {
 
 type AssertUrlChangeRebindsStoredHeadersParams = {
     requested: EventDestinationHeadersRequest | null | undefined
+    stored: StoredEventDestinationHeaders | null
+    url: string
+    rowUrl: string
+}
+
+type CarriedOverHeaderNamesParams = AssertUrlChangeRebindsStoredHeadersParams & {
     stored: StoredEventDestinationHeaders
-    urlChanged: boolean
 }
 
 type ToStoredHeadersParams = {
     requested: EventDestinationHeadersRequest | null | undefined
-    stored: StoredEventDestinationHeaders
+    stored: StoredEventDestinationHeaders | null
+    url: string
 }
 
-type DecryptHeadersParams = ParseStoredHeadersParams
+type DecryptBoundHeadersParams = ParseStoredHeadersParams & {
+    destinationUrl: string
+}
 
 type MaskHeadersParams = {
     row: EventDestinationRow
