@@ -1,4 +1,3 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import {
 	addBarcodeToPdf,
@@ -40,7 +39,6 @@ import {
 	uploadFile,
 } from './lib/actions';
 import { pdfCoAuth } from './lib/auth';
-import { pdfCoClient, PDF_CO_BASE_URL } from './lib/common/client';
 
 export const pdfCo = createPiece({
 	displayName: 'PDF.co',
@@ -88,11 +86,6 @@ export const pdfCo = createPiece({
 		pdfCoConvertPdf,
 		pdfCoEditPdf,
 		pdfCoParseDocument,
-		createCustomApiCallAction({
-			baseUrl: () => PDF_CO_BASE_URL,
-			auth: pdfCoAuth,
-			authMapping: async (auth) => pdfCoClient.headers(pdfCoClient.apiKeyOf(auth)),
-		}),
 	],
 	triggers: [],
 });

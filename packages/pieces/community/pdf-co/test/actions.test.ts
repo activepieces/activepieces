@@ -38,13 +38,10 @@ afterEach(() => {
 });
 
 describe('piece metadata', () => {
-	it('every action has audience, classification and aiMetadata; outputSchema on all but Custom API Call', () => {
+	it('every action has audience, classification, aiMetadata and outputSchema', () => {
 		const actions = Object.values(pdfCo.actions());
-		expect(actions.length).toBe(38);
+		expect(actions.length).toBe(37);
 		for (const action of actions) {
-			if (action.name === 'custom_api_call') {
-				continue;
-			}
 			expect(['both', 'human', 'ai']).toContain(action.audience);
 			expect(action.classification).toBeDefined();
 			expect(action.aiMetadata?.description.length).toBeGreaterThan(40);
