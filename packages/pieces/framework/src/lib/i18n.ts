@@ -1,132 +1,136 @@
-import { I18nForPiece } from "./piece-metadata"
-import { isObject, LocalesEnum } from "@activepieces/core-utils"
-import { MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/core-piece-types"
-import path from 'path';
-import fs from 'fs/promises';
+import path from 'path'
+import fs from 'fs/promises'
+import { isObject, LocalesEnum } from '@activepieces/core-utils'
+import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/core-piece-types'
+import { I18nForPiece } from './piece-metadata'
+
+function translatePiece<T extends Record<string, unknown>>({ piece, translations }: TranslatePieceParams<T>): T {
+  if (!translations) {
+    return piece
+  }
+  return PATH_SEGMENTS.reduce(
+    (translatedPiece, segments) => translateRecord({ record: translatedPiece, segments, translations }),
+    piece,
+  )
+}
+
+async function initializeI18n(pieceOutputPath: string): Promise<I18nForPiece | undefined> {
+  try {
+    const i18n: I18nForPiece = {}
+    for (const locale of Object.values(LocalesEnum)) {
+      const translations = await readLocaleFile({ locale, pieceOutputPath })
+      if (translations) {
+        i18n[locale] = translations
+      }
+    }
+    return Object.keys(i18n).length > 0 ? i18n : undefined
+  }
+  catch (err) {
+    console.log(`Error initializing i18n for ${pieceOutputPath}:`, err)
+    return undefined
+  }
+}
+
+function translateRecord<R extends Record<string, unknown>>({ record, segments, translations }: TranslateRecordParams<R>): R {
+  const [property, ...rest] = segments
+  const child = record[property]
+  const translatedChild = rest.length === 0
+    ? translateLeaf({ leaf: child, translations })
+    : translateValue({ value: child, segments: rest, translations })
+  return translatedChild === child ? record : { ...record, [property]: translatedChild }
+}
+
+function translateValue({ value, segments, translations }: TranslateValueParams): unknown {
+  if (segments[0] !== '*') {
+    return isObject(value) ? translateRecord({ record: value, segments, translations }) : value
+  }
+  const rest = segments.slice(1)
+  return translateChildren({
+    container: value,
+    translateChild: (child) => translateValue({ value: child, segments: rest, translations }),
+  })
+}
+
+function translateChildren({ container, translateChild }: TranslateChildrenParams): unknown {
+  if (Array.isArray(container)) {
+    const items: unknown[] = container
+    const translatedItems = items.map((item) => translateChild(item))
+    return translatedItems.some((item, index) => item !== items[index]) ? translatedItems : container
+  }
+  if (!isObject(container)) {
+    return container
+  }
+  const translatedEntries = Object.entries(container).map(([property, child]): [string, unknown] => [property, translateChild(child)])
+  const changed = translatedEntries.some(([property, child]) => child !== container[property])
+  return changed ? Object.fromEntries(translatedEntries) : container
+}
+
+function translateLeaf({ leaf, translations }: TranslateLeafParams): unknown {
+  if (typeof leaf !== 'string' || leaf.length === 0) {
+    return leaf
+  }
+  const translationKey = leaf.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)
+  const translation = Object.hasOwn(translations, translationKey) ? translations[translationKey] : undefined
+  return translation || leaf
+}
+
+async function readLocaleFile({ locale, pieceOutputPath }: ReadLocaleFileParams) {
+  const filePath = path.join(pieceOutputPath, 'src', 'i18n', `${locale}.json`)
+  if (!(await fileExists(filePath))) {
+    return null
+  }
+  try {
+    const fileContent = await fs.readFile(filePath, 'utf8')
+    const translations = JSON.parse(fileContent)
+    if (typeof translations === 'object' && translations !== null) {
+      return translations
+    }
+    throw new Error(`Invalid i18n file format for ${locale} in piece ${pieceOutputPath}`)
+  }
+  catch (error) {
+    console.error(`Error reading i18n file for ${locale} in piece ${pieceOutputPath}:`, error)
+    return null
+  }
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath)
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+const PATHS_TO_VALUES_TO_TRANSLATE = [
+  'description',
+  'auth.username.displayName',
+  'auth.username.description',
+  'auth.password.displayName',
+  'auth.password.description',
+  'auth.props.*.displayName',
+  'auth.props.*.description',
+  'auth.props.*.options.options.*.label',
+  'auth.description',
+  'actions.*.displayName',
+  'actions.*.description',
+  'actions.*.props.*.displayName',
+  'actions.*.props.*.description',
+  'actions.*.props.*.options.options.*.label',
+  'triggers.*.displayName',
+  'triggers.*.description',
+  'triggers.*.props.*.displayName',
+  'triggers.*.props.*.description',
+  'triggers.*.props.*.options.options.*.label',
+]
+
+const PATH_SEGMENTS = PATHS_TO_VALUES_TO_TRANSLATE.map((pathToValue) => pathToValue.split('.'))
 
 export const pieceTranslation = {
-  translatePiece: <T extends Record<string, unknown>>({ piece, translations }: TranslatePieceParams<T>): T => {
-    if (!translations) {
-      return piece
-    }
-    return pieceTranslation.pathsToValuesToTranslate.reduce(
-      (node, key) => translateField({ node, keys: key.split('.'), translations }),
-      piece,
-    )
-  },
-
-  /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
-  initializeI18n: async (pieceOutputPath: string): Promise<I18nForPiece | undefined> => {
-    try {
-      const locales = Object.values(LocalesEnum);
-      const i18n: I18nForPiece = {};
-      
-      for (const locale of locales) {
-        const translations = await readLocaleFile(locale, pieceOutputPath);
-        if (translations) {
-          i18n[locale] = translations;
-        }
-      }
-      
-      return Object.keys(i18n).length > 0 ? i18n : undefined;
-    }
-    catch (err) {
-      console.log(`Error initializing i18n for ${pieceOutputPath}:`, err)
-      return undefined
-    }
-  },
-
-  pathsToValuesToTranslate: [
-    "description",
-    "auth.username.displayName",
-    "auth.username.description",
-    "auth.password.displayName",
-    "auth.password.description",
-    "auth.props.*.displayName",
-    "auth.props.*.description",
-    "auth.props.*.options.options.*.label",
-    "auth.description",
-    "actions.*.displayName",
-    "actions.*.description",
-    "actions.*.props.*.displayName",
-    "actions.*.props.*.description",
-    "actions.*.props.*.options.options.*.label",
-    "triggers.*.displayName",
-    "triggers.*.description",
-    "triggers.*.props.*.displayName",
-    "triggers.*.props.*.description",
-    "triggers.*.props.*.options.options.*.label"
-  ]
-}
-
-function translateAtPath({ node, keys, translations }: TranslateAtPathParams): unknown {
-  const [head, ...rest] = keys
-  if (head === '*') {
-    return mapChildren({ node, map: (child) => translateAtPath({ node: child, keys: rest, translations }) })
-  }
-  if (!isObject(node)) {
-    return node
-  }
-  return translateField({ node, keys, translations })
-}
-
-function translateField<N extends Record<string, unknown>>({ node, keys, translations }: TranslateFieldParams<N>): N {
-  const [head, ...rest] = keys
-  const child = node[head]
-  const translatedChild = rest.length > 0
-    ? translateAtPath({ node: child, keys: rest, translations })
-    : translateValue({ value: child, translations })
-  return translatedChild === child ? node : { ...node, [head]: translatedChild }
-}
-
-function translateValue({ value, translations }: TranslateValueParams): unknown {
-  if (typeof value !== 'string' || value.length === 0) {
-    return value
-  }
-  const key = value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)
-  const translated = Object.hasOwn(translations, key) ? translations[key] : undefined
-  return translated || value
-}
-
-function mapChildren({ node, map }: MapChildrenParams): unknown {
-  if (Array.isArray(node)) {
-    const mapped = node.map((child: unknown) => map(child))
-    return mapped.some((child, index) => child !== node[index]) ? mapped : node
-  }
-  if (!isObject(node)) {
-    return node
-  }
-  const mappedEntries = Object.entries(node).map(([key, child]): [string, unknown] => [key, map(child)])
-  const changed = mappedEntries.some(([key, child]) => child !== node[key])
-  return changed ? Object.fromEntries(mappedEntries) : node
-}
-
-async function fileExists(filePath: string) {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
-  const filePath = path.join(pieceOutputPath, 'src', 'i18n', `${locale}.json`);
-  if (!(await fileExists(filePath))) {
-    return null;
-  }
-
-  try {
-    const fileContent = await fs.readFile(filePath, 'utf8');
-    const translations = JSON.parse(fileContent);
-    if (typeof translations === 'object' && translations !== null) {
-      return translations;
-    }
-    throw new Error(`Invalid i18n file format for ${locale} in piece ${pieceOutputPath}`);
-  } catch (error) {
-    console.error(`Error reading i18n file for ${locale} in piece ${pieceOutputPath}:`, error);
-    return null;
-  }
+  translatePiece,
+  initializeI18n,
+  pathsToValuesToTranslate: PATHS_TO_VALUES_TO_TRANSLATE,
 }
 
 type TranslatePieceParams<T> = {
@@ -134,26 +138,31 @@ type TranslatePieceParams<T> = {
   translations: Translations | undefined
 }
 
-type TranslateAtPathParams = {
-  node: unknown
-  keys: string[]
-  translations: Translations
-}
-
-type TranslateFieldParams<N> = {
-  node: N
-  keys: string[]
+type TranslateRecordParams<R> = {
+  record: R
+  segments: string[]
   translations: Translations
 }
 
 type TranslateValueParams = {
   value: unknown
+  segments: string[]
   translations: Translations
 }
 
-type MapChildrenParams = {
-  node: unknown
-  map: (child: unknown) => unknown
+type TranslateChildrenParams = {
+  container: unknown
+  translateChild: (child: unknown) => unknown
+}
+
+type TranslateLeafParams = {
+  leaf: unknown
+  translations: Translations
+}
+
+type ReadLocaleFileParams = {
+  locale: LocalesEnum
+  pieceOutputPath: string
 }
 
 type Translations = Record<string, string>
