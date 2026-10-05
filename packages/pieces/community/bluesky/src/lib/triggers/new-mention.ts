@@ -1,10 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { AppBskyFeedDefs, AtpAgent } from '@atproto/api';
+import type { AppBskyFeedDefs, AppBskyNotificationListNotifications, AtpAgent } from '@atproto/api';
 import { blueskyAuth } from '../common/auth';
 import { mentionTriggerOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';
 import { blueskyMappers } from '../common/mappers';
 import { blueskyPolling, PageFetcher } from '../common/polling';
+import { blueskyRefs } from '../common/refs';
 
 const STORE_KEY = 'bluesky_mention_poll';
 const MENTION_REASONS = ['mention', 'reply', 'quote'];
@@ -18,7 +19,7 @@ export const newMention = createTrigger({
   description: 'Triggers when someone mentions you, replies to you or quotes your post',
   aiMetadata: {
     description:
-      'Fires once per new post that mentions the authenticated Bluesky account, replies to it, or quotes one of its posts, carrying the full post plus why it notified. It follows the account\'s notification settings, for example "only from people I follow", and never marks notifications as seen; use New Notification for likes, reposts or follows.',
+      'Fires once per new post that mentions the authenticated Bluesky account, replies to it, or quotes one of its posts, carrying the full post plus why it notified. If the post was deleted or hidden before the poll, it still fires with the notification\'s copy of the post, postAvailable=false and null counts. It follows the account\'s notification settings, for example "only from people I follow", and never marks notifications as seen; use New Notification for likes, reposts or follows.',
   },
   props: {},
   sampleData: {
@@ -45,6 +46,7 @@ export const newMention = createTrigger({
     reasonSubject: null,
     isRead: false,
     replyToUri: null,
+    postAvailable: true,
   },
   type: TriggerStrategy.POLLING,
   outputSchema: mentionTriggerOutputSchema,
@@ -79,19 +81,11 @@ function mentionPage({ agent }: { agent: AtpAgent }): PageFetcher<ReturnType<typ
     const response = await agent.listNotifications({ limit: 100, cursor, reasons: MENTION_REASONS });
     const notifications = response.data.notifications.filter((notification) => MENTION_REASONS.includes(notification.reason));
     const posts = await hydrate({ agent, uris: [...new Set(notifications.map((notification) => notification.uri))] });
-    const items = notifications.flatMap((notification) => {
-      const post = posts.get(notification.uri);
-      if (!post) {
-        return [];
-      }
-      return [
-        {
-          key: `${notification.reason}:${notification.uri}`,
-          time: blueskyPolling.timeOf(notification.indexedAt) ?? 0,
-          data: mentionItem({ post, reason: notification.reason, reasonSubject: notification.reasonSubject, isRead: notification.isRead }),
-        },
-      ];
-    });
+    const items = notifications.map((notification) => ({
+      key: `${notification.reason}:${notification.uri}`,
+      time: blueskyPolling.timeOf(notification.indexedAt) ?? 0,
+      data: mentionItem({ notification, post: posts.get(notification.uri) }),
+    }));
     return {
       items,
       cursor: response.data.cursor,
@@ -113,22 +107,43 @@ async function hydrate({ agent, uris }: { agent: AtpAgent; uris: string[] }): Pr
 }
 
 function mentionItem({
+  notification,
   post,
-  reason,
-  reasonSubject,
-  isRead,
 }: {
-  post: AppBskyFeedDefs.PostView;
-  reason: string;
-  reasonSubject: string | undefined;
-  isRead: boolean;
+  notification: AppBskyNotificationListNotifications.Notification;
+  post: AppBskyFeedDefs.PostView | undefined;
 }) {
+  const notificationFields = {
+    notificationReason: notification.reason,
+    reasonSubject: notification.reasonSubject ?? null,
+    isRead: notification.isRead,
+  };
+  if (post) {
+    return {
+      ...blueskyMappers.postBase(post),
+      text: blueskyMappers.recordText(post.record),
+      ...notificationFields,
+      replyToUri: blueskyMappers.recordReplyParentUri(post.record),
+      postAvailable: true,
+    };
+  }
   return {
-    ...blueskyMappers.postBase(post),
-    text: blueskyMappers.recordText(post.record),
-    notificationReason: reason,
-    reasonSubject: reasonSubject ?? null,
-    isRead,
-    replyToUri: blueskyMappers.recordReplyParentUri(post.record),
+    uri: notification.uri,
+    cid: notification.cid,
+    url: blueskyRefs.postWebUrl({ uri: notification.uri, handle: notification.author.handle }),
+    author: notification.author,
+    record: notification.record,
+    indexedAt: notification.indexedAt,
+    replyCount: null,
+    repostCount: null,
+    likeCount: null,
+    quoteCount: null,
+    labels: notification.labels ?? [],
+    viewer: {},
+    embed: null,
+    text: blueskyMappers.recordText(notification.record),
+    ...notificationFields,
+    replyToUri: blueskyMappers.recordReplyParentUri(notification.record),
+    postAvailable: false,
   };
 }

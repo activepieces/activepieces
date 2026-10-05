@@ -151,6 +151,36 @@ describe('notification triggers', () => {
     expect(fake.callsTo('app.bsky.notification.updateSeen')).toHaveLength(0);
   });
 
+  it('New Mention or Reply still fires from the notification when the post was deleted', async () => {
+    let notifications: unknown[] = [];
+    installFakeBluesky({
+      routes: {
+        'app.bsky.notification.listNotifications': () => json({ notifications }),
+        'app.bsky.feed.getPosts': () => json({ posts: [postView({ rkey: '3kept', text: '@me 3kept' })] }),
+      },
+    });
+    const store = new Map<string, string>();
+    const context = triggerContext({ propsValue: {}, store });
+    await newMention.onEnable(context);
+    notifications = [
+      notification({ rkey: '3gone', reason: 'reply', indexedAt: minutesAgo(9) }),
+      notification({ rkey: '3kept', reason: 'mention', indexedAt: minutesAgo(10) }),
+    ];
+    const events = await newMention.run(context);
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({
+      uri: `at://${OTHER_DID}/app.bsky.feed.post/3gone`,
+      url: `https://bsky.app/profile/${OTHER_HANDLE}/post/3gone`,
+      text: '@me 3gone',
+      notificationReason: 'reply',
+      postAvailable: false,
+      likeCount: null,
+      replyCount: null,
+    });
+    expect(events[1]).toMatchObject({ text: '@me 3kept', postAvailable: true, likeCount: 1 });
+    expect(await newMention.run(context)).toEqual([]);
+  });
+
   it('New Notification passes the chosen types', async () => {
     const fake = installFakeBluesky({ routes: { 'app.bsky.notification.listNotifications': () => json({ notifications: [notification({ rkey: '3q', reason: 'quote', indexedAt: minutesAgo(10) })] }) } });
     const events = await newNotification.test(triggerContext({ propsValue: { reasons: ['quote', 'like'] }, store: new Map() }));

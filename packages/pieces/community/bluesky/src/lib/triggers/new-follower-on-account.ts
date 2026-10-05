@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { AppBskyActorDefs, AtpAgent } from '@atproto/api';
+import type { AppBskyActorDefs, AtpAgent } from '@atproto/api';
 import { blueskyAuth } from '../common/auth';
 import { newFollowerTriggerOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';

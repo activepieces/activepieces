@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AtpAgent, BlobRef } from '@atproto/api';
+import type { AtpAgent, BlobRef } from '@atproto/api';
 import { blueskyAuth } from '../common/auth';
 import { updateProfileOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';

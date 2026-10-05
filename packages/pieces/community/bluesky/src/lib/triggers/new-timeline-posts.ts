@@ -1,5 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { AppBskyFeedDefs, AtpAgent } from '@atproto/api';
+import type { AppBskyFeedDefs, AtpAgent } from '@atproto/api';
+import { blueskyAtproto } from '../common/atproto';
 import { blueskyAuth } from '../common/auth';
 import { newTimelinePostsTriggerOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';
@@ -76,7 +77,7 @@ function timelinePage({ agent }: { agent: AtpAgent }): PageFetcher<ReturnType<ty
   return async ({ cursor }) => {
     const response = await agent.getTimeline({ limit: 100, cursor });
     const items = response.data.feed.map((entry) => {
-      const repost = entry.reason && AppBskyFeedDefs.isReasonRepost(entry.reason) ? entry.reason : undefined;
+      const repost = entry.reason && blueskyAtproto.isReasonRepost(entry.reason) ? entry.reason : undefined;
       return {
         key: repost ? `${repost.by.did}:${entry.post.uri}` : entry.post.uri,
         time: blueskyPolling.timeOf(repost ? repost.indexedAt : entry.post.indexedAt) ?? 0,
@@ -94,7 +95,7 @@ function timelineItem(entry: AppBskyFeedDefs.FeedViewPost) {
     reply: entry.reply ?? null,
     feedContext: {
       isRepost: Boolean(entry.reason),
-      repostBy: entry.reason && AppBskyFeedDefs.isReasonRepost(entry.reason) ? entry.reason.by : null,
+      repostBy: entry.reason && blueskyAtproto.isReasonRepost(entry.reason) ? entry.reason.by : null,
       isReply: Boolean(entry.reply),
       replyToPost: entry.reply?.parent ?? null,
       replyToRoot: entry.reply?.root ?? null,

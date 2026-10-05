@@ -9,6 +9,7 @@ import { getTimeline } from '../src/lib/actions/get-timeline';
 import { findThread } from '../src/lib/actions/find-thread';
 import { updateProfile } from '../src/lib/actions/update-profile';
 import { removeUserFromList } from '../src/lib/actions/remove-user-from-list';
+import { deleteList } from '../src/lib/actions/delete-list';
 import { blueskyCreatePost } from '../src/lib/actions/bluesky-create-post';
 import { bluesky } from '../src/index';
 import { blueskyClient } from '../src/lib/common/client';
@@ -319,6 +320,90 @@ describe('writes with three states', () => {
       { repo: ME_DID, collection: 'app.bsky.graph.listitem', rkey: '3i1' },
       { repo: ME_DID, collection: 'app.bsky.graph.listitem', rkey: '3i3' },
     ]);
+  });
+});
+
+describe('Delete List', () => {
+  const listUri = `at://${ME_DID}/app.bsky.graph.list/3lst`;
+  const otherListUri = `at://${ME_DID}/app.bsky.graph.list/3other`;
+  const listItems = [
+    ...Array.from({ length: 120 }, (_, index) => ({ rkey: `3m${index}`, list: listUri })),
+    ...Array.from({ length: 30 }, (_, index) => ({ rkey: `3o${index}`, list: otherListUri })),
+  ].map(({ rkey, list }) => ({
+    uri: `at://${ME_DID}/app.bsky.graph.listitem/${rkey}`,
+    cid: CID,
+    value: { $type: 'app.bsky.graph.listitem', subject: OTHER_DID, list, createdAt: '2026-10-05T10:00:00.000Z' },
+  }));
+  const listRecordsRoute = ({ records }: { records: typeof listItems }) => (call: { query: URLSearchParams }) => {
+    const offset = Number(call.query.get('cursor') ?? '0');
+    const page = records.slice(offset, offset + 100);
+    return json({ records: page, ...(offset + 100 < records.length ? { cursor: String(offset + 100) } : {}) });
+  };
+  const deletedRkeys = (body: unknown): string[] =>
+    typeof body === 'object' && body !== null && 'writes' in body && Array.isArray(body.writes)
+      ? body.writes.flatMap((write: unknown) => (typeof write === 'object' && write !== null && 'rkey' in write && typeof write.rkey === 'string' ? [write.rkey] : []))
+      : [];
+
+  it('removes every membership of the list from the repository, then deletes the list', async () => {
+    const fake = installFakeBluesky({
+      routes: {
+        'com.atproto.repo.getRecord': () => json({ uri: listUri, cid: CID, value: {} }),
+        'com.atproto.repo.listRecords': listRecordsRoute({ records: listItems }),
+        'com.atproto.repo.applyWrites': () => json({}),
+        'com.atproto.repo.deleteRecord': () => json({}),
+      },
+    });
+    const result = await runAction({ action: deleteList, propsValue: { list: listUri } });
+    expect(result).toEqual({ deleted: true, existed: true, uri: listUri, membersRemoved: 120, membersFailed: 0, membersComplete: true });
+    expect(fake.callsTo('com.atproto.repo.listRecords')).toHaveLength(2);
+    expect(fake.callsTo('com.atproto.repo.listRecords')[0].query.get('collection')).toBe('app.bsky.graph.listitem');
+    const removed = fake.callsTo('com.atproto.repo.applyWrites').flatMap((call) => deletedRkeys(call.body));
+    expect(removed).toHaveLength(120);
+    expect(removed.every((rkey) => rkey.startsWith('3m'))).toBe(true);
+    const order = fake.calls.map((call) => call.nsid).filter((nsid) => nsid === 'com.atproto.repo.applyWrites' || nsid === 'com.atproto.repo.deleteRecord');
+    expect(order).toEqual(['com.atproto.repo.applyWrites', 'com.atproto.repo.applyWrites', 'com.atproto.repo.deleteRecord']);
+    expect(fake.callsTo('com.atproto.repo.deleteRecord')[0].body).toEqual({ repo: ME_DID, collection: 'app.bsky.graph.list', rkey: '3lst' });
+  });
+
+  it('stops on a failed batch and keeps the list so a retry can finish', async () => {
+    let batch = 0;
+    const fake = installFakeBluesky({
+      routes: {
+        'com.atproto.repo.getRecord': () => json({ uri: listUri, cid: CID, value: {} }),
+        'com.atproto.repo.listRecords': listRecordsRoute({ records: listItems }),
+        'com.atproto.repo.applyWrites': () => {
+          batch += 1;
+          return batch === 2 ? xrpcError({ status: 500, error: 'InternalServerError', message: 'boom' }) : json({});
+        },
+        'com.atproto.repo.deleteRecord': () => json({}),
+      },
+    });
+    await expect(runAction({ action: deleteList, propsValue: { list: listUri } })).rejects.toThrow(
+      /Removed 100 of 120 list memberships, then Bluesky refused the next batch\. The list was not deleted; run the action again to finish\./,
+    );
+    expect(fake.callsTo('com.atproto.repo.deleteRecord')).toHaveLength(0);
+  });
+
+  it('cleans up leftover memberships when the list is already gone', async () => {
+    const leftovers = listItems.slice(100);
+    const fake = installFakeBluesky({
+      routes: {
+        'com.atproto.repo.getRecord': () => xrpcError({ status: 400, error: 'RecordNotFound', message: 'Could not locate record' }),
+        'com.atproto.repo.listRecords': listRecordsRoute({ records: leftovers }),
+        'com.atproto.repo.applyWrites': () => json({}),
+        'com.atproto.repo.deleteRecord': () => json({}),
+      },
+    });
+    const result = await runAction({ action: deleteList, propsValue: { list: listUri } });
+    expect(result).toEqual({ deleted: true, existed: false, uri: listUri, membersRemoved: 20, membersFailed: 0, membersComplete: true });
+    expect(fake.callsTo('com.atproto.repo.applyWrites').flatMap((call) => deletedRkeys(call.body))).toHaveLength(20);
+    expect(fake.callsTo('com.atproto.repo.deleteRecord')).toHaveLength(0);
+  });
+
+  it('refuses a list of another account before touching anything', async () => {
+    const fake = installFakeBluesky({ routes: {} });
+    await expect(runAction({ action: deleteList, propsValue: { list: `at://${OTHER_DID}/app.bsky.graph.list/3lst` } })).rejects.toThrow(/belongs to another account/);
+    expect(fake.callsTo('com.atproto.repo.listRecords')).toHaveLength(0);
   });
 });
 

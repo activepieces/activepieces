@@ -1,5 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { AppBskyFeedDefs, AppBskyFeedGetPostThread } from '@atproto/api';
+import type { AppBskyFeedDefs, AppBskyFeedGetPostThread } from '@atproto/api';
+import { blueskyAtproto } from '../common/atproto';
 import { blueskyAuth } from '../common/auth';
 import { findThreadOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';
@@ -56,11 +57,11 @@ export const findThread = createAction({
 
 function threadStatistics(thread: ThreadRoot): ThreadStatistics {
   const empty: ThreadStatistics = { totalPosts: 0, parentPosts: 0, replyPosts: 0, notFoundPosts: 0, blockedPosts: 0 };
-  if (!AppBskyFeedDefs.isThreadViewPost(thread)) {
+  if (!blueskyAtproto.isThreadViewPost(thread)) {
     return {
       ...empty,
-      notFoundPosts: AppBskyFeedDefs.isNotFoundPost(thread) ? 1 : 0,
-      blockedPosts: AppBskyFeedDefs.isBlockedPost(thread) ? 1 : 0,
+      notFoundPosts: blueskyAtproto.isNotFoundPost(thread) ? 1 : 0,
+      blockedPosts: blueskyAtproto.isBlockedPost(thread) ? 1 : 0,
     };
   }
   const parents = countParents(thread.parent);
@@ -75,21 +76,21 @@ function threadStatistics(thread: ThreadRoot): ThreadStatistics {
 }
 
 function countParents(node: AppBskyFeedDefs.ThreadViewPost['parent']): NodeCounts {
-  if (AppBskyFeedDefs.isThreadViewPost(node)) {
+  if (blueskyAtproto.isThreadViewPost(node)) {
     const above = countParents(node.parent);
     return { ...above, posts: above.posts + 1 };
   }
   return {
     posts: 0,
-    notFound: AppBskyFeedDefs.isNotFoundPost(node) ? 1 : 0,
-    blocked: AppBskyFeedDefs.isBlockedPost(node) ? 1 : 0,
+    notFound: blueskyAtproto.isNotFoundPost(node) ? 1 : 0,
+    blocked: blueskyAtproto.isBlockedPost(node) ? 1 : 0,
   };
 }
 
 function countReplies(nodes: NonNullable<AppBskyFeedDefs.ThreadViewPost['replies']>): NodeCounts {
   return nodes.reduce<NodeCounts>(
     (total, node) => {
-      if (AppBskyFeedDefs.isThreadViewPost(node)) {
+      if (blueskyAtproto.isThreadViewPost(node)) {
         const nested = countReplies(node.replies ?? []);
         return {
           posts: total.posts + 1 + nested.posts,
@@ -99,8 +100,8 @@ function countReplies(nodes: NonNullable<AppBskyFeedDefs.ThreadViewPost['replies
       }
       return {
         posts: total.posts,
-        notFound: total.notFound + (AppBskyFeedDefs.isNotFoundPost(node) ? 1 : 0),
-        blocked: total.blocked + (AppBskyFeedDefs.isBlockedPost(node) ? 1 : 0),
+        notFound: total.notFound + (blueskyAtproto.isNotFoundPost(node) ? 1 : 0),
+        blocked: total.blocked + (blueskyAtproto.isBlockedPost(node) ? 1 : 0),
       };
     },
     { posts: 0, notFound: 0, blocked: 0 },

@@ -1,5 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { AppBskyFeedDefs, AtpAgent } from '@atproto/api';
+import type { AppBskyFeedDefs, AtpAgent } from '@atproto/api';
+import { blueskyAtproto } from '../common/atproto';
 import { blueskyAuth } from '../common/auth';
 import { newPostsByAuthorTriggerOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';
@@ -156,10 +157,10 @@ function authorPage({ agent, config, did }: { agent: AtpAgent; config: AuthorCon
   return async ({ cursor }) => {
     const response = await agent.getAuthorFeed({ actor: did, limit: 100, cursor, filter: 'posts_with_replies' });
     const times = response.data.feed.map((entry) =>
-      blueskyPolling.timeOf(entry.reason && AppBskyFeedDefs.isReasonRepost(entry.reason) ? entry.reason.indexedAt : entry.post.indexedAt),
+      blueskyPolling.timeOf(entry.reason && blueskyAtproto.isReasonRepost(entry.reason) ? entry.reason.indexedAt : entry.post.indexedAt),
     );
     const items = response.data.feed.flatMap((entry) => {
-      const repost = entry.reason && AppBskyFeedDefs.isReasonRepost(entry.reason) ? entry.reason : undefined;
+      const repost = entry.reason && blueskyAtproto.isReasonRepost(entry.reason) ? entry.reason : undefined;
       const isReply = blueskyMappers.recordReplyParentUri(entry.post.record) !== null;
       const ownPost = !entry.reason && entry.post.author.did === did;
       const ownRepost = repost !== undefined && repost.by.did === did;

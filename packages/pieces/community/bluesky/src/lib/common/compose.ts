@@ -1,4 +1,4 @@
-import {
+import type {
   $Typed,
   AppBskyEmbedExternal,
   AppBskyEmbedImages,
@@ -8,8 +8,8 @@ import {
   BlobRef,
   RichText,
 } from '@atproto/api';
-import { HttpHeaders, HttpMethod, HttpResponse, httpClient } from '@activepieces/pieces-common';
-import { Readable } from 'node:stream';
+import { blueskyAtproto } from './atproto';
+import { blueskyDownload } from './download';
 import { blueskyRefs } from './refs';
 
 const MAX_POST_GRAPHEMES = 300;
@@ -37,10 +37,11 @@ const LEGACY_WARNING_MAP: Record<string, string | null> = {
 const SELF_LABEL_VALUES = ['sexual', 'nudity', 'porn', 'graphic-media'];
 
 function graphemeLength(text: string): number {
-  return new RichText({ text }).graphemeLength;
+  return blueskyAtproto.graphemeLength(text);
 }
 
 async function buildRichText({ agent, text }: { agent: AtpAgent; text: string }): Promise<RichText> {
+  const { RichText } = await blueskyAtproto.load();
   const richText = new RichText({ text });
   await richText.detectFacets(agent);
   return richText;
@@ -132,102 +133,7 @@ async function fetchBinary({
   accept?: string;
   label: string;
 }): Promise<{ data: Uint8Array; contentType: string }> {
-  assertHttpUrl({ url, label });
-  const deadline = Date.now() + timeoutMs;
-  let response: HttpResponse<Readable>;
-  try {
-    response = await httpClient.sendRequest<Readable>({
-      method: HttpMethod.GET,
-      url,
-      timeout: timeoutMs,
-      responseType: 'stream',
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Activepieces-Bot/1.0)', Accept: accept },
-    });
-  } catch (error) {
-    const status = httpErrorStatus(error);
-    throw new Error(
-      status === undefined
-        ? `Could not download ${label} from ${url}: ${error instanceof Error ? error.message : String(error)}`
-        : `Could not download ${label} from ${url}: HTTP ${status}.`,
-    );
-  }
-  const declared = Number(headerValue({ headers: response.headers, name: 'content-length' }) ?? '');
-  if (Number.isFinite(declared) && declared > maxBytes) {
-    response.body.destroy();
-    throw new Error(`${label} at ${url} is ${formatBytes(declared)}; the limit is ${formatBytes(maxBytes)}.`);
-  }
-  const data = await readCapped({
-    stream: response.body,
-    maxBytes,
-    url,
-    label,
-    timeoutMs: Math.max(1, deadline - Date.now()),
-  });
-  const contentType = headerValue({ headers: response.headers, name: 'content-type' }) ?? '';
-  return { data, contentType: contentType.split(';')[0].trim().toLowerCase() };
-}
-
-async function readCapped({
-  stream,
-  maxBytes,
-  url,
-  label,
-  timeoutMs,
-}: {
-  stream: Readable;
-  maxBytes: number;
-  url: string;
-  label: string;
-  timeoutMs: number;
-}): Promise<Uint8Array> {
-  const chunks: Buffer[] = [];
-  let total = 0;
-  let tooLarge = false;
-  const timer = setTimeout(() => {
-    stream.destroy(new Error(`timed out after ${Math.round(timeoutMs / 1000)} s`));
-  }, timeoutMs);
-  try {
-    for await (const chunk of stream) {
-      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      total += buffer.byteLength;
-      if (total > maxBytes) {
-        tooLarge = true;
-        break;
-      }
-      chunks.push(buffer);
-    }
-  } catch (error) {
-    throw new Error(`Could not download ${label} from ${url}: ${error instanceof Error ? error.message : String(error)}`);
-  } finally {
-    clearTimeout(timer);
-    if (tooLarge) {
-      stream.destroy();
-    }
-  }
-  if (tooLarge) {
-    throw new Error(`${label} at ${url} is larger than the ${formatBytes(maxBytes)} limit.`);
-  }
-  return new Uint8Array(Buffer.concat(chunks, total));
-}
-
-function headerValue({ headers, name }: { headers: HttpHeaders | undefined; name: string }): string | undefined {
-  const value = headers?.[name];
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function httpErrorStatus(error: unknown): number | undefined {
-  if (typeof error !== 'object' || error === null || !('response' in error)) {
-    return undefined;
-  }
-  const response: unknown = error.response;
-  if (typeof response !== 'object' || response === null || !('status' in response)) {
-    return undefined;
-  }
-  return typeof response.status === 'number' ? response.status : undefined;
-}
-
-function formatBytes(bytes: number): string {
-  return bytes >= 1_000_000 ? `${(bytes / 1_000_000).toFixed(1)} MB` : `${Math.round(bytes / 1000)} KB`;
+  return blueskyDownload.download({ url, maxBytes, timeoutMs, accept, label });
 }
 
 function sniffImageType(data: Uint8Array): string | undefined {

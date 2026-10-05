@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AppBskyFeedPost, AtpAgent } from '@atproto/api';
+import type { AppBskyFeedPost, AtpAgent } from '@atproto/api';
 import { blueskyAuth } from '../common/auth';
 import { createPostOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';

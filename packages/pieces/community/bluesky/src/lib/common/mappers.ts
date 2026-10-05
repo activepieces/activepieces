@@ -1,21 +1,18 @@
-import {
+import type {
   AppBskyActorDefs,
-  AppBskyEmbedExternal,
-  AppBskyEmbedImages,
-  AppBskyEmbedRecordWithMedia,
-  AppBskyEmbedVideo,
   AppBskyFeedDefs,
   AppBskyGraphDefs,
   AppBskyNotificationListNotifications,
 } from '@atproto/api';
+import { blueskyAtproto } from './atproto';
 import { blueskyRefs } from './refs';
 
 function mediaFlags(embed: AppBskyFeedDefs.PostView['embed']): MediaFlags {
-  const media = embed && AppBskyEmbedRecordWithMedia.isView(embed) ? embed.media : embed;
+  const media = embed && blueskyAtproto.isRecordWithMediaView(embed) ? embed.media : embed;
   return {
-    hasImages: media !== undefined && AppBskyEmbedImages.isView(media),
-    hasVideo: media !== undefined && AppBskyEmbedVideo.isView(media),
-    hasExternalLink: media !== undefined && AppBskyEmbedExternal.isView(media),
+    hasImages: media !== undefined && blueskyAtproto.isImagesView(media),
+    hasVideo: media !== undefined && blueskyAtproto.isVideoView(media),
+    hasExternalLink: media !== undefined && blueskyAtproto.isExternalView(media),
   };
 }
 
@@ -60,7 +57,7 @@ function postBase(post: AppBskyFeedDefs.PostView) {
 }
 
 function feedItem(entry: AppBskyFeedDefs.FeedViewPost) {
-  const repost = entry.reason && AppBskyFeedDefs.isReasonRepost(entry.reason) ? entry.reason : undefined;
+  const repost = entry.reason && blueskyAtproto.isReasonRepost(entry.reason) ? entry.reason : undefined;
   return {
     ...postBase(entry.post),
     text: recordText(entry.post.record),
@@ -69,7 +66,7 @@ function feedItem(entry: AppBskyFeedDefs.FeedViewPost) {
     repostedAt: repost ? repost.indexedAt : null,
     isReply: recordReplyParentUri(entry.post.record) !== null,
     replyToUri: recordReplyParentUri(entry.post.record),
-    isPinned: entry.reason !== undefined && AppBskyFeedDefs.isReasonPin(entry.reason),
+    isPinned: entry.reason !== undefined && blueskyAtproto.isReasonPin(entry.reason),
   };
 }
 

@@ -571,7 +571,7 @@ export const deleteListOutputSchema: OutputSchema = {
     { key: 'uri', label: 'List URI' },
     { key: 'membersRemoved', label: 'Memberships Removed', format: 'number' },
     { key: 'membersFailed', label: 'Memberships Not Removed', format: 'number' },
-    { key: 'membersComplete', label: 'All Memberships Found', format: 'boolean', description: 'False when the list had more than 5,000 members and some were left.' },
+    { key: 'membersComplete', label: 'All Memberships Found', format: 'boolean', description: 'True once every membership record of the list was removed before the list was deleted.' },
   ],
 };
 
@@ -655,5 +655,11 @@ export const mentionTriggerOutputSchema: OutputSchema = {
     { key: 'replyToUri', label: 'Replied-To Post URI' },
     { key: 'reasonSubject', label: 'Your Post URI', description: 'Your post that was replied to or quoted; null for mentions.' },
     { key: 'isRead', label: 'Is Read', format: 'boolean' },
+    {
+      key: 'postAvailable',
+      label: 'Post Available',
+      format: 'boolean',
+      description: 'False when the post was deleted or hidden before the poll; the post fields then come from the notification and the counts are null.',
+    },
   ],
 };

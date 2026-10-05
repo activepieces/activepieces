@@ -1,5 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AtpAgent } from '@atproto/api';
+import { blueskyAtproto } from './atproto';
 import { blueskyClient } from './client';
 
 const description = `
@@ -41,6 +41,7 @@ export const blueskyAuth = PieceAuth.CustomAuth({
       return { valid: false, error: error instanceof Error ? error.message : 'Invalid PDS Host.' };
     }
     try {
+      const { AtpAgent } = await blueskyAtproto.load();
       const agent = new AtpAgent({ service });
       await agent.login({ identifier: auth.identifier.trim(), password: auth.password });
       return { valid: true };

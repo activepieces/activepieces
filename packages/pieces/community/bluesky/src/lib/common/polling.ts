@@ -1,6 +1,7 @@
 const WINDOW_MS = 15 * 60 * 1000;
-const MAX_PAGES = 4;
+const MAX_PAGES = 10;
 const SEEN_CAP = 500;
+const RESUME_STOP_KEYS = 100;
 const TEST_SAMPLE_SIZE = 5;
 
 function isPollState(value: unknown): value is PollState {
@@ -8,26 +9,49 @@ function isPollState(value: unknown): value is PollState {
     typeof value === 'object' &&
     value !== null &&
     'seen' in value &&
-    Array.isArray(value.seen) &&
-    value.seen.every((key: unknown) => typeof key === 'string') &&
+    isStringArray(value.seen) &&
     'lastTime' in value &&
     typeof value.lastTime === 'number'
   );
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((key: unknown) => typeof key === 'string');
+}
+
+function resumeOf(state: PollState): PollResume | undefined {
+  const resume: unknown = state.resume;
+  if (
+    typeof resume === 'object' &&
+    resume !== null &&
+    'cursor' in resume &&
+    typeof resume.cursor === 'string' &&
+    'stopBefore' in resume &&
+    typeof resume.stopBefore === 'number' &&
+    'stopKeys' in resume &&
+    isStringArray(resume.stopKeys)
+  ) {
+    return { cursor: resume.cursor, stopBefore: resume.stopBefore, stopKeys: resume.stopKeys };
+  }
+  return undefined;
+}
+
 async function collect<T>({
   fetchPage,
+  startCursor,
   stopBefore,
   maxPages,
   seen,
 }: {
   fetchPage: PageFetcher<T>;
+  startCursor?: string;
   stopBefore: number;
   maxPages: number;
   seen: Set<string>;
-}): Promise<{ items: PollItem<T>[]; newestTime: number | undefined }> {
+}): Promise<{ items: PollItem<T>[]; newestTime: number | undefined; unfinishedCursor: string | undefined }> {
   const pages: PollPage<T>[] = [];
-  let cursor: string | undefined = undefined;
+  let cursor: string | undefined = startCursor;
+  let unfinishedCursor: string | undefined = undefined;
   for (let page = 0; page < maxPages; page++) {
     const result: PollPage<T> = await fetchPage({ cursor });
     pages.push(result);
@@ -35,14 +59,17 @@ async function collect<T>({
       (result.oldestTime !== undefined && result.oldestTime < stopBefore) ||
       result.items.some((item) => seen.has(item.key));
     if (reachedCheckpoint || !result.cursor || result.cursor === cursor) {
+      unfinishedCursor = undefined;
       break;
     }
     cursor = result.cursor;
+    unfinishedCursor = result.cursor;
   }
   const times = pages.flatMap((page) => (page.newestTime === undefined ? [] : [page.newestTime]));
   return {
     items: pages.flatMap((page) => page.items),
     newestTime: times.length === 0 ? undefined : times.reduce((max, time) => (time > max ? time : max), times[0]),
+    unfinishedCursor,
   };
 }
 
@@ -86,24 +113,73 @@ async function poll<T>({
   seenCap = SEEN_CAP,
   windowMs = WINDOW_MS,
   seedPages,
-}: SeedParams<T> & { maxPages?: number; windowMs?: number }): Promise<T[]> {
+  resumable = true,
+}: SeedParams<T> & { maxPages?: number; windowMs?: number; resumable?: boolean }): Promise<T[]> {
   const stored = await store.get<unknown>(storeKey);
   if (!isPollState(stored)) {
     await seed({ store, storeKey, fetchPage, seenCap, seedPages });
     return [];
   }
+  const resume = resumable ? resumeOf(stored) : undefined;
+  if (resume !== undefined) {
+    return drain({ store, storeKey, fetchPage, maxPages, seenCap, stored, resume });
+  }
   const cutoff = stored.lastTime - windowMs;
   const seen = new Set(stored.seen);
-  const { items, newestTime } = await collect({ fetchPage, stopBefore: cutoff, maxPages, seen });
-  const fresh = uniqueByKey(items)
-    .filter((item) => !seen.has(item.key) && item.time >= cutoff)
-    .sort((a, b) => b.time - a.time);
+  const { items, newestTime, unfinishedCursor } = await collect({ fetchPage, stopBefore: cutoff, maxPages, seen });
+  const fresh = freshItems({ items, seen, stopBefore: cutoff });
+  const nextResume: PollResume | undefined =
+    resumable && unfinishedCursor !== undefined
+      ? { cursor: unfinishedCursor, stopBefore: cutoff, stopKeys: stored.seen.slice(0, RESUME_STOP_KEYS) }
+      : undefined;
   const nextState: PollState = {
     seen: [...fresh.map((item) => item.key), ...stored.seen].slice(0, seenCap),
     lastTime: newestTime !== undefined && newestTime > stored.lastTime ? newestTime : stored.lastTime,
+    ...(nextResume ? { resume: nextResume } : {}),
   };
   await store.put(storeKey, nextState);
   return fresh.map((item) => item.data);
+}
+
+async function drain<T>({
+  store,
+  storeKey,
+  fetchPage,
+  maxPages,
+  seenCap,
+  stored,
+  resume,
+}: {
+  store: PollStore;
+  storeKey: string;
+  fetchPage: PageFetcher<T>;
+  maxPages: number;
+  seenCap: number;
+  stored: PollState;
+  resume: PollResume;
+}): Promise<T[]> {
+  const stopKeys = new Set(resume.stopKeys);
+  const { items, unfinishedCursor } = await collect({
+    fetchPage,
+    startCursor: resume.cursor,
+    stopBefore: resume.stopBefore,
+    maxPages,
+    seen: stopKeys,
+  });
+  const fresh = freshItems({ items, seen: new Set([...stored.seen, ...resume.stopKeys]), stopBefore: resume.stopBefore });
+  const nextState: PollState = {
+    seen: [...stored.seen, ...fresh.map((item) => item.key)].slice(0, seenCap),
+    lastTime: stored.lastTime,
+    ...(unfinishedCursor !== undefined ? { resume: { ...resume, cursor: unfinishedCursor } } : {}),
+  };
+  await store.put(storeKey, nextState);
+  return fresh.map((item) => item.data);
+}
+
+function freshItems<T>({ items, seen, stopBefore }: { items: PollItem<T>[]; seen: Set<string>; stopBefore: number }): PollItem<T>[] {
+  return uniqueByKey(items)
+    .filter((item) => !seen.has(item.key) && item.time >= stopBefore)
+    .sort((a, b) => b.time - a.time);
 }
 
 async function sample<T>({ fetchPage, size = TEST_SAMPLE_SIZE }: { fetchPage: PageFetcher<T>; size?: number }): Promise<T[]> {
@@ -150,7 +226,8 @@ export const blueskyPolling = {
 export type PollItem<T> = { key: string; time: number; data: T };
 export type PollPage<T> = { items: PollItem<T>[]; cursor?: string; oldestTime: number | undefined; newestTime: number | undefined };
 export type PageFetcher<T> = (args: { cursor: string | undefined }) => Promise<PollPage<T>>;
-export type PollState = { seen: string[]; lastTime: number };
+export type PollState = { seen: string[]; lastTime: number; resume?: PollResume };
+export type PollResume = { cursor: string; stopBefore: number; stopKeys: string[] };
 export type PollStore = {
   get<V>(key: string): Promise<V | null>;
   put<V>(key: string, value: V): Promise<V>;

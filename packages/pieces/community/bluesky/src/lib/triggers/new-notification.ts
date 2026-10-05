@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { AtpAgent } from '@atproto/api';
+import type { AtpAgent } from '@atproto/api';
 import { blueskyAuth } from '../common/auth';
 import { notificationTriggerOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';

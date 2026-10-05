@@ -1,5 +1,6 @@
-import { AtpAgent } from '@atproto/api';
+import type { AtpAgent } from '@atproto/api';
 import { createHash } from 'crypto';
+import { blueskyAtproto } from './atproto';
 import type { BlueSkyAuthType } from './auth';
 
 const DEFAULT_PDS_HOST = 'https://bsky.social';
@@ -37,7 +38,9 @@ async function createBlueskyAgent(auth: BlueSkyAuthType): Promise<AtpAgent> {
   if (cached && Date.now() < cached.expires) {
     return cached.agent;
   }
-  const agent = new AtpAgent({ service: normalizePdsHost(auth.pdsHost) });
+  const service = normalizePdsHost(auth.pdsHost);
+  const { AtpAgent } = await blueskyAtproto.load();
+  const agent = new AtpAgent({ service });
   try {
     await agent.login({ identifier: auth.identifier.trim(), password: auth.password });
   } catch (error) {

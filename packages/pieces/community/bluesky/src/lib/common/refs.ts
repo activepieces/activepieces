@@ -1,4 +1,4 @@
-import { AtpAgent } from '@atproto/api';
+import type { AtpAgent } from '@atproto/api';
 import { blueskyClient } from './client';
 
 const DID_PATTERN = /^did:(plc:[a-z2-7]{24}|web:[a-zA-Z0-9.%:-]{1,253})$/;

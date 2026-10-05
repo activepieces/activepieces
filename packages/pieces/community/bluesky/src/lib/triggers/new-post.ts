@@ -1,5 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { AppBskyFeedDefs, AtpAgent } from '@atproto/api';
+import type { AppBskyFeedDefs, AtpAgent } from '@atproto/api';
 import { blueskyAuth } from '../common/auth';
 import { newPostTriggerOutputSchema } from '../output-schemas';
 import { blueskyClient } from '../common/client';
@@ -132,6 +132,7 @@ export const newPost = createTrigger({
           storeKey: STORE_KEY,
           fetchPage: searchPage({ agent, config }),
           maxPages: config.sort === 'top' ? 1 : blueskyPolling.MAX_PAGES,
+          resumable: config.sort !== 'top',
         }),
     });
   },
