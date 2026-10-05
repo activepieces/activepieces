@@ -2,7 +2,7 @@ import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-f
 import { niftyAuth } from '../auth';
 import { niftyProps } from '../common';
 import { NiftyAuth, niftyClient, NiftyRecord } from '../common/client';
-import { niftyPolling, TimeCursor } from '../common/polling';
+import { niftyPolling, TimeState } from '../common/polling';
 import { taskOutputSchema } from '../output-schemas';
 import { COMPLETED_TASK_SAMPLE } from './sample-data';
 
@@ -33,27 +33,35 @@ export const taskCompleted = createTrigger({
   sampleData: COMPLETED_TASK_SAMPLE,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    if (context.isRepublish && (await context.store.get<TimeCursor>(CURSOR_KEY))) {
+    const fp = fingerprintOf({ propsValue: context.propsValue });
+    const stored = niftyPolling.readTimeState({ value: await context.store.get<unknown>(CURSOR_KEY), fp });
+    if (context.isRepublish && stored) {
       return;
     }
     await context.store.put(CURSOR_KEY, await seed({ auth: context.auth, propsValue: context.propsValue }));
   },
-  async onDisable(context) {
-    await context.store.delete(CURSOR_KEY);
+  async onDisable() {
+    return;
   },
   async test(context) {
-    const tasks = await fetchCompleted({ auth: context.auth, propsValue: context.propsValue, since: undefined });
-    return [...tasks].sort((a, b) => Date.parse(completedOn(b)) - Date.parse(completedOn(a))).slice(0, 5);
+    const { items } = await fetchCompleted({ auth: context.auth, propsValue: context.propsValue, window: undefined });
+    return [...items].sort((a, b) => Date.parse(completedOn(b)) - Date.parse(completedOn(a))).slice(0, 5);
   },
   async run(context) {
-    const stored = await context.store.get<TimeCursor>(CURSOR_KEY);
+    const fp = fingerprintOf({ propsValue: context.propsValue });
+    const stored = niftyPolling.readTimeState({ value: await context.store.get<unknown>(CURSOR_KEY), fp });
     if (!stored) {
       await context.store.put(CURSOR_KEY, await seed({ auth: context.auth, propsValue: context.propsValue }));
       return [];
     }
-    const tasks = await fetchCompleted({ auth: context.auth, propsValue: context.propsValue, since: stored.cp });
-    const { emit, cursor } = niftyPolling.advanceTimeCursor({ cursor: stored, items: tasks, timeOf: completedOn, keyOf: completionKey });
-    await context.store.put(CURSOR_KEY, cursor);
+    const scan = await niftyPolling.readWindow({
+      from: stored.cp,
+      to: new Date(Date.now() + WINDOW_AHEAD_MS).toISOString(),
+      fetchWindow: (window) => fetchCompleted({ auth: context.auth, propsValue: context.propsValue, window }),
+    });
+    const { emit, cursor } = niftyPolling.advanceTimeCursor({ cursor: stored, items: scan.items, timeOf: completedOn, keyOf: completionKey });
+    const next = scan.narrowed ? niftyPolling.coverScannedWindow({ cursor, scannedTo: scan.scannedTo }) : cursor;
+    await context.store.put(CURSOR_KEY, { ...next, fp });
     return emit;
   },
 });
@@ -61,31 +69,34 @@ export const taskCompleted = createTrigger({
 async function fetchCompleted({
   auth,
   propsValue,
-  since,
+  window,
 }: {
   auth: NiftyAuth;
   propsValue: TriggerProps;
-  since: string | undefined;
-}): Promise<NiftyRecord[]> {
-  const window =
-    since === undefined
-      ? {}
-      : {
-          completed_from: since,
-          completed_to: new Date(Date.now() + WINDOW_AHEAD_MS).toISOString(),
-        };
-  const tasks = await niftyPolling.fetchTasks({
+  window: { from: string; to: string } | undefined;
+}): Promise<{ items: NiftyRecord[]; truncated: boolean }> {
+  const range = window === undefined ? {} : { completed_from: window.from, completed_to: window.to };
+  const { items, truncated } = await niftyPolling.fetchTasks({
     auth,
-    projectId: niftyClient.optionalId({ value: propsValue.project, label: 'Project' }),
+    projectId: projectIdOf({ propsValue }),
     includeSubtasks: propsValue.include_subtasks !== false,
-    extraQuery: { completed: true, order: 'completedOn:DESC', ...window },
+    extraQuery: { completed: true, order: 'completedOn:DESC', ...range },
   });
-  return tasks.filter((task) => task['completed'] === true);
+  return { items: items.filter((task) => task['completed'] === true), truncated };
 }
 
-async function seed({ auth, propsValue }: { auth: NiftyAuth; propsValue: TriggerProps }): Promise<TimeCursor> {
-  const tasks = await fetchCompleted({ auth, propsValue, since: undefined });
-  return niftyPolling.seedTimeCursor({ items: tasks, timeOf: completedOn, keyOf: completionKey, now: new Date().toISOString() });
+async function seed({ auth, propsValue }: { auth: NiftyAuth; propsValue: TriggerProps }): Promise<TimeState> {
+  const { items } = await fetchCompleted({ auth, propsValue, window: undefined });
+  const cursor = niftyPolling.seedTimeCursor({ items, timeOf: completedOn, keyOf: completionKey, now: new Date().toISOString() });
+  return { ...cursor, fp: fingerprintOf({ propsValue }) };
+}
+
+function projectIdOf({ propsValue }: { propsValue: TriggerProps }): string | undefined {
+  return niftyClient.optionalId({ value: propsValue.project, label: 'Project' });
+}
+
+function fingerprintOf({ propsValue }: { propsValue: TriggerProps }): string {
+  return niftyPolling.fingerprint({ values: [projectIdOf({ propsValue }) ?? null, propsValue.include_subtasks !== false] });
 }
 
 function completedOn(task: NiftyRecord): string {

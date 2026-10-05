@@ -2,7 +2,7 @@ import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-f
 import { niftyAuth } from '../auth';
 import { niftyProps } from '../common';
 import { NiftyAuth, niftyClient, NiftyRecord } from '../common/client';
-import { niftyPolling, TimeCursor } from '../common/polling';
+import { niftyPolling, TimeState } from '../common/polling';
 import { taskOutputSchema } from '../output-schemas';
 import { TASK_SAMPLE } from './sample-data';
 
@@ -33,42 +33,54 @@ export const newTask = createTrigger({
   sampleData: TASK_SAMPLE,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    if (context.isRepublish && (await context.store.get<TimeCursor>(CURSOR_KEY))) {
+    const fp = fingerprintOf({ propsValue: context.propsValue });
+    const stored = niftyPolling.readTimeState({ value: await context.store.get<unknown>(CURSOR_KEY), fp });
+    if (context.isRepublish && stored) {
       return;
     }
     await context.store.put(CURSOR_KEY, await seed({ auth: context.auth, propsValue: context.propsValue }));
   },
-  async onDisable(context) {
-    await context.store.delete(CURSOR_KEY);
+  async onDisable() {
+    return;
   },
   async test(context) {
-    const tasks = await loadTasks({ auth: context.auth, propsValue: context.propsValue });
-    return [...tasks].sort((a, b) => Date.parse(createdAt(b)) - Date.parse(createdAt(a))).slice(0, 5);
+    const { items } = await loadTasks({ auth: context.auth, propsValue: context.propsValue });
+    return [...items].sort((a, b) => Date.parse(createdAt(b)) - Date.parse(createdAt(a))).slice(0, 5);
   },
   async run(context) {
-    const stored = await context.store.get<TimeCursor>(CURSOR_KEY);
+    const fp = fingerprintOf({ propsValue: context.propsValue });
+    const stored = niftyPolling.readTimeState({ value: await context.store.get<unknown>(CURSOR_KEY), fp });
     if (!stored) {
       await context.store.put(CURSOR_KEY, await seed({ auth: context.auth, propsValue: context.propsValue }));
       return [];
     }
-    const tasks = await loadTasks({ auth: context.auth, propsValue: context.propsValue });
-    const { emit, cursor } = niftyPolling.advanceTimeCursor({ cursor: stored, items: tasks, timeOf: createdAt, keyOf: idOf });
-    await context.store.put(CURSOR_KEY, cursor);
+    const { items } = await loadTasks({ auth: context.auth, propsValue: context.propsValue });
+    const { emit, cursor } = niftyPolling.advanceTimeCursor({ cursor: stored, items, timeOf: createdAt, keyOf: idOf });
+    await context.store.put(CURSOR_KEY, { ...cursor, fp });
     return emit;
   },
 });
 
-async function loadTasks({ auth, propsValue }: { auth: NiftyAuth; propsValue: TriggerProps }): Promise<NiftyRecord[]> {
+async function loadTasks({ auth, propsValue }: { auth: NiftyAuth; propsValue: TriggerProps }): Promise<{ items: NiftyRecord[]; truncated: boolean }> {
   return niftyPolling.fetchTasks({
     auth,
-    projectId: niftyClient.optionalId({ value: propsValue.project, label: 'Project' }),
+    projectId: projectIdOf({ propsValue }),
     includeSubtasks: propsValue.include_subtasks !== false,
   });
 }
 
-async function seed({ auth, propsValue }: { auth: NiftyAuth; propsValue: TriggerProps }): Promise<TimeCursor> {
-  const tasks = await loadTasks({ auth, propsValue });
-  return niftyPolling.seedTimeCursor({ items: tasks, timeOf: createdAt, keyOf: idOf, now: new Date().toISOString() });
+async function seed({ auth, propsValue }: { auth: NiftyAuth; propsValue: TriggerProps }): Promise<TimeState> {
+  const { items } = await loadTasks({ auth, propsValue });
+  const cursor = niftyPolling.seedTimeCursor({ items, timeOf: createdAt, keyOf: idOf, now: new Date().toISOString() });
+  return { ...cursor, fp: fingerprintOf({ propsValue }) };
+}
+
+function projectIdOf({ propsValue }: { propsValue: TriggerProps }): string | undefined {
+  return niftyClient.optionalId({ value: propsValue.project, label: 'Project' });
+}
+
+function fingerprintOf({ propsValue }: { propsValue: TriggerProps }): string {
+  return niftyPolling.fingerprint({ values: [projectIdOf({ propsValue }) ?? null, propsValue.include_subtasks !== false] });
 }
 
 function createdAt(task: NiftyRecord): string {
