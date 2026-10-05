@@ -1,5 +1,4 @@
 import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChecklistItem, LinkedResource, TodoTask } from '@microsoft/microsoft-graph-types';
 import { microsoftToDoAuth } from '../../auth';
 import { createTodoClient } from '../../common';
@@ -17,7 +16,7 @@ export const microsoftTodoMoveTaskAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Move a Microsoft To Do task to another list. To Do has no move call, so this copies the task (fields, checklist items, linked resources) into the target list and then deletes the original; the task gets a new ID, returned here. Tasks with attachments are refused so no file is lost. Not idempotent: a retry after success fails because the original is gone.',
+      'Move a Microsoft To Do task to another list. To Do has no move call, so this copies the task (fields, checklist items, linked resources) into the target list and then deletes the original; the task gets a new ID, returned here. Tasks with attachments are refused so no file is lost, and the original is only deleted if it is unchanged since the copy; otherwise the copy is removed and the move fails. Not idempotent: a retry after success fails because the original is gone.',
     idempotent: false,
   },
   props: {
@@ -70,28 +69,21 @@ export const microsoftTodoMoveTaskAction = createAction({
       for (const item of checklistItems) {
         await client.api(`${newPath}/checklistItems`).post({ displayName: item.displayName, isChecked: item.isChecked });
       }
-      const attachments: PageCollection = await client.api(`${sourcePath}/attachments`).select('id').top(1).get();
-      if (attachments.value.length > 0) {
-        throw new Error(
-          'A file was attached to the task while it was being moved, so the move was cancelled and the task was left in its original list.',
-        );
+      const latest: TodoTask & { '@odata.etag'?: string } = await client.api(sourcePath).get();
+      if (latest.hasAttachments) {
+        throw new Error('A file was attached to the task while it was being moved.');
       }
+      const etag = latest['@odata.etag'];
+      const deleteCall = client.api(sourcePath);
+      await (etag ? deleteCall.header('If-Match', etag) : deleteCall).delete();
     });
     if (copyResult.error) {
       const cleanup = await tryCatch(() => client.api(newPath).delete());
       const message = copyResult.error instanceof Error ? copyResult.error.message : String(copyResult.error);
       throw new Error(
         cleanup.error
-          ? `${message} The partial copy (task ${newTaskId} in list ${targetListId}) could not be removed; delete it before retrying.`
+          ? `The move failed: ${message} The original task is unchanged, but the partial copy (task ${newTaskId} in list ${targetListId}) could not be removed; delete it before retrying.`
           : `The move failed and was rolled back; the original task is unchanged. ${message}`,
-      );
-    }
-    try {
-      await client.api(sourcePath).delete();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(
-        `The task was copied to list ${targetListId} as task ${newTaskId}, but the original could not be deleted: ${message}. Delete task ${taskId} from list ${listId} to finish the move.`,
       );
     }
     const moved: TodoTask = await client.api(newPath).get();

@@ -44,7 +44,7 @@ function assertPageTokenMatches({ token, path, filter }: { token: string; path: 
   const matches =
     url !== null &&
     tokenPath.endsWith(decodeURIComponent(path)) &&
-    normalizeFilter(tokenFilter) === normalizeFilter(filter ?? '');
+    tokenFilter.trim() === (filter ?? '').trim();
   if (!matches) {
     throw new Error(
       'This page token belongs to a different list or filter. Pass the nextPageToken from the previous call with the same inputs, or leave Page Token empty to start over.',
@@ -58,10 +58,6 @@ function parseUrl(value: string): URL | null {
   } catch {
     return null;
   }
-}
-
-function normalizeFilter(filter: string): string {
-  return filter.replace(/\s+/g, '');
 }
 
 async function listAll<T>({ client, path }: { client: Client; path: string }): Promise<T[]> {
