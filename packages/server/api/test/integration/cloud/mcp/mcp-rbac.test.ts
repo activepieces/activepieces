@@ -3,7 +3,9 @@ import { DefaultProjectRole, McpServerType, PlatformRole, ProjectScopedMcpServer
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { resolveMcpPermissionChecker, resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
+import { apCheckSolutionTool } from '../../../../src/app/mcp/tools/ap-check-solution'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
+import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
 import { db } from '../../../helpers/db'
@@ -123,6 +125,27 @@ describe('MCP Tool RBAC', () => {
             const member = await createMemberContext(app, ctx, { projectRole: role.name })
             return { ctx, member }
         }
+
+        it('ap_check_solution skips table checks for a role without READ_TABLE', async () => {
+            const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.READ_MCP])
+            const mcp = makeMcp(ctx.project.id)
+            await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Checked solution' })
+
+            const result = await apCheckSolutionTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Checked solution' })
+
+            expect(result.structuredContent).toMatchObject({ tablesChecked: false })
+            expect(text(result)).toContain('Table steps were not checked')
+        })
+
+        it('ap_check_solution checks tables for a role with READ_TABLE', async () => {
+            const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.READ_TABLE, Permission.READ_MCP])
+            const mcp = makeMcp(ctx.project.id)
+            await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Checked solution' })
+
+            const result = await apCheckSolutionTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Checked solution' })
+
+            expect(result.structuredContent).toMatchObject({ tablesChecked: true })
+        })
 
         it('denies a project tool when the role lacks READ_MCP, even though it grants that tool\'s permission', async () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW])

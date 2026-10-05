@@ -1,17 +1,19 @@
 import { isNil, Permission, tryCatchSync, unique } from '@activepieces/core-utils'
-import { Field, FlowActionType, flowStructureUtil, FlowTriggerType, McpToolDefinition, PopulatedFlow, ProjectScopedMcpServer, Step } from '@activepieces/shared'
+import { Field, FlowActionType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PopulatedFlow, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
+import { resolvePermissionChecker } from '../mcp-permissions'
+import { flowValidation } from './ap-validate-flow'
 import { mcpUtils } from './mcp-utils'
 
 const checkSolutionInput = z.object({
     folderName: mcpUtils.FOLDER_NAME_SCHEMA.unwrap().describe('The folder holding the solution (as created with ap_create_folder)'),
 })
 
-export const apCheckSolutionTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apCheckSolutionTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_check_solution',
         permission: Permission.READ_FLOW,
@@ -27,25 +29,28 @@ export const apCheckSolutionTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 }
                 const { data: flows } = await flowService(log).list({ projectIds: [mcp.projectId], folderId: folder.folderId, includeTriggerSource: false })
                 const steps = flows.flatMap((flow) => flowStructureUtil.getAllSteps(flow.version.trigger).map((step) => ({ flow, step })))
+                const canReadTables = await callerCanReadTables({ userId, projectId: mcp.projectId, log })
                 const [targetsByExternalId, tablesByExternalId] = await Promise.all([
                     loadCallTargets({ projectId: mcp.projectId, externalIds: steps.flatMap(({ step }) => callFlowTarget(step) ?? []), log }),
-                    loadTables({ projectId: mcp.projectId, externalIds: steps.flatMap(({ step }) => referencedTable(step) ?? []) }),
+                    canReadTables ? loadTables({ projectId: mcp.projectId, externalIds: steps.flatMap(({ step }) => referencedTable(step) ?? []) }) : new Map<string, Field[]>(),
                 ])
                 const issues = [
-                    ...flows.filter((flow) => !flow.version.valid).map((flow) => ({ flow, stepName: null, message: 'has invalid steps; fix them using ap_validate_flow' })),
-                    ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId }).map((message) => ({ flow, stepName: step.name, message }))),
+                    ...flows.flatMap((flow) => flowValidation.validateFlow({ trigger: flow.version.trigger }).issues.filter((issue) => issue.severity !== 'info').map((issue) => ({ flow, stepName: issue.stepName, message: issue.message }))),
+                    ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId, canReadTables }).map((message) => ({ flow, stepName: step.name, message }))),
                 ]
                 const flowWord = flows.length === 1 ? 'flow' : 'flows'
                 const lines = issues.map(({ flow, stepName, message }) => `- "${flow.version.displayName}"${isNil(stepName) ? '' : ` ${stepName}`}: ${message}`)
+                const tableNote = canReadTables ? '' : ' Table steps were not checked: your role cannot read tables.'
                 const text = issues.length === 0
-                    ? `✅ Solution "${folder.folderName}": ${flows.length} ${flowWord}, every connection checks out.`
-                    : `❌ Solution "${folder.folderName}": ${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} across ${flows.length} ${flowWord}. Fix each one, then run ap_check_solution again:\n${lines.join('\n')}`
+                    ? `✅ Solution "${folder.folderName}": ${flows.length} ${flowWord}, every connection checks out.${tableNote}`
+                    : `❌ Solution "${folder.folderName}": ${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} across ${flows.length} ${flowWord}.${tableNote} Fix each one, then run ap_check_solution again:\n${lines.join('\n')}`
                 return {
                     content: [{ type: 'text', text }],
                     structuredContent: {
                         folderName: folder.folderName ?? null,
                         flowCount: flows.length,
                         ok: issues.length === 0,
+                        tablesChecked: canReadTables,
                         issues: issues.map(({ flow, stepName, message }) => ({ flowId: flow.id, flowName: flow.version.displayName, stepName, message })),
                     },
                 }
@@ -57,17 +62,19 @@ export const apCheckSolutionTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
     }
 }
 
-function checkStep({ step, targetsByExternalId, tablesByExternalId }: { step: Step, targetsByExternalId: Map<string, PopulatedFlow>, tablesByExternalId: Map<string, Field[]> }): string[] {
-    const targetExternalId = callFlowTarget(step)
+function checkStep({ step, targetsByExternalId, tablesByExternalId, canReadTables }: { step: Step, targetsByExternalId: Map<string, PopulatedFlow>, tablesByExternalId: Map<string, Field[]>, canReadTables: boolean }): string[] {
     const isCallFlow = isPieceStep({ step, pieceSuffix: SUBFLOWS_PIECE_SUFFIX, componentName: CALL_FLOW_ACTION })
-    if (isCallFlow && isNil(targetExternalId)) {
-        return ['Call Flow has no target flow selected']
-    }
-    if (!isNil(targetExternalId)) {
-        return checkCallFlow({ step, target: targetsByExternalId.get(targetExternalId) })
+    if (isCallFlow) {
+        const rawTarget = stepInput(step)['flowId']
+        const targetExternalId = callFlowTarget(step)
+        const hasNoTarget = typeof rawTarget !== 'string' || rawTarget.length === 0
+        if (hasNoTarget) {
+            return ['Call Flow has no target flow selected']
+        }
+        return isNil(targetExternalId) ? [] : checkCallFlow({ step, target: targetsByExternalId.get(targetExternalId) })
     }
     const tableExternalId = referencedTable(step)
-    if (!isNil(tableExternalId)) {
+    if (!isNil(tableExternalId) && canReadTables) {
         return checkTableStep({ step, fields: tablesByExternalId.get(tableExternalId) })
     }
     return []
@@ -84,9 +91,10 @@ function checkCallFlow({ step, target }: { step: Step, target: PopulatedFlow | u
     }
     const input = stepInput(step)
     const contract = parseObject(readPath({ value: stepInput(target.version.trigger), path: ['exampleData', 'sampleData'] }))
-    const payload = parseObject(readPath({ value: input, path: ['flowProps', 'payload'] }))
+    const rawPayload = readPath({ value: input, path: ['flowProps', 'payload'] })
+    const payload = isNil(rawPayload) ? {} : parseObject(rawPayload)
     const missingKeys = isNil(contract) || isNil(payload) ? [] : Object.keys(contract).filter((key) => !(key in payload))
-    const waitsForResponse = input['waitForResponse'] === true
+    const waitsForResponse = input['waitForResponse'] === true || input['waitForResponse'] === 'true'
     const subflowResponds = flowStructureUtil.getAllSteps(target.version.trigger).some((subflowStep) => isPieceStep({ step: subflowStep, pieceSuffix: SUBFLOWS_PIECE_SUFFIX, componentName: RETURN_RESPONSE_ACTION }))
     return [
         ...(missingKeys.length > 0 ? [`Call Flow to "${targetName}" does not send ${missingKeys.join(', ')}, which its Callable Flow sample data expects`] : []),
@@ -104,13 +112,20 @@ function checkTableStep({ step, fields }: { step: Step, fields: Field[] | undefi
     const rows = readPath({ value: input, path: ['values', 'values'] })
     const rowKeys = Array.isArray(rows) ? rows.flatMap((row) => Object.keys(parseObject(row) ?? {})) : []
     const updateKeys = componentName(step) === UPDATE_RECORD_ACTION ? Object.keys(parseObject(input['values']) ?? {}) : []
-    const records = parseArray(input['records'])
-    const recordKeys = isNil(records) ? [] : records.flatMap((record) => Object.keys(parseObject(record) ?? {}))
+    const recordKeys = parseRecords(input['records']).flatMap((record) => Object.keys(parseObject(record) ?? {}))
     const unknownFields = unique([
         ...[...rowKeys, ...updateKeys].filter((key) => !fieldExternalIds.has(key)),
         ...recordKeys.filter((key) => !fieldNames.has(key)),
     ])
     return unknownFields.length > 0 ? [`writes fields the table does not have: ${unknownFields.join(', ')}`] : []
+}
+
+async function callerCanReadTables({ userId, projectId, log }: { userId: string | undefined, projectId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    if (isNil(userId)) {
+        return true
+    }
+    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    return isNil(checker.check(Permission.READ_TABLE, 'ap_check_solution'))
 }
 
 async function loadCallTargets({ projectId, externalIds, log }: { projectId: string, externalIds: string[], log: FastifyBaseLogger }): Promise<Map<string, PopulatedFlow>> {
@@ -135,16 +150,14 @@ function callFlowTarget(step: Step): string | undefined {
     if (!isPieceStep({ step, pieceSuffix: SUBFLOWS_PIECE_SUFFIX, componentName: CALL_FLOW_ACTION })) {
         return undefined
     }
-    const flowId = stepInput(step)['flowId']
-    return typeof flowId === 'string' && flowId.length > 0 ? flowId : undefined
+    return staticReference(stepInput(step)['flowId'])
 }
 
 function referencedTable(step: Step): string | undefined {
     if (!isPieceStep({ step, pieceSuffix: TABLES_PIECE_SUFFIX, componentName: undefined })) {
         return undefined
     }
-    const tableId = stepInput(step)['table_id']
-    return typeof tableId === 'string' && tableId.length > 0 ? tableId : undefined
+    return staticReference(stepInput(step)['table_id'])
 }
 
 function isPieceStep({ step, pieceSuffix, componentName: expected }: { step: Step, pieceSuffix: string, componentName: string | undefined }): boolean {
@@ -173,9 +186,17 @@ function parseObject(value: unknown): Record<string, unknown> | null {
     return typeof parsed === 'object' && !isNil(parsed) && !Array.isArray(parsed) ? asRecord(parsed) : null
 }
 
-function parseArray(value: unknown): unknown[] | null {
+function parseRecords(value: unknown): unknown[] {
     const parsed = typeof value === 'string' ? parseJson(value) : value
-    return Array.isArray(parsed) ? parsed : null
+    if (Array.isArray(parsed)) {
+        return parsed
+    }
+    return isNil(parseObject(parsed)) ? [] : [parsed]
+}
+
+function staticReference(value: unknown): string | undefined {
+    const isStaticId = typeof value === 'string' && value.length > 0 && !value.includes('{{')
+    return isStaticId ? value : undefined
 }
 
 function parseJson(value: string): unknown {

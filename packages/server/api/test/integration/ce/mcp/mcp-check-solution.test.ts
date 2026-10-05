@@ -78,6 +78,7 @@ beforeAll(async () => {
                 props: {
                     table_id: { type: 'SHORT_TEXT', displayName: 'Table', required: false },
                     values: { type: 'JSON', displayName: 'Values', required: false },
+                    records: { type: 'JSON', displayName: 'Records', required: false },
                 },
             },
         },
@@ -105,7 +106,7 @@ describe('ap_check_solution', () => {
         const subflow = await buildSubflow({ mcp, withResponse: true, writeField: table.fieldExternalId, tableExternalId: table.externalId })
         await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { orderId: '{{trigger.body.id}}' }, waitForResponse: true })
 
-        const result = await apCheckSolutionTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })
+        const result = await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })
 
         expect(structured(result).flowCount).toBe(2)
         expect(structured(result).issues).toEqual([])
@@ -118,7 +119,7 @@ describe('ap_check_solution', () => {
         const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })
         await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { customer: 'x' }, waitForResponse: true })
 
-        const messages = structured(await apCheckSolutionTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
+        const messages = structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
 
         expect(messages).toContainEqual(expect.stringContaining('does not send orderId'))
         expect(messages).toContainEqual(expect.stringContaining('has no Return Response step'))
@@ -135,17 +136,65 @@ describe('ap_check_solution', () => {
             steps: [],
         })
 
-        const messages = structured(await apCheckSolutionTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
+        const messages = structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
 
         expect(messages).toContainEqual(expect.stringContaining('writes fields the table does not have: not_a_field'))
         expect(messages).toContainEqual(expect.stringContaining('targets a flow that does not exist'))
         expect(messages).toContainEqual(expect.stringContaining('points at a table that does not exist'))
     })
 
+    it('reports a call with no payload and a string "true" wait, as the action treats them', async () => {
+        const { mcp, table } = await createSolutionBase()
+        const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })
+        await apBuildFlowTool({ mcp }, log).execute({
+            flowName: 'Receive order',
+            folderName: SOLUTION_FOLDER,
+            trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflow.externalId, mode: 'simple', flowProps: {}, waitForResponse: 'true' } }],
+        })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining('does not send orderId'))
+        expect(messages).toContainEqual(expect.stringContaining('has no Return Response step'))
+    })
+
+    it('checks a single raw record object and skips a table chosen by expression', async () => {
+        const { mcp, table } = await createSolutionBase()
+        await apBuildFlowTool({ mcp }, log).execute({
+            flowName: 'Store orders',
+            folderName: SOLUTION_FOLDER,
+            trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
+            steps: [
+                { type: FlowActionType.PIECE, displayName: 'Save raw', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: table.externalId, records: '{"Order id": "1", "Customer": "x"}' } },
+                { type: FlowActionType.PIECE, displayName: 'Save dynamic', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: '{{trigger.tableId}}', values: { values: [] } } },
+            ],
+        })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining('writes fields the table does not have: Customer'))
+        expect(messages.filter((message) => message.includes('does not exist'))).toEqual([])
+    })
+
+    it('reports the template and branch problems ap_validate_flow finds', async () => {
+        const { mcp } = await createSolutionBase()
+        await apBuildFlowTool({ mcp }, log).execute({
+            flowName: 'Broken reference',
+            folderName: SOLUTION_FOLDER,
+            trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
+            steps: [{ type: FlowActionType.CODE, displayName: 'Use missing step', sourceCode: 'export const code = async (inputs) => inputs', input: { value: "{{missing_step['output'].id}}" } }],
+        })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining('missing_step'))
+    })
+
     it('asks for ap_create_folder when the folder does not exist', async () => {
         const ctx = await createTestContext(app)
 
-        const result = await apCheckSolutionTool(makeMcp(ctx.project.id), log).execute({ folderName: 'Nowhere' })
+        const result = await apCheckSolutionTool({ mcp: makeMcp(ctx.project.id) }, log).execute({ folderName: 'Nowhere' })
 
         expect(text(result)).toContain('ap_create_folder')
     })
@@ -182,6 +231,10 @@ async function buildCaller({ mcp, subflowExternalId, payload, waitForResponse }:
             { type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflowExternalId, mode: 'simple', flowProps: { payload }, waitForResponse } },
         ],
     })
+}
+
+async function issueMessages(mcp: ProjectScopedMcpServer): Promise<string[]> {
+    return structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
 }
 
 function structured(result: { structuredContent?: unknown }): { ok: boolean, flowCount: number, issues: { message: string }[] } {

@@ -248,3 +248,8 @@ type ValidationResult = {
     skippedSteps: number
     issues: ValidationIssue[]
 }
+
+export const flowValidation = {
+    validateFlow,
+    hasNoBlockingIssues,
+}
