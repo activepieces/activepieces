@@ -1,8 +1,8 @@
-import { isNil, PlatformId } from '@activepieces/core-utils'
+import { isNil, PlatformId, tryCatch } from '@activepieces/core-utils'
 import { ModelTierSurface } from '@activepieces/server-utils'
-import { AgentModelCandidate } from '@activepieces/shared'
+import { AgentConversation, AgentModelCandidate } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { aiModelCandidates, TierConfigCandidate, TierConfigs } from '../../ai/ai-model-candidates'
+import { aiModelCandidates, FirstCandidate, TierConfigCandidate, TierConfigs } from '../../ai/ai-model-candidates'
 import { agentModelResolution } from './agent-model-resolution'
 
 export const agentModelTier = (log: FastifyBaseLogger) => ({
@@ -19,6 +19,15 @@ export const agentModelTier = (log: FastifyBaseLogger) => ({
             candidates,
             fast: fastIsThisTier ? null : withBudget({ configs: fast, consoleBudget })[0],
         }
+    },
+
+    async mainModelOf({ conversation }: { conversation: Pick<AgentConversation, 'platformId' | 'modelTierId'> }): Promise<FirstCandidate | null> {
+        const tierId = conversation.modelTierId
+        if (isNil(tierId)) {
+            return null
+        }
+        const { data } = await tryCatch(() => aiModelCandidates(log).firstCandidate({ platformId: conversation.platformId, tierId }))
+        return data ?? null
     },
 })
 

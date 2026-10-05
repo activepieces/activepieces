@@ -8,13 +8,13 @@ import { drainOf, NO_STEP_CONTENT, runAgentTurn, StepContentState, StreamDrain, 
 
 describe('a platform tier chat turn', () => {
     it('answers on the next model when the main model fails before sending anything', async () => {
-        const onModelSwitch = vi.fn()
+        const onStepModel = vi.fn()
 
-        const turn = await runTurn({ models: [tierModel({ modelId: 'main', model: failingModel({ statusCode: 503 }) }), tierModel({ modelId: 'backup', model: answeringModel('from backup') })], onModelSwitch })
+        const turn = await runTurn({ models: [tierModel({ modelId: 'main', model: failingModel({ statusCode: 503 }) }), tierModel({ modelId: 'backup', model: answeringModel('from backup') })], onStepModel })
 
         expect(turn.streamError).toBeNull()
         expect(turn.answeredBy.modelId).toBe('backup')
-        expect(onModelSwitch).toHaveBeenCalledWith(expect.objectContaining({ modelId: 'backup' }))
+        expect(onStepModel).toHaveBeenLastCalledWith(expect.objectContaining({ modelId: 'backup' }))
         expect(textOf(turn)).toBe('from backup')
     })
 
@@ -42,6 +42,27 @@ describe('a platform tier chat turn', () => {
 
         expect(turn.streamError).not.toBeNull()
         expect(backup.doStreamCalls).toHaveLength(0)
+    })
+
+    it('tells tools which model runs each step, so a fast step\'s tool calls use the fast key', async () => {
+        const onStepModel = vi.fn()
+
+        await runTurn({
+            models: [tierModel({ modelId: 'main', model: answeringModel('done') })],
+            fastModel: tierModel({ modelId: 'fast', model: searchingModel() }),
+            onStepModel,
+        })
+
+        expect(onStepModel.mock.calls.map(([turnModel]) => turnModel.modelId)).toEqual(['fast', 'main'])
+    })
+
+    it('does not retry a step that already sent text, even on the last model', async () => {
+        const main = textThenFailingModel()
+
+        const turn = await runTurn({ models: [tierModel({ modelId: 'main', model: main })] })
+
+        expect(turn.streamError).not.toBeNull()
+        expect(main.doStreamCalls).toHaveLength(1)
     })
 
     it('drops a failing fast model and answers on the same main model', async () => {
@@ -115,11 +136,11 @@ describe('what counts as content sent in the step that failed', () => {
     })
 })
 
-async function runTurn({ models, fastModel, search, onModelSwitch, onModelOutcome }: {
+async function runTurn({ models, fastModel, search, onStepModel, onModelOutcome }: {
     models: [TurnModel, ...TurnModel[]]
     fastModel?: TurnModel
     search?: () => Promise<unknown>
-    onModelSwitch?: (turnModel: TurnModel) => void
+    onStepModel?: (turnModel: TurnModel) => void
     onModelOutcome?: (outcome: unknown) => void
 }): ReturnType<typeof runAgentTurn> {
     return runAgentTurn({
@@ -136,7 +157,7 @@ async function runTurn({ models, fastModel, search, onModelSwitch, onModelOutcom
         abortSignal: new AbortController().signal,
         log: SILENT_LOG,
         sinks: { drainStream: drainLikeTheWorker },
-        ...(onModelSwitch ? { onModelSwitch } : {}),
+        ...(onStepModel ? { onStepModel } : {}),
         ...(onModelOutcome ? { onModelOutcome } : {}),
     })
 }

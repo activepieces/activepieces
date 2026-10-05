@@ -62,7 +62,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onModelSwitch }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onStepModel }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => undefined)
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -163,6 +163,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
                 : boundedContext
             lastStepUsedFast = usesFastModel
+            onStepModel?.(stepModel)
             const thinkingOff = disableThinking || stepBudget.thinkingBudget === 0
             return {
                 ...(usesFastModel ? { model: stepModel.model } : {}),
@@ -253,7 +254,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             if (failedCleanly && (failedFast || hasNextModel())) {
                 if (!failedFast) {
                     modelIndex++
-                    onModelSwitch?.(current())
                 }
                 log.warn({ error: streamError, failedModel: { id: failedModel.modelId, fast: failedFast }, model: { id: current().modelId }, candidateIndex: modelIndex }, 'Chat model failed before sending anything — continuing the turn on the next model')
                 fast = undefined
@@ -263,7 +263,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 streamRetries = 0
                 continue
             }
-            if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
+            if (shouldRetryStream({ producedVisibleOutput: producedVisibleOutput || drained?.lastStepSentContent === true, streamRetries })) {
                 streamRetries++
                 log.warn({ streamRetries, error: streamError }, 'Chat stream failed before any visible output — retrying the turn')
                 streamError = null
@@ -622,7 +622,7 @@ export type RunAgentTurnParams = {
     stepCeiling?: number
     creditsLeft?: (pendingCredits: number) => Promise<number | null>
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
-    onModelSwitch?: (turnModel: TurnModel) => void
+    onStepModel?: (turnModel: TurnModel) => void
 }
 
 export type AgentTurnResult = {

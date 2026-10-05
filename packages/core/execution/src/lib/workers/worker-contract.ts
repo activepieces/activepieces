@@ -194,7 +194,13 @@ export type SaveAgentMessagesRequest = {
     uiMessages: unknown[]
     title?: string
     modelName?: string
+    answeredBy?: AgentTurnModel
     failure?: { message: string, userMessage?: string }
+}
+
+export type AgentTurnModel = {
+    provider: AIProviderName
+    modelId: string
 }
 
 export type SaveAgentFileRequest = {
