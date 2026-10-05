@@ -228,7 +228,7 @@ export const pdfCoOutputSchemas = {
 	} satisfies OutputSchema,
 	invoice: {
 		fields: [
-			{ key: 'status', label: 'Status', description: '"success", or "working" if the job is still running (use Check Job Status).' },
+			{ key: 'status', label: 'Status', description: '"success", or "working" if the job is still running (run this action again with the Job ID).' },
 			{ key: 'job_id', label: 'Job ID' },
 			{ key: 'vendor_name', label: 'Vendor Name' },
 			{ key: 'customer_name', label: 'Bill-To Name' },

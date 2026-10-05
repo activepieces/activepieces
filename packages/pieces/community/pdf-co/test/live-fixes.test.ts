@@ -177,3 +177,87 @@ describe('error text', () => {
 		expect(String(error)).not.toContain('..');
 	});
 });
+
+function urlOf(input: unknown): string {
+	return typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+}
+
+describe('Greptile round 1: background results', () => {
+	it('Check Job Status reads the part links from the JSON listing when job/check has no list, and saves the parts', async () => {
+		const written: { fileName: string; size: number }[] = [];
+		fetchMock.mockImplementation(async (input: unknown) => {
+			const url = urlOf(input);
+			if (url.includes('/v1/job/check')) {
+				return jsonResponse({ body: { status: 'success', url: LISTING, credits: 2 } });
+			}
+			if (url === LISTING) {
+				return jsonResponse({ body: [PART_1, PART_2] });
+			}
+			return binaryResponse({ data: Buffer.from(url === PART_1 ? 'p1' : 'p2!') });
+		});
+		const result = await runAction({ action: checkJobStatus, propsValue: { jobId: 'S2', saveOutputFile: true }, written });
+		expect(result).toMatchObject({
+			status: 'success',
+			urls: [PART_1, PART_2],
+			files: ['https://files.example/sample_page1-1.pdf', 'https://files.example/sample_page2-2.pdf'],
+		});
+		expect(written.map((entry) => entry.fileName).sort()).toEqual(['sample_page1-1.pdf', 'sample_page2-2.pdf']);
+	});
+
+	it('Check Job Status saves a JSON result as one file when it is not a list of links', async () => {
+		const written: { fileName: string; size: number }[] = [];
+		fetchMock.mockImplementation(async (input: unknown) => {
+			if (urlOf(input).includes('/v1/job/check')) {
+				return jsonResponse({ body: { status: 'success', url: LISTING } });
+			}
+			return jsonResponse({ body: [{ text: 'page 1' }] });
+		});
+		const result = await runAction({ action: checkJobStatus, propsValue: { jobId: 'J9', saveOutputFile: true }, written });
+		expect(result).toMatchObject({ status: 'success', url: LISTING, file: 'https://files.example/sample.json' });
+		expect(result).not.toHaveProperty('urls', expect.anything());
+		expect(written).toHaveLength(1);
+	});
+
+	it('keeps the saved parts and names the failed one when a single part cannot be downloaded', async () => {
+		const written: { fileName: string; size: number }[] = [];
+		fetchMock.mockImplementation(async (input: unknown) =>
+			urlOf(input) === PART_1
+				? binaryResponse({ data: Buffer.from('p1') })
+				: binaryResponse({ data: Buffer.from('x'), headers: { 'content-length': String(200 * 1024 * 1024) } }),
+		);
+		const output = await pdfCoJobs.buildFileOutput({
+			result: { body: { status: 'success', body: [PART_1, PART_2] }, status: 'success', jobId: 'S3' },
+			files: {
+				write: async ({ fileName, data }) => {
+					written.push({ fileName, size: data.byteLength });
+					return `https://files.example/${fileName}`;
+				},
+			},
+			saveOutputFile: true,
+			multiOutput: true,
+		});
+		expect(output.files).toEqual(['https://files.example/sample_page1-1.pdf']);
+		expect(output.file).toBe('https://files.example/sample_page1-1.pdf');
+		expect(output.file_error).toContain('1 of 2 results could not be saved as files (part 2)');
+		expect(output.urls).toEqual([PART_1, PART_2]);
+	});
+
+	it('Parse Invoice with AI picks up a running job by Job ID without starting a new parse', async () => {
+		fetchMock.mockResolvedValueOnce(
+			jsonResponse({ body: { status: 'success', pageCount: 1, body: { vendor: { name: 'ACME Inc.' }, paymentDetails: { total: '$5' } }, credits: 0 } }),
+		);
+		const result = await runAction({ action: parseInvoiceWithAi, propsValue: { jobId: ' INV9 ' } });
+		expect(result).toMatchObject({ status: 'success', job_id: 'INV9', vendor_name: 'ACME Inc.', total: '$5' });
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(requestOf({ fetchMock, call: 0 })).toMatchObject({ url: 'https://api.pdf.co/v1/job/check', body: { jobid: 'INV9' } });
+	});
+
+	it('Parse Invoice with AI returns working again with the same Job ID when the job is still running', async () => {
+		vi.useFakeTimers();
+		fetchMock.mockImplementation(async () => jsonResponse({ body: { status: 'working' } }));
+		const pending = runAction({ action: parseInvoiceWithAi, propsValue: { jobId: 'INV10' } });
+		await vi.advanceTimersByTimeAsync(241_000);
+		await expect(pending).resolves.toMatchObject({ status: 'working', job_id: 'INV10' });
+		expect(requestOf({ fetchMock, call: 0 }).url).toBe('https://api.pdf.co/v1/job/check');
+	});
+});

@@ -35,8 +35,7 @@ export const checkJobStatus = createAction({
 		const check = await pdfCoJobs.checkJob({ apiKey: pdfCoClient.apiKeyOf(auth), jobId });
 		const status = typeof check['status'] === 'string' ? check['status'] : 'unknown';
 		const url = pdfCoFiles.nonEmptyString(check['url']);
-		const parts = pdfCoJobs.stringList(check['body']);
-		const urls = parts === undefined || parts.length === 0 ? undefined : parts;
+		const urls = status === 'success' ? await partLinks({ check, jobId }) : undefined;
 		const output = {
 			job_id: jobId,
 			status,
@@ -51,15 +50,21 @@ export const checkJobStatus = createAction({
 		if (propsValue.saveOutputFile !== true || status !== 'success' || url === undefined) {
 			return output;
 		}
-		try {
-			if (urls === undefined) {
-				return { ...output, file: await pdfCoFiles.saveToFlow({ files, url }) };
-			}
-			const saved = await Promise.all(urls.map((part) => pdfCoFiles.saveToFlow({ files, url: part })));
-			return { ...output, file: saved[0], files: saved };
-		} catch (error) {
-			const reason = error instanceof Error ? error.message : String(error);
-			return { ...output, file_error: `The result could not be saved as a file: ${reason}. Use the link instead.` };
-		}
+		const { saved, error } = await pdfCoJobs.saveAll({ files, targets: urls ?? [url] });
+		return {
+			...output,
+			...(saved.length === 0 ? {} : { file: saved[0] }),
+			...(urls !== undefined && saved.length > 0 ? { files: saved } : {}),
+			...(error === undefined ? {} : { file_error: error }),
+		};
 	},
 });
+
+async function partLinks({ check, jobId }: { check: Record<string, unknown>; jobId: string }): Promise<string[] | undefined> {
+	try {
+		const links = await pdfCoJobs.resultUrls({ result: { body: check, status: 'success', jobId } });
+		return links === undefined || links.length === 0 ? undefined : links;
+	} catch {
+		return undefined;
+	}
+}
