@@ -523,7 +523,28 @@ export const attioListListsOutputSchema: OutputSchema = {
 };
 
 export const attioListListViewsOutputSchema: OutputSchema = {
-  fields: [{ key: 'views', label: 'Views' }, countField, nextCursorField],
+  fields: [
+    {
+      key: 'views',
+      label: 'Views',
+      labelKey: 'title',
+      listItems: [
+        {
+          key: 'id',
+          label: 'ID',
+          children: [
+            { key: 'workspace_id', label: 'Workspace ID' },
+            { key: 'list_id', label: 'List ID' },
+            { key: 'view_id', label: 'View ID' },
+          ],
+        },
+        { key: 'title', label: 'Title' },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+      ],
+    },
+    countField,
+    nextCursorField,
+  ],
 };
 
 export const attioCreateNoteOutputSchema: OutputSchema = { fields: noteFields };

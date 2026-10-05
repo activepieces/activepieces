@@ -12,7 +12,7 @@ export const attioMergeRecordsAction = createAction({
 	displayName: 'Merge Records',
 	description: 'Merges two records of the same object into one.',
 	audience: 'ai',
-	classification: 'WRITE',
+	classification: 'DESTRUCTIVE',
 	aiMetadata: {
 		description: 'Merges the secondary record into the primary one; where both have a value the primary wins, and the secondary record is removed. This cannot be undone. Both IDs must belong to the same object.',
 		idempotent: false,

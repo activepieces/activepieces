@@ -14,7 +14,7 @@ export const attioUpdateTaskAction = createAction({
 	audience: 'ai',
 	classification: 'WRITE',
 	aiMetadata: {
-		description: 'Updates only the supplied fields of a task. Linked Records and Assignee Emails replace the current ones when given. Content cannot be changed.',
+		description: 'Updates only the supplied fields of a task. Linked Records and Assignee Emails replace the current ones when given; leaving them empty keeps the current ones, so links and assignees cannot be cleared to none. Content cannot be changed.',
 		idempotent: true,
 	},
 	props: {
