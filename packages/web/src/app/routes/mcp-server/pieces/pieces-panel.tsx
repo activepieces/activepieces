@@ -13,7 +13,6 @@ import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -85,7 +84,7 @@ export function PiecesPanel({
       ) : isError ? (
         <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border px-4 py-10 text-sm text-muted-foreground">
+        <div className="rounded-lg border px-4 py-10 text-sm text-gray-11">
           {isSearching
             ? t('No piece or action matches your search.')
             : t('No pieces are reachable in this project.')}
@@ -107,7 +106,7 @@ export function PiecesPanel({
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-muted/40"
+              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-gray-3/40"
             >
               {t('Show {count} more pieces', { count: hiddenCount })}
             </button>
@@ -184,10 +183,7 @@ function RunActionDisabledAlert({
 function PieceSetBanner({ projectId }: { projectId: string | null }) {
   const { platform } = platformHooks.useCurrentPlatform();
   const isPlatformAdmin = useIsPlatformAdmin();
-  const { data: projects = [] } = projectCollectionUtils.useAll();
-  const pieceSetId =
-    projects.find((project) => project.id === projectId)?.pieceSetId ?? null;
-  const { data: pieceSet } = pieceSetQueries.usePieceSet(pieceSetId ?? '');
+  const { data: pieceSet } = pieceSetQueries.useProjectPieceSet(projectId);
 
   if (!platform.plan.managePiecesEnabled) {
     return (
@@ -225,8 +221,8 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
         >
           <Link
             to={
-              pieceSetId
-                ? `/platform/pieces/piece-sets/${pieceSetId}`
+              pieceSet
+                ? `/platform/pieces/piece-sets/${pieceSet.id}`
                 : PIECE_SETS_LIST_ROUTE
             }
           >

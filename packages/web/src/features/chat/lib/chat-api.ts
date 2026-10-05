@@ -136,10 +136,6 @@ async function getPendingGate(
   return api.get(`/v1/agents/conversations/${conversationId}/pending-gate`);
 }
 
-async function recordLanding(): Promise<void> {
-  return api.post<void>('/v1/agents/funnel/landing');
-}
-
 async function getMemory(): Promise<GetAgentMemoryResponse> {
   return api.get<GetAgentMemoryResponse>('/v1/agents/memory');
 }
@@ -178,7 +174,6 @@ export const chatApi = {
   submitMessageFeedback,
   getPickerConnections,
   getPendingGate,
-  recordLanding,
   getMemory,
   saveMemory,
   importMemory,

@@ -2,6 +2,7 @@ import {
   ApErrorParams,
   isNil,
   ErrorCode,
+  RequiredActionsMissingErrorParams,
   SeekPage,
 } from '@activepieces/core-utils';
 import {
@@ -72,6 +73,7 @@ export const flowHooks = {
     change,
     onSuccess,
     setIsPublishing,
+    onRequiredActionsMissing,
   }: UseChangeFlowStatusParams) => {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
       ApFlagId.ENABLE_FLOW_ON_PUBLISH,
@@ -150,11 +152,11 @@ export const flowHooks = {
                   )}
                 </p>
                 {reportedError && (
-                  <div className="flex flex-col gap-1 rounded-md bg-muted p-3">
-                    <span className="text-xs font-medium text-muted-foreground">
+                  <div className="flex flex-col gap-1 rounded-md bg-gray-3 p-3">
+                    <span className="text-xs font-medium text-gray-11">
                       {t('The connected app reported')}
                     </span>
-                    <span className="line-clamp-4 text-sm text-foreground">
+                    <span className="line-clamp-4 text-sm text-gray-12">
                       {reportedError}
                     </span>
                   </div>
@@ -168,6 +170,15 @@ export const flowHooks = {
               standardOutput: params.standardOutput || '',
             },
             technicalDetailsDefaultOpen: isNil(reportedError),
+          });
+        } else if (apError.code === ErrorCode.REQUIRED_ACTIONS_MISSING) {
+          if (onRequiredActionsMissing) {
+            onRequiredActionsMissing(apError.params);
+            return;
+          }
+          toast.error(t('Publish failed'), {
+            description: apError.params.message,
+            duration: 5000,
           });
         } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
           toast.error(t('Active flows limit reached'), {
@@ -595,4 +606,7 @@ type UseChangeFlowStatusParams = {
   change: 'publish' | FlowStatus;
   onSuccess: (flow: PopulatedFlow) => void;
   setIsPublishing?: (isPublishing: boolean) => void;
+  onRequiredActionsMissing?: (
+    params: RequiredActionsMissingErrorParams['params'],
+  ) => void;
 };

@@ -21,5 +21,20 @@
   "Tweet ID": "Tweet ID",
   "The text of the tweet": "Текст твита",
   "An image, video or GIF url or base64 to attach to the tweet": "Изображение, видео или GIF url или base64 для прикрепления к твиту",
-  "The ID of the tweet to reply too.": "ID твита для ответа тоже."
+  "The ID of the tweet to reply too.": "ID твита для ответа тоже.",
+  "Post tweets and replies on X, formerly Twitter.": "Публикуйте твиты и ответы в X (бывший Twitter).",
+  "API Key": "API-ключ",
+  "API Key Secret": "Секрет API-ключа",
+  "Found under Keys and tokens, next to API Key and Secret.": "В разделе Keys and tokens, рядом с API Key and Secret.",
+  "Found under Keys and tokens, next to Access Token and Secret.": "В разделе Keys and tokens, рядом с Access Token and Secret.",
+  "To connect, create keys for your app in the X Developer Portal:\n\n1. Open the [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) and select your app. It must belong to a Project.\n2. On the **Settings** tab, under **User authentication settings**, click **Set up**. Choose **Read and write** for App permissions and **Native App** for Type of App, enter your website URL, and set the Callback URI to that URL followed by `/redirect`.\n3. On the **Keys and tokens** tab, regenerate **API Key a": "Чтобы подключиться, создайте ключи для своего приложения в X Developer Portal:\n\n1. Откройте [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) и выберите приложение. Оно должно входить в Project.\n2. На вкладке **Settings** в разделе **User authentication settings** нажмите **Set up**. Выберите **Read and write** для App permissions и **Native App** для Type of App, укажите URL своего сайта и задайте Callback URI как этот URL с `/redirect` на конце.\n3. На вкладке **Keys and tokens** перевыпустите **API Key and Secret** и **Access Token and Secret** и вставьте четыре значения ниже.\n\nВыполните шаг 2 до шага 3: Access Token, созданный раньше, сохраняет прежний уровень доступа.",
+  "Post a new tweet from the connected X account.": "Опубликовать новый твит от подключённого аккаунта X.",
+  "Post a reply to an existing tweet.": "Опубликовать ответ на существующий твит.",
+  "Media 1": "Медиа 1",
+  "Media 2": "Медиа 2",
+  "Media 3": "Медиа 3",
+  "Up to 280 characters, or more with X Premium.": "До 280 символов, с X Premium — больше.",
+  "An image, GIF or video. Add more images under Advanced.": "Изображение, GIF или видео. Ещё изображения — в «Расширенные».",
+  "Another image. GIFs and videos must be posted alone.": "Ещё одно изображение. GIF и видео публикуются только отдельно.",
+  "The number at the end of the tweet's link, after /status/.": "Число в конце ссылки на твит, после /status/."
 }

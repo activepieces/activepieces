@@ -24,28 +24,28 @@ export const Error = () => {
   }, [navigate]);
 
   return (
-    <div className="h-full bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md border-destructive/20">
+    <div className="h-full bg-gray-1 flex items-center justify-center p-4">
+      <div className="w-full max-w-md border-danger-6">
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center space-y-6">
-            <div className="mx-auto w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-10 h-10 text-destructive" />
+            <div className="mx-auto w-20 h-20 bg-danger-3 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-10 h-10 text-danger-11" />
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-2xl font-semibold text-foreground">
+              <h1 className="text-2xl font-semibold text-gray-12">
                 {t('Something went wrong')}
               </h1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-gray-11">
                 {t('Subscription update failed')}
               </p>
             </div>
 
-            <div className="bg-muted/30 rounded-lg p-4 text-left">
-              <h3 className="text-sm font-medium text-foreground mb-2">
+            <div className="bg-gray-3/30 rounded-lg p-4 text-left">
+              <h3 className="text-sm font-medium text-gray-12 mb-2">
                 {t('What you can do:')}
               </h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
+              <ul className="text-sm text-gray-11 space-y-1">
                 <li>{t('Verify your payment method')}</li>
                 <li>{t('Try again in a few moments')}</li>
                 <li>{t('Contact support if issues persist')}</li>
@@ -71,7 +71,7 @@ export const Error = () => {
               </Button>
             </div>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-11">
               {t('Redirecting to billing in {countdown} seconds...', {
                 countdown,
               })}

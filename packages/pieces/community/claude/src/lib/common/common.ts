@@ -21,8 +21,7 @@ Ensure that your API key is valid. \n
 export const modelDropdown = Property.Dropdown({
   auth: claudeAuth,
   displayName: 'Model',
-  description:
-    'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
+  description: 'The Claude model to use. Newest models are listed first.',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {

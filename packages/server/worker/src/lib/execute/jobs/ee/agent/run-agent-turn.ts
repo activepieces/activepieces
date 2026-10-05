@@ -72,10 +72,6 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     const uiParts: PersistedAgentPart[] = []
     const toolCalls: AgentTurnToolCall[] = []
     let toolCallOrder = 0
-    // The cumulative response.messages of the CURRENT streamText attempt, captured per-step in
-    // onStepEnd (the reliable source — mirrors what we stream to the UI). Folded into
-    // accumulatedResponseMessages on EVERY loop exit, so an abort/error break never drops the
-    // steps that already happened (which previously left the saved LLM history as just [user]).
     let currentAttemptMessages: ModelMessage[] = []
     let streamError: Error | null = null
 
@@ -191,12 +187,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         },
         onStepEnd: ({ content, response }) => {
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
-            // Persist the LLM history incrementally (not just UI parts): a turn preempted or
-            // cancelled mid-flight must leave its assistant + tool messages behind so the next
-            // run inherits them instead of re-discovering from scratch. accumulatedResponseMessages
-            // holds prior continuation attempts; this step's response.messages is cumulative for
-            // the current attempt (collectStepMessages takes the last step).
-            currentAttemptMessages = agentAiUtils.collectStepMessages([{ response }])
+            currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
             const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
             onProgress({ uiParts: [...uiParts], responseMessages })
             log.debug({ partCount: uiParts.length, phase: phaseState.phase }, 'Chat step finished')
@@ -412,7 +403,12 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
     if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
         return 'user'
     }
-    const blamesTheUser = USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0) && provider !== AIProviderName.ACTIVEPIECES
+    const ownsTheProvider = provider !== AIProviderName.ACTIVEPIECES
+    const providerUnavailable = ownsTheProvider && (serverSideFault || apiError.statusCode === 429)
+    if (providerUnavailable) {
+        return 'provider'
+    }
+    const blamesTheUser = USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0) && ownsTheProvider
     return blamesTheUser ? 'user' : 'internal'
 }
 
@@ -536,7 +532,7 @@ export type AgentTurnResult = {
     toolCalls: AgentTurnToolCall[]
 }
 
-type AgentRunErrorClass = 'credit' | 'user' | 'internal'
+type AgentRunErrorClass = 'credit' | 'user' | 'provider' | 'internal'
 
 export function firstStepUsesFastModel({ source, dryRun, runsASavedAgent }: { source: AgentRunSource, dryRun?: boolean, runsASavedAgent: boolean }): boolean {
     return dryRun !== true && !(source === AgentRunSource.FLOW_STEP && runsASavedAgent)

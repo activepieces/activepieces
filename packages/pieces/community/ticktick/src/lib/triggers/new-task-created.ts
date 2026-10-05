@@ -4,12 +4,14 @@ import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import { TICKTICK_TASK_STATUS_INCOMPLETE } from '../common/constants';
 import { projectId } from '../common/props';
+import { newTaskCreatedOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'ticktick_new_task_trigger';
 
 export const newTaskCreatedTrigger = createTrigger({
 	auth: ticktickAuth,
 	name: 'new_task_created',
+	outputSchema: newTaskCreatedOutputSchema,
 	classification: 'READ',
 	displayName: 'New Task Created',
 	description: 'Triggers when a new task is created in a selected project.',

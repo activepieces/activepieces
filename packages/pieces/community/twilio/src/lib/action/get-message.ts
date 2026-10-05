@@ -7,15 +7,16 @@ export const twilioGetMessage = createAction({
   auth: twilioAuth,
   name: 'get_message',
   classification: 'READ',
-  description: 'Retrieves the details of a specific message.',
+  description: 'Get the status and details of a sent or received message.',
   audience: 'both',
   aiMetadata: { description: 'Fetches the full details and status of a single Twilio message by its SID. Use to check delivery status or inspect a known message; requires the message SID (starting with "SM" or "MM"). Read-only and idempotent.', idempotent: true },
   displayName: 'Get Message',
   props: {
     message_sid: Property.ShortText({
       displayName: 'Message SID',
-      description: 'The unique identifier (SID) of the message to retrieve. It starts with "SM" or "MM".',
+      description: 'Starts with SM or MM. Shown in the Send SMS output and Twilio logs.',
       required: true,
+      placeholder: 'SM0123456789abcdef0123456789abcdef',
     }),
   },
   async run(context) {
