@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 function verifySignature({
   secret,
@@ -10,7 +10,7 @@ function verifySignature({
   headers: Record<string, string | string[] | undefined>;
   rawBody: unknown;
   nowSeconds: number;
-}): { valid: true; webhookId: string } | { valid: false; reason: string } {
+}): { valid: true; webhookId: string; timestamp: number } | { valid: false; reason: string } {
   const lower = lowerCaseHeaders({ headers });
   const webhookId = lower['webhook-id'];
   const timestamp = lower['webhook-timestamp'];
@@ -40,7 +40,7 @@ function verifySignature({
       const given = Buffer.from(entry.slice(3), 'base64');
       return given.length === expected.length && timingSafeEqual(given, expected);
     });
-  return matches ? { valid: true, webhookId } : { valid: false, reason: 'signature mismatch' };
+  return matches ? { valid: true, webhookId, timestamp: Number(timestamp) } : { valid: false, reason: 'signature mismatch' };
 }
 
 function secretKey({ secret }: { secret: string }): Buffer {
@@ -55,11 +55,44 @@ function lowerCaseHeaders({ headers }: { headers: Record<string, string | string
   );
 }
 
-function rememberDelivery({ seen, webhookId }: { seen: string[]; webhookId: string }): { duplicate: boolean; seen: string[] } {
-  if (seen.includes(webhookId)) {
-    return { duplicate: true, seen };
+function rememberDelivery({
+  seen,
+  deliveryKey,
+  timestamp,
+  nowSeconds,
+}: {
+  seen: unknown;
+  deliveryKey: string;
+  timestamp: number;
+  nowSeconds: number;
+}): { status: 'new' | 'duplicate' | 'full'; seen: SeenDelivery[]; expired: string[] } {
+  const entries = Array.isArray(seen) ? seen.filter(isSeenDelivery) : [];
+  const live = entries.filter((entry) => nowSeconds - entry.ts <= TOLERANCE_SECONDS);
+  const expired = entries.filter((entry) => nowSeconds - entry.ts > TOLERANCE_SECONDS).map((entry) => entry.id);
+  if (live.some((entry) => entry.id === deliveryKey)) {
+    return { status: 'duplicate', seen: live, expired };
   }
-  return { duplicate: false, seen: [...seen, webhookId].slice(-MAX_SEEN_IDS) };
+  if (live.length >= MAX_SEEN_IDS) {
+    return { status: 'full', seen: live, expired };
+  }
+  return { status: 'new', seen: [...live, { id: deliveryKey, ts: timestamp }], expired };
+}
+
+function seenDeliveryKeys({ seen }: { seen: unknown }): string[] {
+  return Array.isArray(seen) ? seen.filter(isSeenDelivery).map((entry) => entry.id) : [];
+}
+
+function deliveryKeyOf({ webhookId }: { webhookId: string }): string {
+  return createHash('sha256').update(webhookId).digest('hex').slice(0, 40);
+}
+
+function isSeenDelivery(value: unknown): value is SeenDelivery {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const id: unknown = Reflect.get(value, 'id');
+  const ts: unknown = Reflect.get(value, 'ts');
+  return typeof id === 'string' && typeof ts === 'number' && Number.isFinite(ts);
 }
 
 function sign({ secret, webhookId, timestamp, body }: { secret: string; webhookId: string; timestamp: number; body: string }): string {
@@ -67,11 +100,15 @@ function sign({ secret, webhookId, timestamp, body }: { secret: string; webhookI
 }
 
 const TOLERANCE_SECONDS = 900;
-const MAX_SEEN_IDS = 100;
+const MAX_SEEN_IDS = 2000;
+
+type SeenDelivery = { id: string; ts: number };
 
 export const fathomWebhook = {
   verifySignature,
   rememberDelivery,
+  deliveryKeyOf,
+  seenDeliveryKeys,
   sign,
   TOLERANCE_SECONDS,
   MAX_SEEN_IDS,

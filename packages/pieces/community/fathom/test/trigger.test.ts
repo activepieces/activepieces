@@ -98,56 +98,155 @@ describe('onEnable / onDisable', () => {
 });
 
 describe('run: signature and dedupe', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   async function enabledStore() {
     const holder = memoryStore();
     await holder.store.put('_new_recording_webhook', { webhookId: 'wh_1', secret: SECRET });
     return holder;
   }
 
+  async function run({ store, payload }: { store: ReturnType<typeof memoryStore>['store']; payload: unknown }): Promise<unknown[]> {
+    const pending = call({ fn: newRecording.run, ctx: context({ store, payload }) });
+    pending.catch(() => undefined);
+    await vi.advanceTimersByTimeAsync(1000);
+    return pending;
+  }
+
   it('accepts a valid signature and returns the raw snake_case body', async () => {
     const { store } = await enabledStore();
-    const result = await call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({}) }) });
-    expect(result).toEqual([meeting({})]);
+    expect(await run({ store, payload: signedPayload({}) })).toEqual([meeting({})]);
   });
 
   it('drops a forged signature', async () => {
     const { store } = await enabledStore();
     const payload = signedPayload({ secret: `whsec_${Buffer.from('another-secret').toString('base64')}` });
-    expect(await call({ fn: newRecording.run, ctx: context({ store, payload }) })).toEqual([]);
+    expect(await run({ store, payload })).toEqual([]);
   });
 
   it('drops a tampered body', async () => {
     const { store } = await enabledStore();
     const payload = { ...signedPayload({}), rawBody: JSON.stringify(meeting({ title: 'Injected' })) };
-    expect(await call({ fn: newRecording.run, ctx: context({ store, payload }) })).toEqual([]);
+    expect(await run({ store, payload })).toEqual([]);
   });
 
   it('accepts a delivery 14 minutes old but drops one older than 15 minutes', async () => {
     const { store } = await enabledStore();
     const now = Math.floor(Date.now() / 1000);
-    expect(await call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({ id: 'msg_a', ts: now - 840 }) }) })).toHaveLength(1);
-    expect(await call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({ id: 'msg_b', ts: now - 901 }) }) })).toEqual([]);
+    expect(await run({ store, payload: signedPayload({ id: 'msg_a', ts: now - 840 }) })).toHaveLength(1);
+    expect(await run({ store, payload: signedPayload({ id: 'msg_b', ts: now - 901 }) })).toEqual([]);
   });
 
   it('drops a retried delivery with the same webhook-id', async () => {
     const { store } = await enabledStore();
-    expect(await call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({ id: 'msg_dup' }) }) })).toHaveLength(1);
-    expect(await call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({ id: 'msg_dup' }) }) })).toEqual([]);
+    expect(await run({ store, payload: signedPayload({ id: 'msg_dup' }) })).toHaveLength(1);
+    expect(await run({ store, payload: signedPayload({ id: 'msg_dup' }) })).toEqual([]);
   });
 
-  it('fails closed when no secret is stored or headers are missing', async () => {
+  it('emits once when two copies of the same delivery run at the same time', async () => {
+    const { store } = await enabledStore();
+    const payload = signedPayload({ id: 'msg_race' });
+    const first = call({ fn: newRecording.run, ctx: context({ store, payload }) });
+    const second = call({ fn: newRecording.run, ctx: context({ store, payload }) });
+    await vi.advanceTimersByTimeAsync(1000);
+    const results = await Promise.all([first, second]);
+    expect(results.map((items) => items.length).sort()).toEqual([0, 1]);
+  });
+
+  it('drops a retry whose claim exists even if the seen list lost it to a concurrent write', async () => {
+    const { store } = await enabledStore();
+    expect(await run({ store, payload: signedPayload({ id: 'msg_lost' }) })).toHaveLength(1);
+    await store.put('_fathom_seen_ids', []);
+    expect(await run({ store, payload: signedPayload({ id: 'msg_lost' }) })).toEqual([]);
+  });
+
+  it('still drops a retry of the first event after 150 other events inside the window', async () => {
+    const { store } = await enabledStore();
+    const now = Math.floor(Date.now() / 1000);
+    expect(await run({ store, payload: signedPayload({ id: 'msg_first', ts: now - 60 }) })).toHaveLength(1);
+    for (let i = 0; i < 150; i++) {
+      expect(await run({ store, payload: signedPayload({ id: `msg_${i}` }) })).toHaveLength(1);
+    }
+    expect(await run({ store, payload: signedPayload({ id: 'msg_first', ts: now - 60 }) })).toEqual([]);
+  });
+
+  it('throws a re-enable message for state saved by 0.2.x without a signing secret', async () => {
     const { store } = memoryStore();
-    expect(await call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({}) }) })).toEqual([]);
-    const enabled = await enabledStore();
-    expect(await call({ fn: newRecording.run, ctx: context({ store: enabled.store, payload: { body: {}, rawBody: '{}', headers: {} } }) })).toEqual([]);
+    await store.put('_new_recording_webhook', { webhookId: 'wh_legacy' });
+    await expect(run({ store, payload: signedPayload({}) })).rejects.toThrow('Turn the flow off and on again');
   });
 
-  it('keeps the dedupe list bounded', () => {
-    const seen = Array.from({ length: 100 }, (_, i) => `m${i}`);
-    const next = fathomWebhook.rememberDelivery({ seen, webhookId: 'new' });
-    expect(next.seen).toHaveLength(100);
-    expect(next.seen[99]).toBe('new');
-    expect(next.seen[0]).toBe('m1');
+  it('fails closed when the trigger is not enabled or headers are missing', async () => {
+    const { store } = memoryStore();
+    expect(await run({ store, payload: signedPayload({}) })).toEqual([]);
+    const enabled = await enabledStore();
+    expect(await run({ store: enabled.store, payload: { body: {}, rawBody: '{}', headers: {} } })).toEqual([]);
+  });
+
+  it('refuses rather than forgets when the window holds the maximum number of deliveries', async () => {
+    const { store } = await enabledStore();
+    const now = Math.floor(Date.now() / 1000);
+    const full = Array.from({ length: fathomWebhook.MAX_SEEN_IDS }, (_, i) => ({ id: `k${i}`, ts: now }));
+    await store.put('_fathom_seen_ids', full);
+    await expect(run({ store, payload: signedPayload({ id: 'msg_over' }) })).rejects.toThrow('not processed');
+  });
+
+  it('deletes expired claims and onDisable deletes the rest', async () => {
+    const { store, data } = await enabledStore();
+    const now = Math.floor(Date.now() / 1000);
+    await store.put('_fathom_seen_ids', [{ id: 'old', ts: now - 1000 }]);
+    await store.put('_fathom_delivery_old', { token: 't', ts: now - 1000 });
+    expect(await run({ store, payload: signedPayload({ id: 'msg_new' }) })).toHaveLength(1);
+    expect(data.has('_fathom_delivery_old')).toBe(false);
+    const newKey = `_fathom_delivery_${fathomWebhook.deliveryKeyOf({ webhookId: 'msg_new' })}`;
+    expect(data.has(newKey)).toBe(true);
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+    await call({ fn: newRecording.onDisable, ctx: context({ store }) });
+    expect(data.size).toBe(0);
+  });
+});
+
+describe('rememberDelivery', () => {
+  const now = 1_800_000_000;
+
+  it('keeps every ID inside the window past 100 events and flags a replay of the first', () => {
+    let seen: unknown = [];
+    for (let i = 0; i < 150; i++) {
+      const next = fathomWebhook.rememberDelivery({ seen, deliveryKey: `k${i}`, timestamp: now - 600 + i, nowSeconds: now });
+      expect(next.status).toBe('new');
+      seen = next.seen;
+    }
+    expect(fathomWebhook.rememberDelivery({ seen, deliveryKey: 'k0', timestamp: now - 600, nowSeconds: now }).status).toBe('duplicate');
+  });
+
+  it('prunes by age, not by count', () => {
+    const seen = [
+      { id: 'stale', ts: now - fathomWebhook.TOLERANCE_SECONDS - 1 },
+      { id: 'edge', ts: now - fathomWebhook.TOLERANCE_SECONDS },
+    ];
+    const next = fathomWebhook.rememberDelivery({ seen, deliveryKey: 'fresh', timestamp: now, nowSeconds: now });
+    expect(next.status).toBe('new');
+    expect(next.expired).toEqual(['stale']);
+    expect(next.seen.map((entry) => entry.id)).toEqual(['edge', 'fresh']);
+  });
+
+  it('reports full instead of dropping a live ID at the cap', () => {
+    const seen = Array.from({ length: fathomWebhook.MAX_SEEN_IDS }, (_, i) => ({ id: `k${i}`, ts: now }));
+    const next = fathomWebhook.rememberDelivery({ seen, deliveryKey: 'extra', timestamp: now, nowSeconds: now });
+    expect(next.status).toBe('full');
+    expect(next.seen).toHaveLength(fathomWebhook.MAX_SEEN_IDS);
+    expect(next.seen[0].id).toBe('k0');
+  });
+
+  it('ignores malformed stored entries', () => {
+    const next = fathomWebhook.rememberDelivery({ seen: ['legacy', { id: 1 }, null], deliveryKey: 'a', timestamp: now, nowSeconds: now });
+    expect(next.seen).toEqual([{ id: 'a', ts: now }]);
   });
 });
 

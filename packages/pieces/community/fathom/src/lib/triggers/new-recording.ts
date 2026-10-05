@@ -1,5 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { AppConnectionType, createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { randomUUID } from 'node:crypto';
+import { AppConnectionType, createTrigger, Property, Store, TriggerStrategy } from '@activepieces/pieces-framework';
 import { fathomAuth, FathomAuthValue } from '../common/auth';
 import { FathomApiError, fathomClient } from '../common/client';
 import { fathomWebhook } from '../common/webhook';
@@ -142,6 +143,8 @@ export const newRecording = createTrigger({
     if (webhookInfo?.webhookId) {
       await deleteWebhook({ auth: context.auth, webhookId: webhookInfo.webhookId });
     }
+    const seenKeys = fathomWebhook.seenDeliveryKeys({ seen: await context.store.get<unknown>(SEEN_KEY) });
+    await Promise.all(seenKeys.map((key) => context.store.delete(claimKey({ deliveryKey: key }))));
     await context.store.delete(STORE_KEY);
     await context.store.delete(SEEN_KEY);
   },
@@ -170,8 +173,13 @@ export const newRecording = createTrigger({
   },
   async run(context) {
     const webhookInfo = await context.store.get<WebhookInformation>(STORE_KEY);
-    if (!webhookInfo?.secret) {
+    if (!webhookInfo) {
       return [];
+    }
+    if (!webhookInfo.secret) {
+      throw new Error(
+        'This Fathom trigger was turned on with an older piece version that did not save the signing secret, so this delivery cannot be verified and was not processed. Turn the flow off and on again (or publish it again) to re-register the webhook.'
+      );
     }
     const verification = fathomWebhook.verifySignature({
       secret: webhookInfo.secret,
@@ -182,15 +190,47 @@ export const newRecording = createTrigger({
     if (!verification.valid) {
       return [];
     }
-    const seen = (await context.store.get<string[]>(SEEN_KEY)) ?? [];
-    const remembered = fathomWebhook.rememberDelivery({ seen, webhookId: verification.webhookId });
-    if (remembered.duplicate) {
+    const deliveryKey = fathomWebhook.deliveryKeyOf({ webhookId: verification.webhookId });
+    const remembered = fathomWebhook.rememberDelivery({
+      seen: await context.store.get<unknown>(SEEN_KEY),
+      deliveryKey,
+      timestamp: verification.timestamp,
+      nowSeconds: Math.floor(Date.now() / 1000),
+    });
+    if (remembered.status === 'duplicate') {
+      return [];
+    }
+    if (remembered.status === 'full') {
+      throw new Error(
+        `Fathom sent more than ${fathomWebhook.MAX_SEEN_IDS} recordings within ${fathomWebhook.TOLERANCE_SECONDS / 60} minutes, so this delivery could not be recorded for duplicate protection and was not processed.`
+      );
+    }
+    const claimed = await claimDelivery({ store: context.store, deliveryKey, timestamp: verification.timestamp });
+    if (!claimed) {
       return [];
     }
     await context.store.put(SEEN_KEY, remembered.seen);
+    await Promise.all(remembered.expired.map((key) => context.store.delete(claimKey({ deliveryKey: key }))));
     return [context.payload.body];
   },
 });
+
+async function claimDelivery({ store, deliveryKey, timestamp }: { store: Store; deliveryKey: string; timestamp: number }): Promise<boolean> {
+  const key = claimKey({ deliveryKey });
+  const existing = await store.get<DeliveryClaim>(key);
+  if (existing) {
+    return false;
+  }
+  const token = randomUUID();
+  await store.put<DeliveryClaim>(key, { token, ts: timestamp });
+  await new Promise((resolve) => setTimeout(resolve, CLAIM_SETTLE_MS));
+  const winner = await store.get<DeliveryClaim>(key);
+  return winner?.token === token;
+}
+
+function claimKey({ deliveryKey }: { deliveryKey: string }): string {
+  return `${CLAIM_KEY_PREFIX}${deliveryKey}`;
+}
 
 function includeFlags({ propsValue }: { propsValue: Record<string, unknown> }): IncludeFlags {
   return {
@@ -240,8 +280,11 @@ async function attachRecordingContent({
 
 const STORE_KEY = '_new_recording_webhook';
 const SEEN_KEY = '_fathom_seen_ids';
+const CLAIM_KEY_PREFIX = '_fathom_delivery_';
+const CLAIM_SETTLE_MS = 500;
 
 type WebhookInformation = { webhookId: string; secret?: string };
+type DeliveryClaim = { token: string; ts: number };
 type IncludeFlags = {
   include_transcript: boolean;
   include_summary: boolean;
