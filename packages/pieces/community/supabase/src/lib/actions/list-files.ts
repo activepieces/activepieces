@@ -37,7 +37,6 @@ export const listFiles = createAction({
         const files = await listAllFiles({
             bucketApi: supabase.storage.from(bucket),
             path: path || undefined,
-            offset: 0,
         });
 
         return {
@@ -54,23 +53,38 @@ export const listFiles = createAction({
     },
 });
 
-async function listAllFiles({ bucketApi, path, offset }: ListAllFilesParams): Promise<StorageFileEntry[]> {
-    const { data, error } = await bucketApi.list(path, { limit: LIST_PAGE_SIZE, offset });
+async function listAllFiles({ bucketApi, path }: ListAllFilesParams): Promise<StorageFileEntry[]> {
+    const filesByName = new Map<string, StorageFileEntry>();
+    let offset = 0;
+    let pageLength = LIST_PAGE_SIZE;
 
-    if (error) {
-        throw new Error(`Failed to list files: ${error.message}`);
+    while (pageLength === LIST_PAGE_SIZE) {
+        const { data, error } = await bucketApi.list(path, {
+            limit: LIST_PAGE_SIZE,
+            offset,
+            sortBy: { column: 'name', order: 'asc' },
+        });
+
+        if (error) {
+            throw new Error(`Failed to list files: ${error.message}`);
+        }
+
+        const page = data ?? [];
+        for (const file of page) {
+            if (!filesByName.has(file.name)) {
+                filesByName.set(file.name, file);
+            }
+        }
+        pageLength = page.length;
+        offset += LIST_PAGE_SIZE - PAGE_OVERLAP;
     }
 
-    const page = data ?? [];
-    if (page.length < LIST_PAGE_SIZE) {
-        return page;
-    }
-
-    const rest = await listAllFiles({ bucketApi, path, offset: offset + LIST_PAGE_SIZE });
-    return [...page, ...rest];
+    return [...filesByName.values()];
 }
 
 const LIST_PAGE_SIZE = 100;
+
+const PAGE_OVERLAP = 10;
 
 type StorageBucketApi = ReturnType<SupabaseClient['storage']['from']>;
 
@@ -79,5 +93,4 @@ type StorageFileEntry = NonNullable<Awaited<ReturnType<StorageBucketApi['list']>
 type ListAllFilesParams = {
     bucketApi: StorageBucketApi;
     path: string | undefined;
-    offset: number;
 };
