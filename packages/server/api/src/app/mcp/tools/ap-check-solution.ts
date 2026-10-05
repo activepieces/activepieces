@@ -35,10 +35,11 @@ export const apCheckSolutionTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     ...flows.filter((flow) => !flow.version.valid).map((flow) => ({ flow, stepName: null, message: 'has invalid steps; fix them using ap_validate_flow' })),
                     ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId }).map((message) => ({ flow, stepName: step.name, message }))),
                 ]
+                const flowWord = flows.length === 1 ? 'flow' : 'flows'
                 const lines = issues.map(({ flow, stepName, message }) => `- "${flow.version.displayName}"${isNil(stepName) ? '' : ` ${stepName}`}: ${message}`)
                 const text = issues.length === 0
-                    ? `✅ Solution "${folder.folderName}": ${flows.length} flows, every connection checks out.`
-                    : `❌ Solution "${folder.folderName}": ${issues.length} issues across ${flows.length} flows. Fix each one, then run ap_check_solution again:\n${lines.join('\n')}`
+                    ? `✅ Solution "${folder.folderName}": ${flows.length} ${flowWord}, every connection checks out.`
+                    : `❌ Solution "${folder.folderName}": ${issues.length} ${issues.length === 1 ? 'issue' : 'issues'} across ${flows.length} ${flowWord}. Fix each one, then run ap_check_solution again:\n${lines.join('\n')}`
                 return {
                     content: [{ type: 'text', text }],
                     structuredContent: {
