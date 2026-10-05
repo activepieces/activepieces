@@ -41,11 +41,7 @@ function SaveBar({
       >
         {t('Discard')}
       </Button>
-      <Button
-        type="submit"
-        loading={saving}
-        {...adminControl(saveControl)}
-      >
+      <Button type="submit" loading={saving} {...adminControl(saveControl)}>
         {saveLabel}
       </Button>
     </>

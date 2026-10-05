@@ -155,7 +155,9 @@ export function ActiveFlowsValue({ project }: { project: ProjectWithLimits }) {
   const limit = project.plan.activeFlowsLimit;
   const atLimit = !isNil(limit) && active >= limit;
   return (
-    <span className={cn('tabular-nums', atLimit && 'font-medium text-danger-11')}>
+    <span
+      className={cn('tabular-nums', atLimit && 'font-medium text-danger-11')}
+    >
       {active}
       {!isNil(limit) && ` / ${limit}`}
     </span>

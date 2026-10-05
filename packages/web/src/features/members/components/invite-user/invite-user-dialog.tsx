@@ -468,9 +468,7 @@ function getDialogDescription({
   }
 
   if (invitationType === InvitationType.PLATFORM) {
-    const base = t(
-      'Each person gets a link that works for 7 days.',
-    );
+    const base = t('Each person gets a link that works for 7 days.');
     return isSmtpConfigured
       ? base
       : base +
