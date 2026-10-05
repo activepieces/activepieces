@@ -4,24 +4,11 @@ import {
   PlatformModelTierEntry,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   KeyModelsById,
@@ -31,8 +18,11 @@ import {
   RankedModel,
   TradeOff,
 } from '@/features/agents/ai-model/model-meta';
-import { ModelRow } from '@/features/agents/ai-model/model-row';
-import { cn } from '@/lib/utils';
+import {
+  ModelPickerGroup,
+  ModelPickerItem,
+  ModelPickerPopover,
+} from '@/features/agents/ai-model/model-picker-popover';
 
 import { KeyStatusBadge } from '../providers-tab/key-status';
 import { ProviderLogo } from '../providers-tab/provider-logo';
@@ -53,16 +43,57 @@ export function AdminModelPicker({
   const pickable: PickableModel[] = configs.flatMap((config) =>
     (keyModels[config.id]?.models ?? []).map((model) => ({ config, model })),
   );
-  const groups: PickerGroup[] =
+  const toItem = (
+    item: RankedModel,
+    { showKey }: { showKey: boolean },
+  ): ModelPickerItem<PlatformModelTierEntry> => {
+    const entry = { configId: item.config.id, modelId: item.model.id };
+    const taken = exclude.some((other) => modelMeta.sameEntry(other, entry));
+    const info = modelMeta.providerInfoOf({ provider: item.config.provider });
+    return {
+      id: modelMeta.entryKey({ entry }),
+      value: entry,
+      name: item.model.name,
+      searchText: `${item.model.name} ${item.model.id} ${item.config.name} ${item.config.provider}`,
+      subtitle: showKey ? item.config.name : undefined,
+      leading:
+        info.logoUrl === '' ? undefined : (
+          <LogoPlate src={info.logoUrl} alt={info.name} size="xxs" />
+        ),
+      model: item.model,
+      note:
+        item.tradeOffs.length === 0
+          ? undefined
+          : item.tradeOffs.map(tradeOffText).join(' · '),
+      disabled: taken,
+      selected: taken,
+    };
+  };
+  const groups: ModelPickerGroup<PlatformModelTierEntry>[] =
     mode === 'fallback'
       ? modelMeta
           .rankForFallback({ main, candidates: pickable })
           .map((group) => ({
-            key: group.kind,
+            id: group.kind,
             heading: rankedHeading({ kind: group.kind }),
-            items: group.items,
+            items: group.items.map((item) => toItem(item, { showKey: true })),
           }))
-      : groupByKey({ configs, pickable });
+      : configs.flatMap((config) => {
+          const items = pickable
+            .filter((item) => item.config.id === config.id)
+            .map((item) =>
+              toItem({ ...item, tradeOffs: [] }, { showKey: false }),
+            );
+          return items.length === 0
+            ? []
+            : [
+                {
+                  id: config.id,
+                  heading: <KeyHeading config={config} />,
+                  items,
+                },
+              ];
+        });
   const loadingKeys = configs.filter(
     (config) => keyModels[config.id]?.isLoading === true,
   );
@@ -71,77 +102,41 @@ export function AdminModelPicker({
   );
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      {anchorOnly ? (
-        <PopoverAnchor asChild>{children}</PopoverAnchor>
-      ) : (
-        <PopoverTrigger asChild>{children}</PopoverTrigger>
-      )}
-      <PopoverContent align={align} className="w-[380px] p-0">
-        <Command>
-          <CommandInput placeholder={t('Search models')} />
-          <KeyNotices
-            loadingKeys={loadingKeys}
-            failedKeys={failedKeys}
-            keyModels={keyModels}
-          />
-          <CommandList className="max-h-80">
-            <CommandEmpty>{t('No models match')}</CommandEmpty>
-            {groups.map((group) => (
-              <CommandGroup key={group.key} heading={group.heading}>
-                {group.items.map((item) => {
-                  const entry = {
-                    configId: item.config.id,
-                    modelId: item.model.id,
-                  };
-                  const taken = exclude.some((other) =>
-                    modelMeta.sameEntry(other, entry),
-                  );
-                  return (
-                    <CommandItem
-                      key={modelMeta.entryKey({ entry })}
-                      value={`${item.model.name} ${item.model.id} ${item.config.name} ${item.config.provider}`}
-                      disabled={taken}
-                      onSelect={() => {
-                        onPick(entry);
-                        onOpenChange(false);
-                      }}
-                      className={cn('cursor-pointer', taken && 'opacity-60')}
-                    >
-                      <div className="flex w-full flex-col gap-0.5">
-                        <ModelRow
-                          model={item.model}
-                          info={
-                            mode === 'fallback'
-                              ? modelMeta.providerInfoOf({
-                                  provider: item.config.provider,
-                                })
-                              : undefined
-                          }
-                          keyName={
-                            mode === 'fallback' ? item.config.name : undefined
-                          }
-                          trailing={
-                            taken ? (
-                              <Check className="size-4 shrink-0 text-gray-11" />
-                            ) : undefined
-                          }
-                        />
-                        {item.tradeOffs.length > 0 && (
-                          <span className="text-xs text-warning-11">
-                            {item.tradeOffs.map(tradeOffText).join(' · ')}
-                          </span>
-                        )}
-                      </div>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <ModelPickerPopover
+      groups={groups}
+      notices={
+        <KeyNotices
+          loadingKeys={loadingKeys}
+          failedKeys={failedKeys}
+          keyModels={keyModels}
+        />
+      }
+      emptyText={
+        pickable.length === 0
+          ? t('No text models on your keys yet')
+          : t('No models match')
+      }
+      onPick={onPick}
+      open={open}
+      onOpenChange={onOpenChange}
+      align={align}
+      anchorOnly={anchorOnly}
+    >
+      {children}
+    </ModelPickerPopover>
+  );
+}
+
+function KeyHeading({ config }: { config: AIProviderWithoutSensitiveData }) {
+  return (
+    <span className="flex items-center gap-2">
+      <ProviderLogo
+        info={modelMeta.providerInfoOf({ provider: config.provider })}
+        size="sm"
+      />
+      <span>{config.name}</span>
+      {config.status !== 'active' && <KeyStatusBadge status={config.status} />}
+    </span>
   );
 }
 
@@ -186,41 +181,6 @@ function KeyNotices({
   );
 }
 
-function groupByKey({
-  configs,
-  pickable,
-}: {
-  configs: AIProviderWithoutSensitiveData[];
-  pickable: PickableModel[];
-}): PickerGroup[] {
-  return configs.flatMap((config) => {
-    const items: RankedModel[] = pickable
-      .filter((item) => item.config.id === config.id)
-      .map((item) => ({ ...item, tradeOffs: [] }));
-    if (items.length === 0) {
-      return [];
-    }
-    return [
-      {
-        key: config.id,
-        heading: (
-          <span className="flex items-center gap-2">
-            <ProviderLogo
-              info={modelMeta.providerInfoOf({ provider: config.provider })}
-              size="sm"
-            />
-            <span>{config.name}</span>
-            {config.status !== 'active' && (
-              <KeyStatusBadge status={config.status} />
-            )}
-          </span>
-        ),
-        items,
-      },
-    ];
-  });
-}
-
 function rankedHeading({ kind }: { kind: RankedGroup['kind'] }): string {
   switch (kind) {
     case 'full':
@@ -244,12 +204,6 @@ function tradeOffText(tradeOff: TradeOff): string {
       return t('No tool calling');
   }
 }
-
-type PickerGroup = {
-  key: string;
-  heading: ReactNode;
-  items: RankedModel[];
-};
 
 type AdminModelPickerProps = {
   configs: AIProviderWithoutSensitiveData[];
