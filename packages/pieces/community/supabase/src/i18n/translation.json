@@ -125,7 +125,7 @@
   "A row is returned only if it matches every filter.": "A row is returned only if it matches every filter.",
   "Starts at 1.": "Starts at 1.",
   "Between 1 and 1000.": "Between 1 and 1000.",
-  "Column to sort by. Keeps pages stable.": "Column to sort by. Keeps pages stable.",
+  "Comma-separated. End with a unique column like id for stable pages.": "Comma-separated. End with a unique column like id for stable pages.",
   "Leave empty to skip counting; count is then 0.": "Leave empty to skip counting; count is then 0.",
   "Must be unique in the project.": "Must be unique in the project.",
   "Whether files in this bucket are publicly readable by URL.": "Whether files in this bucket are publicly readable by URL.",

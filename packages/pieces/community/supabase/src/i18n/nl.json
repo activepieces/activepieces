@@ -183,7 +183,7 @@
   "Order Direction": "Sorteerrichting",
   "Replaces a file already at this path.": "Vervangt een bestand dat al op dit pad staat.",
   "Empty fields keep their current value.": "Lege velden behouden hun huidige waarde.",
-  "Column to sort by. Keeps pages stable.": "Kolom om op te sorteren. Houdt pagina's stabiel.",
+  "Comma-separated. End with a unique column like id for stable pages.": "Gescheiden door komma's. Eindig met een unieke kolom zoals id voor stabiele pagina's.",
   "Ascending": "Oplopend",
   "Descending": "Aflopend",
   "Webhook Secret": "Webhook-geheim",

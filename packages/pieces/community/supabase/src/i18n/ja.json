@@ -183,7 +183,7 @@
   "Order Direction": "並べ替えの順序",
   "Replaces a file already at this path.": "このパスに既にあるファイルを置き換えます。",
   "Empty fields keep their current value.": "空のフィールドは現在の値が保持されます。",
-  "Column to sort by. Keeps pages stable.": "並べ替えに使う列。ページの内容が安定します。",
+  "Comma-separated. End with a unique column like id for stable pages.": "カンマ区切り。ページを安定させるため、最後に id のような一意の列を指定します。",
   "Ascending": "昇順",
   "Descending": "降順",
   "Webhook Secret": "Webhook シークレット",

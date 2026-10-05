@@ -183,7 +183,7 @@
   "Order Direction": "Ordre de tri",
   "Replaces a file already at this path.": "Remplace un fichier déjà présent à ce chemin.",
   "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle.",
-  "Column to sort by. Keeps pages stable.": "Colonne de tri. Garantit des pages stables.",
+  "Comma-separated. End with a unique column like id for stable pages.": "Séparées par des virgules. Terminez par une colonne unique comme id pour des pages stables.",
   "Ascending": "Croissant",
   "Descending": "Décroissant",
   "Webhook Secret": "Secret du webhook",

@@ -172,7 +172,7 @@
   "Order Direction": "Направление сортировки",
   "Replaces a file already at this path.": "Заменяет файл, который уже есть по этому пути.",
   "Empty fields keep their current value.": "Пустые поля сохраняют текущее значение.",
-  "Column to sort by. Keeps pages stable.": "Столбец для сортировки. Обеспечивает стабильное разбиение на страницы.",
+  "Comma-separated. End with a unique column like id for stable pages.": "Через запятую. Последним укажите уникальный столбец, например id, чтобы страницы были стабильными.",
   "Ascending": "По возрастанию",
   "Descending": "По убыванию",
   "Webhook Secret": "Секрет вебхука",

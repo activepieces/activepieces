@@ -172,7 +172,7 @@
   "Order Direction": "Thứ tự sắp xếp",
   "Replaces a file already at this path.": "Thay thế tệp đã có tại đường dẫn này.",
   "Empty fields keep their current value.": "Các trường để trống sẽ giữ giá trị hiện tại.",
-  "Column to sort by. Keeps pages stable.": "Cột dùng để sắp xếp. Giúp các trang ổn định.",
+  "Comma-separated. End with a unique column like id for stable pages.": "Phân tách bằng dấu phẩy. Kết thúc bằng một cột duy nhất như id để các trang ổn định.",
   "Ascending": "Tăng dần",
   "Descending": "Giảm dần",
   "Webhook Secret": "Mã bí mật webhook",

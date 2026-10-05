@@ -102,8 +102,8 @@ export const searchRows = createAction({
         }),
         orderBy: Property.ShortText({
             displayName: 'Order By',
-            description: 'Column to sort by. Keeps pages stable.',
-            placeholder: 'created_at',
+            description: 'Comma-separated. End with a unique column like id for stable pages.',
+            placeholder: 'created_at, id',
             required: false,
         }),
         orderDirection: Property.StaticDropdown({
@@ -142,9 +142,10 @@ export const searchRows = createAction({
             throw new Error('Invalid column specification. Only alphanumeric characters, underscores, commas, dots, arrows, quotes, and asterisks are allowed.');
         }
 
-        const orderColumn = orderBy?.trim();
-        if (orderColumn && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(orderColumn)) {
-            throw new Error(`Invalid Order By column: ${orderColumn}. Use a single column name made of letters, digits and underscores, like created_at.`);
+        const orderColumns = (orderBy ?? '').split(',').map((column) => column.trim()).filter((column) => column.length > 0);
+        const invalidOrderColumn = orderColumns.find((column) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(column));
+        if (invalidOrderColumn) {
+            throw new Error(`Invalid Order By column: ${invalidOrderColumn}. Use column names made of letters, digits and underscores, separated by commas, like created_at, id.`);
         }
 
         const supabase = createClient(url, apiKey);
@@ -228,10 +229,10 @@ export const searchRows = createAction({
 
         const from = (currentPage - 1) * currentPageSize;
         const to = from + currentPageSize - 1;
-        if (orderColumn) {
-            query = query.order(orderColumn, { ascending: orderDirection !== 'desc' });
+        for (const column of orderColumns) {
+            query = query.order(column, { ascending: orderDirection !== 'desc' });
         }
-        query = query.range(from, to);
+        query = query.range(from, to + 1);
 
         const { data, error, count } = await query;
 
@@ -239,18 +240,30 @@ export const searchRows = createAction({
             throw new Error(`Database query failed: ${error.message}`);
         }
 
+        const fetchedRows = data ?? [];
+        const rows = fetchedRows.slice(0, currentPageSize);
+
         return {
-            data: data || [],
+            data: rows,
             count: count || 0,
             page: currentPage,
             pageSize: currentPageSize,
             total_pages: count ? Math.ceil(count / currentPageSize) : 0,
-            has_more: (data ?? []).length === currentPageSize,
+            has_more: hasMoreRows({ fetched: fetchedRows.length, pageSize: currentPageSize }),
             range: {
                 from,
                 to,
-                returned: data?.length || 0
+                returned: rows.length
             }
         };
     },
 });
+
+function hasMoreRows({ fetched, pageSize }: { fetched: number; pageSize: number }): boolean {
+    if (fetched > pageSize) {
+        return true;
+    }
+    return fetched === pageSize && pageSize >= DEFAULT_MAX_ROWS;
+}
+
+const DEFAULT_MAX_ROWS = 1000;

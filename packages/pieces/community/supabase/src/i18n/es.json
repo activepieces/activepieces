@@ -183,7 +183,7 @@
   "Order Direction": "Dirección del orden",
   "Replaces a file already at this path.": "Reemplaza un archivo que ya exista en esta ruta.",
   "Empty fields keep their current value.": "Los campos vacíos conservan su valor actual.",
-  "Column to sort by. Keeps pages stable.": "Columna por la que ordenar. Mantiene estables las páginas.",
+  "Comma-separated. End with a unique column like id for stable pages.": "Separadas por comas. Termina con una columna única como id para que las páginas sean estables.",
   "Ascending": "Ascendente",
   "Descending": "Descendente",
   "Webhook Secret": "Secreto del webhook",

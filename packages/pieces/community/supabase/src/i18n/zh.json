@@ -183,7 +183,7 @@
   "Order Direction": "排序方向",
   "Replaces a file already at this path.": "替换此路径中已有的文件。",
   "Empty fields keep their current value.": "空字段保留当前值。",
-  "Column to sort by. Keeps pages stable.": "用于排序的列。可保持分页稳定。",
+  "Comma-separated. End with a unique column like id for stable pages.": "以逗号分隔。最后填写一个唯一列（如 id），以保持分页稳定。",
   "Ascending": "升序",
   "Descending": "降序",
   "Webhook Secret": "Webhook 密钥",
