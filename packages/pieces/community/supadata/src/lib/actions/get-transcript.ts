@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
-import { supadataAuth } from '../..';
-import { supadataConfig } from '../config';
+import { supadataAuth } from '../auth';
+import { supadataClient } from '../common/client';
+import { getTranscriptOutputSchema } from '../output-schemas';
 
 export const getTranscriptAction = createAction({
   name: 'get_transcript',
+  outputSchema: getTranscriptOutputSchema,
   classification: 'READ',
   displayName: 'Get Transcript',
   description: 'Fetches transcript of a YouTube video.',
@@ -31,24 +32,11 @@ export const getTranscriptAction = createAction({
   },
   async run(context) {
     const { url, text, lang } = context.propsValue;
-    const qs:QueryParams = {
-      url,
-      text: text ? 'true' : 'false',
-    }
-
-    if (lang) {
-      qs['lang'] = lang;
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${supadataConfig.baseUrl}/youtube/transcript`,
-      headers: {
-        [supadataConfig.accessTokenHeaderKey]: context.auth.secret_text,
-      },
-      queryParams: qs,
+    return supadataClient.request({
+      apiKey: context.auth.secret_text,
+      method: supadataClient.GET,
+      path: '/youtube/transcript',
+      query: { url, text: text ? 'true' : 'false', lang },
     });
-
-    return response.body;
   },
-}); 
+});

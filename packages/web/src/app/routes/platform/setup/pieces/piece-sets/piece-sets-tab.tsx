@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
@@ -121,6 +122,7 @@ export const PieceSetsTab = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
                   variant="ghost"
                   size="sm"
                   onClick={() => setEditingSet(row.original)}
@@ -133,6 +135,7 @@ export const PieceSetsTab = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
                   variant="ghost"
                   size="sm"
                   onClick={() => setDuplicatingSet(row.original)}
@@ -145,6 +148,7 @@ export const PieceSetsTab = () => {
             <ConfirmationDeleteDialog
               title={t('Delete {name}', { name: row.original.name })}
               entityName={t('Piece Set')}
+              controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
               message={t(
                 'Projects assigned to this set will be reassigned to the default set.',
               )}
@@ -153,6 +157,7 @@ export const PieceSetsTab = () => {
               }}
             >
               <Button
+                {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}
                 variant="ghost"
                 size="sm"
                 disabled={row.original.isDefault}
