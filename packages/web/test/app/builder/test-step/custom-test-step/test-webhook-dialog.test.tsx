@@ -2,13 +2,20 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiAnyMock, toastErrorMock } = vi.hoisted(() => ({
+const { apiAnyMock, toastErrorMock, waitMock } = vi.hoisted(() => ({
   apiAnyMock: vi.fn(),
   toastErrorMock: vi.fn(),
+  waitMock: vi.fn(),
 }));
 
 vi.mock('i18next', () => ({
@@ -27,7 +34,7 @@ vi.mock('@/lib/api', () => ({
   },
 }));
 
-vi.mock('@/lib/dom-utils', () => ({ wait: () => Promise.resolve() }));
+vi.mock('@/lib/dom-utils', () => ({ wait: waitMock }));
 
 vi.mock('sonner', () => ({ toast: { error: toastErrorMock } }));
 
@@ -86,13 +93,28 @@ describe('TestWebhookDialog (trigger)', () => {
   beforeEach(() => {
     apiAnyMock.mockReset();
     toastErrorMock.mockReset();
+    waitMock.mockReset();
+    waitMock.mockResolvedValue(undefined);
   });
 
   it('stops loading and explains when no sample arrives after sending', async () => {
     apiAnyMock.mockResolvedValue({});
+    let finishWait: () => void = () => undefined;
+    waitMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finishWait = resolve;
+        }),
+    );
     mount();
 
     fireEvent.click(sendButton());
+
+    await waitFor(() => expect(waitMock).toHaveBeenCalledWith(30000));
+    expect(screen.queryAllByRole('button', { name: 'Send' }).length).toBe(0);
+    expect(screen.queryAllByText(NO_SAMPLE_NOTE).length).toBe(0);
+
+    act(() => finishWait());
 
     await screen.findByText(NO_SAMPLE_NOTE);
     expect(apiAnyMock).toHaveBeenCalledWith(
