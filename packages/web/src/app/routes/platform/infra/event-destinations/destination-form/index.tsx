@@ -31,6 +31,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { destinationErrors } from '../lib/destination-errors';
@@ -241,6 +242,11 @@ const DestinationForm = ({
           )}
           {showSubmit && (
             <Button
+              {...adminControl(
+                isEdit
+                  ? AdminControl.EVENT_DESTINATIONS_DESTINATION_UPDATE_SUBMIT
+                  : AdminControl.EVENT_DESTINATIONS_DESTINATION_CREATE_SUBMIT,
+              )}
               type="button"
               loading={isSaving}
               disabled={isSaving}

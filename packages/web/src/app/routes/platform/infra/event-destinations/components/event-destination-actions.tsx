@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
@@ -39,7 +40,12 @@ const EventDestinationActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem
+            {...adminControl(
+              AdminControl.EVENT_DESTINATIONS_DESTINATION_EDIT_OPEN,
+            )}
+            asChild
+          >
             <Link to={`${EVENT_STREAMING_PATH}/${destination.id}`}>
               <Pencil className="h-4 w-4 mr-2" />
               {t('Edit')}
@@ -64,8 +70,14 @@ const EventDestinationActions = ({
               })
             }
             isDanger
+            controlId={
+              AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM
+            }
           >
             <DropdownMenuItem
+              {...adminControl(
+                AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
+              )}
               variant="destructive"
               onSelect={(e) => {
                 e.preventDefault();

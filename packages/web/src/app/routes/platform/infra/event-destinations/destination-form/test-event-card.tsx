@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { destinationErrors } from '../lib/destination-errors';
 import { destinationFormUtils } from '../lib/destination-form-utils';
@@ -104,6 +105,7 @@ export const TestEventCard = ({
           </SelectContent>
         </Select>
         <Button
+          {...adminControl(AdminControl.EVENT_DESTINATIONS_WEBHOOK_TEST_RUN)}
           type="button"
           variant="outline"
           disabled={isSendDisabled}

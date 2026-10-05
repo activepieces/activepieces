@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { destinationErrors } from '../lib/destination-errors';
@@ -198,6 +199,7 @@ const GenerateHandlerFlowCard = ({
         </span>
       </div>
       <Button
+        {...adminControl(AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_RUN)}
         type="button"
         onClick={handleGenerate}
         disabled={isImporting || selectedEvents.length === 0}
@@ -231,7 +233,13 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
           {isNil(flow.publishedVersionId) ? t('Draft') : t('Published')}
         </Badge>
       )}
-      <Button type="button" variant="outline" size="sm" asChild>
+      <Button
+        {...adminControl(AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_LINK)}
+        type="button"
+        variant="outline"
+        size="sm"
+        asChild
+      >
         <a href={`/flows/${flowId}`} target="_blank" rel="noopener noreferrer">
           {t('Open flow')}
           <ExternalLink className="size-3.5" />

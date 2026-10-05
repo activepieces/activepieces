@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Activity, Workflow } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import {
@@ -56,6 +57,7 @@ const StartCard = ({
 }) => {
   return (
     <Link
+      {...adminControl(AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN)}
       to={to}
       className="flex gap-3 rounded-lg border p-4 transition-colors hover:bg-gray-3"
     >

@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { flowHooks, flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import { sampleData } from '../../sample-data';
@@ -189,7 +190,15 @@ const EventDestinationsPage = () => {
           'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
         )}
       >
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" asChild>
+        <AnimatedIconButton
+          {...adminControl(
+            AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN,
+          )}
+          icon={PlusIcon}
+          iconSize={16}
+          size="sm"
+          asChild
+        >
           <Link to={`${EVENT_STREAMING_PATH}/new`}>{t('New Destination')}</Link>
         </AnimatedIconButton>
       </DashboardPageHeader>
