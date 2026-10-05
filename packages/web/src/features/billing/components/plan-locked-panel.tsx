@@ -8,6 +8,7 @@ import { Crown } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
 
+import { useInsideFeatureSample } from '@/components/custom/feature-sample-context';
 import { Panel } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -31,7 +32,8 @@ export function PlanLockedPanel({
   children,
 }: PlanLockedPanelProps) {
   const tier = usePlanTarget(feature);
-  if (!locked) {
+  const insideFeatureSample = useInsideFeatureSample();
+  if (!locked || insideFeatureSample) {
     return (
       <Panel
         title={title}

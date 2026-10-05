@@ -1,6 +1,7 @@
 import { PlatformAdminSurface } from '@activepieces/shared';
-import { createContext, ReactNode, useContext } from 'react';
+import { ReactNode } from 'react';
 
+import { InsideFeatureSampleProvider } from '@/components/custom/feature-sample-context';
 import { PageLock } from '@/components/custom/page';
 import {
   FeatureKey,
@@ -33,18 +34,12 @@ export function FeatureSample({
         />
       )}
     >
-      <InsideFeatureSampleContext.Provider value={true}>
-        {children}
-      </InsideFeatureSampleContext.Provider>
+      <InsideFeatureSampleProvider>{children}</InsideFeatureSampleProvider>
     </PageLock>
   );
 }
 
-export function useInsideFeatureSample(): boolean {
-  return useContext(InsideFeatureSampleContext);
-}
-
-const InsideFeatureSampleContext = createContext(false);
+export { useInsideFeatureSample } from '@/components/custom/feature-sample-context';
 
 export type FeatureSampleProps = {
   locked: boolean;
