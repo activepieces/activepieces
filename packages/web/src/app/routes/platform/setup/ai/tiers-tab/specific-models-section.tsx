@@ -223,12 +223,6 @@ function KeyGroup({
           type="button"
           className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-gray-2"
         >
-          <ChevronRight
-            className={cn(
-              'size-4 shrink-0 text-gray-10 transition-transform',
-              isOpen && 'rotate-90',
-            )}
-          />
           <ProviderLogo
             info={modelMeta.providerInfoOf({ provider: config.provider })}
           />
@@ -261,10 +255,16 @@ function KeyGroup({
               <RefreshCw className="size-3" />
             </Button>
           )}
+          <ChevronRight
+            className={cn(
+              'size-4 shrink-0 text-gray-10 transition-transform',
+              isOpen && 'rotate-90',
+            )}
+          />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="flex flex-col pb-2 pl-12 pr-4">
+        <div className="flex flex-col pb-2 pl-5 pr-4">
           {page.map(({ model }) => (
             <ModelDetailRow
               key={model.id}

@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
+import { cn } from '@/lib/utils';
 
 import { ProviderLogo } from '../providers-tab/provider-logo';
 
@@ -43,15 +44,18 @@ export function ModelDetailRow({
         )}
       </div>
       {metadata !== undefined && (
-        <div className="hidden items-center gap-6 md:flex">
-          {metadata.contextTokens !== undefined && (
-            <Stat label={t('Context')}>
-              {modelMeta.formatContext({ tokens: metadata.contextTokens })}
-            </Stat>
-          )}
-          {metadata.inputCostPerMillionTokens !== undefined &&
-            metadata.outputCostPerMillionTokens !== undefined && (
-              <Stat label={t('Price per 1M')}>
+        <div className="hidden items-center gap-4 md:flex">
+          <Stat label={t('Context')} className="w-16">
+            {metadata.contextTokens === undefined
+              ? EMPTY
+              : modelMeta.formatContext({ tokens: metadata.contextTokens })}
+          </Stat>
+          <Stat label={t('Price per 1M')} className="w-28">
+            {metadata.inputCostPerMillionTokens === undefined ||
+            metadata.outputCostPerMillionTokens === undefined ? (
+              EMPTY
+            ) : (
+              <>
                 {modelMeta.formatPrice({
                   perMillion: metadata.inputCostPerMillionTokens,
                 })}
@@ -59,8 +63,9 @@ export function ModelDetailRow({
                 {modelMeta.formatPrice({
                   perMillion: metadata.outputCostPerMillionTokens,
                 })}
-              </Stat>
+              </>
             )}
+          </Stat>
           <Capabilities model={model} />
         </div>
       )}
@@ -69,9 +74,17 @@ export function ModelDetailRow({
   );
 }
 
-function Stat({ label, children }: { label: string; children: ReactNode }) {
+function Stat({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className: string;
+  children: ReactNode;
+}) {
   return (
-    <span className="flex min-w-16 flex-col">
+    <span className={cn('flex flex-col', className)}>
       <span className="text-xss uppercase tracking-wide text-gray-10">
         {label}
       </span>
@@ -108,6 +121,8 @@ function Capabilities({ model }: { model: AIProviderModel | undefined }) {
     </span>
   );
 }
+
+const EMPTY = '—';
 
 type ModelDetailRowProps = {
   name: string;
