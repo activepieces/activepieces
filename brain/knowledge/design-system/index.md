@@ -35,6 +35,7 @@ themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders
 
 ## Gotchas
 
+- **`ConfirmationDeleteDialog` renders `message` inside `DialogDescription`, a `<p>`.** A select or any other form control placed in the message is invalid nesting and becomes the dialog's `aria-describedby`. A delete flow that needs an input (the tier delete's "Move them to" select) builds its own `Dialog` and keeps only the confirm button's `adminControl` id.
 - `styles.css` points the `--shadow-*` theme keys that change per theme at a plain custom property
   (`--shadow-edge: var(--edge)`). Tailwind copies a `--shadow-*` value into the utility literally, so a dark override of
   the theme key itself never lands; the indirection is what lets shadows change per theme.

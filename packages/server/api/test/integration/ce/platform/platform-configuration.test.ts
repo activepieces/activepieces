@@ -151,6 +151,28 @@ describe('platform configuration', () => {
         expect(ApFlagId).not.toHaveProperty('TELEMETRY_ENABLED')
     })
 
+    it('shows specific AI models to builders until an admin hides them, and lets any member read the switch', async () => {
+        const ctx = await createTestContext(app!)
+        const memberCtx = await createMemberContext(app!, ctx, {
+            projectRole: DefaultProjectRole.EDITOR,
+        })
+
+        expect((await ctx.get('/v1/platform-configurations'))!.json().aiSpecificModelsVisible).toBe(true)
+
+        const hidden = await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false })
+        expect(hidden?.statusCode).toBe(StatusCodes.OK)
+        expect(hidden!.json().aiSpecificModelsVisible).toBe(false)
+        expect(hidden!.json().isInfraSetupTelemetryEnabled).toBe(true)
+
+        const memberRead = await memberCtx.get('/v1/platform-configurations')
+        expect(memberRead?.statusCode).toBe(StatusCodes.OK)
+        expect(memberRead!.json().aiSpecificModelsVisible).toBe(false)
+
+        const memberWrite = await memberCtx.post('/v1/platform-configurations', { aiSpecificModelsVisible: true })
+        expect(memberWrite?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await ctx.get('/v1/platform-configurations'))!.json().aiSpecificModelsVisible).toBe(false)
+    })
+
     it('lets any platform member read the configuration, but only an admin write it', async () => {
         const ctx = await createTestContext(app!)
         const memberCtx = await createMemberContext(app!, ctx, {

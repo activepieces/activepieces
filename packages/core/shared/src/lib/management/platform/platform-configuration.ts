@@ -14,6 +14,7 @@ export const PlatformConfiguration = z.object({
         .int({ error: (issue) => isNil(issue.input) ? formErrors.required : formErrors.wholeNumber })
         .min(MIN_BARRIER_SIGNALS, formErrors.atLeastOne)
         .max(MAX_BARRIER_SIGNALS, formErrors.atMostTenThousand),
+    aiSpecificModelsVisible: z.boolean(),
 })
 export type PlatformConfiguration = z.infer<typeof PlatformConfiguration>
 
@@ -21,6 +22,7 @@ export const PlatformConfigurationSettings = PlatformConfiguration.pick({
     isProductTelemetryEnabled: true,
     isInfraSetupTelemetryEnabled: true,
     maxBarrierSignals: true,
+    aiSpecificModelsVisible: true,
 })
 export type PlatformConfigurationSettings = z.infer<typeof PlatformConfigurationSettings>
 

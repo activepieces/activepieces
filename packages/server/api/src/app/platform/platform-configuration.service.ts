@@ -91,12 +91,13 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         return platformIds.filter((platformId) => !optedOutIds.has(platformId))
     },
 
-    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled, maxBarrierSignals }: UpdateParams): Promise<PlatformConfiguration> {
+    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled, maxBarrierSignals, aiSpecificModelsVisible }: UpdateParams): Promise<PlatformConfiguration> {
         await this.getOrCreateForPlatform({ platformId })
         const patch = {
             ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
             ...spreadIfNotUndefined('isInfraSetupTelemetryEnabled', isInfraSetupTelemetryEnabled),
             ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
+            ...spreadIfNotUndefined('aiSpecificModelsVisible', aiSpecificModelsVisible),
         }
         if (!isEmpty(patch)) {
             await platformConfigurationRepo().update({ platformId }, patch)
