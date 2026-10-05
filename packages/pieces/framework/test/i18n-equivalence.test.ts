@@ -1,10 +1,33 @@
 import fs from 'fs'
 import path from 'path'
-import { LocalesEnum } from '@activepieces/core-utils'
+import { isDeepStrictEqual } from 'util'
+import { isObject, LocalesEnum } from '@activepieces/core-utils'
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/core-piece-types'
 import { pieceTranslation } from '../src/lib/i18n'
 
 const DE = LocalesEnum.GERMAN
+
+const LEGACY_PATHS = [
+  'description',
+  'auth.username.displayName',
+  'auth.username.description',
+  'auth.password.displayName',
+  'auth.password.description',
+  'auth.props.*.displayName',
+  'auth.props.*.description',
+  'auth.props.*.options.options.*.label',
+  'auth.description',
+  'actions.*.displayName',
+  'actions.*.description',
+  'actions.*.props.*.displayName',
+  'actions.*.props.*.description',
+  'actions.*.props.*.options.options.*.label',
+  'triggers.*.displayName',
+  'triggers.*.description',
+  'triggers.*.props.*.displayName',
+  'triggers.*.props.*.description',
+  'triggers.*.props.*.options.options.*.label',
+]
 
 function legacyTranslateProperty(obj: Record<string, unknown>, p: string, i18n: Record<string, string>): void {
   const parsedKeys = p.split('.')
@@ -28,7 +51,7 @@ function legacyTranslatePiece(piece: Record<string, unknown>, locale: LocalesEnu
   const target = i18n?.[locale]
   if (!target) return piece
   const translatedPiece = JSON.parse(JSON.stringify(piece))
-  pieceTranslation.pathsToValuesToTranslate.forEach(key => legacyTranslateProperty(translatedPiece, key, target))
+  LEGACY_PATHS.forEach(key => legacyTranslateProperty(translatedPiece, key, target))
   return translatedPiece
 }
 
@@ -98,6 +121,7 @@ const fixtures: TestPiece[] = [
     actions: {
       a1: { name: 'a1', displayName: 'Keep', description: '', requireAuth: false, props: {} },
       a2: { name: 'a2', displayName: 'Also keep', requireAuth: false, props: { p: { displayName: 'P', required: false, type: 'NUMBER' } } },
+      a3: { name: 'a3', displayName: 'Untranslated', description: 'Nothing here', requireAuth: false, props: { q: prop('Q', 'Not translated', ['Gamma']) } },
     },
     triggers: {},
     i18n: { [DE]: { [longKey.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)]: 'Gekürzt', 'Keep': 'Behalten', 'P': 'Pe' } },
@@ -105,12 +129,17 @@ const fixtures: TestPiece[] = [
 ]
 
 describe('translatePiece copy-on-write', () => {
+  it('keeps the paths the Crowdin translation files are keyed on', () => {
+    expect(pieceTranslation.pathsToValuesToTranslate).toEqual(LEGACY_PATHS)
+  })
+
   it('matches the JSON-clone implementation on every fixture and locale', () => {
     for (const fixture of fixtures) {
       for (const locale of [DE, LocalesEnum.FRENCH, LocalesEnum.CHINESE_TRADITIONAL]) {
         const legacy = legacyTranslatePiece(clone(fixture), locale)
         const actual = translate({ piece: clone(fixture), locale })
         expect(JSON.stringify(actual)).toEqual(JSON.stringify(legacy))
+        expect(actual).toStrictEqual(legacy)
       }
     }
   })
@@ -119,8 +148,45 @@ describe('translatePiece copy-on-write', () => {
     for (const fixture of fixtures) {
       const input = clone(fixture)
       translate({ piece: input, locale: DE })
-      expect(input).toEqual(clone(fixture))
+      expect(input).toStrictEqual(clone(fixture))
     }
+  })
+
+  it('shares every untranslated subtree with the source', () => {
+    for (const fixture of fixtures) {
+      for (const locale of [DE, LocalesEnum.FRENCH]) {
+        const input = clone(fixture)
+        const output = translate({ piece: input, locale })
+        expect(findCopiedSubtrees({ input, output, at: fixture.name })).toEqual([])
+      }
+    }
+  })
+
+  it('translates the rest of a piece that has malformed nodes', () => {
+    const piece = {
+      name: 'malformed', displayName: 'Malformed', description: 'Send a message',
+      actions: {
+        broken: null,
+        act: {
+          name: 'act', displayName: 'Act now', requireAuth: false,
+          props: {
+            field: {
+              displayName: 'Field', required: false, type: 'STATIC_DROPDOWN',
+              options: { options: [{ label: 1, value: 'a' }, { label: ['Alpha'], value: 'b' }, { label: 'Alpha', value: 'c' }] },
+            },
+          },
+        },
+      },
+      triggers: {},
+    }
+    const translated = pieceTranslation.translatePiece({
+      piece,
+      translations: { 'Send a message': 'Eine Nachricht senden', 'Alpha': 'Alfa', 'Act now': 'Jetzt handeln' },
+    })
+    expect(translated.description).toEqual('Eine Nachricht senden')
+    expect(translated.actions.broken).toBeNull()
+    expect(translated.actions.act.displayName).toEqual('Jetzt handeln')
+    expect(translated.actions.act.props.field.options.options.map((option) => option.label)).toEqual([1, ['Alpha'], 'Alfa'])
   })
 
   it('keeps option arrays as arrays', () => {
@@ -174,9 +240,11 @@ describe.skipIf(!corpus)('translatePiece copy-on-write against a real catalogue'
       const locales = Object.keys(parsed.i18n ?? {})
       for (const locale of [...locales, LocalesEnum.CHINESE_TRADITIONAL] as LocalesEnum[]) {
         const legacy = legacyTranslatePiece(JSON.parse(raw), locale)
-        const actual = translate({ piece: JSON.parse(raw), locale })
+        const input: TestPiece = JSON.parse(raw)
+        const actual = translate({ piece: input, locale })
         compared++
-        if (JSON.stringify(actual) !== JSON.stringify(legacy)) mismatches.push(`${file}:${locale}`)
+        if (JSON.stringify(actual) !== JSON.stringify(legacy) || !isDeepStrictEqual(actual, legacy)) mismatches.push(`${file}:${locale}`)
+        mismatches.push(...findCopiedSubtrees({ input, output: actual, at: `${file}:${locale}` }))
       }
     }
     console.log(`compared ${compared} (piece, locale) pairs across ${files.length} pieces`)
@@ -186,6 +254,26 @@ describe.skipIf(!corpus)('translatePiece copy-on-write against a real catalogue'
 
 function translate({ piece, locale }: { piece: TestPiece, locale: LocalesEnum }): TestPiece {
   return pieceTranslation.translatePiece({ piece, translations: piece.i18n?.[locale] })
+}
+
+function findCopiedSubtrees({ input, output, at }: { input: unknown, output: unknown, at: string }): string[] {
+  if (input === output) {
+    return []
+  }
+  if (JSON.stringify(input) === JSON.stringify(output)) {
+    return [at]
+  }
+  if (Array.isArray(input) && Array.isArray(output)) {
+    return input.flatMap((child: unknown, index) => findCopiedSubtrees({ input: child, output: output[index], at: `${at}[${index}]` }))
+  }
+  if (isObject(input) && isObject(output)) {
+    const keyOrderChanged = JSON.stringify(Object.keys(input)) !== JSON.stringify(Object.keys(output)) ? [`${at} (keys)`] : []
+    return [
+      ...keyOrderChanged,
+      ...Object.keys(input).flatMap((key) => findCopiedSubtrees({ input: input[key], output: output[key], at: `${at}.${key}` })),
+    ]
+  }
+  return []
 }
 
 function clone(piece: TestPiece): TestPiece {
