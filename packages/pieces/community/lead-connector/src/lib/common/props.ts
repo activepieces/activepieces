@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property, tryCatch } from '@activepieces/pieces-framework';
 import { leadConnectorAuth } from '../..';
 import { getContacts, getPipelines, getUsers, LeadConnectorContact } from '.';
 
@@ -24,7 +24,8 @@ function contact<R extends boolean>({
           placeholder: CONNECT_FIRST,
         };
       }
-      const contacts = await getContacts(auth, {
+      const contacts = await listContacts({
+        auth,
         query: searchValue ? searchValue : undefined,
       });
       return {
@@ -105,6 +106,54 @@ function pipeline({ description }: { description?: string } = {}) {
   });
 }
 
+async function listContacts({
+  auth,
+  query,
+}: {
+  auth: ContactsAuth;
+  query?: string;
+}): Promise<LeadConnectorContact[]> {
+  const firstPage = await getContacts(auth, { query });
+  if (query) {
+    return firstPage;
+  }
+  const laterPages = await nextContactPages({
+    auth,
+    previous: firstPage,
+    remaining: EXTRA_CONTACT_PAGES,
+  });
+  return [...firstPage, ...laterPages];
+}
+
+async function nextContactPages({
+  auth,
+  previous,
+  remaining,
+}: {
+  auth: ContactsAuth;
+  previous: LeadConnectorContact[];
+  remaining: number;
+}): Promise<LeadConnectorContact[]> {
+  const last = previous[previous.length - 1];
+  if (remaining === 0 || previous.length < CONTACTS_PAGE_SIZE || !last) {
+    return [];
+  }
+  const { data: page } = await tryCatch(() =>
+    getContacts(auth, { startAfterId: last.id })
+  );
+  const seen = new Set(previous.map((item) => item.id));
+  const fresh = (page ?? []).filter((item) => !seen.has(item.id));
+  if (fresh.length === 0) {
+    return [];
+  }
+  const rest = await nextContactPages({
+    auth,
+    previous: fresh,
+    remaining: remaining - 1,
+  });
+  return [...fresh, ...rest];
+}
+
 function contactLabel(item: LeadConnectorContact): string {
   const name =
     item.contactName ||
@@ -126,6 +175,8 @@ function userLabel(item: LeadConnectorUser): string {
   return name || item.email || item.id;
 }
 
+const CONTACTS_PAGE_SIZE = 100;
+const EXTRA_CONTACT_PAGES = 4;
 const CONNECT_FIRST = 'Connect your account first';
 
 export const leadConnectorProps = {
@@ -133,6 +184,8 @@ export const leadConnectorProps = {
   user,
   pipeline,
 };
+
+type ContactsAuth = Parameters<typeof getContacts>[0];
 
 type LeadConnectorUser = {
   id: string;
