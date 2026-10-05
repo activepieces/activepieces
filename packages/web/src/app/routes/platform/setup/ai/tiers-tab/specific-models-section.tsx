@@ -5,14 +5,14 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
-  Check,
   ChevronRight,
   Eye,
   EyeOff,
+  Loader2,
   Plus,
   RefreshCw,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +30,6 @@ import {
 } from '@/features/agents/ai-model/model-meta';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -48,8 +47,6 @@ export function SpecificModelsSection({
 }: SpecificModelsSectionProps) {
   const { mutate: setVisible, isPending } =
     platformModelTierMutations.useSetSpecificModelsVisible();
-  const [savedAt, setSavedAt] = useState<number | undefined>(undefined);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState('');
   const models = modelMeta.specificModelsOf({
     configs: ownKeys,
@@ -57,21 +54,6 @@ export function SpecificModelsSection({
     tiers,
   });
   const cannotHide = visible && tiers.length === 0;
-  const showSaved = useFlash({ at: savedAt, durationMs: 1500 });
-
-  const toggle = (next: boolean) => {
-    setError(undefined);
-    setVisible(next, {
-      onSuccess: () => setSavedAt(Date.now()),
-      onError: (toggleError) =>
-        setError(
-          api.extractServerErrorMessage(
-            toggleError,
-            t('Could not save this setting'),
-          ),
-        ),
-    });
-  };
 
   const needle = search.trim().toLowerCase();
   const matches = (item: PickableModel) =>
@@ -104,21 +86,15 @@ export function SpecificModelsSection({
           />
           <div className="flex shrink-0 flex-col items-end gap-1">
             <div className="flex items-center gap-2">
-              <span
-                className="text-xs text-success-11"
-                aria-live="polite"
-                role="status"
-              >
-                {showSaved && (
-                  <span className="inline-flex items-center gap-1">
-                    <Check className="size-3" />
-                    {t('Saved')}
-                  </span>
-                )}
-              </span>
+              {isPending && (
+                <Loader2
+                  className="size-3.5 animate-spin text-gray-10"
+                  aria-label={t('Saving')}
+                />
+              )}
               <Tabs
                 value={visible ? 'visible' : 'hidden'}
-                onValueChange={(value) => toggle(value === 'visible')}
+                onValueChange={(value) => setVisible(value === 'visible')}
               >
                 <TabsList
                   className="h-8"
@@ -153,11 +129,6 @@ export function SpecificModelsSection({
                 ? t('Builders can pick these directly.')
                 : t('Builders only see tiers.')}
             </p>
-            {error !== undefined && (
-              <p className="text-xs text-danger-11" role="alert">
-                {error}
-              </p>
-            )}
           </div>
         </div>
         {models.length > SEARCH_THRESHOLD && (
@@ -179,7 +150,9 @@ export function SpecificModelsSection({
             total={
               models.filter((item) => item.config.id === group.config.id).length
             }
+            hasTextModels={(group.state?.models?.length ?? 0) > 0}
             isLoading={group.state?.isLoading === true}
+            isFetching={group.state?.isFetching === true}
             isError={group.state?.isError === true}
             onRetry={() => group.state?.refetch()}
             forceOpen={needle !== ''}
@@ -201,7 +174,9 @@ function KeyGroup({
   config,
   items,
   total,
+  hasTextModels,
   isLoading,
+  isFetching,
   isError,
   onRetry,
   forceOpen,
@@ -212,59 +187,80 @@ function KeyGroup({
   const [shown, setShown] = useState(PAGE_SIZE);
   const isOpen = forceOpen || open;
   const page = items.slice(0, shown);
+  const retryButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-xs"
+      aria-label={t('Retry')}
+      disabled={isFetching}
+      onClick={onRetry}
+    >
+      <RefreshCw className={cn('size-3', isFetching && 'animate-spin')} />
+    </Button>
+  );
   return (
     <Collapsible
       open={isOpen}
       onOpenChange={setOpen}
       className="border-b border-gray-6/60 last:border-b-0"
     >
-      <CollapsibleTrigger asChild>
-        <button
-          type="button"
-          className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-gray-2"
-        >
-          <ProviderLogo
-            info={modelMeta.providerInfoOf({ provider: config.provider })}
-          />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sm font-medium">{config.name}</span>
-            <span className="text-xs text-gray-11">
-              {isLoading ? (
-                <Skeleton className="h-3 w-20" />
-              ) : isError ? (
-                t("Couldn't load {key} models", { key: config.name })
-              ) : (
-                t('modelsCount', { count: total })
-              )}
+      <div className="flex items-center gap-2 pr-5">
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex min-w-0 flex-1 items-center gap-3 px-5 py-3 text-left hover:bg-gray-2"
+          >
+            <ProviderLogo
+              info={modelMeta.providerInfoOf({ provider: config.provider })}
+            />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-medium">
+                {config.name}
+              </span>
+              <span className="text-xs text-gray-11">
+                {isLoading ? (
+                  <Skeleton className="h-3 w-20" />
+                ) : isError ? (
+                  t("Couldn't load {key} models", { key: config.name })
+                ) : (
+                  t('modelsCount', { count: total })
+                )}
+              </span>
             </span>
-          </span>
-          {config.status !== 'active' && (
-            <KeyStatusBadge status={config.status} />
-          )}
-          {isError && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              aria-label={t('Retry')}
-              onClick={(event) => {
-                event.stopPropagation();
-                onRetry();
-              }}
-            >
-              <RefreshCw className="size-3" />
-            </Button>
-          )}
-          <ChevronRight
-            className={cn(
-              'size-4 shrink-0 text-gray-10 transition-transform',
-              isOpen && 'rotate-90',
-            )}
-          />
-        </button>
-      </CollapsibleTrigger>
+            <ChevronRight
+              className={cn(
+                'size-4 shrink-0 text-gray-10 transition-transform',
+                isOpen && 'rotate-90',
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        {config.status !== 'active' && (
+          <KeyStatusBadge status={config.status} />
+        )}
+        {isError && retryButton}
+      </div>
       <CollapsibleContent>
         <div className="flex flex-col pb-2 pl-5 pr-4">
+          {isLoading &&
+            [0, 1, 2].map((row) => (
+              <div key={row} className="flex items-center gap-3 py-2.5">
+                <Skeleton className="size-8 rounded-lg" />
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          {isError && (
+            <div className="flex items-center gap-2 py-3 text-sm text-gray-11">
+              <span>
+                {t("Couldn't load {key} models", { key: config.name })}
+              </span>
+              {retryButton}
+            </div>
+          )}
           {page.map(({ model }) => (
             <ModelDetailRow
               key={model.id}
@@ -289,9 +285,11 @@ function KeyGroup({
           ))}
           {!isLoading && !isError && items.length === 0 && (
             <p className="py-3 text-sm text-gray-11">
-              {total === 0
+              {total > 0
+                ? t('No models match')
+                : hasTextModels
                 ? t("Every text model on this key is a tier's main model.")
-                : t('No models match')}
+                : t('No text models on this key.')}
             </p>
           )}
           {items.length > page.length && (
@@ -313,25 +311,6 @@ function KeyGroup({
   );
 }
 
-function useFlash({
-  at,
-  durationMs,
-}: {
-  at: number | undefined;
-  durationMs: number;
-}): boolean {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (at === undefined) {
-      return;
-    }
-    setVisible(true);
-    const timer = window.setTimeout(() => setVisible(false), durationMs);
-    return () => window.clearTimeout(timer);
-  }, [at, durationMs]);
-  return visible;
-}
-
 const PAGE_SIZE = 20;
 const SEARCH_THRESHOLD = 10;
 
@@ -347,7 +326,9 @@ type KeyGroupProps = {
   config: AIProviderWithoutSensitiveData;
   items: PickableModel[];
   total: number;
+  hasTextModels: boolean;
   isLoading: boolean;
+  isFetching: boolean;
   isError: boolean;
   onRetry: () => void;
   forceOpen: boolean;

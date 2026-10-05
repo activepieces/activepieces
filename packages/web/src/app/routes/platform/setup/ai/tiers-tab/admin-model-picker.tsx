@@ -23,6 +23,7 @@ import {
   ModelPickerItem,
   ModelPickerPopover,
 } from '@/features/agents/ai-model/model-picker-popover';
+import { cn } from '@/lib/utils';
 
 import { KeyStatusBadge } from '../providers-tab/key-status';
 import { ProviderLogo } from '../providers-tab/provider-logo';
@@ -111,11 +112,12 @@ export function AdminModelPicker({
           keyModels={keyModels}
         />
       }
-      emptyText={
-        pickable.length === 0
-          ? t('No text models on your keys yet')
-          : t('No models match')
-      }
+      emptyText={emptyTextOf({
+        total: configs.length,
+        loading: loadingKeys.length,
+        failed: failedKeys.length,
+        pickable: pickable.length,
+      })}
       onPick={onPick}
       open={open}
       onOpenChange={onOpenChange}
@@ -171,14 +173,42 @@ function KeyNotices({
             variant="ghost"
             size="icon-xs"
             aria-label={t('Retry')}
+            disabled={keyModels[config.id]?.isFetching === true}
             onClick={() => keyModels[config.id]?.refetch()}
           >
-            <RefreshCw className="size-3" />
+            <RefreshCw
+              className={cn(
+                'size-3',
+                keyModels[config.id]?.isFetching === true && 'animate-spin',
+              )}
+            />
           </Button>
         </div>
       ))}
     </div>
   );
+}
+
+function emptyTextOf({
+  total,
+  loading,
+  failed,
+  pickable,
+}: {
+  total: number;
+  loading: number;
+  failed: number;
+  pickable: number;
+}): string {
+  if (total > 0 && loading === total) {
+    return t('Loading models…');
+  }
+  if (total > 0 && failed === total) {
+    return t("Couldn't load models");
+  }
+  return pickable === 0
+    ? t('No text models on your keys yet')
+    : t('No models match');
 }
 
 function rankedHeading({ kind }: { kind: RankedGroup['kind'] }): string {

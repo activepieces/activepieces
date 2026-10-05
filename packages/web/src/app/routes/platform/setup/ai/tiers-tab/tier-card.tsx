@@ -43,7 +43,6 @@ import {
 } from '@/features/agents/ai-model/model-meta';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { AdminModelPicker } from './admin-model-picker';
@@ -60,27 +59,13 @@ export function TierCard({
   onDelete,
 }: TierCardProps) {
   const { mutate: update, isPending } = platformModelTierMutations.useUpdate();
-  const [error, setError] = useState<string | undefined>(undefined);
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const showSpinner = useDelayedFlag({ active: isPending, delayMs: 300 });
 
-  const save = (request: UpdatePlatformModelTierRequest) => {
-    setError(undefined);
-    update(
-      { id: tier.id, request },
-      {
-        onError: (saveError) =>
-          setError(
-            api.extractServerErrorMessage(
-              saveError,
-              t('Could not save this tier'),
-            ),
-          ),
-      },
-    );
-  };
+  const save = (request: UpdatePlatformModelTierRequest) =>
+    update({ id: tier.id, request });
   const move = ({ from, to }: { from: number; to: number }) =>
     save({ entries: modelMeta.moveEntry({ entries: tier.entries, from, to }) });
 
@@ -163,11 +148,6 @@ export function TierCard({
           {tier.description && (
             <p className="truncate text-xs text-gray-11">{tier.description}</p>
           )}
-          {error !== undefined && (
-            <p className="text-xs text-danger-11" role="alert">
-              {error}
-            </p>
-          )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -176,6 +156,7 @@ export function TierCard({
               variant="ghost"
               size="icon-sm"
               aria-label={t('Tier actions')}
+              disabled={isPending}
             >
               <MoreHorizontal className="size-4" />
             </Button>
@@ -254,6 +235,7 @@ export function TierCard({
                   isLast={last}
                   config={config}
                   model={model}
+                  loading={keyModels[entry.configId]?.isLoading === true}
                   warnings={modelMeta.warningsFor({
                     entry,
                     isMain,
@@ -264,6 +246,7 @@ export function TierCard({
                   menu={
                     <RowMenu
                       isMain={isMain}
+                      disabled={isPending}
                       canMoveUp={position > 0}
                       canMoveDown={!last}
                       onChangeMain={() => setMainPickerOpen(true)}
@@ -353,6 +336,7 @@ export function TierCard({
                   variant="outline"
                   size="sm"
                   className="shrink-0"
+                  disabled={isPending}
                   {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
                 >
                   <Plus className="size-4" />
@@ -369,6 +353,7 @@ export function TierCard({
                   variant="ghost"
                   size="sm"
                   className="text-gray-11"
+                  disabled={isPending}
                   {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
                 >
                   <Plus className="size-4" />
@@ -411,6 +396,7 @@ function TierTag({
 
 function RowMenu({
   isMain,
+  disabled,
   canMoveUp,
   canMoveDown,
   onChangeMain,
@@ -419,6 +405,7 @@ function RowMenu({
   onRemove,
 }: {
   isMain: boolean;
+  disabled: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onChangeMain: () => void;
@@ -434,6 +421,7 @@ function RowMenu({
           size="icon-xs"
           className="shrink-0 text-gray-10"
           aria-label={t('Model actions')}
+          disabled={disabled}
         >
           <MoreHorizontal className="size-3.5" />
         </Button>

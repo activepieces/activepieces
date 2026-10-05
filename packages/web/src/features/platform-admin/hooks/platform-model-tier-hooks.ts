@@ -12,7 +12,9 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import {
@@ -20,6 +22,7 @@ import {
   modelMeta,
 } from '@/features/agents/ai-model/model-meta';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
+import { api } from '@/lib/api';
 
 import { aiProviderApi } from '../api/ai-provider-api';
 import { platformModelTierApi } from '../api/platform-model-tier-api';
@@ -56,6 +59,7 @@ export const platformModelTierQueries = {
                       models: results[index].data,
                     }),
               isLoading: results[index].isLoading,
+              isFetching: results[index].isFetching,
               isError: results[index].isError,
               refetch: results[index].refetch,
             },
@@ -86,8 +90,10 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           (old) => upsertTier({ tiers: old ?? [], tier: created }),
         );
+        toast.success(t('Tier created'), { duration: TOAST_SUCCESS_MS });
       },
-      onError: () => undefined,
+      onError: (error) =>
+        toastError({ error, fallback: t('Could not create this tier') }),
       onSettled: () => settle({ queryClient }),
     });
   },
@@ -120,9 +126,11 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           (old) => upsertTier({ tiers: old ?? [], tier: updated }),
         );
+        toast.success(t('Saved'), { duration: TOAST_SUCCESS_MS });
       },
-      onError: (_error, _variables, context) => {
+      onError: (error, _variables, context) => {
         restore({ queryClient, previous: context?.previous });
+        toastError({ error, fallback: t('Could not save this tier') });
       },
       onSettled: () => settle({ queryClient }),
     });
@@ -138,8 +146,10 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           (old) => old && removeTier({ tiers: old, id, replacedBy }),
         );
+        toast.success(t('Tier deleted'), { duration: TOAST_SUCCESS_MS });
       },
-      onError: () => undefined,
+      onError: (error) =>
+        toastError({ error, fallback: t('Could not delete this tier') }),
       onSettled: () => settle({ queryClient }),
     });
   },
@@ -161,23 +171,42 @@ export const platformModelTierMutations = {
         );
         return { previous };
       },
-      onSuccess: (configuration) => {
+      onSuccess: (configuration, visible) => {
         queryClient.setQueryData(
           platformConfigurationHooks.queryKey,
           configuration,
         );
+        toast.success(
+          visible
+            ? t('Specific models are visible to builders')
+            : t('Specific models are hidden from builders'),
+          { duration: TOAST_SUCCESS_MS },
+        );
       },
-      onError: (_error, _variables, context) => {
+      onError: (error, _variables, context) => {
         if (context?.previous !== undefined) {
           queryClient.setQueryData(
             platformConfigurationHooks.queryKey,
             context.previous,
           );
         }
+        toastError({ error, fallback: t('Could not save this setting') });
       },
     });
   },
 };
+
+function toastError({
+  error,
+  fallback,
+}: {
+  error: unknown;
+  fallback: string;
+}): void {
+  toast.error(api.serverErrorMessage(error) ?? fallback, {
+    duration: TOAST_ERROR_MS,
+  });
+}
 
 function settle({ queryClient }: { queryClient: QueryClient }): void {
   if (
@@ -279,6 +308,8 @@ function removeTier({
 }
 
 const TIERS_STALE_MS = 30 * 1000;
+const TOAST_SUCCESS_MS = 3000;
+const TOAST_ERROR_MS = 5000;
 const KEY_MODELS_STALE_MS = 5 * 60 * 1000;
 
 type KeyModelsQueryResult = {
@@ -286,6 +317,7 @@ type KeyModelsQueryResult = {
     | Awaited<ReturnType<typeof aiProviderApi.listModelsForConfig>>
     | undefined;
   isLoading: boolean;
+  isFetching: boolean;
   isError: boolean;
   refetch: () => unknown;
 };

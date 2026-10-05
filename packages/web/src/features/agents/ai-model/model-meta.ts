@@ -327,6 +327,7 @@ export type KeyModelsById = Record<
   {
     models: AIProviderModel[] | undefined;
     isLoading: boolean;
+    isFetching: boolean;
     isError: boolean;
     refetch: () => unknown;
   }

@@ -39,6 +39,10 @@ const state = vi.hoisted(() => ({
   },
 }));
 
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
 vi.mock('i18next', () => ({
   default: { language: 'en' },
   t: (key: string, vars?: Record<string, string | number>) =>
@@ -72,7 +76,10 @@ vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
 vi.mock('@/hooks/platform-configuration-hooks', () => ({
   platformConfigurationHooks: {
     queryKey: ['platform-configuration'],
-    useCurrentPlatformConfiguration: () => state.configuration,
+    useCurrentPlatformConfiguration: () => ({
+      ...state.configuration,
+      isLoading: false,
+    }),
   },
 }));
 
@@ -110,6 +117,7 @@ beforeEach(() => {
         model('haiku', 'Claude Haiku'),
       ],
       isLoading: false,
+      isFetching: false,
       isError: false,
       refetch: () => undefined,
     },
@@ -125,9 +133,36 @@ describe('TiersTab states', () => {
   });
 
   it('shows the fetch error placeholder when the tiers list fails', () => {
-    state.tiers = { ...state.tiers, isError: true };
+    state.tiers = { ...state.tiers, data: undefined, isError: true };
     renderTab();
     expect(screen.getByText('Trouble loading tiers')).toBeDefined();
+  });
+
+  it('keeps the cards when a refetch fails after data loaded', () => {
+    state.tiers = {
+      ...state.tiers,
+      isError: true,
+      data: [
+        tier('expert', {
+          name: 'Expert',
+          entries: [{ configId: 'k1', modelId: 'sonnet' }],
+        }),
+      ],
+    };
+    renderTab();
+    expect(screen.getByText('Expert')).toBeDefined();
+    expect(screen.queryByText('Trouble loading tiers')).toBeNull();
+  });
+
+  it('still shows existing tiers when the platform has no own keys left', () => {
+    state.configs = { ...state.configs, data: [] };
+    state.tiers = {
+      ...state.tiers,
+      data: [tier('expert', { name: 'Expert', entries: [] })],
+    };
+    renderTab();
+    expect(screen.getByText('Expert')).toBeDefined();
+    expect(screen.queryByText('Add a provider key first')).toBeNull();
   });
 
   it('asks for a provider key when the platform only has the credits key', () => {

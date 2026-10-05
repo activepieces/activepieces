@@ -7,6 +7,7 @@ import { Brain, Wrench } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -23,6 +24,7 @@ export function ModelDetailRow({
   model,
   nameSuffix,
   trailing,
+  loading = false,
 }: ModelDetailRowProps) {
   const metadata = model?.metadata;
   return (
@@ -43,6 +45,12 @@ export function ModelDetailRow({
           <span className="truncate text-xs text-gray-11">{config.name}</span>
         )}
       </div>
+      {loading && model === undefined && (
+        <div className="hidden items-center gap-4 md:flex">
+          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-8 w-28" />
+        </div>
+      )}
       {metadata !== undefined && (
         <div className="hidden items-center gap-4 md:flex">
           <Stat label={t('Context')} className="w-16">
@@ -130,4 +138,5 @@ type ModelDetailRowProps = {
   model: AIProviderModel | undefined;
   nameSuffix?: ReactNode;
   trailing?: ReactNode;
+  loading?: boolean;
 };

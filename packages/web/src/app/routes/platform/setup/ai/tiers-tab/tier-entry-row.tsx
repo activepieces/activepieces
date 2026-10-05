@@ -33,6 +33,7 @@ export function TierEntryRow({
   model,
   warnings,
   menu,
+  loading,
 }: TierEntryRowProps) {
   const isMain = index === 0;
   return (
@@ -69,6 +70,7 @@ export function TierEntryRow({
           warnings.length > 0 ? <WarningsPopover warnings={warnings} /> : null
         }
         trailing={menu}
+        loading={loading}
       />
     </div>
   );
@@ -131,4 +133,5 @@ type TierEntryRowProps = {
   model: AIProviderModel | undefined;
   warnings: EntryWarning[];
   menu: ReactNode;
+  loading: boolean;
 };

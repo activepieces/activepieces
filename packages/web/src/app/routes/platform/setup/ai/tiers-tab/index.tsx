@@ -38,7 +38,7 @@ export function TiersTab() {
     isError: configsError,
     refetch: refetchConfigs,
   } = aiProviderQueries.useAiProviderConfigs();
-  const { data: configuration } =
+  const { data: configuration, isLoading: configurationLoading } =
     platformConfigurationHooks.useCurrentPlatformConfiguration();
   const allConfigs = useMemo(() => configs ?? [], [configs]);
   const keyModels = platformModelTierQueries.useKeyModels(allConfigs);
@@ -68,11 +68,14 @@ export function TiersTab() {
     setDialog({ open: true, mode: 'create', initialMain });
   };
 
-  if (tiersLoading || configsLoading) {
+  if (tiersLoading || configsLoading || configurationLoading) {
     return <TiersSkeleton />;
   }
 
-  const isError = tiersError || configsError;
+  const isError =
+    (tiersError && tiers === undefined) ||
+    (configsError && configs === undefined);
+  const noKeys = ownKeys.length === 0 && liveTiers.length === 0;
   const retry = () => Promise.all([refetchTiers(), refetchConfigs()]);
 
   return (
@@ -86,8 +89,9 @@ export function TiersTab() {
             'Named model groups your builders pick. Each one is a main model plus fallbacks.',
           )}
         />
-        {!isError && ownKeys.length > 0 && (
+        {!isError && !noKeys && (
           <Button
+            id={NEW_TIER_BUTTON_ID}
             size="sm"
             className="shrink-0"
             onClick={(event) => openCreate({ trigger: event.currentTarget })}
@@ -101,7 +105,7 @@ export function TiersTab() {
 
       {isError ? (
         <DataFetchErrorState entity={t('tiers')} onRetry={retry} />
-      ) : ownKeys.length === 0 ? (
+      ) : noKeys ? (
         <NoKeysState />
       ) : (
         <>
@@ -167,6 +171,7 @@ export function TiersTab() {
         ownKeys={ownKeys}
         keyModels={keyModels}
         returnFocusTo={focusTarget}
+        onReturnFocus={focusBack}
       />
       <DeleteTierDialog
         tier={deleting}
@@ -178,9 +183,15 @@ export function TiersTab() {
           }
         }}
         returnFocusTo={focusTarget}
+        onReturnFocus={focusBack}
       />
     </div>
   );
+}
+
+function focusBack({ target }: { target: HTMLElement | null }): void {
+  const alive = target !== null && document.contains(target) ? target : null;
+  (alive ?? document.getElementById(NEW_TIER_BUTTON_ID))?.focus();
 }
 
 function NoKeysState() {
@@ -251,7 +262,7 @@ function TiersSkeleton() {
       {[0, 1].map((card) => (
         <section
           key={card}
-          className="overflow-hidden rounded-xl border border-gray-6/60 bg-panel"
+          className="rounded-xl border border-gray-6/60 bg-panel shadow-panel"
         >
           <div className="flex items-center gap-3 px-5 py-4">
             <Skeleton className="size-10 shrink-0 rounded-lg" />
@@ -261,24 +272,52 @@ function TiersSkeleton() {
             </div>
             <Skeleton className="size-8 rounded-md" />
           </div>
-          <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
-            <Skeleton className="h-3 w-28" />
+          <div className="flex flex-col border-t border-gray-6/60 px-3 pb-3 pt-3">
+            <Skeleton className="mx-2 mb-2 h-3 w-28" />
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="flex items-center gap-3 px-2 py-2.5">
+                <Skeleton className="size-2 shrink-0 rounded-full" />
+                <Skeleton className="size-8 shrink-0 rounded-lg" />
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <div className="hidden items-center gap-4 md:flex">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-8 w-28" />
+                  <Skeleton className="size-6 rounded-md" />
+                </div>
+                <Skeleton className="size-6 rounded-md" />
+              </div>
+            ))}
+            <Skeleton className="mx-2 mt-1 h-8 w-28 rounded-md" />
           </div>
-          {[0, 1, 2].map((row) => (
-            <div key={row} className="flex items-center gap-3 px-5 py-2.5">
-              <Skeleton className="size-4 rounded-sm" />
-              <Skeleton className="size-4 rounded-sm" />
-              <Skeleton className="h-4 w-44" />
-              <Skeleton className="h-3 w-28" />
-            </div>
-          ))}
         </section>
       ))}
-      <div className="flex flex-col gap-2 border-t border-gray-6/60 pt-6">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-3 w-72" />
-        <Skeleton className="mt-2 h-24 w-full rounded-xl" />
-      </div>
+      <section className="rounded-xl border border-gray-6/60 bg-panel shadow-panel">
+        <div className="flex items-start justify-between gap-3 px-5 py-4">
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-3.5 w-56" />
+          </div>
+          <Skeleton className="h-8 w-40 rounded-md" />
+        </div>
+        {[0, 1].map((row) => (
+          <div
+            key={row}
+            className="flex items-center gap-3 border-t border-gray-6/60 px-5 py-3"
+          >
+            <Skeleton className="size-8 shrink-0 rounded-lg" />
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Skeleton className="h-3.5 w-32" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <Skeleton className="size-4 rounded-sm" />
+          </div>
+        ))}
+      </section>
     </div>
   );
 }
+
+const NEW_TIER_BUTTON_ID = 'new-tier-button';
