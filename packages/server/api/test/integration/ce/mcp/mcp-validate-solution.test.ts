@@ -148,6 +148,20 @@ describe('ap_validate_flow with folderName', () => {
         expect(messages).toContainEqual(expect.stringContaining('points at a table that does not exist'))
     })
 
+    it('reports a table trigger with no table selected', async () => {
+        const { mcp } = await createSolutionBase()
+        await apBuildFlowTool({ mcp }, log).execute({
+            flowName: 'Watch orders',
+            folderName: SOLUTION_FOLDER,
+            trigger: { pieceName: '@activepieces/piece-tables', triggerName: 'newRecord', input: {} },
+            steps: [],
+        })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining('table trigger has no table selected'))
+    })
+
     it('tells a table step set to the table internal id which externalId to use', async () => {
         const { mcp, table } = await createSolutionBase()
         await buildSubflow({ mcp, withResponse: true, writeField: table.fieldExternalId, tableExternalId: table.id })

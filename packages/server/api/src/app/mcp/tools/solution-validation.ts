@@ -104,6 +104,10 @@ function checkStep({ step, targetsByExternalId, tablesByExternalId }: { step: St
         const targetExternalId = callReference(step)
         return isNil(targetExternalId) ? [] : checkCallFlow({ step, target: targetsByExternalId.get(targetExternalId) })
     }
+    const isTableTriggerWithoutTable = step.type === FlowTriggerType.PIECE && isPieceStep({ step, pieceName: TABLES_PIECE_NAME, componentName: undefined }) && !isFilled(stepInput(step)['table_id'])
+    if (isTableTriggerWithoutTable) {
+        return ['table trigger has no table selected']
+    }
     const tableExternalId = tableReference(step)
     return isNil(tableExternalId) ? [] : checkTableStep({ step, table: tablesByExternalId.get(tableExternalId) })
 }
