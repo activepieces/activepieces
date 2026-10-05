@@ -77,7 +77,6 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   ap_read_step_settings: SlidersHorizontal,
 
   ap_validate_flow: ShieldCheck,
-  ap_check_solution: ShieldCheck,
   ap_validate_step_config: ShieldCheck,
   ap_test_flow: FlaskConical,
   ap_test_step: FlaskConical,

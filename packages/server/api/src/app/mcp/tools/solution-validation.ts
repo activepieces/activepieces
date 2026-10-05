@@ -1,65 +1,45 @@
 import { isNil, isObject, Permission, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
-import { Field, FlowActionType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PopulatedFlow, Step } from '@activepieces/shared'
+import { Field, FlowActionType, flowStructureUtil, FlowTriggerType, McpToolResult, PopulatedFlow, ProjectScopedMcpServer, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
 import { resolvePermissionChecker } from '../mcp-permissions'
-import { flowValidation } from './ap-validate-flow'
+import { flowValidation } from './flow-validation'
 import { mcpUtils } from './mcp-utils'
 
-const checkSolutionInput = z.object({
-    folderName: mcpUtils.FOLDER_NAME_SCHEMA.unwrap().describe('The folder holding the solution (as created with ap_create_folder)'),
-})
-
-export const apCheckSolutionTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
+async function validate({ mcp, userId, folderName, log }: { mcp: ProjectScopedMcpServer, userId: string | undefined, folderName: string, log: FastifyBaseLogger }): Promise<McpToolResult> {
+    const [folder, canReadTables] = await Promise.all([
+        mcpUtils.resolveFolder({ projectId: mcp.projectId, folderName, log }),
+        callerCanReadTables({ userId, projectId: mcp.projectId, log }),
+    ])
+    if (folder.error) {
+        return folder.error
+    }
+    const { data: flows } = await flowService(log).list({ projectIds: [mcp.projectId], folderId: folder.folderId, includeTriggerSource: false })
+    const allSteps = flows.flatMap((flow) => flowStructureUtil.getAllSteps(flow.version.trigger).map((step) => ({ flow, step })))
+    const steps = allSteps.filter(({ step }) => canReadTables || !isTableStep(step))
+    const unchecked = allSteps.flatMap(({ flow, step }) => {
+        const reason = uncheckedReason({ step, canReadTables })
+        return isNil(reason) ? [] : [{ flow, step, message: reason }]
+    })
+    const [targetsByExternalId, tablesByExternalId] = await Promise.all([
+        loadCallTargets({ projectId: mcp.projectId, folderFlows: flows, externalIds: steps.flatMap(({ step }) => callReference(step) ?? []), log }),
+        loadTables({ projectId: mcp.projectId, externalIds: steps.flatMap(({ step }) => tableReference(step) ?? []) }),
+    ])
+    const issues = [
+        ...flows.flatMap(validationIssues),
+        ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId }).map((message) => ({ flow, step, message }))),
+    ]
     return {
-        title: 'ap_check_solution',
-        permission: Permission.READ_FLOW,
-        description: 'Check that the flows and tables of a solution fit together, without running anything. For every flow in the folder it checks that each Call Flow step targets a real Callable Flow, sends every input key the subflow expects, and only waits for a response the subflow actually returns; that each Tables step and table trigger points at a real table and real fields; and that every flow passes validation. Run it after building a solution of several flows and tables, and fix every issue it reports.',
-        inputSchema: checkSolutionInput.shape,
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-        execute: async (args) => {
-            try {
-                const { folderName } = checkSolutionInput.parse(args)
-                const [folder, canReadTables] = await Promise.all([
-                    mcpUtils.resolveFolder({ projectId: mcp.projectId, folderName, log }),
-                    callerCanReadTables({ userId, projectId: mcp.projectId, log }),
-                ])
-                if (folder.error) {
-                    return folder.error
-                }
-                const { data: flows } = await flowService(log).list({ projectIds: [mcp.projectId], folderId: folder.folderId, includeTriggerSource: false })
-                const allSteps = flows.flatMap((flow) => flowStructureUtil.getAllSteps(flow.version.trigger).map((step) => ({ flow, step })))
-                const steps = allSteps.filter(({ step }) => canReadTables || !isTableStep(step))
-                const unchecked = allSteps.flatMap(({ flow, step }) => {
-                    const reason = uncheckedReason({ step, canReadTables })
-                    return isNil(reason) ? [] : [{ flow, step, message: reason }]
-                })
-                const [targetsByExternalId, tablesByExternalId] = await Promise.all([
-                    loadCallTargets({ projectId: mcp.projectId, folderFlows: flows, externalIds: steps.flatMap(({ step }) => callReference(step) ?? []), log }),
-                    loadTables({ projectId: mcp.projectId, externalIds: steps.flatMap(({ step }) => tableReference(step) ?? []) }),
-                ])
-                const issues = [
-                    ...flows.flatMap(validationIssues),
-                    ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId }).map((message) => ({ flow, step, message }))),
-                ]
-                return {
-                    content: [{ type: 'text', text: summarize({ folderName: folder.folderName, flowCount: flows.length, issues, unchecked }) }],
-                    structuredContent: {
-                        folderName: folder.folderName ?? null,
-                        flowCount: flows.length,
-                        ok: issues.length === 0 && unchecked.length === 0,
-                        tablesChecked: canReadTables,
-                        issues: issues.map(toReportEntry),
-                        unchecked: unchecked.map(toReportEntry),
-                    },
-                }
-            }
-            catch (err) {
-                return mcpUtils.mcpToolError('Failed to check the solution', err)
-            }
+        content: [{ type: 'text', text: summarize({ folderName: folder.folderName, flowCount: flows.length, issues, unchecked }) }],
+        structuredContent: {
+            folderName: folder.folderName ?? null,
+            flowCount: flows.length,
+            ok: issues.length === 0 && unchecked.length === 0,
+            tablesChecked: canReadTables,
+            issues: issues.map(toReportEntry),
+            unchecked: unchecked.map(toReportEntry),
         },
     }
 }
@@ -77,7 +57,7 @@ function summarize({ folderName, flowCount, issues, unchecked }: { folderName: s
     const uncheckedPart = unchecked.length === 0 ? '' : `\nThese connections could not be checked, so the solution is not verified:\n${unchecked.map(formatLine).join('\n')}`
     if (issues.length > 0) {
         const issueWord = issues.length === 1 ? 'issue' : 'issues'
-        return `⚠️ Solution "${folderName}": ${issues.length} ${issueWord} across ${flowCount} ${flowWord}. Fix each one, then run ap_check_solution again:\n${issues.map(formatLine).join('\n')}${uncheckedPart}`
+        return `⚠️ Solution "${folderName}": ${issues.length} ${issueWord} across ${flowCount} ${flowWord}. Fix each one, then run ap_validate_flow with this folderName again:\n${issues.map(formatLine).join('\n')}${uncheckedPart}`
     }
     if (unchecked.length > 0) {
         return `⚠️ Solution "${folderName}": no problems in what could be checked across ${flowCount} ${flowWord}, but it is not fully verified.${uncheckedPart}`
@@ -182,7 +162,7 @@ async function callerCanReadTables({ userId, projectId, log }: { userId: string 
         return true
     }
     const checker = await resolvePermissionChecker({ userId, projectId, log })
-    return isNil(checker.check(Permission.READ_TABLE, 'ap_check_solution'))
+    return isNil(checker.check(Permission.READ_TABLE, 'ap_validate_flow'))
 }
 
 async function loadCallTargets({ projectId, folderFlows, externalIds, log }: { projectId: string, folderFlows: PopulatedFlow[], externalIds: string[], log: FastifyBaseLogger }): Promise<Map<string, PopulatedFlow>> {
@@ -271,6 +251,10 @@ function parseJsonString(value: unknown): unknown {
 
 function asRecord(value: unknown): Record<string, unknown> {
     return isObject(value) ? value : {}
+}
+
+export const solutionValidation = {
+    validate,
 }
 
 const SUBFLOWS_PIECE_NAME = '@activepieces/piece-subflows'

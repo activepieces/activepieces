@@ -5,7 +5,6 @@ import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
 import { apBuildFlowTool } from './ap-build-flow'
 import { apChangeFlowStatusTool } from './ap-change-flow-status'
-import { apCheckSolutionTool } from './ap-check-solution'
 import { apCreateFlowTool } from './ap-create-flow'
 import { apCreateFolderTool } from './ap-create-folder'
 import { apCreateTableTool } from './ap-create-table'
@@ -55,7 +54,6 @@ import { apValidateStepConfigTool } from './ap-validate-step-config'
 export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_flows',
     'ap_flow_structure',
-    'ap_check_solution',
     'ap_read_step_code',
     'ap_read_step_settings',
     'ap_validate_flow',
@@ -124,8 +122,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
     apReadStepSettingsTool(mcp, log),
-    apValidateFlowTool(mcp, log),
-    apCheckSolutionTool({ mcp, userId }, log),
+    apValidateFlowTool({ mcp, userId }, log),
     apResearchPiecesTool(mcp, log),
     // Tool-search engine — gated behind the AP_TOOL_SEARCH_ENABLED rollout flag (default off).
     ...(isToolSearchEnabled() ? [apSearchActionsTool(mcp, log), apSearchTriggersTool(mcp, log)] : []),

@@ -472,7 +472,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Validate Flow Test')
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('⚠️')
         expect(text(result)).toContain('not configured')
@@ -504,7 +504,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('ready to publish')
@@ -532,7 +532,7 @@ describe('MCP Tools integration', () => {
             pieceName: '@activepieces/piece-test-email',
         })
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('⚠️')
         expect(text(result)).toContain('Step Validity')
@@ -560,7 +560,7 @@ describe('MCP Tools integration', () => {
             displayName: 'My Router',
         })
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('⚠️')
         expect(text(result)).toContain('Empty Branches')
@@ -725,7 +725,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('✅')
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -743,7 +743,7 @@ describe('MCP Tools integration', () => {
             triggerName: 'new_email',
         })
 
-        const validAfterSet = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validAfterSet = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validAfterSet)).toContain('✅')
 
         const renameResult = await apUpdateTriggerTool({ mcp }, mockLog).execute({
@@ -755,7 +755,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(renameResult)).toContain('✅')
 
-        const validAfterRename = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validAfterRename = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validAfterRename)).toContain('✅')
     })
 
@@ -803,7 +803,7 @@ describe('MCP Tools integration', () => {
         })
         expect(text(addFieldResult)).toContain('✅')
 
-        const stillValid = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const stillValid = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(stillValid)).toContain('✅')
     })
 
@@ -878,7 +878,7 @@ describe('MCP Tools integration', () => {
             input: { sender: '{{trigger.from}}' },
         })
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -938,7 +938,7 @@ describe('MCP Tools integration', () => {
             input: { val: '{{step_2.item}}' },
         })
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -1018,7 +1018,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('branch 0')
         expect(output).toContain('branch 1')
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -1028,7 +1028,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Lifecycle Test')
 
-        const emptyValidation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const emptyValidation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(emptyValidation)).toContain('⚠️')
 
         await apUpdateTriggerTool({ mcp }, mockLog).execute({
@@ -1052,7 +1052,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
         expect(text(validation)).toContain('2 valid')
@@ -1127,7 +1127,7 @@ describe('MCP Tools integration', () => {
             })
         }
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
 
         const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
@@ -1280,7 +1280,7 @@ describe('MCP Tools integration', () => {
         const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
         expect(flowId).toBeDefined()
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId: flowId! })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId: flowId! })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })

@@ -4,11 +4,11 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { resolveMcpPermissionChecker, resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
-import { apCheckSolutionTool } from '../../../../src/app/mcp/tools/ap-check-solution'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
+import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-flow'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata, createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
@@ -127,7 +127,7 @@ describe('MCP Tool RBAC', () => {
             return { ctx, member }
         }
 
-        it('ap_check_solution skips table checks for a role without READ_TABLE', async () => {
+        it('ap_validate_flow with folderName skips table checks for a role without READ_TABLE', async () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.READ_MCP])
             const mcp = makeMcp(ctx.project.id)
             await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Checked solution' })
@@ -142,24 +142,24 @@ describe('MCP Tool RBAC', () => {
             }))
             await apBuildFlowTool({ mcp }, mockLog).execute({ flowName: 'Watch orders', folderName: 'Checked solution', trigger: { pieceName: '@activepieces/piece-tables', triggerName: 'newRecord', input: { table_id: 'any-table' } }, steps: [] })
 
-            const result = await apCheckSolutionTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Checked solution' })
+            const result = await apValidateFlowTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Checked solution' })
 
             expect(result.structuredContent).toMatchObject({ tablesChecked: false, ok: false })
             expect(text(result)).toContain('your role cannot read tables')
             expect(text(result)).not.toContain('every connection checks out')
         })
 
-        it('ap_check_solution checks tables for a role with READ_TABLE', async () => {
+        it('ap_validate_flow with folderName checks tables for a role with READ_TABLE', async () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.READ_TABLE, Permission.READ_MCP])
             const mcp = makeMcp(ctx.project.id)
             await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Checked solution' })
 
-            const result = await apCheckSolutionTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Checked solution' })
+            const result = await apValidateFlowTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Checked solution' })
 
             expect(result.structuredContent).toMatchObject({ tablesChecked: true })
         })
 
-        it('ap_check_solution does not mark a step without a table_id as unchecked for a role without READ_TABLE', async () => {
+        it('ap_validate_flow with folderName does not mark a step without a table_id as unchecked for a role without READ_TABLE', async () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.READ_MCP])
             const mcp = makeMcp(ctx.project.id)
             await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Create table solution' })
@@ -174,7 +174,7 @@ describe('MCP Tool RBAC', () => {
             }))
             await apBuildFlowTool({ mcp }, mockLog).execute({ flowName: 'No table yet', folderName: 'Create table solution', trigger: { pieceName: '@activepieces/piece-tables', triggerName: 'newRecord', input: {} }, steps: [] })
 
-            const result = await apCheckSolutionTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Create table solution' })
+            const result = await apValidateFlowTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Create table solution' })
 
             expect(result.structuredContent).toMatchObject({ unchecked: [] })
         })
