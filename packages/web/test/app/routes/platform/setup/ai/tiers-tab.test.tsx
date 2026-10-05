@@ -143,11 +143,8 @@ describe('TiersTab states', () => {
   it('offers the first tier and keeps specific models visible while there are none', () => {
     renderTab();
     expect(screen.getByText('Create your first tier')).toBeDefined();
-    const visibility = screen.getByRole('combobox', {
-      name: 'Specific models visible to builders',
-    });
-    expect(visibility.getAttribute('data-disabled')).not.toBeNull();
-    expect(screen.getByText('Visible to builders')).toBeDefined();
+    const hide = screen.getByRole('tab', { name: 'Hidden' });
+    expect(hide.getAttribute('data-disabled')).not.toBeNull();
     expect(screen.getByText('Add a tier before hiding these.')).toBeDefined();
   });
 
@@ -191,7 +188,7 @@ describe('TiersTab states', () => {
     expect(screen.getByText('Claude Haiku')).toBeDefined();
   });
 
-  it('collapses the specific models list into the hidden card', () => {
+  it('tells the admin builders only see tiers when specific models are hidden', () => {
     state.tiers = {
       ...state.tiers,
       data: [
@@ -200,10 +197,8 @@ describe('TiersTab states', () => {
     };
     state.configuration = { data: { aiSpecificModelsVisible: false } };
     renderTab();
-    expect(
-      screen.getByText('Specific models hidden from builders'),
-    ).toBeDefined();
-    expect(screen.queryByText('Claude Haiku')).toBeNull();
+    expect(screen.getByText('Builders only see tiers.')).toBeDefined();
+    expect(screen.getByText('Claude Haiku')).toBeDefined();
   });
 });
 

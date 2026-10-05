@@ -144,7 +144,6 @@ export function TiersTab() {
             ownKeys={ownKeys}
             keyModels={keyModels}
             visible={specificModelsVisible}
-            reducedMotion={reducedMotion}
             onMakeTier={(entry) =>
               openCreate({
                 trigger:

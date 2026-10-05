@@ -3351,15 +3351,11 @@
   "Name it, pick a main model, add fallbacks.": "Name it, pick a main model, add fallbacks.",
   "Loading tiers": "Loading tiers",
   "Could not save this setting": "Could not save this setting",
-  "Visible to builders": "Visible to builders",
   "Specific models visible to builders": "Specific models visible to builders",
   "Add a tier before hiding these.": "Add a tier before hiding these.",
-  "Specific models hidden from builders": "Specific models hidden from builders",
-  "Hidden from builders": "Hidden from builders",
   "Specific models": "Specific models",
   "Models not used as a tier's main model.": "Models not used as a tier's main model.",
   "Make a tier": "Make a tier",
-  "Every text model on your keys is a tier's main model.": "Every text model on your keys is a tier's main model.",
   "Show {count} more": "Show {count} more",
   "Could not save this tier": "Could not save this tier",
   "Fast": "Fast",
@@ -3407,5 +3403,9 @@
   "Low": "Low",
   "Medium": "Medium",
   "High": "High",
-  "specificModelsHiddenCount": "{count, plural, =1 {1 model stays here for admins.} other {# models stay here for admins.}}"
+  "Visible": "Visible",
+  "Hidden": "Hidden",
+  "Builders can pick these directly.": "Builders can pick these directly.",
+  "Builders only see tiers.": "Builders only see tiers.",
+  "Every text model on this key is a tier's main model.": "Every text model on this key is a tier's main model."
 }
