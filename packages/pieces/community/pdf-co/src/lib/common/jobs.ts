@@ -157,11 +157,11 @@ async function saveAll({
 	files: FlowFiles;
 	targets: string[];
 	fileName?: string;
-}): Promise<{ saved: string[]; error?: string }> {
+}): Promise<{ saved: (string | null)[]; error?: string }> {
 	const results = await Promise.allSettled(
 		targets.map((target) => pdfCoFiles.saveToFlow({ files, url: target, fileName: targets.length === 1 ? fileName : undefined })),
 	);
-	const saved = results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+	const saved = results.map((result) => (result.status === 'fulfilled' ? result.value : null));
 	const failures = results.flatMap((result, index) => (result.status === 'rejected' ? [{ index, reason: result.reason }] : []));
 	if (failures.length === 0) {
 		return { saved };
@@ -214,11 +214,24 @@ async function buildFileOutput({
 	if (targets.length === 0) {
 		return base;
 	}
-	const { saved, error } = await saveAll({ files, targets, fileName });
+	const saved = await saveAll({ files, targets, fileName });
+	return { ...base, ...savedFileFields({ ...saved, multiOutput }) };
+}
+
+function savedFileFields({
+	saved,
+	error,
+	multiOutput,
+}: {
+	saved: (string | null)[];
+	error?: string;
+	multiOutput: boolean;
+}): Pick<FileActionOutput, 'file' | 'files' | 'file_error'> {
+	const first = saved[0];
+	const anySaved = saved.some((entry) => entry !== null);
 	return {
-		...base,
-		...(saved.length === 0 ? {} : { file: saved[0] }),
-		...(multiOutput && saved.length > 0 ? { files: saved } : {}),
+		...(first === null || first === undefined ? {} : { file: first }),
+		...(multiOutput && anySaved ? { files: saved } : {}),
 		...(error === undefined ? {} : { file_error: error }),
 	};
 }
@@ -349,6 +362,7 @@ export const pdfCoJobs = {
 	runJob,
 	waitForJob,
 	saveAll,
+	savedFileFields,
 	stringList,
 	checkJob,
 	assertNotFailed,
@@ -391,6 +405,6 @@ export type FileActionOutput = {
 	link_valid_until?: string;
 	duration_ms?: number;
 	file?: string;
-	files?: string[];
+	files?: (string | null)[];
 	file_error?: string;
 };

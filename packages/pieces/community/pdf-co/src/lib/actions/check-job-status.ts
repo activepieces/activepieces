@@ -50,13 +50,8 @@ export const checkJobStatus = createAction({
 		if (propsValue.saveOutputFile !== true || status !== 'success' || url === undefined) {
 			return output;
 		}
-		const { saved, error } = await pdfCoJobs.saveAll({ files, targets: urls ?? [url] });
-		return {
-			...output,
-			...(saved.length === 0 ? {} : { file: saved[0] }),
-			...(urls !== undefined && saved.length > 0 ? { files: saved } : {}),
-			...(error === undefined ? {} : { file_error: error }),
-		};
+		const saved = await pdfCoJobs.saveAll({ files, targets: urls ?? [url] });
+		return { ...output, ...pdfCoJobs.savedFileFields({ ...saved, multiOutput: urls !== undefined }) };
 	},
 });
 

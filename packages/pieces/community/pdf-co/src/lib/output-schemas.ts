@@ -36,7 +36,7 @@ const multiFileResultFields: OutputSchemaField[] = [
 		label: 'Result Links',
 		description: 'One temporary link per output part or page. Not set when the result is a single file, e.g. a multi-page TIFF.',
 	},
-	{ key: 'files', label: 'Saved Files', description: 'One file per output part, when Save Result as File is on.' },
+	{ key: 'files', label: 'Saved Files', description: 'One file per output part, in the same order as Result Links, when Save Result as File is on. A part that could not be saved is null (see File Save Error).' },
 ];
 
 const legacyEditFields: OutputSchemaField[] = [
@@ -263,8 +263,8 @@ export const pdfCoOutputSchemas = {
 			{ key: 'page_count', label: 'Page Count', format: 'number' },
 			{ key: 'link_valid_until', label: 'Link Valid Until', format: 'datetime' },
 			...creditFields,
-			{ key: 'file', label: 'Saved File', description: 'The first part when the job has several outputs.' },
-			{ key: 'files', label: 'Saved Files', description: 'One file per part, for jobs with several outputs.' },
+			{ key: 'file', label: 'Saved File', description: 'The first part when the job has several outputs; not set if that part could not be saved.' },
+			{ key: 'files', label: 'Saved Files', description: 'One file per part, in the same order as Result Links, for jobs with several outputs. A part that could not be saved is null (see File Save Error).' },
 			{ key: 'file_error', label: 'File Save Error' },
 		],
 	} satisfies OutputSchema,

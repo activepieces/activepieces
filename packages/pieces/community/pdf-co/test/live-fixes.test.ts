@@ -242,7 +242,7 @@ describe('Greptile round 1: background results', () => {
 			saveOutputFile: true,
 			multiOutput: true,
 		});
-		expect(output.files).toEqual(['https://files.example/sample_page1-1.pdf']);
+		expect(output.files).toEqual(['https://files.example/sample_page1-1.pdf', null]);
 		expect(output.file).toBe('https://files.example/sample_page1-1.pdf');
 		expect(output.file_error).toContain('1 of 2 results could not be saved as files (part 2)');
 		expect(output.urls).toEqual([PART_1, PART_2]);
@@ -265,5 +265,39 @@ describe('Greptile round 1: background results', () => {
 		await vi.advanceTimersByTimeAsync(241_000);
 		await expect(pending).resolves.toMatchObject({ status: 'working', job_id: 'INV10' });
 		expect(requestOf({ fetchMock, call: 0 }).url).toBe('https://api.pdf.co/v1/job/check');
+	});
+
+	it('keeps each saved file at its part number when part 1 fails and part 2 saves', async () => {
+		fetchMock.mockImplementation(async (input: unknown) =>
+			urlOf(input) === PART_2
+				? binaryResponse({ data: Buffer.from('p2') })
+				: binaryResponse({ data: Buffer.from('x'), headers: { 'content-length': String(200 * 1024 * 1024) } }),
+		);
+		const output = await pdfCoJobs.buildFileOutput({
+			result: { body: { status: 'success', body: [PART_1, PART_2] }, status: 'success', jobId: 'S4' },
+			files: { write: async ({ fileName }) => `https://files.example/${fileName}` },
+			saveOutputFile: true,
+			multiOutput: true,
+		});
+		expect(output.urls).toEqual([PART_1, PART_2]);
+		expect(output.files).toEqual([null, 'https://files.example/sample_page2-2.pdf']);
+		expect(output).not.toHaveProperty('file');
+		expect(output.file_error).toContain('1 of 2 results could not be saved as files (part 1)');
+	});
+
+	it('Check Job Status keeps each saved file at its part number when part 1 fails', async () => {
+		fetchMock.mockImplementation(async (input: unknown) => {
+			const url = urlOf(input);
+			if (url.includes('/v1/job/check')) {
+				return jsonResponse({ body: { status: 'success', url: LISTING, body: [PART_1, PART_2], credits: 2 } });
+			}
+			return url === PART_2
+				? binaryResponse({ data: Buffer.from('p2') })
+				: binaryResponse({ data: Buffer.from('x'), headers: { 'content-length': String(200 * 1024 * 1024) } });
+		});
+		const result = await runAction({ action: checkJobStatus, propsValue: { jobId: 'S5', saveOutputFile: true }, written: [] });
+		expect(result).toMatchObject({ urls: [PART_1, PART_2], files: [null, 'https://files.example/sample_page2-2.pdf'] });
+		expect(result).not.toHaveProperty('file');
+		expect(result['file_error']).toContain('(part 1)');
 	});
 });
