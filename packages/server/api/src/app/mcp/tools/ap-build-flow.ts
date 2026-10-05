@@ -113,7 +113,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         pieceVersion: triggerVersionResult.pieceVersion,
                         triggerName: trigger.triggerName,
                         input: triggerInput,
-                        propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: triggerInput, propertySettings: {}, changedKeys: Object.keys(triggerInput), projectId, platformId, log }),
+                        propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: triggerInput, projectId, platformId, log }),
                     },
                 })
                 let currentFlow = await flowService(log).update({
@@ -241,7 +241,7 @@ async function stepPropertySettings({ actionName, pieceName, pieceVersion, input
     if (!isPieceAction) {
         return {}
     }
-    return mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input, propertySettings: {}, changedKeys: Object.keys(input), projectId, platformId, log })
+    return mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input, projectId, platformId, log })
 }
 
 async function knownStepInput({ step, pieceName, pieceVersion, platformId, log }: {

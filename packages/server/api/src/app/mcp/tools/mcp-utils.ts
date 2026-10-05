@@ -714,14 +714,14 @@ async function executePropertyResolution({ pieceName, pieceVersion, actionOrTrig
     return { status: 'failed', message: 'Unrecognized options format' }
 }
 
-async function resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName, componentType, input, propertySettings, changedKeys, projectId, platformId, log }: {
+async function resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName, componentType, input, propertySettings, changedKeys = [], projectId, platformId, log }: {
     pieceName: string
     pieceVersion: string
     componentName: string
     componentType: 'action' | 'trigger'
     input: Record<string, unknown>
-    propertySettings: unknown
-    changedKeys: string[]
+    propertySettings?: unknown
+    changedKeys?: string[]
     projectId: string
     platformId: string
     log: FastifyBaseLogger
