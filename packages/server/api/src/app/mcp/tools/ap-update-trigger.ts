@@ -64,15 +64,15 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
 
             const { auth: _rawAuth, ...rawInputWithoutAuth } = rawInput ?? {}
             const rewritten = mcpUtils.rewriteAllReferences({ input: rawInputWithoutAuth, trigger: flow.version.trigger })
-            const input = {
-                ...(existingPieceSettings?.input ?? {}),
-                ...(rewritten.input ?? {}),
-                ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
-            }
-
-            const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input, platformId: project.platformId, log })
+            const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input: rewritten.input, platformId: project.platformId, log })
             if (unknownPropsError) {
                 return unknownPropsError
+            }
+            const { input: knownExistingInput } = await mcpUtils.dropUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input: existingPieceSettings?.input, platformId: project.platformId, log })
+            const input = {
+                ...knownExistingInput,
+                ...(rewritten.input ?? {}),
+                ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
             const triggerPayload = {
