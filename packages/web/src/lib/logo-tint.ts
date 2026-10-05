@@ -7,9 +7,11 @@ const MIN_PIXEL_CHROMA = 0.04;
 const MIN_COLOURED_SHARE = 0.08;
 const TINT_LIGHTNESS = 96.5;
 const TINT_CHROMA = 0.022;
+const FAILED_LOAD_RETRY_MS = 5 * 60 * 1000;
 
 const resolved = new Map<string, string | null>();
 const pending = new Map<string, Promise<string | null>>();
+const failedAt = new Map<string, number>();
 
 function useLogoTint({
   src,
@@ -58,19 +60,31 @@ function tintFor({ src }: { src: string }): Promise<string | null> {
   if (existing) {
     return existing;
   }
+  if (failedRecently({ src })) {
+    return Promise.resolve(null);
+  }
   const promise = loadImage({ src })
     .then((image) => {
       const { data } = tryCatchSync(() =>
         tintFromPixels({ pixels: samplePixels({ image }) }),
       );
       const color = data ?? null;
+      failedAt.delete(src);
       resolved.set(src, color);
       return color;
     })
-    .catch(() => null)
+    .catch(() => {
+      failedAt.set(src, Date.now());
+      return null;
+    })
     .finally(() => pending.delete(src));
   pending.set(src, promise);
   return promise;
+}
+
+function failedRecently({ src }: { src: string }): boolean {
+  const at = failedAt.get(src);
+  return at !== undefined && Date.now() - at < FAILED_LOAD_RETRY_MS;
 }
 
 function loadImage({ src }: { src: string }): Promise<HTMLImageElement> {
