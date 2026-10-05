@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared';
 
 import { Avatar } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface ProjectAvatarProps {
   displayName: string;
@@ -64,11 +65,11 @@ export const ProjectAvatar = ({
             showDetails ? 'mb-3' : ''
           }`}
           style={{
-            backgroundColor: 'var(--gray-9)',
+            backgroundColor: 'var(--gray-11)',
             color: 'var(--gray-1)',
           }}
         >
-          <span className={currentSize.text}>
+          <span className={cn(currentSize.text, 'leading-none')}>
             {displayName.charAt(0).toUpperCase()}
           </span>
         </Avatar>
@@ -117,7 +118,7 @@ export const ProjectAvatar = ({
           color: PROJECT_COLOR_PALETTE[iconColor].textColor,
         }}
       >
-        <span className={currentSize.text}>
+        <span className={cn(currentSize.text, 'leading-none')}>
           {displayName.charAt(0).toUpperCase()}
         </span>
       </Avatar>
