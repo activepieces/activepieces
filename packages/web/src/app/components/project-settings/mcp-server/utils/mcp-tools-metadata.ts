@@ -40,6 +40,11 @@ const TOOL_CATEGORIES: ToolCategory[] = [
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
       },
       {
+        name: 'ap_check_solution',
+        description:
+          'Check that the flows and tables in a folder fit together: subflow inputs and responses, table fields, and table triggers',
+      },
+      {
         name: 'ap_research_pieces',
         description:
           'Research pieces with actions and triggers — required before adding or updating steps',

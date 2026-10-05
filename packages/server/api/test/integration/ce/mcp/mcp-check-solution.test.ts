@@ -1,0 +1,208 @@
+import { apId } from '@activepieces/core-utils'
+import { FlowActionType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { z } from 'zod'
+import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
+import { apCheckSolutionTool } from '../../../../src/app/mcp/tools/ap-check-solution'
+import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
+import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
+import { db } from '../../../helpers/db'
+import { createMockPieceMetadata } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+let app: FastifyInstance
+let log: FastifyBaseLogger
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+    log = app.log
+    await db.save('piece_metadata', createMockPieceMetadata({
+        name: '@activepieces/piece-subflows',
+        displayName: 'Sub Flows',
+        version: '0.1.0',
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        platformId: undefined,
+        actions: {
+            callFlow: {
+                name: 'callFlow',
+                displayName: 'Call Flow',
+                description: 'Call a flow',
+                requireAuth: false,
+                props: {
+                    flowId: { type: 'SHORT_TEXT', displayName: 'Flow', required: false },
+                    mode: { type: 'SHORT_TEXT', displayName: 'Mode', required: false },
+                    flowProps: { type: 'JSON', displayName: 'Flow props', required: false },
+                    waitForResponse: { type: 'CHECKBOX', displayName: 'Wait for Response', required: false },
+                },
+            },
+            returnResponse: {
+                name: 'returnResponse',
+                displayName: 'Return Response',
+                description: 'Return a response',
+                requireAuth: false,
+                props: {
+                    mode: { type: 'SHORT_TEXT', displayName: 'Mode', required: false },
+                    response: { type: 'JSON', displayName: 'Response', required: false },
+                },
+            },
+        },
+        triggers: {
+            callableFlow: {
+                name: 'callableFlow',
+                displayName: 'Callable Flow',
+                description: 'Called by another flow',
+                requireAuth: false,
+                props: {
+                    mode: { type: 'SHORT_TEXT', displayName: 'Mode', required: false },
+                    exampleData: { type: 'JSON', displayName: 'Sample data', required: false },
+                },
+            },
+        },
+    }))
+    await db.save('piece_metadata', createMockPieceMetadata({
+        name: '@activepieces/piece-tables',
+        displayName: 'Tables',
+        version: '0.1.0',
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        platformId: undefined,
+        actions: {
+            'tables-create-records': {
+                name: 'tables-create-records',
+                displayName: 'Create Records',
+                description: 'Create records',
+                requireAuth: false,
+                props: {
+                    table_id: { type: 'SHORT_TEXT', displayName: 'Table', required: false },
+                    values: { type: 'JSON', displayName: 'Values', required: false },
+                },
+            },
+        },
+        triggers: {
+            newRecord: {
+                name: 'newRecord',
+                displayName: 'New Record',
+                description: 'A record was created',
+                requireAuth: false,
+                props: {
+                    table_id: { type: 'SHORT_TEXT', displayName: 'Table', required: false },
+                },
+            },
+        },
+    }))
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+describe('ap_check_solution', () => {
+    it('passes a solution whose subflow, call and table all fit together', async () => {
+        const { mcp, table } = await createSolutionBase()
+        const subflow = await buildSubflow({ mcp, withResponse: true, writeField: table.fieldExternalId, tableExternalId: table.externalId })
+        await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { orderId: '{{trigger.body.id}}' }, waitForResponse: true })
+
+        const result = await apCheckSolutionTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })
+
+        expect(structured(result).flowCount).toBe(2)
+        expect(structured(result).issues).toEqual([])
+        expect(structured(result).ok).toBe(true)
+        expect(text(result)).toContain('every connection checks out')
+    })
+
+    it('reports a call that misses a subflow input and waits for a response the subflow never returns', async () => {
+        const { mcp, table } = await createSolutionBase()
+        const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })
+        await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { customer: 'x' }, waitForResponse: true })
+
+        const messages = structured(await apCheckSolutionTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
+
+        expect(messages).toContainEqual(expect.stringContaining('does not send orderId'))
+        expect(messages).toContainEqual(expect.stringContaining('has no Return Response step'))
+    })
+
+    it('reports a call to a flow that does not exist and a table step with an unknown table or field', async () => {
+        const { mcp, table } = await createSolutionBase()
+        await buildSubflow({ mcp, withResponse: true, writeField: 'not_a_field', tableExternalId: table.externalId })
+        await buildCaller({ mcp, subflowExternalId: 'missing-flow', payload: { orderId: '1' }, waitForResponse: false })
+        await apBuildFlowTool({ mcp }, log).execute({
+            flowName: 'Watch orders',
+            folderName: SOLUTION_FOLDER,
+            trigger: { pieceName: '@activepieces/piece-tables', triggerName: 'newRecord', input: { table_id: 'missing-table' } },
+            steps: [],
+        })
+
+        const messages = structured(await apCheckSolutionTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
+
+        expect(messages).toContainEqual(expect.stringContaining('writes fields the table does not have: not_a_field'))
+        expect(messages).toContainEqual(expect.stringContaining('targets a flow that does not exist'))
+        expect(messages).toContainEqual(expect.stringContaining('points at a table that does not exist'))
+    })
+
+    it('asks for ap_create_folder when the folder does not exist', async () => {
+        const ctx = await createTestContext(app)
+
+        const result = await apCheckSolutionTool(makeMcp(ctx.project.id), log).execute({ folderName: 'Nowhere' })
+
+        expect(text(result)).toContain('ap_create_folder')
+    })
+})
+
+async function createSolutionBase(): Promise<{ mcp: ProjectScopedMcpServer, table: { externalId: string, fieldExternalId: string } }> {
+    const ctx = await createTestContext(app)
+    const mcp = makeMcp(ctx.project.id)
+    await apCreateFolderTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })
+    const created = await apCreateTableTool(mcp, log).execute({ name: 'Orders', folderName: SOLUTION_FOLDER, fields: [{ name: 'Order id', type: 'TEXT' }] })
+    const table = z.object({ externalId: z.string(), fields: z.array(z.object({ externalId: z.string() })) }).parse(created.structuredContent)
+    return { mcp, table: { externalId: table.externalId, fieldExternalId: table.fields[0].externalId } }
+}
+
+async function buildSubflow({ mcp, withResponse, writeField, tableExternalId }: { mcp: ProjectScopedMcpServer, withResponse: boolean, writeField: string, tableExternalId: string }): Promise<{ externalId: string }> {
+    const result = await apBuildFlowTool({ mcp }, log).execute({
+        flowName: 'Enrich order',
+        folderName: SOLUTION_FOLDER,
+        trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: { orderId: '123' } } } },
+        steps: [
+            { type: FlowActionType.PIECE, displayName: 'Save order', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: tableExternalId, values: { values: [{ [writeField]: '{{trigger.orderId}}' }] } } },
+            ...(withResponse ? [{ type: FlowActionType.PIECE, displayName: 'Respond', pieceName: '@activepieces/piece-subflows', actionName: 'returnResponse', input: { mode: 'simple', response: { response: { saved: true } } } }] : []),
+        ],
+    })
+    return z.object({ externalId: z.string() }).parse(result.structuredContent)
+}
+
+async function buildCaller({ mcp, subflowExternalId, payload, waitForResponse }: { mcp: ProjectScopedMcpServer, subflowExternalId: string, payload: Record<string, string>, waitForResponse: boolean }): Promise<void> {
+    await apBuildFlowTool({ mcp }, log).execute({
+        flowName: 'Receive order',
+        folderName: SOLUTION_FOLDER,
+        trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: {} } } },
+        steps: [
+            { type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflowExternalId, mode: 'simple', flowProps: { payload }, waitForResponse } },
+        ],
+    })
+}
+
+function structured(result: { structuredContent?: unknown }): { ok: boolean, flowCount: number, issues: { message: string }[] } {
+    return z.object({ ok: z.boolean(), flowCount: z.number(), issues: z.array(z.object({ message: z.string() })) }).parse(result.structuredContent)
+}
+
+function text(result: { content: Array<{ type: 'text', text: string }> }): string {
+    return result.content.map((c) => c.text).join('\n')
+}
+
+function makeMcp(projectId: string): ProjectScopedMcpServer {
+    return {
+        id: apId(),
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        projectId,
+        platformId: null,
+        type: McpServerType.PROJECT,
+        token: apId(),
+        disabledTools: null,
+    }
+}
+
+const SOLUTION_FOLDER = 'Order intake'
