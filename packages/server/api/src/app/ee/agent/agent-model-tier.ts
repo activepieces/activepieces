@@ -26,8 +26,8 @@ export const agentModelTier = (log: FastifyBaseLogger) => ({
         if (isNil(tierId)) {
             return null
         }
-        const models = await this.mainModelsOf({ conversations: [conversation] })
-        return models.get(tierCacheKey({ platformId: conversation.platformId, tierId })) ?? null
+        const { data } = await tryCatch(() => aiModelCandidates(log).firstCandidates({ platformId: conversation.platformId, tierIds: [tierId] }))
+        return data?.get(tierId) ?? null
     },
 
     async mainModelsOf({ conversations }: { conversations: Pick<AgentConversation, 'platformId' | 'modelTierId'>[] }): Promise<Map<string, FirstCandidate | null>> {
@@ -38,8 +38,12 @@ export const agentModelTier = (log: FastifyBaseLogger) => ({
             }
         })
         const perPlatform = await Promise.all([...tierIdsByPlatform].map(async ([platformId, tierIds]): Promise<[string, FirstCandidate | null][]> => {
-            const { data } = await tryCatch(() => aiModelCandidates(log).firstCandidates({ platformId, tierIds }))
-            return tierIds.map((tierId) => [tierCacheKey({ platformId, tierId }), data?.get(tierId) ?? null])
+            const { data, error } = await tryCatch(() => aiModelCandidates(log).firstCandidates({ platformId, tierIds }))
+            if (!isNil(error) || isNil(data)) {
+                log.warn({ error, platform: { id: platformId }, tierCount: tierIds.length }, '[agentModelTier] Could not resolve the tiers of a platform in one pass, each conversation will look its tier up on its own')
+                return []
+            }
+            return tierIds.map((tierId) => [tierCacheKey({ platformId, tierId }), data.get(tierId) ?? null])
         }))
         return new Map(perPlatform.flat())
     },
