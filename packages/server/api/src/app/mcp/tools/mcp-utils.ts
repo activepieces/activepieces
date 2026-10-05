@@ -507,13 +507,13 @@ function resolveConnectionExternalId({ connectionExternalId, input }: { connecti
 
 async function resolveFolder({ projectId, folderName, log }: { projectId: string, folderName: string | undefined, log: FastifyBaseLogger }): Promise<ResolveFolderResult> {
     if (isNil(folderName)) {
-        return { folderId: undefined }
+        return { folderId: undefined, folderName: undefined }
     }
     const folder = await flowFolderService(log).getOneByDisplayNameCaseInsensitive({ projectId, displayName: folderName })
     if (isNil(folder)) {
         return { error: { content: [{ type: 'text', text: `❌ Folder "${folderName}" does not exist. Create it with ap_create_folder first, then retry.` }], isError: true } }
     }
-    return { folderId: folder.id }
+    return { folderId: folder.id, folderName: folder.displayName }
 }
 
 function folderSuffix(folderName: string | undefined): string {
@@ -832,7 +832,7 @@ export const mcpUtils = {
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
-    folderNameSchema: FOLDER_NAME_SCHEMA,
+    FOLDER_NAME_SCHEMA,
 }
 
 export type { PropSummary }
@@ -903,8 +903,8 @@ type LookupPieceComponentResult =
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveFolderResult =
-    | { folderId: string | undefined, error?: never }
-    | { error: McpToolResult, folderId?: never }
+    | { folderId: string | undefined, folderName: string | undefined, error?: never }
+    | { error: McpToolResult, folderId?: never, folderName?: never }
 
 type ResolveRouterStepResult =
     | { routerStep: BranchedAction, error?: never }

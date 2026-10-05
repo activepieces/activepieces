@@ -44,11 +44,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         })
         if (!isNil(folderWithDisplayName)) {
-            return this.update({
-                projectId,
-                folderId: folderWithDisplayName.id,
-                request,
-            })
+            return this.getOneOrThrow({ projectId, folderId: folderWithDisplayName.id })
         }
         const folderId = apId()
         await folderRepo().upsert({

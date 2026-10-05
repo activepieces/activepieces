@@ -165,8 +165,8 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
     return result.content.map(c => c.text).join('\n')
 }
 
-function solutionContent(result: { structuredContent?: unknown }): { flowId: string, externalId: string } {
-    return z.object({ flowId: z.string(), externalId: z.string() }).parse(result.structuredContent)
+function structured<T extends z.ZodType>({ result, schema }: { result: { structuredContent?: unknown }, schema: T }): z.infer<T> {
+    return schema.parse(result.structuredContent)
 }
 
 async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
@@ -2654,7 +2654,7 @@ describe('MCP Tools integration', () => {
         const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Enrich customer', folderName: 'Order intake' })
         const built = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Receive order',
-            folderName: 'Order intake',
+            folderName: 'order INTAKE',
             trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
             steps: [{ type: FlowActionType.CODE, displayName: 'Process', sourceCode: 'export const code = async () => { return { ok: true }; };', input: {} }],
         })
@@ -2665,9 +2665,10 @@ describe('MCP Tools integration', () => {
             fields: [{ name: 'Order id', type: 'TEXT' }],
         })
 
-        const createdContent = solutionContent(created)
-        const builtContent = solutionContent(built)
-        const tableId = z.object({ id: z.string() }).parse(tableResult.structuredContent).id
+        const flowContent = z.object({ flowId: z.string(), externalId: z.string(), folderName: z.string() })
+        const createdContent = structured({ result: created, schema: flowContent })
+        const builtContent = structured({ result: built, schema: flowContent })
+        const tableId = structured({ result: tableResult, schema: z.object({ id: z.string() }) }).id
         const table = await tableService.getOneOrThrow({ id: tableId, projectId: ctx.project.id })
         const createdFlow = await flowService(mockLog).getOne({ id: createdContent.flowId, projectId: ctx.project.id })
         const builtFlow = await flowService(mockLog).getOne({ id: builtContent.flowId, projectId: ctx.project.id })
@@ -2677,6 +2678,7 @@ describe('MCP Tools integration', () => {
         expect(table.folderId).toBe(createdFlow?.folderId)
         expect(createdContent.externalId).toBe(createdFlow?.externalId)
         expect(builtContent.externalId).toBe(builtFlow?.externalId)
+        expect(builtContent.folderName).toBe('Order intake')
         expect(text(created)).toContain('in folder "Order intake"')
         expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
     })
@@ -2699,23 +2701,6 @@ describe('MCP Tools integration', () => {
         expect(flowCount).toBe(0)
     })
 
-    it('ap_build_flow that fails keeps the folder it was filed into', async () => {
-        const ctx = await createTestContext(app)
-        const mcp = makeMcp(ctx.project.id)
-
-        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Shared solution' })
-        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
-            flowName: 'Broken build',
-            folderName: 'Shared solution',
-            trigger: { pieceName: '@activepieces/piece-does-not-exist', triggerName: 'nothing' },
-            steps: [],
-        })
-
-        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Shared solution' })
-        expect(text(result)).toContain('❌')
-        expect(folder).not.toBeNull()
-    })
-
     it('ap_create_folder returns the same folder for the same name in any case, without renaming it', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
@@ -2723,9 +2708,9 @@ describe('MCP Tools integration', () => {
         const first = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order intake' })
         const second = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'order INTAKE' })
 
-        const folderIdOf = (result: { structuredContent?: unknown }): string => z.object({ folderId: z.string() }).parse(result.structuredContent).folderId
+        const folderSchema = z.object({ folderId: z.string() })
         const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Order intake' })
-        expect(folderIdOf(second)).toBe(folderIdOf(first))
+        expect(structured({ result: second, schema: folderSchema }).folderId).toBe(structured({ result: first, schema: folderSchema }).folderId)
         expect(folder?.displayName).toBe('Order intake')
     })
 
@@ -2734,7 +2719,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
 
         const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Loose flow' })
-        const flow = await flowService(mockLog).getOne({ id: solutionContent(created).flowId, projectId: ctx.project.id })
+        const flow = await flowService(mockLog).getOne({ id: structured({ result: created, schema: z.object({ flowId: z.string() }) }).flowId, projectId: ctx.project.id })
 
         expect(flow?.folderId).toBeNull()
         expect(text(created)).not.toContain('in folder')

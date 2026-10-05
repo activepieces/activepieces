@@ -36,7 +36,7 @@ const buildFlowInput = z.object({
         auth: z.string().optional(),
     }),
     steps: z.array(stepSpec),
-    folderName: mcpUtils.folderNameSchema,
+    folderName: mcpUtils.FOLDER_NAME_SCHEMA,
 })
 
 export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
@@ -52,7 +52,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
-            folderName: mcpUtils.folderNameSchema,
+            folderName: mcpUtils.FOLDER_NAME_SCHEMA,
             steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions. ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -72,22 +72,21 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
                 }
 
-                const folder = await mcpUtils.resolveFolder({ projectId, folderName, log })
+                const [platformId, folder] = await Promise.all([
+                    projectService(log).getPlatformId(projectId),
+                    mcpUtils.resolveFolder({ projectId, folderName, log }),
+                ])
                 if (folder.error) {
                     return folder.error
                 }
-                const [platformId, flow] = await Promise.all([
-                    projectService(log).getPlatformId(projectId),
-                    flowService(log).create({
-                        projectId,
-                        ownerId: userId,
-                        createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
-                        request: { displayName: flowName, projectId, folderId: folder.folderId },
-                    }),
-                ])
+                const flow = await flowService(log).create({
+                    projectId,
+                    ownerId: userId,
+                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
+                    request: { displayName: flowName, projectId, folderId: folder.folderId },
+                })
                 flowId = flow.id
-                const flowExternalId = flow.externalId
-                const createdIn = `${mcpUtils.folderSuffix(folderName)}, externalId ${flowExternalId}`
+                const createdIn = `${mcpUtils.folderSuffix(folder.folderName)}, externalId ${flow.externalId}`
 
                 const triggerVersionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: trigger.pieceName, projectId, platformId, log })
                 if (triggerVersionResult.error) {
@@ -201,8 +200,8 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 const flowUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/flows/${flowId}` })
                 const structured = {
                     flowId: flowId!,
-                    externalId: flowExternalId,
-                    folderName: folderName ?? null,
+                    externalId: flow.externalId,
+                    folderName: folder.folderName ?? null,
                     flowUrl,
                     displayName: flowName,
                     stepCount: allSteps.length,

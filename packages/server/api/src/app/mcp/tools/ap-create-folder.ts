@@ -6,7 +6,7 @@ import { flowFolderService } from '../../flows/folder/folder.service'
 import { mcpUtils } from './mcp-utils'
 
 const createFolderInput = z.object({
-    folderName: z.string().trim().min(1).max(255).describe('The folder name, e.g. the solution being built ("Order intake")'),
+    folderName: mcpUtils.FOLDER_NAME_SCHEMA.unwrap().describe('The folder name, e.g. the solution being built ("Order intake")'),
 })
 
 export const apCreateFolderTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -19,8 +19,7 @@ export const apCreateFolderTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         execute: async (args) => {
             try {
                 const { folderName } = createFolderInput.parse(args)
-                const existing = await flowFolderService(log).getOneByDisplayNameCaseInsensitive({ projectId: mcp.projectId, displayName: folderName })
-                const folder = existing ?? await flowFolderService(log).upsert({
+                const folder = await flowFolderService(log).upsert({
                     projectId: mcp.projectId,
                     request: { projectId: mcp.projectId, displayName: folderName },
                 })

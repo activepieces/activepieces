@@ -14,7 +14,7 @@ const createTableInput = z.object({
         type: fieldTypeSchema.describe('Field type'),
         options: z.array(z.string()).optional().describe('Dropdown options (required when type is STATIC_DROPDOWN)'),
     })).describe('Fields to create. Max 100 fields per table.'),
-    folderName: mcpUtils.folderNameSchema,
+    folderName: mcpUtils.FOLDER_NAME_SCHEMA,
 })
 
 export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -67,13 +67,13 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Table "${name}" created (id: ${table.id}, externalId: ${table.externalId})${mcpUtils.folderSuffix(folderName)}\nFields:\n${fieldLines}\n\nℹ️ Use "id" with the record/field tools; use "externalId" as table_id when configuring a Tables piece step in a flow.`,
+                        text: `✅ Table "${name}" created (id: ${table.id}, externalId: ${table.externalId})${mcpUtils.folderSuffix(folder.folderName)}\nFields:\n${fieldLines}\n\nℹ️ Use "id" with the record/field tools; use "externalId" as table_id when configuring a Tables piece step in a flow.`,
                     }],
                     structuredContent: {
                         id: table.id,
                         externalId: table.externalId,
                         name: table.name,
-                        folderName: folderName ?? null,
+                        folderName: folder.folderName ?? null,
                         fields: createdFields.map(f => ({ id: f.id, externalId: f.externalId, name: f.name, type: f.type })),
                     },
                 }
