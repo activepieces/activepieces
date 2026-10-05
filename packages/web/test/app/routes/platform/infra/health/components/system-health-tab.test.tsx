@@ -15,6 +15,7 @@ const versions = vi.hoisted(() => ({
 
 const systemHealthMock = vi.hoisted(() => ({
   data: undefined as GetSystemHealthChecksResponse | undefined,
+  isPending: false,
 }));
 
 vi.mock('i18next', () => ({
@@ -43,7 +44,10 @@ vi.mock(
 
 vi.mock('@/features/platform-admin', () => ({
   healthQueries: {
-    useSystemHealth: () => ({ data: systemHealthMock.data, isPending: false }),
+    useSystemHealth: () => ({
+      data: systemHealthMock.data,
+      isPending: systemHealthMock.isPending,
+    }),
   },
 }));
 
@@ -84,6 +88,7 @@ describe('SystemHealthTab version row', () => {
 
   beforeEach(() => {
     editionMock.value = ApEdition.COMMUNITY;
+    systemHealthMock.isPending = false;
   });
 
   afterEach(() => {
@@ -122,6 +127,22 @@ describe('SystemHealthTab version row', () => {
     expect(text).not.toContain('Needs attention');
     expect(text).not.toContain('Release integrity');
     expect(text).toContain('Disk');
+  });
+
+  it('shows no made-up values while the checks are still loading', () => {
+    systemHealthMock.isPending = true;
+    systemHealthMock.data = undefined;
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    act(() => {
+      root!.render(<SystemHealthTab />);
+    });
+    const text = container.textContent ?? '';
+
+    expect(text).toContain('Checking');
+    expect(text).not.toContain('Unknown');
+    expect(text).not.toContain('No workers are connected.');
   });
 
   it('keeps the version row on enterprise edition', () => {

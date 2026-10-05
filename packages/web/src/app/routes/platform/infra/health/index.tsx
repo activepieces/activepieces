@@ -18,6 +18,7 @@ import { QueueTab } from './components/queue-tab';
 import { RunsTab } from './components/runs-tab';
 import { SystemHealthTab } from './components/system-health-tab';
 import { healthMetricsQueries } from './lib/health-metrics-hooks';
+import { healthRangeUtils } from './lib/health-range';
 
 export default function SettingsHealthPage({
   section,
@@ -28,13 +29,11 @@ export default function SettingsHealthPage({
     monthOptions.find((option) => option.value === searchParams.get('month'))
       ?.value ?? monthOptions[0].value;
 
-  const range = React.useMemo(() => {
-    const month = dayjs(`${selectedMonth}-01`);
-    return {
-      createdAfter: month.startOf('month').toISOString(),
-      createdBefore: month.endOf('month').toISOString(),
-    };
-  }, [selectedMonth]);
+  const range = React.useMemo(
+    () =>
+      healthRangeUtils.monthRange({ month: selectedMonth, now: new Date() }),
+    [selectedMonth],
+  );
 
   const runs = healthMetricsQueries.useRunMetrics(range, section === 'runs');
   const queue = healthMetricsQueries.useQueueMetrics(

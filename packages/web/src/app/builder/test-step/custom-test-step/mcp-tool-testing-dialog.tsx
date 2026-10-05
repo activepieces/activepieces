@@ -172,7 +172,7 @@ function McpToolTestingDialog({
                             />
 
                             {fieldError && (
-                              <p className="text-sm text-danger-11 font-medium">
+                              <p className="text-xs text-danger-11 font-medium">
                                 {fieldError.message?.toString()}
                               </p>
                             )}

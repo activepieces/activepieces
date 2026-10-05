@@ -596,7 +596,7 @@ export const TiptapEditor = ({
           {(typeErrors.length > 0 || previewErrorMsg) && (
             <div className="border-b border-gray-6">
               <div className="flex items-center justify-between px-3 py-2">
-                <span className="flex items-center gap-1.5 text-danger-11 font-medium text-sm">
+                <span className="flex items-center gap-1.5 text-danger-11 font-medium text-xs">
                   <XCircle className="size-3" />
                   {t('Error')}
                 </span>
@@ -620,7 +620,7 @@ export const TiptapEditor = ({
 
           <div>
             <div className="flex items-center justify-between px-3 py-2">
-              <span className="flex items-center gap-1.5 font-medium text-sm">
+              <span className="flex items-center gap-1.5 font-medium text-xs">
                 <ChevronRight className="size-3" />
                 {t('Preview')}
               </span>

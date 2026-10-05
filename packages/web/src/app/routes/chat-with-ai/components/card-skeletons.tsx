@@ -92,7 +92,7 @@ function GeneratedImageCardSkeleton({ label }: { label: string }) {
       <div className="flex items-center justify-between gap-2 p-2">
         <TextShimmer
           as="span"
-          className="min-w-0 truncate text-sm text-gray-11"
+          className="min-w-0 truncate text-xs text-gray-11"
           duration={2}
         >
           {label}

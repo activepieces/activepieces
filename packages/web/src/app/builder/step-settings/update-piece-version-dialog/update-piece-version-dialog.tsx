@@ -239,7 +239,7 @@ const AdvancedForm: React.FC<AdvancedFormProps> = ({
                   type="button"
                   variant="link"
                   size="sm"
-                  className="h-auto p-0 text-sm"
+                  className="h-auto p-0 text-xs"
                   onClick={() => {
                     setShowAllVersions((v) => !v);
                     setVersionSelectOpen(true);

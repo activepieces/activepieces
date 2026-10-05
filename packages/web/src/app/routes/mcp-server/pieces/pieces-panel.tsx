@@ -110,7 +110,10 @@ export function PiecesPanel({
               onClick={() => setShowAll(true)}
               className="h-10 w-full border-t px-5 text-sm font-medium hover:bg-gray-3"
             >
-              {t('Show {count} more pieces', { count: hiddenCount })}
+              {t(
+                '{count, plural, =1 {Show 1 more piece} other {Show # more pieces}}',
+                { count: hiddenCount },
+              )}
             </button>
           )}
         </Card>
@@ -188,7 +191,9 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
   const { data: projects = [] } = projectCollectionUtils.useAll();
   const pieceSetId =
     projects.find((project) => project.id === projectId)?.pieceSetId ?? null;
-  const { data: pieceSet } = pieceSetQueries.usePieceSet(pieceSetId ?? '');
+  const { data: pieceSet } = pieceSetQueries.usePieceSet(
+    isPlatformAdmin ? pieceSetId ?? '' : '',
+  );
 
   if (!platform.plan.managePiecesEnabled) {
     return (
@@ -212,9 +217,9 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
       <Info />
       <AlertDescription className="min-w-60 flex-1">
         {isPlatformAdmin
-          ? t("This project's pieces are controlled by a Piece Set.")
+          ? t("This project's pieces are controlled by a piece policy.")
           : t(
-              "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
+              "This project's pieces are controlled by a piece policy. Contact a platform admin to change it.",
             )}
       </AlertDescription>
       {isPlatformAdmin && (

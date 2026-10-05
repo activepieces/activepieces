@@ -9,7 +9,6 @@ import { t } from 'i18next';
 import { ExternalLink, Layers, Server } from 'lucide-react';
 import { useState } from 'react';
 
-import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PageSection } from '@/components/custom/page';
 import { ResourceCard, ResourceGrid } from '@/components/custom/resource-card';
@@ -23,7 +22,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { workersQueries } from '@/features/platform-admin';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -37,7 +35,6 @@ import { ProjectGroupRow, ProjectGroupsTable } from './project-groups-table';
 export function GroupsView() {
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.workerGroupsEnabled;
-  const routeLocked = useInsideFeatureSample();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const groupsQuery = workersQueries.useWorkerGroups(!isSample);
   const machinesQuery = workersQueries.useWorkerMachines();
@@ -45,7 +42,7 @@ export function GroupsView() {
   const machines = machinesQuery.data;
   const [assigning, setAssigning] = useState<string | null>(null);
 
-  const liveGroups = isSample ? SAMPLE_GROUPS : capacity?.groups ?? [];
+  const liveGroups = isSample ? SAMPLE_GROUPS : capacity?.groups ?? NO_GROUPS;
   const sharedSlots = isSample
     ? SAMPLE_SHARED_SLOTS
     : capacity?.sharedSlots ?? 0;
@@ -56,7 +53,7 @@ export function GroupsView() {
     ? SAMPLE_SHARED_PROJECTS
     : projects.filter((project) => !project.workerGroupId).length;
 
-  const content = (
+  return (
     <>
       <PageSection
         title={t('Groups')}
@@ -111,21 +108,6 @@ export function GroupsView() {
         allProjects={projects}
       />
     </>
-  );
-
-  if (!isSample || routeLocked) {
-    return content;
-  }
-  return (
-    <PlanLockedPanel
-      feature={PLATFORM_FEATURES.workerGroups}
-      locked
-      whenLocked="preview"
-      title={t('Worker groups')}
-      description={t(PLATFORM_FEATURES.workerGroups.description)}
-    >
-      {content}
-    </PlanLockedPanel>
   );
 }
 
@@ -312,6 +294,8 @@ function sampleRow({
 
 const DOCS_URL =
   'https://www.activepieces.com/docs/install/configure-operate/worker-groups';
+
+const NO_GROUPS: WorkerGroupInfo[] = [];
 
 const SAMPLE_GROUPS: WorkerGroupInfo[] = [
   { label: 'finance', slots: 8 },

@@ -117,7 +117,7 @@ export function AnalyticsAreaChart({
             <AreaChart
               accessibilityLayer
               data={chartData}
-              margin={{ left: 0, right: 12, top: 12, bottom: 0 }}
+              margin={{ left: 0, right: 24, top: 12, bottom: 0 }}
             >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

@@ -56,8 +56,8 @@ export function useAssignProjectsToGroup() {
     const saved = changes.filter(
       (_change, index) => results[index].status === 'fulfilled',
     );
-    const failed = results.flatMap((result) =>
-      result.status === 'rejected' ? [result.reason as unknown] : [],
+    const failed: unknown[] = results.flatMap((result) =>
+      result.status === 'rejected' ? [result.reason] : [],
     );
     await refreshProjects(queryClient);
     if (saved.length > 0) {

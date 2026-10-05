@@ -42,7 +42,12 @@ export function ConversationSidebarToggle({
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            aria-label={t('Chats')}
+          >
             <HistoryIcon />
           </Button>
         </SheetTrigger>
@@ -56,7 +61,12 @@ export function ConversationSidebarToggle({
               {t('Chats')}
             </SheetTitle>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon-sm" className="shrink-0">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                aria-label={t('Close')}
+              >
                 <X />
               </Button>
             </SheetClose>
@@ -91,6 +101,7 @@ export function ConversationSidebarToggle({
               variant="ghost"
               size="icon-sm"
               className="shrink-0"
+              aria-label={t('Collapse sidebar')}
               onClick={onTogglePin}
             >
               <PanelLeftCloseIcon />
@@ -109,6 +120,7 @@ export function ConversationSidebarToggle({
           variant="ghost"
           size="icon-sm"
           className="shrink-0"
+          aria-label={t('Open sidebar')}
           onClick={onTogglePin}
         >
           <HistoryIcon />

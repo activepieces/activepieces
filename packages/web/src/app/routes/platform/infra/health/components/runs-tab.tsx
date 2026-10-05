@@ -23,8 +23,10 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
         stats={[
           {
             key: 'completed',
-            label: t('Jobs done'),
-            hint: t('Completed jobs (success + failure) in the period'),
+            label: t('Finished runs'),
+            hint: t(
+              'Runs that succeeded or failed this month, compared with the same number of days before it',
+            ),
             value: listFormat.count(summary?.completed ?? 0),
             delta: summary
               ? statDeltaUtils.percentDelta({
@@ -36,7 +38,7 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
           {
             key: 'success-rate',
             label: t('Success rate'),
-            hint: t('Share of completed jobs that succeeded'),
+            hint: t('Share of finished runs that succeeded'),
             value: `${(summary?.successRate ?? 0).toFixed(1)}%`,
             delta: summary
               ? statDeltaUtils.pointDelta({

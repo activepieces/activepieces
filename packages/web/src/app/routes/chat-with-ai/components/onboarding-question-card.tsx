@@ -324,7 +324,7 @@ function OnboardingPill({
                 )}
                 <span className="truncate">{suggestion.value}</span>
                 {suggestion.hint && (
-                  <span className="ml-auto shrink-0 pl-3 text-sm text-gray-11">
+                  <span className="ml-auto shrink-0 pl-3 text-xs text-gray-11">
                     {suggestion.hint}
                   </span>
                 )}

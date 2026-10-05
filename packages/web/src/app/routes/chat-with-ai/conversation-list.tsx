@@ -13,6 +13,7 @@ import {
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -50,15 +51,19 @@ export function ConversationList({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { data: conversationsPage, isLoading: isLoadingConversations } =
-    useQuery({
-      queryKey: ['chat-conversations', agentId ?? 'chat'],
-      queryFn: () =>
-        chatApi.listConversations({
-          limit: 100,
-          ...(agentId === undefined ? {} : { agentId }),
-        }),
-    });
+  const {
+    data: conversationsPage,
+    isLoading: isLoadingConversations,
+    isError: isConversationsError,
+    refetch: refetchConversations,
+  } = useQuery({
+    queryKey: ['chat-conversations', agentId ?? 'chat'],
+    queryFn: () =>
+      chatApi.listConversations({
+        limit: 100,
+        ...(agentId === undefined ? {} : { agentId }),
+      }),
+  });
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
@@ -247,7 +252,7 @@ export function ConversationList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('Search...')}
-              className="pl-8"
+              className="pl-8 text-base sm:text-sm"
             />
           </div>
         )}
@@ -267,6 +272,11 @@ export function ConversationList({
                 <Skeleton key={i} className="h-8 w-full rounded-lg" />
               ))}
             </div>
+          ) : isConversationsError ? (
+            <DataFetchErrorState
+              entity={t('chats')}
+              onRetry={() => refetchConversations()}
+            />
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
               <MessageSquare className="size-5 text-gray-9" />

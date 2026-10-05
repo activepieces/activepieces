@@ -10,6 +10,7 @@ import React from 'react';
 
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -200,19 +201,21 @@ const TestTriggerSection = React.memo(
                     )}
                   </EmptyDescription>
                 </EmptyHeader>
-                <FirstTimeTestingSection
-                  isValid={isValid}
-                  testType={testType}
-                  isTesting={
-                    isPollingTesting || isSimulating || isTestingDialogOpen
-                  }
-                  mockData={mockData}
-                  isSaving={isSaving || isSavingMockdata}
-                  onSimulateTrigger={fireTest}
-                  onPollTrigger={fireTest}
-                  onMcpToolTesting={fireTest}
-                  onSaveMockAsSampleData={saveMockAsSampleData}
-                />
+                <EmptyContent>
+                  <FirstTimeTestingSection
+                    isValid={isValid}
+                    testType={testType}
+                    isTesting={
+                      isPollingTesting || isSimulating || isTestingDialogOpen
+                    }
+                    mockData={mockData}
+                    isSaving={isSaving || isSavingMockdata}
+                    onSimulateTrigger={fireTest}
+                    onPollTrigger={fireTest}
+                    onMcpToolTesting={fireTest}
+                    onSaveMockAsSampleData={saveMockAsSampleData}
+                  />
+                </EmptyContent>
               </Empty>
             </div>
           )}

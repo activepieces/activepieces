@@ -76,7 +76,7 @@ export function ToolsTab({
     <PageSection
       title={t('What a connected client can call')}
       description={t(
-        'Built-in tools are switched on and off here. Pieces are controlled in piece sets.',
+        'Built-in tools are switched on and off here. Pieces are controlled in piece policies.',
       )}
     >
       <Toolbar>

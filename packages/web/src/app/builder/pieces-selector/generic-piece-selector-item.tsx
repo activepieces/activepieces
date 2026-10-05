@@ -76,7 +76,7 @@ const GenericActionOrTriggerItem = ({
               {pieceSelectorItemInfo.displayName}
             </div>
             {pieceSelectorItemInfo.classification && (
-              <Badge variant="secondary" className="shrink-0">
+              <Badge variant="info" className="shrink-0">
                 {ACTION_CLASSIFICATION_BADGES[
                   pieceSelectorItemInfo.classification
                 ].label()}

@@ -203,11 +203,11 @@ function ToolStepRow({
         <div className="mb-1.5 overflow-hidden rounded-lg border border-gray-6 bg-gray-3/20">
           <div className="flex items-center gap-2 border-b border-gray-6/60 px-3 py-1">
             <Code className="size-3 shrink-0 text-accent-11/80" />
-            <span className="text-sm font-medium text-gray-11">
+            <span className="text-xs font-medium text-gray-11">
               {t('What this code does')}
             </span>
           </div>
-          <div className="space-y-0.5 px-3 py-2 font-mono text-sm leading-relaxed">
+          <div className="space-y-0.5 px-3 py-2 font-mono text-xs leading-relaxed">
             {recipeLines.map((line, idx) => (
               <div
                 key={`${idx}-${line}`}
@@ -274,7 +274,7 @@ function ToolStepRow({
         )}
         {hasDetails && (
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <div className="mt-1 rounded-lg bg-gray-3/30 px-3 py-2 space-y-2 text-sm">
+            <div className="mt-1 rounded-lg bg-gray-3/30 px-3 py-2 space-y-2 text-xs">
               {hasInput && input && (
                 <div>
                   <p className="text-gray-11 font-medium mb-0.5">
@@ -314,13 +314,13 @@ function ToolStepRow({
           <button
             type="button"
             onClick={() => setCodeOpen(!codeOpen)}
-            className="flex items-center gap-1 text-sm text-gray-11 hover:text-gray-12 transition-colors"
+            className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors"
           >
             <Code className="size-3 shrink-0" />
             {codeOpen ? t('Hide code') : t('View code')}
           </button>
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-gray-3/40 px-3 py-2 text-sm font-mono whitespace-pre-wrap break-words text-gray-11">
+            <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-gray-3/40 px-3 py-2 text-xs font-mono whitespace-pre-wrap break-words text-gray-11">
               {codeSource}
             </pre>
           </CollapsibleContent>

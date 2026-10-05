@@ -341,7 +341,7 @@ function AddFilterPopover({
                         {Icon ? <Icon className="size-4 text-gray-11" /> : null}
                         <span className="flex-1">{t(label)}</span>
                         {added && (
-                          <span className="flex items-center gap-1 text-sm font-medium text-accent-11">
+                          <span className="flex items-center gap-1 text-xs font-medium text-accent-11">
                             <Check className="size-3.5" />
                             {t('Added')}
                           </span>
@@ -390,7 +390,7 @@ function FilterFooter({
               ? t('Returns up to {count} results', { count })
               : t(group.label ?? '')}
           </div>
-          <div className="text-sm text-gray-11">
+          <div className="text-xs text-gray-11">
             {activeCount === 0
               ? t('No filters — newest first')
               : t(

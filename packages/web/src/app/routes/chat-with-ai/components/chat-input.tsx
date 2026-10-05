@@ -168,7 +168,7 @@ export function ChatInput({
           )}
         </AnimatePresence>
         {isRecording ? (
-          <div className="min-h-[44px] px-3 py-2 text-sm sm:text-sm text-gray-12 whitespace-pre-wrap break-words">
+          <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-gray-12 whitespace-pre-wrap break-words">
             {interimText || (
               <span className="text-gray-11">{t('Listening...')}</span>
             )}
@@ -178,7 +178,7 @@ export function ChatInput({
             autoFocus={!minimalUntilFocus}
             placeholder={placeholder ?? t('Tell me what you need...')}
             className={cn(
-              'text-sm sm:text-sm',
+              'text-base sm:text-sm',
               showToolbar ? 'min-h-[44px]' : 'min-h-[24px]',
             )}
             onFocus={() => {

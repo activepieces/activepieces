@@ -22,9 +22,12 @@ export default function TriggerHealthPage() {
     refetch,
   } = triggerRunHooks.useStatusReport();
   const days = lastDays(14);
-  const rows = Object.entries(report?.pieces ?? {}).map(([pieceName, stats]) =>
-    toRow({ pieceName, stats, days }),
-  );
+  const rows = Object.entries(report?.pieces ?? {})
+    .map(([pieceName, stats]) => toRow({ pieceName, stats, days }))
+    .sort(
+      (a, b) =>
+        STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || b.runs - a.runs,
+    );
 
   return (
     <Page>
@@ -133,6 +136,12 @@ function RateCell({ value }: { value: number | null }) {
 function RightHeader({ label }: { label: string }) {
   return <span className="block text-right">{label}</span>;
 }
+
+const STATUS_ORDER: Record<TriggerStatus, number> = {
+  failing: 0,
+  degraded: 1,
+  healthy: 2,
+};
 
 const STATUS_DISPLAY: Record<
   TriggerStatus,

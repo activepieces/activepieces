@@ -166,7 +166,7 @@ export const PredefinedInputsForm = () => {
               {selectedAction?.displayName}
             </div>
             {selectedAction?.description && (
-              <p className="mt-0.5 text-sm text-gray-11 line-clamp-2">
+              <p className="mt-0.5 text-xs text-gray-11 line-clamp-2">
                 {selectedAction.description}
               </p>
             )}

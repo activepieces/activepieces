@@ -30,7 +30,7 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
       className="absolute cursor-default -top-[45px] w-full left-0"
     >
       <div className="flex items-center justify-center">
-        <div className="flex scale-65 items-center gap-0.5 rounded-xl border border-solid border-gray-6 bg-panel p-1 shadow-over">
+        <div className="flex scale-65 items-center gap-0.5 rounded-xl border border-solid border-gray-6 bg-gray-1 p-1 shadow-over">
           <NoteColorPicker
             currentColor={currentColor}
             setCurrentColor={(color: NoteColorVariant) => {

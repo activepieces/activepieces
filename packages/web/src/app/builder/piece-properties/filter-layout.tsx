@@ -178,7 +178,7 @@ function ToggleRevealCard({
                 {t(title)}
               </div>
               {description && (
-                <div className="text-sm text-gray-11">{t(description)}</div>
+                <div className="text-xs text-gray-11">{t(description)}</div>
               )}
             </div>
           </label>
@@ -257,7 +257,7 @@ function FilterSummary({
           {active.map(({ name, property, value }) => (
             <span
               key={name}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-3 py-0.5 pl-2.5 pr-1.5 text-sm font-medium text-accent-11"
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-3 py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-accent-11"
             >
               <span className="truncate">{chipLabel(property, value)}</span>
               <button

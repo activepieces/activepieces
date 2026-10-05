@@ -9,20 +9,23 @@ import { cn } from '@/lib/utils';
 export function ProjectAvatar({ project, size = 'md' }: ProjectAvatarProps) {
   const isPersonal = project.type === ProjectType.PERSONAL;
   const palette = PROJECT_COLOR_PALETTE[project.icon.color];
-  const background = isPersonal ? 'var(--gray-9)' : palette.color;
-  const color = isPersonal ? 'var(--gray-1)' : palette.textColor;
-
-  const sizeClass = size === 'sm' ? 'size-5 text-sm' : 'size-7 text-sm';
 
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center rounded-md font-semibold',
-        sizeClass,
+        'flex shrink-0 items-center justify-center rounded-md font-medium',
+        size === 'sm' ? 'size-5 text-xs' : 'size-7 text-sm',
+        isPersonal && 'bg-gray-11 text-gray-1',
       )}
-      style={{ backgroundColor: background, color }}
+      style={
+        isPersonal
+          ? undefined
+          : { backgroundColor: palette.color, color: palette.textColor }
+      }
     >
-      {project.displayName.charAt(0).toUpperCase()}
+      <span className="leading-none">
+        {project.displayName.charAt(0).toUpperCase()}
+      </span>
     </div>
   );
 }

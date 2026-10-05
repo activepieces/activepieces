@@ -133,7 +133,7 @@ const CanvasControls = ({
       id="canvas-controls"
       className="pointer-events-none absolute bottom-2 left-0 z-50 flex w-full items-center"
     >
-      <div className="pointer-events-auto absolute left-2 flex items-center justify-center rounded-xl border border-gray-6 bg-panel p-1">
+      <div className="pointer-events-auto absolute left-2 flex items-center justify-center rounded-xl border border-gray-6 bg-gray-1 p-1">
         <CanvasControlButton
           tooltip={t('Minimap' + (isMac() ? ' (⌘ + M)' : ' (Ctrl + M)'))}
           icon={Map}
@@ -143,7 +143,7 @@ const CanvasControls = ({
       </div>
       <div className="grow"></div>
 
-      <div className="pointer-events-auto flex items-center justify-center gap-1 rounded-xl border border-gray-6 bg-panel p-1 shadow-over">
+      <div className="pointer-events-auto flex items-center justify-center gap-1 rounded-xl border border-gray-6 bg-gray-1 p-1 shadow-over">
         <CanvasControlButton
           tooltip={t('Zoom in')}
           icon={Plus}

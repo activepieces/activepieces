@@ -210,7 +210,7 @@ function PropertyGroupTabs({
                   ) : count > 0 ? (
                     <span
                       className={cn(
-                        'inline-flex min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-sm font-semibold leading-none tabular-nums',
+                        'inline-flex min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-xs font-semibold leading-none tabular-nums',
                         active
                           ? 'bg-gray-3 text-gray-12'
                           : 'bg-gray-4 text-gray-11',

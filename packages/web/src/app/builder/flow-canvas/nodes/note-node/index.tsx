@@ -182,7 +182,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
                 disabled={isDragging || readonly}
                 initialValue={localNote.content}
                 className={cn(
-                  'text-sm h-full',
+                  'text-xs h-full',
                   NoteColorVariantClassName[color],
                   {
                     '!cursor-grabbing': isDragging,
@@ -192,7 +192,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
                 onlyEditableOnDoubleClick={true}
                 placeholder={t('Double click to edit...')}
                 placeholderClassName={cn(
-                  'text-sm',
+                  'text-xs',
                   NoteColorVariantClassName[color],
                 )}
                 onChange={(value: string) => {

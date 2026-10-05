@@ -31,7 +31,7 @@ export default function McpServerPage() {
 
   return (
     <PageTitle
-      title={TABS.find((option) => option.value === nav.tab)?.title ?? ''}
+      title={t(TABS.find((option) => option.value === nav.tab)?.title ?? '')}
     >
       <Page>
         <PageHeader

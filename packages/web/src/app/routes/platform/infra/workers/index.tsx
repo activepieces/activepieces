@@ -70,7 +70,7 @@ function MachinesView() {
     );
   }
 
-  if (isError) {
+  if (isError && !machines) {
     return (
       <DataFetchErrorState entity={t('machines')} onRetry={() => refetch()} />
     );

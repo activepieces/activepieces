@@ -103,7 +103,7 @@ const RunInfoWidget = () => {
     <LargeWidgetWrapper
       containerClassName={cn(
         flowRunUtils.getStatusContainerClassName({ variant }),
-        'border border-gray-6 bg-panel',
+        'border border-gray-6 bg-gray-1',
       )}
       key={run.id + run.status}
     >

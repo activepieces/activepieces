@@ -6,7 +6,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { FolderOpen } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { usePlatformProjects } from '@/app/routes/platform/projects/use-platform-projects';
@@ -51,30 +51,36 @@ export function ProjectGroupsTable({
   });
   const { mutate: updateWorkerSettings } = useUpdateWorkerSettings();
 
-  const save = ({
-    row,
-    request,
-  }: {
-    row: RowDataWithActions<ProjectGroupRow>;
-    request: WorkerSettings;
-  }) => {
-    if (sampleRows) {
-      return;
-    }
-    const previous: WorkerSettings =
-      'workerGroupId' in request
-        ? { workerGroupId: row.workerGroupId }
-        : { maxConcurrentJobs: row.maxConcurrentJobs };
-    updateWorkerSettings({
-      projectId: row.id,
-      projectName: row.displayName,
-      next: request,
-      previous,
-    });
-  };
+  const save = useCallback(
+    ({
+      row,
+      request,
+    }: {
+      row: RowDataWithActions<ProjectGroupRow>;
+      request: WorkerSettings;
+    }) => {
+      if (sampleRows) {
+        return;
+      }
+      const previous: WorkerSettings =
+        'workerGroupId' in request
+          ? { workerGroupId: row.workerGroupId }
+          : { maxConcurrentJobs: row.maxConcurrentJobs };
+      updateWorkerSettings({
+        projectId: row.id,
+        projectName: row.displayName,
+        next: request,
+        previous,
+      });
+    },
+    [sampleRows, updateWorkerSettings],
+  );
 
   const rows = sampleRows ?? (data?.data ?? []).map(toRow);
-  const columns = buildColumns({ groups, sharedSlots, save });
+  const columns = useMemo(
+    () => buildColumns({ groups, sharedSlots, save }),
+    [groups, sharedSlots, save],
+  );
 
   return (
     <>

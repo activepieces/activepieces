@@ -75,7 +75,7 @@ export function ShowcaseTile({
         <p
           className={cn(
             'mt-0.5 leading-snug text-gray-11',
-            isList ? 'text-sm line-clamp-1' : 'text-sm line-clamp-2',
+            isList ? 'text-sm line-clamp-1' : 'text-xs line-clamp-2',
           )}
         >
           {tile.description}

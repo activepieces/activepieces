@@ -65,10 +65,12 @@ export function SystemHealthTab() {
       icon: <Package />,
       status: isPending ? 'loading' : isVersionUpToDate ? 'passed' : 'failed',
       link: RELEASES_LINK,
-      message: t('Running {current}, latest is {latest}', {
-        current: currentVersion || t('Unknown'),
-        latest: latestVersion || t('Unknown'),
-      }),
+      message: isPending
+        ? null
+        : t('Running {current}, latest is {latest}', {
+            current: currentVersion || t('Unknown'),
+            latest: latestVersion || t('Unknown'),
+          }),
       hiddenOnCloud: true,
     },
     {
@@ -121,9 +123,11 @@ export function SystemHealthTab() {
       icon: <MemoryStick />,
       status: toStatus({ value: systemHealth?.workerRam, isPending }),
       link: HARDWARE_DOCS_LINK,
-      message: workersConnected
-        ? t('At least 1GB of RAM is required per worker.')
-        : t('No workers are connected.'),
+      message: workerMessage({
+        isPending,
+        workersConnected,
+        requirement: t('At least 1GB of RAM is required per worker.'),
+      }),
     },
     {
       id: 'worker-cpu',
@@ -131,9 +135,11 @@ export function SystemHealthTab() {
       icon: <Cpu />,
       status: toStatus({ value: systemHealth?.workerCpu, isPending }),
       link: HARDWARE_DOCS_LINK,
-      message: workersConnected
-        ? t('At least 0.5 CPU core is required per worker.')
-        : t('No workers are connected.'),
+      message: workerMessage({
+        isPending,
+        workersConnected,
+        requirement: t('At least 0.5 CPU core is required per worker.'),
+      }),
     },
   ];
 
@@ -239,6 +245,21 @@ function toStatus({
   return value ? 'passed' : 'failed';
 }
 
+function workerMessage({
+  isPending,
+  workersConnected,
+  requirement,
+}: {
+  isPending: boolean;
+  workersConnected: boolean;
+  requirement: string;
+}): string {
+  if (isPending || workersConnected) {
+    return requirement;
+  }
+  return t('No workers are connected.');
+}
+
 function releaseMessage(release: ReleaseInfo | undefined): React.ReactNode {
   if (!release) {
     return null;
@@ -259,7 +280,7 @@ function releaseMessage(release: ReleaseInfo | undefined): React.ReactNode {
     );
   }
   return t(
-    'All {total, plural, =1 {# connected worker matches} other {# connected workers match}} the app release {current}.',
+    '{total, plural, =0 {No workers are connected yet. They must run the app release {current}.} =1 {The connected worker matches the app release {current}.} other {All # connected workers match the app release {current}.}}',
     { total: release.workers.total, current: release.current },
   );
 }

@@ -64,9 +64,9 @@ function AssignProjectsContent({
   const assignProjects = useAssignProjectsToGroup();
   const groupName = workerGroupUtils.displayName(groupLabel);
   const query = search.trim().toLowerCase();
-  const visible = allProjects.filter((project) =>
-    project.displayName.toLowerCase().includes(query),
-  );
+  const visible = allProjects
+    .filter((project) => project.displayName.toLowerCase().includes(query))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
   const changes = pendingChanges({ allProjects, checkedIds, groupLabel });
 
   const toggle = (projectId: string) => {

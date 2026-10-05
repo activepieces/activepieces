@@ -55,10 +55,13 @@ function buildStats(report: PlatformAnalyticsReport): StatValue[] {
       hint: t('Total time saved by automation'),
       value: hasTimeSaved
         ? formatUtils.formatToHoursAndMinutes(totalSecondsSaved)
-        : 'N/A',
-      caption: t('{days} workdays saved', {
-        days: hasTimeSaved ? workdays.toLocaleString() : 'N/A',
-      }),
+        : '—',
+      caption: hasTimeSaved
+        ? t(
+            '{days, plural, =0 {Less than a workday saved} =1 {1 workday saved} other {# workdays saved}}',
+            { days: workdays },
+          )
+        : t('Add time saved per run to your flows to see this'),
     },
     {
       key: 'active-flows',

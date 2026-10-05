@@ -8,6 +8,7 @@ import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import {
@@ -113,7 +114,7 @@ export default function ImpactPage() {
             'View impact analytics and metrics for the active flows.',
           )}
         >
-          <div className="flex h-9 items-center gap-1 rounded-lg border border-dashed border-gray-7 pr-1 pl-3 text-sm text-gray-11">
+          <div className="hidden h-9 items-center gap-1 rounded-lg border border-dashed border-gray-7 pr-1 pl-3 text-sm text-gray-11 lg:flex">
             <span className="tabular-nums">
               {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
               {t('Refreshes daily')}
@@ -123,6 +124,7 @@ export default function ImpactPage() {
                 <Button
                   variant="ghost"
                   size="icon-xs"
+                  aria-label={t('Refresh analytics')}
                   onClick={() =>
                     refreshAnalytics(undefined, {
                       onSuccess: () =>
@@ -185,8 +187,14 @@ export default function ImpactPage() {
           </TabsList>
 
           <TabsContent value="analytics" className="flex flex-col gap-4">
-            <Summary report={report ?? undefined} />
-            <Trends report={report ?? undefined} />
+            {isError ? (
+              <DataFetchErrorState entity={t('analytics')} />
+            ) : (
+              <>
+                <Summary report={report ?? undefined} />
+                <Trends report={report ?? undefined} />
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="details">

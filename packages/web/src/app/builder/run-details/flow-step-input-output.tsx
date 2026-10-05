@@ -332,7 +332,7 @@ const InternalErrorPanel = ({
           {t('Platform Admin Only')}
         </Badge>
       </div>
-      <div className="flex flex-col gap-1 text-sm text-gray-11">
+      <div className="flex flex-col gap-1 text-xs text-gray-11">
         <span>
           {t('Source')}: {internalError.source}
         </span>

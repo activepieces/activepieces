@@ -297,7 +297,7 @@ export function FlowsDetails({
           <AlertCircle />
           <AlertTitle>
             {t(
-              'There are {count} flows missing their Estimated Time Per Run.',
+              '{count, plural, =1 {1 flow is missing its estimated time saved per run.} other {# flows are missing their estimated time saved per run.}}',
               { count: flowsMissingTimeSaved },
             )}
           </AlertTitle>

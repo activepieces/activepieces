@@ -259,6 +259,7 @@ export function ChatWithAIPage() {
                     variant="ghost"
                     size="icon-sm"
                     className="shrink-0"
+                    aria-label={t('New chat')}
                     onClick={handleNewChat}
                   >
                     <PlusIcon />
@@ -299,7 +300,12 @@ export function ChatWithAIPage() {
               {activeConversationId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-xs" className="shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="shrink-0"
+                      aria-label={t('More actions')}
+                    >
                       <Ellipsis />
                     </Button>
                   </DropdownMenuTrigger>
