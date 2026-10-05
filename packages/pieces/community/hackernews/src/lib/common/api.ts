@@ -1,4 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
+import { chunk } from '@activepieces/pieces-framework';
 
 import { hackernewsClient } from './client';
 
@@ -43,9 +44,10 @@ async function listStories({
 }): Promise<{ stories: HackernewsNormalizedItem[]; count: number }> {
 	const resolvedLimit = resolveLimit({ limit });
 	const storyIds = await listStoryIds({ storyList });
-	const items = await Promise.all(
-		storyIds.slice(0, resolvedLimit).map(async (itemId) => await getItem({ itemId })),
-	);
+	const items: (HackernewsItem | null)[] = [];
+	for (const batch of chunk(storyIds.slice(0, resolvedLimit), ITEM_BATCH_SIZE)) {
+		items.push(...(await Promise.all(batch.map(async (itemId) => await getItem({ itemId })))));
+	}
 	const stories = items
 		.filter((item): item is HackernewsItem => item !== null)
 		.map((item) => normalizeItem({ item }));
@@ -164,3 +166,4 @@ export const hackernewsApi = {
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 100;
 const MAX_SUBMISSION_IDS = 100;
+const ITEM_BATCH_SIZE = 10;
