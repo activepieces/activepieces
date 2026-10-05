@@ -737,11 +737,13 @@ async function resolveDynamicPropertySettings({ pieceName, pieceVersion, compone
         const needsSchema = isNil(current[name]?.schema) || watchedKeys.some((key) => changedKeys.includes(key))
         return prop.type === PropertyType.DYNAMIC && !isNil(input[name]) && needsSchema
     })
-    const resolved = await Promise.all(needingSchema.map(async ([name]) => {
+    const refreshed = await Promise.all(needingSchema.map(async ([name]) => {
+        const type = current[name]?.type ?? PropertyExecutionType.MANUAL
         const { data: result } = await tryCatch(() => executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName: componentName, propertyName: name, input, projectId, platformId, log }))
-        return result?.status === 'dynamic' ? [[name, { type: current[name]?.type ?? PropertyExecutionType.MANUAL, schema: result.props }] as const] : []
+        const settings: PropertySettings = result?.status === 'dynamic' ? { type, schema: result.props } : { type }
+        return [name, settings] as const
     }))
-    return { ...current, ...Object.fromEntries(resolved.flat()) }
+    return { ...current, ...Object.fromEntries(refreshed) }
 }
 
 // Classify an action by how many records it returns, from its name. This is the signal the agent
