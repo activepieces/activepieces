@@ -9,14 +9,16 @@ import { commonProps } from '../common/props';
 import { GristAPIClient } from '../common/helpers';
 
 import { HttpMethod } from '@activepieces/pieces-common';
+import { gristSearchRecordOutputSchema } from '../output-schemas';
 
 export const gristSearchRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-search-record',
+  outputSchema: gristSearchRecordOutputSchema,
   classification: 'SEARCH',
   displayName: 'Search Record',
   description: 'Search record by matching criteria.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up records in a Grist table by filtering one chosen column against a value. Use it to find rows before reading or updating them; the match is case-sensitive, exact, and only works on Text-type columns. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: commonProps.workspace_id,
