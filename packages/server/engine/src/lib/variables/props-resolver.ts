@@ -177,7 +177,7 @@ async function evalWithPropertyPath({ segments, getStepView, flattenKeys }: {
             return ''
         }
         const value = propertyPath.resolveValue({ segments: segments.slice(1), scope: stepView })
-        const selected = isNil(flattenKeys) ? value : scriptEvaluator.flattenNestedKeys(value, flattenKeys)
+        const selected = isNil(flattenKeys) ? value : propertyPath.flattenAsJson({ value, keys: flattenKeys })
         return cloneResolvedValue(selected) ?? ''
     })
 

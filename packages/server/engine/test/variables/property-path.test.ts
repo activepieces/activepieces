@@ -228,6 +228,29 @@ describe('propertyPath', () => {
         })
     })
 
+    describe('flattenAsJson', () => {
+        it('collects a key across nested arrays', () => {
+            const value = { rows: [{ tags: [{ name: 'a' }, { name: 'b' }] }, { tags: [{ name: 'c' }] }] }
+            expect(propertyPath.flattenAsJson({ value, keys: ['rows', 'tags', 'name'] })).toEqual(['a', 'b', 'c'])
+        })
+
+        it('reads values the way JSON.stringify would', () => {
+            const createdAt = new Date('2026-10-06T10:00:00.000Z')
+            const rows = [{ v: createdAt }, { v: undefined }, { v: () => 1 }, { v: Number.NaN }, { v: 'x' }]
+            expect(propertyPath.flattenAsJson({ value: { rows }, keys: ['rows', 'v'] })).toEqual([createdAt.toJSON(), null, 'x'])
+        })
+
+        it('turns undefined array elements into null like JSON does', () => {
+            expect(propertyPath.flattenAsJson({ value: { list: ['a', undefined, 'c'] }, keys: ['list'] })).toEqual(['a', null, 'c'])
+        })
+
+        it('returns nothing for object leaves and missing keys', () => {
+            expect(propertyPath.flattenAsJson({ value: { rows: [{ v: { a: 1 } }] }, keys: ['rows', 'v'] })).toEqual([])
+            expect(propertyPath.flattenAsJson({ value: { rows: [{ v: 1 }] }, keys: ['rows', 'missing'] })).toEqual([])
+            expect(propertyPath.flattenAsJson({ value: undefined, keys: ['rows'] })).toEqual([])
+        })
+    })
+
     describe('resolveValue', () => {
         const scope = {
             step_1: {

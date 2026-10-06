@@ -217,31 +217,41 @@ describe('Props resolver', () => {
         evaluateSpy.mockRestore()
     })
 
-    test('flatten array path keeps the JSON shape of live step output values', async () => {
+    test('flatten array path on live step output matches what the script sandbox returns', async () => {
         const createdAt = new Date('2026-10-06T10:00:00.000Z')
         const state = await executionState.upsertStep('step_5', GenericStepOutput.create({
             type: FlowActionType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
-            output: { rows: [{ createdAt, note: undefined }, { createdAt, note: 'b' }] },
+            output: {
+                rows: [
+                    { createdAt, note: undefined, fn: () => 1, score: Number.NaN, tags: ['a', undefined], nested: { id: 1 } },
+                    { createdAt, note: 'b', fn: 'kept', score: 2, tags: [], nested: { id: 2 } },
+                ],
+            },
         }))
-        const { resolvedInput } = await propsResolverService.resolve({
-            unresolvedInput: {
-                dates: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\', \'createdAt\'])}}',
-                notes: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\', \'note\'])}}',
-            },
-            executionState: state,
-        })
-        expect(resolvedInput).toEqual({ dates: [createdAt.toJSON(), createdAt.toJSON()], notes: ['b'] })
+        const keys = ['createdAt', 'note', 'fn', 'score', 'tags', 'nested', 'missing']
+        const nativeInput = Object.fromEntries(keys.map((key) => [key, `{{flattenNestedKeys(step_5['output'], ['rows', '${key}'])}}`]))
+        const scriptInput = Object.fromEntries(keys.map((key) => [key, `{{flattenNestedKeys(step_5['output'], ['rows'].concat(['${key}']))}}`]))
 
-        const { resolvedInput: viaScript } = await propsResolverService.resolve({
-            unresolvedInput: {
-                dates: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\'].concat([\'createdAt\']))}}',
-                notes: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\'].concat([\'note\']))}}',
-            },
-            executionState: state,
+        const { resolvedInput: native } = await propsResolverService.resolve({ unresolvedInput: nativeInput, executionState: state })
+        const { resolvedInput: viaScript } = await propsResolverService.resolve({ unresolvedInput: scriptInput, executionState: state })
+
+        expect(native).toEqual(viaScript)
+        expect(native).toEqual({
+            createdAt: [createdAt.toJSON(), createdAt.toJSON()],
+            note: ['b'],
+            fn: ['kept'],
+            score: [null, 2],
+            tags: ['a', null],
+            nested: [],
+            missing: [],
         })
-        expect(resolvedInput).toEqual(viaScript)
+    })
+
+    test('flattenNestedKeys inside a hand-written expression keeps its script behavior', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys([{ note: undefined }, { note: \'b\' }], [\'note\'])}}', executionState })
+        expect(resolvedInput).toEqual([null, 'b'])
     })
 
     test('flatten array path on a missing step resolves to an empty string', async () => {

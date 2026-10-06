@@ -34,6 +34,33 @@ export const propertyPath = {
         }
         return current
     },
+
+    flattenAsJson({ value, keys }: FlattenAsJsonParams): unknown[] {
+        const json = toJsonValue(value)
+        if (Array.isArray(json)) {
+            return json.flatMap((item) => propertyPath.flattenAsJson({ value: isDroppedByJson(item) ? null : item, keys }))
+        }
+        if (typeof json === 'object' && json !== null) {
+            const [head, ...rest] = keys
+            const match = Object.entries(json).find(([key, child]) => key === head && !isDroppedByJson(child))
+            return isNil(match) ? [] : propertyPath.flattenAsJson({ value: match[1], keys: rest })
+        }
+        return keys.length === 0 ? [json] : []
+    },
+}
+
+function toJsonValue(value: unknown): unknown {
+    if (typeof value === 'object' && value !== null && 'toJSON' in value && typeof value.toJSON === 'function') {
+        return toJsonValue(value.toJSON())
+    }
+    if (typeof value === 'number' && !Number.isFinite(value)) {
+        return null
+    }
+    return value
+}
+
+function isDroppedByJson(value: unknown): boolean {
+    return value === undefined || typeof value === 'function' || typeof value === 'symbol'
 }
 
 function collectSafeSegments(node: jsep.Expression): string[] | null {
@@ -126,6 +153,11 @@ function isArrayExpression(node: jsep.Expression): node is jsep.ArrayExpression 
 const UNDECODED_ESCAPE = /\\[ux0-9\r\n\u2028\u2029]/
 const BLOCKED_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
 const LITERAL_KEYWORDS = new Set(['undefined', 'NaN', 'Infinity'])
+
+type FlattenAsJsonParams = {
+    value: unknown
+    keys: string[]
+}
 
 type FlattenNestedKeysCall = {
     segments: string[]
