@@ -9,7 +9,7 @@ import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../data
 import { distributedLock, distributedStore } from '../database/redis-connections'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
-import { encryptUtils } from '../helper/encryption'
+import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { platformService } from '../platform/platform.service'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviderHealth } from './ai-provider-health'
@@ -191,13 +191,25 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
-        await transaction(async (manager) => {
+        const deleted = await transaction(async (manager) => {
             await platformModelTierService.assertKeyCanBeDeleted({ manager, platformId, configId: providerId })
+            const row = await aiProviderRepo(manager).findOneBy({ platformId, id: providerId })
             await aiProviderRepo(manager).delete({
                 platformId,
                 id: providerId,
             })
+            return row
         })
+        if (!isNil(deleted) && deleted.provider === AIProviderName.ACTIVEPIECES) {
+            await revokeStoredManagedKey({ auth: deleted.auth, platformId, log })
+        }
+    },
+    async deleteManagedProvider({ platformId }: { platformId: PlatformId }): Promise<void> {
+        const managed = await aiProviderRepo().findOneBy({ platformId, provider: AIProviderName.ACTIVEPIECES })
+        if (isNil(managed)) {
+            return
+        }
+        await this.delete(platformId, managed.id)
     },
     async recordKeyObservation({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
         const status = classifyProviderOutcome(signal)
@@ -533,7 +545,7 @@ async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId:
 
 async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { providerId: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {
     return distributedLock(log).runExclusive({
-        key: getManagedAiProviderKeyLockKey(providerId),
+        key: getManagedAiProviderKeyLockKey(platformId),
         timeoutInSeconds: MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS,
         fn: async () => {
             const current = await getRowByIdOrThrow({ platformId, configId: providerId })
@@ -546,12 +558,51 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
                 limit: MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD,
                 limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
             })
-            const rawAuth: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
-            await aiProviderRepo().update({ id: providerId, platformId }, { auth: await encryptUtils.encryptObject(rawAuth) })
-            const persisted = await getRowByIdOrThrow({ platformId, configId: providerId })
-            return encryptUtils.decryptObject<AIProviderAuthConfig>(persisted.auth)
+            const minted: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
+            const { data: stored, error } = await tryCatch(() => storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth: current.auth, auth: minted }))
+            if (isNil(stored) || managedKeyHash(stored) !== minted.apiKeyHash) {
+                await revokeManagedKey({ hash: minted.apiKeyHash, platformId, log })
+            }
+            if (!isNil(error)) {
+                throw error
+            }
+            if (!hasManagedKey(stored)) {
+                throw new Error(`[aiProviderService#enrichWithKeysIfNeeded] Managed AI provider ${providerId} has no stored key`)
+            }
+            return stored
         },
     })
+}
+
+async function storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth, auth }: { providerId: string, platformId: PlatformId, observedAuth: EncryptedObject, auth: ActivePiecesProviderAuthConfig }): Promise<AIProviderAuthConfig> {
+    await aiProviderRepo().createQueryBuilder()
+        .update()
+        .set({ auth: await encryptUtils.encryptObject(auth) })
+        .where({ id: providerId, platformId })
+        .andWhere('"auth"::jsonb = CAST(:observedAuth AS jsonb)', { observedAuth: JSON.stringify(observedAuth) })
+        .execute()
+    const row = await getRowByIdOrThrow({ platformId, configId: providerId })
+    return encryptUtils.decryptObject<AIProviderAuthConfig>(row.auth)
+}
+
+function managedKeyHash(auth: AIProviderAuthConfig): string | undefined {
+    return 'apiKeyHash' in auth ? auth.apiKeyHash : undefined
+}
+
+async function revokeStoredManagedKey({ auth, platformId, log }: { auth: EncryptedObject, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    const { data: stored } = await tryCatch(() => encryptUtils.decryptObject<AIProviderAuthConfig>(auth))
+    const hash = isNil(stored) ? undefined : managedKeyHash(stored)
+    if (isNil(hash) || hash === '') {
+        return
+    }
+    await revokeManagedKey({ hash, platformId, log })
+}
+
+async function revokeManagedKey({ hash, platformId, log }: { hash: string, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    const { error } = await tryCatch(() => openRouterApi.deleteKey({ hash }))
+    if (!isNil(error)) {
+        log.error({ error, platform: { id: platformId }, openRouterKey: { hash } }, '[aiProviderService#revokeManagedKey] Could not revoke a managed OpenRouter key, so it stays live upstream')
+    }
 }
 
 

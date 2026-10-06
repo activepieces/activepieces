@@ -1,6 +1,6 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { openRouterApi, OpenRouterApikey } from '../../../../src/app/ee/platform/platform-plan/openrouter/openrouter-api'
 import { EncryptedObject, encryptUtils } from '../../../../src/app/helper/encryption'
@@ -10,6 +10,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 
 let app: FastifyInstance
 let ctx: TestContext
+let deleteKey: MockInstance<typeof openRouterApi.deleteKey>
 
 beforeAll(async () => {
     app = await setupTestEnvironment({ fresh: true })
@@ -21,6 +22,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
     vi.restoreAllMocks()
+    deleteKey = vi.spyOn(openRouterApi, 'deleteKey').mockResolvedValue(undefined)
     ctx = await createTestContext(app)
 })
 
@@ -58,6 +60,14 @@ function slowMintingKeys(): () => Promise<{ key: string, data: OpenRouterApikey 
     }
 }
 
+async function findManagedRowId(platformId: string): Promise<string> {
+    const row = await db.findOneByOrFail<{ id: string }>('ai_provider', {
+        platformId,
+        provider: AIProviderName.ACTIVEPIECES,
+    })
+    return row.id
+}
+
 async function readPersistedApiKey(platformId: string): Promise<string | undefined> {
     const row = await db.findOneBy<{ auth: EncryptedObject }>('ai_provider', {
         platformId,
@@ -80,6 +90,7 @@ describe('managed AI provider key provisioning', () => {
         ])
 
         expect(createKey).toHaveBeenCalledTimes(1)
+        expect(deleteKey).not.toHaveBeenCalled()
         expect(first.apiKey).toBe(second.apiKey)
         expect(first.apiKeyHash).toBe(second.apiKeyHash)
         expect(await readPersistedApiKey(ctx.platform.id)).toBe(first.apiKey)
@@ -90,6 +101,7 @@ describe('managed AI provider key provisioning', () => {
 
         await expect(aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)).rejects.toThrow('[OpenRouter] POST /keys error: 500')
         expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+        expect(deleteKey).not.toHaveBeenCalled()
 
         createKey.mockImplementation(slowMintingKeys())
         const recovered = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
@@ -98,17 +110,42 @@ describe('managed AI provider key provisioning', () => {
         expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-1')
     })
 
-    it('does not hand back a key that was not persisted when the row is deleted mid-mint', async () => {
+    it('revokes the minted key and does not hand it back when the row is deleted mid-mint', async () => {
         vi.spyOn(openRouterApi, 'createKey').mockImplementation(async () => {
-            await db.delete('ai_provider', (await db.findOneByOrFail<{ id: string }>('ai_provider', {
-                platformId: ctx.platform.id,
-                provider: AIProviderName.ACTIVEPIECES,
-            })).id)
+            await db.delete('ai_provider', await findManagedRowId(ctx.platform.id))
             return { key: 'sk-or-1', data: mockOpenRouterKey('hash-1') }
         })
 
         await expect(aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)).rejects.toThrow()
         expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
+    })
+
+    it('keeps the key another writer stored first and revokes its own', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(async () => {
+            await db.update('ai_provider', await findManagedRowId(ctx.platform.id), {
+                auth: await encryptUtils.encryptObject({ apiKey: 'sk-or-other', apiKeyHash: 'hash-other' }),
+            })
+            return { key: 'sk-or-1', data: mockOpenRouterKey('hash-1') }
+        })
+
+        const result = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+        expect(result.apiKey).toBe('sk-or-other')
+        expect(result.apiKeyHash).toBe('hash-other')
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
+        expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-other')
+    })
+
+    it('revokes the minted key when storing it fails', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(async () => {
+            vi.spyOn(encryptUtils, 'encryptObject').mockRejectedValueOnce(new Error('store failed'))
+            return { key: 'sk-or-1', data: mockOpenRouterKey('hash-1') }
+        })
+
+        await expect(aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)).rejects.toThrow('store failed')
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
     })
 
     it('does not mint again once the platform already has a managed key', async () => {
@@ -121,8 +158,51 @@ describe('managed AI provider key provisioning', () => {
         ])
 
         expect(createKey).toHaveBeenCalledTimes(1)
+        expect(deleteKey).not.toHaveBeenCalled()
         expect(third.apiKey).toBe(provisioned.apiKey)
         expect(fourth.apiKey).toBe(provisioned.apiKey)
         expect(await readPersistedApiKey(ctx.platform.id)).toBe(provisioned.apiKey)
+    })
+})
+
+describe('managed AI provider deletion', () => {
+    it('revokes the stored key when an admin deletes the managed provider', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+        await aiProviderService(app.log).delete(ctx.platform.id, await findManagedRowId(ctx.platform.id))
+
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+    })
+
+    it('revokes the stored key when the platform teardown removes the managed provider', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+        await aiProviderService(app.log).deleteManagedProvider({ platformId: ctx.platform.id })
+
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+    })
+
+    it('revokes nothing when the managed provider never got a key', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockRejectedValue(new Error('[OpenRouter] POST /keys error: 500'))
+        await expect(aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)).rejects.toThrow()
+
+        await aiProviderService(app.log).deleteManagedProvider({ platformId: ctx.platform.id })
+
+        expect(deleteKey).not.toHaveBeenCalled()
+        expect(await db.findOneBy('ai_provider', { platformId: ctx.platform.id, provider: AIProviderName.ACTIVEPIECES })).toBeNull()
+    })
+
+    it('keeps the platform deletable when OpenRouter refuses the revoke', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        deleteKey.mockRejectedValueOnce(new Error('[OpenRouter] DELETE /keys/hash-1 error: 500'))
+
+        await aiProviderService(app.log).deleteManagedProvider({ platformId: ctx.platform.id })
+
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
     })
 })
