@@ -33,6 +33,7 @@ const LEGACY_PATHS: LegacyPath[] = [
     to: '/platform/pieces/policies',
   },
   { from: '/platform/pieces/piece-sets', to: '/platform/pieces/policies' },
+  { from: '/platform/pieces/add-step-menu', to: '/platform/pieces/menu' },
   { from: '/platform/setup/pieces', to: '/platform/pieces' },
   { from: '/platform/setup/templates', to: '/platform/templates' },
   { from: '/platform/setup/billing', to: '/platform/billing' },

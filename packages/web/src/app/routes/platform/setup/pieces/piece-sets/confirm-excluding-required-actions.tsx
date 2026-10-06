@@ -1,21 +1,9 @@
 import { t } from 'i18next';
 
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { RequiredActionGroupHeader } from '@/features/piece-sets';
 
-import {
-  RequiredActionGroup,
-  useRequiredActionsGroupedByPiece,
-} from './use-required-actions-grouped-by-piece';
+import { useRequiredActionsGroupedByPiece } from './use-required-actions-grouped-by-piece';
 
 export function ConfirmExcludingRequiredActionsDialog({
   excludedRequiredActions,
@@ -25,84 +13,47 @@ export function ConfirmExcludingRequiredActionsDialog({
 }: {
   excludedRequiredActions: Record<string, string[]> | null;
   reason: ExcludingReason;
-  onConfirm: () => void;
+  onConfirm: () => Promise<unknown> | unknown;
   onCancel: () => void;
 }) {
+  const actionCount = Object.values(excludedRequiredActions ?? {}).flat()
+    .length;
   return (
-    <Dialog
+    <ConfirmDialog
       open={excludedRequiredActions !== null}
-      onOpenChange={(open) => !open && onCancel()}
-    >
-      <DialogContent className="sm:max-w-md">
-        {excludedRequiredActions && (
-          <ConfirmExcludingRequiredActionsContent
-            excludedRequiredActions={excludedRequiredActions}
-            reason={reason}
-            onConfirm={onConfirm}
-            onCancel={onCancel}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+      onOpenChange={(open) => {
+        if (!open) {
+          onCancel();
+        }
+      }}
+      title={t('Remove required actions?')}
+      description={
+        reason === 'removePieces'
+          ? t('blockingPiecesRemovesRequiredActions', { actionCount })
+          : t('limitingActionsRemovesRequiredActions', { actionCount })
+      }
+      consequence={
+        <ExcludedRequiredActionsList
+          excludedRequiredActions={excludedRequiredActions ?? {}}
+        />
+      }
+      confirmLabel={t('Save and remove')}
+      destructive={false}
+      onConfirm={onConfirm}
+    />
   );
 }
 
-function ConfirmExcludingRequiredActionsContent({
+function ExcludedRequiredActionsList({
   excludedRequiredActions,
-  reason,
-  onConfirm,
-  onCancel,
 }: {
   excludedRequiredActions: Record<string, string[]>;
-  reason: ExcludingReason;
-  onConfirm: () => void;
-  onCancel: () => void;
 }) {
   const { requiredActionsGroupedByPiece } = useRequiredActionsGroupedByPiece({
     actions: excludedRequiredActions,
   });
-  const pieceCount = Object.keys(excludedRequiredActions).length;
-  const actionCount = Object.values(excludedRequiredActions).flat().length;
   return (
-    <>
-      <DialogHeader>
-        <DialogTitle>{t('Remove required actions?')}</DialogTitle>
-        <DialogDescription>
-          {reason === 'removePieces'
-            ? t('removingPiecesRemovesRequiredActions', {
-                count: pieceCount,
-                actionCount,
-              })
-            : t('excludingActionsRemovesRequiredActions', {
-                count: pieceCount,
-                actionCount,
-              })}
-        </DialogDescription>
-      </DialogHeader>
-      <ScrollArea viewPortClassName="max-h-80">
-        <RequiredActionsList
-          requiredActionsGroupedByPiece={requiredActionsGroupedByPiece}
-        />
-      </ScrollArea>
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          {t('Cancel')}
-        </Button>
-        <Button type="button" onClick={onConfirm}>
-          {t('Save and remove')}
-        </Button>
-      </DialogFooter>
-    </>
-  );
-}
-
-function RequiredActionsList({
-  requiredActionsGroupedByPiece,
-}: {
-  requiredActionsGroupedByPiece: RequiredActionGroup[];
-}) {
-  return (
-    <div className="flex flex-col gap-3">
+    <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
       {requiredActionsGroupedByPiece.map((group) => (
         <div key={group.pieceName} className="flex flex-col">
           <RequiredActionGroupHeader
@@ -110,7 +61,7 @@ function RequiredActionsList({
             logoUrl={group.logoUrl}
           />
           {group.actions.map((action) => (
-            <p key={action.name} className="py-1.5 pl-9 text-sm">
+            <p key={action.name} className="py-1 pl-11 text-sm text-gray-11">
               {action.displayName}
             </p>
           ))}

@@ -2,12 +2,14 @@ import { DuplicatePieceSetRequestBody } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -23,6 +25,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import { pieceSetFormErrors } from './piece-set-form-errors';
 
 type DuplicatePieceSetDialogProps = {
   open: boolean;
@@ -40,19 +44,31 @@ const DuplicatePieceSetForm = ({
   sourceId: string;
   sourceName: string;
 }) => {
+  const navigate = useNavigate();
   const form = useForm<z.infer<typeof DuplicatePieceSetRequestBody>>({
     resolver: zodResolver(DuplicatePieceSetRequestBody),
-    defaultValues: { name: `${sourceName} (Copy)` },
+    defaultValues: { name: t('{name} copy', { name: sourceName }) },
     mode: 'onChange',
   });
 
   const { mutate: duplicateSet, isPending } =
-    pieceSetMutations.useDuplicatePieceSet();
+    pieceSetMutations.useDuplicatePieceSet({
+      onError: (error) => pieceSetFormErrors.show({ form, error }),
+    });
 
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     duplicateSet(
       { id: sourceId, name: data.name },
-      { onSuccess: () => onOpenChange(false) },
+      {
+        onSuccess: (copy) => {
+          onOpenChange(false);
+          navigate(`/platform/pieces/policies/${copy.id}`);
+        },
+      },
     );
   };
 
@@ -75,6 +91,11 @@ const DuplicatePieceSetForm = ({
             </FormItem>
           )}
         />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"
@@ -87,6 +108,7 @@ const DuplicatePieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isValid}
           >
             {t('Duplicate')}
           </Button>
@@ -106,7 +128,15 @@ export const DuplicatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Duplicate Piece Set')}</DialogTitle>
+          <DialogTitle>{t('Duplicate policy')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'A new policy starts with the same pieces and actions as {name}.',
+              {
+                name: sourceName,
+              },
+            )}
+          </DialogDescription>
         </DialogHeader>
         <DuplicatePieceSetForm
           key={open ? 'open' : 'closed'}

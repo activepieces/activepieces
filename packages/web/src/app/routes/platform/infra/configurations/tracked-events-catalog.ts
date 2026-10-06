@@ -85,7 +85,7 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   },
   [TelemetryEventName.PIECE_SELECTOR_SEARCH]: {
     group: 'flows',
-    label: t('Searched the step picker'),
+    label: t('Searched the piece menu'),
   },
   [TelemetryEventName.MCP_SERVER_CONNECTED]: {
     group: 'mcp',

@@ -1,0 +1,842 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import {
+  apId,
+  PieceSelectorTabConfig,
+  PieceSelectorTabSection,
+} from '@activepieces/shared';
+import {
+  Add01Icon,
+  ArrowDown01Icon,
+  Cancel01Icon,
+  Delete02Icon,
+  DragDropVerticalIcon,
+  MoreHorizontalIcon,
+  PuzzleIcon,
+  RotateCcwIcon,
+  Tick02Icon,
+  ViewIcon,
+  ViewOffSlashIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
+import { ReactNode, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
+import { Page, PageColumns } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
+import { SaveBar } from '@/components/custom/settings-parts';
+import {
+  Sortable,
+  SortableDragHandle,
+  SortableItem,
+} from '@/components/custom/sortable';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  PieceIcon,
+  pieceSelectorCustomization,
+  PIECE_SELECTOR_TAB_ICON_OPTIONS,
+  piecesHooks,
+} from '@/features/pieces';
+import { platformPiecesMutations } from '@/features/platform-admin';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
+import { cn } from '@/lib/utils';
+
+const borderlessInputClass =
+  'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
+
+export function AddStepMenuPage() {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const hasCustomMenu = (platform.pieceSelectorConfig?.tabs.length ?? 0) > 0;
+  const savedTabs = hasCustomMenu
+    ? platform.pieceSelectorConfig?.tabs ?? []
+    : pieceSelectorCustomization.getDefaultTabConfigs();
+  const [tabs, setDraftTabs] = useState<PieceSelectorTabConfig[]>(savedTabs);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [previewTabId, setPreviewTabId] = useState<string | null>(null);
+  const { pieces } = piecesHooks.usePieces({
+    includeHidden: true,
+    skipProjectFilter: true,
+  });
+  const saveMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
+    platformId: platform.id,
+    onError: (error) => {
+      mutationFeedback.markShown(error);
+      setServerError(mutationFeedback.message(error));
+    },
+  });
+  const resetMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
+    platformId: platform.id,
+    onError: (error) =>
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't reset the piece menu"),
+      }),
+  });
+  const dirty = serializeTabs(tabs) !== serializeTabs(savedTabs);
+  const validationError = validateTabs(normalizeTabs(tabs));
+  const busy = saveMutation.isPending || resetMutation.isPending;
+  const [newTabId, setNewTabId] = useState<string | null>(null);
+
+  const setTabs = (
+    update: (prev: PieceSelectorTabConfig[]) => PieceSelectorTabConfig[],
+  ) => {
+    setServerError(null);
+    setDraftTabs(update);
+  };
+
+  const updateTab = (id: string, patch: Partial<PieceSelectorTabConfig>) =>
+    setTabs((prev) =>
+      prev.map((tab) => (tab.id === id ? { ...tab, ...patch } : tab)),
+    );
+
+  const removeTab = (id: string) =>
+    setTabs((prev) => prev.filter((tab) => tab.id !== id));
+
+  const addCustomTab = () => {
+    const id = apId();
+    setNewTabId(id);
+    setTabs((prev) => [
+      ...prev,
+      {
+        id,
+        kind: 'CUSTOM',
+        title: '',
+        icon: pieceSelectorCustomization.getRandomIconKey(),
+        hidden: false,
+        pieceNames: [],
+        sections: [],
+      },
+    ]);
+  };
+
+  const discard = () => {
+    setServerError(null);
+    setDraftTabs(savedTabs);
+  };
+
+  const handleSave = () => {
+    if (!dirty || validationError !== null || busy) {
+      return;
+    }
+    const normalizedTabs = normalizeTabs(tabs);
+    setServerError(null);
+    saveMutation.mutate(
+      { tabs: normalizedTabs },
+      {
+        onSuccess: () => {
+          setDraftTabs(normalizedTabs);
+          toast.success(t('Piece menu layout saved'));
+        },
+      },
+    );
+  };
+
+  const resetToDefault = () => {
+    if (!hasCustomMenu || busy) {
+      return;
+    }
+    const previousConfig = platform.pieceSelectorConfig;
+    const previousTabs = savedTabs;
+    resetMutation.mutate(null, {
+      onSuccess: () => {
+        setServerError(null);
+        setDraftTabs(pieceSelectorCustomization.getDefaultTabConfigs());
+        mutationFeedback.undo({
+          message: t('Piece menu layout reset to default'),
+          onUndo: async () => {
+            await resetMutation.mutateAsync(previousConfig ?? null);
+            setDraftTabs(previousTabs);
+          },
+        });
+      },
+    });
+  };
+
+  return (
+    <form
+      className="flex min-h-0 flex-1 flex-col"
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleSave();
+      }}
+    >
+      <Page
+        footer={
+          <SaveBar
+            dirty={dirty}
+            saving={saveMutation.isPending}
+            invalid={validationError !== null}
+            error={dirty ? validationError ?? serverError : null}
+            onDiscard={discard}
+            saveControl={AdminControl.PIECES_SELECTOR_SUBMIT}
+          />
+        }
+      >
+        <AdminPageHeader page="addStepMenu">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={t('More actions')}
+              >
+                <HugeiconsIcon icon={MoreHorizontalIcon} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                {...adminControl(AdminControl.PIECES_SELECTOR_RESET_CONFIRM)}
+                disabled={!hasCustomMenu || busy}
+                onSelect={resetToDefault}
+              >
+                <HugeiconsIcon icon={RotateCcwIcon} />
+                {t('Reset to default')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </AdminPageHeader>
+
+        <PageColumns
+          main={
+            <Panel
+              flush
+              title={t('Tabs')}
+              description={t(
+                'Drag to reorder. Rename a tab, give it an icon, or hide it. Custom tabs hold the pieces you pick, in sections.',
+              )}
+            >
+              <div className="flex flex-col gap-2 p-5">
+                <Sortable
+                  value={tabs}
+                  onValueChange={(next) => setTabs(() => next)}
+                >
+                  <div className="flex flex-col gap-2">
+                    {tabs.map((tab) => (
+                      <SortableItem key={tab.id} value={tab.id} asChild>
+                        <div>
+                          <TabCard
+                            tab={tab}
+                            isNew={tab.id === newTabId}
+                            pieces={pieces ?? []}
+                            onChange={(patch) => updateTab(tab.id, patch)}
+                            onRemove={() => removeTab(tab.id)}
+                          />
+                        </div>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </Sortable>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  onClick={addCustomTab}
+                >
+                  <HugeiconsIcon icon={Add01Icon} />
+                  {t('Add custom tab')}
+                </Button>
+              </div>
+            </Panel>
+          }
+          aside={
+            <MenuPreview
+              tabs={tabs}
+              pieces={pieces ?? []}
+              selectedId={previewTabId}
+              onSelect={setPreviewTabId}
+            />
+          }
+        />
+      </Page>
+      <UnsavedChangesGuard dirty={dirty} />
+    </form>
+  );
+}
+
+function normalizeTabs(
+  tabs: PieceSelectorTabConfig[],
+): PieceSelectorTabConfig[] {
+  return tabs.map((tab) => {
+    const trimmedTitle = (tab.title ?? '').trim();
+    const sections = (tab.sections ?? [])
+      .map((section) => ({ ...section, title: section.title.trim() }))
+      .filter(
+        (section) => section.title !== '' || section.pieceNames.length > 0,
+      );
+    return {
+      ...tab,
+      title: trimmedTitle === '' ? undefined : trimmedTitle,
+      ...(tab.kind === 'CUSTOM' ? { sections } : {}),
+    };
+  });
+}
+
+function validateTabs(tabs: PieceSelectorTabConfig[]): string | null {
+  if (tabs.some((tab) => tab.kind === 'CUSTOM' && !tab.title)) {
+    return t('Custom tabs must have a name');
+  }
+  if (
+    tabs.some((tab) =>
+      (tab.sections ?? []).some((section) => section.title === ''),
+    )
+  ) {
+    return t('Sections must have a name');
+  }
+  return null;
+}
+
+function serializeTabs(tabs: PieceSelectorTabConfig[]): string {
+  return JSON.stringify(
+    normalizeTabs(tabs).map((tab) => [
+      tab.id,
+      tab.kind,
+      tab.builtinTab ?? null,
+      tab.title ?? null,
+      tab.icon ?? null,
+      tab.hidden,
+      tab.pieceNames ?? [],
+      (tab.sections ?? []).map((section) => [
+        section.id,
+        section.title,
+        section.pieceNames,
+      ]),
+    ]),
+  );
+}
+
+function MenuPreview({
+  tabs,
+  pieces,
+  selectedId,
+  onSelect,
+}: {
+  tabs: PieceSelectorTabConfig[];
+  pieces: PieceMetadataModelSummary[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const visible = tabs.filter((tab) => !tab.hidden);
+  const selected =
+    visible.find((tab) => tab.id === selectedId) ?? visible[0] ?? null;
+  const byName = new Map(pieces.map((piece) => [piece.name, piece]));
+  const labelOf = (tab: PieceSelectorTabConfig) => {
+    const display = pieceSelectorCustomization.getBuiltinTabDisplay(
+      tab.builtinTab,
+    );
+    return (
+      (tab.title ?? '').trim() ||
+      (display ? t(display.defaultLabel) : t('Untitled tab'))
+    );
+  };
+  return (
+    <Panel
+      flush
+      title={t('Preview')}
+      description={t('What builders see when they add a step.')}
+    >
+      {visible.length === 0 ? (
+        <p className="p-5 text-sm text-gray-11">
+          {t('Every tab is hidden. Builders will only see search.')}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-4 p-5">
+          <div className="flex flex-wrap gap-1 rounded-xl bg-gray-3 p-1">
+            {visible.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onSelect(tab.id)}
+                className={cn(
+                  'flex h-7 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-gray-11 outline-hidden focus-visible:ring-2 focus-visible:ring-gray-8 [&_svg]:size-3.5',
+                  selected?.id === tab.id && 'bg-panel text-gray-12 shadow-xs',
+                )}
+              >
+                {pieceSelectorCustomization.renderIcon(tab.icon) ??
+                  pieceSelectorCustomization.renderIcon(
+                    pieceSelectorCustomization.getBuiltinTabDisplay(
+                      tab.builtinTab,
+                    )?.defaultIconKey,
+                  )}
+                <span className="truncate">{labelOf(tab)}</span>
+              </button>
+            ))}
+          </div>
+          {selected && selected.kind === 'CUSTOM' ? (
+            <div className="flex flex-col gap-3">
+              <PreviewPieces
+                names={selected.pieceNames ?? []}
+                byName={byName}
+              />
+              {(selected.sections ?? []).map((section) => (
+                <div key={section.id} className="flex flex-col gap-2">
+                  <span className="text-xs font-medium text-gray-11">
+                    {section.title || t('Untitled section')}
+                  </span>
+                  <PreviewPieces names={section.pieceNames} byName={byName} />
+                </div>
+              ))}
+              {(selected.pieceNames ?? []).length === 0 &&
+                (selected.sections ?? []).length === 0 && (
+                  <p className="text-sm text-gray-11">
+                    {t(
+                      'This tab is empty. Open it on the left to pick pieces.',
+                    )}
+                  </p>
+                )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-11">
+              {t(
+                'A standard tab. It lists its pieces from the catalog, so it updates on its own.',
+              )}
+            </p>
+          )}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function PreviewPieces({
+  names,
+  byName,
+}: {
+  names: string[];
+  byName: Map<string, PieceMetadataModelSummary>;
+}) {
+  if (names.length === 0) {
+    return null;
+  }
+  return (
+    <ul className="grid grid-cols-2 gap-1.5">
+      {names.map((name) => {
+        const piece = byName.get(name);
+        return (
+          <li
+            key={name}
+            className="flex h-9 min-w-0 items-center gap-2 rounded-lg border px-2 text-sm"
+          >
+            <PieceIcon
+              size="xs"
+              border
+              displayName={piece?.displayName}
+              logoUrl={piece?.logoUrl}
+              showTooltip={false}
+            />
+            <span className="truncate">{piece?.displayName ?? name}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+const TabCard = ({
+  tab,
+  pieces,
+  isNew,
+  onChange,
+  onRemove,
+}: {
+  tab: PieceSelectorTabConfig;
+  isNew: boolean;
+  pieces: PieceMetadataModelSummary[];
+  onChange: (patch: Partial<PieceSelectorTabConfig>) => void;
+  onRemove: () => void;
+}) => {
+  const [expanded, setExpanded] = useState(isNew);
+  const display = pieceSelectorCustomization.getBuiltinTabDisplay(
+    tab.builtinTab,
+  );
+  const iconNode = pieceSelectorCustomization.renderIcon(tab.icon) ??
+    pieceSelectorCustomization.renderIcon(display?.defaultIconKey) ?? (
+      <HugeiconsIcon icon={PuzzleIcon} className="size-5" />
+    );
+  const placeholder = display ? t(display.defaultLabel) : t('Tab name');
+  const sections = tab.sections ?? [];
+  const isCustom = tab.kind === 'CUSTOM';
+
+  const addSection = () =>
+    onChange({
+      sections: [...sections, { id: apId(), title: '', pieceNames: [] }],
+    });
+
+  const updateSection = (
+    sectionId: string,
+    patch: Partial<PieceSelectorTabSection>,
+  ) =>
+    onChange({
+      sections: sections.map((section) =>
+        section.id === sectionId ? { ...section, ...patch } : section,
+      ),
+    });
+
+  const removeSection = (sectionId: string) =>
+    onChange({
+      sections: sections.filter((section) => section.id !== sectionId),
+    });
+
+  return (
+    <div
+      className={cn(
+        'rounded-xl border bg-panel transition-colors',
+        tab.hidden && 'opacity-60',
+        expanded && 'border-accent-7',
+      )}
+    >
+      <div className="flex items-center gap-1.5 p-2">
+        <SortableDragHandle
+          variant="ghost"
+          size="icon-xs"
+          className="shrink-0 text-gray-9"
+          aria-label={t('Drag to reorder')}
+        >
+          <HugeiconsIcon icon={DragDropVerticalIcon} />
+        </SortableDragHandle>
+
+        <TabIconPicker
+          value={tab.icon}
+          iconNode={iconNode}
+          onChange={(icon) => onChange({ icon })}
+        />
+
+        <Input
+          value={tab.title ?? ''}
+          placeholder={placeholder}
+          aria-label={t('Tab name')}
+          autoFocus={isNew}
+          onChange={(e) => onChange({ title: e.target.value })}
+          className={cn(borderlessInputClass, 'flex-1 font-medium')}
+        />
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="shrink-0 text-gray-11"
+          onClick={() => onChange({ hidden: !tab.hidden })}
+          aria-label={tab.hidden ? t('Show tab') : t('Hide tab')}
+          aria-pressed={tab.hidden}
+        >
+          {tab.hidden ? (
+            <HugeiconsIcon icon={ViewOffSlashIcon} />
+          ) : (
+            <HugeiconsIcon icon={ViewIcon} />
+          )}
+        </Button>
+
+        {isCustom && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="shrink-0 text-gray-11"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-label={t('Pieces & sections')}
+            aria-expanded={expanded}
+          >
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
+              className={cn('transition-transform', {
+                'rotate-180': expanded,
+              })}
+            />
+          </Button>
+        )}
+      </div>
+
+      {isCustom && expanded && (
+        <div className="flex flex-col divide-y border-t">
+          <PiecesPickerRow
+            label={t('Pieces')}
+            hint={t('Shown at the top of the tab')}
+            pieces={pieces}
+            selectedPieceNames={tab.pieceNames ?? []}
+            onChange={(pieceNames) => onChange({ pieceNames })}
+          />
+
+          <div className="flex flex-col gap-2 p-3">
+            <span className="text-sm font-medium">{t('Sections')}</span>
+            {sections.map((section) => (
+              <div
+                key={section.id}
+                className="flex items-center gap-1.5 rounded-xl border bg-gray-1 p-1"
+              >
+                <Input
+                  value={section.title}
+                  placeholder={t('Section name')}
+                  aria-label={t('Section name')}
+                  onChange={(e) =>
+                    updateSection(section.id, { title: e.target.value })
+                  }
+                  className={cn(borderlessInputClass, 'flex-1')}
+                />
+                <PiecePickerButton
+                  pieces={pieces}
+                  selectedPieceNames={section.pieceNames}
+                  onChange={(pieceNames) =>
+                    updateSection(section.id, { pieceNames })
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="shrink-0 text-gray-11 hover:text-danger-11"
+                  onClick={() => removeSection(section.id)}
+                  aria-label={t('Delete section')}
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} />
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="self-start text-gray-11"
+              onClick={addSection}
+            >
+              <HugeiconsIcon icon={Add01Icon} />
+              {t('Add section')}
+            </Button>
+          </div>
+
+          <div className="flex justify-end p-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-danger-11 hover:bg-danger-3 hover:text-danger-11"
+              onClick={onRemove}
+            >
+              <HugeiconsIcon icon={Delete02Icon} />
+              {t('Delete tab')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PiecesPickerRow = ({
+  label,
+  hint,
+  pieces,
+  selectedPieceNames,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  pieces: PieceMetadataModelSummary[];
+  selectedPieceNames: string[];
+  onChange: (pieceNames: string[]) => void;
+}) => {
+  return (
+    <div className="flex items-center justify-between gap-2 p-3">
+      <div className="flex flex-col">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-xs text-gray-11">{hint}</span>
+      </div>
+      <PiecePickerButton
+        pieces={pieces}
+        selectedPieceNames={selectedPieceNames}
+        onChange={onChange}
+      />
+    </div>
+  );
+};
+
+const TabIconPicker = ({
+  value,
+  iconNode,
+  onChange,
+}: {
+  value: string | undefined;
+  iconNode: ReactNode;
+  onChange: (icon: string) => void;
+}) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="shrink-0 text-gray-12"
+          aria-label={t('Change icon')}
+        >
+          {iconNode}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-2">
+        <div className="grid grid-cols-6 gap-1 max-h-64 overflow-y-auto overflow-x-hidden">
+          {PIECE_SELECTOR_TAB_ICON_OPTIONS.map(({ key, Icon }) => (
+            <Button
+              type="button"
+              key={key}
+              variant="ghost"
+              size="icon"
+              className={cn({
+                'bg-gray-5 hover:bg-gray-5 text-accent-11 hover:text-accent-11':
+                  value === key,
+              })}
+              onClick={() => onChange(key)}
+            >
+              <HugeiconsIcon icon={Icon} />
+            </Button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+const PiecePickerButton = ({
+  pieces,
+  selectedPieceNames,
+  onChange,
+}: {
+  pieces: PieceMetadataModelSummary[];
+  selectedPieceNames: string[];
+  onChange: (pieceNames: string[]) => void;
+}) => {
+  const piecesByName = useMemo(
+    () => new Map(pieces.map((piece) => [piece.name, piece])),
+    [pieces],
+  );
+  const selectedPieces = selectedPieceNames
+    .map((name) => piecesByName.get(name))
+    .filter((piece): piece is PieceMetadataModelSummary => !!piece);
+
+  const togglePiece = (name: string) =>
+    onChange(
+      selectedPieceNames.includes(name)
+        ? selectedPieceNames.filter((candidate) => candidate !== name)
+        : [...selectedPieceNames, name],
+    );
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0 whitespace-nowrap font-normal"
+        >
+          {t('{count} pieces', { count: selectedPieceNames.length })}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="end">
+        {selectedPieces.length > 0 && (
+          <div className="border-b p-2">
+            <Sortable
+              value={selectedPieces.map((piece) => ({ id: piece.name }))}
+              onValueChange={(items) => onChange(items.map((item) => item.id))}
+            >
+              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+                {selectedPieces.map((piece) => (
+                  <SortableItem key={piece.name} value={piece.name} asChild>
+                    <div className="flex items-center gap-2 rounded-lg px-1 py-0.5">
+                      <SortableDragHandle
+                        variant="ghost"
+                        size="icon-xs"
+                        className="shrink-0 text-gray-9"
+                        aria-label={t('Drag to reorder')}
+                      >
+                        <HugeiconsIcon icon={DragDropVerticalIcon} />
+                      </SortableDragHandle>
+                      <PieceIcon
+                        logoUrl={piece.logoUrl}
+                        displayName={piece.displayName}
+                        showTooltip={false}
+                        size="sm"
+                      />
+                      <span className="grow truncate text-sm">
+                        {piece.displayName}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="shrink-0"
+                        onClick={() => togglePiece(piece.name)}
+                        aria-label={t('Remove {name}', {
+                          name: piece.displayName,
+                        })}
+                      >
+                        <HugeiconsIcon icon={Cancel01Icon} />
+                      </Button>
+                    </div>
+                  </SortableItem>
+                ))}
+              </div>
+            </Sortable>
+          </div>
+        )}
+        <Command>
+          <CommandInput placeholder={t('Search pieces')} />
+          <CommandList>
+            <CommandEmpty>{t('No pieces found')}</CommandEmpty>
+            <CommandGroup>
+              {pieces.map((piece) => {
+                const isSelected = selectedPieceNames.includes(piece.name);
+                return (
+                  <CommandItem
+                    key={piece.name}
+                    value={piece.displayName}
+                    onSelect={() => togglePiece(piece.name)}
+                    className="flex items-center gap-2"
+                  >
+                    <PieceIcon
+                      logoUrl={piece.logoUrl}
+                      displayName={piece.displayName}
+                      showTooltip={false}
+                      size="sm"
+                    />
+                    <span className="grow truncate">{piece.displayName}</span>
+                    {isSelected && (
+                      <HugeiconsIcon
+                        icon={Tick02Icon}
+                        className="size-4 text-accent-11"
+                      />
+                    )}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};

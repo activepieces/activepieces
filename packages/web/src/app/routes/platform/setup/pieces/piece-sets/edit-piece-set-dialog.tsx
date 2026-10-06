@@ -25,9 +25,11 @@ import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { pieceSetFormErrors } from './piece-set-form-errors';
+
 const formSchema = z.object({
-  name: z.string().min(1, { message: formErrors.required }),
-  key: z.string().optional(),
+  name: z.string().trim().min(1, { message: formErrors.required }),
+  key: z.string().trim().min(1, { message: formErrors.required }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,17 +62,20 @@ const EditPieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
+    onError: (error) =>
+      pieceSetFormErrors.show({ form, error, keyField: 'key' }),
+  });
 
   const handleSubmit = ({ name, key }: FormValues) => {
+    if (isPending || !form.formState.isDirty) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     updateSet(
       {
         id,
-        request: {
-          name,
-          key: key || undefined,
-        },
+        request: { name, key },
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -100,17 +105,24 @@ const EditPieceSetForm = ({
           name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('Key')}</FormLabel>
+              <FormLabel>{t('Embed key')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('e.g. my-set')} {...field} />
+                <Input placeholder={t('e.g. sales')} {...field} />
               </FormControl>
               <FormDescription>
-                {t('Used in the Embed SDK to assign this set to a project')}
+                {t(
+                  'The embed SDK passes this key to put a project on this policy.',
+                )}
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"
@@ -123,6 +135,7 @@ const EditPieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isDirty || !form.formState.isValid}
           >
             {t('Save')}
           </Button>
@@ -143,7 +156,7 @@ export const EditPieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Edit Piece Set')}</DialogTitle>
+          <DialogTitle>{t('Edit details')}</DialogTitle>
         </DialogHeader>
         <EditPieceSetForm
           key={open ? 'open' : 'closed'}

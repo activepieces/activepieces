@@ -4,50 +4,58 @@ import {
   ApFlagId,
   AppConnectionType,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
 
 import { PiecesOAuth2AppsMap } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { oauthAppsApi } from '../api/oauth-apps';
 
 export const oauthAppsMutations = {
-  useDeleteOAuthApp: (refetch: () => void, setOpen: (open: boolean) => void) =>
-    useMutation({
-      mutationFn: async (credentialId: string) => {
-        await oauthAppsApi.delete(credentialId);
-        refetch();
-      },
-      onSuccess: () => {
-        toast.success(t('OAuth2 Credentials Deleted'), {
-          duration: 3000,
-        });
-        setOpen(false);
-      },
-    }),
-
-  useUpsertOAuthApp: (
-    refetch: () => void,
-    setOpen: (open: boolean) => void,
-    onConfigurationDone: () => void,
-  ) =>
-    useMutation({
-      mutationFn: async (request: UpsertOAuth2AppRequest) => {
-        await oauthAppsApi.upsert(request);
-        refetch();
-      },
-      onSuccess: () => {
-        toast.success(t('OAuth2 Credentials Updated'), {
-          duration: 3000,
-        });
-        onConfigurationDone();
-        setOpen(false);
-      },
-    }),
+  useDeleteOAuthApp: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (credentialId: string) => oauthAppsApi.delete(credentialId),
+      onSuccess: () => refreshOAuthApps({ queryClient }),
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't remove the OAuth app"),
+        }),
+    });
+  },
+  useUpsertOAuthApp: ({ onError }: { onError: (error: Error) => void }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (request: UpsertOAuth2AppRequest) =>
+        oauthAppsApi.upsert(request),
+      onSuccess: () => refreshOAuthApps({ queryClient }),
+      onError,
+    });
+  },
 };
+
+function refreshOAuthApps({
+  queryClient,
+}: {
+  queryClient: QueryClient;
+}): Promise<unknown> {
+  return Promise.all(
+    OAUTH_APP_QUERY_KEYS.map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey }),
+    ),
+  );
+}
+
+const OAUTH_APP_QUERY_KEYS = [['oauth2-apps-configured'], ['oauth-apps']];
 
 export const oauthAppsQueries = {
   useOAuthAppConfigured(pieceId: string) {

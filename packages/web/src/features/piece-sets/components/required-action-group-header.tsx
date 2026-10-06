@@ -20,7 +20,9 @@ export function RequiredActionGroupHeader({
         logoUrl={logoUrl}
         showTooltip={false}
       />
-      <span className="flex-1 text-sm font-semibold">{displayName}</span>
+      <span className="flex-1 text-sm font-medium text-gray-12">
+        {displayName}
+      </span>
       {children}
     </div>
   );

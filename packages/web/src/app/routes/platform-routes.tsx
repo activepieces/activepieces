@@ -92,6 +92,11 @@ const PiecesListPage = React.lazy(() =>
     default: m.PiecesListTab,
   })),
 );
+const AddStepMenuPage = React.lazy(() =>
+  import('./platform/setup/pieces/add-step-menu-page').then((m) => ({
+    default: m.AddStepMenuPage,
+  })),
+);
 const PieceSetsPage = React.lazy(() =>
   import('./platform/setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
     default: m.PieceSetsTab,
@@ -247,6 +252,20 @@ export const platformRoutes = [
     ),
   },
   {
+    path: '/platform/pieces/menu',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Piece menu layout">
+          <PlanFeatureSample feature="addStepMenu">
+            <SuspenseWrapper>
+              <AddStepMenuPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
     path: '/platform/pieces/policies',
     element: (
       <PlatformLayout>
@@ -255,9 +274,11 @@ export const platformRoutes = [
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
-            <SuspenseWrapper>
-              <PieceSetsPage />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="pieceSets">
+              <SuspenseWrapper>
+                <PieceSetsPage />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -268,9 +289,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Piece policy">
-          <SuspenseWrapper>
-            <PieceSetDetailsPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="pieceSets">
+            <SuspenseWrapper>
+              <PieceSetDetailsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -612,6 +635,7 @@ export const platformRoutes = [
     ),
   })),
   ...[
+    '/platform/pieces/add-step-menu',
     '/platform/pieces/piece-sets',
     '/platform/pieces/piece-sets/*',
     '/platform/setup/*',

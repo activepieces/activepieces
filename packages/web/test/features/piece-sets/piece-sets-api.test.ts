@@ -9,8 +9,8 @@ vi.mock('@/lib/api', () => ({
   },
 }));
 
-import { api } from '@/lib/api';
 import { pieceSetsApi } from '@/features/piece-sets';
+import { api } from '@/lib/api';
 
 const getMock = api.get as ReturnType<typeof vi.fn>;
 

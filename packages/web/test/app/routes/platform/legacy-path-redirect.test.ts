@@ -15,6 +15,7 @@ describe('legacyPathUtils.resolve', () => {
       '/platform/setup/pieces/piece-sets/abc123',
       '/platform/pieces/policies/abc123',
     ],
+    ['/platform/pieces/add-step-menu', '/platform/pieces/menu'],
     ['/platform/setup/billing/success', '/platform/billing/success'],
     [
       '/platform/infrastructure/event-destinations',

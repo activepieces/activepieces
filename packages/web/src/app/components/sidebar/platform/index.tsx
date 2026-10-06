@@ -107,6 +107,12 @@ export function PlatformSidebar() {
               locked: !platform.plan.managePiecesEnabled,
               tier: PLATFORM_FEATURES.pieces.tier,
             },
+            {
+              to: '/platform/pieces/menu',
+              label: t('Menu layout'),
+              locked: !platform.plan.managePiecesEnabled,
+              tier: PLATFORM_FEATURES.pieces.tier,
+            },
           ],
         },
         {

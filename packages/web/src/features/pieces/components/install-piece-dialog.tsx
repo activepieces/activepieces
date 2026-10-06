@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Add01Icon } from '@hugeicons/core-free-icons';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import pako from 'pako';
@@ -16,6 +16,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { FileInput } from '@/components/custom/file-input';
 import { IconButton } from '@/components/custom/icon-button';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -47,8 +49,10 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { piecesApi } from '../api/pieces-api';
+import { pieceCacheUtils } from '../hooks/pieces-hooks';
 const FormSchema = z.object({
   packageType: z.nativeEnum(PackageType),
   pieceName: z.string().optional(),
@@ -65,6 +69,7 @@ const InstallPieceDialog = ({
   onInstallPiece,
   scope,
 }: InstallPieceDialogProps) => {
+  const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [isOpen, setIsOpen] = useState(false);
@@ -115,35 +120,21 @@ const InstallPieceDialog = ({
 
   const { mutate, isPending } = useMutation<void, Error, AddPieceRequestBody>({
     mutationFn: async (data) => {
-      form.clearErrors();
-
-      if (data.packageType === PackageType.REGISTRY) {
-        if (!data.pieceName) {
-          form.setError('pieceName', {
-            message: t('Piece name is required for NPM Registry'),
-          });
-        }
-        if (!data.pieceVersion) {
-          form.setError('pieceVersion', {
-            message: t('Piece version is required for NPM Registry'),
-          });
-        }
-        if (!data.pieceName || !data.pieceVersion) {
-          throw new Error('Validation failed');
-        }
-      }
-
       await piecesApi.install(data);
     },
-    onSuccess: () => {
+    onSuccess: (_, data) => {
       setIsOpen(false);
       form.reset();
       onInstallPiece();
-      toast.success(t('Piece installed'), {
-        duration: 3000,
-      });
+      pieceCacheUtils.invalidatePieceCaches(queryClient).catch(() => undefined);
+      toast.success(
+        data.pieceName
+          ? t('{name} installed', { name: data.pieceName })
+          : t('Piece installed'),
+      );
     },
-    onError: (error) => {
+    onError: (error, data) => {
+      mutationFeedback.markShown(error);
       if (api.isError(error)) {
         if (error.response?.status === HttpStatusCode.Conflict) {
           form.setError('root.serverError', {
@@ -159,48 +150,82 @@ const InstallPieceDialog = ({
           responseData.params.message
         ) {
           form.setError('root.serverError', {
-            message: responseData.params.message,
+            message: engineFailureMessage({
+              message: responseData.params.message,
+              pieceName: data.pieceName,
+              pieceVersion: data.pieceVersion,
+            }),
           });
           return;
         }
-        form.setError('root.serverError', {
-          message: t('Something went wrong, please try again later'),
-        });
       }
+      form.setError('root.serverError', {
+        message: mutationFeedback.message(error),
+      });
     },
   });
 
+  const submit = (data: z.infer<typeof FormSchema>) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors();
+    if (data.packageType === PackageType.REGISTRY) {
+      if (!data.pieceName) {
+        form.setError('pieceName', {
+          message: t('Piece name is required for NPM Registry'),
+        });
+      }
+      if (!data.pieceVersion) {
+        form.setError('pieceVersion', {
+          message: t('Piece version is required for NPM Registry'),
+        });
+      }
+      if (!data.pieceName || !data.pieceVersion) {
+        return;
+      }
+    }
+    mutate({
+      projectId: authenticationSession.getProjectId()!,
+      ...data,
+    } as AddPieceRequestBody);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          form.reset();
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <IconButton
           {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
           icon={Add01Icon}
-          size="sm"
         >
-          {t('Install Piece')}
+          {t('Install piece')}
         </IconButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Install a piece')}</DialogTitle>
-          <DialogDescription>
-            <ApMarkdown
-              markdown={
-                'Use this to install a [custom piece](https://www.activepieces.com/docs/build-pieces/building-pieces/create-action) that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.'
-              }
-            />
+          <DialogTitle>{t('Install piece')}</DialogTitle>
+          <DialogDescription asChild>
+            <div>
+              <ApMarkdown
+                markdown={
+                  'Add a [custom piece](https://www.activepieces.com/docs/build-pieces/building-pieces/create-action) from npm or a packed archive. Only install pieces from authors you trust: a piece can read the data of every flow that uses it.'
+                }
+              />
+            </div>
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <form
             className="flex flex-col gap-4"
-            onSubmit={form.handleSubmit((data) =>
-              mutate({
-                projectId: authenticationSession.getProjectId()!,
-                ...data,
-              } as AddPieceRequestBody),
-            )}
+            onSubmit={form.handleSubmit(submit)}
           >
             <FormField
               name="packageType"
@@ -208,7 +233,7 @@ const InstallPieceDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel htmlFor="packageType">
-                    {t('Package Type')}
+                    {t('Package type')}
                   </FormLabel>
                   <Select
                     value={field.value}
@@ -228,13 +253,13 @@ const InstallPieceDialog = ({
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value={PackageType.REGISTRY}>
-                          {t('NPM Registry')}
+                          {t('npm registry')}
                         </SelectItem>
                         <SelectItem
                           value={PackageType.ARCHIVE}
                           disabled={!isEnabled || !privatePiecesEnabled}
                         >
-                          {t('Packed Archive (.tgz)')}
+                          {t('Packed archive (.tgz)')}
                         </SelectItem>
                       </SelectGroup>
                     </SelectContent>
@@ -252,7 +277,7 @@ const InstallPieceDialog = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="pieceName">
-                        {t('Piece Name')}
+                        {t('Package name')}
                       </FormLabel>
                       <Input
                         {...field}
@@ -260,7 +285,6 @@ const InstallPieceDialog = ({
                         id="pieceName"
                         type="text"
                         placeholder="@activepieces/piece-name"
-                        className="rounded-md"
                       />
                       <FormMessage />
                     </FormItem>
@@ -272,7 +296,7 @@ const InstallPieceDialog = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="pieceVersion">
-                        {t('Piece Version')}
+                        {t('Version')}
                       </FormLabel>
                       <Input
                         {...field}
@@ -280,7 +304,6 @@ const InstallPieceDialog = ({
                         id="pieceVersion"
                         type="text"
                         placeholder="0.0.1"
-                        className="rounded-md"
                       />
                       <FormMessage />
                     </FormItem>
@@ -297,13 +320,10 @@ const InstallPieceDialog = ({
                   field: { value: _value, onChange, ...fieldProps },
                 }) => (
                   <FormItem>
-                    <FormLabel htmlFor="pieceArchive">
-                      {t('Package Archive')}
-                    </FormLabel>
-                    <Input
+                    <FormLabel htmlFor="pieceArchive">{t('Archive')}</FormLabel>
+                    <FileInput
                       {...fieldProps}
                       id="pieceArchive"
-                      type="file"
                       onChange={(event) => {
                         const file = event.target.files?.[0];
                         if (file) {
@@ -312,7 +332,6 @@ const InstallPieceDialog = ({
                         }
                       }}
                       placeholder={t('Package archive')}
-                      className="rounded-md"
                     />
                     <FormMessage />
                   </FormItem>
@@ -325,13 +344,23 @@ const InstallPieceDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button
-              {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
-              loading={isPending}
-              type="submit"
-            >
-              {t('Install')}
-            </Button>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => setIsOpen(false)}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
+                loading={isPending}
+                type="submit"
+              >
+                {t('Install')}
+              </Button>
+            </DialogFooter>
           </form>
         </FormProvider>
       </DialogContent>
@@ -339,4 +368,30 @@ const InstallPieceDialog = ({
   );
 };
 
+function engineFailureMessage({
+  message,
+  pieceName,
+  pieceVersion,
+}: {
+  message: string;
+  pieceName: string | undefined;
+  pieceVersion: string | undefined;
+}): string {
+  if (message.includes(ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE)) {
+    return pieceName && pieceVersion
+      ? t(
+          "Couldn't find {name}@{version} on npm. Check the package name and version.",
+          { name: pieceName, version: pieceVersion },
+        )
+      : t(
+          "Couldn't find this piece on npm. Check the package name and version.",
+        );
+  }
+  return ERROR_CODE_ONLY.test(message)
+    ? t("Couldn't install the piece. Check the package name and version.")
+    : message;
+}
+
 export { InstallPieceDialog };
+
+const ERROR_CODE_ONLY = /^[A-Z][A-Z0-9_]+$/;

@@ -1,5 +1,7 @@
+import { PuzzleIcon } from '@hugeicons/core-free-icons';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate, LogoPlateProps } from '@/components/custom/logo-plate';
 import {
   Tooltip,
@@ -8,7 +10,14 @@ import {
 } from '@/components/ui/tooltip';
 
 const PieceIcon = React.memo(
-  ({ displayName, logoUrl, border, size, showTooltip }: PieceIconProps) => (
+  ({
+    displayName,
+    logoUrl,
+    border,
+    size,
+    showTooltip,
+    fallback,
+  }: PieceIconProps) => (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex shrink-0">
@@ -18,6 +27,7 @@ const PieceIcon = React.memo(
             size={size}
             border={border}
             tint
+            fallback={fallback}
           />
         </div>
       </TooltipTrigger>
@@ -30,9 +40,20 @@ const PieceIcon = React.memo(
 
 PieceIcon.displayName = 'PieceIcon';
 
-export { PieceIcon };
+const MissingPieceGlyph = () => (
+  <HugeiconsIcon
+    icon={PuzzleIcon}
+    aria-hidden
+    className="size-3/5 text-gray-11"
+  />
+);
 
-export type PieceIconProps = Pick<LogoPlateProps, 'size' | 'border'> & {
+export { MissingPieceGlyph, PieceIcon };
+
+export type PieceIconProps = Pick<
+  LogoPlateProps,
+  'size' | 'border' | 'fallback'
+> & {
   displayName?: string;
   logoUrl?: string;
   showTooltip: boolean;

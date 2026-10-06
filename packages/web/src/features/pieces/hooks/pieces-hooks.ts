@@ -78,6 +78,7 @@ type UsePieceProps = {
 
 type UseMultiplePiecesProps = {
   names: string[];
+  skipProjectFilter?: boolean;
 };
 
 type UsePiecesProps = {
@@ -168,8 +169,11 @@ export const piecesHooks = {
       combine: piecesByNameFromResults,
     });
   },
-  usePieceSummariesByNames: ({ names }: UseMultiplePiecesProps) => {
-    const { pieces, isLoading } = piecesHooks.usePieces({});
+  usePieceSummariesByNames: ({
+    names,
+    skipProjectFilter = false,
+  }: UseMultiplePiecesProps) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({ skipProjectFilter });
     const summaries = useMemo(() => {
       if (!pieces) return [];
       const byName = new Map(pieces.map((p) => [p.name, p]));
@@ -179,8 +183,14 @@ export const piecesHooks = {
     }, [pieces, names]);
     return { summaries, isLoading };
   },
-  usePieceSummary: ({ name }: { name: string }) => {
-    const { pieces, isLoading } = piecesHooks.usePieces({});
+  usePieceSummary: ({
+    name,
+    skipProjectFilter = false,
+  }: {
+    name: string;
+    skipProjectFilter?: boolean;
+  }) => {
+    const { pieces, isLoading } = piecesHooks.usePieces({ skipProjectFilter });
     const summary = useMemo(
       () => pieces?.find((p) => p.name === name),
       [pieces, name],
