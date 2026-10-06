@@ -6,7 +6,7 @@ import { pieceInstaller } from './cache/pieces/piece-installer'
 import { ProvisionInput, SandboxSettings } from './types'
 import { distributedDiskLock } from './utils/distributed-lock'
 
-const FORCE_REINSTALL_COOLDOWN_MS = 5 * 60 * 1000
+const FORCE_REINSTALL_COOLDOWN_MS = 2 * 60 * 1000
 const FORCE_REINSTALL_LOCK_TIMEOUT_MS = 60 * 1000
 
 export const engineRpcHandlers = ({ log, basePath, getSettings, provision }: EngineRpcHandlersParams): WorkerRpcContract => ({
