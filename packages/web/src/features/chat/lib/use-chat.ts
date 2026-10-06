@@ -12,6 +12,8 @@ import {
   PersistedAgentMessage,
   ToolProgressEvent,
   AgentMessageSource,
+  SubagentActivity,
+  SubagentProgressEvent,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -198,6 +200,10 @@ function appendGatePart({
   ];
 }
 
+function progressOf(activity: SubagentActivity): number {
+  return activity.steps.length;
+}
+
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
 
 function isAllowedMimeType(value: string): value is AgentAllowedMimeType {
@@ -347,6 +353,32 @@ export function useAgentChat({
     [store],
   );
 
+  const handleSubagentProgress = useCallback(
+    (event: SubagentProgressEvent) => {
+      store.setState((prev) => {
+        const existing = prev.toolCallMeta[event.toolCallId]?.subagent;
+        const isStale =
+          existing !== undefined &&
+          (existing.status !== 'running' ||
+            progressOf(existing) > progressOf(event.data)) &&
+          event.data.status === 'running';
+        if (isStale) {
+          return prev;
+        }
+        return {
+          toolCallMeta: {
+            ...prev.toolCallMeta,
+            [event.toolCallId]: {
+              ...prev.toolCallMeta[event.toolCallId],
+              subagent: event.data,
+            },
+          },
+        };
+      });
+    },
+    [store],
+  );
+
   const updateToolCallMeta = useCallback(
     <K extends keyof ToolCallMeta>(
       key: K,
@@ -470,6 +502,7 @@ export function useAgentChat({
     onImageGenerated: handleImageGenerated,
     onFileProduced: handleFileProduced,
     onBuildPlan: handleBuildPlan,
+    onSubagentProgress: handleSubagentProgress,
     onStreamFinished: (convId) => {
       chatDebug.info({ conversation: { id: convId } }, 'stream finished');
       settleStreamRef.current(convId);

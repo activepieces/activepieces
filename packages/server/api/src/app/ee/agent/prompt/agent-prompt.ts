@@ -20,6 +20,10 @@ const GUIDES: Record<string, string> = Object.fromEntries(
     GUIDE_TOPICS.map((topic) => [topic, loadPromptTemplate(`guides/${topic}.md`)]),
 )
 
+const TASK_TEMPLATE = loadPromptTemplate('task-subagent-prompt.md')
+
+const SUBAGENTS_NOTE = loadPromptTemplate('chat-subagents-note.md').trim()
+
 function sanitizeProjectName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
 }
@@ -74,6 +78,20 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templ
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 
+function buildTaskSystemPrompt({ projects, currentProjectId, frontendUrl }: {
+    projects: Project[]
+    currentProjectId: string | null
+    frontendUrl: string
+}): string {
+    const currentProject = currentProjectId
+        ? projects.find((p) => p.id === currentProjectId) ?? null
+        : null
+    return TASK_TEMPLATE
+        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
+        .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlockFromTemplates({ project: currentProject, frontendUrl, selectedTemplate: PROMPT_TEMPLATES.projectSelected, noProjectTemplate: PROMPT_TEMPLATES.noProject }))
+        .replaceAll('{{FRONTEND_URL}}', frontendUrl)
+}
+
 function buildBuilderSystemPrompt({ agent }: { agent: Agent | null }): string {
     const state = isNil(agent)
         ? 'No agent yet. Create one as soon as you know what job it should do, then keep changing that one.'
@@ -99,7 +117,9 @@ function describeTools(tools: AgentConfig['tools']): string {
 export const agentPrompt = {
     buildSystemPrompt: buildAgentSystemPrompt,
     buildBuilderSystemPrompt,
+    buildTaskSystemPrompt,
     guides: GUIDES,
+    subagentsNote: SUBAGENTS_NOTE,
     projectDisplayName,
     sources: {
         ...PROMPT_TEMPLATES,

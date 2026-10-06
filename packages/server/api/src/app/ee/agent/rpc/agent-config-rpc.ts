@@ -19,6 +19,7 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
 import { smtpEmailSender } from '../../helper/email/email-sender/smtp-email-sender'
+import { agentTaskService } from '../agent-task-service'
 
 import { chosenProviders } from './chosen-providers'
 import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-shared'
@@ -159,22 +160,21 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             }))
             : null
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        const systemPromptText = agentPrompt.buildSystemPrompt({
-            projects: scopedProjects,
-            currentProjectId: selectedProjectId,
-            frontendUrl,
-            templates: promptOverride,
-        }) + agentSurfaceNotes.buildRunNotes({
+        const tasksAvailable = !dryRun && carriesChatContext
+        const conversationTasks = tasksAvailable ? await agentTaskService.list({ platformId, conversationId }) : []
+        const runNotesFor = ({ forTask }: { forTask: boolean }): string => agentSurfaceNotes.buildRunNotes({
             source: conversation.source,
-            ...spreadIfDefined('messageSource', input.messageSource),
+            ...spreadIfDefined('messageSource', forTask ? undefined : input.messageSource),
             currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
-            imageEditAvailable: !isNil(imageModelId),
+            imageAvailable: !forTask && actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
+            imageEditAvailable: !forTask && !isNil(imageModelId),
             emailAvailable: emailEnabled,
             agentsAvailable,
+            tasksAvailable: !forTask && tasksAvailable,
+            tasks: conversationTasks,
             userEmail: runUserEmail,
             userIdentity,
             connections: inventoryResult && !inventoryResult.error
@@ -182,6 +182,15 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 : null,
             memory: runMemory,
         })
+        const systemPromptText = agentPrompt.buildSystemPrompt({
+            projects: scopedProjects,
+            currentProjectId: selectedProjectId,
+            frontendUrl,
+            templates: promptOverride,
+        }) + runNotesFor({ forTask: false })
+        const taskSystemPrompt = tasksAvailable
+            ? agentPrompt.buildTaskSystemPrompt({ projects: scopedProjects, currentProjectId: selectedProjectId, frontendUrl }) + runNotesFor({ forTask: true })
+            : undefined
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
@@ -271,6 +280,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 : null,
             projects: scopedProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
             guides,
+            ...spreadIfDefined('taskSystemPrompt', taskSystemPrompt),
             aiTools,
             emailEnabled,
             agentsAvailable,

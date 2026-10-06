@@ -53,6 +53,7 @@ import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
 import { ShowcaseCard } from './showcase-card/showcase-card';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
+import { SubagentGroup } from './subagent-card';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
 const PROSE_CLASSES = 'max-w-none break-words';
@@ -397,6 +398,15 @@ function MessageBlocks({
             }
             return null;
           }
+          case 'subagents':
+            return (
+              <SubagentGroup
+                key={`subagents-${block.builders[0]?.toolCallId ?? i}`}
+                builders={block.builders}
+                toolCallMeta={toolCallMeta}
+                isStreaming={isStreaming}
+              />
+            );
           case 'batch-progress':
             return (
               <div key={`batch-${i}`} className="py-2">

@@ -3318,5 +3318,12 @@
   "MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.": "MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.",
   "{tier}: {status}": "{tier}: {status}",
   "{tier}, {status}": "{tier}, {status}",
-  "Show full output": "Show full output"
+  "Show full output": "Show full output",
+  "Stopped early": "Stopped early",
+  "Getting started": "Getting started",
+  "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}": "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}",
+  "{count, plural, =1 {Task finished} other {# tasks finished}}": "{count, plural, =1 {Task finished} other {# tasks finished}}",
+  "Needs your input": "Needs your input",
+  "Task": "Task",
+  "Asked by {taskTitle}": "Asked by {taskTitle}"
 }

@@ -1,8 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
+import { agentPrompt } from './agent-prompt'
 import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, tasksAvailable, tasks, userEmail, userIdentity, connections, memory }: {
     source: AgentRunSource
     messageSource?: 'onboarding'
     currentDate: string
@@ -13,6 +14,8 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     imageEditAvailable: boolean
     emailAvailable: boolean
     agentsAvailable: boolean
+    tasksAvailable: boolean
+    tasks?: ConversationTask[]
     userEmail: string
     userIdentity: UserIdentity | null
     connections: ConnectionInventory | null
@@ -32,6 +35,8 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
             userEmail,
         })
         + (isChat && agentsAvailable ? AGENTS_NOTE : '')
+        + (isChat && tasksAvailable ? `\n\n${agentPrompt.subagentsNote}` : '')
+        + (isChat && tasksAvailable && !isNil(tasks) && tasks.length > 0 ? buildTasksNote(tasks) : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')
         + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
@@ -129,6 +134,15 @@ function buildConnectionInventoryNote({ connections, truncated }: ConnectionInve
     return lines.join('\n')
 }
 
+function buildTasksNote(tasks: ConversationTask[]): string {
+    const lines = tasks.map((task) => {
+        const made = task.artifacts.length === 0 ? '' : `; made ${task.artifacts.map((artifact) => `${artifact.type} "${artifact.name}" (${artifact.id})`).join(', ')}`
+        const summary = isNil(task.summary) ? '' : `: ${task.summary}`
+        return `- taskId ${task.id}, "${task.title}", ${task.status.toLowerCase()}${made}${summary}`
+    })
+    return ['', '', '## Tasks in this conversation', 'Continue one with `ap_run_task` and its taskId instead of starting over.', ...lines].join('\n')
+}
+
 function buildMemoryNote({ instructions, memories }: RunMemory): string {
     const trimmedInstructions = instructions?.trim()
     const lines: string[] = [
@@ -208,3 +222,11 @@ const RUN_NOTE_HEADINGS: readonly string[] = [
 ]
 
 const RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY = 2
+
+type ConversationTask = {
+    id: string
+    title: string
+    status: string
+    summary?: string | null
+    artifacts: { type: string, id: string, name: string }[]
+}

@@ -46,9 +46,13 @@ All three go in an `Order intake` folder with an `Orders` table.
 **Shared work goes in one subflow.** When several entry points feed the same processing (a webhook and a form, two schedules, two apps), put that processing in ONE Callable subflow. Each entry flow then only receives its input and calls the subflow. Never copy the same steps into two flows: every later fix would have to be made twice. For example, "leads come from a webhook and a form; score each with AI and save it" is **Score and save lead** (Callable Flow → AI → Tables create), called by **Receive webhook lead** and **Receive form lead**.
 
 How to build one:
+0. **Tasks, in waves:** with two or more flows, give every flow its own `ap_run_task` ("build and validate the Save order flow in folder X") and run them in waves, every task of a wave in the same step:
+   - wave 1: every flow that needs nothing else built first (the shared subflow, a scheduled digest that only reads a table);
+   - wave 2: every flow that calls something from wave 1 (the intake flows that call the subflow), with the ids wave 1 returned.
+   One flow per task, never several flows in one task. A solution with a single flow you build yourself. You keep the folder, the tables (create them before wave 1), the folder check, testing and turning it on.
 1. **Folder:** `ap_create_folder` with a name for the whole solution. Pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
 2. **Names:** name each flow for its one job, in plain words ("Save order", not "Flow 2" or "Order flow helper").
-3. **Order:** tables first, then subflows, then the flows that call them. Each step needs an id the previous one returned.
+3. **Order:** tables first, then the waves above. A flow that calls a subflow needs the id its wave returned.
 4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow`, with `exampleData.sampleData` listing every input it takes, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read each input as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (that is empty at run time). Add a `returnResponse` step only if a caller needs data back.
 5. **Caller:** a `callFlow` step with `flowId` set to the subflow's **externalId** (the one `ap_build_flow` returned, not its flow id). Use `mode: "simple"` and send every key of the subflow's sample data in `flowProps.payload` as an object. Set `waitForResponse` only when the subflow has a Return Response step.
 6. **Tables steps:** `table_id` is the table's **externalId**. Form `values` are keyed by field externalId.

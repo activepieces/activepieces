@@ -1,6 +1,6 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, SubagentProgressEvent, ToolProgressEvent } from '@activepieces/shared'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
@@ -173,6 +173,7 @@ export type AgentEventEmitter = {
     emitImageGenerated(data: ImageGeneratedEvent): void
     emitFileProduced(data: FileProducedEvent): void
     emitBuildPlan(data: BuildPlanEvent): void
+    emitSubagentProgress(data: SubagentProgressEvent): void
 }
 
 export type TaintState = { tainted: boolean }
