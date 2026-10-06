@@ -31,7 +31,7 @@ describe('backgroundMigrationRunner', () => {
         expect(rows).toHaveLength(1)
     })
 
-    it('does not record a migration whose up() throws', async () => {
+    it('records a failed migration with its error and does not mark it completed', async () => {
         const MigrationClass = makeTestMigration({
             name: `Failing${Date.now()}`,
             up: async () => { throw new Error('boom') },
@@ -39,8 +39,29 @@ describe('backgroundMigrationRunner', () => {
         await expect(
             backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] }),
         ).rejects.toThrow(/boom/)
-        const rows = await selectByName(new MigrationClass().name)
-        expect(rows).toHaveLength(0)
+        const name = new MigrationClass().name
+        const completed = await selectCompletedByName(name)
+        expect(completed).toHaveLength(0)
+        const status = await backgroundMigrationRunner.getStatus({ migrations: [MigrationClass] })
+        expect(status.failedMigration?.name).toBe(name)
+        expect(status.failedMigration?.lastError).toMatch(/boom/)
+    })
+
+    it('clears failure state when a previously failed migration succeeds on retry', async () => {
+        let shouldFail = true
+        const name = `RetrySucceeds${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => { if (shouldFail) throw new Error('transient') },
+        })
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] }),
+        ).rejects.toThrow(/transient/)
+        shouldFail = false
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        const status = await backgroundMigrationRunner.getStatus({ migrations: [MigrationClass] })
+        expect(status.failedMigration).toBeNull()
+        expect(status.pendingCount).toBe(0)
     })
 
     it('skips a migration that has already completed', async () => {
@@ -110,7 +131,11 @@ function makeTestMigration({
 
 async function selectByName(name: string): Promise<{ name: string }[]> {
     const rows = await databaseConnection().query(
-        `SELECT "name" FROM "${BACKGROUND_MIGRATIONS_TABLE}"`,
+        `SELECT "name" FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "executed_at" IS NOT NULL`,
     ) as { name: string }[]
     return rows.filter(row => row.name === name)
+}
+
+async function selectCompletedByName(name: string): Promise<{ name: string }[]> {
+    return selectByName(name)
 }

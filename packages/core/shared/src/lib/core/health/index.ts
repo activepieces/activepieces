@@ -11,10 +11,17 @@ export const ReleaseHealth = z.object({
     }),
 })
 
+export const FailedBackgroundMigration = z.object({
+    name: z.string(),
+    failedAt: z.string(),
+    lastError: z.string(),
+})
+
 export const BackgroundMigrationsHealth = z.object({
     pendingCount: z.number(),
     completedCount: z.number(),
     error: z.string().nullable(),
+    failedMigration: FailedBackgroundMigration.nullable(),
 })
 
 export const GetSystemHealthChecksResponse = z.object({
@@ -91,6 +98,7 @@ export const GetDiagnosticsResponse = z.object({
 })
 
 export type ReleaseHealth = z.infer<typeof ReleaseHealth>
+export type FailedBackgroundMigration = z.infer<typeof FailedBackgroundMigration>
 export type BackgroundMigrationsHealth = z.infer<typeof BackgroundMigrationsHealth>
 export type GetSystemHealthChecksResponse = z.infer<typeof GetSystemHealthChecksResponse>
 export type InfraCheck = z.infer<typeof InfraCheck>
