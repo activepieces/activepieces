@@ -6,6 +6,7 @@ import { xeroUpdateInvoiceAi } from '../src/lib/actions/ai/update-invoice';
 import { xeroCreateInventoryItem } from '../src/lib/actions/create-inventory-item';
 import { xeroCreateManualJournal } from '../src/lib/actions/create-manual-journal';
 import { xeroGetProfitAndLoss } from '../src/lib/actions/get-profit-and-loss';
+import { xeroGetAgedPayables } from '../src/lib/actions/get-aged-payables';
 import { xeroSearchInvoices } from '../src/lib/actions/search-invoices';
 import { xeroVoidInvoice } from '../src/lib/actions/void-invoice';
 import { xeroDeletePayment } from '../src/lib/actions/delete-payment';
@@ -288,8 +289,45 @@ describe('Reports', () => {
       reportDate: '5 October 2026',
       reportTitles: ['Profit & Loss', 'Demo'],
       columns: ['', '31 Oct 26'],
-      rows: [{ section: 'Income', rowType: 'Row', label: 'Sales', values: ['1200.50'], accountId: 'acc-1' }],
+      rows: [{ section: 'Income', rowType: 'Row', label: 'Sales', values: ['1200.50'], accountId: 'acc-1', invoiceId: null }],
     });
+  });
+
+  it('filters an aged report with Xero\'s contactId parameter and keeps each row\'s invoice ID', async () => {
+    const fetchMock = stubFetch({
+      status: 200,
+      body: {
+        Reports: [
+          {
+            ReportID: 'AgedPayablesByContact',
+            ReportName: 'Aged Payables By Contact',
+            ReportType: 'AgedPayablesByContact',
+            Rows: [
+              { RowType: 'Header', Cells: [{ Value: 'Date' }, { Value: 'Total' }] },
+              {
+                RowType: 'Section',
+                Rows: [
+                  {
+                    RowType: 'Row',
+                    Cells: [
+                      { Value: '2026-09-01T00:00:00', Attributes: [{ Id: 'invoiceID', Value: 'inv-9' }] },
+                      { Value: '250.00', Attributes: [{ Id: 'invoiceID', Value: 'inv-9' }] },
+                    ],
+                  },
+                  { RowType: 'SummaryRow', Cells: [{ Value: 'Total' }, { Value: '250.00' }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const result = await runAction({ action: xeroGetAgedPayables, propsValue: { tenant_id: 'org-1', contact_id: CONTACT_ID } });
+    expect(new URL(requestedUrl({ fetchMock })).searchParams.get('contactId')).toBe(CONTACT_ID);
+    expect((result as { rows: unknown[] }).rows).toEqual([
+      { section: '', rowType: 'Row', label: '2026-09-01T00:00:00', values: ['250.00'], accountId: null, invoiceId: 'inv-9' },
+      { section: '', rowType: 'SummaryRow', label: 'Total', values: ['250.00'], accountId: null, invoiceId: null },
+    ]);
   });
 
   it('refuses more than 11 comparison periods', async () => {

@@ -435,6 +435,7 @@ const reportSchema: OutputSchema = {
         field({ key: 'label', label: 'Label' }),
         { key: 'values', label: 'Values' },
         field({ key: 'accountId', label: 'Account ID' }),
+        field({ key: 'invoiceId', label: 'Invoice ID' }),
       ],
     },
   ],

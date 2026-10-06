@@ -6,10 +6,13 @@ function cellValue({ cell }: { cell: Record<string, unknown> }): string {
   return typeof value === 'string' ? value : value === undefined || value === null ? '' : String(value);
 }
 
-function accountIdOf({ cell }: { cell: Record<string, unknown> | undefined }): string | null {
-  if (!cell) return null;
-  const attribute = xeroValue.readRecords(cell['Attributes']).find((entry) => entry['Id'] === 'account');
-  return attribute ? xeroValue.readString(attribute['Value']) ?? null : null;
+function attributeOf({ cells, id }: { cells: Record<string, unknown>[]; id: string }): string | null {
+  for (const cell of cells) {
+    const attribute = xeroValue.readRecords(cell['Attributes']).find((entry) => typeof entry['Id'] === 'string' && entry['Id'].toLowerCase() === id);
+    const value = attribute ? xeroValue.readString(attribute['Value']) : undefined;
+    if (value) return value;
+  }
+  return null;
 }
 
 function flattenRows({ rows, section }: { rows: Record<string, unknown>[]; section: string }): FlatReportRow[] {
@@ -28,7 +31,8 @@ function flattenRows({ rows, section }: { rows: Record<string, unknown>[]; secti
         rowType,
         label: first ? cellValue({ cell: first }) : '',
         values: rest.map((cell) => cellValue({ cell })),
-        accountId: accountIdOf({ cell: first }),
+        accountId: attributeOf({ cells: first ? [first] : [], id: 'account' }),
+        invoiceId: attributeOf({ cells, id: 'invoiceid' }),
       },
     ];
   });
@@ -98,6 +102,7 @@ export type FlatReportRow = {
   label: string;
   values: string[];
   accountId: string | null;
+  invoiceId: string | null;
 };
 
 export type FlatReport = {
