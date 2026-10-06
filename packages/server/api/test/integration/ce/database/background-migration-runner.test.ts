@@ -102,6 +102,27 @@ describe('backgroundMigrationRunner', () => {
         }
     })
 
+    it('assertBackgroundMigrationComplete rejects a backfill that only failed', async () => {
+        const backfill = makeTestMigration({
+            name: `FailedGate${Date.now()}`,
+            up: async () => { throw new Error('kaboom') },
+        })
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [backfill] }),
+        ).rejects.toThrow(/kaboom/)
+
+        const queryRunner = databaseConnection().createQueryRunner()
+        try {
+            await expect(migrationHelpers.assertBackgroundMigrationComplete({
+                queryRunner,
+                migration: backfill,
+            })).rejects.toThrow(/FailedGate.*has not completed/)
+        }
+        finally {
+            await queryRunner.release()
+        }
+    })
+
     it('reports pending count via getStatus', async () => {
         const done = makeTestMigration({ name: `StatusDone${Date.now()}` })
         const pending = makeTestMigration({ name: `StatusPending${Date.now()}` })

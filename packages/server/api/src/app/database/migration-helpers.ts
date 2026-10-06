@@ -20,7 +20,7 @@ async function assertBackgroundMigrationComplete({
 }): Promise<void> {
     const name = new migration().name
     const rows = await queryRunner.query(
-        `SELECT 1 FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1`,
+        `SELECT 1 FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1 AND "executed_at" IS NOT NULL`,
         [name],
     )
     if (rows.length === 0) {
