@@ -2,6 +2,7 @@ import { isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, ObjectLiteral, Repository } from 'typeorm'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -85,7 +86,10 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
                 .execute()
             deletedAuditEvents = result.affected ?? 0
         } while (deletedAuditEvents > 0)
-        await platformRepo().delete({ id: platformId })
+        await aiProviderService(log).deleteManagedProvider({
+            platformId,
+            inSameTransaction: (manager) => platformRepo(manager).delete({ id: platformId }),
+        })
 
         const identityIds = await deletePlatformUsers(platformId)
         await deleteUnreferencedIdentities(identityIds)

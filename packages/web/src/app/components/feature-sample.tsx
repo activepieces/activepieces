@@ -1,7 +1,11 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformAdminSurface,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Lock } from 'lucide-react';
-import { ReactNode } from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -9,9 +13,10 @@ import {
   FeatureTier,
   RequestTrial,
   TIER_LABELS,
-  useManagePlanDialogStore,
+  useUpgradeClick,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export function FeatureSample({
   locked,
@@ -23,7 +28,7 @@ export function FeatureSample({
   showContactSales = true,
   children,
 }: FeatureSampleProps) {
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const upgradeClick = useUpgradeClick();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   if (!locked) {
@@ -39,7 +44,9 @@ export function FeatureSample({
         aria-hidden
         className="flex flex-1 min-h-0 min-w-0 flex-col pointer-events-none select-none opacity-25"
       >
-        {children}
+        <InsideFeatureSampleContext.Provider value={true}>
+          {children}
+        </InsideFeatureSampleContext.Provider>
       </div>
 
       <div className="absolute inset-0 grid place-items-center overflow-auto p-6">
@@ -58,9 +65,13 @@ export function FeatureSample({
           {isCommunity ? (
             <div className="flex flex-col items-center gap-3">
               {showContactSales && featureKey !== undefined && (
-                <RequestTrial featureKey={featureKey} />
+                <RequestTrial
+                  featureKey={featureKey}
+                  surface={PlatformAdminSurface.SAMPLE}
+                />
               )}
               <a
+                {...adminControl(AdminControl.PLAN_SAMPLE_LINK)}
                 href={documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -71,7 +82,16 @@ export function FeatureSample({
               </a>
             </div>
           ) : (
-            <Button className="w-full" onClick={() => openManagePlanDialog()}>
+            <Button
+              className="w-full"
+              onClick={() =>
+                upgradeClick({
+                  feature: featureKey,
+                  tier,
+                  surface: PlatformAdminSurface.SAMPLE,
+                })
+              }
+            >
               {tier === undefined
                 ? t('Upgrade to unlock')
                 : t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
@@ -92,6 +112,12 @@ export function FeatureSample({
     </div>
   );
 }
+
+export function useInsideFeatureSample(): boolean {
+  return useContext(InsideFeatureSampleContext);
+}
+
+const InsideFeatureSampleContext = createContext(false);
 
 const ENTERPRISE_DOCUMENTATION_URL =
   'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';

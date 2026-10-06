@@ -1,4 +1,8 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformAdminSurface,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Crown, ExternalLink } from 'lucide-react';
 import { ReactNode, useState } from 'react';
@@ -14,10 +18,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { FeatureKey } from '../components/request-trial';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
+
+import { useUpgradeClick } from './use-upgrade-click';
 
 export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
   const [open, setOpen] = useState(false);
@@ -42,8 +48,9 @@ export function UpgradeFeatureDialog({
   bullets,
   tier,
   documentationUrl,
+  featureKey,
 }: UpgradeFeatureDialogProps) {
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const upgradeClick = useUpgradeClick();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
@@ -79,6 +86,7 @@ export function UpgradeFeatureDialog({
         <DialogFooter className="sm:justify-start">
           {isCommunity ? (
             <a
+              {...adminControl(AdminControl.PLAN_DIALOG_LINK)}
               href={docsUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -91,7 +99,11 @@ export function UpgradeFeatureDialog({
             <Button
               onClick={() => {
                 onOpenChange(false);
-                openManagePlanDialog();
+                upgradeClick({
+                  feature: featureKey,
+                  tier,
+                  surface: PlatformAdminSurface.DIALOG,
+                });
               }}
             >
               {t('Upgrade plan')}
