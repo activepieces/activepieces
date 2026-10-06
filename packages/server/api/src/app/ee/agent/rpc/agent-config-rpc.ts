@@ -221,10 +221,11 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const compactionModels = isNil(tierRun)
             ? [{ config: providerConfig, modelId: resolvedModelId, thinkingBudget: tier.thinkingBudget }]
             : tierRun.candidates
-        const contextProvider = smallestContextProvider({ configs: compactionModels.map((candidate) => candidate.config) })
+        const everyModelOfTheTurn = isNil(tierRun) ? compactionModels : [...tierRun.candidates, ...(isNil(tierRun.fast) ? [] : [tierRun.fast])]
+        const contextProvider = smallestContextProvider({ configs: everyModelOfTheTurn.map((candidate) => candidate.config) })
         const reservedOutputTokens = isNil(tierRun)
             ? await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
-            : Math.max(...await Promise.all(tierRun.candidates.map((candidate) => agentAiUtils.affordableOutputTokens({ provider: candidate.config.provider, modelIds: [candidate.modelId], thinkingBudget: candidate.thinkingBudget }))))
+            : Math.max(...await Promise.all(everyModelOfTheTurn.map((candidate) => agentAiUtils.affordableOutputTokens({ provider: candidate.config.provider, modelIds: [candidate.modelId], thinkingBudget: candidate.thinkingBudget }))))
         const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
         const payloadReservedTokens = reservedTokens + agentAiUtils.estimateTokenCount({ messages: [], systemPromptLength: systemPromptText.length })
         const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })

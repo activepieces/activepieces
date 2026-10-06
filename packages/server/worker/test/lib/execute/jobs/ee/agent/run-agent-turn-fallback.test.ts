@@ -76,6 +76,16 @@ describe('a platform tier chat turn', () => {
         expect(textOf(turn)).toBe('from main')
     })
 
+    it('drops a fast model that rejects the request outright, since the main model may still take it', async () => {
+        const turn = await runTurn({
+            models: [tierModel({ modelId: 'main', model: answeringModel('from main') })],
+            fastModel: tierModel({ modelId: 'fast', model: failingModel({ statusCode: 400 }) }),
+        })
+
+        expect(turn.streamError).toBeNull()
+        expect(textOf(turn)).toBe('from main')
+    })
+
     it('fails on a bad request instead of trying the next model', async () => {
         const backup = answeringModel('from backup')
 
