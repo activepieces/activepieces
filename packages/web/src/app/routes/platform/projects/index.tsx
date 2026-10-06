@@ -1,461 +1,414 @@
-import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
+import { ProjectType, UserWithMetaInformation } from '@activepieces/shared';
 import {
+  ArrowUpRight01Icon,
   Delete02Icon,
-  PackageIcon,
+  Folder01Icon,
+  Notification01Icon,
   PencilEdit01Icon,
-  Tick02Icon,
-  UserCircleIcon,
 } from '@hugeicons/core-free-icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import {
-  DataTable,
-  RowDataWithActions,
-  BulkAction,
-} from '@/components/custom/data-table';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { BulkAction, DataTable } from '@/components/custom/data-table';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import {
+  CountTabs,
+  ListSearch,
+  ListToolbar,
+} from '@/components/custom/list/list-toolbar';
+import { RowMenuItem } from '@/components/custom/list/row-menu';
+import { useUrlParam } from '@/components/custom/list/use-url-param';
+import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-} from '@/components/ui/item';
-import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { globalConnectionsQueries } from '@/features/connections';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import {
   CreateProjectButton,
   EditProjectDialog,
   projectCollectionUtils,
 } from '@/features/projects';
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { formatUtils } from '@/lib/format-utils';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
+import {
+  MUTATION_ERROR_TOAST_ID,
+  mutationFeedback,
+} from '@/lib/mutation-feedback';
 import { validationUtils } from '@/lib/validation-utils';
 
-import { projectsTableColumns } from './columns';
+import { ProjectRow, projectsTableColumns } from './columns';
+import { ProjectSheet } from './project-sheet';
+import {
+  refreshPlatformProjects,
+  usePlatformProjects,
+} from './use-platform-projects';
 
 export default function ProjectsPage() {
-  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { project: currentProject } =
-    projectCollectionUtils.useCurrentProject();
-
-  useEffect(() => {
-    if (!searchParams.has('type')) {
-      setSearchParams(
-        (prev) => {
-          const newParams = new URLSearchParams(prev);
-          newParams.set('type', ProjectType.TEAM);
-          return newParams;
-        },
-        { replace: true },
-      );
-    }
-  }, []);
-
-  const displayNameFilter = searchParams.get('displayName') || undefined;
-  const typeFilter = searchParams.getAll('type');
-
-  const filters = useMemo(
-    () => ({
-      displayName: displayNameFilter,
-      type:
-        typeFilter.length > 0
-          ? typeFilter.map((t) => t as ProjectType)
-          : undefined,
-    }),
-    [displayNameFilter, typeFilter.join(',')],
-  );
-
-  const { data: allProjects } =
-    projectCollectionUtils.useAllPlatformProjects(filters);
-
-  const {
-    mutate: toggleAutoCreatePersonalProjects,
-    isPending: isAutoCreatePersonalProjectsPending,
-  } = useMutation({
-    mutationFn: (autoCreatePersonalProjects: boolean) =>
-      platformApi.update({ autoCreatePersonalProjects }, platform.id),
-    onSuccess: (updatedPlatform) => {
-      setCurrentPlatform(queryClient, updatedPlatform);
-      toast.success(t('Automatic personal project creation updated'), {
-        duration: 3000,
-      });
-    },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
-    },
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') ?? '';
+  const cursor = searchParams.get('cursor') ?? undefined;
+  const limit = Number(searchParams.get('limit')) || DEFAULT_LIMIT;
+  const [type, setType] = useUrlParam<ProjectType>({
+    key: 'type',
+    fallback: ProjectType.TEAM,
+    allowed: PROJECT_TYPES,
   });
+  const currentProjectId = authenticationSession.getProjectId();
 
-  const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] =
-    useState<any>(null);
-  const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
-  const { data: allGlobalConnectionsPage } =
+  const { data, isLoading, isError, refetch } = usePlatformProjects({
+    search,
+    type,
+    cursor,
+    limit,
+  });
+  const { data: allProjects } = projectCollectionUtils.useAllPlatformProjects();
+  const { data: usersPage } = platformUserHooks.useUsers();
+  const { data: globalConnectionsPage } =
     globalConnectionsQueries.useGlobalConnections({
-      request: { limit: 9999 },
-      extraKeys: [],
+      request: { limit: GLOBAL_CONNECTIONS_LIMIT },
+      extraKeys: ['projects-page'],
     });
-  const allProjectsWithGlobalConnectionsCount = useMemo(() => {
-    return allProjects.map((project) => ({
-      ...project,
-      globalConnectionsCount:
-        allGlobalConnectionsPage?.data?.filter((connection) =>
-          connection.projectIds.includes(project.id),
-        ).length ?? 0,
-    }));
-  }, [allProjects, allGlobalConnectionsPage?.data]);
-  const columns = useMemo(
+
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ProjectRow | null>(null);
+  const [deleting, setDeleting] = useState<ProjectRow[] | null>(null);
+  const [skippedName, setSkippedName] = useState<string | null>(null);
+
+  const ownerNames = useMemo(
+    () => namesById({ users: usersPage?.data ?? [] }),
+    [usersPage?.data],
+  );
+  const rows: ProjectRow[] = useMemo(
     () =>
-      projectsTableColumns({
-        platform,
-      }),
-    [platform],
+      (data?.data ?? []).map((project) => ({
+        ...project,
+        ownerName: ownerNames.get(project.ownerId),
+        globalConnectionsCount: (globalConnectionsPage?.data ?? []).filter(
+          (connection) => connection.projectIds.includes(project.id),
+        ).length,
+      })),
+    [data?.data, ownerNames, globalConnectionsPage?.data],
   );
+  const openProject = rows.find((row) => row.id === openId) ?? null;
 
-  const columnsWithCheckbox: ColumnDef<
-    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
-  >[] = [
-    {
-      id: 'select',
-      accessorKey: 'select',
-      size: 40,
-      minSize: 40,
-      maxSize: 40,
-      header: ({ table }) => {
-        const selectableRows = table
-          .getRowModel()
-          .rows.filter((row) => row.original.id !== currentProject?.id);
-        const allSelectableSelected =
-          selectableRows.length > 0 &&
-          selectableRows.every((row) => row.getIsSelected());
-        const someSelectableSelected = selectableRows.some((row) =>
-          row.getIsSelected(),
-        );
-
-        return (
-          <Checkbox
-            checked={allSelectableSelected || someSelectableSelected}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              selectableRows.forEach((row) => row.toggleSelected(isChecked));
-
-              if (isChecked) {
-                const selectableProjects = selectableRows.map(
-                  (row) => row.original,
-                );
-                const newSelectedRows = [
-                  ...selectableProjects,
-                  ...selectedRows,
-                ];
-                const uniqueRows = Array.from(
-                  new Map(
-                    newSelectedRows.map((item) => [item.id, item]),
-                  ).values(),
-                );
-                setSelectedRows(uniqueRows);
-              } else {
-                const filteredRows = selectedRows.filter(
-                  (row) =>
-                    !selectableRows.some((r) => r.original.id === row.id),
-                );
-                setSelectedRows(filteredRows);
-              }
-            }}
-          />
-        );
-      },
-      cell: ({ row }) => {
-        const isCurrentProject = row.original.id === currentProject?.id;
-        const isDisabled = isCurrentProject;
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-
-        return (
-          <Tooltip>
-            <TooltipTrigger>
-              <div className={isDisabled ? 'cursor-not-allowed' : ''}>
-                <Checkbox
-                  checked={isChecked}
-                  disabled={isDisabled}
-                  onCheckedChange={(value) => {
-                    if (isDisabled) return;
-
-                    const isChecked = !!value;
-                    let newSelectedRows = [...selectedRows];
-                    if (isChecked) {
-                      const exists = newSelectedRows.some(
-                        (selectedRow) => selectedRow.id === row.original.id,
-                      );
-                      if (!exists) {
-                        newSelectedRows.push(row.original);
-                      }
-                    } else {
-                      newSelectedRows = newSelectedRows.filter(
-                        (selectedRow) => selectedRow.id !== row.original.id,
-                      );
-                    }
-                    setSelectedRows(newSelectedRows);
-                    row.toggleSelected(!!value);
-                  }}
-                />
-              </div>
-            </TooltipTrigger>
-            {isDisabled && (
-              <TooltipContent side="right">
-                {isCurrentProject
-                  ? t(
-                      'Cannot delete active project, switch to another project first',
-                    )
-                  : t(
-                      "Personal projects cannot be deleted, and you can't subscribe to their alerts",
-                    )}
-              </TooltipContent>
-            )}
-          </Tooltip>
-        );
-      },
-    },
-    ...columns,
-  ];
-
-  const bulkActions: BulkAction<ProjectWithLimits>[] = useMemo(
-    () => [
-      {
-        render: (
-          _: RowDataWithActions<ProjectWithLimits>[],
-          resetSelection: () => void,
-        ) => (
-          <PlatformAdminProjectAlertSubscriptionBulkActions
-            selectedProjects={selectedRows}
-            resetSelection={() => {
-              resetSelection();
-              setSelectedRows([]);
-            }}
-          />
-        ),
-      },
-      {
-        render: (
-          _: RowDataWithActions<ProjectWithLimits>[],
-          resetSelection: () => void,
-        ) => {
-          const canDeleteAny = selectedRows.some(
-            (row) => row.id !== currentProject?.id,
-          );
-          return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Projects')}
-                message={t(
-                  'The selected projects and all their data will be permanently deleted.',
-                )}
-                entityName={t('Projects')}
-                buttonText={t('Delete')}
-                controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
-                mutationFn={async () => {
-                  const deletableProjects = selectedRows.filter(
-                    (row) => row.id !== currentProject?.id,
-                  );
-                  projectCollectionUtils.delete(
-                    deletableProjects.map((row) => row.id),
-                  );
-                  resetSelection();
-                  setSelectedRows([]);
-                }}
-                onError={(error) => {
-                  toast.error(t('Error'), {
-                    description: errorToastMessage(error),
-                    duration: 3000,
-                  });
-                }}
-              >
-                {selectedRows.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-danger-11 hover:text-danger-11"
-                    disabled={!canDeleteAny}
-                    {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
-                  >
-                    <HugeiconsIcon icon={Delete02Icon} className="mr-1 w-4" />
-                    {`${t('Delete')} (${selectedRows.length})`}
-                  </Button>
-                )}
-              </ConfirmationDeleteDialog>
-            </div>
-          );
-        },
-      },
-    ],
-    [selectedRows, currentProject],
-  );
-
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateProjectButton
-        key="new-project"
-        variant="full"
-        projects={allProjects}
-      />,
-    ],
-    [allProjects],
-  );
-
-  const errorToastMessage = (error: unknown): string | undefined => {
-    if (validationUtils.isValidationError(error)) {
-      console.error(t('Validation error'), error);
-      switch (error.response?.data?.params?.message) {
-        case 'PROJECT_HAS_ENABLED_FLOWS':
-          return t('Project has enabled flows. Please disable them first.');
-        case 'ACTIVE_PROJECT':
-          return t(
-            'This project is active. Please switch to another project first.',
-          );
-      }
-      return undefined;
-    }
+  const refresh = async () => {
+    await refreshPlatformProjects(queryClient);
+    await projectCollectionUtils.refetchProjects();
   };
 
-  const actions = [
-    (row: ProjectWithLimits) => {
-      return (
-        <div className="flex items-end justify-end">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                className="size-8 p-0"
-                {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setEditDialogInitialValues({
-                    projectName: row.displayName,
-                    sensitive: row.sensitive,
-                  });
-                  setEditDialogProjectId(row.id);
-                  setEditDialogOpen(true);
-                }}
-              >
-                <HugeiconsIcon icon={PencilEdit01Icon} className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Edit project')}</TooltipContent>
-          </Tooltip>
-        </div>
-      );
+  const switchInto = useCallback(
+    async (project: ProjectRow) => {
+      await projectCollectionUtils.setCurrentProject(project.id);
+      navigate('/');
+    },
+    [navigate],
+  );
+
+  const menuItems = useCallback(
+    (project: ProjectRow): RowMenuItem[] => [
+      {
+        label: t('Open project'),
+        icon: ArrowUpRight01Icon,
+        onSelect: () => switchInto(project),
+      },
+      {
+        label: t('Edit'),
+        icon: PencilEdit01Icon,
+        control: AdminControl.PROJECTS_EDIT_OPEN,
+        onSelect: () => setEditing(project),
+      },
+      {
+        label: t('Alerts'),
+        icon: Notification01Icon,
+        onSelect: () => setOpenId(project.id),
+      },
+      {
+        label: t('Delete'),
+        icon: Delete02Icon,
+        destructive: true,
+        disabled: project.id === currentProjectId,
+        disabledReason: t('You are in this project. Switch to another first.'),
+        control: AdminControl.PROJECTS_DELETE_OPEN,
+        onSelect: () => setDeleting([project]),
+      },
+    ],
+    [currentProjectId, switchInto],
+  );
+
+  const columns = useMemo(
+    () => projectsTableColumns({ menuItems }),
+    [menuItems],
+  );
+
+  const bulkActions: BulkAction<ProjectRow>[] = [
+    {
+      render: (selected, resetSelection) => (
+        <PlatformAdminProjectAlertSubscriptionBulkActions
+          selectedProjects={selected}
+          resetSelection={resetSelection}
+        />
+      ),
+    },
+    {
+      render: (selected) => {
+        if (selected.length === 0) {
+          return null;
+        }
+        const current = selected.find(
+          (project) => project.id === currentProjectId,
+        );
+        const deletable = selected.filter(
+          (project) => project.id !== currentProjectId,
+        );
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-danger-11 hover:text-danger-11"
+            disabled={deletable.length === 0}
+            title={
+              deletable.length === 0
+                ? t('You are in this project. Switch to another first.')
+                : undefined
+            }
+            {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
+            onClick={() => {
+              setSkippedName(current?.displayName ?? null);
+              setDeleting(deletable);
+            }}
+          >
+            <HugeiconsIcon icon={Delete02Icon} />
+            {t('Delete {count}', { count: deletable.length })}
+          </Button>
+        );
+      },
     },
   ];
 
+  const filtered = search.trim().length > 0;
+  const deleteName =
+    deleting && deleting.length === 1 ? deleting[0].displayName : null;
+
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
-        title={t('Projects')}
-        description={t('Manage your automation projects')}
-      />
-      <div className="px-6 pt-4">
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <HugeiconsIcon icon={UserCircleIcon} />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
-            <ItemDescription>
-              {t(
-                'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
-              )}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Switch
-              checked={platform.autoCreatePersonalProjects}
-              onCheckedChange={(checked) =>
-                toggleAutoCreatePersonalProjects(checked)
-              }
-              disabled={isAutoCreatePersonalProjectsPending}
-              {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
-            />
-          </ItemActions>
-        </Item>
-      </div>
-      <DataTable
-        emptyStateTextTitle={t('No projects found')}
-        emptyStateTextDescription={t(
-          'Start by creating projects to manage your automation teams',
-        )}
-        emptyStateIcon={
-          <HugeiconsIcon icon={PackageIcon} className="size-14" />
+    <Page>
+      <AdminPageHeader page="projects">
+        <CreateProjectButton
+          variant="full"
+          projects={allProjects}
+          onCreate={() => refresh()}
+        />
+      </AdminPageHeader>
+      <ListToolbar
+        search={<ListSearch placeholder={t('Search by name')} />}
+        tabs={
+          <CountTabs
+            value={type}
+            onValueChange={setType}
+            options={[
+              { value: ProjectType.TEAM, label: t('Team') },
+              { value: ProjectType.PERSONAL, label: t('Personal') },
+            ]}
+          />
         }
-        onRowClick={async (project) => {
-          await projectCollectionUtils.setCurrentProject(project.id);
-          navigate('/');
-        }}
-        filters={[
-          {
-            type: 'input',
-            title: t('Name'),
-            accessorKey: 'displayName',
-            icon: Tick02Icon,
-          },
-          {
-            type: 'select',
-            title: t('Type'),
-            accessorKey: 'type',
-            options: Object.values(ProjectType).map((type) => {
-              return {
-                label:
-                  formatUtils.convertEnumToHumanReadable(type) + ' Project',
-                value: type,
-              };
-            }),
-            icon: Tick02Icon,
-          },
-        ]}
-        columns={columnsWithCheckbox}
-        page={{
-          data: allProjectsWithGlobalConnectionsCount,
-          next: null,
-          previous: null,
-        }}
-        isLoading={false}
-        isError={false}
+      />
+      <DataTable
+        emptyStateTextTitle={
+          filtered ? t('No projects match') : t('No projects yet')
+        }
+        emptyStateTextDescription={
+          filtered
+            ? t('Try a different name or the other tab.')
+            : t(
+                "A project is one team's workspace. Everything a team builds stays inside it.",
+              )
+        }
+        emptyStateIcon={<HugeiconsIcon icon={Folder01Icon} />}
+        emptyStateAction={
+          filtered || type === ProjectType.PERSONAL ? undefined : (
+            <CreateProjectButton
+              variant="full"
+              projects={allProjects}
+              onCreate={() => refresh()}
+            />
+          )
+        }
+        columns={columns}
+        page={data ? { ...data, data: rows } : undefined}
+        onRowClick={(row) => setOpenId(row.id)}
+        isLoading={isLoading}
+        isError={isError}
         errorStateEntity={t('projects')}
-        clientPagination={true}
+        onRetry={refetch}
+        selectColumn
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
-        actions={actions}
+      />
+      <ProjectSheet
+        project={openProject}
+        onOpenChange={(open) => !open && setOpenId(null)}
+        onOpenProject={switchInto}
+        onEdit={setEditing}
+        onDelete={(project) => setDeleting([project])}
+        onChanged={() => refresh()}
       />
       <EditProjectDialog
-        open={editDialogOpen}
-        onClose={() => {
-          setEditDialogOpen(false);
-        }}
-        initialValues={editDialogInitialValues}
-        projectId={editDialogProjectId}
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        onSaved={() => refresh()}
+        initialValues={
+          editing
+            ? {
+                projectName: editing.displayName,
+                externalId: editing.externalId ?? undefined,
+                sensitive: editing.sensitive,
+              }
+            : undefined
+        }
+        projectId={editing?.id ?? ''}
       />
-    </div>
+      {deleting && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleting(null);
+              setSkippedName(null);
+            }
+          }}
+          title={
+            deleteName
+              ? t('Delete {name}?', { name: deleteName })
+              : t('deleteProjectsTitle', { count: deleting.length })
+          }
+          description={
+            <>
+              {deleting.length === 1
+                ? t(
+                    'Its flows, runs, connections and tables are deleted for good.',
+                  )
+                : t(
+                    'Their flows, runs, connections and tables are deleted for good.',
+                  )}
+              {skippedName &&
+                ` ${t("{name} is skipped because you're in it.", {
+                  name: skippedName,
+                })}`}
+            </>
+          }
+          confirmLabel={t('Delete')}
+          typeToConfirm={deleteName ?? t('delete')}
+          onConfirm={async () => {
+            const { deleted, failures } = await deleteProjects({
+              projects: deleting,
+            });
+            if (deleted.some((project) => project.id === openId)) {
+              setOpenId(null);
+            }
+            await refresh();
+            reportDeleted({ deleted, failures });
+          }}
+          onError={(error) => {
+            void refresh();
+            showDeleteError({ error });
+          }}
+          controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
+        />
+      )}
+    </Page>
   );
 }
+
+async function deleteProjects({
+  projects,
+}: {
+  projects: ProjectRow[];
+}): Promise<DeleteOutcome> {
+  const results = await Promise.allSettled(
+    projects.map((project) => api.delete<void>(`/v1/projects/${project.id}`)),
+  );
+  const deleted = projects.filter(
+    (_, index) => results[index].status === 'fulfilled',
+  );
+  const failures: unknown[] = results.flatMap((result) =>
+    result.status === 'rejected' ? [result.reason] : [],
+  );
+  if (deleted.length === 0 && failures.length > 0) {
+    throw failures[0];
+  }
+  return { deleted, failures };
+}
+
+function reportDeleted({ deleted, failures }: DeleteOutcome) {
+  if (failures.length > 0) {
+    toast.error(
+      t('projectsDeletedWithFailures', {
+        deleted: deleted.length,
+        failed: failures.length,
+      }),
+      {
+        id: MUTATION_ERROR_TOAST_ID,
+        description: knownDeleteError({ error: failures[0] }),
+      },
+    );
+    return;
+  }
+  toast.success(
+    deleted.length === 1
+      ? t('{name} deleted', { name: deleted[0].displayName })
+      : t('projectsDeletedCount', { count: deleted.length }),
+  );
+}
+
+function showDeleteError({ error }: { error: unknown }) {
+  const known = knownDeleteError({ error });
+  if (known === undefined) {
+    mutationFeedback.error({ error, title: t("Couldn't delete project") });
+    return;
+  }
+  mutationFeedback.markShown(error);
+  toast.error(t("Couldn't delete project"), {
+    id: MUTATION_ERROR_TOAST_ID,
+    description: known,
+  });
+}
+
+function knownDeleteError({ error }: { error: unknown }): string | undefined {
+  if (validationUtils.isValidationError(error)) {
+    switch (error.response?.data?.params?.message) {
+      case 'PROJECT_HAS_ENABLED_FLOWS':
+        return t('Turn off the flows in this project before deleting it.');
+      case 'ACTIVE_PROJECT':
+        return t('You are in this project. Switch to another first.');
+    }
+  }
+  return undefined;
+}
+
+function namesById({
+  users,
+}: {
+  users: UserWithMetaInformation[];
+}): Map<string, string> {
+  return new Map(
+    users.map((user) => [
+      user.id,
+      `${user.firstName} ${user.lastName}`.trim() || user.email,
+    ]),
+  );
+}
+
+const DEFAULT_LIMIT = 10;
+const GLOBAL_CONNECTIONS_LIMIT = 1000;
+const PROJECT_TYPES = [ProjectType.TEAM, ProjectType.PERSONAL] as const;
+
+type DeleteOutcome = {
+  deleted: ProjectRow[];
+  failures: unknown[];
+};

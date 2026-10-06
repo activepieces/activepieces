@@ -1,12 +1,11 @@
 import { t } from 'i18next';
-import { Link } from 'react-router-dom';
 
+import { Panel, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
 import {
   Item,
   ItemContent,
   ItemDescription,
-  ItemGroup,
   ItemTitle,
 } from '@/components/ui/item';
 import {
@@ -23,30 +22,21 @@ export function PlatformRolesList() {
   const { platform } = platformHooks.useCurrentPlatform();
 
   return (
-    <div className="flex flex-col gap-3">
-      <ItemGroup className="gap-2">
+    <Panel flush>
+      <SettingRows>
         {roleCopy
           .platformRoles({
             personalProjectsEnabled: platform.autoCreatePersonalProjects,
           })
           .map((platformRole) => (
-            <Item
-              key={platformRole.role}
-              variant="outline"
-              size="sm"
-              className="flex-nowrap bg-panel"
-            >
+            <Item key={platformRole.role} className="flex-nowrap items-center">
               <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
               <ItemContent className="min-w-0">
                 <ItemTitle className="min-w-0 max-w-full flex-wrap">
                   {platformRole.label}
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Badge
-                        tabIndex={0}
-                        variant="secondary"
-                        className="text-xs tracking-wider focus-visible:ring-[1px] focus-visible:ring-gray-8/50 focus-visible:outline-none"
-                      >
+                      <Badge variant="secondary" tabIndex={0}>
                         {t('Built in')}
                       </Badge>
                     </TooltipTrigger>
@@ -55,25 +45,14 @@ export function PlatformRolesList() {
                     </TooltipContent>
                   </Tooltip>
                   {platformRole.isDefaultForNewMembers && (
-                    <Badge variant="info" className="text-xs tracking-wider">
-                      {t('Default for new people')}
-                    </Badge>
+                    <Badge variant="info">{t('Default for new people')}</Badge>
                   )}
                 </ItemTitle>
                 <ItemDescription>{platformRole.description}</ItemDescription>
               </ItemContent>
             </Item>
           ))}
-      </ItemGroup>
-      <p className="text-xs text-gray-11">
-        {t("Everyone has exactly one. To change someone's, open")}{' '}
-        <Link
-          to="/platform/users"
-          className="text-accent-11 underline underline-offset-4"
-        >
-          {t('Members')} →
-        </Link>
-      </p>
-    </div>
+      </SettingRows>
+    </Panel>
   );
 }

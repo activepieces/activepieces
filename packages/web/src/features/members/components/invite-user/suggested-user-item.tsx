@@ -28,7 +28,7 @@ function PlatformUserItem({
   const getBadge = () => {
     if (user.memberStatus === 'has-access') {
       return {
-        label: t('Has Access'),
+        label: t('Has access'),
         className: 'text-success-11 bg-success-3',
       };
     }
@@ -89,13 +89,13 @@ function EmailStatusSuggestionItem({
     switch (emailStatus.type) {
       case 'new-user':
         return {
-          label: isPlatformInvite ? t('New User') : t('New Member'),
+          label: isPlatformInvite ? t('New user') : t('New member'),
           className: 'text-accent-11 bg-accent-3 border-accent-7',
           disabled: false,
         };
       case 'has-access':
         return {
-          label: t('Has Access'),
+          label: t('Has access'),
           className: 'text-success-11 bg-success-3',
           disabled: true,
         };

@@ -10,8 +10,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
@@ -35,13 +37,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
@@ -60,11 +62,15 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
 
-  const { data: globalConnectionsPage, isLoading: isLoadingConnections } =
-    globalConnectionsQueries.useGlobalConnections({
-      request: { limit: 9999 },
-      extraKeys: [],
-    });
+  const {
+    data: globalConnectionsPage,
+    isLoading: isLoadingConnections,
+    isError: connectionsFailed,
+    refetch: refetchConnections,
+  } = globalConnectionsQueries.useGlobalConnections({
+    request: { limit: 9999 },
+    extraKeys: [],
+  });
 
   const globalConnections = globalConnectionsPage?.data ?? [];
 
@@ -91,18 +97,23 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>{t('Create Project')}</DialogTitle>
+              <DialogTitle>{t('New project')}</DialogTitle>
               <DialogDescription>
                 {t(
-                  'Set up a new project to organize your automations and connections.',
+                  'A shared workspace for one team. Its flows, connections and tables are visible only to its members and platform admins.',
                 )}
               </DialogDescription>
             </DialogHeader>
             {(!isLoadingConnections || !globalConnectionsEnabled) && (
               <NewProjectForm
+                key={connectionsFailed ? 'connections-failed' : 'ready'}
                 setOpen={setOpen}
                 globalConnections={globalConnections}
                 globalConnectionsEnabled={globalConnectionsEnabled}
+                connectionsFailed={
+                  connectionsFailed && globalConnectionsPage === undefined
+                }
+                onRetryConnections={() => refetchConnections()}
                 onCreate={props.onCreate}
                 gate={
                   props.gate === undefined
@@ -127,16 +138,31 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
   );
 };
 
+export const newProjectFormSchema = z.object({
+  displayName: z.string().trim().min(1, 'Name is required'),
+  alertReceiverEmail: z
+    .email('Enter a valid email address')
+    .nullable()
+    .optional()
+    .or(z.literal('')),
+  sensitive: z.boolean().optional(),
+  globalConnectionExternalIds: z.array(z.string()).optional(),
+});
+
 const NewProjectForm = ({
   onCreate,
   setOpen,
   globalConnections,
   globalConnectionsEnabled,
+  connectionsFailed,
+  onRetryConnections,
   gate,
 }: Omit<NewProjectDialogProps, 'children' | 'gate'> & {
   setOpen: (open: boolean) => void;
   globalConnections: AppConnectionWithoutSensitiveData[];
   globalConnectionsEnabled: boolean;
+  connectionsFailed: boolean;
+  onRetryConnections: () => void;
   gate?: { locked: boolean; onBlocked: () => void };
 }) => {
   const queryClient = useQueryClient();
@@ -149,28 +175,31 @@ const NewProjectForm = ({
     .map((connection) => connection.externalId);
 
   const form = useForm<CreatePlatformProjectRequest>({
-    resolver: zodResolver(
-      z.object({
-        displayName: z.string().min(1, t('Name is required')),
-        alertReceiverEmail: z
-          .email(t('Invalid email'))
-          .nullable()
-          .optional()
-          .or(z.literal('')),
-      }),
-    ),
+    resolver: zodResolver(newProjectFormSchema),
     defaultValues: {
+      displayName: '',
       globalConnectionExternalIds: preselectedConnectionExternalIds,
       alertReceiverEmail: '',
       sensitive: false,
     },
   });
 
-  const handleCreate = () => {
-    const values = form.getValues();
+  const handleCreate = (values: CreatePlatformProjectRequest) => {
+    if (isPending) {
+      return;
+    }
+    if (gate?.locked === true) {
+      gate.onBlocked();
+      return;
+    }
+    form.clearErrors('root.serverError');
     const alertReceiverEmail = values.alertReceiverEmail?.trim();
     mutate({
       ...values,
+      displayName: values.displayName.trim(),
+      globalConnectionExternalIds: connectionsFailed
+        ? undefined
+        : values.globalConnectionExternalIds,
       alertReceiverEmail:
         alertReceiverEmail && alertReceiverEmail.length > 0
           ? alertReceiverEmail
@@ -180,6 +209,7 @@ const NewProjectForm = ({
 
   const { mutate, isPending } = projectCollectionUtils.useCreateProject(
     (data) => {
+      toast.success(t('{name} created', { name: data.displayName }));
       onCreate?.(data);
       setOpen(false);
       queryClient.invalidateQueries({
@@ -187,8 +217,11 @@ const NewProjectForm = ({
       });
     },
     (error) => {
-      console.error(error);
-      internalErrorToast();
+      mutationFeedback.markShown(error);
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
     },
   );
 
@@ -196,43 +229,43 @@ const NewProjectForm = ({
     <>
       <Form {...form}>
         <form
-          className="grid space-y-4"
-          onSubmit={(e) => form.handleSubmit(handleCreate)(e)}
+          className="flex flex-col gap-4"
+          onSubmit={form.handleSubmit(handleCreate)}
         >
           <FormField
             name="displayName"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="displayName" showRequiredIndicator>
-                  {t('Project Name')}
-                </Label>
+              <FormItem>
+                <Label htmlFor="displayName">{t('Name')}</Label>
                 <Input
                   {...field}
                   id="displayName"
-                  placeholder={t('Project Name')}
-                  className="rounded-md"
+                  autoFocus
+                  placeholder={t('Customer success')}
                 />
+                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             name="alertReceiverEmail"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem>
                 <Label htmlFor="alertReceiverEmail">
-                  {t('Alert Receiver Email')}
+                  {t('Alert email (optional)')}
                 </Label>
                 <Input
                   {...field}
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className="rounded-md"
                   value={field.value ?? ''}
                 />
-                <span className="text-xs text-gray-11">
-                  {t('Receives flow failure emails for this project.')}
-                </span>
+                <FormDescription>
+                  {t(
+                    'Gets an email the first time a flow fails each day. Members can add themselves later.',
+                  )}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -241,12 +274,12 @@ const NewProjectForm = ({
             <FormField
               name="sensitive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                <FormItem className="flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="sensitive">{t('Sensitive project')}</Label>
                     <FormDescription>
                       {t(
-                        'When enabled, publishing flows in this project requires approval.',
+                        'Publishing a flow needs approval from someone with the permission.',
                       )}
                     </FormDescription>
                   </div>
@@ -256,17 +289,29 @@ const NewProjectForm = ({
                     onCheckedChange={field.onChange}
                     {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
                   />
-                  <FormMessage />
                 </FormItem>
               )}
             />
           )}
-          {globalConnectionsEnabled && (
+          {globalConnectionsEnabled && connectionsFailed && (
+            <div className="flex flex-col gap-2">
+              <Label>{t('Global connections')}</Label>
+              <DataFetchErrorState
+                entity={t('global connections')}
+                onRetry={onRetryConnections}
+                className="rounded-xl border py-6"
+              />
+              <p className="text-xs text-gray-11">
+                {t('You can add global connections later from Edit.')}
+              </p>
+            </div>
+          )}
+          {globalConnectionsEnabled && !connectionsFailed && (
             <FormField
               name="globalConnectionExternalIds"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label>{t('Global Connections')}</Label>
+                <FormItem>
+                  <Label>{t('Global connections')}</Label>
                   <MultiSelectPieceProperty
                     placeholder={t('Select global connections')}
                     options={
@@ -293,9 +338,9 @@ const NewProjectForm = ({
             />
           )}
           {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
+            <p role="alert" className="text-sm text-danger-11">
               {form.formState.errors.root.serverError.message}
-            </FormMessage>
+            </p>
           )}
           <DialogFooter>
             <Button
@@ -310,23 +355,14 @@ const NewProjectForm = ({
               {t('Cancel')}
             </Button>
             <Button
-              disabled={isPending}
+              type="submit"
               loading={isPending}
               {...adminControl(AdminControl.PROJECTS_NEW_SUBMIT)}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                if (gate?.locked === true) {
-                  gate.onBlocked();
-                  return;
-                }
-                form.handleSubmit(handleCreate)(e);
-              }}
             >
               {gate?.locked === true && (
                 <HugeiconsIcon icon={CrownIcon} className="size-3.5 shrink-0" />
               )}
-              {t('Create Project')}
+              {t('Create')}
             </Button>
           </DialogFooter>
         </form>

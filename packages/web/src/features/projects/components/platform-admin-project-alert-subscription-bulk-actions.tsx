@@ -56,7 +56,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         onClick={handleSubscribe}
         {...adminControl(AdminControl.PROJECTS_SUBSCRIBE_RUN)}
       >
-        <HugeiconsIcon icon={BellPlusIcon} className="mr-1 w-4" />
+        <HugeiconsIcon icon={BellPlusIcon} />
         {t('Subscribe to alerts')}
       </Button>
       <Button
@@ -66,7 +66,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         onClick={() => setConfirmUnsubscribeOpen(true)}
         {...adminControl(AdminControl.PROJECTS_UNSUBSCRIBE_OPEN)}
       >
-        <HugeiconsIcon icon={BellMinusIcon} className="mr-1 w-4" />
+        <HugeiconsIcon icon={BellMinusIcon} />
         {t('Unsubscribe from alerts')}
       </Button>
 

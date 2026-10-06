@@ -1,14 +1,20 @@
 import { ErrorCode } from '@activepieces/core-utils';
 import { Alert, AlertChannel, ProjectWithLimits } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { internalErrorToast } from '@/components/ui/sonner';
+import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { alertsApi } from '../api/alerts-api';
 
@@ -16,7 +22,7 @@ export const alertMutations = {
   useCreateAlert: (params?: CreateAlertParams) => {
     const queryClient = useQueryClient();
     const projectId = authenticationSession.getProjectId()!;
-    return useMutation<Alert, Error, { email: string }>({
+    return useMutation<void, Error, { email: string }>({
       mutationFn: async (params) =>
         alertsApi.create({
           receiver: params.email,
@@ -33,19 +39,17 @@ export const alertMutations = {
         params?.onSuccess?.();
       },
       onError: (error) => {
-        if (api.isError(error)) {
-          switch (error.response?.status) {
-            case HttpStatusCode.Conflict:
-              params?.form?.setError('root.serverError', {
-                message: t('The email is already added.'),
-              });
-              break;
-            default: {
-              internalErrorToast();
-              break;
-            }
-          }
+        if (
+          api.isError(error) &&
+          error.response?.status === HttpStatusCode.Conflict &&
+          params?.form
+        ) {
+          params.form.setError('root.serverError', {
+            message: t('The email is already added.'),
+          });
+          return;
         }
+        mutationFeedback.error({ error, title: t("Couldn't add the email") });
       },
     });
   },
@@ -62,28 +66,78 @@ export const alertMutations = {
           duration: 3000,
         });
       },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't remove the email"),
+        }),
     });
   },
+  usePlatformProjectAlertEmails: ({ projectId }: { projectId: string }) => {
+    const shared = {
+      queryKey: platformProjectAlertsKeys.project(projectId),
+      mutationFn: (change: AlertEmailChange) =>
+        changeProjectAlertEmail({ projectId, change }),
+      apply: ({
+        current,
+        vars,
+      }: {
+        current: Alert[];
+        vars: AlertEmailChange;
+      }): Alert[] =>
+        vars.op === 'add'
+          ? [...current, optimisticAlert({ projectId, email: vars.email })]
+          : current.filter((alert) => alert.receiver !== vars.email),
+      invalidate: [createAlertQueryKey(projectId)],
+      scope: `platform-project-alerts-${projectId}`,
+    };
+    const add = useOptimisticMutation<AlertEmailChange, Alert[]>({
+      ...shared,
+      errorTitle: t("Couldn't add the email"),
+    });
+    const remove = useOptimisticMutation<AlertEmailChange, Alert[]>({
+      ...shared,
+      errorTitle: t("Couldn't remove the email"),
+      success: ({ vars }) =>
+        t('{email} no longer gets alerts', { email: vars.email }),
+      undo: ({ vars }) => ({ op: 'add', email: vars.email }),
+    });
+    return {
+      add: (email: string) => add.mutateAsync({ op: 'add', email }),
+      remove: (alert: Alert) => {
+        if (isOptimisticAlert(alert)) {
+          return;
+        }
+        remove.mutate({
+          op: 'remove',
+          email: alert.receiver,
+          alertId: alert.id,
+        });
+      },
+    };
+  },
   useBulkSubscribeAlerts: () => {
-    return useMutation<
-      SubscribeSummary,
-      Error,
-      BulkAlertParams,
-      { toastId: string | number }
-    >({
+    const queryClient = useQueryClient();
+    return useMutation<SubscribeSummary, Error, BulkAlertParams>({
       mutationFn: async ({ email, projects }) => {
         const results = await Promise.allSettled(
           projects.map((project) =>
             subscribeProjectToEmail({ projectId: project.id, email }),
           ),
         );
+        const created = results.flatMap((result) =>
+          result.status === 'fulfilled' && result.value.outcome === 'subscribed'
+            ? [result.value.projectId]
+            : [],
+        );
         return {
-          subscribed: countOutcome(results, 'subscribed'),
+          subscribed: created.length,
           alreadySubscribed: countOutcome(results, 'already-subscribed'),
           failed: results.filter((r) => r.status === 'rejected').length,
+          created,
         };
       },
-      onSuccess: ({ subscribed, alreadySubscribed, failed }) => {
+      onSuccess: ({ subscribed, alreadySubscribed, failed, created }, vars) => {
         const description =
           alreadySubscribed > 0
             ? t('alertSubscriptionsAlreadySubscribed', {
@@ -98,22 +152,41 @@ export const alertMutations = {
             }),
             { description },
           );
-        } else {
-          toast.success(
-            t('alertSubscriptionsSubscribedSummary', { count: subscribed }),
-            { description },
-          );
+          return;
         }
+        const message = t('alertSubscriptionsSubscribedSummary', {
+          count: subscribed,
+        });
+        if (created.length === 0) {
+          toast.success(message, { description });
+          return;
+        }
+        mutationFeedback.undo({
+          message,
+          onUndo: async () => {
+            await settleAll(
+              created.map((projectId) =>
+                unsubscribeProjectFromEmail({
+                  projectId,
+                  lowerEmail: vars.email.toLowerCase(),
+                }),
+              ),
+            );
+            await invalidateAlertLists(queryClient);
+          },
+        });
       },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't subscribe to alerts"),
+        }),
+      onSettled: () => invalidateAlertLists(queryClient),
     });
   },
   useBulkUnsubscribeAlerts: () => {
-    return useMutation<
-      UnsubscribeSummary,
-      Error,
-      BulkAlertParams,
-      { toastId: string | number }
-    >({
+    const queryClient = useQueryClient();
+    return useMutation<UnsubscribeSummary, Error, BulkAlertParams>({
       mutationFn: async ({ email, projects }) => {
         const lowerEmail = email.toLowerCase();
         const results = await Promise.allSettled(
@@ -121,13 +194,20 @@ export const alertMutations = {
             unsubscribeProjectFromEmail({ projectId: project.id, lowerEmail }),
           ),
         );
+        const removed = results.flatMap((result) =>
+          result.status === 'fulfilled' ? result.value : [],
+        );
         return {
-          unsubscribed: countOutcome(results, 'unsubscribed'),
-          notSubscribed: countOutcome(results, 'not-subscribed'),
+          unsubscribed: new Set(removed.map((alert) => alert.projectId)).size,
+          notSubscribed: results.filter(
+            (result) =>
+              result.status === 'fulfilled' && result.value.length === 0,
+          ).length,
           failed: results.filter((r) => r.status === 'rejected').length,
+          removed,
         };
       },
-      onSuccess: ({ unsubscribed, notSubscribed, failed }) => {
+      onSuccess: ({ unsubscribed, notSubscribed, failed, removed }) => {
         const description =
           notSubscribed > 0
             ? t('alertSubscriptionsNotSubscribed', { count: notSubscribed })
@@ -140,13 +220,37 @@ export const alertMutations = {
             }),
             { description },
           );
-        } else {
-          toast.success(
-            t('alertSubscriptionsUnsubscribedSummary', { count: unsubscribed }),
-            { description },
-          );
+          return;
         }
+        const message = t('alertSubscriptionsUnsubscribedSummary', {
+          count: unsubscribed,
+        });
+        if (removed.length === 0) {
+          toast.success(message, { description });
+          return;
+        }
+        mutationFeedback.undo({
+          message,
+          onUndo: async () => {
+            await settleAll(
+              removed.map((alert) =>
+                alertsApi.create({
+                  channel: AlertChannel.EMAIL,
+                  projectId: alert.projectId,
+                  receiver: alert.receiver,
+                }),
+              ),
+            );
+            await invalidateAlertLists(queryClient);
+          },
+        });
       },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't unsubscribe from alerts"),
+        }),
+      onSettled: () => invalidateAlertLists(queryClient),
     });
   },
 };
@@ -165,10 +269,82 @@ export const alertQueries = {
       },
     });
   },
+  usePlatformProjectAlerts: ({ projectId }: { projectId: string }) => {
+    return useQuery<Alert[], Error>({
+      queryKey: platformProjectAlertsKeys.project(projectId),
+      queryFn: async () =>
+        (await alertsApi.list({ projectId, limit: ALERTS_LIST_LIMIT })).data,
+    });
+  },
+};
+
+export const platformProjectAlertsKeys = {
+  all: ['platform-project-alerts'] as const,
+  project: (projectId: string) =>
+    ['platform-project-alerts', projectId] as const,
 };
 
 const createAlertQueryKey = (projectId: string) =>
   ['alerts-email-list', projectId] as const;
+
+function invalidateAlertLists(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: platformProjectAlertsKeys.all }),
+    queryClient.invalidateQueries({ queryKey: ['alerts-email-list'] }),
+  ]);
+}
+
+async function changeProjectAlertEmail({
+  projectId,
+  change,
+}: {
+  projectId: string;
+  change: AlertEmailChange;
+}): Promise<void> {
+  if (change.op === 'add') {
+    await alertsApi.create({
+      channel: AlertChannel.EMAIL,
+      projectId,
+      receiver: change.email,
+    });
+    return;
+  }
+  if (change.alertId !== undefined) {
+    await alertsApi.delete(change.alertId);
+  }
+}
+
+async function settleAll(promises: Promise<unknown>[]): Promise<void> {
+  const results = await Promise.allSettled(promises);
+  const failure = results.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected',
+  );
+  if (failure) {
+    throw failure.reason;
+  }
+}
+
+function optimisticAlert({
+  projectId,
+  email,
+}: {
+  projectId: string;
+  email: string;
+}): Alert {
+  const now = new Date().toISOString();
+  return {
+    id: `${OPTIMISTIC_ID_PREFIX}${email}`,
+    created: now,
+    updated: now,
+    projectId,
+    channel: AlertChannel.EMAIL,
+    receiver: email,
+  };
+}
+
+function isOptimisticAlert(alert: Alert): boolean {
+  return alert.id.startsWith(OPTIMISTIC_ID_PREFIX);
+}
 
 const subscribeProjectToEmail = async ({
   projectId,
@@ -176,17 +352,17 @@ const subscribeProjectToEmail = async ({
 }: {
   projectId: string;
   email: string;
-}): Promise<SubscribeOutcome> => {
+}): Promise<SubscribeResult> => {
   try {
     await alertsApi.create({
       channel: AlertChannel.EMAIL,
       projectId,
       receiver: email,
     });
-    return 'subscribed';
+    return { outcome: 'subscribed', projectId };
   } catch (error) {
     if (api.isApError(error, ErrorCode.EXISTING_ALERT_CHANNEL)) {
-      return 'already-subscribed';
+      return { outcome: 'already-subscribed' };
     }
     throw error;
   }
@@ -198,30 +374,29 @@ const unsubscribeProjectFromEmail = async ({
 }: {
   projectId: string;
   lowerEmail: string;
-}): Promise<UnsubscribeOutcome> => {
+}): Promise<Alert[]> => {
   const page = await alertsApi.list({ projectId, limit: ALERTS_LIST_LIMIT });
   const matches = page.data.filter(
     (alert) =>
       alert.channel === AlertChannel.EMAIL &&
       alert.receiver.toLowerCase() === lowerEmail,
   );
-  if (matches.length === 0) {
-    return 'not-subscribed';
-  }
   await Promise.all(matches.map((alert) => alertsApi.delete(alert.id)));
-  return 'unsubscribed';
+  return matches;
 };
 
-const countOutcome = <T extends string>(
-  results: PromiseSettledResult<T>[],
-  outcome: T,
+const countOutcome = (
+  results: PromiseSettledResult<SubscribeResult>[],
+  outcome: SubscribeResult['outcome'],
 ): number =>
   results.reduce(
-    (n, r) => n + (r.status === 'fulfilled' && r.value === outcome ? 1 : 0),
+    (n, r) =>
+      n + (r.status === 'fulfilled' && r.value.outcome === outcome ? 1 : 0),
     0,
   );
 
 const ALERTS_LIST_LIMIT = 100;
+const OPTIMISTIC_ID_PREFIX = 'optimistic-';
 
 type CreateAlertParams = {
   onSuccess?: () => void;
@@ -233,17 +408,24 @@ type BulkAlertParams = {
   projects: ProjectWithLimits[];
 };
 
-type SubscribeOutcome = 'subscribed' | 'already-subscribed';
-type UnsubscribeOutcome = 'unsubscribed' | 'not-subscribed';
+type SubscribeResult =
+  | { outcome: 'subscribed'; projectId: string }
+  | { outcome: 'already-subscribed' };
 
 type SubscribeSummary = {
   subscribed: number;
   alreadySubscribed: number;
   failed: number;
+  created: string[];
 };
 
 type UnsubscribeSummary = {
   unsubscribed: number;
   notSubscribed: number;
   failed: number;
+  removed: Alert[];
 };
+
+export type AlertEmailChange =
+  | { op: 'add'; email: string }
+  | { op: 'remove'; email: string; alertId?: string };

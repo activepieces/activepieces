@@ -23,6 +23,7 @@ import {
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
+import { rolesPlan } from '@/app/routes/platform/security/project-role/sample-roles';
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
@@ -84,7 +85,7 @@ export function PlatformSidebar() {
             {
               to: '/platform/users/roles',
               label: t('Roles'),
-              locked: !platform.plan.projectRolesEnabled,
+              locked: rolesPlan.isLocked(platform.plan),
               tier: PLATFORM_FEATURES.projectRoles.tier,
             },
           ],

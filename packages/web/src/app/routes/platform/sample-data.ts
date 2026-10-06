@@ -1,4 +1,3 @@
-import { RoleType } from '@activepieces/core-utils';
 import {
   ApiKeyResponseWithoutValue,
   AppConnectionScope,
@@ -11,7 +10,6 @@ import {
   EventDestination,
   EventDestinationFormat,
   EventDestinationScope,
-  ProjectRole,
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
   SecretManagerProviderId,
@@ -86,22 +84,6 @@ function globalConnections(): AppConnectionWithoutSensitiveData[] {
     flowIds: null,
     preSelectForNewProjects: false,
     usingSecretManager: false,
-  }));
-}
-
-function projectRoles(): ProjectRole[] {
-  return [
-    { name: 'Release Manager', userCount: 3 },
-    { name: 'Support Read Only', userCount: 8 },
-    { name: 'Finance Auditor', userCount: 2 },
-  ].map((entry, index) => ({
-    id: `sample-role-${index}`,
-    ...agedTimestamps((index + 1) * 9 * 24 * 60),
-    name: entry.name,
-    permissions: ['READ_FLOW', 'READ_RUN', 'READ_APP_CONNECTION'],
-    platformId: SAMPLE_PLATFORM_ID,
-    type: RoleType.CUSTOM,
-    userCount: entry.userCount,
   }));
 }
 
@@ -223,7 +205,6 @@ export const sampleData = {
   apiKeysPage: () => toPage(apiKeys()),
   auditEventsPage: () => toPage(auditEvents()),
   globalConnectionsPage: () => toPage(globalConnections()),
-  projectRolesPage: () => toPage(projectRoles()),
   eventDestinations,
   secretManagers,
 };

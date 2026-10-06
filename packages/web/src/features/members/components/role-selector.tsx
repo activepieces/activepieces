@@ -41,7 +41,7 @@ export const RoleSelector = ({
   const showProjectSpinner = projectRolesLoading || projectRoleAssigning;
   const selectDisabled = disabled || showProjectSpinner;
 
-  const label = isPlatform ? t('Platform Roles') : t('Project Roles');
+  const label = isPlatform ? t('Platform roles') : t('Project roles');
 
   const options = isPlatform
     ? roleCopy
@@ -81,7 +81,7 @@ export const RoleSelector = ({
         ) : selectedRole ? (
           <span className="font-normal">{selectedRole.label}</span>
         ) : (
-          <SelectValue placeholder={placeholder || t('Select Role')} />
+          <SelectValue placeholder={placeholder || t('Select a role')} />
         )}
       </SelectTrigger>
       <SelectContent>

@@ -8,8 +8,8 @@ import {
 import { api } from '@/lib/api';
 
 export const alertsApi = {
-  create(request: CreateAlertParams): Promise<Alert> {
-    return api.post<Alert>('/v1/alerts', request);
+  create(request: CreateAlertParams): Promise<void> {
+    return api.post<void>('/v1/alerts', request);
   },
   list(request: ListAlertsParams): Promise<SeekPage<Alert>> {
     return api.get<SeekPage<Alert>>('/v1/alerts', request);

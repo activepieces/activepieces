@@ -54,6 +54,16 @@ const ProjectRolePage = React.lazy(() =>
     default: m.ProjectRolePage,
   })),
 );
+const RoleDetailPage = React.lazy(() =>
+  import('./platform/security/project-role/role-detail-page').then((m) => ({
+    default: m.RoleDetailPage,
+  })),
+);
+const RolesComparePage = React.lazy(() =>
+  import('./platform/security/project-role/roles-compare-page').then((m) => ({
+    default: m.RolesComparePage,
+  })),
+);
 const SecretManagersPage = React.lazy(
   () => import('./platform/security/secret-managers'),
 );
@@ -427,6 +437,34 @@ export const platformRoutes = [
           <PlanFeatureSample feature="projectRoles">
             <SuspenseWrapper>
               <ProjectRolePage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/users/roles/compare',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Compare roles">
+          <PlanFeatureSample feature="projectRoles">
+            <SuspenseWrapper>
+              <RolesComparePage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/users/roles/:roleId',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Role">
+          <PlanFeatureSample feature="projectRoles">
+            <SuspenseWrapper>
+              <RoleDetailPage />
             </SuspenseWrapper>
           </PlanFeatureSample>
         </PageTitle>

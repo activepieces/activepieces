@@ -1,6 +1,7 @@
 import { Permission } from '@activepieces/core-utils';
 import {
   AppConnectionWithoutSensitiveData,
+  formErrors,
   UpdateProjectPlatformRequest,
   PlatformRole,
 } from '@activepieces/shared';
@@ -9,6 +10,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { SkeletonList } from '@/components/custom/skeleton-list';
@@ -29,7 +31,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -37,55 +38,52 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-
-interface EditProjectDialogProps {
-  open: boolean;
-  onClose: () => void;
-  projectId: string;
-  initialValues?: {
-    projectName?: string;
-    externalId?: string;
-    sensitive?: boolean;
-  };
-}
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export function EditProjectDialog({
   open,
   onClose,
+  onSaved,
   projectId,
   initialValues,
 }: EditProjectDialogProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
 
-  const { data: globalConnectionsPage, isLoading: isLoadingConnections } =
-    globalConnectionsQueries.useGlobalConnections({
-      request: { limit: 9999 },
-      extraKeys: [],
-    });
+  const {
+    data: globalConnectionsPage,
+    isLoading: isLoadingConnections,
+    isError: connectionsFailed,
+    refetch: refetchConnections,
+  } = globalConnectionsQueries.useGlobalConnections({
+    request: { limit: 9999 },
+    extraKeys: [],
+  });
 
-  const globalConnections = globalConnectionsPage?.data ?? [];
+  const connections: GlobalConnectionsState = !globalConnectionsEnabled
+    ? { status: 'disabled' }
+    : connectionsFailed && globalConnectionsPage === undefined
+    ? { status: 'failed', retry: () => refetchConnections() }
+    : { status: 'ready', list: globalConnectionsPage?.data ?? [] };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full">
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent size="sm" aria-describedby={undefined}>
         <DialogHeader>
-          {' '}
-          <DialogTitle>
-            {t('Edit')} {initialValues?.projectName}
-          </DialogTitle>
+          <DialogTitle>{t('Edit project')}</DialogTitle>
         </DialogHeader>
 
-        {!globalConnectionsEnabled || !isLoadingConnections ? (
+        {globalConnectionsEnabled && isLoadingConnections ? (
+          <SkeletonList numberOfItems={3} className="h-10" />
+        ) : (
           <EditProjectForm
+            key={`${open ? projectId : 'closed'}-${connections.status}`}
             onClose={onClose}
+            onSaved={onSaved}
             projectId={projectId}
             initialValues={initialValues}
-            globalConnections={globalConnections}
-            globalConnectionsEnabled={globalConnectionsEnabled}
+            connections={connections}
           />
-        ) : (
-          <SkeletonList numberOfItems={3} className="h-10" />
         )}
       </DialogContent>
     </Dialog>
@@ -94,79 +92,99 @@ export function EditProjectDialog({
 
 const EditProjectForm = ({
   onClose,
+  onSaved,
   projectId,
   initialValues,
-  globalConnections,
-  globalConnectionsEnabled,
+  connections,
 }: {
   onClose: () => void;
+  onSaved?: () => void;
   projectId: string;
   initialValues?: EditProjectDialogProps['initialValues'];
-  globalConnections: AppConnectionWithoutSensitiveData[];
-  globalConnectionsEnabled: boolean;
+  connections: GlobalConnectionsState;
 }) => {
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
-
-  const currentConnectionExternalIds = globalConnections
-    .filter((connection) => connection.projectIds.includes(projectId))
-    .map((connection) => connection.externalId);
-
-  const { mutate, isPending } = projectCollectionUtils.useUpdateProject(
-    () => {
-      queryClient.invalidateQueries({
-        queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
-      });
-      toast.success(t('Your changes have been saved.'), {
-        duration: 3000,
-      });
-      onClose();
-    },
-    (error) => {
-      console.error(error);
-      internalErrorToast();
-    },
-  );
+  const globalConnections =
+    connections.status === 'ready' ? connections.list : [];
 
   const form = useForm<UpdateProjectPlatformRequest>({
     defaultValues: {
       displayName: initialValues?.projectName,
       externalId: initialValues?.externalId,
       sensitive: initialValues?.sensitive ?? false,
-      globalConnectionExternalIds: currentConnectionExternalIds,
+      globalConnectionExternalIds: currentConnectionIds({
+        connections: globalConnections,
+        projectId,
+      }),
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
+    mode: 'onChange',
   });
+
+  const { mutate, isPending } = projectCollectionUtils.useUpdateProject(
+    () => {
+      queryClient.invalidateQueries({
+        queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
+      });
+      toast.success(t('Changes saved'));
+      onSaved?.();
+      onClose();
+    },
+    (error) => {
+      mutationFeedback.markShown(error);
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
+    },
+  );
+
+  const submit = (values: UpdateProjectPlatformRequest) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
+    mutate({
+      projectId,
+      request: editProjectRequest({
+        values,
+        connectionsStatus: connections.status,
+        connectionsDirty:
+          form.formState.dirtyFields.globalConnectionExternalIds !== undefined,
+      }),
+    });
+  };
+
+  const serverError = form.formState.errors.root?.serverError?.message;
+  const initialConnectionIds =
+    form.formState.defaultValues?.globalConnectionExternalIds ?? [];
+  const selectedConnectionIds = form.watch('globalConnectionExternalIds') ?? [];
+  const removesConnection = initialConnectionIds.some(
+    (id) => id !== undefined && !selectedConnectionIds.includes(id),
+  );
 
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit((values) => {
-          mutate({
-            projectId,
-            request: {
-              displayName: values.displayName,
-              externalId: values.externalId,
-              sensitive: values.sensitive,
-              globalConnectionExternalIds: values.globalConnectionExternalIds,
-            },
-          });
-        })}
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit(submit)}
       >
-        {globalConnectionsEnabled && <GlobalConnectionWarning />}
         <FormField
           name="displayName"
+          rules={{
+            validate: (value: string | undefined) =>
+              (value ?? '').trim().length > 0 || formErrors.required,
+          }}
           render={({ field }) => (
             <FormItem>
-              <Label htmlFor="displayName">{t('Project Name')}</Label>
+              <Label htmlFor="displayName">{t('Name')}</Label>
               <Input
                 {...field}
                 id="displayName"
-                placeholder={t('Project Name')}
-                className="rounded-md"
+                placeholder={t('Customer success')}
               />
               <FormMessage />
             </FormItem>
@@ -177,6 +195,12 @@ const EditProjectForm = ({
           platformRole === PlatformRole.ADMIN && (
             <FormField
               name="externalId"
+              rules={{
+                validate: (value: string | undefined) =>
+                  !initialValues?.externalId ||
+                  (value ?? '').trim().length > 0 ||
+                  EXTERNAL_ID_REQUIRED,
+              }}
               render={({ field }) => (
                 <FormItem>
                   <Label htmlFor="externalId">{t('External ID')}</Label>
@@ -187,7 +211,6 @@ const EditProjectForm = ({
                     {...field}
                     id="externalId"
                     placeholder={t('org-3412321')}
-                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>
@@ -200,12 +223,12 @@ const EditProjectForm = ({
             <FormField
               name="sensitive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                <FormItem className="flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="sensitive">{t('Sensitive project')}</Label>
                     <FormDescription>
                       {t(
-                        'When enabled, publishing flows in this project requires approval.',
+                        'Publishing a flow needs approval from someone with the permission.',
                       )}
                     </FormDescription>
                   </div>
@@ -221,12 +244,28 @@ const EditProjectForm = ({
             />
           )}
 
-        {globalConnectionsEnabled && (
+        {connections.status === 'failed' && (
+          <div className="flex flex-col gap-2">
+            <Label>{t('Global connections')}</Label>
+            <DataFetchErrorState
+              entity={t('global connections')}
+              onRetry={connections.retry}
+              className="rounded-xl border py-6"
+            />
+            <p className="text-xs text-gray-11">
+              {t(
+                "Saving now keeps this project's global connections as they are.",
+              )}
+            </p>
+          </div>
+        )}
+
+        {connections.status === 'ready' && (
           <FormField
             name="globalConnectionExternalIds"
             render={({ field }) => (
               <FormItem>
-                <Label>{t('Global Connections')}</Label>
+                <Label>{t('Global connections')}</Label>
                 <MultiSelectPieceProperty
                   placeholder={t('Select global connections')}
                   options={globalConnections.map((connection) => ({
@@ -246,13 +285,28 @@ const EditProjectForm = ({
           />
         )}
 
-        <DialogFooter className="justify-end mt-6">
-          <Button type="button" variant="outline" onClick={onClose}>
+        {connections.status === 'ready' && removesConnection && (
+          <GlobalConnectionWarning />
+        )}
+
+        {serverError && (
+          <p role="alert" className="text-sm text-danger-11">
+            {serverError}
+          </p>
+        )}
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={onClose}
+          >
             {t('Cancel')}
           </Button>
           <Button
             type="submit"
-            disabled={isPending}
+            disabled={!form.formState.isDirty}
             loading={isPending}
             {...adminControl(AdminControl.PROJECTS_EDIT_SUBMIT)}
           >
@@ -262,4 +316,56 @@ const EditProjectForm = ({
       </form>
     </Form>
   );
+};
+
+export function editProjectRequest({
+  values,
+  connectionsStatus,
+  connectionsDirty,
+}: {
+  values: UpdateProjectPlatformRequest;
+  connectionsStatus: GlobalConnectionsState['status'];
+  connectionsDirty: boolean;
+}): UpdateProjectPlatformRequest {
+  const sendConnections = connectionsStatus === 'ready' && connectionsDirty;
+  return {
+    displayName: values.displayName?.trim(),
+    externalId: values.externalId,
+    sensitive: values.sensitive,
+    globalConnectionExternalIds: sendConnections
+      ? values.globalConnectionExternalIds
+      : undefined,
+  };
+}
+
+function currentConnectionIds({
+  connections,
+  projectId,
+}: {
+  connections: AppConnectionWithoutSensitiveData[];
+  projectId: string;
+}): string[] {
+  return connections
+    .filter((connection) => connection.projectIds.includes(projectId))
+    .map((connection) => connection.externalId);
+}
+
+const EXTERNAL_ID_REQUIRED =
+  "An external ID can't be removed once set. Enter a new one instead.";
+
+type GlobalConnectionsState =
+  | { status: 'disabled' }
+  | { status: 'failed'; retry: () => void }
+  | { status: 'ready'; list: AppConnectionWithoutSensitiveData[] };
+
+export type EditProjectDialogProps = {
+  open: boolean;
+  onClose: () => void;
+  onSaved?: () => void;
+  projectId: string;
+  initialValues?: {
+    projectName?: string;
+    externalId?: string;
+    sensitive?: boolean;
+  };
 };

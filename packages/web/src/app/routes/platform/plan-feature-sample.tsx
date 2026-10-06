@@ -6,6 +6,8 @@ import { FeatureTeaser } from '@/app/components/feature-teaser';
 import { PLATFORM_FEATURES, PlatformFeature } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { rolesPlan } from './security/project-role/sample-roles';
+
 export function PlanFeatureSample({
   feature,
   children,
@@ -43,7 +45,7 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     teaser: PLATFORM_FEATURES.sso,
   },
   projectRoles: {
-    isLocked: (plan) => !plan.projectRolesEnabled,
+    isLocked: rolesPlan.isLocked,
     teaser: PLATFORM_FEATURES.projectRoles,
   },
   globalConnections: {

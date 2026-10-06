@@ -84,18 +84,13 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       );
     case 'full':
       return crown ? (
-        <Button size="sm" className={className} {...control}>
+        <Button className={className} {...control}>
           {crown}
-          {t('New Project')}
+          {t('New project')}
         </Button>
       ) : (
-        <IconButton
-          icon={Add01Icon}
-          size="sm"
-          className={className}
-          {...control}
-        >
-          {t('New Project')}
+        <IconButton icon={Add01Icon} className={className} {...control}>
+          {t('New project')}
         </IconButton>
       );
     case 'sidebar-menu':

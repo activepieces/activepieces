@@ -1,185 +1,171 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  PlatformWithoutSensitiveData,
-  ProjectWithLimits,
+  PROJECT_COLOR_PALETTE,
   ProjectType,
+  ProjectWithLimits,
 } from '@activepieces/shared';
-import {
-  Clock01Icon,
-  HashIcon,
-  Link02Icon,
-  LockKeyholeIcon,
-  Tag01Icon,
-  UserIcon,
-  UserMultipleIcon,
-  WorkflowSquare02Icon,
-} from '@hugeicons/core-free-icons';
+import { LockKeyholeIcon } from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/custom/formatted-date';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-
-type ProjectsTableColumnsProps = {
-  platform: PlatformWithoutSensitiveData;
-};
+import {
+  DateCell,
+  InitialsTile,
+  MutedCell,
+  NameCell,
+  NumberCell,
+} from '@/components/custom/list/list-cells';
+import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export const projectsTableColumns = ({
-  platform,
-}: ProjectsTableColumnsProps): ColumnDef<
-  RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
->[] => {
-  const columns: ColumnDef<
-    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
-  >[] = [
-    {
-      accessorKey: 'displayName',
-      size: 270,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Name')}
-          icon={Tag01Icon}
-        />
-      ),
-      cell: ({ row }) => {
-        const locked = row.original.plan.locked;
-        const isPersonal = row.original.type === ProjectType.PERSONAL;
-
-        return (
-          <div className="text-left flex items-center justify-start ">
-            {locked && (
-              <HugeiconsIcon
-                icon={LockKeyholeIcon}
-                className="size-3 mr-1.5"
-                strokeWidth={2.5}
-              />
-            )}
-            {isPersonal && (
-              <HugeiconsIcon icon={UserIcon} className="size-4 mr-1.5" />
-            )}
-            <span className="font-medium">{row.original.displayName}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'type',
-      enableHiding: true,
-    },
-    {
-      accessorKey: 'users',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Active Users')}
-          icon={UserMultipleIcon}
-          className="w-full"
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left tabular-nums">
-            <span className="font-medium">
-              {row.original.analytics.activeUsers}
-            </span>
-            <span className="text-gray-11">
-              {` / ${row.original.analytics.totalUsers}`}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'flows',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Active Flows')}
-          icon={WorkflowSquare02Icon}
-          className="w-full"
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left tabular-nums">
-            <span className="font-medium">
-              {row.original.analytics.activeFlows}
-            </span>
-            <span className="text-gray-11">
-              {` / ${row.original.analytics.totalFlows}`}
-            </span>
-          </div>
-        );
-      },
-    },
-  ];
-
-  if (platform.plan.embeddingEnabled) {
-    columns.push({
-      accessorKey: 'externalId',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('External ID')}
-          icon={HashIcon}
-        />
-      ),
-      cell: ({ row }) => {
-        const displayValue =
-          isNil(row.original.externalId) ||
-          row.original.externalId?.length === 0
-            ? '-'
-            : row.original.externalId;
-        return <div className="text-left truncate">{displayValue}</div>;
-      },
-    });
-  }
-  if (platform.plan.globalConnectionsEnabled) {
-    columns.push({
-      accessorKey: 'globalConnectionsCount',
-      size: 135,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Global Connections')}
-          icon={Link02Icon}
-          className="w-full"
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left tabular-nums">
-            {row.original.globalConnectionsCount}
-          </div>
-        );
-      },
-    });
-  }
-
-  columns.push({
-    accessorKey: 'createdAt',
-    size: 110,
+  menuItems,
+}: {
+  menuItems: (project: ProjectRow) => RowMenuItem[];
+}): ColumnDef<RowDataWithActions<ProjectRow>>[] => [
+  {
+    accessorKey: 'displayName',
+    size: 400,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Project')} />
+    ),
+    cell: ({ row }) => (
+      <NameCell
+        stacked
+        media={<ProjectTile project={row.original} />}
+        title={row.original.displayName}
+        badge={
+          row.original.plan.locked ? (
+            <Badge variant="outline">
+              <HugeiconsIcon icon={LockKeyholeIcon} />
+              {t('Locked')}
+            </Badge>
+          ) : undefined
+        }
+        sub={row.original.externalId ?? undefined}
+      />
+    ),
+  },
+  {
+    id: 'owner',
+    size: 200,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} />
+    ),
+    cell: ({ row }) => <MutedCell>{row.original.ownerName}</MutedCell>,
+  },
+  {
+    id: 'members',
+    size: 120,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t('Created')}
-        icon={Clock01Icon}
+        title={t('Members')}
+        className="justify-end"
       />
     ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          <FormattedDate date={new Date(row.original.created)} />
-        </div>
-      );
-    },
-  });
+    cell: ({ row }) => (
+      <span
+        className="block text-right text-gray-12 tabular-nums"
+        title={t('{active} active of {total} members', {
+          active: row.original.analytics.activeUsers,
+          total: row.original.analytics.totalUsers,
+        })}
+      >
+        {`${row.original.analytics.activeUsers} / ${row.original.analytics.totalUsers}`}
+      </span>
+    ),
+  },
+  {
+    id: 'activeFlows',
+    size: 120,
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Active flows')}
+        className="justify-end"
+      />
+    ),
+    cell: ({ row }) => <ActiveFlowsCell project={row.original} />,
+  },
+  {
+    id: 'lastActivity',
+    size: 148,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Last activity')} />
+    ),
+    cell: ({ row }) => (
+      <DateCell value={row.original.analytics.lastFlowUpdated} />
+    ),
+  },
+  {
+    id: 'created',
+    size: 112,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Created')} />
+    ),
+    cell: ({ row }) => <DateCell value={row.original.created} mode="short" />,
+  },
+  {
+    id: 'actions',
+    size: 56,
+    cell: ({ row }) => (
+      <div className="flex justify-end">
+        <RowMenu items={menuItems(row.original)} />
+      </div>
+    ),
+  },
+];
 
-  return columns;
+export function ProjectTile({
+  project,
+  className,
+}: {
+  project: ProjectWithLimits;
+  className?: string;
+}) {
+  const isPersonal = project.type === ProjectType.PERSONAL;
+  const swatch = PROJECT_COLOR_PALETTE[project.icon.color];
+  return (
+    <InitialsTile
+      name={project.displayName.charAt(0)}
+      className={className}
+      style={
+        isPersonal
+          ? undefined
+          : { backgroundColor: swatch.color, color: swatch.textColor }
+      }
+    />
+  );
+}
+
+export function ActiveFlowsCell({ project }: { project: ProjectWithLimits }) {
+  return (
+    <NumberCell>
+      <ActiveFlowsValue project={project} />
+    </NumberCell>
+  );
+}
+
+export function ActiveFlowsValue({ project }: { project: ProjectWithLimits }) {
+  const active = project.analytics.activeFlows;
+  const limit = project.plan.activeFlowsLimit;
+  const atLimit = !isNil(limit) && active >= limit;
+  return (
+    <span
+      className={cn('tabular-nums', atLimit && 'font-medium text-danger-11')}
+    >
+      {active}
+      {!isNil(limit) && ` / ${limit}`}
+    </span>
+  );
+}
+
+export type ProjectRow = ProjectWithLimits & {
+  ownerName?: string;
+  globalConnectionsCount?: number;
 };

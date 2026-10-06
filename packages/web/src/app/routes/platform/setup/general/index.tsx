@@ -9,6 +9,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { DangerZoneSection } from './danger-zone-section';
+import { ProjectsPanel } from './projects-panel';
 
 export const GeneralPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -24,6 +25,8 @@ export const GeneralPage = () => {
       description={t('Your platform name, branding and general settings.')}
     >
       <AppearanceSection />
+      <Separator className="my-8" />
+      <ProjectsPanel />
       {canDeletePlatform && (
         <>
           <Separator className="my-8" />
