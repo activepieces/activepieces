@@ -10,7 +10,7 @@ export const linearCreateProject = createAction({
   classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a project in a Linear team.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Creates a new project under a Linear team, with optional description, icon, color, start/target dates, and status. Use to set up a new project to group issues. Requires a team ID and project name; not idempotent, each call creates a distinct project.',
     idempotent: false,
