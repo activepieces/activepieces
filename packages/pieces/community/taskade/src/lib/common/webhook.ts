@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, Store, TestOrRunHookContext, TriggerHookContext, TriggerStrategy } from '@activepieces/pieces-framework';
 import { taskadeAuth } from '../auth';
@@ -22,19 +22,6 @@ function verifySignature({ secret, headers, rawBody }: { secret: string; headers
 
 function sign({ secret, body }: { secret: string; body: Buffer | string }): string {
 	return `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
-}
-
-function deliveryKey(rawBody: unknown): string {
-	const body = typeof rawBody === 'string' ? rawBody : Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : JSON.stringify(rawBody ?? null);
-	return createHash('sha256').update(body).digest('hex').slice(0, 40);
-}
-
-function remember({ seen, key }: { seen: unknown; key: string }): { duplicate: boolean; seen: string[] } {
-	const list = Array.isArray(seen) ? seen.filter((entry): entry is string => typeof entry === 'string') : [];
-	if (list.includes(key)) {
-		return { duplicate: true, seen: list };
-	}
-	return { duplicate: false, seen: [...list, key].slice(-MAX_SEEN) };
 }
 
 async function registerWebhook({ token, targetUrl, event, spaceIds }: { token: string; targetUrl: string; event: TaskadeWebhookEvent; spaceIds: string[] }): Promise<{ id: string; secret: string }> {
@@ -135,7 +122,6 @@ function webhookTriggerHooks(event: TaskadeWebhookEvent) {
 				await deleteWebhook({ token: context.auth.secret_text, id: registration.id });
 			}
 			await context.store.delete(STORE_KEY);
-			await context.store.delete(SEEN_KEY);
 		},
 		async run(context: WebhookRunContext): Promise<unknown[]> {
 			const registration = await context.store.get<WebhookRegistration>(STORE_KEY);
@@ -146,11 +132,6 @@ function webhookTriggerHooks(event: TaskadeWebhookEvent) {
 			if (!valid) {
 				return [];
 			}
-			const remembered = remember({ seen: await context.store.get<unknown>(SEEN_KEY), key: deliveryKey(context.payload.rawBody) });
-			if (remembered.duplicate) {
-				return [];
-			}
-			await context.store.put(SEEN_KEY, remembered.seen);
 			return [context.payload.body];
 		},
 	};
@@ -158,21 +139,15 @@ function webhookTriggerHooks(event: TaskadeWebhookEvent) {
 
 const SIGNATURE_HEADER = 'x-taskade-signature';
 const STORE_KEY = 'taskade_webhook';
-const SEEN_KEY = 'taskade_webhook_seen';
-const MAX_SEEN = 200;
 
 export const taskadeWebhook = {
 	verifySignature,
 	sign,
-	deliveryKey,
-	remember,
 	registerWebhook,
 	deleteWebhook,
 	webhookTriggerProps,
 	webhookTriggerHooks,
 	STORE_KEY,
-	SEEN_KEY,
-	MAX_SEEN,
 };
 
 type WebhookRegistration = { id: string; secret: string };

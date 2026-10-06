@@ -48,14 +48,6 @@ describe('signature', () => {
 		expect(taskadeWebhook.verifySignature({ secret: SECRET, headers: d.headers, rawBody: undefined })).toBe(false);
 		expect(taskadeWebhook.verifySignature({ secret: SECRET, headers: { 'X-Taskade-Signature': 'sha256=abc' }, rawBody: d.rawBody })).toBe(false);
 	});
-	test('dedupe list is bounded', () => {
-		const many = Array.from({ length: taskadeWebhook.MAX_SEEN }, (_, i) => `k${i}`);
-		const next = taskadeWebhook.remember({ seen: many, key: 'new' });
-		expect(next.duplicate).toBe(false);
-		expect(next.seen).toHaveLength(taskadeWebhook.MAX_SEEN);
-		expect(next.seen).not.toContain('k0');
-		expect(taskadeWebhook.remember({ seen: next.seen, key: 'new' }).duplicate).toBe(true);
-	});
 });
 
 describe('lifecycle', () => {
@@ -92,12 +84,11 @@ describe('lifecycle', () => {
 	});
 	test('onDisable deletes by encoded id and forgets state; 404 counts as deleted', async () => {
 		const seen = stubFetch(() => ({ status: 404, body: { ok: false } }));
-		const store = memoryStore({ [taskadeWebhook.STORE_KEY]: { id: HOOK_URL, secret: SECRET }, [taskadeWebhook.SEEN_KEY]: ['a'] });
+		const store = memoryStore({ [taskadeWebhook.STORE_KEY]: { id: HOOK_URL, secret: SECRET } });
 		await call({ fn: taskDueTrigger.onDisable, ctx: context({ store }) });
 		expect(seen[0].method).toBe('DELETE');
 		expect(seen[0].path).toBe(`/webhooks/${encodeURIComponent(HOOK_URL)}`);
 		expect(store.read(taskadeWebhook.STORE_KEY)).toBeUndefined();
-		expect(store.read(taskadeWebhook.SEEN_KEY)).toBeUndefined();
 	});
 	test('onDisable keeps the stored id when the delete fails', async () => {
 		stubFetch(() => ({ status: 500, body: { ok: false, message: 'boom' } }));
@@ -111,11 +102,12 @@ describe('run', () => {
 	function storeWithSecret() {
 		return memoryStore({ [taskadeWebhook.STORE_KEY]: { id: HOOK_URL, secret: SECRET } });
 	}
-	test('emits a correctly signed delivery once, drops the retry', async () => {
+	test('emits every correctly signed delivery and writes no dedupe state, so a failed submission can be retried', async () => {
 		const store = storeWithSecret();
 		const payload = delivery();
 		await expect(call({ fn: taskDueTrigger.run, ctx: context({ store, payload }) })).resolves.toEqual([payload.body]);
-		await expect(call({ fn: taskDueTrigger.run, ctx: context({ store, payload }) })).resolves.toEqual([]);
+		await expect(call({ fn: taskDueTrigger.run, ctx: context({ store, payload }) })).resolves.toEqual([payload.body]);
+		expect(store.read('taskade_webhook_seen')).toBeUndefined();
 	});
 	test('drops unsigned, badly signed and raw-body-less deliveries', async () => {
 		const store = storeWithSecret();

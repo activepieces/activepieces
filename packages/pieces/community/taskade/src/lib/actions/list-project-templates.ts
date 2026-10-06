@@ -35,9 +35,10 @@ export const listProjectTemplatesAction = createAction({
 			operation: 'list project templates',
 			query: { limit, page },
 		});
-		const items = (response.items ?? [])
+		const rawItems = response.items ?? [];
+		const items = rawItems
 			.filter((item): item is Partial<BaseResponse> => item !== null && typeof item.id === 'string')
 			.map((item) => ({ id: item.id ?? '', name: item.name ?? null }));
-		return taskadeNormalize.pageOutput({ items, page, limit });
+		return taskadeNormalize.pageOutput({ items, fetched: rawItems.length, page, limit });
 	},
 });

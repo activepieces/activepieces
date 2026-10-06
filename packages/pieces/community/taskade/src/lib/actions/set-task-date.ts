@@ -80,6 +80,9 @@ export const setTaskDateAction = createAction({
 		if (end && end.date < start.date) {
 			throw new Error('End Date must be on or after Start Date.');
 		}
+		if (end && end.date === start.date && start.time && end.time && toSeconds(end.time) < toSeconds(start.time)) {
+			throw new Error(`End Time ${end.time} is before Start Time ${start.time} on ${start.date}. Use a later End Time or a later End Date.`);
+		}
 		const date = end ? { start, end } : { start };
 		await taskadeApi.request({ token, method: HttpMethod.PUT, path, operation: 'set task date', body: date });
 		return { projectId: parsedProjectId, taskId: parsedTaskId, cleared: false, date };
@@ -114,6 +117,11 @@ function buildDate({ date, time, timezone, label }: { date: unknown; time: unkno
 		...(timeText ? { time: timeText } : {}),
 		...(timezone ? { timezone } : {}),
 	};
+}
+
+function toSeconds(time: string): number {
+	const [hours, minutes, seconds] = time.split(':').map(Number);
+	return hours * 3600 + minutes * 60 + (seconds ?? 0);
 }
 
 const DATE_PATTERN = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;

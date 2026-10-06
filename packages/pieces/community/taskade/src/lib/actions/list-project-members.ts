@@ -36,9 +36,10 @@ export const listProjectMembersAction = createAction({
 			operation: 'list project members',
 			query: { limit, page },
 		});
-		const items = (response.items ?? [])
+		const rawItems = response.items ?? [];
+		const items = rawItems
 			.filter((item): item is MemberResponse => item !== null)
 			.map((item) => ({ handle: item.handle, displayName: item.displayName ?? null }));
-		return taskadeNormalize.pageOutput({ items, page, limit });
+		return taskadeNormalize.pageOutput({ items, fetched: rawItems.length, page, limit });
 	},
 });

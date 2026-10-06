@@ -11,7 +11,7 @@ export const projectJoinedTrigger = createTrigger({
 	classification: 'READ',
 	aiMetadata: {
 		description:
-			'Fires when someone joins a Taskade project, with the project, its workspace and the new member\'s name and user ID. Deliveries are signature-checked and repeats are dropped. Needs a Taskade Pro plan.',
+			'Fires when someone joins a Taskade project, with the project, its workspace and the new member\'s name and user ID. Deliveries are signature-checked. Taskade sends no delivery ID, so a delivery Taskade resends can run the flow again. Needs a Taskade Pro plan.',
 	},
 	outputSchema: taskadeOutputSchemas['projectJoinedTrigger'],
 	sampleData: {

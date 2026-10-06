@@ -54,8 +54,8 @@ function conversation(raw: ConversationResponse): Conversation {
 	};
 }
 
-function pageOutput<T>({ items, page, limit }: { items: T[]; page: number; limit: number }): { items: T[]; page: number; nextPage: number | null; hasMore: boolean } {
-	const hasMore = items.length >= limit;
+function pageOutput<T>({ items, fetched, page, limit }: { items: T[]; fetched: number; page: number; limit: number }): { items: T[]; page: number; nextPage: number | null; hasMore: boolean } {
+	const hasMore = fetched >= limit;
 	return { items, page, nextPage: hasMore ? page + 1 : null, hasMore };
 }
 

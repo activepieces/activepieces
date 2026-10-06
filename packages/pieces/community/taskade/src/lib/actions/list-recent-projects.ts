@@ -47,7 +47,8 @@ export const listRecentProjectsAction = createAction({
 			operation: 'list my projects',
 			query: { limit, page, sort },
 		});
-		const items = (response.items ?? []).map((item) => taskadeNormalize.project(item));
-		return taskadeNormalize.pageOutput({ items, page, limit });
+		const rawItems = response.items ?? [];
+		const items = rawItems.map((item) => taskadeNormalize.project(item));
+		return taskadeNormalize.pageOutput({ items, fetched: rawItems.length, page, limit });
 	},
 });

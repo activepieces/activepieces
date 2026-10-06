@@ -11,7 +11,7 @@ export const taskDueTrigger = createTrigger({
 	classification: 'READ',
 	aiMetadata: {
 		description:
-			'Fires when the due date of a Taskade task arrives, with the task ID and text, its project and workspace, assignees and start/end date. Deliveries are signature-checked and repeats are dropped. Needs a Taskade Pro plan.',
+			'Fires when the due date of a Taskade task arrives, with the task ID and text, its project and workspace, assignees and start/end date. Deliveries are signature-checked. Taskade sends no delivery ID, so a delivery Taskade resends can run the flow again. Needs a Taskade Pro plan.',
 	},
 	outputSchema: taskadeOutputSchemas['taskDueTrigger'],
 	sampleData: {

@@ -35,9 +35,10 @@ export const listAgentsAction = createAction({
 			operation: 'list agents',
 			query: { limit, page },
 		});
-		const items = (response.items ?? [])
+		const rawItems = response.items ?? [];
+		const items = rawItems
 			.filter((item): item is AgentResponse => item !== null)
 			.map((raw) => taskadeNormalize.agent({ raw, includePrompts: false }));
-		return taskadeNormalize.pageOutput({ items, page, limit });
+		return taskadeNormalize.pageOutput({ items, fetched: rawItems.length, page, limit });
 	},
 });

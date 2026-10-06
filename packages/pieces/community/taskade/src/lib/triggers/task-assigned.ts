@@ -11,7 +11,7 @@ export const taskAssignedTrigger = createTrigger({
 	classification: 'READ',
 	aiMetadata: {
 		description:
-			'Fires when one or more Taskade tasks are assigned to someone, with the project, who assigned them and each task\'s ID, text, completion and assignee handles. Deliveries are signature-checked and repeats are dropped. Needs a Taskade Pro plan.',
+			'Fires when one or more Taskade tasks are assigned to someone, with the project, who assigned them and each task\'s ID, text, completion and assignee handles. Deliveries are signature-checked. Taskade sends no delivery ID, so a delivery Taskade resends can run the flow again. Needs a Taskade Pro plan.',
 	},
 	outputSchema: taskadeOutputSchemas['taskAssignedTrigger'],
 	sampleData: {

@@ -213,6 +213,11 @@ describe('set_task_date', () => {
 		expect(seen[0].body).toEqual({ start: { date: '2026-10-20' } });
 		expect(result).toEqual({ projectId: 'P1', taskId: 't1', cleared: false, date: { start: { date: '2026-10-20' } } });
 	});
+	test('same-day range with the end time after the start time is sent', async () => {
+		const seen = stubFetch(() => ({ body: { ok: true } }));
+		await run(setTaskDateAction)({ projectId: 'P1', taskId: 't1', startDate: '2026-10-20', startTime: '09:00', endDate: '2026-10-20', endTime: '17:00' });
+		expect(seen[0].body).toEqual({ start: { date: '2026-10-20', time: '09:00' }, end: { date: '2026-10-20', time: '17:00' } });
+	});
 	test('range with times and timezone', async () => {
 		const seen = stubFetch(() => ({ body: { ok: true } }));
 		await run(setTaskDateAction)({ projectId: 'P1', taskId: 't1', startDate: '2026-10-20', startTime: '09:30', endDate: '2026-10-21', endTime: '17:00:00', timezone: 'Europe/Berlin' });
@@ -228,6 +233,8 @@ describe('set_task_date', () => {
 		[{ startDate: '2026-10-20', startTime: '9am' }, 'HH:MM'],
 		[{ startDate: '2026-10-20', endTime: '10:00' }, 'End Time needs End Date'],
 		[{ startDate: '2026-10-20', endDate: '2026-10-19' }, 'on or after'],
+		[{ startDate: '2026-10-20', startTime: '17:00', endDate: '2026-10-20', endTime: '09:00' }, 'is before Start Time'],
+		[{ startDate: '2026-10-20', startTime: '09:00:30', endDate: '2026-10-20', endTime: '09:00' }, 'is before Start Time'],
 	])('refuses %j', async (props, message) => {
 		const seen = stubFetch(() => ({ body: {} }));
 		await expect(run(setTaskDateAction)({ projectId: 'P1', taskId: 't1', ...props })).rejects.toThrow(message);

@@ -106,6 +106,10 @@ describe('projects', () => {
 		const seen = stubFetch(() => ({ body: { ok: true, items: [{ id: 'T1', name: 'Sprint' }, null] } }));
 		await expect(run(listProjectTemplatesAction)({ folderId: 'W' })).resolves.toEqual({ items: [{ id: 'T1', name: 'Sprint' }], page: 1, nextPage: null, hasMore: false });
 		expect(seen[0].query.get('limit')).toBe('20');
+		stubFetch(() => ({ body: { ok: true, items: [{ id: 'T1', name: 'Sprint' }, null] } }));
+		await expect(run(listProjectTemplatesAction)({ folderId: 'W', limit: 2 })).resolves.toMatchObject({ items: [{ id: 'T1' }], nextPage: 2, hasMore: true });
+		stubFetch(() => ({ body: { ok: true, items: [{ handle: 'pieces', displayName: 'P' }, null] } }));
+		await expect(run(listProjectMembersAction)({ projectId: 'P1', limit: 2 })).resolves.toMatchObject({ items: [{ handle: 'pieces' }], nextPage: 2, hasMore: true });
 		stubFetch(() => ({ body: { ok: true, items: [{ handle: 'pieces', displayName: 'P' }] } }));
 		await expect(run(listProjectMembersAction)({ projectId: 'P1', limit: 1 })).resolves.toEqual({
 			items: [{ handle: 'pieces', displayName: 'P' }],

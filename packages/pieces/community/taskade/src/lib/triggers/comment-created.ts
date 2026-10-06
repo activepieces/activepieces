@@ -11,7 +11,7 @@ export const commentCreatedTrigger = createTrigger({
 	classification: 'READ',
 	aiMetadata: {
 		description:
-			'Fires when someone comments on a Taskade task, with the comment text, the commenter, the task ID and text, and the project. Deliveries are signature-checked and repeats are dropped. Needs a Taskade Pro plan.',
+			'Fires when someone comments on a Taskade task, with the comment text, the commenter, the task ID and text, and the project. Deliveries are signature-checked. Taskade sends no delivery ID, so a delivery Taskade resends can run the flow again. Needs a Taskade Pro plan.',
 	},
 	outputSchema: taskadeOutputSchemas['commentCreatedTrigger'],
 	sampleData: {

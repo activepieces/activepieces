@@ -38,6 +38,10 @@ describe('agents', () => {
 			hasMore: true,
 		});
 	});
+	test('list_agents reports hasMore from the raw page size when a null entry is dropped', async () => {
+		stubFetch(() => ({ body: { ok: true, items: [AGENT, null] } }));
+		await expect(run(listAgentsAction)({ folderId: 'W', limit: 2 })).resolves.toMatchObject({ items: [{ id: 'A1' }], nextPage: 2, hasMore: true });
+	});
 	test('get_agent keeps prompts', async () => {
 		stubFetch(() => ({ body: { ok: true, item: AGENT } }));
 		await expect(run(getAgentAction)({ agentId: 'A1' })).resolves.toMatchObject({ commands: [{ id: 'c1', name: 'Cmd', prompt: 'do' }] });

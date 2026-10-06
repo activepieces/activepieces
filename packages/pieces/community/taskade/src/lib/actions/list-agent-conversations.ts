@@ -35,7 +35,8 @@ export const listAgentConversationsAction = createAction({
 			operation: 'list agent conversations',
 			query: { limit, page },
 		});
-		const items = (response.items ?? []).map((item) => taskadeNormalize.conversation(item));
-		return taskadeNormalize.pageOutput({ items, page, limit });
+		const rawItems = response.items ?? [];
+		const items = rawItems.map((item) => taskadeNormalize.conversation(item));
+		return taskadeNormalize.pageOutput({ items, fetched: rawItems.length, page, limit });
 	},
 });
