@@ -25,15 +25,16 @@ export const createGroupAction = createAction({
     isIsolated: Property.Checkbox({ displayName: 'Isolated', description: 'Members of an isolated group only see content shared with the group (see Heartbeat docs).', required: false }),
     isJoinable: Property.Checkbox({ displayName: 'Joinable', description: 'Members can join the group themselves.', required: false }),
   },
-  outputSchema: heartbeatOutputSchemas.group,
+  outputSchema: heartbeatOutputSchemas.createdGroup,
   async run({ auth, propsValue }) {
+    const name = heartbeatApi.requiredText({ value: propsValue.name, label: 'Name' });
     const created = await heartbeatApi.request<unknown>({
       token: auth.secret_text,
       method: HttpMethod.PUT,
       path: '/groups',
       operation: 'create group',
       body: {
-        name: heartbeatApi.requiredText({ value: propsValue.name, label: 'Name' }),
+        name,
         description: heartbeatApi.optionalText(propsValue.description),
         members: heartbeatApi.listOrUndefined(heartbeatApi.emailList({ value: propsValue.memberEmails, label: 'Member Emails' })),
         parentGroupID: heartbeatApi.optionalUuid({ value: propsValue.parentGroupId, label: 'Parent Group ID' }),
@@ -45,6 +46,10 @@ export const createGroupAction = createAction({
     if (typeof groupId !== 'string') {
       throw new Error('Heartbeat created the group but did not return its ID. Use List Groups to find it.');
     }
-    return heartbeatGroups.getGroup({ token: auth.secret_text, groupId });
+    const lookup = await heartbeatApi.afterWrite({
+      what: 'the new group',
+      load: () => heartbeatGroups.getGroup({ token: auth.secret_text, groupId }),
+    });
+    return { ...(lookup.value ?? { id: groupId, name }), lookupError: lookup.lookupError };
   },
 });

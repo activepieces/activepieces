@@ -89,6 +89,12 @@ describe('chat', () => {
 		expect(seen[1].query.get('limit')).toBe('10');
 		expect(result).toMatchObject({ sent: true, messageId: 'm1' });
 	});
+	test('send chat message stays successful when the read-back fails', async () => {
+		const seen = stubFetch(replies([{ status: 204, text: '' }, { status: 503, body: { message: 'unavailable' } }]));
+		const result = await run({ action: sendChatMessageAction, propsValue: { channelId: IDS.channel, text: 'Hi' } });
+		expect(seen.filter((request) => request.method === 'PUT')).toHaveLength(1);
+		expect(result).toMatchObject({ sent: true, messageId: null, message: null, lookupError: expect.stringMatching(/unavailable/) });
+	});
 	test('send chat message returns null ID when no match', async () => {
 		stubFetch((request) => (request.method === 'PUT' ? { status: 204, text: '' } : { body: { data: [], hasMore: false } }));
 		expect(await run({ action: sendChatMessageAction, propsValue: { channelId: IDS.channel, text: 'Hi' } })).toMatchObject({ sent: true, messageId: null, message: null });
@@ -102,7 +108,7 @@ describe('chat', () => {
 describe('direct messages', () => {
 	test('send without sender returns no chat info', async () => {
 		const seen = stubFetch(replies([{ status: 204, text: '' }]));
-		expect(await run({ action: sendDirectMessageAction, propsValue: { toUserId: IDS.user, text: 'Hi' } })).toEqual({ to: IDS.user, from: null, sent: true, chatId: null, chatUrl: null, messageId: null });
+		expect(await run({ action: sendDirectMessageAction, propsValue: { toUserId: IDS.user, text: 'Hi' } })).toEqual({ to: IDS.user, from: null, sent: true, chatId: null, chatUrl: null, messageId: null, lookupError: null });
 		expect(seen[0].body).toEqual({ text: '<p>Hi</p>', to: IDS.user });
 		expect(seen).toHaveLength(1);
 	});
@@ -115,7 +121,12 @@ describe('direct messages', () => {
 		const result = await run({ action: sendDirectMessageAction, propsValue: { toUserId: IDS.user, text: 'Hi', fromUserId: IDS.admin } });
 		expect(seen[1].body).toEqual({ userID1: IDS.admin, userID2: IDS.user });
 		expect(seen[2].path).toBe(`/directMessages/${IDS.chat}`);
-		expect(result).toEqual({ to: IDS.user, from: IDS.admin, sent: true, chatId: IDS.chat, chatUrl: 'https://app.heartbeat.chat/x/c/1', messageId: IDS.message });
+		expect(result).toEqual({ to: IDS.user, from: IDS.admin, sent: true, chatId: IDS.chat, chatUrl: 'https://app.heartbeat.chat/x/c/1', messageId: IDS.message, lookupError: null });
+	});
+	test('send with sender stays successful when the chat lookup fails', async () => {
+		stubFetch(replies([{ status: 204, text: '' }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: sendDirectMessageAction, propsValue: { toUserId: IDS.user, text: 'Hi', fromUserId: IDS.admin } });
+		expect(result).toMatchObject({ sent: true, chatId: null, messageId: null, lookupError: expect.stringMatching(/Do not re-run/) });
 	});
 	test('send refuses same sender and recipient', async () => {
 		stubFetch(replies([{ body: {} }]));
@@ -161,7 +172,12 @@ describe('events', () => {
 		const result = await run({ action: createEventAction, propsValue: { name: 'E', startTime: '2026-10-13T15:00:00Z', durationMinutes: 30, location: 'CUSTOM', customLocation: 'Room', invitedEmails: ['a@x.io'] } });
 		expect(seen[0].method).toBe('PUT');
 		expect(seen[0].body).toEqual({ name: 'E', description: '', startTime: '2026-10-13T15:00:00.000Z', duration: 30, location: 'Room', invitedUsers: ['a@x.io'] });
-		expect(result).toEqual({ ...event, location: { type: 'CUSTOM', locationStr: 'Room' } });
+		expect(result).toEqual({ ...event, location: { type: 'CUSTOM', locationStr: 'Room' }, lookupError: null });
+	});
+	test('create event keeps the new ID when the read-back fails', async () => {
+		stubFetch(replies([{ body: { success: true, event: { id: IDS.event, location: { type: 'HEARTBEAT' } } } }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: createEventAction, propsValue: { name: 'E', startTime: '2026-10-13T15:00:00Z', durationMinutes: 30, location: 'HEARTBEAT' } });
+		expect(result).toMatchObject({ id: IDS.event, location: { type: 'HEARTBEAT' }, lookupError: expect.stringMatching(/saved in Heartbeat/) });
 	});
 	test('create event validates duration and custom location', async () => {
 		stubFetch(replies([{ body: {} }]));

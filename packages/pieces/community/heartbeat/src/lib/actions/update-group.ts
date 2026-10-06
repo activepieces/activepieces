@@ -39,7 +39,7 @@ export const updateGroupAction = createAction({
       throw new Error('Nothing to update: set at least one field.');
     }
     await heartbeatApi.request({ token: auth.secret_text, method: HttpMethod.POST, path: `/groups/${groupId}`, operation: 'update group', body: changes });
-    const group = await heartbeatGroups.getGroup({ token: auth.secret_text, groupId });
-    return { id: groupId, updated: true, updatedFields: Object.keys(changes), group };
+    const lookup = await heartbeatApi.afterWrite({ what: 'the updated group', load: () => heartbeatGroups.getGroup({ token: auth.secret_text, groupId }) });
+    return { id: groupId, updated: true, updatedFields: Object.keys(changes), group: lookup.value, lookupError: lookup.lookupError };
   },
 });

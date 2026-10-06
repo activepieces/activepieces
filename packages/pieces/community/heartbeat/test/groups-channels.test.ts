@@ -50,9 +50,14 @@ describe('roles and groups', () => {
 	});
 	test('create group PUTs and re-reads by the returned groupID', async () => {
 		const seen = stubFetch(replies([{ body: { success: true, groupID: IDS.group } }, { body: group }]));
-		expect(await run({ action: createGroupAction, propsValue: { name: 'AP-TEST group', memberEmails: ['odai+aptest-1@activepieces.com'], parentGroupId: IDS.admin } })).toEqual(group);
+		expect(await run({ action: createGroupAction, propsValue: { name: 'AP-TEST group', memberEmails: ['odai+aptest-1@activepieces.com'], parentGroupId: IDS.admin } })).toEqual({ ...group, lookupError: null });
 		expect(seen[0].method).toBe('PUT');
 		expect(seen[0].body).toEqual({ name: 'AP-TEST group', members: ['odai+aptest-1@activepieces.com'], parentGroupID: IDS.admin });
+	});
+	test('create group keeps the new ID when the read-back fails', async () => {
+		stubFetch(replies([{ body: { success: true, groupID: IDS.group } }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: createGroupAction, propsValue: { name: 'AP-TEST group' } });
+		expect(result).toMatchObject({ id: IDS.group, name: 'AP-TEST group', lookupError: expect.stringMatching(/Do not re-run/) });
 	});
 	test('create group fails loudly without an ID', async () => {
 		stubFetch(replies([{ body: { success: true } }]));
@@ -76,6 +81,16 @@ describe('roles and groups', () => {
 		const seen = stubFetch(replies([{ body: { success: true } }]));
 		expect(await run({ action: deleteGroupAction, propsValue: { groupId: IDS.group } })).toEqual({ id: IDS.group, deleted: true, alreadyDeleted: false });
 		expect(seen[0].method).toBe('DELETE');
+	});
+	test('add members lists emails as unverified when the group read-back fails', async () => {
+		stubFetch(replies([{ status: 204, text: '' }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: addUsersToGroupAction, propsValue: { groupId: IDS.group, emails: ['a@x.io'] } });
+		expect(result).toMatchObject({ added: [], notAdded: [], unverified: ['a@x.io'], lookupError: expect.stringMatching(/saved in Heartbeat/) });
+	});
+	test('update group stays successful when the read-back fails', async () => {
+		stubFetch(replies([{ status: 204, text: '' }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: updateGroupAction, propsValue: { groupId: IDS.group, name: 'New' } });
+		expect(result).toMatchObject({ id: IDS.group, updated: true, group: null, lookupError: expect.stringMatching(/saved in Heartbeat/) });
 	});
 	test('add members PUTs memberships and reports ignored emails', async () => {
 		const seen = stubFetch(replies([{ body: { success: true } }, { body: group }]));
@@ -120,7 +135,12 @@ describe('channels', () => {
 		const seen = stubFetch(replies([{ body: { success: true, channelID: IDS.channel } }, { body: channels }]));
 		const result = await run({ action: createChannelAction, propsValue: { name: 'AP-TEST posts', channelCategoryId: IDS.category, channelType: 'POSTS', visibility: 'private', invitedEmails: ['a@x.io'], isReadOnly: true } });
 		expect(seen[0].body).toEqual({ name: 'AP-TEST posts', isPrivate: true, channelCategoryID: IDS.category, channelType: 'POSTS', invitedUsers: ['a@x.io'], isReadOnly: true });
-		expect(result).toEqual(channels[0]);
+		expect(result).toEqual({ ...channels[0], lookupError: null });
+	});
+	test('create channel keeps the new ID when the read-back fails', async () => {
+		stubFetch(replies([{ body: { success: true, channelID: IDS.channel } }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: createChannelAction, propsValue: { name: 'AP-TEST posts', channelCategoryId: IDS.category, channelType: 'POSTS', visibility: 'public' } });
+		expect(result).toMatchObject({ id: IDS.channel, name: 'AP-TEST posts', type: 'POSTS', lookupError: expect.stringMatching(/saved in Heartbeat/) });
 	});
 	test('create channel requires an explicit visibility and refuses read-only chat', async () => {
 		stubFetch(replies([{ body: {} }]));

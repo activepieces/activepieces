@@ -47,10 +47,12 @@ async function createUser({ token, body }: { token: string; body: Record<string,
   });
   const vendor = heartbeatApi.isRecord(created) ? created : {};
   const userId = typeof vendor['userID'] === 'string' ? vendor['userID'] : undefined;
-  const user = userId
-    ? await getUser({ token, userId })
-    : await findUserByEmail({ token, email: String(body['email']) });
-  return { ...vendor, ...(user ?? {}), userID: userId ?? user?.['id'] ?? null };
+  const lookup = await heartbeatApi.afterWrite({
+    what: 'the new member',
+    load: () => (userId ? getUser({ token, userId }) : findUserByEmail({ token, email: String(body['email']) })),
+  });
+  const user = lookup.value;
+  return { ...vendor, ...(user ?? {}), userID: userId ?? user?.['id'] ?? null, lookupError: lookup.lookupError };
 }
 
 const PROFILE_DETAIL_KEYS = ['linkedInData', 'linkedInSummary', 'onboardingResponses'];

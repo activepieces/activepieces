@@ -202,6 +202,12 @@ const nextCursorField = field({ key: 'nextCursor', label: 'Next Cursor', descrip
 const hasMoreField = field({ key: 'hasMore', label: 'Has More', format: 'boolean' });
 const countField = field({ key: 'count', label: 'Count', format: 'number' });
 
+const lookupErrorField = field({
+  key: 'lookupError',
+  label: 'Read-Back Error',
+  description: 'Empty on success. Set when the change was saved but reading the result back failed; the step still succeeds so a retry does not repeat the change.',
+});
+
 const deletedFields: OutputSchemaField[] = [
   field({ key: 'id', label: 'ID' }),
   field({ key: 'deleted', label: 'Deleted', format: 'boolean' }),
@@ -214,6 +220,7 @@ export const heartbeatOutputSchemas = {
     fields: [
       field({ key: 'userID', label: 'User ID', description: 'ID of the new member.' }),
       ...userFields.filter((item) => item.key !== 'id'),
+      lookupErrorField,
     ],
   },
   userList: {
@@ -236,6 +243,7 @@ export const heartbeatOutputSchemas = {
       field({ key: 'updated', label: 'Updated', format: 'boolean' }),
       field({ key: 'updatedFields', label: 'Updated Fields' }),
       object({ key: 'user', label: 'Member', children: userSummaryFields }),
+      lookupErrorField,
     ],
   },
   removedUser: {
@@ -274,7 +282,10 @@ export const heartbeatOutputSchemas = {
       field({ key: 'lessonIds', label: 'Lesson IDs' }),
       field({ key: 'completedAt', label: 'Completed At', format: 'datetime' }),
       field({ key: 'confirmed', label: 'Confirmed Lesson IDs', description: 'Lessons that now show as completed for the member.' }),
-      field({ key: 'notConfirmed', label: 'Not Confirmed Lesson IDs', description: 'Lessons Heartbeat did not record, usually because the lesson ID does not exist.' }),
+      field({ key: 'notConfirmed', label: 'Not Confirmed Lesson IDs', description: 'Lessons Heartbeat did not record after a full check, usually because the lesson ID does not exist.' }),
+      field({ key: 'unverified', label: 'Unverified Lesson IDs', description: 'Lessons that could not be checked because the read-back stopped early (more than 500 completions) or failed.' }),
+      field({ key: 'checkComplete', label: 'Check Complete', format: 'boolean', description: 'False when some lessons could not be checked; see Unverified Lesson IDs.' }),
+      lookupErrorField,
     ],
   },
   roleList: {
@@ -284,12 +295,14 @@ export const heartbeatOutputSchemas = {
     fields: [list({ key: 'groups', label: 'Groups', items: groupFields, labelKey: 'name' }), countField],
   },
   group: { fields: groupFields },
+  createdGroup: { fields: [...groupFields, lookupErrorField] },
   updatedGroup: {
     fields: [
       field({ key: 'id', label: 'Group ID' }),
       field({ key: 'updated', label: 'Updated', format: 'boolean' }),
       field({ key: 'updatedFields', label: 'Updated Fields' }),
       object({ key: 'group', label: 'Group', children: groupFields }),
+      lookupErrorField,
     ],
   },
   deleted: { fields: deletedFields },
@@ -299,6 +312,8 @@ export const heartbeatOutputSchemas = {
       field({ key: 'emails', label: 'Requested Emails' }),
       field({ key: 'added', label: 'In Group Now' }),
       field({ key: 'notAdded', label: 'Not Added', description: 'Emails that are not community members; Heartbeat ignores them.' }),
+      field({ key: 'unverified', label: 'Unverified', description: 'Emails that could not be checked because reading the group back failed.' }),
+      lookupErrorField,
     ],
   },
   groupRemoval: {
@@ -316,12 +331,14 @@ export const heartbeatOutputSchemas = {
   },
   category: { fields: idName },
   channel: { fields: channelFields },
+  createdChannel: { fields: [...channelFields, lookupErrorField] },
   updatedChannel: {
     fields: [
       field({ key: 'id', label: 'Channel ID' }),
       field({ key: 'updated', label: 'Updated', format: 'boolean' }),
       field({ key: 'updatedFields', label: 'Updated Fields' }),
       object({ key: 'channel', label: 'Channel', children: channelFields }),
+      lookupErrorField,
     ],
   },
   threadList: {
@@ -350,6 +367,7 @@ export const heartbeatOutputSchemas = {
       field({ key: 'sent', label: 'Sent', format: 'boolean' }),
       field({ key: 'messageId', label: 'Message ID', description: 'Empty if the message could not be matched right after sending.' }),
       object({ key: 'message', label: 'Message', children: messageFields }),
+      lookupErrorField,
     ],
   },
   chatMessageList: {
@@ -363,6 +381,7 @@ export const heartbeatOutputSchemas = {
       field({ key: 'chatId', label: 'Chat ID', description: 'Returned when a Sender is set.' }),
       field({ key: 'chatUrl', label: 'Chat URL', format: 'url' }),
       field({ key: 'messageId', label: 'Message ID' }),
+      lookupErrorField,
     ],
   },
   directChat: {
@@ -395,6 +414,7 @@ export const heartbeatOutputSchemas = {
           field({ key: 'locationStr', label: 'Custom Location', description: 'Set when a custom location was given.' }),
         ],
       }),
+      lookupErrorField,
     ],
   },
   eventAttendance: {

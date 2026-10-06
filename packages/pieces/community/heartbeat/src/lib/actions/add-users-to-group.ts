@@ -14,7 +14,7 @@ export const addUsersToGroupAction = createAction({
   description: 'Adds members to a group by email, optionally moving them out of sibling groups.',
   audience: 'both',
   aiMetadata: {
-    description: 'Adds existing members (by email) to a group, optionally removing them from sibling groups under the same parent to move them between stages. Heartbeat silently ignores emails that are not members, so they are listed in notAdded. Adding existing group members changes nothing, so it is idempotent.',
+    description: 'Adds existing members (by email) to a group, optionally removing them from sibling groups under the same parent to move them between stages. Heartbeat silently ignores emails that are not members, so they are listed in notAdded (if the read-back fails, all emails are listed in unverified with lookupError set). Adding existing group members changes nothing, so it is idempotent.',
     idempotent: true,
   },
   props: {
@@ -38,12 +38,18 @@ export const addUsersToGroupAction = createAction({
       operation: 'add members to group',
       body: { emails, shouldRemoveFromSiblingGroups: propsValue.removeFromSiblingGroups === true },
     });
-    const members = heartbeatGroups.memberEmails(await heartbeatGroups.getGroup({ token: auth.secret_text, groupId }));
+    const lookup = await heartbeatApi.afterWrite({
+      what: 'the group members',
+      load: async () => heartbeatGroups.memberEmails(await heartbeatGroups.getGroup({ token: auth.secret_text, groupId })),
+    });
+    const members = lookup.value;
     return {
       groupId,
       emails,
-      added: emails.filter((email) => members.has(email.toLowerCase())),
-      notAdded: emails.filter((email) => !members.has(email.toLowerCase())),
+      added: members === null ? [] : emails.filter((email) => members.has(email.toLowerCase())),
+      notAdded: members === null ? [] : emails.filter((email) => !members.has(email.toLowerCase())),
+      unverified: members === null ? emails : [],
+      lookupError: lookup.lookupError,
     };
   },
 });

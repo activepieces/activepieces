@@ -69,7 +69,7 @@ export const updateChannelAction = createAction({
       throw new Error('Nothing to update: set at least one field or change Access.');
     }
     await heartbeatApi.request({ token: auth.secret_text, method: HttpMethod.POST, path: `/channels/${channelId}`, operation: 'update channel', body });
-    const channel = await heartbeatChannels.findChannel({ token: auth.secret_text, channelId });
-    return { id: channelId, updated: true, updatedFields: Object.keys(body), channel };
+    const lookup = await heartbeatApi.afterWrite({ what: 'the updated channel', load: () => heartbeatChannels.findChannel({ token: auth.secret_text, channelId }) });
+    return { id: channelId, updated: true, updatedFields: Object.keys(body), channel: lookup.value, lookupError: lookup.lookupError };
   },
 });

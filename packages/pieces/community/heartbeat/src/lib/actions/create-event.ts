@@ -71,8 +71,11 @@ export const createEventAction = createAction({
     if (typeof eventId !== 'string') {
       throw new Error('Heartbeat created the event but did not return its ID. Use List Events to find it.');
     }
-    const event = await heartbeatEvents.getEvent({ token: auth.secret_text, eventId });
-    return { ...event, location: vendorEvent['location'] ?? null };
+    const lookup = await heartbeatApi.afterWrite({
+      what: 'the new event',
+      load: () => heartbeatEvents.getEvent({ token: auth.secret_text, eventId }),
+    });
+    return { ...(lookup.value ?? vendorEvent), location: vendorEvent['location'] ?? null, lookupError: lookup.lookupError };
   },
 });
 

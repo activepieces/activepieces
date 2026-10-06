@@ -53,6 +53,11 @@ describe('create user (human)', () => {
 		expect(seen[1].query.get('email')).toBe(user.email);
 		expect(result).toMatchObject({ userID: IDS.user });
 	});
+	test('keeps the new user ID when the read-back fails, so a retry does not create again', async () => {
+		stubFetch(replies([{ body: { userID: IDS.user } }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: heartBeatCreateUser, propsValue: { name: 'A', email: user.email, role_id: IDS.role } });
+		expect(result).toMatchObject({ userID: IDS.user, lookupError: expect.stringMatching(/saved in Heartbeat/) });
+	});
 	test('rejects a social link without scheme before any request', async () => {
 		const seen = stubFetch(replies([{ body: {} }]));
 		await expect(run({ action: heartBeatCreateUser, propsValue: { name: 'A', email: user.email, role_id: IDS.role, linkedin: 'linkedin.com/in/x' } })).rejects.toThrow();
@@ -193,7 +198,20 @@ describe('completed lessons', () => {
 		expect(seen[0].method).toBe('POST');
 		expect(seen[0].body).toEqual({ email: 'a@x.io', completedLessons: [{ lessonID: IDS.lesson, timestamp: '2026-10-01T10:00:00.000Z' }, { lessonID: other, timestamp: '2026-10-01T10:00:00.000Z' }] });
 		expect(seen[2].path).toBe(`/users/${IDS.user}/completed-lessons`);
-		expect(result).toEqual({ email: 'a@x.io', lessonIds: [IDS.lesson, other], completedAt: '2026-10-01T10:00:00.000Z', confirmed: [IDS.lesson], notConfirmed: [other] });
+		expect(result).toEqual({ email: 'a@x.io', lessonIds: [IDS.lesson, other], completedAt: '2026-10-01T10:00:00.000Z', confirmed: [IDS.lesson], notConfirmed: [other], unverified: [], checkComplete: true, lookupError: null });
+	});
+	test('mark reports lessons beyond the fifth page as unverified, not missing', async () => {
+		const page = (n: number) => Array.from({ length: 100 }, (_, i) => ({ lessonID: `00000000-0000-4000-8000-${String(n * 100 + i).padStart(12, '0')}` }));
+		const seen = stubFetch(replies([{ body: {} }, { body: user }, { body: page(0) }, { body: page(1) }, { body: page(2) }, { body: page(3) }, { body: page(4) }, { body: [{ lessonID: IDS.lesson }] }]));
+		const result = await run({ action: markLessonsCompletedAction, propsValue: { email: 'a@x.io', lessonIds: [IDS.lesson] } });
+		expect(seen).toHaveLength(7);
+		expect(result).toMatchObject({ confirmed: [], notConfirmed: [], unverified: [IDS.lesson], checkComplete: false, lookupError: null });
+	});
+	test('mark keeps the saved completion when the read-back fails', async () => {
+		stubFetch(replies([{ body: {} }, { status: 500, body: { message: 'down' } }]));
+		const result = await run({ action: markLessonsCompletedAction, propsValue: { email: 'a@x.io', lessonIds: [IDS.lesson] } });
+		expect(result).toMatchObject({ confirmed: [], notConfirmed: [], unverified: [IDS.lesson], checkComplete: false });
+		expect(result).toHaveProperty('lookupError', expect.stringMatching(/saved in Heartbeat.*down/));
 	});
 	test('mark follows completed-lesson pages until all are found', async () => {
 		const full = Array.from({ length: 100 }, (_, i) => ({ lessonID: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}` }));

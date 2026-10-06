@@ -35,20 +35,27 @@ export const sendChatMessageAction = createAction({
       operation: 'send chat message',
       body: { text, from: fromUserId },
     });
-    const recent = await heartbeatApi.request<unknown>({
-      token: auth.secret_text,
-      method: HttpMethod.GET,
-      path: `/chatChannel/${channelId}/messages`,
-      operation: 'list chat messages',
-      query: { limit: 10 },
+    const lookup = await heartbeatApi.afterWrite({
+      what: 'the sent message',
+      load: async () => {
+        const recent = await heartbeatApi.request<unknown>({
+          token: auth.secret_text,
+          method: HttpMethod.GET,
+          path: `/chatChannel/${channelId}/messages`,
+          operation: 'list chat messages',
+          query: { limit: 10 },
+        });
+        const messages = heartbeatApi.recordList(heartbeatApi.isRecord(recent) ? recent['data'] : undefined);
+        return heartbeatMessages.findSentMessage({ messages, text, senderId: fromUserId, sentAfter });
+      },
     });
-    const messages = heartbeatApi.recordList(heartbeatApi.isRecord(recent) ? recent['data'] : undefined);
-    const message = heartbeatMessages.findSentMessage({ messages, text, senderId: fromUserId, sentAfter });
+    const message = lookup.value;
     return {
       channelId,
       sent: true,
       messageId: typeof message?.['id'] === 'string' ? message['id'] : null,
       message,
+      lookupError: lookup.lookupError,
     };
   },
 });

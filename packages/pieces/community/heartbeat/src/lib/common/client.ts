@@ -316,6 +316,18 @@ function recordList(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? value.filter(isRecord) : [];
 }
 
+async function afterWrite<T>({ load, what }: { load: () => Promise<T>; what: string }): Promise<AfterWriteResult<T>> {
+  try {
+    return { value: await load(), lookupError: null };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      value: null,
+      lookupError: `The change was saved in Heartbeat, but reading back ${what} failed (${reason}). Do not re-run this step for the same input, or the change may be made twice.`,
+    };
+  }
+}
+
 export const heartbeatApi = {
   request,
   authHeaders,
@@ -339,7 +351,10 @@ export const heartbeatApi = {
   toPage,
   recordList,
   sleep,
+  afterWrite,
 };
+
+export type AfterWriteResult<T> = { value: T | null; lookupError: string | null };
 
 export type QueryValue = string | number | boolean | undefined | null;
 

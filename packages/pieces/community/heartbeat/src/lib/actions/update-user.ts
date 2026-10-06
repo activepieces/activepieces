@@ -76,8 +76,8 @@ export const updateUserAction = createAction({
       operation: 'update member',
       body: { email, ...changes },
     });
-    const user = await heartbeatUsers.findUserByEmail({ token: auth.secret_text, email });
-    return { email, updated: true, updatedFields: Object.keys(changes), user };
+    const lookup = await heartbeatApi.afterWrite({ what: 'the updated member', load: () => heartbeatUsers.findUserByEmail({ token: auth.secret_text, email }) });
+    return { email, updated: true, updatedFields: Object.keys(changes), user: lookup.value, lookupError: lookup.lookupError };
   },
 });
 

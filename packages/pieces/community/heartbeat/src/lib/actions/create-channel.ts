@@ -49,7 +49,7 @@ export const createChannelAction = createAction({
     invitedGroupIds: heartbeatProps.ids({ displayName: 'Invited Group IDs', description: 'Groups that can access a private channel. Use List Groups to find IDs.', required: false }),
     isReadOnly: Property.Checkbox({ displayName: 'Read Only', description: 'Only admins and moderators can post threads. Not available for chat channels.', required: false }),
   },
-  outputSchema: heartbeatOutputSchemas.channel,
+  outputSchema: heartbeatOutputSchemas.createdChannel,
   async run({ auth, propsValue }) {
     if (propsValue.visibility !== 'public' && propsValue.visibility !== 'private') {
       throw new Error('Visibility must be public or private.');
@@ -81,7 +81,10 @@ export const createChannelAction = createAction({
     if (typeof channelId !== 'string') {
       throw new Error('Heartbeat created the channel but did not return its ID. Use List Channels to find it.');
     }
-    const channel = await heartbeatChannels.findChannel({ token: auth.secret_text, channelId });
-    return channel ?? { id: channelId, name, type: propsValue.channelType };
+    const lookup = await heartbeatApi.afterWrite({
+      what: 'the new channel',
+      load: () => heartbeatChannels.findChannel({ token: auth.secret_text, channelId }),
+    });
+    return { ...(lookup.value ?? { id: channelId, name, type: propsValue.channelType }), lookupError: lookup.lookupError };
   },
 });

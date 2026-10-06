@@ -39,24 +39,38 @@ export const sendDirectMessageAction = createAction({
       body: { text, to, from },
     });
     if (from === undefined) {
-      return { to, from: null, sent: true, chatId: null, chatUrl: null, messageId: null };
+      return { to, from: null, sent: true, chatId: null, chatUrl: null, messageId: null, lookupError: null };
     }
-    const chat = await heartbeatApi.request<unknown>({
-      token: auth.secret_text,
-      method: HttpMethod.PUT,
-      path: '/directChats',
-      operation: 'get direct chat',
-      body: { userID1: from, userID2: to },
+    const lookup = await heartbeatApi.afterWrite({
+      what: 'the direct chat and sent message',
+      load: async () => {
+        const chat = await heartbeatApi.request<unknown>({
+          token: auth.secret_text,
+          method: HttpMethod.PUT,
+          path: '/directChats',
+          operation: 'get direct chat',
+          body: { userID1: from, userID2: to },
+        });
+        const chatId = heartbeatApi.isRecord(chat) && typeof chat['chatID'] === 'string' ? chat['chatID'] : null;
+        const chatUrl = heartbeatApi.isRecord(chat) && typeof chat['url'] === 'string' ? chat['url'] : null;
+        if (chatId === null) {
+          return { chatId, chatUrl, messageId: null };
+        }
+        const messages = heartbeatApi.recordList(
+          await heartbeatApi.request<unknown>({ token: auth.secret_text, method: HttpMethod.GET, path: `/directMessages/${chatId}`, operation: 'list direct messages' }),
+        );
+        const message = heartbeatMessages.findSentMessage({ messages, text, senderId: from, sentAfter });
+        return { chatId, chatUrl, messageId: typeof message?.['id'] === 'string' ? message['id'] : null };
+      },
     });
-    const chatId = heartbeatApi.isRecord(chat) && typeof chat['chatID'] === 'string' ? chat['chatID'] : null;
-    const chatUrl = heartbeatApi.isRecord(chat) && typeof chat['url'] === 'string' ? chat['url'] : null;
-    if (chatId === null) {
-      return { to, from, sent: true, chatId: null, chatUrl, messageId: null };
-    }
-    const messages = heartbeatApi.recordList(
-      await heartbeatApi.request<unknown>({ token: auth.secret_text, method: HttpMethod.GET, path: `/directMessages/${chatId}`, operation: 'list direct messages' }),
-    );
-    const message = heartbeatMessages.findSentMessage({ messages, text, senderId: from, sentAfter });
-    return { to, from, sent: true, chatId, chatUrl, messageId: typeof message?.['id'] === 'string' ? message['id'] : null };
+    return {
+      to,
+      from,
+      sent: true,
+      chatId: lookup.value?.chatId ?? null,
+      chatUrl: lookup.value?.chatUrl ?? null,
+      messageId: lookup.value?.messageId ?? null,
+      lookupError: lookup.lookupError,
+    };
   },
 });
