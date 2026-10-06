@@ -204,3 +204,37 @@ describe('the onboarding note', () => {
         expect(agentSurfaceNotes.onboardingNote({ source: AgentRunSource.AGENT, messageSource: 'onboarding' })).toBeNull()
     })
 })
+
+describe('the skills note', () => {
+    function notesFor(source: AgentRunSource): string {
+        return agentSurfaceNotes.buildRunNotes({
+            source,
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            userEmail: 'owner@acme.com',
+            userIdentity: null,
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+    }
+
+    it('gives a chat run the skill index and how to run deferred tools', () => {
+        const notes = notesFor(AgentRunSource.CHAT)
+        expect(notes).toContain('ap_lazy_tool')
+        expect(notes).toContain('- flow_building — load before')
+    })
+
+    it('tells a saved agent how to run deferred tools without the chat skill index', () => {
+        const notes = notesFor(AgentRunSource.AGENT)
+        expect(notes).toContain('ap_lazy_tool')
+        expect(notes).not.toContain('- flow_building')
+        for (const tool of CHAT_ONLY_TOOLS) {
+            expect(notes).not.toContain(tool)
+        }
+    })
+
+    it('adds nothing on surfaces without skills', () => {
+        expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('ap_lazy_tool')
+        expect(notesFor(AgentRunSource.AGENT_BUILDER)).not.toContain('ap_lazy_tool')
+    })
+})
