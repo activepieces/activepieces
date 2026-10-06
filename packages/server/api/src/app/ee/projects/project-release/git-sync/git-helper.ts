@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ActivepiecesError, ErrorCode, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { fileSystemUtils } from '@activepieces/server-utils'
 import { ApEnvironment, ConfigureRepoRequest, GitRepo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -98,12 +98,16 @@ async function initGitRepo(
     await git.addConfig('protocol.file.allow', 'never')
     await git.addRemote('origin', remoteUrl)
     await git.branch(['-M', branch])
-    await git.raw(['pull', 'origin', branch])
+    const { error } = await tryCatch(() => git.raw(['pull', 'origin', branch]))
+    if (!isNil(error)) {
+        throw new Error(error.message.slice(-MAX_GIT_ERROR_MESSAGE_LENGTH))
+    }
     return git
 }
 
 const SAFE_SLUG_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
 const SAFE_KEY_PATH_PATTERN = /^[A-Za-z0-9._/-]+$/
+const MAX_GIT_ERROR_MESSAGE_LENGTH = 2000
 
 function assertSafeSlug(slug: string): void {
     if (!SAFE_SLUG_PATTERN.test(slug) || slug === '.' || slug === '..') {
@@ -127,7 +131,7 @@ function assertSafeKeyPath(keyPath: string): void {
     }
 }
 
-async function validateConnection(request: ConfigureRepoRequest): Promise<void> {
+async function validateConnection({ request, log }: { request: ConfigureRepoRequest, log: FastifyBaseLogger }): Promise<void> {
     const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
@@ -146,12 +150,15 @@ async function validateConnection(request: ConfigureRepoRequest): Promise<void> 
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_GIT_CREDENTIALS,
             params: {
-                message: (error as Error).message.replaceAll(keyPath, '<ssh-key>'),
+                message: error instanceof Error ? error.message.replaceAll(keyPath, '<ssh-key>') : String(error),
             },
         })
     }
     finally {
-        await tryCatch(() => fs.rm(keyPath, { force: true }))
+        const { error: keyRemovalError } = await tryCatch(() => fs.rm(keyPath, { force: true }))
+        if (!isNil(keyRemovalError)) {
+            log.error({ error: keyRemovalError }, '[gitHelper#validateConnection] Failed to delete the temporary SSH key')
+        }
         await tryCatch(() => fs.rm(tmpFolder, { recursive: true, force: true }))
     }
 }
