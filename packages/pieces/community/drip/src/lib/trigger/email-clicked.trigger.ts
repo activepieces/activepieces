@@ -5,23 +5,23 @@ import { dripSamples } from '../common/samples';
 import { dripWebhook } from '../common/webhook';
 import { dripOutputSchemas } from '../output-schemas';
 
-const STORE_KEY = 'drip_new_subscriber_trigger';
-const EVENT = 'subscriber.created';
+const STORE_KEY = 'drip_email_clicked_trigger';
+const EVENT = 'subscriber.clicked_email';
 
-export const dripNewSubscriberEvent = createTrigger({
+export const dripEmailClickedEvent = createTrigger({
   auth: dripAuth,
-  name: 'new_subscriber',
+  name: 'email_clicked',
   classification: 'READ',
-  displayName: 'New Subscriber',
-  description: 'Triggers when a subscriber is created in your Drip account.',
+  displayName: 'Email Link Clicked',
+  description: 'Triggers when a subscriber clicks a link in a Drip email. Can be high volume.',
   aiMetadata: {
-    description: 'Fires when a new subscriber is created in the selected Drip account (Drip event subscriber.created), with the subscriber profile. Represents a contact being added to the list.',
+    description: 'Fires when a subscriber clicks a link in a Drip email in the selected account (Drip event subscriber.clicked_email); data.properties has the URL, email subject and email ID. Can fire often on large lists.',
   },
   props: {
     account_id: dripCommon.account_id,
   },
-  sampleData: dripSamples.event({ name: EVENT }),
-  outputSchema: dripOutputSchemas.subscriberEvent,
+  sampleData: dripSamples.event({ name: EVENT, properties: { delivery_id: '99999', email_id: '88888', url: 'https://www.example.com', email_subject: 'Welcome to the course' } }),
+  outputSchema: dripOutputSchemas.clickEvent,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     await dripWebhook.enable({

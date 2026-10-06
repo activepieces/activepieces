@@ -5,17 +5,17 @@ import { dripSamples } from '../common/samples';
 import { dripWebhook } from '../common/webhook';
 import { dripOutputSchemas } from '../output-schemas';
 
-const STORE_KEY = 'drip_new_subscriber_trigger';
-const EVENT = 'subscriber.created';
+const STORE_KEY = 'drip_subscriber_deleted_trigger';
+const EVENT = 'subscriber.deleted';
 
-export const dripNewSubscriberEvent = createTrigger({
+export const dripSubscriberDeletedEvent = createTrigger({
   auth: dripAuth,
-  name: 'new_subscriber',
+  name: 'subscriber_deleted',
   classification: 'READ',
-  displayName: 'New Subscriber',
-  description: 'Triggers when a subscriber is created in your Drip account.',
+  displayName: 'Subscriber Deleted',
+  description: 'Triggers when a subscriber is deleted from your Drip account.',
   aiMetadata: {
-    description: 'Fires when a new subscriber is created in the selected Drip account (Drip event subscriber.created), with the subscriber profile. Represents a contact being added to the list.',
+    description: 'Fires when a subscriber is deleted from the selected Drip account (Drip event subscriber.deleted), with the last known subscriber profile.',
   },
   props: {
     account_id: dripCommon.account_id,

@@ -5,17 +5,17 @@ import { dripSamples } from '../common/samples';
 import { dripWebhook } from '../common/webhook';
 import { dripOutputSchemas } from '../output-schemas';
 
-const STORE_KEY = 'drip_tag_applied_to_subscriber_trigger';
-const EVENT = 'subscriber.applied_tag';
+const STORE_KEY = 'drip_tag_removed_trigger';
+const EVENT = 'subscriber.removed_tag';
 
-export const dripTagAppliedEvent = createTrigger({
+export const dripTagRemovedEvent = createTrigger({
   auth: dripAuth,
-  name: 'tag_applied_to_subscribers',
+  name: 'tag_removed',
   classification: 'READ',
-  displayName: 'Tag Applied',
-  description: 'Triggers when a tag is applied.',
+  displayName: 'Tag Removed',
+  description: 'Triggers when a tag is removed from a subscriber.',
   aiMetadata: {
-    description: 'Fires when a tag is applied to a subscriber in the selected Drip account (Drip event subscriber.applied_tag), optionally only for one tag; the payload has the subscriber and the tag in data.properties.tag.',
+    description: 'Fires when a tag is removed from a subscriber in the selected Drip account (Drip event subscriber.removed_tag), optionally only for one tag; the payload has the subscriber and the tag in data.properties.tag.',
   },
   props: {
     account_id: dripCommon.account_id,
