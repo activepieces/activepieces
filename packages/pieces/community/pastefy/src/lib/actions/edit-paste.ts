@@ -6,6 +6,7 @@ import CryptoJS from 'crypto-js';
 export default createAction({
   auth: pastefyAuth,
   name: 'edit_paste',
+  classification: 'WRITE',
   displayName: 'Edit Paste',
   description: 'Edits an existing private paste',
   audience: 'both',

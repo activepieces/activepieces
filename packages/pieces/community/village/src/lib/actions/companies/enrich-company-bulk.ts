@@ -14,6 +14,7 @@ interface IdentifierRow {
 export const enrichCompanyBulk = createAction({
   auth: villageAuth,
   name: 'enrich_company_bulk',
+  classification: 'READ',
   displayName: 'Enrich Company (Bulk)',
   description:
     'Get detailed information for up to 10 companies in a single request. Each result contains either company data or an error.',

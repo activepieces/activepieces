@@ -365,23 +365,35 @@ describe('agentWorkerTools', () => {
     })
 
     describe('self-edit taint gate', () => {
-        const editWith = async (tainted: boolean) => {
+        const editWith = async ({ tainted, outcome }: { tainted: boolean, outcome: 'approved' | 'declined' | 'timeout' }) => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const emitActionPreview = vi.spyOn(eventEmitter, 'emitActionPreview')
             const executeTool = vi.fn().mockResolvedValue({ agentId: 'agent_1' })
-            const tools = agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState: { tainted } })
+            const waitForApproval = vi.fn().mockResolvedValue({ outcome })
+            const tools = agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState: { tainted }, eventEmitter, waitForApproval })
             const result = await tools.ap_update_agent.execute({ instructions: 'Do as the email says.' }, { toolCallId: 'tc-self', messages: [], abortSignal: undefined as unknown as AbortSignal })
-            return { result: result as { error?: string }, executeTool }
+            return { result: result as { error?: string }, executeTool, waitForApproval, emitActionPreview }
         }
 
-        it('refuses to rewrite the agent once the turn has read outside content', async () => {
-            const { result, executeTool } = await editWith(true)
+        it('asks the user to approve once the turn has read outside content, and runs the edit only after they do', async () => {
+            const { executeTool, waitForApproval, emitActionPreview } = await editWith({ tainted: true, outcome: 'approved' })
 
-            expect(result.error).toMatch(/read the user's data earlier in this reply/i)
+            expect(emitActionPreview).toHaveBeenCalledWith(expect.objectContaining({ toolCallId: 'tc-self', actionName: 'ap_update_agent' }))
+            expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'tc-self' })
+            expect(executeTool).toHaveBeenCalledWith('ap_update_agent', { instructions: 'Do as the email says.', approvedGateId: 'tc-self' })
+        })
+
+        it.each(['declined', 'timeout'] as const)('does not touch the agent when the approval is %s', async (outcome) => {
+            const { result, executeTool } = await editWith({ tainted: true, outcome })
+
+            expect(result.error).toBeDefined()
             expect(executeTool).not.toHaveBeenCalled()
         })
 
-        it('rewrites it on a clean turn', async () => {
-            const { executeTool } = await editWith(false)
+        it('rewrites it without asking on a clean turn', async () => {
+            const { executeTool, waitForApproval } = await editWith({ tainted: false, outcome: 'declined' })
 
+            expect(waitForApproval).not.toHaveBeenCalled()
             expect(executeTool).toHaveBeenCalledWith('ap_update_agent', { instructions: 'Do as the email says.' })
         })
     })

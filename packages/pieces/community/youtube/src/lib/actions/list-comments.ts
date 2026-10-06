@@ -19,12 +19,13 @@ export const youtubeListCommentsAction = createAction({
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',
-      description: 'The `v` parameter in a YouTube URL (e.g. `dQw4w9WgXcQ`).',
+      description: "The v= value in the video's URL.",
+      placeholder: 'dQw4w9WgXcQ',
       required: true,
     }),
     order: Property.StaticDropdown({
       displayName: 'Order',
-      description: 'Comment ordering.',
+      description: 'How to sort the comments. Empty: newest first.',
       required: false,
       options: {
         options: [
@@ -35,14 +36,19 @@ export const youtubeListCommentsAction = createAction({
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
-      description: 'Number of threads to return (1-100, default 20).',
+      description: 'How many comment threads to return, up to 100.',
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
       required: false,
       defaultValue: 20,
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'Token from a previous response, to fetch the next page.',
+      description: 'The nextPageToken from an earlier run, to get the next page.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

@@ -31,6 +31,7 @@ const polling: Polling<
 export const newMailbox = createTrigger({
   auth: parseurAuth,
   name: 'newMailbox',
+  classification: 'READ',
   displayName: 'New Mailbox',
   description: 'Fires when a new mailbox is created in the Parseur account.',
   aiMetadata: {

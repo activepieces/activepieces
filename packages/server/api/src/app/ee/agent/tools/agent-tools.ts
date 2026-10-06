@@ -17,6 +17,7 @@ import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
 import { agentApprovalGate } from '../agent-approval-gate'
+import { readConversationFile } from '../agent-file-utils'
 import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
 import { agentAudit, agentService } from '../agent-service'
@@ -667,9 +668,10 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 // A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
 // the model context with a compact shape preview + the fileId. The agent then processes the FULL
 // data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
-function buildActionRunOffload({ projectId, platformId, pieceName, actionName, log }: {
+function buildActionRunOffload({ projectId, platformId, conversationId, pieceName, actionName, log }: {
     projectId: string
     platformId?: string
+    conversationId?: string
     pieceName: string
     actionName: string
     log: FastifyBaseLogger
@@ -690,7 +692,7 @@ function buildActionRunOffload({ projectId, platformId, pieceName, actionName, l
                 type: FileType.FLOW_STEP_FILE,
                 fileName,
                 compression: FileCompression.NONE,
-                metadata: { mimetype: 'application/json' },
+                metadata: { mimetype: 'application/json', ...spreadIfDefined('conversationId', conversationId) },
             }))
             if (error || isNil(saved)) {
                 log.warn({ error, pieceName, actionName }, '[agent] large-result offload failed; falling back to inline truncation')
@@ -746,7 +748,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         actionName,
         input: parsedInput,
         connectionExternalId,
-        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, conversationId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -817,15 +819,11 @@ async function runAgentCode({ toolInput, projects, platformId, userId, conversat
         : []
     const inputFiles: { name: string, mimeType: string, base64: string }[] = []
     for (const fileId of inputFileIds) {
-        const { data: file, error: lookupError } = await tryCatch(() => fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE }))
-        // Confine to the current conversation's project, not just the platform — otherwise a
-        // model-supplied fileId from another project on the same platform could be read.
-        if (lookupError || isNil(file) || file.platformId !== platformId || file.projectId !== projectId) {
+        const { data: fileData } = await tryCatch(() => isNil(conversationId)
+            ? fileService(log).getDataOrThrow({ projectId, fileId, type: FileType.FLOW_STEP_FILE })
+            : readConversationFile({ platformId, conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId, log }))
+        if (isNil(fileData)) {
             return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
-        }
-        const { data: fileData, error: dataError } = await tryCatch(() => fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE }))
-        if (dataError || isNil(fileData)) {
-            return { text: `❌ Couldn't read attachment ${fileId}.`, producedFiles: [] }
         }
         const mimeType = isObject(fileData.metadata) && typeof fileData.metadata.mimetype === 'string' ? fileData.metadata.mimetype : 'application/octet-stream'
         inputFiles.push({ name: fileData.fileName ?? fileId, mimeType, base64: fileData.data.toString('base64') })
@@ -851,7 +849,7 @@ async function runAgentCode({ toolInput, projects, platformId, userId, conversat
         return { text: `❌ ${reason}`, producedFiles: [] }
     }
 
-    return persistProducedFiles({ output: result.output, projectId, platformId, log })
+    return persistProducedFiles({ output: result.output, projectId, platformId, conversationId, log })
 }
 
 function extractFilesFromOutput(output: unknown): { files: RawProducedFile[], rest: unknown } {
@@ -871,10 +869,11 @@ function decodeBase64(value: string): Buffer | undefined {
     return buffer.length > 0 ? buffer : undefined
 }
 
-async function persistProducedFiles({ output, projectId, platformId, log }: {
+async function persistProducedFiles({ output, projectId, platformId, conversationId, log }: {
     output: unknown
     projectId: string
     platformId: string
+    conversationId?: string
     log: FastifyBaseLogger
 }): Promise<RunCodeToolResult> {
     const { files, rest } = extractFilesFromOutput(output)
@@ -892,7 +891,7 @@ async function persistProducedFiles({ output, projectId, platformId, log }: {
             type: FileType.FLOW_STEP_FILE,
             fileName: file.name,
             compression: FileCompression.NONE,
-            metadata: { mimetype: file.mimeType },
+            metadata: { mimetype: file.mimeType, ...spreadIfDefined('conversationId', conversationId) },
         })
         const url = await filesService.constructReadUrl({ fileId: saved.id, fileType: saved.type, platformId })
         producedFiles.push({ fileId: saved.id, url, mediaType: file.mimeType, fileName: file.name, byteSize: buffer.length })

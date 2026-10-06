@@ -1,11 +1,11 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
-import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
+import { userIdentityHelper } from '../../../helper/user-identity-helper'
+import { mcpAccess } from '../../mcp-access'
 import { mcpOAuthCodeService } from './mcp-oauth-code.service'
 
 export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
@@ -16,21 +16,15 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
         const platformId = req.principal.platform.id
 
         if (isNil(projectId)) {
-            const user = await userService(req.log).getOneOrFail({ id: userId })
-            if (user.platformRole !== PlatformRole.ADMIN) {
-                return reply.status(403).send({ error: 'access_denied', error_description: 'Only platform administrators can authorize platform-wide MCP access' })
+            if (await userIdentityHelper(req.log).isUserEmbedded(userId)) {
+                return reply.status(403).send({ error: 'access_denied', error_description: 'Embedded users must authorize MCP for a specific project' })
+            }
+            if (!await mcpAccess.hasMcpReach({ platformId, userId, log: req.log })) {
+                return reply.status(403).send({ error: 'access_denied', error_description: 'You do not have MCP access in any project' })
             }
         }
-        else {
-            const user = await userService(req.log).getOneOrFail({ id: userId })
-            const accessibleProjects = await projectService(req.log).getAllForUser({
-                platformId,
-                userId,
-                isPrivileged: userService(req.log).isUserPrivileged(user),
-            })
-            if (!accessibleProjects.some(p => p.id === projectId)) {
-                return reply.status(403).send({ error: 'access_denied', error_description: 'You do not have access to this project' })
-            }
+        else if (!await mcpAccess.hasMcpAccessToProject({ platformId, userId, projectId, log: req.log })) {
+            return reply.status(403).send({ error: 'access_denied', error_description: 'You do not have MCP access to this project' })
         }
 
         const { data: authRequest, error } = await tryCatch(() => verifyAuthRequest(authRequestId))

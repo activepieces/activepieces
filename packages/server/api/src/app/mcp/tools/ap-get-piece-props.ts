@@ -16,7 +16,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         title: 'ap_get_piece_props',
         description: 'Get the input schema for a piece action or trigger, plus AI guidance for using it: an AI-written description of what it does, an idempotency hint, and — when available — the output field paths it produces (for triggers, also derived from sample data). Use the AI description to pick the right action; when output fields are listed, reference them directly downstream as {{step[\'output\'].path}}. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
         inputSchema: getPiecePropsInput.shape,
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
         execute: async (args) => {
             try {
                 const { pieceName, actionOrTriggerName, type, auth, flowId, input: providedInput } = getPiecePropsInput.parse(args)

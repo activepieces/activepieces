@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth } from '../auth';
-import { gmailArchiveEmailAction } from './archive-email-action';
+import { archiveGmailMessage } from './archive-email-action';
 import { gmailArchiveEmailActionOutputSchema } from '../output-schemas';
 
 export const gmailAiArchiveMessageAction = createAction({
@@ -16,6 +16,17 @@ export const gmailAiArchiveMessageAction = createAction({
     idempotent: true,
   },
   outputSchema: gmailArchiveEmailActionOutputSchema,
-  props: gmailArchiveEmailAction.props,
-  run: gmailArchiveEmailAction.run,
+  props: {
+    message_id: Property.ShortText({
+      displayName: 'Message',
+      description: 'Message ID from a Find Email step or a Gmail trigger.',
+      required: true,
+    }),
+  },
+  async run(context) {
+    return archiveGmailMessage({
+      auth: context.auth,
+      messageId: context.propsValue.message_id,
+    });
+  },
 });

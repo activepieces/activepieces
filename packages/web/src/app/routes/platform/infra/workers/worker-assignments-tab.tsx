@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { workersQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { ByGroupView } from './by-group-view';
 import { ByProjectView } from './by-project-view';
@@ -31,10 +32,11 @@ export function WorkerAssignmentsTab() {
             'Worker groups reserve a dedicated queue for the projects you assign. Defined in your deployment with AP_WORKER_GROUP_ID.',
           )}{' '}
           <a
+            {...adminControl(AdminControl.WORKERS_DOCS_LINK)}
             href="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
             target="_blank"
             rel="noreferrer"
-            className="text-primary underline"
+            className="text-accent-11 underline"
           >
             {t('Learn more')}
           </a>

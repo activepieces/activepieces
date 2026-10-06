@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import path from 'path'
 import { isNil, STEP_NAME_REGEX } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
@@ -54,7 +55,10 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             throw new ExecutionError('InvalidStepName', `Invalid code step name: "${action.name}"`, ExecutionErrorType.USER)
         }
         const useDeno = action.settings.useDeno === true
-        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/${useDeno ? 'index.ts' : 'index.js'}`)
+        const stepDir = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}`)
+        const artifactPath = useDeno
+            ? resolveDenoArtifactPath(stepDir)
+            : path.join(stepDir, 'index.js')
         const codeSandbox = await initCodeSandbox({ useDeno })
 
         const output = await codeSandbox.runCodeModule({
@@ -77,4 +81,9 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     }
 
     return executionStateResult
+}
+
+function resolveDenoArtifactPath(stepDir: string): string {
+    const transpiledPath = path.join(stepDir, 'index.cjs')
+    return existsSync(transpiledPath) ? transpiledPath : path.join(stepDir, 'index.ts')
 }

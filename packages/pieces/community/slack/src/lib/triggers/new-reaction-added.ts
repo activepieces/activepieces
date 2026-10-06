@@ -4,8 +4,8 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
-import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { appWebhookSetupInfo, onlyBotChannels, slackChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newReactionAddedTriggerOutputSchema } from '../output-schemas';
 
 
@@ -28,29 +28,8 @@ export const newReactionAdded = createTrigger({
       required: false,
     }),
     user: userId(false),
-    channels: Property.MultiSelectDropdown({
-      auth: slackAuth,
-      displayName: 'Channels',
-      description: 'Empty means every channel the bot is in.',
-      required: false,
-      refreshers: [],
-      async options({ auth }) {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect slack account',
-            options: [],
-          };
-        }
-        const accessToken = getBotToken(auth as SlackAuthValue);
-        const channels = await getChannels(accessToken);
-        return {
-          disabled: false,
-          placeholder: 'Select channels',
-          options: channels,
-        };
-      },
-    }),
+    onlyBotChannels,
+    channels: slackChannels,
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,

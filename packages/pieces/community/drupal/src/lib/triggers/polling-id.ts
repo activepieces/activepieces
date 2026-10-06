@@ -44,6 +44,7 @@ const polling: Polling<DrupalAuthType, { name: string }> = {
 export const drupalPollingId = createTrigger({
   auth: drupalAuth,
   name: 'drupalPollingId',
+  classification: 'READ',
   displayName: 'Polling by ID',
   description: 'A trigger that polls the Drupal site by ID.',
   aiMetadata: {

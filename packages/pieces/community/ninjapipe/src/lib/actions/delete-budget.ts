@@ -6,6 +6,7 @@ import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
 export const deleteBudget = createAction({
   auth: ninjapipeAuth,
   name: 'delete_budget',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Budget',
   description: 'Deletes a budget by ID.',
   audience: 'both',

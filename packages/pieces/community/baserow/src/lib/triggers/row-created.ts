@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { rowOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
   events: ['rows.created'],
@@ -11,6 +12,7 @@ const triggerHooks = createWebhookTriggerHooks({
 export const rowCreatedTrigger = createTrigger({
   name: 'baserow_row_created',
   classification: 'READ',
+  outputSchema: rowOutputSchema,
   auth: baserowAuth,
   displayName: 'New Row',
   description: 'Triggers when a new row is created in a Baserow table.',

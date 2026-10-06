@@ -11,6 +11,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 export const searchPoints = createAction({
   auth: qdrantAuth,
   name: 'search_points',
+  classification: 'SEARCH',
   displayName: 'Search Points',
   description: 'Search for points closest to your given vector (= embedding)',
   audience: 'both',

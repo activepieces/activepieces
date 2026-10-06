@@ -5,6 +5,7 @@ import { makeClient, tarventCommon } from '../common';
 export const updateContactGroup = createAction({
   auth: tarventAuth,
   name: 'tarvent_update_contact_group',
+  classification: 'WRITE',
   displayName: 'Add/Remove Contact From Audience Group',
   description: 'Adds or removes a contact from an audience group.',
   audience: 'both',

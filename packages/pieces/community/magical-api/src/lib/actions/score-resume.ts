@@ -8,6 +8,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const scoreResume = createAction({
     auth: magicalApiAuth,
     name: 'score_resume',
+    classification: 'READ',
     displayName: 'Score Resume',
     description: 'Scores a resume against a job description and provides a reason.',
     audience: 'both',

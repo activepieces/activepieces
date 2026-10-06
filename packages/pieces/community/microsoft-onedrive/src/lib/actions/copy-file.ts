@@ -1,23 +1,24 @@
 import {
   createAction,
   DropdownOption,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { tryCatch } from '@activepieces/pieces-framework';
 import { Client, PageCollection, ResponseType } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
+import { getCloudProp, getGraphBaseUrl } from '../common/microsoft-cloud';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { copyFileOutputSchema } from '../output-schemas';
 
 export const copyFile = createAction({
   auth: oneDriveAuth,
   name: 'copy_file',
   classification: 'WRITE',
   displayName: 'Copy File',
+  outputSchema: copyFileOutputSchema,
   description: 'Create a copy of a file in your OneDrive, optionally in a different folder or with a new name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a copy of a OneDrive file, optionally into a different folder and/or under a new name, and returns the copied item once the asynchronous copy completes. Use to duplicate a file or stamp out copies of a template document. Not idempotent: each run creates another copy — with the default rename conflict behavior, repeated runs produce numbered duplicates.',
@@ -45,8 +46,8 @@ export const copyFile = createAction({
           };
         }
 
-        const authValue = auth as OAuth2PropertyValue;
-        const cloud = authValue.props?.['cloud'] as string | undefined;
+        const authValue = auth;
+        const cloud = getCloudProp(authValue);
         const client = Client.initWithMiddleware({
           authProvider: {
             getAccessToken: () => Promise.resolve(authValue.access_token),
@@ -57,16 +58,14 @@ export const copyFile = createAction({
         const folderId = sourceFolderId || 'root';
         const options: DropdownOption<string>[] = [];
 
-        // A page can be empty (or contain only folders) and still carry
-        // @odata.nextLink, so keep following the link instead of stopping
-        // at the first empty page.
         let response: PageCollection | undefined = await client
           .api(`/me/drive/items/${folderId}/children`)
           .select('id,name,file')
           .get();
 
         while (response && options.length < MAX_DROPDOWN_FILES) {
-          for (const item of (response.value ?? []) as DriveItem[]) {
+          const items: DriveItem[] = response.value ?? [];
+          for (const item of items) {
             if (item.file) {
               options.push({ label: item.name!, value: item.id! });
             }
@@ -104,7 +103,7 @@ export const copyFile = createAction({
   },
   async run(context) {
     const { fileId, destinationFolderId, newName, conflictBehavior } = context.propsValue;
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const cloud = getCloudProp(context.auth);
 
     if (!fileId) {
       throw new Error('Please select a file to copy.');
@@ -119,8 +118,6 @@ export const copyFile = createAction({
 
     const body: { parentReference?: { driveId: string; id: string }; name?: string } = {};
     if (destinationFolderId) {
-      // Docs: "The parentReference parameter should include the driveId and id
-      // parameters for the target folder."
       const drive = await client.api('/me/drive').select('id').get();
       body.parentReference = { driveId: drive.id, id: destinationFolderId };
     }

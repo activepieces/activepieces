@@ -10,6 +10,7 @@ import { teamworkRequest } from '../common/client';
 
 export const createProject = createAction({
 	name: 'create_project',
+	classification: 'WRITE',
 	displayName: 'Create Project',
 	description: 'Create a new project (name, description, belongs to company, dates, etc.).',
 	audience: 'both',

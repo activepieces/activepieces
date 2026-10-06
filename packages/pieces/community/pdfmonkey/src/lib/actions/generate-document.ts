@@ -7,6 +7,7 @@ import { templateIdDropdown } from '../common/props';
 export const generateDocumentAction = createAction({
 	auth: pdfmonkeyAuth,
 	name: 'generateDocument',
+	classification: 'WRITE',
 	displayName: 'Generate Document',
 	description: 'Generates a new document using a specified template.',
 	audience: 'both',

@@ -5,6 +5,7 @@ import { pastebinAuth } from '../..';
 export default createAction({
   auth: pastebinAuth,
   name: 'get_paste_content',
+  classification: 'READ',
   displayName: 'Get Paste Content',
   description: 'Retrieves the content of a paste',
   audience: 'both',

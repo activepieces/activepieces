@@ -111,4 +111,5 @@ export const warningMarkdown = Property.MarkDown({
 export const mssqlProps = {
   table,
   column,
+  asTable,
 };

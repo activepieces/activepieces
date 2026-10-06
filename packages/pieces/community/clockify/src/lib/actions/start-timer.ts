@@ -7,6 +7,7 @@ import { projectId, tagIds, taskId, workspaceId } from '../common/props';
 export const startTimerAction = createAction({
 	auth: clockifyAuth,
 	name: 'start-timer',
+	classification: 'WRITE',
 	displayName: 'Start Timer',
 	description: 'Starts a new time entry.',
 	audience: 'both',

@@ -7,6 +7,7 @@ import { QuickbooksTerm, QuickbooksVendor } from '../lib/types';
 export const createVendorAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_vendor',
+	classification: 'WRITE',
 	displayName: 'Create Vendor',
 	description: 'Creates a vendor in QuickBooks.',
 	audience: 'both',

@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { rowsUpdatedTriggerOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
   events: ['rows.updated'],
@@ -11,6 +12,7 @@ const triggerHooks = createWebhookTriggerHooks({
 export const rowsUpdatedTrigger = createTrigger({
   name: 'baserow_rows_updated',
   classification: 'READ',
+  outputSchema: rowsUpdatedTriggerOutputSchema,
   auth: baserowAuth,
   displayName: 'Updated Rows (Batch)',
   description:

@@ -142,7 +142,7 @@ function actionFor({
 }
 
 function buildSuccessUrl(action: CheckoutAction): string {
-  return `${window.location.origin}/platform/setup/billing/success?action=${action}`;
+  return `${window.location.origin}/platform/billing/success?action=${action}`;
 }
 
 function dropToFreeWarning(additionalSeats: number | null | undefined): string {

@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitPaymentsProviderReturnParameters = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-payments-provider-return-parameters',
+  classification: 'WRITE',
   displayName: 'Submit payments return parameters',
   description: 'Submit direct return query and fragment parameters returned from the provider.',
   audience: 'both',

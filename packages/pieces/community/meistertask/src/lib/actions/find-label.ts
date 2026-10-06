@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findLabel = createAction({
   auth: meistertaskAuth,
   name: 'find_label',
+  classification: 'SEARCH',
   displayName: 'Find Label',
   description: 'Finds a label by searching',
   audience: 'both',

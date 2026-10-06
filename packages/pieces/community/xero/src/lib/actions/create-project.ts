@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroCreateProject = createAction({
   auth: xeroAuth,
   name: 'xero_create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Creates a new project for a contact.',
   audience: 'both',

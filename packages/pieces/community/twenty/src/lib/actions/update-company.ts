@@ -6,6 +6,7 @@ import { twentyRequest } from '../common';
 export const updateCompany = createAction({
   auth: twentyAuth,
   name: 'update_company',
+  classification: 'WRITE',
   displayName: 'Update Company',
   description: 'Updates an existing company record in Twenty CRM.',
   audience: 'both',

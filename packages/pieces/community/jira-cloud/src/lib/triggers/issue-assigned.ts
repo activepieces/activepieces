@@ -9,6 +9,7 @@ import { JiraPollingItem, JiraPollingProps, createJiraPolling } from '../common/
 import { getUsersDropdown } from '../common/props';
 import { ChangelogHistory } from '../common/types';
 
+import { issueAssignedTriggerOutputSchema } from '../output-schemas';
 type IssueWithChangelog = {
   id: string;
   key: string;
@@ -83,6 +84,7 @@ const polling = createJiraPolling<IssueAssignedProps>({
 
 export const issueAssigned = createTrigger({
   name: 'issue_assigned',
+  classification: 'READ',
   displayName: 'Issue Assigned',
   description:
     'Fires when a Jira issue is assigned to someone. Use it to ping people in Slack/Teams the moment work lands on them, auto-create a to-do when tickets hit your queue, or track hand-offs between teammates.',
@@ -92,6 +94,7 @@ export const issueAssigned = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueAssignedTriggerOutputSchema,
   props: {
     assignedToMe: Property.Checkbox({
       displayName: 'Only when assigned to me',

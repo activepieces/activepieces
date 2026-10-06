@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createContact = createAction({
   auth: oncehubAuth,
   name: 'createContact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description:
     'Create a new contact in Oncehub. Either email or mobile_phone is required.',

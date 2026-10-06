@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createShortlinkAction = createAction({
   name: 'create_shortlink',
+  classification: 'WRITE',
   displayName: 'Create Shortlink',
   description: 'Create a new shortlink for your user account',
   audience: 'both',

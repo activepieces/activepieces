@@ -22,6 +22,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Re
 export const leaveRequestSubmitted = createTrigger({
 	auth: workdayAuth,
 	name: 'leave_request_submitted',
+	classification: 'READ',
 	displayName: 'Leave Request Submitted',
 	description: 'Triggers when a leave request is submitted in Workday.',
 	aiMetadata: {

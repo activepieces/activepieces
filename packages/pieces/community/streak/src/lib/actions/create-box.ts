@@ -9,6 +9,7 @@ import { StreakBox } from '../common/types';
 export const createBoxAction = createAction({
   auth: streakAuth,
   name: 'create_box',
+  classification: 'WRITE',
   displayName: 'Create Box',
   description: 'Create a new box (record) in a pipeline.',
   audience: 'both',

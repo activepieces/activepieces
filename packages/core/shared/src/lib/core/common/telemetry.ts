@@ -33,6 +33,11 @@ type OnboardingCompleted = {
     platformId: string
 }
 
+type AdminNavLockedClicked = {
+    path: string
+    tier?: string
+}
+
 type PlanChange = {
     platformId: string
     plan: string
@@ -126,6 +131,38 @@ type McpToolCalled = {
     toolName: string
 }
 
+type PlatformAdminPageViewed = {
+    page: string
+    locked: boolean
+}
+
+type PlatformAdminGateBlocked = {
+    feature: string
+    control: string
+}
+
+type PlatformAdminUpgradeClicked = {
+    feature: string | null
+    tier: string | null
+    surface: PlatformAdminSurface
+}
+
+type PlatformAdminSalesContacted = {
+    feature: string
+    surface: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>
+}
+
+type PlatformAdminControlClicked = {
+    control: string
+    page: string
+}
+
+type PlatformAdminLimitReached = {
+    limit: PlatformAdminLimit
+    used: number
+    allowed: number | null
+}
+
 type McpServerConnected = {
     userId: string
     projectId?: string
@@ -167,6 +204,24 @@ export enum TelemetryEventName {
     INVITE_SENT = 'invite.sent',
     INVITE_ACCEPTED = 'invite.accepted',
     SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
+    ADMIN_NAV_LOCKED_CLICKED = 'admin.nav.locked.clicked',
+    PLATFORM_ADMIN_PAGE_VIEWED = 'platform.admin.page.viewed',
+    PLATFORM_ADMIN_GATE_BLOCKED = 'platform.admin.gate.blocked',
+    PLATFORM_ADMIN_UPGRADE_CLICKED = 'platform.admin.upgrade.clicked',
+    PLATFORM_ADMIN_SALES_CONTACTED = 'platform.admin.sales.contacted',
+    PLATFORM_ADMIN_LIMIT_REACHED = 'platform.admin.limit.reached',
+    PLATFORM_ADMIN_CONTROL_CLICKED = 'platform.admin.control.clicked',
+}
+
+export enum PlatformAdminSurface {
+    SAMPLE = 'sample',
+    TEASER = 'teaser',
+    DIALOG = 'dialog',
+    LIMIT = 'limit',
+}
+
+export enum PlatformAdminLimit {
+    TEAM_PROJECTS = 'teamProjects',
 }
 
 export type TelemetryEvent =
@@ -199,6 +254,13 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
     | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
+    | BaseTelemetryEvent<TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED, AdminNavLockedClicked>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED, PlatformAdminPageViewed>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED, PlatformAdminGateBlocked>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED, PlatformAdminUpgradeClicked>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED, PlatformAdminSalesContacted>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED, PlatformAdminLimitReached>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED, PlatformAdminControlClicked>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.ONBOARDING_COMPLETED,
@@ -208,6 +270,7 @@ export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new 
     TelemetryEventName.PLAN_REACTIVATED,
     TelemetryEventName.TRIAL_STARTED,
     TelemetryEventName.SALES_HANDOFF_CLICKED,
+    TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
     TelemetryEventName.SIGNED_UP,
     TelemetryEventName.SIGNED_IN,
     TelemetryEventName.SIGN_UP_SUBMITTED,

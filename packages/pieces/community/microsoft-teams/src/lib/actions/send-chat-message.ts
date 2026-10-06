@@ -6,6 +6,7 @@ import { createGraphClient } from '../common/graph';
 export const sendChatMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_send_chat_message',
+	classification: 'WRITE',
 	displayName: 'Send Chat Message',
 	description: 'Sends a message in an existing chat.',
 	audience: 'both',

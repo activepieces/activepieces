@@ -11,6 +11,7 @@ interface Item {
 
 export const sendMms = createAction({
   name: 'sendMms',
+  classification: 'WRITE',
   displayName: 'Send MMS',
   auth: krispcallAuth,
   description: 'Send mms in krispcall.',

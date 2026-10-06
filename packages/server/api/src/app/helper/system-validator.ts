@@ -1,5 +1,5 @@
 import { inspect } from 'util'
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
@@ -7,6 +7,7 @@ import { RedisType } from '../database/redis/types'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
+import { networkUtils } from './network-utils'
 import { system } from './system/system'
 import { AppSystemProp, ContainerType, SystemProp } from './system/system-props'
 
@@ -65,18 +66,39 @@ function urlValidator(value: string) {
     }
 }
 
+function assertMcpUrlHasDistinctHost(): void {
+    const mcpUrl = system.get(AppSystemProp.MCP_URL)
+    const frontendUrl = system.get(AppSystemProp.FRONTEND_URL)
+    if (isNil(mcpUrl) || isNil(frontendUrl)) {
+        return
+    }
+    const parsedMcpUrl = tryCatchSync(() => new URL(mcpUrl))
+    const parsedFrontendUrl = tryCatchSync(() => new URL(frontendUrl))
+    if (parsedMcpUrl.error || parsedFrontendUrl.error) {
+        return
+    }
+    const sameHost = parsedMcpUrl.data.host.toLowerCase() === parsedFrontendUrl.data.host.toLowerCase()
+    const sameBaseUrl = networkUtils.cleanTrailingSlash(mcpUrl) === networkUtils.cleanTrailingSlash(frontendUrl)
+    if (sameHost && !sameBaseUrl) {
+        throw new Error(JSON.stringify({
+            message: 'AP_MCP_URL and AP_FRONTEND_URL share a hostname but are not the same URL, so the server cannot tell requests for one from the other. Give AP_MCP_URL its own hostname, or leave it unset.',
+            docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
+        }))
+    }
+}
+
 const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
     // AppSystemProp
     [AppSystemProp.ALLOW_OPEN_SIGN_UP]: booleanValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
+    [AppSystemProp.SKIP_PREWARM_CODES]: booleanValidator,
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
     [AppSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.LOG_FILE]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
-    [AppSystemProp.CLOUD_CHAT_ROLLOUT_CAP]: numberValidator,
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
@@ -108,6 +130,7 @@ const systemPropValidators: {
     [AppSystemProp.AXIOM_TOKEN]: stringValidator,
     [AppSystemProp.AXIOM_DATASET]: stringValidator,
     [AppSystemProp.FRONTEND_URL]: urlValidator,
+    [AppSystemProp.MCP_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
     [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
@@ -333,4 +356,5 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
     }
 
+    assertMcpUrlHasDistinctHost()
 }

@@ -31,7 +31,7 @@ export const ConfigurationsPage = () => {
     });
 
   if (edition === ApEdition.CLOUD) {
-    return <Navigate to="/platform/infrastructure/workers" replace />;
+    return <Navigate to="/platform/workers" replace />;
   }
 
   if (isLoading || isNil(configuration)) {

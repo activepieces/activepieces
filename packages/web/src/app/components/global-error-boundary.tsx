@@ -64,19 +64,19 @@ const ErrorFallbackContent = ({
       : t('Technical Details');
 
   return (
-    <div className="min-h-screen w-full bg-background flex items-center justify-center p-6">
+    <div className="min-h-screen w-full bg-gray-1 flex items-center justify-center p-6">
       <div className="w-full max-w-md flex flex-col items-center text-center gap-6">
-        <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-          <AlertTriangle className="size-7 text-muted-foreground" />
+        <div className="flex size-14 items-center justify-center rounded-full bg-gray-3">
+          <AlertTriangle className="size-7 text-gray-11" />
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-gray-12">
             {isChunkError
               ? t('A new version is available')
               : t('Something went wrong')}
           </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed text-balance">
+          <p className="text-sm text-gray-11 leading-relaxed text-balance">
             {isChunkError
               ? t(
                   'The application was updated. Please reload the page to get the latest version.',
@@ -99,14 +99,14 @@ const ErrorFallbackContent = ({
 
         <div className="w-full flex flex-col gap-2 text-left">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-gray-11">
               {detailsLabel}
             </span>
             <Button
               variant="ghost"
               size="icon"
               aria-label={t('Copy')}
-              className="size-7 text-muted-foreground"
+              className="size-7 text-gray-11"
               onClick={() => {
                 writeToClipboard(diagnostics)
                   .then(() => flashCopyState('copied'))
@@ -120,7 +120,7 @@ const ErrorFallbackContent = ({
               )}
             </Button>
           </div>
-          <pre className="max-h-56 overflow-auto rounded-lg border bg-muted/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap break-words select-all">
+          <pre className="max-h-56 overflow-auto rounded-lg border bg-gray-3/40 p-4 font-mono text-xs leading-relaxed text-gray-11 whitespace-pre-wrap break-words select-all">
             {diagnostics}
           </pre>
         </div>

@@ -5,6 +5,7 @@ import { logsnagAuth } from '../..';
 export const createEvent = createAction({
   auth: logsnagAuth,
   name: 'createEvent',
+  classification: 'WRITE',
   displayName: 'Create Event',
   description: 'Creates a new event in LogSnag with the specified channel and details.',
   audience: 'both',

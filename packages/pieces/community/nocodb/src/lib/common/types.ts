@@ -148,3 +148,60 @@ export interface DataOperationV3Response {
 export type DataOperationResponse =
   | Record<string, unknown>
   | DataOperationV3Response;
+
+export interface CurrentUserResponse {
+  id: string;
+  email: string;
+  email_verified: boolean;
+  firstname: string | null;
+  lastname: string | null;
+  roles: Record<string, boolean>;
+  base_roles?: Record<string, boolean>;
+  workspace_roles?: Record<string, boolean>;
+}
+
+export interface NotificationResponse {
+  id: string;
+  type: string;
+  body: Record<string, unknown>;
+  is_read: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ViewSortResponse {
+  id: string;
+  fk_view_id: string;
+  fk_column_id: string;
+  direction: string;
+}
+
+export interface ViewColumnResponse {
+  id: string;
+  fk_view_id: string;
+  fk_column_id: string;
+  show: boolean;
+  order: number;
+}
+
+export interface ViewResponse {
+  id: string;
+  title: string;
+  type: number;
+  fk_model_id: string;
+  base_id: string;
+  uuid: string | null;
+  show: boolean;
+}
+
+export interface SharedViewGroupedDataItem {
+  key: string;
+  value: Record<string, unknown>[];
+}
+
+export interface AttachmentUploadReq {
+  url: string;
+  title?: string;
+  mimetype?: string;
+}

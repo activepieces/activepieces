@@ -13,7 +13,7 @@ export const stripeFindInvoice = createAction({
   classification: 'READ',
   auth: stripeAuth,
   displayName: 'Find Invoice',
-  description: 'Finds an invoice by its unique ID.',
+  description: 'Look up an invoice and its details.',
   audience: 'human',
   aiMetadata: {
     description:

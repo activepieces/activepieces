@@ -9,6 +9,7 @@ import { escapeWql, workdayWqlRequest } from '../common';
 export const findPurchaseOrder = createAction({
 	auth: workdayAuth,
 	name: 'find_purchase_order',
+	classification: 'READ',
 	displayName: 'Find Purchase Order',
 	description: 'Finds a purchase order by ID in Workday using WQL.',
 	audience: 'both',

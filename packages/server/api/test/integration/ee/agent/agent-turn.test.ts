@@ -158,7 +158,7 @@ describe('the model an agent answers on', () => {
         // The tier resolver returns the default tier for anything it does not recognise as a tier
         // id, so routing a concrete model id through it comes back as a different model with no
         // error. The two must differ for the accepting test above to mean anything.
-        const chatDefault = agentHelpers.resolveTier({ tierId: null }).modelId
+        const chatDefault = agentHelpers.resolveTier({ tierId: null, surface: 'chat' }).modelId
 
         expect(CONFIGURED_MODEL).not.toBe(chatDefault)
     })

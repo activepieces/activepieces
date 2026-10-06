@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getUserSubscriptionAction = createAction({
   name: 'get_user_subscription',
+  classification: 'READ',
   displayName: 'Get User Subscription',
   description: 'Retrieve the current subscription for your user account',
   audience: 'both',

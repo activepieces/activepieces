@@ -40,6 +40,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof contextualAiAuth
 export const newAgentTrigger = createTrigger({
   auth: contextualAiAuth,
   name: 'new_agent',
+  classification: 'READ',
   displayName: 'New Agent',
   description: 'Triggers when a new Contextual AI agent is created',
   aiMetadata: {

@@ -140,6 +140,18 @@ export const PLATFORM_FEATURES = {
       'Keep the catalog on-brand and focused',
     ],
   },
+  aiProviders: {
+    featureKey: 'UNIVERSAL_AI',
+    title: 'Unlock AI Center',
+    description:
+      'Bring your own AI provider keys and choose the models that power your automations',
+    tier: 'plus',
+    bullets: [
+      'Connect OpenAI, Anthropic, Google and more',
+      'Pick the default model for each AI capability',
+      'Pay your provider directly, with no model markup',
+    ],
+  },
 } satisfies Record<string, PlatformFeature>;
 
 export type PlatformFeatureId = keyof typeof PLATFORM_FEATURES;

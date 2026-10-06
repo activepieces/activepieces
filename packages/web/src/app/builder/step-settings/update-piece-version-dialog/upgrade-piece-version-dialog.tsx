@@ -53,7 +53,7 @@ export const UpgradePieceVersionContent: React.FC<
       />
 
       {serverError && (
-        <p className="text-sm font-medium text-destructive">{serverError}</p>
+        <p className="text-sm font-medium text-danger-11">{serverError}</p>
       )}
 
       <DialogFooter>

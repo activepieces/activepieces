@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { rsaSignatureActionOutputSchema } from '../output-schemas';
 import Crypto from 'crypto';
 
 export const rsaSignature = createAction({
@@ -9,6 +10,7 @@ export const rsaSignature = createAction({
   description:
     'Signs text with an RSA private key using SHA-256, SHA-384, or SHA-512 (RSA-SHA256 by default)',
   aiMetadata: { description: 'Signs a text payload with an RSA private key in PEM format (PKCS#1 or PKCS#8), hashing with SHA-256, SHA-384 or SHA-512. Pick this for asymmetric request signing where the verifier holds only the public key; use Generate HMAC Signature when both sides share one symmetric secret, and Text to Hash for a plain unkeyed digest. Requires the private key plus its passphrase if the key is encrypted; signing uses deterministic PKCS#1 v1.5 padding, so it is idempotent.', idempotent: true },
+  outputSchema: rsaSignatureActionOutputSchema,
   props: {
     privateKey: Property.LongText({
       displayName: 'Private Key',

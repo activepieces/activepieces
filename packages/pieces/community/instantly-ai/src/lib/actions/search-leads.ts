@@ -7,6 +7,7 @@ import { campaignId, listId } from '../common/props';
 export const searchLeadsAction = createAction({
   auth: instantlyAiAuth,
   name: 'search_leads',
+  classification: 'SEARCH',
   displayName: 'Search Leads',
   description: 'Search for leads in Instantly by name or email.',
   audience: 'both',

@@ -1,10 +1,11 @@
-import { ProjectWithLimits } from '@activepieces/shared';
+import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Crown, Plus } from 'lucide-react';
 import React from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import {
@@ -12,6 +13,7 @@ import {
   useFeatureGate,
   useTeamProjectLimitGuard,
 } from '@/features/billing';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
@@ -29,6 +31,7 @@ export function CreateProjectButton({
     locked: hasReachedLimit,
     feature: PLATFORM_FEATURES.projects,
   });
+  const { capture } = useTelemetry();
 
   const trigger = triggerFor({
     variant,
@@ -40,6 +43,15 @@ export function CreateProjectButton({
   return (
     <NewProjectDialog
       onCreate={onCreate}
+      onBlocked={() =>
+        capture({
+          name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+          payload: {
+            feature: PLATFORM_FEATURES.projects.featureKey,
+            control: AdminControl.PROJECTS_NEW_OPEN,
+          },
+        })
+      }
       gate={{
         locked: hasReachedLimit,
         content: teamProjectLimitContent,
@@ -51,20 +63,28 @@ export function CreateProjectButton({
 }
 
 function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
+  const control = adminControl(
+    locked ? undefined : AdminControl.PROJECTS_NEW_OPEN,
+  );
   switch (variant) {
     case 'icon':
       return (
         <Button
           variant="ghost"
           size="icon"
-          className={cn('h-6 w-6 hover:bg-accent', className)}
+          className={cn('h-6 w-6 hover:bg-gray-4', className)}
+          {...control}
         >
-          {locked ? <Crown className="text-primary" /> : <Plus />}
+          {locked ? <Crown className="text-accent-11" /> : <Plus />}
         </Button>
       );
     case 'full':
       return crown ? (
-        <Button size="sm" className={cn('has-[>svg]:px-2.5', className)}>
+        <Button
+          size="sm"
+          className={cn('has-[>svg]:px-2.5', className)}
+          {...control}
+        >
           {crown}
           {t('New Project')}
         </Button>
@@ -74,6 +94,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           iconSize={16}
           size="sm"
           className={className}
+          {...control}
         >
           {t('New Project')}
         </AnimatedIconButton>
@@ -81,10 +102,11 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
     case 'sidebar-menu':
       return (
         <SidebarMenuButton
-          className={cn('text-muted-foreground gap-2', className)}
+          className={cn('text-gray-11 gap-2', className)}
+          {...control}
         >
           {locked ? (
-            <Crown className="size-4 text-primary" />
+            <Crown className="size-4 text-accent-11" />
           ) : (
             <Plus className="size-4" />
           )}

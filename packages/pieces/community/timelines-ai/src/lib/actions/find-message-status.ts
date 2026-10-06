@@ -4,6 +4,7 @@ import { timelinesAiAuth, timelinesAiCommon } from '../common';
 export const findMessageStatus = createAction({
   auth: timelinesAiAuth,
   name: 'findMessageStatus',
+  classification: 'READ',
   displayName: 'Find Message Status',
   description: 'Lookup a message’s delivery status by message ID.',
   audience: 'both',

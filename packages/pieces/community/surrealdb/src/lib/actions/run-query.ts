@@ -5,6 +5,7 @@ import surrealClient from '../common';
 export const runQuery = createAction({
   auth: surrealdbAuth,
   name: 'run-query',
+  classification: 'WRITE',
   displayName: 'Run Query',
   description: 'Run a query in SurrealDB.',
   audience: 'both',

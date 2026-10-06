@@ -1,11 +1,10 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Activity, Calendar, HeartPulse, LineChart } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { VIEW_QUERY_PARAM } from '@/app/routes/platform/admin-pages';
 import {
   Select,
   SelectContent,
@@ -13,14 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { QueueTab } from './components/queue-tab';
 import { RunsTab } from './components/runs-tab';
 import { SystemHealthTab } from './components/system-health-tab';
 import { healthMetricsQueries } from './lib/health-metrics-hooks';
-
-type MonthOption = { value: string; label: string };
 
 function buildMonthOptions(): MonthOption[] {
   const now = dayjs();
@@ -33,10 +29,12 @@ function buildMonthOptions(): MonthOption[] {
   });
 }
 
-export default function SettingsHealthPage() {
+export default function SettingsHealthPage({
+  section,
+}: SettingsHealthPageProps) {
   const monthOptions = React.useMemo(buildMonthOptions, []);
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = parseTabValue(searchParams.get(VIEW_QUERY_PARAM));
+  const navigate = useNavigate();
   const selectedMonth = searchParams.get('month') || monthOptions[0].value;
 
   const range = React.useMemo(() => {
@@ -52,19 +50,9 @@ export default function SettingsHealthPage() {
     isLoading: isReportLoading,
     isError: isReportError,
     refetch: refetchReport,
-  } = healthMetricsQueries.useRunMetrics(range, activeTab === 'runs');
+  } = healthMetricsQueries.useRunMetrics(range, section === 'runs');
   const { data: live, isLoading: isLiveLoading } =
-    healthMetricsQueries.useQueueMetrics(range, activeTab === 'queue');
-
-  const setTab = (tab: TabValue) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (tab === 'system') {
-      newParams.delete(VIEW_QUERY_PARAM);
-    } else {
-      newParams.set(VIEW_QUERY_PARAM, tab);
-    }
-    setSearchParams(newParams, { replace: true });
-  };
+    healthMetricsQueries.useQueueMetrics(range, section === 'queue');
 
   const handleMonthChange = (month: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -78,7 +66,7 @@ export default function SettingsHealthPage() {
         title={t('Health')}
         description={t('Check the status of your platform and its components')}
       >
-        {(activeTab === 'runs' || activeTab === 'queue') && (
+        {(section === 'runs' || section === 'queue') && (
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger className="w-auto gap-2 h-8">
               <Calendar className="h-4 w-4" />
@@ -95,49 +83,37 @@ export default function SettingsHealthPage() {
         )}
       </DashboardPageHeader>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setTab(value as TabValue)}
-        className="w-full"
-      >
-        <TabsList variant="outline" className="border-b w-full">
-          <TabsTrigger variant="outline" value="system">
-            <HeartPulse className="w-4 h-4 mr-2" />
-            {t('System Health')}
-          </TabsTrigger>
-          <TabsTrigger variant="outline" value="runs">
-            <LineChart className="w-4 h-4 mr-2" />
-            {t('Runs Health')}
-          </TabsTrigger>
-          <TabsTrigger variant="outline" value="queue">
-            <Activity className="w-4 h-4 mr-2" />
-            {t('Queue Health')}
-          </TabsTrigger>
-        </TabsList>
+      {section === 'system' && (
+        <SystemHealthTab
+          onSeeRuns={() =>
+            navigate({
+              pathname: '/platform/health/runs',
+              search: searchParams.toString(),
+            })
+          }
+        />
+      )}
 
-        <TabsContent value="system">
-          <SystemHealthTab onSeeRuns={() => setTab('runs')} />
-        </TabsContent>
+      {section === 'runs' && (
+        <RunsTab
+          report={report}
+          isLoading={isReportLoading}
+          isError={isReportError}
+          onRetry={refetchReport}
+        />
+      )}
 
-        <TabsContent value="runs">
-          <RunsTab
-            report={report}
-            isLoading={isReportLoading}
-            isError={isReportError}
-            onRetry={refetchReport}
-          />
-        </TabsContent>
-
-        <TabsContent value="queue">
-          <QueueTab live={live} isLoading={isLiveLoading} />
-        </TabsContent>
-      </Tabs>
+      {section === 'queue' && (
+        <QueueTab live={live} isLoading={isLiveLoading} />
+      )}
     </div>
   );
 }
 
-function parseTabValue(value: string | null): TabValue {
-  return value === 'runs' || value === 'queue' ? value : 'system';
-}
+type HealthSection = 'system' | 'runs' | 'queue';
 
-type TabValue = 'system' | 'runs' | 'queue';
+type MonthOption = { value: string; label: string };
+
+type SettingsHealthPageProps = {
+  section: HealthSection;
+};
