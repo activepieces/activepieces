@@ -3,6 +3,7 @@ import { AppConnectionType, AppConnectionValueForAuthProperty, createMockActionC
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { jumpcloudAuth } from '../src/lib/auth';
 import { jumpcloudApi } from '../src/lib/common/client';
+import { jumpcloudFields } from '../src/lib/common/fields';
 import { jumpcloudObjects } from '../src/lib/common/objects';
 import { jumpcloudOutput } from '../src/lib/common/output';
 import { jumpcloudProps } from '../src/lib/common/props';
@@ -154,6 +155,11 @@ describe('objects', () => {
         expect(jumpcloudObjects.typeOptions({ creatableOnly: true }).map((option) => option.value)).not.toContain('system');
     });
 
+    it('parses object types and rejects unknown ones', () => {
+        expect(jumpcloudObjects.parseType('system')).toBe('system');
+        expect(() => jumpcloudObjects.parseType('printer')).toThrow('Select a valid Object Type');
+    });
+
     it('guards object type values', () => {
         expect(jumpcloudObjects.isObjectType('user_group')).toBe(true);
         expect(jumpcloudObjects.isObjectType('toString')).toBe(false);
@@ -243,6 +249,36 @@ describe('objects', () => {
         ['application', { _id: 'a1', name: 'slack', displayLabel: 'Slack' }, 'Slack'],
     ] as const)('labels a %s as %s', (type, record, label) => {
         expect(jumpcloudObjects.optionLabel({ type, record })).toBe(label);
+    });
+});
+
+describe('fields', () => {
+    it('lets typed fields win over additional fields and drops blanks', () => {
+        expect(
+            jumpcloudFields.buildChanges({
+                type: 'user',
+                fields: { username: ' jdoe ', email: '', unknown: 'x' },
+                additionalFields: '{"username": "other", "location": "Remote"}',
+            }),
+        ).toEqual({ username: 'jdoe', location: 'Remote' });
+    });
+
+    it.each([
+        ['not json', 'not valid JSON'],
+        ['[1, 2]', 'must be a JSON object'],
+        [[1, 2], 'must be a JSON object'],
+    ])('rejects Additional Fields %s', (additionalFields, message) => {
+        expect(() => jumpcloudFields.buildChanges({ type: 'user_group', fields: { name: 'Eng' }, additionalFields })).toThrow(message);
+    });
+
+    it('drops read-only keys before a full replace', () => {
+        expect(
+            jumpcloudFields.mergeForReplace({
+                type: 'application',
+                current: { _id: 'a1', created: 'x', organization: 'o', name: 'bookmark', config: {}, displayLabel: 'Old' },
+                changes: { displayLabel: 'New' },
+            }),
+        ).toEqual({ name: 'bookmark', config: {}, displayLabel: 'New' });
     });
 });
 

@@ -38,7 +38,20 @@ export type ObjectTypeConfig = {
     idField: '_id' | 'id';
     defaultSort: string;
     canCreate: boolean;
+    replaceOnUpdate: boolean;
     search: ObjectSearch;
+};
+
+export type PageWindow = {
+    start: number;
+    count: number;
+};
+
+export type PaginationInput = {
+    skip?: number;
+    limit?: number;
+    fetchAll?: boolean;
+    maxItems?: number;
 };
 
 export type FlatObject = Record<string, string | number | boolean | null>;

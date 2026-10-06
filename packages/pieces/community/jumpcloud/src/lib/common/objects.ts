@@ -1,16 +1,19 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { jumpcloudApi, MAX_PAGE_SIZE } from './client';
+import { jumpcloudApi } from './client';
 import { ApiRecord, ConnectionProps, ListPage, ObjectTypeConfig, ObjectTypeKey, PageRequest } from './types';
 
 export const jumpcloudObjects = {
     config,
     isObjectType,
+    parseType,
     typeOptions,
     itemPath,
     readId,
     listPage,
     searchPage,
     optionLabel,
+    getRecord,
+    listByIds,
 };
 
 function config(type: ObjectTypeKey): ObjectTypeConfig {
@@ -19,6 +22,13 @@ function config(type: ObjectTypeKey): ObjectTypeConfig {
 
 function isObjectType(value: unknown): value is ObjectTypeKey {
     return typeof value === 'string' && Object.prototype.hasOwnProperty.call(OBJECT_TYPES, value);
+}
+
+function parseType(value: unknown): ObjectTypeKey {
+    if (!isObjectType(value)) {
+        throw new Error('Select a valid Object Type: User, System (device), User Group, Device Group or Application (SSO).');
+    }
+    return value;
 }
 
 function typeOptions({ creatableOnly }: { creatableOnly: boolean }): { label: string; value: ObjectTypeKey }[] {
@@ -75,10 +85,59 @@ async function searchPage({ auth, type, term, page }: SearchParams): Promise<Lis
         case 'filter':
             return listPage({ auth, type, page, filter: `${search.field}:${search.operator}:${trimmed}` });
         case 'local': {
-            const all = await listPage({ auth, type, page: { limit: MAX_PAGE_SIZE, skip: 0 }, sort: OBJECT_TYPES[type].pickerSort });
+            const all = await jumpcloudApi.collectPages({
+                fetchPage: (request) => listPage({ auth, type, page: request, sort: OBJECT_TYPES[type].pickerSort }),
+                fetchAll: true,
+                maxItems: LOCAL_SEARCH_MAX_ITEMS,
+            });
             const needle = trimmed.toLowerCase();
-            return { items: all.items.filter((record) => optionLabel({ type, record }).toLowerCase().includes(needle)) };
+            const matches = all.items.filter((record) => optionLabel({ type, record }).toLowerCase().includes(needle));
+            return { items: matches.slice(page.skip, page.skip + page.limit), totalCount: matches.length };
         }
+    }
+}
+
+async function getRecord({ auth, type, id }: { auth: ConnectionProps; type: ObjectTypeKey; id: string }): Promise<ApiRecord> {
+    const body = await jumpcloudApi.send<unknown>({
+        auth,
+        method: HttpMethod.GET,
+        path: itemPath({ type, id }),
+        version: OBJECT_TYPES[type].version,
+    });
+    if (!jumpcloudApi.isRecord(body)) {
+        throw new Error(`JumpCloud returned an unexpected response for ${OBJECT_TYPES[type].label} ${id}.`);
+    }
+    return body;
+}
+
+async function listByIds({ auth, type, ids }: { auth: ConnectionProps; type: ObjectTypeKey; ids: string[] }): Promise<ApiRecord[]> {
+    if (ids.length === 0) {
+        return [];
+    }
+    const { version, idField } = OBJECT_TYPES[type];
+    if (version === 'v1') {
+        const page = await listPage({ auth, type, page: { limit: ids.length, skip: 0 }, filter: `${idField}:$in:${ids.join('|')}` });
+        return page.items;
+    }
+    const batches = Array.from({ length: Math.ceil(ids.length / PARALLEL_FETCHES) }, (_, index) =>
+        ids.slice(index * PARALLEL_FETCHES, (index + 1) * PARALLEL_FETCHES),
+    );
+    const results = await batches.reduce<Promise<ApiRecord[]>>(async (previous, batch) => {
+        const collected = await previous;
+        const fetched = await Promise.all(batch.map((id) => getRecordOrNull({ auth, type, id })));
+        return [...collected, ...fetched.filter((record): record is ApiRecord => record !== null)];
+    }, Promise.resolve([]));
+    return results;
+}
+
+async function getRecordOrNull({ auth, type, id }: { auth: ConnectionProps; type: ObjectTypeKey; id: string }): Promise<ApiRecord | null> {
+    try {
+        return await getRecord({ auth, type, id });
+    } catch (error) {
+        if (jumpcloudApi.isNotFound(error)) {
+            return null;
+        }
+        throw error;
     }
 }
 
@@ -121,6 +180,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         defaultSort: '_id',
         pickerSort: 'username',
         canCreate: true,
+        replaceOnUpdate: false,
         search: { kind: 'endpoint', path: '/search/systemusers', fields: ['username', 'email', 'firstname', 'lastname', 'displayname'] },
     },
     system: {
@@ -131,6 +191,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         defaultSort: '_id',
         pickerSort: 'displayName',
         canCreate: false,
+        replaceOnUpdate: false,
         search: { kind: 'endpoint', path: '/search/systems', fields: ['displayName', 'hostname', 'serialNumber'] },
     },
     user_group: {
@@ -141,6 +202,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         defaultSort: 'name',
         pickerSort: 'name',
         canCreate: true,
+        replaceOnUpdate: true,
         search: { kind: 'filter', field: 'name', operator: 'search' },
     },
     system_group: {
@@ -151,6 +213,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         defaultSort: 'name',
         pickerSort: 'name',
         canCreate: true,
+        replaceOnUpdate: true,
         search: { kind: 'filter', field: 'name', operator: 'search' },
     },
     application: {
@@ -161,9 +224,13 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         defaultSort: '_id',
         pickerSort: 'displayLabel',
         canCreate: true,
+        replaceOnUpdate: true,
         search: { kind: 'local' },
     },
 };
+
+const LOCAL_SEARCH_MAX_ITEMS = 1000;
+const PARALLEL_FETCHES = 10;
 
 const OBJECT_TYPE_KEYS: ObjectTypeKey[] = ['user', 'system', 'user_group', 'system_group', 'application'];
 

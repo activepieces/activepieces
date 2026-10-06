@@ -1,5 +1,12 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { createObjectAction } from './lib/actions/create-object';
+import { deleteObjectAction } from './lib/actions/delete-object';
+import { getObjectAction } from './lib/actions/get-object';
+import { listObjectsAction } from './lib/actions/list-objects';
+import { listObjectsByIdAction } from './lib/actions/list-objects-by-id';
+import { searchObjectsAction } from './lib/actions/search-objects';
+import { updateObjectAction } from './lib/actions/update-object';
 import { jumpcloudAuth } from './lib/auth';
 import { jumpcloudApi } from './lib/common/client';
 
@@ -12,6 +19,13 @@ export const jumpcloud = createPiece({
     auth: jumpcloudAuth,
     authors: ['eliseukadesh67'],
     actions: [
+        createObjectAction,
+        updateObjectAction,
+        deleteObjectAction,
+        getObjectAction,
+        listObjectsAction,
+        listObjectsByIdAction,
+        searchObjectsAction,
         createCustomApiCallAction({
             auth: jumpcloudAuth,
             description: 'Call any JumpCloud API endpoint with this connection. Use a path such as /systemusers for the v1 API or /v2/usergroups for the v2 API.',

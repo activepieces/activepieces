@@ -1,6 +1,5 @@
 import { HttpError, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { jumpcloud } from '../src';
 import { JUMPCLOUD_REGION, jumpcloudApi } from '../src/lib/common/client';
 
 const sendRequest = vi.fn();
@@ -119,11 +118,5 @@ describe('validateConnection', () => {
         const result = await jumpcloudApi.validateConnection({ apiKey: 'key', region: JUMPCLOUD_REGION.IN });
 
         expect(result).toEqual({ valid: false, error: expect.stringContaining('Could not reach the JumpCloud API (ENOTFOUND)') });
-    });
-});
-
-describe('piece definition', () => {
-    it('exposes a custom API call action', () => {
-        expect(Object.keys(jumpcloud.actions())).toEqual(['custom_api_call']);
     });
 });

@@ -1,5 +1,5 @@
 import { httpClient, HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { ApiRecord, ApiVersion, CollectedPage, ConnectionProps, ListPage, PageRequest } from './types';
+import { ApiRecord, ApiVersion, CollectedPage, ConnectionProps, ListPage, PageRequest, PageWindow, PaginationInput } from './types';
 
 export const jumpcloudApi = {
     resolveBaseUrl,
@@ -9,7 +9,9 @@ export const jumpcloudApi = {
     send,
     fetchListPage,
     collectPages,
+    pageWindow,
     isRecord,
+    isNotFound,
 };
 
 function resolveBaseUrl({ region }: BaseUrlProps): string {
@@ -63,7 +65,7 @@ async function send<T>({ auth, method, path, version = 'v1', body, queryParams }
         });
         return response.body;
     } catch (error) {
-        throw new Error(describeError(error));
+        throw new Error(describeError(error), { cause: error });
     }
 }
 
@@ -72,11 +74,17 @@ async function fetchListPage(params: SendParams): Promise<ListPage> {
     return parseListBody(body);
 }
 
-async function collectPages({ fetchPage, skip, limit, fetchAll, maxItems }: CollectParams): Promise<CollectedPage> {
-    const start = clampInt({ value: skip, min: 0, max: Number.MAX_SAFE_INTEGER, fallback: 0 });
-    const target = fetchAll
-        ? clampInt({ value: maxItems, min: 1, max: MAX_FETCH_ALL_ITEMS, fallback: DEFAULT_MAX_ITEMS })
-        : clampInt({ value: limit, min: 1, max: MAX_PAGE_SIZE, fallback: DEFAULT_PAGE_SIZE });
+function pageWindow({ skip, limit, fetchAll, maxItems }: PaginationInput): PageWindow {
+    return {
+        start: clampInt({ value: skip, min: 0, max: Number.MAX_SAFE_INTEGER, fallback: 0 }),
+        count: fetchAll
+            ? clampInt({ value: maxItems, min: 1, max: MAX_FETCH_ALL_ITEMS, fallback: DEFAULT_MAX_ITEMS })
+            : clampInt({ value: limit, min: 1, max: MAX_PAGE_SIZE, fallback: DEFAULT_PAGE_SIZE }),
+    };
+}
+
+async function collectPages({ fetchPage, ...pagination }: CollectParams): Promise<CollectedPage> {
+    const { start, count: target } = pageWindow(pagination);
     let items: ApiRecord[] = [];
     let cursor = start;
     let totalCount: number | undefined;
@@ -92,6 +100,11 @@ async function collectPages({ fetchPage, skip, limit, fetchAll, maxItems }: Coll
         }
     }
     return { items, total_count: totalCount ?? null, next_skip: cursor };
+}
+
+function isNotFound(error: unknown): boolean {
+    const source = error instanceof Error && error.cause instanceof HttpError ? error.cause : error;
+    return source instanceof HttpError && source.response.status === 404;
 }
 
 function isRecord(value: unknown): value is ApiRecord {
@@ -217,12 +230,8 @@ type SendParams = {
     queryParams?: QueryParams;
 };
 
-type CollectParams = {
+type CollectParams = PaginationInput & {
     fetchPage: (page: PageRequest) => Promise<ListPage>;
-    skip?: number;
-    limit?: number;
-    fetchAll?: boolean;
-    maxItems?: number;
 };
 
 type ValidationResult = { valid: true } | { valid: false; error: string };
