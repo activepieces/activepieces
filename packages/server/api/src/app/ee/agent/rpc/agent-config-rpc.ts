@@ -146,22 +146,24 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // that is right there. Best-effort: a lookup failure must not block the turn.
         // Chat picks a connection mid-run; a configured surface had one pinned when it was set up,
         // so handing it the inventory only teaches it to renegotiate what it cannot change.
-        const inventoryResult = (!dryRun && carriesChatContext && !isNil(selectedProjectId))
-            ? await tryCatch(() => appConnectionService(log).list({
-                projectId: selectedProjectId,
-                platformId,
-                pieceName: undefined,
-                displayName: undefined,
-                status: undefined,
-                cursorRequest: null,
-                scope: undefined,
-                externalIds: undefined,
-                limit: CONNECTION_INVENTORY_LIMIT,
-            }))
-            : null
-        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const tasksAvailable = !dryRun && carriesChatContext
-        const conversationTasks = tasksAvailable ? await agentTaskService.list({ platformId, conversationId }) : []
+        const [inventoryResult, conversationTasks] = await Promise.all([
+            (!dryRun && carriesChatContext && !isNil(selectedProjectId))
+                ? tryCatch(() => appConnectionService(log).list({
+                    projectId: selectedProjectId,
+                    platformId,
+                    pieceName: undefined,
+                    displayName: undefined,
+                    status: undefined,
+                    cursorRequest: null,
+                    scope: undefined,
+                    externalIds: undefined,
+                    limit: CONNECTION_INVENTORY_LIMIT,
+                }))
+                : null,
+            tasksAvailable ? agentTaskService.list({ platformId, conversationId }) : [],
+        ])
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const runNotesFor = ({ forTask }: { forTask: boolean }): string => agentSurfaceNotes.buildRunNotes({
             source: conversation.source,
             ...spreadIfDefined('messageSource', forTask ? undefined : input.messageSource),

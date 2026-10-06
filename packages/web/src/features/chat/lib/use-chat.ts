@@ -201,7 +201,7 @@ function appendGatePart({
 }
 
 function progressOf(activity: SubagentActivity): number {
-  return activity.steps.length;
+  return activity.stepCount;
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);

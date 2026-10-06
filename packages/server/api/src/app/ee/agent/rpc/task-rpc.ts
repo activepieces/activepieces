@@ -10,14 +10,9 @@ export const taskRpc = (_log: FastifyBaseLogger) => ({
 
     async finishAgentTask(input: FinishAgentTaskRequest): Promise<void> {
         await agentTaskService.finish({
-            platformId: input.platformId,
-            conversationId: input.conversationId,
-            taskId: input.taskId,
-            claimId: input.claimId,
+            ...input,
             status: SubagentTaskStatus[input.status],
             messages: input.messages.filter(isObject),
-            summary: input.summary,
-            artifacts: input.artifacts,
         })
     },
 })

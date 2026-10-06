@@ -192,12 +192,12 @@ export function buildMessageBlocks({
       }
       if (toolName === 'ap_run_task') {
         endSegment();
-        const builder = { toolCallId: chatPartUtils.getToolCallId(p), part: p };
+        const task = { toolCallId: chatPartUtils.getToolCallId(p), part: p };
         const previous = result[result.length - 1];
-        if (previous?.kind === 'subagents') {
-          previous.builders.push(builder);
+        if (previous?.kind === 'tasks') {
+          previous.tasks.push(task);
         } else {
-          result.push({ kind: 'subagents', builders: [builder] });
+          result.push({ kind: 'tasks', tasks: [task] });
         }
         continue;
       }
@@ -388,8 +388,8 @@ export type MessageBlock =
   | { kind: 'memory-saved'; memory: string }
   | { kind: 'batch-progress'; data: BatchProgressData }
   | {
-      kind: 'subagents';
-      builders: { toolCallId: string; part: AnyToolPart }[];
+      kind: 'tasks';
+      tasks: { toolCallId: string; part: AnyToolPart }[];
     }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }

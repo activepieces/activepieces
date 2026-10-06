@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
-import { AnyToolPart } from '@/features/chat/lib/chat-types';
+import { AnyToolPart, chatPartUtils } from '@/features/chat/lib/chat-types';
 
 import {
   AppLogos,
@@ -15,15 +15,15 @@ import {
 } from './subagent-primitives';
 
 export function SubagentGroup({
-  builders,
+  tasks,
   toolCallMeta,
   isStreaming,
 }: {
-  builders: { toolCallId: string; part: AnyToolPart }[];
+  tasks: { toolCallId: string; part: AnyToolPart }[];
   toolCallMeta: Record<string, ToolCallMeta>;
   isStreaming: boolean;
 }) {
-  const tasks = builders.map(({ toolCallId, part }) => ({
+  const activities = tasks.map(({ toolCallId, part }) => ({
     toolCallId,
     activity: resolveActivity({
       live: toolCallMeta[toolCallId]?.subagent,
@@ -31,7 +31,9 @@ export function SubagentGroup({
       isStreaming,
     }),
   }));
-  const working = tasks.some(({ activity }) => activity.status === 'running');
+  const working = activities.some(
+    ({ activity }) => activity.status === 'running',
+  );
 
   return (
     <motion.div
@@ -44,14 +46,14 @@ export function SubagentGroup({
         {working
           ? t(
               '{count, plural, =1 {Working on a task} other {Working on # tasks at once}}',
-              { count: builders.length },
+              { count: tasks.length },
             )
           : t('{count, plural, =1 {Task finished} other {# tasks finished}}', {
-              count: builders.length,
+              count: tasks.length,
             })}
       </div>
       <div className="pb-1.5">
-        {tasks.map(({ toolCallId, activity }) => (
+        {activities.map(({ toolCallId, activity }) => (
           <SubagentRow key={toolCallId} activity={activity} />
         ))}
       </div>
@@ -96,16 +98,15 @@ function resolveActivity({
   return {
     title: typeof input['title'] === 'string' ? input['title'] : t('Task'),
     status: isStreaming ? 'running' : 'failed',
-    steps: [],
+    stepCount: 0,
     startedAt: '',
   };
 }
 
 function activityFromOutput(part: AnyToolPart): SubagentActivity | null {
-  if (part.state !== 'output-available') return null;
-  const output = parseOutput(part.output);
-  if (!isObject(output)) return null;
-  const activity = output['activity'];
+  const parsed = chatPartUtils.parseToolOutput(part);
+  if (parsed.state !== 'success' || !isObject(parsed.data)) return null;
+  const activity = parsed.data['activity'];
   return isSubagentActivity(activity) ? activity : null;
 }
 
@@ -116,17 +117,8 @@ function isSubagentActivity(value: unknown): value is SubagentActivity {
     typeof value['startedAt'] === 'string' &&
     typeof value['status'] === 'string' &&
     STATUSES.includes(value['status']) &&
-    Array.isArray(value['steps'])
+    typeof value['stepCount'] === 'number'
   );
-}
-
-function parseOutput(output: unknown): unknown {
-  if (typeof output !== 'string') return output;
-  try {
-    return JSON.parse(output);
-  } catch {
-    return output;
-  }
 }
 
 const STATUSES: string[] = ['running', 'done', 'blocked', 'failed'];

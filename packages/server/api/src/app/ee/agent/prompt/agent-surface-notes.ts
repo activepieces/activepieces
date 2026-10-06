@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, SubagentTask } from '@activepieces/shared'
 import { agentPrompt } from './agent-prompt'
 import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
@@ -223,10 +223,4 @@ const RUN_NOTE_HEADINGS: readonly string[] = [
 
 const RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY = 2
 
-type ConversationTask = {
-    id: string
-    title: string
-    status: string
-    summary?: string | null
-    artifacts: { type: string, id: string, name: string }[]
-}
+type ConversationTask = Pick<SubagentTask, 'id' | 'title' | 'status' | 'summary' | 'artifacts'>

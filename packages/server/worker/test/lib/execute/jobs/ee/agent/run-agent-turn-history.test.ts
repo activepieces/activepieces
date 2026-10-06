@@ -1,7 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { ModelMessage, tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { runAgentTurn } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
@@ -32,6 +32,31 @@ describe('the history a turn leaves behind', () => {
 
         expect(rolesAndParts(turn.accumulatedResponseMessages)).toEqual(['assistant:tool-call', 'tool:tool-result', 'assistant:text'])
         expect(rolesAndParts(progress[progress.length - 1])).toEqual(['assistant:tool-call', 'tool:tool-result', 'assistant:text'])
+    })
+
+    it('counts paid calls from before a cut-off when it checks credits', async () => {
+        const creditsLeft = vi.fn().mockResolvedValue(100)
+
+        await runAgentTurn({
+            model: updateThenConfirm(),
+            provider: AIProviderName.ANTHROPIC,
+            systemPrompt: 'You are a test agent.',
+            messages: [{ role: 'user', content: 'Change the instructions of New agent to: Reply in Arabic.' }],
+            tools: {
+                ap_update_agent: tool({ description: 'change an agent', inputSchema: z.object({ instructions: z.string() }), execute: async () => ({ saved: true }) }),
+            },
+            allToolNames: ['ap_update_agent'],
+            tier: TIER,
+            modelId: TIER.modelId,
+            phaseState: { phase: 'build' },
+            abortSignal: new AbortController().signal,
+            log: SILENT_LOG,
+            creditsLeft,
+            priorToolCalls: [{ toolName: 'ap_web_search', output: {} }],
+            sinks: { drainStream: (result) => result.consumeStream() },
+        })
+
+        expect(creditsLeft).toHaveBeenCalledWith(2)
     })
 
     it('keeps every finished step when the turn is cancelled partway, not just the last one', async () => {

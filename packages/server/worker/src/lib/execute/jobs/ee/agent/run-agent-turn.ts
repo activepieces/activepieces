@@ -41,13 +41,13 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     let creditsExhausted = false
     let paidToolsAffordable = true
-    let earlierAttemptToolCalls: ChatToolCall[] = []
+    let earlierAttemptToolCalls: ChatToolCall[] = priorToolCalls ?? []
     const creditsRanOut: StopCondition<ToolSet> = async ({ steps }) => {
         if (isNil(creditsLeft)) {
             return false
@@ -515,6 +515,7 @@ export type RunAgentTurnParams = {
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
     creditsLeft?: (pendingCredits: number) => Promise<number | null>
+    priorToolCalls?: ChatToolCall[]
 }
 
 export type AgentTurnResult = {

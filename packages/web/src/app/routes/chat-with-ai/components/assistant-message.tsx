@@ -398,11 +398,11 @@ function MessageBlocks({
             }
             return null;
           }
-          case 'subagents':
+          case 'tasks':
             return (
               <SubagentGroup
-                key={`subagents-${block.builders[0]?.toolCallId ?? i}`}
-                builders={block.builders}
+                key={`tasks-${block.tasks[0]?.toolCallId ?? i}`}
+                tasks={block.tasks}
                 toolCallMeta={toolCallMeta}
                 isStreaming={isStreaming}
               />

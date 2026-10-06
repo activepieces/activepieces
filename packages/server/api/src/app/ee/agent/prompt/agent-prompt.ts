@@ -83,13 +83,7 @@ function buildTaskSystemPrompt({ projects, currentProjectId, frontendUrl }: {
     currentProjectId: string | null
     frontendUrl: string
 }): string {
-    const currentProject = currentProjectId
-        ? projects.find((p) => p.id === currentProjectId) ?? null
-        : null
-    return TASK_TEMPLATE
-        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
-        .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlockFromTemplates({ project: currentProject, frontendUrl, selectedTemplate: PROMPT_TEMPLATES.projectSelected, noProjectTemplate: PROMPT_TEMPLATES.noProject }))
-        .replaceAll('{{FRONTEND_URL}}', frontendUrl)
+    return buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templates: { system: TASK_TEMPLATE } })
 }
 
 function buildBuilderSystemPrompt({ agent }: { agent: Agent | null }): string {

@@ -93,19 +93,12 @@ export type BuildPlanEvent = {
     updatedAt: string
 }
 
-export type SubagentStep = {
-    id: string
-    toolName: string
-    status: 'done' | 'failed'
-    summary: string
-}
-
 export type SubagentActivity = {
     taskId?: string
     title: string
     status: 'running' | 'done' | 'blocked' | 'failed'
     statusLine?: string
-    steps: SubagentStep[]
+    stepCount: number
     pieces?: string[]
     artifacts?: { type: string, id: string, name: string }[]
     needs?: string

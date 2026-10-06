@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, isObject, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { MAX_AGENT_TURN_WALL_CLOCK_MS, SubagentTask, SubagentTaskArtifact, SubagentTaskStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -13,12 +13,12 @@ async function begin({ platformId, conversationId, title, taskId }: {
     title: string
     taskId?: string
 }): Promise<{ taskId: string, claimId: string, messages: Record<string, unknown>[] }> {
-    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId, platformId })
-    if (isNil(conversation)) {
-        throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'agent_conversation', entityId: conversationId } })
-    }
     const claimId = apId()
     if (isNil(taskId)) {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId, platformId })
+        if (isNil(conversation)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'agent_conversation', entityId: conversationId } })
+        }
         const id = apId()
         await agentTaskRepo().insert({
             id,
@@ -40,14 +40,15 @@ async function begin({ platformId, conversationId, title, taskId }: {
         .set({ status: SubagentTaskStatus.RUNNING, title, claimId })
         .where('id = :taskId AND "platformId" = :platformId AND "conversationId" = :conversationId', { taskId, platformId, conversationId })
         .andWhere('(status != :running OR updated < :staleBefore)', { running: SubagentTaskStatus.RUNNING, staleBefore })
-        .returning('id')
+        .returning(['id', 'messages'])
         .execute()
     const claimedRows: unknown = claimed.raw
-    if (!Array.isArray(claimedRows) || claimedRows.length !== 1) {
+    const row: unknown = Array.isArray(claimedRows) && claimedRows.length === 1 ? claimedRows[0] : undefined
+    if (!isObject(row)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Task ${taskId} does not exist in this conversation or is still running` } })
     }
-    const task = await agentTaskRepo().findOneByOrFail({ id: taskId, platformId, conversationId })
-    return { taskId, claimId, messages: task.messages }
+    const messages = Array.isArray(row['messages']) ? row['messages'].filter(isObject) : []
+    return { taskId, claimId, messages }
 }
 
 async function finish({ platformId, conversationId, taskId, claimId, status, messages, summary, artifacts }: {

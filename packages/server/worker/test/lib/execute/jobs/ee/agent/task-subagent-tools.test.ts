@@ -124,20 +124,18 @@ describe('createTaskSubagentTools', () => {
         expect(result).toMatchObject({ status: 'done', summary: 'Done after the drop.' })
     })
 
-    it('counts the paid calls made before a cut-off when it continues', async () => {
-        const creditsLeft = vi.fn().mockResolvedValue(100)
+    it('carries the paid calls made before a cut-off into the continued turn', async () => {
         runAgentTurn
             .mockResolvedValueOnce({ ...turnResult(), streamError: new Error('stream dropped') })
-            .mockImplementationOnce(async (params: { tools: ToolSet, creditsLeft: (pending: number) => Promise<number | null> }) => {
-                await params.creditsLeft(1)
+            .mockImplementationOnce(async (params: { tools: ToolSet }) => {
                 await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
                 return turnResult()
             })
-        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, creditsLeftFor: () => creditsLeft, tools: toolSet(['ap_web_search']) })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })
 
         await tasks['ap_run_task'].execute?.({ title: 'Research', brief: 'Find out' }, EXECUTION_OPTIONS)
 
-        expect(creditsLeft).toHaveBeenCalledWith(2)
+        expect(runAgentTurn.mock.calls[1][0].priorToolCalls).toEqual([{ toolName: 'ap_web_search', output: {} }])
     })
 
     it('stops retrying an interrupted task after its budget of continuations', async () => {
