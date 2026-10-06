@@ -101,6 +101,21 @@ describe('paid tools', () => {
         expect(small.catalogNote).toContain('mcp__gmail__send_email')
         expect(chatSurface().coreToolNames).not.toContain('ap_web_search')
     })
+
+    it('hides paid tools from the skill playbook and the schema lookup when the balance is low', async () => {
+        const tools = stubTools([...CHAT_TOOL_NAMES, 'ap_fetch_url', 'ap_scrape_url'])
+        const surfaceFor = (canAfford: boolean) => buildSkillSurface({ tools, surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => canAfford })
+
+        const lowPlaybook = String(await surfaceFor(false).tools['ap_load_skill']?.execute?.({ skill: 'web_and_media' }, CALL_OPTIONS))
+        expect(lowPlaybook).toContain('### ap_fetch_url')
+        expect(lowPlaybook).not.toContain('### ap_web_search')
+        expect(lowPlaybook).not.toContain('### ap_scrape_url')
+        expect(lowPlaybook).toContain('balance cannot cover these paid tools: ap_web_search, ap_scrape_url')
+        await expect(surfaceFor(false).tools['ap_get_tool_schema']?.execute?.({ tool: 'ap_web_search' }, CALL_OPTIONS)).resolves.toEqual({ error: expect.stringContaining('needs credits') })
+
+        const fullPlaybook = String(await surfaceFor(true).tools['ap_load_skill']?.execute?.({ skill: 'web_and_media' }, CALL_OPTIONS))
+        expect(fullPlaybook).toContain('### ap_web_search')
+    })
 })
 
 describe('ap_lazy_tool', () => {

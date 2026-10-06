@@ -86,7 +86,7 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
                 }
                 loadedSkills.add(skill.name)
                 onSkillLoaded(skill)
-                return renderSkill({ skill, guide: skill.guideTopic === undefined ? undefined : guides[skill.guideTopic], registry, core })
+                return renderSkill({ skill, guide: skill.guideTopic === undefined ? undefined : guides[skill.guideTopic], registry, core, canAffordPaidTool })
             },
         }),
     }
@@ -102,6 +102,9 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
                 const target = registry[toolName]
                 if (target === undefined || agentToolSkills.isMetaTool(toolName)) {
                     return { error: `There is no tool named "${toolName}".` }
+                }
+                if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
+                    return { error: paidToolRefusal(toolName) }
                 }
                 return { tool: toolName, description: descriptionOf(target), inputSchema: await jsonSchemaOf(target) }
             },
@@ -134,7 +137,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
                 return { success: false, error: new Error(`There is no tool named "${toolName}". Use a name from a loaded skill or from your instructions.`) }
             }
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
-                return { success: false, error: new Error(`"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`) }
+                return { success: false, error: new Error(paidToolRefusal(toolName)) }
             }
             const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input }) })
             if (!inner.success) {
@@ -167,13 +170,16 @@ async function withOuterLabels({ target, outer, input }: { target: ToolSet[strin
     return { ...input, ...labels }
 }
 
-async function renderSkill({ skill, guide, registry, core }: {
+async function renderSkill({ skill, guide, registry, core, canAffordPaidTool }: {
     skill: AgentSkill
     guide: string | undefined
     registry: ToolSet
     core: Set<string>
+    canAffordPaidTool: () => boolean
 }): Promise<string> {
-    const toolNames = skill.toolNames.filter((name) => name in registry && !core.has(name))
+    const available = skill.toolNames.filter((name) => name in registry && !core.has(name))
+    const unaffordable = canAffordPaidTool() ? [] : available.filter((name) => chatBilling.isPaidTool(name))
+    const toolNames = available.filter((name) => !unaffordable.includes(name))
     const sections = await Promise.all(toolNames.map(async (name) => {
         const target = registry[name]
         return `### ${name}\n${descriptionOf(target)}\nInput schema: ${JSON.stringify(target === undefined ? {} : await jsonSchemaOf(target))}`
@@ -182,6 +188,7 @@ async function renderSkill({ skill, guide, registry, core }: {
         `# Skill: ${skill.name}`,
         ...(guide === undefined ? [] : [guide]),
         ...(sections.length === 0 ? [] : [`## Tools (run with ${LAZY_TOOL_NAME})`, ...sections]),
+        ...(unaffordable.length === 0 ? [] : [`Not available, the balance cannot cover these paid tools: ${unaffordable.join(', ')}. Tell the user if the task needs them.`]),
     ].join('\n\n')
 }
 
@@ -215,6 +222,10 @@ async function workerLabelKeys(schema: unknown): Promise<Set<string>> {
     return new Set([...LABEL_FIELDS].filter((key) => key in properties
         && !required.includes(key)
         && stableStringify(properties[key]) === stableStringify(labelProperties[key])))
+}
+
+function paidToolRefusal(toolName: string): string {
+    return `"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`
 }
 
 function withoutRetiredTools(tools: ToolSet): ToolSet {
