@@ -6863,7 +6863,7 @@
     },
     "packages/pieces/community/pdf-co": {
       "name": "@activepieces/piece-pdf-co",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6872,6 +6872,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/pdf4me": {
