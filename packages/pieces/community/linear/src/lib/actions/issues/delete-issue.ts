@@ -12,7 +12,7 @@ export const linearDeleteIssue = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Issue',
   description: 'Move an issue to the trash. Linear keeps it for 30 days, so it can be restored.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Moves a Linear issue to the trash, where Linear keeps it for 30 days before deleting it for good; it is never deleted permanently by this action. Use for cleanup or de-duplication flows; to hide a finished issue without deleting it, archive it instead. Not idempotent: a second call on the same issue may fail because it is already in the trash.',

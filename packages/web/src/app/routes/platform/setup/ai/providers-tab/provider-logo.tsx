@@ -1,3 +1,4 @@
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { AiProviderInfo } from '@/features/agents';
 
 export function ProviderLogo({
@@ -7,24 +8,16 @@ export function ProviderLogo({
   info: AiProviderInfo;
   size?: 'sm' | 'md';
 }) {
-  if (size === 'sm') {
-    return info.logoUrl ? (
-      <img
-        src={info.logoUrl}
-        alt={info.name}
-        className="size-4 shrink-0 object-contain"
-      />
-    ) : null;
+  if (!info.logoUrl) {
+    return size === 'sm' ? null : (
+      <div className="size-8 shrink-0 rounded-lg bg-gray-3" />
+    );
   }
   return (
-    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-      {info.logoUrl && (
-        <img
-          src={info.logoUrl}
-          alt={info.name}
-          className="size-4 object-contain"
-        />
-      )}
-    </div>
+    <LogoPlate
+      src={info.logoUrl}
+      alt={info.name}
+      className={size === 'sm' ? 'size-4' : 'size-8 rounded-lg p-2'}
+    />
   );
 }

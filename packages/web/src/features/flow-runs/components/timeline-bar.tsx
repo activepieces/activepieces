@@ -10,10 +10,10 @@ import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 const PHASE_COLOR: Record<TimelinePhase['name'], string> = {
-  QUEUE: 'bg-blue-600',
-  PROVISION: 'bg-amber-500',
-  BOOT: 'bg-violet-600',
-  RUN: 'bg-emerald-600',
+  QUEUE: 'bg-swatch-11-mark',
+  PROVISION: 'bg-swatch-6-mark',
+  BOOT: 'bg-swatch-1-mark',
+  RUN: 'bg-swatch-8-mark',
 };
 
 function phaseLabel(name: TimelinePhase['name']): string {
@@ -110,10 +110,10 @@ export function TimelineBar({
         {timeline.legs.map((leg, i) => (
           <div key={i} className="flex flex-col gap-2">
             {i > 0 && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <div className="flex-1 border-t border-dashed border-border" />
+              <div className="flex items-center gap-2 text-xs text-gray-11">
+                <div className="flex-1 border-t border-dashed border-gray-6" />
                 <span>{t('Resumed')}</span>
-                <div className="flex-1 border-t border-dashed border-border" />
+                <div className="flex-1 border-t border-dashed border-gray-6" />
               </div>
             )}
             <LegBar phases={leg} />
@@ -129,13 +129,13 @@ export function TimelineBar({
                 PHASE_COLOR[name],
               )}
             />
-            <span className="w-16 shrink-0 font-medium text-foreground">
+            <span className="w-16 shrink-0 font-medium text-gray-12">
               {phaseLabel(name)}
             </span>
-            <span className="flex-1 text-muted-foreground">
+            <span className="flex-1 text-gray-11">
               {phaseDescription(name)}
             </span>
-            <span className="shrink-0 font-medium tabular-nums text-foreground">
+            <span className="shrink-0 font-medium tabular-nums text-gray-12">
               {formatUtils.formatDuration(totals[name], true)}
             </span>
           </div>

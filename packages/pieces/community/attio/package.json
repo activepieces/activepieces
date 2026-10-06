@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-attio",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -12,7 +12,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "form-data": "4.0.6"
   },
   "devDependencies": {
     "tslib": "2.6.2"

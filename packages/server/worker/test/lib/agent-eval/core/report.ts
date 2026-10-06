@@ -1,17 +1,18 @@
 import chalk from 'chalk'
-import { evalFormat } from './eval-format'
+import { evalFormat, JudgeAgreement } from './eval-format'
 
-function render({ entries }: { entries: EvalReportEntry[] }): string {
+function render({ entries, judgeAgreement }: { entries: EvalReportEntry[], judgeAgreement: JudgeAgreement | null }): string {
     const first = entries[0]
     const lines = [
         '',
         chalk.bold.cyan('  Activepieces · Chat Prompt Eval'),
         `  ${chalk.dim('model')} ${first ? `${first.provider} · ${first.modelId}` : '—'}`,
+        `  ${chalk.dim('judge')} ${first ? first.judgeModelId : '—'} ${chalk.dim(`· ${first ? first.runs : 0} run(s) per fixture, majority wins`)}`,
         '',
     ]
 
     for (const entry of entries) {
-        const status = entry.passed ? chalk.green('PASS') : chalk.red('FAIL')
+        const status = `${entry.passed ? chalk.green('PASS') : chalk.red('FAIL')} ${entry.passes}/${entry.runs}`
         lines.push(`  ${entry.passed ? chalk.green('●') : chalk.red('●')} ${chalk.bold(entry.id)} ${chalk.dim(`[${entry.kind}]`)} ${status}`)
         for (const check of [...entry.assertions.map((a) => ({ name: a.label, pass: a.pass, reason: a.reason })), ...entry.judge.map((v) => ({ name: v.expectedLabel === 'fail' ? `${v.dimension} (expect FAIL)` : v.dimension, pass: v.pass, reason: v.reason }))]) {
             const detail = check.pass ? '' : chalk.red(`  ${evalFormat.truncate({ text: check.reason, max: 72 })}`)
@@ -20,10 +21,19 @@ function render({ entries }: { entries: EvalReportEntry[] }): string {
     }
 
     const passed = entries.filter((entry) => entry.passed).length
-    const { tpr, tnr } = evalFormat.calibration(entries)
+    const { tpr, tnr } = evalFormat.expectedLabelMatch(entries)
     const verdict = passed === entries.length ? chalk.green.bold('GREEN') : chalk.red.bold('RED')
-    lines.push('', `  ${passed}/${entries.length} fixtures passed · calibration TPR ${tpr.toFixed(2)}/TNR ${tnr.toFixed(2)} · ${verdict}`, '')
+    lines.push('', `  ${passed}/${entries.length} fixtures passed · expected-label match TPR ${tpr.toFixed(2)}/TNR ${tnr.toFixed(2)} · ${verdict}`)
+    lines.push(`  ${chalk.dim('judge vs human labels')} ${judgeAgreement && judgeAgreement.n > 0 ? `${formatRate(judgeAgreement.tpr)} TPR / ${formatRate(judgeAgreement.tnr)} TNR over ${judgeAgreement.n} case(s)` : 'no human-reviewed labels yet'}`)
+    if (judgeAgreement?.draft) {
+        lines.push(`  ${chalk.dim('draft estimate')} ${formatRate(judgeAgreement.draft.tpr)} TPR / ${formatRate(judgeAgreement.draft.tnr)} TNR over ${judgeAgreement.draft.n} model-written label(s), not a measure of judge accuracy`)
+    }
+    lines.push('')
     return lines.join('\n') + '\n'
+}
+
+function formatRate(rate: number | null): string {
+    return rate === null ? '—' : rate.toFixed(2)
 }
 
 export const agentEvalReport = {
@@ -36,8 +46,16 @@ export type EvalReportEntry = {
     description: string
     provider: string
     modelId: string
+    judgeModelId: string
+    runs: number
+    passes: number
     passed: boolean
-    assertions: Array<{ label: string, pass: boolean, reason: string }>
-    judge: Array<{ dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string }>
+    assertions: AssertionEntry[]
+    judge: JudgeVerdictEntry[]
     transcript: string
+    runVerdicts: Array<{ passed: boolean, assertions: AssertionEntry[], judge: JudgeVerdictEntry[] }>
 }
+
+type AssertionEntry = { label: string, pass: boolean, reason: string }
+
+type JudgeVerdictEntry = { dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string }

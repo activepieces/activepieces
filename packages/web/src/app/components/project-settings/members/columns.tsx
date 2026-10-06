@@ -122,7 +122,7 @@ const RoleCell = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-orange-700 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
+              <Info className="h-4 w-4 text-warning-11 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
             </TooltipTrigger>
             <TooltipContent>
               <p>{t('Pending Invitation')}</p>
@@ -220,7 +220,7 @@ const ActionsCell = ({
           disabled={!userHasPermissionToDelete}
           className="h-8 w-8 p-0"
         >
-          <Trash2 className="h-4 w-4 text-destructive" />
+          <Trash2 className="h-4 w-4 text-danger-11" />
         </Button>
       </ConfirmationDeleteDialog>
     </PermissionNeededTooltip>
@@ -255,7 +255,7 @@ export const membersTableColumns = ({
             />
             <div className="flex flex-col gap-1 min-w-0">
               <TextWithTooltip tooltipMessage={email}>
-                <p className="text-sm text-orange-700">{email}</p>
+                <p className="text-sm text-warning-11">{email}</p>
               </TextWithTooltip>
             </div>
           </div>
@@ -278,7 +278,7 @@ export const membersTableColumns = ({
             <div className="flex flex-col gap-1 min-w-0">
               <p className="text-sm font-medium leading-none">{name}</p>
               <TextWithTooltip tooltipMessage={email}>
-                <p className="text-sm text-muted-foreground">{email}</p>
+                <p className="text-sm text-gray-11">{email}</p>
               </TextWithTooltip>
             </div>
           </div>
@@ -299,7 +299,7 @@ export const membersTableColumns = ({
           <div className="flex flex-col gap-1 min-w-0">
             <p className="text-sm font-medium leading-none">{name}</p>
             <TextWithTooltip tooltipMessage={email}>
-              <p className="text-sm text-muted-foreground">{email}</p>
+              <p className="text-sm text-gray-11">{email}</p>
             </TextWithTooltip>
           </div>
         </div>
