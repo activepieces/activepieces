@@ -17,8 +17,9 @@ export const engineRpcHandlers = ({ log, basePath, getSettings, provision }: Eng
             return
         }
         const pieceKey = `${pieceName}@${pieceVersion}`
+        const installer = pieceInstaller(log, basePath, getSettings)
         await diskLock(join(basePath, 'force-install-lock')).runExclusive({
-            key: pieceKey,
+            key: installer.resolveWorkspace(piecesToReinstall[0]),
             timeoutMs: FORCE_REINSTALL_LOCK_TIMEOUT_MS,
             fn: async () => {
                 const stampPath = reinstallStampPath(basePath, pieceKey)
@@ -32,7 +33,7 @@ export const engineRpcHandlers = ({ log, basePath, getSettings, provision }: Eng
                 log.warn({
                     piece: { name: pieceName, version: pieceVersion },
                 }, '[engineRpcHandlers] Engine failed to require a piece module, forcing piece reinstall')
-                await pieceInstaller(log, basePath, getSettings).install({
+                await installer.install({
                     pieces: piecesToReinstall,
                     includeFilters: true,
                     publicApiUrl: provision.publicApiUrl,

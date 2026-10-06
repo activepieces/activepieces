@@ -26,6 +26,10 @@ export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () 
     getCustomPiecesPath(platformId: string): string {
         return getCustomPiecesPath(basePath, platformId, getSettings)
     },
+
+    resolveWorkspace(piece: PiecePackage): string {
+        return resolveWorkspaceForPiece({ piece, basePath, getSettings })
+    },
 })
 
 function getCustomPiecesPath(basePath: string, platformId: string, getSettings: () => SandboxSettings): string {
@@ -207,21 +211,22 @@ async function tryInstallPiecesIndividually(
 }
 
 function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getSettings: () => SandboxSettings): Record<string, PiecePackage[]> {
-    const paths = cacheUtils(basePath)
-    return groupBy(pieces, (piece) => {
-        switch (piece.packageType) {
-            case PackageType.ARCHIVE:
+    return groupBy(pieces, (piece) => resolveWorkspaceForPiece({ piece, basePath, getSettings }))
+}
+
+function resolveWorkspaceForPiece({ piece, basePath, getSettings }: ResolveWorkspaceParams): string {
+    switch (piece.packageType) {
+        case PackageType.ARCHIVE:
+            return getCustomPiecesPath(basePath, piece.platformId, getSettings)
+        case PackageType.REGISTRY: {
+            if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
                 return getCustomPiecesPath(basePath, piece.platformId, getSettings)
-            case PackageType.REGISTRY: {
-                if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
-                    return getCustomPiecesPath(basePath, piece.platformId, getSettings)
-                }
-                return paths.getGlobalCacheCommonPath()
             }
-            default:
-                throw new Error('Invalid package type')
+            return cacheUtils(basePath).getGlobalCacheCommonPath()
         }
-    })
+        default:
+            throw new Error('Invalid package type')
+    }
 }
 
 const WORKSPACE_BUNFIG = '[install]\nlinker = "isolated"\nminimumReleaseAge = 259200\n'
@@ -440,4 +445,10 @@ type DownloadBundleParams = {
     rootWorkspace: string
     piece: PiecePackage
     bundleSource: BundleSource
+}
+
+type ResolveWorkspaceParams = {
+    piece: PiecePackage
+    basePath: string
+    getSettings: () => SandboxSettings
 }
