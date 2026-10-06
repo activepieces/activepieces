@@ -91,6 +91,7 @@ function restoreReceiptsIntoStore({
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
 const TOOL_GATES_WITHOUT_A_PIECE = new Set([
+  'ap_send_email',
   'ap_test_flow',
   'ap_delete_records',
   'ap_delete_table',
@@ -149,7 +150,14 @@ function buildToolCallMetaFromGate(
       isBatch: false,
     };
   }
-  return actionPreview ? { [gate.gateId]: { actionPreview } } : {};
+  if (!actionPreview) return {};
+  return {
+    [gate.gateId]: {
+      actionPreview: gate.taskTitle
+        ? { ...actionPreview, taskTitle: gate.taskTitle }
+        : actionPreview,
+    },
+  };
 }
 
 // History only persists resolved tool calls, so a live pending gate loses its `input-available`
@@ -165,6 +173,23 @@ function buildGatePart(gate: PendingGate) {
   };
 }
 
+function buildRunningTaskPart({
+  toolCallId,
+  title,
+}: {
+  toolCallId: string;
+  title: string;
+}) {
+  return {
+    type: 'dynamic-tool' as const,
+    toolCallId,
+    toolName: 'ap_run_task',
+    title,
+    state: 'input-available' as const,
+    input: { title },
+  };
+}
+
 function appendGatePart({
   messages,
   gate,
@@ -172,30 +197,60 @@ function appendGatePart({
   messages: ChatUIMessage[];
   gate: PendingGate;
 }): ChatUIMessage[] {
+  return appendTrailingPart({ messages, part: buildGatePart(gate) });
+}
+
+function appendRunningTaskParts({
+  messages,
+  toolCallMeta,
+}: {
+  messages: ChatUIMessage[];
+  toolCallMeta: Record<string, ToolCallMeta>;
+}): ChatUIMessage[] {
+  return Object.entries(toolCallMeta).reduce(
+    (current, [toolCallId, meta]) =>
+      meta.subagent?.status === 'running'
+        ? appendTrailingPart({
+            messages: current,
+            part: buildRunningTaskPart({
+              toolCallId,
+              title: meta.subagent.title,
+            }),
+          })
+        : current,
+    messages,
+  );
+}
+
+function appendTrailingPart({
+  messages,
+  part,
+}: {
+  messages: ChatUIMessage[];
+  part: ReturnType<typeof buildGatePart>;
+}): ChatUIMessage[] {
   const alreadyAnchored = messages.some((m) =>
     m.parts.some(
-      (part) => 'toolCallId' in part && part.toolCallId === gate.gateId,
+      (existing) =>
+        'toolCallId' in existing && existing.toolCallId === part.toolCallId,
     ),
   );
   if (alreadyAnchored) return messages;
-  // Anchor on the current turn, always at the tail. When the tail is the user's just-sent
-  // message (the worker is blocked on the gate before persisting its assistant turn), open a
-  // fresh trailing assistant message rather than attaching to an earlier, already-finished turn.
   const last = messages[messages.length - 1];
   if (last?.role === 'assistant') {
     const next = [...messages];
     next[next.length - 1] = {
       ...last,
-      parts: [...last.parts, buildGatePart(gate)],
+      parts: [...last.parts, part],
     };
     return next;
   }
   return [
     ...messages,
     {
-      id: `gate-${gate.gateId}`,
+      id: `live-${part.toolCallId}`,
       role: 'assistant',
-      parts: [buildGatePart(gate)],
+      parts: [part],
     },
   ];
 }
@@ -969,6 +1024,12 @@ export function useAgentChat({
             );
           }
         }
+        setPersistedMessages((prev) =>
+          appendRunningTaskParts({
+            messages: prev,
+            toolCallMeta: store.getState().toolCallMeta,
+          }),
+        );
       }
       return mapped;
     },
