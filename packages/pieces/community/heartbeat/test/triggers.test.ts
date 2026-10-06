@@ -171,9 +171,9 @@ describe('trigger runs re-fetch and dedupe', () => {
 		expect(await hook({ trigger: newThreadTrigger, name: 'run', context })).toHaveLength(1);
 		expect(await hook({ trigger: newThreadTrigger, name: 'run', context })).toHaveLength(0);
 	});
-	const mentionOf = (id: string, kind = 'user') => `<p>Hi <span class="reference" data-denotation-char="@" data-id="mention.${kind}.${id}" data-value="X">@X</span></p>`;
+	const mentionOf = ({ id, kind = 'user' }: { id: string; kind?: string }) => `<p>Hi <span class="reference" data-denotation-char="@" data-id="mention.${kind}.${id}" data-value="X">@X</span></p>`;
 	test('new mention picks the nested comment and reads mentions from its stored content', async () => {
-		const reply = { id: IDS.comment, userID: IDS.user, content: mentionOf(IDS.user) };
+		const reply = { id: IDS.comment, userID: IDS.user, content: mentionOf({ id: IDS.user }) };
 		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel, userID: IDS.admin, url: 'u', comments: [{ id: 'c0', children: [reply] }] } }]));
 		const events = await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ propsValue: { userIds: [IDS.user] }, body: { mentionedUsers: [{ id: IDS.admin, type: 'USER' }], userID: IDS.user, source: { type: 'COMMENT', channelID: IDS.channel, threadID: IDS.thread, commentID: IDS.comment } } }) });
 		expect(events).toHaveLength(1);
@@ -188,12 +188,12 @@ describe('trigger runs re-fetch and dedupe', () => {
 		expect(await hook({ trigger: newMentionTrigger, name: 'run', context })).toEqual([]);
 	});
 	test('new mention ignores mentions of members or groups that were not chosen', async () => {
-		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel, content: mentionOf(IDS.admin) + mentionOf(IDS.role, 'group'), comments: [] } }]));
+		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel, content: mentionOf({ id: IDS.admin }) + mentionOf({ id: IDS.role, kind: 'group' }), comments: [] } }]));
 		const context = triggerContext({ propsValue: { userIds: [IDS.user], groupIds: [IDS.group] }, body: { source: { threadID: IDS.thread } } });
 		expect(await hook({ trigger: newMentionTrigger, name: 'run', context })).toEqual([]);
 	});
 	test('new mention matches a chosen group and honours the channel filter', async () => {
-		const thread = { id: IDS.thread, channelID: IDS.channel, content: mentionOf(IDS.group, 'group'), comments: [] };
+		const thread = { id: IDS.thread, channelID: IDS.channel, content: mentionOf({ id: IDS.group, kind: 'group' }), comments: [] };
 		stubFetch(replies([{ body: thread }]));
 		const events = await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ propsValue: { groupIds: [IDS.group], channelIds: [IDS.channel] }, body: { source: { threadID: IDS.thread } } }) });
 		expect(events).toMatchObject([{ sourceType: 'THREAD', mentionedUsers: [{ id: IDS.group, type: 'GROUP' }] }]);
