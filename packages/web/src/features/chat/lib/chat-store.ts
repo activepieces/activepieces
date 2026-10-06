@@ -64,7 +64,6 @@ export type ChatStoreState = {
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
   taskPanelToolCallId: string | null;
-  taskPanelAutoOpen: boolean;
 
   setConversationId: (conversationId: string | null) => void;
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
@@ -99,7 +98,6 @@ export const createChatStore = () =>
     dismissedGateIds: {},
     lastDismissedFormId: null,
     taskPanelToolCallId: null,
-    taskPanelAutoOpen: true,
 
     approveGate: (gateId: string, payload?: Record<string, unknown>) => {
       set((prev) => dismissAndCleanup(prev, gateId));
@@ -135,7 +133,7 @@ export const createChatStore = () =>
       set({ taskPanelToolCallId: toolCallId });
     },
     closeTaskPanel: () => {
-      set({ taskPanelToolCallId: null, taskPanelAutoOpen: false });
+      set({ taskPanelToolCallId: null });
     },
   }));
 

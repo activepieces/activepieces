@@ -49,7 +49,7 @@ import {
   PersonalizationChipState,
 } from './components/personalization-chip';
 import { QuickReplies } from './components/quick-replies';
-import { TaskPanelSlotContext } from './components/task-panel';
+import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
@@ -79,19 +79,21 @@ export function AIChatBox({
 
   return (
     <ChatStoreProvider>
-      <ChatBoxContent
-        incognito={incognito}
-        initialPrompt={initialPrompt}
-        agentId={agentId}
-        builder={builder}
-        onTurnEnd={onTurnEnd}
-        emptyState={emptyState}
-        footerNote={footerNote}
-        placeholder={placeholder}
-        conversationId={conversationId}
-        onTitleUpdate={onTitleUpdate}
-        onConversationCreated={onConversationCreated}
-      />
+      <TaskPanelLayout>
+        <ChatBoxContent
+          incognito={incognito}
+          initialPrompt={initialPrompt}
+          agentId={agentId}
+          builder={builder}
+          onTurnEnd={onTurnEnd}
+          emptyState={emptyState}
+          footerNote={footerNote}
+          placeholder={placeholder}
+          conversationId={conversationId}
+          onTitleUpdate={onTitleUpdate}
+          onConversationCreated={onConversationCreated}
+        />
+      </TaskPanelLayout>
     </ChatStoreProvider>
   );
 }
@@ -308,211 +310,201 @@ function ChatBoxContent({
     }
   };
 
-  const [taskPanelSlot, setTaskPanelSlot] = useState<HTMLDivElement | null>(
-    null,
-  );
   const cachedConversations = queryClient.getQueryData<
     SeekPage<AgentConversation>
   >(['chat-conversations']);
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
   return (
-    <TaskPanelSlotContext.Provider value={taskPanelSlot}>
-      <div className="flex h-full flex-1 min-w-0">
-        <div className="flex flex-col h-full flex-1 min-w-0">
-          <AnimatePresence mode="wait">
-            {isEmpty ? (
-              <div
-                key="empty-state"
-                className={cn(
-                  'flex-1 overflow-y-auto min-h-0',
-                  showPersonalizationDonut && 'pb-14',
-                )}
-              >
-                {emptyState ??
-                  (showOnboardingCard ? (
-                    <OnboardingWelcome />
-                  ) : (
-                    <EmptyState
-                      onSuggestionClick={(text) => void handleSend(text)}
-                      incognito={incognito}
-                      showFlowCards={!hasConversations}
-                      hasInput={hasInput}
-                    />
-                  ))}
-              </div>
-            ) : (
-              <motion.div
-                key="chat-container"
-                className="flex-1 min-h-0"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.25 }}
-              >
-                <ChatContainerRoot
-                  className="flex-1 relative h-full px-3 sm:px-6"
-                  style={{
-                    maskImage:
-                      'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
-                    WebkitMaskImage:
-                      'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
-                  }}
-                >
-                  <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
-                    {isLoadingHistory && <MessageSkeletons />}
-
-                    {messages.map((msg, idx) => {
-                      if (msg.role === 'user') {
-                        return (
-                          <UserMessage
-                            key={msg.id}
-                            message={msg}
-                            isLastMessage={idx === messages.length - 1}
-                          />
-                        );
-                      }
-
-                      const isLastStreamingAssistant =
-                        isStreaming && idx === messages.length - 1;
-
-                      const isLastAssistant = idx === messages.length - 1;
-
-                      return (
-                        <AssistantMessage
-                          key={msg.id}
-                          message={msg}
-                          isStreaming={isLastStreamingAssistant}
-                          isResumed={
-                            isLastStreamingAssistant && isResumedStream
-                          }
-                          isLastMessage={isLastAssistant}
-                          onSendPrompt={(text) => void handleSend(text)}
-                          claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
-                          conversationId={conversationId}
-                          messageIndex={idx}
-                        />
-                      );
-                    })}
-
-                    {!isAwaitingResponse &&
-                      !wasCancelled &&
-                      !hasBlockingCard &&
-                      (quickReplies.length > 0 || offerRecurringAutomation) && (
-                        <div className="mt-auto pt-2">
-                          <QuickReplies
-                            replies={quickReplies}
-                            offerRecurringAutomation={offerRecurringAutomation}
-                            onSend={handleSend}
-                          />
-                        </div>
-                      )}
-
-                    {wasCancelled && (
-                      <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
-                        <Square className="h-3 w-3 fill-current" />
-                        <span>{t('Response stopped')}</span>
-                      </div>
-                    )}
-
-                    {error && (
-                      <motion.div
-                        className="flex items-center gap-2 rounded-lg border border-danger-6 bg-danger-3 px-3 py-2 text-danger-11 text-sm"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <AlertTriangle className="h-4 w-4 shrink-0" />
-                        <span className="flex-1">{error}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-danger-11 hover:text-danger-11 gap-1.5 shrink-0 h-7 px-2"
-                          onClick={handleRetry}
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                          {t('Retry')}
-                        </Button>
-                      </motion.div>
-                    )}
-
-                    <ChatContainerScrollAnchor />
-                  </ChatContainerContent>
-                  <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
-                </ChatContainerRoot>
-              </motion.div>
+    <div className="flex flex-col h-full flex-1 min-w-0">
+      <AnimatePresence mode="wait">
+        {isEmpty ? (
+          <div
+            key="empty-state"
+            className={cn(
+              'flex-1 overflow-y-auto min-h-0',
+              showPersonalizationDonut && 'pb-14',
             )}
-          </AnimatePresence>
-
-          <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <div className="max-w-3xl mx-auto relative">
-              {showOnboardingCard && (
-                <div className="mb-3">
-                  <OnboardingQuestionCard
-                    initialRole={initialAnswers.role}
-                    initialCompany={initialAnswers.company}
-                    initialCompanyDomain={initialAnswers.companyDomain}
-                    companyLocked={companyLocked}
-                    onComplete={handleOnboardingComplete}
-                    onDismiss={handleOnboardingDismiss}
-                  />
-                </div>
-              )}
-              {showPersonalizationDonut && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-full z-10 mb-3 flex justify-center">
-                  <div className="pointer-events-auto">
-                    <PersonalizationChip
-                      state={personalizationChipState}
-                      role={personalization.roleInput}
-                      company={
-                        personalization.profile?.companyName ??
-                        personalization.companyInput
-                      }
-                      onClick={() => setPromptOpen(true)}
-                      onClear={personalization.reset}
-                    />
-                  </div>
-                </div>
-              )}
-              <ChatBottomBar
-                isStreaming={isStreaming}
-                onSend={handleSend}
-                onStop={cancelStream}
-                onInputChange={setHasInput}
-                recede={showOnboardingCard}
-                selectedModel={modelName}
-                onModelChange={setModelName}
-                lastAssistantMessage={lastAssistantMessage}
-                lastMessageId={lastMessage?.id}
-                hideModelSelector={agentId !== undefined}
-                placeholder={
-                  placeholder ??
-                  (showOnboardingCard
-                    ? t('Or tell me the work you want gone')
-                    : isEmpty
-                    ? t('Ask, build, or run a task...')
-                    : undefined)
-                }
-                banner={
-                  showBanner && !hasBlockingCard ? (
-                    <ChatCreditsAlert
-                      creditsExhausted={credits.creditsExhausted}
-                      creditsPercentUsed={credits.creditsPercentUsed}
-                      onDismiss={credits.dismissCreditsWarning}
-                    />
-                  ) : null
-                }
-              />
-              {footerNote !== undefined && (
-                <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-gray-11">
-                  {footerNote}
-                </p>
-              )}
-            </div>
+          >
+            {emptyState ??
+              (showOnboardingCard ? (
+                <OnboardingWelcome />
+              ) : (
+                <EmptyState
+                  onSuggestionClick={(text) => void handleSend(text)}
+                  incognito={incognito}
+                  showFlowCards={!hasConversations}
+                  hasInput={hasInput}
+                />
+              ))}
           </div>
+        ) : (
+          <motion.div
+            key="chat-container"
+            className="flex-1 min-h-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
+          >
+            <ChatContainerRoot
+              className="flex-1 relative h-full px-3 sm:px-6"
+              style={{
+                maskImage:
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
+                WebkitMaskImage:
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
+              }}
+            >
+              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
+                {isLoadingHistory && <MessageSkeletons />}
+
+                {messages.map((msg, idx) => {
+                  if (msg.role === 'user') {
+                    return (
+                      <UserMessage
+                        key={msg.id}
+                        message={msg}
+                        isLastMessage={idx === messages.length - 1}
+                      />
+                    );
+                  }
+
+                  const isLastStreamingAssistant =
+                    isStreaming && idx === messages.length - 1;
+
+                  const isLastAssistant = idx === messages.length - 1;
+
+                  return (
+                    <AssistantMessage
+                      key={msg.id}
+                      message={msg}
+                      isStreaming={isLastStreamingAssistant}
+                      isResumed={isLastStreamingAssistant && isResumedStream}
+                      isLastMessage={isLastAssistant}
+                      onSendPrompt={(text) => void handleSend(text)}
+                      claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
+                      conversationId={conversationId}
+                      messageIndex={idx}
+                    />
+                  );
+                })}
+
+                {!isAwaitingResponse &&
+                  !wasCancelled &&
+                  !hasBlockingCard &&
+                  (quickReplies.length > 0 || offerRecurringAutomation) && (
+                    <div className="mt-auto pt-2">
+                      <QuickReplies
+                        replies={quickReplies}
+                        offerRecurringAutomation={offerRecurringAutomation}
+                        onSend={handleSend}
+                      />
+                    </div>
+                  )}
+
+                {wasCancelled && (
+                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
+                    <Square className="h-3 w-3 fill-current" />
+                    <span>{t('Response stopped')}</span>
+                  </div>
+                )}
+
+                {error && (
+                  <motion.div
+                    className="flex items-center gap-2 rounded-lg border border-danger-6 bg-danger-3 px-3 py-2 text-danger-11 text-sm"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">{error}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-danger-11 hover:text-danger-11 gap-1.5 shrink-0 h-7 px-2"
+                      onClick={handleRetry}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      {t('Retry')}
+                    </Button>
+                  </motion.div>
+                )}
+
+                <ChatContainerScrollAnchor />
+              </ChatContainerContent>
+              <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
+            </ChatContainerRoot>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-3xl mx-auto relative">
+          {showOnboardingCard && (
+            <div className="mb-3">
+              <OnboardingQuestionCard
+                initialRole={initialAnswers.role}
+                initialCompany={initialAnswers.company}
+                initialCompanyDomain={initialAnswers.companyDomain}
+                companyLocked={companyLocked}
+                onComplete={handleOnboardingComplete}
+                onDismiss={handleOnboardingDismiss}
+              />
+            </div>
+          )}
+          {showPersonalizationDonut && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-full z-10 mb-3 flex justify-center">
+              <div className="pointer-events-auto">
+                <PersonalizationChip
+                  state={personalizationChipState}
+                  role={personalization.roleInput}
+                  company={
+                    personalization.profile?.companyName ??
+                    personalization.companyInput
+                  }
+                  onClick={() => setPromptOpen(true)}
+                  onClear={personalization.reset}
+                />
+              </div>
+            </div>
+          )}
+          <ChatBottomBar
+            isStreaming={isStreaming}
+            onSend={handleSend}
+            onStop={cancelStream}
+            onInputChange={setHasInput}
+            recede={showOnboardingCard}
+            selectedModel={modelName}
+            onModelChange={setModelName}
+            lastAssistantMessage={lastAssistantMessage}
+            lastMessageId={lastMessage?.id}
+            hideModelSelector={agentId !== undefined}
+            placeholder={
+              placeholder ??
+              (showOnboardingCard
+                ? t('Or tell me the work you want gone')
+                : isEmpty
+                ? t('Ask, build, or run a task...')
+                : undefined)
+            }
+            banner={
+              showBanner && !hasBlockingCard ? (
+                <ChatCreditsAlert
+                  creditsExhausted={credits.creditsExhausted}
+                  creditsPercentUsed={credits.creditsPercentUsed}
+                  onDismiss={credits.dismissCreditsWarning}
+                />
+              ) : null
+            }
+          />
+          {footerNote !== undefined && (
+            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-gray-11">
+              {footerNote}
+            </p>
+          )}
         </div>
-        <div ref={setTaskPanelSlot} className="contents" />
       </div>
-    </TaskPanelSlotContext.Provider>
+    </div>
   );
 }
 

@@ -2,17 +2,16 @@ import { SubagentActivity } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Loader2, Maximize2, Minimize2, X } from 'lucide-react';
 import { motion } from 'motion/react';
-import { createContext, useEffect, useRef, useState } from 'react';
+import { createContext, useState } from 'react';
 
-import { Markdown } from '@/components/prompt-kit/markdown';
-import { Button } from '@/components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  ChatContainerContent,
+  ChatContainerRoot,
+} from '@/components/prompt-kit/chat-container';
+import { Markdown } from '@/components/prompt-kit/markdown';
 import { cn } from '@/lib/utils';
 
+import { PreviewIconButton } from './previews/preview-card';
 import { Duration, LiveLine, StatusMark } from './subagent-primitives';
 
 export function TaskPanel({
@@ -27,9 +26,10 @@ export function TaskPanel({
   onClose: () => void;
 }) {
   const [fullscreen, setFullscreen] = useState(false);
-  const selected =
-    tasks.find(({ toolCallId }) => toolCallId === selectedToolCallId) ??
-    tasks[0];
+  const selected = tasks.find(
+    ({ toolCallId }) => toolCallId === selectedToolCallId,
+  );
+  if (!selected) return null;
 
   return (
     <motion.aside
@@ -46,25 +46,16 @@ export function TaskPanel({
       <div className="flex items-center gap-1 border-b px-4 py-2.5">
         <p className="flex-1 truncate text-sm font-medium text-gray-12">
           {tasks.length > 1
-            ? t('{count, plural, =1 {1 task} other {# tasks}}', {
-                count: tasks.length,
-              })
+            ? t('{count} tasks', { count: tasks.length })
             : selected.activity.title}
         </p>
-        <PanelButton
+        <PreviewIconButton
+          icon={fullscreen ? Minimize2 : Maximize2}
           label={fullscreen ? t('Exit full screen') : t('Full screen')}
           onClick={() => setFullscreen((value) => !value)}
           className="max-lg:hidden"
-        >
-          {fullscreen ? (
-            <Minimize2 className="size-4" />
-          ) : (
-            <Maximize2 className="size-4" />
-          )}
-        </PanelButton>
-        <PanelButton label={t('Close')} onClick={onClose}>
-          <X className="size-4" />
-        </PanelButton>
+        />
+        <PreviewIconButton icon={X} label={t('Close')} onClick={onClose} />
       </div>
 
       {tasks.length > 1 && (
@@ -105,20 +96,14 @@ function TaskDetails({
   wide: boolean;
 }) {
   const timeline = activity.timeline ?? [];
+  const artifacts = activity.artifacts ?? [];
   const running = activity.status === 'running';
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!running) return;
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
-  }, [running, timeline.length]);
 
   return (
-    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
-      <div className={cn('mx-auto w-full px-5 py-5', wide && 'max-w-3xl')}>
+    <ChatContainerRoot className="min-h-0 flex-1">
+      <ChatContainerContent
+        className={cn('mx-auto px-5 py-5', wide && 'max-w-3xl')}
+      >
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-lg font-medium text-gray-12">{activity.title}</p>
@@ -154,10 +139,10 @@ function TaskDetails({
           </Section>
         )}
 
-        {(activity.artifacts ?? []).length > 0 && (
+        {artifacts.length > 0 && (
           <Section title={t('Made')}>
             <div className="flex flex-wrap gap-1.5">
-              {(activity.artifacts ?? []).map((artifact) => (
+              {artifacts.map((artifact) => (
                 <span
                   key={`${artifact.type}-${artifact.id}`}
                   className="max-w-full truncate rounded-md bg-gray-3 px-2 py-0.5 text-xs text-gray-12"
@@ -168,8 +153,8 @@ function TaskDetails({
             </div>
           </Section>
         )}
-      </div>
-    </div>
+      </ChatContainerContent>
+    </ChatContainerRoot>
   );
 }
 
@@ -208,33 +193,15 @@ function Section({
   );
 }
 
-function PanelButton({
-  label,
-  onClick,
-  className,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  className?: string;
-  children: React.ReactNode;
-}) {
+export function TaskPanelLayout({ children }: { children: React.ReactNode }) {
+  const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          type="button"
-          onClick={onClick}
-          aria-label={label}
-          className={className}
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <TaskPanelSlotContext.Provider value={slot}>
+      <div className="flex h-full min-w-0 flex-1">
+        {children}
+        <div ref={setSlot} className="contents" />
+      </div>
+    </TaskPanelSlotContext.Provider>
   );
 }
 
