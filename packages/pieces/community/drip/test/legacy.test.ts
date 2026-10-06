@@ -69,8 +69,14 @@ describe('dropdowns', () => {
   });
   test('campaign dropdown stops after 10 pages', async () => {
     const seen = stubFetch(() => ({ body: { campaigns: [{ id: '1', name: 'C', status: 'active' }], meta: { total_pages: 50 } } }));
-    await options({ prop: dripCommon.campaign_id({ required: true }), propsValue: { account_id: A } });
+    const result = await options({ prop: dripCommon.campaign_id({ required: true }), propsValue: { account_id: A } });
     expect(seen).toHaveLength(10);
+    expect(result).toMatchObject({ disabled: false, placeholder: expect.stringContaining('Drip has more') });
+  });
+  test('campaign dropdown shows no truncation note when the last page is the 10th', async () => {
+    stubFetch((_request, index) => ({ body: { campaigns: [{ id: String(index), name: 'C', status: 'active' }], meta: { total_pages: 10 } } }));
+    const result = await options({ prop: dripCommon.campaign_id({ required: true }), propsValue: { account_id: A } });
+    expect(result).not.toHaveProperty('placeholder');
   });
   test('campaign dropdown needs an account and reports a disabled Drip account', async () => {
     await expect(options({ prop: dripCommon.campaign_id({ required: true }) })).resolves.toMatchObject({ disabled: true, placeholder: 'Please select an account first' });

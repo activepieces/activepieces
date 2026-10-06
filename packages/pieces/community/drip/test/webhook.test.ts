@@ -39,6 +39,10 @@ function dedupeKeyOf(d: ReturnType<typeof delivery>): string {
   return createHash('sha256').update(parts.join('|')).digest('hex');
 }
 
+function emitted({ body, storeKey = NEW_SUB_KEY }: { body: unknown; storeKey?: string }) {
+  return { ...Object(body), _dedupe_key: expect.stringMatching(new RegExp(`^drip:${storeKey}:[0-9a-f]{64}$`)) };
+}
+
 function stored({ key, extra = { secret: SECRET } }: { key: string; extra?: Record<string, unknown> }) {
   return memoryStore({ [key]: { webhookId: '77', userId: A, ...extra } });
 }
@@ -115,7 +119,7 @@ describe('run', () => {
   test('emits a delivery with the right token, event and account', async () => {
     const store = stored({ key: NEW_SUB_KEY });
     const d = delivery();
-    await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toEqual([d.body]);
+    await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toEqual([emitted({ body: d.body })]);
   });
   test('drops a wrong token, another event, another account, and anything without a registration', async () => {
     const seen = stubFetch(() => ({ body: {} }));
@@ -131,42 +135,47 @@ describe('run', () => {
     const store = stored({ key: NEW_SUB_KEY, extra: {} });
     const seen = stubFetch(() => ({ body: { subscribers: [SUB] } }));
     const d = delivery({ token: null });
-    await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toEqual([d.body]);
+    await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toEqual([emitted({ body: d.body })]);
     expect(seen[0].path).toBe(`/${A}/subscribers/z1tog`);
     vi.unstubAllGlobals();
     stubFetch(() => ({ status: 404, body: { errors: [{ code: 'not_found_error', message: 'nf' }] } }));
     const forged = delivery({ token: 'anything', occurredAt: '2026-10-06T16:00:00Z' });
     await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: forged }) })).resolves.toEqual([]);
   });
-  test('missing token falls back to re-fetching the subscriber and emits Drip data', async () => {
-    const fresh = { ...SUB, first_name: 'From Drip' };
-    const seen = stubFetch(() => ({ body: { subscribers: [fresh] } }));
+  test('a registration with a secret drops deliveries without ap_token and never calls Drip', async () => {
+    const seen = stubFetch(() => ({ status: 404, body: { errors: [{ code: 'not_found_error', message: 'nf' }] } }));
     const store = stored({ key: NEW_SUB_KEY });
-    const result = await call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: delivery({ token: null }) }) });
-    expect(seen[0].path).toBe(`/${A}/subscribers/z1tog`);
-    expect(result).toEqual([{ ...delivery().body, data: { account_id: A, subscriber: fresh } }]);
+    await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: delivery({ token: null }) }) })).resolves.toEqual([]);
+    const deletedStore = memoryStore({ drip_subscriber_deleted_trigger: { webhookId: '1', userId: A, secret: SECRET } });
+    const forged = delivery({ event: 'subscriber.deleted', token: null, occurredAt: '2026-10-06T17:00:00Z' });
+    await expect(call({ trigger: dripSubscriberDeletedEvent, fn: 'run', context: ctx({ store: deletedStore, payload: forged }) })).resolves.toEqual([]);
+    expect(seen).toHaveLength(0);
   });
-  test('missing token: unknown subscriber, other email, or tag state not matching → dropped', async () => {
-    const store = stored({ key: TAG_KEY });
+  test('legacy store entries (no secret): unknown subscriber, other email, or tag state not matching → dropped', async () => {
+    const store = stored({ key: TAG_KEY, extra: {} });
     stubFetch(() => ({ status: 404, body: { errors: [{ code: 'not_found_error', message: 'nf' }] } }));
     await expect(call({ trigger: dripTagAppliedEvent, fn: 'run', context: ctx({ store, payload: delivery({ event: 'subscriber.applied_tag', token: null, properties: { tag: 'vip' } }) }) })).resolves.toEqual([]);
     vi.unstubAllGlobals();
     stubFetch(() => ({ body: { subscribers: [{ ...SUB, email: 'other@x.co' }] } }));
     await expect(call({ trigger: dripTagAppliedEvent, fn: 'run', context: ctx({ store, payload: delivery({ event: 'subscriber.applied_tag', token: null, properties: { tag: 'vip' } }) }) })).resolves.toEqual([]);
     vi.unstubAllGlobals();
-    stubFetch(() => ({ body: { subscribers: [SUB] } }));
+    const fresh = { ...SUB, first_name: 'From Drip' };
+    stubFetch(() => ({ body: { subscribers: [fresh] } }));
     await expect(call({ trigger: dripTagAppliedEvent, fn: 'run', context: ctx({ store, payload: delivery({ event: 'subscriber.applied_tag', token: null, properties: { tag: 'other' } }) }) })).resolves.toEqual([]);
-    await expect(call<unknown[]>({ trigger: dripTagAppliedEvent, fn: 'run', context: ctx({ store, payload: delivery({ event: 'subscriber.applied_tag', token: null, properties: { tag: 'VIP' } }) }) })).resolves.toHaveLength(1);
-    const removedStore = memoryStore({ drip_tag_removed_trigger: { webhookId: '1', userId: A, secret: SECRET } });
+    const applied = delivery({ event: 'subscriber.applied_tag', token: null, properties: { tag: 'VIP' } });
+    await expect(call<unknown[]>({ trigger: dripTagAppliedEvent, fn: 'run', context: ctx({ store, payload: applied }) })).resolves.toEqual([
+      emitted({ body: { ...applied.body, data: { ...applied.body.data, subscriber: fresh } }, storeKey: TAG_KEY }),
+    ]);
+    const removedStore = memoryStore({ drip_tag_removed_trigger: { webhookId: '1', userId: A } });
     await expect(call({ trigger: dripTagRemovedEvent, fn: 'run', context: ctx({ store: removedStore, payload: delivery({ event: 'subscriber.removed_tag', token: null, properties: { tag: 'vip' } }) }) })).resolves.toEqual([]);
   });
-  test('missing token on subscriber.deleted is accepted only when Drip no longer has the subscriber', async () => {
+  test('subscriber.deleted is emitted only with the right ap_token; a legacy entry without a secret never emits it', async () => {
+    const seen = stubFetch(() => ({ status: 404, body: { errors: [{ code: 'not_found_error', message: 'nf' }] } }));
     const store = memoryStore({ drip_subscriber_deleted_trigger: { webhookId: '1', userId: A, secret: SECRET } });
-    stubFetch(() => ({ body: { subscribers: [SUB] } }));
-    await expect(call({ trigger: dripSubscriberDeletedEvent, fn: 'run', context: ctx({ store, payload: delivery({ event: 'subscriber.deleted', token: null }) }) })).resolves.toEqual([]);
-    vi.unstubAllGlobals();
-    stubFetch(() => ({ status: 404, body: { errors: [{ code: 'not_found_error', message: 'nf' }] } }));
-    await expect(call<unknown[]>({ trigger: dripSubscriberDeletedEvent, fn: 'run', context: ctx({ store, payload: delivery({ event: 'subscriber.deleted', token: null }) }) })).resolves.toHaveLength(1);
+    await expect(call<unknown[]>({ trigger: dripSubscriberDeletedEvent, fn: 'run', context: ctx({ store, payload: delivery({ event: 'subscriber.deleted' }) }) })).resolves.toHaveLength(1);
+    const legacy = memoryStore({ drip_subscriber_deleted_trigger: { webhookId: '1', userId: A } });
+    await expect(call({ trigger: dripSubscriberDeletedEvent, fn: 'run', context: ctx({ store: legacy, payload: delivery({ event: 'subscriber.deleted', token: null }) }) })).resolves.toEqual([]);
+    expect(seen).toHaveLength(0);
   });
   test('duplicate deliveries are emitted once and the dedupe ring is bounded', async () => {
     const store = stored({ key: NEW_SUB_KEY });
@@ -186,6 +195,39 @@ describe('run', () => {
     await vi.runAllTimersAsync();
     const results = await Promise.all(runs);
     expect(results.map((r) => (Array.isArray(r) ? r.length : -1)).sort()).toEqual([0, 1]);
+  });
+  test('a repeat of an emitted delivery within the claim window is dropped and carries the same platform dedupe key', async () => {
+    const store = stored({ key: NEW_SUB_KEY });
+    const first = await call<Record<string, unknown>[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: delivery() }) });
+    expect(first).toHaveLength(1);
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: delivery() }) })).resolves.toHaveLength(0);
+    const other = await call<Record<string, unknown>[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: delivery({ occurredAt: '2026-10-06T18:00:00Z' }) }) });
+    expect(other[0]['_dedupe_key']).not.toBe(first[0]['_dedupe_key']);
+  });
+  test('a claim never becomes permanent: after the claim window a retry of a lost hand-off emits again', async () => {
+    const store = stored({ key: NEW_SUB_KEY });
+    const d = delivery();
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(1);
+    const key = dripWebhook.claimKeyOf({ storeKey: NEW_SUB_KEY, key: dedupeKeyOf(d) });
+    const claim = Object(store.read(key));
+    expect(claim).not.toHaveProperty('done');
+    await store.put(key, { ...claim, at: Date.now() - dripWebhook.ABANDONED_CLAIM_MS - 1 });
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(1);
+  });
+  test('the claim index is re-read and repaired when a concurrent run overwrote it', async () => {
+    const store = stored({ key: NEW_SUB_KEY });
+    const put = store.put;
+    let overwrites = 1;
+    store.put = async <T>(key: string, value: T): Promise<T> => {
+      if (key.endsWith('_seen') && overwrites-- > 0) {
+        await put(key, ['someone-else']);
+        return value;
+      }
+      return put(key, value);
+    };
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: delivery() }) })).resolves.toHaveLength(1);
+    const seen = store.read(`${NEW_SUB_KEY}_seen`);
+    expect(seen).toEqual(['someone-else', dripWebhook.claimKeyOf({ storeKey: NEW_SUB_KEY, key: dedupeKeyOf(delivery()) })]);
   });
   test('an unfinished claim blocks a retry until it is abandoned, then the retry emits', async () => {
     const store = stored({ key: NEW_SUB_KEY });

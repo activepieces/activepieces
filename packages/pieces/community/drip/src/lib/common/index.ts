@@ -59,7 +59,7 @@ export const dripCommon = {
           };
         }
         try {
-          const campaigns = await listAllCampaigns({ token: auth.secret_text, accountId: String(account_id) });
+          const { campaigns, truncated } = await listAllCampaigns({ token: auth.secret_text, accountId: String(account_id) });
           if (campaigns.length === 0) {
             return {
               disabled: false,
@@ -69,6 +69,7 @@ export const dripCommon = {
           }
           return {
             disabled: false,
+            ...(truncated ? { placeholder: `Showing the first ${campaigns.length} email series campaigns by name. Drip has more, so some campaigns are not listed here.` } : {}),
             options: campaigns.map((campaign) => ({
               value: String(campaign['id']),
               label: `${String(campaign['name'] ?? campaign['id'])} (${String(campaign['status'] ?? 'unknown')})`,
@@ -104,8 +105,9 @@ function dropdownError(error: unknown): { disabled: true; options: []; placehold
   return { disabled: true, options: [], placeholder: message.slice(0, 300) };
 }
 
-async function listAllCampaigns({ token, accountId }: { token: string; accountId: string }): Promise<Record<string, unknown>[]> {
+async function listAllCampaigns({ token, accountId }: { token: string; accountId: string }): Promise<{ campaigns: Record<string, unknown>[]; truncated: boolean }> {
   const pages: Record<string, unknown>[][] = [];
+  let truncated = false;
   for (let page = 1; page <= MAX_DROPDOWN_PAGES; page++) {
     const result = await dripApi.listPage({
       token,
@@ -121,6 +123,7 @@ async function listAllCampaigns({ token, accountId }: { token: string; accountId
     if (!result.hasMore) {
       break;
     }
+    truncated = page === MAX_DROPDOWN_PAGES;
   }
-  return pages.flat();
+  return { campaigns: pages.flat(), truncated };
 }

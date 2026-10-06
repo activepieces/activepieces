@@ -1,12 +1,13 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Store } from '@activepieces/pieces-framework';
+import { DEDUPE_KEY_PROPERTY, Store } from '@activepieces/pieces-framework';
 import { dripApi, DripRecord } from './client';
 
 const TOKEN_PARAM = 'ap_token';
 const SEEN_LIMIT = 200;
 const CLAIM_SETTLE_MS = 500;
 const ABANDONED_CLAIM_MS = 60_000;
+const INDEX_WRITE_ATTEMPTS = 3;
 
 async function enable({ token, accountId, webhookUrl, store, storeKey, event }: EnableParams): Promise<void> {
   const account = dripApi.parseAccountId(accountId);
@@ -60,8 +61,8 @@ async function handle({ token, store, storeKey, event, payload, matches }: Handl
   }
   const delivered = readToken(payload.queryParams);
   let verifiedBody: DripRecord = body;
-  if (stored.secret && delivered !== undefined) {
-    if (!sameSecret({ expected: stored.secret, given: delivered })) {
+  if (stored.secret) {
+    if (delivered === undefined || !sameSecret({ expected: stored.secret, given: delivered })) {
       return [];
     }
   } else {
@@ -75,29 +76,27 @@ async function handle({ token, store, storeKey, event, payload, matches }: Handl
     return [];
   }
   const key = dedupeKey({ event, data, occurredAt: body['occurred_at'] });
-  if (!(await isFirstDelivery({ store, storeKey, key }))) {
+  if (!(await claimDelivery({ store, storeKey, key }))) {
     return [];
   }
-  return [verifiedBody];
+  return [{ ...verifiedBody, [DEDUPE_KEY_PROPERTY]: `drip:${storeKey}:${key}` }];
 }
 
-async function isFirstDelivery({ store, storeKey, key }: { store: Store; storeKey: string; key: string }): Promise<boolean> {
+async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey: string; key: string }): Promise<boolean> {
   const claimKey = claimKeyOf({ storeKey, key });
   const existing = await store.get<DeliveryClaim>(claimKey);
   if (existing !== null && existing !== undefined && !isAbandoned({ claim: existing, now: Date.now() })) {
     return false;
   }
   const claimToken = randomUUID();
-  const at = Date.now();
   try {
-    await store.put<DeliveryClaim>(claimKey, { token: claimToken, at, done: false });
+    await store.put<DeliveryClaim>(claimKey, { token: claimToken, at: Date.now() });
     await dripApi.sleep(CLAIM_SETTLE_MS);
     const winner = await store.get<DeliveryClaim>(claimKey);
     if (winner?.token !== claimToken) {
       return false;
     }
     await rememberClaim({ store, storeKey, claimKey });
-    await store.put<DeliveryClaim>(claimKey, { token: claimToken, at, done: true });
     return true;
   } catch (error) {
     await releaseClaim({ store, claimKey, claimToken });
@@ -106,7 +105,7 @@ async function isFirstDelivery({ store, storeKey, key }: { store: Store; storeKe
 }
 
 function isAbandoned({ claim, now }: { claim: DeliveryClaim; now: number }): boolean {
-  return claim.done === false && typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
+  return typeof claim.at !== 'number' || now - claim.at > ABANDONED_CLAIM_MS;
 }
 
 async function releaseClaim({ store, claimKey, claimToken }: { store: Store; claimKey: string; claimToken: string }): Promise<void> {
@@ -121,12 +120,18 @@ async function releaseClaim({ store, claimKey, claimToken }: { store: Store; cla
 }
 
 async function rememberClaim({ store, storeKey, claimKey }: { store: Store; storeKey: string; claimKey: string }): Promise<void> {
-  const seen = (await store.get<string[]>(seenKey(storeKey))) ?? [];
-  const next = [...seen.filter((item) => item !== claimKey), claimKey];
-  const evicted = next.slice(0, Math.max(0, next.length - SEEN_LIMIT));
-  await store.put<string[]>(seenKey(storeKey), next.slice(-SEEN_LIMIT));
-  for (const old of evicted) {
-    await store.delete(old);
+  for (let attempt = 0; attempt < INDEX_WRITE_ATTEMPTS; attempt++) {
+    const seen = (await store.get<string[]>(seenKey(storeKey))) ?? [];
+    const next = [...seen.filter((item) => item !== claimKey), claimKey];
+    const evicted = next.slice(0, Math.max(0, next.length - SEEN_LIMIT));
+    await store.put<string[]>(seenKey(storeKey), next.slice(-SEEN_LIMIT));
+    for (const old of evicted) {
+      await store.delete(old);
+    }
+    const saved = (await store.get<string[]>(seenKey(storeKey))) ?? [];
+    if (saved.includes(claimKey)) {
+      return;
+    }
   }
 }
 
@@ -154,7 +159,7 @@ function sameSecret({ expected, given }: { expected: string; given: string }): b
 
 async function confirmWithDrip({ token, accountId, event, body, data }: { token: string; accountId: string; event: string; body: DripRecord; data: DripRecord }): Promise<DripRecord | undefined> {
   const subscriber = data['subscriber'];
-  if (!dripApi.isRecord(subscriber)) {
+  if (event === 'subscriber.deleted' || !dripApi.isRecord(subscriber)) {
     return undefined;
   }
   const id = dripApi.optionalText(subscriber['id']);
@@ -172,16 +177,10 @@ async function confirmWithDrip({ token, accountId, event, body, data }: { token:
     });
     fetched = dripApi.firstRecord({ body: response, key: 'subscribers', operation: 'confirm webhook subscriber' });
   } catch (error) {
-    if (dripApi.isNotFound(error) && event === 'subscriber.deleted') {
-      return body;
-    }
     if (dripApi.isNotFound(error)) {
       return undefined;
     }
     throw error;
-  }
-  if (event === 'subscriber.deleted') {
-    return undefined;
   }
   if (email !== undefined && String(fetched['email'] ?? '').toLowerCase() !== email.toLowerCase()) {
     return undefined;
@@ -252,7 +251,7 @@ export const dripWebhook = {
   claimKeyOf,
 };
 
-type DeliveryClaim = { token: string; at?: number; done?: boolean };
+type DeliveryClaim = { token: string; at?: number };
 
 export type DripWebhookInformation = {
   webhookId: string;
