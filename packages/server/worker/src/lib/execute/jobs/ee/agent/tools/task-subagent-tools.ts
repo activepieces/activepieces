@@ -187,7 +187,7 @@ function outOfBudget(turn: AgentTurnResult): boolean {
 function finishTool(finish: { result?: TaskResult }): ToolSet {
     return {
         [TASK_COMPLETION_TOOL_NAME]: tool({
-            description: 'Call this exactly once, as your last action, to hand your result back. status: done when the goal is achieved, blocked when only the user can unblock you (say what in needs), failed when you tried and could not. summary: a few plain sentences the main assistant can relay. artifacts: everything you created or changed (flows, tables, records, agents) with ids and names.',
+            description: 'Call this exactly once, as your last action, to hand your result back. status: done when the goal is achieved, blocked when only the user can unblock you (say what in needs), failed when you tried and could not. summary: a few plain sentences the main assistant can relay. artifacts: only what you created or changed (flows, tables, records, agents) with ids and names, empty when you only read.',
             inputSchema: taskResult,
             execute: async (result) => {
                 finish.result = result
@@ -277,7 +277,7 @@ const taskInput = z.object({
 const taskResult = z.object({
     status: z.enum(['done', 'blocked', 'failed']),
     summary: z.string().describe('A few plain sentences: what you did and what the main assistant should tell the user'),
-    artifacts: z.array(SubagentTaskArtifact).describe('Everything you created or changed'),
+    artifacts: z.array(SubagentTaskArtifact).describe('Only what you created or changed. Empty when you only read.'),
     needs: z.string().optional().describe('When blocked: exactly what you need from the user'),
 })
 
