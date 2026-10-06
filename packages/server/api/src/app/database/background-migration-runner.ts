@@ -67,36 +67,38 @@ async function runOne({
     log: FastifyBaseLogger
     dataSource: DataSource
 }): Promise<void> {
-    const startedAt = Date.now()
     log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Running migration')
+    await wideEvent.timed({
+        name: `backgroundMigration:${migration.name}`,
+        fn: async () => {
+            const queryRunner = dataSource.createQueryRunner()
+            try {
+                try {
+                    await migration.up(queryRunner)
+                }
+                finally {
+                    await queryRunner.release()
+                }
+            }
+            catch (error) {
+                const message = error instanceof Error ? error.message : String(error)
+                await dataSource.query(
+                    `INSERT INTO "${BACKGROUND_MIGRATIONS_TABLE}" ("name", "failed_at", "last_error") VALUES ($1, NOW(), $2)
+                     ON CONFLICT ("name") DO UPDATE SET "failed_at" = NOW(), "last_error" = EXCLUDED."last_error"`,
+                    [migration.name, message],
+                )
+                log.error({ migration: { name: migration.name }, error: message }, '[backgroundMigrationRunner] Migration failed')
+                throw error
+            }
 
-    const queryRunner = dataSource.createQueryRunner()
-    try {
-        try {
-            await migration.up(queryRunner)
-        }
-        finally {
-            await queryRunner.release()
-        }
-    }
-    catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        await dataSource.query(
-            `INSERT INTO "${BACKGROUND_MIGRATIONS_TABLE}" ("name", "failed_at", "last_error") VALUES ($1, NOW(), $2)
-             ON CONFLICT ("name") DO UPDATE SET "failed_at" = NOW(), "last_error" = EXCLUDED."last_error"`,
-            [migration.name, message],
-        )
-        log.error({ migration: { name: migration.name }, error: message }, '[backgroundMigrationRunner] Migration failed')
-        throw error
-    }
-
-    await dataSource.query(
-        `INSERT INTO "${BACKGROUND_MIGRATIONS_TABLE}" ("name", "executed_at") VALUES ($1, NOW())
-         ON CONFLICT ("name") DO UPDATE SET "executed_at" = NOW(), "failed_at" = NULL, "last_error" = NULL`,
-        [migration.name],
-    )
-    const durationMs = Date.now() - startedAt
-    log.info({ migration: { name: migration.name }, durationMs }, '[backgroundMigrationRunner] Migration completed')
+            await dataSource.query(
+                `INSERT INTO "${BACKGROUND_MIGRATIONS_TABLE}" ("name", "executed_at") VALUES ($1, NOW())
+                 ON CONFLICT ("name") DO UPDATE SET "executed_at" = NOW(), "failed_at" = NULL, "last_error" = NULL`,
+                [migration.name],
+            )
+            log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Migration completed')
+        },
+    })
 }
 
 let backgroundMigrationsTableEnsured = false
