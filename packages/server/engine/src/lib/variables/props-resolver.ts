@@ -144,6 +144,10 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     if (variableName.startsWith(CONNECTIONS)) {
         return connectionToken.handle({ variableName, engineToken, projectId, apiUrl, censoredInput, contextVersion, pieceName })
     }
+    const flattenCall = propertyPath.parseFlattenNestedKeysCall(variableName)
+    if (!isNil(flattenCall)) {
+        return evalWithPropertyPath({ segments: flattenCall.segments, getStepView, flattenKeys: flattenCall.keys })
+    }
     const segments = propertyPath.parse(variableName)
     if (isNil(segments) || segments.length === 0) {
         return evalWithScript({ variableName, getStepView, scriptSession, stepNames })
@@ -162,9 +166,10 @@ async function evalWithScript({ variableName, getStepView, scriptSession, stepNa
     return scriptEvaluator.evaluate({ script: variableName, scriptSession })
 }
 
-async function evalWithPropertyPath({ segments, getStepView }: {
+async function evalWithPropertyPath({ segments, getStepView, flattenKeys }: {
     segments: string[]
     getStepView: GetStepView
+    flattenKeys?: string[]
 }): Promise<unknown> {
     const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError(async () => {
         const stepView = await getStepView(segments[0])
@@ -172,7 +177,8 @@ async function evalWithPropertyPath({ segments, getStepView }: {
             return ''
         }
         const value = propertyPath.resolveValue({ segments: segments.slice(1), scope: stepView })
-        return cloneResolvedValue(value) ?? ''
+        const selected = isNil(flattenKeys) ? value : scriptEvaluator.flattenNestedKeys(value, flattenKeys)
+        return cloneResolvedValue(selected) ?? ''
     })
 
     if (resultError) {

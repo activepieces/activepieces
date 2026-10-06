@@ -210,6 +210,24 @@ describe('propertyPath', () => {
         })
     })
 
+    describe('parseFlattenNestedKeysCall', () => {
+        it('parses the data selector list mapping shape', () => {
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(step_2[\'output\'], [\'base\'])')).toEqual({ segments: ['step_2', 'output'], keys: ['base'] })
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(trigger.output, [\'users\',\'name\'])')).toEqual({ segments: ['trigger', 'output'], keys: ['users', 'name'] })
+        })
+
+        it('returns null for anything that is not a plain path plus string literals', () => {
+            expect(propertyPath.parseFlattenNestedKeysCall('step_1.output')).toBeNull()
+            expect(propertyPath.parseFlattenNestedKeysCall('other(step_1, [\'a\'])')).toBeNull()
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(step_1, keys)')).toBeNull()
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(step_1, [1])')).toBeNull()
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(step_1.items.map(x => x), [\'a\'])')).toBeNull()
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(step_1.__proto__, [\'a\'])')).toBeNull()
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(step_1, [\'a\'], [\'b\'])')).toBeNull()
+            expect(propertyPath.parseFlattenNestedKeysCall('flattenNestedKeys(step_1, [\'\\u0061\'])')).toBeNull()
+        })
+    })
+
     describe('resolveValue', () => {
         const scope = {
             step_1: {

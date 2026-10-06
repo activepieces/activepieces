@@ -5,6 +5,7 @@ import { FlowExecutorContext } from '../../src/lib/handler/context/flow-executio
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
+import { scriptEvaluator } from '../../src/lib/variables/script-evaluator'
 
 const propsResolverService = createPropsResolver({
     projectId: 'PROJECT_ID',
@@ -198,6 +199,27 @@ describe('Props resolver', () => {
     test('flatten array path', async () => {
         const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger.output, [\'users\',\'name\'])}}', executionState })
         expect(resolvedInput).toEqual(['Alice', 'Bob'])
+    })
+
+    test('flatten array path resolves in the engine without the script sandbox', async () => {
+        const evaluateSpy = vi.spyOn(scriptEvaluator, 'evaluate')
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: { values: { name: '{{flattenNestedKeys(trigger[\'output\'], [\'users\', \'name\'])}}' } }, executionState })
+        expect(resolvedInput).toEqual({ values: { name: ['Alice', 'Bob'] } })
+        expect(evaluateSpy).not.toHaveBeenCalled()
+        evaluateSpy.mockRestore()
+    })
+
+    test('flatten call outside the data selector shape still goes through the script sandbox', async () => {
+        const evaluateSpy = vi.spyOn(scriptEvaluator, 'evaluate')
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger.output, [\'users\'].concat([\'name\']))}}', executionState })
+        expect(resolvedInput).toEqual(['Alice', 'Bob'])
+        expect(evaluateSpy).toHaveBeenCalled()
+        evaluateSpy.mockRestore()
+    })
+
+    test('flatten array path on a missing step resolves to an empty string', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(step_7.output, [\'users\', \'name\'])}}', executionState })
+        expect(resolvedInput).toEqual('')
     })
 
     test('merge multiple flatten array paths', async ()=>{

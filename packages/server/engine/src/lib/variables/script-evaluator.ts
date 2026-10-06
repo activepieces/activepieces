@@ -32,6 +32,7 @@ export const scriptEvaluator = {
         }
         return result ?? ''
     },
+    flattenNestedKeys,
 }
 
 function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {

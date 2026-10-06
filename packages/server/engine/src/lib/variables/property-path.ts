@@ -7,17 +7,21 @@ export const propertyPath = {
         if (isNil(ast)) {
             return null
         }
-        const segments = collectSegments(ast)
-        if (isNil(segments)) {
+        return collectSafeSegments(ast)
+    },
+
+    parseFlattenNestedKeysCall(expression: string): FlattenNestedKeysCall | null {
+        const { data: ast } = tryCatchSync(() => jsep(expression))
+        if (isNil(ast) || !isFlattenNestedKeysCall(ast)) {
             return null
         }
-        if (LITERAL_KEYWORDS.has(segments[0])) {
+        const [target, keysNode] = ast.arguments
+        const segments = collectSafeSegments(target)
+        const keys = collectStringLiterals(keysNode)
+        if (isNil(segments) || isNil(keys)) {
             return null
         }
-        if (segments.some((segment) => BLOCKED_SEGMENTS.has(segment))) {
-            return null
-        }
-        return segments
+        return { segments, keys }
     },
 
     resolveValue({ segments, scope }: ResolveValueParams): unknown {
@@ -30,6 +34,38 @@ export const propertyPath = {
         }
         return current
     },
+}
+
+function collectSafeSegments(node: jsep.Expression): string[] | null {
+    const segments = collectSegments(node)
+    if (isNil(segments)) {
+        return null
+    }
+    if (LITERAL_KEYWORDS.has(segments[0])) {
+        return null
+    }
+    if (segments.some((segment) => BLOCKED_SEGMENTS.has(segment))) {
+        return null
+    }
+    return segments
+}
+
+function isFlattenNestedKeysCall(node: jsep.Expression): node is jsep.CallExpression {
+    return isCallExpression(node) && isIdentifier(node.callee) && node.callee.name === 'flattenNestedKeys' && node.arguments.length === 2
+}
+
+function collectStringLiterals(node: jsep.Expression): string[] | null {
+    if (!isArrayExpression(node)) {
+        return null
+    }
+    const keys: string[] = []
+    for (const element of node.elements) {
+        if (isNil(element) || !isLiteral(element) || typeof element.value !== 'string' || UNDECODED_ESCAPE.test(element.raw)) {
+            return null
+        }
+        keys.push(element.value)
+    }
+    return keys
 }
 
 function collectSegments(node: jsep.Expression): string[] | null {
@@ -79,9 +115,22 @@ function isLiteral(node: jsep.Expression): node is jsep.Literal {
     return node.type === 'Literal'
 }
 
+function isCallExpression(node: jsep.Expression): node is jsep.CallExpression {
+    return node.type === 'CallExpression'
+}
+
+function isArrayExpression(node: jsep.Expression): node is jsep.ArrayExpression {
+    return node.type === 'ArrayExpression'
+}
+
 const UNDECODED_ESCAPE = /\\[ux0-9\r\n\u2028\u2029]/
 const BLOCKED_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
 const LITERAL_KEYWORDS = new Set(['undefined', 'NaN', 'Infinity'])
+
+type FlattenNestedKeysCall = {
+    segments: string[]
+    keys: string[]
+}
 
 type ResolveValueParams = {
     segments: string[]
