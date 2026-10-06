@@ -26,5 +26,18 @@
   "PATCH": "ПАТЧ",
   "PUT": "ПОКУПИТЬ",
   "DELETE": "УДАЛИТЬ",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Post to LinkedIn profiles and Company Pages": "Публикуйте в профилях LinkedIn и на страницах компаний",
+  "Sign in with the LinkedIn account that should publish the posts. To post on a Company Page, that account must be one of its admins.": "Войдите в аккаунт LinkedIn, от имени которого будут публиковаться записи. Чтобы публиковать на странице компании, этот аккаунт должен быть одним из её администраторов.",
+  "Post on your personal LinkedIn profile": "Опубликовать в своём личном профиле LinkedIn",
+  "Post on a LinkedIn Company Page you manage": "Опубликовать на странице компании LinkedIn, которой вы управляете",
+  "Link URL": "URL ссылки",
+  "Link Title": "Заголовок ссылки",
+  "Link Description": "Описание ссылки",
+  "Up to 3,000 characters of plain text; an @ does not tag anyone.": "До 3000 символов обычного текста; @ никого не отмечает.",
+  "Who can see the post.": "Кто может видеть запись.",
+  "With a Link URL, the image becomes the link's thumbnail.": "Если указан URL ссылки, изображение становится её миниатюрой.",
+  "Title and description show only when a Link URL is set.": "Заголовок и описание показываются, только если указан URL ссылки.",
+  "Only pages where your account can post are listed.": "Показаны только страницы, на которых ваш аккаунт может публиковать.",
+  "Posts to a Company Page are always public.": "Записи на странице компании всегда публичные."
 }
