@@ -32,6 +32,7 @@ import {
 import {
   ConnectionPickerData,
   getTextFromParts,
+  hasPieceName,
   parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
@@ -581,6 +582,7 @@ function DisplayToolCard({
   switch (toolName) {
     case 'ap_show_connection_required':
     case 'ap_show_connection_picker': {
+      if (!hasPieceName(data)) return null;
       if (!isInteractive && toolOutput?.['dismissed'] === true) return null;
       const selectedLabel =
         typeof toolOutput?.['label'] === 'string'

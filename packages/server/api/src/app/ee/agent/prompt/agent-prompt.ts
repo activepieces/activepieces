@@ -7,7 +7,7 @@ function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
 }
 
-const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces'] as const
+const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces', 'discovery', 'web_research', 'connections', 'build_flow_advanced'] as const
 
 const PROMPT_TEMPLATES = {
     system: loadPromptTemplate('chat-system-prompt.md'),
@@ -28,15 +28,9 @@ function projectDisplayName(project: Project): string {
     return project.type === ProjectType.PERSONAL ? 'Personal Project' : project.displayName
 }
 
-function buildProjectListBlock({ projects, frontendUrl }: {
-    projects: Project[]
-    frontendUrl: string
-}): string {
+function buildProjectListBlock({ projects }: { projects: Project[] }): string {
     if (projects.length === 0) return 'No projects available.'
-    return projects.map((p) => {
-        const url = `${frontendUrl}/projects/${p.id}`
-        return `- **${sanitizeProjectName(projectDisplayName(p))}** (ID: ${p.id}) — [Open](${url})`
-    }).join('\n')
+    return projects.map((p) => `- **${sanitizeProjectName(projectDisplayName(p))}** (ID: ${p.id})`).join('\n')
 }
 
 function buildProjectContextBlockFromTemplates({ project, frontendUrl, selectedTemplate, noProjectTemplate }: {
@@ -69,7 +63,7 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templ
     const noProjectTemplate = templates?.noProject ?? PROMPT_TEMPLATES.noProject
 
     return systemTemplate
-        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
+        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects }))
         .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlockFromTemplates({ project: currentProject, frontendUrl, selectedTemplate, noProjectTemplate }))
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }

@@ -1,7 +1,8 @@
 import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, PersistedAgentPart, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
+import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { APICallError, generateText, isLoopFinished, isStepCount, jsonSchema, JSONSchema7, LanguageModel, LanguageModelUsage, ModelMessage, NoObjectGeneratedError, NoSuchToolError, Output, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
+import { buildSkillSurface } from './tools/skill-tools'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
@@ -41,8 +42,8 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft }: RunAgentTurnParams): Promise<AgentTurnResult> {
-    const drainStream = sinks?.drainStream ?? (async () => {})
+export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+    const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     let creditsExhausted = false
@@ -66,7 +67,19 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         ...(isNil(stepCeiling) ? [] : [isStepCount(stepCeiling)]),
         creditsRanOut,
     ]
-    const guardedTools = wrapToolsWithFailureGuard({ tools, log })
+    const skillSurface = isNil(skills) ? null : buildSkillSurface({
+        tools,
+        surface: skills.surface,
+        guides: skills.guides,
+        onSkillLoaded: (skill) => {
+            if (skill.entersBuildPhase) {
+                phaseState.phase = 'build'
+            }
+        },
+        canAffordPaidTool: () => paidToolsAffordable,
+    })
+    const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
+    const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
     const maxTurnTokens = runawayTokenCeiling(provider)
 
     const uiParts: PersistedAgentPart[] = []
@@ -96,7 +109,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         maxRetries: 3,
         maxOutputTokens,
         abortSignal,
-        instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
+        instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt: turnSystemPrompt, provider }),
         messages: agentAiUtils.stripThinkingBlocks(attemptMessages, provider),
         tools: guardedTools,
         stopWhen: loopStopCondition,
@@ -106,7 +119,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         // thinking budget back into the disabled first step.
         prepareStep: ({ steps, messages: currentMessages }) => {
             const lastStep = steps[steps.length - 1]
-            const widened = lastStep?.toolCalls?.some((c) => agentToolPhases.isBuildOnlyTool(c.toolName))
+            const widened = lastStep?.toolCalls?.some((c) => agentToolPhases.isBuildOnlyTool(agentToolSkills.effectiveToolCall({ toolName: c.toolName, input: c.input }).toolName))
             if (widened) {
                 phaseState.phase = 'build'
             }
@@ -128,9 +141,10 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
                 : undefined
             const disableThinking = isFirstStep || phaseState.phase === 'discovery' || forcesCompletion
             const usesFastModel = isFirstStep && !isNil(fastModel)
-            const phaseTools = agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }).filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name))
+            const visibleTools = skillSurface?.coreToolNames ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
+            const phaseTools = visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name))
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
-            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider })
+            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider })
             const stepContext = isLastAllowedStep
                 ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
                 : boundedContext
@@ -144,21 +158,16 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
                 ...stepContext,
             }
         },
-        repairToolCall: async ({ toolCall, error }) => {
+        repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
             }
+            if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
+                return null
+            }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
-            const { data: repaired } = await tryCatch(async () => {
-                const { text } = await generateText({
-                    model,
-                    abortSignal,
-                    telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
-                    prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
-                })
-                return jsonInputFrom(text)
-            })
+            const repaired = await repairToolInput({ model, abortSignal, toolName: toolCall.toolName, input: toolCall.input, errorMessage: error.message, schema: await inputSchema({ toolName: toolCall.toolName }) })
             if (isNil(repaired)) {
                 log.warn({ toolName: toolCall.toolName }, 'Could not repair the tool call into valid JSON')
                 return null
@@ -166,10 +175,11 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             return { ...toolCall, input: repaired }
         },
         onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
+            const effectiveCall = agentToolSkills.effectiveToolCall({ toolName: toolCall.toolName, input: toolCall.input })
             toolCalls.push({
-                toolName: toolCall.toolName,
+                toolName: effectiveCall.toolName,
                 toolCallId: toolCall.toolCallId,
-                input: toolCall.input,
+                input: effectiveCall.input,
                 order: toolCallOrder++,
                 phase: phaseState.phase,
             })
@@ -424,8 +434,33 @@ export function looksEmptyResultText(text: string): boolean {
     return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
 }
 
-function completedToolCalls(steps: ReadonlyArray<{ toolResults: ReadonlyArray<{ toolName: string, output: unknown }> }>): ChatToolCall[] {
-    return steps.flatMap((step) => step.toolResults.map((result) => ({ toolName: result.toolName, output: result.output })))
+async function repairToolInput({ model, abortSignal, toolName, input, errorMessage, schema }: {
+    model: LanguageModel
+    abortSignal: AbortSignal
+    toolName: string
+    input: string
+    errorMessage: string
+    schema: JSONSchema7
+}): Promise<string | undefined> {
+    const { data, error } = await tryCatch(async () => generateText({
+        model,
+        abortSignal,
+        telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
+        output: Output.object({ schema: jsonSchema(schema) }),
+        prompt: `Fix this invalid input for the tool "${toolName}". The error was: ${errorMessage}\n\nOriginal input:\n${input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+    }))
+    if (!isNil(data)) {
+        return JSON.stringify(data.output)
+    }
+    return NoObjectGeneratedError.isInstance(error) && !isNil(error.text) ? jsonInputFrom(error.text) : undefined
+}
+
+function isParsableJson(text: string): boolean {
+    return tryCatchSync((): unknown => JSON.parse(text)).error === null
+}
+
+function completedToolCalls(steps: ReadonlyArray<{ toolResults: ReadonlyArray<{ toolName: string, input: unknown, output: unknown }> }>): ChatToolCall[] {
+    return steps.flatMap((step) => step.toolResults.map((result) => ({ toolName: agentToolSkills.effectiveToolCall({ toolName: result.toolName, input: result.input }).toolName, output: result.output })))
 }
 
 function runawayTokenCeiling(provider: AIProviderName): number {
@@ -515,6 +550,7 @@ export type RunAgentTurnParams = {
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
     creditsLeft?: (pendingCredits: number) => Promise<number | null>
+    skills?: { surface: SkillSurface, guides: Record<string, string> }
 }
 
 export type AgentTurnResult = {

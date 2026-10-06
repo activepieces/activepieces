@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 import {
   ConnectionPickerData,
+  hasPieceName,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
@@ -190,6 +191,7 @@ function BlockingDisplayCard({
       );
     case 'ap_show_connection_required':
     case 'ap_show_connection_picker':
+      if (!hasPieceName(data)) return null;
       return (
         <ConnectionPickerCard
           picker={data as unknown as ConnectionPickerData}

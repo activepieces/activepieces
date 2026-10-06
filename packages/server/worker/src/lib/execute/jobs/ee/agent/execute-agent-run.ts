@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, AiProviderCredentials, apErrorOf, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -265,6 +265,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         modelId: config.modelId,
                         ...spreadIfDefined('fastModelId', dryRun ? undefined : config.fastModelId),
                         phaseState,
+                        ...spreadIfDefined('skills', skillsFor({ source, guides: config.guides })),
                         abortSignal: abortController.signal,
                         log,
                         sinks: {
@@ -496,6 +497,11 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
     })
 }
 
+
+function skillsFor({ source, guides }: { source: AgentRunSource, guides: Record<string, string> }): { surface: SkillSurface, guides: Record<string, string> } | undefined {
+    const surface = agentToolSkills.surfaceFor({ source })
+    return isNil(surface) ? undefined : { surface, guides }
+}
 
 function isPieceTool(tool: AgentTool): tool is AgentPieceTool {
     return tool.type === AgentToolType.PIECE
@@ -837,6 +843,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
         }, STREAM_IDLE_REPORT_MS)
     }
 
+    const heldLazyToolStarts = new Map<string, Record<string, unknown>>()
     const reader = uiStream.getReader()
     const abortRace = waitForAbort(abortSignal).then(() => 'aborted' as const)
     armIdleReporter()
@@ -847,6 +854,14 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             const { done, value: chunk } = next
             if (done) break
             armIdleReporter()
+            const unwrapped = agentWorkerTools.unwrapLazyToolChunk({ chunk, heldStarts: heldLazyToolStarts })
+            if (unwrapped.hold) {
+                heldLazyToolStarts.set(unwrapped.hold.callId, unwrapped.hold.chunk)
+            }
+            if (unwrapped.release) {
+                heldLazyToolStarts.delete(unwrapped.release)
+            }
+            chunkBuffer.push(...unwrapped.emit)
             const chunkType = isObject(chunk) && typeof chunk['type'] === 'string' ? chunk['type'] : undefined
             if (chunkType === 'tool-input-available') {
                 pendingToolCalls++
@@ -860,7 +875,6 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             else if (chunkType === 'reasoning-end') {
                 reasoningInFlight = false
             }
-            chunkBuffer.push(chunk)
             if (chunkBuffer.length >= BATCH_SIZE) {
                 if (flushTimer) {
                     clearTimeout(flushTimer)
