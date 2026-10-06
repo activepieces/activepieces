@@ -93,7 +93,7 @@ import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
-import { systemJobsSchedule } from './helper/system-jobs/system-job'
+import { SystemJobBackoff, systemJobsSchedule } from './helper/system-jobs/system-job'
 import { systemSnapshot } from './helper/system-snapshot'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { shutdownTelemetry } from './helper/telemetry.utils'
@@ -511,6 +511,10 @@ async function dispatchBackgroundMigrations(log: FastifyBaseLogger): Promise<voi
         schedule: {
             type: 'one-time',
             date: apDayjs(),
+        },
+        customConfig: {
+            attempts: 10,
+            backoff: { type: SystemJobBackoff.instantBurstThenExponential, delay: 0 },
         },
     })
 }

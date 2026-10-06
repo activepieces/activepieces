@@ -13,6 +13,7 @@ const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 const RE_QUEUE_DELAY_MS = apDayjsDuration(1, 'minute').asMilliseconds()
+const INSTANT_BURST_THEN_EXPONENTIAL = 'instantBurstThenExponential'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
@@ -72,6 +73,9 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             {
                 connection: await redisConnections.create(),
                 concurrency: 5,
+                settings: {
+                    backoffStrategy: instantBurstThenExponentialBackoff,
+                },
             },
         )
 
@@ -158,6 +162,20 @@ async function processSystemJob(job: Job<SystemJobData, unknown, SystemJobName>)
     const jobHandler = systemJobHandlers.getJobHandler(job.name)
     await jobHandler(job.data)
 }
+
+function instantBurstThenExponentialBackoff(attemptsMade: number, type?: string): number {
+    if (type !== INSTANT_BURST_THEN_EXPONENTIAL) return 0
+    const INSTANT_BURST_SIZE = 5
+    const EXPONENTIAL_BASE_MS = apDayjsDuration(1, 'minute').asMilliseconds()
+    const EXPONENTIAL_CAP_MS = apDayjsDuration(1, 'hour').asMilliseconds()
+    if (attemptsMade <= INSTANT_BURST_SIZE) return 0
+    const exponentialStep = attemptsMade - INSTANT_BURST_SIZE
+    return Math.min(EXPONENTIAL_BASE_MS * 2 ** (exponentialStep - 1), EXPONENTIAL_CAP_MS)
+}
+
+export const SystemJobBackoff = {
+    instantBurstThenExponential: INSTANT_BURST_THEN_EXPONENTIAL,
+} as const
 
 async function removeDeprecatedJobs(log: FastifyBaseLogger): Promise<void> {
     const deprecatedJobs = [
