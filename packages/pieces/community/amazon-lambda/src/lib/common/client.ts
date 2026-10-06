@@ -8,13 +8,13 @@ import {
   type InvocationType,
 } from '@aws-sdk/client-lambda';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { HttpMethod, httpClient, type HttpRequest } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import type { ServerContext } from '@activepieces/pieces-framework';
 import { HttpRequest as AwsHttpRequest } from '@smithy/protocol-http';
 import { SignatureV4 } from '@smithy/signature-v4';
 
 import { isOidcAuth, type LambdaAuthProps, type OidcAuthProps } from '../auth';
-import { LambdaApiError } from './errors';
+import { LambdaApiError, parseLambdaErrorBody } from './errors';
 import { lambdaEndpoint } from './regions';
 
 const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
@@ -173,17 +173,24 @@ export async function customLambdaCall(
     body: bodyString,
   });
 
-  const request: HttpRequest = {
-    method: input.method,
-    url: url.toString(),
-    headers: signed,
-    body: bodyString,
-    timeout: clampTimeout(input.timeoutSeconds),
-  };
-
   try {
-    const response = await httpClient.sendRequest(request);
-    return { status: response.status, headers: stringHeaders(response.headers), body: response.body };
+    const response = await fetch(signedRequestUrl(url), {
+      method: input.method,
+      headers: signed,
+      body: bodyString,
+      redirect: 'manual',
+      signal: AbortSignal.timeout(clampTimeout(input.timeoutSeconds)),
+    });
+    const responseBody = await readFetchBody(response);
+    if (!response.ok) {
+      const parsed = parseLambdaErrorBody(responseBody);
+      throw new LambdaApiError(response.status, parsed.name, parsed.message);
+    }
+    return {
+      status: response.status,
+      headers: headersFromFetch(response),
+      body: responseBody,
+    };
   } catch (error) {
     throw LambdaApiError.from(error);
   }
@@ -362,6 +369,12 @@ function signedQuery(url: URL): Record<string, string | string[]> {
   );
 }
 
+function signedRequestUrl(url: URL): string {
+  const pathUrl = `${url.origin}${url.pathname}`;
+  if (!url.search) return pathUrl;
+  return `${pathUrl}${url.search.replaceAll('+', '%20')}`;
+}
+
 function normalizePath(path: string): string {
   const trimmed = path.trim();
   if (!trimmed || trimmed.includes('://') || trimmed.startsWith('//')) {
@@ -393,14 +406,22 @@ function userHeaders(headers: Record<string, unknown> | undefined): Record<strin
   return out;
 }
 
-function stringHeaders(headers: Record<string, string | string[] | undefined> | undefined): Record<string, string> {
+function headersFromFetch(response: Response): Record<string, string> {
   const out: Record<string, string> = {};
-  if (!headers) return out;
-  for (const [key, value] of Object.entries(headers)) {
-    if (value === undefined) continue;
-    out[key] = Array.isArray(value) ? value.join(',') : value;
-  }
+  response.headers.forEach((value, key) => {
+    out[key] = value;
+  });
   return out;
+}
+
+async function readFetchBody(response: Response): Promise<unknown> {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
 }
 
 function blankToUndefined(value: string | undefined): string | undefined {

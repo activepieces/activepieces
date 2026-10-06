@@ -1,9 +1,8 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { send, sendRequest, stsSend, signedQueries } = vi.hoisted(() => ({
+const { send, stsSend, signedQueries } = vi.hoisted(() => ({
   send: vi.fn<(command: unknown) => Promise<unknown>>(),
-  sendRequest: vi.fn<(request: unknown) => Promise<unknown>>(),
   stsSend: vi.fn<(command: unknown) => Promise<unknown>>(),
   signedQueries: [] as unknown[],
 }));
@@ -51,11 +50,6 @@ vi.mock('@smithy/protocol-http', async (importOriginal) => {
       }
     },
   };
-});
-
-vi.mock('@activepieces/pieces-common', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@activepieces/pieces-common')>();
-  return { ...actual, httpClient: { sendRequest } };
 });
 
 const {
@@ -192,13 +186,17 @@ describe('listFunctions', () => {
 
 describe('customLambdaCall', () => {
   beforeEach(() => {
-    sendRequest.mockReset();
     signedQueries.length = 0;
+    vi.stubGlobal('fetch', vi.fn<(input: string, init?: RequestInit) => Promise<Response>>());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('when a custom call is signed', () => {
     it('given a path in the connection region, should sign the request and return the response', async () => {
-      sendRequest.mockResolvedValue({ status: 200, headers: { 'content-type': 'application/json' }, body: { Functions: [] } });
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({ Functions: [] }));
 
       const result = await customLambdaCall(accessKey, server, {
         method: HttpMethod.GET,
@@ -207,14 +205,21 @@ describe('customLambdaCall', () => {
       });
 
       expect(result.status).toBe(200);
-      const request = sendRequest.mock.calls[0][0] as { url: string; headers: Record<string, string> };
-      expect(request.url).toBe('https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?MaxItems=1');
-      expect(request.headers.authorization).toMatch(/^AWS4-HMAC-SHA256 /);
-      expect(request.headers.host).toBe('lambda.us-east-1.amazonaws.com');
+      expect(result.body).toEqual({ Functions: [] });
+      expect(fetch).toHaveBeenCalledWith(
+        'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?MaxItems=1',
+        expect.objectContaining({
+          method: HttpMethod.GET,
+          headers: expect.objectContaining({
+            authorization: expect.stringMatching(/^AWS4-HMAC-SHA256 /),
+            host: 'lambda.us-east-1.amazonaws.com',
+          }),
+        }),
+      );
     });
 
     it('given a China region, should target the China partition host', async () => {
-      sendRequest.mockResolvedValue({ status: 200, headers: {}, body: {} });
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
       await customLambdaCall(
         { ...accessKey, region: 'cn-north-1' },
@@ -222,8 +227,10 @@ describe('customLambdaCall', () => {
         { method: HttpMethod.GET, path: '/2015-03-31/functions' },
       );
 
-      const request = sendRequest.mock.calls[0][0] as { url: string };
-      expect(request.url).toBe('https://lambda.cn-north-1.amazonaws.com.cn/2015-03-31/functions');
+      expect(fetch).toHaveBeenCalledWith(
+        'https://lambda.cn-north-1.amazonaws.com.cn/2015-03-31/functions',
+        expect.anything(),
+      );
     });
 
     it('given a path that leaves the Lambda host, should reject it before sending', async () => {
@@ -231,7 +238,7 @@ describe('customLambdaCall', () => {
         method: HttpMethod.GET,
         path: 'https://example.com/functions',
       })).rejects.toThrow('InvalidPath');
-      expect(sendRequest).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
     });
 
     it('given a backslash path, should reject it before sending', async () => {
@@ -240,20 +247,37 @@ describe('customLambdaCall', () => {
         path: '/\\attacker.example/functions',
         body: { name: 'billing' },
       })).rejects.toThrow('InvalidPath');
-      expect(sendRequest).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
     });
 
     it('given a repeated query key, should sign every value', async () => {
-      sendRequest.mockResolvedValue({ status: 200, headers: {}, body: {} });
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
       await customLambdaCall(accessKey, server, {
         method: HttpMethod.GET,
         path: '/2015-03-31/functions?Marker=a&Marker=b',
       });
 
-      const request = sendRequest.mock.calls[0][0] as { url: string };
-      expect(request.url).toBe('https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?Marker=a&Marker=b');
+      expect(fetch).toHaveBeenCalledWith(
+        'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?Marker=a&Marker=b',
+        expect.anything(),
+      );
       expect(signedQueries.at(-1)).toEqual({ Marker: ['a', 'b'] });
+    });
+
+    it('given a space in the query, should send the same encoding that was signed', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
+
+      await customLambdaCall(accessKey, server, {
+        method: HttpMethod.GET,
+        path: '/2015-03-31/functions',
+        queryParams: { Marker: 'a b' },
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?Marker=a%20b',
+        expect.anything(),
+      );
     });
   });
 });
@@ -351,3 +375,12 @@ describe('decodePayload', () => {
     expect(decodePayload(new TextEncoder().encode('plain text'))).toBe('plain text');
   });
 });
+
+function jsonResponse(body: unknown): Response {
+  return {
+    ok: true,
+    status: 200,
+    headers: new Headers({ 'content-type': 'application/json' }),
+    text: async () => JSON.stringify(body),
+  } as Response;
+}

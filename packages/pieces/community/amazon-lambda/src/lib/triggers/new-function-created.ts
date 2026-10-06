@@ -5,6 +5,7 @@ import { awsLambdaCombinedAuth, type LambdaAuthProps } from '../auth';
 import { listFunctions } from '../common/client';
 
 export const SEEN_FUNCTION_ARNS_KEY = 'seen-function-arns';
+export const PENDING_FUNCTION_ARNS_KEY = 'pending-function-arns';
 
 export const newFunctionCreated = createTrigger({
   name: 'newFunctionCreated',
@@ -27,6 +28,7 @@ export const newFunctionCreated = createTrigger({
   },
   async onDisable(context) {
     await deleteSeenArns(context.store);
+    await deletePendingArns(context.store);
   },
   async run(context) {
     const functions = await listFunctions(context.auth.props as LambdaAuthProps, context.server);
@@ -38,61 +40,109 @@ export const newFunctionCreated = createTrigger({
   },
 });
 
-// NOTE: A missing snapshot stores the current ARNs and returns nothing, so the first poll does not emit every function.
 export async function remember(
   store: Store,
   functions: FunctionConfiguration[],
   initializeOnly: boolean,
 ): Promise<FunctionConfiguration[]> {
   const currentArns = functions.flatMap((fn) => (fn.FunctionArn ? [fn.FunctionArn] : []));
-  const previous = await readSeenArns(store);
-  if (initializeOnly || previous == null) {
-    await writeSeenArns({ store, arns: currentArns });
+  const currentSet = new Set(currentArns);
+
+  if (initializeOnly) {
+    await writeArnChunks({ store, keyPrefix: SEEN_FUNCTION_ARNS_KEY, arns: currentArns });
+    await writeArnChunks({ store, keyPrefix: PENDING_FUNCTION_ARNS_KEY, arns: [] });
     return [];
   }
-  const seen = new Set(previous);
-  const created = functions.filter((fn) => fn.FunctionArn && !seen.has(fn.FunctionArn));
-  await writeSeenArns({ store, arns: currentArns });
+
+  const previous = await readArnChunks({ store, keyPrefix: SEEN_FUNCTION_ARNS_KEY });
+  if (previous == null) {
+    await writeArnChunks({ store, keyPrefix: SEEN_FUNCTION_ARNS_KEY, arns: currentArns });
+    await writeArnChunks({ store, keyPrefix: PENDING_FUNCTION_ARNS_KEY, arns: [] });
+    return [];
+  }
+
+  const pending = (await readArnChunks({ store, keyPrefix: PENDING_FUNCTION_ARNS_KEY })) ?? [];
+  const seenForEmit = new Set(previous);
+  const created = functions.filter((fn) => fn.FunctionArn && !seenForEmit.has(fn.FunctionArn));
+  const createdArns = created.flatMap((fn) => (fn.FunctionArn ? [fn.FunctionArn] : []));
+
+  const confirmed = uniqueArns([...previous, ...pending]).filter((arn) => currentSet.has(arn));
+  await writeArnChunks({ store, keyPrefix: SEEN_FUNCTION_ARNS_KEY, arns: confirmed });
+  await writeArnChunks({ store, keyPrefix: PENDING_FUNCTION_ARNS_KEY, arns: createdArns });
   return created;
 }
 
 const STORE_VALUE_MAX_BYTES = 512 * 1024;
 
-function seenArnKey(index: number): string {
-  return index === 0 ? SEEN_FUNCTION_ARNS_KEY : `${SEEN_FUNCTION_ARNS_KEY}-${index}`;
+function storeKey({ keyPrefix, index }: { keyPrefix: string; index: number }): string {
+  return index === 0 ? keyPrefix : `${keyPrefix}-${index}`;
 }
 
-async function readSeenArns(store: Store): Promise<string[] | null> {
-  const first = await store.get<string[]>(seenArnKey(0));
+async function readArnChunks({
+  store,
+  keyPrefix,
+}: {
+  store: Store;
+  keyPrefix: string;
+}): Promise<string[] | null> {
+  const first = await store.get<string[]>(storeKey({ keyPrefix, index: 0 }));
   if (first == null) return null;
-  const rest = await readArnChunks({ store, index: 1 });
+  const rest = await readArnChunkTail({ store, keyPrefix, index: 1 });
   return [...first, ...rest];
 }
 
-async function readArnChunks({ store, index }: { store: Store; index: number }): Promise<string[]> {
-  const chunk = await store.get<string[]>(seenArnKey(index));
+async function readArnChunkTail({
+  store,
+  keyPrefix,
+  index,
+}: {
+  store: Store;
+  keyPrefix: string;
+  index: number;
+}): Promise<string[]> {
+  const chunk = await store.get<string[]>(storeKey({ keyPrefix, index }));
   if (chunk == null) return [];
-  const rest = await readArnChunks({ store, index: index + 1 });
+  const rest = await readArnChunkTail({ store, keyPrefix, index: index + 1 });
   return [...chunk, ...rest];
 }
 
-async function writeSeenArns({ store, arns }: { store: Store; arns: string[] }): Promise<void> {
+async function writeArnChunks({
+  store,
+  keyPrefix,
+  arns,
+}: {
+  store: Store;
+  keyPrefix: string;
+  arns: string[];
+}): Promise<void> {
   const chunks = chunkArns(arns);
   for (const [index, chunk] of chunks.entries()) {
-    await store.put(seenArnKey(index), chunk);
+    await store.put(storeKey({ keyPrefix, index }), chunk);
   }
-  await deleteArnChunks({ store, index: chunks.length });
+  await deleteArnChunkTail({ store, keyPrefix, index: chunks.length });
 }
 
 async function deleteSeenArns(store: Store): Promise<void> {
-  await deleteArnChunks({ store, index: 0 });
+  await deleteArnChunkTail({ store, keyPrefix: SEEN_FUNCTION_ARNS_KEY, index: 0 });
 }
 
-async function deleteArnChunks({ store, index }: { store: Store; index: number }): Promise<void> {
-  const existing = await store.get<string[]>(seenArnKey(index));
+async function deletePendingArns(store: Store): Promise<void> {
+  await deleteArnChunkTail({ store, keyPrefix: PENDING_FUNCTION_ARNS_KEY, index: 0 });
+}
+
+async function deleteArnChunkTail({
+  store,
+  keyPrefix,
+  index,
+}: {
+  store: Store;
+  keyPrefix: string;
+  index: number;
+}): Promise<void> {
+  const existing = await store.get<string[]>(storeKey({ keyPrefix, index }));
   if (existing == null) return;
-  await store.delete(seenArnKey(index));
-  await deleteArnChunks({ store, index: index + 1 });
+  await store.delete(storeKey({ keyPrefix, index }));
+  await deleteArnChunkTail({ store, keyPrefix, index: index + 1 });
 }
 
 function chunkArns(arns: string[]): string[][] {
@@ -114,4 +164,8 @@ function chunkArns(arns: string[]): string[][] {
   }
   chunks.push(current);
   return chunks;
+}
+
+function uniqueArns(arns: string[]): string[] {
+  return [...new Set(arns)];
 }
