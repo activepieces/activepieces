@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { jumpcloudApi } from './client';
+import { jumpcloudApi, MAX_PAGE_SIZE } from './client';
 import { ApiRecord, ConnectionProps, ListPage, ObjectTypeConfig, ObjectTypeKey, PageRequest } from './types';
 
 export const jumpcloudObjects = {
@@ -14,6 +14,8 @@ export const jumpcloudObjects = {
     optionLabel,
     getRecord,
     listByIds,
+    createdAt,
+    listNewest,
 };
 
 function config(type: ObjectTypeKey): ObjectTypeConfig {
@@ -141,6 +143,42 @@ async function getRecordOrNull({ auth, type, id }: { auth: ConnectionProps; type
     }
 }
 
+function createdAt({ type, record }: { type: ObjectTypeKey; record: ApiRecord }): number | null {
+    const created = record['created'];
+    if (typeof created === 'string') {
+        const parsed = Date.parse(created);
+        if (Number.isFinite(parsed)) {
+            return parsed;
+        }
+    }
+    const id = readId({ type, record });
+    return id !== null && OBJECT_ID_PATTERN.test(id) ? parseInt(id.slice(0, 8), 16) * 1000 : null;
+}
+
+async function listNewest({ auth, type, since, maxItems }: NewestParams): Promise<ApiRecord[]> {
+    if (OBJECT_TYPES[type].sortsByCreated) {
+        return collectNewest({ auth, type, since, maxItems, skip: 0, collected: [] });
+    }
+    const all = await jumpcloudApi.collectPages({
+        fetchPage: (page) => listPage({ auth, type, page }),
+        fetchAll: true,
+        maxItems,
+    });
+    return all.items;
+}
+
+async function collectNewest({ auth, type, since, maxItems, skip, collected }: NewestParams & { skip: number; collected: ApiRecord[] }): Promise<ApiRecord[]> {
+    const limit = Math.min(MAX_PAGE_SIZE, maxItems - collected.length);
+    const page = await listPage({ auth, type, page: { limit, skip }, sort: '-created' });
+    const items = [...collected, ...page.items];
+    const oldest = page.items.length === 0 ? null : createdAt({ type, record: page.items[page.items.length - 1] });
+    const reachedOld = oldest !== null && oldest <= since;
+    if (page.items.length < limit || reachedOld || items.length >= maxItems) {
+        return items;
+    }
+    return collectNewest({ auth, type, since, maxItems, skip: skip + page.items.length, collected: items });
+}
+
 function optionLabel({ type, record }: { type: ObjectTypeKey; record: ApiRecord }): string {
     const id = readId({ type, record }) ?? 'unknown ID';
     switch (type) {
@@ -171,7 +209,7 @@ function firstNonEmpty(values: string[]): string | undefined {
     return values.find((value) => value.length > 0);
 }
 
-const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: string }> = {
+const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: string; sortsByCreated: boolean }> = {
     user: {
         label: 'User',
         version: 'v1',
@@ -179,6 +217,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         idField: '_id',
         defaultSort: '_id',
         pickerSort: 'username',
+        sortsByCreated: true,
         canCreate: true,
         replaceOnUpdate: false,
         search: { kind: 'endpoint', path: '/search/systemusers', fields: ['username', 'email', 'firstname', 'lastname', 'displayname'] },
@@ -190,6 +229,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         idField: '_id',
         defaultSort: '_id',
         pickerSort: 'displayName',
+        sortsByCreated: true,
         canCreate: false,
         replaceOnUpdate: false,
         search: { kind: 'endpoint', path: '/search/systems', fields: ['displayName', 'hostname', 'serialNumber'] },
@@ -201,6 +241,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         idField: 'id',
         defaultSort: 'name',
         pickerSort: 'name',
+        sortsByCreated: false,
         canCreate: true,
         replaceOnUpdate: true,
         search: { kind: 'filter', field: 'name', operator: 'search' },
@@ -212,6 +253,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         idField: 'id',
         defaultSort: 'name',
         pickerSort: 'name',
+        sortsByCreated: false,
         canCreate: true,
         replaceOnUpdate: true,
         search: { kind: 'filter', field: 'name', operator: 'search' },
@@ -223,6 +265,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
         idField: '_id',
         defaultSort: '_id',
         pickerSort: 'displayLabel',
+        sortsByCreated: true,
         canCreate: true,
         replaceOnUpdate: true,
         search: { kind: 'local' },
@@ -231,6 +274,7 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
 
 const LOCAL_SEARCH_MAX_ITEMS = 1000;
 const PARALLEL_FETCHES = 10;
+const OBJECT_ID_PATTERN = /^[0-9a-f]{24}$/i;
 
 const OBJECT_TYPE_KEYS: ObjectTypeKey[] = ['user', 'system', 'user_group', 'system_group', 'application'];
 
@@ -240,6 +284,13 @@ type ListParams = {
     page: PageRequest;
     filter?: string;
     sort?: string;
+};
+
+type NewestParams = {
+    auth: ConnectionProps;
+    type: ObjectTypeKey;
+    since: number;
+    maxItems: number;
 };
 
 type SearchParams = {

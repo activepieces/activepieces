@@ -17,6 +17,7 @@ import { updateObjectAction } from './lib/actions/update-object';
 import { updateUserOnSystemAction } from './lib/actions/update-user-on-system';
 import { jumpcloudAuth } from './lib/auth';
 import { jumpcloudApi } from './lib/common/client';
+import { newObjectTrigger } from './lib/triggers/new-object';
 
 export const jumpcloud = createPiece({
     displayName: 'JumpCloud',
@@ -49,5 +50,5 @@ export const jumpcloud = createPiece({
             authMapping: async (auth) => jumpcloudApi.authHeaders(auth.props),
         }),
     ],
-    triggers: [],
+    triggers: [newObjectTrigger],
 });
