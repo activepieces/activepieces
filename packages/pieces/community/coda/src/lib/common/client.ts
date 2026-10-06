@@ -211,14 +211,11 @@ async function getMutationStatus({ token, requestId, timeoutMs }: { token: strin
 	});
 }
 
-// A status check that times out, is rate limited or hits a Coda server error says nothing
-// about the write itself, so polling keeps going until the wait budget runs out.
 function isTransientPollError(error: unknown): boolean {
 	const status = statusOf(error);
 	return status === undefined || status === 404 || status === 408 || status === 409 || status === 429 || status >= 500;
 }
 
-// Time left for one poll request, or undefined when the budget is too small to start one.
 function pollRequestBudget({ deadline, now }: { deadline: number; now: () => number }): number | undefined {
 	const remaining = deadline - now();
 	return remaining < MIN_POLL_REQUEST_MS ? undefined : Math.min(REQUEST_TIMEOUT_MS, remaining);

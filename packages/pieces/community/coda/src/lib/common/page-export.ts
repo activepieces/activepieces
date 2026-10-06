@@ -74,8 +74,6 @@ async function waitForExport({
 	}
 }
 
-// One status check; a timeout, rate limit or server error counts as "not ready yet" so the
-// caller gets the export ID back to resume instead of a failed step.
 async function pollExport(params: { token: string; pagePath: string; exportId: string; timeoutMs: number }): Promise<ExportStatus | undefined> {
 	try {
 		return await getExportStatus(params);
