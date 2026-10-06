@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
 import { createPhaseTools } from './session-tools'
 import { taskContext } from './task-context'
-import { AgentEventEmitter } from './tool-primitives'
+import { AgentEventEmitter, extractResultText } from './tool-primitives'
 
 export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<TaskDeps, 'workerTools' | 'taskPrompt'> & {
     tools: ToolSet
@@ -277,13 +277,20 @@ function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
             return [{ kind: 'search', query, results: searchResults(part.output) }]
         }
         const url = part.input['url']
-        return PAGE_READ_TOOLS.includes(part.toolName) && typeof url === 'string' ? [{ kind: 'read', url }] : []
+        const pageWasRead = PAGE_READ_TOOLS.includes(part.toolName) && typeof url === 'string' && part.status === PersistedToolCallStatus.COMPLETED && returnedPage(part.output)
+        return pageWasRead ? [{ kind: 'read', url }] : []
     })
     const titles = new Map(entries.flatMap((entry) => entry.kind === 'search' ? entry.results : []).map((link) => [link.url, link.title]))
     return entries.map((entry) => {
         const title = entry.kind === 'read' ? titles.get(entry.url) : undefined
         return isNil(title) ? entry : { ...entry, title }
     })
+}
+
+function returnedPage(output: unknown): boolean {
+    const parsed = parseToJsonIfPossible(output)
+    const hasPageText = isObject(parsed) && (typeof parsed['content'] === 'string' || typeof parsed['markdown'] === 'string')
+    return hasPageText || extractResultText(parsed).startsWith(LARGE_RESPONSE_MARKER)
 }
 
 function searchResults(output: unknown): SubagentLink[] {
@@ -367,6 +374,7 @@ const CONTINUE_REQUEST = 'You were cut off. Continue from where you stopped.'
 const MAX_CONTINUATIONS = 2
 const WEB_SEARCH_TOOL = 'ap_web_search'
 const PAGE_READ_TOOLS = ['ap_fetch_url', 'ap_scrape_url']
+const LARGE_RESPONSE_MARKER = '[LARGE RESPONSE'
 
 const NOT_FOR_TASKS = [
     TASK_TOOL_NAME,

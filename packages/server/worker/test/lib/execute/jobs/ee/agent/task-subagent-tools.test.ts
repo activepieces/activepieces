@@ -111,7 +111,7 @@ describe('createTaskSubagentTools', () => {
             ...turnResult(),
             uiParts: [
                 { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 's1', toolName: 'ap_web_search', input: { query: 'blue bottle' }, status: PersistedToolCallStatus.COMPLETED, output: { results: [{ title: 'Blue Bottle plans', url: 'https://bluebottle.com/plans' }, { title: 'Reddit thread', url: 'https://reddit.com/r/coffee/1' }] } },
-                { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'f1', toolName: 'ap_fetch_url', input: { url: 'https://bluebottle.com/plans' }, status: PersistedToolCallStatus.COMPLETED, output: 'page' },
+                { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'f1', toolName: 'ap_fetch_url', input: { url: 'https://bluebottle.com/plans' }, status: PersistedToolCallStatus.COMPLETED, output: { url: 'https://bluebottle.com/plans', content: 'Plans and pricing' } },
             ],
         })
         const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })
@@ -122,6 +122,26 @@ describe('createTaskSubagentTools', () => {
             { kind: 'search', query: 'blue bottle', results: [{ url: 'https://bluebottle.com/plans', title: 'Blue Bottle plans' }, { url: 'https://reddit.com/r/coffee/1', title: 'Reddit thread' }] },
             { kind: 'read', url: 'https://bluebottle.com/plans', title: 'Blue Bottle plans' },
         ] } })
+    })
+
+    it('counts only pages that were actually read', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Found it.', artifacts: [] }, EXECUTION_OPTIONS)
+            return {
+                ...turnResult(),
+                uiParts: [
+                    { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'f1', toolName: 'ap_fetch_url', input: { url: 'https://ok.com' }, status: PersistedToolCallStatus.COMPLETED, output: { url: 'https://ok.com', content: 'Pricing' } },
+                    { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'f2', toolName: 'ap_fetch_url', input: { url: 'https://down.com' }, status: PersistedToolCallStatus.COMPLETED, output: { content: [{ type: 'text', text: 'Failed to fetch https://down.com: timeout' }] } },
+                    { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'f3', toolName: 'ap_scrape_url', input: { url: 'https://broken.com' }, status: PersistedToolCallStatus.ERROR, output: null },
+                    { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'f4', toolName: 'ap_scrape_url', input: { url: 'https://big.com' }, status: PersistedToolCallStatus.COMPLETED, output: { content: [{ type: 'text', text: '[LARGE RESPONSE — long values were truncated to fit, structure preserved] {}' }] } },
+                ],
+            }
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })
+
+        const result = await tasks['ap_run_task'].execute?.({ title: 'Research', brief: 'Find out' }, EXECUTION_OPTIONS)
+
+        expect(result).toMatchObject({ activity: { timeline: [{ kind: 'read', url: 'https://ok.com' }, { kind: 'read', url: 'https://big.com' }] } })
     })
 
     it('keeps the card details out of what the main model reads', async () => {

@@ -9,12 +9,12 @@ import {
   ChatContainerRoot,
 } from '@/components/prompt-kit/chat-container';
 import { Markdown } from '@/components/prompt-kit/markdown';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   FaviconOrGlobe,
   getDomain,
   Source,
 } from '@/components/prompt-kit/source';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 import { PreviewIconButton } from './previews/preview-card';
