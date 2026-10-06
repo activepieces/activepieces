@@ -49,7 +49,7 @@ async function disable({ token, store, storeKey }: DisableParams): Promise<void>
 
 async function clearIndex({ store, indexKey }: { store: Store; indexKey: string }): Promise<void> {
   for (const claimKey of await readIndex({ store, indexKey })) {
-    await store.delete(claimKey);
+    await deleteClaim({ store, claimKey });
   }
   await store.delete(indexKey);
 }
@@ -92,20 +92,27 @@ async function handle({ token, store, storeKey, event, payload, matches }: Handl
 
 async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey: string; key: string }): Promise<boolean> {
   const claimKey = claimKeyOf({ storeKey, key });
+  const doneKey = doneKeyOf(claimKey);
+  if (await isDone({ store, doneKey })) {
+    return false;
+  }
   const existing = await store.get<DeliveryClaim>(claimKey);
   if (existing !== null && existing !== undefined && !isAbandoned({ claim: existing, now: Date.now() })) {
     return false;
   }
-  const claim: DeliveryClaim = { token: randomUUID(), at: Date.now(), done: false };
+  const claim: DeliveryClaim = { token: randomUUID(), at: Date.now() };
   try {
+    await indexClaim({ store, indexKey: indexKeyOf({ storeKey, slot: slotOf(key) }), claimKey });
     await store.put<DeliveryClaim>(claimKey, claim);
     await dripApi.sleep(CLAIM_SETTLE_MS);
     const winner = await store.get<DeliveryClaim>(claimKey);
     if (winner !== null && winner !== undefined && winner.token !== claim.token) {
       return false;
     }
-    await indexClaim({ store, indexKey: indexKeyOf({ storeKey, slot: slotOf(key) }), claimKey });
-    await store.put<DeliveryClaim>(claimKey, { ...claim, done: true });
+    if (await isDone({ store, doneKey })) {
+      return false;
+    }
+    await store.put<DeliveryClaim>(doneKey, claim);
     return true;
   } catch (error) {
     await releaseClaim({ store, claimKey, claimToken: claim.token });
@@ -113,8 +120,18 @@ async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey:
   }
 }
 
+async function isDone({ store, doneKey }: { store: Store; doneKey: string }): Promise<boolean> {
+  const done = await store.get<DeliveryClaim>(doneKey);
+  return done !== null && done !== undefined;
+}
+
+async function deleteClaim({ store, claimKey }: { store: Store; claimKey: string }): Promise<void> {
+  await store.delete(claimKey);
+  await store.delete(doneKeyOf(claimKey));
+}
+
 function isAbandoned({ claim, now }: { claim: DeliveryClaim; now: number }): boolean {
-  return claim.done === false && typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
+  return typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
 }
 
 async function releaseClaim({ store, claimKey, claimToken }: { store: Store; claimKey: string; claimToken: string }): Promise<void> {
@@ -139,7 +156,7 @@ async function indexClaim({ store, indexKey, claimKey }: { store: Store; indexKe
     const evicted = next.slice(0, Math.max(0, next.length - SLOT_CAPACITY));
     await store.put<string[]>(indexKey, next.slice(-SLOT_CAPACITY));
     for (const old of evicted) {
-      await store.delete(old);
+      await deleteClaim({ store, claimKey: old });
     }
     if ((await readIndex({ store, indexKey })).includes(claimKey)) {
       return;
@@ -153,6 +170,10 @@ function slotOf(key: string): number {
 
 function claimKeyOf({ storeKey, key }: { storeKey: string; key: string }): string {
   return `${storeKey}_d_${key.slice(0, 40)}`;
+}
+
+function doneKeyOf(claimKey: string): string {
+  return `${claimKey}_ok`;
 }
 
 function indexKeyOf({ storeKey, slot }: { storeKey: string; slot: number }): string {
@@ -266,10 +287,11 @@ export const dripWebhook = {
   SLOT_CAPACITY,
   ABANDONED_CLAIM_MS,
   claimKeyOf,
+  doneKeyOf,
   indexKeyOf,
 };
 
-type DeliveryClaim = { token: string; at?: number; done?: boolean };
+type DeliveryClaim = { token: string; at?: number };
 
 export type DripWebhookInformation = {
   webhookId: string;

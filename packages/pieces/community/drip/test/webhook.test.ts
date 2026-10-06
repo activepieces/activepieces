@@ -47,10 +47,6 @@ function indexOf(key: string): string {
   return dripWebhook.indexKeyOf({ storeKey: NEW_SUB_KEY, slot: parseInt(key.slice(0, 2), 16) });
 }
 
-function hasDone(value: unknown): boolean {
-  return JSON.stringify(value).includes('"done":true');
-}
-
 function stored({ key, extra = { secret: SECRET } }: { key: string; extra?: Record<string, unknown> }) {
   return memoryStore({ [key]: { webhookId: '77', userId: A, ...extra } });
 }
@@ -192,7 +188,7 @@ describe('run', () => {
     for (let i = 0; i < 600; i++) {
       await call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: delivery({ occurredAt: `2026-10-06T${String(10 + Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}:00Z` }) }) });
     }
-    const claims = store.keys().filter((key) => key.startsWith(`${NEW_SUB_KEY}_d_`));
+    const claims = store.keys().filter((key) => key.startsWith(`${NEW_SUB_KEY}_d_`) && !key.endsWith('_ok'));
     const indexed = store.keys().filter((key) => key.startsWith(`${NEW_SUB_KEY}_i_`)).flatMap((key) => {
       const list = store.read(key);
       return Array.isArray(list) ? list : [];
@@ -221,7 +217,7 @@ describe('run', () => {
     await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(1);
     const key = dripWebhook.claimKeyOf({ storeKey: NEW_SUB_KEY, key: dedupeKeyOf(d) });
     const claim = Object(store.read(key));
-    expect(claim).toMatchObject({ done: true });
+    expect(store.read(dripWebhook.doneKeyOf(key))).toEqual(claim);
     await store.put(key, { ...claim, at: Date.now() - 24 * 60 * 60 * 1000 });
     await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(0);
   });
@@ -249,6 +245,7 @@ describe('run', () => {
     const saved = store.read(indexKey);
     expect(Array.isArray(saved) ? saved.length : 0).toBe(dripWebhook.SLOT_CAPACITY);
     expect(store.read(old[0])).toBeUndefined();
+    expect(store.read(dripWebhook.doneKeyOf(old[0]))).toBeUndefined();
     expect(store.read(old[1])).toMatchObject({ done: true });
   });
   test('the index entry is re-read and rewritten when a concurrent run of another delivery overwrote the index', async () => {
@@ -267,6 +264,36 @@ describe('run', () => {
     await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(1);
     expect(store.read(indexKey)).toEqual(['someone-else', dripWebhook.claimKeyOf({ storeKey: NEW_SUB_KEY, key: dedupeKeyOf(d) })]);
   });
+  test('a run whose claim write landed late does not emit a delivery another run already finished', async () => {
+    const store = stored({ key: NEW_SUB_KEY });
+    const d = delivery();
+    const claimKey = dripWebhook.claimKeyOf({ storeKey: NEW_SUB_KEY, key: dedupeKeyOf(d) });
+    const put = store.put;
+    store.put = async <T>(key: string, value: T): Promise<T> => {
+      const result = await put(key, value);
+      if (key === claimKey) {
+        await put(dripWebhook.doneKeyOf(claimKey), { token: 'first-run', at: Date.now() });
+      }
+      return result;
+    };
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(0);
+    expect(store.read(dripWebhook.doneKeyOf(claimKey))).toMatchObject({ token: 'first-run' });
+  });
+  test('a claim is in the cleanup index before it is written, so a run that stops mid-claim leaves nothing unindexed', async () => {
+    const store = stored({ key: NEW_SUB_KEY });
+    const d = delivery();
+    const claimKey = dripWebhook.claimKeyOf({ storeKey: NEW_SUB_KEY, key: dedupeKeyOf(d) });
+    const put = store.put;
+    store.put = async <T>(key: string, value: T): Promise<T> => {
+      if (key === claimKey) {
+        expect(store.read(indexOf(dedupeKeyOf(d)))).toEqual([claimKey]);
+        throw new Error('worker stopped');
+      }
+      return put(key, value);
+    };
+    await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).rejects.toThrow('worker stopped');
+    expect(store.read(indexOf(dedupeKeyOf(d)))).toEqual([claimKey]);
+  });
   test('an unfinished claim blocks a retry until it is abandoned, then the retry emits', async () => {
     const store = stored({ key: NEW_SUB_KEY });
     const d = delivery();
@@ -281,7 +308,7 @@ describe('run', () => {
     const put = store.put;
     let failures = 1;
     store.put = async <T>(key: string, value: T): Promise<T> => {
-      if (hasDone(value) && failures-- > 0) {
+      if (key.endsWith('_ok') && failures-- > 0) {
         throw new Error('store down');
       }
       return put(key, value);
