@@ -132,10 +132,19 @@ export const pieceLoader = {
     },
 }
 
+const MODULE_RESOLUTION_ERROR_CODES = ['MODULE_NOT_FOUND', 'ERR_MODULE_NOT_FOUND']
+
+function isModuleResolutionError(error: unknown): boolean {
+    return error instanceof Error && 'code' in error && typeof error.code === 'string' && MODULE_RESOLUTION_ERROR_CODES.includes(error.code)
+}
+
 async function requireWithReinstallRetry({ piecePath, pieceName, pieceVersion }: RequireWithReinstallRetryParams): Promise<Record<string, unknown>> {
     const { data: module, error: requireError } = tryCatchSync<Record<string, unknown>>(() => createRequire(__filename)(piecePath))
     if (!requireError) {
         return module
+    }
+    if (!isModuleResolutionError(requireError)) {
+        throw requireError
     }
     const reinstalled = await workerSocket.requestPieceReinstall({ pieceName, pieceVersion })
     if (!reinstalled) {
