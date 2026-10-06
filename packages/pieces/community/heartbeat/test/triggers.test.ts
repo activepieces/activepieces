@@ -1,0 +1,190 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { heartbeatWebhooks } from '../src/lib/common/webhooks';
+import { newMemberTrigger } from '../src/lib/triggers/new-member';
+import { newThreadTrigger } from '../src/lib/triggers/new-thread';
+import { newMentionTrigger } from '../src/lib/triggers/new-mention';
+import { newEventTrigger } from '../src/lib/triggers/new-event';
+import { newDirectMessageTrigger } from '../src/lib/triggers/new-direct-message';
+import { IDS, memoryStore, replies, runStep, stubFetch, TOKEN, triggerContext } from './helpers';
+
+type Hook = (context: ReturnType<typeof triggerContext>) => Promise<unknown>;
+
+function hook({ trigger, name, context }: { trigger: unknown; name: 'onEnable' | 'onDisable' | 'run' | 'test'; context: ReturnType<typeof triggerContext> }) {
+	const fn: Hook = Reflect.get(Object(trigger), name);
+	return runStep(fn(context));
+}
+
+const WEBHOOK_URL = 'https://example.ngrok.dev/api/v1/webhooks/flow123';
+
+beforeEach(() => {
+	vi.useFakeTimers();
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+	vi.unstubAllGlobals();
+});
+
+describe('webhook lifecycle', () => {
+	test('enable deletes orphans on the same URL, registers and stores the ID', async () => {
+		const store = memoryStore();
+		const seen = stubFetch((request) => {
+			if (request.method === 'GET') {
+				return { body: [{ id: 'orphan-1', url: WEBHOOK_URL }, { id: 'other', url: 'https://elsewhere' }] };
+			}
+			if (request.method === 'PUT') {
+				return { body: { id: IDS.webhook } };
+			}
+			return { body: { success: true } };
+		});
+		await hook({ trigger: newEventTrigger, name: 'onEnable', context: triggerContext({ store }) });
+		expect(seen.map((r) => `${r.method} ${r.path}`)).toEqual(['GET /webhooks', 'DELETE /webhooks/orphan-1', 'PUT /webhooks']);
+		expect(seen[2].body).toEqual({ action: { name: 'EVENT_CREATE' }, url: WEBHOOK_URL });
+		expect(store.read(heartbeatWebhooks.WEBHOOK_STORE_KEY)).toEqual({ webhookId: IDS.webhook });
+	});
+	test('enable replaces a previously stored webhook', async () => {
+		const store = memoryStore({ [heartbeatWebhooks.WEBHOOK_STORE_KEY]: { webhookId: 'old' } });
+		const seen = stubFetch((request) => (request.method === 'GET' ? { body: [] } : request.method === 'PUT' ? { body: { id: IDS.webhook } } : { status: 404, body: {} }));
+		await hook({ trigger: newMemberTrigger, name: 'onEnable', context: triggerContext({ store }) });
+		expect(seen[0].method).toBe('DELETE');
+		expect(seen[0].path).toBe('/webhooks/old');
+		expect(seen[2].body).toEqual({ action: { name: 'USER_JOIN' }, url: WEBHOOK_URL });
+	});
+	test('enable deletes the new webhook if storing its ID fails', async () => {
+		const store = memoryStore();
+		store.put = async () => {
+			throw new Error('store down');
+		};
+		const seen = stubFetch((request) => (request.method === 'GET' ? { body: [] } : request.method === 'PUT' ? { body: { id: IDS.webhook } } : { body: {} }));
+		await expect(hook({ trigger: newEventTrigger, name: 'onEnable', context: triggerContext({ store }) })).rejects.toThrow('store down');
+		expect(seen[seen.length - 1].method).toBe('DELETE');
+		expect(seen[seen.length - 1].path).toBe(`/webhooks/${IDS.webhook}`);
+	});
+	test('disable forgets the ID after a 2xx or 404, keeps it on other errors', async () => {
+		const store = memoryStore({ [heartbeatWebhooks.WEBHOOK_STORE_KEY]: { webhookId: IDS.webhook } });
+		stubFetch(replies([{ status: 404, body: {} }]));
+		await hook({ trigger: newEventTrigger, name: 'onDisable', context: triggerContext({ store }) });
+		expect(store.read(heartbeatWebhooks.WEBHOOK_STORE_KEY)).toBeUndefined();
+		vi.unstubAllGlobals();
+		const kept = memoryStore({ [heartbeatWebhooks.WEBHOOK_STORE_KEY]: { webhookId: IDS.webhook } });
+		stubFetch(replies([{ status: 500, body: { message: 'down' } }]));
+		await expect(hook({ trigger: newEventTrigger, name: 'onDisable', context: triggerContext({ store: kept }) })).rejects.toThrow();
+		expect(kept.read(heartbeatWebhooks.WEBHOOK_STORE_KEY)).toEqual({ webhookId: IDS.webhook });
+	});
+	test('dedupe ring is bounded', async () => {
+		const store = memoryStore();
+		for (let i = 0; i < heartbeatWebhooks.MAX_SEEN_KEYS + 10; i++) {
+			await heartbeatWebhooks.isFirstDelivery({ store, key: `k${i}` });
+		}
+		const seenKeys = store.read(heartbeatWebhooks.SEEN_STORE_KEY);
+		expect(Array.isArray(seenKeys) && seenKeys.length).toBe(heartbeatWebhooks.MAX_SEEN_KEYS);
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'k0' })).toBe(true);
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'k0' })).toBe(false);
+	});
+});
+
+describe('trigger filters', () => {
+	test('new thread sends the channel filter', async () => {
+		const seen = stubFetch((request) => (request.method === 'GET' ? { body: [] } : { body: { id: IDS.webhook } }));
+		await hook({ trigger: newThreadTrigger, name: 'onEnable', context: triggerContext({ propsValue: { channelId: IDS.channel, includeMovedThreads: true } }) });
+		expect(seen[1].body).toEqual({ action: { name: 'THREAD_CREATE', filter: { channelID: IDS.channel, triggerOnMove: true } }, url: WEBHOOK_URL });
+	});
+	test('new thread refuses moved threads without a channel', async () => {
+		stubFetch(replies([{ body: [] }]));
+		await expect(hook({ trigger: newThreadTrigger, name: 'onEnable', context: triggerContext({ propsValue: { includeMovedThreads: true } }) })).rejects.toThrow(/Channel ID/);
+	});
+	test('new mention builds userSelection and requires at least one target', async () => {
+		const seen = stubFetch((request) => (request.method === 'GET' ? { body: [] } : { body: { id: IDS.webhook } }));
+		await hook({ trigger: newMentionTrigger, name: 'onEnable', context: triggerContext({ propsValue: { userIds: [IDS.user], groupIds: [IDS.group], channelIds: [IDS.channel] } }) });
+		expect(seen[1].body).toEqual({
+			action: { name: 'MENTION', filter: { userSelection: [{ id: IDS.user, type: 'USER' }, { id: IDS.group, type: 'GROUP' }], channelIDs: [IDS.channel] } },
+			url: WEBHOOK_URL,
+		});
+		await expect(hook({ trigger: newMentionTrigger, name: 'onEnable', context: triggerContext({ propsValue: {} }) })).rejects.toThrow(/at least one/);
+	});
+	test('new direct message requires the admin filter', async () => {
+		const seen = stubFetch((request) => (request.method === 'GET' ? { body: [] } : { body: { id: IDS.webhook } }));
+		await hook({ trigger: newDirectMessageTrigger, name: 'onEnable', context: triggerContext({ propsValue: { adminUserId: IDS.admin } }) });
+		expect(seen[1].body).toEqual({ action: { name: 'DIRECT_MESSAGE', filter: { userID: IDS.admin } }, url: WEBHOOK_URL });
+	});
+});
+
+describe('trigger runs re-fetch and dedupe', () => {
+	test('new member emits the re-read user once', async () => {
+		const store = memoryStore();
+		const seen = stubFetch(replies([{ body: { id: IDS.user, email: 'a@x.io' } }]));
+		const context = triggerContext({ store, body: { id: IDS.user, name: 'A', email: 'forged@x.io' } });
+		expect(await hook({ trigger: newMemberTrigger, name: 'run', context })).toEqual([{ id: IDS.user, email: 'a@x.io' }]);
+		expect(seen[0].path).toBe(`/users/${IDS.user}`);
+		expect(seen[0].auth).toBe(`Bearer ${TOKEN}`);
+		expect(await hook({ trigger: newMemberTrigger, name: 'run', context })).toEqual([]);
+	});
+	test('forged or non-UUID IDs emit nothing without calling the API', async () => {
+		const seen = stubFetch(replies([{ body: {} }]));
+		expect(await hook({ trigger: newEventTrigger, name: 'run', context: triggerContext({ body: { id: '../users' } }) })).toEqual([]);
+		expect(await hook({ trigger: newMemberTrigger, name: 'run', context: triggerContext({ body: 'not json' }) })).toEqual([]);
+		expect(seen).toHaveLength(0);
+	});
+	test('a 404 on re-fetch emits nothing; other errors throw', async () => {
+		stubFetch(replies([{ status: 404, body: { message: 'Could not find event' } }]));
+		expect(await hook({ trigger: newEventTrigger, name: 'run', context: triggerContext({ body: { id: IDS.event } }) })).toEqual([]);
+		vi.unstubAllGlobals();
+		stubFetch(replies([{ status: 500, body: { message: 'down' } }]));
+		await expect(hook({ trigger: newEventTrigger, name: 'run', context: triggerContext({ body: { id: IDS.event } }) })).rejects.toThrow(/down/);
+	});
+	test('new event accepts a JSON string body', async () => {
+		stubFetch(replies([{ body: { id: IDS.event } }]));
+		expect(await hook({ trigger: newEventTrigger, name: 'run', context: triggerContext({ body: JSON.stringify({ id: IDS.event }) }) })).toEqual([{ id: IDS.event }]);
+	});
+	test('new thread dedupes per thread and channel', async () => {
+		const store = memoryStore();
+		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel } }]));
+		const context = triggerContext({ store, body: { id: IDS.thread, channelID: IDS.channel } });
+		expect(await hook({ trigger: newThreadTrigger, name: 'run', context })).toHaveLength(1);
+		expect(await hook({ trigger: newThreadTrigger, name: 'run', context })).toHaveLength(0);
+	});
+	test('new mention picks the nested comment', async () => {
+		const reply = { id: IDS.comment, userID: IDS.user, content: '<p>hey</p>' };
+		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel, userID: IDS.admin, url: 'u', comments: [{ id: 'c0', children: [reply] }] } }]));
+		const events = await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ body: { mentionedUsers: [{ id: IDS.user, type: 'USER' }], userID: IDS.user, source: { type: 'COMMENT', channelID: IDS.channel, threadID: IDS.thread, commentID: IDS.comment } } }) });
+		expect(events).toHaveLength(1);
+		const event = Array.isArray(events) ? events[0] : undefined;
+		expect(event).toMatchObject({ sourceType: 'COMMENT', commentId: IDS.comment, authorUserId: IDS.user, content: '<p>hey</p>', thread: { id: IDS.thread } });
+		expect(event).not.toHaveProperty('thread.comments');
+	});
+	test('new mention ignores a comment ID that is not in the thread', async () => {
+		stubFetch(replies([{ body: { id: IDS.thread, comments: [] } }]));
+		expect(await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ body: { source: { threadID: IDS.thread, commentID: IDS.comment } } }) })).toEqual([]);
+	});
+	test('new direct message emits the matching message from the chat', async () => {
+		const seen = stubFetch(replies([{ body: [{ id: 'x' }, { id: IDS.message, userID: IDS.user, content: '<p>hi</p>', createdAt: 't' }] }]));
+		const result = await hook({ trigger: newDirectMessageTrigger, name: 'run', context: triggerContext({ body: { senderUserID: IDS.user, receiverUserID: IDS.admin, chatID: IDS.chat, chatMessageID: IDS.message } }) });
+		expect(seen[0].path).toBe(`/directMessages/${IDS.chat}`);
+		expect(result).toEqual([{ chatId: IDS.chat, messageId: IDS.message, senderUserId: IDS.user, receiverUserId: IDS.admin, content: '<p>hi</p>', createdAt: 't', images: [], files: [] }]);
+	});
+	test('new direct message drops unknown message IDs', async () => {
+		stubFetch(replies([{ body: [{ id: 'x' }] }]));
+		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context: triggerContext({ body: { chatID: IDS.chat, chatMessageID: IDS.message } }) })).toEqual([]);
+	});
+});
+
+describe('trigger test()', () => {
+	test('new member returns newest members first', async () => {
+		stubFetch(replies([{ body: [{ id: 'a', createdAt: '2026-01-01' }, { id: 'b', createdAt: '2026-02-01' }] }]));
+		expect(await hook({ trigger: newMemberTrigger, name: 'test', context: triggerContext({}) })).toEqual([{ id: 'b', createdAt: '2026-02-01' }, { id: 'a', createdAt: '2026-01-01' }]);
+	});
+	test('new event returns newest events first', async () => {
+		stubFetch(replies([{ body: [{ id: 'a', createdAt: '2026-01-01' }, { id: 'b', createdAt: '2026-02-01' }] }]));
+		expect(await hook({ trigger: newEventTrigger, name: 'test', context: triggerContext({}) })).toMatchObject([{ id: 'b' }, { id: 'a' }]);
+	});
+	test('new thread walks posts channels until it finds threads', async () => {
+		const seen = stubFetch((request) => {
+			if (request.path === '/channels') {
+				return { body: [{ id: 'c1', type: 'POSTS' }, { id: 'c2', type: 'CHAT' }, { id: 'c3', type: 'POSTS' }] };
+			}
+			return request.path === '/channels/c1/threads' ? { body: [] } : { body: [{ id: IDS.thread }] };
+		});
+		expect(await hook({ trigger: newThreadTrigger, name: 'test', context: triggerContext({}) })).toEqual([{ id: IDS.thread }]);
+		expect(seen.map((r) => r.path)).toEqual(['/channels', '/channels/c1/threads', '/channels/c3/threads']);
+	});
+});
