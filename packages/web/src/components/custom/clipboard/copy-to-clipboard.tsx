@@ -45,7 +45,7 @@ const CopyToClipboardInput = ({
         <Textarea
           value={shown}
           rows={6}
-          className={noBorderInputClass}
+          className={cn(noBorderInputClass, 'font-mono text-xs')}
           readOnly
         />
       )}

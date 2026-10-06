@@ -2,10 +2,8 @@ import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import React from 'react';
 
 import { FeatureSample } from '@/app/components/feature-sample';
-import {
-  FeatureTeaser,
-  FeatureTeaserProps,
-} from '@/app/components/feature-teaser';
+import { FeatureTeaser } from '@/app/components/feature-teaser';
+import { PLATFORM_FEATURES, PlatformFeature } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export function PlanFeatureSample({
@@ -23,7 +21,6 @@ export function PlanFeatureSample({
       tier={teaser.tier}
       documentationUrl={teaser.documentationUrl}
       featureKey={teaser.featureKey}
-      showContactSales={teaser.showContactSales}
     >
       {children}
     </FeatureSample>
@@ -43,101 +40,65 @@ export function PlanFeatureGuard({
 const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
   sso: {
     isLocked: (plan) => !plan.ssoEnabled,
-    teaser: {
-      featureKey: 'SSO',
-      title: 'Enable Single Sign On',
-      description:
-        'Let your users sign in with your current SSO provider or give them self serve sign up access',
-      tier: 'team',
-    },
+    teaser: PLATFORM_FEATURES.sso,
   },
   projectRoles: {
     isLocked: (plan) => !plan.projectRolesEnabled,
-    teaser: {
-      featureKey: 'CUSTOM_ROLES',
-      title: 'Enable Custom Roles',
-      description:
-        'Define custom roles and permissions to control what your team members can access and modify',
-      tier: 'team',
-    },
+    teaser: PLATFORM_FEATURES.projectRoles,
   },
   globalConnections: {
     isLocked: (plan) => !plan.globalConnectionsEnabled,
-    teaser: {
-      featureKey: 'GLOBAL_CONNECTIONS',
-      title: 'Enable Global Connections',
-      description: 'Manage platform-wide connections to external systems.',
-      tier: 'team',
-    },
+    teaser: PLATFORM_FEATURES.globalConnections,
   },
   templates: {
     isLocked: (plan) => !plan.manageTemplatesEnabled,
-    teaser: {
-      featureKey: 'TEMPLATES',
-      title: 'Unlock Templates',
-      description:
-        'Convert the most common automations into reusable templates 1 click away from your users',
-      tier: 'enterprise',
-    },
+    teaser: PLATFORM_FEATURES.templates,
   },
   embedding: {
     isLocked: (plan) => !plan.embeddingEnabled,
-    teaser: {
-      featureKey: 'SIGNING_KEYS',
-      title: 'Unlock Embedding Through JS SDK',
-      description: 'Enable signing keys to access embedding functionalities.',
-      tier: 'enterprise',
-    },
+    teaser: PLATFORM_FEATURES.embedding,
   },
   apiKeys: {
     isLocked: (plan) => !plan.apiKeysEnabled,
-    teaser: {
-      featureKey: 'API',
-      title: 'Enable API Keys',
-      description: 'Create and manage API keys to access Activepieces APIs.',
-      tier: 'team',
-    },
+    teaser: PLATFORM_FEATURES.apiKeys,
   },
   secretManagers: {
     isLocked: (plan) => !plan.secretManagersEnabled,
-    teaser: {
-      featureKey: 'SECRET_MANAGERS',
-      title: 'Enable Secret Managers',
-      description: 'Manage your secrets from a single and secure place',
-      tier: 'enterprise',
-    },
+    teaser: PLATFORM_FEATURES.secretManagers,
   },
   auditLogs: {
     isLocked: (plan) => !plan.auditLogEnabled,
+    teaser: PLATFORM_FEATURES.auditLogs,
+  },
+  pieceSets: {
+    isLocked: (plan) => !plan.managePiecesEnabled,
     teaser: {
-      featureKey: 'AUDIT_LOGS',
-      title: 'Unlock Audit Logs',
+      ...PLATFORM_FEATURES.pieces,
+      title: 'Piece policies',
       description:
-        'Comply with internal and external security policies by tracking activities done within your account',
-      tier: 'enterprise',
+        'Decide which pieces, and which actions inside them, each project may build with. Projects use the Default policy unless you assign another.',
+    },
+  },
+  addStepMenu: {
+    isLocked: (plan) => !plan.managePiecesEnabled,
+    teaser: {
+      ...PLATFORM_FEATURES.pieces,
+      title: 'Piece menu layout',
+      description:
+        'Choose the tabs and pieces builders see when they add a step to a flow, in the order your teams use them.',
     },
   },
   eventStreaming: {
     isLocked: (plan) => !plan.eventStreamingEnabled,
-    teaser: {
-      featureKey: 'EVENT_DESTINATIONS',
-      title: 'Unlock Event Streaming',
-      description:
-        'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
-      tier: 'enterprise',
-      documentationUrl:
-        'https://www.activepieces.com/docs/admin-guide/guides/event-streaming',
-    },
+    teaser: PLATFORM_FEATURES.eventStreaming,
   },
   aiProviders: {
     isLocked: (plan) => !plan.aiProvidersEnabled,
-    teaser: {
-      featureKey: 'UNIVERSAL_AI',
-      title: 'Unlock AI Center',
-      description:
-        'Bring your own AI provider keys and choose the models that power your automations',
-      tier: 'plus',
-    },
+    teaser: PLATFORM_FEATURES.aiProviders,
+  },
+  workerGroups: {
+    isLocked: (plan) => !plan.workerGroupsEnabled,
+    teaser: PLATFORM_FEATURES.workerGroups,
   },
 };
 
@@ -151,11 +112,14 @@ type PlanFeature =
   | 'secretManagers'
   | 'auditLogs'
   | 'eventStreaming'
-  | 'aiProviders';
+  | 'aiProviders'
+  | 'workerGroups'
+  | 'pieceSets'
+  | 'addStepMenu';
 
 type PlanFeatureSampleSpec = {
   isLocked: (plan: PlatformWithoutSensitiveData['plan']) => boolean;
-  teaser: FeatureTeaserProps;
+  teaser: PlatformFeature;
 };
 
 type PlanFeatureSampleProps = {

@@ -1,37 +1,15 @@
-import {
-  ApEdition,
-  ApFlagId,
-  PlatformAdminSurface,
-} from '@activepieces/shared';
-import {
-  CrownIcon,
-  LinkSquare02Icon,
-  Tick02Icon,
-} from '@hugeicons/core-free-icons';
-import { t } from 'i18next';
-import { ReactNode, useState } from 'react';
+import { CrownIcon } from '@hugeicons/core-free-icons';
+import { ReactNode, useCallback, useState } from 'react';
 
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { FeatureKey } from '../components/request-trial';
-import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
-
-import { useUpgradeClick } from './use-upgrade-click';
+import { UpgradeDialog } from '../components/upgrade-dialog';
+import { FeatureTier } from '../utils/feature-tier';
 
 export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
   const [open, setOpen] = useState(false);
+  const openDialog = useCallback(() => setOpen(true), []);
 
   return {
     locked,
@@ -41,7 +19,7 @@ export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
         className="size-3.5 shrink-0 text-on-accent/90"
       />
     ) : null,
-    open: () => setOpen(true),
+    open: openDialog,
     dialog: (
       <UpgradeFeatureDialog open={open} onOpenChange={setOpen} {...feature} />
     ),
@@ -51,83 +29,17 @@ export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
 export function UpgradeFeatureDialog({
   open,
   onOpenChange,
-  title,
-  description,
-  bullets,
-  tier,
-  documentationUrl,
-  featureKey,
+  ...feature
 }: UpgradeFeatureDialogProps) {
-  const upgradeClick = useUpgradeClick();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const isCommunity = edition === ApEdition.COMMUNITY;
-  const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[28rem]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {t(title)}
-            {tier !== undefined && !isCommunity && (
-              <Badge variant="outline">{TIER_LABELS[tier]}</Badge>
-            )}
-          </DialogTitle>
-          <DialogDescription>
-            {isCommunity
-              ? t('This is an Enterprise feature, available on our paid plans.')
-              : t(description)}
-          </DialogDescription>
-        </DialogHeader>
-
-        {!isCommunity && bullets !== undefined && bullets.length > 0 && (
-          <ul className="flex flex-col gap-2">
-            {bullets.map((bullet) => (
-              <li key={bullet} className="flex items-start gap-2 text-sm">
-                <HugeiconsIcon
-                  icon={Tick02Icon}
-                  className="mt-0.5 size-4 shrink-0 text-accent-11"
-                />
-                <span>{t(bullet)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <DialogFooter className="sm:justify-start">
-          {isCommunity ? (
-            <a
-              {...adminControl(AdminControl.PLAN_DIALOG_LINK)}
-              href={docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
-            >
-              {t('Read the docs')}
-              <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
-            </a>
-          ) : (
-            <Button
-              onClick={() => {
-                onOpenChange(false);
-                upgradeClick({
-                  feature: featureKey,
-                  tier,
-                  surface: PlatformAdminSurface.DIALOG,
-                });
-              }}
-            >
-              {t('Upgrade plan')}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <UpgradeDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      feature={feature}
+      showContactSales={false}
+    />
   );
 }
-
-const ENTERPRISE_DOCUMENTATION_URL =
-  'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
 
 export type PlatformFeature = {
   featureKey: FeatureKey;

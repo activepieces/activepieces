@@ -51,7 +51,7 @@ export const useTeamProjectLimitGuard = ({
     <TeamProjectLimitContent
       limit={limit ?? 0}
       isPlatformAdmin={isPlatformAdmin}
-      isCommunity={edition === ApEdition.COMMUNITY}
+      isCloud={edition === ApEdition.CLOUD}
       used={teamProjectsUsed}
       onClose={onClose}
     />
@@ -66,7 +66,7 @@ export const useTeamProjectLimitGuard = ({
 function TeamProjectLimitContent({
   limit,
   isPlatformAdmin,
-  isCommunity,
+  isCloud,
   used,
   onClose,
 }: TeamProjectLimitContentProps) {
@@ -120,10 +120,12 @@ function TeamProjectLimitContent({
         <ul className="flex flex-col gap-2">
           {feature.bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <HugeiconsIcon
-                icon={Tick02Icon}
-                className="mt-0.5 size-4 shrink-0 text-accent-11"
-              />
+              <span className="flex h-lh shrink-0 items-center">
+                <HugeiconsIcon
+                  icon={Tick02Icon}
+                  className="size-4 text-accent-11"
+                />
+              </span>
               <span>{t(bullet)}</span>
             </li>
           ))}
@@ -135,7 +137,7 @@ function TeamProjectLimitContent({
             <Button type="button" variant="outline" onClick={onClose}>
               {t('Cancel')}
             </Button>
-            {isCommunity ? (
+            {!isCloud ? (
               <RequestTrial
                 featureKey={feature.featureKey}
                 surface={PlatformAdminSurface.LIMIT}
@@ -169,7 +171,7 @@ function TeamProjectLimitContent({
 type TeamProjectLimitContentProps = {
   limit: number;
   isPlatformAdmin: boolean;
-  isCommunity: boolean;
+  isCloud: boolean;
   used: number;
   onClose: () => void;
 };
