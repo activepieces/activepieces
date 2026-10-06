@@ -74,10 +74,10 @@ async function finish({ platformId, conversationId, taskId, claimId, status, mes
         .execute()
 }
 
-async function list({ platformId, conversationId }: { platformId: string, conversationId: string }): Promise<Omit<SubagentTask, 'messages'>[]> {
+async function list({ platformId, conversationId }: { platformId: string, conversationId: string }): Promise<Pick<SubagentTask, 'id' | 'title' | 'status'>[]> {
     return agentTaskRepo().find({
         where: { platformId, conversationId },
-        select: ['id', 'created', 'updated', 'platformId', 'projectId', 'conversationId', 'title', 'status', 'summary', 'artifacts'],
+        select: ['id', 'title', 'status'],
         order: { created: 'ASC' },
     })
 }

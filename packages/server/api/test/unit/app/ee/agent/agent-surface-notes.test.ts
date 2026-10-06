@@ -1,4 +1,4 @@
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, SubagentTaskStatus } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { agentSurfaceNotes } from '../../../../../src/app/ee/agent/prompt/agent-surface-notes'
 
@@ -146,13 +146,14 @@ describe('what each surface is told it can do', () => {
             source: AgentRunSource.CHAT,
             currentDate: 'Tuesday, August 18, 2026',
             ...EVERYTHING_AVAILABLE,
-            tasks: [{ id: 'task1', title: 'Build Save order', status: 'DONE', summary: 'Built and validated.', artifacts: [{ type: 'flow', id: 'f1', name: 'Save order' }] }],
+            tasks: [{ id: 'task1', title: 'Build Save order', status: SubagentTaskStatus.DONE }],
             userEmail: 'owner@acme.com',
             userIdentity: IDENTITY,
             connections: null,
             memory: { instructions: null, memories: [] },
         })
-        expect(withTasks).toContain('- taskId task1, "Build Save order", done; made flow "Save order" (f1): Built and validated.')
+        expect(withTasks).toContain('- taskId task1, "Build Save order", done')
+        expect(withTasks).not.toContain('Save order" (f1)')
     })
 })
 

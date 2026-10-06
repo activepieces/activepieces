@@ -29,7 +29,7 @@ describe('agentTaskService', () => {
         expect(started.messages).toEqual([])
         expect(resumed).toEqual({ taskId: started.taskId, claimId: expect.any(String), messages: [{ role: 'user', content: 'build it' }] })
         expect(resumed.claimId).not.toBe(started.claimId)
-        expect(tasks).toEqual([expect.objectContaining({ id: started.taskId, title: 'Build Save order', status: SubagentTaskStatus.RUNNING, summary: 'Needs a Gmail connection.', artifacts: [{ type: 'flow', id: 'f1', name: 'Save order' }] })])
+        expect(tasks).toEqual([{ id: started.taskId, title: 'Build Save order', status: SubagentTaskStatus.RUNNING }])
     })
 
     it('refuses to resume a task that is still running', async () => {
@@ -60,7 +60,7 @@ describe('agentTaskService', () => {
 
         await agentTaskService.finish({ platformId: ctx.platform.id, conversationId, taskId: second.taskId, claimId: second.claimId, status: SubagentTaskStatus.DONE, messages: [{ role: 'user', content: 'new' }], summary: 'new result', artifacts: [] })
         await agentTaskService.finish({ platformId: ctx.platform.id, conversationId, taskId: first.taskId, claimId: first.claimId, status: SubagentTaskStatus.FAILED, messages: [{ role: 'user', content: 'old' }], summary: 'old result', artifacts: [] })
-        const [task] = await agentTaskService.list({ platformId: ctx.platform.id, conversationId })
+        const task = await db.findOneBy('agent_task', { id: first.taskId })
 
         expect(task).toMatchObject({ status: SubagentTaskStatus.DONE, summary: 'new result' })
     })
