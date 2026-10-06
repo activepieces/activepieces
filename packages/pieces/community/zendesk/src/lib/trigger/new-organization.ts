@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { newOrganizationOutputSchema } from '../output-schemas';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_new_organization_webhook';
 
@@ -28,6 +29,7 @@ interface ZendeskOrganization {
 
 export const newOrganization = createTrigger({
   name: 'new_organization',
+  outputSchema: newOrganizationOutputSchema,
   classification: 'READ',
   displayName: 'New Organization',
   description: 'Fires when a new organization record is created. Uses Zendesk event webhook (no Trigger needed).',

@@ -137,7 +137,7 @@ export const newFormSubmissionTrigger = createTrigger({
 		formId: formDropdown,
 		allowMultipleFiles: Property.Checkbox({
 			displayName: 'Allow Multiple Files',
-			description: 'Return all file fields as array',
+			description: 'Returns every uploaded file as a list; off keeps only the last one.',
 			required: true,
 			defaultValue: false,
 		}),

@@ -20,15 +20,14 @@ export const askOpenAI = createAction({
   name: 'ask_chatgpt',
   classification: 'READ',
   displayName: 'Ask ChatGPT',
-  description: 'Ask ChatGPT anything you want!',
+  description: 'Send a question or instruction to an OpenAI model and get a reply.',
   aiMetadata: { description: 'Sends a prompt to an OpenAI chat model and returns the reply text, with sampling controls (temperature, top P, frequency and presence penalties) and an optional roles array that supplies the system message. Two modes: stateless by default, or, when a memory key is set, loading and re-saving the conversation history in project storage so later runs continue the same thread, trimming it as it approaches the token limit. This is the general-purpose text call of this piece; prefer ask_assistant to route through a pre-built OpenAI Assistant, vision_prompt when an image is part of the question, and extract-structured-data when the answer must come back as named fields. A model, a question, and a maximum token count are required; not idempotent: each call produces a fresh completion and, with a memory key, rewrites the stored history.', idempotent: false },
   props: {
     model: Property.Dropdown({
   auth: openaiAuth,
       displayName: 'Model',
       required: true,
-      description:
-        'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
+      description: 'The OpenAI model that writes the reply.',
       refreshers: [],
       defaultValue: 'gpt-3.5-turbo',
       options: async ({ auth }) => {
@@ -58,59 +57,65 @@ export const askOpenAI = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: "Couldn't load models, API key is invalid",
+            placeholder: "Couldn't load models. Check your API key or try again.",
           };
         }
       },
     }),
     prompt: Property.LongText({
       displayName: 'Question',
+      description: 'What you want the model to answer or do.',
+      placeholder: 'e.g. Summarize this email in three bullet points',
       required: true,
-    }),
-    temperature: Property.Number({
-      displayName: 'Temperature',
-      required: false,
-      description:
-        'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      defaultValue: 1,
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: true,
-      description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion depending on the model. Don't set the value to maximum and leave some tokens for the input. (One token is roughly 4 characters for normal English text)",
+      description: 'Longest reply in tokens, about 4 characters each.',
       defaultValue: 2048,
+    }),
+    memoryKey: Property.ShortText({
+      displayName: 'Conversation Memory ID',
+      description:
+        'Runs that share this ID continue one conversation. Empty: no memory.',
+      placeholder: 'e.g. support-chat-42',
+      required: false,
+    }),
+    temperature: Property.Number({
+      displayName: 'Temperature',
+      required: false,
+      description: 'From 0 to 2. Lower is more focused, higher is more varied.',
+      defaultValue: 1,
+      advanced: true,
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
-      description:
-        'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+      description: 'From 0 to 1. Adjust this or Temperature, not both.',
       defaultValue: 1,
+      advanced: true,
     }),
     frequencyPenalty: Property.Number({
-      displayName: 'Frequency penalty',
+      displayName: 'Frequency Penalty',
       required: false,
       description:
-        "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.",
+        'From -2 to 2. Higher values make the model repeat itself less.',
       defaultValue: 0,
+      advanced: true,
     }),
     presencePenalty: Property.Number({
-      displayName: 'Presence penalty',
+      displayName: 'Presence Penalty',
       required: false,
       description:
-        "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
-    }),
-    memoryKey: Property.ShortText({
-      displayName: 'Memory Key',
-      description:
-        'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave ChatGPT without memory of previous messages.',
-      required: false,
+        'From -2 to 2. Higher values push the model toward new topics.',
+      advanced: true,
     }),
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
-      description: 'Array of roles to specify more accurate response',
+      description:
+        'Messages sent before the question, such as a system instruction.',
+      advanced: true,
       defaultValue: [
         { role: 'system', content: 'You are a helpful assistant.' },
       ],
