@@ -9,7 +9,10 @@ import { PlatformLayout } from '../components/platform-layout';
 
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
-import { PlanFeatureSample } from './platform/plan-feature-sample';
+import {
+  PlanFeatureGuard,
+  PlanFeatureSample,
+} from './platform/plan-feature-sample';
 import { useAdminControlClicks } from './platform/use-admin-control-clicks';
 import { useAdminPageViewed } from './platform/use-admin-page-viewed';
 
@@ -21,6 +24,9 @@ const SettingsUsage = React.lazy(() =>
 );
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
+);
+const EventDestinationFormPage = React.lazy(
+  () => import('./platform/infra/event-destinations/destination-form'),
 );
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
 const PlatformConfigurationsPage = React.lazy(() =>
@@ -543,6 +549,23 @@ export const platformRoutes = [
       </PlatformLayout>
     ),
   },
+  ...[
+    { path: '/platform/audit-log/streaming/new', title: 'New Destination' },
+    { path: '/platform/audit-log/streaming/:id', title: 'Edit Destination' },
+  ].map(({ path, title }) => ({
+    path,
+    element: (
+      <PlatformLayout>
+        <PageTitle title={title}>
+          <PlanFeatureGuard feature="eventStreaming">
+            <SuspenseWrapper>
+              <EventDestinationFormPage />
+            </SuspenseWrapper>
+          </PlanFeatureGuard>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  })),
   ...[
     '/platform/setup/*',
     '/platform/security/*',

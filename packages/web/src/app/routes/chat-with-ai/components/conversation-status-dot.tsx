@@ -16,7 +16,7 @@ export function ConversationStatusDot({
       <TooltipTrigger asChild>
         <span className="relative flex h-1.5 w-1.5 items-center justify-center">
           {state === 'working' && (
-            <span className="absolute inline-flex h-full w-full rounded-full bg-accent-11 opacity-75 animate-ping" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-accent-10 opacity-75 animate-ping" />
           )}
           <span
             className={cn(
@@ -49,7 +49,7 @@ function getStateLabel(state: ConversationIndicatorState): string {
 }
 
 const DOT_CLASS: Record<ConversationIndicatorState, string> = {
-  working: 'bg-accent-11',
-  waiting: 'bg-warning-11',
+  working: 'bg-accent-10',
+  waiting: 'bg-warning-10',
   unread: 'bg-gray-12',
 };
