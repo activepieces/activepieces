@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { ModelTierSurface } from '@activepieces/server-utils'
 import { AiProviderToolChoices, AiProviderToolConfig, AIProviderWithoutSensitiveData, GetProviderConfigResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -23,6 +23,9 @@ async function keyCredentialsForRun({ platformId, configs, choice, scope, log }:
         return null
     }
     const { data, error } = await tryCatch(() => aiProviderService(log).getConfigOrThrow({ platformId, provider: row.provider, scope, configId: row.id }))
+    if (error instanceof ActivepiecesError && error.error.code === ErrorCode.FEATURE_DISABLED) {
+        throw error
+    }
     if (error) {
         log.warn({ error, aiProvider: { id: row.id } }, '[chosenProviders#resolveForRun] Chosen AI provider cannot serve this run, using the chat provider')
     }

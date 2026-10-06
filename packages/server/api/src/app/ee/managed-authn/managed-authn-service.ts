@@ -5,6 +5,7 @@ import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, 
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { planFeatures } from '../../platform/plan-features'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -20,6 +21,11 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         const externalPrincipal = await externalTokenExtractor(log).extract(
             externalAccessToken,
         )
+        await planFeatures(log).assertEnabled({
+            platformId: externalPrincipal.platformId,
+            feature: 'embeddingEnabled',
+            message: 'Embedding is not on this platform\'s plan',
+        })
 
         const { project } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,

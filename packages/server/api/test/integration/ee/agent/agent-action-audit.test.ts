@@ -31,7 +31,7 @@ afterEach(() => {
 const RECIPIENT = 'someone@example.com'
 
 async function contextWithProvider(): Promise<TestContext> {
-    const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, auditLogEnabled: true } })
+    const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, auditLogEnabled: true, aiProvidersEnabled: true } })
     await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
     return ctx
 }

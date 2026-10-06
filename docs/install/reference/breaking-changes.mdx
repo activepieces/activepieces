@@ -8,6 +8,24 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Team and Enterprise features stop working when the plan no longer includes them
+
+Most Team and Enterprise features used to be checked only when an admin set them up, so anything configured while a plan or trial was active kept working after it lapsed. From this release each feature is also checked when it is used:
+
+- SAML sign-in and embedded sign-in are refused, and the sign-in page no longer shows the SAML button.
+- Flow steps that use a global connection, a secret from a secret manager or your own AI provider key fail with an error saying the feature is not on the plan. A model tier fails when its main model uses your own key.
+- Chat no longer opens saved agents.
+- Members with a custom role act as Viewers.
+- Deleting a flow or table no longer pushes the delete to a connected git repository.
+- On Cloud, custom logos and colours appear only while the plan includes branding, as on self-hosted.
+- Saving branding, allowed embed origins, custom templates, private pieces or OAuth apps, and adding or editing your own AI provider keys, is refused without the matching plan feature.
+
+Nothing is deleted, and everything works again as soon as the plan includes the feature. Community Edition is not affected.
+
+#### What you need to do
+
+Nothing if your plan includes the features you use. Otherwise renew or upgrade your plan before you upgrade Activepieces.
+
 #### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
 
 Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.

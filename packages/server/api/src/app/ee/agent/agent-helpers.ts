@@ -417,12 +417,12 @@ async function agentsSurfaceAvailable({ platformId, log }: { platformId: string,
     return plan.agentsEnabled
 }
 
-async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+async function assertAgentsSurfaceAvailable({ platformId, log, message = 'This step runs a saved agent, and agents are not available on this platform' }: { platformId: string, log: FastifyBaseLogger, message?: string }): Promise<void> {
     const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
     if (!plan.agentsEnabled) {
         throw new ActivepiecesError({
             code: ErrorCode.FEATURE_DISABLED,
-            params: { message: 'This step runs a saved agent, and agents are not available on this platform' },
+            params: { message },
         })
     }
 }
@@ -461,3 +461,5 @@ export const agentHelpers = {
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>
 
 export type StreamingLockResult = 'acquired' | 'busy' | 'superseded'
+
+export const SAVED_AGENTS_NOT_ON_PLAN = 'Saved agents are not on this platform\'s plan'

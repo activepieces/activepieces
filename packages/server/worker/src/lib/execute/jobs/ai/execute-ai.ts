@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
+import { AiStepAction, apErrorOf, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { JobContext, JobHandler, JobResult, JobResultKind } from '../../types'
 import { resolveAiFiles } from './ai-files'
@@ -221,7 +221,7 @@ function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: s
 }
 
 function toFailureMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error)
+    return apErrorOf(error)?.message ?? (error instanceof Error ? error.message : String(error))
 }
 
 const DEFAULT_WEB_SEARCH_STEPS = 5

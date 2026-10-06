@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { oauthAppService } from './oauth-app.service'
 
 export const oauthAppModule: FastifyPluginAsyncZod = async (app) => {
@@ -40,6 +41,7 @@ const oauthAppController: FastifyPluginAsyncZod = async (app) => {
             config: {
                 security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
+            preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.managePiecesEnabled),
             schema: {
                 body: UpsertOAuth2AppRequest,
             },
@@ -60,6 +62,7 @@ const oauthAppController: FastifyPluginAsyncZod = async (app) => {
             config: {
                 security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
+            preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.managePiecesEnabled),
             schema: {
                 params: GetIdParams,
             },

@@ -104,6 +104,28 @@ describe('Templates', () => {
             const responseBody = response?.json()
             expect(responseBody.metadata).toEqual({ foo: 'bar' })
         })
+
+        it('refuses a custom template on a plan without templates', async () => {
+            const ctx = await createTestContext(app!, { plan: { manageTemplatesEnabled: false } })
+            const mockTemplate = createMockTemplate({
+                platformId: ctx.platform.id,
+                type: TemplateType.CUSTOM,
+            })
+            const createTemplateRequest: CreateTemplateRequestBody = {
+                name: mockTemplate.name,
+                description: mockTemplate.description,
+                summary: mockTemplate.summary,
+                flows: mockTemplate.flows,
+                type: TemplateType.CUSTOM,
+                author: mockTemplate.author,
+                categories: mockTemplate.categories,
+                tags: mockTemplate.tags,
+            }
+
+            const response = await ctx.post('/v1/templates', createTemplateRequest)
+
+            expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        })
     })
 
     describe('Delete Template', () => {

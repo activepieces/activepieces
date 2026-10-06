@@ -10,6 +10,7 @@ import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { billingProvider } from '../../../platform/billing-provider'
+import { planFeatures } from '../../../platform/plan-features'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
@@ -74,6 +75,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         }
 
         const updatedPlatformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
+        planFeatures(log).forget(platformId)
         if (!isNil(updatedPlatformPlan.plan)) {
             await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan, PLATFORM_PLAN_NAME_TTL_SECONDS)
         }

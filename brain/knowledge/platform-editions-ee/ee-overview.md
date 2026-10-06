@@ -10,6 +10,7 @@ The Enterprise Edition extends CE with commercial features living under `package
 1. **Module-level** — edition switch in `app.ts` registers EE/Cloud modules conditionally on `ApEdition`.
 2. **Endpoint-level** — `app.addHook('preHandler', platformMustHaveFeatureEnabled((p) => p.plan.myFlag))`; returns HTTP 402 `FEATURE_DISABLED` when the flag is false.
 3. **Hooks pattern** — CE declares a no-op default interface; EE `.set()`s the real one; callers stay edition-agnostic.
+4. **Runtime gate** — `planFeatures(log).assertEnabled({ platformId, feature, message })` at the point a feature is used (sign-in, a run fetching a connection or key, a role lookup), so it stops working once the plan lapses. Safe in CE code (always enabled on Community), cached 60s per process and cleared by `platformPlanService.update`. See [decision 000047](../decisions/000047-plan-features-are-enforced-where-they-are-used.md).
 
 ### EE modules (with plan flag)
 - audit-logs (`auditLogEnabled`), api-keys (`apiKeysEnabled`), global-connections (`globalConnectionsEnabled`), secret-managers (`secretManagersEnabled`), scim (`scimEnabled`), template (`manageTemplatesEnabled`), pieces (`managePiecesEnabled`). (The custom-domains module is gone; the `customDomainsEnabled` column remains for backwards compatibility.)

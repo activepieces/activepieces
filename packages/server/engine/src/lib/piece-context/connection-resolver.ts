@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ConnectionPieceMismatchError, ExecutionError, FetchError } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ConnectionPieceMismatchError, ExecutionError, ExecutionErrorType, FetchError } from '@activepieces/shared'
 import { retryFetch } from '../api/retry-fetch'
 import { utils } from '../utils'
 
@@ -19,7 +19,7 @@ export const createConnectionResolver = ({ projectId, engineToken, apiUrl, conte
                 if (!response.ok) {
                     return handleResponseError({
                         externalId,
-                        httpStatus: response.status,
+                        response,
                     })
                 }
                 const connection: AppConnection = await response.json()
@@ -44,9 +44,13 @@ export const createConnectionResolver = ({ projectId, engineToken, apiUrl, conte
     }
 }
 
-const handleResponseError = ({ externalId, httpStatus }: HandleResponseErrorParams): never => {
-    if (httpStatus === 404) {
+const handleResponseError = async ({ externalId, response }: HandleResponseErrorParams): Promise<never> => {
+    if (response.status === 404) {
         throw new ConnectionNotFoundError(externalId)
+    }
+    if (response.status === 402) {
+        const body: PlanErrorBody = await response.json()
+        throw new ExecutionError('ConnectionNotOnPlan', JSON.stringify({ message: body.params.message }, null, 2), ExecutionErrorType.USER)
     }
 
     throw new ConnectionLoadingError(externalId)
@@ -101,7 +105,13 @@ type CreateConnectionResolverParams = {
 
 type HandleResponseErrorParams = {
     externalId: string
-    httpStatus: number
+    response: Response
+}
+
+type PlanErrorBody = {
+    params: {
+        message: string
+    }
 }
 
 type AssertPieceBindingParams = {

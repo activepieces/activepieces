@@ -12,6 +12,7 @@ import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { system } from '../../helper/system/system'
+import { planFeatures } from '../../platform/plan-features'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
@@ -120,6 +121,11 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
     app.delete('/:id', DeletePieceRequest, async (req, reply) => {
+        await planFeatures(req.log).assertEnabled({
+            platformId: req.principal.platform.id,
+            feature: 'managePiecesEnabled',
+            message: 'Managing pieces is not on this platform\'s plan',
+        })
         await pieceMetadataService(req.log).delete({
             id: req.params.id,
             platformId: req.principal.platform.id,

@@ -68,7 +68,7 @@ afterEach(() => {
 // coverage: the archive only reaches the handler if that route attaches attachMultipartFieldsToBody.
 describe('POST /v1/pieces — private piece installation (EE)', () => {
     it('should install a private piece from a tgz archive and persist metadata', async () => {
-        const ctx = await createTestContext(app!)
+        const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
 
         const formData = new FormData()
         formData.append(
@@ -99,5 +99,23 @@ describe('POST /v1/pieces — private piece installation (EE)', () => {
         expect(saved.pieceType).toBe(PieceType.CUSTOM)
         expect(saved.packageType).toBe(PackageType.ARCHIVE)
         expect(saved.archiveId).toBeDefined()
+    })
+
+    it('should refuse a private piece on a plan without managing pieces', async () => {
+        const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: false } })
+        const formData = new FormData()
+        formData.append('pieceArchive', new Blob([tgzBuffer], { type: 'application/gzip' }), 'private-piece-test.tgz')
+        formData.append('pieceName', PIECE_NAME)
+        formData.append('pieceVersion', PIECE_VERSION)
+        formData.append('packageType', PackageType.ARCHIVE)
+        formData.append('scope', PieceScope.PLATFORM)
+
+        const response = await ctx.inject({
+            method: 'POST',
+            url: '/api/v1/pieces',
+            body: formData,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })

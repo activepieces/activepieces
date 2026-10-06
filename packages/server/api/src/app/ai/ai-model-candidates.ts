@@ -12,8 +12,11 @@ export const aiModelCandidates = (log: FastifyBaseLogger) => ({
 
     async resolve({ platformId, tierId }: { platformId: PlatformId, tierId: string }): Promise<ResolveAiModelCandidatesResponse> {
         const { tier, entries } = await platformModelTierService.getForRun({ platformId, id: tierId })
-        const decrypted = await Promise.all(entries.map(async ({ modelId, key }) => {
+        const decrypted = await Promise.all(entries.map(async ({ modelId, key }, index) => {
             const { data: credentials, error } = await tryCatch(() => aiProviderService(log).credentialsForTierKey({ platformId, key }))
+            if (index === 0 && error instanceof ActivepiecesError && error.error.code === ErrorCode.FEATURE_DISABLED) {
+                throw error
+            }
             if (!isNil(error) || isNil(credentials)) {
                 log.warn({ error, aiProvider: { id: key.id }, platformTier: { id: tier.id } }, '[aiModelCandidates] Skipping a tier entry whose key cannot be read')
                 return []

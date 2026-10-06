@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
 import { AddSigningKeyResponse, SigningKey, SigningKeyId } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SigningKeyEntity } from './signing-key-entity'
@@ -38,9 +38,10 @@ export const signingKeyService = {
         }
     },
 
-    async get({ id }: GetParams): Promise<SigningKey | null> {
+    async get({ id, platformId }: GetParams): Promise<SigningKey | null> {
         return repo().findOneBy({
             id,
+            ...spreadIfDefined('platformId', platformId),
         })
     },
 
@@ -71,6 +72,7 @@ type AddParams = {
 
 type GetParams = {
     id: SigningKeyId
+    platformId?: PlatformId
 }
 
 type DeleteParams = {

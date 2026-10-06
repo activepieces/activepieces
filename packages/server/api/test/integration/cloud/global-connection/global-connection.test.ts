@@ -2,6 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { AppConnectionScope, AppConnectionType, PackageType, PlatformRole, PrincipalType, UpdateGlobalConnectionValueRequestBody, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { platformPlanService } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
@@ -582,6 +583,57 @@ describe('GlobalConnection API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Worker connection fetch', () => {
+        it('stops handing a global connection to runs once the plan no longer includes it', async () => {
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
+            const mockPieceMetadata = createMockPieceMetadata({
+                platformId: mockPlatform.id,
+                packageType: PackageType.REGISTRY,
+            })
+            await db.save('piece_metadata', [mockPieceMetadata])
+            const ownerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: { id: mockPlatform.id },
+            })
+            const engineToken = await generateMockToken({
+                id: apId(),
+                type: PrincipalType.ENGINE,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            const connection = await app!.inject({
+                method: 'POST',
+                url: '/api/v1/global-connections',
+                headers: { authorization: `Bearer ${ownerToken}` },
+                body: {
+                    pieceVersion: mockPieceMetadata.version,
+                    displayName: 'global connection',
+                    pieceName: mockPieceMetadata.name,
+                    projectIds: [mockProject.id],
+                    scope: AppConnectionScope.PLATFORM,
+                    type: AppConnectionType.SECRET_TEXT,
+                    value: {
+                        type: AppConnectionType.SECRET_TEXT,
+                        secret_text: 'test-secret-text',
+                    },
+                },
+            })
+            const fetchForRun = () => app!.inject({
+                method: 'GET',
+                url: `/api/v1/worker/app-connections/${connection.json().externalId}`,
+                headers: { authorization: `Bearer ${engineToken}` },
+            })
+
+            const whileOnPlan = await fetchForRun()
+            await platformPlanService(app!.log).update({ platformId: mockPlatform.id, globalConnectionsEnabled: false })
+            const afterLapse = await fetchForRun()
+
+            expect(whileOnPlan.statusCode).toBe(StatusCodes.OK)
+            expect(afterLapse.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         })
     })
 })

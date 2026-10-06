@@ -1,7 +1,9 @@
 import { UserIdentityProvider } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { platformPlanService } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity } from '../../../helpers/mocks'
@@ -115,5 +117,22 @@ describe('SAML ACS redirect', () => {
 
         expect(location.origin).toBe('https://sso.customer.example.com')
         expect(location.pathname).toBe('/authenticate')
+    })
+
+    it('refuses the assertion once the plan no longer includes single sign-on', async () => {
+        await platformPlanService(app.log).update({ platformId, ssoEnabled: false })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/authn/saml/acs?platformId=${platformId}`,
+            headers: {
+                'x-forwarded-proto': 'https',
+                'x-forwarded-host': 'apps.customer.example.com',
+                'content-type': 'application/x-www-form-urlencoded',
+            },
+            payload: 'SAMLResponse=stubbed',
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })

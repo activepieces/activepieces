@@ -1,12 +1,13 @@
-import { ProjectRole } from '@activepieces/core-utils'
+import { Permission, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { platformPlanService } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockProjectRole, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -229,6 +230,30 @@ describe('Project Role API', () => {
 
             const response = await ctx.delete(`/v1/project-roles/${faker.string.uuid()}`)
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('Custom role after the plan lapses', () => {
+        it('lets a member with a custom role only view the project', async () => {
+            const ctx = await createTestContext(app!, { plan: { customRolesEnabled: true } })
+            const customRole = createMockProjectRole({
+                platformId: ctx.platform.id,
+                type: RoleType.CUSTOM,
+                name: 'Flow Builder',
+                permissions: [Permission.READ_FLOW, Permission.WRITE_FLOW],
+            })
+            await db.save('project_role', customRole)
+            const member = await createMemberContext(app!, ctx, { projectRole: customRole.name })
+            const createFlow = () => member.post('/v1/flows', { displayName: 'test flow', projectId: ctx.project.id })
+
+            const whileOnPlan = await createFlow()
+            await platformPlanService(app!.log).update({ platformId: ctx.platform.id, customRolesEnabled: false })
+            const afterLapse = await createFlow()
+            const readAfterLapse = await member.get('/v1/flows', { projectId: ctx.project.id })
+
+            expect(whileOnPlan.statusCode).not.toBe(StatusCodes.FORBIDDEN)
+            expect(afterLapse.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(readAfterLapse.statusCode).toBe(StatusCodes.OK)
         })
     })
 })
