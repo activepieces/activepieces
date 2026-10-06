@@ -34,8 +34,8 @@ async function turnWhereTheModelRepairsWith(repairText: string): Promise<unknown
         },
         doGenerate: async () => ({
             content: [{ type: 'text' as const, text: repairText }],
-            finishReason: 'stop' as const,
-            usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+            finishReason: { unified: 'stop' as const, raw: 'stop' },
+            usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } },
             warnings: [],
         }),
     })

@@ -1,7 +1,7 @@
 import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, PersistedAgentPart, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
+import { APICallError, generateText, isLoopFinished, isStepCount, jsonSchema, JSONSchema7, LanguageModel, LanguageModelUsage, ModelMessage, NoObjectGeneratedError, NoSuchToolError, Output, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
@@ -144,21 +144,13 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
                 ...stepContext,
             }
         },
-        repairToolCall: async ({ toolCall, error }) => {
+        repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
             }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
-            const { data: repaired } = await tryCatch(async () => {
-                const { text } = await generateText({
-                    model,
-                    abortSignal,
-                    telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
-                    prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
-                })
-                return jsonInputFrom(text)
-            })
+            const repaired = await repairToolInput({ model, abortSignal, toolName: toolCall.toolName, input: toolCall.input, errorMessage: error.message, schema: await inputSchema({ toolName: toolCall.toolName }) })
             if (isNil(repaired)) {
                 log.warn({ toolName: toolCall.toolName }, 'Could not repair the tool call into valid JSON')
                 return null
@@ -422,6 +414,27 @@ export function isTransientFailureText(text: string): boolean {
 // from the shapes our action results use (found:false, empty array) and the A3a empty-result note.
 export function looksEmptyResultText(text: string): boolean {
     return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
+}
+
+async function repairToolInput({ model, abortSignal, toolName, input, errorMessage, schema }: {
+    model: LanguageModel
+    abortSignal: AbortSignal
+    toolName: string
+    input: string
+    errorMessage: string
+    schema: JSONSchema7
+}): Promise<string | undefined> {
+    const { data, error } = await tryCatch(async () => generateText({
+        model,
+        abortSignal,
+        telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
+        output: Output.object({ schema: jsonSchema(schema) }),
+        prompt: `Fix this invalid input for the tool "${toolName}". The error was: ${errorMessage}\n\nOriginal input:\n${input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+    }))
+    if (!isNil(data)) {
+        return JSON.stringify(data.output)
+    }
+    return NoObjectGeneratedError.isInstance(error) && !isNil(error.text) ? jsonInputFrom(error.text) : undefined
 }
 
 function completedToolCalls(steps: ReadonlyArray<{ toolResults: ReadonlyArray<{ toolName: string, output: unknown }> }>): ChatToolCall[] {
