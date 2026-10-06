@@ -5,6 +5,7 @@ import { CreateScriptSessionParams, ScriptSession } from './code-sandbox-common'
 export function createSharedScriptSession(buildParams: () => Promise<CreateScriptSessionParams>): SharedScriptSession {
     let sessionPromise: Promise<ScriptSession> | null = null
     return {
+        results: new Map(),
         get: () => {
             if (isNil(sessionPromise)) {
                 sessionPromise = initCodeSandbox({ useDeno: true }).then(async (codeSandbox) => codeSandbox.createScriptSession(await buildParams()))
@@ -23,6 +24,7 @@ export function createSharedScriptSession(buildParams: () => Promise<CreateScrip
 }
 
 export type SharedScriptSession = {
+    results: Map<string, Promise<unknown>>
     get(): Promise<ScriptSession>
     dispose(): Promise<void>
 }

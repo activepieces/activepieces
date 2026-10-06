@@ -151,7 +151,18 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     return evalWithPropertyPath({ segments, getStepView })
 }
 
-async function evalWithScript({ variableName, getStepView, scriptSession, stepNames }: EvalStepTokenParams): Promise<unknown> {
+async function evalWithScript(params: EvalStepTokenParams): Promise<unknown> {
+    const { variableName, scriptSession } = params
+    const pending = scriptSession.results.get(variableName)
+    if (!isNil(pending)) {
+        return cloneResolvedValue(await pending)
+    }
+    const evaluation = evaluateScriptToken(params)
+    scriptSession.results.set(variableName, evaluation)
+    return evaluation
+}
+
+async function evaluateScriptToken({ variableName, getStepView, scriptSession, stepNames }: EvalStepTokenParams): Promise<unknown> {
     const session = await scriptSession.get()
     for (const stepName of extractReferencedStepNames(variableName, stepNames)) {
         const view = await getStepView(stepName)

@@ -5,6 +5,7 @@ import { FlowExecutorContext } from '../../src/lib/handler/context/flow-executio
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
+import { scriptEvaluator } from '../../src/lib/variables/script-evaluator'
 
 const propsResolverService = createPropsResolver({
     projectId: 'PROJECT_ID',
@@ -198,6 +199,19 @@ describe('Props resolver', () => {
     test('flatten array path', async () => {
         const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger.output, [\'users\',\'name\'])}}', executionState })
         expect(resolvedInput).toEqual(['Alice', 'Bob'])
+    })
+
+    test('script tokens are evaluated once per resolve and shared with the censored input', async () => {
+        const evaluateSpy = vi.spyOn(scriptEvaluator, 'evaluate')
+        const { resolvedInput, censoredInput } = await propsResolverService.resolve({
+            unresolvedInput: { a: '{{trigger.output.users.map(u => u.name)}}', b: '{{trigger.output.users.map(u => u.name)}}' },
+            executionState,
+        })
+        expect(resolvedInput).toEqual({ a: ['Alice', 'Bob'], b: ['Alice', 'Bob'] })
+        expect(censoredInput).toEqual(resolvedInput)
+        expect(evaluateSpy).toHaveBeenCalledTimes(1)
+        expect(resolvedInput.a).not.toBe(resolvedInput.b)
+        evaluateSpy.mockRestore()
     })
 
     test('merge multiple flatten array paths', async ()=>{
