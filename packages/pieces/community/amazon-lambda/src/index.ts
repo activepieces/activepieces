@@ -11,7 +11,7 @@ export const amazonLambda = createPiece({
   auth: awsLambdaCombinedAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-lambda.png',
-  authors: [],
+  authors: ['eliseukadesh67'],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   actions: [invokeFunction, getFunctionConfiguration, customApiCall],
   triggers: [newFunctionCreated],
