@@ -8,10 +8,11 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, timeoutMs }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
         const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
         child.stdin.end(buildRunProgram({ body, marker }))
+        const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
 
         return new Promise((resolve, reject) => {
             let capturedStdout = ''
@@ -29,6 +30,7 @@ export const deno = {
             })
 
             child.on('close', (code, signal) => {
+                clearTimeout(killTimer)
                 void removeDenoDir(denoDir)
                 if (settled) {
                     return
@@ -72,6 +74,7 @@ export const deno = {
             })
 
             child.on('error', (error) => {
+                clearTimeout(killTimer)
                 void removeDenoDir(denoDir)
                 if (settled) {
                     return
@@ -228,6 +231,7 @@ type DenoProgramParams = {
     resolveNodeModules?: boolean
     env?: Record<string, string>
     denoDirBase?: string
+    timeoutMs?: number
 }
 
 type SpawnDenoParams = {

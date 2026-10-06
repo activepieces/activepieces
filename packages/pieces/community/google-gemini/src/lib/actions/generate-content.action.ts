@@ -9,7 +9,7 @@ import { generateContentActionOutputSchema } from '../output-schemas';
 
 export const generateContentAction = createAction({
   audience: 'both',
-	description: 'Generate content using Google Gemini using the "gemini-pro" model',
+	description: 'Send a prompt to Gemini and get a text response.',
 	aiMetadata: { description: 'Runs a single stateless prompt through a Gemini text model and returns the generated text, optionally grounded by one built-in tool: Google Search for live web results, URL Context to fetch pages named in the prompt, Google Maps scoped to a latitude/longitude, or File Search over an uploaded file. Use this as the default Gemini text-generation call; prefer chat_gemini when the exchange needs conversation memory, generate_content_from_image when the input includes an image, and create_video or text-to-speech for non-text output. Not idempotent: each call produces a fresh completion, and the File Search mode additionally creates a new file search store.', idempotent: false },
 	displayName: 'Generate Content',
 	name: 'generate_content',
@@ -19,23 +19,22 @@ export const generateContentAction = createAction({
 		prompt: Property.LongText({
 			displayName: 'Prompt',
 			required: true,
-			description: 'The prompt to generate content from.',
+			description: 'What you want Gemini to write or answer.',
 		}),
 		model: Property.Dropdown({
 			displayName: 'Model',
 			required: true,
-			description: 'The model which will generate the completion',
+			description: 'Gemini model that writes the response.',
 			refreshers: [],
 			defaultValue: defaultLLM,
 			auth: googleGeminiAuth,
 			options: async ({ auth }) => getGeminiModelOptions({ auth }),
 		}),
 		toolType: Property.StaticDropdown({
-			displayName: 'Tool Type',
-			description: 'Select built-in tool to use with Gemini model.',
+			displayName: 'Built-in Tool',
+			description: 'Lets Gemini search Google, read links, use Maps or search a file.',
 			required: false,
 			options: {
-				disabled: false,
 				options: [
 					{ label: 'Google Search', value: 'google-search' },
 					{ label: 'File Search', value: 'file-search' },
@@ -45,7 +44,7 @@ export const generateContentAction = createAction({
 			},
 		}),
 		toolProperties: Property.DynamicProperties({
-			displayName: 'Tool Config',
+			displayName: 'Tool Settings',
 			auth: googleGeminiAuth,
 			refreshers: ['toolType'],
 			required: false,
@@ -60,11 +59,12 @@ export const generateContentAction = createAction({
 							file: Property.File({
 								displayName: 'File',
 								required: true,
-								description: 'File to use for search tool.',
+								description: 'File Gemini searches to answer the prompt.',
 							}),
 							fileStoreName: Property.ShortText({
 								displayName: 'File Store Name',
 								required: true,
+								description: 'Name for the search store this step creates on each run.',
 							}),
 						};
 						break;
@@ -73,7 +73,7 @@ export const generateContentAction = createAction({
 							mrkdown: Property.MarkDown({
 								variant: MarkdownVariant.INFO,
 								value:
-									'To use URL context tool, include one or more URLs directly in the prompt. Gemini will fetch and use the page content as additional context.',
+									'Put the links in the prompt. Gemini reads those pages before it answers.',
 							}),
 						};
 						break;
@@ -82,7 +82,7 @@ export const generateContentAction = createAction({
 							mrkdown: Property.MarkDown({
 								variant: MarkdownVariant.INFO,
 								value:
-									'To use Google Search tool, include a clear search query in the prompt. Gemini will use Google Search to retrieve up-to-date web information.',
+									'Gemini searches Google when the prompt needs up-to-date information.',
 							}),
 						};
 						break;
@@ -91,12 +91,12 @@ export const generateContentAction = createAction({
 							latitude: Property.Number({
 								displayName: 'Latitude',
 								required: true,
-								description: 'Provide the relevant location latitude.',
+								description: 'Center of the Maps search, in decimal degrees from -90 to 90.',
 							}),
 							longitude: Property.Number({
 								displayName: 'Longitude',
 								required: true,
-								description: 'Provide the relevant location longitude.',
+								description: 'Center of the Maps search, in decimal degrees from -180 to 180.',
 							}),
 						};
 						break;

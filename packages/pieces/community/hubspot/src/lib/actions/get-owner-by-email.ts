@@ -19,6 +19,8 @@ export const getOwnerByEmailAction = createAction({
 	props: {
 		email: Property.ShortText({
 			displayName: 'Owner Email',
+			description: 'The email of the HubSpot user who owns records.',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
 	},

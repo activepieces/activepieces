@@ -484,24 +484,31 @@
                {
                   "group": "Build a Piece",
                   "pages": [
-                     "build-pieces/building-pieces/overview",
-                     "build-pieces/building-pieces/start-building",
-                     "build-pieces/building-pieces/setup-fork",
-                     "build-pieces/building-pieces/development-setup",
-                     "build-pieces/building-pieces/piece-definition",
-                     "build-pieces/building-pieces/piece-authentication",
-                     "build-pieces/building-pieces/create-action",
-                     "build-pieces/building-pieces/create-trigger",
-                     {
-                        "group": "Sharing Pieces",
-                        "icon": "circle-7",
-                        "pages": [
-                           "build-pieces/sharing-pieces/overview",
-                           "build-pieces/sharing-pieces/contribute",
-                           "build-pieces/sharing-pieces/community",
-                           "build-pieces/sharing-pieces/private"
-                        ]
-                     }
+                    "build-pieces/building-pieces/overview",
+                    "build-pieces/building-pieces/build-with-ai",
+                    {
+                      "group": "Build Manually",
+                      "pages": [
+                        "build-pieces/building-pieces/start-building",
+                        "build-pieces/building-pieces/setup-fork",
+                        "build-pieces/building-pieces/development-setup",
+                        "build-pieces/building-pieces/piece-definition",
+                        "build-pieces/building-pieces/piece-authentication",
+                        "build-pieces/building-pieces/create-action",
+                        "build-pieces/building-pieces/create-trigger"
+                      ],
+                      "icon": "hammer"
+                    },
+                    {
+                      "group": "Sharing Pieces",
+                      "icon": "share",
+                      "pages": [
+                        "build-pieces/sharing-pieces/overview",
+                        "build-pieces/sharing-pieces/contribute",
+                        "build-pieces/sharing-pieces/community",
+                        "build-pieces/sharing-pieces/private"
+                      ]
+                    }
                   ]
                },
                {

@@ -1,11 +1,11 @@
 {
   "Stay updated with RSS feeds": "Restez à jour avec les fils RSS",
-  "New Item In Feed": "Nouvel élément dans le flux",
+  "New Item in Feed": "Nouvel élément dans le flux",
   "New Items in Multiple Feeds": "Nouveaux éléments dans plusieurs flux",
-  "Runs when a new item is added in the RSS feed": "Exécute lorsqu'un nouvel élément est ajouté dans le flux RSS",
-  "Runs when a new item is added in one of the RSS feed": "Exécute lorsqu'un nouvel élément est ajouté dans un flux RSS",
+  "Runs when a new item is published in an RSS feed.": "S'exécute lorsqu'un nouvel élément est publié dans un flux RSS.",
+  "Runs when a new item is published in any of the feeds you list.": "S'exécute lorsqu'un nouvel élément est publié dans l'un des flux de la liste.",
   "RSS Feed URL": "URL du flux RSS",
   "RSS Feed URLs": "URL du flux RSS",
-  "Single RSS feed URL": "URL du flux RSS unique",
-  "List of RSS feed URLs": "Liste des URLs de flux RSS"
+  "Link to the feed itself, not the site homepage; Atom works too.": "Lien vers le flux lui-même, pas vers la page d'accueil du site ; Atom fonctionne aussi.",
+  "One feed address per row; a feed that fails to load is skipped.": "Une adresse de flux par ligne ; un flux qui ne se charge pas est ignoré."
 }

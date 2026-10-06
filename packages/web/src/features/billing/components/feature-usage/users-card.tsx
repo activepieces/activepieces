@@ -8,6 +8,7 @@ import { Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingUtils } from '../../utils/billing-utils';
 import { DetailRow } from '../detail-row';
@@ -27,8 +28,8 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border p-5">
-      <span className="text-lg font-semibold text-foreground">
+    <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
+      <span className="text-lg font-semibold text-gray-12">
         {isNil(effectiveTotal)
           ? t('{used} seats', { used: used.toLocaleString() })
           : t('{used}/{total} seats', {
@@ -64,16 +65,17 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
       )}
 
       {capBinds ? (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-gray-11">
           {billingUtils.scheduledCapNotice(info)}
         </span>
       ) : hasScheduledChange ? (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-gray-11">
           {t('Seat changes are unavailable while a plan change is scheduled.')}
         </span>
       ) : (
         <>
           <Button
+            {...adminControl(AdminControl.BILLING_SEATS_OPEN)}
             type="button"
             variant="outline"
             size="sm"

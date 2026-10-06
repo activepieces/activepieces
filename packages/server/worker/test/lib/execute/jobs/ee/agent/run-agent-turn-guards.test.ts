@@ -66,7 +66,7 @@ describe('classifyAgentRunError', () => {
 
     it.each([
         [400, 'internal'], [401, 'user'], [402, 'credit'], [403, 'user'], [404, 'user'], [408, 'internal'],
-        [409, 'internal'], [413, 'internal'], [422, 'internal'], [429, 'internal'], [500, 'internal'], [503, 'internal'],
+        [409, 'internal'], [413, 'internal'], [422, 'internal'], [429, 'provider'], [500, 'provider'], [503, 'provider'],
     ])('classifies a provider %i as %s', (statusCode, expected) => {
         expect(classify(apiError({ statusCode, message: 'the provider said no' }))).toBe(expected)
     })
@@ -129,8 +129,20 @@ describe('classifyAgentRunError', () => {
     })
 
     it('does not let a 5xx error page mentioning credits masquerade as a billing failure', () => {
-        expect(classify(apiError({ statusCode: 500, message: 'Bad gateway', responseBody: '<html>Buy more credits</html>' }))).toBe('internal')
-        expect(classify(apiError({ statusCode: 503, message: 'Unavailable', responseBody: 'trace-id 402 upstream down' }))).toBe('internal')
+        expect(classify(apiError({ statusCode: 500, message: 'Bad gateway', responseBody: '<html>Buy more credits</html>' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 503, message: 'Unavailable', responseBody: 'trace-id 402 upstream down' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+    })
+
+    it('blames an outage at the customer\'s own provider on the provider, but keeps one at ours internal', () => {
+        const highDemand = new RetryError({
+            message: 'Failed after 4 attempts',
+            reason: 'maxRetriesExceeded',
+            errors: [apiError({ statusCode: 503, message: 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.' })],
+        })
+        expect(classify(highDemand, AIProviderName.GOOGLE)).toBe('provider')
+        expect(classify(highDemand, AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 429, message: 'Too Many Requests' }), AIProviderName.OPENAI)).toBe('provider')
+        expect(classify(apiError({ statusCode: 429, message: 'Too Many Requests' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
     })
 
     it('reports a real quota rejection as credit, so the client can offer a top-up', () => {

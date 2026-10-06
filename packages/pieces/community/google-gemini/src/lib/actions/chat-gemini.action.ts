@@ -16,28 +16,28 @@ export const chatGemini = createAction({
   auth: googleGeminiAuth,
   name: 'chat_gemini',
   classification: 'READ',
-  displayName: 'Chat Gemini',
-  description: 'Chat with Google Gemini',
+  displayName: 'Chat with Gemini',
+  description: 'Chat with Gemini, optionally remembering earlier messages.',
   aiMetadata: { description: 'Sends a prompt as one turn of a Gemini chat and returns the reply, with two modes: supply a memory key (max 128 characters) to load and persist the conversation history in project storage so later runs remember earlier turns, or leave it empty for a stateless single turn. Pick it over generate_content when the exchange spans multiple runs and must retain context; generate_content is the better choice for one-shot generation or when a built-in tool such as Google Search or File Search is needed. Not idempotent: each call produces a new reply and, when a memory key is set, rewrites the stored history.', idempotent: false },
   props: {
+    prompt: Property.LongText({
+      displayName: 'Prompt',
+      required: true,
+      description: 'Your next message in the conversation.',
+    }),
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      description: 'The model which will generate the completion',
+      description: 'Gemini model that writes the response.',
       refreshers: [],
       auth: googleGeminiAuth,
       defaultValue: defaultLLM,
       options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
-    prompt: Property.LongText({
-      displayName: 'Prompt',
-      required: true,
-      description: 'The prompt to generate content from.',
-    }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
       description:
-        'A memory key that will keep the chat history. Keep it empty to leave Gemini without memory of previous messages.',
+        'Reuse a key to continue its conversation. Empty: no memory.',
       required: false,
     }),
   },
@@ -47,7 +47,7 @@ export const chatGemini = createAction({
       memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
-    const { model, prompt, memoryKey } = propsValue;  
+    const { model, prompt, memoryKey } = propsValue;
     const genAI = new GoogleGenerativeAI(auth.secret_text);
     const geminiModel = genAI.getGenerativeModel({ model });
     let history: Content[] = [];
@@ -65,15 +65,15 @@ export const chatGemini = createAction({
 
     const result = await chat.sendMessage(prompt);
     const responseText = result.response.text();
+    const returnedHistory = memoryKey ? await chat.getHistory() : history;
 
     if (memoryKey) {
-      const updatedHistory = await chat.getHistory();
-      await store.put(memoryKey, updatedHistory, StoreScope.PROJECT);
+      await store.put(memoryKey, returnedHistory, StoreScope.PROJECT);
     }
 
     return {
       response: responseText,
-      history: history,
+      history: returnedHistory,
     };
   },
 });
