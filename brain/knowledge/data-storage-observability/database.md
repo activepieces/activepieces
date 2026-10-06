@@ -61,7 +61,7 @@ Tracks are **independent**. Neither waits for the other. Ordering is by timestam
 
 Blocking runs under a Redis lock at boot — anything more than seconds blocks every replica from serving. If in doubt, background is the safe default.
 
-**CIC is not automatically background.** The codebase has plenty of `CREATE INDEX CONCURRENTLY` in the blocking track using an inline `const concurrently = isPGlite() ? '' : 'CONCURRENTLY'` pattern (see e.g. `1857000000000-AddWaitpointDeadLetteredAt`). That's fine for a single index on a table where the boot delay is tolerable. Background makes sense when CIC + drops are stacked into a reshape, or the table is huge enough that the boot delay hurts deploys.
+**CIC is not automatically background.** A single `CREATE INDEX CONCURRENTLY` on a table where the boot delay is tolerable belongs in the blocking track. Background makes sense when CIC + drops are stacked into a reshape, or the table is huge enough that the boot delay hurts deploys. Either way, always go through `migrationHelpers.createIndexConcurrently` — see below.
 
 ### Cross-track dependency
 
@@ -99,34 +99,24 @@ export class BackfillFooStatus1858000000000 implements BackgroundMigration {
 
 `transaction = false as const` — the type is a `false` literal, so `tsc` catches a stray `true`. `CIC` and `VALIDATE CONSTRAINT` refuse to run in a transaction.
 
-### CIC — helper or inline
+### CIC — always via the helper
 
-Two accepted forms depending on the situation:
+Every CIC goes through `migrationHelpers.createIndexConcurrently({ ... })`, and every `DROP INDEX CONCURRENTLY` goes through `migrationHelpers.dropIndexConcurrently({ ... })`. Both tracks, no exceptions.
 
-- **`migrationHelpers.createIndexConcurrently({ ... })`** — retry-safe. Checks `pg_index.indisvalid`: missing → CREATE, invalid (crashed CIC) → REINDEX, valid → no-op. A crashed CIC leaves an `INVALID` index behind, which a plain `IF NOT EXISTS` retry silently skips forever — the helper cleans that up. Use in any migration where a mid-flight failure is plausible (long-running CIC on a large table, background migrations that may be retried).
+The helper handles the two things a raw `CREATE INDEX CONCURRENTLY` gets wrong:
 
-- **Inline `const concurrently = isPGlite() ? '' : 'CONCURRENTLY'`** — the established codebase pattern (`1857`, `1858`, `1839`, `1821`, and many others). Fine for a quick, well-scoped CIC in the blocking track where INVALID-retry recovery isn't a real concern. `IF NOT EXISTS` covers the common re-run.
+- **pglite fallback.** pglite rejects `CONCURRENTLY`; the helper runs a plain `CREATE INDEX IF NOT EXISTS` on pglite so local dev works.
+- **Retry safety.** A crashed CIC leaves an `INVALID` index behind. A plain `IF NOT EXISTS` retry sees the name exists and skips — the `INVALID` entry sits forever, unused by the planner. The helper checks `pg_index.indisvalid` and runs `REINDEX INDEX CONCURRENTLY` on an invalid leftover, `CREATE` on a missing one, no-op on a valid one.
 
-Never write raw `CREATE INDEX CONCURRENTLY` without one of these — pglite falls over on it, and no retry story means an `INVALID` leftover sits forever.
+Older migrations in `postgres/` use an inline `const concurrently = isPGlite() ? '' : 'CONCURRENTLY'` ternary. Don't write new ones that way — the helper supersedes it. Treat the inline pattern as legacy.
 
 ### Index reshapes
 
 Adding a new set of indexes and dropping the olds they replace goes in the **background track** whenever the table is large enough that the boot cost would hurt deploys. The whole reshape sits in one background migration with `transaction = false`, sequencing `CREATE INDEX CONCURRENTLY` and `DROP INDEX CONCURRENTLY` so the table always has coverage.
 
-Two orderings, author picks based on the size/risk trade:
+Two orderings. **Default to All creates then all drops** — mid-batch failure leaves full coverage, recovery is "drop the half-built news and restart", and disk is almost always the cheaper resource than a hot table's coverage. Switch to pair-by-pair only when disk headroom genuinely can't take 2N.
 
-**Pair-by-pair** — cheapest disk. Peak footprint is N+1 indexes (every CIC adds its new before the old is dropped).
-
-```ts
-public async up(q: QueryRunner): Promise<void> {
-    await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_1', ... })
-    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_1' })
-    await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_2', ... })
-    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_2' })
-}
-```
-
-**All creates then all drops** — safest rollback story. Peak footprint is 2N. If any CIC fails mid-batch, zero olds have been dropped yet.
+**All creates then all drops** — the default. Peak footprint is 2N indexes. If any CIC fails mid-batch, zero olds have been dropped yet, so the table still has its original coverage — safest rollback story. Use when: the table is hot and you can't afford a transient coverage gap, more than ~3 index pairs are being swapped, or you have the disk for 2N indexes.
 
 ```ts
 public async up(q: QueryRunner): Promise<void> {
@@ -137,31 +127,43 @@ public async up(q: QueryRunner): Promise<void> {
 }
 ```
 
-Both helpers handle the pglite fallback (no `CONCURRENTLY`) and the retry-safety (REINDEX on INVALID). Never write raw `CREATE INDEX CONCURRENTLY` or `DROP INDEX CONCURRENTLY` in background migrations.
+**Pair-by-pair** — the disk-constrained variant. Peak footprint is N+1 indexes. Use when: the per-index footprint is big enough that 2N would strain disk, the reshape is only 1-2 pairs, or the pair semantics are independent (new1 fully replaces old1 before new2 is even started). Cost: if a later CIC fails, the earlier olds are already dropped — reduced coverage until the next retry succeeds.
 
-PR #14888 (`AddBarrierChildAttribution1858000000000`) uses the all-creates-first shape in the blocking track — that pattern works too, just with the boot-delay tradeoff. Same shape in background gives you zero-downtime deploy.
+```ts
+public async up(q: QueryRunner): Promise<void> {
+    await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_1', ... })
+    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_1' })
+    await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_2', ... })
+    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_2' })
+}
+```
+
+The All-creates-then-all-drops shape can also be done in the blocking track, with the boot-delay tradeoff. The background version gives zero-downtime deploy for the same work.
 
 ### Chunking backfills
 
 ```ts
 public async up(q: QueryRunner): Promise<void> {
     while (true) {
-        const updated = await q.query(`
-            UPDATE flow_version
-               SET status = jsonb_build_object('kind', state)
-             WHERE id IN (
-                SELECT id FROM flow_version
-                 WHERE status IS NULL
-                 LIMIT 1000
-             )
-            RETURNING 1
-        `) as unknown[]
-        if (updated.length === 0) break
+        const rows = await q.query(`
+            WITH updated AS (
+                UPDATE flow_version
+                   SET status = jsonb_build_object('kind', state)
+                 WHERE id IN (
+                     SELECT id FROM flow_version
+                      WHERE status IS NULL
+                      LIMIT 1000
+                 )
+                RETURNING 1
+            )
+            SELECT count(*)::int AS updated_count FROM updated
+        `) as [{ updated_count: number }]
+        if (rows[0].updated_count === 0) break
     }
 }
 ```
 
-Use `RETURNING` + check `rows.length`, not `res.rowCount` — `QueryRunner.query()` returns a rows array, not a pg result object, so `rowCount` is `undefined` and the loop never exits. Commits per chunk, resumable on re-run (the `WHERE` skips done rows), no long transaction.
+Why the CTE wrap: a bare `UPDATE ... RETURNING` has non-portable return shape — PGlite gives you a rows array, node-postgres gives you `[rows, affectedCount]`. Reading `.length` on the node-postgres tuple always yields 2, so the loop never terminates in prod but passes locally. Wrapping in `WITH ... SELECT count(*)` makes the top-level statement a SELECT, which has uniform shape across both drivers. The chunk itself is still idempotent — the `WHERE col IS NULL` skips already-updated rows, so a crash mid-backfill resumes cleanly on retry.
 
 ### Constraint recipes
 
@@ -210,7 +212,7 @@ ALTER TABLE foo DROP CONSTRAINT foo_col_not_null;
 
 ## Gotchas
 
-- **pglite doesn't support `CONCURRENTLY`.** The CIC helper (and the inline `concurrently` ternary) falls back to plain `CREATE INDEX` when pglite is the backend. Only affects local dev.
+- **pglite doesn't support `CONCURRENTLY`.** `migrationHelpers.createIndexConcurrently` / `dropIndexConcurrently` fall back to plain `CREATE INDEX IF NOT EXISTS` / `DROP INDEX IF EXISTS` on pglite. Only affects local dev. Older migrations use an inline `const concurrently = isPGlite() ? '' : 'CONCURRENTLY'` ternary — don't reuse that pattern in new code, the helpers supersede it.
 - **`breaking = true` is the ROLLBACK-safety flag, not the customer-facing "breaking change" label.** Two different concepts. The label is decided per the [PR labels rules](../../../CLAUDE.md#pull-requests); the flag is decided per what the migration's `down()` can undo.
 - **Contract DDL in the same release as its backfill fails boot** because the backfill hasn't run yet — its row isn't in `background_migrations`. Ship contract in the next release.
 - **A brand-new hot-path index in the same release as the code that needs it can leave the app on seq scans while background CIC builds.** Only applies when there's *no* prior covering index for the query. Fixes: (a) ship the CIC in a prior release so it's built by the time the code lands (verify via `pendingCount` on `/v1/health/system`), or (b) put the CIC in the blocking track so the index is present when the app starts serving. Reshapes (replacing existing indexes) don't hit this — the old index keeps queries fast while new one builds.
