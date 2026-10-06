@@ -100,7 +100,7 @@ async function initGitRepo(
     await git.branch(['-M', branch])
     const { error } = await tryCatch(() => git.raw(['pull', 'origin', branch]))
     if (!isNil(error)) {
-        throw new Error(error.message.slice(-MAX_GIT_ERROR_MESSAGE_LENGTH))
+        throw new Error(error.message.replaceAll(keyPath, '<ssh-key>').slice(-MAX_GIT_ERROR_MESSAGE_LENGTH))
     }
     return git
 }
@@ -150,7 +150,7 @@ async function validateConnection({ request, log }: { request: ConfigureRepoRequ
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_GIT_CREDENTIALS,
             params: {
-                message: error instanceof Error ? error.message.replaceAll(keyPath, '<ssh-key>') : String(error),
+                message: error instanceof Error ? error.message : String(error),
             },
         })
     }
