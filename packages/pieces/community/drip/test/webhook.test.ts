@@ -294,6 +294,22 @@ describe('run', () => {
     await expect(call({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).rejects.toThrow('worker stopped');
     expect(store.read(indexOf(dedupeKeyOf(d)))).toEqual([claimKey]);
   });
+  test('the index is checked again after the settle wait and repaired if a slower concurrent run dropped this claim from it', async () => {
+    const store = stored({ key: NEW_SUB_KEY });
+    const d = delivery();
+    const claimKey = dripWebhook.claimKeyOf({ storeKey: NEW_SUB_KEY, key: dedupeKeyOf(d) });
+    const indexKey = indexOf(dedupeKeyOf(d));
+    const put = store.put;
+    store.put = async <T>(key: string, value: T): Promise<T> => {
+      const result = await put(key, value);
+      if (key === claimKey) {
+        await put(indexKey, ['slower-run']);
+      }
+      return result;
+    };
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(1);
+    expect(store.read(indexKey)).toEqual(['slower-run', claimKey]);
+  });
   test('an unfinished claim blocks a retry until it is abandoned, then the retry emits', async () => {
     const store = stored({ key: NEW_SUB_KEY });
     const d = delivery();

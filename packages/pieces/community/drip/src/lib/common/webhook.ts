@@ -101,8 +101,9 @@ async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey:
     return false;
   }
   const claim: DeliveryClaim = { token: randomUUID(), at: Date.now() };
+  const indexKey = indexKeyOf({ storeKey, slot: slotOf(key) });
   try {
-    await indexClaim({ store, indexKey: indexKeyOf({ storeKey, slot: slotOf(key) }), claimKey });
+    await indexClaim({ store, indexKey, claimKey });
     await store.put<DeliveryClaim>(claimKey, claim);
     await dripApi.sleep(CLAIM_SETTLE_MS);
     const winner = await store.get<DeliveryClaim>(claimKey);
@@ -111,6 +112,9 @@ async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey:
     }
     if (await isDone({ store, doneKey })) {
       return false;
+    }
+    if (!(await readIndex({ store, indexKey })).includes(claimKey)) {
+      await indexClaim({ store, indexKey, claimKey });
     }
     await store.put<DeliveryClaim>(doneKey, claim);
     return true;
