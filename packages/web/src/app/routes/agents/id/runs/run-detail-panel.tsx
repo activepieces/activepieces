@@ -66,7 +66,7 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
   return (
     <Sheet open={!isNil(runId)} onOpenChange={(next) => !next && onClose()}>
       <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-[640px]">
-        <SheetHeader className="shrink-0 gap-2 border-b border-border px-6 py-4">
+        <SheetHeader className="shrink-0 gap-2 border-b border-gray-6 px-6 py-4">
           <SheetTitle className="line-clamp-2 pr-8 text-base font-semibold">
             {run?.title ?? t('Untitled run')}
           </SheetTitle>
@@ -109,7 +109,7 @@ const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
   const look = agentRunUtils.getStatusIcon(run.status);
   const durationMs = agentRunUtils.getDurationMs(run);
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-11">
       <StatusIconWithText
         icon={look.Icon}
         text={agentRunUtils.getStatusLabel(run.status)}
@@ -172,8 +172,8 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
   }
   if (part.type === PersistedAgentPartType.REASONING) {
     return (
-      <TimelineItem icon={<Brain className="h-4 w-4 text-muted-foreground" />}>
-        <p className="py-3 text-sm text-muted-foreground">{part.text}</p>
+      <TimelineItem icon={<Brain className="h-4 w-4 text-gray-11" />}>
+        <p className="py-3 text-sm text-gray-11">{part.text}</p>
       </TimelineItem>
     );
   }
@@ -183,9 +183,7 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
     part.type === PersistedAgentPartType.SOURCE_URL
   ) {
     return (
-      <TimelineItem
-        icon={<Paperclip className="h-4 w-4 text-muted-foreground" />}
-      >
+      <TimelineItem icon={<Paperclip className="h-4 w-4 text-gray-11" />}>
         <a
           href={part.url}
           target="_blank"
@@ -228,9 +226,9 @@ const ToolCall = ({
     <TimelineItem
       icon={
         failed ? (
-          <CircleAlert className="h-4 w-4 text-destructive" />
+          <CircleAlert className="h-4 w-4 text-danger-11" />
         ) : (
-          <CircleCheck className="h-4 w-4 text-muted-foreground" />
+          <CircleCheck className="h-4 w-4 text-gray-11" />
         )
       }
     >
@@ -244,14 +242,14 @@ const ToolCall = ({
           <ChevronRight
             size={14}
             className={cn(
-              'shrink-0 text-muted-foreground transition-transform',
+              'shrink-0 text-gray-11 transition-transform',
               open && 'rotate-90',
             )}
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="flex flex-col gap-3 pt-3">
           {failed && !isNil(part.errorText) && (
-            <p className="text-xs text-destructive">{part.errorText}</p>
+            <p className="text-xs text-danger-11">{part.errorText}</p>
           )}
           {hasInput && <Payload label={t('Input')} value={part.input} />}
           {hasOutput && <Payload label={t('Output')} value={part.output} />}
@@ -265,7 +263,7 @@ const Payload = ({ label, value }: { label: string; value: unknown }) => (
   <JsonViewer
     json={value}
     title={
-      <span className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
+      <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
         {label}
       </span>
     }

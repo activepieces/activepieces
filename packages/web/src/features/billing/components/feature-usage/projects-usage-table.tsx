@@ -69,7 +69,7 @@ export function ProjectsUsageTable({
         isError={isError}
         errorStateEntity={t('project usage')}
         onRetry={refetch}
-        emptyStateIcon={<Coins className="size-14 text-muted-foreground" />}
+        emptyStateIcon={<Coins className="size-14 text-gray-11" />}
         emptyStateTextTitle={t('No project usage yet')}
         emptyStateTextDescription={t(
           'Once your projects consume credits, their usage will appear here.',
@@ -96,7 +96,7 @@ function ProjectNameLink({
       <button
         type="button"
         onClick={goToProjectHome}
-        className="truncate text-sm font-medium text-primary hover:underline"
+        className="truncate text-sm font-medium text-accent-11 hover:underline"
       >
         {projectName}
       </button>

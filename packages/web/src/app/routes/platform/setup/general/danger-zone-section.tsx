@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { DeletePlatformDialog } from './delete-platform-dialog';
 
@@ -19,7 +20,7 @@ export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border px-4 py-3.5">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-sm font-medium">{t('Delete platform')}</span>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-gray-11">
             {t('Once deleted, your platform cannot be recovered.')}
             {hasSubscription
               ? ` ${t(
@@ -29,6 +30,7 @@ export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
           </span>
         </div>
         <Button
+          {...adminControl(AdminControl.GENERAL_PLATFORM_DELETE_OPEN)}
           variant="destructive"
           size="sm"
           disabled={hasSubscription}

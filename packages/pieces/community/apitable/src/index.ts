@@ -1,10 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createRecordAction } from './lib/actions/create-record';
 import { findRecordAction } from './lib/actions/find-record';
@@ -18,14 +13,13 @@ import { uploadAttachmentAction } from './lib/actions/upload-attachment';
 import { searchNodesAction } from './lib/actions/search-nodes';
 import { getNodeDetailsAction } from './lib/actions/get-node-details';
 import { newRecordTrigger } from './lib/triggers/new-record';
-import { makeClient } from './lib/common';
 import { APITableAuth } from './lib/auth';
 
 export const apitable = createPiece({
   displayName: 'AITable',
   auth: APITableAuth,
   description: `Interactive spreadsheets with collaboration`,
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [

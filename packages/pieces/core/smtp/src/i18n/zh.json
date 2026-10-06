@@ -24,5 +24,18 @@
   "Custom Headers": "Custom Headers",
   "Attachments": "Attachments",
   "plain text": "plain text",
-  "html": "html"
+  "html": "html",
+  "Require TLS": "要求 TLS",
+  "465 encrypts from the start; other ports upgrade to STARTTLS if the server offers it.": "465 从一开始就加密；其他端口在服务器支持时升级为 STARTTLS。",
+  "Fail instead of sending unencrypted if STARTTLS is unavailable.": "如果 STARTTLS 不可用，则发送失败，而不是以未加密方式发送。",
+  "Login name, usually your email address. Blank if no login is needed.": "登录名，通常是您的邮箱地址。无需登录时留空。",
+  "Cc": "抄送",
+  "Bcc": "密送",
+  "Must be an address your server lets you send from.": "必须是您的服务器允许发信的地址。",
+  "Replies go to this address instead of the sender.": "回复将发送到此地址，而不是发件人。",
+  "How the text in Body is interpreted.": "正文内容中的文本如何解析。",
+  "Name shown in the inbox instead of your address.": "收件箱中显示的名称，代替您的地址。",
+  "Extra headers added to the email, as name and value pairs.": "添加到邮件的额外标头，以名称和值成对填写。",
+  "Plain Text": "纯文本",
+  "HTML": "HTML"
 }

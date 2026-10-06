@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
@@ -9,33 +9,50 @@ export const telegramSendPollAction = createAction({
   name: 'send_poll',
   classification: 'WRITE',
   displayName: 'Send Poll',
-  description: 'Send a native Telegram poll (regular or quiz) to a chat',
+  description: 'Send a poll or a quiz to a chat.',
   audience: 'human',
   aiMetadata: { description: 'Posts a native Telegram poll (regular or quiz) to a chat with 2–10 answer options. Use to collect votes or run a quiz; quiz polls require a correct_option_id and cannot allow multiple answers, and open_period and close_date are mutually exclusive. Not idempotent: each call creates a new poll.', idempotent: false },
+  propertyGroups: [
+    { key: 'send_to', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id'] },
+    {
+      key: 'poll',
+      display: 'section',
+      label: 'Poll',
+      icon: 'text',
+      props: ['question', 'options', 'type', 'is_anonymous', 'allows_multiple_answers'],
+    },
+    {
+      key: 'quiz',
+      display: 'section',
+      label: 'Quiz',
+      icon: 'tag',
+      props: ['quiz_info', 'correct_option_id', 'explanation', 'explanation_parse_mode'],
+    },
+    {
+      key: 'closing',
+      display: 'section',
+      label: 'Closing',
+      icon: 'calendar',
+      props: ['closing_info', 'open_period', 'close_date', 'is_closed'],
+    },
+  ],
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
-    message_thread_id: telegramCommons.messageThreadIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
     question: Property.ShortText({
       displayName: 'Question',
-      description: 'Poll question, 1–300 characters.',
+      description: 'Up to 300 characters.',
       required: true,
     }),
     options: Property.Array({
       displayName: 'Options',
-      description: 'List of answer options (2–10 options, each 1–100 characters).',
+      description: '2 to 10 answers, each up to 100 characters.',
       required: true,
-    }),
-    is_anonymous: Property.Checkbox({
-      displayName: 'Anonymous',
-      description: 'True, if the poll needs to be anonymous. Default true.',
-      required: false,
-      defaultValue: true,
     }),
     type: Property.StaticDropdown({
       displayName: 'Poll Type',
-      description: 'Poll type. Defaults to "regular".',
       required: false,
+      display: 'cards',
       options: {
         options: [
           { label: 'Regular', value: 'regular' },
@@ -44,43 +61,63 @@ export const telegramSendPollAction = createAction({
       },
       defaultValue: 'regular',
     }),
+    is_anonymous: Property.Checkbox({
+      displayName: 'Anonymous',
+      description: 'Hide who voted for what.',
+      required: false,
+      defaultValue: true,
+    }),
     allows_multiple_answers: Property.Checkbox({
       displayName: 'Allow Multiple Answers',
-      description: 'True if the poll allows multiple answers (regular polls only).',
+      description: 'Regular polls only.',
       required: false,
       defaultValue: false,
     }),
+    quiz_info: Property.MarkDown({
+      value: 'Only used when Poll Type is Quiz.',
+      variant: MarkdownVariant.INFO,
+    }),
     correct_option_id: Property.Number({
-      displayName: 'Correct Option Id (Quiz)',
-      description: '0-based index of the correct answer option (required for quizzes).',
+      displayName: 'Correct Option',
+      description: 'Position of the right answer, counting from 0.',
       required: false,
     }),
     explanation: Property.LongText({
-      displayName: 'Explanation (Quiz)',
-      description: 'Explanation shown when a user picks an incorrect answer (0–200 chars).',
+      displayName: 'Explanation',
+      description: 'Shown after a wrong answer, up to 200 characters.',
       required: false,
     }),
-    explanation_parse_mode: telegramCommons.parseModeProp(),
+    explanation_parse_mode: telegramCommons.form.parseModeProp({
+      displayName: 'Explanation Format',
+      description: 'How Telegram styles the explanation.',
+    }),
+    closing_info: Property.MarkDown({
+      value: 'Set an open period or a close date, not both.',
+      variant: MarkdownVariant.INFO,
+    }),
     open_period: Property.Number({
-      displayName: 'Open Period (seconds)',
-      description: 'Amount of time in seconds the poll will be active (5–600).',
+      displayName: 'Open Period',
+      description: 'Seconds the poll stays open, 5 to 600.',
       required: false,
+      width: 'half',
     }),
     close_date: Property.DateTime({
       displayName: 'Close Date',
-      description: 'Point in time when the poll will be automatically closed.',
+      description: 'When the poll closes, 5 to 600 seconds from now.',
       required: false,
+      width: 'half',
     }),
     is_closed: Property.Checkbox({
       displayName: 'Closed',
-      description: 'Pass True if the poll should be immediately closed. Useful for previews.',
+      description: 'Post the poll already closed, to show results.',
       required: false,
       defaultValue: false,
     }),
-    disable_notification: telegramCommons.disableNotificationProp(),
-    protect_content: telegramCommons.protectContentProp(),
-    reply_to_message_id: telegramCommons.replyToMessageIdProp(),
-    reply_markup: telegramCommons.replyMarkupProp(),
+    message_thread_id: telegramCommons.form.messageThreadIdProp(),
+    disable_notification: telegramCommons.form.disableNotificationProp(),
+    protect_content: telegramCommons.form.protectContentProp(),
+    reply_to_message_id: telegramCommons.form.replyToMessageIdProp(),
+    reply_markup: telegramCommons.form.replyMarkupProp(),
   },
   outputSchema: sendPollActionOutputSchema,
   async run(ctx) {
@@ -92,18 +129,18 @@ export const telegramSendPollAction = createAction({
     const correctOptionId = ctx.propsValue.correct_option_id;
     if (pollType === 'quiz') {
       if (correctOptionId === undefined || correctOptionId === null) {
-        throw new Error('Quiz polls require "Correct Option Id".');
+        throw new Error('Quiz polls require "Correct Option".');
       }
       if (correctOptionId < 0 || correctOptionId >= options.length) {
         throw new Error(
-          `"Correct Option Id" must be between 0 and ${options.length - 1} (the index of an option).`
+          `"Correct Option" must be between 0 and ${options.length - 1} (the index of an option).`
         );
       }
       if (ctx.propsValue.allows_multiple_answers) {
         throw new Error('Quiz polls cannot allow multiple answers.');
       }
     } else if (correctOptionId !== undefined && correctOptionId !== null) {
-      throw new Error('"Correct Option Id" is only valid for quiz polls. Set "Poll Type" to Quiz or clear this field.');
+      throw new Error('"Correct Option" is only valid for quiz polls. Set "Poll Type" to Quiz or clear this field.');
     }
     if (ctx.propsValue.open_period && ctx.propsValue.close_date) {
       throw new Error('"Open Period" and "Close Date" are mutually exclusive — set at most one.');

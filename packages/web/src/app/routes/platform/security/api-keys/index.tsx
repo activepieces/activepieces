@@ -27,6 +27,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { sampleData } from '../../sample-data';
@@ -45,7 +46,12 @@ const ApiKeysPage = () => {
       description={t('Manage API keys to access Activepieces APIs.')}
       actions={
         <NewApiKeyDialog onCreate={() => refetch()}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+            {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
+          >
             {t('New API Key')}
           </AnimatedIconButton>
         </NewApiKeyDialog>
@@ -56,7 +62,7 @@ const ApiKeysPage = () => {
       )}
 
       {!isLoading && keys.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
           <Key className="size-10" />
           <p className="text-sm">
             {t('No API keys yet. Create one to get started.')}
@@ -106,6 +112,7 @@ const ApiKeysPage = () => {
                       )}
                       entityName={t('API Key')}
                       buttonText={t('Revoke')}
+                      controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
                       mutationFn={async () => {
                         await apiKeyApi.delete(apiKey.id);
                         refetch();
@@ -113,10 +120,13 @@ const ApiKeysPage = () => {
                       onError={() => internalErrorToast()}
                     >
                       <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
+                        className="text-danger-11 focus:text-danger-11"
                         onSelect={(e) => e.preventDefault()}
+                        {...adminControl(
+                          AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
+                        )}
                       >
-                        <Trash className="size-4 mr-2 text-destructive" />
+                        <Trash className="size-4 mr-2 text-danger-11" />
                         {t('Revoke API Key')}
                       </DropdownMenuItem>
                     </ConfirmationDeleteDialog>

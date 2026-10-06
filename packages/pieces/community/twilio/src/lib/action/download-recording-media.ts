@@ -7,18 +7,19 @@ export const twilioDownloadRecordingMedia = createAction({
   name: 'download_recording_media',
   classification: 'READ',
   displayName: 'Download Recording Media',
-  description: 'Download the media file for a specific recording.',
+  description: 'Download a call recording as an audio file.',
   audience: 'both',
   aiMetadata: { description: 'Downloads the audio file for a specific Twilio call recording by its SID, returning it as a file (MP3 or WAV). Use to retrieve recorded call audio for storage or further processing; requires the recording SID (starting with "RE"). Read-only and idempotent.', idempotent: true },
   props: {
     recording_sid: Property.ShortText({
       displayName: 'Recording SID',
-      description: 'The unique identifier (SID) of the recording to download. It starts with "RE".',
+      description: 'Starts with RE. Shown in the New Recording trigger output.',
       required: true,
+      placeholder: 'RE0123456789abcdef0123456789abcdef',
     }),
     format: Property.StaticDropdown({
       displayName: 'Format',
-      description: 'The desired audio format for the download file.',
+      description: 'MP3 files are smaller. WAV keeps full quality.',
       required: false,
       defaultValue: 'mp3',
       options: {
@@ -30,8 +31,9 @@ export const twilioDownloadRecordingMedia = createAction({
     }),
     channels: Property.StaticDropdown({
         displayName: 'Channels',
-        description: 'Specify whether to download a mono or dual-channel file. Note: Dual-channel may not be available for all recordings.',
+        description: 'Dual keeps each caller on a separate channel, if recorded that way.',
         required: false,
+        advanced: true,
         options: {
             options: [
                 { label: 'Mono', value: 1 },

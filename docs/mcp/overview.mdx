@@ -61,6 +61,10 @@ Tools are organized into categories. **Discovery tools** are always available. O
 
 See the [Tools Reference](/mcp/tools) for the complete catalog with input schemas, and [Tool Search](/mcp/tool-search) for how agents find the right action or trigger by describing a task in plain language.
 
+<Note>
+  MCP tools are free, except `ap_run_action`, which costs 1 credit per call. A flow that a tool call starts is billed as a normal flow run.
+</Note>
+
 ## Self-Hosting Behind a Reverse Proxy
 
 The MCP server and its OAuth endpoints are reachable both at the host root (`https://your-instance.com/mcp`) and under a path prefix (`https://your-instance.com/<prefix>/mcp`) when your reverse proxy routes `https://host/<prefix>/*` to Activepieces.

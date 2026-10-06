@@ -1,0 +1,73 @@
+import {
+  getCurrentUserAtomic,
+  getModuleFieldsAtomic,
+  getRelatedListsAtomic,
+  getUserAtomic,
+  listModulesAtomic,
+  listUsersAtomic,
+} from './metadata';
+import {
+  createRecordAtomic,
+  deleteRecordAtomic,
+  getRecordAtomic,
+  listRecordsAtomic,
+  updateRecordAtomic,
+  upsertRecordAtomic,
+} from './records';
+import { convertLeadAtomic, createContactAtomic, createDealAtomic, createEventAtomic, createLeadAtomic } from './typed';
+import {
+  addTagsAtomic,
+  createNoteAtomic,
+  createTagAtomic,
+  deleteNoteAtomic,
+  getNoteAtomic,
+  listNotesAtomic,
+  listTagsAtomic,
+  removeTagsAtomic,
+  updateNoteAtomic,
+} from './notes-tags';
+import {
+  downloadAttachmentAtomic,
+  listRelatedRecordsAtomic,
+  linkRelatedRecordAtomic,
+  listAttachmentsAtomic,
+  uploadAttachmentAtomic,
+} from './related-attachments';
+import { createEmailDraftAtomic, listEmailDraftsAtomic, updateEmailDraftAtomic } from './drafts';
+
+export const zohoAiActions = [
+  listModulesAtomic,
+  getModuleFieldsAtomic,
+  getRelatedListsAtomic,
+  listUsersAtomic,
+  getUserAtomic,
+  getCurrentUserAtomic,
+  listRecordsAtomic,
+  getRecordAtomic,
+  createRecordAtomic,
+  updateRecordAtomic,
+  deleteRecordAtomic,
+  upsertRecordAtomic,
+  createLeadAtomic,
+  createContactAtomic,
+  createDealAtomic,
+  createEventAtomic,
+  convertLeadAtomic,
+  listNotesAtomic,
+  getNoteAtomic,
+  createNoteAtomic,
+  updateNoteAtomic,
+  deleteNoteAtomic,
+  listTagsAtomic,
+  createTagAtomic,
+  addTagsAtomic,
+  removeTagsAtomic,
+  listRelatedRecordsAtomic,
+  linkRelatedRecordAtomic,
+  listAttachmentsAtomic,
+  uploadAttachmentAtomic,
+  downloadAttachmentAtomic,
+  createEmailDraftAtomic,
+  listEmailDraftsAtomic,
+  updateEmailDraftAtomic,
+];

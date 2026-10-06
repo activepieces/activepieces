@@ -2,6 +2,7 @@ import { PieceCategory, createPiece } from '@activepieces/pieces-framework';
 import { mssqlAuth } from './lib/auth';
 import { findRowsAction } from './lib/actions/find-rows';
 import { insertRowAction } from './lib/actions/insert-row';
+import { insertRowsAction } from './lib/actions/insert-rows';
 import { updateRowsAction } from './lib/actions/update-rows';
 import { deleteRowsAction } from './lib/actions/delete-rows';
 import { getTablesAction } from './lib/actions/get-tables';
@@ -20,6 +21,7 @@ export const mssql = createPiece({
   actions: [
     findRowsAction,
     insertRowAction,
+    insertRowsAction,
     updateRowsAction,
     deleteRowsAction,
     getTablesAction,
