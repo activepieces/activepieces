@@ -20,9 +20,7 @@ function clearPreview() {
 
 function write({ primaryColor, statusColors = {} }: BrandSeed) {
   const { style } = document.documentElement;
-  brandColors
-    .statusVariableNames()
-    .forEach((name) => style.removeProperty(name));
+  brandColors.variableNames().forEach((name) => style.removeProperty(name));
   Object.entries({
     ...brandColors.cssVariables({ primaryColor }),
     ...brandColors.statusCssVariables({ statusColors }),

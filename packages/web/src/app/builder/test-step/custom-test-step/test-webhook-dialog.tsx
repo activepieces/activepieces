@@ -1,5 +1,6 @@
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
@@ -21,7 +22,6 @@ import { Form, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { api } from '@/lib/api';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -104,7 +104,8 @@ const TestTriggerWebhookDialog = ({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
       setIsLoading(true);
 
-      await api.any(`${webhookPrefixUrl}/${flowId}/test`, {
+      await axios({
+        url: `${webhookPrefixUrl}/${flowId}/test`,
         method: data.method,
         data: data.body,
         headers: data.headers,

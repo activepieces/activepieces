@@ -215,7 +215,7 @@ function RichTextToolbar({
             onMouseDown={(event) => event.preventDefault()}
             onClick={run}
             className={cn(
-              'flex size-7 items-center justify-center rounded text-gray-11 outline-none transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-accent-8/50',
+              'flex size-7 items-center justify-center rounded text-gray-11 outline-none transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8/50',
               active && 'bg-gray-3 text-gray-12',
             )}
           >
@@ -580,7 +580,7 @@ export const TiptapEditor = ({
       className={cn(
         'relative w-full',
         isHtml &&
-          'overflow-hidden rounded-md border border-gray-6 bg-transparent transition-[color,box-shadow] focus-within:border-accent-8 focus-within:ring-[1px] focus-within:ring-accent-8/50',
+          'overflow-hidden rounded-md border border-gray-6 bg-transparent transition-[color,box-shadow] focus-within:border-gray-8 focus-within:ring-[1px] focus-within:ring-gray-8/50',
         wrapperClassName,
       )}
       ref={editorWrapperRef}

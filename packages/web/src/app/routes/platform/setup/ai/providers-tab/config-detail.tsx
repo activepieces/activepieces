@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -210,7 +211,12 @@ export function ConfigDetail({
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={onReplaceCredentials}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReplaceCredentials}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN)}
+            >
               {t('Replace')}
             </Button>
           </div>
@@ -233,6 +239,7 @@ export function ConfigDetail({
               size="sm"
               loading={isRechecking}
               onClick={onRecheck}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_RECHECK_RUN)}
             >
               {t('Recheck')}
             </Button>
@@ -349,6 +356,7 @@ export function ConfigDetail({
             size="sm"
             className="shrink-0 gap-2 border-danger-7 text-danger-11 enabled:hover:bg-danger-3 enabled:hover:text-danger-11"
             onClick={() => setDeleteOpen(true)}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
           >
             <Trash2 className="size-4" />
             {t('Delete')}
@@ -361,6 +369,7 @@ export function ConfigDetail({
           message={t('Steps and agents using this key will stop working.')}
           entityName={config.name}
           showToast={true}
+          controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
           mutationFn={async () => {
             await onDelete();
             leavingOnPurpose.current = true;
@@ -387,6 +396,7 @@ export function ConfigDetail({
               keyboardShortcut="S"
               onKeyboardShortcut={save}
               onClick={save}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT)}
             >
               {t('Save')}
             </Button>
