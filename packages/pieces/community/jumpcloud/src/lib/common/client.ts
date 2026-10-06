@@ -1,10 +1,15 @@
-import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { ApiRecord, ApiVersion, CollectedPage, ConnectionProps, ListPage, PageRequest } from './types';
 
 export const jumpcloudApi = {
     resolveBaseUrl,
     authHeaders,
     describeError,
     validateConnection,
+    send,
+    fetchListPage,
+    collectPages,
+    isRecord,
 };
 
 function resolveBaseUrl({ region }: BaseUrlProps): string {
@@ -44,6 +49,74 @@ async function validateConnection(props: ConnectionProps): Promise<ValidationRes
     } catch (error) {
         return { valid: false, error: describeError(error) };
     }
+}
+
+async function send<T>({ auth, method, path, version = 'v1', body, queryParams }: SendParams): Promise<T> {
+    const url = `${resolveBaseUrl(auth)}${version === 'v2' ? '/v2' : ''}${path}`;
+    try {
+        const response = await httpClient.sendRequest<T>({
+            method,
+            url,
+            headers: authHeaders(auth),
+            ...(queryParams === undefined ? {} : { queryParams }),
+            ...(body === undefined ? {} : { body }),
+        });
+        return response.body;
+    } catch (error) {
+        throw new Error(describeError(error));
+    }
+}
+
+async function fetchListPage(params: SendParams): Promise<ListPage> {
+    const body = await send<unknown>(params);
+    return parseListBody(body);
+}
+
+async function collectPages({ fetchPage, skip, limit, fetchAll, maxItems }: CollectParams): Promise<CollectedPage> {
+    const start = clampInt({ value: skip, min: 0, max: Number.MAX_SAFE_INTEGER, fallback: 0 });
+    const target = fetchAll
+        ? clampInt({ value: maxItems, min: 1, max: MAX_FETCH_ALL_ITEMS, fallback: DEFAULT_MAX_ITEMS })
+        : clampInt({ value: limit, min: 1, max: MAX_PAGE_SIZE, fallback: DEFAULT_PAGE_SIZE });
+    let items: ApiRecord[] = [];
+    let cursor = start;
+    let totalCount: number | undefined;
+    while (items.length < target) {
+        const pageSize = Math.min(MAX_PAGE_SIZE, target - items.length);
+        const page = await fetchPage({ limit: pageSize, skip: cursor });
+        items = [...items, ...page.items];
+        cursor += page.items.length;
+        totalCount = page.totalCount ?? totalCount;
+        const reachedEnd = page.items.length < pageSize || (totalCount !== undefined && cursor >= totalCount);
+        if (reachedEnd) {
+            return { items, total_count: totalCount ?? null, next_skip: null };
+        }
+    }
+    return { items, total_count: totalCount ?? null, next_skip: cursor };
+}
+
+function isRecord(value: unknown): value is ApiRecord {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseListBody(body: unknown): ListPage {
+    if (Array.isArray(body)) {
+        return { items: body.filter(isRecord) };
+    }
+    if (isRecord(body) && Array.isArray(body['results'])) {
+        const totalCount = body['totalCount'];
+        return {
+            items: body['results'].filter(isRecord),
+            ...(typeof totalCount === 'number' && totalCount >= 0 ? { totalCount } : {}),
+        };
+    }
+    throw new Error('JumpCloud returned an unexpected list response. Run the step again, or use Custom API Call to inspect the raw response.');
+}
+
+function clampInt({ value, min, max, fallback }: { value: number | undefined; min: number; max: number; fallback: number }): number {
+    if (value === undefined || !Number.isFinite(value)) {
+        return fallback;
+    }
+    return Math.min(max, Math.max(min, Math.trunc(value)));
 }
 
 function describeNonHttpError(error: unknown): string {
@@ -107,6 +180,11 @@ export const JUMPCLOUD_REGION = {
     IN: 'in',
 } as const;
 
+export const MAX_PAGE_SIZE = 100;
+export const DEFAULT_PAGE_SIZE = 50;
+export const DEFAULT_MAX_ITEMS = 1000;
+export const MAX_FETCH_ALL_ITEMS = 10000;
+
 const REGION_BASE_URLS: Record<string, string> = {
     [JUMPCLOUD_REGION.US]: 'https://console.jumpcloud.com/api',
     [JUMPCLOUD_REGION.EU]: 'https://console.eu.jumpcloud.com/api',
@@ -130,6 +208,21 @@ type HeaderProps = {
     orgId?: string;
 };
 
-export type ConnectionProps = BaseUrlProps & HeaderProps;
+type SendParams = {
+    auth: ConnectionProps;
+    method: HttpMethod;
+    path: string;
+    version?: ApiVersion;
+    body?: unknown;
+    queryParams?: QueryParams;
+};
+
+type CollectParams = {
+    fetchPage: (page: PageRequest) => Promise<ListPage>;
+    skip?: number;
+    limit?: number;
+    fetchAll?: boolean;
+    maxItems?: number;
+};
 
 type ValidationResult = { valid: true } | { valid: false; error: string };
