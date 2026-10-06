@@ -8,6 +8,8 @@ const CLAIM_SLOTS = 256;
 const CLAIM_SETTLE_MS = 500;
 const ABANDONED_CLAIM_MS = 60_000;
 const SLOT_DELETE_BATCH = 32;
+const SLOT_CAPACITY = 16;
+const SLOT_WRITE_ATTEMPTS = 3;
 
 async function enable({ token, accountId, webhookUrl, store, storeKey, event }: EnableParams): Promise<void> {
   const account = dripApi.parseAccountId(accountId);
@@ -82,27 +84,45 @@ async function handle({ token, store, storeKey, event, payload, matches }: Handl
 }
 
 async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey: string; key: string }): Promise<boolean> {
-  const claimKey = claimKeyOf({ storeKey, key });
-  const existing = await store.get<DeliveryClaim>(claimKey);
-  if (existing?.key === key && !isAbandoned({ claim: existing, now: Date.now() })) {
+  const slotKey = claimKeyOf({ storeKey, key });
+  const existing = (await readSlot({ store, slotKey }))[key];
+  if (existing !== undefined && !isAbandoned({ claim: existing, now: Date.now() })) {
     return false;
   }
-  const claimToken = randomUUID();
-  const at = Date.now();
+  const claim: DeliveryClaim = { token: randomUUID(), at: Date.now(), done: false };
   try {
-    await store.put<DeliveryClaim>(claimKey, { key, token: claimToken, at, done: false });
+    await writeEntry({ store, slotKey, key, claim });
     await dripApi.sleep(CLAIM_SETTLE_MS);
-    const winner = await store.get<DeliveryClaim>(claimKey);
-    if (winner?.key === key && winner.token !== claimToken) {
+    const winner = (await readSlot({ store, slotKey }))[key];
+    if (winner !== undefined && winner.token !== claim.token) {
       return false;
     }
-    if (winner?.key === key) {
-      await store.put<DeliveryClaim>(claimKey, { key, token: claimToken, at, done: true });
-    }
+    await saveEntry({ store, slotKey, key, claim: { ...claim, done: true } });
     return true;
   } catch (error) {
-    await releaseClaim({ store, claimKey, claimToken });
+    await releaseClaim({ store, slotKey, key, claimToken: claim.token });
     throw error;
+  }
+}
+
+async function readSlot({ store, slotKey }: { store: Store; slotKey: string }): Promise<Record<string, DeliveryClaim>> {
+  const slot = await store.get<DeliverySlot>(slotKey);
+  return dripApi.isRecord(slot) && dripApi.isRecord(slot.entries) ? slot.entries : {};
+}
+
+async function writeEntry({ store, slotKey, key, claim }: { store: Store; slotKey: string; key: string; claim: DeliveryClaim }): Promise<void> {
+  const others = Object.entries(await readSlot({ store, slotKey })).filter(([entryKey]) => entryKey !== key);
+  const kept = others.sort(([, a], [, b]) => (b.at ?? 0) - (a.at ?? 0)).slice(0, SLOT_CAPACITY - 1);
+  await store.put<DeliverySlot>(slotKey, { entries: Object.fromEntries([...kept, [key, claim]]) });
+}
+
+async function saveEntry({ store, slotKey, key, claim }: { store: Store; slotKey: string; key: string; claim: DeliveryClaim }): Promise<void> {
+  for (let attempt = 0; attempt < SLOT_WRITE_ATTEMPTS; attempt++) {
+    await writeEntry({ store, slotKey, key, claim });
+    const saved = (await readSlot({ store, slotKey }))[key];
+    if (saved?.token === claim.token && saved.done === claim.done) {
+      return;
+    }
   }
 }
 
@@ -110,11 +130,12 @@ function isAbandoned({ claim, now }: { claim: DeliveryClaim; now: number }): boo
   return claim.done === false && typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
 }
 
-async function releaseClaim({ store, claimKey, claimToken }: { store: Store; claimKey: string; claimToken: string }): Promise<void> {
+async function releaseClaim({ store, slotKey, key, claimToken }: { store: Store; slotKey: string; key: string; claimToken: string }): Promise<void> {
   try {
-    const current = await store.get<DeliveryClaim>(claimKey);
-    if (current?.token === claimToken) {
-      await store.delete(claimKey);
+    const entries = await readSlot({ store, slotKey });
+    if (entries[key]?.token === claimToken) {
+      const rest = Object.fromEntries(Object.entries(entries).filter(([entryKey]) => entryKey !== key));
+      await store.put<DeliverySlot>(slotKey, { entries: rest });
     }
   } catch {
     return;
@@ -233,11 +254,14 @@ export const dripWebhook = {
   textMatches,
   TOKEN_PARAM,
   CLAIM_SLOTS,
+  SLOT_CAPACITY,
   ABANDONED_CLAIM_MS,
   claimKeyOf,
 };
 
-type DeliveryClaim = { key?: string; token: string; at?: number; done?: boolean };
+type DeliveryClaim = { token: string; at?: number; done?: boolean };
+
+type DeliverySlot = { entries?: Record<string, DeliveryClaim> };
 
 export type DripWebhookInformation = {
   webhookId: string;
