@@ -261,7 +261,7 @@ export async function executePieceActionRun({
                 type: 'text',
                 text: `❌ ${action.displayName} failed with INTERNAL_ERROR — the engine crashed while loading or executing the piece. Run ID: ${actionRun.id}.`,
             }],
-            structuredContent: { errorSummary: 'The step couldn’t start — something went wrong loading it.', runId: actionRun.id },
+            structuredContent: { errorSummary: 'The step couldn\'t start — something went wrong loading it.', ...(actionRun.neverStarted ? {} : { runId: actionRun.id }) },
             isError: true,
         }
     }
