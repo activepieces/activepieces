@@ -85,7 +85,7 @@ function ClientChip({ row }: { row: McpOAuthGrant }) {
       </span>
       {row.lastUsedAt === null ? (
         <Badge variant="outline" className="gap-1.5 font-normal">
-          <span className="size-1.5 rounded-full bg-gray-11" />
+          <span className="size-1.5 rounded-full bg-gray-9" />
           {t('Waiting for first call')}
         </Badge>
       ) : (

@@ -9,6 +9,7 @@ import { CheckCircle, Loader2, XCircle } from 'lucide-react';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Label } from '@/components/ui/label';
+import { AdminControl } from '@/lib/admin-control';
 
 import { StepShell } from '../stepper';
 
@@ -93,11 +94,19 @@ const VerificationRow = ({ record }: { record: EmbedVerificationRecord }) => {
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5 min-w-0">
           <Label className="text-xs text-gray-11">{t('Name')}</Label>
-          <CopyToClipboardInput textToCopy={record.name} useInput={true} />
+          <CopyToClipboardInput
+            textToCopy={record.name}
+            useInput={true}
+            controlId={AdminControl.EMBEDDING_DNS_NAME_COPY}
+          />
         </div>
         <div className="flex flex-col gap-1.5 min-w-0">
           <Label className="text-xs text-gray-11">{t('Value')}</Label>
-          <CopyToClipboardInput textToCopy={record.value} useInput={true} />
+          <CopyToClipboardInput
+            textToCopy={record.value}
+            useInput={true}
+            controlId={AdminControl.EMBEDDING_DNS_VALUE_COPY}
+          />
         </div>
       </div>
     </div>

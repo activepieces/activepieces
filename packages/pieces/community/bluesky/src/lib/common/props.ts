@@ -1,59 +1,12 @@
 import { Property } from '@activepieces/pieces-framework';
 import { blueskyAuth } from './auth';
+import { blueskyClient } from './client';
 
-export const languageOptions = [
-  { label: 'English', value: 'en' },
-  { label: 'Spanish', value: 'es' },
-  { label: 'French', value: 'fr' },
-  { label: 'German', value: 'de' },
-  { label: 'Italian', value: 'it' },
-  { label: 'Portuguese', value: 'pt' },
-  { label: 'Russian', value: 'ru' },
-  { label: 'Japanese', value: 'ja' },
-  { label: 'Korean', value: 'ko' },
-  { label: 'Chinese (Simplified)', value: 'zh' },
-  { label: 'Chinese (Traditional)', value: 'zh-TW' },
-  { label: 'Arabic', value: 'ar' },
-  { label: 'Hindi', value: 'hi' },
-  { label: 'Dutch', value: 'nl' },
-  { label: 'Swedish', value: 'sv' },
-  { label: 'Norwegian', value: 'no' },
-  { label: 'Danish', value: 'da' },
-  { label: 'Finnish', value: 'fi' },
-  { label: 'Polish', value: 'pl' },
-  { label: 'Czech', value: 'cs' },
-  { label: 'Hungarian', value: 'hu' },
-  { label: 'Romanian', value: 'ro' },
-  { label: 'Greek', value: 'el' },
-  { label: 'Turkish', value: 'tr' },
-  { label: 'Hebrew', value: 'he' },
-  { label: 'Thai', value: 'th' },
-  { label: 'Vietnamese', value: 'vi' },
-  { label: 'Indonesian', value: 'id' },
-  { label: 'Malay', value: 'ms' },
-  { label: 'Filipino', value: 'fil' },
-];
+const MAX_DROPDOWN_FOLLOWS = 1000;
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 25;
 
-
-export const languageDropdown = Property.StaticDropdown({
-  displayName: 'Language',
-  description: 'Select the language for the post',
-  required: false,
-  options: {
-    options: languageOptions,
-  },
-});
-
-export const multiLanguageDropdown = Property.StaticMultiSelectDropdown({
-  displayName: 'Languages',
-  description: 'Select one or more languages for the post',
-  required: false,
-  options: {
-    options: languageOptions,
-  },
-});
-
-export const threadDepthDropdown = Property.StaticDropdown({
+const threadDepthDropdown = Property.StaticDropdown({
   displayName: 'Thread Depth',
   description: 'How many levels deep to retrieve replies',
   required: false,
@@ -72,7 +25,7 @@ export const threadDepthDropdown = Property.StaticDropdown({
   },
 });
 
-export const parentHeightDropdown = Property.StaticDropdown({
+const parentHeightDropdown = Property.StaticDropdown({
   displayName: 'Parent Height',
   description: 'How many parent posts to retrieve',
   required: false,
@@ -91,126 +44,45 @@ export const parentHeightDropdown = Property.StaticDropdown({
   },
 });
 
-export const visibilityDropdown = Property.StaticDropdown({
-  displayName: 'Visibility',
-  description: 'Post visibility setting',
-  required: false,
-  defaultValue: 'public',
-  options: {
-    options: [
-      { label: 'Public', value: 'public' },
-      { label: 'Unlisted', value: 'unlisted' },
-    ],
-  },
-});
-
-export const moderationLabelDropdown = Property.StaticMultiSelectDropdown({
-  displayName: 'Content Labels',
-  description: 'Apply content moderation labels to the post',
-  required: false,
-  options: {
-    options: [
-      { label: 'Adult Content', value: 'adult' },
-      { label: 'Graphic Media', value: 'graphic-media' },
-      { label: 'Nudity', value: 'nudity' },
-      { label: 'Sexual', value: 'sexual' },
-      { label: 'Violence', value: 'violence' },
-      { label: 'Self Harm', value: 'self-harm' },
-      { label: 'Spam', value: 'spam' },
-      { label: 'Impersonation', value: 'impersonation' },
-    ],
-  },
-});
-
-export const postUrlProperty = Property.ShortText({
+const postUrlProperty = Property.ShortText({
   displayName: 'Post URL',
   description: 'Paste the Bluesky post URL (e.g., https://bsky.app/profile/username.bsky.social/post/xxx)',
   required: true,
 });
 
-export const userHandleProperty = Property.ShortText({
-  displayName: 'User Handle',
-  description: 'Bluesky username (e.g., username.bsky.social)',
-  required: true,
-});
-
-export const authorSelectionProperty = Property.Dropdown({
-  displayName: 'Select Author',
-  description: 'Choose from accounts you follow',
-  required: false,
-  auth: blueskyAuth,
-  refreshers: ['auth'],
-  options: async ({ auth }) => {
-    try {
-      const { createBlueskyAgent } = await import('./client');
-      if (!auth) return { options: [] };
-      const agent = await createBlueskyAgent(auth.props);
-      const session = agent.session;
-      
-      if (!session?.did) {
-        return { options: [{ label: 'Please authenticate first', value: '' }] };
-      }
-      
-      const followingResponse = await agent.getFollows({ 
-        actor: session.did, 
-        limit: 100 
-      });
-      
-      const options = followingResponse.data.follows.map((follow: any) => ({
-        label: `${follow.displayName || follow.handle} (@${follow.handle})`,
-        value: follow.handle
-      }));
-      
-      options.unshift({ label: 'Enter handle manually', value: 'manual' });
-      
-      return { options };
-    } catch (error) {
-      return { 
-        options: [{ label: 'Error loading following list', value: '' }] 
-      };
-    }
-  }
-});
-
-export const postSearchProperty = Property.ShortText({
-  displayName: 'Search Posts',
-  description: 'Search for posts by keywords, hashtags, or content',
-  required: false,
-});
-
-export const postTextProperty = Property.LongText({
+const postTextProperty = Property.LongText({
   displayName: 'Post Text',
-  description: 'What do you want to post? (Max 300 characters)',
+  description: 'What do you want to post? (Max 300 characters, counted as visible characters so emoji and non-Latin text count once each)',
   required: true,
 });
 
-export const imageUrlsProperty = Property.Array({
+const imageUrlsProperty = Property.Array({
   displayName: 'Image URLs',
-  description: 'Add up to 4 images by URL',
+  description: 'Add up to 4 images by URL (PNG, JPEG, GIF or WebP, max 1 MB each)',
   required: false,
 });
 
-export const imageDescriptionsProperty = Property.Array({
+const imageDescriptionsProperty = Property.Array({
   displayName: 'Image Descriptions',
   description: 'Describe each image for accessibility',
   required: false,
 });
 
-export const linkUrlProperty = Property.ShortText({
+const linkUrlProperty = Property.ShortText({
   displayName: 'Link to Share',
   description: 'URL to share with your post',
   required: false,
 });
 
-export const replyToPostProperty = Property.ShortText({
+const replyToPostProperty = Property.ShortText({
   displayName: 'Reply to Post',
   description: 'URL of post to reply to',
   required: false,
 });
 
-export const postTypeDropdown = Property.StaticDropdown({
+const postTypeDropdown = Property.StaticDropdown({
   displayName: 'Post Type',
-  description: 'Type of content you\'re sharing',
+  description: 'Informational only. To quote a post, fill in "Quote Post URL"; to reply, fill in "Reply to Post".',
   required: false,
   defaultValue: 'text',
   options: {
@@ -224,7 +96,7 @@ export const postTypeDropdown = Property.StaticDropdown({
   },
 });
 
-export const simpleLanguageDropdown = Property.StaticDropdown({
+const simpleLanguageDropdown = Property.StaticDropdown({
   displayName: 'Post Language',
   description: 'Language of your post',
   required: false,
@@ -250,39 +122,10 @@ export const simpleLanguageDropdown = Property.StaticDropdown({
   },
 });
 
-export const replyDepthDropdown = Property.StaticDropdown({
-  displayName: 'How many replies to show?',
-  description: 'Choose how deep to go into the conversation',
-  required: false,
-  defaultValue: '10',
-  options: {
-    options: [
-      { label: 'Just direct replies (1 level)', value: '1' },
-      { label: 'Short conversation (3 levels)', value: '3' },
-      { label: 'Full conversation (10 levels)', value: '10' },
-      { label: 'Entire thread (50+ levels)', value: '50' },
-    ],
-  },
-});
-
-export const parentPostsDropdown = Property.StaticDropdown({
-  displayName: 'Show conversation context?',
-  description: 'Include previous posts in the thread for context',
-  required: false,
-  defaultValue: '3',
-  options: {
-    options: [
-      { label: 'No context - just this post', value: '0' },
-      { label: 'Recent context (3 previous posts)', value: '3' },
-      { label: 'Full context (10 previous posts)', value: '10' },
-      { label: 'Complete thread history', value: '80' },
-    ],
-  },
-});
-
-export const contentWarningDropdown = Property.StaticMultiSelectDropdown({
+const contentWarningDropdown = Property.StaticMultiSelectDropdown({
   displayName: 'Content Warnings',
-  description: 'Add warnings for sensitive content',
+  description:
+    'Self-labels Bluesky shows as content warnings. "Adult Content" is sent as Bluesky\'s Adult (porn) label, "Violence" as Graphic Media, "Sensitive Topic" as Suggestive (sexual); "Spam/Promotional" has no Bluesky label and is ignored.',
   required: false,
   options: {
     options: [
@@ -291,13 +134,16 @@ export const contentWarningDropdown = Property.StaticMultiSelectDropdown({
       { label: 'Sensitive Topic', value: 'sensitive' },
       { label: 'Violence', value: 'violence' },
       { label: 'Spam/Promotional', value: 'spam' },
+      { label: 'Suggestive (sexual)', value: 'sexual' },
+      { label: 'Nudity', value: 'nudity' },
+      { label: 'Adult (porn)', value: 'porn' },
     ],
   },
 });
 
-export const audienceDropdown = Property.StaticDropdown({
+const audienceDropdown = Property.StaticDropdown({
   displayName: 'Audience',
-  description: 'Who can see this post',
+  description: 'Bluesky posts are always public; this setting has no effect and is kept only for older flows.',
   required: false,
   defaultValue: 'public',
   options: {
@@ -309,84 +155,229 @@ export const audienceDropdown = Property.StaticDropdown({
   },
 });
 
-export function extractPostInfoFromUrl(url: string): { uri?: string; handle?: string; postId?: string } {
-  if (url.startsWith('at://')) {
-    return { uri: url };
-  }
-  
-  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?]+)/);
-  if (urlMatch) {
-    const handle = urlMatch[1];
-    const postId = urlMatch[2];
-    
-    return {
-      handle: handle,
-      postId: postId,
-    };
-  }
-  
-  return {};
+function limitProperty({ description }: { description?: string } = {}) {
+  return Property.Number({
+    displayName: 'Limit',
+    description: description ?? `How many results to return per page (1-${MAX_LIMIT}, default ${DEFAULT_LIMIT}).`,
+    required: false,
+    defaultValue: DEFAULT_LIMIT,
+  });
 }
 
-export function normalizeHandle(handle: string): string {
-  let cleanHandle = handle.replace(/^@/, '');
-  
-  if (!cleanHandle.includes('.')) {
-    cleanHandle += '.bsky.social';
-  }
-  
-  return cleanHandle;
+function cursorProperty() {
+  return Property.ShortText({
+    displayName: 'Cursor',
+    description: 'Leave empty for the first page. To get the next page, pass the "cursor" value returned by the previous run.',
+    required: false,
+  });
 }
 
-export function createSimpleExternalLink(url: string): { uri: string; title: string; description?: string } {
-  return {
-    uri: url,
-    title: url,
-    description: 'Shared link'
-  };
+function actorProperty({ description }: { description: string }) {
+  return Property.ShortText({ displayName: 'Account', description, required: true });
 }
 
+function optionalActorProperty({ description }: { description: string }) {
+  return Property.ShortText({ displayName: 'Account', description, required: false });
+}
 
-export const postUriProperty = Property.ShortText({
-  displayName: 'Post URI (Advanced)',
-  description: 'Technical AT-URI format (at://did:plc:xxx/app.bsky.feed.post/xxx) - use Post URL field instead',
-  required: false,
+function postInputProperty() {
+  return Property.ShortText({
+    displayName: 'Post',
+    description: 'The post link (https://bsky.app/profile/alice.bsky.social/post/3k...) or its at:// URI.',
+    required: true,
+  });
+}
+
+function listInputProperty() {
+  return Property.ShortText({
+    displayName: 'List',
+    description: 'The list link (https://bsky.app/profile/alice.bsky.social/lists/3k...) or its at:// URI.',
+    required: true,
+  });
+}
+
+const NOTIFICATION_REASONS = [
+  { label: 'Like', value: 'like' },
+  { label: 'Repost', value: 'repost' },
+  { label: 'Follow', value: 'follow' },
+  { label: 'Mention', value: 'mention' },
+  { label: 'Reply', value: 'reply' },
+  { label: 'Quote', value: 'quote' },
+  { label: 'Joined via your starter pack', value: 'starterpack-joined' },
+  { label: 'Like of your repost', value: 'like-via-repost' },
+  { label: 'Repost of your repost', value: 'repost-via-repost' },
+  { label: 'Post from an account you subscribed to', value: 'subscribed-post' },
+  { label: 'Verified', value: 'verified' },
+  { label: 'Verification removed', value: 'unverified' },
+];
+
+function notificationReasonsProperty({ defaultValue, description }: { defaultValue?: string[]; description: string }) {
+  return Property.StaticMultiSelectDropdown({
+    displayName: 'Notification Types',
+    description,
+    required: false,
+    defaultValue,
+    options: { options: NOTIFICATION_REASONS },
+  });
+}
+
+const selectionMethodDropdown = Property.StaticDropdown({
+  displayName: 'Select Method',
+  description: 'How to choose the post',
+  required: true,
+  defaultValue: 'timeline',
+  options: {
+    options: [
+      { label: 'From my timeline', value: 'timeline' },
+      { label: 'Enter URL manually', value: 'manual' },
+    ],
+  },
 });
 
-export const externalLinkProperty = Property.Object({
-  displayName: 'External Link (Advanced)',
-  description: 'Manual link object - use "Link to Share" field instead',
-  required: false,
-});
-
-export const replyToProperty = Property.Object({
-  displayName: 'Reply To (Advanced)',
-  description: 'Manual reply object - use "Reply to Post" field instead',
-  required: false,
-});
-
-
-
-export async function parseBlueskyUrl(url: string, agent: any): Promise<string> {
-  if (url.startsWith('at://')) {
-    if (!url.match(/^at:\/\/did:plc:[a-z0-9]+\/app\.bsky\.feed\.post\/[a-z0-9]+$/)) {
-      throw new Error('Invalid AT-URI format');
+function selectedPostInput({
+  selectionMethod,
+  postSelection,
+  postUrl,
+}: {
+  selectionMethod: unknown;
+  postSelection: unknown;
+  postUrl: unknown;
+}): string {
+  if (selectionMethod === 'timeline') {
+    if (typeof postSelection !== 'string' || postSelection.trim() === '') {
+      throw new Error('Please select a post from your timeline dropdown');
     }
-    return url;
+    return postSelection.trim();
   }
-  
-  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?]+)/);
-  if (urlMatch) {
-    const handle = urlMatch[1];
-    const postId = urlMatch[2];
-    
-    if (!handle.includes('.') && !handle.includes('@')) {
-      throw new Error('Invalid handle format in URL');
+  if (selectionMethod === 'manual') {
+    if (typeof postUrl !== 'string' || postUrl.trim() === '') {
+      throw new Error('Post URL is required when using manual entry method');
     }
-    
-    const didDoc = await agent.resolveHandle({ handle: handle.replace('@', '') });
-    return `at://${didDoc.data.did}/app.bsky.feed.post/${postId}`;
+    return postUrl.trim();
   }
-  
-  throw new Error('Invalid post URL format. Please use a valid Bluesky post URL or AT-URI.');
+  throw new Error('Please select a post selection method');
 }
+
+function parseLimit(raw: unknown): number {
+  if (raw === undefined || raw === null || raw === '') {
+    return DEFAULT_LIMIT;
+  }
+  const value = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isInteger(value) || value < 1 || value > MAX_LIMIT) {
+    throw new Error(`Limit must be a whole number between 1 and ${MAX_LIMIT}; got ${String(raw)}.`);
+  }
+  return value;
+}
+
+function parseCursor(raw: unknown): string | undefined {
+  return typeof raw === 'string' && raw.trim() !== '' ? raw.trim() : undefined;
+}
+
+function postLabel({ handle, text, indexedAt }: { handle: string; text: unknown; indexedAt: string }): string {
+  const body = typeof text === 'string' && text !== '' ? text : 'Media post';
+  const trimmed = body.length > 80 ? `${body.substring(0, 80)}...` : body;
+  return `@${handle}: ${trimmed} (${new Date(indexedAt).toLocaleDateString()})`;
+}
+
+function timelinePostDropdown() {
+  return Property.Dropdown({
+    auth: blueskyAuth,
+    displayName: 'Select Post',
+    description: 'Choose from your 50 most recent timeline posts (only when "From my timeline" is selected above)',
+    required: false,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return { disabled: true, options: [], placeholder: 'Connect your Bluesky account first' };
+      }
+      try {
+        const agent = await blueskyClient.createAgent(auth.props);
+        const timeline = await agent.getTimeline({ limit: 50 });
+        return {
+          disabled: false,
+          options: timeline.data.feed.map((item) => ({
+            label: postLabel({ handle: item.post.author.handle, text: item.post.record['text'], indexedAt: item.post.indexedAt }),
+            value: item.post.uri,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: `Could not load your timeline: ${error instanceof Error ? error.message : 'unknown error'}`,
+        };
+      }
+    },
+  });
+}
+
+function followingDropdown() {
+  return Property.Dropdown({
+    auth: blueskyAuth,
+    displayName: 'Select Author',
+    description: 'Choose from accounts you follow',
+    required: false,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return { disabled: true, options: [], placeholder: 'Connect your Bluesky account first' };
+      }
+      try {
+        const agent = await blueskyClient.createAgent(auth.props);
+        const did = blueskyClient.sessionDid(agent);
+        const options: { label: string; value: string }[] = [];
+        let cursor: string | undefined = undefined;
+        do {
+          const page: Awaited<ReturnType<typeof agent.getFollows>> = await agent.getFollows({ actor: did, limit: 100, cursor });
+          options.push(
+            ...page.data.follows.map((follow) => ({
+              label: `${follow.displayName || follow.handle} (@${follow.handle})`,
+              value: follow.handle,
+            })),
+          );
+          cursor = page.data.cursor && page.data.cursor !== cursor ? page.data.cursor : undefined;
+        } while (cursor && options.length < MAX_DROPDOWN_FOLLOWS);
+        if (options.length === 0) {
+          return { disabled: true, options: [], placeholder: 'You do not follow anyone yet. Use "Enter handle manually" instead.' };
+        }
+        return { disabled: false, options };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: `Could not load the accounts you follow: ${error instanceof Error ? error.message : 'unknown error'}`,
+        };
+      }
+    },
+  });
+}
+
+export const blueskyProps = {
+  MAX_LIMIT,
+  DEFAULT_LIMIT,
+  threadDepthDropdown,
+  parentHeightDropdown,
+  postUrlProperty,
+  postTextProperty,
+  imageUrlsProperty,
+  imageDescriptionsProperty,
+  linkUrlProperty,
+  replyToPostProperty,
+  postTypeDropdown,
+  simpleLanguageDropdown,
+  contentWarningDropdown,
+  audienceDropdown,
+  limitProperty,
+  cursorProperty,
+  actorProperty,
+  optionalActorProperty,
+  postInputProperty,
+  listInputProperty,
+  timelinePostDropdown,
+  followingDropdown,
+  selectionMethodDropdown,
+  selectedPostInput,
+  notificationReasonsProperty,
+  parseLimit,
+  parseCursor,
+};

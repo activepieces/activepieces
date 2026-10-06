@@ -1,6 +1,7 @@
 import { memoryLock } from '@activepieces/server-utils'
 import {
     FlowState,
+    FlowStatus,
     Folder,
     PieceType,
     PROJECT_REPLACE_SCHEMA_VERSION,
@@ -416,6 +417,89 @@ describe('Project Replace API', () => {
             })
             expect(['dup_a', 'dup_b']).toContain(body.failed[0].externalId)
         })
+
+        it('returns 207 with a flow failure when CREATE_FLOW publishes unsuccessfully', async () => {
+            const { project, apiKey } = await setupCtx({ environmentsEnabled: true })
+
+            const response = await postReplace({
+                projectId: project.id,
+                apiKey: apiKey.value,
+                body: {
+                    ...emptyReplaceRequest(),
+                    flows: [buildSimpleFlow({ projectId: project.id, displayName: 'unpublishable_create', externalId: 'unpublishable_create', valid: false })],
+                },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.MULTI_STATUS)
+            const body = response.json()
+            expect(body.applied.flowsCreated).toBe(0)
+            expect(body.applied.flowsUnchanged).toBe(0)
+            expect(body.failed).toHaveLength(1)
+            expect(body.failed[0]).toMatchObject({
+                kind: 'flow',
+                op: 'CREATE',
+                externalId: 'unpublishable_create',
+            })
+            expect(body.failed[0].error).toContain('is not valid')
+        })
+
+        it('returns 207 when LOCK_AND_PUBLISH throws while registering the trigger', async () => {
+            const { project, apiKey } = await setupCtx({ environmentsEnabled: true })
+
+            const response = await postReplace({
+                projectId: project.id,
+                apiKey: apiKey.value,
+                body: {
+                    ...emptyReplaceRequest(),
+                    flows: [buildSimpleFlow({ projectId: project.id, displayName: 'enabled_flow', externalId: 'enabled_flow', status: FlowStatus.ENABLED })],
+                },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.MULTI_STATUS)
+            const body = response.json()
+            expect(body.applied.flowsCreated).toBe(0)
+            expect(body.failed).toHaveLength(1)
+            expect(body.failed[0]).toMatchObject({
+                kind: 'flow',
+                op: 'CREATE',
+                externalId: 'enabled_flow',
+            })
+            expect(body.failed[0].error).toContain('Failed to publish flow')
+            expect(body.failed[0].error).not.toMatch(/^[A-Z_]+: \{/)
+        })
+
+        it('returns 207 with a flow failure when UPDATE_FLOW publishes unsuccessfully', async () => {
+            const { project, apiKey } = await setupCtx({ environmentsEnabled: true })
+            const externalId = 'unpublishable_update'
+            const firstVersion = buildSimpleFlow({ projectId: project.id, displayName: 'v1', externalId, valid: false })
+
+            await postReplace({
+                projectId: project.id,
+                apiKey: apiKey.value,
+                body: { ...emptyReplaceRequest(), flows: [firstVersion] },
+            })
+
+            const secondVersion = structuredClone(firstVersion)
+            secondVersion.version.displayName = 'v2'
+
+            const response = await postReplace({
+                projectId: project.id,
+                apiKey: apiKey.value,
+                body: { ...emptyReplaceRequest(), flows: [secondVersion] },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.MULTI_STATUS)
+            const body = response.json()
+            expect(body.applied.flowsUpdated).toBe(0)
+            expect(body.applied.flowsUnchanged).toBe(0)
+            expect(body.failed).toHaveLength(1)
+            expect(body.failed[0]).toMatchObject({
+                kind: 'flow',
+                op: 'UPDATE',
+                externalId,
+            })
+            expect(body.failed[0].error).toContain('is not valid')
+        })
     })
 })
 
@@ -455,10 +539,13 @@ function emptyReplaceRequest(): ProjectReplaceRequest {
     }
 }
 
-function buildSimpleFlow({ projectId, displayName }: { projectId: string, displayName: string }): FlowState {
-    const flow = flowGenerator.simpleActionAndTrigger()
+function buildSimpleFlow({ projectId, displayName, externalId, valid = true, status = FlowStatus.DISABLED }: { projectId: string, displayName: string, externalId?: string, valid?: boolean, status?: FlowStatus }): FlowState {
+    const flow = flowGenerator.simpleActionAndTrigger(externalId)
     flow.projectId = projectId
+    flow.status = status
     flow.version.displayName = displayName
+    flow.version.valid = valid
+    flow.version.trigger.valid = valid
     // Trigger name must be 'trigger' — that's the default name on the freshly-created
     // flow on dest. UPDATE_TRIGGER looks up the trigger by name, so a random name
     // would throw "Step not found".

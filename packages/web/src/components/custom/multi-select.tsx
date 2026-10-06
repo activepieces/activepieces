@@ -44,9 +44,7 @@ interface MultiSelectContextValue {
 
   onDeselect(value: string, item: MultiSelectOptionItem): void;
 
-  onSearch?(keyword: string | undefined): void;
-
-  filter?: boolean | ((keyword: string, current: string) => boolean);
+  onSearch(keyword: string | undefined): void;
 
   disabled?: boolean;
 
@@ -79,8 +77,7 @@ type MultiSelectProps = React.ComponentPropsWithoutRef<
   onSelect?(value: string, item: MultiSelectOptionItem): void;
   onDeselect?(value: string, item: MultiSelectOptionItem): void;
   defaultValue?: string[];
-  onSearch?(keyword: string | undefined): void;
-  filter?: boolean | ((keyword: string, current: string) => boolean);
+  onSearch(keyword: string | undefined): void;
   disabled?: boolean;
   maxCount?: number;
   items?: MultiSelectOptionItem[];
@@ -96,7 +93,6 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   onOpenChange,
   defaultOpen,
   onSearch,
-  filter,
   disabled,
   maxCount,
   items = [],
@@ -162,7 +158,6 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
       value: value || [],
       open: open || false,
       onSearch,
-      filter,
       disabled,
       maxCount,
       onSelect: handleSelect,
@@ -173,7 +168,6 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     value,
     open,
     onSearch,
-    filter,
     disabled,
     maxCount,
     handleSelect,
@@ -229,7 +223,7 @@ const MultiSelectTrigger = React.forwardRef<
           type="button"
           loading={loading}
           className={cn(
-            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-gray-8 bg-transparent px-4 py-1 text-sm ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-accent-8 [&>span]:line-clamp-1',
+            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-gray-8 bg-transparent px-4 py-1 text-sm ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-gray-8 [&>span]:line-clamp-1',
             {
               'cursor-not-allowed opacity-80': disabled,
               'cursor-pointer': !disabled,
@@ -417,7 +411,10 @@ const MultiSelectContent = React.forwardRef<
 
   if (!context.open) {
     return fragmentRef.current
-      ? createPortal(<Command>{children}</Command>, fragmentRef.current)
+      ? createPortal(
+          <Command shouldFilter={false}>{children}</Command>,
+          fragmentRef.current,
+        )
       : null;
   }
 
@@ -449,7 +446,7 @@ const MultiSelectContent = React.forwardRef<
       >
         <Command
           className={cn('px-1 max-h-96 w-full', className)}
-          shouldFilter={!context.onSearch}
+          shouldFilter={false}
         >
           {children}
         </Command>
