@@ -124,6 +124,24 @@ describe('createTaskSubagentTools', () => {
         ] } })
     })
 
+    it('keeps the links of a search too large to return in full', async () => {
+        const truncated = JSON.stringify({ query: 'pricing', results: [{ title: 'Plans', url: 'https://ok.com/plans' }] })
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Found it.', artifacts: [] }, EXECUTION_OPTIONS)
+            return {
+                ...turnResult(),
+                uiParts: [
+                    { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 's1', toolName: 'ap_web_search', input: { query: 'pricing' }, status: PersistedToolCallStatus.COMPLETED, output: { content: [{ type: 'text', text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved] The full response was 80KB.\n\n${truncated}` }] } },
+                ],
+            }
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })
+
+        const result = await tasks['ap_run_task'].execute?.({ title: 'Research', brief: 'Find out' }, EXECUTION_OPTIONS)
+
+        expect(result).toMatchObject({ activity: { timeline: [{ kind: 'search', query: 'pricing', results: [{ url: 'https://ok.com/plans', title: 'Plans' }] }] } })
+    })
+
     it('counts only pages that were actually read', async () => {
         runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Found it.', artifacts: [] }, EXECUTION_OPTIONS)

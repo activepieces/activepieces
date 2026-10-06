@@ -287,6 +287,14 @@ function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
     })
 }
 
+function unwrapLargeResponse(value: unknown): unknown {
+    const text = extractResultText(value)
+    if (!text.startsWith(LARGE_RESPONSE_MARKER)) {
+        return value
+    }
+    return parseToJsonIfPossible(text.slice(text.indexOf('\n\n') + 2))
+}
+
 function returnedPage(output: unknown): boolean {
     const parsed = parseToJsonIfPossible(output)
     const hasPageText = isObject(parsed) && (typeof parsed['content'] === 'string' || typeof parsed['markdown'] === 'string')
@@ -294,7 +302,7 @@ function returnedPage(output: unknown): boolean {
 }
 
 function searchResults(output: unknown): SubagentLink[] {
-    const parsed = parseToJsonIfPossible(output)
+    const parsed = unwrapLargeResponse(parseToJsonIfPossible(output))
     if (!isObject(parsed) || !Array.isArray(parsed['results'])) {
         return []
     }

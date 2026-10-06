@@ -116,7 +116,11 @@ export const createChatStore = () =>
       set({ lastDismissedFormId: messageId });
     },
     setConversationId: (conversationId: string | null) => {
-      set({ conversationId });
+      set((prev) =>
+        prev.conversationId === conversationId
+          ? { conversationId }
+          : { conversationId, taskPanelAutoOpen: true },
+      );
     },
     resetInteractions: () => {
       set({
@@ -126,7 +130,6 @@ export const createChatStore = () =>
         dismissedGateIds: {},
         lastDismissedFormId: null,
         taskPanelToolCallId: null,
-        taskPanelAutoOpen: true,
       });
     },
     resetBuilds: () => {
