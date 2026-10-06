@@ -4787,6 +4787,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/jumpcloud": {
+      "name": "@activepieces/piece-jumpcloud",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/jungle-grid": {
       "name": "@activepieces/piece-jungle-grid",
       "version": "0.2.1",
@@ -11949,6 +11961,8 @@
     "@activepieces/piece-jsm-operations": ["@activepieces/piece-jsm-operations@workspace:packages/pieces/community/jsm-operations"],
 
     "@activepieces/piece-json": ["@activepieces/piece-json@workspace:packages/pieces/community/json"],
+
+    "@activepieces/piece-jumpcloud": ["@activepieces/piece-jumpcloud@workspace:packages/pieces/community/jumpcloud"],
 
     "@activepieces/piece-jungle-grid": ["@activepieces/piece-jungle-grid@workspace:packages/pieces/community/jungle-grid"],
 
