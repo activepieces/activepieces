@@ -99,9 +99,7 @@ const ErrorFallbackContent = ({
 
         <div className="w-full flex flex-col gap-2 text-left">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-11">
-              {detailsLabel}
-            </span>
+            <span className="text-xs text-gray-11">{detailsLabel}</span>
             <Button
               variant="ghost"
               size="icon"
