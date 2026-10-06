@@ -201,6 +201,23 @@ describe('worker settings override', () => {
         expect(stored.SANDBOX_MEMORY_LIMIT).toBe('2097152')
     }, 10_000)
 
+    it('no local AP_SANDBOX_MEMORY_LIMIT keeps server-provided limit', async () => {
+        const serverSettings = buildWorkerSettingsResponse({ SANDBOX_MEMORY_LIMIT: '524288' })
+        await connectAndWaitForSettings(serverSettings)
+
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.SANDBOX_MEMORY_LIMIT).toBe('524288')
+    }, 10_000)
+
+    it.each(['invalid', '2097152KB', '0', '-1'])('invalid local AP_SANDBOX_MEMORY_LIMIT %s throws', async (value) => {
+        process.env.AP_SANDBOX_MEMORY_LIMIT = value
+        const serverSettings = buildWorkerSettingsResponse()
+
+        const err = await connectAndExpectCrash(serverSettings)
+        expect(err.message).toMatch(/AP_SANDBOX_MEMORY_LIMIT must be a positive integer/)
+        expect(mockWorkerSettingsSet).not.toHaveBeenCalled()
+    }, 10_000)
+
     it('worker group + SANDBOX_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
