@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 describe('piece definition', () => {
-    it('registers every object action and the custom API call', () => {
+    it('registers every action and the custom API call', () => {
         expect(Object.keys(jumpcloud.actions())).toEqual([
             'create_object',
             'update_object',
@@ -43,6 +43,14 @@ describe('piece definition', () => {
             'list_objects',
             'list_objects_by_id',
             'search_objects',
+            'create_association',
+            'delete_association',
+            'find_user_by_employee_id',
+            'lock_user',
+            'unlock_user',
+            'reset_user_mfa',
+            'update_user_on_system',
+            'run_trigger_command',
             'custom_api_call',
         ]);
     });

@@ -2,6 +2,7 @@ import { Property } from '@activepieces/pieces-framework';
 import { jumpcloudAuth } from '../auth';
 import { DEFAULT_MAX_ITEMS, DEFAULT_PAGE_SIZE, jumpcloudApi, MAX_FETCH_ALL_ITEMS, MAX_PAGE_SIZE } from './client';
 import { jumpcloudObjects } from './objects';
+import { ObjectTypeKey } from './types';
 
 export const jumpcloudProps = {
     objectType,
@@ -9,10 +10,14 @@ export const jumpcloudProps = {
     pagination,
 };
 
-function objectType({ creatableOnly = false }: { creatableOnly?: boolean } = {}) {
+function objectType({
+    creatableOnly = false,
+    displayName = 'Object Type',
+    description = 'The kind of JumpCloud object to work with.',
+}: { creatableOnly?: boolean; displayName?: string; description?: string } = {}) {
     return Property.StaticDropdown({
-        displayName: 'Object Type',
-        description: 'The kind of JumpCloud object to work with.',
+        displayName,
+        description,
         required: true,
         defaultValue: 'user',
         options: {
@@ -22,15 +27,17 @@ function objectType({ creatableOnly = false }: { creatableOnly?: boolean } = {})
     });
 }
 
-function objectId({ displayName = 'Object', description }: { displayName?: string; description?: string } = {}) {
+function objectId({ displayName = 'Object', description, typeProp = 'objectType', fixedType }: ObjectIdParams = {}) {
     return Property.Dropdown({
         auth: jumpcloudAuth,
         displayName,
         description: description ?? 'Pick the object, or type to search by name. You can also map an ID from an earlier step.',
         required: true,
-        refreshers: ['objectType'],
+        refreshers: fixedType === undefined ? [typeProp] : [],
         refreshOnSearch: true,
-        options: async ({ auth, objectType }, { searchValue }) => {
+        options: async (propsValue, { searchValue }) => {
+            const { auth } = propsValue;
+            const objectType = fixedType ?? propsValue[typeProp];
             if (auth === undefined) {
                 return { disabled: true, options: [], placeholder: 'Connect your JumpCloud account first.' };
             }
@@ -96,3 +103,10 @@ function pagination() {
 }
 
 const PICKER_PAGE_SIZE = 50;
+
+type ObjectIdParams = {
+    displayName?: string;
+    description?: string;
+    typeProp?: string;
+    fixedType?: ObjectTypeKey;
+};

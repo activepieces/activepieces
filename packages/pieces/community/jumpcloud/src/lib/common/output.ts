@@ -2,6 +2,7 @@ import { ApiRecord, FlatObject, ObjectTypeKey } from './types';
 
 export const jumpcloudOutput = {
     flatten,
+    flattenCommandResult,
 };
 
 function flatten({ type, record }: { type: ObjectTypeKey; record: ApiRecord }): FlatObject {
@@ -85,6 +86,23 @@ function flattenApplication(record: ApiRecord): FlatObject {
         sso_url: str(record['ssoUrl']),
         active: bool(record['active']),
         created: str(record['created']),
+    };
+}
+
+function flattenCommandResult({ commandId, record }: { commandId: string; record: ApiRecord }): FlatObject {
+    const response = record['response'];
+    const data = response !== null && typeof response === 'object' && 'data' in response ? response.data : undefined;
+    return {
+        command_id: commandId,
+        command_name: str(record['name']),
+        system_id: str(record['systemId']),
+        system_name: str(record['system']),
+        run_as_user: str(record['user']),
+        exit_code: data !== null && typeof data === 'object' && 'exitCode' in data && typeof data.exitCode === 'number' ? data.exitCode : null,
+        output: data !== null && typeof data === 'object' && 'output' in data ? str(data.output) : null,
+        error: response !== null && typeof response === 'object' && 'error' in response ? str(response.error) : null,
+        request_time: str(record['requestTime']),
+        response_time: str(record['responseTime']),
     };
 }
 

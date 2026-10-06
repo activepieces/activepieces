@@ -197,6 +197,8 @@ export const MAX_PAGE_SIZE = 100;
 export const DEFAULT_PAGE_SIZE = 50;
 export const DEFAULT_MAX_ITEMS = 1000;
 export const MAX_FETCH_ALL_ITEMS = 10000;
+export const COMMAND_POLL_SECONDS = 5;
+export const COMMAND_MAX_WAIT_SECONDS = 300;
 
 const REGION_BASE_URLS: Record<string, string> = {
     [JUMPCLOUD_REGION.US]: 'https://console.jumpcloud.com/api',
