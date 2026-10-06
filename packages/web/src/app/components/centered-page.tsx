@@ -11,6 +11,7 @@ export const CenteredPage = ({
   description,
   actions,
   footer,
+  breadcrumb,
   children,
   widthClassName = 'max-w-[40rem]',
   showHeaderSeparator = true,
@@ -20,14 +21,16 @@ export const CenteredPage = ({
   description?: React.ReactNode;
   actions?: React.ReactNode;
   footer?: React.ReactNode;
+  breadcrumb?: React.ReactNode;
   children: React.ReactNode;
   widthClassName?: string;
   showHeaderSeparator?: boolean;
   className?: string;
 }) => {
   const header =
-    title === undefined && !description && !actions ? null : (
+    title === undefined && !description && !actions && !breadcrumb ? null : (
       <>
+        {breadcrumb && <div className="pb-3">{breadcrumb}</div>}
         <div
           className={cn(
             'flex items-start justify-between gap-4',

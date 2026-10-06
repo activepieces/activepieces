@@ -2,14 +2,16 @@ import { Property, createAction, OAuth2PropertyValue } from '@activepieces/piece
 import { getTaskListsDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
+import { taskListOutputSchema } from '../output-schemas';
 
 export const updateTaskListAction = createAction({
     auth: microsoftToDoAuth,
     name: 'update_task_list',
+    outputSchema: taskListOutputSchema,
     classification: 'WRITE',
     displayName: 'Update Task List',
     description: 'Updates an existing task list.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Rename an existing Microsoft To Do task list, identified by its task list id, to a new display name. Use to change a list\'s title. Idempotent: re-sending the same name leaves the list in the same state. The new name is required and cannot be empty.', idempotent: true },
     props: {
         task_list_id: Property.Dropdown({

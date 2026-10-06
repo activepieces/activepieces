@@ -174,7 +174,7 @@ const TrialActivationScreen = ({
                 className="h-1.5 overflow-hidden rounded-full bg-gray-3"
               >
                 <div
-                  className="relative h-full overflow-hidden rounded-full bg-accent-11 transition-[width] duration-300 ease-[var(--ease-expand-out)]"
+                  className="relative h-full overflow-hidden rounded-full bg-accent-9 transition-[width] duration-300 ease-[var(--ease-expand-out)]"
                   style={{ width: `${Math.round(progress)}%` }}
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent)] animate-indeterminate-progress" />

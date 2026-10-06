@@ -52,8 +52,8 @@ export function BatchProgressCard({
               'transition-all duration-500',
               progress.done
                 ? hasFailures
-                  ? 'bg-warning-11'
-                  : 'bg-success-11'
+                  ? 'bg-warning-9'
+                  : 'bg-success-9'
                 : undefined,
             )}
           />

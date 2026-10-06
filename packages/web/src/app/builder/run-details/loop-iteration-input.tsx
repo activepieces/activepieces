@@ -185,13 +185,13 @@ function getIterationStatus(
 function getIterationDotClassName(status: StepOutputStatus): string {
   switch (status) {
     case StepOutputStatus.FAILED:
-      return 'bg-danger-11';
+      return 'bg-danger-10';
     case StepOutputStatus.RUNNING:
-      return 'bg-accent-11 animate-pulse';
+      return 'bg-accent-10 animate-pulse';
     case StepOutputStatus.PAUSED:
-      return 'bg-warning-11';
+      return 'bg-warning-10';
     default:
-      return 'bg-success-11';
+      return 'bg-success-10';
   }
 }
 

@@ -37,6 +37,53 @@ import { listCollections } from './lib/actions/list-collections';
 import { getCollection } from './lib/actions/get-collection';
 import { generateChatCompletion } from './lib/actions/generate-chat-completion';
 import { generateEmbeddings } from './lib/actions/generate-embeddings';
+import { checkDatasetViewerSupport } from './lib/actions/check-dataset-viewer-support';
+import { listDatasetSplits } from './lib/actions/list-dataset-splits';
+import { previewDatasetRows } from './lib/actions/preview-dataset-rows';
+import { getDatasetRows } from './lib/actions/get-dataset-rows';
+import { searchDatasetRows } from './lib/actions/search-dataset-rows';
+import { filterDatasetRows } from './lib/actions/filter-dataset-rows';
+import { getDatasetViewerInfo } from './lib/actions/get-dataset-viewer-info';
+import { getDatasetSize } from './lib/actions/get-dataset-size';
+import { getDatasetStatistics } from './lib/actions/get-dataset-statistics';
+import { listDatasetParquetFiles } from './lib/actions/list-dataset-parquet-files';
+import { getDatasetLeaderboard } from './lib/actions/get-dataset-leaderboard';
+import { createRepo } from './lib/actions/create-repo';
+import { updateRepoSettings } from './lib/actions/update-repo-settings';
+import { createRepoBranch } from './lib/actions/create-repo-branch';
+import { deleteRepoBranch } from './lib/actions/delete-repo-branch';
+import { createRepoTag } from './lib/actions/create-repo-tag';
+import { deleteRepoTag } from './lib/actions/delete-repo-tag';
+import { commitFiles } from './lib/actions/commit-files';
+import { createDiscussion } from './lib/actions/create-discussion';
+import { commentOnDiscussion } from './lib/actions/comment-on-discussion';
+import { changeDiscussionStatus } from './lib/actions/change-discussion-status';
+import { renameDiscussion } from './lib/actions/rename-discussion';
+import { pinDiscussion } from './lib/actions/pin-discussion';
+import { deleteDiscussion } from './lib/actions/delete-discussion';
+import { commentOnPaper } from './lib/actions/comment-on-paper';
+import { replyToPaperComment } from './lib/actions/reply-to-paper-comment';
+import { createCollection } from './lib/actions/create-collection';
+import { addCollectionItem } from './lib/actions/add-collection-item';
+import { listGatedAccessRequests } from './lib/actions/list-gated-access-requests';
+import { handleGatedAccessRequest } from './lib/actions/handle-gated-access-request';
+import { upsertSpaceSecret } from './lib/actions/upsert-space-secret';
+import { deleteSpaceSecret } from './lib/actions/delete-space-secret';
+import { upsertSpaceVariable } from './lib/actions/upsert-space-variable';
+import { deleteSpaceVariable } from './lib/actions/delete-space-variable';
+import { listNotifications } from './lib/actions/list-notifications';
+import { deleteNotifications } from './lib/actions/delete-notifications';
+import { updateWatchList } from './lib/actions/update-watch-list';
+import { listWebhooks } from './lib/actions/list-webhooks';
+import { getWebhook } from './lib/actions/get-webhook';
+import { createWebhook } from './lib/actions/create-webhook';
+import { updateWebhook } from './lib/actions/update-webhook';
+import { deleteWebhook } from './lib/actions/delete-webhook';
+import { setWebhookEnabled } from './lib/actions/set-webhook-enabled';
+import { listInferenceEndpoints } from './lib/actions/list-inference-endpoints';
+import { getUserSocials } from './lib/actions/get-user-socials';
+import { getOrganizationSocials } from './lib/actions/get-organization-socials';
+import { searchHfDocs } from './lib/actions/search-hf-docs';
 import { huggingFaceAuth } from './lib/auth';
 
 export const huggingface = createPiece({
@@ -86,6 +133,53 @@ export const huggingface = createPiece({
     getCollection,
     generateChatCompletion,
     generateEmbeddings,
+    checkDatasetViewerSupport,
+    listDatasetSplits,
+    previewDatasetRows,
+    getDatasetRows,
+    searchDatasetRows,
+    filterDatasetRows,
+    getDatasetViewerInfo,
+    getDatasetSize,
+    getDatasetStatistics,
+    listDatasetParquetFiles,
+    getDatasetLeaderboard,
+    createRepo,
+    updateRepoSettings,
+    createRepoBranch,
+    deleteRepoBranch,
+    createRepoTag,
+    deleteRepoTag,
+    commitFiles,
+    createDiscussion,
+    commentOnDiscussion,
+    changeDiscussionStatus,
+    renameDiscussion,
+    pinDiscussion,
+    deleteDiscussion,
+    commentOnPaper,
+    replyToPaperComment,
+    createCollection,
+    addCollectionItem,
+    listGatedAccessRequests,
+    handleGatedAccessRequest,
+    upsertSpaceSecret,
+    deleteSpaceSecret,
+    upsertSpaceVariable,
+    deleteSpaceVariable,
+    listNotifications,
+    deleteNotifications,
+    updateWatchList,
+    listWebhooks,
+    getWebhook,
+    createWebhook,
+    updateWebhook,
+    deleteWebhook,
+    setWebhookEnabled,
+    listInferenceEndpoints,
+    getUserSocials,
+    getOrganizationSocials,
+    searchHfDocs,
   ],
   triggers: [],
 });

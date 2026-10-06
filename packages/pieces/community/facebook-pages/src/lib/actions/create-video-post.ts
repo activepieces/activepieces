@@ -13,6 +13,10 @@ export const createVideoPost = createAction({
   audience: 'human',
   aiMetadata: { description: 'Publishes a video post to a Facebook Page the connected account manages by uploading a video from a publicly reachable URL, with an optional title and description. Choose this for video content rather than text or photo posts. Requires a managed page and a video URL Facebook can fetch (limit 1GB or 20 minutes); not idempotent, as each call uploads a new video.', idempotent: false },
   outputSchema: createVideoPostActionOutputSchema,
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Post to', icon: 'send', props: ['page'] },
+    { key: 'post', display: 'section', label: 'Post', icon: 'file', props: ['video', 'title', 'description'] },
+  ],
   props: {
     page: facebookPagesCommon.page,
     video: facebookPagesCommon.video,

@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { redditAuth } from '../auth';
+import { redditApi } from '../common/client';
+import { createRedditCommentOutputSchema } from '../output-schemas';
 
 export const createRedditComment = createAction({
   auth: redditAuth,
   name: 'createRedditComment',
+  outputSchema: createRedditCommentOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Comment on a Reddit post or reply to a comment.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Posts a comment from the authenticated account, either as a top-level reply to a post or as a nested reply to another comment, determined by the parent ID type (t3_ for a post, t1_ for a comment). Requires the parent ID and the comment text. Not idempotent — each call creates a separate comment.', idempotent: false },
   props: {
     parent_id: Property.ShortText({
@@ -23,38 +26,16 @@ export const createRedditComment = createAction({
     }),
   },
   async run(context) {
-    let parentId = context.propsValue.parent_id.trim();
-
-    // If it's just a post ID, prefix it
-    if (!parentId.startsWith('t1_') && !parentId.startsWith('t3_')) {
-      parentId = `t3_${parentId}`;
-    }
-
-    const url = 'https://oauth.reddit.com/api/comment';
-    const payload = new URLSearchParams({
-      thing_id: parentId,
-      text: context.propsValue.content,
-      api_type: 'json',
-    });
-
-    const response = await httpClient.sendRequest({
+    return redditApi.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url,
-      headers: {
-        'Authorization': `Bearer ${context.auth.access_token}`,
-        'User-Agent': 'ActivePieces Reddit Client',
-        'Content-Type': 'application/x-www-form-urlencoded',
+      allowJsonErrors: true,
+      path: '/api/comment',
+      form: {
+        api_type: 'json',
+        thing_id: redditApi.toFullname({ value: context.propsValue.parent_id, prefix: 't3_', accept: ['t1_', 't3_'] }),
+        text: context.propsValue.content,
       },
-      body: payload.toString(),
     });
-
-    if (response.status !== 200) {
-      return {
-        error: `Failed to create comment: ${response.status}`,
-        details: response.body,
-      };
-    }
-
-    return response.body;
   },
 });

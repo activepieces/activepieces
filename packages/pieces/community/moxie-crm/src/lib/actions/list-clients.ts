@@ -6,7 +6,7 @@ import { listClientsActionOutputSchema } from '../output-schemas';
 export const moxieListClientsAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_list_clients',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Clients',
   description: 'Retrieve every client and prospect in the workspace.',
   audience: 'both',

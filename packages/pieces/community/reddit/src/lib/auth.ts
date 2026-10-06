@@ -21,7 +21,7 @@ export const redditAuth = PieceAuth.OAuth2({
   authUrl: 'https://www.reddit.com/api/v1/authorize',
   tokenUrl: 'https://www.reddit.com/api/v1/access_token',
   required: true,
-  scope: ['identity', 'read', 'submit', 'edit', 'history', 'flair'],
+  scope: ['identity', 'read', 'submit', 'edit', 'history', 'flair', 'save', 'report', 'subscribe', 'privatemessages', 'mysubreddits', 'wikiread'],
   authorizationMethod: OAuth2AuthorizationMethod.HEADER,
   extra: {
     grantType: OAuth2GrantType.AUTHORIZATION_CODE,

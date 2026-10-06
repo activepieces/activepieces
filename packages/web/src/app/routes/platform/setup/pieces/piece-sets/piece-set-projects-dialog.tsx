@@ -29,7 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -50,6 +50,19 @@ const isAssignedToSet = ({
   return project.pieceSetId === pieceSet.id;
 };
 
+function findCurrentSetName({
+  project,
+  pieceSets,
+}: {
+  project: ProjectWithLimits;
+  pieceSets: PieceSet[];
+}): string {
+  const currentSet = isNil(project.pieceSetId)
+    ? pieceSets.find((set) => set.isDefault)
+    : pieceSets.find((set) => set.id === project.pieceSetId);
+  return currentSet?.name ?? '';
+}
+
 const AssignProjectsForm = ({
   pieceSet,
   allProjects,
@@ -62,6 +75,11 @@ const AssignProjectsForm = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const [selected, setSelected] = useState<string[]>(serverAssignedIds);
+  const { data: pieceSetsPage } = pieceSetQueries.usePieceSets({ limit: 100 });
+  const pieceSets = pieceSetsPage?.data ?? [];
+  const movingCount = selected.filter(
+    (id) => !serverAssignedIds.includes(id),
+  ).length;
   const assignMutation = pieceSetMutations.useAssignProjects();
   const removeMutation = pieceSetMutations.useBulkRemoveProjects();
 
@@ -135,12 +153,24 @@ const AssignProjectsForm = ({
                 >
                   <Checkbox checked={checked} className="pointer-events-none" />
                   <span className="truncate">{project.displayName}</span>
+                  {!isAssignedToSet({ pieceSet, project }) && (
+                    <span className="ml-auto shrink-0 text-xs text-gray-11">
+                      {t('Currently: {name}', {
+                        name: findCurrentSetName({ project, pieceSets }),
+                      })}
+                    </span>
+                  )}
                 </CommandItem>
               );
             })}
           </CommandGroup>
         </CommandList>
       </Command>
+      {movingCount > 0 && (
+        <p className="text-xs text-warning-11">
+          {t('projectsMovingFromOtherSets', { count: movingCount })}
+        </p>
+      )}
       <DialogFooter>
         <Button
           type="button"

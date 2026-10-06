@@ -72,7 +72,7 @@ function Calendar({
           defaultClassNames.dropdowns,
         ),
         dropdown_root: cn(
-          'relative rounded-md border border-gray-6 shadow-xs has-focus:border-accent-8 has-focus:ring-[3px] has-focus:ring-accent-8/50',
+          'relative rounded-md border border-gray-6 shadow-xs has-focus:border-gray-8 has-focus:ring-[3px] has-focus:ring-gray-8/50',
           defaultClassNames.dropdown_root,
         ),
         dropdown: cn(
@@ -203,7 +203,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        'flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-accent-8 group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-accent-8/50 data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-end=true]:bg-accent-9 data-[range-end=true]:text-on-accent data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-gray-4 data-[range-middle=true]:text-gray-12 data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md data-[range-start=true]:bg-accent-9 data-[range-start=true]:text-on-accent data-[selected-single=true]:bg-accent-9 data-[selected-single=true]:text-on-accent dark:hover:text-gray-12 [&>span]:text-xs [&>span]:opacity-70',
+        'flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-gray-8 group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-gray-8/50 data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-end=true]:bg-accent-9 data-[range-end=true]:text-on-accent data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-gray-4 data-[range-middle=true]:text-gray-12 data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md data-[range-start=true]:bg-accent-9 data-[range-start=true]:text-on-accent data-[selected-single=true]:bg-accent-9 data-[selected-single=true]:text-on-accent dark:hover:text-gray-12 [&>span]:text-xs [&>span]:opacity-70',
         defaultClassNames.day,
         className,
       )}

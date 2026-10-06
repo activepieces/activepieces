@@ -1,8 +1,6 @@
 import {
-  FlowAction,
   FlowTriggerType,
   FlowVersion,
-  Step,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
@@ -25,18 +23,13 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   selectStepByName,
   setOpenedPieceSelectorStepNameOrAddButtonId,
 }) => {
-  const invalidSteps = useMemo(
-    () =>
-      flowStructureUtil
-        .getAllSteps(flowVersion.trigger)
-        .filter(filterValidOrSkippedSteps).length,
+  const invalidStepCount = useMemo(
+    () => getInvalidSteps(flowVersion).length,
     [flowVersion],
   );
   const { fitView } = useReactFlow();
   function onClick() {
-    const invalidSteps = flowStructureUtil
-      .getAllSteps(flowVersion.trigger)
-      .filter(filterValidOrSkippedSteps);
+    const invalidSteps = getInvalidSteps(flowVersion);
     if (invalidSteps.length > 0) {
       const stepToFocus = invalidSteps[0];
       selectStepByName(stepToFocus.name);
@@ -58,7 +51,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
           e.preventDefault();
         }}
       >
-        {t('incompleteSteps', { invalidSteps: invalidSteps })}
+        {t('incompleteSteps', { invalidSteps: invalidStepCount })}
       </Button>
     )
   );
@@ -66,7 +59,11 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 
 IncompleteSettingsButton.displayName = 'IncompleteSettingsButton';
 export default IncompleteSettingsButton;
-function filterValidOrSkippedSteps(step: Step) {
-  if ((step as FlowAction).skip) return false;
-  return !step.valid;
+function getInvalidSteps(flowVersion: FlowVersion) {
+  const skippedStepNames = flowStructureUtil.getSkippedStepNames({
+    trigger: flowVersion.trigger,
+  });
+  return flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .filter((step) => !step.valid && !skippedStepNames.has(step.name));
 }

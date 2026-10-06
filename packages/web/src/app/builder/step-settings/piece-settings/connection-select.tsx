@@ -222,31 +222,10 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                         placeholder={t('Select a connection')}
                         data-testid="select-connection-value"
                       >
-                        {!isNil(field.value) &&
-                        !isNil(
-                          connections?.data?.find(
-                            (connection) =>
-                              connection.externalId ===
-                              removeBrackets(field.value),
-                          ),
-                        ) ? (
-                          <div className="truncate grow shrink flex items-center gap-2">
-                            {connections?.data?.find(
-                              (connection) =>
-                                connection.externalId ===
-                                removeBrackets(field.value),
-                            )?.scope === AppConnectionScope.PLATFORM && (
-                              <Globe size={16} className="shrink-0" />
-                            )}
-                            {
-                              connections?.data?.find(
-                                (connection) =>
-                                  connection.externalId ===
-                                  removeBrackets(field.value),
-                              )?.displayName
-                            }
-                          </div>
-                        ) : null}
+                        <SelectedConnectionLabel
+                          value={field.value}
+                          connections={connections?.data ?? []}
+                        />
                       </SelectValue>
                       <div className="grow"></div>
                       {field.value &&
@@ -375,6 +354,36 @@ function removeBrackets(str: string | undefined) {
   return str.replace(
     /\{\{connections\['(.*?)'\]\}\}/g,
     (_, connectionName) => connectionName,
+  );
+}
+function SelectedConnectionLabel({
+  value,
+  connections,
+}: {
+  value: string | undefined;
+  connections: AppConnectionWithoutSensitiveData[];
+}) {
+  if (isNil(value) || value === '') {
+    return null;
+  }
+  const connection = connections.find(
+    (connection) => connection.externalId === removeBrackets(value),
+  );
+  if (isNil(connection)) {
+    return (
+      <div className="truncate grow shrink flex items-center gap-2 text-gray-11">
+        <Unplug size={16} className="shrink-0 text-danger-11" />
+        {t('Connection not found')}
+      </div>
+    );
+  }
+  return (
+    <div className="truncate grow shrink flex items-center gap-2">
+      {connection.scope === AppConnectionScope.PLATFORM && (
+        <Globe size={16} className="shrink-0" />
+      )}
+      {connection.displayName}
+    </div>
   );
 }
 function getConnectionStatusDisplay(status: AppConnectionStatus): {

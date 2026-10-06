@@ -1,6 +1,7 @@
 import {
   ApFile,
   createAction,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -18,35 +19,43 @@ export const telegramSendDocumentAction = createAction({
   name: 'send_document',
   classification: 'WRITE',
   displayName: 'Send Document',
-  description: 'Send a generic file (document) to a Telegram chat',
+  description: 'Send any file to a chat as a document.',
   audience: 'human',
   aiMetadata: { description: 'Uploads and sends a generic file (up to 50 MB) as a document to a Telegram chat, supplied as a file or a previously uploaded Telegram file_id. Use for arbitrary attachments (PDFs, archives, spreadsheets) rather than media shown inline. Not idempotent: each call sends a new document.', idempotent: false },
+  propertyGroups: [
+    { key: 'send_to', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id'] },
+    { key: 'file', display: 'section', label: 'File', icon: 'paperclip', props: ['file_info', 'document', 'document_id'] },
+    { key: 'caption', display: 'section', label: 'Caption', icon: 'text', props: ['format', 'caption', 'instructions_format'] },
+  ],
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
-    message_thread_id: telegramCommons.messageThreadIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
+    file_info: Property.MarkDown({
+      value: 'Upload a file or enter a file ID. If both are set, the upload is sent.',
+      variant: MarkdownVariant.INFO,
+    }),
     document: Property.File({
       displayName: 'Document',
-      description: 'The document file to send. Telegram supports any file up to 50 MB.',
+      description: 'Any file type, up to 50 MB.',
       required: false,
     }),
     document_id: Property.ShortText({
-      displayName: 'Document Id',
-      description:
-        'Reuse a document previously uploaded to Telegram by passing its file_id. Either provide a document or a document id.',
+      displayName: 'Document ID',
+      description: 'file_id of a document already on Telegram, to send it again.',
       required: false,
     }),
+    format: telegramCommons.form.parseModeProp(),
     caption: Property.LongText({
       displayName: 'Caption',
-      description: 'Optional caption to display below the document (0–1024 chars).',
+      description: 'Up to 1024 characters.',
       required: false,
     }),
-    format: telegramCommons.parseModeProp(),
-    instructions_format: telegramCommons.formatLinkInstructions(),
-    disable_notification: telegramCommons.disableNotificationProp(),
-    protect_content: telegramCommons.protectContentProp(),
-    reply_to_message_id: telegramCommons.replyToMessageIdProp(),
-    reply_markup: telegramCommons.replyMarkupProp(),
+    instructions_format: telegramCommons.form.formatLinkInstructions(),
+    message_thread_id: telegramCommons.form.messageThreadIdProp(),
+    disable_notification: telegramCommons.form.disableNotificationProp(),
+    protect_content: telegramCommons.form.protectContentProp(),
+    reply_to_message_id: telegramCommons.form.replyToMessageIdProp(),
+    reply_markup: telegramCommons.form.replyMarkupProp(),
   },
   outputSchema: sendDocumentActionOutputSchema,
   async run(ctx) {

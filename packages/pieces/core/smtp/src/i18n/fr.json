@@ -24,5 +24,18 @@
   "Custom Headers": "En-têtes personnalisés",
   "Attachments": "Pièces jointes",
   "plain text": "texte brut",
-  "html": "html"
+  "html": "html",
+  "Require TLS": "Exiger TLS",
+  "465 encrypts from the start; other ports upgrade to STARTTLS if the server offers it.": "465 chiffre dès le début ; les autres ports passent à STARTTLS si le serveur le propose.",
+  "Fail instead of sending unencrypted if STARTTLS is unavailable.": "Échoue au lieu d’envoyer sans chiffrement si STARTTLS est indisponible.",
+  "Login name, usually your email address. Blank if no login is needed.": "Identifiant, généralement votre adresse e-mail. Vide si aucune connexion n’est requise.",
+  "Cc": "Cc",
+  "Bcc": "Cci",
+  "Must be an address your server lets you send from.": "Doit être une adresse depuis laquelle votre serveur autorise l’envoi.",
+  "Replies go to this address instead of the sender.": "Les réponses vont à cette adresse au lieu de l’expéditeur.",
+  "How the text in Body is interpreted.": "Comment le texte de Body est interprété.",
+  "Name shown in the inbox instead of your address.": "Nom affiché dans la boîte de réception à la place de votre adresse.",
+  "Extra headers added to the email, as name and value pairs.": "En-têtes supplémentaires ajoutés à l’e-mail, sous forme de paires nom-valeur.",
+  "Plain Text": "Texte brut",
+  "HTML": "HTML"
 }

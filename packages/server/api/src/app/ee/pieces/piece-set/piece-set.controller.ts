@@ -2,6 +2,7 @@ import { AssignProjectsRequestBody, CreatePieceSetRequestBody, DuplicatePieceSet
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { pieceSetService } from './piece-set.service'
 
@@ -24,6 +25,10 @@ export const pieceSetController: FastifyPluginAsyncZod = async (app) => {
             ...req.body,
         })
         return reply.status(StatusCodes.CREATED).send(set)
+    })
+
+    app.get('/projects/:projectId', GetProjectPieceSet, async (req) => {
+        return service.getForProject({ projectId: req.projectId, platformId: req.principal.platform.id })
     })
 
     app.get('/:id', GetPieceSet, async (req) => {
@@ -100,6 +105,20 @@ const GetPieceSet = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         summary: 'Get a piece set by id',
         params: idParam,
+    },
+}
+
+const GetProjectPieceSet = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, {
+            type: ProjectResourceType.PARAM,
+        }),
+    },
+    schema: {
+        tags: ['piece-sets'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        summary: 'Get the piece set that applies to a project',
+        params: z.object({ projectId: z.string() }),
     },
 }
 

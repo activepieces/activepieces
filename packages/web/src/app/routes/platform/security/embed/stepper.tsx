@@ -74,7 +74,7 @@ export const Stepper = ({
                 <div
                   className={cn(
                     'w-px flex-1 my-2',
-                    isComplete ? 'bg-success-11' : 'bg-gray-6',
+                    isComplete ? 'bg-success-10' : 'bg-gray-6',
                   )}
                 />
               )}

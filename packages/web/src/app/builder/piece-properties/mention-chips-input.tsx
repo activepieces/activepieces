@@ -168,7 +168,7 @@ function MentionChipsInput({
               'inline-flex max-w-full items-start gap-1 rounded-md bg-gray-3 py-0.5 pl-2.5 pr-1 text-sm outline-none transition-colors',
               disabled
                 ? 'cursor-default'
-                : 'cursor-pointer hover:bg-gray-3/70 focus-visible:ring-2 focus-visible:ring-accent-8/50',
+                : 'cursor-pointer hover:bg-gray-3/70 focus-visible:ring-2 focus-visible:ring-gray-8/50',
               {
                 'bg-danger-3 text-danger-11 hover:bg-danger-4': invalid,
               },
@@ -189,7 +189,7 @@ function MentionChipsInput({
                 type="button"
                 aria-label={t('Remove')}
                 className={cn(
-                  'shrink-0 rounded-full px-1 py-0.5 text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-accent-8/50',
+                  'shrink-0 rounded-full px-1 py-0.5 text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8/50',
                   { 'text-danger-11/70 hover:text-danger-11': invalid },
                 )}
                 onClick={(event) => {
@@ -206,7 +206,7 @@ function MentionChipsInput({
 
       {!disabled && (
         <div
-          className="min-w-[140px] flex-1 rounded-sm focus-within:ring-2 focus-within:ring-accent-8/50"
+          className="min-w-[140px] flex-1 rounded-sm focus-within:ring-2 focus-within:ring-gray-8/50"
           onKeyDownCapture={handleKeyDownCapture}
           onPasteCapture={handlePasteCapture}
           onBlur={handleComposeBlur}

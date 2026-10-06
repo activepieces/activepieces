@@ -82,7 +82,6 @@ function contentTypeToExtension(contentType: string): string {
   const type = contentType.split(';')[0].trim().toLowerCase();
   return CONTENT_TYPE_EXTENSIONS[type] ?? '';
 }
-import FormData from 'form-data';
 
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
@@ -420,6 +419,7 @@ export function createCustomApiCallAction<
               fileFieldValue?: ApFile;
             }>;
 
+            const { default: FormData } = await import('form-data');
             const formData = new FormData();
 
             for (const {

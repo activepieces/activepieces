@@ -63,7 +63,7 @@ export function ProjectSelect({
         >
           {selectedProject?.type === ProjectType.TEAM ? (
             <Avatar
-              className="size-4 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+              className="size-4 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
               style={{
                 backgroundColor:
                   PROJECT_COLOR_PALETTE[selectedProject.icon.color].color,
@@ -108,7 +108,7 @@ export function ProjectSelect({
                 >
                   {isTeam && project ? (
                     <Avatar
-                      className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+                      className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
                       style={{
                         backgroundColor:
                           PROJECT_COLOR_PALETTE[project.icon.color].color,

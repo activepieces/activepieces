@@ -1,6 +1,7 @@
-import { OAuth2PropertyValue, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property, TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
+import { taskCompletedOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
@@ -39,7 +40,19 @@ export const taskCompletedTrigger = createTrigger({
             },
         }),
     },
+    outputSchema: taskCompletedOutputSchema,
     type: TriggerStrategy.WEBHOOK,
+    handshakeConfiguration: {
+        strategy: WebhookHandshakeStrategy.QUERY_PRESENT,
+        paramName: 'validationToken',
+    },
+    async onHandshake(context) {
+        return {
+            status: 200,
+            body: context.payload.queryParams['validationToken'],
+            headers: { 'Content-Type': 'text/plain' },
+        };
+    },
     sampleData: {
         '@odata.etag': 'W/"vVwdQvxCiE6779iYhchMrAAGgwrltg=="',
         importance: 'normal',

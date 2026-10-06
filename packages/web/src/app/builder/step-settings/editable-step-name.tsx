@@ -111,7 +111,7 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                 className={cn(
                   'flex items-center gap-1.5 min-w-0',
                   !readonly &&
-                    'cursor-text rounded-sm hover:text-gray-12/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8',
+                    'cursor-text rounded-sm hover:text-gray-12/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8',
                 )}
               >
                 <span className="truncate text-gray-12">

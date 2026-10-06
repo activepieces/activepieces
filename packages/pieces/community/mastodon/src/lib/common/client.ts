@@ -227,15 +227,41 @@ async function requestPage<T>(params: MastodonRequestParams): Promise<MastodonPa
   };
 }
 
-function toStringArray(value: unknown[] | undefined): string[] | undefined {
-  if (value === undefined) {
+function toStringArray(value: unknown): string[] | undefined {
+  const list = toList(value);
+  if (list === undefined) {
     return undefined;
   }
-  const items = value
+  const items = list
     .filter((item) => typeof item === 'string' || typeof item === 'number')
     .map((item) => String(item).trim())
     .filter((item) => item !== '');
   return items.length === 0 ? undefined : items;
+}
+
+function toList(value: unknown): unknown[] | undefined {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value !== 'string' || value.trim() === '') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  if (trimmed.startsWith('[')) {
+    const parsed = safeParseJson(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  }
+  return [trimmed];
+}
+
+function safeParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
 }
 
 function hasValue(value: unknown): boolean {

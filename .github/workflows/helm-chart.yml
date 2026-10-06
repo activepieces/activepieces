@@ -32,6 +32,7 @@ jobs:
           helm dependency build
           helm lint .
           helm template ap . | grep -q '^kind: Rollout'
+          helm template ap . --show-only templates/deployment.yaml | yq -e '.spec.template.spec.containers[0] | (.livenessProbe.httpGet.path == "/api/v1/health" and .readinessProbe.httpGet.path == "/api/v1/health")'
           helm template ap . --api-versions apps/v1/StatefulSet | grep -q '^kind: StatefulSet'
           helm template ap . --set autoscaling.enabled=true --api-versions apps/v1/StatefulSet --api-versions argoproj.io/v1alpha1/Rollout > "$RUNNER_TEMP/rollout.yaml"
           grep -q '^kind: Rollout' "$RUNNER_TEMP/rollout.yaml"

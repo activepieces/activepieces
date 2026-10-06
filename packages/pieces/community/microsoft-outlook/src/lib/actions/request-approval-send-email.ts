@@ -12,26 +12,26 @@ export const requestApprovalInMail = createAction({
   classification: 'WRITE',
   displayName: 'Request Approval in Email',
   description:
-    'Send approval request email and then wait until the email is approved or disapproved',
+    'Send an email with an approval link and pause until it is answered.',
   audience: 'both',
   aiMetadata: { description: 'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with the decision. Use this as a human-in-the-loop approval gate before proceeding. Not idempotent: each call sends a new email and creates a new pending waitpoint.', idempotent: false },
   outputSchema: requestApprovalActionOutputSchema,
   props: {
     recipients: Property.ShortText({
-      displayName: 'To Email Address',
-      description:
-        'The email address of the recipient who will receive the approval request.',
+      displayName: 'To',
+      description: 'Address that receives the approval request.',
+      placeholder: 'manager@example.com',
       required: true,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject of the approval request email.',
+      placeholder: 'Approval needed: purchase order 1042',
       required: true,
     }),
     body: Property.LongText({
       displayName: 'Body',
       description:
-        'The main content of the email. You can include details about the approval request here in the html format or plain text.',
+        'Shown above the Review & Respond button. HTML tags are rendered.',
       required: true,
     }),
   },
@@ -80,7 +80,7 @@ export const requestApprovalInMail = createAction({
           ],
         };
 
-        const sendResult = await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/sendMail`).post({
+        await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/sendMail`).post({
           message: mailPayload,
           saveToSentItems: true,
         });

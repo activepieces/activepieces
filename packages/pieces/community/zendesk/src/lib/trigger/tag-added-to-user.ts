@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { tagAddedToUserOutputSchema } from '../output-schemas';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_tag_added_to_user_webhook';
 
@@ -41,6 +42,7 @@ interface ZendeskUser {
 
 export const tagAddedToUser = createTrigger({
   name: 'tag_added_to_user',
+  outputSchema: tagAddedToUserOutputSchema,
   classification: 'READ',
   displayName: 'Tag Added to User',
   description: 'Triggers when one or more tags are added to a user.',

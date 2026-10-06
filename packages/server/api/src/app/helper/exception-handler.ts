@@ -25,8 +25,13 @@ export const exceptionHandler = {
     },
     handle: (e: unknown, log: FastifyBaseLogger): void => {
         log.error({ error: e }, 'Unhandled exception')
-        if (sentryInitialized) {
-            Sentry.captureException(e)
-        }
+        captureException(e)
     },
+    captureException,
+}
+
+function captureException(e: unknown): void {
+    if (sentryInitialized) {
+        Sentry.captureException(e)
+    }
 }

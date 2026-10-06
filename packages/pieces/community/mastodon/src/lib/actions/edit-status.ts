@@ -18,7 +18,7 @@ export const editStatus = createAction({
   classification: 'WRITE',
   displayName: 'Edit Status',
   description: 'Edit the text, content warning, media or poll of one of your statuses.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Edits a status posted by the connected account; only the fields you set change, everything else (text, content warning, sensitivity, media, poll) is carried over from the current post. An existing poll keeps its votes when you leave the poll fields empty, but its hidden-totals setting is reset to visible, and the edit is refused if the poll has ended or closes in under 5 minutes. Setting Poll Options or Allow Multiple Choices to different values resets all votes. Media IDs replace the attached media set. It cannot remove an existing content warning or detach all media; to do that, delete the status and create it again.',
@@ -29,7 +29,7 @@ export const editStatus = createAction({
     status_id: Property.ShortText({
       displayName: 'Status ID',
       description:
-        'Local ID of your own status to edit. Obtain it from Create Status, Get Status or List Account Statuses.',
+        'ID of your own status to edit. Map it from a previous Post Status step (Status > Status ID), Create Status, Get Status or List Account Statuses.',
       required: true,
     }),
     status: Property.LongText({

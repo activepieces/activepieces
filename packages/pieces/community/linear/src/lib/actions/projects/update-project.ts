@@ -12,7 +12,7 @@ export const linearUpdateProject = createAction({
   classification: 'WRITE',
   displayName: 'Update Project',
   description: 'Change a project. Only the fields you fill in are changed.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Updates an existing Linear project identified by its project ID, changing fields such as name, description, icon, color, start/target dates, or status, and adds the selected team to the project without removing its other teams. Use to modify a project already created. Repeating the same update is idempotent.',
     idempotent: true,

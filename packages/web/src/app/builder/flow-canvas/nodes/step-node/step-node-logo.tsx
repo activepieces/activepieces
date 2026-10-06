@@ -29,6 +29,7 @@ const StepNodeLogo = ({
           'size-12 p-2.5': isHorizontal,
         })}
         border
+        tint
       />
     </div>
   );

@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { findAgentOutputSchema } from '../output-schemas';
 
 interface ZendeskAgent {
   id: number;
@@ -25,10 +26,11 @@ interface ZendeskUsersResponse {
 export const findAgentAction = createAction({
   auth: zendeskAuth,
   name: 'find-agent',
+  outputSchema: findAgentOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find an Agent',
   description: 'Find an agent by email or name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Finds an agent (staff/support team member) in Zendesk by searching for their email or name. Returns the first matching agent with their profile details. Useful for assigning tickets or sending notifications to specific agents.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({

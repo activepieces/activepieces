@@ -52,6 +52,7 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
         className="h-full w-full !cursor-grabbing"
         src={step?.settings?.customLogoUrl ?? stepMetadata?.logoUrl}
         alt={t('Step Icon')}
+        tint
       />
     </div>
   );

@@ -192,7 +192,7 @@ function ActivityDetail({
       <div
         data-activity-body
         tabIndex={0}
-        className="flex-1 overflow-y-auto px-6 py-4 outline-none focus-visible:ring-2 focus-visible:ring-accent-8"
+        className="flex-1 overflow-y-auto px-6 py-4 outline-none focus-visible:ring-2 focus-visible:ring-gray-8"
       >
         <dl className="flex flex-col gap-3 text-sm">
           <DetailRow

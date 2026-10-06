@@ -1,20 +1,15 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AtpAgent } from '@atproto/api';
-
-export interface BlueSkyAuthType {
-  pdsHost?: string;
-  identifier: string;
-  password: string;
-}
+import { blueskyAtproto } from './atproto';
+import { blueskyClient } from './client';
 
 const description = `
-To authenticate with Bluesky:
+To connect Bluesky:
 
-1. **PDS Host**: The Personal Data Server host. Leave empty to use the default Bluesky network (https://bsky.social).
-2. **Identifier**: Your Bluesky handle (e.g., yourhandle.bsky.social) or email address.
-3. **Password**: Your Bluesky account password or app password.
+1. **PDS Host**: Leave the default (https://bsky.social) unless your account lives on a self-hosted Personal Data Server.
+2. **Identifier**: Your Bluesky handle (for example yourname.bsky.social) or the email address of the account.
+3. **Password**: An **app password**. In Bluesky open **Settings → Privacy and security → App passwords**, click **Add App Password**, give it a name and paste the generated password here. Your main account password also works, but it grants full account access, so an app password is strongly recommended.
 
-For enhanced security, consider using an app password from your Bluesky account settings.
+Bluesky limits sign-ins to 30 per 5 minutes and 300 per day per account.
 `;
 
 export const blueskyAuth = PieceAuth.CustomAuth({
@@ -34,41 +29,42 @@ export const blueskyAuth = PieceAuth.CustomAuth({
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'Your Bluesky account password or app password',
+      description: 'A Bluesky app password (recommended) or your account password',
       required: true,
     }),
   },
   validate: async ({ auth }) => {
+    let service: string;
     try {
-      const agent = new AtpAgent({
-        service: auth.pdsHost || 'https://bsky.social',
-      });
-
-      await agent.login({
-        identifier: auth.identifier,
-        password: auth.password,
-      });
-
-      return {
-        valid: true,
-      };
-    } catch (error: any) {
-      if (error.message?.includes('Invalid identifier or password')) {
-        return {
-          valid: false,
-          error: 'Invalid credentials. Please check your identifier and password.',
-        };
-      } else if (error.message?.includes('Invalid request')) {
-        return {
-          valid: false,
-          error: 'Invalid request. Please check your identifier format.',
-        };
-      } else {
-        return {
-          valid: false,
-          error: `Authentication failed: ${error.message || 'Unknown error'}`,
-        };
+      service = blueskyClient.normalizePdsHost(auth.pdsHost);
+    } catch (error) {
+      return { valid: false, error: error instanceof Error ? error.message : 'Invalid PDS Host.' };
+    }
+    try {
+      const { AtpAgent } = await blueskyAtproto.load();
+      const agent = new AtpAgent({ service });
+      await agent.login({ identifier: auth.identifier.trim(), password: auth.password });
+      return { valid: true };
+    } catch (error) {
+      if (blueskyClient.isXrpcError(error) && (error.status === 401 || error.error === 'AuthenticationRequired')) {
+        return { valid: false, error: 'Invalid credentials. Please check your identifier and app password.' };
       }
+      if (blueskyClient.isXrpcError(error) && error.status === 429) {
+        return { valid: false, error: 'Bluesky rate limit reached for sign-ins (30 per 5 minutes, 300 per day). Try again later.' };
+      }
+      if (blueskyClient.isXrpcError(error) && error.status === 400) {
+        return { valid: false, error: `Invalid request. Please check your identifier format. (${error.message})` };
+      }
+      return {
+        valid: false,
+        error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
     }
   },
 });
+
+export type BlueSkyAuthType = {
+  pdsHost?: string;
+  identifier: string;
+  password: string;
+};

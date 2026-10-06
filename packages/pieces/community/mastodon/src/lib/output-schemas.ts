@@ -623,6 +623,10 @@ export const mutedAccountPageOutputSchema: OutputSchema = pageSchema({
 
 export const notificationOutputSchema: OutputSchema = { fields: notificationFields };
 
+export const followNotificationOutputSchema: OutputSchema = {
+  fields: notificationFields.filter((field) => field.key !== 'status'),
+};
+
 export const notificationPageOutputSchema: OutputSchema = pageSchema({
   itemsKey: 'notifications',
   label: 'Notifications',

@@ -3,7 +3,7 @@ import { Minus, Plus } from 'lucide-react';
 import React from 'react';
 
 const buttonClass =
-  'flex size-8 items-center justify-center text-gray-11 outline-none transition-colors hover:bg-gray-4 hover:text-gray-12 disabled:pointer-events-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-accent-8/50';
+  'flex size-8 items-center justify-center text-gray-11 outline-none transition-colors hover:bg-gray-4 hover:text-gray-12 disabled:pointer-events-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-gray-8/50';
 
 function NumberStepper({
   value,

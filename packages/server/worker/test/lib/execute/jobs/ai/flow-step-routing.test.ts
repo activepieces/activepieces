@@ -71,6 +71,7 @@ describe('flowStep reaches every model built on the worker', () => {
                 schema: { mode: 'simple', fields: [{ name: 'total', type: 'number', isRequired: true }] },
             }),
             resolved: RESOLVED,
+            modelId: 'mistral-large-latest',
             flowStep: FLOW_STEP,
             files: [],
         })

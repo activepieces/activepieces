@@ -22,6 +22,7 @@ import { linearDeleteIssue } from './lib/actions/issues/delete-issue';
 import { linearAttachLink } from './lib/actions/attachments/attach-link';
 import { linearCreateProjectStatusUpdate } from './lib/actions/projects/create-project-status-update';
 import { linearNewProjectStatusUpdate } from './lib/triggers/new-project-status-update';
+import { linearAtomics } from './lib/actions/atomics';
 
 const markdown = `
 To get your API key:
@@ -84,6 +85,7 @@ export const linear = createPiece({
     linearAttachLink,
     linearCreateProjectStatusUpdate,
     linearRawGraphqlQuery,
+    ...linearAtomics,
   ],
   triggers: [
     linearNewComment,

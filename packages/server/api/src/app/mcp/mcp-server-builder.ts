@@ -26,7 +26,7 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 1. Discover: ap_research_pieces, ap_list_connections, ap_list_ai_models
 2. Schema: ap_get_piece_props (get field names/types before configuring)
 3. Build: ap_build_flow (one call for new flows) OR ap_create_flow → ap_update_trigger → ap_add_step (granular)
-4. Validate: ap_validate_flow
+4. Validate: ap_validate_flow with flowId for one flow, or with folderName for a solution of several flows and tables in one folder
 5. Publish: ap_lock_and_publish → ap_change_flow_status
 
 ### Key patterns

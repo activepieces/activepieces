@@ -3,6 +3,7 @@ import React from 'react';
 
 import { ImageWithFallback } from '@/components/custom/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
+import { logoTint } from '@/lib/logo-tint';
 import { cn } from '@/lib/utils';
 
 const logoPlateVariants = cva(
@@ -20,6 +21,9 @@ const logoPlateVariants = cva(
       },
       border: {
         true: 'border border-solid',
+      },
+      tint: {
+        true: 'transition-colors duration-300',
       },
     },
   },
@@ -49,24 +53,29 @@ export const LogoPlate = React.memo(
     className,
     innerClassName,
     fallback,
-  }: LogoPlateProps) => (
-    <div
-      data-theme="light"
-      title={title}
-      className={cn(logoPlateVariants({ size, border }), className)}
-    >
-      {src ? (
-        <ImageWithFallback
-          src={src}
-          alt={alt}
-          className={cn(logoPlatePadding({ size }), innerClassName)}
-          fallback={fallback}
-        />
-      ) : (
-        fallback ?? <Skeleton className="h-full w-full rounded-md" />
-      )}
-    </div>
-  ),
+    tint,
+  }: LogoPlateProps) => {
+    const tintColor = logoTint.useLogoTint({ src, enabled: tint === true });
+    return (
+      <div
+        data-theme="light"
+        title={title}
+        className={cn(logoPlateVariants({ size, border, tint }), className)}
+        style={tintColor ? { backgroundColor: tintColor } : undefined}
+      >
+        {src ? (
+          <ImageWithFallback
+            src={src}
+            alt={alt}
+            className={cn(logoPlatePadding({ size }), innerClassName)}
+            fallback={fallback}
+          />
+        ) : (
+          fallback ?? <Skeleton className="h-full w-full rounded-md" />
+        )}
+      </div>
+    );
+  },
 );
 
 LogoPlate.displayName = 'LogoPlate';

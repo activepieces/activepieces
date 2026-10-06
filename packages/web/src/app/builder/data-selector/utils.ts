@@ -3,6 +3,7 @@ import {
   flowCanvasUtils,
   FlowAction,
   FlowActionType,
+  flowStructureUtil,
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
@@ -318,7 +319,7 @@ function traverseStep(
     stepNode.data = { ...stepNode.data, stepName: step.name };
   }
 
-  const cofEnabled = flowCanvasUtils.hasContinueOnFailureBranches(step);
+  const cofEnabled = flowStructureUtil.hasContinueOnFailureBranches(step);
   if (cofEnabled) {
     const branch = flowCanvasUtils.getStepBranchRelativeTo(
       step,

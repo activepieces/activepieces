@@ -1,5 +1,6 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ApId, apId, ErrorCode, isNil } from '@activepieces/core-utils'
 import { AiStepAction, AiStepFile, AiStepSchema, AiStepWebSearch, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, maxSocketHttpBufferSizeBytes, PrincipalType, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -8,6 +9,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiExecution } from './ai-execution'
+import { aiModelCandidates } from './ai-model-candidates'
 import { aiModelResolution } from './ai-model-resolution'
 
 export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
@@ -27,16 +29,14 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
         const requestId = apId()
         const log = request.log.child({ flowRun: { id: body.flowRunId }, requestId })
         const execution = aiExecution(log)
-        const modelId = body.action === AiStepAction.GENERATE_IMAGE
-            ? body.modelId
-            : aiModelResolution.resolveTierModelId({ provider: body.provider, modelId: body.modelId, log })
+        const model = await pickModel({ body, platformId: platform.id, log })
         const answerInThisRequest = isNil(body.waitpointId)
         const timeoutMs = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000
         const answer = answerInThisRequest ? execution.waitForAnswer({ requestId, timeoutMs }) : undefined
 
         await execution.enqueue(aiJobFor({
             body,
-            modelId,
+            model,
             requestId,
             projectId,
             platformId: platform.id,
@@ -44,8 +44,9 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
         }))
         log.info({
             project: { id: projectId },
-            model: { id: modelId },
-            tier: modelId === body.modelId ? undefined : { id: body.modelId },
+            model: { id: model.modelId },
+            tier: isNil(body.modelTierId) && model.modelId !== body.modelId ? { id: body.modelId } : undefined,
+            platformTier: isNil(body.modelTierId) ? undefined : { id: body.modelTierId },
         }, '[aiExecuteController] Enqueued AI step')
 
         if (!isNil(answer)) {
@@ -55,9 +56,29 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-function aiJobFor({ body, modelId, requestId, projectId, platformId, webserverId }: {
+async function pickModel({ body, platformId, log }: {
     body: z.infer<typeof ExecuteAiRequest>
-    modelId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<PickedModel> {
+    if (!isNil(body.modelTierId)) {
+        if (body.action === AiStepAction.GENERATE_IMAGE) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Image steps pick a specific model, not a tier' } })
+        }
+        return aiModelCandidates(log).firstCandidate({ platformId, tierId: body.modelTierId })
+    }
+    if (isNil(body.provider) || isNil(body.modelId)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Pick a tier or a provider and model' } })
+    }
+    const modelId = body.action === AiStepAction.GENERATE_IMAGE
+        ? body.modelId
+        : aiModelResolution.resolveTierModelId({ provider: body.provider, modelId: body.modelId, log })
+    return { provider: body.provider, providerConfigId: body.providerConfigId, modelId }
+}
+
+function aiJobFor({ body, model, requestId, projectId, platformId, webserverId }: {
+    body: z.infer<typeof ExecuteAiRequest>
+    model: PickedModel
     requestId: string
     projectId: string
     platformId: string
@@ -73,10 +94,11 @@ function aiJobFor({ body, modelId, requestId, projectId, platformId, webserverId
         flowRunId: body.flowRunId,
         waitpointId: body.waitpointId,
         webserverId,
-        provider: body.provider,
-        modelId,
+        provider: model.provider,
+        modelId: model.modelId,
+        modelTierId: body.modelTierId,
         prompt: body.prompt,
-        providerConfigId: body.providerConfigId,
+        providerConfigId: model.providerConfigId,
         maxOutputTokens: body.maxOutputTokens,
         temperature: body.temperature,
         webSearch: body.webSearch,
@@ -119,9 +141,10 @@ const ExecuteAiRequest = z.object({
     flowId: z.string(),
     flowRunId: z.string(),
     waitpointId: z.string().optional(),
-    provider: z.enum(AIProviderName),
+    provider: z.enum(AIProviderName).optional(),
     providerConfigId: z.string().optional(),
-    modelId: z.string(),
+    modelId: z.string().optional(),
+    modelTierId: z.optional(ApId),
     prompt: z.string().optional(),
     text: z.string().optional(),
     categories: z.array(z.string()).optional(),
@@ -133,6 +156,12 @@ const ExecuteAiRequest = z.object({
     temperature: z.number().optional(),
     webSearch: AiStepWebSearch.optional(),
 })
+
+type PickedModel = {
+    provider: AIProviderName
+    providerConfigId?: string
+    modelId: string
+}
 
 const ExecuteAiResponse = z.object({
     requestId: z.string(),

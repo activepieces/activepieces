@@ -5,6 +5,10 @@ on:
     types: [opened, synchronize, reopened]
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   auto-merge-bot-pr:
     runs-on: ubuntu-latest

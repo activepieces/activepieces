@@ -1,4 +1,4 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, MarkdownVariant, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { supabaseAuth } from '../auth';
 import { supabaseCommon } from '../common/props';
 import { newRowTriggerOutputSchema } from '../output-schemas';
@@ -27,34 +27,24 @@ export const newRow = createTrigger({
     },
     props: {
         instructions: Property.MarkDown({
-            value: `## Setup Instructions
+            value: `1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.
+2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.
+3. Paste this URL, then click **Create webhook**:
 
-1. **Go to your Supabase Dashboard** → Database → Webhooks
-2. **Click "Create a new hook"**
-3. **Configure the webhook:**
-   - **Name**: Give it a descriptive name (e.g., "Activepieces New Row")
-   - **Table**: Select the table you want to monitor
-   - **Events**: Check "Insert" 
-   - **Type**: HTTP Request
-   - **Method**: POST
-   - **URL**: Copy and paste the webhook URL below
-4. **Click "Create webhook"**
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
 
-**Webhook URL:** \`{{webhookUrl}}\`
-
-## Important Notes
-- The webhook will send a JSON payload with the new row data
-- Make sure your table has the necessary permissions
-- You can test the webhook by inserting a new row into your table
-
-For more details, see [Supabase Database Webhooks documentation](https://supabase.com/docs/guides/database/webhooks).`
+[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)`,
+            variant: MarkdownVariant.INFO,
         }),
         table_name: supabaseCommon.table_name,
         schema: Property.ShortText({
             displayName: 'Schema',
-            description: 'Database schema (default: public)',
+            description: 'Change only if the table is not in the public schema.',
             required: false,
-            defaultValue: 'public'
+            defaultValue: 'public',
+            advanced: true
         })
     },
     outputSchema: newRowTriggerOutputSchema,

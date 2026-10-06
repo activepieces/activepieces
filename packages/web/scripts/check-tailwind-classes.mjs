@@ -20,6 +20,7 @@ const ALLOWED = [
 
 const RUNTIME_VARIABLE_PREFIXES = ['--tw-', '--radix-', '--shiki-'];
 const RUNTIME_VARIABLE_SUFFIX = '-seed';
+const RUNTIME_RAMP_VARIABLE = /^--(accent|danger|warning|success)-(light|dark)-\d+$/;
 
 const THIRD_PARTY_CSS = ['@xyflow/react/dist/style.css', 'react-data-grid/lib/styles.css'];
 
@@ -248,7 +249,11 @@ function collectStylesheetClasses() {
 }
 
 function isRuntimeVariable({ name }) {
-  return RUNTIME_VARIABLE_PREFIXES.some((prefix) => name.startsWith(prefix)) || name.endsWith(RUNTIME_VARIABLE_SUFFIX);
+  return (
+    RUNTIME_VARIABLE_PREFIXES.some((prefix) => name.startsWith(prefix)) ||
+    name.endsWith(RUNTIME_VARIABLE_SUFFIX) ||
+    RUNTIME_RAMP_VARIABLE.test(name)
+  );
 }
 
 function walk(dir) {

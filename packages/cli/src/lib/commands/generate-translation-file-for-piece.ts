@@ -1,9 +1,9 @@
 import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { buildPackage, findPiece, findPieces } from '../utils/piece-utils';
+import { assertPieceExists, buildPackage, findPiece, findPieces } from '../utils/piece-utils';
 import { makeFolderRecursive, readPackageJson } from '../utils/files';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { exec } from '../utils/exec';
 import { pieceTranslation } from '@activepieces/pieces-framework';
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
@@ -66,6 +66,7 @@ const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { c
 
 const generateTranslationFile = async (pieceName: string) => {
   const pieceRoot = await findPiece(pieceName)
+  assertPieceExists(pieceRoot)
   const packageJson = await readPackageJson(pieceRoot)
   await buildPackage(packageJson.name)
   try{
@@ -94,7 +95,7 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
   .requiredOption('--shard-total <shardTotal>', 'Total number of shards', (value) => parseInt(value, 10))
   .action(async ({shardIndex, shardTotal}: { shardIndex: number; shardTotal: number }) => {
     const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
-    const pieces = (await findPieces(piecesDirectory)).map(piece => piece.split('/').pop());
+    const pieces = (await findPieces(piecesDirectory)).map(piece => basename(piece));
     let totalTime = 0
     let indexAcrossAllPieces = 0
     for (const piece of pieces) {

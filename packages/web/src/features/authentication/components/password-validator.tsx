@@ -95,9 +95,9 @@ const PasswordRequirementsList = ({
               className={cn(
                 'w-2 h-2 rounded-full shrink-0',
                 rule.passed
-                  ? 'bg-success-11'
+                  ? 'bg-success-10'
                   : isError
-                  ? 'bg-danger-11'
+                  ? 'bg-danger-10'
                   : 'bg-gray-8',
               )}
             />

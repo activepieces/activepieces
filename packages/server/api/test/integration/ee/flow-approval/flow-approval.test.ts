@@ -147,11 +147,12 @@ describe('flow-approval — routing', () => {
 describe('flow-approval — submitForApproval race', () => {
     it('two concurrent submits produce exactly one PENDING row', async () => {
         const ctx = await setupSensitiveCtx()
-        const { flow } = await createDraftFlow(ctx)
+        const { flow, version } = await createDraftFlow(ctx)
 
         const results = await Promise.allSettled([
             flowApprovalRequestService(app!.log).submitForApproval({
                 flow,
+                flowVersionToPublish: version,
                 userId: ctx.user.id,
                 projectId: ctx.project.id,
                 platformId: ctx.platform.id,
@@ -159,6 +160,7 @@ describe('flow-approval — submitForApproval race', () => {
             }),
             flowApprovalRequestService(app!.log).submitForApproval({
                 flow,
+                flowVersionToPublish: version,
                 userId: ctx.user.id,
                 projectId: ctx.project.id,
                 platformId: ctx.platform.id,
@@ -180,10 +182,11 @@ describe('flow-approval — submitForApproval race', () => {
 describe('flow-approval — submitForApproval supersession', () => {
     it('resubmitting updates the existing PENDING row in place and re-points it at the newly locked version', async () => {
         const ctx = await setupSensitiveCtx()
-        const { flow } = await createDraftFlow(ctx)
+        const { flow, version } = await createDraftFlow(ctx)
 
         const first = await flowApprovalRequestService(app!.log).submitForApproval({
             flow,
+            flowVersionToPublish: version,
             userId: ctx.user.id,
             projectId: ctx.project.id,
             platformId: ctx.platform.id,
@@ -200,6 +203,7 @@ describe('flow-approval — submitForApproval supersession', () => {
 
         const second = await flowApprovalRequestService(app!.log).submitForApproval({
             flow,
+            flowVersionToPublish: newDraft,
             userId: ctx.user.id,
             projectId: ctx.project.id,
             platformId: ctx.platform.id,

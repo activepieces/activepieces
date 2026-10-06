@@ -1,10 +1,15 @@
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import {
+  getAccessTokenOrThrow,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { SpotifyWebApi } from './client';
+import { User } from './models/user';
 
 const markdownDescription = `
 To obtain a client ID and client secret for Spotify, follow these simple steps:
@@ -38,6 +43,20 @@ export const spotifyCommon = {
       'user-follow-read',
       'user-follow-modify',
     ],
+    getConnectionIdentifier: async ({ auth }) => {
+      try {
+        const response = await httpClient.sendRequest<User>({
+          method: HttpMethod.GET,
+          url: 'https://api.spotify.com/v1/me',
+          headers: { Authorization: `Bearer ${auth.access_token}` },
+          timeout: 5000,
+        });
+        const user = response.body;
+        return user.email || user.display_name || user.id || undefined;
+      } catch {
+        return undefined;
+      }
+    },
   }),
   device_id: (required = true) =>
     Property.Dropdown({

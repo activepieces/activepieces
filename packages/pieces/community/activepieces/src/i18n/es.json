@@ -20,7 +20,7 @@
   "Query Parameters": "Parámetros de consulta",
   "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
-  "Response is Binary ?": "¿Respuesta es binaria?",
+  "Response is Binary ?": "¿La respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Follow redirects": "Seguir redirecciones",

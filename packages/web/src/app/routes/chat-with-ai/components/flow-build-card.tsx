@@ -69,8 +69,8 @@ export function FlowBuildCard({
           className="mt-3 h-2"
           indicatorClassName={cn(
             'transition-all duration-500',
-            isDone && 'bg-success-11',
-            isFailed && 'bg-warning-11',
+            isDone && 'bg-success-9',
+            isFailed && 'bg-warning-9',
           )}
         />
       </div>

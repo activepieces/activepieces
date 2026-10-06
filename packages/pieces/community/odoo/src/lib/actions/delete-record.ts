@@ -12,7 +12,7 @@ export const deleteRecordAction = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Permanently delete a record of any Odoo model. This cannot be undone.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Permanently deletes one Odoo record of any model (unlink). Odoo may refuse when other records depend on it; archiving via Run Record Action with action_archive is the recoverable alternative. Not idempotent: a second call fails because the record is gone.',

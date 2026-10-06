@@ -7,6 +7,7 @@
 
 const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_build_flow',
+    'ap_create_folder',
     'ap_create_flow',
     'ap_add_step',
     'ap_update_step',
@@ -17,7 +18,6 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_delete_branch',
     'ap_test_flow',
     'ap_test_step',
-    'ap_validate_flow',
     'ap_validate_step_config',
     'ap_execute_action',
     'ap_discover_action_auth',

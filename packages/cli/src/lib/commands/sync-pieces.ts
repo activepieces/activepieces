@@ -7,7 +7,7 @@ async function syncPieces(
   params:
   {apiUrl: string,
   apiKey: string,
-  pieces: string[] | null,
+  pieces: string[] | undefined,
   failOnError: boolean,}
 ) {
   const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'custom')
@@ -28,7 +28,7 @@ export const syncPieceCommand = new Command('sync')
     .option('-f, --fail-on-error', 'Exit the process if an error occurs while syncing a piece', false)
     .action(async (options) => {
         const apiKey = process.env.AP_API_KEY;
-        const pieces = options.pieces ? [...new Set<string>(options.pieces)] : null;
+        const pieces = options.pieces ? [...new Set<string>(options.pieces)] : undefined;
         const failOnError = options.failOnError;
         if (!apiKey) {
             console.error(chalk.red('AP_API_KEY environment variable is required'));

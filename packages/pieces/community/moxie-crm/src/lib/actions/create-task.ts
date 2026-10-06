@@ -1,9 +1,7 @@
-import {
-  Property,
-  createAction,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient, reformatDate } from '../common';
+import { moxieDropdowns } from '../common/dropdowns';
+import { moxieInput } from '../common/props';
 import { moxieCRMAuth } from '../auth';
 import { createTaskActionOutputSchema } from '../output-schemas';
 
@@ -24,93 +22,20 @@ export const moxieCreateTaskAction = createAction({
       displayName: 'Name',
       required: true,
     }),
-    clientName: Property.Dropdown({
-      auth: moxieCRMAuth,
+    clientName: moxieDropdowns.clientName({
+      required: true,
       displayName: 'Client Name',
       description: 'Exact match of a client name in your CRM',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account first',
-            options: [],
-          };
-        }
-
-        const client = await makeClient(
-          auth
-        );
-        const clients = await client.listClients();
-        return {
-          disabled: false,
-          options: clients.map((client) => {
-            return {
-              label: client.name,
-              value: client.name,
-            };
-          }),
-        };
-      },
     }),
-    projectName: Property.Dropdown({
-      auth: moxieCRMAuth,
+    projectName: moxieDropdowns.projectByClientName({
+      required: true,
+      valueKey: 'name',
       displayName: 'Project Name',
       description: 'Exact match of a project that is owned by the client.',
-      required: true,
-      refreshers: ['clientName'],
-      options: async ({ auth, clientName }) => {
-        if (!auth || !clientName) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account first and select client',
-            options: [],
-          };
-        }
-        const client = await makeClient(
-          auth
-        );
-        const projects = await client.searchProjects(clientName as string);
-        return {
-          disabled: false,
-          options: projects.map((project) => {
-            return {
-              label: project.name,
-              value: project.name,
-            };
-          }),
-        };
-      },
     }),
-    status: Property.Dropdown({
-      auth: moxieCRMAuth,
-      displayName: 'Status',
+    status: moxieDropdowns.taskStageLabelByProjectName({
       required: true,
-      defaultValue: 'Not Started',
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account first',
-            options: [],
-          };
-        }
-        const client = await makeClient(
-            auth
-        );
-        const stages = await client.listProjectTaskStages();
-        return {
-          disabled: false,
-          options: stages.map((stage) => {
-            return {
-              label: stage.label,
-              value: stage.label,
-            };
-          }),
-        };
-      },
+      description: 'The stage to place the task in. Stages come from the selected project type.',
     }),
     description: Property.LongText({
       displayName: 'Description',
@@ -149,18 +74,17 @@ export const moxieCreateTaskAction = createAction({
   async run({ auth, propsValue }) {
     const { name, clientName, projectName, status, description, priority } =
       propsValue;
-    const dueDate = reformatDate(propsValue.dueDate) as string;
-    const startDate = reformatDate(propsValue.startDate) as string;
-    const tasks = (propsValue.tasks as string[]) || [];
-    const assignedTo = (propsValue.assignedTo as string[]) || [];
-    const customValues =
-      (propsValue.customValues as Record<string, string>) || {};
+    const dueDate = reformatDate(propsValue.dueDate);
+    const startDate = reformatDate(propsValue.startDate);
+    const tasks = moxieInput.stringList({ value: propsValue.tasks, field: 'Subtasks' }) ?? [];
+    const assignedTo = moxieInput.stringList({ value: propsValue.assignedTo, field: 'Assigned To' }) ?? [];
+    const customValues = moxieInput.record({ value: propsValue.customValues, field: 'Custom Values' }) ?? {};
     const client = await makeClient(auth);
     return await client.createTask({
       name,
-      clientName,
-      projectName,
-      status,
+      clientName: moxieInput.requiredText({ value: clientName, field: 'Client Name' }),
+      projectName: moxieInput.requiredText({ value: projectName, field: 'Project Name' }),
+      status: moxieInput.requiredText({ value: status, field: 'Status' }),
       description,
       dueDate,
       startDate,

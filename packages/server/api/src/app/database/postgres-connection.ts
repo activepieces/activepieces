@@ -448,6 +448,9 @@ import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000
 import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
 import { AddAgentFolderId1858000000000 } from './migration/postgres/1858000000000-AddAgentFolderId'
 import { AddPlatformModelTier1859000000000 } from './migration/postgres/1859000000000-AddPlatformModelTier'
+import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/1860000000000-AddPieceSetRequiredActions'
+import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
+import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/1863000000000-AddEventDestinationHeaders'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -911,6 +914,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddWaitpointDeadLetteredAt1857000000000,
         AddAgentFolderId1858000000000,
         AddPlatformModelTier1859000000000,
+        AddPieceSetRequiredActions1860000000000,
+        AddEventDestinationEnabledAndFormat1862000000000,
+        AddEventDestinationHeaders1863000000000,
     ]
     return migrations
 }

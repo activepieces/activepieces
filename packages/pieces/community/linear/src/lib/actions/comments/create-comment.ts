@@ -11,7 +11,7 @@ export const linearCreateComment = createAction({
   classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Post a comment on an issue.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Posts a new comment on a Linear issue identified by its issue ID. Use to add a note, reply, or status update to an existing issue. Requires the issue ID and comment body; not idempotent, each call appends a new comment.',
     idempotent: false,

@@ -1,13 +1,17 @@
-import { apId } from '@activepieces/core-utils'
-import { FlowActionType, FlowCreatorType, FlowRunStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { apId, isObject } from '@activepieces/core-utils'
+import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { flowService } from '../../../../src/app/flows/flow/flow.service'
+import { flowFolderService } from '../../../../src/app/flows/folder/folder.service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
+import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
+import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
 import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
@@ -29,6 +33,8 @@ import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-step-settings'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
+import { tableService } from '../../../../src/app/tables/table/table.service'
+import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -51,6 +57,17 @@ beforeAll(async () => {
         packageType: PackageType.REGISTRY,
         platformId: undefined,
         actions: {
+            send_template: {
+                name: 'send_template',
+                displayName: 'Send Template',
+                description: 'Send an email from a template',
+                requireAuth: false,
+                props: {
+                    template: { type: 'SHORT_TEXT', displayName: 'Template', required: true },
+                    note: { type: 'SHORT_TEXT', displayName: 'Note', required: false },
+                    fields: { type: 'DYNAMIC', displayName: 'Fields', required: true, refreshers: ['template'] },
+                },
+            },
             send_email: {
                 name: 'send_email',
                 displayName: 'Send Email',
@@ -74,6 +91,26 @@ beforeAll(async () => {
                     label: { type: 'SHORT_TEXT', displayName: 'Label', required: false },
                 },
             },
+            new_templated_email: {
+                name: 'new_templated_email',
+                displayName: 'New Templated Email',
+                description: 'Triggers on new email matching a template',
+                requireAuth: false,
+                props: {
+                    template: { type: 'SHORT_TEXT', displayName: 'Template', required: true },
+                    fields: { type: 'DYNAMIC', displayName: 'Fields', required: true, refreshers: ['template'] },
+                },
+            },
+            new_labeled_email: {
+                name: 'new_labeled_email',
+                displayName: 'New Labeled Email',
+                description: 'Triggers on new email with a label',
+                requireAuth: false,
+                props: {
+                    folder: { type: 'SHORT_TEXT', displayName: 'Folder', required: false },
+                    label: { type: 'SHORT_TEXT', displayName: 'Label', required: true },
+                },
+            },
             new_attachment: {
                 name: 'new_attachment',
                 displayName: 'New Attachment',
@@ -84,6 +121,7 @@ beforeAll(async () => {
         },
     })
     await db.save('piece_metadata', gmailPiece)
+    await db.save('piece_metadata', { ...gmailPiece, id: apId(), version: '0.0.9' })
 
     const arrayPiece = createMockPieceMetadata({
         name: '@activepieces/piece-test-array',
@@ -158,6 +196,10 @@ function makeMcp(projectId: string): ProjectScopedMcpServer {
 
 function text(result: { content: Array<{ type: 'text', text: string }> }): string {
     return result.content.map(c => c.text).join('\n')
+}
+
+function structured<T extends z.ZodType>({ result, schema }: { result: { structuredContent?: unknown }, schema: T }): z.infer<T> {
+    return schema.parse(result.structuredContent)
 }
 
 async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
@@ -463,7 +505,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Validate Flow Test')
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('⚠️')
         expect(text(result)).toContain('not configured')
@@ -495,7 +537,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('ready to publish')
@@ -523,7 +565,7 @@ describe('MCP Tools integration', () => {
             pieceName: '@activepieces/piece-test-email',
         })
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('⚠️')
         expect(text(result)).toContain('Step Validity')
@@ -551,7 +593,7 @@ describe('MCP Tools integration', () => {
             displayName: 'My Router',
         })
 
-        const result = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const result = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
 
         expect(text(result)).toContain('⚠️')
         expect(text(result)).toContain('Empty Branches')
@@ -716,7 +758,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('✅')
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -734,7 +776,7 @@ describe('MCP Tools integration', () => {
             triggerName: 'new_email',
         })
 
-        const validAfterSet = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validAfterSet = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validAfterSet)).toContain('✅')
 
         const renameResult = await apUpdateTriggerTool({ mcp }, mockLog).execute({
@@ -746,7 +788,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(renameResult)).toContain('✅')
 
-        const validAfterRename = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validAfterRename = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validAfterRename)).toContain('✅')
     })
 
@@ -794,7 +836,7 @@ describe('MCP Tools integration', () => {
         })
         expect(text(addFieldResult)).toContain('✅')
 
-        const stillValid = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const stillValid = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(stillValid)).toContain('✅')
     })
 
@@ -869,7 +911,7 @@ describe('MCP Tools integration', () => {
             input: { sender: '{{trigger.from}}' },
         })
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -929,7 +971,7 @@ describe('MCP Tools integration', () => {
             input: { val: '{{step_2.item}}' },
         })
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -1009,7 +1051,7 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('branch 0')
         expect(output).toContain('branch 1')
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -1019,7 +1061,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Lifecycle Test')
 
-        const emptyValidation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const emptyValidation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(emptyValidation)).toContain('⚠️')
 
         await apUpdateTriggerTool({ mcp }, mockLog).execute({
@@ -1043,7 +1085,7 @@ describe('MCP Tools integration', () => {
             input: {},
         })
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
         expect(text(validation)).toContain('2 valid')
@@ -1118,7 +1160,7 @@ describe('MCP Tools integration', () => {
             })
         }
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId })
         expect(text(validation)).toContain('✅')
 
         const structure = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
@@ -1271,7 +1313,7 @@ describe('MCP Tools integration', () => {
         const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
         expect(flowId).toBeDefined()
 
-        const validation = await apValidateFlowTool(mcp, mockLog).execute({ flowId: flowId! })
+        const validation = await apValidateFlowTool({ mcp }, mockLog).execute({ flowId: flowId! })
         expect(text(validation)).toContain('✅')
         expect(text(validation)).toContain('ready to publish')
     })
@@ -2635,5 +2677,265 @@ describe('MCP Tools integration', () => {
         const mcp1 = makeMcp(ctx1.project.id)
         const result = await apReadStepSettingsTool(mcp1, mockLog).execute({ flowId, stepName: 'trigger' })
         expect(text(result)).toContain('❌ Flow not found')
+    })
+
+    it('ap_create_flow, ap_build_flow and ap_create_table place a solution in one folder and return each flow externalId', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order intake' })
+        const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Enrich customer', folderName: 'Order intake' })
+        const built = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Receive order',
+            folderName: 'order INTAKE',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.CODE, displayName: 'Process', sourceCode: 'export const code = async () => { return { ok: true }; };', input: {} }],
+        })
+
+        const tableResult = await apCreateTableTool(mcp, mockLog).execute({
+            name: 'Orders',
+            folderName: 'Order intake',
+            fields: [{ name: 'Order id', type: 'TEXT' }],
+        })
+
+        const flowContent = z.object({ flowId: z.string(), externalId: z.string(), folderName: z.string() })
+        const createdContent = structured({ result: created, schema: flowContent })
+        const builtContent = structured({ result: built, schema: flowContent })
+        const tableId = structured({ result: tableResult, schema: z.object({ id: z.string() }) }).id
+        const table = await tableService.getOneOrThrow({ id: tableId, projectId: ctx.project.id })
+        const createdFlow = await flowService(mockLog).getOne({ id: createdContent.flowId, projectId: ctx.project.id })
+        const builtFlow = await flowService(mockLog).getOne({ id: builtContent.flowId, projectId: ctx.project.id })
+
+        expect(createdFlow?.folderId).toBeTruthy()
+        expect(builtFlow?.folderId).toBe(createdFlow?.folderId)
+        expect(table.folderId).toBe(createdFlow?.folderId)
+        expect(createdContent.externalId).toBe(createdFlow?.externalId)
+        expect(builtContent.externalId).toBe(builtFlow?.externalId)
+        expect(builtContent.folderName).toBe('Order intake')
+        expect(text(created)).toContain('in folder "Order intake"')
+        expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
+        expect(text(built)).toContain('ap_validate_flow({ folderName: "Order intake" })')
+        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order "rush"' })
+        const quoted = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Quoted folder',
+            folderName: 'Order "rush"',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [],
+        })
+        expect(text(quoted)).toContain('ap_validate_flow({ folderName: "Order \\"rush\\"" })')
+    })
+
+    it('ap_build_flow into a folder that does not exist creates nothing', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Unfiled build',
+            folderName: 'Never created',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [],
+        })
+
+        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Never created' })
+        const flowCount = await flowService(mockLog).count({ projectId: ctx.project.id, folderId: undefined })
+        expect(text(result)).toContain('ap_create_folder')
+        expect(folder).toBeNull()
+        expect(flowCount).toBe(0)
+    })
+
+    it('ap_create_folder returns the same folder for the same name in any case, without renaming it', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const first = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order intake' })
+        const second = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'order INTAKE' })
+
+        const folderSchema = z.object({ folderId: z.string() })
+        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Order intake' })
+        expect(structured({ result: second, schema: folderSchema }).folderId).toBe(structured({ result: first, schema: folderSchema }).folderId)
+        expect(folder?.displayName).toBe('Order intake')
+    })
+
+    it('ap_create_folder called concurrently with different casing creates one folder', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const results = await Promise.all([
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Parallel solution' }),
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'PARALLEL solution' }),
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'parallel Solution' }),
+        ])
+
+        const folderIds = results.map((result) => structured({ result, schema: z.object({ folderId: z.string() }) }).folderId)
+        expect(new Set(folderIds).size).toBe(1)
+    })
+
+    it('ap_create_flow without a folder leaves the flow unfiled', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Loose flow' })
+        const flow = await flowService(mockLog).getOne({ id: structured({ result: created, schema: z.object({ flowId: z.string() }) }).flowId, projectId: ctx.project.id })
+
+        expect(flow?.folderId).toBeNull()
+        expect(text(created)).not.toContain('in folder')
+    })
+
+    it('ap_build_flow drops unknown properties from steps that are not valid yet, so a later update is not rejected for them', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const built = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Unknown props',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_labeled_email', input: { folder: 'INBOX', method: 'POST' } },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Send', pieceName: '@activepieces/piece-test-email', actionName: 'send_email', input: { to: 'a@b.co', bogus: 'x' } }],
+        })
+        const { flowId } = structured({ result: built, schema: z.object({ flowId: z.string() }) })
+        const builtFlow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        const triggerUpdate = await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_labeled_email', input: { label: 'urgent' } })
+        const stepUpdate = await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { subject: 'Hello' } })
+        const rejected = await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { nope: 'x' } })
+        const updatedFlow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(text(built)).toContain('dropped')
+        expect(builtFlow.version.trigger.valid).toBe(false)
+        expect(builtFlow.version.trigger.settings.input).not.toHaveProperty('method')
+        expect(flowStructureUtil.getStepOrThrow('step_1', builtFlow.version.trigger).settings.input).not.toHaveProperty('bogus')
+        expect(text(triggerUpdate)).not.toContain('Unknown properties')
+        expect(text(stepUpdate)).not.toContain('Unknown properties')
+        expect(text(rejected)).toContain("Unknown properties: 'nope'")
+        expect(updatedFlow.version.trigger.settings.input).toMatchObject({ folder: 'INBOX', label: 'urgent' })
+        expect(flowStructureUtil.getStepOrThrow('step_1', updatedFlow.version.trigger).settings.input).toMatchObject({ to: 'a@b.co', subject: 'Hello' })
+    })
+
+    it('ap_update_trigger clears a stale unknown property saved on a trigger that is not valid yet', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Stale props')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        await flowService(mockLog).update({
+            id: flowId, projectId: ctx.project.id, userId: null, platformId: ctx.platform.id,
+            operation: {
+                type: FlowOperationType.UPDATE_TRIGGER,
+                request: {
+                    name: flow.version.trigger.name,
+                    displayName: 'New Labeled Email',
+                    valid: false,
+                    type: FlowTriggerType.PIECE,
+                    settings: { pieceName: '@activepieces/piece-test-email', pieceVersion: '0.1.0', triggerName: 'new_labeled_email', input: { folder: 'INBOX', method: 'POST' }, propertySettings: {} },
+                },
+            },
+        })
+        const stale = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        const triggerUpdate = await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_labeled_email', input: { label: 'urgent' } })
+        const updatedFlow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(stale.version.trigger.settings.input).toHaveProperty('method')
+        expect(text(triggerUpdate)).not.toContain('Unknown properties')
+        expect(updatedFlow.version.trigger.settings.input).toEqual({ folder: 'INBOX', label: 'urgent' })
+    })
+
+    it('ap_add_step and ap_update_step save the schema of a dynamic property, so the engine can process its fields', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const schema = { count: { type: 'NUMBER', displayName: 'Count', required: false } }
+        const resolve = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: schema } })
+        const flowId = await createFlowAndGetId(mcp, 'Dynamic schema')
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' })
+
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId, parentStepName: 'trigger', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.PIECE, displayName: 'Send',
+            pieceName: '@activepieces/piece-test-email', actionName: 'send_template', input: { template: 'welcome', fields: { count: '3' } },
+        })
+        const afterAdd = resolve.mock.calls.length
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { note: 'unrelated' } })
+        const afterUnrelatedEdit = resolve.mock.calls.length
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { template: 'reminder' } })
+        const afterRefresherEdit = resolve.mock.calls.length
+        resolve.mockRestore()
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(afterAdd).toBe(1)
+        expect(afterUnrelatedEdit).toBe(1)
+        expect(afterRefresherEdit).toBe(2)
+        expect(flowStructureUtil.getStepOrThrow('step_1', flow.version.trigger).settings.propertySettings).toMatchObject({ fields: { type: 'MANUAL', schema } })
+    })
+
+    it('ap_add_step still saves the step when the dynamic property schema cannot be resolved', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const resolve = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockRejectedValue(new Error('no worker'))
+        const flowId = await createFlowAndGetId(mcp, 'Dynamic schema failure')
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' })
+
+        const added = await apAddStepTool({ mcp }, mockLog).execute({
+            flowId, parentStepName: 'trigger', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.PIECE, displayName: 'Send',
+            pieceName: '@activepieces/piece-test-email', actionName: 'send_template', input: { template: 'welcome', fields: { count: '3' } },
+        })
+        resolve.mockRestore()
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(text(added)).toContain('✅')
+        expect(flowStructureUtil.getStepOrThrow('step_1', flow.version.trigger).settings.propertySettings?.fields?.schema).toBeUndefined()
+    })
+
+    it('ap_build_flow and ap_update_trigger save a dynamic trigger schema, and a failed refresh drops the stale one', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const schema = { count: { type: 'NUMBER', displayName: 'Count', required: false } }
+        const resolve = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: schema } })
+
+        const built = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Dynamic trigger',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_templated_email', input: { template: 'welcome', fields: { count: '3' } } },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Send', pieceName: '@activepieces/piece-test-email', actionName: 'send_template', auth: 'my-connection', input: { template: 'welcome', fields: { count: '1' } } }],
+        })
+        const { flowId } = structured({ result: built, schema: z.object({ flowId: z.string() }) })
+        const builtFlow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        const stepResolveInput = resolve.mock.calls.map(([request]) => request).find((request) => isObject(request) && request.actionOrTriggerName === 'send_template')
+
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_templated_email', input: { template: 'reminder' } })
+        const afterRefresh = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        resolve.mockRejectedValue(new Error('no worker'))
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_templated_email', input: { template: 'digest' } })
+        resolve.mockRestore()
+        const afterFailedRefresh = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(builtFlow.version.trigger.settings.propertySettings).toMatchObject({ fields: { schema } })
+        expect(stepResolveInput).toMatchObject({ input: { auth: "{{connections['my-connection']}}" } })
+        expect(afterRefresh.version.trigger.settings.propertySettings).toMatchObject({ fields: { schema } })
+        expect(afterFailedRefresh.version.trigger.settings.propertySettings?.fields).toEqual({ type: 'MANUAL' })
+    })
+
+    it('ap_update_trigger re-resolves a dynamic trigger schema when it moves the trigger to a newer piece version', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const oldSchema = { count: { type: 'SHORT_TEXT', displayName: 'Count', required: false } }
+        const newSchema = { count: { type: 'NUMBER', displayName: 'Count', required: false } }
+        const flowId = await createFlowAndGetId(mcp, 'Version upgrade')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        await flowService(mockLog).update({
+            id: flowId, projectId: ctx.project.id, userId: null, platformId: ctx.platform.id,
+            operation: {
+                type: FlowOperationType.UPDATE_TRIGGER,
+                request: {
+                    name: flow.version.trigger.name,
+                    displayName: 'New Templated Email',
+                    valid: false,
+                    type: FlowTriggerType.PIECE,
+                    settings: { pieceName: '@activepieces/piece-test-email', pieceVersion: '0.0.9', triggerName: 'new_templated_email', input: { template: 'welcome', fields: { count: '3' } }, propertySettings: { fields: { type: 'MANUAL', schema: oldSchema } } },
+                },
+            },
+        })
+        const resolve = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: newSchema } })
+
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_templated_email', displayName: 'Renamed' })
+        resolve.mockRestore()
+        const updated = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(updated.version.trigger.settings.pieceVersion).toBe('0.1.0')
+        expect(updated.version.trigger.settings.propertySettings).toMatchObject({ fields: { type: 'MANUAL', schema: newSchema } })
     })
 })

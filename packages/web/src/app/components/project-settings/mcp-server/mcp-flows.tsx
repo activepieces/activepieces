@@ -39,7 +39,7 @@ export function McpFlows({ mcpServer }: McpFlowsProps) {
               <div
                 className={cn(
                   'w-2 h-2 rounded-full',
-                  isEnabled ? 'bg-success-11' : 'bg-gray-11',
+                  isEnabled ? 'bg-success-10' : 'bg-gray-9',
                 )}
               />
               <span>{isEnabled ? t('On') : t('Off')}</span>

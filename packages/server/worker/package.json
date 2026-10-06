@@ -47,7 +47,7 @@
     "@types/write-file-atomic": "4.0.3",
     "cli-table3": "0.6.3",
     "commander": "11.1.0",
-    "fastify": "5.8.5",
+    "fastify": "5.12.5",
     "vitest": "3.2.6"
   }
 }

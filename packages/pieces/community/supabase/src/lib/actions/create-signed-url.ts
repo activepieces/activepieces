@@ -17,19 +17,22 @@ export const createSignedUrl = createAction({
     props: {
         bucket: Property.ShortText({
             displayName: 'Bucket',
-            description: 'The name of the Storage bucket.',
+            description: "The bucket's name, as shown in Storage.",
+            placeholder: 'avatars',
             required: true,
         }),
         path: Property.ShortText({
             displayName: 'File Path',
-            description: 'The path of the file within the bucket.',
+            description: "The file's path in the bucket, including its name.",
+            placeholder: 'folder/report.pdf',
             required: true,
         }),
         expiresIn: Property.Number({
-            displayName: 'Expires In (seconds)',
-            description: 'How long the link stays valid, in seconds.',
+            displayName: 'Expires In',
+            description: 'Seconds the link stays valid. Default is one hour.',
             required: false,
             defaultValue: 3600,
+            advanced: true,
         }),
     },
     outputSchema: createSignedUrlActionOutputSchema,

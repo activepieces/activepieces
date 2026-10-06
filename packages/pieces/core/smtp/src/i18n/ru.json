@@ -24,5 +24,18 @@
   "Custom Headers": "Пользовательские заголовки",
   "Attachments": "Вложения",
   "plain text": "простой текст",
-  "html": "html"
+  "html": "html",
+  "Require TLS": "Требовать TLS",
+  "465 encrypts from the start; other ports upgrade to STARTTLS if the server offers it.": "465 шифрует соединение сразу; другие порты переходят на STARTTLS, если сервер его поддерживает.",
+  "Fail instead of sending unencrypted if STARTTLS is unavailable.": "Не отправлять без шифрования, если STARTTLS недоступен.",
+  "Login name, usually your email address. Blank if no login is needed.": "Логин, обычно ваш адрес почты. Оставьте пустым, если вход не нужен.",
+  "Cc": "Копия",
+  "Bcc": "Скрытая копия",
+  "Must be an address your server lets you send from.": "Адрес, с которого ваш сервер разрешает отправку.",
+  "Replies go to this address instead of the sender.": "Ответы придут на этот адрес, а не отправителю.",
+  "How the text in Body is interpreted.": "Как интерпретируется текст в поле «Тело».",
+  "Name shown in the inbox instead of your address.": "Имя, которое показывается во входящих вместо вашего адреса.",
+  "Extra headers added to the email, as name and value pairs.": "Дополнительные заголовки письма в виде пар «имя — значение».",
+  "Plain Text": "Простой текст",
+  "HTML": "HTML"
 }

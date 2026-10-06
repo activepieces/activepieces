@@ -1,7 +1,13 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { randomBytes, timingSafeEqual } from 'crypto';
 
 type TelegramUpdate = Record<string, unknown> & { update_id?: number };
 
@@ -22,7 +28,7 @@ const UPDATE_TYPE_OPTIONS = [
   { label: 'Edited Message', value: 'edited_message' },
   { label: 'Channel Post', value: 'channel_post' },
   { label: 'Edited Channel Post', value: 'edited_channel_post' },
-  { label: 'Callback Query (inline button tap)', value: 'callback_query' },
+  { label: 'Inline Button Tap', value: 'callback_query' },
   { label: 'Inline Query', value: 'inline_query' },
   { label: 'Chosen Inline Result', value: 'chosen_inline_result' },
   { label: 'Poll', value: 'poll' },
@@ -32,13 +38,16 @@ const UPDATE_TYPE_OPTIONS = [
   { label: 'Chat Join Request', value: 'chat_join_request' },
 ];
 
-const updateTypesDescription = 'Which update types this flow should listen for. Leave empty for Telegram\'s default set (does not include callback queries).';
+const updateTypesDescription =
+  'Empty receives every update except Chat Member and reactions.';
 
-const triggerNotesDescription = `
-Telegram allows only **one webhook per bot token**, so this one trigger covers every update type picked below. Use a Branch step downstream to fork on update kind (e.g. \`message\` vs \`callback_query\`).
+const triggerNotesDescription = `**One webhook per bot.** Publishing another flow with this bot token stops this one. Use one flow per bot and branch on the update type.
 
-Same reason **Retest** shows example data instead of a live update once this flow is published, refetching would mean hijacking the bot's active webhook. Test before publishing to capture a real message.
-`;
+After publishing, Retest shows sample data. Test before publishing to load a real update.`;
+
+const WEBHOOK_SECRET_STORE_KEY = 'telegram_webhook_secret_token';
+
+const TELEGRAM_SECRET_HEADER = 'x-telegram-bot-api-secret-token';
 
 const SAMPLE_UPDATE: TelegramUpdate = {
   update_id: 351114420,
@@ -76,6 +85,7 @@ export const telegramNewMessage = createTrigger({
   props: {
     trigger_notes: Property.MarkDown({
       value: triggerNotesDescription,
+      variant: MarkdownVariant.WARNING,
     }),
     update_types: Property.StaticMultiSelectDropdown({
       displayName: 'Update Types',
@@ -88,15 +98,29 @@ export const telegramNewMessage = createTrigger({
   sampleData: SAMPLE_UPDATE,
   async onEnable(context) {
     const allowedUpdates = (context.propsValue.update_types ?? []) as string[];
+    const secretToken = randomBytes(32).toString('hex');
+    await context.store.put(WEBHOOK_SECRET_STORE_KEY, secretToken);
     await telegramCommons.subscribeWebhook(context.auth.secret_text, context.webhookUrl, {
       allowed_updates: allowedUpdates,
       drop_pending_updates: true,
+      secret_token: secretToken,
     });
   },
   async onDisable(context) {
     await telegramCommons.unsubscribeWebhook(context.auth.secret_text);
+    await context.store.delete(WEBHOOK_SECRET_STORE_KEY);
   },
   async run(context) {
+    const expectedSecret = await context.store.get<string>(WEBHOOK_SECRET_STORE_KEY);
+    if (
+      expectedSecret &&
+      !secretTokenMatches({
+        expected: expectedSecret,
+        received: context.payload.headers[TELEGRAM_SECRET_HEADER],
+      })
+    ) {
+      return [];
+    }
     return [context.payload.body];
   },
   async test(context) {
@@ -117,6 +141,24 @@ const getLastFiveMessages = async (botToken: string) => {
   const response = await httpClient.sendRequest<GetUpdatesResponse>(request);
   return response.body;
 };
+
+function secretTokenMatches({
+  expected,
+  received,
+}: {
+  expected: string;
+  received: string | undefined;
+}): boolean {
+  if (!received) {
+    return false;
+  }
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
 
 const getWebhookInfo = async (botToken: string) => {
   const request: HttpRequest = {

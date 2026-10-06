@@ -2,14 +2,16 @@ import { Property, createAction, OAuth2PropertyValue } from '@activepieces/piece
 import { getTaskListsDropdown, getIncompleteTasksInListDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
+import { completeTaskOutputSchema } from '../output-schemas';
 
 export const completeTaskAction = createAction({
     auth: microsoftToDoAuth,
     name: 'complete_task',
+    outputSchema: completeTaskOutputSchema,
     classification: 'WRITE',
     displayName: 'Complete Task',
     description: 'Marks a task as completed.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Mark a specific Microsoft To Do task as completed, setting its status to completed and stamping a completion time. Use when a task should be closed out; identify it by task list id and task id (resolve via list/find actions). Idempotent in effect — completing an already-completed task leaves it completed, though it refreshes the completion timestamp.', idempotent: true },
     props: {
         task_list_id: Property.Dropdown({

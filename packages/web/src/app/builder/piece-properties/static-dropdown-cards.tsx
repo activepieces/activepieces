@@ -25,7 +25,7 @@ function StaticDropdownCards({
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex min-w-32 flex-1 items-center gap-2.5 rounded-md border px-3 py-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent-8/50',
+              'flex min-w-32 flex-1 items-center gap-2.5 rounded-md border px-3 py-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gray-8/50',
               selected
                 ? 'border-accent-9 bg-accent-3'
                 : 'border-gray-6 bg-gray-1 hover:bg-gray-3/50',

@@ -214,7 +214,7 @@ export function FlowsDetails({
           const projectAvatar =
             project?.type === ProjectType.TEAM ? (
               <Avatar
-                className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+                className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
                 style={{
                   backgroundColor:
                     PROJECT_COLOR_PALETTE[project.icon.color].color,

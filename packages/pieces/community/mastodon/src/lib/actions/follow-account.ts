@@ -15,7 +15,7 @@ export const followAccount = createAction({
   classification: 'WRITE',
   displayName: 'Follow Account',
   description: 'Follow an account, or send a follow request to a locked account.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Follows an account as the connected account (for a locked account this sends a follow request); the target is notified. Calling it again on an account you already follow does not error and just updates the boost, notification and language options. Returns the relationship.',
@@ -26,7 +26,7 @@ export const followAccount = createAction({
     account_id: Property.ShortText({
       displayName: 'Account ID',
       description:
-        'Local ID of the account to follow. Obtain it from Lookup Account, Search Accounts or Search (use resolve for a remote user@domain).',
+        'ID of the account to follow, for example 109302436954721982 (not the @handle). Map it from Lookup Account (Account ID), from the New Follower trigger (From Account > Account ID) to follow back, or from Search for a user@domain on another server.',
       required: true,
     }),
     reblogs: mastodonProps.optionalBoolean({

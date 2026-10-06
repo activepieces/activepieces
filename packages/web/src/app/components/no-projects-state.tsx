@@ -11,7 +11,7 @@ export const NoProjectsState = () => {
         variant="secondary"
         className="bg-accent-3 text-accent-11 hover:bg-accent-3 gap-1.5 font-medium"
       >
-        <span className="size-1.5 rounded-full bg-accent-11" />
+        <span className="size-1.5 rounded-full bg-accent-10" />
         {t('Waiting for access')}
       </Badge>
 

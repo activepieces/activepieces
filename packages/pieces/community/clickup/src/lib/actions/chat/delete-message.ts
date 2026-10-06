@@ -8,14 +8,14 @@ export const deleteClickupMessage = createAction({
   auth: clickupAuth,
   name: 'delete_message',
   classification: 'DESTRUCTIVE',
-  description: 'Deletes a message in a ClickUp channel',
+  description: "Delete a chat message. This can't be undone.",
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a Chat message in a ClickUp workspace by its workspace and message IDs. This is a destructive write; once deleted the message cannot be recovered. Repeating the call on an already-deleted message has no further effect.', idempotent: false },
   displayName: 'Delete Message',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     message_id: Property.ShortText({
-      description: 'ID of the message to delete',
+      description: 'Returned by Get Channel Messages or Create Message.',
       displayName: 'Message ID',
       required: true,
     }),

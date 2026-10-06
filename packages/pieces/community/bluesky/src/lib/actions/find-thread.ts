@@ -1,8 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
+import type { AppBskyFeedDefs, AppBskyFeedGetPostThread } from '@atproto/api';
+import { blueskyAtproto } from '../common/atproto';
 import { blueskyAuth } from '../common/auth';
 import { findThreadOutputSchema } from '../output-schemas';
-import { createBlueskyAgent } from '../common/client';
-import { postUrlProperty, threadDepthDropdown, parentHeightDropdown, extractPostInfoFromUrl } from '../common/props';
+import { blueskyClient } from '../common/client';
+import { blueskyProps } from '../common/props';
+import { blueskyRefs } from '../common/refs';
 
 export const findThread = createAction({
   auth: blueskyAuth,
@@ -13,112 +16,98 @@ export const findThread = createAction({
   audience: 'both',
   outputSchema: findThreadOutputSchema,
   aiMetadata: {
-    description: 'Retrieves the full conversation thread around a Bluesky post — parent posts and nested replies — given a bsky.app post URL or AT-URI, with configurable reply depth and parent height (each 0-1000). Use to read an entire discussion rather than a single post. Read-only and idempotent.',
+    description:
+      'Retrieves the full conversation thread around a Bluesky post (parent posts and nested replies) given a bsky.app post URL or AT-URI, with configurable reply depth (default 10) and parent height (default 3), each 0-1000. Use to read an entire discussion rather than a single post. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
-    postUrl: postUrlProperty,
-    depth: threadDepthDropdown,
-    parentHeight: parentHeightDropdown,
+    postUrl: blueskyProps.postUrlProperty,
+    depth: blueskyProps.threadDepthDropdown,
+    parentHeight: blueskyProps.parentHeightDropdown,
   },
   async run({ auth, propsValue }) {
-    const { postUrl, depth = 6, parentHeight = 80 } = propsValue;
-
-    try {
-      const agent = await createBlueskyAgent(auth.props);
-      
-      const postInfo = extractPostInfoFromUrl(postUrl); 
-      let atUri = postInfo.uri;
-
-      if (!atUri && postInfo.handle && postInfo.postId) {
-        const didDoc = await agent.resolveHandle({ handle: postInfo.handle });
-        
-        if (didDoc.data?.did) {
-          atUri = `at://${didDoc.data.did}/app.bsky.feed.post/${postInfo.postId}`;
-        } else {
-          throw new Error(`Could not resolve handle: ${postInfo.handle}`);
-        }
-      }
-
-      if (!atUri) {
-        throw new Error('Could not parse the post URL. Please make sure you are using a valid Bluesky post URL like: https://bsky.app/profile/username.bsky.social/post/xxx');
-      }
-
-      if (!atUri.startsWith('at://')) {
-        throw new Error('Invalid URI format. Must be an AT-URI starting with "at://" or a valid Bluesky URL');
-      }
-
-      const depthNum = parseInt(depth.toString(), 10);
-      const parentHeightNum = parseInt(parentHeight.toString(), 10);
-      
-      if (isNaN(depthNum) || depthNum < 0 || depthNum > 1000) {
-        throw new Error('Depth must be a number between 0 and 1000');
-      }
-      if (isNaN(parentHeightNum) || parentHeightNum < 0 || parentHeightNum > 1000) {
-        throw new Error('Parent height must be a number between 0 and 1000');
-      }
-
-      const response = await agent.getPostThread({
-        uri: atUri,
-        depth: depthNum,
-        parentHeight: parentHeightNum,
-      });
-
-      const stats = {
-        totalPosts: 0,
-        parentPosts: 0,
-        replyPosts: 0,
-        notFoundPosts: 0,
-        blockedPosts: 0,
-      };
-
-      const countPosts = (threadPost: any): void => {
-        if (!threadPost) return;
-
-        if (threadPost.$type === 'app.bsky.feed.defs#notFoundPost') {
-          stats.notFoundPosts++;
-        } else if (threadPost.$type === 'app.bsky.feed.defs#blockedPost') {
-          stats.blockedPosts++;
-        } else if (threadPost.post) {
-          stats.totalPosts++;
-        }
-
-        if (threadPost.parent) {
-          stats.parentPosts++;
-          countPosts(threadPost.parent);
-        }
-
-        if (threadPost.replies && Array.isArray(threadPost.replies)) {
-          stats.replyPosts += threadPost.replies.length;
-          threadPost.replies.forEach((reply: any) => countPosts(reply));
-        }
-      };
-
-      if (response.data.thread) {
-        countPosts(response.data.thread);
-        if (
-          response.data.thread.$type === 'app.bsky.feed.defs#threadViewPost' &&
-          'post' in response.data.thread &&
-          response.data.thread.post
-        ) {
-          stats.totalPosts = 1;
-        }
-      }
-
-      return {
-        success: true,
-        thread: response.data.thread,
-        requestedUri: atUri,
-        parameters: {
-          depth: depthNum,
-          parentHeight: parentHeightNum,
-        },
-        statistics: stats,
-        retrievedAt: new Date().toISOString(),
-      };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to find thread: ${errorMessage}`);
+    const { postUrl, depth = '10', parentHeight = '3' } = propsValue;
+    blueskyRefs.parsePostInput(postUrl);
+    const depthNum = parseInt(String(depth), 10);
+    const parentHeightNum = parseInt(String(parentHeight), 10);
+    if (isNaN(depthNum) || depthNum < 0 || depthNum > 1000) {
+      throw new Error('Depth must be a number between 0 and 1000');
     }
+    if (isNaN(parentHeightNum) || parentHeightNum < 0 || parentHeightNum > 1000) {
+      throw new Error('Parent height must be a number between 0 and 1000');
+    }
+    return blueskyClient.withBluesky({
+      auth: auth.props,
+      action: 'find the thread',
+      fn: async (agent) => {
+        const ref = await blueskyRefs.resolvePostRef({ agent, input: postUrl });
+        const response = await agent.getPostThread({ uri: ref.uri, depth: depthNum, parentHeight: parentHeightNum });
+        return {
+          success: true,
+          thread: response.data.thread,
+          requestedUri: ref.uri,
+          parameters: { depth: depthNum, parentHeight: parentHeightNum },
+          statistics: threadStatistics(response.data.thread),
+          retrievedAt: new Date().toISOString(),
+        };
+      },
+    });
   },
 });
+
+function threadStatistics(thread: ThreadRoot): ThreadStatistics {
+  const empty: ThreadStatistics = { totalPosts: 0, parentPosts: 0, replyPosts: 0, notFoundPosts: 0, blockedPosts: 0 };
+  if (!blueskyAtproto.isThreadViewPost(thread)) {
+    return {
+      ...empty,
+      notFoundPosts: blueskyAtproto.isNotFoundPost(thread) ? 1 : 0,
+      blockedPosts: blueskyAtproto.isBlockedPost(thread) ? 1 : 0,
+    };
+  }
+  const parents = countParents(thread.parent);
+  const replies = countReplies(thread.replies ?? []);
+  return {
+    totalPosts: 1 + parents.posts + replies.posts,
+    parentPosts: parents.posts,
+    replyPosts: replies.posts,
+    notFoundPosts: parents.notFound + replies.notFound,
+    blockedPosts: parents.blocked + replies.blocked,
+  };
+}
+
+function countParents(node: AppBskyFeedDefs.ThreadViewPost['parent']): NodeCounts {
+  if (blueskyAtproto.isThreadViewPost(node)) {
+    const above = countParents(node.parent);
+    return { ...above, posts: above.posts + 1 };
+  }
+  return {
+    posts: 0,
+    notFound: blueskyAtproto.isNotFoundPost(node) ? 1 : 0,
+    blocked: blueskyAtproto.isBlockedPost(node) ? 1 : 0,
+  };
+}
+
+function countReplies(nodes: NonNullable<AppBskyFeedDefs.ThreadViewPost['replies']>): NodeCounts {
+  return nodes.reduce<NodeCounts>(
+    (total, node) => {
+      if (blueskyAtproto.isThreadViewPost(node)) {
+        const nested = countReplies(node.replies ?? []);
+        return {
+          posts: total.posts + 1 + nested.posts,
+          notFound: total.notFound + nested.notFound,
+          blocked: total.blocked + nested.blocked,
+        };
+      }
+      return {
+        posts: total.posts,
+        notFound: total.notFound + (blueskyAtproto.isNotFoundPost(node) ? 1 : 0),
+        blocked: total.blocked + (blueskyAtproto.isBlockedPost(node) ? 1 : 0),
+      };
+    },
+    { posts: 0, notFound: 0, blocked: 0 },
+  );
+}
+
+type ThreadRoot = AppBskyFeedGetPostThread.OutputSchema['thread'];
+type NodeCounts = { posts: number; notFound: number; blocked: number };
+type ThreadStatistics = { totalPosts: number; parentPosts: number; replyPosts: number; notFoundPosts: number; blockedPosts: number };

@@ -10,7 +10,7 @@ export const deleteStatus = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Status',
   description: 'Permanently delete one of your own statuses.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Permanently deletes a status posted by the connected account and returns the deleted status including its source text (useful to redraft). Followers and remote servers may already have received it, so deletion cannot recall copies. Only works on your own posts; repeating the call fails with not found.',
@@ -21,7 +21,7 @@ export const deleteStatus = createAction({
     status_id: Property.ShortText({
       displayName: 'Status ID',
       description:
-        'Local ID of your own status to delete. Obtain it from Create Status, Get Status or List Account Statuses.',
+        'ID of your own status to delete. Map it from a previous Post Status step (Status > Status ID), Create Status, Get Status or List Account Statuses.',
       required: true,
     }),
     delete_media: Property.Checkbox({

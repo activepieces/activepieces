@@ -86,7 +86,7 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
 
     return sftp as T;
   } else {
-    const ftpClient = new FTPClient();
+    const ftpClient = new FTPClient(undefined, { allowSeparateTransferHost: true });
     await ftpClient.access({
       host,
       port,

@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 const dotVariants = cva('size-2 rounded-full', {
   variants: {
     variant: {
-      destructive: 'bg-danger-11',
-      primary: 'bg-accent-11',
+      destructive: 'bg-danger-10',
+      primary: 'bg-accent-10',
     },
   },
   defaultVariants: {},

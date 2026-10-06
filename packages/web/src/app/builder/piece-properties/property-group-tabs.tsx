@@ -189,7 +189,7 @@ function PropertyGroupTabs({
                   disabled={disabled}
                   aria-invalid={hasError}
                   className={cn(
-                    'relative z-10 flex-1 gap-1.5 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-8/50 data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+                    'relative z-10 flex-1 gap-1.5 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-gray-8/50 data-[state=active]:bg-transparent data-[state=active]:shadow-none',
                     hasError
                       ? 'text-danger-11 data-[state=active]:text-danger-11'
                       : 'text-gray-11 hover:text-gray-12 data-[state=active]:text-gray-12',
@@ -221,7 +221,7 @@ function PropertyGroupTabs({
                   ) : null}
                   {hasError && (
                     <span
-                      className="size-1.5 shrink-0 rounded-full bg-danger-11"
+                      className="size-1.5 shrink-0 rounded-full bg-danger-10"
                       aria-hidden
                     />
                   )}

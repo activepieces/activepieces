@@ -119,6 +119,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                             if (unknownPropsError) {
                                 return unknownPropsError
                             }
+                            pieceSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', input: resolvedInput, projectId: mcp.projectId, platformId: project.platformId, log })
                         }
                     }
                     skeletonAction = {

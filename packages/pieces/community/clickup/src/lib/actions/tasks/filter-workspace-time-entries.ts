@@ -1,5 +1,9 @@
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import {
+  MarkdownVariant,
+  Property,
+  createAction,
+} from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import qs from 'qs';
 import { clickupAuth } from '../../auth';
@@ -12,45 +16,79 @@ export const filterClickupWorkspaceTimeEntries = createAction({
   name: 'list_workspace_time_entries',
   classification: 'SEARCH',
   displayName: 'List Time Entries',
-  description: 'Retrieves time entries filtered by start and end date.',
+  description: 'List time tracked in a workspace, by date, place and person.',
   audience: 'human',
   aiMetadata: { description: 'List tracked time entries across a ClickUp workspace, optionally narrowed by date range, assignee, and a single scope (task, list, folder, or space). Pick this to report on or audit logged time; it is read-only and idempotent. Scope filters are mutually exclusive, with task taking precedence over list, folder, then space.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'scope',
+      display: 'section',
+      label: 'Search In',
+      icon: 'inbox',
+      props: [
+        'workspace_id',
+        'scope_info',
+        'space_id',
+        'folder_id',
+        'list_id',
+        'task_id',
+      ],
+    },
+    {
+      key: 'time',
+      display: 'section',
+      label: 'Time Window',
+      icon: 'calendar',
+      props: ['start_date', 'end_date'],
+    },
+    {
+      key: 'people',
+      display: 'section',
+      label: 'People',
+      icon: 'users',
+      props: ['assignee'],
+    },
+  ],
   props: {
     workspace_id: clickupCommon.workspace_id(true),
-
-    start_date: Property.DateTime({
-      displayName: 'Start date',
-      description: '',
-      required: false,
+    scope_info: Property.MarkDown({
+      value:
+        'Leave these empty to cover the whole workspace. The most specific one you pick is used.',
+      variant: MarkdownVariant.INFO,
     }),
-    end_date: Property.DateTime({
-      displayName: 'End date',
-      required: false,
-    }),
-
     space_id: clickupCommon.space_id(false),
     folder_id: clickupCommon.folder_id(false),
     list_id: clickupCommon.list_id(false),
     task_id: clickupCommon.task_id(false, 'Task'),
-
+    start_date: Property.DateTime({
+      displayName: 'Start Date',
+      description: 'Entries from this moment on. Empty: the last 30 days.',
+      required: false,
+      width: 'half',
+    }),
+    end_date: Property.DateTime({
+      displayName: 'End Date',
+      description: 'Entries up to this moment. Empty: now.',
+      required: false,
+      width: 'half',
+    }),
     assignee: clickupCommon.assignee_id(
       false,
-      'Assignee Id',
-      'ID of assignee for Clickup Task'
+      'Assignees',
+      'Whose entries to include. Empty: only yours.'
     ),
-
     include_task_tags: Property.Checkbox({
-      displayName: 'Include task tags',
-      description:
-        'Include task tags in the response for time entries associated with tasks.',
+      displayName: 'Include Task Tags',
+      description: "Add each task's tags to the results.",
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
     include_location_names: Property.Checkbox({
-      displayName: 'Include location names',
-      description:
-        'Include the names of the List, Folder, and Space along with the list_id, folder_id, and space_id.',
+      displayName: 'Include Location Names',
+      description: 'Add list, folder and space names to the results.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },

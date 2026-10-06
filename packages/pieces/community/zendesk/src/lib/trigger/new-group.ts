@@ -12,6 +12,7 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { newGroupOutputSchema } from '../output-schemas';
 
 interface ZendeskGroup {
   id: number;
@@ -52,6 +53,7 @@ const polling: Polling<ZendeskAuthValue, Record<string, never>> = {
 
 export const newGroup = createTrigger({
   name: 'new_group',
+  outputSchema: newGroupOutputSchema,
   classification: 'READ',
   displayName: 'New Group',
   description: 'Fires when a new group is created.',

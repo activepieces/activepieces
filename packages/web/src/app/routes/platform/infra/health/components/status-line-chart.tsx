@@ -22,22 +22,22 @@ const SERIES: Array<{ status: FlowRunStatus; label: string; color: string }> = [
   {
     status: FlowRunStatus.SUCCEEDED,
     label: 'Succeeded',
-    color: 'var(--success-11)',
+    color: 'var(--success-9)',
   },
   {
     status: FlowRunStatus.FAILED,
     label: 'Failed',
-    color: 'var(--warning-11)',
+    color: 'var(--warning-9)',
   },
   {
     status: FlowRunStatus.INTERNAL_ERROR,
     label: 'Internal error',
-    color: 'var(--danger-11)',
+    color: 'var(--danger-9)',
   },
   {
     status: FlowRunStatus.CANCELED,
     label: 'Cancelled',
-    color: 'var(--gray-11)',
+    color: 'var(--gray-9)',
   },
 ];
 

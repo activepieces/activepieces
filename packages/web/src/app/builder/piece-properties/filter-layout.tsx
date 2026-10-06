@@ -265,7 +265,7 @@ function FilterSummary({
                 aria-label={t('Remove')}
                 disabled={disabled}
                 onClick={() => clearOne(name, property)}
-                className="shrink-0 rounded-full p-0.5 text-accent-11/70 outline-none transition-colors hover:text-accent-11 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
+                className="shrink-0 rounded-full p-0.5 text-accent-11/70 outline-none transition-colors hover:text-accent-11 focus-visible:ring-2 focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50"
               >
                 <X className="size-3" />
               </button>

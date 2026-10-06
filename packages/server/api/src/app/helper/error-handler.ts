@@ -23,7 +23,12 @@ export const errorHandler = async (
             !error.statusCode ||
       error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()
         ) {
-            exceptionHandler.handle(error, request.log)
+            if (wideEvent.sealed()) {
+                exceptionHandler.captureException(error)
+            }
+            else {
+                exceptionHandler.handle(error, request.log)
+            }
         }
         await reply
             .status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR)
@@ -111,11 +116,13 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.INVALID_GIT_CREDENTIALS]: StatusCodes.BAD_REQUEST,
     [ErrorCode.INVALID_OTP]: StatusCodes.GONE,
     [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
+    [ErrorCode.REQUIRED_ACTIONS_MISSING]: StatusCodes.BAD_REQUEST,
     [ErrorCode.FILE_TOO_LARGE]: StatusCodes.REQUEST_TOO_LONG,
     [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
     [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
     [ErrorCode.INVALID_LICENSE_KEY]: StatusCodes.BAD_REQUEST,
     [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: StatusCodes.CONFLICT,
+    [ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS]: StatusCodes.BAD_REQUEST,
     [ErrorCode.MCP_PIECE_REQUIRES_CONNECTION]: StatusCodes.BAD_REQUEST,
     [ErrorCode.MCP_PIECE_CONNECTION_MISMATCH]: StatusCodes.BAD_REQUEST,
     [ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS]: StatusCodes.UNPROCESSABLE_ENTITY,

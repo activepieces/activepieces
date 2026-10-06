@@ -147,10 +147,10 @@ export const flowRunUtils = {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
         return {
-          variant: 'primary',
+          variant: 'default',
           Icon: Timer,
           text: t('Running'),
-          extraClassName: 'text-accent-11 stroke-accent-11',
+          extraClassName: 'text-gray-12 stroke-gray-12',
         };
       case StepOutputStatus.PAUSED:
         return {
@@ -208,7 +208,7 @@ export const flowRunUtils = {
         };
       case FlowRunStatus.RUNNING:
         return {
-          variant: 'primary',
+          variant: 'default',
           Icon: Play,
         };
       case FlowRunStatus.FAILED:

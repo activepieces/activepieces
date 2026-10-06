@@ -16,5 +16,14 @@
   "Title": "Aanspreektitel",
   "Description": "Beschrijving",
   "A URL we can access for the photo": "Een URL die we voor de foto kunnen gebruiken",
-  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "Een URL die we kunnen gebruiken voor de video (limiet: 1GB of 20 minuten)"
+  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "Een URL die we kunnen gebruiken voor de video (limiet: 1GB of 20 minuten)",
+  "Photo URL": "Foto-URL",
+  "Video URL": "Video-URL",
+  "Pages you gave access to when connecting your account.": "Pagina's waartoe je toegang hebt gegeven bij het koppelen van je account.",
+  "Facebook adds a preview card for this link below the post.": "Facebook toont onder het bericht een voorbeeldkaart voor deze link.",
+  "Public URL of the image, so Facebook can download it.": "Openbare URL van de afbeelding, zodat Facebook die kan downloaden.",
+  "Post text shown with the photo.": "Berichttekst die bij de foto wordt getoond.",
+  "Public URL of the video file, up to 1 GB or 20 minutes.": "Openbare URL van het videobestand, tot 1 GB of 20 minuten.",
+  "Name of the video, shown on the Page's Videos tab.": "Naam van de video, getoond op het tabblad Video's van de pagina.",
+  "Post text shown with the video.": "Berichttekst die bij de video wordt getoond."
 }

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAuth } from '../auth';
 import { updateUserActionOutputSchema } from '../output-schemas';
@@ -17,26 +17,54 @@ export const updateUser = createAction({
     props: {
         userId: Property.ShortText({
             displayName: 'User ID',
+            description: 'Find it under Authentication, Users in Supabase.',
+            placeholder: '00000000-0000-0000-0000-000000000000',
             required: true,
         }),
+        changes_info: Property.MarkDown({
+            value: 'Empty email, phone and password keep their current value.',
+            variant: MarkdownVariant.INFO,
+        }),
         email: Property.ShortText({
-            displayName: 'New Email',
+            displayName: 'Email',
+            placeholder: 'jane@example.com',
             required: false,
+            width: 'half',
         }),
         phone: Property.ShortText({
-            displayName: 'New Phone',
+            displayName: 'Phone',
+            description: 'Include the country code.',
+            placeholder: '+15551234567',
             required: false,
+            width: 'half',
         }),
         password: Property.ShortText({
-            displayName: 'New Password',
+            displayName: 'Password',
+            description: 'Leave empty to keep the current password.',
             required: false,
         }),
         userMetadata: Property.Json({
             displayName: 'User Metadata',
-            description: 'Replaces the user\'s custom metadata, as a JSON object.',
+            description: 'Custom data saved on the user, as JSON.',
             required: false,
         }),
     },
+    propertyGroups: [
+        {
+            key: 'user',
+            display: 'section',
+            label: 'User to Update',
+            icon: 'user',
+            props: ['userId'],
+        },
+        {
+            key: 'changes',
+            display: 'section',
+            label: 'Changes',
+            icon: 'text',
+            props: ['changes_info', 'email', 'phone', 'password', 'userMetadata'],
+        },
+    ],
     outputSchema: updateUserActionOutputSchema,
     async run(context) {
         const { userId, email, phone, password, userMetadata } = context.propsValue;
