@@ -5,6 +5,7 @@ import { createEmailTools } from './tools/email-tools'
 import { createEventEmitter } from './tools/event-emitter'
 import { wrapDeleteGate, wrapTestFlowGate } from './tools/flow-gate-tools'
 import { createAgentSurfaceTools, createBuildPlanTools, createLocalTools, createPhaseTools, createStructuredOutputTool, createThinkingTools } from './tools/session-tools'
+import { unwrapLazyToolChunk } from './tools/skill-tools'
 import { createTaintState, extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, previousReplyReadData, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout, wrapToolsWithTaint } from './tools/tool-primitives'
 import { createImageTools, createProviderSearchTools, createScrapeTools, createSearchTools, createWebTools, falImageGenerator, providerImageGenerator } from './tools/web-media-tools'
 
@@ -36,6 +37,7 @@ export const agentWorkerTools = {
     createConfiguredFlowTools,
     createConfiguredKnowledgeBaseTools,
     createStructuredOutputTool,
+    unwrapLazyToolChunk,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,

@@ -1,7 +1,7 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, ToolProgressEvent } from '@activepieces/shared'
-import { ToolExecutionOptions, ToolSet } from 'ai'
+import { JSONSchema7, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
 export const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
@@ -76,6 +76,11 @@ function buildOversizeEnvelope({ result, text }: { result: unknown, text: string
         content: [{ type: 'text', text }],
         ...spreadIfDefined('_meta', meta),
     }
+}
+
+export function plainJsonSchema<T = JSONSchema7>(schema: JSONSchema7): T {
+    const plain: T = JSON.parse(JSON.stringify(schema))
+    return plain
 }
 
 export function normalizePieceName(piece: string): string {
