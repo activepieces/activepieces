@@ -20,7 +20,7 @@ afterAll(async () => {
 })
 
 async function context(): Promise<TestContext> {
-    return createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+    return createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, aiProvidersEnabled: true } })
 }
 
 async function createAgent(ctx: TestContext): Promise<{ id: string }> {

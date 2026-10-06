@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../../core/db/repo-factory'
 import { paginationHelper } from '../../../../helper/pagination/pagination-utils'
 import { system } from '../../../../helper/system/system'
+import { planFeatures } from '../../../../platform/plan-features'
 import { projectStateService } from '../project-state/project-state.service'
 import { gitHelper } from './git-helper'
 import { gitSyncHandler } from './git-sync-handler'
@@ -68,6 +69,11 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
         const gitRepo = await repo().findOneBy({ projectId })
         if (isNil(gitRepo) || gitRepo.branchType === GitBranchType.PRODUCTION) {
+            return
+        }
+        const environmentsEnabled = await planFeatures(log).isEnabled({ platformId, feature: 'environmentsEnabled' })
+        if (!environmentsEnabled) {
+            log.info({ project: { id: projectId }, platform: { id: platformId } }, '[gitRepoService#onDeleted] Releases are not on the plan, skipping the git push')
             return
         }
         switch (type) {

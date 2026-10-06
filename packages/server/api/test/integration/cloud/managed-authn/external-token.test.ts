@@ -42,7 +42,7 @@ describe('Managed Authentication API', () => {
     describe('External token endpoint', () => {
         it('Signs up new users', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -85,7 +85,7 @@ describe('Managed Authentication API', () => {
 
         it('Creates new project', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -129,7 +129,7 @@ describe('Managed Authentication API', () => {
         it('Assigns the named piece set matching the first tag when exchanging external token', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup({
-                plan: { managePiecesEnabled: true },
+                plan: { managePiecesEnabled: true, embeddingEnabled: true },
             })
 
             const mockSigningKey = createMockSigningKey({
@@ -181,7 +181,7 @@ describe('Managed Authentication API', () => {
 
         it('Assigns the named piece set even when managePiecesEnabled is false (flag gates management, not enforcement)', async () => {
             // arrange — mocks default managePiecesEnabled to false
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -231,7 +231,7 @@ describe('Managed Authentication API', () => {
         it('Assigns the named piece set referenced by a v4 token pieceSet field', async () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup({
-                plan: { managePiecesEnabled: true },
+                plan: { managePiecesEnabled: true, embeddingEnabled: true },
             })
 
             const mockSigningKey = createMockSigningKey({
@@ -278,7 +278,7 @@ describe('Managed Authentication API', () => {
 
         it('Adds new user as a member in new project', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -321,7 +321,7 @@ describe('Managed Authentication API', () => {
 
         it('Adds new user to existing project', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -361,7 +361,7 @@ describe('Managed Authentication API', () => {
 
         it('Signs in existing users', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -404,9 +404,29 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.id).toBe(mockUser.id)
         })
 
+        it('Refuses sign-in once the plan no longer includes embedding', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: false } })
+            const mockSigningKey = createMockSigningKey({ platformId: mockPlatform.id })
+            await db.save('signing_key', mockSigningKey)
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        })
+
         it('Fails if signing key is not found', async () => {
             // arrange
-            await mockAndSaveBasicSetup()
+            await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const nonExistentSigningKeyId = apId()
 
@@ -435,7 +455,7 @@ describe('Managed Authentication API', () => {
 
     describe('Concurrency pool', () => {
         it('Creates pool and assigns to project when token has concurrencyPoolKey and limit', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -475,7 +495,7 @@ describe('Managed Authentication API', () => {
         })
 
         it('Does not create pool when token has concurrencyPoolKey but no concurrencyPoolLimit', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -510,7 +530,7 @@ describe('Managed Authentication API', () => {
         })
 
         it('Reuses same pool for same concurrencyPoolKey across multiple tokens', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -563,7 +583,7 @@ describe('Managed Authentication API', () => {
         })
 
         it('Does not create pool when token has no concurrencyPoolKey', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,

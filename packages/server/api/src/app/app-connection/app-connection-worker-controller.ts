@@ -1,8 +1,9 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { AppConnection, EnginePrincipal, GetAppConnectionForWorkerRequestQuery } from '@activepieces/shared'
+import { AppConnection, AppConnectionScope, EnginePrincipal, GetAppConnectionForWorkerRequestQuery } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { secretManagersService } from '../ee/secret-managers/secret-managers.service'
+import { planFeatures } from '../platform/plan-features'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) => {
@@ -23,6 +24,13 @@ export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) 
                     entityId: `externalId=${request.params.externalId}`,
                     entityType: 'AppConnection',
                 },
+            })
+        }
+        if (appConnection.scope === AppConnectionScope.PLATFORM) {
+            await planFeatures(request.log).assertEnabled({
+                platformId: enginePrincipal.platform.id,
+                feature: 'globalConnectionsEnabled',
+                message: 'Global connections are not on this platform\'s plan',
             })
         }
 

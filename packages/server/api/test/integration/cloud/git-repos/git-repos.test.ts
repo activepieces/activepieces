@@ -11,6 +11,7 @@ import {
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -423,6 +424,21 @@ describe('Git API', () => {
         it.each(SAFE_REMOTE_URLS)('should accept remoteUrl %j', async (remoteUrl) => {
             const { statusCode } = await postCreate({ remoteUrl })
             expect(statusCode).toBe(StatusCodes.CREATED)
+        })
+    })
+
+    describe('Deleting a flow after the plan lapses', () => {
+        it('deletes the flow and skips the push to the connected repo', async () => {
+            const ctx = await createTestContext(app!, { plan: { environmentsEnabled: false } })
+            await db.save('git_repo', {
+                ...createMockGitRepo({ projectId: ctx.project.id }),
+                branchType: GitBranchType.DEVELOPMENT,
+            })
+            const flow = await ctx.post('/v1/flows', { displayName: 'test flow', projectId: ctx.project.id })
+
+            const response = await ctx.delete(`/v1/flows/${flow.json().id}`)
+
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
     })
 })

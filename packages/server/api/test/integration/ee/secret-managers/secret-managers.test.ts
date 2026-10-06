@@ -5,6 +5,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
 import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
+import { platformPlanService } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { validatePathFormat } from '../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
 import { generateMockToken } from '../../../helpers/auth'
@@ -269,6 +270,34 @@ describe('Secret Managers API', () => {
             })
 
             expect(result).toBe('super-secret-value')
+        })
+
+        it('should refuse to resolve a secret once the plan no longer includes secret managers, even when failures are tolerated', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            vaultMock.mockVaultLoginSuccess()
+            const created = await createHashicorpConnection(app!, testToken)
+            await platformPlanService(mockLog).update({ platformId: mockPlatform.id, secretManagersEnabled: false })
+
+            await expect(
+                secretManagersService(mockLog).resolveString({
+                    key: `{{${created.id}${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
+                    platformId: mockPlatform.id,
+                    throwOnFailure: false,
+                }),
+            ).rejects.toMatchObject({
+                error: expect.objectContaining({
+                    code: ErrorCode.FEATURE_DISABLED,
+                }),
+            })
         })
 
         it('should retrun original value for non-secret key format', async () => {

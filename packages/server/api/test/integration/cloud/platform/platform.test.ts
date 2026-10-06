@@ -53,6 +53,7 @@ describe('Platform API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
+                    customAppearanceEnabled: true,
                 },
                 platform: {
                 },
@@ -109,6 +110,7 @@ describe('Platform API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
+                    customAppearanceEnabled: true,
                 },
                 platform: {
                 },
@@ -153,6 +155,7 @@ describe('Platform API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
+                    customAppearanceEnabled: true,
                 },
                 platform: {
                 },
@@ -205,6 +208,7 @@ describe('Platform API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
+                    customAppearanceEnabled: true,
                 },
                 platform: {
                 },
@@ -249,6 +253,7 @@ describe('Platform API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
+                    customAppearanceEnabled: true,
                 },
                 platform: {
                 },
@@ -534,6 +539,34 @@ describe('Platform API', () => {
             })
             expect(victimReadResponse?.statusCode).toBe(StatusCodes.OK)
             expect(victimReadResponse?.json().name).toBe('platform-b-original-name')
+        })
+
+        it('saves a rename but refuses branding and embed origins the plan does not include', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    customAppearanceEnabled: false,
+                    embeddingEnabled: false,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const updatePlatform = (body: UpdatePlatformRequestBody) => app!.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: { authorization: `Bearer ${testToken}` },
+                body,
+            })
+
+            const rename = await updatePlatform({ name: 'renamed platform' })
+            const branding = await updatePlatform({ primaryColor: '#ff0000' })
+            const embedOrigins = await updatePlatform({ allowedEmbedOrigins: ['https://example.com'] })
+
+            expect(rename.statusCode).toBe(StatusCodes.OK)
+            expect(branding.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+            expect(embedOrigins.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         })
 
     })

@@ -1,6 +1,7 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -17,6 +18,7 @@ import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { userIdentityHelper } from '../helper/user-identity-helper'
 import { userService } from '../user/user-service'
+import { planFeatures } from './plan-features'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
@@ -55,6 +57,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const platformId = req.principal.platform.id
+        await assertPlanCoversSettings({ platformId, body: req.body, log: req.log })
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
             fileService(app.log).uploadPublicAsset({
@@ -184,6 +187,24 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     }
 }
 
+async function assertPlanCoversSettings({ platformId, body, log }: AssertPlanCoversSettingsParams): Promise<void> {
+    const changesBranding = [body.logoIcon, body.fullLogo, body.favIcon, body.primaryColor, body.themeColors].some((value) => !isNil(value))
+    if (changesBranding) {
+        await planFeatures(log).assertEnabled({
+            platformId,
+            feature: 'customAppearanceEnabled',
+            message: 'Custom branding is not on this platform\'s plan',
+        })
+    }
+    if (!isNil(body.allowedEmbedOrigins)) {
+        await planFeatures(log).assertEnabled({
+            platformId,
+            feature: 'embeddingEnabled',
+            message: 'Embedding is not on this platform\'s plan',
+        })
+    }
+}
+
 const CreatePlatformEndpoint = {
     config: {
         security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
@@ -252,3 +273,8 @@ const GetAssetRequest = {
     },
 }
 
+type AssertPlanCoversSettingsParams = {
+    platformId: string
+    body: UpdatePlatformRequestBody
+    log: FastifyBaseLogger
+}
