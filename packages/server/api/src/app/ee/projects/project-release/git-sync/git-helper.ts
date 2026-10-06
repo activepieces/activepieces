@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { fileSystemUtils } from '@activepieces/server-utils'
 import { ApEnvironment, ConfigureRepoRequest, GitRepo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -74,7 +74,7 @@ async function createGitRepoAndReturnPaths(
 
 async function createOrGetSshKeyPath({ keyPath, sshPrivateKey }: { keyPath: string, sshPrivateKey: string }): Promise<void> {
     await fs.mkdir(path.dirname(keyPath), { recursive: true })
-    await fs.writeFile(keyPath, sshPrivateKey)
+    await fs.writeFile(keyPath, `${sshPrivateKey.replace(/\r\n/g, '\n').trim()}\n`)
     await fs.chmod(keyPath, 0o600)
 }
 
@@ -92,13 +92,13 @@ async function initGitRepo(
             allowUnsafeSshCommand: true,
             allowUnsafeProtocolOverride: true,
         },
-    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
+    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 -o LogLevel=ERROR`)
     await git.init()
     await git.addConfig('core.symlinks', 'false')
     await git.addConfig('protocol.file.allow', 'never')
     await git.addRemote('origin', remoteUrl)
     await git.branch(['-M', branch])
-    await git.pull('origin', branch)
+    await git.raw(['pull', 'origin', branch])
     return git
 }
 
@@ -146,12 +146,12 @@ async function validateConnection(request: ConfigureRepoRequest): Promise<void> 
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_GIT_CREDENTIALS,
             params: {
-                message: (error as Error).message,
+                message: (error as Error).message.replaceAll(keyPath, '<ssh-key>'),
             },
         })
     }
     finally {
-        await fs.rmdir(tmpFolder, { recursive: true })
-        await fs.unlink(keyPath)
+        await tryCatch(() => fs.rm(keyPath, { force: true }))
+        await tryCatch(() => fs.rm(tmpFolder, { recursive: true, force: true }))
     }
 }
