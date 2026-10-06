@@ -10,14 +10,14 @@ export function buildSkillSurface({ tools, surface, guides, onSkillLoaded, canAf
     guides: Record<string, string>
     onSkillLoaded: (skill: AgentSkill) => void
     canAffordPaidTool: () => boolean
-}): SkillSurfaceResult | null {
+}): SkillSurfaceResult {
     const registry = withoutRetiredTools(tools)
-    if (Object.keys(registry).length <= MAX_CORE_TOOLS) {
-        return null
-    }
     const skillTools = createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordPaidTool })
     const surfaceTools = { ...registry, ...skillTools }
     const allToolNames = Object.keys(surfaceTools)
+    if (Object.keys(registry).length <= MAX_CORE_TOOLS) {
+        return { tools: surfaceTools, coreToolNames: allToolNames, catalogNote: '' }
+    }
     const coreToolNames = agentToolSkills.coreToolNames({ surface }).filter((name) => allToolNames.includes(name))
     const uncatalogued = agentToolSkills.uncataloguedToolNames({ surface, allToolNames })
     return {

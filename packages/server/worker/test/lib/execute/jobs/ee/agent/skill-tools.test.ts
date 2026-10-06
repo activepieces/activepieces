@@ -20,17 +20,13 @@ const CHAT_TOOL_NAMES = [
 ]
 
 function chatSurface({ canAfford = true }: { canAfford?: boolean } = {}) {
-    const surface = buildSkillSurface({
+    return buildSkillSurface({
         tools: stubTools(CHAT_TOOL_NAMES),
         surface: 'CHAT',
         guides: { build_flow: 'BUILD GUIDE' },
         onSkillLoaded: vi.fn(),
         canAffordPaidTool: () => canAfford,
     })
-    if (surface === null) {
-        throw new Error('expected a skill surface for a large tool set')
-    }
-    return surface
 }
 
 const CALL_OPTIONS = { toolCallId: 'call_1', messages: [], abortSignal: new AbortController().signal, context: undefined }
@@ -69,9 +65,11 @@ describe('buildSkillSurface', () => {
         expect(chatSurface().catalogNote).toContain('mcp__gmail__send_email')
     })
 
-    it('leaves a small tool set alone', () => {
-        const surface = buildSkillSurface({ tools: stubTools(['ap_web_search', 'ap_add_step']), surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
-        expect(surface).toBeNull()
+    it('sends a small tool set directly and still installs the skill tools its prompt mentions', () => {
+        const surface = buildSkillSurface({ tools: stubTools(['ap_web_search', 'ap_add_step']), surface: 'AGENT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
+        expect(surface.coreToolNames).toEqual(expect.arrayContaining(['ap_web_search', 'ap_add_step', 'ap_load_skill', 'ap_get_tool_schema', LAZY_TOOL_NAME]))
+        expect(Object.keys(surface.tools).sort()).toEqual([...surface.coreToolNames].sort())
+        expect(surface.catalogNote).toBe('')
     })
 })
 
