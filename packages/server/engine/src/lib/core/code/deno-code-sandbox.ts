@@ -3,7 +3,7 @@ import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { deno, DenoPermission } from '@activepieces/core-utils'
+import { deno, DenoPermission, DenoSession } from '@activepieces/core-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from './code-sandbox-common'
 
@@ -83,13 +83,48 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
 
         async createScriptSession({ scriptContext, functions }) {
             const context: Record<string, unknown> = { ...scriptContext }
+            const bootstrapBody = Object.entries(functions).map(([key, value]) => `globalThis[${JSON.stringify(key)}] = ${value.toString()};`).join('\n')
+            let livePromise: Promise<LiveScriptSession> | null = null
             let disposed = false
+
+            const ensureLive = (): Promise<LiveScriptSession> => {
+                if (livePromise === null) {
+                    const attempt = deno.createSession({
+                        bootstrapBody,
+                        permissions: [],
+                        cwd: tmpdir(),
+                    }).then((session) => ({ session, sentGlobals: new Map<string, unknown>() }))
+                    attempt.catch(() => {
+                        if (livePromise === attempt) {
+                            livePromise = null
+                        }
+                    }).catch(() => undefined)
+                    livePromise = attempt
+                }
+                return livePromise
+            }
+
+            const syncGlobals = async ({ session, sentGlobals }: LiveScriptSession): Promise<void> => {
+                for (const [key, value] of Object.entries(context)) {
+                    if (!sentGlobals.has(key) || sentGlobals.get(key) !== value) {
+                        sentGlobals.set(key, value)
+                        await session.setGlobal({ key, value })
+                    }
+                }
+            }
+
             return {
                 run: async (script: string) => {
                     if (disposed) {
                         throw new Error('Script session has been disposed')
                     }
-                    return sandbox.runScript({ script, scriptContext: context, functions })
+                    let live = await ensureLive()
+                    if (!live.session.isAlive()) {
+                        livePromise = null
+                        live = await ensureLive()
+                    }
+                    await syncGlobals(live)
+                    return live.session.run({ script })
                 },
                 setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
                     if (noOverwrite && (key in context || key in functions)) {
@@ -99,6 +134,8 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 },
                 dispose: () => {
                     disposed = true
+                    livePromise?.then(({ session }) => session.dispose()).catch(() => undefined)
+                    livePromise = null
                 },
             }
         },
@@ -124,4 +161,9 @@ function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, strin
         }
     }
     return env
+}
+
+type LiveScriptSession = {
+    session: DenoSession
+    sentGlobals: Map<string, unknown>
 }

@@ -330,6 +330,48 @@ describe('denoCodeSandbox permission boundary', () => {
                 session.dispose()
             }
         })
+
+        it('runs every script of a session in one Deno process', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: {},
+                functions: {},
+            })
+            try {
+                expect(await session.run('globalThis.__runs = (globalThis.__runs ?? 0) + 1')).toBe(1)
+                expect(await session.run('globalThis.__runs = (globalThis.__runs ?? 0) + 1')).toBe(2)
+                expect(await session.run('__runs')).toBe(2)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('respawns after the process dies and replays the globals', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: { base: 40 },
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                await session.setGlobal('step_1', { out: 5 })
+                expect(await session.run('step_1.out + base')).toBe(45)
+
+                await expectRejection(session.run('Deno.exit(1)'), /exited|not running/)
+
+                expect(await session.run('double(step_1.out + base)')).toBe(90)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('rejects runs after dispose', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: {},
+                functions: {},
+            })
+            session.dispose()
+            await expect(session.run('1 + 1')).rejects.toThrow()
+        })
     })
 })
 

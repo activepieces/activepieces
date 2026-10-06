@@ -85,6 +85,131 @@ export const deno = {
         })
     },
 
+    /**
+     * Spawns one long-lived Deno process that holds globals in its own heap and
+     * evaluates scripts on demand, so repeated evaluations against the same data
+     * serialize it once instead of once per run.
+     */
+    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {} }: DenoSessionParams): Promise<DenoSession> {
+        const marker = newResultMarker()
+        const { child, denoPath, denoDir } = await spawnDeno({
+            entry: { body: buildSessionProgram({ bootstrapBody, marker }) },
+            permissions,
+            cwd,
+            memoryLimitMb,
+            allowReadPaths: [],
+            resolveNodeModules: false,
+            env,
+        })
+
+        const pending = new Map<string, PendingSessionCommand>()
+        let nextCommandId = 0
+        let alive = true
+        let stdoutBuffer = ''
+        let capturedStderr = ''
+
+        const settleResponse = (line: string): void => {
+            let message: (DenoResultMessage & { id: string }) | null = null
+            try {
+                message = JSON.parse(line.slice(marker.length))
+            }
+            catch {
+                return
+            }
+            if (message === null) {
+                return
+            }
+            const command = pending.get(message.id)
+            if (command === undefined) {
+                return
+            }
+            pending.delete(message.id)
+            if (message.success) {
+                command.resolve(message.result)
+            }
+            else {
+                command.reject(sandboxError.build({ error: message.error, stdout: '', stderr: capturedStderr }))
+            }
+            capturedStderr = ''
+        }
+
+        child.stdout.on('data', (data: Buffer) => {
+            stdoutBuffer += data.toString()
+            let newline = stdoutBuffer.indexOf('\n')
+            while (newline !== -1) {
+                const line = stdoutBuffer.slice(0, newline)
+                stdoutBuffer = stdoutBuffer.slice(newline + 1)
+                if (line.startsWith(marker)) {
+                    settleResponse(line)
+                }
+                else if (line.trim()) {
+                    console.log(line)
+                }
+                newline = stdoutBuffer.indexOf('\n')
+            }
+        })
+
+        child.stderr.on('data', (data: Buffer) => {
+            const text = data.toString()
+            capturedStderr += text
+            console.error(text.trimEnd())
+        })
+
+        const failAllPending = (error: Error): void => {
+            alive = false
+            for (const command of pending.values()) {
+                command.reject(error)
+            }
+            pending.clear()
+        }
+
+        child.on('close', (code, signal) => {
+            void removeDenoDir(denoDir)
+            failAllPending(sandboxError.build({ error: `Deno session exited with code ${code} and signal ${signal}`, stdout: '', stderr: capturedStderr }))
+        })
+
+        child.on('error', (error) => {
+            void removeDenoDir(denoDir)
+            failAllPending(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: '', stderr: capturedStderr }))
+        })
+
+        const send = (command: Record<string, unknown>): Promise<unknown> => {
+            if (!alive) {
+                return Promise.reject(sandboxError.build({ error: 'Deno session is not running', stdout: '', stderr: capturedStderr }))
+            }
+            const id = String(nextCommandId++)
+            let payload: string
+            try {
+                payload = `${JSON.stringify({ ...command, id })}\n`
+            }
+            catch (stringifyError) {
+                return Promise.reject(stringifyError)
+            }
+            return new Promise((resolve, reject) => {
+                pending.set(id, { resolve, reject })
+                child.stdin.write(payload, (writeError) => {
+                    if (writeError && pending.delete(id)) {
+                        reject(sandboxError.build({ error: `Failed to write to deno session: ${writeError.message}`, stdout: '', stderr: capturedStderr }))
+                    }
+                })
+            })
+        }
+
+        return {
+            setGlobal: async ({ key, value }: SessionSetGlobalParams): Promise<void> => {
+                await send({ kind: 'set', key, value })
+            },
+            run: ({ script }: SessionRunParams): Promise<unknown> => {
+                return send({ kind: 'run', script })
+            },
+            isAlive: (): boolean => alive,
+            dispose: (): void => {
+                alive = false
+                child.kill('SIGKILL')
+            },
+        }
+    },
+
 }
 
 // Loaded lazily so this module stays importable from browser bundles — the
@@ -116,6 +241,14 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
     const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
     const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
+    let entryArg: string
+    if (typeof entry === 'string') {
+        entryArg = entry
+    }
+    else {
+        entryArg = `${denoDir}/main.mjs`
+        await fs.writeFile(entryArg, entry.body)
+    }
     const child = childProcess.spawn(denoPath, [
         'run',
         '--quiet',
@@ -127,7 +260,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         `--v8-flags=--max-old-space-size=${memoryLimitMb}`,
         ...toPermissionFlags({ permissions, tmpDir: os.tmpdir() }),
         ...permissions.includes(DenoPermission.ALL) ? [] : allowReadPaths.map((path) => `--allow-read=${path}`),
-        entry,
+        entryArg,
     ], {
         cwd,
         env: {
@@ -198,6 +331,73 @@ catch (error) {
 `
 }
 
+function buildSessionProgram({ bootstrapBody, marker }: { bootstrapBody: string, marker: string }): string {
+    return `
+${sandboxError.payloadSource}
+${bootstrapBody}
+const print = console.log.bind(console);
+const emit = (payload) => {
+    print(${JSON.stringify(marker)} + JSON.stringify(payload));
+};
+let currentReject = null;
+globalThis.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    if (currentReject) {
+        currentReject(event.reason);
+    }
+    else {
+        console.error('Unhandled rejection in deno session:', event.reason);
+    }
+});
+const runScript = (script) => new Promise((resolve, reject) => {
+    currentReject = reject;
+    Promise.resolve()
+        .then(() => (0, eval)('(' + script + ')'))
+        .then(async (value) => {
+            await new Promise((tick) => setTimeout(tick, 0));
+            resolve(value);
+        })
+        .catch(reject);
+});
+const decoder = new TextDecoder();
+let buffered = '';
+for await (const chunk of Deno.stdin.readable) {
+    buffered += decoder.decode(chunk, { stream: true });
+    let newline = buffered.indexOf('\\n');
+    while (newline !== -1) {
+        const line = buffered.slice(0, newline);
+        buffered = buffered.slice(newline + 1);
+        newline = buffered.indexOf('\\n');
+        if (line.trim() === '') {
+            continue;
+        }
+        let command;
+        try {
+            command = JSON.parse(line);
+        }
+        catch {
+            continue;
+        }
+        if (command.kind === 'set') {
+            globalThis[command.key] = command.value;
+            emit({ id: command.id, success: true, result: null });
+            continue;
+        }
+        try {
+            const result = await runScript(command.script);
+            emit({ id: command.id, success: true, result: result ?? null });
+        }
+        catch (error) {
+            emit({ id: command.id, success: false, error: toErrorPayload(error) });
+        }
+        finally {
+            currentReject = null;
+        }
+    }
+}
+`
+}
+
 function extractResult(stdout: string, marker: string): { userOutput: string, resultJson: string | null } {
     const idx = stdout.lastIndexOf(marker)
     if (idx === -1) {
@@ -234,8 +434,37 @@ type DenoProgramParams = {
     timeoutMs?: number
 }
 
+export type DenoSession = {
+    setGlobal(params: SessionSetGlobalParams): Promise<void>
+    run(params: SessionRunParams): Promise<unknown>
+    isAlive(): boolean
+    dispose(): void
+}
+
+type DenoSessionParams = {
+    bootstrapBody: string
+    permissions: DenoPermission[]
+    cwd?: string
+    memoryLimitMb?: number
+    env?: Record<string, string>
+}
+
+type SessionSetGlobalParams = {
+    key: string
+    value: unknown
+}
+
+type SessionRunParams = {
+    script: string
+}
+
+type PendingSessionCommand = {
+    resolve(value: unknown): void
+    reject(error: Error): void
+}
+
 type SpawnDenoParams = {
-    entry: string
+    entry: string | { body: string }
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb: number
