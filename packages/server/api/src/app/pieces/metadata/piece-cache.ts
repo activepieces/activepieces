@@ -13,11 +13,11 @@ const repo = repoFactory(PieceMetadataEntity)
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
 const INSTANCE_ID = apId()
-const CACHE_VERSION_MAX_AGE_MS = 10 * 60 * 1000
+const PIECE_CACHE_VERSION_MAX_AGE_MS = 10 * 60 * 1000
 const PIECE_CACHE_INVALIDATION_CHANNEL = 'piece-registry-invalidation'
 
-let cacheVersion = 0
-let cacheVersionStartedAt = performance.now()
+let pieceCacheVersion = 0
+let pieceCacheVersionStartedAt = performance.now()
 const persistedRegistry = createCacheVersionMemo<PieceRegistryEntry[]>({ currentCacheVersion: currentPieceCacheVersion })
 
 export const pieceCache = (log: FastifyBaseLogger) => {
@@ -29,7 +29,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                     if (sender === INSTANCE_ID) {
                         return
                     }
-                    advanceCacheVersion()
+                    advancePieceCacheVersion()
                     log.debug('[pieceCache] Invalidated via pubsub')
                 })
             }
@@ -44,7 +44,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
         },
 
         async invalidate(): Promise<void> {
-            advanceCacheVersion()
+            advancePieceCacheVersion()
             if (!isTestingEnvironment) {
                 await pubsub.publish(PIECE_CACHE_INVALIDATION_CHANNEL, INSTANCE_ID)
             }
@@ -53,16 +53,16 @@ export const pieceCache = (log: FastifyBaseLogger) => {
 }
 
 export function currentPieceCacheVersion(): number {
-    if (performance.now() - cacheVersionStartedAt > CACHE_VERSION_MAX_AGE_MS) {
-        advanceCacheVersion()
-        system.globalLogger().info({ pieceCache: { cacheVersion, maxAgeMs: CACHE_VERSION_MAX_AGE_MS } }, '[pieceCache] Max age reached, advanced the cache version')
+    if (performance.now() - pieceCacheVersionStartedAt > PIECE_CACHE_VERSION_MAX_AGE_MS) {
+        advancePieceCacheVersion()
+        system.globalLogger().info({ pieceCache: { cacheVersion: pieceCacheVersion, maxAgeMs: PIECE_CACHE_VERSION_MAX_AGE_MS } }, '[pieceCache] Max age reached, advanced the cache version')
     }
-    return cacheVersion
+    return pieceCacheVersion
 }
 
-function advanceCacheVersion(): void {
-    cacheVersion++
-    cacheVersionStartedAt = performance.now()
+function advancePieceCacheVersion(): void {
+    pieceCacheVersion++
+    pieceCacheVersionStartedAt = performance.now()
 }
 
 function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {
