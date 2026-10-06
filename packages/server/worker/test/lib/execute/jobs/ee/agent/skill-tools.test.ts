@@ -3,6 +3,7 @@ import { asSchema, jsonSchema, Schema, tool, ToolSet } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { buildSkillSurface, unwrapLazyToolChunk } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
+import { cardTitleFields } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/tool-primitives'
 
 function stubTools(names: string[]): ToolSet {
     return Object.fromEntries(names.map((name) => [name, tool({
@@ -97,6 +98,50 @@ describe('ap_lazy_tool', () => {
         expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_rename_flow"')
         expect(errorMessageOf(rejected)).toContain('Input schema')
         expect((await validateWrapped({ surface, value: { tool: 'ap_rename_flow', input: { flowId: 'f1' } } })).success).toBe(true)
+    })
+
+    async function runThroughLazyTool({ targetSchema, outer, input }: { targetSchema: z.ZodType<Record<string, unknown>>, outer: Record<string, unknown>, input: Record<string, unknown> }): Promise<unknown> {
+        const execute = vi.fn(async (received: unknown) => received)
+        const surface = buildSkillSurface({
+            tools: { ...stubTools(CHAT_TOOL_NAMES), ap_send_email: tool({ description: 'Send an email.', inputSchema: targetSchema, execute }) },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+        const checked = await validateWrapped({ surface, value: { tool: 'ap_send_email', input, ...outer } })
+        if (!checked.success) {
+            throw checked.error
+        }
+        await surface.tools[LAZY_TOOL_NAME]?.execute?.(checked.value, CALL_OPTIONS)
+        return execute.mock.calls[0]?.[0]
+    }
+
+    it('gives the target the pill labels set on the outer call, so its cards are named', async () => {
+        const received = await runThroughLazyTool({
+            targetSchema: z.object({ to: z.string(), ...cardTitleFields }),
+            outer: { title: 'Email the team', doneTitle: 'Emailed the team' },
+            input: { to: 'a@b.co' },
+        })
+        expect(received).toEqual({ to: 'a@b.co', title: 'Email the team', doneTitle: 'Emailed the team' })
+    })
+
+    it('keeps a label already set inside the input', async () => {
+        const received = await runThroughLazyTool({
+            targetSchema: z.object({ to: z.string(), ...cardTitleFields }),
+            outer: { title: 'Outer label' },
+            input: { to: 'a@b.co', title: 'Inner label' },
+        })
+        expect(received).toEqual({ to: 'a@b.co', title: 'Inner label' })
+    })
+
+    it('adds no labels to a tool whose schema has no label fields', async () => {
+        const received = await runThroughLazyTool({
+            targetSchema: z.object({ to: z.string() }).strict(),
+            outer: { title: 'Email the team' },
+            input: { to: 'a@b.co' },
+        })
+        expect(received).toEqual({ to: 'a@b.co' })
     })
 
     it('hands a JSON-schema tool its input unchanged', async () => {

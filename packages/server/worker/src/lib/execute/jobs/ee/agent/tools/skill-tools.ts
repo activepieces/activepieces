@@ -136,7 +136,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
                 return { success: false, error: new Error(`"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`) }
             }
-            const inner = await validateToolInput({ target, input })
+            const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input }) })
             if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
@@ -157,6 +157,15 @@ async function validateToolInput({ target, input }: { target: ToolSet[string], i
     }
     const result = zodSchema.safeParse(input)
     return result.success ? { success: true, value: input } : { success: false, error: new Error(result.error.message) }
+}
+
+async function withOuterLabels({ target, outer, input }: { target: ToolSet[string], outer: Record<string, unknown>, input: Record<string, unknown> }): Promise<Record<string, unknown>> {
+    const schema = plainJsonSchema(await asSchema(target.inputSchema).jsonSchema)
+    const declared = isObject(schema.properties) ? Object.keys(schema.properties) : []
+    const labels = Object.fromEntries([...LABEL_FIELDS]
+        .filter((key) => declared.includes(key) && input[key] === undefined && typeof outer[key] === 'string')
+        .map((key) => [key, outer[key]]))
+    return { ...input, ...labels }
 }
 
 function zodJsonSchema(schema: JSONSchema7): z.core.JSONSchema.JSONSchema {
