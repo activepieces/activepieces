@@ -163,12 +163,24 @@ async function continueTurn({ title, turnParams, previous, request, overrides }:
             ...overrides,
             messages: [...turnParams.messages, ...previous.accumulatedResponseMessages, requestMessage],
             priorToolCalls: [...(turnParams.priorToolCalls ?? []), ...billedToolCalls(previous.uiParts)],
+            sinks: withEarlierParts({ sinks: turnParams.sinks, earlierParts: previous.uiParts }),
         }),
     })
     return {
         ...next,
         uiParts: [...previous.uiParts, ...next.uiParts],
         accumulatedResponseMessages: [...previous.accumulatedResponseMessages, requestMessage, ...next.accumulatedResponseMessages],
+    }
+}
+
+function withEarlierParts({ sinks, earlierParts }: { sinks: RunAgentTurnParams['sinks'], earlierParts: PersistedAgentPart[] }): RunAgentTurnParams['sinks'] {
+    if (isNil(sinks)) {
+        return sinks
+    }
+    const onProgress = sinks.onProgress
+    return {
+        ...sinks,
+        ...(isNil(onProgress) ? {} : { onProgress: (progress: Parameters<typeof onProgress>[0]) => onProgress({ ...progress, uiParts: [...earlierParts, ...progress.uiParts] }) }),
     }
 }
 

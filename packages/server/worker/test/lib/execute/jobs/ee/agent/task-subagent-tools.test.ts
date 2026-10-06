@@ -138,6 +138,24 @@ describe('createTaskSubagentTools', () => {
         expect(runAgentTurn.mock.calls[1][0].priorToolCalls).toEqual([{ toolName: 'ap_web_search', output: {} }])
     })
 
+    it('keeps the steps from before a cut-off in its live progress', async () => {
+        runAgentTurn
+            .mockResolvedValueOnce({ ...turnResult(), streamError: new Error('stream dropped') })
+            .mockImplementationOnce(async (params: { tools: ToolSet, sinks: { onProgress: (progress: { uiParts: unknown[] }) => void } }) => {
+                params.sinks.onProgress({ uiParts: [{ type: PersistedAgentPartType.THINKING_STATUS, text: 'Writing the summary' }] })
+                await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+                return turnResult()
+            })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })
+
+        await tasks['ap_run_task'].execute?.({ title: 'Research', brief: 'Find out' }, EXECUTION_OPTIONS)
+
+        const lines = emitSubagentProgress.mock.calls.map(([event]) => event.data.statusLine)
+        expect(lines).toContain('Writing the summary')
+        const continued = emitSubagentProgress.mock.calls.find(([event]) => event.data.statusLine === 'Writing the summary')
+        expect(continued?.[0].data.stepCount).toBe(1)
+    })
+
     it('stops retrying an interrupted task after its budget of continuations', async () => {
         runAgentTurn.mockResolvedValue({ ...turnResult(), streamError: new Error('stream dropped') })
         const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })

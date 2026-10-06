@@ -135,8 +135,11 @@ function buildConnectionInventoryNote({ connections, truncated }: ConnectionInve
 }
 
 function buildTasksNote(tasks: ConversationTask[]): string {
-    const lines = tasks.map((task) => `- taskId ${task.id}, "${task.title}", ${task.status.toLowerCase()}`)
-    return ['', '', '## Tasks in this conversation', 'Each task\'s result is in the history above. Continue one with `ap_run_task` and its taskId instead of starting over.', ...lines].join('\n')
+    const lines = tasks.map((task) => {
+        const made = task.artifacts.length === 0 ? '' : `; made ${task.artifacts.map((artifact) => `${artifact.type} "${artifact.name}" (${artifact.id})`).join(', ')}`
+        return `- taskId ${task.id}, "${task.title}", ${task.status.toLowerCase()}${made}`
+    })
+    return ['', '', '## Tasks in this conversation', 'Continue one with `ap_run_task` and its taskId instead of starting over. The task remembers everything it did, so ask it when you need details its result no longer shows.', ...lines].join('\n')
 }
 
 function buildMemoryNote({ instructions, memories }: RunMemory): string {
@@ -219,4 +222,4 @@ const RUN_NOTE_HEADINGS: readonly string[] = [
 
 const RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY = 2
 
-type ConversationTask = Pick<SubagentTask, 'id' | 'title' | 'status'>
+type ConversationTask = Pick<SubagentTask, 'id' | 'title' | 'status' | 'artifacts'>

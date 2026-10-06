@@ -29,7 +29,7 @@ describe('agentTaskService', () => {
         expect(started.messages).toEqual([])
         expect(resumed).toEqual({ taskId: started.taskId, claimId: expect.any(String), messages: [{ role: 'user', content: 'build it' }] })
         expect(resumed.claimId).not.toBe(started.claimId)
-        expect(tasks).toEqual([{ id: started.taskId, title: 'Build Save order', status: SubagentTaskStatus.RUNNING }])
+        expect(tasks).toEqual([{ id: started.taskId, title: 'Build Save order', status: SubagentTaskStatus.RUNNING, artifacts: [{ type: 'flow', id: 'f1', name: 'Save order' }] }])
     })
 
     it('refuses to resume a task that is still running', async () => {
