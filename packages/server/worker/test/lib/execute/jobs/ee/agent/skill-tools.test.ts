@@ -67,8 +67,8 @@ describe('buildSkillSurface', () => {
     })
 
     it('sends a small tool set directly and still installs the skill tools its prompt mentions', () => {
-        const surface = buildSkillSurface({ tools: stubTools(['ap_web_search', 'ap_add_step']), surface: 'AGENT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
-        expect(surface.coreToolNames).toEqual(expect.arrayContaining(['ap_web_search', 'ap_add_step', 'ap_load_skill', 'ap_get_tool_schema', LAZY_TOOL_NAME]))
+        const surface = buildSkillSurface({ tools: stubTools(['ap_fetch_url', 'ap_add_step']), surface: 'AGENT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
+        expect(surface.coreToolNames).toEqual(expect.arrayContaining(['ap_fetch_url', 'ap_add_step', 'ap_load_skill', 'ap_get_tool_schema', LAZY_TOOL_NAME]))
         expect(Object.keys(surface.tools).sort()).toEqual([...surface.coreToolNames].sort())
         expect(surface.catalogNote).toBe('')
     })
@@ -93,10 +93,13 @@ describe('buildSkillSurface cap', () => {
 })
 
 describe('paid tools', () => {
-    it('refuses a direct call to a paid tool the balance cannot cover', async () => {
-        const surface = buildSkillSurface({ tools: stubTools(CHAT_TOOL_NAMES), surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => false })
-        await expect(surface.tools['mcp__gmail__send_email']?.execute?.({ value: 'x' }, CALL_OPTIONS)).resolves.toEqual({ error: expect.stringContaining('needs credits') })
-        await expect(surface.tools['ap_add_step']?.execute?.({ value: 'x' }, CALL_OPTIONS)).resolves.toEqual({ ran: 'ap_add_step', value: 'x' })
+    it('never sends a paid tool directly, so an unaffordable call is refused before it runs or bills', () => {
+        const small = buildSkillSurface({ tools: stubTools(['ap_web_search', 'mcp__gmail__send_email', 'ap_add_step']), surface: 'AGENT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
+        expect(small.coreToolNames).toContain('ap_add_step')
+        expect(small.coreToolNames).not.toContain('ap_web_search')
+        expect(small.coreToolNames).not.toContain('mcp__gmail__send_email')
+        expect(small.catalogNote).toContain('mcp__gmail__send_email')
+        expect(chatSurface().coreToolNames).not.toContain('ap_web_search')
     })
 })
 

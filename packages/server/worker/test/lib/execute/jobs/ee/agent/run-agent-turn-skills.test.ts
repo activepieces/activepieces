@@ -99,7 +99,7 @@ describe('repairing a call in skills mode', () => {
     it('still repairs a core tool called directly with input that fails its schema', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
         const model = scriptedModel({
-            toolCalls: [{ id: 'direct-1', toolName: 'ap_web_search', input: '{"query":42}' }],
+            toolCalls: [{ id: 'direct-1', toolName: 'ap_research_pieces', input: '{"query":42}' }],
             repairText: '{"query":"42"}',
         })
 
@@ -117,8 +117,12 @@ async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, se
         provider: AIProviderName.ANTHROPIC,
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'research this' }],
-        tools: { ...fillerTools(), ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }) },
-        allToolNames: [...Object.keys(fillerTools()), 'ap_web_search'],
+        tools: {
+            ...fillerTools(),
+            ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }),
+            ap_research_pieces: tool({ description: 'research pieces', inputSchema: z.object({ query: z.string() }), execute: search }),
+        },
+        allToolNames: [...Object.keys(fillerTools()), 'ap_web_search', 'ap_research_pieces'],
         tier: TIER,
         modelId: TIER.modelId,
         phaseState: { phase: 'discovery' },

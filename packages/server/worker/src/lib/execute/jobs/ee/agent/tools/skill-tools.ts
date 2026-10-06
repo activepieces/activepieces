@@ -11,15 +11,15 @@ export function buildSkillSurface({ tools, surface, guides, onSkillLoaded, canAf
     onSkillLoaded: (skill: AgentSkill) => void
     canAffordPaidTool: () => boolean
 }): SkillSurfaceResult {
-    const registry = withPaidToolGuard({ tools: withoutRetiredTools(tools), canAffordPaidTool })
+    const registry = withoutRetiredTools(tools)
     const skillTools = createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordPaidTool })
     const surfaceTools = { ...registry, ...skillTools }
     const allToolNames = Object.keys(surfaceTools)
-    if (allToolNames.length <= MAX_CORE_TOOLS) {
-        return { tools: surfaceTools, coreToolNames: allToolNames, catalogNote: '' }
-    }
-    const coreToolNames = agentToolSkills.coreToolNames({ surface }).filter((name) => allToolNames.includes(name))
-    const uncatalogued = agentToolSkills.uncataloguedToolNames({ surface, allToolNames })
+    const directToolNames = allToolNames.length <= MAX_CORE_TOOLS
+        ? allToolNames
+        : agentToolSkills.coreToolNames({ surface }).filter((name) => allToolNames.includes(name))
+    const coreToolNames = directToolNames.filter((name) => !chatBilling.isPaidTool(name))
+    const uncatalogued = agentToolSkills.uncataloguedToolNames({ surface, allToolNames }).filter((name) => !coreToolNames.includes(name))
     return {
         tools: surfaceTools,
         coreToolNames,
@@ -134,7 +134,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
                 return { success: false, error: new Error(`There is no tool named "${toolName}". Use a name from a loaded skill or from your instructions.`) }
             }
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
-                return { success: false, error: new Error(paidToolRefusal(toolName)) }
+                return { success: false, error: new Error(`"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`) }
             }
             const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input }) })
             if (!inner.success) {
@@ -215,23 +215,6 @@ async function workerLabelKeys(schema: unknown): Promise<Set<string>> {
     return new Set([...LABEL_FIELDS].filter((key) => key in properties
         && !required.includes(key)
         && stableStringify(properties[key]) === stableStringify(labelProperties[key])))
-}
-
-function withPaidToolGuard({ tools, canAffordPaidTool }: { tools: ToolSet, canAffordPaidTool: () => boolean }): ToolSet {
-    return Object.fromEntries(Object.entries(tools).map(([name, target]) => {
-        const execute = target.execute
-        if (!chatBilling.isPaidTool(name) || execute === undefined) {
-            return [name, target]
-        }
-        return [name, {
-            ...target,
-            execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => canAffordPaidTool() ? execute(input, options) : { error: paidToolRefusal(name) },
-        }]
-    }))
-}
-
-function paidToolRefusal(toolName: string): string {
-    return `"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`
 }
 
 function withoutRetiredTools(tools: ToolSet): ToolSet {

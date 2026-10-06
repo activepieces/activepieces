@@ -96,7 +96,6 @@ const CORE_TOOL_NAMES: Record<SkillSurface, readonly string[]> = {
         'ap_update_thinking_status',
         'ap_show_quick_replies',
         'ap_research_pieces',
-        'ap_web_search',
         'ap_remember',
         'ap_list_flows',
         'ap_show_questions',
@@ -188,10 +187,10 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     },
     {
         name: 'web_and_media',
-        loadWhen: 'before reading a web page, scraping a site, generating an image or sending an email',
+        loadWhen: 'before searching the web, reading a web page, scraping a site, generating an image or sending an email',
         guideTopic: 'web_research',
         entersBuildPhase: false,
-        toolNames: ['ap_fetch_url', 'ap_scrape_url', 'ap_generate_image', 'ap_send_email'],
+        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_generate_image', 'ap_send_email'],
     },
     {
         name: 'interaction',

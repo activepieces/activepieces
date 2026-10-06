@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { chatBilling } from '../../src/lib/ee/agent/chat-billing'
 import { AGENT_SKILLS, agentToolSkills, CORE_TOOL_NAMES, LAZY_TOOL_NAME, MAX_CORE_TOOLS } from '../../src/lib/ee/agent/tool-skills'
 
 describe('agentToolSkills', () => {
@@ -46,6 +47,10 @@ describe('agentToolSkills', () => {
             expect(CORE_TOOL_NAMES.CHAT).toContain(tool)
         }
         expect(CORE_TOOL_NAMES.AGENT).toContain('ap_show_connection_picker')
+    })
+
+    it('keeps paid tools out of every core list', () => {
+        expect(Object.values(CORE_TOOL_NAMES).flat().filter((name) => chatBilling.isPaidTool(name))).toEqual([])
     })
 
     it('always sends the thinking-status tool directly', () => {
