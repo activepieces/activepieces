@@ -10,8 +10,8 @@ export const deleteBucket = createAction({
     description: 'Permanently deletes a Storage bucket. The bucket must be empty first.',
     audience: 'both',
     aiMetadata: {
-        description: 'Permanently deletes a Storage bucket by name. The bucket must already be empty (delete its files first) or the call fails. Use only once you have confirmed the bucket name and that it should be removed entirely. Idempotent: deleting an already-deleted bucket errors without further effect.',
-        idempotent: true,
+        description: 'Permanently deletes a Storage bucket by name. The bucket must already be empty (delete its files first) or the call fails. Use only once you have confirmed the bucket name and that it should be removed entirely. Not idempotent: deleting an already-deleted bucket returns an error.',
+        idempotent: false,
     },
     auth: supabaseAuth,
     props: {

@@ -174,5 +174,19 @@
   "Matches pattern": "匹配模式",
   "Matches pattern, any case": "匹配模式（不区分大小写）",
   "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL, then click **Create webhook**:\n\n```text\n{{webhookUrl}}\n```\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. 在 Supabase 中，打开 **Database → Webhooks** 并点击 **Create a new hook**。\n2. 选择表，勾选 **Insert**，并选择方法为 **POST** 的 **HTTP Request**。\n3. 粘贴此 URL，然后点击 **Create webhook**：\n\n```text\n{{webhookUrl}}\n```\n\n[Supabase webhook 文档](https://supabase.com/docs/guides/database/webhooks)",
-  "Change only if the table is not in the public schema.": "仅当表不在 public 架构中时才更改。"
+  "Change only if the table is not in the public schema.": "仅当表不在 public 架构中时才更改。",
+  "Your project URL, like https://abcd1234.supabase.co, or your self-hosted URL.": "项目 URL，例如 https://abcd1234.supabase.co，或自托管实例的 URL。",
+  "A secret or service_role key. Publishable/anon keys only reach what RLS allows.": "secret 或 service_role 密钥。publishable/anon 密钥只能访问 RLS 允许的内容。",
+  "\n### Connect your Supabase project\n1. Open your project in the [Supabase Dashboard](https://supabase.com/dashboard).\n2. Copy the **Project URL** from **Project Settings → Data API**, or use your self-hosted URL.\n3. Copy a key from **Project Settings → API Keys**.\n\nUse the **secret** key (`sb_secret_…`) or the legacy **service_role** key: it bypasses Row Level Security, so keep it private. The **publishable** or legacy **anon** key only reaches what your Row Level Security policies allow.\n": "\n### 连接 Supabase 项目\n1. 在 [Supabase 控制台](https://supabase.com/dashboard)中打开项目。\n2. 从 **Project Settings → Data API** 复制 **Project URL**，或使用自托管实例的 URL。\n3. 从 **Project Settings → API Keys** 复制一个密钥。\n\n请使用 **secret** 密钥（`sb_secret_…`）或旧版 **service_role** 密钥：它会绕过 Row Level Security，请妥善保密。**publishable** 密钥或旧版 **anon** 密钥只能访问 Row Level Security 策略允许的内容。\n",
+  "Overwrite Existing File": "覆盖现有文件",
+  "Order By": "排序依据",
+  "Order Direction": "排序方向",
+  "Replaces a file already at this path.": "替换此路径中已有的文件。",
+  "Empty fields keep their current value.": "空字段保留当前值。",
+  "Comma-separated. End with a unique column like id for stable pages.": "以逗号分隔。最后填写一个唯一列（如 id），以保持分页稳定。",
+  "Ascending": "升序",
+  "Descending": "降序",
+  "Webhook Secret": "Webhook 密钥",
+  "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL:\n\n```text\n{{webhookUrl}}\n```\n\n4. Optional: add this HTTP header, set to your Webhook Secret (Advanced):\n   **x-webhook-secret**\n5. Click **Create webhook**.\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. 在 Supabase 中，打开 **Database → Webhooks** 并点击 **Create a new hook**。\n2. 选择表，勾选 **Insert**，并选择方法为 **POST** 的 **HTTP Request**。\n3. 粘贴此 URL：\n\n```text\n{{webhookUrl}}\n```\n\n4. 可选：添加此 HTTP 标头，值设为“Webhook 密钥”（高级）中填写的内容：\n   **x-webhook-secret**\n5. 点击 **Create webhook**。\n\n[Supabase webhook 文档](https://supabase.com/docs/guides/database/webhooks)",
+  "If set, requests must send it in an x-webhook-secret header.": "设置后，请求必须在 x-webhook-secret 标头中发送该值。"
 }

@@ -33,7 +33,7 @@ export const searchRows = createAction({
             display: 'section',
             label: 'Pagination',
             icon: 'sliders',
-            props: ['page', 'pageSize', 'countOption'],
+            props: ['page', 'pageSize', 'orderBy', 'orderDirection', 'countOption'],
         },
     ],
     props: {
@@ -100,6 +100,23 @@ export const searchRows = createAction({
             max: 1000,
             step: 1,
         }),
+        orderBy: Property.ShortText({
+            displayName: 'Order By',
+            description: 'Comma-separated. End with a unique column like id for stable pages.',
+            placeholder: 'created_at, id',
+            required: false,
+        }),
+        orderDirection: Property.StaticDropdown({
+            displayName: 'Order Direction',
+            required: false,
+            defaultValue: 'asc',
+            options: {
+                options: [
+                    { label: 'Ascending', value: 'asc' },
+                    { label: 'Descending', value: 'desc' },
+                ]
+            }
+        }),
         countOption: Property.StaticDropdown({
             displayName: 'Total Count',
             description: 'Leave empty to skip counting; count is then 0.',
@@ -115,7 +132,7 @@ export const searchRows = createAction({
     },
     outputSchema: searchRowsActionOutputSchema,
     async run(context) {
-        const { table_name, columns, filters, page, pageSize, countOption } = context.propsValue;
+        const { table_name, columns, filters, page, pageSize, orderBy, orderDirection, countOption } = context.propsValue;
         const { url, apiKey } = context.auth.props;
 
         const currentPage = Math.max(1, page || 1);
@@ -123,6 +140,12 @@ export const searchRows = createAction({
         
         if (columns && !/^[a-zA-Z0-9_,.\s\->"*]+$/.test(columns)) {
             throw new Error('Invalid column specification. Only alphanumeric characters, underscores, commas, dots, arrows, quotes, and asterisks are allowed.');
+        }
+
+        const orderColumns = (orderBy ?? '').split(',').map((column) => column.trim()).filter((column) => column.length > 0);
+        const invalidOrderColumn = orderColumns.find((column) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(column));
+        if (invalidOrderColumn) {
+            throw new Error(`Invalid Order By column: ${invalidOrderColumn}. Use column names made of letters, digits and underscores, separated by commas, like created_at, id.`);
         }
 
         const supabase = createClient(url, apiKey);
@@ -172,7 +195,12 @@ export const searchRows = createAction({
                             query = query.is(filter.field, filter.value);
                             break;
                         case 'in': {
-                            const inValues = Array.isArray(filter.value) ? filter.value : String(filter.value).split(',');
+                            const inValues = Array.isArray(filter.value)
+                                ? filter.value
+                                : String(filter.value).split(',').map((value) => value.trim()).filter((value) => value.length > 0);
+                            if (inValues.length === 0) {
+                                throw new Error('Is one of needs at least one value');
+                            }
                             query = query.in(filter.field, inValues);
                             break;
                         }
@@ -201,7 +229,10 @@ export const searchRows = createAction({
 
         const from = (currentPage - 1) * currentPageSize;
         const to = from + currentPageSize - 1;
-        query = query.range(from, to);
+        for (const column of orderColumns) {
+            query = query.order(column, { ascending: orderDirection !== 'desc' });
+        }
+        query = query.range(from, to + 1);
 
         const { data, error, count } = await query;
 
@@ -209,17 +240,30 @@ export const searchRows = createAction({
             throw new Error(`Database query failed: ${error.message}`);
         }
 
+        const fetchedRows = data ?? [];
+        const rows = fetchedRows.slice(0, currentPageSize);
+
         return {
-            data: data || [],
+            data: rows,
             count: count || 0,
             page: currentPage,
             pageSize: currentPageSize,
             total_pages: count ? Math.ceil(count / currentPageSize) : 0,
+            has_more: hasMoreRows({ fetched: fetchedRows.length, pageSize: currentPageSize }),
             range: {
                 from,
                 to,
-                returned: data?.length || 0
+                returned: rows.length
             }
         };
     },
 });
+
+function hasMoreRows({ fetched, pageSize }: { fetched: number; pageSize: number }): boolean {
+    if (fetched > pageSize) {
+        return true;
+    }
+    return fetched === pageSize && pageSize >= DEFAULT_MAX_ROWS;
+}
+
+const DEFAULT_MAX_ROWS = 1000;

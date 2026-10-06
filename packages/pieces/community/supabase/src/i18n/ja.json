@@ -174,5 +174,19 @@
   "Matches pattern": "パターンに一致",
   "Matches pattern, any case": "パターンに一致（大文字と小文字を区別しない）",
   "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL, then click **Create webhook**:\n\n```text\n{{webhookUrl}}\n```\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. Supabase で **Database → Webhooks** を開き、**Create a new hook** をクリックします。\n2. テーブルを選び、**Insert** にチェックを入れて、メソッド **POST** の **HTTP Request** を選択します。\n3. この URL を貼り付けて、**Create webhook** をクリックします:\n\n```text\n{{webhookUrl}}\n```\n\n[Supabase の Webhook ドキュメント](https://supabase.com/docs/guides/database/webhooks)",
-  "Change only if the table is not in the public schema.": "テーブルが public スキーマにない場合のみ変更してください。"
+  "Change only if the table is not in the public schema.": "テーブルが public スキーマにない場合のみ変更してください。",
+  "Your project URL, like https://abcd1234.supabase.co, or your self-hosted URL.": "プロジェクトの URL（例: https://abcd1234.supabase.co）、またはセルフホストの URL。",
+  "A secret or service_role key. Publishable/anon keys only reach what RLS allows.": "secret キーまたは service_role キー。publishable/anon キーは RLS で許可された範囲にのみアクセスできます。",
+  "\n### Connect your Supabase project\n1. Open your project in the [Supabase Dashboard](https://supabase.com/dashboard).\n2. Copy the **Project URL** from **Project Settings → Data API**, or use your self-hosted URL.\n3. Copy a key from **Project Settings → API Keys**.\n\nUse the **secret** key (`sb_secret_…`) or the legacy **service_role** key: it bypasses Row Level Security, so keep it private. The **publishable** or legacy **anon** key only reaches what your Row Level Security policies allow.\n": "\n### Supabase プロジェクトを接続する\n1. [Supabase ダッシュボード](https://supabase.com/dashboard)でプロジェクトを開きます。\n2. **Project Settings → Data API** から **Project URL** をコピーするか、セルフホストの URL を使用します。\n3. **Project Settings → API Keys** からキーをコピーします。\n\n**secret** キー（`sb_secret_…`）または従来の **service_role** キーを使用してください。このキーは Row Level Security をバイパスするため、外部に漏らさないでください。**publishable** キーまたは従来の **anon** キーは、Row Level Security のポリシーで許可された範囲にのみアクセスできます。\n",
+  "Overwrite Existing File": "既存のファイルを上書き",
+  "Order By": "並べ替えの基準",
+  "Order Direction": "並べ替えの順序",
+  "Replaces a file already at this path.": "このパスに既にあるファイルを置き換えます。",
+  "Empty fields keep their current value.": "空のフィールドは現在の値が保持されます。",
+  "Comma-separated. End with a unique column like id for stable pages.": "カンマ区切り。ページを安定させるため、最後に id のような一意の列を指定します。",
+  "Ascending": "昇順",
+  "Descending": "降順",
+  "Webhook Secret": "Webhook シークレット",
+  "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL:\n\n```text\n{{webhookUrl}}\n```\n\n4. Optional: add this HTTP header, set to your Webhook Secret (Advanced):\n   **x-webhook-secret**\n5. Click **Create webhook**.\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. Supabase で **Database → Webhooks** を開き、**Create a new hook** をクリックします。\n2. テーブルを選び、**Insert** にチェックを入れて、メソッド **POST** の **HTTP Request** を選択します。\n3. この URL を貼り付けます:\n\n```text\n{{webhookUrl}}\n```\n\n4. 任意: この HTTP ヘッダーを追加し、値に「Webhook シークレット」（高度な設定）を設定します:\n   **x-webhook-secret**\n5. **Create webhook** をクリックします。\n\n[Supabase の Webhook ドキュメント](https://supabase.com/docs/guides/database/webhooks)",
+  "If set, requests must send it in an x-webhook-secret header.": "設定すると、リクエストは x-webhook-secret ヘッダーでこの値を送信する必要があります。"
 }

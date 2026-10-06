@@ -10,8 +10,8 @@ export const deleteUser = createAction({
     description: 'Permanently deletes a user from the project\'s Auth system. Requires the Service Role Key.',
     audience: 'both',
     aiMetadata: {
-        description: "Permanently deletes a user from Auth by ID, removing their ability to sign in. Requires the Service Role Key. Use only once you have confirmed the user ID (Get User or List Users first) — this cannot be undone. Idempotent: deleting an already-deleted user ID errors without further effect.",
-        idempotent: true,
+        description: "Permanently deletes a user from Auth by ID, removing their ability to sign in. Requires the Service Role Key. Use only once you have confirmed the user ID (Get User or List Users first) — this cannot be undone. Not idempotent: deleting an already-deleted user ID returns an error.",
+        idempotent: false,
     },
     auth: supabaseAuth,
     props: {

@@ -498,10 +498,17 @@ export const supabaseCommon = {
               break;
             
             case 'boolean':
-              properties[column.column_name] = Property.Checkbox({
+              properties[column.column_name] = Property.StaticDropdown({
                 displayName: column.column_name,
-                description: `${description} Saved as off unless you switch it on.`,
-                required: false
+                description: `${description} Keep current value leaves it unchanged.`,
+                required: false,
+                options: {
+                  options: [
+                    { label: 'Keep current value', value: null },
+                    { label: 'True', value: true },
+                    { label: 'False', value: false }
+                  ]
+                }
               });
               break;
 
@@ -521,7 +528,7 @@ export const supabaseCommon = {
             case 'object':
               properties[column.column_name] = Property.Json({
                 displayName: column.column_name,
-                description: `${description} Left empty, it is saved as {}.`,
+                description: `${description} Leave empty to keep the current value.`,
                 required: false
               });
               break;
@@ -531,7 +538,7 @@ export const supabaseCommon = {
             case 'text[]':
               properties[column.column_name] = Property.Array({
                 displayName: column.column_name,
-                description: `${description} Left empty, it is saved as an empty list.`,
+                description: `${description} Leave empty to keep the current value.`,
                 required: false
               });
               break;

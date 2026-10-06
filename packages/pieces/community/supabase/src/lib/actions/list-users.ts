@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { supabaseAuth } from '../auth';
 import { listUsersActionOutputSchema } from '../output-schemas';
 
@@ -33,10 +33,12 @@ export const listUsers = createAction({
         const { page, perPage } = context.propsValue;
         const { url, apiKey } = context.auth.props;
         const supabase = createClient(url, apiKey);
+        const usersPerPage = perPage || 50;
+        const currentPage = page || 1;
 
         const { data, error } = await supabase.auth.admin.listUsers({
-            page: page || 1,
-            perPage: perPage || 50,
+            page: currentPage,
+            perPage: usersPerPage,
         });
 
         if (error) {
@@ -52,6 +54,33 @@ export const listUsers = createAction({
                 last_sign_in_at: user.last_sign_in_at ?? null,
                 confirmed_at: user.confirmed_at ?? null,
             })),
+            has_more: await hasMoreUsers({
+                supabase,
+                page: currentPage,
+                perPage: usersPerPage,
+                returned: data.users.length,
+            }),
         };
     },
 });
+
+async function hasMoreUsers({ supabase, page, perPage, returned }: HasMoreUsersParams): Promise<boolean> {
+    if (returned < perPage) {
+        return false;
+    }
+    const { data, error } = await supabase.auth.admin.listUsers({
+        page: page * perPage + 1,
+        perPage: 1,
+    });
+    if (error) {
+        throw new Error(`Failed to list users: ${error.message}`);
+    }
+    return data.users.length > 0;
+}
+
+type HasMoreUsersParams = {
+    supabase: SupabaseClient;
+    page: number;
+    perPage: number;
+    returned: number;
+};
