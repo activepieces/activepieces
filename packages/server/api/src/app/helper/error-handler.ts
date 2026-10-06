@@ -23,7 +23,12 @@ export const errorHandler = async (
             !error.statusCode ||
       error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()
         ) {
-            exceptionHandler.handle(error, request.log)
+            if (wideEvent.sealed()) {
+                exceptionHandler.captureException(error)
+            }
+            else {
+                exceptionHandler.handle(error, request.log)
+            }
         }
         await reply
             .status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR)

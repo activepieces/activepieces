@@ -1,4 +1,4 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { zoomCreateMeeting } from './lib/actions/create-meeting';
@@ -30,6 +30,19 @@ export const zoomAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://zoom.us/oauth/token',
   required: true,
   scope: [],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{ email?: string; display_name?: string }>({
+        method: HttpMethod.GET,
+        url: 'https://api.zoom.us/v2/users/me',
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body.email || response.body.display_name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });
 
 export const zoom = createPiece({

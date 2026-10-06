@@ -1,66 +1,14 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import type { AppBskyActorDefs, AtpAgent } from '@atproto/api';
 import { blueskyAuth } from '../common/auth';
 import { newFollowerTriggerOutputSchema } from '../output-schemas';
-import { createBlueskyAgent } from '../common/client';
-import dayjs from 'dayjs';
+import { blueskyClient } from '../common/client';
+import { blueskyPolling, PageFetcher } from '../common/polling';
+import { blueskyRefs } from '../common/refs';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Record<string, never>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    try {
-      const agent = await createBlueskyAgent(auth.props);
-      
-      const session = agent.session;
-      if (!session?.did) {
-        throw new Error('Could not get user DID from session');
-      }
-
-      const userDid = session.did;
-
-      const response = await agent.getFollowers({
-        actor: userDid,
-        limit: 100
-      });
-
-      if (!response.data?.followers || !Array.isArray(response.data.followers)) {
-        return [];
-      }
-
-      const currentTime = Date.now();
-      const cutoffTime = lastFetchEpochMS || 0;
-
-      return response.data.followers
-        .filter((follower: any) => {
-          const profileTime = follower.indexedAt ? dayjs(follower.indexedAt).valueOf() : currentTime;
-          return profileTime > cutoffTime - (24 * 60 * 60 * 1000);
-        })
-        .map((follower: any) => ({
-          epochMilliSeconds: follower.indexedAt ? dayjs(follower.indexedAt).valueOf() : currentTime,
-          data: {
-            did: follower.did,
-            handle: follower.handle,
-            displayName: follower.displayName || follower.handle,
-            description: follower.description || '',
-            avatar: follower.avatar || '',
-            banner: follower.banner || '',
-            followersCount: follower.followersCount || 0,
-            followsCount: follower.followsCount || 0,
-            postsCount: follower.postsCount || 0,
-            indexedAt: follower.indexedAt || new Date().toISOString(),
-            viewer: follower.viewer || {},
-            labels: follower.labels || [],
-            createdAt: follower.createdAt || null
-          }
-        }))
-        .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds);
-
-    } catch (error) {
-      console.error('Error fetching followers:', error);
-      return [];
-    }
-  }
-};
+const STORE_KEY = 'bluesky_followers_poll';
+const FOLLOWER_SEEN_CAP = 1000;
+const FOLLOWER_SEED_PAGES = 10;
 
 export const newFollowerOnAccount = createTrigger({
   auth: blueskyAuth,
@@ -69,7 +17,8 @@ export const newFollowerOnAccount = createTrigger({
   displayName: 'New Follower on Account',
   description: 'Triggers when someone new follows your Bluesky account',
   aiMetadata: {
-    description: 'Fires when a new account follows the authenticated Bluesky account; each event represents one new follower and carries that follower\'s profile details.',
+    description:
+      'Fires when a new account follows the authenticated Bluesky account; each event represents one new follower and carries that follower\'s profile details. An account that unfollows and follows again does not fire twice.',
   },
   props: {},
   sampleData: {
@@ -79,6 +28,7 @@ export const newFollowerOnAccount = createTrigger({
     description: 'A new user who just followed your account',
     avatar: 'https://cdn.bsky.app/img/avatar/plain/did:plc:example123/example@jpeg',
     banner: '',
+    url: 'https://bsky.app/profile/newfollower.bsky.social',
     followersCount: 0,
     followsCount: 0,
     postsCount: 0,
@@ -87,29 +37,82 @@ export const newFollowerOnAccount = createTrigger({
       muted: false,
       blockedBy: false,
       following: 'at://did:plc:example123/app.bsky.graph.follow/example456',
-      followedBy: 'at://did:plc:example456/app.bsky.graph.follow/example789'
+      followedBy: 'at://did:plc:example456/app.bsky.graph.follow/example789',
     },
     labels: [],
-    createdAt: '2023-06-01T12:00:00.000Z'
+    createdAt: '2023-06-01T12:00:00.000Z',
   },
   type: TriggerStrategy.POLLING,
   outputSchema: newFollowerTriggerOutputSchema,
-  
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return blueskyClient.withBluesky({
+      auth: context.auth.props,
+      action: 'read your followers',
+      fn: (agent) => blueskyPolling.sample({ fetchPage: followersPage({ agent }) }),
+    });
   },
-  
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await blueskyClient.withBluesky({
+      auth: context.auth.props,
+      action: 'read your followers',
+      fn: (agent) =>
+        blueskyPolling.onEnable({
+          store: context.store,
+          storeKey: STORE_KEY,
+          fetchPage: followersPage({ agent }),
+          isRepublish: context.isRepublish,
+          seenCap: FOLLOWER_SEEN_CAP,
+          seedPages: FOLLOWER_SEED_PAGES,
+        }),
+    });
   },
-
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await blueskyPolling.onDisable({ store: context.store, storeKey: STORE_KEY });
   },
-
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return blueskyClient.withBluesky({
+      auth: context.auth.props,
+      action: 'read your followers',
+      fn: (agent) =>
+        blueskyPolling.poll({
+          store: context.store,
+          storeKey: STORE_KEY,
+          fetchPage: followersPage({ agent }),
+          seenCap: FOLLOWER_SEEN_CAP,
+          seedPages: FOLLOWER_SEED_PAGES,
+        }),
+    });
   },
 });
+
+function followersPage({ agent }: { agent: AtpAgent }): PageFetcher<ReturnType<typeof followerItem>> {
+  return async ({ cursor }) => {
+    const response = await agent.getFollowers({ actor: blueskyClient.sessionDid(agent), limit: 100, cursor });
+    const now = Date.now();
+    return {
+      items: response.data.followers.map((follower) => ({ key: follower.did, time: now, data: followerItem(follower) })),
+      cursor: response.data.cursor,
+      oldestTime: undefined,
+      newestTime: undefined,
+    };
+  };
+}
+
+function followerItem(follower: AppBskyActorDefs.ProfileView) {
+  return {
+    did: follower.did,
+    handle: follower.handle,
+    displayName: follower.displayName || follower.handle,
+    description: follower.description || '',
+    avatar: follower.avatar || '',
+    banner: '',
+    url: blueskyRefs.profileWebUrl(follower.handle === 'handle.invalid' ? follower.did : follower.handle),
+    followersCount: 0,
+    followsCount: 0,
+    postsCount: 0,
+    indexedAt: follower.indexedAt || new Date().toISOString(),
+    viewer: follower.viewer || {},
+    labels: follower.labels || [],
+    createdAt: follower.createdAt || null,
+  };
+}
