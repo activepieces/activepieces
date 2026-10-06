@@ -2,6 +2,7 @@ import { AgentIcon, ColorName } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { platformPlanService } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -52,5 +53,24 @@ describe('chat on Cloud follows the plan', () => {
 
         expect(runs.statusCode).toBe(StatusCodes.OK)
         expect(chat.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+    })
+
+    it('keeps plain chat but refuses a saved agent once the plan no longer has agents', async () => {
+        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        const agent = await ctx.post('/v1/agents', {
+            projectId: ctx.project.id,
+            displayName: 'Nightly agent',
+            description: null,
+            icon: AgentIcon.BOT,
+            color: ColorName.PURPLE,
+            draft: { instructions: 'Do the nightly job.', maxSteps: 5, tools: [], structuredOutput: [], modelName: null },
+        })
+        await platformPlanService(app.log).update({ platformId: ctx.platform.id, agentsEnabled: false })
+
+        const withAgent = await ctx.post('/v1/agents/conversations', { agentId: agent.json().id, projectId: ctx.project.id })
+        const plainChat = await ctx.post('/v1/agents/conversations', {})
+
+        expect(withAgent.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect(plainChat.statusCode).not.toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })

@@ -14,7 +14,7 @@ import { agentApprovalGate } from './agent-approval-gate'
 import { agentChatModel } from './agent-chat-model'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity } from './agent-entity'
-import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
+import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId, SAVED_AGENTS_NOT_ON_PLAN } from './agent-helpers'
 import { agentModelTier } from './agent-model-tier'
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
@@ -85,6 +85,9 @@ async function modelChoiceFrom({ platformId, projectId, request, log }: { platfo
 
 export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
+        if (!isNil(request.agentId)) {
+            await agentHelpers.assertAgentsSurfaceAvailable({ platformId, log, message: SAVED_AGENTS_NOT_ON_PLAN })
+        }
         const agent = isNil(request.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
