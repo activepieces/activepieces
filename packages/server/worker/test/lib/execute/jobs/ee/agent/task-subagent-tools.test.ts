@@ -142,6 +142,23 @@ describe('createTaskSubagentTools', () => {
         expect(result).toMatchObject({ activity: { timeline: [{ kind: 'search', query: 'pricing', results: [{ url: 'https://ok.com/plans', title: 'Plans' }] }] } })
     })
 
+    it('keeps reporting progress when a search or page read failed with no output', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet, sinks: { onProgress: (progress: { uiParts: unknown[] }) => void } }) => {
+            const failed = [
+                { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 's1', toolName: 'ap_web_search', input: { query: 'pricing' }, status: PersistedToolCallStatus.ERROR, output: undefined },
+                { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'f1', toolName: 'ap_fetch_url', input: { url: 'https://down.com' }, status: PersistedToolCallStatus.COMPLETED, output: undefined },
+            ]
+            params.sinks.onProgress({ uiParts: failed })
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Recovered.', artifacts: [] }, EXECUTION_OPTIONS)
+            return { ...turnResult(), uiParts: failed }
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })
+
+        const result = await tasks['ap_run_task'].execute?.({ title: 'Research', brief: 'Find out' }, EXECUTION_OPTIONS)
+
+        expect(result).toMatchObject({ status: 'done', activity: { timeline: [{ kind: 'search', query: 'pricing', results: [] }] } })
+    })
+
     it('counts only pages that were actually read', async () => {
         runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Found it.', artifacts: [] }, EXECUTION_OPTIONS)

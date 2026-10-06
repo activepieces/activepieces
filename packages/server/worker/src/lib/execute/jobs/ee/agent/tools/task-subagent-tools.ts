@@ -288,6 +288,9 @@ function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
 }
 
 function unwrapLargeResponse(value: unknown): unknown {
+    if (isNil(value)) {
+        return value
+    }
     const text = extractResultText(value)
     if (!text.startsWith(LARGE_RESPONSE_MARKER)) {
         return value
@@ -296,6 +299,9 @@ function unwrapLargeResponse(value: unknown): unknown {
 }
 
 function returnedPage(output: unknown): boolean {
+    if (isNil(output)) {
+        return false
+    }
     const parsed = parseToJsonIfPossible(output)
     const hasPageText = isObject(parsed) && (typeof parsed['content'] === 'string' || typeof parsed['markdown'] === 'string')
     return hasPageText || extractResultText(parsed).startsWith(LARGE_RESPONSE_MARKER)
