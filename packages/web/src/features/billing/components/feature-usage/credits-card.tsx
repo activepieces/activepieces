@@ -1,75 +1,61 @@
 import { isNil } from '@activepieces/core-utils';
 import { PlatformBillingInformation } from '@activepieces/shared';
-import { Clock01Icon } from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
+import * as React from 'react';
 
-import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { Progress } from '@/components/ui/progress';
+import { Panel } from '@/components/custom/panel';
+import { Meter } from '@/components/custom/stats';
 
 import { billingUtils, CreditsResetLine } from '../../utils/billing-utils';
 
-const CARD_DATE_FORMAT = 'D MMM YYYY, h:mm A';
+import { CreditsInfoDialog } from './credits-info-dialog';
 
-export const CreditsCard = ({ info }: CreditsCardProps) => {
+export const CreditsCard = ({ info, children }: CreditsCardProps) => {
   const { plan, usage } = info;
-  const remaining = usage.creditsRemaining;
-  const isUnlimited = isNil(remaining);
   const total = plan.includedCredits;
-  const used = isUnlimited ? usage.creditsUsed : Math.max(0, total - remaining);
-  const percentUsed = billingUtils.percentUsed({
-    used,
-    total: isUnlimited ? null : total,
-  });
+  const isUnlimited = isNil(usage.creditsRemaining) || total <= 0;
+  const used = isUnlimited
+    ? usage.creditsUsed
+    : Math.max(0, total - (usage.creditsRemaining ?? 0));
   const footer = resolveFooter(info);
   const switchesToPlanName =
     info.scheduledPlanName ??
     (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
 
   return (
-    <div className="flex flex-col rounded-xl border bg-panel">
-      <div className="flex flex-col gap-3 p-5">
-        <span className="text-gray-11 text-sm">
-          {isUnlimited ? t('Credits used') : t('Included in plan')}
-        </span>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-semibold text-gray-12">
-              {(isUnlimited ? used : total).toLocaleString()}
-            </span>
-            <span className="text-gray-11">{t('credits')}</span>
-          </div>
-        </div>
-        {!isUnlimited && (
-          <>
-            <Progress value={percentUsed} usage />
-            <span className="text-sm text-gray-11">
-              {t('{amount} remaining', {
-                amount: Math.round(remaining).toLocaleString(),
-              })}
-            </span>
-          </>
+    <Panel
+      title={t('Credits')}
+      description={t('What you spend to run flows, AI steps and chat.')}
+      action={<CreditsInfoDialog />}
+      flush
+    >
+      <div className="flex flex-col gap-2 p-4">
+        <Meter
+          value={isUnlimited ? 0 : used}
+          max={isUnlimited ? 1 : total}
+          label={t('{amount} credits used', {
+            amount: Math.round(used).toLocaleString(),
+          })}
+          limit={
+            isUnlimited
+              ? t('No credit limit on this plan')
+              : t('of {total}', { total: total.toLocaleString() })
+          }
+        />
+        {!isNil(footer) && (
+          <span className="text-xs text-gray-11">
+            {footer.label} {footer.value}
+            {!isNil(info.trialEndsAt) &&
+              !isNil(switchesToPlanName) &&
+              ` · ${t('Then switches to the {plan} plan', {
+                plan: switchesToPlanName,
+              })}`}
+          </span>
         )}
       </div>
-      {!isNil(footer) && (
-        <div className="flex flex-col gap-1 border-t p-4 text-sm text-gray-11">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Clock01Icon} className="size-4 shrink-0" />
-            <span>
-              {footer.label}{' '}
-              <span className="font-semibold text-gray-12">{footer.value}</span>
-            </span>
-          </div>
-          {!isNil(info.trialEndsAt) && !isNil(switchesToPlanName) && (
-            <span className="pl-6">
-              {t('Then switches to the {plan} plan', {
-                plan: switchesToPlanName,
-              })}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
+      {children}
+    </Panel>
   );
 };
 
@@ -90,6 +76,9 @@ function resolveFooter(
   });
 }
 
+const CARD_DATE_FORMAT = 'MMM D, YYYY, h:mm A';
+
 type CreditsCardProps = {
   info: PlatformBillingInformation;
+  children?: React.ReactNode;
 };

@@ -9,7 +9,6 @@ import {
   InformationCircleIcon,
   UnfoldMoreIcon,
 } from '@hugeicons/core-free-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -45,7 +44,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { PriceSummary } from '../price-summary';
@@ -55,29 +53,28 @@ export function AutoRechargeConfigDialog({
   onOpenChange,
   feature,
 }: AutoRechargeConfigDialogProps) {
-  const queryClient = useQueryClient();
   const autoTopUp = feature.autoTopUp?.enabled ? feature.autoTopUp : undefined;
 
   const form = useForm<AutoRechargeFormValues>({
     resolver: zodResolver(AutoRechargeFormSchema),
     defaultValues: {
-      threshold: nearestOption(
-        autoTopUp?.threshold ?? feature.billingUnits,
-        CREDIT_OPTIONS,
-      ),
-      creditsToAdd: nearestOption(
-        autoTopUp?.quantity ?? DEFAULT_CREDITS_TO_ADD,
-        CREDIT_OPTIONS,
-      ),
-      maxMonthlyTopUps: normalizeTopUps(autoTopUp?.maxMonthlyTopUps),
+      threshold:
+        autoTopUp?.threshold ??
+        nearestOption(feature.billingUnits, CREDIT_OPTIONS),
+      creditsToAdd: autoTopUp?.quantity ?? DEFAULT_CREDITS_TO_ADD,
+      maxMonthlyTopUps: autoTopUp?.maxMonthlyTopUps ?? null,
     },
     mode: 'onChange',
   });
 
   const { mutate: updateAutoTopUp, isPending } =
-    billingMutations.useUpdateAutoTopUp(queryClient);
+    billingMutations.useUpdateAutoTopUp();
 
+  const threshold = form.watch('threshold');
   const creditsToAdd = form.watch('creditsToAdd');
+  const maxMonthlyTopUps = form.watch('maxMonthlyTopUps');
+  const thresholdOptions = withOption(CREDIT_OPTIONS, threshold);
+  const topUpOptions = withOption(MONTHLY_TOPUP_OPTIONS, maxMonthlyTopUps);
   const costPerTopUp =
     (creditsToAdd / feature.billingUnits) * feature.pricePerUnit;
 
@@ -90,12 +87,15 @@ export function AutoRechargeConfigDialog({
       featureId: feature.featureId,
     };
 
-    updateAutoTopUp(params, { onSuccess: () => onOpenChange(false) });
+    updateAutoTopUp(
+      { params, previous: feature.autoTopUp },
+      { onSuccess: () => onOpenChange(false) },
+    );
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] gap-2">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Auto recharge')}</DialogTitle>
           <DialogDescription>
@@ -104,13 +104,16 @@ export function AutoRechargeConfigDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
-            <div className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSave)}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-4">
               <FormField
                 control={form.control}
                 name="threshold"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem>
                     <FormLabel>{t('When credits below')}</FormLabel>
                     <Select
                       value={String(field.value)}
@@ -122,7 +125,7 @@ export function AutoRechargeConfigDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CREDIT_OPTIONS.map((option) => (
+                        {thresholdOptions.map((option) => (
                           <SelectItem key={option} value={String(option)}>
                             {option.toLocaleString()}
                           </SelectItem>
@@ -137,7 +140,7 @@ export function AutoRechargeConfigDialog({
                 control={form.control}
                 name="creditsToAdd"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem>
                     <FormLabel>{t('Add credits')}</FormLabel>
                     <FormControl>
                       <CreditsAmountSelect
@@ -154,7 +157,7 @@ export function AutoRechargeConfigDialog({
                 control={form.control}
                 name="maxMonthlyTopUps"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem>
                     <FormLabel>{t('Monthly spending limit')}</FormLabel>
                     <Select
                       value={
@@ -174,7 +177,7 @@ export function AutoRechargeConfigDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {MONTHLY_TOPUP_OPTIONS.map((count) => (
+                        {topUpOptions.map((count) => (
                           <SelectItem key={count} value={String(count)}>
                             {t(
                               '${cost} ({count, plural, =1 {1 auto recharge} other {# auto recharges}})',
@@ -205,10 +208,12 @@ export function AutoRechargeConfigDialog({
             />
 
             <div className="flex items-start gap-2 text-xs text-gray-11">
-              <HugeiconsIcon
-                icon={InformationCircleIcon}
-                className="size-3.5 mt-0.5 shrink-0"
-              />
+              <span className="flex h-lh shrink-0 items-center">
+                <HugeiconsIcon
+                  icon={InformationCircleIcon}
+                  className="size-3.5"
+                />
+              </span>
               <span>
                 {t(
                   'Changes apply on your next usage — credits are charged the next time your balance falls below the threshold, not immediately when you save.',
@@ -279,14 +284,12 @@ function CreditsAmountSelect({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-gray-6 bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
-          )}
+          className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-gray-7 bg-transparent py-1.5 pr-2.5 pl-3 text-sm shadow-xs outline-none focus-visible:border-gray-8 focus-visible:ring-3 focus-visible:ring-gray-8/50"
         >
           <span>{value.toLocaleString()}</span>
           <HugeiconsIcon
             icon={UnfoldMoreIcon}
-            className="size-4 shrink-0 opacity-50"
+            className="size-4 shrink-0 text-gray-11"
           />
         </button>
       </PopoverTrigger>
@@ -299,12 +302,12 @@ function CreditsAmountSelect({
             key={option}
             type="button"
             onClick={() => pick(option)}
-            className="flex w-full items-center rounded-md px-3 py-2 text-sm hover:bg-gray-4"
+            className="flex w-full items-center rounded-xl px-2 py-1.5 text-sm hover:bg-gray-3"
           >
             {option.toLocaleString()}
           </button>
         ))}
-        <div className="mt-1 flex items-center gap-2 rounded-md border border-gray-6 px-3 py-2 focus-within:border-gray-8 focus-within:ring-[3px] focus-within:ring-gray-8/50">
+        <div className="mt-1 flex items-center gap-2 rounded-xl border border-gray-7 px-2 py-1.5 focus-within:border-gray-8 focus-within:ring-3 focus-within:ring-gray-8/50">
           <input
             type="number"
             min={CREDITS_MIN}
@@ -329,7 +332,7 @@ function CreditsAmountSelect({
             placeholder={t('Custom amount (rounded up to nearest 1,000)')}
             className="w-full bg-transparent text-sm outline-none"
           />
-          <span className="shrink-0 text-sm text-gray-11">{t('credits')}</span>
+          <span className="shrink-0 text-xs text-gray-11">{t('credits')}</span>
         </div>
       </PopoverContent>
     </Popover>
@@ -349,13 +352,11 @@ function nearestOption(value: number, options: number[]): number {
   );
 }
 
-function normalizeTopUps(value: number | null | undefined): number | null {
-  if (isNil(value)) {
-    return null;
+function withOption(options: number[], value: number | null): number[] {
+  if (isNil(value) || options.includes(value)) {
+    return options;
   }
-  return MONTHLY_TOPUP_OPTIONS.includes(value)
-    ? value
-    : nearestOption(value, MONTHLY_TOPUP_OPTIONS);
+  return [...options, value].sort((a, b) => a - b);
 }
 
 const DEFAULT_CREDITS_TO_ADD = 1000;

@@ -1,0 +1,317 @@
+import {
+  ProjectIcon,
+  ProjectType,
+  ProjectWithLimits,
+} from '@activepieces/shared';
+import { FolderOpenIcon } from '@hugeicons/core-free-icons';
+import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+
+import { usePlatformProjects } from '@/app/routes/platform/projects/use-platform-projects';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { NameCell, NumberCell } from '@/components/custom/list/list-cells';
+import { ListSearch, ListToolbar } from '@/components/custom/list/list-toolbar';
+import { StatusDot } from '@/components/custom/status-dot';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
+
+import { workerGroupUtils } from './machine-card';
+import { ProjectAvatar } from './project-avatar';
+import {
+  useUpdateWorkerSettings,
+  WorkerSettings,
+} from './worker-settings-mutations';
+
+export function ProjectGroupsTable({
+  groups,
+  sharedSlots,
+  sampleRows,
+}: {
+  groups: WorkerGroupInfo[];
+  sharedSlots: number;
+  sampleRows?: ProjectGroupRow[];
+}) {
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') ?? '';
+  const cursor = searchParams.get('cursor') ?? undefined;
+  const limit = Number(searchParams.get('limit') ?? '10') || 10;
+  const { data, isLoading, isError, refetch } = usePlatformProjects({
+    search,
+    cursor,
+    limit,
+  });
+  const { mutate: updateWorkerSettings } = useUpdateWorkerSettings();
+
+  const save = useCallback(
+    ({
+      row,
+      request,
+    }: {
+      row: RowDataWithActions<ProjectGroupRow>;
+      request: WorkerSettings;
+    }) => {
+      if (sampleRows) {
+        return;
+      }
+      const previous: WorkerSettings =
+        'workerGroupId' in request
+          ? { workerGroupId: row.workerGroupId }
+          : { maxConcurrentJobs: row.maxConcurrentJobs };
+      updateWorkerSettings({
+        projectId: row.id,
+        projectName: row.displayName,
+        next: request,
+        previous,
+      });
+    },
+    [sampleRows, updateWorkerSettings],
+  );
+
+  const rows = sampleRows ?? (data?.data ?? []).map(toRow);
+  const columns = useMemo(
+    () => buildColumns({ groups, sharedSlots, save }),
+    [groups, sharedSlots, save],
+  );
+
+  return (
+    <>
+      <ListToolbar search={<ListSearch placeholder={t('Search projects')} />} />
+      <DataTable
+        columns={columns}
+        page={
+          sampleRows
+            ? { data: rows, next: null, previous: null }
+            : data && { data: rows, next: data.next, previous: data.previous }
+        }
+        hidePagination={sampleRows !== undefined}
+        isLoading={!sampleRows && isLoading}
+        isError={!sampleRows && isError}
+        errorStateEntity={t('projects')}
+        onRetry={refetch}
+        emptyStateTextTitle={
+          search.trim() !== '' ? t('No project matches') : t('No projects yet')
+        }
+        emptyStateTextDescription={
+          search.trim() !== ''
+            ? t('Try a different search.')
+            : t('Projects appear here once someone creates one.')
+        }
+        emptyStateIcon={<HugeiconsIcon icon={FolderOpenIcon} />}
+      />
+    </>
+  );
+}
+
+function buildColumns({
+  groups,
+  sharedSlots,
+  save,
+}: {
+  groups: WorkerGroupInfo[];
+  sharedSlots: number;
+  save: (params: {
+    row: RowDataWithActions<ProjectGroupRow>;
+    request: WorkerSettings;
+  }) => void;
+}): ColumnDef<RowDataWithActions<ProjectGroupRow>, unknown>[] {
+  return [
+    {
+      accessorKey: 'displayName',
+      header: () => t('Project'),
+      cell: ({ row }) => (
+        <NameCell
+          media={<ProjectAvatar project={row.original} size="sm" />}
+          title={row.original.displayName}
+          sub={
+            row.original.type === ProjectType.PERSONAL
+              ? t('Personal')
+              : undefined
+          }
+        />
+      ),
+    },
+    {
+      accessorKey: 'flows',
+      size: 100,
+      header: () => <span className="block text-right">{t('Flows')}</span>,
+      cell: ({ row }) => <NumberCell value={row.original.flows} />,
+    },
+    {
+      accessorKey: 'workerGroupId',
+      size: 260,
+      header: () => t('Runs on'),
+      cell: ({ row }) => (
+        <GroupPicker
+          value={row.original.workerGroupId}
+          groups={groups}
+          onChange={(workerGroupId) =>
+            save({ row: row.original, request: { workerGroupId } })
+          }
+        />
+      ),
+    },
+    {
+      accessorKey: 'maxConcurrentJobs',
+      size: 200,
+      header: () => t('Concurrent runs'),
+      cell: ({ row }) => (
+        <ConcurrencyInput
+          key={`${row.original.id}-${row.original.maxConcurrentJobs ?? ''}`}
+          value={row.original.maxConcurrentJobs}
+          poolSlots={
+            groups.find((group) => group.label === row.original.workerGroupId)
+              ?.slots ?? sharedSlots
+          }
+          onCommit={(maxConcurrentJobs) =>
+            save({ row: row.original, request: { maxConcurrentJobs } })
+          }
+        />
+      ),
+    },
+  ];
+}
+
+function GroupPicker({
+  value,
+  groups,
+  onChange,
+}: {
+  value: string | null;
+  groups: WorkerGroupInfo[];
+  onChange: (workerGroupId: string | null) => void;
+}) {
+  const offline =
+    value !== null && !groups.some((group) => group.label === value);
+  return (
+    <Select
+      value={value ?? SHARED_POOL}
+      onValueChange={(next) => onChange(next === SHARED_POOL ? null : next)}
+    >
+      <SelectTrigger
+        size="sm"
+        className="w-52"
+        aria-invalid={offline}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={SHARED_POOL}>
+          <StatusDot tone="neutral">{t('Shared pool')}</StatusDot>
+        </SelectItem>
+        {offline && value !== null && (
+          <SelectItem value={value}>
+            <StatusDot tone="danger">
+              {t('{group} (no machines)', {
+                group: workerGroupUtils.displayName(value),
+              })}
+            </StatusDot>
+          </SelectItem>
+        )}
+        {groups.map((group) => (
+          <SelectItem key={group.label} value={group.label}>
+            <StatusDot tone="success">
+              {workerGroupUtils.displayName(group.label)}
+            </StatusDot>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function ConcurrencyInput({
+  value,
+  poolSlots,
+  onCommit,
+}: {
+  value: number | null;
+  poolSlots: number;
+  onCommit: (next: number | null) => void;
+}) {
+  const [draft, setDraft] = useState(value === null ? '' : String(value));
+  const [invalid, setInvalid] = useState(false);
+  const commit = () => {
+    const next = draft.trim() === '' ? null : Number(draft);
+    if (next === value) {
+      return;
+    }
+    if (next !== null && (!Number.isInteger(next) || next <= 0)) {
+      setDraft(value === null ? '' : String(value));
+      setInvalid(true);
+      return;
+    }
+    onCommit(next);
+  };
+  return (
+    <div
+      className="flex flex-col gap-1"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <Input
+        size="sm"
+        inputMode="numeric"
+        className="w-36 tabular-nums"
+        aria-label={t('Concurrent runs')}
+        placeholder={t('Default {count}', { count: poolSlots })}
+        value={draft}
+        onClick={(event) => event.stopPropagation()}
+        aria-invalid={invalid}
+        onChange={(event) => {
+          setInvalid(false);
+          const digits = event.target.value.replace(/[^0-9]/g, '');
+          const capped =
+            digits !== '' && poolSlots > 0
+              ? String(Math.min(Number(digits), poolSlots))
+              : digits;
+          setDraft(capped);
+        }}
+        onBlur={commit}
+        onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+          if (event.key === 'Enter') {
+            event.currentTarget.blur();
+          }
+        }}
+      />
+      {invalid && (
+        <span role="alert" className="text-xs text-danger-11">
+          {t('Use a whole number above 0, or leave it empty.')}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function toRow(project: ProjectWithLimits): ProjectGroupRow {
+  return {
+    id: project.id,
+    displayName: project.displayName,
+    type: project.type,
+    icon: project.icon,
+    flows: project.analytics.totalFlows,
+    workerGroupId: project.workerGroupId ?? null,
+    maxConcurrentJobs: project.maxConcurrentJobs ?? null,
+  };
+}
+
+const SHARED_POOL = '__shared__';
+
+export type ProjectGroupRow = {
+  id: string;
+  displayName: string;
+  type: ProjectType;
+  icon: ProjectIcon;
+  flows: number;
+  workerGroupId: string | null;
+  maxConcurrentJobs: number | null;
+};

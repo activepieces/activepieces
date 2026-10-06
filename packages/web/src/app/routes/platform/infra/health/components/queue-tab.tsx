@@ -1,41 +1,46 @@
 import { PlatformMetricsLive } from '@activepieces/shared';
-import { Loading02Icon, Pulse01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 
-import { formatUtils } from '@/lib/format-utils';
-
-import { MetricCard } from '../../../../impact/summary/metric-card';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { listFormat } from '@/components/custom/list/list-format';
+import { StatRow } from '@/components/custom/stats';
 
 import { StuckJobsTable } from './stuck-jobs-table';
+
+export function QueueTab({ live, isLoading, isError, onRetry }: QueueTabProps) {
+  if (isError) {
+    return (
+      <DataFetchErrorState entity={t('queue metrics')} onRetry={onRetry} />
+    );
+  }
+  return (
+    <>
+      <StatRow
+        divided
+        loading={isLoading}
+        stats={[
+          {
+            key: 'running',
+            label: t('Running'),
+            hint: t('Jobs currently executing on workers'),
+            value: listFormat.count(live?.running ?? 0),
+          },
+          {
+            key: 'queued',
+            label: t('Queued'),
+            hint: t('Jobs waiting in the queue'),
+            value: listFormat.count(live?.queued ?? 0),
+          },
+        ]}
+      />
+      <StuckJobsTable stuckJobs={live?.stuckJobs} isLoading={isLoading} />
+    </>
+  );
+}
 
 type QueueTabProps = {
   live: PlatformMetricsLive | undefined;
   isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
 };
-
-export function QueueTab({ live, isLoading }: QueueTabProps) {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <MetricCard
-          icon={Pulse01Icon}
-          title={t('Running')}
-          value={isLoading ? '—' : formatUtils.formatNumber(live?.running ?? 0)}
-          description={t('Jobs currently executing on workers')}
-          iconColor="text-swatch-11-mark"
-          iconBgColor="bg-swatch-11-surface"
-        />
-        <MetricCard
-          icon={Loading02Icon}
-          title={t('Queued')}
-          value={isLoading ? '—' : formatUtils.formatNumber(live?.queued ?? 0)}
-          description={t('Jobs waiting in the queue')}
-          iconColor="text-swatch-6-mark"
-          iconBgColor="bg-swatch-6-surface"
-        />
-      </div>
-
-      <StuckJobsTable stuckJobs={live?.stuckJobs} isLoading={isLoading} />
-    </div>
-  );
-}

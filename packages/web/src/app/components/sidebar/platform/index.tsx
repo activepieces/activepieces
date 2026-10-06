@@ -9,7 +9,6 @@ import {
   FrameIcon,
   Key01Icon,
   Login03Icon,
-  PreferenceHorizontalIcon,
   PuzzleIcon,
   ReceiptIcon,
   ServerStack01Icon,
@@ -245,15 +244,6 @@ export function PlatformSidebar() {
       label: t('Settings'),
       items: [
         { to: '/platform/general', label: t('General'), icon: Settings01Icon },
-        ...(edition === ApEdition.CLOUD
-          ? []
-          : [
-              {
-                to: '/platform/configurations',
-                label: t('Configurations'),
-                icon: PreferenceHorizontalIcon,
-              },
-            ]),
         {
           to: '/platform/billing',
           label: t('Billing'),

@@ -29,11 +29,6 @@ const EventDestinationFormPage = React.lazy(
   () => import('./platform/infra/event-destinations/destination-form'),
 );
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
-const PlatformConfigurationsPage = React.lazy(() =>
-  import('./platform/infra/configurations').then((m) => ({
-    default: m.ConfigurationsPage,
-  })),
-);
 const TriggerHealthPage = React.lazy(() => import('./platform/infra/triggers'));
 const SettingsWorkersPage = React.lazy(
   () => import('./platform/infra/workers'),
@@ -496,7 +491,7 @@ export const platformRoutes = [
             tabPaths={WORKERS_TAB_PATHS}
           >
             <SuspenseWrapper>
-              <SettingsWorkersPage section="health" />
+              <SettingsWorkersPage section="machines" />
             </SuspenseWrapper>
           </LegacyTabRedirect>
         </PageTitle>
@@ -512,9 +507,11 @@ export const platformRoutes = [
             basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
           >
-            <SuspenseWrapper>
-              <SettingsWorkersPage section="worker-groups" />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="workerGroups">
+              <SuspenseWrapper>
+                <SettingsWorkersPage section="groups" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -573,15 +570,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/configurations',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Configurations">
-          <SuspenseWrapper>
-            <PlatformConfigurationsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <RedirectKeepingSearch to="/platform/general" />,
   },
   {
     path: '/platform/health/triggers',

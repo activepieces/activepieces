@@ -3,25 +3,11 @@ import {
   PlanName,
   PlatformBillingInformation,
 } from '@activepieces/shared';
-import {
-  AiMagicIcon,
-  CoinsDollarIcon,
-  FlashIcon,
-  Folder01Icon,
-  UserMultipleIcon,
-} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
+import { Link } from 'react-router-dom';
 
-import {
-  HugeiconsIcon,
-  type IconSvgElement,
-} from '@/components/custom/hugeicons-icon';
-import { Badge } from '@/components/ui/badge';
-import {
-  Progress,
-  usageIndicatorClass,
-  usageTrackClass,
-} from '@/components/ui/progress';
+import { Panel } from '@/components/custom/panel';
+import { Meter } from '@/components/custom/stats';
 
 import { billingUtils } from '../../utils/billing-utils';
 
@@ -34,73 +20,93 @@ export function FeatureUsageCards({
 }) {
   const metrics = resolveUsageMetrics(platformSubscription);
   return (
-    <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
-      {metrics.map((metric) => (
-        <UsageMetricCard key={metric.key} metric={metric} />
-      ))}
+    <Panel>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+        {metrics.map((metric) => (
+          <UsageMeter key={metric.key} metric={metric} />
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function UsageMeter({ metric }: { metric: UsageMetric }) {
+  const used = metric.used.toLocaleString(undefined, {
+    maximumFractionDigits: 0,
+  });
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <Meter
+        value={isNil(metric.included) ? 0 : metric.used}
+        max={metric.included ?? 1}
+        label={
+          <span>
+            <span className="font-medium tabular-nums">{used}</span>{' '}
+            {t(metric.label)}
+          </span>
+        }
+        limit={
+          isNil(metric.included)
+            ? t('No limit on this plan')
+            : t('of {total}', { total: metric.included.toLocaleString() })
+        }
+      />
+      {!isNil(metric.note) && (
+        <span className="text-xs text-gray-11">{metric.note}</span>
+      )}
+      {!isNil(metric.over) && (
+        <span className="text-xs text-gray-11">
+          {metric.over.message}{' '}
+          {metric.over.link && (
+            <Link
+              to={metric.over.link.to}
+              className="font-medium text-accent-11 underline-offset-4 hover:underline"
+            >
+              {metric.over.link.label}
+            </Link>
+          )}
+        </span>
+      )}
     </div>
   );
 }
 
-function UsageMetricCard({ metric }: { metric: UsageMetric }) {
-  const Icon = metric.icon;
-  const isUnlimited = isNil(metric.included);
-  const percent = billingUtils.percentUsed({
-    used: metric.used,
-    total: metric.included,
-  });
-
-  return (
-    <div className="flex flex-col gap-4 rounded-xl bg-gray-3/30 p-5">
-      <div className="flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-md border bg-gray-1 text-gray-11">
-          <HugeiconsIcon icon={Icon} className="size-4" />
-        </span>
-        <span className="text-sm font-medium text-gray-12">
-          {t(metric.label)}
-        </span>
-        {isUnlimited && (
-          <Badge variant="secondary" className="rounded-md font-normal">
-            {t('Unlimited')}
-          </Badge>
-        )}
-      </div>
-
-      <div className="flex items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-gray-11">{t('Used')}</span>
-          <span className="text-2xl font-semibold text-gray-12">
-            {metric.used.toLocaleString()}
-          </span>
-        </div>
-        {!isUnlimited && (
-          <div className="flex flex-col items-end gap-1">
-            <span className="text-xs text-gray-11">{t('Limit')}</span>
-            <span className="text-2xl font-semibold text-gray-12">
-              {metric.included!.toLocaleString()}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {!isUnlimited && (
-        <div className="flex flex-col gap-1.5">
-          <Progress
-            value={percent}
-            className={usageTrackClass(percent / 100)}
-            indicatorClassName={usageIndicatorClass(percent / 100)}
-          />
-          <div className="flex items-center text-xs text-gray-11">
-            <span>{t('{percent}% used', { percent })}</span>
-          </div>
-        </div>
-      )}
-
-      {!isNil(metric.note) && (
-        <span className="text-xs text-gray-11">{metric.note}</span>
-      )}
-    </div>
-  );
+function overLimit({
+  key,
+  used,
+  included,
+}: Pick<UsageMetric, 'key' | 'used' | 'included'>): OverLimit | undefined {
+  if (isNil(included) || used <= included) {
+    return undefined;
+  }
+  switch (key) {
+    case 'users':
+      return {
+        message: t(
+          '{count, plural, =1 {1 user over the limit.} other {# users over the limit.}} Deactivate people who no longer need access, or add seats.',
+          { count: used - included },
+        ),
+        link: { to: '/platform/users', label: t('Manage users') },
+      };
+    case 'team-projects':
+      return {
+        message:
+          included === 0
+            ? t(
+                "Your plan doesn't include team projects. Existing ones keep working, but you can't add more.",
+              )
+            : t(
+                "Over the limit. Existing projects keep working, but you can't add more.",
+              ),
+        link: { to: '/platform/projects', label: t('Manage projects') },
+      };
+    case 'active-flows':
+      return {
+        message: t('Over the limit. Turn off flows you no longer need.'),
+      };
+    default:
+      return undefined;
+  }
 }
 
 function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
@@ -110,30 +116,26 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
   const metrics: UsageMetric[] = [
     {
       key: 'credits',
-      label: 'Credits',
-      icon: CoinsDollarIcon,
+      label: 'credits used',
       used: usage.creditsUsed,
       included: plan.includedCredits > 0 ? plan.includedCredits : null,
     },
     {
       key: 'users',
-      label: 'Users',
-      icon: UserMultipleIcon,
+      label: 'users',
       used: usage.users,
       included: usersLimit,
       note: usersCapBinds ? billingUtils.scheduledCapNotice(info) : undefined,
     },
     {
       key: 'active-flows',
-      label: 'Active Flows',
-      icon: FlashIcon,
+      label: 'active flows',
       used: usage.activeFlows,
       included: plan.activeFlowsLimit ?? null,
     },
     {
       key: 'team-projects',
-      label: 'Team Projects',
-      icon: Folder01Icon,
+      label: 'team projects',
       used: usage.teamProjects,
       included: plan.billedTeamProjectsLimit ?? null,
     },
@@ -142,24 +144,32 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
     metrics.push({
       key: 'appsumo-ai-credits',
       label:
-        plan.plan === PlanName.APPSUMO ? 'AppSumo AI Credits' : 'AI Credits',
-      icon: AiMagicIcon,
+        plan.plan === PlanName.APPSUMO
+          ? 'AppSumo AI credits used'
+          : 'AI credits used',
       used: usage.appSumoAiCreditsUsed,
       included:
         usage.appSumoAiCreditsUsed + (usage.appSumoAiCreditsRemaining ?? 0),
     });
   }
-  return metrics.filter(
-    (metric) =>
-      !(HIDE_WHEN_UNLIMITED.includes(metric.key) && isNil(metric.included)),
-  );
+  return metrics
+    .filter(
+      (metric) =>
+        !(HIDE_WHEN_UNLIMITED.includes(metric.key) && isNil(metric.included)),
+    )
+    .map((metric) => ({ ...metric, over: overLimit(metric) }));
 }
 
 type UsageMetric = {
   key: string;
   label: string;
-  icon: IconSvgElement;
   used: number;
   included: number | null;
   note?: string;
+  over?: OverLimit;
+};
+
+type OverLimit = {
+  message: string;
+  link?: { to: string; label: string };
 };

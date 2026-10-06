@@ -59,7 +59,7 @@ const LEGACY_PATHS: LegacyPath[] = [
   },
   {
     from: '/platform/infrastructure/configurations',
-    to: '/platform/configurations',
+    to: '/platform/general',
   },
   { from: '/platform/setup', to: '/platform/ai', catchAll: true },
   { from: '/platform/security', to: '/platform/audit-log', catchAll: true },

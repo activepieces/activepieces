@@ -4,7 +4,7 @@ import { t } from 'i18next';
 
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { billingQueries } from '../hooks/billing-hooks';
@@ -42,20 +42,20 @@ export function PlanSwitchSuccessDialog() {
       open={!isNil(entry)}
       onOpenChange={(open) => !open && closeDialog()}
     >
-      <DialogContent showCloseButton={false} className="max-w-md">
+      <DialogContent size="sm" showCloseButton={false}>
         {!isNil(entry) && (
-          <div className="flex flex-col items-center gap-5 py-4 text-center">
-            <span className="flex size-14 items-center justify-center rounded-full bg-success-9">
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-success-9">
               <HugeiconsIcon
                 icon={Tick02Icon}
-                className="size-7 text-on-success"
+                className="size-6 text-on-success"
                 strokeWidth={3}
               />
             </span>
-            <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">
+            <div className="flex flex-col gap-1">
+              <DialogTitle>
                 {t("You're on the {plan} plan", { plan: t(entry.name) })}
-              </h2>
+              </DialogTitle>
               <p className="text-sm text-gray-11">
                 {t('You now have access to {benefits}.', {
                   benefits: new Intl.ListFormat(undefined, {

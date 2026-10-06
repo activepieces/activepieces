@@ -4,17 +4,16 @@ import {
   ConsumableBillableFeature,
 } from '@activepieces/shared';
 import { PencilEdit01Icon } from '@hugeicons/core-free-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { type ReactNode, useState } from 'react';
 
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingMutations } from '../../hooks/billing-hooks';
-import { DetailRow } from '../detail-row';
 
 import { AutoRechargeConfigDialog } from './auto-recharge-config-dialog';
 
@@ -24,11 +23,10 @@ export const AutoRechargeCard = ({
   note,
 }: AutoRechargeCardProps) => {
   const autoTopUp = feature.autoTopUp;
-  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { mutate: updateAutoTopUp, isPending } =
-    billingMutations.useUpdateAutoTopUp(queryClient);
-  const { mutate: setupPayment, isPending: isSettingUpPayment } =
+    billingMutations.useUpdateAutoTopUp();
+  const { open: setupPayment, isPending: isSettingUpPayment } =
     billingMutations.useSetupPayment();
 
   const enabled = (autoTopUp?.enabled ?? false) && !isNil(autoTopUp);
@@ -39,95 +37,87 @@ export const AutoRechargeCard = ({
       return;
     }
     updateAutoTopUp({
-      state: AiCreditsAutoTopUpState.DISABLED,
-      featureId: feature.featureId,
+      params: {
+        state: AiCreditsAutoTopUpState.DISABLED,
+        featureId: feature.featureId,
+      },
+      previous: autoTopUp,
     });
   };
 
-  // Auto-recharge can only charge with a card on file, so collect one first: a cardless customer sees an
-  // "add payment method" CTA instead of the toggle. Once the card is saved, the toggle appears.
-  if (!hasCard) {
-    return (
-      <div className="flex flex-col gap-3 rounded-xl border bg-panel p-5">
-        <span className="text-sm font-medium text-gray-12">
-          {t('Enable auto recharge')}
-        </span>
-        {note && <span className="text-sm text-gray-11">{note}</span>}
-        <span className="text-sm text-gray-11">
-          {t(
-            'Add a payment method to set up auto recharge. You can configure it once your card is on file.',
-          )}
-        </span>
-        <Button
-          {...adminControl(AdminControl.BILLING_PAYMENT_METHOD_OPEN)}
-          variant="outline"
-          size="sm"
-          className="self-start"
-          loading={isSettingUpPayment}
-          onClick={() => setupPayment()}
-        >
-          {t('Add a payment method')}
-        </Button>
-      </div>
-    );
-  }
+  const description = !hasCard
+    ? t('Add a payment method first. Auto recharge charges the card on file.')
+    : enabled
+    ? t('When below {threshold}, add {quantity} · {limit}', {
+        threshold: autoTopUp.threshold.toLocaleString(),
+        quantity: autoTopUp.quantity.toLocaleString(),
+        limit: isNil(autoTopUp.maxMonthlyTopUps)
+          ? t('No monthly limit')
+          : t(
+              '{count, plural, =1 {at most once a month} other {at most # times a month}}',
+              { count: autoTopUp.maxMonthlyTopUps },
+            ),
+      })
+    : t('Buy credits automatically before you run out.');
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
-      <div className="flex items-center gap-3">
-        <Switch
-          {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_TOGGLE)}
-          checked={enabled}
-          disabled={isPending}
-          onCheckedChange={toggle}
-        />
-        <span className="text-sm font-medium text-gray-12">
-          {t('Enable auto recharge')}
-        </span>
-      </div>
-      {note && <span className="text-sm text-gray-11">{note}</span>}
-      {enabled && (
-        <>
-          <div className="flex flex-col gap-2 text-sm">
-            <DetailRow
-              label={t('When credits below')}
-              value={autoTopUp.threshold.toLocaleString()}
-            />
-            <DetailRow
-              label={t('Add')}
-              value={autoTopUp.quantity.toLocaleString()}
-            />
-            <DetailRow
-              label={t('Monthly limit')}
-              value={
-                isNil(autoTopUp.maxMonthlyTopUps)
-                  ? t('No limit')
-                  : t(
-                      '{count, plural, =1 {1 auto recharge} other {# auto recharges}}',
-                      { count: autoTopUp.maxMonthlyTopUps },
-                    )
-              }
-            />
-          </div>
+    <SettingRows className="border-t border-gray-6">
+      <SettingRow
+        title={t('Auto recharge')}
+        description={
+          note ? (
+            <>
+              {description}
+              <br />
+              {note}
+            </>
+          ) : (
+            description
+          )
+        }
+      >
+        {!hasCard ? (
           <Button
-            {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_OPEN)}
+            {...adminControl(AdminControl.BILLING_PAYMENT_METHOD_OPEN)}
             variant="outline"
             size="sm"
-            className="self-start"
-            onClick={() => setIsDialogOpen(true)}
+            loading={isSettingUpPayment}
+            onClick={setupPayment}
           >
-            <HugeiconsIcon icon={PencilEdit01Icon} className="mr-2 size-4" />
-            {t('Edit')}
+            {t('Add a payment method')}
           </Button>
-        </>
+        ) : (
+          <>
+            {enabled && (
+              <Button
+                {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_OPEN)}
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsDialogOpen(true)}
+              >
+                <HugeiconsIcon icon={PencilEdit01Icon} />
+                {t('Edit')}
+              </Button>
+            )}
+            <Switch
+              {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_TOGGLE)}
+              aria-label={t('Auto recharge')}
+              checked={enabled}
+              disabled={isPending}
+              onCheckedChange={toggle}
+            />
+          </>
+        )}
+      </SettingRow>
+      {hasCard && (
+        <AutoRechargeConfigDialog
+          key={isDialogOpen ? 'auto-open' : 'auto-closed'}
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          feature={feature}
+        />
       )}
-      <AutoRechargeConfigDialog
-        key={isDialogOpen ? 'auto-open' : 'auto-closed'}
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        feature={feature}
-      />
-    </div>
+    </SettingRows>
   );
 };
 

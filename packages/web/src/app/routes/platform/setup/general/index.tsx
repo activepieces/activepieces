@@ -1,38 +1,40 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-import { t } from 'i18next';
 
-import { CenteredPage } from '@/app/components/centered-page';
 import { AppearanceSection } from '@/app/routes/platform/setup/general/appearance-section';
-import { Separator } from '@/components/ui/separator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { DangerZoneSection } from './danger-zone-section';
+import { PlatformOwnerRow } from './platform-owner-row';
 import { ProjectsPanel } from './projects-panel';
+import { TelemetryPanel } from './telemetry-panel';
 
 export const GeneralPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: user } = userHooks.useCurrentUser();
 
-  const canDeletePlatform =
-    edition === ApEdition.CLOUD && platform.ownerId === user?.id;
+  const isCloud = edition === ApEdition.CLOUD;
+  const isOwner = platform.ownerId === user?.id;
 
   return (
-    <CenteredPage
-      title={t('General')}
-      description={t('Your platform name, branding and general settings.')}
-    >
-      <AppearanceSection />
-      <Separator className="my-8" />
-      <ProjectsPanel />
-      {canDeletePlatform && (
+    <AppearanceSection
+      ownerRow={<PlatformOwnerRow ownerId={platform.ownerId} />}
+      panels={
         <>
-          <Separator className="my-8" />
-          <DangerZoneSection platformName={platform.name} />
+          <ProjectsPanel />
+          {!isCloud && <TelemetryPanel />}
         </>
-      )}
-    </CenteredPage>
+      }
+      dangerZone={
+        !isCloud || isOwner ? (
+          <DangerZoneSection
+            platformName={platform.name}
+            selfHosted={!isCloud}
+          />
+        ) : null
+      }
+    />
   );
 };

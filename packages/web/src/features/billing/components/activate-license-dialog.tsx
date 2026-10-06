@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,6 +18,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const LicenseKeySchema = z.object({
   tempLicenseKey: z.string({ message: t('License key is invalid') }),
@@ -30,12 +30,14 @@ interface ActivateLicenseDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   isTrialKey?: boolean;
+  title?: string;
 }
 
 export const ActivateLicenseDialog = ({
   isOpen,
   onOpenChange,
   isTrialKey = false,
+  title,
 }: ActivateLicenseDialogProps) => {
   const queryClinet = useQueryClient();
 
@@ -48,12 +50,22 @@ export const ActivateLicenseDialog = ({
   });
 
   const { mutate: activateLicenseKey, isPending } =
-    platformHooks.useUpdateLisenceKey({ queryClient: queryClinet });
+    platformHooks.useUpdateLisenceKey({
+      queryClient: queryClinet,
+      messages: { error: null },
+    });
 
   const handleSubmit = (data: LicenseKeySchema) => {
     form.clearErrors();
     activateLicenseKey(data.tempLicenseKey, {
       onSuccess: () => handleClose(),
+      onError: (error) => {
+        mutationFeedback.markShown(error);
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
+        });
+      },
     });
   };
 
@@ -68,7 +80,10 @@ export const ActivateLicenseDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isTrialKey ? t('Activate Trial Key') : t('Activate License Key')}
+            {title ??
+              (isTrialKey
+                ? t('Activate trial key')
+                : t('Activate license key'))}
           </DialogTitle>
           <DialogDescription>
             {isTrialKey
@@ -79,7 +94,7 @@ export const ActivateLicenseDialog = ({
 
         <Form {...form}>
           <form
-            className="space-y-4"
+            className="flex flex-col gap-4"
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FormField
@@ -102,15 +117,15 @@ export const ActivateLicenseDialog = ({
                 </FormItem>
               )}
             />
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
+            {form.formState.errors.root?.serverError && (
+              <p role="alert" className="text-sm text-danger-11">
                 {form.formState.errors.root.serverError.message}
-              </FormMessage>
+              </p>
             )}
           </form>
         </Form>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter>
           <DialogClose asChild>
             <Button
               variant="outline"
@@ -123,10 +138,10 @@ export const ActivateLicenseDialog = ({
           <Button
             {...adminControl(AdminControl.BILLING_LICENSE_KEY_SUBMIT)}
             onClick={form.handleSubmit(handleSubmit)}
-            disabled={isPending || !form.watch('tempLicenseKey')?.trim()}
-            className="min-w-20"
+            disabled={!form.watch('tempLicenseKey')?.trim()}
+            loading={isPending}
           >
-            {isPending ? <LoadingSpinner className="size-4" /> : t('Activate')}
+            {t('Activate')}
           </Button>
         </DialogFooter>
       </DialogContent>

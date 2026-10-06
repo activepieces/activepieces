@@ -2,9 +2,8 @@ import { SeekPage } from '@activepieces/core-utils';
 import { ProjectCreditUsage } from '@activepieces/shared';
 import { CoinsDollarIcon } from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -12,24 +11,25 @@ import {
   DataTable,
   RowDataWithActions,
 } from '@/components/custom/data-table';
-import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { NameCell, NumberCell } from '@/components/custom/list/list-cells';
+import { PageSection } from '@/components/custom/page';
 import { billingQueries } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 
 export function ProjectsUsageTable({
   platformId,
+  range,
   enabled = true,
+  rangePicker,
 }: {
   platformId: string;
+  range: { from: Date; to: Date };
   enabled?: boolean;
+  rangePicker?: ReactNode;
 }) {
-  const [range, setRange] = useState<{ from: Date; to: Date }>(() => ({
-    from: dayjs().subtract(30, 'day').startOf('day').toDate(),
-    to: dayjs().endOf('day').toDate(),
-  }));
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
 
   const { data, isLoading, isError, refetch } = billingQueries.useProjectsUsage(
@@ -47,22 +47,11 @@ export function ProjectsUsageTable({
     : undefined;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">
-          {t('Credits Usage by Project')}
-        </h2>
-        <DateTimePickerWithRange
-          presetType="past"
-          from={range.from.toISOString()}
-          to={range.to.toISOString()}
-          onChange={(selected) => {
-            if (selected?.from && selected?.to) {
-              setRange({ from: selected.from, to: selected.to });
-            }
-          }}
-        />
-      </div>
+    <PageSection
+      title={t('Where the credits went')}
+      description={t('Credits each project spent in the selected range.')}
+      action={rangePicker}
+    >
       <DataTable
         columns={COLUMNS}
         page={page}
@@ -70,84 +59,59 @@ export function ProjectsUsageTable({
         isError={isError}
         errorStateEntity={t('project usage')}
         onRetry={refetch}
-        emptyStateIcon={
-          <HugeiconsIcon
-            icon={CoinsDollarIcon}
-            className="size-14 text-gray-11"
-          />
-        }
-        emptyStateTextTitle={t('No project usage yet')}
+        onRowClick={(row) => {
+          projectCollectionUtils.setCurrentProject(row.projectId);
+          navigate('/');
+        }}
+        emptyStateIcon={<HugeiconsIcon icon={CoinsDollarIcon} />}
+        emptyStateTextTitle={t('No credits spent in this range')}
         emptyStateTextDescription={t(
-          'Once your projects consume credits, their usage will appear here.',
+          'Once projects run flows or use AI, their credits show here.',
         )}
       />
-    </div>
+    </PageSection>
   );
 }
 
-function ProjectNameLink({
-  projectId,
-  projectName,
-}: {
-  projectId: string;
-  projectName: string;
-}) {
-  const navigate = useNavigate();
-  const goToProjectHome = () => {
-    projectCollectionUtils.setCurrentProject(projectId);
-    navigate('/');
-  };
-  return (
-    <TextWithTooltip tooltipMessage={projectName}>
-      <button
-        type="button"
-        onClick={goToProjectHome}
-        className="truncate text-sm font-medium text-accent-11 hover:underline"
-      >
-        {projectName}
-      </button>
-    </TextWithTooltip>
-  );
+function NumericHeader({ title }: { title: string }) {
+  return <span className="block text-right">{title}</span>;
 }
 
 const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
   {
     accessorKey: 'projectName',
-    header: () => <span className="text-sm">{t('Project')}</span>,
+    header: () => t('Project'),
+    cell: ({ row }) => <NameCell title={row.original.projectName} />,
+  },
+  {
+    id: 'runsCreditsUsed',
+    size: 140,
+    header: () => <NumericHeader title={t('Runs credits')} />,
     cell: ({ row }) => (
-      <ProjectNameLink
-        projectId={row.original.projectId}
-        projectName={row.original.projectName}
+      <NumberCell
+        value={Math.round(
+          Math.max(0, row.original.creditsUsed - row.original.aiCreditsUsed),
+        )}
       />
     ),
   },
   {
     accessorKey: 'aiCreditsUsed',
-    header: () => <span className="text-sm">{t('AI Usage')}</span>,
+    size: 140,
+    header: () => <NumericHeader title={t('AI credits')} />,
     cell: ({ row }) => (
-      <span className="text-sm">
-        {Math.round(row.original.aiCreditsUsed).toLocaleString()}
-      </span>
-    ),
-  },
-  {
-    id: 'runsCreditsUsed',
-    header: () => <span className="text-sm">{t('Runs Usage')}</span>,
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {Math.round(
-          Math.max(0, row.original.creditsUsed - row.original.aiCreditsUsed),
-        ).toLocaleString()}
-      </span>
+      <NumberCell value={Math.round(row.original.aiCreditsUsed)} />
     ),
   },
   {
     accessorKey: 'creditsUsed',
-    header: () => <span className="text-sm">{t('Total')}</span>,
+    size: 140,
+    header: () => <NumericHeader title={t('Total')} />,
     cell: ({ row }) => (
-      <span className="text-sm">
-        {Math.round(row.original.creditsUsed).toLocaleString()}
-      </span>
+      <NumberCell
+        value={Math.round(row.original.creditsUsed)}
+        className="font-medium text-gray-12"
+      />
     ),
   },
 ];
