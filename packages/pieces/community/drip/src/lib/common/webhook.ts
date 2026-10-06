@@ -4,10 +4,10 @@ import { DEDUPE_KEY_PROPERTY, Store } from '@activepieces/pieces-framework';
 import { dripApi, DripRecord } from './client';
 
 const TOKEN_PARAM = 'ap_token';
-const SEEN_LIMIT = 200;
+const CLAIM_SLOTS = 256;
 const CLAIM_SETTLE_MS = 500;
 const ABANDONED_CLAIM_MS = 60_000;
-const INDEX_WRITE_ATTEMPTS = 3;
+const SLOT_DELETE_BATCH = 32;
 
 async function enable({ token, accountId, webhookUrl, store, storeKey, event }: EnableParams): Promise<void> {
   const account = dripApi.parseAccountId(accountId);
@@ -39,11 +39,10 @@ async function disable({ token, store, storeKey }: DisableParams): Promise<void>
   }
   await deleteWebhook({ token, accountId: stored.userId, webhookId: stored.webhookId });
   await store.delete(storeKey);
-  const seen = (await store.get<string[]>(seenKey(storeKey))) ?? [];
-  for (const claimKey of seen) {
-    await store.delete(claimKey);
+  const slots = Array.from({ length: CLAIM_SLOTS }, (_, slot) => slotKeyOf({ storeKey, slot }));
+  for (let start = 0; start < slots.length; start += SLOT_DELETE_BATCH) {
+    await Promise.all(slots.slice(start, start + SLOT_DELETE_BATCH).map((slotKey) => store.delete(slotKey)));
   }
-  await store.delete(seenKey(storeKey));
 }
 
 async function handle({ token, store, storeKey, event, payload, matches }: HandleParams): Promise<unknown[]> {
@@ -85,18 +84,21 @@ async function handle({ token, store, storeKey, event, payload, matches }: Handl
 async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey: string; key: string }): Promise<boolean> {
   const claimKey = claimKeyOf({ storeKey, key });
   const existing = await store.get<DeliveryClaim>(claimKey);
-  if (existing !== null && existing !== undefined && !isAbandoned({ claim: existing, now: Date.now() })) {
+  if (existing?.key === key && !isAbandoned({ claim: existing, now: Date.now() })) {
     return false;
   }
   const claimToken = randomUUID();
+  const at = Date.now();
   try {
-    await store.put<DeliveryClaim>(claimKey, { token: claimToken, at: Date.now() });
+    await store.put<DeliveryClaim>(claimKey, { key, token: claimToken, at, done: false });
     await dripApi.sleep(CLAIM_SETTLE_MS);
     const winner = await store.get<DeliveryClaim>(claimKey);
-    if (winner?.token !== claimToken) {
+    if (winner?.key === key && winner.token !== claimToken) {
       return false;
     }
-    await rememberClaim({ store, storeKey, claimKey });
+    if (winner?.key === key) {
+      await store.put<DeliveryClaim>(claimKey, { key, token: claimToken, at, done: true });
+    }
     return true;
   } catch (error) {
     await releaseClaim({ store, claimKey, claimToken });
@@ -105,7 +107,7 @@ async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey:
 }
 
 function isAbandoned({ claim, now }: { claim: DeliveryClaim; now: number }): boolean {
-  return typeof claim.at !== 'number' || now - claim.at > ABANDONED_CLAIM_MS;
+  return claim.done === false && typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
 }
 
 async function releaseClaim({ store, claimKey, claimToken }: { store: Store; claimKey: string; claimToken: string }): Promise<void> {
@@ -119,24 +121,12 @@ async function releaseClaim({ store, claimKey, claimToken }: { store: Store; cla
   }
 }
 
-async function rememberClaim({ store, storeKey, claimKey }: { store: Store; storeKey: string; claimKey: string }): Promise<void> {
-  for (let attempt = 0; attempt < INDEX_WRITE_ATTEMPTS; attempt++) {
-    const seen = (await store.get<string[]>(seenKey(storeKey))) ?? [];
-    const next = [...seen.filter((item) => item !== claimKey), claimKey];
-    const evicted = next.slice(0, Math.max(0, next.length - SEEN_LIMIT));
-    await store.put<string[]>(seenKey(storeKey), next.slice(-SEEN_LIMIT));
-    for (const old of evicted) {
-      await store.delete(old);
-    }
-    const saved = (await store.get<string[]>(seenKey(storeKey))) ?? [];
-    if (saved.includes(claimKey)) {
-      return;
-    }
-  }
+function claimKeyOf({ storeKey, key }: { storeKey: string; key: string }): string {
+  return slotKeyOf({ storeKey, slot: parseInt(key.slice(0, 2), 16) % CLAIM_SLOTS });
 }
 
-function claimKeyOf({ storeKey, key }: { storeKey: string; key: string }): string {
-  return `${storeKey}_d_${key.slice(0, 32)}`;
+function slotKeyOf({ storeKey, slot }: { storeKey: string; slot: number }): string {
+  return `${storeKey}_d_${slot}`;
 }
 
 function withToken({ url, secret }: { url: string; secret: string }): string {
@@ -203,10 +193,6 @@ function dedupeKey({ event, data, occurredAt }: { event: string; data: DripRecor
   return createHash('sha256').update(parts.join('|')).digest('hex');
 }
 
-function seenKey(storeKey: string): string {
-  return `${storeKey}_seen`;
-}
-
 async function deleteWebhook({ token, accountId, webhookId }: { token: string; accountId: string; webhookId: string }): Promise<void> {
   try {
     await dripApi.request<unknown>({
@@ -246,12 +232,12 @@ export const dripWebhook = {
   propertiesOf,
   textMatches,
   TOKEN_PARAM,
-  SEEN_LIMIT,
+  CLAIM_SLOTS,
   ABANDONED_CLAIM_MS,
   claimKeyOf,
 };
 
-type DeliveryClaim = { token: string; at?: number };
+type DeliveryClaim = { key?: string; token: string; at?: number; done?: boolean };
 
 export type DripWebhookInformation = {
   webhookId: string;
