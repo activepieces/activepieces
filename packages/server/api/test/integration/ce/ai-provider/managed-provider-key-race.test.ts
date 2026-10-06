@@ -219,6 +219,26 @@ describe('managed AI provider deletion', () => {
         expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
     })
 
+    it('runs the platform delete in the same transaction and revokes only after it', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        const steps: string[] = []
+        deleteKey.mockImplementation(async () => {
+            steps.push('revoke')
+        })
+
+        await aiProviderService(app.log).deleteManagedProvider({
+            platformId: ctx.platform.id,
+            inSameTransaction: async (manager) => {
+                const managedRows = await manager.query('SELECT 1 FROM "ai_provider" WHERE "platformId" = $1 AND "provider" = $2', [ctx.platform.id, AIProviderName.ACTIVEPIECES])
+                steps.push(`platform delete sees ${managedRows.length} managed rows`)
+            },
+        })
+
+        expect(steps).toEqual(['platform delete sees 0 managed rows', 'revoke'])
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
+    })
+
     it('revokes nothing when the managed provider never got a key', async () => {
         vi.spyOn(openRouterApi, 'createKey').mockRejectedValue(new Error('[OpenRouter] POST /keys error: 500'))
         await expect(aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)).rejects.toThrow()

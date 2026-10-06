@@ -198,8 +198,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         })
         await revokeKeyIfManaged({ row: deleted, log })
     },
-    async deleteManagedProvider({ platformId }: { platformId: PlatformId }): Promise<void> {
-        const deleted = await transaction((manager) => deleteRowForUpdate({ manager, where: { platformId, provider: AIProviderName.ACTIVEPIECES } }))
+    async deleteManagedProvider({ platformId, inSameTransaction }: { platformId: PlatformId, inSameTransaction?: (manager: EntityManager) => Promise<unknown> }): Promise<void> {
+        const deleted = await transaction(async (manager) => {
+            await lockPlatformForUpdate({ manager, platformId })
+            const row = await deleteRowForUpdate({ manager, where: { platformId, provider: AIProviderName.ACTIVEPIECES } })
+            await inSameTransaction?.(manager)
+            return row
+        })
         await revokeKeyIfManaged({ row: deleted, log })
     },
     async recordKeyObservation({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
@@ -574,6 +579,10 @@ async function storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth, a
         .execute()
     const row = await getRowByIdOrThrow({ platformId, configId: providerId })
     return encryptUtils.decryptObject<AIProviderAuthConfig>(row.auth)
+}
+
+async function lockPlatformForUpdate({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
+    await manager.query('SELECT 1 FROM "platform" WHERE "id" = $1 FOR UPDATE', [platformId])
 }
 
 async function deleteRowForUpdate({ manager, where }: { manager: EntityManager, where: FindOptionsWhere<AIProviderSchema> }): Promise<AIProviderSchema | null> {

@@ -76,7 +76,6 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
         await variableRepo().delete({ platformId })
         await concurrencyPoolRepo().delete({ platformId })
         await toolSearchIndexRepo().delete({ platformId })
-        await aiProviderService(log).deleteManagedProvider({ platformId })
 
         let deletedAuditEvents: number
         do {
@@ -87,7 +86,10 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
                 .execute()
             deletedAuditEvents = result.affected ?? 0
         } while (deletedAuditEvents > 0)
-        await platformRepo().delete({ id: platformId })
+        await aiProviderService(log).deleteManagedProvider({
+            platformId,
+            inSameTransaction: (manager) => platformRepo(manager).delete({ id: platformId }),
+        })
 
         const identityIds = await deletePlatformUsers(platformId)
         await deleteUnreferencedIdentities(identityIds)
