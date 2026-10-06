@@ -21,12 +21,19 @@ export const googleFormsAuth = [PieceAuth.OAuth2({
   scope: googleFormsScopes,
 }), PieceAuth.CustomAuth({
   displayName: 'Service Account (Advanced)',
-  description: 'Authenticate via service account from https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key.  <br> <br> You can optionally use domain-wide delegation (https://support.google.com/a/answer/162106?hl=en#zippy=%2Cset-up-domain-wide-delegation-for-a-client) to access forms without adding the service account to each one. <br> <br> **Note:** Without a user email, the service account only has access to files/folders you explicitly share with it.',
+  description: `Connect with a Google Cloud service account.
+
+**How to get the key:**
+1. Open the [Google Cloud console](https://console.cloud.google.com/iam-admin/serviceaccounts) → **IAM & Admin** → **Service Accounts**.
+2. Create a service account, or pick an existing one.
+3. Open **Keys** → **Add key** → **Create new key** → **JSON** and download the file.
+4. Share each form with the service account's email, or set up [domain-wide delegation](https://support.google.com/a/answer/162106) and fill in **User Email** below.`,
   required: true,
   props: {
     serviceAccount: Property.ShortText({
       displayName: 'Service Account JSON Key',
       required: true,
+      description: 'Paste the full contents of the downloaded key file.',
     }),
     userEmail: Property.ShortText({
       displayName: 'User Email',
@@ -84,54 +91,107 @@ export const getAccessToken = async (auth: GoogleFormsAuthValue): Promise<string
 
 export const googleFormsCommon = {
   include_team_drives: Property.Checkbox({
-    displayName: 'Include Team Drive Forms',
-    description:
-      'Determines if forms from Team Drives should be included in the results.',
+    displayName: 'Include Shared Drives',
+    description: 'Also include forms stored in shared drives.',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
   form_id: Property.Dropdown({
     displayName: 'Form',
+    description: 'The form to watch for new responses.',
     required: true,
     auth: googleFormsAuth,
     refreshers: ['include_team_drives'],
-    options: async ({ auth, include_team_drives }) => {
+    refreshOnSearch: true,
+    options: async ({ auth, include_team_drives }, { searchValue }) => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please authenticate first',
+          placeholder: 'Connect your account first',
         };
       }
       const authValue = auth as GoogleFormsAuthValue;
-      const accessToken = await getAccessToken(authValue);
-      const files = (
-        await httpClient.sendRequest<{ files: { id: string; name: string }[] }>(
-          {
-            method: HttpMethod.GET,
-            url: `https://www.googleapis.com/drive/v3/files`,
-            queryParams: {
-              q: "mimeType='application/vnd.google-apps.form'",
-              includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
-              supportsAllDrives: 'true',
-              corpora: include_team_drives ? 'allDrives' : 'user',
-            },
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: accessToken,
-            },
-          }
-        )
-      ).body.files;
-      return {
-        disabled: false,
-        options: files.map((file: { id: string; name: string }) => {
+      try {
+        const accessToken = await getAccessToken(authValue);
+        const { files, nextPageToken } = await listForms({
+          accessToken,
+          includeTeamDrives: Boolean(include_team_drives),
+          searchValue: searchValue?.trim() ?? '',
+        });
+        if (files.length === 0) {
           return {
+            disabled: false,
+            options: [],
+            placeholder: 'No forms found',
+          };
+        }
+        return {
+          disabled: false,
+          placeholder: nextPageToken
+            ? `Showing the first ${files.length} forms. Type to narrow the list.`
+            : undefined,
+          options: files.map((file) => ({
             label: file.name,
             value: file.id,
-          };
-        }),
-      };
+          })),
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load forms. Check your connection.',
+        };
+      }
     },
   }),
 };
+
+async function listForms({
+  accessToken,
+  includeTeamDrives,
+  searchValue,
+}: {
+  accessToken: string;
+  includeTeamDrives: boolean;
+  searchValue: string;
+}): Promise<{ files: { id: string; name: string }[]; nextPageToken?: string }> {
+  const q = [
+    "mimeType='application/vnd.google-apps.form'",
+    'trashed = false',
+    ...(searchValue.length > 0
+      ? [`name contains '${escapeDriveQueryLiteral(searchValue)}'`]
+      : []),
+  ];
+  const response = await httpClient.sendRequest<{
+    files: { id: string; name: string }[];
+    nextPageToken?: string;
+  }>({
+    method: HttpMethod.GET,
+    url: `https://www.googleapis.com/drive/v3/files`,
+    queryParams: {
+      q: q.join(' and '),
+      includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+      supportsAllDrives: 'true',
+      corpora: includeTeamDrives ? 'allDrives' : 'user',
+      pageSize: String(FORM_DROPDOWN_PAGE_SIZE),
+      orderBy: 'createdTime desc',
+      fields: 'nextPageToken, files(id, name)',
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: accessToken,
+    },
+  });
+  return {
+    files: response.body.files ?? [],
+    nextPageToken: response.body.nextPageToken,
+  };
+}
+
+function escapeDriveQueryLiteral(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+const FORM_DROPDOWN_PAGE_SIZE = 1000;
