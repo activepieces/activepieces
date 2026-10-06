@@ -118,6 +118,11 @@ export type SubagentActivity = {
     durationMs?: number
 }
 
+export const subagentProgressId = {
+    forSubject: ({ toolCallId, index }: { toolCallId: string, index: number }): string => `${toolCallId}:${index}`,
+    baseOf: (progressId: string): string => progressId.split(':')[0],
+}
+
 export type SubagentProgressEvent = {
     toolCallId: string
     data: SubagentActivity

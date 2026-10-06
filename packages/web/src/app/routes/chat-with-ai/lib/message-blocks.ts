@@ -1,5 +1,5 @@
 import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
-import { BatchProgressData } from '@activepieces/shared';
+import { BatchProgressData, subagentProgressId } from '@activepieces/shared';
 
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import {
@@ -192,10 +192,7 @@ export function buildMessageBlocks({
       }
       if (toolName === 'ap_run_task' || toolName === 'ap_deep_research') {
         endSegment();
-        const tasks = taskBuilders({
-          part: p,
-          research: toolName === 'ap_deep_research',
-        });
+        const tasks = taskRows({ part: p, toolName });
         const previous = result[result.length - 1];
         if (previous?.kind === 'tasks') {
           previous.tasks.push(...tasks);
@@ -258,34 +255,40 @@ export function buildMessageBlocks({
   };
 }
 
-// Several genuine outcomes in a row (e.g. a handful of individual writes) would
-// otherwise stack as N full-width cards. Coalesce an adjacent run of 2+ outcome
-// cards into one collapsed `card-group` so the timeline stays calm; a lone card
-// renders unchanged. Recurses into a build's children, which render through the
-// same block pipeline.
-function taskBuilders({
+function taskRows({
   part,
-  research,
+  toolName,
 }: {
   part: AnyToolPart;
-  research: boolean;
-}): TaskBuilder[] {
+  toolName: string;
+}): TaskRow[] {
   const toolCallId = chatPartUtils.getToolCallId(part);
-  if (!research) return [{ toolCallId, part }];
+  const parsed = chatPartUtils.parseToolOutput(part);
+  const output = parsed.state === 'success' ? parsed.data : undefined;
+  if (toolName !== 'ap_deep_research') {
+    return [{ toolCallId, part, output }];
+  }
   const input = isObject(part.input) ? part.input : {};
   const subjects = Array.isArray(input['subjects'])
     ? input['subjects'].filter(
         (subject): subject is string => typeof subject === 'string',
       )
     : [];
+  const outputs =
+    isObject(output) && Array.isArray(output['tasks']) ? output['tasks'] : [];
   return subjects.map((subject, index) => ({
-    toolCallId: `${toolCallId}:${index}`,
+    toolCallId: subagentProgressId.forSubject({ toolCallId, index }),
     part,
-    researchIndex: index,
-    fallbackTitle: subject,
+    output: outputs[index],
+    subject,
   }));
 }
 
+// Several genuine outcomes in a row (e.g. a handful of individual writes) would
+// otherwise stack as N full-width cards. Coalesce an adjacent run of 2+ outcome
+// cards into one collapsed `card-group` so the timeline stays calm; a lone card
+// renders unchanged. Recurses into a build's children, which render through the
+// same block pipeline.
 function memorySaveDeclined(output: unknown): boolean {
   const parsed = parseToJsonIfPossible(output);
   return isObject(parsed) && parsed['saved'] === false;
@@ -415,7 +418,7 @@ export type MessageBlock =
   | { kind: 'batch-progress'; data: BatchProgressData }
   | {
       kind: 'tasks';
-      tasks: TaskBuilder[];
+      tasks: TaskRow[];
     }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }
@@ -439,11 +442,11 @@ export type OutcomeCardBlock =
   | { kind: 'image'; toolCallId: string }
   | { kind: 'files'; toolCallId: string };
 
-export type TaskBuilder = {
+export type TaskRow = {
   toolCallId: string;
   part: AnyToolPart;
-  researchIndex?: number;
-  fallbackTitle?: string;
+  output: unknown;
+  subject?: string;
 };
 
 export type SourceItem = { key: string; href?: string; title?: string };

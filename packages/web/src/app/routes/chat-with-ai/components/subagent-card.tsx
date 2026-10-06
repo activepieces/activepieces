@@ -1,4 +1,4 @@
-import { isNil, isObject } from '@activepieces/core-utils';
+import { isObject } from '@activepieces/core-utils';
 import { SubagentActivity } from '@activepieces/shared';
 import { t } from 'i18next';
 import { motion } from 'motion/react';
@@ -8,10 +8,9 @@ import { createPortal } from 'react-dom';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
-import { chatPartUtils } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
 
-import { TaskBuilder } from '../lib/message-blocks';
+import { TaskRow } from '../lib/message-blocks';
 
 import {
   AppLogos,
@@ -27,7 +26,7 @@ export function SubagentGroup({
   toolCallMeta,
   isStreaming,
 }: {
-  tasks: TaskBuilder[];
+  tasks: TaskRow[];
   toolCallMeta: Record<string, ToolCallMeta>;
   isStreaming: boolean;
 }) {
@@ -135,7 +134,7 @@ function resolveActivity({
   isStreaming,
 }: {
   live: SubagentActivity | undefined;
-  task: TaskBuilder;
+  task: TaskRow;
   isStreaming: boolean;
 }): SubagentActivity {
   const saved = activityFromOutput(task);
@@ -148,22 +147,15 @@ function resolveActivity({
   const inputTitle =
     typeof input['title'] === 'string' ? input['title'] : undefined;
   return {
-    title: task.fallbackTitle ?? inputTitle ?? t('Task'),
+    title: task.subject ?? inputTitle ?? t('Task'),
     status: isStreaming ? 'running' : 'failed',
     stepCount: 0,
     startedAt: '',
   };
 }
 
-function activityFromOutput(task: TaskBuilder): SubagentActivity | null {
-  const parsed = chatPartUtils.parseToolOutput(task.part);
-  if (parsed.state !== 'success' || !isObject(parsed.data)) return null;
-  const output = isNil(task.researchIndex)
-    ? parsed.data
-    : Array.isArray(parsed.data['tasks'])
-    ? parsed.data['tasks'][task.researchIndex]
-    : undefined;
-  const activity = isObject(output) ? output['activity'] : undefined;
+function activityFromOutput(task: TaskRow): SubagentActivity | null {
+  const activity = isObject(task.output) ? task.output['activity'] : undefined;
   return isSubagentActivity(activity) ? activity : null;
 }
 

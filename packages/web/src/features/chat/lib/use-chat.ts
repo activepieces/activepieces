@@ -13,6 +13,7 @@ import {
   ToolProgressEvent,
   AgentMessageSource,
   SubagentActivity,
+  subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -90,6 +91,7 @@ function restoreReceiptsIntoStore({
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
+const TASK_PANEL_DOCKS_FROM = '(min-width: 1024px)';
 const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_send_email',
   'ap_test_flow',
@@ -229,7 +231,7 @@ function appendTrailingPart({
   messages: ChatUIMessage[];
   part: ReturnType<typeof buildGatePart>;
 }): ChatUIMessage[] {
-  const baseToolCallId = part.toolCallId.split(':')[0];
+  const baseToolCallId = subagentProgressId.baseOf(part.toolCallId);
   const alreadyAnchored = messages.some((m) =>
     m.parts.some(
       (existing) =>
@@ -263,7 +265,7 @@ function progressOf(activity: SubagentActivity): number {
 }
 
 function isWideScreen(): boolean {
-  return window.matchMedia('(min-width: 1024px)').matches;
+  return window.matchMedia(TASK_PANEL_DOCKS_FROM).matches;
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);

@@ -126,6 +126,7 @@ export const createChatStore = () =>
         dismissedGateIds: {},
         lastDismissedFormId: null,
         taskPanelToolCallId: null,
+        taskPanelAutoOpen: true,
       });
     },
     resetBuilds: () => {

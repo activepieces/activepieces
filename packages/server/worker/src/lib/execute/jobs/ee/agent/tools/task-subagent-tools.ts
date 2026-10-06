@@ -1,6 +1,7 @@
-import { AIProviderName, chunk, isNil, isObject, omit, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentLink, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AIProviderName, isNil, isObject, omit, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
+import { AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentLink, subagentProgressId, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, LanguageModel, ModelMessage, tool, ToolSet } from 'ai'
+import pLimit from 'p-limit'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
 import { createPhaseTools } from './session-tools'
@@ -33,29 +34,18 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
                 inputSchema: researchInput,
                 toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify({ tasks: output.tasks.map((task: TaskRunOutput) => omit(task, ['activity', 'billedToolCalls'])) }) }),
                 execute: async ({ question, subjects, context }, { toolCallId }) => {
-                    const tasks = await runInGroups({
-                        items: subjects.map((subject, index) => ({ subject, index })),
-                        size: RESEARCHERS_AT_ONCE,
-                        run: ({ subject, index }) => runTask({
-                            deps,
-                            title: subject,
-                            brief: [question, `Subject: ${subject}`, ...(isNil(context) ? [] : [context])].join('\n\n'),
-                            progressId: `${toolCallId}:${index}`,
-                        }),
-                    })
+                    const researchSlot = pLimit(RESEARCHERS_AT_ONCE)
+                    const tasks = await Promise.all(subjects.map((subject, index) => researchSlot(() => runTask({
+                        deps,
+                        title: subject,
+                        brief: [question, `Subject: ${subject}`, ...(isNil(context) ? [] : [context])].join('\n\n'),
+                        progressId: subagentProgressId.forSubject({ toolCallId, index }),
+                    }))))
                     return { tasks, billedToolCalls: tasks.flatMap((task) => task.billedToolCalls ?? []) }
                 },
             }),
         } : {}),
     }
-}
-
-async function runInGroups<T, R>({ items, size, run }: { items: T[], size: number, run: (item: T) => Promise<R> }): Promise<R[]> {
-    const results: R[] = []
-    for (const group of chunk(items, size)) {
-        results.push(...await Promise.all(group.map(run)))
-    }
-    return results
 }
 
 async function runTask({ deps, title, brief, taskId, progressId }: {
@@ -274,8 +264,7 @@ function finalActivity({ title, turn, result, startedAt }: { title: string, turn
 }
 
 function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
-    const titles = new Map(parts.flatMap((part) => isSearchCall(part) ? searchResults(part.output) : []).map((link) => [link.url, link.title]))
-    return parts.flatMap((part): SubagentTimelineEntry[] => {
+    const entries = parts.flatMap((part): SubagentTimelineEntry[] => {
         if (part.type === PersistedAgentPartType.THINKING_STATUS) {
             const text = part.text.trim()
             return text.length > 0 ? [{ kind: 'status', text }] : []
@@ -288,20 +277,17 @@ function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
             return [{ kind: 'search', query, results: searchResults(part.output) }]
         }
         const url = part.input['url']
-        if (PAGE_READ_TOOLS.includes(part.toolName) && typeof url === 'string') {
-            const title = titles.get(url)
-            return [{ kind: 'read', url, ...(isNil(title) ? {} : { title }) }]
-        }
-        return []
+        return PAGE_READ_TOOLS.includes(part.toolName) && typeof url === 'string' ? [{ kind: 'read', url }] : []
+    })
+    const titles = new Map(entries.flatMap((entry) => entry.kind === 'search' ? entry.results : []).map((link) => [link.url, link.title]))
+    return entries.map((entry) => {
+        const title = entry.kind === 'read' ? titles.get(entry.url) : undefined
+        return isNil(title) ? entry : { ...entry, title }
     })
 }
 
-function isSearchCall(part: PersistedAgentPart): part is Extract<PersistedAgentPart, { type: PersistedAgentPartType.TOOL_CALL }> {
-    return part.type === PersistedAgentPartType.TOOL_CALL && part.toolName === WEB_SEARCH_TOOL
-}
-
 function searchResults(output: unknown): SubagentLink[] {
-    const parsed = typeof output === 'string' ? parseJson(output) : output
+    const parsed = parseToJsonIfPossible(output)
     if (!isObject(parsed) || !Array.isArray(parsed['results'])) {
         return []
     }
@@ -312,11 +298,6 @@ function searchResults(output: unknown): SubagentLink[] {
         const title = typeof result['title'] === 'string' && result['title'].length > 0 ? result['title'] : undefined
         return [{ url: result['url'], ...(isNil(title) ? {} : { title }) }]
     })
-}
-
-function parseJson(text: string): unknown {
-    const { data } = tryCatchSync(() => JSON.parse(text))
-    return data
 }
 
 function billedToolCalls(parts: PersistedAgentPart[]): { toolName: string, output: unknown }[] {

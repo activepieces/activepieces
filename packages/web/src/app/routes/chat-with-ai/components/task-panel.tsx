@@ -10,7 +10,11 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { FaviconOrGlobe, Source } from '@/components/prompt-kit/source';
+import {
+  FaviconOrGlobe,
+  getDomain,
+  Source,
+} from '@/components/prompt-kit/source';
 import { cn } from '@/lib/utils';
 
 import { PreviewIconButton } from './previews/preview-card';
@@ -256,7 +260,7 @@ function TimelineItem({
             rel="noopener noreferrer"
             className="block truncate hover:underline"
           >
-            {t('Read {page}', { page: entry.title ?? domainOf(entry.url) })}
+            {t('Read {page}', { page: entry.title ?? getDomain(entry.url) })}
           </a>
         )}
       </div>
@@ -321,7 +325,7 @@ function SourceCard({ url, title }: { url: string; title?: string }) {
     >
       <span className="flex items-center gap-1.5 text-xs text-gray-11">
         <FaviconOrGlobe url={url} size="sm" />
-        <span className="truncate">{domainOf(url)}</span>
+        <span className="truncate">{getDomain(url)}</span>
       </span>
       <span className="line-clamp-2 text-sm text-gray-12">{title ?? url}</span>
     </a>
@@ -353,14 +357,6 @@ export function TaskPanelLayout({ children }: { children: React.ReactNode }) {
       </div>
     </TaskPanelSlotContext.Provider>
   );
-}
-
-function domainOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
 }
 
 export const TaskPanelSlotContext = createContext<HTMLElement | null>(null);

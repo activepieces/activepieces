@@ -80,18 +80,12 @@ export function AppLogos({ pieces }: { pieces: string[] }) {
   const apps = pieces.filter(
     (pieceName) => !PLUMBING_PIECES.includes(pieceName),
   );
-  if (apps.length === 0) return null;
-  const shown = apps.slice(0, MAX_LOGOS);
-  const extra = apps.length - shown.length;
   return (
-    <div className="flex shrink-0 items-center gap-1">
-      {shown.map((pieceName) => (
+    <LogoStack
+      items={apps.map((pieceName) => (
         <AppLogo key={pieceName} pieceName={pieceName} />
       ))}
-      {extra > 0 && (
-        <span className="text-xss text-gray-11 tabular-nums">+{extra}</span>
-      )}
-    </div>
+    />
   );
 }
 
@@ -100,24 +94,28 @@ export function ReadFavicons({
 }: {
   timeline: SubagentTimelineEntry[];
 }) {
-  const pages = readPages(timeline);
-  if (pages.length === 0) return null;
-  const shown = pages.slice(0, MAX_LOGOS);
-  const extra = pages.length - shown.length;
   return (
-    <div className="flex shrink-0 items-center">
-      {shown.map((page) => (
+    <LogoStack
+      items={readPages(timeline).map((page) => (
         <span
           key={page.url}
-          className="flex size-5 items-center justify-center rounded-full bg-panel ring-2 ring-panel not-first:ml-1"
+          className="flex size-5 items-center justify-center rounded-full bg-panel"
         >
           <FaviconOrGlobe url={page.url} size="sm" />
         </span>
       ))}
+    />
+  );
+}
+
+function LogoStack({ items }: { items: React.ReactNode[] }) {
+  if (items.length === 0) return null;
+  const extra = items.length - MAX_LOGOS;
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {items.slice(0, MAX_LOGOS)}
       {extra > 0 && (
-        <span className="pl-1 text-xss text-gray-11 tabular-nums">
-          +{extra}
-        </span>
+        <span className="text-xss text-gray-11 tabular-nums">+{extra}</span>
       )}
     </div>
   );

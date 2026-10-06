@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 function getDomain(url: string): string {
   try {
-    return new URL(url).hostname.replace('www.', '');
+    return new URL(url).hostname.replace(/^www\./, '');
   } catch {
     return url;
   }
@@ -84,7 +84,7 @@ function Source({ href, title, className }: SourceProps) {
   );
 }
 
-export { FaviconOrGlobe, Source };
+export { FaviconOrGlobe, getDomain, Source };
 
 export type SourceProps = {
   href: string;
