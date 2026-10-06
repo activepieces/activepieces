@@ -23,7 +23,7 @@ export const jumpcloud = createPiece({
     displayName: 'JumpCloud',
     description: 'Manage JumpCloud users, devices, groups and applications.',
     minimumSupportedRelease: '0.88.2',
-    logoUrl: 'https://raw.githubusercontent.com/eliseukadesh67/activepieces/feat/jumpcloud/packages/pieces/community/jumpcloud/jumpcloud.png',
+    logoUrl: 'https://cdn.activepieces.com/pieces/jumpcloud.png',
     categories: [PieceCategory.DEVELOPER_TOOLS],
     auth: jumpcloudAuth,
     authors: ['eliseukadesh67'],
