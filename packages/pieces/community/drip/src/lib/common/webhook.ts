@@ -4,12 +4,11 @@ import { DEDUPE_KEY_PROPERTY, Store } from '@activepieces/pieces-framework';
 import { dripApi, DripRecord } from './client';
 
 const TOKEN_PARAM = 'ap_token';
-const CLAIM_SLOTS = 256;
+const CLAIM_CELLS = 256;
+const CLAIM_PROBES = 4;
 const CLAIM_SETTLE_MS = 500;
 const ABANDONED_CLAIM_MS = 60_000;
-const SLOT_BATCH = 32;
-const SLOT_CAPACITY = 16;
-const INDEX_WRITE_ATTEMPTS = 3;
+const CELL_DELETE_BATCH = 32;
 
 async function enable({ token, accountId, webhookUrl, store, storeKey, event }: EnableParams): Promise<void> {
   const account = dripApi.parseAccountId(accountId);
@@ -41,17 +40,10 @@ async function disable({ token, store, storeKey }: DisableParams): Promise<void>
   }
   await deleteWebhook({ token, accountId: stored.userId, webhookId: stored.webhookId });
   await store.delete(storeKey);
-  const indexKeys = Array.from({ length: CLAIM_SLOTS }, (_, slot) => indexKeyOf({ storeKey, slot }));
-  for (let start = 0; start < indexKeys.length; start += SLOT_BATCH) {
-    await Promise.all(indexKeys.slice(start, start + SLOT_BATCH).map((indexKey) => clearIndex({ store, indexKey })));
+  const keys = Array.from({ length: CLAIM_CELLS }, (_, cell) => cellKeyOf({ storeKey, cell })).flatMap((cellKey) => [cellKey, doneKeyOf(cellKey)]);
+  for (let start = 0; start < keys.length; start += CELL_DELETE_BATCH) {
+    await Promise.all(keys.slice(start, start + CELL_DELETE_BATCH).map((key) => store.delete(key)));
   }
-}
-
-async function clearIndex({ store, indexKey }: { store: Store; indexKey: string }): Promise<void> {
-  for (const claimKey of await readIndex({ store, indexKey })) {
-    await deleteClaim({ store, claimKey });
-  }
-  await store.delete(indexKey);
 }
 
 async function handle({ token, store, storeKey, event, payload, matches }: HandleParams): Promise<unknown[]> {
@@ -91,97 +83,107 @@ async function handle({ token, store, storeKey, event, payload, matches }: Handl
 }
 
 async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey: string; key: string }): Promise<boolean> {
-  const claimKey = claimKeyOf({ storeKey, key });
-  const doneKey = doneKeyOf(claimKey);
-  if (await isDone({ store, doneKey })) {
+  const cells = probeCells({ storeKey, key });
+  const states = await readCells({ store, cells });
+  if (states.some((state) => holds({ state, key, now: Date.now() }))) {
     return false;
   }
-  const existing = await store.get<DeliveryClaim>(claimKey);
-  if (existing !== null && existing !== undefined && !isAbandoned({ claim: existing, now: Date.now() })) {
-    return false;
-  }
-  const claim: DeliveryClaim = { token: randomUUID(), at: Date.now() };
-  const indexKey = indexKeyOf({ storeKey, slot: slotOf(key) });
-  try {
-    await indexClaim({ store, indexKey, claimKey });
-    await store.put<DeliveryClaim>(claimKey, claim);
-    await dripApi.sleep(CLAIM_SETTLE_MS);
-    const winner = await store.get<DeliveryClaim>(claimKey);
-    if (winner !== null && winner !== undefined && winner.token !== claim.token) {
+  const claim: DeliveryClaim = { key, token: randomUUID(), at: Date.now() };
+  for (const cellKey of preferredCells({ cells, states, key }).slice(0, 2)) {
+    const outcome = await tryCell({ store, cellKey, claim });
+    if (outcome === 'lost') {
       return false;
     }
-    if (await isDone({ store, doneKey })) {
-      return false;
+    if (outcome === 'taken') {
+      continue;
     }
-    if (!(await readIndex({ store, indexKey })).includes(claimKey)) {
-      await indexClaim({ store, indexKey, claimKey });
+    try {
+      if ((await readCells({ store, cells })).some((state) => state.done?.key === key)) {
+        return false;
+      }
+      await store.put<DeliveryClaim>(doneKeyOf(cellKey), claim);
+    } catch (error) {
+      await releaseClaim({ store, cellKey, claimToken: claim.token });
+      throw error;
     }
-    await store.put<DeliveryClaim>(doneKey, claim);
     return true;
+  }
+  return true;
+}
+
+async function tryCell({ store, cellKey, claim }: { store: Store; cellKey: string; claim: DeliveryClaim }): Promise<'won' | 'lost' | 'taken'> {
+  try {
+    await store.put<DeliveryClaim>(cellKey, claim);
+    await dripApi.sleep(CLAIM_SETTLE_MS);
+    const current = await store.get<DeliveryClaim>(cellKey);
+    if (current === null || current === undefined) {
+      return 'won';
+    }
+    if (current.key !== claim.key) {
+      return 'taken';
+    }
+    return current.token === claim.token ? 'won' : 'lost';
   } catch (error) {
-    await releaseClaim({ store, claimKey, claimToken: claim.token });
+    await releaseClaim({ store, cellKey, claimToken: claim.token });
     throw error;
   }
 }
 
-async function isDone({ store, doneKey }: { store: Store; doneKey: string }): Promise<boolean> {
-  const done = await store.get<DeliveryClaim>(doneKey);
-  return done !== null && done !== undefined;
+async function readCells({ store, cells }: { store: Store; cells: string[] }): Promise<CellState[]> {
+  return Promise.all(
+    cells.map(async (cellKey) => {
+      const [claim, done] = await Promise.all([store.get<DeliveryClaim>(cellKey), store.get<DeliveryClaim>(doneKeyOf(cellKey))]);
+      return { claim: claim ?? undefined, done: done ?? undefined };
+    }),
+  );
 }
 
-async function deleteClaim({ store, claimKey }: { store: Store; claimKey: string }): Promise<void> {
-  await store.delete(claimKey);
-  await store.delete(doneKeyOf(claimKey));
+function holds({ state, key, now }: { state: CellState; key: string; now: number }): boolean {
+  if (state.done?.key === key) {
+    return true;
+  }
+  return state.claim?.key === key && !isAbandoned({ claim: state.claim, now });
+}
+
+function preferredCells({ cells, states, key }: { cells: string[]; states: CellState[]; key: string }): string[] {
+  const rank = (state: CellState): number => {
+    if (state.claim?.key === key) {
+      return -2;
+    }
+    if (state.claim === undefined && state.done === undefined) {
+      return -1;
+    }
+    return Math.max(state.claim?.at ?? 0, state.done?.at ?? 0);
+  };
+  return cells.map((cellKey, index) => ({ cellKey, rank: rank(states[index]) })).sort((a, b) => a.rank - b.rank).map((entry) => entry.cellKey);
 }
 
 function isAbandoned({ claim, now }: { claim: DeliveryClaim; now: number }): boolean {
   return typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
 }
 
-async function releaseClaim({ store, claimKey, claimToken }: { store: Store; claimKey: string; claimToken: string }): Promise<void> {
+async function releaseClaim({ store, cellKey, claimToken }: { store: Store; cellKey: string; claimToken: string }): Promise<void> {
   try {
-    const current = await store.get<DeliveryClaim>(claimKey);
+    const current = await store.get<DeliveryClaim>(cellKey);
     if (current?.token === claimToken) {
-      await store.delete(claimKey);
+      await store.delete(cellKey);
     }
   } catch {
     return;
   }
 }
 
-async function readIndex({ store, indexKey }: { store: Store; indexKey: string }): Promise<string[]> {
-  const list = await store.get<unknown>(indexKey);
-  return Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string') : [];
+function probeCells({ storeKey, key }: { storeKey: string; key: string }): string[] {
+  const cells = Array.from({ length: CLAIM_PROBES }, (_, probe) => parseInt(key.slice(probe * 6, probe * 6 + 6), 16) % CLAIM_CELLS);
+  return [...new Set(cells)].map((cell) => cellKeyOf({ storeKey, cell }));
 }
 
-async function indexClaim({ store, indexKey, claimKey }: { store: Store; indexKey: string; claimKey: string }): Promise<void> {
-  for (let attempt = 0; attempt < INDEX_WRITE_ATTEMPTS; attempt++) {
-    const next = [...(await readIndex({ store, indexKey })).filter((item) => item !== claimKey), claimKey];
-    const evicted = next.slice(0, Math.max(0, next.length - SLOT_CAPACITY));
-    await store.put<string[]>(indexKey, next.slice(-SLOT_CAPACITY));
-    for (const old of evicted) {
-      await deleteClaim({ store, claimKey: old });
-    }
-    if ((await readIndex({ store, indexKey })).includes(claimKey)) {
-      return;
-    }
-  }
+function cellKeyOf({ storeKey, cell }: { storeKey: string; cell: number }): string {
+  return `${storeKey}_c_${cell}`;
 }
 
-function slotOf(key: string): number {
-  return parseInt(key.slice(0, 2), 16) % CLAIM_SLOTS;
-}
-
-function claimKeyOf({ storeKey, key }: { storeKey: string; key: string }): string {
-  return `${storeKey}_d_${key.slice(0, 40)}`;
-}
-
-function doneKeyOf(claimKey: string): string {
-  return `${claimKey}_ok`;
-}
-
-function indexKeyOf({ storeKey, slot }: { storeKey: string; slot: number }): string {
-  return `${storeKey}_i_${slot}`;
+function doneKeyOf(cellKey: string): string {
+  return `${cellKey}_ok`;
 }
 
 function withToken({ url, secret }: { url: string; secret: string }): string {
@@ -287,15 +289,15 @@ export const dripWebhook = {
   propertiesOf,
   textMatches,
   TOKEN_PARAM,
-  CLAIM_SLOTS,
-  SLOT_CAPACITY,
+  CLAIM_CELLS,
   ABANDONED_CLAIM_MS,
-  claimKeyOf,
+  probeCells,
   doneKeyOf,
-  indexKeyOf,
 };
 
-type DeliveryClaim = { token: string; at?: number };
+type DeliveryClaim = { key?: string; token: string; at?: number };
+
+type CellState = { claim?: DeliveryClaim; done?: DeliveryClaim };
 
 export type DripWebhookInformation = {
   webhookId: string;
