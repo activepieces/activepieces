@@ -78,8 +78,8 @@ function buildOversizeEnvelope({ result, text }: { result: unknown, text: string
     }
 }
 
-export function plainJsonSchema(schema: JSONSchema7): JSONSchema7 {
-    const plain: JSONSchema7 = JSON.parse(JSON.stringify(schema))
+export function plainJsonSchema<T = JSONSchema7>(schema: JSONSchema7): T {
+    const plain: T = JSON.parse(JSON.stringify(schema))
     return plain
 }
 

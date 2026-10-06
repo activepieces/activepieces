@@ -30,9 +30,8 @@ import {
   OutcomeCardBlock,
 } from '../lib/message-blocks';
 import {
-  ConnectionPickerData,
   getTextFromParts,
-  hasPieceName,
+  isConnectionPickerData,
   parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
@@ -582,7 +581,7 @@ function DisplayToolCard({
   switch (toolName) {
     case 'ap_show_connection_required':
     case 'ap_show_connection_picker': {
-      if (!hasPieceName(data)) return null;
+      if (!isConnectionPickerData(data)) return null;
       if (!isInteractive && toolOutput?.['dismissed'] === true) return null;
       const selectedLabel =
         typeof toolOutput?.['label'] === 'string'
@@ -590,7 +589,7 @@ function DisplayToolCard({
           : undefined;
       return (
         <ConnectionPickerCard
-          picker={data as unknown as ConnectionPickerData}
+          picker={data}
           onResolve={(payload) => onResolve(toolCallId, payload)}
           isInteractive={isInteractive}
           selectedConnectionLabel={selectedLabel}

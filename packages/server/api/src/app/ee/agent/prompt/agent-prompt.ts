@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { isNil } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentToolType, Project, ProjectType } from '@activepieces/shared'
+import { Agent, AGENT_SKILLS, AgentConfig, AgentToolType, Project, ProjectType } from '@activepieces/shared'
 
 function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
 }
 
-const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces', 'discovery', 'web_research', 'connections', 'build_flow_advanced'] as const
+const GUIDE_TOPICS = AGENT_SKILLS.flatMap((skill) => skill.guideTopic ?? [])
 
 const PROMPT_TEMPLATES = {
     system: loadPromptTemplate('chat-system-prompt.md'),

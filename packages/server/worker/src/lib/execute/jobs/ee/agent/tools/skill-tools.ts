@@ -1,6 +1,6 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AGENT_SKILLS, AgentSkill, agentToolSkills, chatBilling, GET_TOOL_SCHEMA_NAME, LAZY_TOOL_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SkillSurface } from '@activepieces/shared'
-import { asSchema, jsonSchema, JSONSchema7, Schema, tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { asSchema, jsonSchema, Schema, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { cardTitleFields, plainJsonSchema } from './tool-primitives'
 
@@ -151,7 +151,7 @@ async function validateToolInput({ target, input }: { target: ToolSet[string], i
         const result = await schema.validate(input)
         return result.success ? { success: true, value: isObject(result.value) ? result.value : input } : result
     }
-    const { data: zodSchema } = await tryCatch(async () => z.fromJSONSchema(zodJsonSchema(await schema.jsonSchema)))
+    const { data: zodSchema } = await tryCatch(async () => z.fromJSONSchema(plainJsonSchema<z.core.JSONSchema.JSONSchema>(await schema.jsonSchema)))
     if (isNil(zodSchema)) {
         return { success: true, value: input }
     }
@@ -166,11 +166,6 @@ async function withOuterLabels({ target, outer, input }: { target: ToolSet[strin
         .filter((key) => declared.includes(key) && input[key] === undefined && typeof outer[key] === 'string')
         .map((key) => [key, outer[key]]))
     return { ...input, ...labels }
-}
-
-function zodJsonSchema(schema: JSONSchema7): z.core.JSONSchema.JSONSchema {
-    const plain: z.core.JSONSchema.JSONSchema = JSON.parse(JSON.stringify(schema))
-    return plain
 }
 
 async function renderSkill({ skill, guide, registry, core }: {

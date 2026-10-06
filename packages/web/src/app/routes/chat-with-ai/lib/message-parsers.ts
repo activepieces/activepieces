@@ -9,8 +9,14 @@ export function normalizePieceName(piece: string): string {
     : `@activepieces/piece-${shortName}`;
 }
 
-export function hasPieceName(input: Record<string, unknown>): boolean {
-  return typeof input['piece'] === 'string' && input['piece'].length > 0;
+export function isConnectionPickerData(
+  input: Record<string, unknown>,
+): input is Record<string, unknown> & ConnectionPickerData {
+  return (
+    typeof input['piece'] === 'string' &&
+    input['piece'].length > 0 &&
+    typeof input['displayName'] === 'string'
+  );
 }
 
 export function isConnectionHealthy(status: string): boolean {
