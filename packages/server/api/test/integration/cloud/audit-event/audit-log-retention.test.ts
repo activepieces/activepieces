@@ -51,10 +51,10 @@ const remainingIds = async (ids: string[]): Promise<string[]> => {
     return rows.map((row) => row.id).sort()
 }
 
-const createPlatform = async ({ auditLogRetentionDays }: { auditLogRetentionDays: number | null }) => {
+const createPlatform = async ({ auditLogRetentionDays, auditLogEnabled = true }: { auditLogRetentionDays: number | null, auditLogEnabled?: boolean }) => {
     return createTestContext(app!, {
         platform: { auditLogRetentionDays },
-        plan: { auditLogEnabled: true },
+        plan: { auditLogEnabled },
     })
 }
 
@@ -99,6 +99,36 @@ describe('auditLogRetention.sweep', () => {
 
         expect(await remainingIds([...inheritsExpired, ...inheritsFresh, ...longerExpired, ...longerFresh]))
             .toStrictEqual([...inheritsFresh, ...longerFresh].sort())
+    })
+
+    it('ignores the saved period of a platform whose plan has no audit logs', async () => {
+        const ctx = await createPlatform({ auditLogRetentionDays: 30, auditLogEnabled: false })
+        const ids = await saveEvents({ platformId: ctx.platform.id, ages: [45, 400] })
+
+        await auditLogRetention(app!.log).sweep()
+
+        expect(await remainingIds(ids)).toStrictEqual([...ids].sort())
+    })
+
+    it('applies only the instance ceiling to a platform whose plan has no audit logs', async () => {
+        process.env.AP_AUDIT_LOG_RETENTION_DAYS = '60'
+        const ctx = await createPlatform({ auditLogRetentionDays: 30, auditLogEnabled: false })
+        const [fresh, expired] = await saveEvents({ platformId: ctx.platform.id, ages: [45, 400] })
+
+        await auditLogRetention(app!.log).sweep()
+
+        expect(await remainingIds([fresh, expired])).toStrictEqual([fresh])
+    })
+
+    it('applies only the instance ceiling to a platform without a plan row', async () => {
+        process.env.AP_AUDIT_LOG_RETENTION_DAYS = '60'
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        await databaseConnection().query('DELETE FROM "platform_plan" WHERE "platformId" = $1', [ctx.platform.id])
+        const [fresh, expired] = await saveEvents({ platformId: ctx.platform.id, ages: [45, 400] })
+
+        await auditLogRetention(app!.log).sweep()
+
+        expect(await remainingIds([fresh, expired])).toStrictEqual([fresh])
     })
 
     it('ignores a malformed ceiling instead of deleting everything', async () => {

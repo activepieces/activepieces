@@ -76,11 +76,12 @@ async function findPlatformsWithExpiredEvents({ ceiling }: { ceiling: number | n
         return entityManager.query(`
             SELECT p.id AS "platformId"
             FROM "platform" p
-            WHERE LEAST(p."auditLogRetentionDays", $1::int) IS NOT NULL
+            LEFT JOIN "platform_plan" pp ON pp."platformId" = p.id
+            WHERE ${EFFECTIVE_RETENTION_DAYS_SQL} IS NOT NULL
               AND EXISTS (
                 SELECT 1 FROM "audit_event" a
                 WHERE a."platformId" = p.id
-                  AND a.created < now() - make_interval(days => LEAST(p."auditLogRetentionDays", $1::int))
+                  AND a.created < now() - make_interval(days => ${EFFECTIVE_RETENTION_DAYS_SQL})
               )
             ORDER BY random()
         `, [ceiling])
@@ -166,10 +167,11 @@ async function deleteOneBatch({ platformId, ceiling, cursor, limit }: DeleteOneB
 
 async function lockRetentionDays({ entityManager, platformId, ceiling }: { entityManager: EntityManager, platformId: string, ceiling: number | null }): Promise<number | null> {
     const rows: unknown = await entityManager.query(`
-        SELECT LEAST("auditLogRetentionDays", $1::int) AS "retentionDays"
-        FROM "platform"
-        WHERE id = $2
-        FOR SHARE
+        SELECT ${EFFECTIVE_RETENTION_DAYS_SQL} AS "retentionDays"
+        FROM "platform" p
+        LEFT JOIN "platform_plan" pp ON pp."platformId" = p.id
+        WHERE p.id = $2
+        FOR SHARE OF p
     `, [ceiling, platformId])
     return RetentionDaysRows.parse(rows)[0]?.retentionDays ?? null
 }
@@ -248,6 +250,7 @@ const AUTOVACUUM_SCALE_FACTOR_OPTION = 'autovacuum_vacuum_scale_factor'
 const AUTOVACUUM_SCALE_FACTOR = 0.02
 const AUTOVACUUM_LOCK_TIMEOUT_MS = 100
 const MAX_PLATFORMS_IN_BACKLOG_WARNING = 10
+const EFFECTIVE_RETENTION_DAYS_SQL = 'LEAST(CASE WHEN pp."auditLogEnabled" THEN p."auditLogRetentionDays" END, $1::int)'
 
 const PlatformIdRows = z.array(z.object({
     platformId: z.string(),
