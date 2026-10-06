@@ -43,50 +43,122 @@ describe('a turn in skills mode', () => {
 describe('a wrapped call with the wrong input', () => {
     it('is rejected by the schema before the real tool runs, without a repair call, and the turn carries on', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
-        let calls = 0
-        const model = new MockLanguageModelV3({
-            doStream: async () => {
-                calls++
-                return {
-                    stream: convertArrayToReadableStream(calls === 1
-                        ? [
-                            { type: 'stream-start' as const, warnings: [] },
-                            { type: 'tool-call' as const, toolCallId: 'bad-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":42}}' },
-                            { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
-                        ]
-                        : [
-                            { type: 'stream-start' as const, warnings: [] },
-                            { type: 'text-start' as const, id: 'answer' },
-                            { type: 'text-delta' as const, id: 'answer', delta: 'Done.' },
-                            { type: 'text-end' as const, id: 'answer' },
-                            { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
-                        ]),
-                }
-            },
-        })
+        const model = scriptedModel({ toolCalls: [{ id: 'bad-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":42}}' }] })
 
-        await runAgentTurn({
-            model,
-            provider: AIProviderName.ANTHROPIC,
-            systemPrompt: 'You are a test agent.',
-            messages: [{ role: 'user', content: 'research this' }],
-            tools: { ...fillerTools(), ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }) },
-            allToolNames: [...Object.keys(fillerTools()), 'ap_web_search'],
-            tier: TIER,
-            modelId: TIER.modelId,
-            phaseState: { phase: 'discovery' },
-            abortSignal: new AbortController().signal,
-            log: SILENT_LOG,
-            sinks: { drainStream: (result) => result.consumeStream() },
-            skills: { surface: 'CHAT', guides: {} },
-        })
+        await runSkillsTurn({ model, search })
 
         expect(search).not.toHaveBeenCalled()
         expect(model.doGenerateCalls.length).toBe(0)
         expect(model.doStreamCalls.length).toBe(2)
         expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).toContain('Invalid input for \\"ap_web_search\\"')
     })
+
+    it('shows the model the real schema, so its next call runs the tool', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [
+            { id: 'bad-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":42}}' },
+            { id: 'good-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":"42"}}' },
+        ] })
+
+        await runSkillsTurn({ model, search })
+
+        expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).toContain('Input schema')
+        expect(search).toHaveBeenCalledTimes(1)
+        expect(search).toHaveBeenCalledWith({ query: '42' }, expect.objectContaining({ toolCallId: 'good-1' }))
+        expect(model.doGenerateCalls.length).toBe(0)
+    })
 })
+
+describe('repairing a call in skills mode', () => {
+    it('repairs a wrapped call whose JSON is broken, then validates the repair before running the tool', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({
+            toolCalls: [{ id: 'broken-1', toolName: 'ap_lazy_tool', input: '{ tool: "ap_web_search", input: { query: "more" }, }' }],
+            repairText: '{"tool":"ap_web_search","input":{"query":"more"}}',
+        })
+
+        await runSkillsTurn({ model, search })
+
+        expect(model.doGenerateCalls.length).toBe(1)
+        expect(search).toHaveBeenCalledWith({ query: 'more' }, expect.objectContaining({ toolCallId: 'broken-1' }))
+    })
+
+    it('does not run the tool when the repaired wrapped call still has the wrong inner input', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({
+            toolCalls: [{ id: 'broken-1', toolName: 'ap_lazy_tool', input: '{ tool: "ap_web_search", input: { query: 42 }, }' }],
+            repairText: '{"tool":"ap_web_search","input":{"query":42}}',
+        })
+
+        await runSkillsTurn({ model, search })
+
+        expect(model.doGenerateCalls.length).toBe(1)
+        expect(search).not.toHaveBeenCalled()
+    })
+
+    it('still repairs a core tool called directly with input that fails its schema', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({
+            toolCalls: [{ id: 'direct-1', toolName: 'ap_web_search', input: '{"query":42}' }],
+            repairText: '{"query":"42"}',
+        })
+
+        await runSkillsTurn({ model, search })
+
+        expect(model.doGenerateCalls.length).toBe(1)
+        expect(model.doGenerateCalls[0]?.responseFormat).toEqual(expect.objectContaining({ type: 'json' }))
+        expect(search).toHaveBeenCalledWith({ query: '42' }, expect.objectContaining({ toolCallId: 'direct-1' }))
+    })
+})
+
+async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, search: () => Promise<typeof SEARCH_RESULT> }): Promise<void> {
+    await runAgentTurn({
+        model,
+        provider: AIProviderName.ANTHROPIC,
+        systemPrompt: 'You are a test agent.',
+        messages: [{ role: 'user', content: 'research this' }],
+        tools: { ...fillerTools(), ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }) },
+        allToolNames: [...Object.keys(fillerTools()), 'ap_web_search'],
+        tier: TIER,
+        modelId: TIER.modelId,
+        phaseState: { phase: 'discovery' },
+        abortSignal: new AbortController().signal,
+        log: SILENT_LOG,
+        sinks: { drainStream: (result) => result.consumeStream() },
+        skills: { surface: 'CHAT', guides: {} },
+    })
+}
+
+function scriptedModel({ toolCalls, repairText = '' }: { toolCalls: ScriptedToolCall[], repairText?: string }): MockLanguageModelV3 {
+    let calls = 0
+    return new MockLanguageModelV3({
+        doStream: async () => {
+            const toolCall = toolCalls[calls]
+            calls++
+            return {
+                stream: convertArrayToReadableStream(toolCall === undefined
+                    ? [
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'text-start' as const, id: 'answer' },
+                        { type: 'text-delta' as const, id: 'answer', delta: 'Done.' },
+                        { type: 'text-end' as const, id: 'answer' },
+                        { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    ]
+                    : [
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'tool-call' as const, toolCallId: toolCall.id, toolName: toolCall.toolName, input: toolCall.input },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    ]),
+            }
+        },
+        doGenerate: async () => ({
+            content: [{ type: 'text' as const, text: repairText }],
+            finishReason: { unified: 'stop' as const, raw: 'stop' },
+            usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } },
+            warnings: [],
+        }),
+    })
+}
 
 function fillerTools(): ToolSet {
     return Object.fromEntries(FILLER_TOOL_NAMES.map((name) => [name, tool({ description: `${name}.`, inputSchema: z.object({}), execute: async () => SEARCH_RESULT })]))
@@ -127,3 +199,9 @@ const SEARCH_RESULT = { content: [{ type: 'text', text: 'ok' }] }
 const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-haiku-4.5' }
 
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }
+
+type ScriptedToolCall = {
+    id: string
+    toolName: string
+    input: string
+}
