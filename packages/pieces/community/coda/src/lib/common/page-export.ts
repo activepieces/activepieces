@@ -18,12 +18,24 @@ async function startExport({ token, pagePath, format }: { token: string; pagePat
 	});
 }
 
-async function getExportStatus({ token, pagePath, exportId }: { token: string; pagePath: string; exportId: string }): Promise<ExportStatus> {
+async function getExportStatus({
+	token,
+	pagePath,
+	exportId,
+	timeoutMs,
+}: {
+	token: string;
+	pagePath: string;
+	exportId: string;
+	timeoutMs?: number;
+}): Promise<ExportStatus> {
 	return codaApi.request<ExportStatus>({
 		token,
 		method: HttpMethod.GET,
 		path: `${pagePath}/export/${codaApi.pathSegment({ value: exportId, label: 'Export ID' })}`,
 		operation: 'check page export',
+		timeoutMs,
+		retryRateLimits: timeoutMs === undefined,
 	});
 }
 
@@ -40,13 +52,18 @@ async function waitForExport({
 	wait?: (ms: number) => Promise<void>;
 	now?: () => number;
 }): Promise<ExportStatus | undefined> {
+	codaApi.pathSegment({ value: exportId, label: 'Export ID' });
 	const deadline = now() + EXPORT_WAIT_MS;
 	for (let attempt = 0; ; attempt++) {
-		const status = await getExportStatus({ token, pagePath, exportId });
-		if (status.status === 'complete') {
+		const budget = codaApi.pollRequestBudget({ deadline, now });
+		if (budget === undefined) {
+			return undefined;
+		}
+		const status = await pollExport({ token, pagePath, exportId, timeoutMs: budget });
+		if (status?.status === 'complete') {
 			return status;
 		}
-		if (status.status === 'failed') {
+		if (status?.status === 'failed') {
 			throw new Error(`Coda could not export the page: ${status.error ?? 'no reason given'}`);
 		}
 		const remaining = deadline - now();
@@ -54,6 +71,19 @@ async function waitForExport({
 			return undefined;
 		}
 		await wait(Math.min(EXPORT_POLL_DELAYS_MS[attempt] ?? EXPORT_POLL_STEP_MS, remaining));
+	}
+}
+
+// One status check; a timeout, rate limit or server error counts as "not ready yet" so the
+// caller gets the export ID back to resume instead of a failed step.
+async function pollExport(params: { token: string; pagePath: string; exportId: string; timeoutMs: number }): Promise<ExportStatus | undefined> {
+	try {
+		return await getExportStatus(params);
+	} catch (error) {
+		if (codaApi.statusOf(error) !== 404 && codaApi.isTransientPollError(error)) {
+			return undefined;
+		}
+		throw error;
 	}
 }
 

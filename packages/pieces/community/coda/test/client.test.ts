@@ -28,6 +28,8 @@ describe('parseDocId', () => {
 		['https://coda.io/d/My-Doc_dAbC123xyZ/Page_suXYZ#_tugrid-1', 'AbC123xyZ'],
 		['https://docs.superhuman.com/d/_dMG3aOhChDA', 'MG3aOhChDA'],
 		['https://www.coda.io/d/_dMG3aOhChDA/_suBzIp5A', 'MG3aOhChDA'],
+		['https://coda.io/d/My_draft_dAbC123', 'AbC123'],
+		['https://coda.io/d/Q3_data_dump_dXy-9_Z/Page_su1', 'Xy-9_Z'],
 	])('%s → %s', (input, expected) => {
 		expect(codaApi.parseDocId(input)).toBe(expected);
 	});
@@ -146,9 +148,46 @@ describe('waitForMutation', () => {
 		expect(seen.length).toBeLessThanOrEqual(6);
 	});
 
-	test('other errors fail', async () => {
-		stubFetch(() => ({ status: 500, body: { message: 'boom' } }));
-		await expect(runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r' }))).rejects.toThrow(/boom/);
+	test('auth errors fail but keep the request id so the write is not repeated', async () => {
+		stubFetch(() => ({ status: 401, body: { message: 'boom' } }));
+		const failure = runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r-9' }));
+		await expect(failure).rejects.toThrow(/request ID r-9.*do not repeat.*boom/s);
+	});
+
+	test('server errors and rate limits keep polling, then return pending', async () => {
+		const seen = stubFetch(replies([{ status: 500, body: { message: 'boom' } }, { status: 429 }, { body: { completed: true } }]));
+		await expect(runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r' }))).resolves.toEqual({ requestId: 'r', completed: true, warning: null });
+		expect(seen).toHaveLength(3);
+		stubFetch(() => ({ status: 503 }));
+		await expect(runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r', timeoutMs: 5_000 }))).resolves.toEqual({
+			requestId: 'r',
+			completed: false,
+			warning: null,
+		});
+	});
+
+	test('a hanging status check is cut at the wait budget and returns pending', async () => {
+		let calls = 0;
+		vi.stubGlobal(
+			'fetch',
+			vi.fn((_input: unknown, init?: RequestInit) => {
+				calls++;
+				return new Promise<Response>((_resolve, reject) => {
+					init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+				});
+			}),
+		);
+		const start = Date.now();
+		const result = await runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r', timeoutMs: 10_000 }));
+		expect(result).toEqual({ requestId: 'r', completed: false, warning: null });
+		expect(Date.now() - start).toBeLessThanOrEqual(10_000);
+		expect(calls).toBeGreaterThanOrEqual(1);
+	});
+
+	test('pollRequestBudget never exceeds the remaining time', () => {
+		expect(codaApi.pollRequestBudget({ deadline: 5_000, now: () => 0 })).toBe(5_000);
+		expect(codaApi.pollRequestBudget({ deadline: 100_000, now: () => 0 })).toBe(30_000);
+		expect(codaApi.pollRequestBudget({ deadline: 500, now: () => 0 })).toBeUndefined();
 	});
 
 	test('settleMutation skips waiting when turned off and refuses a missing request id', async () => {

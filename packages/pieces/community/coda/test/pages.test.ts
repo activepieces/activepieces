@@ -112,6 +112,34 @@ describe('get_page_content', () => {
 		expect(result).toEqual({ pageId: 'canvas-1', format: 'html', completed: false, exportId: 'exp1', content: null, truncated: false });
 		expect(seen.every((request) => request.method === 'GET')).toBe(true);
 	});
+	test('a hanging or failing status check returns the export id to resume instead of failing', async () => {
+		stubFetch(() => ({ status: 503 }));
+		await expect(run(getPageContentAction)({ docId: 'd', pageIdOrName: 'p', outputFormat: 'markdown', exportId: 'exp1' })).resolves.toEqual({
+			pageId: 'p',
+			format: 'markdown',
+			completed: false,
+			exportId: 'exp1',
+			content: null,
+			truncated: false,
+		});
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(
+				(_input: unknown, init?: RequestInit) =>
+					new Promise<Response>((_resolve, reject) => {
+						init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+					}),
+			),
+		);
+		const start = Date.now();
+		const result = await run(getPageContentAction)({ docId: 'd', pageIdOrName: 'p', outputFormat: 'markdown', exportId: 'exp1' });
+		expect(result).toMatchObject({ completed: false, exportId: 'exp1' });
+		expect(Date.now() - start).toBeLessThanOrEqual(60_000);
+	});
+	test('an unknown export id fails instead of waiting', async () => {
+		stubFetch(() => ({ status: 404, body: { message: 'no such export' } }));
+		await expect(run(getPageContentAction)({ docId: 'd', pageIdOrName: 'p', outputFormat: 'markdown', exportId: 'nope' })).rejects.toThrow(/no such export/);
+	});
 	test('failed export throws', async () => {
 		stubFetch((request) => (request.method === 'POST' ? { status: 202, body: { id: 'e' } } : { body: { id: 'e', status: 'failed', error: 'too big' } }));
 		await expect(run(getPageContentAction)({ docId: 'd', pageIdOrName: 'p', outputFormat: 'markdown' })).rejects.toThrow(/too big/);

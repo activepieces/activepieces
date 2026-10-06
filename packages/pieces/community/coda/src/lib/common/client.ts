@@ -10,6 +10,7 @@ const RATE_LIMIT_RETRY_DELAYS_MS = [3_000, 6_000];
 const MUTATION_POLL_DELAYS_MS = [1_000, 2_000, 3_000];
 const MUTATION_POLL_STEP_MS = 3_000;
 const DEFAULT_MUTATION_WAIT_MS = 30_000;
+const MIN_POLL_REQUEST_MS = 1_000;
 const MAX_ERROR_TEXT = 500;
 const DOC_LINK_HOSTS = ['coda.io', 'docs.superhuman.com'];
 const DOC_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -119,7 +120,7 @@ function parseDocId(input: unknown): string {
 	}
 	const parts = url.pathname.split('/').filter((part) => part.length > 0);
 	const slug = parts[0] === 'd' ? parts[1] : undefined;
-	const marker = slug ? slug.indexOf('_d') : -1;
+	const marker = slug ? slug.lastIndexOf('_d') : -1;
 	const id = slug && marker >= 0 ? slug.slice(marker + 2) : undefined;
 	if (!id || !DOC_ID_PATTERN.test(id)) {
 		throw new Error(`Could not find a doc ID in "${text}". Paste a link like https://coda.io/d/My-Doc_dAbC123 or the doc ID itself.`);
@@ -162,13 +163,13 @@ function authHeaders(token: string): Record<string, string> {
 	return { Authorization: `Bearer ${token.trim()}` };
 }
 
-async function request<T>({ token, method, path, operation, query, body, wait = sleep }: CodaRequest): Promise<T> {
+async function request<T>({ token, method, path, operation, query, body, wait = sleep, timeoutMs = REQUEST_TIMEOUT_MS, retryRateLimits = true }: CodaRequest): Promise<T> {
 	const httpRequest: HttpRequest = {
 		method,
 		url: `${CODA_BASE_URL}${path}`,
 		authentication: { type: AuthenticationType.BEARER_TOKEN, token: token.trim() },
 		queryParams: toQueryParams(query),
-		timeout: REQUEST_TIMEOUT_MS,
+		timeout: timeoutMs,
 		followRedirects: false,
 	};
 	if (body !== undefined) {
@@ -190,7 +191,7 @@ async function request<T>({ token, method, path, operation, query, body, wait = 
 			if (status === undefined) {
 				throw error;
 			}
-			if ((status === 429 || status === 409) && attempt < RATE_LIMIT_RETRY_DELAYS_MS.length) {
+			if (retryRateLimits && (status === 429 || status === 409) && attempt < RATE_LIMIT_RETRY_DELAYS_MS.length) {
 				await wait(RATE_LIMIT_RETRY_DELAYS_MS[attempt]);
 				continue;
 			}
@@ -199,13 +200,28 @@ async function request<T>({ token, method, path, operation, query, body, wait = 
 	}
 }
 
-async function getMutationStatus({ token, requestId }: { token: string; requestId: string }): Promise<MutationStatus> {
+async function getMutationStatus({ token, requestId, timeoutMs }: { token: string; requestId: string; timeoutMs?: number }): Promise<MutationStatus> {
 	return request<MutationStatus>({
 		token,
 		method: HttpMethod.GET,
 		path: `/mutationStatus/${pathSegment({ value: requestId, label: 'Request ID' })}`,
 		operation: 'get mutation status',
+		timeoutMs,
+		retryRateLimits: timeoutMs === undefined,
 	});
+}
+
+// A status check that times out, is rate limited or hits a Coda server error says nothing
+// about the write itself, so polling keeps going until the wait budget runs out.
+function isTransientPollError(error: unknown): boolean {
+	const status = statusOf(error);
+	return status === undefined || status === 404 || status === 408 || status === 409 || status === 429 || status >= 500;
+}
+
+// Time left for one poll request, or undefined when the budget is too small to start one.
+function pollRequestBudget({ deadline, now }: { deadline: number; now: () => number }): number | undefined {
+	const remaining = deadline - now();
+	return remaining < MIN_POLL_REQUEST_MS ? undefined : Math.min(REQUEST_TIMEOUT_MS, remaining);
 }
 
 async function waitForMutation({
@@ -221,6 +237,7 @@ async function waitForMutation({
 	now?: () => number;
 	wait?: (ms: number) => Promise<void>;
 }): Promise<MutationWaitResult> {
+	pathSegment({ value: requestId, label: 'Request ID' });
 	const deadline = now() + timeoutMs;
 	for (let attempt = 0; ; attempt++) {
 		const remaining = deadline - now();
@@ -228,14 +245,20 @@ async function waitForMutation({
 			return { requestId, completed: false, warning: null };
 		}
 		await wait(Math.min(MUTATION_POLL_DELAYS_MS[attempt] ?? MUTATION_POLL_STEP_MS, remaining));
+		const budget = pollRequestBudget({ deadline, now });
+		if (budget === undefined) {
+			return { requestId, completed: false, warning: null };
+		}
 		try {
-			const status = await getMutationStatus({ token, requestId });
+			const status = await getMutationStatus({ token, requestId, timeoutMs: budget });
 			if (status.completed) {
 				return { requestId, completed: true, warning: status.warning ?? null };
 			}
 		} catch (error) {
-			if (statusOf(error) !== 404) {
-				throw error;
+			if (!isTransientPollError(error)) {
+				throw new Error(
+					`Coda accepted the change (request ID ${requestId}) but checking its status failed, so do not repeat the change; check it later with Get Mutation Status. ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		}
 	}
@@ -324,6 +347,8 @@ export const codaApi = {
 	settleMutation,
 	toPageOutput,
 	validateLimit,
+	isTransientPollError,
+	pollRequestBudget,
 	buildRowQuery,
 	statusOf,
 	isRecord,
@@ -341,6 +366,8 @@ export type CodaRequest = {
 	query?: Record<string, CodaQueryValue>;
 	body?: unknown;
 	wait?: (ms: number) => Promise<void>;
+	timeoutMs?: number;
+	retryRateLimits?: boolean;
 };
 
 export type MutationStatus = {
