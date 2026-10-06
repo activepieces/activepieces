@@ -3330,5 +3330,8 @@
   "Exit full screen": "Exit full screen",
   "Full screen": "Full screen",
   "Findings": "Findings",
-  "Made": "Made"
+  "Made": "Made",
+  "{count, plural, =1 {1 source} other {# sources}}": "{count, plural, =1 {1 source} other {# sources}}",
+  "Read {page}": "Read {page}",
+  "Searched “{query}”": "Searched “{query}”"
 }

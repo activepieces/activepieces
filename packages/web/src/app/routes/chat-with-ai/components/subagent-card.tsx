@@ -1,4 +1,4 @@
-import { isObject } from '@activepieces/core-utils';
+import { isNil, isObject } from '@activepieces/core-utils';
 import { SubagentActivity } from '@activepieces/shared';
 import { t } from 'i18next';
 import { motion } from 'motion/react';
@@ -8,13 +8,16 @@ import { createPortal } from 'react-dom';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
-import { AnyToolPart, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { chatPartUtils } from '@/features/chat/lib/chat-types';
 import { cn } from '@/lib/utils';
+
+import { TaskBuilder } from '../lib/message-blocks';
 
 import {
   AppLogos,
   Duration,
   LiveLine,
+  ReadFavicons,
   StatusMark,
 } from './subagent-primitives';
 import { TaskPanel, TaskPanelSlotContext } from './task-panel';
@@ -24,7 +27,7 @@ export function SubagentGroup({
   toolCallMeta,
   isStreaming,
 }: {
-  tasks: { toolCallId: string; part: AnyToolPart }[];
+  tasks: TaskBuilder[];
   toolCallMeta: Record<string, ToolCallMeta>;
   isStreaming: boolean;
 }) {
@@ -32,11 +35,11 @@ export function SubagentGroup({
   const openTaskPanel = useChatStoreContext((s) => s.openTaskPanel);
   const closeTaskPanel = useChatStoreContext((s) => s.closeTaskPanel);
   const panelSlot = useContext(TaskPanelSlotContext);
-  const activities = tasks.map(({ toolCallId, part }) => ({
-    toolCallId,
+  const activities = tasks.map((task) => ({
+    toolCallId: task.toolCallId,
     activity: resolveActivity({
-      live: toolCallMeta[toolCallId]?.subagent,
-      part,
+      live: toolCallMeta[task.toolCallId]?.subagent,
+      task,
       isStreaming,
     }),
   }));
@@ -119,6 +122,7 @@ function SubagentRow({
           <LiveLine activity={activity} />
         </div>
         <AppLogos pieces={activity.pieces ?? []} />
+        <ReadFavicons timeline={activity.timeline ?? []} />
         <Duration activity={activity} />
       </button>
     </div>
@@ -127,32 +131,39 @@ function SubagentRow({
 
 function resolveActivity({
   live,
-  part,
+  task,
   isStreaming,
 }: {
   live: SubagentActivity | undefined;
-  part: AnyToolPart;
+  task: TaskBuilder;
   isStreaming: boolean;
 }): SubagentActivity {
-  const saved = activityFromOutput(part);
+  const saved = activityFromOutput(task);
   if (saved) return saved;
   if (live) {
     const stoppedMidRun = live.status === 'running' && !isStreaming;
     return stoppedMidRun ? { ...live, status: 'failed' } : live;
   }
-  const input = isObject(part.input) ? part.input : {};
+  const input = isObject(task.part.input) ? task.part.input : {};
+  const inputTitle =
+    typeof input['title'] === 'string' ? input['title'] : undefined;
   return {
-    title: typeof input['title'] === 'string' ? input['title'] : t('Task'),
+    title: task.fallbackTitle ?? inputTitle ?? t('Task'),
     status: isStreaming ? 'running' : 'failed',
     stepCount: 0,
     startedAt: '',
   };
 }
 
-function activityFromOutput(part: AnyToolPart): SubagentActivity | null {
-  const parsed = chatPartUtils.parseToolOutput(part);
+function activityFromOutput(task: TaskBuilder): SubagentActivity | null {
+  const parsed = chatPartUtils.parseToolOutput(task.part);
   if (parsed.state !== 'success' || !isObject(parsed.data)) return null;
-  const activity = parsed.data['activity'];
+  const output = isNil(task.researchIndex)
+    ? parsed.data
+    : Array.isArray(parsed.data['tasks'])
+    ? parsed.data['tasks'][task.researchIndex]
+    : undefined;
+  const activity = isObject(output) ? output['activity'] : undefined;
   return isSubagentActivity(activity) ? activity : null;
 }
 

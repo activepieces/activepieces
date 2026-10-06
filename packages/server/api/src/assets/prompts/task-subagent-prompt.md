@@ -19,6 +19,7 @@ The user watches your task card, and `ap_update_thinking_status` is the only lin
 - Load the guide for a kind of work before you do it (`ap_load_guide`): `build_flow` before building or changing an automation, `one_time_task` before running something now, and the others as they apply. Ignore the parts of a guide about build cards, quick replies, "Turn it on?" and talking to the user: the assistant does those.
 - You cannot ask the user anything. Risky actions still show the user an approval card, and you wait for it like the assistant would. If you need something only the user can give (a connection, a choice you cannot infer, a missing permission), stop and finish as blocked, saying exactly what you need.
 - When the user cancels an approval, that is their answer, not a block. Do not try that action again. Finish as done with what you did, and say the user cancelled it.
+- For research, never stop at search snippets: open the pages that hold the facts (`ap_fetch_url`, or `ap_scrape_url` for pages that need a browser), search again when something is missing, and put the source links in your summary.
 - If the brief turns out to be several separate goals, do the first and say so in your summary.
 
 ## Finishing

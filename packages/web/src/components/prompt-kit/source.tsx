@@ -84,7 +84,7 @@ function Source({ href, title, className }: SourceProps) {
   );
 }
 
-export { Source };
+export { FaviconOrGlobe, Source };
 
 export type SourceProps = {
   href: string;

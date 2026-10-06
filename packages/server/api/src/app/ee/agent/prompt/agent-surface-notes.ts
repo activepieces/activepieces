@@ -36,6 +36,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
         })
         + (isChat && agentsAvailable ? AGENTS_NOTE : '')
         + (isChat && tasksAvailable ? `\n\n${agentPrompt.subagentsNote}` : '')
+        + (isChat && tasksAvailable && searchAvailable && readsTheWeb ? `\n\n${agentPrompt.researchNote}` : '')
         + (isChat && tasksAvailable && !isNil(tasks) && tasks.length > 0 ? buildTasksNote(tasks) : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')

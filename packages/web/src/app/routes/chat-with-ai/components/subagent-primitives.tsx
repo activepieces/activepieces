@@ -1,9 +1,10 @@
-import { SubagentActivity } from '@activepieces/shared';
+import { SubagentActivity, SubagentTimelineEntry } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Hand, Loader2, Minus } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
+import { FaviconOrGlobe } from '@/components/prompt-kit/source';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -94,6 +95,34 @@ export function AppLogos({ pieces }: { pieces: string[] }) {
   );
 }
 
+export function ReadFavicons({
+  timeline,
+}: {
+  timeline: SubagentTimelineEntry[];
+}) {
+  const pages = readPages(timeline);
+  if (pages.length === 0) return null;
+  const shown = pages.slice(0, MAX_LOGOS);
+  const extra = pages.length - shown.length;
+  return (
+    <div className="flex shrink-0 items-center">
+      {shown.map((page) => (
+        <span
+          key={page.url}
+          className="flex size-5 items-center justify-center rounded-full bg-panel ring-2 ring-panel not-first:ml-1"
+        >
+          <FaviconOrGlobe url={page.url} size="sm" />
+        </span>
+      ))}
+      {extra > 0 && (
+        <span className="pl-1 text-xss text-gray-11 tabular-nums">
+          +{extra}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function Duration({ activity }: { activity: SubagentActivity }) {
   if (activity.status === 'running') {
     return activity.startedAt.length > 0 ? (
@@ -143,6 +172,20 @@ function AppLogo({ pieceName }: { pieceName: string }) {
     />
   );
 }
+
+function readPages(
+  timeline: SubagentTimelineEntry[],
+): { url: string; title?: string }[] {
+  const pages = timeline.flatMap((entry) =>
+    entry.kind === 'read' ? [{ url: entry.url, title: entry.title }] : [],
+  );
+  return pages.filter(
+    (page, index) =>
+      pages.findIndex((other) => other.url === page.url) === index,
+  );
+}
+
+export const subagentTimelineUtils = { readPages };
 
 const MAX_LOGOS = 3;
 const PLUMBING_PIECES = ['@activepieces/piece-subflows'];

@@ -93,7 +93,15 @@ export type BuildPlanEvent = {
     updatedAt: string
 }
 
-export type SubagentTimelineEntry = { kind: 'status', text: string }
+export type SubagentLink = {
+    url: string
+    title?: string
+}
+
+export type SubagentTimelineEntry =
+    | { kind: 'status', text: string }
+    | { kind: 'search', query: string, results: SubagentLink[] }
+    | { kind: 'read', url: string, title?: string }
 
 export type SubagentActivity = {
     taskId?: string
