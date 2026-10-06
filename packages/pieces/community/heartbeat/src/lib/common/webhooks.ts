@@ -57,18 +57,41 @@ async function disable({ token, store }: { token: string; store: WebhookStore })
 
 async function isFirstDelivery({ store, key }: { store: WebhookStore; key: string }): Promise<boolean> {
   const claimKey = claimKeyOf(key);
-  if ((await store.get<DeliveryClaim>(claimKey)) !== null) {
+  const existing = await store.get<DeliveryClaim>(claimKey);
+  if (existing !== null && !isAbandoned({ claim: existing, now: Date.now() })) {
     return false;
   }
   const token = randomUUID();
-  await store.put<DeliveryClaim>(claimKey, { token });
-  await heartbeatApi.sleep(CLAIM_SETTLE_MS);
-  const winner = await store.get<DeliveryClaim>(claimKey);
-  if (winner?.token !== token) {
-    return false;
+  const at = Date.now();
+  try {
+    await store.put<DeliveryClaim>(claimKey, { token, at, done: false });
+    await heartbeatApi.sleep(CLAIM_SETTLE_MS);
+    const winner = await store.get<DeliveryClaim>(claimKey);
+    if (winner?.token !== token) {
+      return false;
+    }
+    await rememberClaim({ store, claimKey });
+    await store.put<DeliveryClaim>(claimKey, { token, at, done: true });
+    return true;
+  } catch (error) {
+    await releaseClaim({ store, claimKey, token });
+    throw error;
   }
-  await rememberClaim({ store, claimKey });
-  return true;
+}
+
+function isAbandoned({ claim, now }: { claim: DeliveryClaim; now: number }): boolean {
+  return claim.done === false && typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
+}
+
+async function releaseClaim({ store, claimKey, token }: { store: WebhookStore; claimKey: string; token: string }): Promise<void> {
+  try {
+    const current = await store.get<DeliveryClaim>(claimKey);
+    if (current?.token === token) {
+      await store.delete(claimKey);
+    }
+  } catch {
+    // Store still failing: the unfinished claim is treated as abandoned after ABANDONED_CLAIM_MS, so a later retry can emit the event.
+  }
 }
 
 function claimKeyOf(key: string): string {
@@ -121,6 +144,7 @@ const SEEN_STORE_KEY = 'heartbeat_seen_deliveries';
 const MAX_SEEN_KEYS = 500;
 const CLAIM_KEY_PREFIX = 'hb_delivery_';
 const CLAIM_SETTLE_MS = 500;
+const ABANDONED_CLAIM_MS = 60_000;
 
 export const heartbeatWebhooks = {
   enable,
@@ -133,11 +157,12 @@ export const heartbeatWebhooks = {
   WEBHOOK_STORE_KEY,
   SEEN_STORE_KEY,
   claimKeyOf,
+  ABANDONED_CLAIM_MS,
 };
 
 type StoredWebhook = { webhookId: string };
 
-type DeliveryClaim = { token: string };
+type DeliveryClaim = { token: string; at?: number; done?: boolean };
 
 type WebhookStore = {
   get<T>(key: string): Promise<T | null>;

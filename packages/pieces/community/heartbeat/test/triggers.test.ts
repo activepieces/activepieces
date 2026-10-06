@@ -99,6 +99,41 @@ describe('webhook lifecycle', () => {
 		]);
 		expect([first, second].filter(Boolean)).toHaveLength(1);
 	});
+	test('a store failure after claiming releases the claim so the retry emits', async () => {
+		const store = memoryStore();
+		const put = store.put;
+		store.put = async (key, value) => {
+			if (key === heartbeatWebhooks.SEEN_STORE_KEY) {
+				throw new Error('store down');
+			}
+			return put(key, value);
+		};
+		await expect(heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' })).rejects.toThrow('store down');
+		expect(store.read(heartbeatWebhooks.claimKeyOf('MENTION:a'))).toBeUndefined();
+		store.put = put;
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' })).toBe(true);
+	});
+	test('an unfinished claim that could not be released expires, a finished one never does', async () => {
+		vi.setSystemTime(new Date('2026-10-06T12:00:00Z'));
+		const store = memoryStore();
+		const put = store.put;
+		store.put = async (key, value) => {
+			if (key === heartbeatWebhooks.SEEN_STORE_KEY) {
+				throw new Error('store down');
+			}
+			return put(key, value);
+		};
+		store.delete = async () => {
+			throw new Error('store down');
+		};
+		await expect(heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' })).rejects.toThrow('store down');
+		store.put = put;
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' })).toBe(false);
+		vi.setSystemTime(Date.now() + heartbeatWebhooks.ABANDONED_CLAIM_MS + 1);
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' })).toBe(true);
+		vi.setSystemTime(Date.now() + heartbeatWebhooks.ABANDONED_CLAIM_MS * 10);
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' })).toBe(false);
+	});
 	test('overlapping deliveries of different events both emit and keep each other', async () => {
 		const store = memoryStore();
 		const results = await Promise.all([
@@ -210,16 +245,17 @@ describe('trigger runs re-fetch and dedupe', () => {
 		expect(seen.map((r) => r.path)).toEqual([`/directMessages/${IDS.chat}`]);
 		expect(result).toEqual([{ chatId: IDS.chat, messageId: IDS.message, senderUserId: IDS.user, receiverUserId: IDS.admin, content: '<p>hi</p>', createdAt: 't', images: [], files: [] }]);
 	});
-	test('new direct message confirms the chat belongs to the admin when the admin has not written in it', async () => {
-		const seen = stubFetch((request) => (request.method === 'PUT' ? { body: { chatID: IDS.chat } } : { body: [{ id: IDS.message, userID: IDS.user }] }));
+	test('new direct message accepts a first message before the admin has replied, using reads only', async () => {
+		const seen = stubFetch(replies([{ body: [{ id: IDS.message, userID: IDS.user }] }]));
 		const context = triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } });
 		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toHaveLength(1);
-		expect(seen[1]).toMatchObject({ method: 'PUT', path: '/directChats', body: { userID1: IDS.admin, userID2: IDS.user } });
+		expect(seen.map((request) => request.method)).toEqual(['GET']);
 	});
-	test('new direct message ignores chats that do not include the admin', async () => {
-		stubFetch((request) => (request.method === 'PUT' ? { body: { chatID: IDS.thread } } : { body: [{ id: IDS.message, userID: IDS.user }] }));
+	test('new direct message ignores chats where someone other than the admin and sender wrote', async () => {
+		const seen = stubFetch(replies([{ body: [{ id: 'x', userID: IDS.group }, { id: IDS.message, userID: IDS.user }] }]));
 		const context = triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } });
 		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toEqual([]);
+		expect(seen.map((request) => request.method)).toEqual(['GET']);
 	});
 	test('new direct message ignores messages the admin sent', async () => {
 		stubFetch(replies([{ body: [{ id: IDS.message, userID: IDS.admin }] }]));
