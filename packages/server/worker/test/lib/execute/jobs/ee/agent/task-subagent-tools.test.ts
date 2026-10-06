@@ -83,6 +83,25 @@ describe('createTaskSubagentTools', () => {
         expect(mainPhase.phase).toBe('build')
     })
 
+    it('sends the growing timeline with every live update', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet, sinks: { onProgress: (progress: { uiParts: unknown[] }) => void } }) => {
+            const first = { type: PersistedAgentPartType.THINKING_STATUS, text: 'Looking at your Leads table' }
+            params.sinks.onProgress({ uiParts: [first] })
+            params.sinks.onProgress({ uiParts: [first, { type: PersistedAgentPartType.THINKING_STATUS, text: 'Checking the flow works' }] })
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Built.', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })
+
+        await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        const running = emitSubagentProgress.mock.calls.map(([event]) => event.data).filter((data) => data.status === 'running' && (data.timeline ?? []).length > 0)
+        expect(running.map((data) => data.timeline)).toEqual([
+            [{ kind: 'status', text: 'Looking at your Leads table' }],
+            [{ kind: 'status', text: 'Looking at your Leads table' }, { kind: 'status', text: 'Checking the flow works' }],
+        ])
+    })
+
     it('streams its status steps as a timeline', async () => {
         runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Built.', artifacts: [] }, EXECUTION_OPTIONS)

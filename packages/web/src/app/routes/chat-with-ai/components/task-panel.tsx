@@ -2,13 +2,14 @@ import { SubagentActivity } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Loader2, Maximize2, Minimize2, X } from 'lucide-react';
 import { motion } from 'motion/react';
-import { createContext, useState } from 'react';
+import { createContext, useState, useSyncExternalStore } from 'react';
 
 import {
   ChatContainerContent,
   ChatContainerRoot,
 } from '@/components/prompt-kit/chat-container';
 import { Markdown } from '@/components/prompt-kit/markdown';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 import { PreviewIconButton } from './previews/preview-card';
@@ -26,35 +27,28 @@ export function TaskPanel({
   onClose: () => void;
 }) {
   const [fullscreen, setFullscreen] = useState(false);
+  const docked = useDocked();
   const selected = tasks.find(
     ({ toolCallId }) => toolCallId === selectedToolCallId,
   );
   if (!selected) return null;
-
-  return (
-    <motion.aside
-      initial={{ opacity: 0, x: 24 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-      className={cn(
-        'flex h-full flex-col bg-panel',
-        fullscreen
-          ? 'fixed inset-0 z-50'
-          : 'max-lg:fixed max-lg:inset-0 max-lg:z-50 lg:w-[460px] lg:shrink-0 lg:border-l xl:w-[540px]',
-      )}
-    >
+  const title =
+    tasks.length > 1
+      ? t('{count} tasks', { count: tasks.length })
+      : selected.activity.title;
+  const body = (
+    <>
       <div className="flex items-center gap-1 border-b px-4 py-2.5">
         <p className="flex-1 truncate text-sm font-medium text-gray-12">
-          {tasks.length > 1
-            ? t('{count} tasks', { count: tasks.length })
-            : selected.activity.title}
+          {title}
         </p>
-        <PreviewIconButton
-          icon={fullscreen ? Minimize2 : Maximize2}
-          label={fullscreen ? t('Exit full screen') : t('Full screen')}
-          onClick={() => setFullscreen((value) => !value)}
-          className="max-lg:hidden"
-        />
+        {docked && (
+          <PreviewIconButton
+            icon={fullscreen ? Minimize2 : Maximize2}
+            label={fullscreen ? t('Exit full screen') : t('Full screen')}
+            onClick={() => setFullscreen((value) => !value)}
+          />
+        )}
         <PreviewIconButton icon={X} label={t('Close')} onClick={onClose} />
       </div>
 
@@ -84,8 +78,59 @@ export function TaskPanel({
         activity={selected.activity}
         wide={fullscreen}
       />
+    </>
+  );
+
+  if (fullscreen || !docked) {
+    return (
+      <Dialog
+        open
+        onOpenChange={(open) => {
+          if (open) return;
+          if (fullscreen && docked) {
+            setFullscreen(false);
+          } else {
+            onClose();
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          showOverlay={false}
+          aria-describedby={undefined}
+          className="inset-0 top-0 left-0 flex h-full w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0 data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0"
+        >
+          <DialogTitle className="sr-only">{title}</DialogTitle>
+          {body}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <motion.aside
+      initial={{ opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25 }}
+      className="flex h-full w-[460px] shrink-0 flex-col border-l bg-panel xl:w-[540px]"
+    >
+      {body}
     </motion.aside>
   );
+}
+
+function useDocked(): boolean {
+  return useSyncExternalStore(
+    subscribeToDocking,
+    () => window.matchMedia(DOCKED_MEDIA_QUERY).matches,
+    () => true,
+  );
+}
+
+function subscribeToDocking(onChange: () => void): () => void {
+  const query = window.matchMedia(DOCKED_MEDIA_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
 }
 
 function TaskDetails({
@@ -206,3 +251,5 @@ export function TaskPanelLayout({ children }: { children: React.ReactNode }) {
 }
 
 export const TaskPanelSlotContext = createContext<HTMLElement | null>(null);
+
+const DOCKED_MEDIA_QUERY = '(min-width: 1024px)';
