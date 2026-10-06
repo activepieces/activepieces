@@ -17,8 +17,8 @@ export const engineRpcHandlers = ({ log, basePath, getSettings, provision }: Eng
             return
         }
         const pieceKey = `${pieceName}@${pieceVersion}`
-        await diskLock(join(basePath, 'locks')).runExclusive({
-            key: `force-reinstall-${pieceKey}`,
+        await diskLock(join(basePath, 'force-install-lock')).runExclusive({
+            key: pieceKey,
             timeoutMs: FORCE_REINSTALL_LOCK_TIMEOUT_MS,
             fn: async () => {
                 const stampPath = reinstallStampPath(basePath, pieceKey)
