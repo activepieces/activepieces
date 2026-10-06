@@ -163,11 +163,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
 
 function StatBar({ label, value, detail }: StatBarProps) {
   const barColor =
-    value > 95
-      ? 'bg-danger-11'
-      : value > 80
-      ? 'bg-warning-11'
-      : 'bg-success-11';
+    value > 95 ? 'bg-danger-9' : value > 80 ? 'bg-warning-9' : 'bg-success-9';
 
   return (
     <div className="flex items-center gap-2">

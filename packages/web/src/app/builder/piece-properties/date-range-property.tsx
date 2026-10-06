@@ -59,7 +59,7 @@ function DateRangeProperty({
                 aria-pressed={selected}
                 onClick={() => selectPreset(option.value)}
                 className={cn(
-                  'rounded-full border px-3 py-1 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent-8/50',
+                  'rounded-full border px-3 py-1 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gray-8/50',
                   selected
                     ? 'border-accent-9 bg-accent-3 text-accent-11'
                     : 'border-gray-6 text-gray-11 hover:text-gray-12',

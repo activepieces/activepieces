@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  flowCanvasUtils as sharedFlowCanvasUtils,
   FlowActionType,
   flowStructureUtil,
   FlowTriggerType,
@@ -162,7 +161,7 @@ export const FlowCanvas = React.memo(
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
           flowStructureUtil.isBranchedAction(step) ||
-          sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+          flowStructureUtil.hasContinueOnFailureBranches(step)
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)
@@ -253,7 +252,7 @@ export const FlowCanvas = React.memo(
                 size={1}
                 variant={BackgroundVariant.Dots}
                 bgColor={`var(--gray-2)`}
-                color={`var(--gray-5)`}
+                color={`var(--gray-8)`}
               />
               <Minimap key={graphKey} />
             </ReactFlow>
@@ -284,8 +283,7 @@ const getChildrenKey = (step: Step) => {
       }, '');
     case FlowActionType.CODE:
     case FlowActionType.PIECE: {
-      const cofEnabled =
-        sharedFlowCanvasUtils.hasContinueOnFailureBranches(step);
+      const cofEnabled = flowStructureUtil.hasContinueOnFailureBranches(step);
       const branches = step.continueOnFailureBranches;
       const onSuccessKey = branches?.onSuccess
         ? flowStructureUtil

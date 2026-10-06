@@ -17,6 +17,7 @@ const PieceIcon = React.memo(
             alt={displayName}
             size={size}
             border={border}
+            tint
           />
         </div>
       </TooltipTrigger>

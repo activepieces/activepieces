@@ -4,6 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { AppConnectionType } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { oauth2 as googleOauth2 } from '@googleapis/oauth2';
 import { JWT, OAuth2Client } from 'google-auth-library';
 
@@ -23,6 +24,19 @@ export const gmailAuth = [
     tokenUrl: 'https://oauth2.googleapis.com/token',
     required: true,
     scope: gmailScopes,
+    getConnectionIdentifier: async ({ auth }) => {
+      try {
+        const response = await httpClient.sendRequest<GmailProfile>({
+          method: HttpMethod.GET,
+          url: 'https://gmail.googleapis.com/gmail/v1/users/me/profile',
+          headers: { Authorization: `Bearer ${auth.access_token}` },
+          timeout: 5000,
+        });
+        return response.body?.emailAddress || undefined;
+      } catch {
+        return undefined;
+      }
+    },
   }),
   PieceAuth.CustomAuth({
     displayName: 'Service Account (Advanced)',
@@ -115,3 +129,5 @@ export async function getUserEmail(
       .data.email ?? undefined
   );
 }
+
+type GmailProfile = { emailAddress?: string };

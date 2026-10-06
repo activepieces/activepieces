@@ -146,7 +146,7 @@ function CapabilityCard({
           <span className="flex min-w-0 items-center gap-1.5 text-xs text-gray-11">
             <span
               className={cn('size-1.5 shrink-0 rounded-full', {
-                'bg-success-11': inUse,
+                'bg-success-10': inUse,
                 'border border-gray-8': !inUse,
               })}
             />

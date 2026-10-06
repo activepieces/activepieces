@@ -222,7 +222,7 @@ function FilterRow({
         aria-label={t('Remove filter')}
         disabled={disabled}
         onClick={onRemove}
-        className="flex h-[38px] w-[30px] shrink-0 items-center justify-center rounded-md text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
+        className="flex h-[38px] w-[30px] shrink-0 items-center justify-center rounded-md text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50"
       >
         <X className="size-4" />
       </button>
@@ -283,7 +283,7 @@ function AddFilterPopover({
           <button
             type="button"
             disabled={disabled}
-            className="flex w-full items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-dashed border-accent-6 bg-accent-3 py-[13px] text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-4 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-dashed border-accent-6 bg-accent-3 py-[13px] text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-4 focus-visible:ring-2 focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50"
           >
             <Plus className="size-4" />
             {t('Add filter')}
@@ -292,7 +292,7 @@ function AddFilterPopover({
           <button
             type="button"
             disabled={disabled}
-            className="flex items-center gap-2 rounded-[9px] border border-gray-6 bg-gray-1 px-3.5 py-2 text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-3 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
+            className="flex items-center gap-2 rounded-[9px] border border-gray-6 bg-gray-1 px-3.5 py-2 text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-3 focus-visible:ring-2 focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50"
           >
             <Plus className="size-4" />
             {t('Add filter')}

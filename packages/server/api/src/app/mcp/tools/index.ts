@@ -122,7 +122,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
     apReadStepSettingsTool(mcp, log),
-    apValidateFlowTool(mcp, log),
+    apValidateFlowTool({ mcp, userId }, log),
     apResearchPiecesTool(mcp, log),
     // Tool-search engine — gated behind the AP_TOOL_SEARCH_ENABLED rollout flag (default off).
     ...(isToolSearchEnabled() ? [apSearchActionsTool(mcp, log), apSearchTriggersTool(mcp, log)] : []),
