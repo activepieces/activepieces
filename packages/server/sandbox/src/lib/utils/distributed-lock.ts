@@ -3,43 +3,35 @@ import { mkdir, open, readFile, rename, rm, stat } from 'node:fs/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { join } from 'path'
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import writeFileAtomic from 'write-file-atomic'
+import { ApLock } from '@activepieces/server-utils'
 
 const POLL_INTERVAL_MS = 500
-const DEFAULT_STALE_MS = 5 * 60 * 1000
-const DONE_MARKER = 'done'
+const STALE_LOCK_MS = 5 * 60 * 1000
 
-export const distributedDiskLock = (locksPath: string) => ({
-    async runExclusiveWithCooldown({ key, fn, timeoutMs, cooldownMs, staleMs = DEFAULT_STALE_MS }: RunExclusiveParams): Promise<boolean> {
+export const diskLock = (locksPath: string) => ({
+    acquire: async (key: string, timeoutMs?: number): Promise<ApLock> => {
         const lockPath = join(locksPath, `${sanitizeKey(key)}.lock`)
         const token = randomUUID()
-        const deadline = Date.now() + timeoutMs
+        const deadline = isNil(timeoutMs) ? null : Date.now() + timeoutMs
         await mkdir(locksPath, { recursive: true })
-        for (;;) {
-            if (await tryAcquire({ lockPath, token })) {
-                try {
-                    await fn()
-                }
-                finally {
-                    await markDoneIfOwned({ lockPath, token })
-                }
-                return true
-            }
-            const state = await readLockState(lockPath)
-            if (!isNil(state)) {
-                const isDone = state.content === DONE_MARKER
-                if (isDone && state.ageMs < cooldownMs) {
-                    return false
-                }
-                if (state.ageMs >= (isDone ? cooldownMs : staleMs)) {
-                    await takeover(lockPath)
-                    continue
-                }
-            }
-            if (Date.now() >= deadline) {
-                throw new Error(`Timed out waiting for disk lock ${key}`)
+        while (!await tryAcquireOnce({ lockPath, token })) {
+            await takeoverIfStale(lockPath)
+            if (!isNil(deadline) && Date.now() >= deadline) {
+                throw new Error(`Timed out acquiring disk lock for key ${key}`)
             }
             await sleep(POLL_INTERVAL_MS)
+        }
+        return {
+            release: async () => releaseIfOwned({ lockPath, token }),
+        }
+    },
+    runExclusive: async <T>({ key, fn, timeoutMs }: RunExclusiveParams<T>): Promise<T> => {
+        const lock = await diskLock(locksPath).acquire(key, timeoutMs)
+        try {
+            return await fn()
+        }
+        finally {
+            await lock.release()
         }
     },
 })
@@ -48,7 +40,7 @@ function sanitizeKey(key: string): string {
     return key.replace(/[^a-zA-Z0-9._-]/g, '-')
 }
 
-async function tryAcquire({ lockPath, token }: LockParams): Promise<boolean> {
+async function tryAcquireOnce({ lockPath, token }: LockParams): Promise<boolean> {
     const { data: handle, error } = await tryCatch(() => open(lockPath, 'wx'))
     if (error) {
         if (getErrorCode(error) === 'EEXIST') {
@@ -65,33 +57,25 @@ async function tryAcquire({ lockPath, token }: LockParams): Promise<boolean> {
     return true
 }
 
-async function readLockState(lockPath: string): Promise<{ content: string, ageMs: number } | null> {
-    const { data: lockStat, error: statError } = await tryCatch(() => stat(lockPath))
-    if (statError) {
-        return null
+async function takeoverIfStale(lockPath: string): Promise<void> {
+    const { data: lockStat, error } = await tryCatch(() => stat(lockPath))
+    if (error || Date.now() - lockStat.mtimeMs < STALE_LOCK_MS) {
+        return
     }
-    const { data: content, error: readError } = await tryCatch(() => readFile(lockPath, 'utf8'))
-    if (readError) {
-        return null
-    }
-    return { content, ageMs: Date.now() - lockStat.mtimeMs }
-}
-
-async function takeover(lockPath: string): Promise<void> {
     const stalePath = `${lockPath}.stale-${randomUUID()}`
-    const { error } = await tryCatch(() => rename(lockPath, stalePath))
-    if (error) {
+    const { error: renameError } = await tryCatch(() => rename(lockPath, stalePath))
+    if (renameError) {
         return
     }
     await rm(stalePath, { force: true })
 }
 
-async function markDoneIfOwned({ lockPath, token }: LockParams): Promise<void> {
+async function releaseIfOwned({ lockPath, token }: LockParams): Promise<void> {
     const { data: owner, error } = await tryCatch(() => readFile(lockPath, 'utf8'))
     if (error || owner !== token) {
         return
     }
-    await tryCatch(() => writeFileAtomic(lockPath, DONE_MARKER, 'utf8'))
+    await rm(lockPath, { force: true })
 }
 
 function getErrorCode(error: unknown): string | undefined {
@@ -106,10 +90,8 @@ type LockParams = {
     token: string
 }
 
-type RunExclusiveParams = {
+type RunExclusiveParams<T> = {
     key: string
-    fn: () => Promise<void>
-    timeoutMs: number
-    cooldownMs: number
-    staleMs?: number
+    fn: () => Promise<T>
+    timeoutMs?: number
 }
