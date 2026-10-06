@@ -1,30 +1,28 @@
 import {
   Property,
   Store,
-  StoreScope,
   createAction,
 } from '@activepieces/pieces-framework';
-import { constructQueueName, formatStorageError } from '../common';
+import { constructQueueName, queueNameProp, readQueue, sharedNotes, writeQueue } from '../common';
+import { pushToQueueOutputSchema } from '../output-schemas';
 
 const notes = `**Note:**
-- You can push items from other flows. The queue name should be unique across all flows.
-- The testing step work in isolation and doesn't affect the actual queue after publishing.
+- Items are added to the end of the queue and returned oldest first by Pull items from queue.
+${sharedNotes}
 `
 export const pushToQueue = createAction({
   audience: 'both',
   name: 'push-to-queue',
   classification: 'WRITE',
   description: 'Push item to queue',
-  aiMetadata: { description: 'Appends one or more items to the end of a named project-scoped FIFO queue, creating the queue on first use; the queue name is a plain string shared across the whole project, so any flow using the same name writes to the same queue. Use it to buffer or throttle work for later consumption, then read it back with Pull items from queue, or discard everything with Clear queue. Not idempotent: each call appends the items again, and the write fails once the accumulated queue exceeds the project store size limit.', idempotent: false },
+  aiMetadata: { description: 'Appends one or more items to the end of a named project-scoped FIFO queue, creating the queue on first use; any flow using the same queue name writes to the same queue. Use it to buffer or throttle work for later consumption with Pull items from queue; use Get Queue Size or Peek at Queue to check the backlog without changing it. Not idempotent: each call appends the items again; the write fails once the queue would exceed 512 KB, and parallel runs pushing the same queue can lose items.', idempotent: false },
   displayName: 'Push to Queue',
+  outputSchema: pushToQueueOutputSchema,
   props: {
     info: Property.MarkDown({
       value: notes,
     }),
-    queueName: Property.ShortText({
-      displayName: 'Queue Name',
-      required: true,
-    }),
+    queueName: queueNameProp,
     items: Property.Array({
       displayName: 'Items',
       required: true,
@@ -40,16 +38,9 @@ export const pushToQueue = createAction({
 
 async function push({ store, queueName, items, testing }: { store: Store, queueName: string, items: unknown[], testing: boolean }) {
   const key = constructQueueName(queueName, testing)
-  const existingQueueItems = await store.get<unknown[]>(key, StoreScope.PROJECT) || []
-  const updatedQueueItems = [...existingQueueItems, ...items]
-  try {
-    return await store.put(key, updatedQueueItems, StoreScope.PROJECT)
-  } catch (e: unknown) {
-    const name = (e as Error)?.name;
-    if (name === 'StorageLimitError') {
-      throw formatStorageError(e)
-    } else {
-      throw e
-    }
+  const existingQueueItems = await readQueue({ store, key, queueName })
+  if (items.length === 0) {
+    return existingQueueItems
   }
+  return writeQueue({ store, key, queueName, items: [...existingQueueItems, ...items] })
 }
