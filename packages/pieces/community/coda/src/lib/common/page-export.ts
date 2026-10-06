@@ -76,7 +76,8 @@ async function waitForExport({
 
 async function pollExport(params: { token: string; pagePath: string; exportId: string; timeoutMs: number }): Promise<ExportStatus | undefined> {
 	try {
-		return await getExportStatus(params);
+		const poll = await codaApi.withinBudget({ task: getExportStatus(params), ms: params.timeoutMs });
+		return poll.done ? poll.value : undefined;
 	} catch (error) {
 		if (codaApi.statusOf(error) !== 404 && codaApi.isTransientPollError(error)) {
 			return undefined;

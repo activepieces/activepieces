@@ -148,10 +148,22 @@ describe('waitForMutation', () => {
 		expect(seen.length).toBeLessThanOrEqual(6);
 	});
 
-	test('auth errors fail but keep the request id so the write is not repeated', async () => {
+	test('a non-transient status-check error still returns the accepted write as pending', async () => {
 		stubFetch(() => ({ status: 401, body: { message: 'boom' } }));
-		const failure = runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r-9' }));
-		await expect(failure).rejects.toThrow(/request ID r-9.*do not repeat.*boom/s);
+		const result = await runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r-9' }));
+		expect(result).toMatchObject({ requestId: 'r-9', completed: false });
+		expect(result.warning).toMatch(/do not repeat.*boom/s);
+	});
+
+	test('a status check whose body never finishes is cut at the budget', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response(new ReadableStream({ start: () => undefined }), { status: 200, headers: { 'content-type': 'application/json' } })),
+		);
+		const start = Date.now();
+		const result = await runStep(codaApi.waitForMutation({ token: TOKEN, requestId: 'r', timeoutMs: 10_000 }));
+		expect(result).toEqual({ requestId: 'r', completed: false, warning: null });
+		expect(Date.now() - start).toBeLessThanOrEqual(10_000);
 	});
 
 	test('server errors and rate limits keep polling, then return pending', async () => {

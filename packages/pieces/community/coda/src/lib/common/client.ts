@@ -221,6 +221,19 @@ function pollRequestBudget({ deadline, now }: { deadline: number; now: () => num
 	return remaining < MIN_POLL_REQUEST_MS ? undefined : Math.min(REQUEST_TIMEOUT_MS, remaining);
 }
 
+async function withinBudget<T>({ task, ms }: { task: Promise<T>; ms: number }): Promise<{ done: true; value: T } | { done: false }> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const expired = new Promise<{ done: false }>((resolve) => {
+		timer = setTimeout(() => resolve({ done: false }), ms);
+	});
+	task.catch(() => undefined);
+	try {
+		return await Promise.race([task.then((value) => ({ done: true as const, value })), expired]);
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
 async function waitForMutation({
 	token,
 	requestId,
@@ -247,15 +260,17 @@ async function waitForMutation({
 			return { requestId, completed: false, warning: null };
 		}
 		try {
-			const status = await getMutationStatus({ token, requestId, timeoutMs: budget });
-			if (status.completed) {
-				return { requestId, completed: true, warning: status.warning ?? null };
+			const poll = await withinBudget({ task: getMutationStatus({ token, requestId, timeoutMs: budget }), ms: budget });
+			if (poll.done && poll.value.completed) {
+				return { requestId, completed: true, warning: poll.value.warning ?? null };
 			}
 		} catch (error) {
 			if (!isTransientPollError(error)) {
-				throw new Error(
-					`Coda accepted the change (request ID ${requestId}) but checking its status failed, so do not repeat the change; check it later with Get Mutation Status. ${error instanceof Error ? error.message : String(error)}`,
-				);
+				return {
+					requestId,
+					completed: false,
+					warning: `Coda accepted the change, but checking its status failed, so do not repeat it. Check it later with Get Mutation Status. ${error instanceof Error ? error.message : String(error)}`,
+				};
 			}
 		}
 	}
@@ -346,6 +361,7 @@ export const codaApi = {
 	validateLimit,
 	isTransientPollError,
 	pollRequestBudget,
+	withinBudget,
 	buildRowQuery,
 	statusOf,
 	isRecord,

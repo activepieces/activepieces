@@ -61,7 +61,7 @@ const mutationFields: OutputSchema['fields'] = [
   {
     key: 'warning',
     label: 'Warning',
-    description: 'A warning from Coda about the applied change, if any.',
+    description: 'A warning from Coda about the applied change, or why its status could not be checked.',
   },
 ];
 
