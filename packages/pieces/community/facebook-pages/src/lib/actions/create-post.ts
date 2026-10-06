@@ -13,6 +13,10 @@ export const createPost = createAction({
   audience: 'human',
   aiMetadata: { description: 'Publishes a text status update to the feed of a Facebook Page the connected account manages, optionally attaching a link that Facebook will render as a preview card. Choose this for plain-text or link announcements; use the photo or video post actions for media uploads. Requires selecting a managed page (which supplies the page-scoped access token) and a message; not idempotent, as each call publishes a separate post.', idempotent: false },
   outputSchema: createPostActionOutputSchema,
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Post to', icon: 'send', props: ['page'] },
+    { key: 'post', display: 'section', label: 'Post', icon: 'text', props: ['message', 'link'] },
+  ],
   props: {
     page: facebookPagesCommon.page,
     message: facebookPagesCommon.message,

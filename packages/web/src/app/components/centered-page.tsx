@@ -11,33 +11,43 @@ export const CenteredPage = ({
   description,
   actions,
   footer,
+  breadcrumb,
   children,
   widthClassName = 'max-w-[40rem]',
+  showHeaderSeparator = true,
   className,
 }: {
   title?: string;
   description?: React.ReactNode;
   actions?: React.ReactNode;
   footer?: React.ReactNode;
+  breadcrumb?: React.ReactNode;
   children: React.ReactNode;
   widthClassName?: string;
+  showHeaderSeparator?: boolean;
   className?: string;
 }) => {
   const header =
-    title === undefined && !description && !actions ? null : (
+    title === undefined && !description && !actions && !breadcrumb ? null : (
       <>
-        <div className="flex items-start justify-between gap-4">
+        {breadcrumb && <div className="pb-3">{breadcrumb}</div>}
+        <div
+          className={cn(
+            'flex items-start justify-between gap-4',
+            !showHeaderSeparator && 'mb-6',
+          )}
+        >
           <div className="flex flex-col gap-1">
             {title !== undefined && (
               <h1 className="text-xl font-medium">{title}</h1>
             )}
             {description && (
-              <div className="text-sm text-muted-foreground">{description}</div>
+              <div className="text-sm text-gray-11">{description}</div>
             )}
           </div>
           {actions && <div className="shrink-0">{actions}</div>}
         </div>
-        <Separator className="my-4" />
+        {showHeaderSeparator && <Separator className="my-4" />}
       </>
     );
 
@@ -62,7 +72,7 @@ export const CenteredPage = ({
           <div className={cn('w-full mx-auto', widthClassName)}>{children}</div>
         </div>
       </ScrollArea>
-      <div className="shrink-0 border-t bg-background">
+      <div className="shrink-0 border-t bg-gray-1">
         <div className={cn(GUTTER, 'py-3')}>
           <div
             className={cn(

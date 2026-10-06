@@ -10,7 +10,7 @@ export const unfollowAccount = createAction({
   classification: 'WRITE',
   displayName: 'Unfollow Account',
   description: 'Stop following an account.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Unfollows an account (or withdraws a pending follow request) as the connected account. Safe to retry. Returns the updated relationship.',
@@ -21,7 +21,7 @@ export const unfollowAccount = createAction({
     account_id: Property.ShortText({
       displayName: 'Account ID',
       description:
-        'Local ID of the account on this server, for example 109302436954721982. Obtain it from Lookup Account, Search Accounts, Get Account or Search (use resolve for a remote user@domain).',
+        'ID of the account to unfollow, for example 109302436954721982 (not the @handle). Map it from Lookup Account (Account ID), Search Accounts, Get Account or Search for a user@domain on another server.',
       required: true,
     }),
   },

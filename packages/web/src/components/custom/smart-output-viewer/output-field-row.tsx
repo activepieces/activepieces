@@ -90,17 +90,17 @@ function SchemaListItemRow({
   if (itemChildren.length === 0) {
     return (
       <div
-        className="flex items-start gap-3 py-1.5 pr-3 hover:bg-accent/50"
+        className="flex items-start gap-3 py-1.5 pr-3 hover:bg-gray-4/50"
         style={{ paddingLeft }}
       >
-        <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
+        <span className="text-sm text-gray-11 min-w-[120px] max-w-[160px] shrink-0 truncate">
           {itemLabel}
         </span>
         <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
           {isStepFileUrl(item) ? (
             <StepFileDownloadButton fileUrl={item} />
           ) : isNil(item) ? (
-            <span className="text-muted-foreground italic">{t('empty')}</span>
+            <span className="text-gray-11 italic">{t('empty')}</span>
           ) : typeof item === 'object' ? (
             JSON.stringify(item)
           ) : (
@@ -115,11 +115,11 @@ function SchemaListItemRow({
     <>
       <button
         type="button"
-        className="flex items-center gap-3 py-1.5 pr-3 hover:bg-accent/50 cursor-pointer w-full text-left"
+        className="flex items-center gap-3 py-1.5 pr-3 hover:bg-gray-4/50 cursor-pointer w-full text-left"
         style={{ paddingLeft }}
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0">
+        <span className="flex items-center gap-1 text-sm text-gray-11 min-w-[120px] max-w-[160px] shrink-0">
           {expanded ? (
             <ChevronDown className="h-3 w-3 shrink-0" />
           ) : (
@@ -169,11 +169,11 @@ function SchemaMatrixRow({
     <>
       <button
         type="button"
-        className="flex items-center gap-3 py-1.5 pr-3 hover:bg-accent/50 cursor-pointer w-full text-left"
+        className="flex items-center gap-3 py-1.5 pr-3 hover:bg-gray-4/50 cursor-pointer w-full text-left"
         style={{ paddingLeft: rowPadding }}
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0">
+        <span className="flex items-center gap-1 text-sm text-gray-11 min-w-[120px] max-w-[160px] shrink-0">
           {expanded ? (
             <ChevronDown className="h-3 w-3 shrink-0" />
           ) : (
@@ -187,20 +187,18 @@ function SchemaMatrixRow({
           {row.map((cell, idx) => (
             <div
               key={`${rowKey}_cell_${idx}`}
-              className="flex items-start gap-3 py-1.5 pr-3 hover:bg-accent/50"
+              className="flex items-start gap-3 py-1.5 pr-3 hover:bg-gray-4/50"
               style={{ paddingLeft: cellPadding }}
             >
               <span className="flex h-5 items-center shrink-0">
                 <FieldTypeIcon value={cell} format={format} />
               </span>
-              <span className="text-sm text-muted-foreground min-w-[100px] max-w-[140px] shrink-0 truncate">
+              <span className="text-sm text-gray-11 min-w-[100px] max-w-[140px] shrink-0 truncate">
                 {t('Cell')} {idx + 1}
               </span>
               <span className="flex-1 text-sm min-w-0">
                 {isNil(cell) || cell === '' ? (
-                  <span className="text-muted-foreground italic">
-                    {t('empty')}
-                  </span>
+                  <span className="text-gray-11 italic">{t('empty')}</span>
                 ) : (
                   <FormatValue
                     value={cell}
@@ -263,11 +261,11 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
   const labelWeight = isTop ? 'font-medium' : '';
 
   return (
-    <div className={isTop ? 'border-b border-dividers last:border-b-0' : ''}>
+    <div className={isTop ? 'border-b border-gray-6 last:border-b-0' : ''}>
       <div
         className={`flex items-start gap-3 ${
           isTop ? 'py-2.5' : 'py-1.5'
-        } pr-3 hover:bg-accent/50`}
+        } pr-3 hover:bg-gray-4/50`}
         style={{ paddingLeft: rowPaddingLeft }}
       >
         <div
@@ -277,7 +275,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className={`flex items-center gap-1 text-sm ${labelWeight} text-muted-foreground min-w-0`}
+              className={`flex items-center gap-1 text-sm ${labelWeight} text-gray-11 min-w-0`}
             >
               {expanded ? (
                 <ChevronDown className="h-3.5 w-3.5 shrink-0" />
@@ -289,7 +287,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
             </button>
           ) : (
             <span
-              className={`flex items-center gap-1 text-sm ${labelWeight} text-muted-foreground truncate`}
+              className={`flex items-center gap-1 text-sm ${labelWeight} text-gray-11 truncate`}
             >
               <FieldTypeIcon value={value} format={field.format} />
               {label}
@@ -299,7 +297,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 cursor-help" />
+                  <Info className="h-3.5 w-3.5 text-gray-11 shrink-0 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[300px]">
                   {field.description}
@@ -310,7 +308,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
         </div>
         <div className="flex-1 text-sm min-w-0">
           {isDescribedList || isMatrix ? (
-            <span className="text-muted-foreground">
+            <span className="text-gray-11">
               {t('itemCount', {
                 count: isMatrix ? matrixRows.length : listItems.length,
               })}
@@ -319,7 +317,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
             isDynamicMap ||
             isGenericObject ? (
             <span
-              className="text-muted-foreground truncate"
+              className="text-gray-11 truncate"
               title={
                 isNil(value) || typeof value !== 'object'
                   ? undefined
@@ -453,20 +451,18 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
             estimateSize={30}
             renderItem={(item, idx) => (
               <div
-                className="flex items-start gap-3 py-1.5 pr-3 hover:bg-accent/50"
+                className="flex items-start gap-3 py-1.5 pr-3 hover:bg-gray-4/50"
                 style={{ paddingLeft: nestedPaddingLeft(depth + 1) }}
               >
                 <span className="flex h-5 items-center shrink-0">
                   <FieldTypeIcon value={item} format={field.format} />
                 </span>
-                <span className="text-sm text-muted-foreground min-w-[120px] max-w-[160px] shrink-0 truncate">
+                <span className="text-sm text-gray-11 min-w-[120px] max-w-[160px] shrink-0 truncate">
                   {`${label} ${idx + 1}`}
                 </span>
                 <span className="flex-1 text-sm min-w-0 break-words whitespace-pre-wrap">
                   {isNil(item) || item === '' ? (
-                    <span className="text-muted-foreground italic">
-                      {t('empty')}
-                    </span>
+                    <span className="text-gray-11 italic">{t('empty')}</span>
                   ) : (
                     <FormatValue
                       value={item}

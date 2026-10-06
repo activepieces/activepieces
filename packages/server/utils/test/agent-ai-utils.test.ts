@@ -130,20 +130,13 @@ describe('collectStepMessages', () => {
         content: [{ type: 'text', text: 'That table does not exist yet — want me to create it?' }],
     }
 
-    it('returns the last step (which on this provider is cumulative — holds every earlier step)', () => {
-        // The provider's `response.messages` is cumulative: each step already contains every prior
-        // step's assistant/tool messages, so the LAST step holds the full set. Flat-mapping would
-        // re-emit the earlier steps in a 4,3,2,1 staircase (the bug this guards against).
+    it('joins every step, since each step holds only its own messages', () => {
         const steps = [
             { response: { messages: [listCall, listResult] } },
-            { response: { messages: [listCall, listResult, finalText] } },
+            { response: { messages: [finalText] } },
         ]
-        const result = agentAiUtils.collectStepMessages(steps)
-        expect(result).toEqual([listCall, listResult, finalText])
-        // The regression this guards: the tool call + its result must survive (the last step carries them).
-        expect(result).toContainEqual(listResult)
-        // And no duplication from flat-mapping the staircase.
-        expect(result.filter((m) => m === listCall).length).toBe(1)
+
+        expect(agentAiUtils.collectStepMessages(steps)).toEqual([listCall, listResult, finalText])
     })
 
     it('returns an empty array when there are no steps', () => {

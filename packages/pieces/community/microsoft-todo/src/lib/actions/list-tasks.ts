@@ -4,14 +4,16 @@ import { microsoftToDoAuth } from '../auth';
 import { getTaskListsDropdown } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
+import { listTasksOutputSchema } from '../output-schemas';
 
 export const listTasksAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'list_tasks',
+	outputSchema: listTasksOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'List Tasks',
 	description: 'Returns a list of all tasks in a specific list.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'List the tasks in a given Microsoft To Do task list, paging through all results. Optionally narrow by a title substring and/or a status filter (not started, in progress, completed, waiting on others, deferred); with no filters it returns every task in the list. Use to enumerate or browse a list\'s contents. Read-only and idempotent. Requires a task list id.', idempotent: true },
 	props: {
 		task_list_id: Property.Dropdown({

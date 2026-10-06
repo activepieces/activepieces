@@ -3,61 +3,69 @@ import React, { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-interface ImageWithFallbackProps
-  extends React.ImgHTMLAttributes<HTMLImageElement> {
-  fallback?: React.ReactNode;
-}
-
-const ImageWithFallback = ({
+export const ImageWithFallback = ({
   src,
   alt,
   fallback,
-  ...props
+  className,
+  imageClassName,
+  ...rest
 }: ImageWithFallbackProps) => {
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  const handleLoad = () => {
-    setIsLoading(false);
-  };
-
-  const handleError = () => {
-    setHasError(true);
-    setIsLoading(false);
-  };
-
-  const { className, ...rest } = props;
+  const hasError = failedSrc !== null && failedSrc === src;
+  const isLoading = !hasError && loadedSrc !== src;
+  const monogram = alt?.trim().charAt(0).toUpperCase();
 
   return (
-    <span className={cn('relative inline-block h-full w-full', className)}>
-      {isLoading && !hasError && (
+    <span
+      className={cn(
+        'relative inline-block h-full w-full overflow-hidden',
+        className,
+      )}
+    >
+      {isLoading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          {fallback ?? <Skeleton className="w-full h-full" />}
+          <Skeleton className="h-full w-full" />
         </span>
       )}
-      {!hasError ? (
+      {hasError ? (
+        <span
+          role={alt ? 'img' : undefined}
+          aria-label={alt || undefined}
+          aria-hidden={alt ? undefined : true}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          {fallback ?? (
+            <span className="text-[0.6em] font-semibold leading-none">
+              {monogram}
+            </span>
+          )}
+        </span>
+      ) : (
         <img
           src={src}
           alt={alt}
-          onLoad={handleLoad}
-          onError={handleError}
+          onLoad={() => setLoadedSrc(src ?? null)}
+          onError={() => setFailedSrc(src ?? null)}
           className={cn(
-            `transition-opacity duration-500 w-full h-full object-contain`,
-            {
-              'opacity-0': isLoading,
-              'opacity-100': !isLoading,
-            },
-            className,
+            'h-full w-full object-contain transition-opacity duration-500',
+            isLoading ? 'opacity-0' : 'opacity-100',
+            imageClassName,
           )}
           {...rest}
         />
-      ) : (
-        <span className="absolute inset-0 flex items-center justify-center">
-          {fallback ?? <Skeleton className="w-full h-full" />}
-        </span>
       )}
     </span>
   );
 };
 
-export default ImageWithFallback;
+export type ImageWithFallbackProps = Omit<
+  React.ImgHTMLAttributes<HTMLImageElement>,
+  'className'
+> & {
+  className?: string;
+  imageClassName?: string;
+  fallback?: React.ReactNode;
+};

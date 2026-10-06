@@ -30,7 +30,7 @@ import {
   aiProviderQueries,
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -59,8 +59,6 @@ export function ProvidersTab() {
     isError: isProvidersError,
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
@@ -164,7 +162,7 @@ export function ProvidersTab() {
   const activeInfo = activeConfig
     ? providerInfoOf({ provider: activeConfig.provider })
     : undefined;
-  if (activeConfig && activeInfo && allowWrite) {
+  if (activeConfig && activeInfo) {
     return (
       <>
         <ConfigDetail
@@ -211,32 +209,29 @@ export function ProvidersTab() {
                 : t('Each key has its own models and project access.')
             }
           />
-          {allowWrite && (
-            <Button
-              size="sm"
-              className="shrink-0"
-              onClick={() => openConnect()}
-            >
-              <Plus className="size-4" />
-              {t('Add key')}
-            </Button>
-          )}
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => openConnect()}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
+            <Plus className="size-4" />
+            {t('Add key')}
+          </Button>
         </div>
 
         {isProvidersError ? (
           <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
         ) : configs.length === 0 ? (
-          <EmptyProviders onConnect={openConnect} allowWrite={allowWrite} />
+          <EmptyProviders onConnect={openConnect} />
         ) : (
           <>
-            {allowWrite && (
-              <ChatProviderRow
-                configs={providers ?? []}
-                value={chatProviderRow?.id ?? null}
-                isSwitching={isSwitchingChatProvider}
-                onChange={selectChatConfig}
-              />
-            )}
+            <ChatProviderRow
+              configs={providers ?? []}
+              value={chatProviderRow?.id ?? null}
+              isSwitching={isSwitchingChatProvider}
+              onChange={selectChatConfig}
+            />
             <div className="flex flex-col gap-6">
               {connectedProviders.map((provider) => (
                 <ProviderGroup
@@ -246,7 +241,6 @@ export function ProvidersTab() {
                     (config) => config.provider === provider,
                   )}
                   projects={projects}
-                  allowWrite={allowWrite}
                   onAdd={() => openConnect(provider)}
                   onOpen={openConfig}
                   onDelete={(id) => deleteProvider(id)}
@@ -254,7 +248,7 @@ export function ProvidersTab() {
               ))}
             </div>
             {available.length > 0 && (
-              <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
+              <section className="flex flex-col gap-4 border-t border-gray-6/60 pt-6">
                 <SectionHeader
                   title={t('Also available')}
                   count={available.length}
@@ -267,7 +261,6 @@ export function ProvidersTab() {
                     <AvailableProviderCard
                       key={info.provider}
                       info={info}
-                      allowWrite={allowWrite}
                       onConnect={() => openConnect(info.provider)}
                     />
                   ))}
@@ -293,7 +286,6 @@ function ProviderGroup({
   provider,
   configs,
   projects,
-  allowWrite,
   onAdd,
   onOpen,
   onDelete,
@@ -301,7 +293,6 @@ function ProviderGroup({
   provider: AIProviderName;
   configs: AIProviderWithoutSensitiveData[];
   projects: Project[];
-  allowWrite: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => Promise<unknown>;
@@ -314,7 +305,7 @@ function ProviderGroup({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-xl border border-border/60 bg-card',
+        'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
         CARD_SHADOW,
       )}
     >
@@ -322,19 +313,22 @@ function ProviderGroup({
         <ProviderLogo info={info} />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium leading-none">{info.name}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-gray-11">
             {t('configurationsCount', { count: configs.length })}
           </p>
         </div>
-        {allowWrite && (
-          <Button variant="ghost" size="sm" onClick={onAdd}>
-            <Plus className="size-4" />
-            {t('Add key')}
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onAdd}
+          {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+        >
+          <Plus className="size-4" />
+          {t('Add key')}
+        </Button>
       </div>
-      <div className="border-t border-border/60 px-5 pb-1 pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
           {t('Keys')}
         </p>
       </div>
@@ -344,7 +338,6 @@ function ProviderGroup({
             key={config.id}
             config={config}
             projects={projects}
-            allowWrite={allowWrite}
             onOpen={() => onOpen(config.id)}
             onDelete={() => onDelete(config.id)}
           />
@@ -357,13 +350,11 @@ function ProviderGroup({
 function ConfigRow({
   config,
   projects,
-  allowWrite,
   onOpen,
   onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
-  allowWrite: boolean;
   onOpen: () => void;
   onDelete: () => Promise<unknown>;
 }) {
@@ -388,19 +379,18 @@ function ConfigRow({
 
   return (
     <div
-      role={allowWrite ? 'button' : undefined}
-      tabIndex={allowWrite ? 0 : undefined}
-      onClick={allowWrite ? onOpen : undefined}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
       onKeyDown={(event) => {
-        if (allowWrite && (event.key === 'Enter' || event.key === ' ')) {
+        if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           onOpen();
         }
       }}
       className={cn(
         'group flex items-center gap-4 px-5 py-3 transition-colors',
-        allowWrite &&
-          'cursor-pointer hover:bg-muted/50 active:bg-muted focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -409,7 +399,7 @@ function ConfigRow({
             {config.name}
           </p>
           {config.enabledForChat && (
-            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-[11px] font-medium text-primary">
+            <span className="shrink-0 rounded-full bg-accent-3 px-2 py-px text-[11px] font-medium text-accent-11">
               {t('Chat')}
             </span>
           )}
@@ -417,7 +407,7 @@ function ConfigRow({
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-muted-foreground">
+            <p className="w-fit truncate text-xs text-gray-11">
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
@@ -441,39 +431,39 @@ function ConfigRow({
         </div>
       )}
 
-      {allowWrite && (
-        <div
-          className="flex shrink-0 items-center gap-1"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="size-4" />
-                <span className="sr-only">{t('Delete')}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Delete')}</TooltipContent>
-          </Tooltip>
-          <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground" />
-          <ConfirmationDeleteDialog
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-            title={t('Delete {name}', { name: config.name })}
-            message={t('Steps and agents using this key will stop working.')}
-            entityName={config.name}
-            showToast={true}
-            mutationFn={async () => {
-              await onDelete();
-            }}
-          />
-        </div>
-      )}
+      <div
+        className="flex shrink-0 items-center gap-1"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="px-2 text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100"
+              onClick={() => setDeleteOpen(true)}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">{t('Delete')}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Delete')}</TooltipContent>
+        </Tooltip>
+        <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+        <ConfirmationDeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={t('Delete {name}', { name: config.name })}
+          message={t('Steps and agents using this key will stop working.')}
+          entityName={config.name}
+          showToast={true}
+          controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
+          mutationFn={async () => {
+            await onDelete();
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -494,7 +484,7 @@ function ProjectChips({
       <TooltipTrigger asChild>
         <span className="flex min-w-0 items-center gap-1">
           {excluded && (
-            <span className="shrink-0 text-sm text-muted-foreground">
+            <span className="shrink-0 text-sm text-gray-11">
               {t('All except')}
             </span>
           )}
@@ -502,7 +492,7 @@ function ProjectChips({
             <ProjectSwatch key={project.id} project={project} />
           ))}
           {rest > 0 && (
-            <span className="text-sm text-muted-foreground tabular-nums">
+            <span className="text-sm text-gray-11 tabular-nums">
               {t('+{count}', { count: rest })}
             </span>
           )}
@@ -534,16 +524,16 @@ function ChatProviderRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
+        'flex items-center gap-3 rounded-xl border border-gray-6/60 bg-panel px-4 py-3',
         CARD_SHADOW,
       )}
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/60">
-        <MessageSquare className="size-4 text-muted-foreground" />
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
+        <MessageSquare className="size-4 text-gray-11" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-none">{t('Chat provider')}</p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-gray-11 mt-1">
           {t('Powers the built-in chat for everyone on this platform')}
         </p>
       </div>
@@ -575,10 +565,8 @@ function ChatProviderRow({
 
 function EmptyProviders({
   onConnect,
-  allowWrite,
 }: {
   onConnect: (provider?: AIProviderName) => void;
-  allowWrite: boolean;
 }) {
   const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
     SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
@@ -589,26 +577,27 @@ function EmptyProviders({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card px-6 py-14 text-center">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
-          <Bot className="size-5 text-primary" />
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-6/60 bg-panel px-6 py-14 text-center">
+        <div className="flex size-12 items-center justify-center rounded-xl bg-accent-3">
+          <Bot className="size-5 text-accent-11" />
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-base font-semibold tracking-tight">
             {t('Connect your first provider')}
           </p>
-          <p className="max-w-md text-sm text-muted-foreground">
+          <p className="max-w-md text-sm text-gray-11">
             {t(
               'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
             )}
           </p>
         </div>
-        {allowWrite && (
-          <Button onClick={() => onConnect()}>
-            <Plus className="size-4" />
-            {t('Connect a provider')}
-          </Button>
-        )}
+        <Button
+          onClick={() => onConnect()}
+          {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+        >
+          <Plus className="size-4" />
+          {t('Connect a provider')}
+        </Button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {recommended.map((info) => (
@@ -617,13 +606,12 @@ function EmptyProviders({
             info={info}
             tagline={recommendedTagline({ provider: info.provider })}
             recommended
-            allowWrite={allowWrite}
             onConnect={() => onConnect(info.provider)}
           />
         ))}
       </div>
       <div className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
           {t('Or choose another provider')}
         </p>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -631,7 +619,6 @@ function EmptyProviders({
             <AvailableProviderCard
               key={info.provider}
               info={info}
-              allowWrite={allowWrite}
               onConnect={() => onConnect(info.provider)}
             />
           ))}
@@ -645,38 +632,33 @@ function AvailableProviderCard({
   info,
   tagline,
   recommended,
-  allowWrite,
   onConnect,
 }: {
   info: AiProviderInfo;
   tagline?: string;
   recommended?: boolean;
-  allowWrite: boolean;
   onConnect: () => void;
 }) {
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border',
+        'flex items-center gap-3 rounded-xl border border-gray-6/60 bg-panel p-4 transition-colors hover:border-gray-6',
         CARD_SHADOW,
       )}
     >
       <ProviderLogo info={info} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-sm font-medium leading-none">{info.name}</p>
-        {tagline && (
-          <p className="truncate text-xs text-muted-foreground">{tagline}</p>
-        )}
+        {tagline && <p className="truncate text-xs text-gray-11">{tagline}</p>}
       </div>
-      {allowWrite && (
-        <Button
-          size="sm"
-          variant={recommended ? 'default' : 'outline'}
-          onClick={onConnect}
-        >
-          {t('Connect')}
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant={recommended ? 'default' : 'outline'}
+        onClick={onConnect}
+        {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
+      >
+        {t('Connect')}
+      </Button>
     </div>
   );
 }
@@ -693,7 +675,7 @@ function ProvidersSkeleton() {
       </div>
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
+          'flex items-center gap-3 rounded-xl border border-gray-6/60 bg-panel px-4 py-3',
           CARD_SHADOW,
         )}
       >
@@ -708,7 +690,7 @@ function ProvidersSkeleton() {
         <section
           key={group}
           className={cn(
-            'overflow-hidden rounded-xl border border-border/60 bg-card',
+            'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
             CARD_SHADOW,
           )}
         >
@@ -720,7 +702,7 @@ function ProvidersSkeleton() {
             </div>
             <Skeleton className="h-8 w-20 rounded-md" />
           </div>
-          <div className="border-t border-border/60 px-5 pb-1 pt-3">
+          <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
             <Skeleton className="h-3 w-10" />
           </div>
           {[0, 1].map((row) => (
@@ -735,8 +717,7 @@ function ProvidersSkeleton() {
   );
 }
 
-const CARD_SHADOW =
-  'shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]';
+const CARD_SHADOW = 'shadow-panel';
 
 function providerInfoOf({
   provider,
