@@ -19,7 +19,7 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="size-7 text-muted-foreground hover:text-foreground"
+          className="size-7 text-gray-11 hover:text-gray-12"
           title={t('Sandboxes')}
         >
           <Box size={14} />
@@ -27,20 +27,20 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         {sandboxes.length === 0 ? (
-          <p className="px-3 py-2 text-xs text-muted-foreground">
+          <p className="px-3 py-2 text-xs text-gray-11">
             {t('No sandboxes running')}
           </p>
         ) : (
           <table className="text-xs">
             <thead>
               <tr className="border-b">
-                <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+                <th className="px-3 py-2 text-left font-medium text-gray-11">
                   {t('Sandbox')}
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+                <th className="px-3 py-2 text-left font-medium text-gray-11">
                   {t('Status')}
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+                <th className="px-3 py-2 text-left font-medium text-gray-11">
                   {t('Memory')}
                 </th>
               </tr>
@@ -59,7 +59,7 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
                       {sandbox.busy ? t('Busy') : t('Idle')}
                     </Badge>
                   </td>
-                  <td className="px-3 py-2 font-mono text-muted-foreground">
+                  <td className="px-3 py-2 font-mono text-gray-11">
                     {prettyBytes(sandbox.memoryUsageBytes, { binary: true })}
                   </td>
                 </tr>

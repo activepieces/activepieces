@@ -97,7 +97,7 @@ const DataSelectorNodeContent = ({
       aria-expanded={isExpandable ? expanded : undefined}
       className={cn(
         'w-full max-w-full relative select-none focus:outline-hidden cursor-pointer group transition-colors',
-        'hover:bg-accent/60 focus:bg-accent dark:hover:bg-accent/20',
+        'hover:bg-gray-4/60 focus:bg-gray-4',
       )}
       data-depth={depth}
     >
@@ -111,7 +111,7 @@ const DataSelectorNodeContent = ({
         {!isStepRoot && isExpandable && (
           <ChevronRight
             className={cn(
-              'size-3.5 shrink-0 text-muted-foreground transition-transform',
+              'size-3.5 shrink-0 text-gray-11 transition-transform',
               expanded && 'rotate-90',
             )}
           />
@@ -132,8 +132,8 @@ const DataSelectorNodeContent = ({
               className={cn(
                 'truncate min-w-0 shrink-0 max-w-[30ch]',
                 isStepRoot
-                  ? 'font-medium text-foreground text-sm'
-                  : 'text-foreground text-sm',
+                  ? 'font-medium text-gray-12 text-sm'
+                  : 'text-gray-12 text-sm',
                 node.data.displayNameClassName,
               )}
             >
@@ -142,7 +142,7 @@ const DataSelectorNodeContent = ({
           )}
 
           {showArrayCount && (
-            <span className="shrink-0 text-xs text-muted-foreground">
+            <span className="shrink-0 text-xs text-gray-11">
               {t('{count, plural, =1 {1 item} other {# items}}', {
                 count: arrayValue?.length ?? 0,
               })}
@@ -151,9 +151,9 @@ const DataSelectorNodeContent = ({
 
           {showValuePreview && valuePreview !== '' && (
             <>
-              <span className="shrink-0 text-muted-foreground">:</span>
+              <span className="shrink-0 text-gray-11">:</span>
               <TextWithTooltip tooltipMessage={String(valuePreview)}>
-                <span className="min-w-0 truncate text-primary text-sm flex-1">
+                <span className="min-w-0 truncate text-accent-11 text-sm flex-1">
                   {valuePreview}
                 </span>
               </TextWithTooltip>
@@ -173,7 +173,7 @@ const DataSelectorNodeContent = ({
               }
             }}
             className={cn(
-              'h-6 px-2 text-xs text-primary shrink-0 opacity-0 transition-opacity',
+              'h-6 px-2 text-xs text-accent-11 shrink-0 opacity-0 transition-opacity',
               'group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >
@@ -184,7 +184,7 @@ const DataSelectorNodeContent = ({
         {isStepRoot && isExpandable && (
           <ChevronDown
             className={cn(
-              'size-4 shrink-0 text-muted-foreground transition-transform',
+              'size-4 shrink-0 text-gray-11 transition-transform',
               !expanded && '-rotate-90',
             )}
           />

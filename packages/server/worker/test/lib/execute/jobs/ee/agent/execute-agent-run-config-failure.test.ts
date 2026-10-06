@@ -1,5 +1,6 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { AgentEvent, AgentEventType, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, EngineResponseStatus, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { executeAgentRunJob } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
 import { JobContext } from '../../../../../../src/lib/execute/types'
@@ -97,6 +98,20 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
 
         expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
         expect(events[0]).toMatchObject({ type: AgentEventType.ERROR, data: { code: ErrorCode.QUOTA_EXCEEDED } })
+    })
+
+    it('completes as a user failure when the customer\'s own provider is overloaded, so it is not reported as ours', async () => {
+        const overloaded = new RetryError({
+            message: 'Failed after 4 attempts',
+            reason: 'maxRetriesExceeded',
+            errors: [new APICallError({ message: 'This model is currently experiencing high demand.', url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode: 503 })],
+        })
+        const { ctx, events } = buildContext(overloaded)
+
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
+
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
+        expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 
     it('still fails the job on an unrecognised error, so our own bugs are not laundered', async () => {

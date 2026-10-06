@@ -365,6 +365,8 @@ export const EventDestinationJobData = z.object({
     webhookId: z.string(),
     webhookUrl: z.string(),
     payload: z.unknown(), // EE audit-event schema stays in @activepieces/shared; engine does not need it
+    contentType: z.enum(['application/json', 'application/x-protobuf']).optional(),
+    hasHeaders: z.boolean().optional(),
     jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 
@@ -415,6 +417,7 @@ const AiStepJobBase = z.object({
     provider: z.enum(AIProviderName),
     providerConfigId: z.string().optional(),
     modelId: z.string(),
+    modelTierId: z.string().optional(),
     prompt: z.string().optional(),
     maxOutputTokens: z.number().optional(),
     temperature: z.number().optional(),

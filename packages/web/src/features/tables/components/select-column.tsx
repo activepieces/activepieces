@@ -12,8 +12,8 @@ export function SelectHeaderCell() {
     <div
       className={cn(
         'flex items-center justify-start h-full pl-4',
-        'bg-muted/50 hover:bg-muted',
-        'data-[state=open]:bg-muted',
+        'bg-gray-3/50 hover:bg-gray-3',
+        'data-[state=open]:bg-gray-3',
       )}
     >
       <Checkbox
