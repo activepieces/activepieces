@@ -245,11 +245,16 @@ describe('trigger runs re-fetch and dedupe', () => {
 		expect(seen.map((r) => r.path)).toEqual([`/directMessages/${IDS.chat}`]);
 		expect(result).toEqual([{ chatId: IDS.chat, messageId: IDS.message, senderUserId: IDS.user, receiverUserId: IDS.admin, content: '<p>hi</p>', createdAt: 't', images: [], files: [] }]);
 	});
-	test('new direct message accepts a first message before the admin has replied, using reads only', async () => {
-		const seen = stubFetch(replies([{ body: [{ id: IDS.message, userID: IDS.user }] }]));
+	test('new direct message confirms the chat ID with Heartbeat when the admin has not written in it yet', async () => {
+		const seen = stubFetch((request) => (request.method === 'PUT' ? { body: { chatID: IDS.chat } } : { body: [{ id: IDS.message, userID: IDS.user }] }));
 		const context = triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } });
-		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toHaveLength(1);
-		expect(seen.map((request) => request.method)).toEqual(['GET']);
+		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toMatchObject([{ senderUserId: IDS.user, receiverUserId: IDS.admin }]);
+		expect(seen[1]).toMatchObject({ method: 'PUT', path: '/directChats', body: { userID1: IDS.admin, userID2: IDS.user } });
+	});
+	test('new direct message ignores a sender-only chat that belongs to another admin', async () => {
+		stubFetch((request) => (request.method === 'PUT' ? { body: { chatID: IDS.thread } } : { body: [{ id: IDS.message, userID: IDS.user }] }));
+		const context = triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } });
+		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toEqual([]);
 	});
 	test('new direct message ignores chats where someone other than the admin and sender wrote', async () => {
 		const seen = stubFetch(replies([{ body: [{ id: 'x', userID: IDS.group }, { id: IDS.message, userID: IDS.user }] }]));
