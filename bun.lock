@@ -8795,7 +8795,7 @@
     },
     "packages/pieces/community/supabase": {
       "name": "@activepieces/piece-supabase",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
