@@ -28,7 +28,7 @@ export const newAttachmentTrigger = createTrigger({
 	name: 'newAttachment',
 	classification: 'READ',
 	displayName: 'New Attachment',
-	description: 'Triggers when a new email containing one or more attachments arrives.',
+	description: 'Triggers once for each attachment on a new email.',
 	aiMetadata: {
 		description:
 			'Fires once per attachment when a new email carrying one or more file attachments arrives, optionally scoped to a folder, sender, attachment-name, or file-extension filter. Each fire represents a single attachment from a newly received message.',
@@ -37,18 +37,19 @@ export const newAttachmentTrigger = createTrigger({
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',
-			description: 'Monitor attachments in a specific folder. Leave empty to monitor all folders.',
+			description: 'Leave empty to watch the whole mailbox, including sent mail.',
 			required: false,
 		}),
 		sender: Property.ShortText({
-			displayName: 'From (Sender Email)',
-			description:
-				'Filter emails from a specific sender (contains). Leave empty to include all senders.',
+			displayName: 'From',
+			description: 'Only emails whose sender address contains this text.',
+			placeholder: 'sender@example.com',
 			required: false,
 		}),
 		attachmentNameFilter: Property.ShortText({
-			displayName: 'Attachment Name Filter',
-			description: 'Filter attachments by name (contains). Leave empty to include all attachments.',
+			displayName: 'Attachment Name',
+			description: 'Only attachments whose file name contains this text.',
+			placeholder: 'invoice',
 			required: false,
 		}),
 		fileExtension: Property.ShortText({

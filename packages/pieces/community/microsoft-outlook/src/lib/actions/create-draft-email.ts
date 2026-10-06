@@ -9,38 +9,49 @@ export const createDraftEmailAction = createAction({
 	name: 'createDraftEmail',
 	classification: 'WRITE',
 	displayName: 'Create Draft Email',
-	description: 'Creates a draft email message.',
+	description: 'Save a new email to your Drafts folder without sending it.',
 	audience: 'human',
 	aiMetadata: { description: 'Creates a new unsent draft email in the Outlook mailbox with recipients, subject, body, and optional attachments. Use this to stage a message for later review or sending (pair with Send Draft Email). Not idempotent: each call creates a separate draft.', idempotent: false },
 	outputSchema: draftMessageActionOutputSchema,
+	propertyGroups: [
+		{
+			key: 'recipients',
+			display: 'tabs',
+			label: 'Recipients',
+			props: ['recipients', 'ccRecipients', 'bccRecipients'],
+		},
+	],
 	props: {
 		recipients: Property.Array({
-			displayName: 'To Email(s)',
+			displayName: 'To',
 			required: true,
 		}),
 		ccRecipients: Property.Array({
-			displayName: 'CC Email(s)',
+			displayName: 'Cc',
 			required: false,
 			defaultValue: [],
 		}),
 		bccRecipients: Property.Array({
-			displayName: 'BCC Email(s)',
+			displayName: 'Bcc',
 			required: false,
 			defaultValue: [],
 		}),
 		subject: Property.ShortText({
 			displayName: 'Subject',
+			placeholder: 'Invoice for March',
 			required: true,
 		}),
 		bodyFormat: Property.StaticDropdown({
 			displayName: 'Body Format',
+			description: 'How the text in Body is interpreted.',
 			required: true,
 			defaultValue: 'text',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'HTML', value: 'html' },
-					{ label: 'Text', value: 'text' },
+					{ label: 'Plain Text', value: 'text', description: 'Sent as written', icon: 'text' },
+					{ label: 'HTML', value: 'html', description: 'Tags are rendered', icon: 'code' },
 				],
 			},
 		}),
@@ -58,16 +69,15 @@ export const createDraftEmailAction = createAction({
 					required: true,
 				}),
 				fileName: Property.ShortText({
-					displayName: 'File Name',
+					displayName: 'Attachment Name',
+					description: 'Overrides the uploaded file name.',
+					placeholder: 'report.pdf',
 					required: false,
 				}),
 			},
 		}),
 	},
 	async run(context) {
-		const recipients = context.propsValue.recipients as string[];
-		const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];
-		const bccRecipients = (context.propsValue.bccRecipients ?? []) as string[];
 		const attachments = (context.propsValue.attachments ?? []) as Array<{ file: ApFile; fileName: string }>;
 
 		const { subject, body, bodyFormat } = context.propsValue;
@@ -78,21 +88,9 @@ export const createDraftEmailAction = createAction({
 				content: body,
 				contentType: bodyFormat as BodyType,
 			},
-			toRecipients: recipients.map((mail) => ({
-				emailAddress: {
-					address: mail,
-				},
-			})),
-			ccRecipients: ccRecipients.map((mail) => ({
-				emailAddress: {
-					address: mail,
-				},
-			})),
-			bccRecipients: bccRecipients.map((mail) => ({
-				emailAddress: {
-					address: mail,
-				},
-			})),
+			toRecipients: outlookCommon.toRecipients(context.propsValue.recipients),
+			ccRecipients: outlookCommon.toRecipients(context.propsValue.ccRecipients),
+			bccRecipients: outlookCommon.toRecipients(context.propsValue.bccRecipients),
 			attachments: attachments.map((attachment) => ({
 				'@odata.type': '#microsoft.graph.fileAttachment',
 				name: attachment.fileName || attachment.file.filename,
