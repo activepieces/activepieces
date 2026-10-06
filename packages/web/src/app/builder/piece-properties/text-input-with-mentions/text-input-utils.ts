@@ -494,7 +494,7 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     mentionAttrs.label || '{}',
   );
   mentionElement.className =
-    'inline-flex bg-gray-3/10 break-all my-1 mx-px border border-gray-6 border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-gray-11 ';
+    'inline-flex bg-gray-3/10 break-all my-1 mx-px border border-gray-6 border-solid items-center gap-2 py-1 px-2 rounded-md text-gray-11 ';
   assertNotNullOrUndefined(mentionAttrs.label, 'mentionAttrs.label');
   assertNotNullOrUndefined(mentionAttrs.id, 'mentionAttrs.id');
   assertNotNullOrUndefined(
@@ -514,10 +514,6 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
-  } else {
-    const emptyImagePlaceHolder = document.createElement('span');
-    emptyImagePlaceHolder.className = 'h-4 -mr-2';
-    mentionElement.appendChild(emptyImagePlaceHolder);
   }
 
   const mentiontextDiv = document.createTextNode(

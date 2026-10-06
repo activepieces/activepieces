@@ -61,7 +61,7 @@ export function FlowBuildCard({
         )}
       >
         <BuildDoodle iconName={iconName} />
-        <h2 className="pr-28 text-2xl font-extrabold leading-[1.1] tracking-tight text-gray-12 sm:pr-40 sm:text-[28px]">
+        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 sm:pr-40 sm:text-3xl">
           {tagline}
         </h2>
         <Progress

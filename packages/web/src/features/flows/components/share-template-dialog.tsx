@@ -117,14 +117,14 @@ const ShareTemplateDialog: React.FC<{
               control={shareTemplateForm.control}
               name="description"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="description">{t('Description')}</Label>
                   <Input
                     {...field}
                     required
                     id="description"
                     placeholder={t('A short description of the template')}
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>

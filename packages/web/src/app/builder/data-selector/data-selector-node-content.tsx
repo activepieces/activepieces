@@ -163,7 +163,7 @@ const DataSelectorNodeContent = ({
 
         {showInsertButton && (
           <Button
-            variant="basic"
+            variant="ghost"
             size="sm"
             tabIndex={-1}
             onClick={(e) => {

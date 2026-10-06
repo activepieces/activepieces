@@ -162,7 +162,7 @@ const ProjectReleasesPage = () => {
   ];
 
   return (
-    <div className="flex-col w-full gap-4">
+    <div className="flex w-full flex-col gap-4 px-4 pt-3 pb-4">
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}

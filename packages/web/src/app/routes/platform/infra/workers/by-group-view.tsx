@@ -85,7 +85,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
         </div>
 
         <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold leading-tight">
+          <span className="text-2xl font-semibold leading-tight">
             {onlineWorkerCount}
           </span>
           <span className="text-sm text-gray-11">
@@ -98,7 +98,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+            <span className="text-xs font-medium tracking-wide text-gray-11">
               {t('PROJECTS')}
             </span>
             <Button

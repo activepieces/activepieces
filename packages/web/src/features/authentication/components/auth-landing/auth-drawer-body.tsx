@@ -34,6 +34,7 @@ import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { FullLogo } from '@/components/custom/full-logo';
+import { HorizontalSeparatorWithText } from '@/components/custom/horizontal-separator-with-text';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -43,7 +44,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
 import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -76,7 +76,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 // label, not a statement that slows the eye down. 400 is the lightest weight
 // actually loaded; 300 would silently fall back and look identical.
 const AUTH_TITLE_CLASS =
-  'text-center text-[21px] font-normal leading-snug tracking-[-0.02em] text-balance text-gray-12';
+  'text-center text-xl font-normal leading-snug tracking-tight text-balance text-gray-12';
 
 // Steps cross-fade instead of snapping, and the card animates to the new
 // height, so moving between email → code → password reads as one surface
@@ -454,7 +454,7 @@ function LegalNote() {
   }
 
   return (
-    <p className="mt-8 border-t pt-5 text-center text-[11px] leading-relaxed text-gray-11">
+    <p className="mt-8 border-t pt-5 text-center text-xs leading-relaxed text-gray-11">
       {t('By continuing, you agree to our')}{' '}
       {!isNil(termsUrl) && (
         <a
@@ -554,7 +554,7 @@ function EmailStep({
           control={form.control}
           name="email"
           render={({ field }) => (
-            <FormItem className="grid space-y-2">
+            <FormItem>
               {/* One field, one affordance: the submit arrow lives inside the
                   input. When the address is personal the container grows a
                   note beneath the field — the field and the nudge read as one
@@ -573,7 +573,7 @@ function EmailStep({
                     autoFocus
                     type="text"
                     placeholder={t('name@work.com')}
-                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-14 text-[15px] shadow-none focus-visible:ring-0"
+                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-14 text-base shadow-none focus-visible:ring-0"
                     data-testid="auth-email"
                   />
                   <Button
@@ -657,7 +657,7 @@ function ResetStep() {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
                   <Input
@@ -665,7 +665,7 @@ function ResetStep() {
                     autoFocus
                     type="text"
                     placeholder={t('name@work.com')}
-                    className="h-12 rounded-lg pl-11 text-[15px]"
+                    className="h-12 rounded-lg pl-11 text-base"
                   />
                 </div>
                 <FormMessage />
@@ -763,7 +763,7 @@ function NameStep({ onSessionRejected }: NameStepProps) {
           control={form.control}
           name="fullName"
           render={({ field }) => (
-            <FormItem className="grid space-y-2">
+            <FormItem>
               <div
                 className={cn(
                   'rounded-xl border bg-gray-1 transition-colors duration-200',
@@ -779,7 +779,7 @@ function NameStep({ onSessionRejected }: NameStepProps) {
                     type="text"
                     autoComplete="name"
                     placeholder={t('Full Name')}
-                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-4 text-[15px] shadow-none focus-visible:ring-0"
+                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-4 text-base shadow-none focus-visible:ring-0"
                     data-testid="auth-full-name"
                   />
                 </div>

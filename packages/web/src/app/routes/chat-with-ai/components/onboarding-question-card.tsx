@@ -319,7 +319,7 @@ function OnboardingPill({
                     src={suggestion.logo}
                     alt=""
                     size="xxs"
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                 )}
                 <span className="truncate">{suggestion.value}</span>

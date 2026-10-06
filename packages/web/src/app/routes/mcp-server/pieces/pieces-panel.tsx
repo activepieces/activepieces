@@ -6,10 +6,10 @@ import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { LockedAlert } from '@/components/custom/locked-alert';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -26,7 +26,7 @@ import { piecesUtils } from './pieces-utils';
 
 const COLLAPSED_ROW_LIMIT = 6;
 const COLLAPSED_ROW_HEIGHT = 50;
-const PIECE_SETS_LIST_ROUTE = '/platform/pieces/piece-sets';
+const PIECE_SETS_LIST_ROUTE = '/platform/pieces/policies';
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function PiecesPanel({
@@ -190,10 +190,10 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
       <LockedAlert
         title={t('Control Pieces')}
         description={t(
-          'Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.',
+          'Every piece below is reachable by any connected client. Restricting the list with a piece policy is an enterprise feature.',
         )}
         button={
-          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="basic" />
+          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="ghost" />
         }
       />
     );
@@ -201,15 +201,15 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
 
   return (
     <Alert
-      variant="primary"
+      variant="info"
       className="flex flex-wrap items-center gap-x-3 gap-y-2"
     >
       <Info />
       <AlertDescription className="min-w-60 flex-1">
         {isPlatformAdmin
-          ? t("This project's pieces are controlled by a Piece Set.")
+          ? t("This project's pieces are controlled by a piece policy.")
           : t(
-              "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
+              "This project's pieces are controlled by a piece policy. Contact a platform admin to change it.",
             )}
       </AlertDescription>
       {isPlatformAdmin && (
@@ -222,11 +222,11 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
           <Link
             to={
               pieceSet
-                ? `/platform/pieces/piece-sets/${pieceSet.id}`
+                ? `/platform/pieces/policies/${pieceSet.id}`
                 : PIECE_SETS_LIST_ROUTE
             }
           >
-            {pieceSet?.name ?? t('Review piece set')}
+            {pieceSet?.name ?? t('Review piece policy')}
             <ExternalLink className="size-3.5" />
           </Link>
         </Button>

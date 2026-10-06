@@ -77,8 +77,8 @@ const GenericActionOrTriggerItem = ({
             </div>
             {pieceSelectorItemInfo.classification && (
               <Badge
-                variant="accent"
-                className="shrink-0 px-1.5 py-0 text-xss font-normal"
+                variant="secondary"
+                className="shrink-0 px-1.5 py-0 text-xs font-normal"
               >
                 {ACTION_CLASSIFICATION_BADGES[
                   pieceSelectorItemInfo.classification

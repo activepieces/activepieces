@@ -91,7 +91,7 @@ const GetStartedCard = ({
   children,
 }: GetStartedCardProps) => {
   return (
-    <Card className="flex-1 overflow-hidden">
+    <Card className="flex-1 overflow-hidden gap-0 py-0">
       <CardContent className="p-0">
         <div className="flex items-center gap-3 px-4 py-4">
           <div
@@ -130,7 +130,7 @@ const SuggestedTemplateCard = ({
     <Card
       onClick={() => onSelect(template)}
       variant="interactive"
-      className="h-[220px] flex flex-col"
+      className="h-[220px] flex flex-col gap-0 py-0"
     >
       <CardContent className="py-4 px-4 flex flex-col gap-1 flex-1 min-h-0">
         <div className="h-12 flex flex-col justify-start flex-shrink-0">
@@ -182,7 +182,7 @@ const SuggestedTemplateCard = ({
 
 const TemplateCardSkeleton = () => {
   return (
-    <Card className="h-[220px] flex flex-col">
+    <Card className="h-[220px] flex flex-col gap-0 py-0">
       <CardContent className="py-4 px-4 flex flex-col gap-2 flex-1">
         <Skeleton className="h-6 w-3/4" />
         <Skeleton className="h-4 w-full mt-2" />

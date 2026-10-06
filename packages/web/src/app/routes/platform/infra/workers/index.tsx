@@ -68,7 +68,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
       {section === 'health' && (
         <div className="flex flex-col gap-4 pt-4">
           {isCloud && fleetType === WorkerMachineType.SHARED && (
-            <Alert variant="primary">
+            <Alert variant="info">
               <Zap size={16} />
               <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
               <AlertDescription className="text-xs">
@@ -103,17 +103,17 @@ export default function WorkersPage({ section }: WorkersPageProps) {
                 <Card key={i} className="animate-pulse">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <div className="h-4 w-28 bg-gray-3 rounded" />
+                      <div className="h-4 w-28 bg-gray-3 rounded-md" />
                       <div className="h-5 w-16 bg-gray-3 rounded-full" />
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="h-3 w-full bg-gray-3 rounded" />
-                    <div className="h-3 w-full bg-gray-3 rounded" />
-                    <div className="h-3 w-full bg-gray-3 rounded" />
+                    <div className="h-3 w-full bg-gray-3 rounded-md" />
+                    <div className="h-3 w-full bg-gray-3 rounded-md" />
+                    <div className="h-3 w-full bg-gray-3 rounded-md" />
                   </CardContent>
                   <CardFooter>
-                    <div className="h-4 w-full bg-gray-3 rounded" />
+                    <div className="h-4 w-full bg-gray-3 rounded-md" />
                   </CardFooter>
                 </Card>
               ))}

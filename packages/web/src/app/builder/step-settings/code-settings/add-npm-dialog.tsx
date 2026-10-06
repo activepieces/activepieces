@@ -100,7 +100,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
                     id="packageName"
                     type="text"
                     placeholder="hello-world"
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>

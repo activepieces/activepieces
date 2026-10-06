@@ -4,8 +4,8 @@ import { AlertCircle, ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
+import { TextShimmer } from '@/components/custom/text-shimmer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TextShimmer } from '@/components/ui/text-shimmer';
 import {
   AnyToolPart,
   CardSkeletonPhase,

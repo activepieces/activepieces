@@ -233,7 +233,7 @@ export const PieceSetProjectsDialog = ({
                 {assignedProjects.slice(0, 3).map((project) => (
                   <span
                     key={project.id}
-                    className="flex size-5 items-center justify-center rounded-[5px] text-[9px] font-bold"
+                    className="flex size-5 items-center justify-center rounded-md text-xs font-semibold"
                     style={{
                       backgroundColor:
                         PROJECT_COLOR_PALETTE[project.icon.color].color,

@@ -21,6 +21,14 @@ import { useDeepCompareEffect } from 'react-use';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -55,6 +63,7 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
 
 export const CURSOR_QUERY_PARAM = 'cursor';
 export const LIMIT_QUERY_PARAM = 'limit';
+const NO_ROWS: never[] = [];
 
 type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
@@ -99,7 +108,6 @@ interface DataTableProps<
   getRowId?: (row: TData) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
-  bordered?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -141,7 +149,6 @@ export function DataTable<
   initialSorting = [],
   clientPagination = false,
   clientFiltering = false,
-  bordered = false,
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
@@ -189,7 +196,7 @@ export function DataTable<
             ),
             cell: ({ row }) => {
               return (
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                   {actions.map((action, index) => {
                     return (
                       <React.Fragment key={index}>
@@ -254,7 +261,7 @@ export function DataTable<
     setNextPageCursor(page?.next ?? undefined);
     setPreviousPageCursor(page?.previous ?? undefined);
     setTableData(enrichPageData(page?.data ?? []));
-  }, [page?.data]);
+  }, [page?.data ?? NO_ROWS]);
 
   const table = useReactTable({
     data: tableData,
@@ -343,6 +350,12 @@ export function DataTable<
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const rows = table.getRowModel().rows;
   const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const columnLayout = layoutColumns({
+    columns: table.getVisibleLeafColumns().map((column) => ({
+      id: column.id,
+      size: column.columnDef.size ?? DEFAULT_COLUMN_SIZE,
+    })),
+  });
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollContainerRef.current,
@@ -352,17 +365,13 @@ export function DataTable<
   });
 
   return (
-    <div
-      className={cn(
-        virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
-      )}
-    >
+    <div className={cn('flex flex-col', virtualizeRows && 'min-h-0 flex-1')}>
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+        <DataTableToolbar>
+          <div className="flex w-full flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {filters &&
                 filters.map((filter) => (
                   <DataTableFilter
@@ -390,35 +399,28 @@ export function DataTable<
       <div
         ref={scrollContainerRef}
         className={cn(
-          'mt-0',
-          {
-            'overflow-hidden': !virtualizeRows,
-            'flex-1 min-h-0 overflow-auto': virtualizeRows,
-          },
-          bordered &&
-            'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+          'overflow-hidden rounded-2xl bg-panel shadow-edge',
+          virtualizeRows && 'min-h-0 flex-1 overflow-auto',
         )}
       >
         <Table
           className="table-fixed"
+          style={{ minWidth: columnLayout.minWidth }}
           containerClassName={cn(virtualizeRows && 'overflow-visible')}
         >
+          <colgroup>
+            {columnLayout.columns.map((column) => (
+              <col key={column.id} style={{ width: column.width }} />
+            ))}
+          </colgroup>
           <TableHeader
             className={cn(virtualizeRows && STICKY_HEADER_CLASS_NAME)}
           >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
-                  const size = header.column.columnDef.size;
                   return (
-                    <TableHead
-                      key={header.id}
-                      style={
-                        size
-                          ? { width: size, minWidth: size, maxWidth: size }
-                          : undefined
-                      }
-                    >
+                    <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -433,7 +435,7 @@ export function DataTable<
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow className="hover:bg-gray-1">
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-24 text-center"
@@ -464,7 +466,8 @@ export function DataTable<
                         className={cn(
                           'cursor-pointer',
                           {
-                            'hover:bg-gray-1 cursor-default': isNil(onRowClick),
+                            'cursor-default hover:bg-transparent':
+                              isNil(onRowClick),
                           },
                           getRowClassName?.(row.original, rowIndex),
                         )}
@@ -495,20 +498,8 @@ export function DataTable<
                         data-state={row.getIsSelected() && 'selected'}
                       >
                         {row.getVisibleCells().map((cell) => {
-                          const size = cell.column.columnDef.size;
                           return (
-                            <TableCell
-                              key={cell.id}
-                              style={
-                                size
-                                  ? {
-                                      width: size,
-                                      minWidth: size,
-                                      maxWidth: size,
-                                    }
-                                  : undefined
-                              }
-                            >
+                            <TableCell key={cell.id}>
                               <div
                                 className={cn('flex w-full items-center', {
                                   'justify-end': cell.column.id === 'actions',
@@ -556,7 +547,8 @@ export function DataTable<
                     className={cn(
                       'cursor-pointer',
                       {
-                        'hover:bg-gray-1 cursor-default': isNil(onRowClick),
+                        'cursor-default hover:bg-transparent':
+                          isNil(onRowClick),
                       },
                       getRowClassName?.(row.original, rowIndex),
                     )}
@@ -588,20 +580,8 @@ export function DataTable<
                     data-state={row.getIsSelected() && 'selected'}
                   >
                     {row.getVisibleCells().map((cell) => {
-                      const size = cell.column.columnDef.size;
                       return (
-                        <TableCell
-                          key={cell.id}
-                          style={
-                            size
-                              ? {
-                                  width: size,
-                                  minWidth: size,
-                                  maxWidth: size,
-                                }
-                              : undefined
-                          }
-                        >
+                        <TableCell key={cell.id}>
                           <div
                             className={cn('flex w-full items-center', {
                               'justify-end': cell.column.id === 'actions',
@@ -643,23 +623,27 @@ export function DataTable<
                 </TableCell>
               </TableRow>
             ) : (
-              <TableRow className="hover:bg-gray-1">
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    {emptyStateIcon ? emptyStateIcon : <></>}
-                    <p className="text-lg font-semibold">
-                      {emptyStateTextTitle}
-                    </p>
-                    {emptyStateTextDescription && (
-                      <p className="text-sm text-gray-11 ">
-                        {emptyStateTextDescription}
-                      </p>
+                  <Empty className="border-0 p-0">
+                    <EmptyHeader>
+                      {emptyStateIcon && (
+                        <EmptyMedia variant="icon">{emptyStateIcon}</EmptyMedia>
+                      )}
+                      <EmptyTitle>{emptyStateTextTitle}</EmptyTitle>
+                      {emptyStateTextDescription && (
+                        <EmptyDescription>
+                          {emptyStateTextDescription}
+                        </EmptyDescription>
+                      )}
+                    </EmptyHeader>
+                    {emptyStateAction && (
+                      <EmptyContent>{emptyStateAction}</EmptyContent>
                     )}
-                    {emptyStateAction}
-                  </div>
+                  </Empty>
                 </TableCell>
               </TableRow>
             )}
@@ -667,7 +651,7 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && !virtualizeRows && (
-        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+        <div className="flex items-center justify-end gap-3 pt-3 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-gray-11">{t('Rows per page')}</span>
             <Select
@@ -679,7 +663,7 @@ export function DataTable<
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger size="sm" className="w-20">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
@@ -696,7 +680,6 @@ export function DataTable<
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.previousPage();
@@ -710,13 +693,12 @@ export function DataTable<
                 : !previousPageCursor
             }
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft />
             {t('Previous')}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.nextPage();
@@ -729,7 +711,7 @@ export function DataTable<
             }
           >
             {t('Next')}
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight />
           </Button>
         </div>
       )}
@@ -744,5 +726,34 @@ export function DataTable<
   );
 }
 
+function layoutColumns({ columns }: { columns: ColumnSize[] }): ColumnLayout {
+  const fluid = columns.filter((column) => column.size > FIXED_COLUMN_MAX);
+  const fluidTotal = fluid.reduce((total, column) => total + column.size, 0);
+  const fixedTotal = columns
+    .filter((column) => column.size <= FIXED_COLUMN_MAX)
+    .reduce((total, column) => total + column.size, 0);
+  return {
+    columns: columns.map((column) => ({
+      id: column.id,
+      width:
+        column.size <= FIXED_COLUMN_MAX || fluidTotal === 0
+          ? `${column.size}px`
+          : `${((column.size / fluidTotal) * 100).toFixed(3)}%`,
+    })),
+    minWidth: Math.round(fixedTotal + fluidTotal * FLUID_SHRINK_LIMIT),
+  };
+}
+
+const DEFAULT_COLUMN_SIZE = 150;
+const FIXED_COLUMN_MAX = 64;
+const FLUID_SHRINK_LIMIT = 0.7;
+
 const STICKY_HEADER_CLASS_NAME =
-  'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--gray-3)_70%,var(--gray-1))] shadow-[inset_0_1px_0_var(--gray-6),inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';
+  'sticky top-0 z-10 bg-panel shadow-[inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';
+
+type ColumnSize = { id: string; size: number };
+
+type ColumnLayout = {
+  columns: { id: string; width: string }[];
+  minWidth: number;
+};

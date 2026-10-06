@@ -240,7 +240,6 @@ export function ActivityFeed({
           projects,
           members: isPrivileged ? users?.data ?? [] : [],
         })}
-        bordered={true}
         onRowClick={(row) => setSelection({ row })}
         getRowClassName={(row) =>
           row.id === selected?.id ? 'bg-accent-3 hover:bg-accent-4' : ''

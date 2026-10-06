@@ -86,7 +86,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                 <code
                   className={cn(
                     className,
-                    'bg-gray-3 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                    'bg-gray-3 px-[6px] py-[2px] rounded-none font-mono text-sm',
                   )}
                   {...props}
                 >

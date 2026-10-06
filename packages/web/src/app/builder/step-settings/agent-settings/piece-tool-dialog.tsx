@@ -204,7 +204,7 @@ export function AgentPieceDialog({
 
   return (
     <Dialog open={showAddPieceDialog} onOpenChange={handleDialogClose}>
-      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
+      <DialogContent className="w-[90vw] sm:max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
         <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
           <DialogTitle>{renderDialogHeaderContent()}</DialogTitle>
         </DialogHeader>

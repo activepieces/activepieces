@@ -14,7 +14,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -66,27 +65,23 @@ const RenameConnectionDialog = forwardRef<
         open={isRenameDialogOpen}
         onOpenChange={(open) => setIsRenameDialogOpen(open)}
       >
-        <DialogTrigger asChild>
-          <>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!userHasPermissionToRename}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsRenameDialogOpen(true);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {!userHasPermissionToRename ? t('Permission needed') : t('Edit')}
-            </TooltipContent>
-          </>
-        </DialogTrigger>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!userHasPermissionToRename}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsRenameDialogOpen(true);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {!userHasPermissionToRename ? t('Permission needed') : t('Edit')}
+        </TooltipContent>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('Rename Connection')}</DialogTitle>
@@ -108,13 +103,13 @@ const RenameConnectionDialog = forwardRef<
                 control={renameConnectionForm.control}
                 name="displayName"
                 render={({ field }) => (
-                  <FormItem className="grid space-y-2">
+                  <FormItem>
                     <Label htmlFor="displayName">{t('Name')}</Label>
                     <Input
                       {...field}
                       id="displayName"
                       placeholder={t('New Connection Name')}
-                      className="rounded-sm"
+                      className="rounded-md"
                     />
                     <FormMessage />
                   </FormItem>

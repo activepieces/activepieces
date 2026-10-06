@@ -52,7 +52,7 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <Card className="w-md rounded-sm drop-shadow-xl">
+    <Card className="w-md rounded-md drop-shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl">
           {isSent ? t('Check Your Inbox') : t('Reset Password')}
@@ -80,7 +80,7 @@ const ResetPasswordForm = () => {
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem className="w-full grid space-y-2">
+                  <FormItem className="w-full">
                     <Label htmlFor="email">{t('Email')}</Label>
                     <Input
                       {...field}

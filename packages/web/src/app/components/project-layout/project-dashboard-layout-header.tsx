@@ -47,22 +47,21 @@ const AnimatedTab = ({
   return (
     <TabsTrigger
       value={tab.to}
-      variant="outline"
-      className="pb-3"
+      className="flex-none"
       onClick={onClick}
       data-state={isActive ? 'active' : 'inactive'}
       onMouseEnter={() => iconRef.current?.startAnimation()}
       onMouseLeave={() => iconRef.current?.stopAnimation()}
     >
-      <IconComponent ref={iconRef} size={16} className="mr-2" />
+      <IconComponent ref={iconRef} size={16} />
       {tab.label}
       {tab.beta && (
-        <span className="ml-1.5 rounded-full bg-accent-3 px-1.5 py-0.5 text-[10px] font-medium leading-none text-accent-11">
+        <span className="rounded-full bg-accent-3 px-1.5 py-0.5 text-xs font-medium leading-none text-accent-11">
           Beta
         </span>
       )}
       {!isNil(tab.badgeCount) && tab.badgeCount > 0 && (
-        <span className="ml-1.5 rounded-full bg-accent-9 px-1.5 py-0.5 text-[10px] font-medium leading-none text-on-accent">
+        <span className="rounded-full bg-accent-9 px-1.5 py-0.5 text-xs font-medium leading-none text-on-accent">
           {tab.badgeCount > 10 ? '10+' : tab.badgeCount}
         </span>
       )}
@@ -147,8 +146,8 @@ export const ProjectDashboardLayoutHeader = () => {
     <div className="flex flex-col">
       {!isEmbedded && <ProjectDashboardPageHeader />}
       {!embedState.hideSideNav && (
-        <Tabs className="px-3 pt-2 border-b">
-          <TabsList variant="outline">
+        <Tabs className="overflow-x-auto border-b px-3 pt-2 [scrollbar-width:none]">
+          <TabsList variant="line">
             {visiblePrimaryTabs.map((tab) => (
               <AnimatedTab
                 key={tab.to}
@@ -159,10 +158,7 @@ export const ProjectDashboardLayoutHeader = () => {
             ))}
             {visiblePrimaryTabs.length > 0 &&
               visibleSecondaryTabs.length > 0 && (
-                <Separator
-                  orientation="vertical"
-                  className="mx-2 h-5 self-center mb-2"
-                />
+                <Separator orientation="vertical" className="mx-1 h-5" />
               )}
             {visibleSecondaryTabs.map((tab) => (
               <AnimatedTab

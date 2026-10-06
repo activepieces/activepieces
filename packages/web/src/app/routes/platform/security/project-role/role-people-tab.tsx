@@ -61,13 +61,13 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
         </p>
       )}
       <div className={cn(PEOPLE_COLUMNS, 'shrink-0 border-b px-6 pb-2')}>
-        <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
+        <span className="text-xs font-medium tracking-wider text-gray-11">
           {t('Name')}
         </span>
-        <span className="hidden text-xss font-medium uppercase tracking-wider text-gray-11 @min-[36rem]:block">
+        <span className="hidden text-xs font-medium tracking-wider text-gray-11 @min-[36rem]:block">
           {t('Email')}
         </span>
-        <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
+        <span className="text-xs font-medium tracking-wider text-gray-11">
           {t('Project')}
         </span>
       </div>

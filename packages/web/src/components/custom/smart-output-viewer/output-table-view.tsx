@@ -107,7 +107,7 @@ function OutputTableView({ items }: OutputTableViewProps) {
 
   return (
     <div className="p-3">
-      <div className="text-xs text-gray-11 mb-2">
+      <div className="text-sm text-gray-11 mb-2">
         {isTruncated
           ? t('Showing {shown} of {total} {label}', {
               shown: rows.length,

@@ -206,16 +206,16 @@ export function ChatModelSelector({
           )}
           <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-gray-11">
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <ArrowUp className="size-3" />
               </kbd>
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <ArrowDown className="size-3" />
               </kbd>
               <span>{t('to navigate')}</span>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <CornerDownLeft className="size-3" />
               </kbd>
               <span>{t('to select')}</span>

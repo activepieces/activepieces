@@ -131,7 +131,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                     {...field}
                     required
                     id="clientId"
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>
@@ -148,7 +148,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                     {...field}
                     required
                     id="clientSecret"
-                    className="rounded-sm"
+                    className="rounded-md"
                     type="password"
                   />
                   <FormMessage />

@@ -66,7 +66,7 @@ function CreatePlatformDialogForm({
             },
           }}
           render={({ field }) => (
-            <FormItem className="grid space-y-2">
+            <FormItem>
               <Label htmlFor="createPlatformName">{t('Platform Name')}</Label>
               <Input
                 {...field}
@@ -74,7 +74,7 @@ function CreatePlatformDialogForm({
                 id="createPlatformName"
                 type="text"
                 placeholder={t('My Platform')}
-                className="rounded-sm"
+                className="rounded-md"
                 autoFocus
               />
               <FormMessage />

@@ -504,7 +504,7 @@ function SidebarGroupLabel({
       data-sidebar="group-label"
       className={cn(
         'flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-normal text-gray-11 ring-gray-8 outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
-        'group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0',
+        'group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0',
         className,
       )}
       {...props}

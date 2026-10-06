@@ -112,7 +112,10 @@ function TierTools({
                       </code>
                     </TextWithTooltip>
                     {offForPlatform && (
-                      <Badge variant="neutral" className="shrink-0 font-normal">
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 font-normal"
+                      >
                         {t('Off for the platform')}
                       </Badge>
                     )}

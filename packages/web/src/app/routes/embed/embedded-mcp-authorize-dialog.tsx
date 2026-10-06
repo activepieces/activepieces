@@ -88,7 +88,7 @@ export const EmbeddedMcpAuthorizeDialog = () => {
         showOverlay={false}
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
-        className="min-w-[400px] max-w-[440px]"
+        className="min-w-[400px] sm:max-w-[440px]"
       >
         <DialogHeader>
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">

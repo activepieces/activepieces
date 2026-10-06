@@ -95,7 +95,10 @@ const ChangeOwnerDialog = ({
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+          >
             <FormField
               control={form.control}
               name="ownerId"

@@ -70,7 +70,7 @@ export function ActivityDetailSheet({
   return (
     <Sheet open={row !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
-        hideCloseButton
+        showCloseButton={false}
         overlayClassName="bg-scrim/40"
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(event) => {
@@ -241,8 +241,8 @@ function ActivityDetail({
                   {row.projectName}
                   {projectType !== undefined && (
                     <Badge
-                      variant="accent"
-                      className="text-xss font-normal text-gray-11"
+                      variant="secondary"
+                      className="text-xs font-normal text-gray-11"
                     >
                       {projectType === ProjectType.PERSONAL
                         ? t('Personal')
@@ -266,7 +266,7 @@ function ActivityDetail({
 
         {row.errorMessage !== null && (
           <div className="mt-5 rounded-md border border-danger-6 bg-danger-3 p-3">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-danger-11">
+            <div className="mb-1 text-xs font-semibold tracking-wide text-danger-11">
               {t('Error')}
             </div>
             <p className="whitespace-pre-wrap break-words text-sm text-danger-11">
@@ -348,7 +348,7 @@ function ActivityPayload({
 function OutputSection({ output }: { output: ParsedOutput }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-gray-11">
+      <div className="text-xs font-semibold tracking-wide text-gray-11">
         {t('Output')}
       </div>
       {output.summary !== null && <p className="text-sm">{output.summary}</p>}
@@ -371,7 +371,7 @@ function PayloadValue({ data }: { data: unknown }) {
 function PayloadSection({ label, data }: { label: string; data: unknown }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-gray-11">
+      <div className="text-xs font-semibold tracking-wide text-gray-11">
         {label}
       </div>
       {data === null || data === undefined ? (

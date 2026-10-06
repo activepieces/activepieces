@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,7 +29,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
@@ -166,7 +166,7 @@ const EditProjectForm = ({
                 {...field}
                 id="displayName"
                 placeholder={t('Project Name')}
-                className="rounded-sm"
+                className="rounded-md"
               />
               <FormMessage />
             </FormItem>
@@ -187,7 +187,7 @@ const EditProjectForm = ({
                     {...field}
                     id="externalId"
                     placeholder={t('org-3412321')}
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>

@@ -41,14 +41,11 @@ const OverwriteDraftDialog = ({
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        disabled={!userHasPermissionToWriteFlow}
-        className="w-full"
-      >
-        <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
+      <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
+        <DialogTrigger asChild disabled={!userHasPermissionToWriteFlow}>
           {children}
-        </PermissionNeededTooltip>
-      </DialogTrigger>
+        </DialogTrigger>
+      </PermissionNeededTooltip>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Overwrite Draft')}</DialogTitle>

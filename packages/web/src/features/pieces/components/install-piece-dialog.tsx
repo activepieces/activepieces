@@ -261,7 +261,7 @@ const InstallPieceDialog = ({
                         id="pieceName"
                         type="text"
                         placeholder="@activepieces/piece-name"
-                        className="rounded-sm"
+                        className="rounded-md"
                       />
                       <FormMessage />
                     </FormItem>
@@ -281,7 +281,7 @@ const InstallPieceDialog = ({
                         id="pieceVersion"
                         type="text"
                         placeholder="0.0.1"
-                        className="rounded-sm"
+                        className="rounded-md"
                       />
                       <FormMessage />
                     </FormItem>
@@ -313,7 +313,7 @@ const InstallPieceDialog = ({
                         }
                       }}
                       placeholder={t('Package archive')}
-                      className="rounded-sm"
+                      className="rounded-md"
                     />
                     <FormMessage />
                   </FormItem>

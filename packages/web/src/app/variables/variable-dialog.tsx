@@ -64,7 +64,7 @@ export function VariableDialog(props: VariableDialogProps) {
   const { open, onOpenChange, existing, onSaved } = props;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent size="sm">
         <VariableForm
           key={open ? `${existing?.id ?? 'new'}-open` : 'closed'}
           existing={existing}

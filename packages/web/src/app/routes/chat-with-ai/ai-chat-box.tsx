@@ -495,7 +495,7 @@ function ChatBoxContent({
             }
           />
           {footerNote !== undefined && (
-            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-gray-11">
+            <p className="pt-[9px] text-center text-xs leading-3.5 text-gray-11">
               {footerNote}
             </p>
           )}

@@ -72,7 +72,7 @@ export const PieceSetsTab = () => {
           <div className="flex items-center gap-2">
             <span className="font-medium">{row.original.name}</span>
             {row.original.isDefault && (
-              <Badge variant="default">{t('Default')}</Badge>
+              <Badge variant="outline">{t('Default')}</Badge>
             )}
           </div>
         ),

@@ -47,7 +47,7 @@ export const DownloadButton = ({
           onClick={() => downloadFile()}
           {...props}
         >
-          <Download className="h-4 w-4"></Download>
+          <Download className="size-4"></Download>
         </Button>
       </TooltipTrigger>
       <TooltipContent side={tooltipSide}>{t('Download')}</TooltipContent>

@@ -45,7 +45,7 @@ export const AgentStructuredOutput = ({
 
       <div className="flex flex-col gap-2 mt-4">
         {outputFields.length > 0 ? (
-          <Card>
+          <Card className="gap-0 py-0">
             <CardContent className="px-2 py-2">
               <div className="flex flex-col gap-3">
                 {outputFields.map((field, idx) => (

@@ -3,6 +3,8 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useMenuFocusReturn } from '@/hooks/use-menu-focus-return';
+import { toastInteraction } from '@/lib/toast-interaction';
 import { cn } from '@/lib/utils';
 
 function Dialog({
@@ -38,7 +40,7 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       tabIndex={-1}
       className={cn(
-        'fixed inset-0 z-50 bg-scrim outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
+        'fixed inset-0 isolate z-50 bg-scrim outline-hidden duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         className,
       )}
       {...props}
@@ -49,30 +51,42 @@ function DialogOverlay({
 function DialogContent({
   className,
   children,
+  size = 'md',
   showCloseButton = true,
   showOverlay = true,
   overlayClassName,
+  onInteractOutside,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & DialogContentProps) {
+  const focusReturn = useMenuFocusReturn({ onCloseAutoFocus });
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal>
       {showOverlay && <DialogOverlay className={overlayClassName} />}
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        data-size={size}
         className={cn(
-          'fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-panel p-5 shadow-lg duration-200 outline-hidden data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
+          'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-3rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl bg-panel p-6 text-sm text-gray-12 shadow-over duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+          DIALOG_SIZES[size],
           className,
         )}
+        onInteractOutside={toastInteraction.ignore(onInteractOutside)}
+        onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         {...props}
       >
+        {focusReturn.capture}
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-gray-1 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-gray-8 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-gray-4 data-[state=open]:text-gray-11 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-          >
-            <XIcon />
-            <span className="sr-only">Close</span>
+          <DialogPrimitive.Close data-slot="dialog-close" asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="absolute top-6 right-6"
+            >
+              <XIcon />
+              <span className="sr-only">Close</span>
+            </Button>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>
@@ -84,10 +98,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn(
-        'flex flex-col gap-2 text-center sm:text-left mb-3',
-        className,
-      )}
+      className={cn('flex flex-col gap-2 pr-9', className)}
       {...props}
     />
   );
@@ -103,7 +114,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-3',
+        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
         className,
       )}
       {...props}
@@ -125,10 +136,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(
-        'text-lg leading-none font-semibold tracking-tight',
-        className,
-      )}
+      className={cn('text-base leading-normal font-semibold', className)}
       {...props}
     />
   );
@@ -141,7 +149,10 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('text-sm text-gray-11', className)}
+      className={cn(
+        'text-sm text-gray-11 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-gray-12',
+        className,
+      )}
       {...props}
     />
   );
@@ -160,7 +171,16 @@ export {
   DialogTrigger,
 };
 
+const DIALOG_SIZES = {
+  sm: 'sm:max-w-md',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-2xl',
+  xl: 'sm:max-w-4xl',
+  xxl: 'sm:max-w-6xl',
+} as const;
+
 type DialogContentProps = {
+  size?: keyof typeof DIALOG_SIZES;
   showCloseButton?: boolean;
   showOverlay?: boolean;
   overlayClassName?: string;

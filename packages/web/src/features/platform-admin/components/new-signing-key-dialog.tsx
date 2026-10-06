@@ -101,7 +101,7 @@ export const NewSigningKeyDialog = ({
                       {...field}
                       required
                       id="displayName"
-                      className="rounded-sm"
+                      className="rounded-md"
                     />
                     <FormMessage />
                   </FormItem>
@@ -132,7 +132,7 @@ export const NewSigningKeyDialog = ({
             </>
           ) : (
             <Button
-              variant={'accent'}
+              variant={'secondary'}
               onClick={() => {
                 setSigningKey(undefined);
                 setOpen(false);

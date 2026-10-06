@@ -25,7 +25,7 @@ export function WorkerAssignmentsTab() {
 
   return (
     <div className="flex flex-col gap-4 pt-4">
-      <Alert variant="primary">
+      <Alert variant="info">
         <Info className="size-4" />
         <AlertDescription className="text-sm">
           {t(
@@ -45,12 +45,8 @@ export function WorkerAssignmentsTab() {
 
       <Tabs defaultValue="by-project" className="w-full">
         <TabsList variant="default">
-          <TabsTrigger variant="default" value="by-project">
-            {t('By project')}
-          </TabsTrigger>
-          <TabsTrigger variant="default" value="by-group">
-            {t('By group')}
-          </TabsTrigger>
+          <TabsTrigger value="by-project">{t('By project')}</TabsTrigger>
+          <TabsTrigger value="by-group">{t('By group')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="by-project">

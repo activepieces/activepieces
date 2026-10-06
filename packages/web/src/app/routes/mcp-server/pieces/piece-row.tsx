@@ -47,7 +47,7 @@ export const PieceRow = memo(function PieceRow({
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-3">
           {row.destructiveActionCount > 0 && (
-            <Badge variant="destructive" className="py-0 text-xss font-normal">
+            <Badge variant="destructive" className="py-0 text-xs font-normal">
               {t('pieceDestructiveActionCount', {
                 count: row.destructiveActionCount,
               })}
@@ -90,14 +90,11 @@ function ActionGroupColumn({
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center gap-2 px-2">
         <span
-          className={cn(
-            'text-xs font-semibold tracking-wider uppercase',
-            tone.label,
-          )}
+          className={cn('text-xs font-semibold tracking-wider', tone.label)}
         >
           {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
         </span>
-        <Badge variant={tone.count} className="px-1.5 text-xss">
+        <Badge variant={tone.count} className="px-1.5 text-xs">
           {group.actions.length}
         </Badge>
       </div>
@@ -107,7 +104,7 @@ function ActionGroupColumn({
             key={action.name}
             tooltipMessage={action.displayName}
           >
-            <div className="rounded-sm px-2 py-0.5 text-sm leading-5 hover:bg-gray-3">
+            <div className="rounded-md px-2 py-0.5 text-sm leading-5 hover:bg-gray-3">
               {action.displayName}
             </div>
           </TextWithTooltip>
@@ -125,8 +122,8 @@ function ActionGroupColumn({
 }
 
 const CLASSIFICATION_TONES: Record<ActionClassification, ClassificationTone> = {
-  READ: { label: 'text-gray-12', count: 'accent' },
-  SEARCH: { label: 'text-gray-12', count: 'accent' },
+  READ: { label: 'text-gray-12', count: 'secondary' },
+  SEARCH: { label: 'text-gray-12', count: 'secondary' },
   WRITE: {
     label: 'text-warning-11',
     count: 'warning',
@@ -140,7 +137,7 @@ const CLASSIFICATION_TONES: Record<ActionClassification, ClassificationTone> = {
 
 type ClassificationTone = {
   label: string;
-  count: 'accent' | 'warning' | 'destructive';
+  count: 'secondary' | 'warning' | 'destructive';
   frame?: string;
 };
 

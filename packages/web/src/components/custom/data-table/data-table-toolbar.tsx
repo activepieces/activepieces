@@ -1,21 +1,17 @@
-import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 type DataTableToolbarProps = {
   children?: React.ReactNode;
   className?: string;
 };
 
-const DataTableToolbar = (params: DataTableToolbarProps) => {
+const DataTableToolbar = ({ children, className }: DataTableToolbarProps) => {
   return (
     <div
-      className={cn(
-        'flex items-center justify-between py-3 overflow-auto',
-        params.className ?? DASHBOARD_CONTENT_PADDING_X,
-      )}
+      data-slot="toolbar"
+      className={cn('mb-6 flex items-center gap-3', className)}
     >
-      <div className="flex flex-1 items-center space-x-2">
-        {params.children}
-      </div>
+      {children}
     </div>
   );
 };

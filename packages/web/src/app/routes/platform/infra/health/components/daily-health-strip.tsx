@@ -72,7 +72,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                   <TooltipTrigger asChild>
                     <div
                       className={cn(
-                        'flex-1 h-full rounded-sm transition-colors',
+                        'flex-1 h-full rounded-md transition-colors',
                         healthy
                           ? 'bg-success-9 hover:bg-success-9/80'
                           : 'bg-danger-9 hover:bg-danger-9/80',

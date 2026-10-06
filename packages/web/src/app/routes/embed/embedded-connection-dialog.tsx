@@ -129,7 +129,7 @@ const EmbeddedConnectionDialogContent = ({
         showOverlay={false}
         onInteractOutside={(e) => e.preventDefault()}
         className={cn(
-          'max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto',
+          'max-h-[70vh]  min-w-[450px] sm:max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto',
           {
             'bg-transparent! border-none! focus:outline-hidden border-transparent! shadow-none!':
               isLoadingPiece,

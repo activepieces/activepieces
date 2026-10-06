@@ -165,7 +165,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Alert variant="primary">
+      <Alert variant="info">
         <Info />
         <AlertDescription className="text-pretty">
           {t(

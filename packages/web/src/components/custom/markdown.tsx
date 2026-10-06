@@ -41,7 +41,7 @@ const Container = ({
 }) => {
   return (
     <Alert
-      className={cn('rounded-md border', {
+      className={cn('border', {
         'bg-warning-3 border-none text-warning-11':
           variant === MarkdownVariant.WARNING,
         'bg-success-3 text-success-11 border-none':
@@ -53,14 +53,12 @@ const Container = ({
       {variant !== MarkdownVariant.BORDERLESS && (
         <>
           {(variant === MarkdownVariant.INFO || variant === undefined) && (
-            <Info className="w-4 h-4 mt-1" />
+            <Info />
           )}
           {variant === MarkdownVariant.WARNING && (
-            <AlertTriangle className="w-4 h-4 mt-1 stroke-warning-11" />
+            <AlertTriangle className="stroke-warning-11" />
           )}
-          {variant === MarkdownVariant.TIP && (
-            <Lightbulb className="w-4 h-4 mt-1" />
-          )}
+          {variant === MarkdownVariant.TIP && <Lightbulb />}
         </>
       )}
       <AlertDescription className="grow w-full">{children}</AlertDescription>
@@ -114,7 +112,7 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative flex w-full max-w-full items-center gap-1 rounded border border-solid bg-gray-1 p-1.5 text-sm">
+                <div className="relative flex w-full max-w-full items-start gap-1 rounded-lg border border-solid bg-gray-1 p-1 text-sm">
                   <code
                     data-testid="markdown-code-block"
                     className="grow min-w-0 whitespace-pre-wrap break-all select-all px-1 py-1.5 font-mono text-sm"
@@ -123,13 +121,14 @@ const ApMarkdown = React.memo(
                   </code>
                   <Button
                     variant="ghost"
-                    className="bg-gray-1 rounded p-2 inline-flex items-center justify-center h-8"
+                    size="icon-sm"
+                    className="bg-gray-1"
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (
-                      <Check className="w-3 h-3" />
+                      <Check className="size-3.5" />
                     ) : (
-                      <Copy className="w-3 h-3" />
+                      <Copy className="size-3.5" />
                     )}
                   </Button>
                 </div>
@@ -137,33 +136,36 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node: _node, ref: _ref, ...props }) => (
               <h1
-                className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
+                className="scroll-m-20 text-lg font-semibold tracking-tight lg:text-2xl"
                 {...props}
               />
             ),
             h2: ({ node: _node, ref: _ref, ...props }) => (
               <h2
-                className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-base text-lg font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
             h3: ({ node: _node, ref: _ref, ...props }) => (
               <h3
-                className="scroll-m-20 text-lg font-semibold tracking-tight"
+                className="scroll-m-20 text-base font-semibold tracking-tight"
                 {...props}
               />
             ),
             p: ({ node: _node, ref: _ref, ...props }) => (
-              <p
-                className="leading-5 first-of-type:mt-1 not-first-of-type:mt-2 w-full mb-2"
+              <p className="w-full leading-5 not-first:mt-2" {...props} />
+            ),
+            ul: ({ node: _node, ref: _ref, ...props }) => (
+              <ul
+                className="mt-2 ml-6 list-disc first:mt-0 [&>li]:mt-1"
                 {...props}
               />
             ),
-            ul: ({ node: _node, ref: _ref, ...props }) => (
-              <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />
-            ),
             ol: ({ node: _node, ref: _ref, ...props }) => (
-              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-2" {...props} />
+              <ol
+                className="mt-2 ml-6 list-decimal first:mt-0 [&>li]:mt-1"
+                {...props}
+              />
             ),
             li: ({ node: _node, ref: _ref, ...props }) => <li {...props} />,
             a: ({ node: _node, ref: _ref, ...props }) => (

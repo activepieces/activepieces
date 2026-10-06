@@ -36,7 +36,7 @@ function ItemIcon({
     if (iconBgColor) {
       return (
         <span
-          className="flex size-5 shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold leading-none"
+          className="flex size-5 shrink-0 items-center justify-center rounded-md text-xs font-semibold leading-none"
           style={{ backgroundColor: iconBgColor, color: iconTextColor }}
         >
           {iconLetter}
@@ -172,7 +172,7 @@ export function SearchResultRow({
         <HighlightText text={item.label} query={query ?? ''} />
       </span>
       {item.status === 'ENABLED' && (
-        <span className="shrink-0 rounded-full bg-success-3 px-1.5 py-0.5 text-[10px] font-medium text-success-11">
+        <span className="shrink-0 rounded-full bg-success-3 px-1.5 py-0.5 text-xs font-medium text-success-11">
           {t('Live')}
         </span>
       )}

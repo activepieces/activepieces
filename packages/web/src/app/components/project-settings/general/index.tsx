@@ -110,7 +110,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                                 variant="ghost"
                                 size="icon"
                                 className={cn(
-                                  'h-8 w-8 rounded-sm transition-all hover:scale-110 p-0',
+                                  'h-8 w-8 rounded-md transition-all hover:scale-110 p-0',
                                   PROJECT_COLOR_SWATCH[currentColor] ===
                                     PROJECT_COLOR_SWATCH[colorName] &&
                                     'ring-2 ring-offset-2 ring-offset-panel ring-gray-12',
@@ -180,7 +180,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
           <FormField
             name="sensitive"
             render={({ field }) => (
-              <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+              <FormItem className="flex flex-row items-center justify-between gap-3 rounded-md border p-3">
                 <div className="space-y-1">
                   <Label htmlFor="sensitive" className="text-sm font-medium">
                     {t('Sensitive Project')}

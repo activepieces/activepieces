@@ -28,7 +28,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -161,7 +161,7 @@ export const AutomationsTableRow = ({
             <TooltipTrigger asChild>
               <button
                 onClick={onTogglePin}
-                className="p-0.5 rounded hover:bg-gray-3 transition-colors"
+                className="p-0.5 rounded-md hover:bg-gray-3 transition-colors"
               >
                 <Star
                   className={cn(
@@ -375,14 +375,13 @@ export const AutomationsTableRow = ({
                 {t('Delete')}
               </DropdownMenuItem>
             ) : (
-              <ConfirmationDeleteDialog
+              <ConfirmDialog
                 title={t('Delete {type}', { type: item.type })}
-                message={t('Deleting "{name}" cannot be undone.', {
+                description={t('Deleting "{name}" cannot be undone.', {
                   name: item.name,
                 })}
-                mutationFn={async () => onDelete()}
-                entityName={item.type}
-                buttonText={t('Delete')}
+                onConfirm={async () => onDelete()}
+                confirmLabel={t('Delete')}
               >
                 <DropdownMenuItem
                   onSelect={(e) => e.preventDefault()}
@@ -391,7 +390,7 @@ export const AutomationsTableRow = ({
                   <Trash2 className="h-4 w-4 mr-2" />
                   {t('Delete')}
                 </DropdownMenuItem>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

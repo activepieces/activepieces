@@ -68,12 +68,12 @@ export const ChatDrawer = () => {
       dismissible={false}
       modal={false}
     >
-      <DrawerContent className="w-[500px] overflow-x-hidden">
+      <DrawerContent className="w-[500px] overflow-x-hidden data-[vaul-drawer-direction=right]:sm:max-w-[500px]">
         <DrawerHeader>
           <div className="p-4">
             <div className="flex items-center gap-1">
               <Button
-                variant="basic"
+                variant="ghost"
                 size={'icon'}
                 className="text-gray-12"
                 onClick={() => setChatDrawerOpenSource(null)}

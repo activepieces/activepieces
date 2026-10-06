@@ -9,9 +9,9 @@ import { t } from 'i18next';
 import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
@@ -131,7 +131,7 @@ const RoleCell = ({
         </TooltipProvider>
         <Button
           variant="outline"
-          className="w-[150px] justify-between cursor-not-allowed"
+          className="w-48 justify-between cursor-not-allowed"
           disabled={true}
         >
           <span>{roleName}</span>
@@ -143,7 +143,7 @@ const RoleCell = ({
 
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateRole}>
-      <div className="w-[150px]">
+      <div className="w-48">
         <RoleSelector
           type="project"
           value={roleName}
@@ -193,26 +193,21 @@ const ActionsCell = ({
     return null;
   }
 
-  const displayName =
-    row.original.type === 'member'
-      ? `${row.original.data.user.firstName} ${row.original.data.user.lastName}`
-      : row.original.data.email;
-
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
-      <ConfirmationDeleteDialog
+      <ConfirmDialog
         title={
           row.original.type === 'invitation'
             ? t('Remove Invitation')
             : t('Remove Member')
         }
-        message={
+        description={
           row.original.type === 'invitation'
             ? t('This invitation will be revoked immediately.')
             : t('This member will lose access to the project immediately.')
         }
-        mutationFn={() => deleteMember()}
-        entityName={displayName}
+        onConfirm={() => deleteMember()}
+        confirmLabel={t('Remove')}
       >
         <Button
           variant="ghost"
@@ -222,7 +217,7 @@ const ActionsCell = ({
         >
           <Trash2 className="h-4 w-4 text-danger-11" />
         </Button>
-      </ConfirmationDeleteDialog>
+      </ConfirmDialog>
     </PermissionNeededTooltip>
   );
 };

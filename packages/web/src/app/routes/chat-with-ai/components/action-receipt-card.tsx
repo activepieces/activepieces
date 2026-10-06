@@ -52,7 +52,7 @@ export function ActionReceiptCard({
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-gray-11 break-words">
+        <p className="px-3.5 pb-2.5 text-xs leading-relaxed text-gray-11 break-words">
           {receipt.errorMessage}
         </p>
       )}

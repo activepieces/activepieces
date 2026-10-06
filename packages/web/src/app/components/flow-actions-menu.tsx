@@ -24,7 +24,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -361,9 +361,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               <PermissionNeededTooltip
                 hasPermission={userHasPermissionToUpdateFlow}
               >
-                <ConfirmationDeleteDialog
+                <ConfirmDialog
                   title={t('Delete Flow')}
-                  message={
+                  description={
                     <>
                       <div>
                         {t(
@@ -371,7 +371,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                         )}
                       </div>
                       {isDevelopmentBranch && (
-                        <div className="font-bold mt-2">
+                        <div className="font-semibold mt-2">
                           {t(
                             'You are on a development branch, this will also delete the flow from the remote repository.',
                           )}
@@ -379,12 +379,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                       )}
                     </>
                   }
-                  mutationFn={async () => {
+                  onConfirm={async () => {
                     await flowsApi.delete(flow.id);
                     onDelete();
                   }}
-                  entityName={t('flow')}
-                  buttonText={t('Delete')}
+                  confirmLabel={t('Delete')}
                 >
                   <DropdownMenuItem
                     disabled={!userHasPermissionToUpdateFlow}
@@ -396,7 +395,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                       <span className="text-danger-11">{t('Delete')}</span>
                     </div>
                   </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
+                </ConfirmDialog>
               </PermissionNeededTooltip>
             )}
         </DropdownMenuContent>

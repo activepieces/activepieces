@@ -14,7 +14,7 @@ import {
 import { useState } from 'react';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -189,14 +189,13 @@ export function ApTableHeader({
                     {t('Download Data')}
                   </DropdownMenuItem>
                   <PermissionNeededTooltip hasPermission={canEdit}>
-                    <ConfirmationDeleteDialog
+                    <ConfirmDialog
                       title={t('Delete Table')}
-                      message={t(
+                      description={t(
                         'This will permanently delete the table and all its data.',
                       )}
-                      entityName={t('table')}
-                      buttonText={t('Delete')}
-                      mutationFn={async () => {
+                      confirmLabel={t('Delete')}
+                      onConfirm={async () => {
                         await tablesApi.delete(table.id);
                         onBack();
                       }}
@@ -210,7 +209,7 @@ export function ApTableHeader({
                         <Trash2 className="mr-2 h-4 w-4" />
                         {t('Delete')}
                       </DropdownMenuItem>
-                    </ConfirmationDeleteDialog>
+                    </ConfirmDialog>
                   </PermissionNeededTooltip>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -246,12 +245,11 @@ export function ApTableHeader({
       )}
       {selectedRecords.size > 0 && (
         <PermissionNeededTooltip hasPermission={canEdit}>
-          <ConfirmationDeleteDialog
+          <ConfirmDialog
             title={t('Delete Records')}
-            message={t('The selected records will be permanently deleted.')}
-            entityName={selectedRecords.size === 1 ? t('record') : t('records')}
-            buttonText={t('Delete')}
-            mutationFn={async () => {
+            description={t('The selected records will be permanently deleted.')}
+            confirmLabel={t('Delete')}
+            onConfirm={async () => {
               const indices = Array.from(selectedRecords).map((row) =>
                 records.findIndex((r) => r.uuid === row),
               );
@@ -268,7 +266,7 @@ export function ApTableHeader({
               {t('Delete Records')}{' '}
               {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
             </Button>
-          </ConfirmationDeleteDialog>
+          </ConfirmDialog>
         </PermissionNeededTooltip>
       )}
     </div>

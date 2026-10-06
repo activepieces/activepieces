@@ -294,7 +294,7 @@ function TitleBadge({ label, tooltip }: { label: string; tooltip: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="neutral" className="font-normal" tabIndex={0}>
+        <Badge variant="secondary" className="font-normal" tabIndex={0}>
           {label}
         </Badge>
       </TooltipTrigger>

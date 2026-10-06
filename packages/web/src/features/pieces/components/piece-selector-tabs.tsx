@@ -29,16 +29,16 @@ export const PieceSelectorTabs = ({
       className="w-full min-w-0"
     >
       <TabsList
-        className={`h-full w-full flex gap-3 px-2 justify-start rounded-none bg-gray-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]`}
+        className={`h-full group-data-horizontal/tabs:h-auto w-full flex gap-3 px-2 py-1.5 justify-start rounded-none bg-transparent overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]`}
       >
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.key}
             value={tab.key}
-            className={`flex flex-col h-full rounded-md w-[85px] max-w-[85px] shrink-0
+            className={`flex flex-col h-full rounded-md w-[85px] max-w-[85px] shrink-0 px-1 py-1.5
               hover:bg-gray-4
-               data-[state=active]:text-accent-11 data-[state=active]:shadow-none
-               border-transparent data-[state=active]:border-accent-9 data-[state=active]:bg-transparent
+               group-data-[variant=default]/tabs-list:data-active:text-accent-11 group-data-[variant=default]/tabs-list:data-active:shadow-none
+               group-data-[variant=default]/tabs-list:data-active:bg-transparent
                text-gray-12 [&>svg]:size-5 [&>svg]:shrink-0`}
           >
             {tab.icon}

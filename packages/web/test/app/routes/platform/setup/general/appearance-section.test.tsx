@@ -105,6 +105,16 @@ vi.mock('@/components/ui/input', () => {
   return { Input };
 });
 
+vi.mock('@/components/custom/file-input', () => {
+  const FileInput = React.forwardRef<HTMLInputElement, InputMockProps>(
+    ({ defaultFileName: _defaultFileName, ...props }, ref) => (
+      <input ref={ref} type="file" {...props} />
+    ),
+  );
+  FileInput.displayName = 'FileInput';
+  return { FileInput };
+});
+
 vi.mock('@/components/custom/color-picker', () => ({
   ColorPicker: ({ value, onChange }: ColorPickerMockProps) => (
     <input

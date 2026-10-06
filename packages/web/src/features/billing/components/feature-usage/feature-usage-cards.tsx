@@ -50,7 +50,7 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
           {t(metric.label)}
         </span>
         {isUnlimited && (
-          <Badge variant="secondary" className="rounded-sm font-normal">
+          <Badge variant="secondary" className="rounded-md font-normal">
             {t('Unlimited')}
           </Badge>
         )}

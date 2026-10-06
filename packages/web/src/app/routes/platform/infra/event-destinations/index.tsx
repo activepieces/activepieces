@@ -204,7 +204,6 @@ const EventDestinationsPage = () => {
       </DashboardPageHeader>
       <div className="flex w-full flex-col px-4 pb-6">
         <DataTable
-          bordered={true}
           columns={columns}
           page={{ data: destinations, next: null, previous: null }}
           isLoading={isLoading}

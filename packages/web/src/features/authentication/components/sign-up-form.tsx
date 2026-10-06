@@ -246,7 +246,7 @@ const SignUpForm = ({
                     id="firstName"
                     type="text"
                     placeholder={'John'}
-                    className="rounded-sm"
+                    className="rounded-md"
                     data-testid="sign-up-first-name"
                   />
                   <FormMessage />
@@ -268,7 +268,7 @@ const SignUpForm = ({
                     id="lastName"
                     type="text"
                     placeholder={'Doe'}
-                    className="rounded-sm"
+                    className="rounded-md"
                     data-testid="sign-up-last-name"
                   />
                   <FormMessage />
@@ -285,7 +285,7 @@ const SignUpForm = ({
                 formatUtils.emailRegex.test(email) || t('Email is invalid'),
             }}
             render={({ field }) => (
-              <FormItem className="grid space-y-1">
+              <FormItem>
                 <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   {...field}
@@ -293,7 +293,7 @@ const SignUpForm = ({
                   id="email"
                   type="email"
                   placeholder={'email@example.com'}
-                  className="rounded-sm"
+                  className="rounded-md"
                   data-testid="sign-up-email"
                 />
                 <FormMessage />
@@ -308,7 +308,7 @@ const SignUpForm = ({
               validate: passwordValidation,
             }}
             render={({ field }) => (
-              <FormItem className="grid space-y-1">
+              <FormItem>
                 <Label htmlFor="password">{t('Password')}</Label>
                 <Popover open={isPasswordFocused}>
                   <PopoverAnchor asChild>
@@ -319,7 +319,7 @@ const SignUpForm = ({
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder={'********'}
-                        className="rounded-sm pr-16"
+                        className="rounded-md pr-16"
                         data-testid="sign-up-password"
                         onFocus={() => setIsPasswordFocused(true)}
                         onBlur={() => setIsPasswordFocused(false)}
@@ -373,7 +373,7 @@ const SignUpForm = ({
               control={form.control}
               name="newsLetter"
               render={({ field }) => (
-                <FormItem className="flex items-center gap-2 ">
+                <FormItem className="flex flex-row items-center gap-2">
                   <FormControl>
                     <Checkbox
                       id="newsLetter"

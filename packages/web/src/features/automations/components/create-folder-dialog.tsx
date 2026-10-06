@@ -95,7 +95,10 @@ export const CreateFolderDialog = ({
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+          >
             <FormField
               control={form.control}
               name="displayName"
@@ -106,7 +109,7 @@ export const CreateFolderDialog = ({
                     required
                     id="folder"
                     placeholder={t('Folder Name')}
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>

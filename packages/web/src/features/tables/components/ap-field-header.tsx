@@ -82,7 +82,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
             noAnimationOnOut={true}
             onCloseAutoFocus={(e) => e.preventDefault()}
             align="start"
-            className="w-56 rounded-sm"
+            className="w-56 rounded-md"
           >
             {actions.map((action, index) => (
               <div key={index}>
@@ -94,7 +94,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
       </DropdownMenu>
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
         <PopoverTrigger asChild>
-          <div className="w-full h-full -mt-[40px] pointer-events-none"></div>
+          <div className="pointer-events-none h-0 w-full"></div>
         </PopoverTrigger>
         <PopoverContent align="start" className="p-3">
           {popoverContent}

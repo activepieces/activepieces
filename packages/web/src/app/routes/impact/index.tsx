@@ -197,15 +197,18 @@ export default function ImpactPage() {
           className="w-full "
         >
           <TabsList
-            variant="outline"
-            className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
+            variant="line"
+            className={cn(
+              'border-b w-full justify-start',
+              DASHBOARD_CONTENT_PADDING_X,
+            )}
           >
-            <TabsTrigger variant="outline" value="analytics">
-              <LineChart className="w-4 h-4 mr-2" />
+            <TabsTrigger value="analytics" className="flex-none">
+              <LineChart className="size-4" />
               {t('Analytics')}
             </TabsTrigger>
-            <TabsTrigger variant="outline" value="details">
-              <List className="w-4 h-4 mr-2" />
+            <TabsTrigger value="details" className="flex-none">
+              <List className="size-4" />
               {t('Details')}
             </TabsTrigger>
           </TabsList>

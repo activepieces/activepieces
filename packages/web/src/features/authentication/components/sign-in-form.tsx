@@ -160,7 +160,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem>
                 <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   {...field}
@@ -168,7 +168,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                   id="email"
                   type="text"
                   placeholder={'email@example.com'}
-                  className="rounded-sm"
+                  className="rounded-md"
                   tabIndex={1}
                   data-testid="sign-in-email"
                   onChange={(e) => {
@@ -184,7 +184,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem>
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">{t('Password')}</Label>
                   {edition !== ApEdition.COMMUNITY &&
@@ -214,7 +214,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder={'********'}
-                    className="rounded-sm pr-10"
+                    className="rounded-md pr-10"
                     tabIndex={2}
                     data-testid="sign-in-password"
                   />

@@ -94,7 +94,7 @@ function PropertySection({
             <Icon className="size-4" />
           </span>
         )}
-        <span className="text-sm font-semibold tracking-[-0.005em] text-gray-12">
+        <span className="text-sm font-semibold text-gray-12">
           {group.label}
         </span>
       </div>

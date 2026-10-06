@@ -89,7 +89,7 @@ export function PreviewCard({
 
       {renderExpanded && (
         <Dialog open={expanded} onOpenChange={setExpanded}>
-          <DialogContent className="flex h-[85vh] w-[90vw] max-w-5xl flex-col gap-3">
+          <DialogContent className="flex h-[85vh] w-[90vw] sm:max-w-5xl flex-col gap-3">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Icon className="size-4 text-gray-11" />

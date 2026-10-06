@@ -1,7 +1,7 @@
 import { Column } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, LucideIcon } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -15,7 +15,6 @@ export function DataTableColumnHeader<TData, TValue>({
   column,
   title,
   className,
-  icon: Icon,
   sortable = false,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (sortable) {
@@ -28,8 +27,8 @@ export function DataTableColumnHeader<TData, TValue>({
         : ArrowUpDown;
 
     return (
-      <Button
-        variant="ghost"
+      <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           if (sortDirection === false) {
@@ -40,21 +39,26 @@ export function DataTableColumnHeader<TData, TValue>({
             column.clearSorting();
           }
         }}
-        className={`h-auto text-gray-12 p-0 hover:bg-transparent -ml-3 ${className}`}
+        className={cn(
+          'group/sort inline-flex items-center gap-1 rounded-md whitespace-nowrap outline-none hover:text-gray-12 focus-visible:ring-3 focus-visible:ring-gray-8/50 [&_svg]:size-3.5 [&_svg]:shrink-0',
+          sortDirection !== false && 'text-gray-12',
+          className,
+        )}
       >
-        {Icon && <Icon className="h-4 w-4 text-gray-12 flex-shrink-0 mr-2" />}
         {title}
-        <SortIcon className="ml-2 h-4 w-4" />
-      </Button>
+        <SortIcon
+          className={cn(
+            sortDirection === false &&
+              'opacity-0 transition-opacity group-hover/sort:opacity-100 group-focus-visible/sort:opacity-100',
+          )}
+        />
+      </button>
     );
   }
 
   return (
-    <div
-      className={`flex items-center justify-start space-x-2 whitespace-nowrap ${className}`}
-    >
-      {Icon && <Icon className="h-4 w-4 text-gray-11 flex-shrink-0" />}
-      <div className="text-xs font-normal text-gray-12">{title}</div>
+    <div className={cn('flex items-center whitespace-nowrap', className)}>
+      {title}
     </div>
   );
 }

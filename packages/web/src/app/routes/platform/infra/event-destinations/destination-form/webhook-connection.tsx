@@ -5,6 +5,7 @@ import { ExternalLink, Info, Plus, Workflow } from 'lucide-react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { HorizontalSeparatorWithText } from '@/components/custom/horizontal-separator-with-text';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';

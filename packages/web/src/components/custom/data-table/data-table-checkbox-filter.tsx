@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -15,19 +15,18 @@ export function DataTableInputCheckbox({
   handleCheckedChange,
 }: DataTableCheckboxProps) {
   return (
-    <Button
-      type="button"
-      variant="outline"
+    <Label
       className={cn(
-        'flex items-center space-x-2 border-dashed rounded-md px-3 py-2 h-9',
+        buttonVariants({ variant: 'outline' }),
+        'cursor-pointer border-dashed font-medium select-none',
         checked && 'bg-gray-3 border-gray-8 text-gray-12',
       )}
-      onClick={() => handleCheckedChange(!checked)}
     >
-      <Checkbox checked={checked} className="pointer-events-none" />
-      <Label className="text-sm font-normal leading-none select-none cursor-pointer">
-        {label}
-      </Label>
-    </Button>
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(next) => handleCheckedChange(next === true)}
+      />
+      {label}
+    </Label>
   );
 }

@@ -92,13 +92,11 @@ const PieceSetDetailsPage = () => {
       >
         <div className={cn('pt-3 shrink-0', DASHBOARD_CONTENT_PADDING_X)}>
           <TabsList
-            variant="outline"
+            variant="line"
             className="w-full justify-start border-b border-gray-6"
           >
-            <TabsTrigger variant="outline" value="pieces">
-              {t('Pieces')}
-            </TabsTrigger>
-            <TabsTrigger variant="outline" value="requiredActions">
+            <TabsTrigger value="pieces">{t('Pieces')}</TabsTrigger>
+            <TabsTrigger value="requiredActions">
               {t('Required actions')}
               <RequiredActionsCountBadge pieceSet={pieceSet} />
             </TabsTrigger>

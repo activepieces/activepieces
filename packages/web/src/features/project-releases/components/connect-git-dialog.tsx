@@ -104,7 +104,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
       <DialogContent className="sm:max-w-[500px]">
         <Form {...form}>
           <form
-            className="flex flex-col"
+            className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((data) => mutate(data))}
           >
             <DialogHeader>

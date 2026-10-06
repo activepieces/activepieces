@@ -115,7 +115,10 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+          >
             <DialogHeader>
               <DialogTitle>{t('Push to Git')}</DialogTitle>
             </DialogHeader>

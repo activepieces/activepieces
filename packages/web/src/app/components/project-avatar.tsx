@@ -110,7 +110,7 @@ export const ProjectAvatar = ({
       <Avatar
         className={`${
           currentSize.avatar
-        } flex items-center justify-center rounded-sm ${
+        } flex items-center justify-center rounded-md ${
           showDetails ? 'mb-3' : ''
         }`}
         style={{

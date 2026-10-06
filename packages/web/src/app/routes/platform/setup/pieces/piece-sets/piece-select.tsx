@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 
+import { VirtualizedScrollArea } from '@/components/custom/virtualized-scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,7 +11,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { PieceIcon } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 

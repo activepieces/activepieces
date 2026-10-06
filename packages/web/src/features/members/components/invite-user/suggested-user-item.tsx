@@ -67,7 +67,7 @@ function PlatformUserItem({
         </div>
         <Badge
           variant="ghost"
-          className={cn('ml-auto shrink-0 text-xs rounded-sm', badge.className)}
+          className={cn('ml-auto shrink-0 text-xs rounded-md', badge.className)}
         >
           {badge.label}
         </Badge>
@@ -144,7 +144,7 @@ function EmailStatusSuggestionItem({
         </div>
         <Badge
           variant="ghost"
-          className={cn('ml-auto shrink-0 text-xs rounded-sm', className)}
+          className={cn('ml-auto shrink-0 text-xs rounded-md', className)}
         >
           {label}
         </Badge>

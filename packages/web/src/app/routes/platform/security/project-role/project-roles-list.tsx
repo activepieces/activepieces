@@ -5,6 +5,7 @@ import { ChevronRight, Shield } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -14,7 +15,6 @@ import {
   ItemGroup,
   ItemTitle,
 } from '@/components/ui/item';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -85,9 +85,9 @@ export function ProjectRolesList({
                   </button>
                   <Badge
                     variant={
-                      role.type === RoleType.DEFAULT ? 'accent' : 'inverted'
+                      role.type === RoleType.DEFAULT ? 'secondary' : 'info'
                     }
-                    className="shrink-0 text-xss uppercase tracking-wider"
+                    className="shrink-0 text-xs tracking-wider"
                   >
                     {role.type === RoleType.DEFAULT
                       ? t('Built in')

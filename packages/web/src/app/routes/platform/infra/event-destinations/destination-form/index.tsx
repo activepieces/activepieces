@@ -20,6 +20,7 @@ import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,7 +31,6 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 

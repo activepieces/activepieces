@@ -17,6 +17,7 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z, ZodType } from 'zod';
 
+import { FileInput } from '@/components/custom/file-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { ShowPoweredBy } from '@/components/custom/show-powered-by';
@@ -284,7 +285,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                 )}
                                 {input.type === FormInputType.FILE && (
                                   <FormControl>
-                                    <Input
+                                    <FileInput
                                       name={input.name}
                                       id={input.name}
                                       onChange={(e) => {
@@ -293,7 +294,6 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                           field.onChange(file);
                                         }
                                       }}
-                                      type="file"
                                     />
                                   </FormControl>
                                 )}

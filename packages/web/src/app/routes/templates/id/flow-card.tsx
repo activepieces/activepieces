@@ -22,8 +22,9 @@ export const FlowCard = ({
       onClick={onClick}
       variant={singleFlow ? 'default' : 'interactive'}
       isSelected={!singleFlow && isSelected}
+      className="gap-0 py-0"
     >
-      <CardContent className="p-4 flex items-center gap-4">
+      <CardContent className="p-4 flex flex-row items-center gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <Workflow className="w-4 h-4 shrink-0" />

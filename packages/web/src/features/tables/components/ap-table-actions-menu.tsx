@@ -12,7 +12,7 @@ import {
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import {
   DropdownMenu,
@@ -151,14 +151,13 @@ const ApTableActionsMenu = ({
               onSelect={(e) => e.preventDefault()}
               onClick={(e) => e.stopPropagation()}
             >
-              <ConfirmationDeleteDialog
+              <ConfirmDialog
                 title={t('Delete Table')}
-                message={t(
+                description={t(
                   'This table and all its data will be permanently deleted.',
                 )}
-                entityName={table.name}
-                buttonText={t('Delete')}
-                mutationFn={async () => {
+                confirmLabel={t('Delete')}
+                onConfirm={async () => {
                   await tablesApi.delete(table.id);
                   onDelete?.();
                   refetch?.();
@@ -168,7 +167,7 @@ const ApTableActionsMenu = ({
                   <TrashIcon className="h-4 w-4" />
                   {t('Delete')}
                 </div>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             </DropdownMenuItem>
           </PermissionNeededTooltip>
         </DropdownMenuContent>

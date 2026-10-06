@@ -7,13 +7,13 @@ import { CheckIcon, FolderOpen, Plug, User } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
   DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -110,7 +110,6 @@ export function GrantsTab() {
         onRetry={refetch}
         filters={buildFilters({ projects, members: users?.data ?? [] })}
         selectColumn={true}
-        bordered={true}
         toolbarButtons={[
           <span key="expiry" className="text-sm text-gray-11">
             {t('each expires 30 days after sign-in')}
@@ -119,17 +118,14 @@ export function GrantsTab() {
         bulkActions={[
           {
             render: (rows, resetSelection) => (
-              <ConfirmationDeleteDialog
+              <ConfirmDialog
                 title={t('Revoke access')}
-                message={t(
+                description={t(
                   'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
                   { entityName: t('revokedGrants', { count: rows.length }) },
                 )}
-                entityName={t('revokedGrants', { count: rows.length })}
-                buttonText={t('Revoke')}
-                isDanger
-                showToast={false}
-                mutationFn={async () => {
+                confirmLabel={t('Revoke')}
+                onConfirm={async () => {
                   await revoke.mutateAsync(rows.map((row) => row.id));
                   resetSelection();
                 }}
@@ -137,7 +133,7 @@ export function GrantsTab() {
                 <Button variant="destructive" size="sm">
                   {t('revokeSelectedCount', { count: rows.length })}
                 </Button>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             ),
           },
         ]}
@@ -146,7 +142,7 @@ export function GrantsTab() {
         emptyStateIcon={<Plug className="size-10" />}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-gray-11">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-11">
         <span>
           {t(
             'Two rows for one client is normal — signing in again creates a second connection. Revoking one leaves the other alive.',

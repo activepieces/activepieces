@@ -82,7 +82,7 @@ const ViewRelease = () => {
         <div className="flex justify-between items-center w-full">
           <div className="flex flex-col items-start gap-2 w-full">
             <div className="flex items-center gap-2 justify-between w-full">
-              <h1 className="text-3xl font-bold">{release?.name}</h1>
+              <h1 className="text-3xl font-semibold">{release?.name}</h1>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <ApplyButton

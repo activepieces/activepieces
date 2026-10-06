@@ -48,7 +48,7 @@ export function ConversationSidebarToggle({
         </SheetTrigger>
         <SheetContent
           side="left"
-          hideCloseButton
+          showCloseButton={false}
           className="flex w-[min(92vw,360px)] flex-col gap-0 p-0"
         >
           <SheetHeader className="flex-row items-center justify-between gap-2 space-y-0 border-b px-4 py-3">

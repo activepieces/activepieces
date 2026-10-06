@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,7 +20,6 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog, signingKeyApi } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
