@@ -8,39 +8,41 @@ export const telegramAnswerCallbackQueryAction = createAction({
   name: 'answer_callback_query',
   classification: 'WRITE',
   displayName: 'Answer Callback Query',
-  description:
-    'Respond to a callback query sent by an inline keyboard button. Shows a notification or alert to the user.',
+  description: 'Answer a tap on an inline button with a short banner or alert.',
   audience: 'human',
   aiMetadata: { description: 'Acknowledges a callback query raised when a user taps an inline keyboard button, identified by callback_query_id (from the trigger payload), optionally showing a toast or alert. Use to stop the button spinner and give feedback; a given query can only be answered once. Not idempotent: each call is a one-time response to that query.', idempotent: false },
+  propertyGroups: [
+    { key: 'callback', display: 'section', label: 'Button Tap', icon: 'reply', props: ['callback_query_id'] },
+    { key: 'response', display: 'section', label: 'Response', icon: 'text', props: ['text', 'show_alert'] },
+  ],
   props: {
     callback_query_id: Property.ShortText({
-      displayName: 'Callback Query Id',
-      description:
-        'Unique identifier of the callback query. Available on `callback_query.id` in the New Callback Query trigger payload.',
+      displayName: 'Callback Query ID',
+      description: 'callback_query.id from the New Update trigger.',
       required: true,
     }),
     text: Property.LongText({
       displayName: 'Text',
-      description:
-        'Text shown to the user. If not specified, nothing is shown (the spinner is just stopped).',
+      description: 'Up to 200 characters. Empty just stops the loading spinner.',
       required: false,
     }),
     show_alert: Property.Checkbox({
       displayName: 'Show Alert',
-      description: 'If True, an alert dialog is shown instead of a notification at the top of the screen.',
+      description: 'Show a pop-up the user must close, instead of a banner.',
       required: false,
       defaultValue: false,
     }),
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'URL that will be opened by the user.',
+      description: 'Only a t.me link to your bot, or a game URL.',
       required: false,
+      advanced: true,
     }),
     cache_time: Property.Number({
-      displayName: 'Cache Time (seconds)',
-      description:
-        'The maximum amount of time in seconds the result of the callback query may be cached client-side.',
+      displayName: 'Cache Time',
+      description: 'Seconds Telegram may reuse this answer. Default 0.',
       required: false,
+      advanced: true,
     }),
   },
   async run(ctx) {

@@ -39,6 +39,8 @@ vi.mock('../src/wide-event', () => ({
             }
             : undefined,
         set: spies.wideSetSpy,
+        sealed: () => false,
+        postEmitContext: () => ({}),
     },
 }))
 

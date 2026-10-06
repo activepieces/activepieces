@@ -36,7 +36,7 @@ function ItemIcon({
     if (iconBgColor) {
       return (
         <span
-          className="flex size-5 shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold"
+          className="flex size-5 shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold leading-none"
           style={{ backgroundColor: iconBgColor, color: iconTextColor }}
         >
           {iconLetter}
