@@ -5,7 +5,7 @@ Load this right before you build, after discovery is done and the needed connect
 Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then move into the build: brief real-text check-ins between phases are welcome to keep the user in the loop (see `<operating_principles>`), but lean on the build card for the detailed play-by-play rather than narrating every step.
 
 ## Publish a live build plan (the build card)
-The moment you commit to building — right alongside `ap_set_phase('build')` and loading this guide — call `ap_set_build_plan` with `phase: 'detecting'`, a short `flowName`, a bold `tagline`, a business-relevant `iconName`, and the full list of steps you intend to build, each `status: 'pending'`. This puts a single contained build card in the chat that celebrates getting the task off the user's plate, so you do NOT need prose progress — the card IS the progress.
+The moment you commit to building — right after loading this skill — call `ap_set_build_plan` with `phase: 'detecting'`, a short `flowName`, a bold `tagline`, a business-relevant `iconName`, and the full list of steps you intend to build, each `status: 'pending'`. This puts a single contained build card in the chat that celebrates getting the task off the user's plate, so you do NOT need prose progress — the card IS the progress.
 
 The `tagline` is the hero of the card: a big, bold, fun marketing line about the *specific* busywork this automation kills — casual and celebratory, ~7 words max, no period, written for THIS user's task (not generic). Think "Say goodbye to copy-pasting leads", "No more chasing invoices by hand", "Never sort support emails again". Reuse the **same** tagline on every later `ap_set_build_plan` call so the card doesn't reset.
 
@@ -29,7 +29,7 @@ You are the domain expert: invent the business logic the user would otherwise be
 Every assumption you make becomes an editable line in the closing brief (below) — that's where the user changes it, not up front.
 
 ## Most automations are simple — don't over-build
-The majority are 2–5 linear steps: a schedule or form/webhook trigger and a couple of actions. Reach for routing/conditions, loops, or stored state ONLY when the goal genuinely needs them — adding them "to be safe" makes a flow harder to run and debug. Match the shape to the real requirement, nothing more. (Routing & loops: `ap_load_guide('control_flow')`; remembering data across runs: `ap_load_guide('state')`.)
+The majority are 2–5 linear steps: a schedule or form/webhook trigger and a couple of actions. Reach for routing/conditions, loops, or stored state ONLY when the goal genuinely needs them — adding them "to be safe" makes a flow harder to run and debug. Match the shape to the real requirement, nothing more. (Routing & loops: `ap_load_skill('control_flow')`; remembering data across runs: `ap_load_skill('state')`.)
 
 **Exception — reprocessing safety is never "over-building".** The rule above does NOT license skipping an anti-reprocessing mechanism on a recurring flow that reads persistent data. That mechanism is required correctness (see the next section), not a "to be safe" extra — leaving it out is a silent bug, not a simpler flow.
 
@@ -57,7 +57,7 @@ How to build one:
 
 Testing: a Call Flow only reaches a subflow that is published and turned on, so a caller's test run fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow`, using mock trigger data shaped the way a caller delivers it: `{"data": <its sample data>}`. Test the caller's steps before the Call Flow.
 
-Turning it on: one "Turn it on?" card for the whole solution. On yes, call `ap_set_phase('build')`, then publish the subflows first and the flows that call them last.
+Turning it on: one "Turn it on?" card for the whole solution. On yes, publish the subflows first and the flows that call them last.
 
 ## Recurring flows must not reprocess
 **Before you build, answer one question: does this run more than once, and does it read data that persists between runs?** If a scheduled/recurring flow reads a source that keeps its data (a sheet, a Table, an inbox, any record set), that source holds the SAME rows again on the next run. A flow shaped `read-all → act → done` will redo run N's work on run N+1 — re-sending, re-paying, re-notifying. This is the #1 silent logic bug: it validates fine, a single test run looks perfect, and the damage only appears on the second run.
@@ -65,11 +65,11 @@ Turning it on: one "Turn it on?" card for the whole solution. On yes, call `ap_s
 Worked failure: "summarize each employee's hours from my sheet and tell me what to pay them", on a weekly schedule. `read sheet → summarize → email` is correct for ONE week — but nothing marks anyone paid, so every week it re-pays everyone for hours already paid. Correct flow for the wrong problem. The fix below (Activepieces Tables ledger): read the sheet → drop rows whose key is already in a `Paid Log` table → pay only the new ones → record their keys in `Paid Log`.
 
 If the flow is recurring AND reads persistent data, commit to exactly ONE of these (each maps to a primitive the platform already has — don't hand-roll):
-- **A "new item" trigger that dedups for you** — prefer this when the source HAS such a trigger. Use its *New Record / New Row / New Email* trigger (Tables **New Record** is a real webhook; app polling triggers dedup via `lastPoll`/`lastItem`) instead of a schedule + a stateless "get all rows" read. The trigger fires once per new item and never re-sees old ones. (`ap_load_guide('tables')` / the app's triggers.)
-- **An Activepieces Tables ledger (dedup against a table you own)** — the default when the source is external or read-only (a Google Sheet, an inbox) and you should NOT mutate it, or when there's no new-item trigger. Create an AP Table (e.g. `Paid Log`, `Processed Orders`) that records the keys you've already handled. Each run: (1) read the source; (2) build a **stable dedup key** per item (e.g. `worker + shift date`, `order_id`, `message_id`); (3) `find-records` the ledger and keep only items whose key is NOT already there; (4) act on just those new items; (5) `create-records` their keys into the ledger so the next run skips them. This syncs "what's been done" into Activepieces and makes the flow idempotent without touching the user's source. `ap_load_guide('tables')`.
+- **A "new item" trigger that dedups for you** — prefer this when the source HAS such a trigger. Use its *New Record / New Row / New Email* trigger (Tables **New Record** is a real webhook; app polling triggers dedup via `lastPoll`/`lastItem`) instead of a schedule + a stateless "get all rows" read. The trigger fires once per new item and never re-sees old ones. (`ap_load_skill('tables')` / the app's triggers.)
+- **An Activepieces Tables ledger (dedup against a table you own)** — the default when the source is external or read-only (a Google Sheet, an inbox) and you should NOT mutate it, or when there's no new-item trigger. Create an AP Table (e.g. `Paid Log`, `Processed Orders`) that records the keys you've already handled. Each run: (1) read the source; (2) build a **stable dedup key** per item (e.g. `worker + shift date`, `order_id`, `message_id`); (3) `find-records` the ledger and keep only items whose key is NOT already there; (4) act on just those new items; (5) `create-records` their keys into the ledger so the next run skips them. This syncs "what's been done" into Activepieces and makes the flow idempotent without touching the user's source. `ap_load_skill('tables')`.
 - **A processed-flag filter + write-back** — when you DO own the source: read only unprocessed rows (`find-records`/"get rows" filtered on e.g. `status = pending` or `paid = false`), then after acting flip that field with `update-record`/update-row. Without the write-back the filter is meaningless.
 - **Delete or archive after processing** — remove/move the row once handled so the next read can't see it.
-- **A stored high-water mark** — persist the last-processed id/timestamp in **Store** (`ap_load_guide('state')`) and filter the read to items newer than it.
+- **A stored high-water mark** — persist the last-processed id/timestamp in **Store** (`ap_load_skill('state')`) and filter the read to items newer than it.
 
 Also reason through the rest of the cleanup surface, not just the happy path: a **stable dedup key** (so the same real-world item isn't counted as new after an edit), **partial-run recovery** (only mark an item done AFTER its action succeeds, so a mid-run crash reprocesses just the unfinished ones — put the mark/record step immediately after the action), and **ledger growth** (a dedup table grows forever — prune or archive old keys on a retention window if volume is high). Match the depth to the real volume; don't build a retention job for a table that gains 5 rows a week.
 
@@ -83,9 +83,9 @@ Activepieces ships pieces that need no external app or connection; registry sear
 | "a form" | `@activepieces/piece-forms` (**Human Input**) | hosted web form trigger w/ shareable link |
 | "every day/hour", "cron" | `@activepieces/piece-schedule` | schedule triggers |
 | "webhook", "receive events" | `@activepieces/piece-webhook` | inbound webhook trigger |
-| "save/track data here" | `@activepieces/piece-tables` | built-in database — `ap_load_guide('tables')` |
-| "remember/count/dedup" | `@activepieces/piece-store` | key-value store — `ap_load_guide('state')` |
-| "ask AI/classify/extract" | `@activepieces/piece-ai` | native AI — use this, never the OpenAI/vendor piece — `ap_load_guide('ai')` |
+| "save/track data here" | `@activepieces/piece-tables` | built-in database — `ap_load_skill('tables')` |
+| "remember/count/dedup" | `@activepieces/piece-store` | key-value store — `ap_load_skill('state')` |
+| "ask AI/classify/extract" | `@activepieces/piece-ai` | native AI — use this, never the OpenAI/vendor piece — `ap_load_skill('ai')` |
 | "human sign-off" | `@activepieces/piece-approval` | pause for approve/reject |
 | "wait/pause" | `@activepieces/piece-delay` | delay step |
 | "split big work" | `@activepieces/piece-subflows` | call another flow |
@@ -93,7 +93,7 @@ Activepieces ships pieces that need no external app or connection; registry sear
 ## CODE is the last resort — use inline expressions & conditions first
 Dropping a **CODE step** into a flow to filter, reshape, calculate, or format data is almost always the wrong first move — it's slower to build, opaque to a non-coder, and harder to debug. Walk this ladder and stop at the first rung that fits; only the last rung is code:
 1. **A native piece action** — anything that talks to an app or is a normal automation step.
-2. **A router condition** (`ROUTER`; `ap_load_guide('control_flow')`) — to *route/branch* on a value, using the structured `BranchOperator`s.
+2. **A router condition** (`ROUTER`; `ap_load_skill('control_flow')`) — to *route/branch* on a value, using the structured `BranchOperator`s.
 3. **An inline formula expression** — to *derive, filter, format, or calculate* a value right inside a step's input. No extra step, runs instantly, and covers the large majority of "I'll just write a quick CODE step to massage this" cases.
 4. **A CODE step** — ONLY when none of the above fit: genuinely procedural multi-step logic, parsing the functions can't express, or a real npm library is needed.
 
@@ -128,7 +128,7 @@ Validate a formula input with `ap_validate_step_config` like any step, and confi
 | Webhook payload | 5 MB | rejected |
 | Store value | 512 KB/key | use Tables instead |
 
-A loop over thousands of items will blow 600 s — chunk it or split into sub-flows (`ap_load_guide('error_handling')`). Don't capture full payloads across many iterations (25 MB log). Hold large files by URL/reference, never inline base64.
+A loop over thousands of items will blow 600 s — chunk it or split into sub-flows (`ap_load_skill('error_handling')`). Don't capture full payloads across many iterations (25 MB log). Hold large files by URL/reference, never inline base64.
 
 ## Map only the fields a step needs — don't over-pull
 Wire the **specific fields** a step consumes, never an entire upstream output. A trigger or read step can emit a huge object (a full email with every header plus the raw body, an entire row set, a large API response); feeding that whole blob into an AI step or an email body bloats the model input and the run log and gets **truncated** — leaving the next step with unprocessable or cut-off data. Reference the exact fields instead (e.g. `{{trigger['output'].subject}}`, `{{trigger['output'].body_plain}}`, a single column — not the whole row). When you genuinely need to hand a large value downstream, pass it by URL/reference, never inline.
