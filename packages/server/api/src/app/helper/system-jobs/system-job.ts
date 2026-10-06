@@ -13,6 +13,7 @@ const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 const RE_QUEUE_DELAY_MS = apDayjsDuration(1, 'minute').asMilliseconds()
+const RE_QUEUE_MAX_AGE_MS = apDayjsDuration(15, 'minute').asMilliseconds()
 const INSTANT_BURST_THEN_EXPONENTIAL = 'instantBurstThenExponential'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
@@ -49,6 +50,10 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             SYSTEM_JOB_QUEUE,
             async (job, token) => {
                 if (!systemJobHandlers.hasHandler(job.name)) {
+                    const ageMs = Date.now() - job.timestamp
+                    if (ageMs > RE_QUEUE_MAX_AGE_MS) {
+                        throw new Error(`No handler for system job "${job.name}" after ${Math.round(ageMs / 1000)}s; likely a retired job name`)
+                    }
                     log.info({ job: { id: job.id, type: job.name } }, '[systemJob#worker] No handler on this pod; re-queueing (rolling deploy with mixed versions)')
                     await job.moveToDelayed(Date.now() + RE_QUEUE_DELAY_MS, token)
                     throw new DelayedError()
