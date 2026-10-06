@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 
 export const FIRECRAWL_API_BASE_URL = 'https://api.firecrawl.dev/v2';
 export const POLLING_INTERVAL = 5000;
+export const FIRECRAWL_ORIGIN = 'activepieces';
 
 export const forScreenshotOutputFormat = (): any => {
   return {
