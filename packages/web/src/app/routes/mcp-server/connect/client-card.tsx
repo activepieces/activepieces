@@ -22,7 +22,7 @@ export function ClientCard({
         'flex items-center gap-3 rounded-md border px-3.5 py-3 text-left transition-colors',
         highlighted
           ? 'border-accent-9 bg-accent-3'
-          : 'hover:border-accent-8 hover:bg-gray-4/40',
+          : 'hover:border-gray-8 hover:bg-gray-4/40',
       )}
     >
       <ClientIcon icon={client.icon} />

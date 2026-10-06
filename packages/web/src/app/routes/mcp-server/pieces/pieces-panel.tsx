@@ -13,7 +13,6 @@ import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -184,10 +183,7 @@ function RunActionDisabledAlert({
 function PieceSetBanner({ projectId }: { projectId: string | null }) {
   const { platform } = platformHooks.useCurrentPlatform();
   const isPlatformAdmin = useIsPlatformAdmin();
-  const { data: projects = [] } = projectCollectionUtils.useAll();
-  const pieceSetId =
-    projects.find((project) => project.id === projectId)?.pieceSetId ?? null;
-  const { data: pieceSet } = pieceSetQueries.usePieceSet(pieceSetId ?? '');
+  const { data: pieceSet } = pieceSetQueries.useProjectPieceSet(projectId);
 
   if (!platform.plan.managePiecesEnabled) {
     return (
@@ -225,8 +221,8 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
         >
           <Link
             to={
-              pieceSetId
-                ? `/platform/pieces/piece-sets/${pieceSetId}`
+              pieceSet
+                ? `/platform/pieces/piece-sets/${pieceSet.id}`
                 : PIECE_SETS_LIST_ROUTE
             }
           >

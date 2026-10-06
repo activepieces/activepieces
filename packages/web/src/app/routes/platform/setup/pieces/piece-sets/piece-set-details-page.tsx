@@ -1,4 +1,8 @@
-import { PieceSelection, PieceSelectionMode } from '@activepieces/shared';
+import {
+  PieceSelection,
+  PieceSelectionMode,
+  PieceSet,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -7,32 +11,17 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
-import { PieceSetPiecesTab } from './piece-set-pieces-tab';
+import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
-
-function flipSelectionMode({
-  current,
-  include,
-  knownPieceNames,
-}: {
-  current: PieceSelection;
-  include: boolean;
-  knownPieceNames: string[];
-}): PieceSelection {
-  const excluded = new Set(current.exceptions);
-  return {
-    mode: include
-      ? PieceSelectionMode.INCLUDE_ALL
-      : PieceSelectionMode.EXCLUDE_ALL,
-    exceptions: knownPieceNames.filter((name) => !excluded.has(name)),
-  };
-}
+import { RequiredActionsTab } from './required-actions-tab';
+import { useRequiredActionsGroupedByPiece } from './use-required-actions-grouped-by-piece';
 
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,8 +33,7 @@ const PieceSetDetailsPage = () => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
 
   const handleToggle = (value: boolean) => {
     if (!pieceSet || !pieces) return;
@@ -94,51 +82,113 @@ const PieceSetDetailsPage = () => {
           </div>
         }
         description={t(
-          'Configure which pieces and actions are available in this set',
+          'Determine which actions and triggers assigned projects can add to their flows.',
         )}
       />
 
-      <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
-        <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-gray-3/40 px-3.5 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-11">
-                {t('Assigned')}
+      <Tabs
+        defaultValue="pieces"
+        className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0"
+      >
+        <div className={cn('pt-3 shrink-0', DASHBOARD_CONTENT_PADDING_X)}>
+          <TabsList
+            variant="outline"
+            className="w-full justify-start border-b border-gray-6"
+          >
+            <TabsTrigger variant="outline" value="pieces">
+              {t('Pieces')}
+            </TabsTrigger>
+            <TabsTrigger variant="outline" value="requiredActions">
+              {t('Required actions')}
+              <RequiredActionsCountBadge pieceSet={pieceSet} />
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent
+          value="pieces"
+          className="flex-1 min-h-0 flex flex-col data-[state=inactive]:hidden mt-0"
+        >
+          <div className="p-4 pb-0 shrink-0 flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-gray-3/40 px-3.5 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold">{t('Assigned')}</span>
+                <PieceSetProjectsDialog pieceSet={pieceSet} />
+              </div>
+
+              <div className="self-stretch w-px bg-gray-6" />
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold">
+                  {t('Auto-Include')}
+                </span>
+                <AutoIncludePill
+                  label={t('New pieces')}
+                  checked={
+                    pieceSet.config.pieces.mode ===
+                    PieceSelectionMode.INCLUDE_ALL
+                  }
+                  disabled={piecesLoading}
+                  onCheckedChange={handleToggle}
+                />
+              </div>
+
+              <span className="text-xs text-gray-11">
+                {t(
+                  'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
+                )}
               </span>
-              <PieceSetProjectsDialog pieceSet={pieceSet} />
             </div>
-
-            <div className="self-stretch w-px bg-gray-6" />
-
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-11">
-                {t('Auto-include')}
-              </span>
-              <AutoIncludePill
-                label={t('New pieces')}
-                checked={
-                  pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
-                }
-                disabled={isPending || piecesLoading}
-                onCheckedChange={handleToggle}
-              />
-            </div>
-
-            <span className="text-xs text-gray-11">
-              {t(
-                'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
-              )}
-            </span>
           </div>
-        </div>
 
-        <div className="flex-1 min-h-0 flex flex-col">
-          <PieceSetPiecesTab pieceSet={pieceSet} />
-        </div>
-      </div>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <PieceSetPiecesTable pieceSet={pieceSet} />
+          </div>
+        </TabsContent>
+
+        <TabsContent
+          value="requiredActions"
+          className="flex-1 min-h-0 flex flex-col data-[state=inactive]:hidden"
+        >
+          <RequiredActionsTab pieceSet={pieceSet} />
+        </TabsContent>
+      </Tabs>
     </>
   );
 };
+
+function flipSelectionMode({
+  current,
+  include,
+  knownPieceNames,
+}: {
+  current: PieceSelection;
+  include: boolean;
+  knownPieceNames: string[];
+}): PieceSelection {
+  const excluded = new Set(current.exceptions);
+  return {
+    mode: include
+      ? PieceSelectionMode.INCLUDE_ALL
+      : PieceSelectionMode.EXCLUDE_ALL,
+    exceptions: knownPieceNames.filter((name) => !excluded.has(name)),
+  };
+}
+
+function RequiredActionsCountBadge({ pieceSet }: { pieceSet: PieceSet }) {
+  const { actionsInLatestPieceVersionCount: count } =
+    useRequiredActionsGroupedByPiece({
+      actions: pieceSet.config.requiredActions.actions,
+    });
+  if (count === 0) {
+    return null;
+  }
+  return (
+    <Badge variant="secondary" className="ml-2">
+      {count}
+    </Badge>
+  );
+}
 
 function AutoIncludePill({
   label,
