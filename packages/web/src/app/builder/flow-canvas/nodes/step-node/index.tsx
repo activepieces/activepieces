@@ -16,7 +16,6 @@ import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';
-import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
 import { StepNodeChevron } from './step-node-chevron';
@@ -61,7 +60,10 @@ const ApStepCanvasNode = React.memo(
       [step, flowVersion],
     );
     const isTrigger = flowStructureUtil.isTrigger(step.type);
-    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
+    const isSkipped = flowStructureUtil.isSkipped({
+      stepName: step.name,
+      trigger: flowVersion.trigger,
+    });
     const chevronClickOverride =
       step.type === FlowTriggerType.EMPTY
         ? () => setOpenedPieceSelectorStepNameOrAddButtonId(step.name)

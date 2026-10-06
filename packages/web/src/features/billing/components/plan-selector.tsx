@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
@@ -356,6 +357,7 @@ function PlanCta({
         asChild
       >
         <a
+          {...adminControl(AdminControl.BILLING_PLAN_SALES_LINK)}
           href={planSelectorUtils.SALES_URL}
           target="_blank"
           rel="noopener noreferrer"
@@ -375,7 +377,12 @@ function PlanCta({
   if (isCurrent) {
     if (hasScheduledChange) {
       return (
-        <Button variant="default" className="w-full" onClick={onKeepPlan}>
+        <Button
+          {...adminControl(AdminControl.BILLING_PLAN_KEEP_OPEN)}
+          variant="default"
+          className="w-full"
+          onClick={onKeepPlan}
+        >
           {t('Keep current plan')}
         </Button>
       );
@@ -396,7 +403,12 @@ function PlanCta({
       );
     }
     return (
-      <Button variant="outline" className="w-full" onClick={onDowngrade}>
+      <Button
+        {...adminControl(AdminControl.BILLING_PLAN_DOWNGRADE_OPEN)}
+        variant="outline"
+        className="w-full"
+        onClick={onDowngrade}
+      >
         {t('Downgrade')}
       </Button>
     );
@@ -408,6 +420,7 @@ function PlanCta({
   const action = planSelectorUtils.actionFor({ currentPlanId });
   return (
     <Button
+      {...adminControl(AdminControl.BILLING_PLAN_PURCHASE_SUBMIT)}
       variant={highlighted ? 'default' : 'outline'}
       className="w-full"
       disabled={isPending}

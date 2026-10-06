@@ -516,7 +516,7 @@ function ProjectRow({
 
   const badge = (
     <span
-      className="flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold"
+      className="flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold leading-none"
       style={
         palette
           ? { backgroundColor: palette.color, color: palette.textColor }

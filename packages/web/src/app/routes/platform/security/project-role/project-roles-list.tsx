@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { roleCopy } from '@/features/members/lib/role-copy';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 import { RoleAvatar } from './role-avatar';
@@ -64,7 +65,7 @@ export function ProjectRolesList({
               key={role.id}
               variant="outline"
               size="sm"
-              className="relative flex-nowrap cursor-pointer bg-panel hover:bg-gray-3 focus-within:border-accent-8 focus-within:ring-[3px] focus-within:ring-accent-8/50"
+              className="relative flex-nowrap cursor-pointer bg-panel hover:bg-gray-3 focus-within:border-gray-8 focus-within:ring-[3px] focus-within:ring-gray-8/50"
             >
               <RoleAvatar
                 name={role.name}
@@ -76,6 +77,7 @@ export function ProjectRolesList({
                     type="button"
                     className="min-w-0 text-left after:absolute after:inset-0 after:content-['']"
                     onClick={() => setOpened({ role, tab: 'permissions' })}
+                    {...adminControl(AdminControl.ROLES_ROLE_OPEN)}
                   >
                     <TextWithTooltip tooltipMessage={role.name}>
                       <span className="block truncate">{role.name}</span>
@@ -104,6 +106,7 @@ export function ProjectRolesList({
                     type="button"
                     className="relative z-10 shrink-0 text-sm tabular-nums text-accent-11 underline-offset-4 hover:underline"
                     onClick={() => setOpened({ role, tab: 'people' })}
+                    {...adminControl(AdminControl.ROLES_PEOPLE_OPEN)}
                   >
                     {t('rolePeopleCount', { count: role.userCount })}
                   </button>

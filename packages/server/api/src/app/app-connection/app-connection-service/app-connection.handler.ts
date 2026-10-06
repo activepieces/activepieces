@@ -413,6 +413,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
             type: FlowOperationType.LOCK_AND_PUBLISH,
             request: { status },
         },
+        skipRequiredActionsCheck: true,
     })
 }
 

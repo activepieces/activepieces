@@ -5,6 +5,7 @@ import { ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useManagePlanDialogStore } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export function FeatureBanner({
   message,
@@ -22,6 +23,7 @@ export function FeatureBanner({
         <span>{message}</span>
         {isCommunity ? (
           <a
+            {...adminControl(AdminControl.PLAN_BANNER_LINK)}
             href={docsUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -32,6 +34,7 @@ export function FeatureBanner({
           </a>
         ) : (
           <button
+            {...adminControl(AdminControl.PLAN_BANNER_OPEN)}
             type="button"
             onClick={() => openManagePlanDialog()}
             className="font-medium text-accent-11 hover:underline"

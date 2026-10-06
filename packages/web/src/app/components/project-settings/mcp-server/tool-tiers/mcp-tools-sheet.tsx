@@ -21,6 +21,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { McpToolTierGroup, mcpToolTiers } from './mcp-tool-tiers';
 
@@ -84,6 +85,7 @@ function TierTools({
               variant="outline"
               size="sm"
               className="shrink-0"
+              {...adminControl(AdminControl.MCP_TOOLS_ALL_RUN)}
               onClick={() =>
                 onSetAll({ names: editableNames, enabled: !allOn })
               }
@@ -120,6 +122,7 @@ function TierTools({
                 {!tier.locked && (
                   <ItemActions>
                     <Switch
+                      {...adminControl(AdminControl.MCP_TOOL_TOGGLE)}
                       checked={!offTools.includes(tool.name)}
                       disabled={readOnly || offForPlatform}
                       onCheckedChange={(checked) =>

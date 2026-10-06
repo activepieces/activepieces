@@ -695,3 +695,5 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
+
+export const pieceQueryOptions = { latest: latestPieceQueryOptions };

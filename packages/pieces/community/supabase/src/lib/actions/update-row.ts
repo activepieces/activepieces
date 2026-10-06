@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, MarkdownVariant, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
@@ -12,25 +12,35 @@ export const updateRow = createAction({
     audience: 'both',
     aiMetadata: { description: 'Updates existing rows in a Supabase table by applying the same field values to every row matching a filter (equals, in-list, or greater-than on a chosen column). Use to modify records you can identify by a filter; it does not create rows that do not exist. Idempotent: re-running with the same filter and values leaves the matched rows in the same state.', idempotent: true },
     auth: supabaseAuth,
+    propertyGroups: [
+        {
+            key: 'target',
+            display: 'section',
+            label: 'Rows to Update',
+            icon: 'filter',
+            props: ['table_name', 'filter_column', 'filter_type', 'filter_value', 'filter_values'],
+        },
+        {
+            key: 'changes',
+            display: 'section',
+            label: 'Changes',
+            icon: 'text',
+            props: ['changes_info', 'update_data'],
+        },
+        {
+            key: 'output',
+            display: 'section',
+            label: 'Output',
+            icon: 'sliders',
+            props: ['count_updated', 'return_updated'],
+        },
+    ],
     props: {
         table_name: supabaseCommon.table_name,
-        filter_type: Property.StaticDropdown({
-            displayName: 'Filter Type',
-            description: 'How to identify rows to update',
-            required: true,
-            defaultValue: 'eq',
-            options: {
-                options: [
-                    { label: 'Column equals value', value: 'eq' },
-                    { label: 'Column is in list of values', value: 'in' },
-                    { label: 'Column is greater than value', value: 'gt' }
-                ]
-            }
-        }),
         filter_column: Property.Dropdown({
             auth: supabaseAuth,
-            displayName: 'Filter Column',
-            description: 'Select the column to filter on',
+            displayName: 'Column',
+            description: 'Rows are matched on this column.',
             required: true,
             refreshers: ['table_name'],
             options: async ({ auth, table_name }) => {
@@ -108,26 +118,43 @@ export const updateRow = createAction({
                 }
             }
         }),
+        filter_type: Property.StaticDropdown({
+            displayName: 'Condition',
+            description: 'How the column is compared with the value.',
+            required: true,
+            defaultValue: 'eq',
+            options: {
+                options: [
+                    { label: 'Equals', value: 'eq' },
+                    { label: 'Is one of', value: 'in' },
+                    { label: 'Greater than', value: 'gt' }
+                ]
+            }
+        }),
         filter_value: Property.ShortText({
-            displayName: 'Filter Value',
-            description: 'The value to match against (not used for "in list" filter)',
+            displayName: 'Value',
+            description: 'Used by every condition except Is one of.',
             required: false,
         }),
         filter_values: Property.Array({
-            displayName: 'Filter Values',
-            description: 'List of values for "in list" filter type',
+            displayName: 'Values',
+            description: 'Used only by Is one of.',
             required: false,
+        }),
+        changes_info: Property.MarkDown({
+            value: 'Empty text, number and date fields keep their current value.',
+            variant: MarkdownVariant.INFO,
         }),
         update_data: supabaseCommon.update_fields,
         count_updated: Property.Checkbox({
             displayName: 'Count Updated Rows',
-            description: 'Whether to count the number of updated rows',
+            description: 'Adds the number of updated rows to the output.',
             required: false,
             defaultValue: false,
         }),
         return_updated: Property.Checkbox({
             displayName: 'Return Updated Rows',
-            description: 'Whether to return the updated rows data',
+            description: 'Adds the updated rows to the output.',
             required: false,
             defaultValue: false,
         })

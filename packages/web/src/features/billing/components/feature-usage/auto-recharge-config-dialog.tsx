@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
@@ -217,7 +218,11 @@ export function AutoRechargeConfigDialog({
               >
                 {t('Cancel')}
               </Button>
-              <Button type="submit" loading={isPending}>
+              <Button
+                {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_SUBMIT)}
+                type="submit"
+                loading={isPending}
+              >
                 {t('Save')}
               </Button>
             </DialogFooter>
@@ -268,7 +273,7 @@ function CreditsAmountSelect({
         <button
           type="button"
           className={cn(
-            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-gray-6 bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-accent-8 focus-visible:ring-[3px] focus-visible:ring-accent-8/50',
+            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-gray-6 bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
           )}
         >
           <span>{value.toLocaleString()}</span>
@@ -289,7 +294,7 @@ function CreditsAmountSelect({
             {option.toLocaleString()}
           </button>
         ))}
-        <div className="mt-1 flex items-center gap-2 rounded-md border border-gray-6 px-3 py-2 focus-within:border-accent-8 focus-within:ring-[3px] focus-within:ring-accent-8/50">
+        <div className="mt-1 flex items-center gap-2 rounded-md border border-gray-6 px-3 py-2 focus-within:border-gray-8 focus-within:ring-[3px] focus-within:ring-gray-8/50">
           <input
             type="number"
             min={CREDITS_MIN}
