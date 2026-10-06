@@ -1,21 +1,22 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isPieceVisible, PieceSet } from '@activepieces/shared';
+import {
+  GitBranchIcon,
+  HashIcon,
+  PackageIcon,
+  PreferenceHorizontalIcon,
+  PuzzleIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  GitBranch,
-  Hash,
-  Package,
-  Puzzle,
-  SlidersHorizontal,
-} from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -105,7 +106,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Name')}
-              icon={Puzzle}
+              icon={PuzzleIcon}
             />
           ),
           cell: ({ row }) => {
@@ -130,7 +131,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Package Name')}
-              icon={Hash}
+              icon={HashIcon}
             />
           ),
           cell: ({ row }) => (
@@ -144,7 +145,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Version')}
-              icon={GitBranch}
+              icon={GitBranchIcon}
             />
           ),
           cell: ({ row }) => (
@@ -158,7 +159,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Actions & triggers')}
-              icon={SlidersHorizontal}
+              icon={PreferenceHorizontalIcon}
             />
           ),
           cell: ({ row }) => {
@@ -278,14 +279,16 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
         emptyStateTextDescription={t(
           'Start by installing pieces that you want to use in your automations',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={PackageIcon} className="size-14" />
+        }
         columns={columns}
         filters={[
           {
             type: 'input',
             title: t('Piece Name'),
             accessorKey: 'displayName',
-            icon: CheckIcon,
+            icon: Tick02Icon,
           },
         ]}
         customFilters={[

@@ -1,9 +1,10 @@
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -109,7 +110,10 @@ const ConfirmDialogBody = ({
       </DialogHeader>
       {consequence && (
         <div className="flex items-start gap-2 text-sm text-gray-12">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning-11" />
+          <HugeiconsIcon
+            icon={Alert02Icon}
+            className="mt-0.5 size-4 shrink-0 text-warning-11"
+          />
           <div className="min-w-0 break-words">{consequence}</div>
         </div>
       )}

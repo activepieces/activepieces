@@ -1,6 +1,7 @@
 'use client';
 
 import { apId, isNil, SeekPage } from '@activepieces/core-utils';
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import {
   ColumnDef as TanstackColumnDef,
   flexRender,
@@ -13,11 +14,11 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -693,7 +694,7 @@ export function DataTable<
                 : !previousPageCursor
             }
           >
-            <ChevronLeft />
+            <HugeiconsIcon icon={ArrowLeft01Icon} />
             {t('Previous')}
           </Button>
           <Button
@@ -711,7 +712,7 @@ export function DataTable<
             }
           >
             {t('Next')}
-            <ChevronRight />
+            <HugeiconsIcon icon={ArrowRight01Icon} />
           </Button>
         </div>
       )}

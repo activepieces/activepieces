@@ -1,8 +1,17 @@
 import { unique } from '@activepieces/core-utils';
 import { AgentToolType } from '@activepieces/shared';
+import {
+  BookOpen01Icon,
+  ServerStack01Icon,
+  UnplugIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { BookOpen, LucideIcon, Server, Unplug, Workflow } from 'lucide-react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import {
   Tooltip,
   TooltipContent,
@@ -31,7 +40,7 @@ export const AgentToolStack = ({
   if (toolCount === 0) {
     return (
       <span className="flex items-center gap-1.5 text-sm leading-5 text-gray-11">
-        <Unplug size={14} className="text-gray-11" />
+        <HugeiconsIcon icon={UnplugIcon} size={14} className="text-gray-11" />
         {t('No tools')}
       </span>
     );
@@ -63,7 +72,7 @@ export const AgentToolStack = ({
             <Tooltip key={type}>
               <TooltipTrigger asChild>
                 <span className="flex size-6.5 items-center justify-center rounded-md border bg-gray-1 text-gray-11">
-                  <Icon size={14} />
+                  <HugeiconsIcon icon={Icon} size={14} />
                 </span>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -93,14 +102,14 @@ export const AgentToolStack = ({
 
 const NON_PIECE_TOOL_KINDS: {
   type: AgentToolType;
-  icon: LucideIcon;
+  icon: IconSvgElement;
   label: string;
 }[] = [
   {
     type: AgentToolType.KNOWLEDGE_BASE,
-    icon: BookOpen,
+    icon: BookOpen01Icon,
     label: 'Knowledge Base',
   },
-  { type: AgentToolType.FLOW, icon: Workflow, label: 'Flows' },
-  { type: AgentToolType.MCP, icon: Server, label: 'MCP Servers' },
+  { type: AgentToolType.FLOW, icon: WorkflowSquare02Icon, label: 'Flows' },
+  { type: AgentToolType.MCP, icon: ServerStack01Icon, label: 'MCP Servers' },
 ];

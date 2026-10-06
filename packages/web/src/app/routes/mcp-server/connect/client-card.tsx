@@ -1,5 +1,6 @@
-import { ChevronRight } from 'lucide-react';
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import { ClientIcon } from '../client-icon';
@@ -32,7 +33,10 @@ export function ClientCard({
           {client.setupHint}
         </span>
       </div>
-      <ChevronRight className="size-4 shrink-0 text-gray-11" />
+      <HugeiconsIcon
+        icon={ArrowRight01Icon}
+        className="size-4 shrink-0 text-gray-11"
+      />
     </button>
   );
 }

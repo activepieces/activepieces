@@ -7,18 +7,18 @@ import {
   isFailedState,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
+import {
+  Archive02Icon,
+  ArrowDown01Icon,
+  Cancel01Icon,
+  HistoryIcon,
+  Redo02Icon,
+  RefreshIcon,
+  Search01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Redo,
-  RotateCw,
-  ChevronDown,
-  History,
-  X,
-  Archive,
-  SearchIcon,
-} from 'lucide-react';
 import { useEffect, useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -31,6 +31,7 @@ import {
   DataTableFilters,
 } from '@/components/custom/data-table';
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { MessageTooltip } from '@/components/custom/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -189,7 +190,7 @@ export const RunsTable = () => {
               label: flow.version.displayName,
               value: flow.id,
             })) || [],
-          icon: CheckIcon,
+          icon: Tick02Icon,
         },
         {
           type: 'select',
@@ -204,19 +205,19 @@ export const RunsTable = () => {
               icon: flowRunUtils.getStatusIcon(status).Icon,
             };
           }),
-          icon: CheckIcon,
+          icon: Tick02Icon,
         },
         {
           type: 'input',
           title: t('Error message'),
           accessorKey: 'failedStepMessage',
-          icon: SearchIcon,
+          icon: Search01Icon,
         },
         {
           type: 'date',
           title: t('Created'),
           accessorKey: 'created',
-          icon: CheckIcon,
+          icon: Tick02Icon,
           defaultPresetName: DEFAULT_DATE_PRESET,
         },
         {
@@ -313,7 +314,7 @@ export const RunsTable = () => {
                   setSelectedRows([]);
                 }}
               >
-                <Archive className="size-4 mr-1" />
+                <HugeiconsIcon icon={Archive02Icon} className="size-4 mr-1" />
                 {selectedRows.length > 0
                   ? `${t('Archive')} ${
                       !isDisabled
@@ -387,7 +388,10 @@ export const RunsTable = () => {
                       resetSelection();
                     }}
                   >
-                    <X className="h-3 w-4 mr-1" />
+                    <HugeiconsIcon
+                      icon={Cancel01Icon}
+                      className="h-3 w-4 mr-1"
+                    />
                     {selectedRows.length > 0
                       ? `${t('Cancel')} ${
                           selectedAll
@@ -425,7 +429,10 @@ export const RunsTable = () => {
                       size="sm"
                       loading={retryRuns.isPending}
                     >
-                      <RotateCw className="size-4 mr-1" />
+                      <HugeiconsIcon
+                        icon={RefreshIcon}
+                        className="size-4 mr-1"
+                      />
                       {selectedRows.length > 0
                         ? `${t('Retry')} ${
                             !isDisabled
@@ -437,7 +444,10 @@ export const RunsTable = () => {
                               : ''
                           }`
                         : t('Retry')}
-                      <ChevronDown className="h-3 w-4 ml-1" />
+                      <HugeiconsIcon
+                        icon={ArrowDown01Icon}
+                        className="h-3 w-4 ml-1"
+                      />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -475,7 +485,10 @@ export const RunsTable = () => {
                         className="cursor-pointer"
                       >
                         <div className="flex flex-row gap-2 items-center">
-                          <RotateCw className="h-4 w-4" />
+                          <HugeiconsIcon
+                            icon={RefreshIcon}
+                            className="h-4 w-4"
+                          />
                           <span>{t('on latest version')}</span>
                         </div>
                       </DropdownMenuItem>
@@ -521,7 +534,10 @@ export const RunsTable = () => {
                           className="cursor-pointer"
                         >
                           <div className="flex flex-row gap-2 items-center">
-                            <Redo className="h-4 w-4" />
+                            <HugeiconsIcon
+                              icon={Redo02Icon}
+                              className="h-4 w-4"
+                            />
                             <span>{t('from failed step')}</span>
                           </div>
                         </DropdownMenuItem>
@@ -575,7 +591,7 @@ export const RunsTable = () => {
           >
             <div className="flex flex-row gap-2 items-center">
               {t('Viewing retried runs')} ({retriedRunsInQueryParams.length}){' '}
-              <X className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
             </div>
           </Button>,
         ]
@@ -588,7 +604,9 @@ export const RunsTable = () => {
         emptyStateTextDescription={t(
           'Come back later when your automations start running',
         )}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={HistoryIcon} className="size-14" />
+        }
         columns={columns}
         page={data}
         isLoading={isLoading || isFetchingFlows}

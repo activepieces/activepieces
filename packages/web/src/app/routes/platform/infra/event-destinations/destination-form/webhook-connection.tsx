@@ -1,11 +1,17 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApFlagId, ApplicationEventName } from '@activepieces/shared';
+import {
+  Add01Icon,
+  InformationCircleIcon,
+  LinkSquare02Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink, Info, Plus, Workflow } from 'lucide-react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { HorizontalSeparatorWithText } from '@/components/custom/horizontal-separator-with-text';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -98,7 +104,7 @@ export const WebhookConnection = ({
         <>
           <HandlerFlowCard flowId={handlerFlowId} />
           <Alert>
-            <Info className="size-4" />
+            <HugeiconsIcon icon={InformationCircleIcon} className="size-4" />
             <AlertTitle>
               {isEdit
                 ? t('Keep this flow published so it receives events')
@@ -185,7 +191,7 @@ const GenerateHandlerFlowCard = ({
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
       <span className="flex size-10 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
-        <Workflow className="size-[18px]" />
+        <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-[18px]" />
       </span>
       <div className="flex max-w-[460px] flex-col gap-1">
         <span className="text-sm font-medium">
@@ -205,7 +211,7 @@ const GenerateHandlerFlowCard = ({
         disabled={isImporting || selectedEvents.length === 0}
         loading={isImporting}
       >
-        <Plus className="size-4" />
+        <HugeiconsIcon icon={Add01Icon} className="size-4" />
         {t('Generate handler flow')}
       </Button>
     </div>
@@ -218,7 +224,7 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
   return (
     <div className="flex w-full items-center gap-3 rounded-lg border p-4">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
-        <Workflow className="size-4" />
+        <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-4" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate text-sm font-medium">
@@ -242,7 +248,7 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
       >
         <a href={`/flows/${flowId}`} target="_blank" rel="noopener noreferrer">
           {t('Open flow')}
-          <ExternalLink className="size-3.5" />
+          <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
         </a>
       </Button>
     </div>

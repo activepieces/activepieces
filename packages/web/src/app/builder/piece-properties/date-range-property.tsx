@@ -1,7 +1,8 @@
+import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowRight } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { inputClass } from '@/components/ui/input';
 import {
   Select,
@@ -90,7 +91,10 @@ function DateRangeProperty({
               className={inputClass}
             />
           </label>
-          <ArrowRight className="mb-2 size-4 shrink-0 text-gray-11" />
+          <HugeiconsIcon
+            icon={ArrowRight02Icon}
+            className="mb-2 size-4 shrink-0 text-gray-11"
+          />
           <label className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-xs text-gray-11">{t('Before')}</span>
             <input

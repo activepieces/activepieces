@@ -130,13 +130,13 @@ the crown is.
 
 **The crown replaces the action's own icon, it does not join it.** A plus and a crown side by side read as
 two separate affordances. `useFeatureGate` returns `crown` as an element when locked and `null` when not,
-so a plain button is `{gate.crown ?? <Plus className="size-4" />}` and only ever shows one icon. The
-exception is `AnimatedIconButton`, whose icon is a prop rather than a child because it animates on hover:
-a crown has no animation to drive, so the locked case renders a plain `Button` instead.
+so a plain button is `{gate.crown ?? <HugeiconsIcon icon={Add01Icon} className="size-4" />}` and only ever shows one
+icon. The exception is `IconButton`, whose icon is a prop rather than a child, so the locked case renders a plain
+`Button` with the crown as its child instead.
 
 `gate.crown` carries `text-on-accent/90`, the ink measured for the brand solid, so it only reads on the
 filled button it was written for and disappears on an `outline` one. `Customize Selector` is outline and renders
-its own `<Crown className="size-3.5 shrink-0 text-accent-11" />` instead, matching the sidebar crowns, while
+its own `<HugeiconsIcon icon={CrownIcon} className="size-3.5 shrink-0 text-accent-11" />` instead, matching the sidebar crowns, while
 still taking `open` and `dialog` from the hook. Take the behaviour from the gate and the colour from the
 button until the helper learns to inherit `currentColor`.
 
@@ -272,7 +272,8 @@ Four pages now hand-roll the same searchParams dance, three with an unsafe cast.
   nothing failed. `pointer-events-none` on the icon is why the self-animating fallback does not cover it
   either: the icon's own `onMouseEnter` never fires, and the component only marks itself externally
   controlled once a ref is attached. Restored 2026-09-15. Before copying a shared component's markup,
-  diff it for refs, effects and handlers, not just classes.
+  diff it for refs, effects and handlers, not just classes. (The animated icons have since been replaced by static
+  Hugeicons glyphs.)
 - **A quieter Community.** This is the open-source product, and upsell density there is a brand question and
   not only a conversion one. The structure stays honest, the pitch does not follow self-hosters around.
 - **No landing page yet.** It is purely additive, blocks nothing, needs five or six separate queries with no

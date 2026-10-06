@@ -1,10 +1,10 @@
 import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
+import { Add01Icon, CrownIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Crown, Plus } from 'lucide-react';
 import React from 'react';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
@@ -75,29 +75,28 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           className={cn('h-6 w-6 hover:bg-gray-4', className)}
           {...control}
         >
-          {locked ? <Crown className="text-accent-11" /> : <Plus />}
+          {locked ? (
+            <HugeiconsIcon icon={CrownIcon} className="text-accent-11" />
+          ) : (
+            <HugeiconsIcon icon={Add01Icon} />
+          )}
         </Button>
       );
     case 'full':
       return crown ? (
-        <Button
-          size="sm"
-          className={cn('has-[>svg]:px-2.5', className)}
-          {...control}
-        >
+        <Button size="sm" className={className} {...control}>
           {crown}
           {t('New Project')}
         </Button>
       ) : (
-        <AnimatedIconButton
-          icon={PlusIcon}
-          iconSize={16}
+        <IconButton
+          icon={Add01Icon}
           size="sm"
           className={className}
           {...control}
         >
           {t('New Project')}
-        </AnimatedIconButton>
+        </IconButton>
       );
     case 'sidebar-menu':
       return (
@@ -106,9 +105,9 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           {...control}
         >
           {locked ? (
-            <Crown className="size-4 text-accent-11" />
+            <HugeiconsIcon icon={CrownIcon} className="size-4 text-accent-11" />
           ) : (
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
           )}
           <span>{t('Add team project')}</span>
         </SidebarMenuButton>

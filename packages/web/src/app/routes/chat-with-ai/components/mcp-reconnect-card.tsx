@@ -1,8 +1,13 @@
+import {
+  PlugSocketIcon,
+  RefreshIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, Plug, RotateCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -64,7 +69,10 @@ export function McpReconnectCard({
             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
             className="flex shrink-0 items-center justify-center"
           >
-            <Check className="h-5 w-5 text-success-11" />
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              className="h-5 w-5 text-success-11"
+            />
           </motion.span>
         ) : !opened ? (
           <Button
@@ -77,7 +85,7 @@ export function McpReconnectCard({
               setOpened(true);
             }}
           >
-            <Plug className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={PlugSocketIcon} className="h-3.5 w-3.5" />
             {t('Reconnect')}
           </Button>
         ) : (
@@ -94,7 +102,7 @@ export function McpReconnectCard({
                 });
               }}
             >
-              <RotateCw className="h-3 w-3" />
+              <HugeiconsIcon icon={RefreshIcon} className="h-3 w-3" />
               {t("I've reconnected")}
             </Button>
           )
@@ -132,7 +140,7 @@ function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
   }
   return (
     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-gray-3/40">
-      <Plug className="h-5 w-5 text-gray-11" />
+      <HugeiconsIcon icon={PlugSocketIcon} className="h-5 w-5 text-gray-11" />
     </div>
   );
 }

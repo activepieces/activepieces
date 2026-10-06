@@ -1,11 +1,15 @@
 import { TelemetryEventName } from '@activepieces/shared';
+import {
+  MailRemove01Icon,
+  MailValidation01Icon,
+} from '@hugeicons/core-free-icons';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { MailCheck, MailX } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { FullLogo } from '@/components/custom/full-logo';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Card } from '@/components/ui/card';
@@ -69,7 +73,10 @@ const VerifyEmail = () => {
           <div className="gap-4 w-full flex flex-row items-center justify-center">
             {!isPending && !isExpired && (
               <>
-                <MailCheck className="w-16 h-16" />
+                <HugeiconsIcon
+                  icon={MailValidation01Icon}
+                  className="w-16 h-16"
+                />
                 <span className="text-left w-fit">
                   {t(
                     'Email has been verified. You will be redirected to sign in...',
@@ -88,7 +95,7 @@ const VerifyEmail = () => {
 
             {isExpired && (
               <>
-                <MailX className="w-16 h-16" />
+                <HugeiconsIcon icon={MailRemove01Icon} className="w-16 h-16" />
                 <div className="text-left w-fit">
                   <div>
                     {t(

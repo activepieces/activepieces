@@ -5,18 +5,19 @@ import {
   RequiredActionsMode,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Info,
-  ListChecks,
-  Loader2,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
+  Add01Icon,
+  Cancel01Icon,
+  CheckListIcon,
+  Delete02Icon,
+  InformationCircleIcon,
+  Loading02Icon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -135,13 +136,16 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
             variant="outline"
             onClick={() => setEditDialog({ open: true, pieceName: null })}
           >
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
             {t('Add actions')}
           </Button>
         </div>
         {isLoading ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="size-6 animate-spin text-gray-11" />
+            <HugeiconsIcon
+              icon={Loading02Icon}
+              className="size-6 animate-spin text-gray-11"
+            />
           </div>
         ) : requiredActionsGroupedByPiece.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
@@ -165,7 +169,10 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
           </ScrollArea>
         ) : (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
-            <ListChecks className="size-8 text-gray-11" />
+            <HugeiconsIcon
+              icon={CheckListIcon}
+              className="size-8 text-gray-11"
+            />
             <span className="text-sm font-medium">
               {t('No required actions')}
             </span>
@@ -246,7 +253,7 @@ function PieceRequiredActionsCard({
                 aria-label={t('Edit')}
                 onClick={onEdit}
               >
-                <Pencil className="size-4" />
+                <HugeiconsIcon icon={PencilEdit01Icon} className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('Edit')}</TooltipContent>
@@ -262,7 +269,7 @@ function PieceRequiredActionsCard({
                   onRemove(group.actions.map((action) => action.name))
                 }
               >
-                <Trash2 className="size-4" />
+                <HugeiconsIcon icon={Delete02Icon} className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('Remove all')}</TooltipContent>
@@ -286,7 +293,7 @@ function PieceRequiredActionsCard({
                 aria-label={t('Remove')}
                 onClick={() => onRemove([action.name])}
               >
-                <X className="size-3.5" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
               </Button>
             </span>
           ))}
@@ -294,7 +301,10 @@ function PieceRequiredActionsCard({
       </div>
       {actionNamesNotInLatestPieceVersion.length > 0 && (
         <div className="flex items-center gap-2 border-t bg-gray-3/50 px-4 py-2.5 text-sm text-gray-11">
-          <Info className="size-4 shrink-0" />
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-4 shrink-0"
+          />
           <span className="flex-1">
             {t('actionsNotInLatestPieceVersion', {
               count: actionNamesNotInLatestPieceVersion.length,
@@ -451,7 +461,10 @@ function EditRequiredActionsDialogContent({
             </div>
             {pieceLoading ? (
               <div className="flex justify-center rounded-lg border py-6">
-                <Loader2 className="size-5 animate-spin text-gray-11" />
+                <HugeiconsIcon
+                  icon={Loading02Icon}
+                  className="size-5 animate-spin text-gray-11"
+                />
               </div>
             ) : actions.length === 0 ? (
               <span className="rounded-lg border px-3 py-4 text-sm text-gray-11">

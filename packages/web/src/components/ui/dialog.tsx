@@ -1,7 +1,8 @@
-import { XIcon } from 'lucide-react';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { useMenuFocusReturn } from '@/hooks/use-menu-focus-return';
 import { toastInteraction } from '@/lib/toast-interaction';
@@ -84,7 +85,7 @@ function DialogContent({
               size="icon-sm"
               className="absolute top-6 right-6"
             >
-              <XIcon />
+              <HugeiconsIcon icon={Cancel01Icon} />
               <span className="sr-only">Close</span>
             </Button>
           </DialogPrimitive.Close>

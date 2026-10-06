@@ -1,11 +1,11 @@
-import { t } from 'i18next';
 import {
-  ArrowRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-} from 'lucide-react';
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  ArrowRight02Icon,
+  PencilEdit01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Fragment,
@@ -16,6 +16,7 @@ import {
   useState,
 } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -144,7 +145,7 @@ export function MultiQuestionForm({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <Check className="size-4 text-success-11" />
+        <HugeiconsIcon icon={Tick02Icon} className="size-4 text-success-11" />
         <span>{t('Answers submitted')}</span>
       </motion.div>
     );
@@ -184,7 +185,7 @@ export function MultiQuestionForm({
             disabled={currentStep === 0}
             aria-label={t('Back')}
           >
-            <ChevronLeft className="size-4" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
           </Button>
           <span className="text-xs tabular-nums px-1">
             {t('{current} of {total}', {
@@ -200,7 +201,7 @@ export function MultiQuestionForm({
             disabled={!currentAnswer}
             aria-label={t('Next')}
           >
-            <ChevronRight className="size-4" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
           </Button>
         </>
       }
@@ -475,7 +476,7 @@ function ChoiceBody({
                 isCustomTextActive && 'bg-gray-12 text-gray-1',
               )}
             >
-              <Pencil className="size-3.5" />
+              <HugeiconsIcon icon={PencilEdit01Icon} className="size-3.5" />
             </span>
             <Input
               ref={customAnswerInputRef}
@@ -520,7 +521,7 @@ function ChoiceBody({
               aria-label={isCustomTextActive ? t('Send') : t('Skip')}
             >
               {isCustomTextActive ? (
-                <ArrowRight className="size-4" />
+                <HugeiconsIcon icon={ArrowRight02Icon} className="size-4" />
               ) : (
                 t('Skip')
               )}

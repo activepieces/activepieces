@@ -19,9 +19,14 @@ import {
   AppConnectionStatus,
   OAuth2GrantType,
 } from '@activepieces/shared';
+import {
+  Cancel01Icon,
+  Tick02Icon,
+  UnplugIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CheckIcon, UnplugIcon, XIcon } from 'lucide-react';
 
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 import { OAuth2App } from '@/features/connections/utils/oauth2-utils';
 import { formUtils } from '@/features/pieces/utils/form-utils';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -46,13 +51,13 @@ export class NoProjectSelected extends Error {
 export const appConnectionUtils = {
   getStatusIcon(status: AppConnectionStatus): {
     variant: 'default' | 'success' | 'error';
-    icon: React.ComponentType;
+    icon: IconSvgElement;
   } {
     switch (status) {
       case AppConnectionStatus.ACTIVE:
         return {
           variant: 'success',
-          icon: CheckIcon,
+          icon: Tick02Icon,
         };
       case AppConnectionStatus.MISSING:
         return {
@@ -62,7 +67,7 @@ export const appConnectionUtils = {
       case AppConnectionStatus.ERROR:
         return {
           variant: 'error',
-          icon: XIcon,
+          icon: Cancel01Icon,
         };
     }
   },

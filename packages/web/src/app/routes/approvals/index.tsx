@@ -2,10 +2,15 @@ import {
   PopulatedFlowApprovalRequest,
   FlowApprovalRequestState,
 } from '@activepieces/shared';
+import {
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+  ShieldAlertIcon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CircleCheck, CircleX, Eye, ShieldAlert } from 'lucide-react';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -16,6 +21,10 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { Button } from '@/components/ui/button';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
@@ -25,16 +34,20 @@ const stateVariant = (
   state: FlowApprovalRequestState,
 ): {
   variant: 'default' | 'success' | 'error';
-  Icon: typeof ShieldAlert;
+  Icon: IconSvgElement;
   text: string;
 } => {
   switch (state) {
     case FlowApprovalRequestState.PENDING:
-      return { variant: 'default', Icon: ShieldAlert, text: t('Pending') };
+      return { variant: 'default', Icon: ShieldAlertIcon, text: t('Pending') };
     case FlowApprovalRequestState.APPROVED:
-      return { variant: 'success', Icon: CircleCheck, text: t('Approved') };
+      return {
+        variant: 'success',
+        Icon: CheckmarkCircle02Icon,
+        text: t('Approved'),
+      };
     case FlowApprovalRequestState.REJECTED:
-      return { variant: 'error', Icon: CircleX, text: t('Rejected') };
+      return { variant: 'error', Icon: CancelCircleIcon, text: t('Rejected') };
   }
 };
 
@@ -113,7 +126,7 @@ export function ApprovalsPage() {
             variant="outline"
             onClick={() => onReview(row.original)}
           >
-            <Eye className="size-4 me-1" />
+            <HugeiconsIcon icon={ViewIcon} className="size-4 me-1" />
             {t('Review')}
           </Button>
         </div>
@@ -143,7 +156,12 @@ export function ApprovalsPage() {
         emptyStateTextDescription={t(
           'When users request approval for sensitive flows, they will appear here.',
         )}
-        emptyStateIcon={<ShieldAlert className="size-12 text-gray-11" />}
+        emptyStateIcon={
+          <HugeiconsIcon
+            icon={ShieldAlertIcon}
+            className="size-12 text-gray-11"
+          />
+        }
       />
     </div>
   );

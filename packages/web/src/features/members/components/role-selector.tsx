@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 
+import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -73,7 +73,9 @@ export const RoleSelector = ({
       <SelectTrigger className="w-full">
         {showProjectSpinner ? (
           <span className="flex items-center gap-2 font-normal text-gray-11">
-            <Loader2 className="size-4 animate-spin" />
+            <Spinner
+              className="size-4 animate-spin"
+            />
             {projectRoleAssigning ? t('Saving...') : t('Loading...')}
           </span>
         ) : selectedRole ? (

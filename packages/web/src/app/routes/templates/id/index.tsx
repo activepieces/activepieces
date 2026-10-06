@@ -7,9 +7,14 @@ import {
   TemplateType,
   Template,
 } from '@activepieces/shared';
+import {
+  ArrowLeft02Icon,
+  ArrowRight02Icon,
+  Link02Icon,
+  LinkSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowLeft, ArrowRight, Link, ExternalLink } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -17,6 +22,7 @@ import { toast } from 'sonner';
 import { FlowCanvas } from '@/app/builder/flow-canvas';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -141,14 +147,14 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
               onClick={() => navigate('/templates')}
               className="flex items-center gap-2"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <HugeiconsIcon icon={ArrowLeft02Icon} className="w-4 h-4" />
               <span className="text-sm font-medium whitespace-nowrap">
                 {t('All Templates')}
               </span>
             </Button>
           </div>
           <Button variant="outline" size="sm" onClick={handleShare}>
-            <Link className="w-4 h-4" />
+            <HugeiconsIcon icon={Link02Icon} className="w-4 h-4" />
             {t('Share')}
           </Button>
         </div>
@@ -182,7 +188,10 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                     className="flex-1"
                   >
                     {t('Use Template')}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <HugeiconsIcon
+                      icon={ArrowRight02Icon}
+                      className="w-4 h-4 ml-2"
+                    />
                   </Button>
                   {template.type !== TemplateType.SHARED && (
                     <Button
@@ -192,7 +201,10 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                       className="flex-1"
                     >
                       {t('Setup guide')}
-                      <ExternalLink className="w-4 h-4 ml-2" />
+                      <HugeiconsIcon
+                        icon={LinkSquare02Icon}
+                        className="w-4 h-4 ml-2"
+                      />
                     </Button>
                   )}
                 </div>

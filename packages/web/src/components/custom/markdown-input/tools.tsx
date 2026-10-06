@@ -1,15 +1,16 @@
+import {
+  ArrowDown02Icon,
+  Image01Icon,
+  TextBoldIcon,
+  TextItalicIcon,
+  TextStrikethroughIcon,
+  TextUnderlineIcon,
+} from '@hugeicons/core-free-icons';
 import { Editor } from '@tiptap/react';
 import { t } from 'i18next';
-import {
-  ImageIcon,
-  UnderlineIcon,
-  ItalicIcon,
-  Strikethrough,
-  BoldIcon,
-  ArrowDown,
-} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -89,7 +90,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
           size="icon-sm"
           variant={isStrikeActive ? 'default' : 'ghost'}
         >
-          <Strikethrough />
+          <HugeiconsIcon icon={TextStrikethroughIcon} />
         </Button>
       </ToolWrapper>
       <ToolWrapper tooltip={t('Bold')}>
@@ -98,7 +99,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
           size="icon-sm"
           variant={isBoldActive ? 'default' : 'ghost'}
         >
-          <BoldIcon />
+          <HugeiconsIcon icon={TextBoldIcon} />
         </Button>
       </ToolWrapper>
       <ToolWrapper tooltip={t('Italic')}>
@@ -107,7 +108,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
           size="icon-sm"
           variant={isItalicActive ? 'default' : 'ghost'}
         >
-          <ItalicIcon />
+          <HugeiconsIcon icon={TextItalicIcon} />
         </Button>
       </ToolWrapper>
       <ToolWrapper tooltip={t('Underline')}>
@@ -116,7 +117,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
           size="icon-sm"
           variant={isUnderlineActive ? 'default' : 'ghost'}
         >
-          <UnderlineIcon />
+          <HugeiconsIcon icon={TextUnderlineIcon} />
         </Button>
       </ToolWrapper>
     </div>
@@ -147,7 +148,7 @@ const ImageTool = ({
       <ToolWrapper tooltip={t('Image')}>
         <PopoverTrigger asChild>
           <Button size="icon-sm" variant={'ghost'}>
-            <ImageIcon />
+            <HugeiconsIcon icon={Image01Icon} />
           </Button>
         </PopoverTrigger>
       </ToolWrapper>
@@ -172,7 +173,7 @@ const ImageTool = ({
             disabled={imageUrl.length === 0}
             variant={'ghost'}
           >
-            <ArrowDown className="size-4" />
+            <HugeiconsIcon icon={ArrowDown02Icon} className="size-4" />
           </Button>
         </div>
       </PopoverContent>

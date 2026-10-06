@@ -1,5 +1,6 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -56,12 +57,12 @@ const CarouselContentWithButtons = ({
       </CarouselContent>
       {canScrollPrev && (
         <CarouselPrevious variant="ghost" className="left-0 z-10">
-          <ChevronLeft className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
         </CarouselPrevious>
       )}
       {canScrollNext && (
         <CarouselNext variant="ghost" className="right-0 z-10">
-          <ChevronRight className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
         </CarouselNext>
       )}
     </div>

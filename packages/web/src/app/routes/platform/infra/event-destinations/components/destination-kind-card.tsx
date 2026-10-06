@@ -1,3 +1,4 @@
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +22,7 @@ export const DestinationKindCard = ({
           isSelected ? 'bg-accent-3 text-accent-11' : 'bg-gray-3',
         )}
       >
-        <Icon className="size-4" />
+        <HugeiconsIcon icon={Icon} className="size-4" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-2">
         <span className="flex items-center justify-between gap-2">

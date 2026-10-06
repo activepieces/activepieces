@@ -2,8 +2,13 @@ import {
   McpOAuthClientKey,
   PLATFORM_WIDE_PROJECT_FILTER_VALUE,
 } from '@activepieces/shared';
+import {
+  FolderOpenIcon,
+  PlugSocketIcon,
+  Tick02Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CheckIcon, FolderOpen, Plug, User } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -14,6 +19,7 @@ import {
   DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -82,7 +88,7 @@ export function GrantsTab() {
         <Empty className="border border-dashed py-20">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <Plug />
+              <HugeiconsIcon icon={PlugSocketIcon} />
             </EmptyMedia>
             <EmptyTitle>{t('Nothing has connected yet')}</EmptyTitle>
             <EmptyDescription>
@@ -139,7 +145,9 @@ export function GrantsTab() {
         ]}
         emptyStateTextTitle={t('No connections match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}
-        emptyStateIcon={<Plug className="size-10" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={PlugSocketIcon} className="size-10" />
+        }
       />
 
       <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-11">
@@ -183,7 +191,7 @@ function buildFilters({
       type: 'select',
       title: t('Project'),
       accessorKey: 'project',
-      icon: FolderOpen,
+      icon: FolderOpenIcon,
       options: [
         ...projects.map((project) => ({
           label: project.displayName,
@@ -202,7 +210,7 @@ function buildFilters({
       type: 'select',
       title: t('Member'),
       accessorKey: 'member',
-      icon: User,
+      icon: UserIcon,
       options: members.map((member) => ({
         label: `${member.firstName} ${member.lastName}`.trim() || member.email,
         value: member.id,
@@ -214,7 +222,7 @@ function buildFilters({
     type: 'select',
     title: t('Client'),
     accessorKey: 'client',
-    icon: CheckIcon,
+    icon: Tick02Icon,
     options: McpOAuthClientKey.options.map((clientKey) => ({
       label: mcpClientDisplay.label({ key: clientKey, clientName: null }),
       value: clientKey,

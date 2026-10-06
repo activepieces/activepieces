@@ -5,9 +5,10 @@ import type {
   AgentPieceTool,
   AgentTool,
 } from '@activepieces/shared';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -124,7 +125,7 @@ export const AgentTools = ({
                 </div>
               ) : (
                 <Button variant="outline" className="mt-2">
-                  <Plus className="size-4 mr-2" />
+                  <HugeiconsIcon icon={Add01Icon} className="size-4 mr-2" />
                   {t('Add')}
                 </Button>
               )}
@@ -165,7 +166,7 @@ export const AgentTools = ({
 
             <AddToolDropdown disabled={disabled} align="center">
               <Button variant="outline" className="gap-2">
-                <Plus className="size-4" />
+                <HugeiconsIcon icon={Add01Icon} className="size-4" />
                 {t('Add')}
               </Button>
             </AddToolDropdown>

@@ -1,7 +1,8 @@
+import { Attachment01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Paperclip } from 'lucide-react';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { inputClass } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -60,7 +61,11 @@ function FileInput({
             {shownName ?? t('Select a file')}
           </span>
         </TextWithTooltip>
-        <Paperclip aria-hidden className="size-4 shrink-0 text-gray-11" />
+        <HugeiconsIcon
+          icon={Attachment01Icon}
+          aria-hidden
+          className="size-4 shrink-0 text-gray-11"
+        />
       </button>
     </>
   );

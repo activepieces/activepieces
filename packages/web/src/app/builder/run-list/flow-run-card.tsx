@@ -6,13 +6,14 @@ import {
   isFailedState,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
+import { RepeatIcon, Timer02Icon, ViewIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Eye, Repeat, Timer } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
@@ -75,7 +76,8 @@ const FlowRunCard = React.memo(
             {run.status === FlowRunStatus.CANCELED ? (
               <Tooltip>
                 <TooltipTrigger>
-                  <Icon
+                  <HugeiconsIcon
+                    icon={Icon}
                     className={cn('w-5 h-5', {
                       'text-success-11': variant === 'success',
                       'text-danger-11': variant === 'error',
@@ -87,7 +89,8 @@ const FlowRunCard = React.memo(
                 <TooltipContent>{t('Canceled')}</TooltipContent>
               </Tooltip>
             ) : (
-              <Icon
+              <HugeiconsIcon
+                icon={Icon}
                 className={cn('w-5 h-5', {
                   'text-success-11': variant === 'success',
                   'text-danger-11': variant === 'error',
@@ -105,14 +108,16 @@ const FlowRunCard = React.memo(
               includeTime={true}
               className="text-sm font-medium leading-none select-none cursor-default"
             ></FormattedDate>
-            {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
+            {run.id === viewedRunId && (
+              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+            )}
           </div>
           {isFlowRunStateTerminal({
             status: run.status,
             ignoreInternalError: false,
           }) && (
             <p className="flex gap-1 text-xs text-gray-11">
-              <Timer className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={Timer02Icon} className="h-3.5 w-3.5" />
               {t('Took')}{' '}
               {formatUtils.formatDuration(
                 run.startTime && run.finishTime
@@ -161,7 +166,7 @@ const FlowRunCard = React.memo(
                           e.stopPropagation();
                         }}
                       >
-                        <Repeat className="w-4 h-4"></Repeat>
+                        <HugeiconsIcon icon={RepeatIcon} className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>

@@ -1,13 +1,18 @@
 import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Delete02Icon,
+  Key01Icon,
+  MoreHorizontalIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { SkeletonList } from '@/components/custom/skeleton-list';
-import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -46,14 +51,13 @@ const ApiKeysPage = () => {
       description={t('Manage API keys to access Activepieces APIs.')}
       actions={
         <NewApiKeyDialog onCreate={() => refetch()}>
-          <AnimatedIconButton
-            icon={PlusIcon}
-            iconSize={16}
+          <IconButton
+            icon={Add01Icon}
             size="sm"
             {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
           >
             {t('New API Key')}
-          </AnimatedIconButton>
+          </IconButton>
         </NewApiKeyDialog>
       }
     >
@@ -63,7 +67,7 @@ const ApiKeysPage = () => {
 
       {!isLoading && keys.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-          <Key className="size-10" />
+          <HugeiconsIcon icon={Key01Icon} className="size-10" />
           <p className="text-sm">
             {t('No API keys yet. Create one to get started.')}
           </p>
@@ -75,7 +79,7 @@ const ApiKeysPage = () => {
           {keys.map((apiKey) => (
             <Item key={apiKey.id} variant="outline" size="sm">
               <ItemMedia variant="icon">
-                <Key />
+                <HugeiconsIcon icon={Key01Icon} />
               </ItemMedia>
               <ItemContent>
                 <ItemTitle>{apiKey.displayName}</ItemTitle>
@@ -101,7 +105,10 @@ const ApiKeysPage = () => {
                 <DropdownMenu modal={true}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="size-8 p-0">
-                      <MoreHorizontal className="size-4" />
+                      <HugeiconsIcon
+                        icon={MoreHorizontalIcon}
+                        className="size-4"
+                      />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -126,7 +133,10 @@ const ApiKeysPage = () => {
                           AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
                         )}
                       >
-                        <Trash className="size-4 mr-2 text-danger-11" />
+                        <HugeiconsIcon
+                          icon={Delete02Icon}
+                          className="size-4 mr-2 text-danger-11"
+                        />
                         {t('Revoke API Key')}
                       </DropdownMenuItem>
                     </ConfirmationDeleteDialog>

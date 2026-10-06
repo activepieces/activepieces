@@ -1,7 +1,8 @@
-import { CheckIcon, MinusIcon } from 'lucide-react';
+import { Remove01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 function Checkbox({
@@ -23,7 +24,11 @@ function Checkbox({
         data-slot="checkbox-indicator"
         className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
       >
-        {checked === 'indeterminate' ? <MinusIcon /> : <CheckIcon />}
+        {checked === 'indeterminate' ? (
+          <HugeiconsIcon icon={Remove01Icon} />
+        ) : (
+          <HugeiconsIcon icon={Tick02Icon} />
+        )}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

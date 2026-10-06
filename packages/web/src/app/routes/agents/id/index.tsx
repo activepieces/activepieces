@@ -1,7 +1,12 @@
 import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
+import {
+  ArrowLeft01Icon,
+  HistoryIcon,
+  PreferenceHorizontalIcon,
+  SearchRemoveIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   useLocation,
@@ -11,6 +16,7 @@ import {
 } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -204,7 +210,7 @@ const AgentEditorContent = () => {
       <Empty className="h-full">
         <EmptyHeader className="max-w-md">
           <EmptyMedia variant="icon">
-            <SearchX />
+            <HugeiconsIcon icon={SearchRemoveIcon} />
           </EmptyMedia>
           <EmptyTitle>
             {isError
@@ -233,7 +239,7 @@ const AgentEditorContent = () => {
           onClick={() => navigate(backTo)}
           className="flex size-7 shrink-0 items-center justify-center rounded-lg text-gray-11 transition-colors hover:bg-gray-4 hover:text-gray-12"
         >
-          <ChevronLeft size={16} />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
         </button>
         <AgentMark size="sm" icon={agent.icon} color={agent.color} />
         <div className="flex min-w-0 grow basis-0 flex-col gap-px">
@@ -252,7 +258,7 @@ const AgentEditorContent = () => {
             aria-pressed={runsVisible}
             onClick={toggleRuns}
           >
-            <History className="size-4" />
+            <HugeiconsIcon icon={HistoryIcon} className="size-4" />
             {t('Runs')}
           </Button>
           <Button
@@ -262,7 +268,7 @@ const AgentEditorContent = () => {
             aria-pressed={configureOpen}
             onClick={toggleConfigure}
           >
-            <Settings2 className="size-4" />
+            <HugeiconsIcon icon={PreferenceHorizontalIcon} className="size-4" />
             {t('Configure')}
           </Button>
         </div>

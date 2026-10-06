@@ -1,8 +1,9 @@
+import { HammerIcon, WorkflowSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Hammer, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,12 +46,15 @@ export const AddToolDropdown = ({
         <DropdownMenuItem
           onSelect={() => openAddPieceToolDialog({ page: 'pieces-list' })}
         >
-          <Hammer className="size-3.5 me-2" />
+          <HugeiconsIcon icon={HammerIcon} className="size-3.5 me-2" />
           <span>{t('Piece tool')}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onSelect={() => setShowAddFlowDialog(true)}>
-          <Workflow className="size-3.5 me-2" />
+          <HugeiconsIcon
+            icon={WorkflowSquare02Icon}
+            className="size-3.5 me-2"
+          />
           <span>{t('Flow tool')}</span>
         </DropdownMenuItem>
 

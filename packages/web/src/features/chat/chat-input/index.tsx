@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
+import { ArrowUp02Icon, Attachment01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import * as React from 'react';
 import { useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { ResizableTextareaProps, Textarea } from '@/components/ui/textarea';
 import { useElementSize } from '@/hooks/use-element-size';
@@ -139,7 +140,10 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
             />
             <div className="flex justify-end items-center gap-4 px-4 py-2">
               <label htmlFor="file-upload" className="cursor-pointer">
-                <Paperclip className="w-4 h-4 text-gray-11 hover:text-gray-12" />
+                <HugeiconsIcon
+                  icon={Attachment01Icon}
+                  className="w-4 h-4 text-gray-11 hover:text-gray-12"
+                />
               </label>
               <input
                 ref={fileInputRef}
@@ -159,7 +163,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
                 size="icon"
                 variant="default"
               >
-                <ArrowUpIcon className="w-4 h-4" />
+                <HugeiconsIcon icon={ArrowUp02Icon} className="w-4 h-4" />
               </Button>
             </div>
           </div>

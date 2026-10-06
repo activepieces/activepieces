@@ -1,7 +1,8 @@
-import { Timer } from 'lucide-react';
+import { Timer02Icon } from '@hugeicons/core-free-icons';
 import { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { flowRunUtils } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
@@ -10,7 +11,7 @@ import { cn } from '@/lib/utils';
 const StepNodeRunDuration = ({ duration }: { duration: number }) => {
   return (
     <div className="text-xs text-gray-11 shrink-0 flex items-center gap-1">
-      <Timer className="size-3" />
+      <HugeiconsIcon icon={Timer02Icon} className="size-3" />
       <span>{formatUtils.formatDuration(duration, true)}</span>
     </div>
   );

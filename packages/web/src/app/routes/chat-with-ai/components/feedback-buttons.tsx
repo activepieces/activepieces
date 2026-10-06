@@ -1,9 +1,13 @@
+import { ThumbsDownIcon, ThumbsUpIcon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { MessageAction } from '@/components/prompt-kit/message';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { cn } from '@/lib/utils';
@@ -46,11 +50,7 @@ export function FeedbackButtons({
     }
   };
 
-  const renderButton = (
-    value: Rating,
-    label: string,
-    Icon: typeof ThumbsUp,
-  ) => {
+  const renderButton = (value: Rating, label: string, Icon: IconSvgElement) => {
     const active = rating === value;
     return (
       <MessageAction tooltip={label}>
@@ -67,7 +67,10 @@ export function FeedbackButtons({
             animate={active ? { scale: [1, 1.35, 1] } : { scale: 1 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
-            <Icon className={cn('h-3.5 w-3.5', active && 'fill-current')} />
+            <HugeiconsIcon
+              icon={Icon}
+              className={cn('h-3.5 w-3.5', active && 'fill-current')}
+            />
           </motion.span>
         </motion.button>
       </MessageAction>
@@ -76,8 +79,10 @@ export function FeedbackButtons({
 
   return (
     <>
-      {rating !== 'down' && renderButton('up', t('Good response'), ThumbsUp)}
-      {rating !== 'up' && renderButton('down', t('Bad response'), ThumbsDown)}
+      {rating !== 'down' &&
+        renderButton('up', t('Good response'), ThumbsUpIcon)}
+      {rating !== 'up' &&
+        renderButton('down', t('Bad response'), ThumbsDownIcon)}
       <FeedbackDialog
         key={dialogOpen ? 'open' : 'closed'}
         open={dialogOpen}

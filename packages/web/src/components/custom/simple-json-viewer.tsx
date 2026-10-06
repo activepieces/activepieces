@@ -1,9 +1,10 @@
+import { Copy01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Copy, Check } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { syntaxTheme } from '@/lib/syntax-theme';
@@ -54,9 +55,15 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
         <div className="absolute top-2 right-5 z-10">
           <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
             {copied ? (
-              <Check className="size-4 text-success-11" />
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                className="size-4 text-success-11"
+              />
             ) : (
-              <Copy className="size-4 text-gray-12" />
+              <HugeiconsIcon
+                icon={Copy01Icon}
+                className="size-4 text-gray-12"
+              />
             )}
           </Button>
         </div>

@@ -1,14 +1,16 @@
 import { isNil, Permission } from '@activepieces/core-utils';
+import {
+  BoxIcon,
+  ConnectIcon,
+  HistoryIcon,
+  Shield01Icon,
+  VariableIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { BoxIcon } from '@/components/icons/box';
-import { ConnectIcon } from '@/components/icons/connect';
-import { HistoryIcon } from '@/components/icons/history';
-import { ShieldIcon } from '@/components/icons/shield';
-import { VariableIcon } from '@/components/icons/variable';
-import { WorkflowIcon } from '@/components/icons/workflow';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,11 +24,6 @@ import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 
 import { ProjectDashboardLayoutHeaderTab } from '.';
 
-type AnimatedIconHandle = {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-};
-
 const AnimatedTab = ({
   tab,
   isActive,
@@ -36,24 +33,14 @@ const AnimatedTab = ({
   isActive: boolean;
   onClick: () => void;
 }) => {
-  const iconRef = useRef<AnimatedIconHandle>(null);
-  const IconComponent = tab.icon as React.ForwardRefExoticComponent<
-    {
-      className?: string;
-      size?: number;
-    } & React.RefAttributes<AnimatedIconHandle>
-  >;
-
   return (
     <TabsTrigger
       value={tab.to}
       className="flex-none"
       onClick={onClick}
       data-state={isActive ? 'active' : 'inactive'}
-      onMouseEnter={() => iconRef.current?.startAnimation()}
-      onMouseLeave={() => iconRef.current?.stopAnimation()}
     >
-      <IconComponent ref={iconRef} size={16} />
+      <HugeiconsIcon icon={tab.icon} size={16} />
       {tab.label}
       {tab.beta && (
         <span className="rounded-full bg-accent-3 px-1.5 py-0.5 text-xs font-medium leading-none text-accent-11">
@@ -85,7 +72,7 @@ export const ProjectDashboardLayoutHeader = () => {
     {
       to: authenticationSession.appendProjectRoutePrefix('/automations'),
       label: t('Automations'),
-      icon: WorkflowIcon,
+      icon: WorkflowSquare02Icon,
       hasPermission: checkAccess(Permission.READ_FLOW),
       show: true,
     },
@@ -125,7 +112,7 @@ export const ProjectDashboardLayoutHeader = () => {
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/approvals'),
-      icon: ShieldIcon,
+      icon: Shield01Icon,
       label: t('Pending approvals'),
       hasPermission:
         !isFetchingProjectRole &&

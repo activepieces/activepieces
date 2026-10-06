@@ -4,10 +4,16 @@ import {
   isFlowRunStateTerminal,
   StepOutputStatus,
 } from '@activepieces/shared';
+import {
+  ArrowRight02Icon,
+  HelpCircleIcon,
+  InformationCircleIcon,
+  MagnetIcon,
+} from '@hugeicons/core-free-icons';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRight, CircleHelp, Info, Magnet } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   HoverCard,
@@ -82,7 +88,7 @@ const RunInfoWidget = () => {
   const run = useBuilderStateContext((state) => state.run);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
-    : { variant: 'default' as const, Icon: CircleHelp };
+    : { variant: 'default' as const, Icon: HelpCircleIcon };
   const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
     ApFlagId.FLOW_RUN_TIME_SECONDS,
   );
@@ -109,7 +115,7 @@ const RunInfoWidget = () => {
     >
       <div className="flex items-center justify-between w-full flex-wrap">
         <div className="flex items-center text-sm shrink-0">
-          <Icon className="size-5 mr-2" />
+          <HugeiconsIcon icon={Icon} className="size-5 mr-2" />
           <span className="text-gray-12 font-medium">
             {getStatusText({
               status: run.status,
@@ -148,7 +154,10 @@ const RunInfoWidget = () => {
           {isRunTerminal && !isTimelineEmpty(run.timeline) && (
             <HoverCard openDelay={200} closeDelay={100}>
               <HoverCardTrigger className="ml-1 inline-flex cursor-default items-center">
-                <Info className="size-4 text-gray-11" />
+                <HugeiconsIcon
+                  icon={InformationCircleIcon}
+                  className="size-4 text-gray-11"
+                />
               </HoverCardTrigger>
               <HoverCardContent className="w-[28rem] p-3">
                 <TimelineBar timeline={run.timeline} />
@@ -203,7 +212,7 @@ const ResumeLiveFollowButton = ({
   }
   return (
     <Button variant="ghost" size="sm" onClick={resumeLiveFollow}>
-      <Magnet className="size-4" />
+      <HugeiconsIcon icon={MagnetIcon} className="size-4" />
       {t('Follow run updates')}
     </Button>
   );
@@ -247,7 +256,7 @@ const JumpToFailedStepButton = ({
       onClick={handleClick}
       className="text-danger-11 hover:text-danger-11"
     >
-      <ArrowRight className="size-4" />
+      <HugeiconsIcon icon={ArrowRight02Icon} className="size-4" />
       {t('See error')}
     </Button>
   );

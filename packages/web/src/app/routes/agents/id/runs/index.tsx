@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
+import { HistoryIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { History } from 'lucide-react';
 import { useState } from 'react';
 
 import { SidebarHeader } from '@/app/builder/sidebar-header';
@@ -10,6 +10,7 @@ import {
 } from '@/components/custom/card-list';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -51,7 +52,7 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
         <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <History />
+              <HugeiconsIcon icon={HistoryIcon} />
             </EmptyMedia>
             <EmptyTitle>{t('No flow has run this agent yet')}</EmptyTitle>
             <EmptyDescription>
@@ -77,7 +78,8 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
                   className="flex w-full min-w-0 items-center gap-3 px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8"
                   onClick={() => setOpenRunId(run.id)}
                 >
-                  <Icon
+                  <HugeiconsIcon
+                    icon={Icon}
                     aria-label={agentRunUtils.getStatusLabel(run.status)}
                     className={cn('size-5 shrink-0', {
                       'text-success-11': variant === 'success',

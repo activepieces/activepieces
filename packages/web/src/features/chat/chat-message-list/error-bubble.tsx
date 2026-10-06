@@ -1,7 +1,13 @@
 import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
 import { ChatUIResponse } from '@activepieces/shared';
-import { BotIcon, CircleX, RotateCcw } from 'lucide-react';
+import {
+  CancelCircleIcon,
+  Robot01Icon,
+  RotateCcwIcon,
+} from '@hugeicons/core-free-icons';
 import React from 'react';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 import {
   ChatBubble,
@@ -69,10 +75,14 @@ export const ErrorBubble = ({
     <div className="relative">
       <ChatBubbleAvatar
         src={chatUI?.platformLogoUrl}
-        fallback={<BotIcon className="size-5" />}
+        fallback={<HugeiconsIcon icon={Robot01Icon} className="size-5" />}
       />
       <div className="absolute -bottom-[2px] -right-[2px]">
-        <CircleX className="size-4 text-danger-11" strokeWidth={3} />
+        <HugeiconsIcon
+          icon={CancelCircleIcon}
+          className="size-4 text-danger-11"
+          strokeWidth={3}
+        />
       </div>
     </div>
     <ChatBubbleMessage className="text-danger-11">
@@ -82,7 +92,7 @@ export const ErrorBubble = ({
       <ChatBubbleAction
         variant="outline"
         className="size-5 mt-2"
-        icon={<RotateCcw className="size-3" />}
+        icon={<HugeiconsIcon icon={RotateCcwIcon} className="size-3" />}
         onClick={() => {
           sendMessage({ isRetrying: true });
         }}

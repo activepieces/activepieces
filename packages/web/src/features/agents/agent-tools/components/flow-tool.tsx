@@ -1,7 +1,12 @@
 import { AgentFlowTool } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Cancel01Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus, Workflow, X } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   AccordionContent,
   AccordionItem,
@@ -34,7 +39,10 @@ export const AgentFlowToolComponent = ({
       <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-4 transition-all">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-md bg-gray-3 flex items-center justify-center">
-            <Workflow className="size-4 text-gray-11" />
+            <HugeiconsIcon
+              icon={WorkflowSquare02Icon}
+              className="size-4 text-gray-11"
+            />
           </div>
           <span className="text-sm font-medium">{t('Flows')}</span>
         </div>
@@ -70,7 +78,7 @@ export const AgentFlowToolComponent = ({
                       transition
                     "
                   >
-                    <X className="h-3 w-3" />
+                    <HugeiconsIcon icon={Cancel01Icon} className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t('Remove flow')}</TooltipContent>
@@ -84,7 +92,7 @@ export const AgentFlowToolComponent = ({
           size="xs"
           onClick={() => setShowAddFlowDialog(true)}
         >
-          <Plus className="size-3 mr-1" />
+          <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
           {t('Add Flow')}
         </Button>
       </AccordionContent>

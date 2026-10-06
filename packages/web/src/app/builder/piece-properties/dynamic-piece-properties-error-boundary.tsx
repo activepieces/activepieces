@@ -1,8 +1,9 @@
+import { RefreshIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { RefreshCcw } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 const DynamicPropertiesErrorBoundary = ({
@@ -27,7 +28,12 @@ const DynamicPropertiesErrorBoundary = ({
                 triedRerenderingRef.current = true;
               }}
             >
-              {<RefreshCcw className="w-4 h-4 text-gray-12!"></RefreshCcw>}{' '}
+              {
+                <HugeiconsIcon
+                  icon={RefreshIcon}
+                  className="w-4 h-4 text-gray-12!"
+                />
+              }{' '}
             </Button>
           </div>
         ) : (
@@ -40,7 +46,12 @@ const DynamicPropertiesErrorBoundary = ({
                 window.location.reload();
               }}
             >
-              {<RefreshCcw className="w-4 h-4 text-gray-12!"></RefreshCcw>}{' '}
+              {
+                <HugeiconsIcon
+                  icon={RefreshIcon}
+                  className="w-4 h-4 text-gray-12!"
+                />
+              }{' '}
             </Button>
           </div>
         )

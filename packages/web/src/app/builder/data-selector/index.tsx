@@ -7,14 +7,19 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
+import {
+  DatabaseIcon,
+  SearchRemoveIcon,
+  VariableIcon,
+} from '@hugeicons/core-free-icons';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Database, SearchXIcon, Variable } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'use-debounce';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchInput } from '@/components/custom/search-input';
 import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { VirtualizedList } from '@/components/custom/virtualized-list';
@@ -403,11 +408,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             className="px-3 shrink-0 gap-1 border-b border-gray-6 w-full justify-start"
           >
             <TabsTrigger value="data" className="flex-none">
-              <Database className="w-4 h-4" />
+              <HugeiconsIcon icon={DatabaseIcon} className="w-4 h-4" />
               {t('Data')}
             </TabsTrigger>
             <TabsTrigger value="variables" className="flex-none">
-              <Variable className="w-4 h-4" />
+              <HugeiconsIcon icon={VariableIcon} className="w-4 h-4" />
               {t('Variables')}
             </TabsTrigger>
           </TabsList>
@@ -451,7 +456,10 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               />
               {filteredNodes.length === 0 && (
                 <div className="flex items-center justify-center gap-2 mt-5  flex-col">
-                  <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
+                  <HugeiconsIcon
+                    icon={SearchRemoveIcon}
+                    className="w-[35px] h-[35px]"
+                  />
                   <div className="text-center font-semibold">
                     {t('No matching data')}
                   </div>

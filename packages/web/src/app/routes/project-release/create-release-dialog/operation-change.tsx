@@ -2,9 +2,14 @@ import {
   FlowProjectOperationType,
   FlowProjectOperation,
 } from '@activepieces/shared';
-import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
+import {
+  Add01Icon,
+  Delete02Icon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const renderDiffInfo = (flowName: string, icon: React.ReactNode) => (
@@ -31,7 +36,7 @@ export const OperationChange = React.memo(
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(
               change.flow.displayName,
-              <Plus className="w-4 h-4 shrink-0" />,
+              <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 shrink-0" />,
             )}
           </div>
         )}
@@ -40,7 +45,10 @@ export const OperationChange = React.memo(
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(
               change.targetFlow.displayName,
-              <PencilIcon className="w-4 h-4 shrink-0" />,
+              <HugeiconsIcon
+                icon={PencilEdit01Icon}
+                className="w-4 h-4 shrink-0"
+              />,
             )}
           </div>
         )}
@@ -49,7 +57,10 @@ export const OperationChange = React.memo(
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(
               change.flow.displayName,
-              <TrashIcon className="w-4 h-4 shrink-0" />,
+              <HugeiconsIcon
+                icon={Delete02Icon}
+                className="w-4 h-4 shrink-0"
+              />,
             )}
           </div>
         )}

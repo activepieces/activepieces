@@ -1,9 +1,10 @@
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from 'embla-carousel-react';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -188,7 +189,7 @@ function CarouselPrevious({
       onClick={scrollPrev}
       {...props}
     >
-      {children || <ChevronLeftIcon />}
+      {children || <HugeiconsIcon icon={ArrowLeft01Icon} />}
       <span className="sr-only">Previous slide</span>
     </Button>
   );
@@ -219,7 +220,7 @@ function CarouselNext({
       onClick={scrollNext}
       {...props}
     >
-      {children || <ChevronRightIcon />}
+      {children || <HugeiconsIcon icon={ArrowRight01Icon} />}
       <span className="sr-only">Next slide</span>
     </Button>
   );

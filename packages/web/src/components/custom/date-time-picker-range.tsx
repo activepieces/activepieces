@@ -1,3 +1,4 @@
+import { Calendar03Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import {
   format,
   subDays,
@@ -7,10 +8,10 @@ import {
   subMonths,
 } from 'date-fns';
 import { t } from 'i18next';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TimePicker } from '@/components/custom/time-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -245,7 +246,7 @@ export function DateTimePickerWithRange({
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className="justify-start border-dashed">
-            <CalendarIcon />
+            <HugeiconsIcon icon={Calendar03Icon} />
             {selectedPreset ? (
               <span>{getPresetLabel(selectedPreset)}</span>
             ) : date?.from ? (
@@ -302,7 +303,10 @@ export function DateTimePickerWithRange({
               />
               {showTimes && (
                 <div className="flex flex-wrap items-center gap-3 border-t px-3 py-3 text-sm">
-                  <Clock className="size-4 text-gray-11" />
+                  <HugeiconsIcon
+                    icon={Clock01Icon}
+                    className="size-4 text-gray-11"
+                  />
                   <TimePicker
                     date={timeDate.from}
                     name="from"
@@ -347,7 +351,7 @@ export function DateTimePickerWithRange({
                   size="sm"
                   onClick={() => setShowTimes((shown) => !shown)}
                 >
-                  <Clock />
+                  <HugeiconsIcon icon={Clock01Icon} />
                   {showTimes ? t('Hide times') : t('Add times')}
                 </Button>
                 <Button

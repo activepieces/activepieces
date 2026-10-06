@@ -1,8 +1,9 @@
 import { isObject } from '@activepieces/core-utils';
+import { ArrowDown01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { VirtualizedList } from '@/components/custom/virtualized-list';
 
 import { truncateValue, ValueRow } from './shared-value-rendering';
@@ -39,9 +40,9 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
       >
         <div className="shrink-0 size-4 flex items-center justify-center text-gray-11">
           {expanded ? (
-            <ChevronDown className="size-3.5" />
+            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           ) : (
-            <ChevronRight className="size-3.5" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
           )}
         </div>
         <span className="text-sm font-medium text-gray-11 shrink-0">

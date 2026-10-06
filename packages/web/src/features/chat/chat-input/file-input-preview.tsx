@@ -1,5 +1,6 @@
-import { FileIcon, X } from 'lucide-react';
+import { Cancel01Icon, File01Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 type FileInputPreviewProps = {
@@ -33,7 +34,7 @@ export const FileInputPreview = ({
       )}
       {!isImage && !isVideo && (
         <div className="w-20 h-20 bg-gray-12 text-gray-1 rounded-lg flex items-center justify-center">
-          <FileIcon className="w-8 h-8" />
+          <HugeiconsIcon icon={File01Icon} className="w-8 h-8" />
         </div>
       )}
       <Button
@@ -46,7 +47,7 @@ export const FileInputPreview = ({
         }}
         className="absolute -top-2 -right-2 rounded-full p-1 size-6"
       >
-        <X className="w-3 h-3" />
+        <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
       </Button>
       <p className="text-xs mt-1 truncate w-20">{file.name}</p>
     </div>

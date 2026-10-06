@@ -1,12 +1,17 @@
 import { Permission } from '@activepieces/core-utils';
 import { FlowVersionMetadata, FlowVersionState } from '@activepieces/shared';
+import {
+  MoreVerticalIcon,
+  PencilEdit01Icon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { EllipsisVertical, Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -82,7 +87,7 @@ const FlowVersionDetailsCard = React.memo(
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="size-10 flex justify-center items-center">
-                  <EyeIcon className="w-5 h-5 "></EyeIcon>
+                  <HugeiconsIcon icon={ViewIcon} className="w-5 h-5 " />
                 </div>
               </TooltipTrigger>
               <TooltipContent>{t('Viewing')}</TooltipContent>
@@ -101,7 +106,7 @@ const FlowVersionDetailsCard = React.memo(
           >
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" disabled={isPending} size={'icon'}>
-                <EllipsisVertical />
+                <HugeiconsIcon icon={MoreVerticalIcon} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
@@ -109,7 +114,7 @@ const FlowVersionDetailsCard = React.memo(
                 onClick={() => viewVersion(flowVersion)}
                 className="w-full"
               >
-                <Eye className="mr-2 h-4 w-4" />
+                <HugeiconsIcon icon={ViewIcon} className="mr-2 h-4 w-4" />
                 <span>{t('View')}</span>
               </DropdownMenuItem>
               {flowVersion.state !== FlowVersionState.DRAFT && (
@@ -127,7 +132,10 @@ const FlowVersionDetailsCard = React.memo(
                     }}
                     disabled={!userHasPermissionToWriteFlow}
                   >
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={PencilEdit01Icon}
+                      className="mr-2 h-4 w-4"
+                    />
                     <span>{t('Use as Draft')}</span>
                   </DropdownMenuItem>
                 </OverwriteDraftDialog>

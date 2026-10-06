@@ -1,12 +1,14 @@
 import { EventDestinationFormat } from '@activepieces/shared';
+import { Pulse01Icon, WorkflowSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Activity, LucideIcon, Workflow } from 'lucide-react';
+
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 
 function buildOptions(): DestinationKindOption[] {
   return [
     {
       kind: 'otel',
-      icon: Activity,
+      icon: Pulse01Icon,
       title: t('Send to an OpenTelemetry tool'),
       shortTitle: t('OpenTelemetry tool'),
       description: t(
@@ -16,7 +18,7 @@ function buildOptions(): DestinationKindOption[] {
     },
     {
       kind: 'webhook',
-      icon: Workflow,
+      icon: WorkflowSquare02Icon,
       title: t('Send to a webhook'),
       shortTitle: t('Webhook'),
       description: t(
@@ -56,7 +58,7 @@ export type DestinationKind = 'otel' | 'webhook';
 
 export type DestinationKindOption = {
   kind: DestinationKind;
-  icon: LucideIcon;
+  icon: IconSvgElement;
   title: string;
   shortTitle: string;
   description: string;

@@ -1,6 +1,7 @@
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 export function RememberedFacts({
@@ -33,7 +34,7 @@ export function RememberedFacts({
             className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
             onClick={() => onForget(index)}
           >
-            <X className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Cancel01Icon} className="h-3.5 w-3.5" />
           </Button>
         </li>
       ))}

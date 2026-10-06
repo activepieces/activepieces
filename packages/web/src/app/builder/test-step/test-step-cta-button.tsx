@@ -6,12 +6,13 @@ import {
   Step,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { PlayIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Play } from 'lucide-react';
 import { useContext, useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { pieceSelectorUtils } from '@/features/pieces';
 
@@ -167,7 +168,7 @@ const ActionCTAButton = ({
             className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
           >
-            <Play className="size-4 fill-current" />
+            <HugeiconsIcon icon={PlayIcon} className="size-4 fill-current" />
             {t('Retest Step')}
           </Button>
         </TestButtonTooltip>
@@ -188,7 +189,7 @@ const ActionCTAButton = ({
           className={SOFT_PRIMARY_CTA_CLASSES}
           size="sm"
         >
-          <Play className="size-4 fill-current" />
+          <HugeiconsIcon icon={PlayIcon} className="size-4 fill-current" />
           {t('Test Step')}
         </Button>
       </TestButtonTooltip>
@@ -270,7 +271,7 @@ const TriggerCTAButton = ({
             className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
           >
-            <Play className="size-4 fill-current" />
+            <HugeiconsIcon icon={PlayIcon} className="size-4 fill-current" />
             {t('Retest Trigger')}
           </Button>
         </TestButtonTooltip>
@@ -291,7 +292,7 @@ const TriggerCTAButton = ({
           size="sm"
           data-testid="test-trigger-button"
         >
-          <Play className="size-4 fill-current" />
+          <HugeiconsIcon icon={PlayIcon} className="size-4 fill-current" />
           {t('Test Trigger')}
         </Button>
       </TestButtonTooltip>

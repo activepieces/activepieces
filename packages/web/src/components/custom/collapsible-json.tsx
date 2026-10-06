@@ -1,7 +1,8 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowDown01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import React, { useState } from 'react';
 
 import { CodeSnippet } from '@/components/custom/code-snippet';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 export function CollapsibleJson({
@@ -24,9 +25,9 @@ export function CollapsibleJson({
         className="flex items-center gap-2 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
       >
         {isOpen ? (
-          <ChevronDown className="size-4" />
+          <HugeiconsIcon icon={ArrowDown01Icon} className="size-4" />
         ) : (
-          <ChevronRight className="size-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
         )}
         {label}
       </button>

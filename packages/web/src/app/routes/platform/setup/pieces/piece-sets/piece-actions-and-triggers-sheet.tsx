@@ -5,12 +5,13 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loading02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -100,7 +101,10 @@ function PieceActionsAndTriggersSheetBody({
       </SheetHeader>
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-gray-11" />
+          <HugeiconsIcon
+            icon={Loading02Icon}
+            className="size-8 animate-spin text-gray-11"
+          />
         </div>
       ) : !pieceModel ? (
         <DataFetchErrorState

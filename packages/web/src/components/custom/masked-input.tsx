@@ -1,7 +1,8 @@
+import { ViewIcon, ViewOffSlashIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input, InputProps } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -30,7 +31,11 @@ export function MaskedInput({ className, ...props }: MaskedInputProps) {
         onClick={() => setIsVisible((visible) => !visible)}
         aria-label={isVisible ? t('Hide value') : t('Show value')}
       >
-        {isVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        {isVisible ? (
+          <HugeiconsIcon icon={ViewOffSlashIcon} className="size-4" />
+        ) : (
+          <HugeiconsIcon icon={ViewIcon} className="size-4" />
+        )}
       </Button>
     </div>
   );

@@ -1,15 +1,16 @@
 import { FileResponseInterface } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
+import { Copy01Icon, SourceCodeIcon } from '@hugeicons/core-free-icons';
 import ReactCodeMirror, {
   EditorState,
   EditorView,
 } from '@uiw/react-codemirror';
-import { CodeIcon, Copy } from 'lucide-react';
 import React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { syntaxTheme } from '@/lib/syntax-theme';
@@ -73,7 +74,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                   />
                   <div className="absolute top-4 left-5 text-xs text-gray-11">
                     <div className="flex items-center gap-1">
-                      <CodeIcon className="size-3" />
+                      <HugeiconsIcon icon={SourceCodeIcon} className="size-3" />
                       <span>{match[1]}</span>
                     </div>
                   </div>
@@ -137,7 +138,7 @@ const CopyCode = ({
           setTimeout(() => setIsCopied(false), 1500);
         }}
       >
-        <Copy className="size-4" />
+        <HugeiconsIcon icon={Copy01Icon} className="size-4" />
         <span className="text-xs">{isCopied ? 'Copied!' : 'Copy Code'}</span>
       </Button>
     </div>

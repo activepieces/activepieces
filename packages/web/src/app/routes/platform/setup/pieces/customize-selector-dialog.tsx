@@ -5,24 +5,25 @@ import {
   PieceSelectorTabSection,
   TelemetryEventName,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  CheckIcon,
-  ChevronDownIcon,
-  Crown,
-  EyeIcon,
-  EyeOffIcon,
-  GripVerticalIcon,
-  PlusIcon,
+  Add01Icon,
+  ArrowDown01Icon,
+  Cancel01Icon,
+  CrownIcon,
+  Delete02Icon,
+  DragDropVerticalIcon,
+  PreferenceHorizontalIcon,
   PuzzleIcon,
-  Settings2Icon,
-  TrashIcon,
-  XIcon,
-} from 'lucide-react';
+  Tick02Icon,
+  ViewIcon,
+  ViewOffSlashIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Sortable,
   SortableDragHandle,
@@ -98,7 +99,10 @@ export const CustomizeSelectorDialog = ({
             gate.open();
           }}
         >
-          <Crown className="size-3.5 shrink-0 text-accent-11" />
+          <HugeiconsIcon
+            icon={CrownIcon}
+            className="size-3.5 shrink-0 text-accent-11"
+          />
           {t('Customize Selector')}
         </Button>
         {gate.dialog}
@@ -114,7 +118,10 @@ export const CustomizeSelectorDialog = ({
           variant="outline"
           size="sm"
         >
-          <Settings2Icon className="size-4 mr-2" />
+          <HugeiconsIcon
+            icon={PreferenceHorizontalIcon}
+            className="size-4 mr-2"
+          />
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>
@@ -235,7 +242,7 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
             className="self-start text-gray-11 mt-1"
             onClick={addCustomTab}
           >
-            <PlusIcon className="size-4 mr-2" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4 mr-2" />
             {t('Add custom tab')}
           </Button>
         </div>
@@ -292,7 +299,7 @@ const TabCard = ({
   );
   const iconNode = pieceSelectorCustomization.renderIcon(tab.icon) ??
     pieceSelectorCustomization.renderIcon(display?.defaultIconKey) ?? (
-      <PuzzleIcon className="size-5" />
+      <HugeiconsIcon icon={PuzzleIcon} className="size-5" />
     );
   const placeholder = display ? t(display.defaultLabel) : t('Tab name');
   const sections = tab.sections ?? [];
@@ -332,7 +339,7 @@ const TabCard = ({
           size="icon"
           className="shrink-0 size-7 text-gray-9"
         >
-          <GripVerticalIcon className="size-4" />
+          <HugeiconsIcon icon={DragDropVerticalIcon} className="size-4" />
         </SortableDragHandle>
 
         <TabIconPicker
@@ -356,9 +363,9 @@ const TabCard = ({
           title={tab.hidden ? t('Show tab') : t('Hide tab')}
         >
           {tab.hidden ? (
-            <EyeOffIcon className="size-4" />
+            <HugeiconsIcon icon={ViewOffSlashIcon} className="size-4" />
           ) : (
-            <EyeIcon className="size-4" />
+            <HugeiconsIcon icon={ViewIcon} className="size-4" />
           )}
         </Button>
 
@@ -370,7 +377,8 @@ const TabCard = ({
             onClick={() => setExpanded((prev) => !prev)}
             title={t('Pieces & sections')}
           >
-            <ChevronDownIcon
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
               className={cn('size-4 transition-transform', {
                 'rotate-180': expanded,
               })}
@@ -418,7 +426,7 @@ const TabCard = ({
                   onClick={() => removeSection(section.id)}
                   title={t('Delete section')}
                 >
-                  <XIcon className="size-4" />
+                  <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
                 </Button>
               </div>
             ))}
@@ -428,7 +436,7 @@ const TabCard = ({
               className="self-start text-gray-11"
               onClick={addSection}
             >
-              <PlusIcon className="size-4 mr-2" />
+              <HugeiconsIcon icon={Add01Icon} className="size-4 mr-2" />
               {t('Add section')}
             </Button>
           </div>
@@ -440,7 +448,7 @@ const TabCard = ({
               className="h-8 text-danger-11 hover:text-danger-11 hover:bg-danger-3"
               onClick={onRemove}
             >
-              <TrashIcon className="size-4 mr-2" />
+              <HugeiconsIcon icon={Delete02Icon} className="size-4 mr-2" />
               {t('Delete tab')}
             </Button>
           </div>
@@ -511,7 +519,7 @@ const TabIconPicker = ({
               })}
               onClick={() => onChange(key)}
             >
-              <Icon className="size-4" />
+              <HugeiconsIcon icon={Icon} className="size-4" />
             </Button>
           ))}
         </div>
@@ -571,7 +579,10 @@ const PiecePickerButton = ({
                         size="icon"
                         className="shrink-0 size-6 text-gray-9"
                       >
-                        <GripVerticalIcon className="size-3.5" />
+                        <HugeiconsIcon
+                          icon={DragDropVerticalIcon}
+                          className="size-3.5"
+                        />
                       </SortableDragHandle>
                       <PieceIcon
                         logoUrl={piece.logoUrl}
@@ -588,7 +599,10 @@ const PiecePickerButton = ({
                         className="shrink-0 size-6"
                         onClick={() => togglePiece(piece.name)}
                       >
-                        <XIcon className="size-3.5" />
+                        <HugeiconsIcon
+                          icon={Cancel01Icon}
+                          className="size-3.5"
+                        />
                       </Button>
                     </div>
                   </SortableItem>
@@ -619,7 +633,10 @@ const PiecePickerButton = ({
                     />
                     <span className="grow truncate">{piece.displayName}</span>
                     {isSelected && (
-                      <CheckIcon className="size-4 text-accent-11" />
+                      <HugeiconsIcon
+                        icon={Tick02Icon}
+                        className="size-4 text-accent-11"
+                      />
                     )}
                   </CommandItem>
                 );

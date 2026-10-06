@@ -1,7 +1,8 @@
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Search } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -97,7 +98,10 @@ export const MultiSelectFilter = ({
         {searchable && (
           <div className="px-2 pt-2 pb-1 border-b">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-11" />
+              <HugeiconsIcon
+                icon={Search01Icon}
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-11"
+              />
               <Input
                 placeholder={t('Search...')}
                 value={search}

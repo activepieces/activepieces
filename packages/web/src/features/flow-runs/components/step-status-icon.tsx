@@ -2,6 +2,7 @@ import { StepOutputStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import {
   Tooltip,
@@ -41,7 +42,7 @@ const StepStatusIcon = React.memo(
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Icon className={className}></Icon>
+          <HugeiconsIcon icon={Icon} className={className} />
         </TooltipTrigger>
         {!hideTooltip && (
           <TooltipContent side="bottom">{statusText[status]}</TooltipContent>

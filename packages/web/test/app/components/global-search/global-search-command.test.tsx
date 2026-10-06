@@ -17,8 +17,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('lucide-react', () => ({
-  Search: () => null,
+vi.mock('@hugeicons/react', () => ({
+  HugeiconsIcon: () => null,
 }));
 
 vi.mock('@/components/ui/button', () => ({

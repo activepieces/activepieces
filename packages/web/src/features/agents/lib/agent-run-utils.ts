@@ -2,17 +2,23 @@ import {
   AgentConversationStatus,
   AgentRunListItem,
 } from '@activepieces/shared';
+import {
+  AlertCircleIcon,
+  CheckmarkCircle02Icon,
+  PlayIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CircleAlert, CircleCheck, LucideIcon, Play } from 'lucide-react';
+
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 
 function getStatusIcon(status: AgentConversationStatus): AgentRunStatusIcon {
   switch (status) {
     case AgentConversationStatus.STREAMING:
-      return { Icon: Play, variant: 'default' };
+      return { Icon: PlayIcon, variant: 'default' };
     case AgentConversationStatus.ERROR:
-      return { Icon: CircleAlert, variant: 'error' };
+      return { Icon: AlertCircleIcon, variant: 'error' };
     case AgentConversationStatus.IDLE:
-      return { Icon: CircleCheck, variant: 'default' };
+      return { Icon: CheckmarkCircle02Icon, variant: 'default' };
   }
 }
 
@@ -42,6 +48,6 @@ export const agentRunUtils = {
 };
 
 export type AgentRunStatusIcon = {
-  Icon: LucideIcon;
+  Icon: IconSvgElement;
   variant: 'default' | 'error' | 'success';
 };

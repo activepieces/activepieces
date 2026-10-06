@@ -1,7 +1,8 @@
+import { ViewIcon, ViewOffSlashIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -61,7 +62,11 @@ const CopyToClipboardInput = ({
             aria-label={hidden ? t('Show') : t('Hide')}
             onClick={() => setRevealed((value) => !value)}
           >
-            {hidden ? <Eye /> : <EyeOff />}
+            {hidden ? (
+              <HugeiconsIcon icon={ViewIcon} />
+            ) : (
+              <HugeiconsIcon icon={ViewOffSlashIcon} />
+            )}
           </Button>
         )}
         <CopyButton

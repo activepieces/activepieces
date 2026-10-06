@@ -1,13 +1,21 @@
+import {
+  ArrowDataTransferVerticalIcon,
+  ArrowDown02Icon,
+  ArrowUp02Icon,
+} from '@hugeicons/core-free-icons';
 import { Column } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, LucideIcon } from 'lucide-react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
   title: string;
-  icon?: LucideIcon;
+  icon?: IconSvgElement;
   sortable?: boolean;
 }
 
@@ -21,10 +29,10 @@ export function DataTableColumnHeader<TData, TValue>({
     const sortDirection = column.getIsSorted();
     const SortIcon =
       sortDirection === 'desc'
-        ? ArrowDown
+        ? ArrowDown02Icon
         : sortDirection === 'asc'
-        ? ArrowUp
-        : ArrowUpDown;
+        ? ArrowUp02Icon
+        : ArrowDataTransferVerticalIcon;
 
     return (
       <button
@@ -46,7 +54,8 @@ export function DataTableColumnHeader<TData, TValue>({
         )}
       >
         {title}
-        <SortIcon
+        <HugeiconsIcon
+          icon={SortIcon}
           className={cn(
             sortDirection === false &&
               'opacity-0 transition-opacity group-hover/sort:opacity-100 group-focus-visible/sort:opacity-100',

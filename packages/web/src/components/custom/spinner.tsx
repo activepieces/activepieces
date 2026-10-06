@@ -1,6 +1,6 @@
-import { LoaderCircle } from 'lucide-react';
 import React from 'react';
 
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 export interface ISVGProps extends React.SVGProps<SVGSVGElement> {
@@ -11,9 +11,9 @@ export interface ISVGProps extends React.SVGProps<SVGSVGElement> {
 const LoadingSpinner = React.memo(
   ({ className, isLarge = false }: ISVGProps) => {
     return (
-      <LoaderCircle
+      <Spinner
         className={cn(
-          'animate-spin  duration-1500 stroke-gray-12 size-5',
+          'animate-spin duration-1500 text-gray-12 size-5',
           {
             'size-[24px]': !isLarge,
             'size-[50px]': isLarge,

@@ -4,10 +4,11 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { FlashIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Zap } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { triggerEventHooks } from '@/features/flows';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -183,7 +184,7 @@ const TestTriggerSection = React.memo(
               </div>
               <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
                 <div className="flex items-center justify-center size-12 rounded-full bg-accent-3 text-accent-11">
-                  <Zap className="size-6" />
+                  <HugeiconsIcon icon={FlashIcon} className="size-6" />
                 </div>
                 <div className="flex flex-col gap-1.5 max-w-[280px]">
                   <span className="text-sm font-medium text-gray-12">

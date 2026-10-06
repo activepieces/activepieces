@@ -1,9 +1,15 @@
+import {
+  FileCodeCornerIcon,
+  LinkSquare02Icon,
+  SourceCodeSquareIcon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Code2, ExternalLink, FileCode2, Eye } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { DownloadButton } from '@/components/custom/download-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { CodeBlockCode } from '@/components/prompt-kit/code-block';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -60,7 +66,7 @@ export function HtmlPreview({
   const actions = (
     <>
       <PreviewIconButton
-        icon={ExternalLink}
+        icon={LinkSquare02Icon}
         label={t('Open in new tab')}
         onClick={openInNewTab}
       />
@@ -78,7 +84,7 @@ export function HtmlPreview({
 
   return (
     <PreviewCard
-      icon={FileCode2}
+      icon={FileCodeCornerIcon}
       label={label ?? t('HTML template')}
       actions={actions}
       toolbar={
@@ -92,11 +98,14 @@ export function HtmlPreview({
                 value="preview"
                 className="gap-1.5 px-2 py-0.5 text-xs"
               >
-                <Eye className="size-3.5" />
+                <HugeiconsIcon icon={ViewIcon} className="size-3.5" />
                 {t('Preview')}
               </TabsTrigger>
               <TabsTrigger value="code" className="gap-1.5 px-2 py-0.5 text-xs">
-                <Code2 className="size-3.5" />
+                <HugeiconsIcon
+                  icon={SourceCodeSquareIcon}
+                  className="size-3.5"
+                />
                 {t('Code')}
               </TabsTrigger>
             </TabsList>

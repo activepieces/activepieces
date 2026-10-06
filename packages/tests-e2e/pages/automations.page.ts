@@ -44,15 +44,14 @@ export class AutomationsPage extends BasePage {
 
   async cleanupExistingAutomations() {
     while (true) {
-      const moreButtons = this.page.locator('button:has(svg.lucide-more-horizontal)');
+      const moreButtons = this.page.getByTestId('automation-row-actions');
       if (!(await moreButtons.count())) break;
 
       await moreButtons.first().click();
       await this.page.getByRole('menuitem', { name: 'Delete' }).click();
 
-      const confirmButton = this.page.getByRole('button', { name: 'Remove' });
-      await confirmButton.click();
-      await this.page.waitForSelector('button:has-text("Remove")', { state: 'hidden' });
+      await this.page.getByRole('button', { name: 'Delete' }).click();
+      await this.page.waitForSelector('[role="dialog"]', { state: 'hidden' });
       await this.page.reload();
       await this.waitFor();
     }

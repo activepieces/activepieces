@@ -1,10 +1,11 @@
+import { Calendar03Icon } from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Calendar } from 'lucide-react';
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Select,
   SelectContent,
@@ -69,7 +70,7 @@ export default function SettingsHealthPage({
         {(section === 'runs' || section === 'queue') && (
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger className="w-auto gap-2 h-8">
-              <Calendar className="h-4 w-4" />
+              <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent side="bottom" align="end">

@@ -11,13 +11,19 @@ import {
   UpdateAIProviderRequest,
   VertexProviderConfig,
 } from '@activepieces/shared';
+import {
+  ArrowLeft01Icon,
+  Delete02Icon,
+  Key01Icon,
+  Pulse01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Activity, ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
@@ -159,7 +165,7 @@ export function ConfigDetail({
           onClick={onBack}
           className="inline-flex w-fit items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
-          <ChevronLeft className="size-4" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
           {t('Providers')}
         </button>
         <div className="flex items-start gap-3">
@@ -200,7 +206,10 @@ export function ConfigDetail({
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
-                <KeyRound className="size-4 text-gray-11" />
+                <HugeiconsIcon
+                  icon={Key01Icon}
+                  className="size-4 text-gray-11"
+                />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium leading-none">
@@ -223,7 +232,10 @@ export function ConfigDetail({
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
-                <Activity className="size-4 text-gray-11" />
+                <HugeiconsIcon
+                  icon={Pulse01Icon}
+                  className="size-4 text-gray-11"
+                />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium leading-none">
@@ -358,7 +370,7 @@ export function ConfigDetail({
             onClick={() => setDeleteOpen(true)}
             {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
           >
-            <Trash2 className="size-4" />
+            <HugeiconsIcon icon={Delete02Icon} className="size-4" />
             {t('Delete')}
           </Button>
         </div>

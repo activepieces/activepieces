@@ -1,11 +1,16 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  Alert02Icon,
+  AlertCircleIcon,
+  Cancel01Icon,
+} from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CircleAlert, TriangleAlert, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -64,7 +69,7 @@ export const CreditsUsageAlert = React.memo(() => {
     dateFormat: BILLING_DATE_FORMAT,
   });
   const isDanger = severity === 'error';
-  const Icon = isDanger ? CircleAlert : TriangleAlert;
+  const Icon = isDanger ? AlertCircleIcon : Alert02Icon;
 
   const message = [
     creditsRemaining <= 0
@@ -94,7 +99,7 @@ export const CreditsUsageAlert = React.memo(() => {
           isDanger ? 'border-danger-7 bg-danger-3' : 'bg-warning-3',
         )}
       >
-        <Icon className="size-4 shrink-0" />
+        <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
         <AlertDescription className="min-w-0 text-current">
           {message}
         </AlertDescription>
@@ -108,7 +113,7 @@ export const CreditsUsageAlert = React.memo(() => {
               className="text-current"
               onClick={dismissAlert}
             >
-              <X className="size-3.5" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
             </Button>
           )}
         </div>

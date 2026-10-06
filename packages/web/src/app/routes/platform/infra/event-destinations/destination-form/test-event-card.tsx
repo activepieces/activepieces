@@ -4,11 +4,12 @@ import {
   ApFlagId,
   ApplicationEventName,
 } from '@activepieces/shared';
+import { SentIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Send } from 'lucide-react';
 import { useState } from 'react';
 import { UseFormReturn, useFormState, useWatch } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -123,7 +124,7 @@ export const TestEventCard = ({
             sendTestEvent(currentRequest);
           }}
         >
-          <Send className="size-4" />
+          <HugeiconsIcon icon={SentIcon} className="size-4" />
           {t('Send test event')}
         </Button>
       </div>

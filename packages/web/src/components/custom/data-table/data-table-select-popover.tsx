@@ -1,7 +1,11 @@
+import { FilterHorizontalIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ListFilterIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +34,7 @@ type DataTableSelectPopoverProps = {
   options: readonly {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }> | string;
+    icon?: IconSvgElement | string;
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
@@ -50,7 +54,7 @@ const DataTableSelectPopover = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="border-dashed">
-          <ListFilterIcon />
+          <HugeiconsIcon icon={FilterHorizontalIcon} />
           {title}
           {selectedValues?.size > 0 && (
             <>
@@ -109,7 +113,8 @@ const DataTableSelectPopover = ({
                       }}
                     >
                       {single ? (
-                        <Check
+                        <HugeiconsIcon
+                          icon={Tick02Icon}
                           className={cn('size-4', !isSelected && 'invisible')}
                         />
                       ) : (
@@ -127,7 +132,10 @@ const DataTableSelectPopover = ({
                         />
                       ) : (
                         option.icon && (
-                          <option.icon className="size-4 text-gray-11" />
+                          <HugeiconsIcon
+                            icon={option.icon}
+                            className="size-4 text-gray-11"
+                          />
                         )
                       )}
                       <div>

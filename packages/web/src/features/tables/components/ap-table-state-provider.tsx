@@ -1,8 +1,8 @@
 import { isNil } from '@activepieces/core-utils';
 import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { FileNotFoundIcon } from '@hugeicons/core-free-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { FileX } from 'lucide-react';
 import {
   createContext,
   useCallback,
@@ -14,6 +14,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -137,7 +138,10 @@ export function ApTableStateProvider({
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
         <div className="rounded-full bg-gray-3 p-4">
-          <FileX className="h-10 w-10 text-gray-11" />
+          <HugeiconsIcon
+            icon={FileNotFoundIcon}
+            className="h-10 w-10 text-gray-11"
+          />
         </div>
 
         <div>

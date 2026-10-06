@@ -6,6 +6,7 @@ import {
   PieceScope,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -15,9 +16,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { IconButton } from '@/components/custom/icon-button';
 import { ApMarkdown } from '@/components/custom/markdown';
-import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -173,14 +173,13 @@ const InstallPieceDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
-        <AnimatedIconButton
+        <IconButton
           {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
-          icon={PlusIcon}
-          iconSize={16}
+          icon={Add01Icon}
           size="sm"
         >
           {t('Install Piece')}
-        </AnimatedIconButton>
+        </IconButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

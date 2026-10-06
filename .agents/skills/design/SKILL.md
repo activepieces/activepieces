@@ -1,6 +1,6 @@
 ---
 name: activepieces-design-system
-description: Design system for Activepieces (open-source AI automation platform, "open source replacement for Zapier"). Use whenever designing, mocking, or building UI for Activepieces — the web app (flow builder, runs, connections, dashboard), docs, or marketing surfaces. Provides brand purple `#8142E3`, Inter type ramp with `sm` (14px) as body default, Tailwind neutrals, Lucide icons, Shadcn/Radix primitive conventions, the signature dotted-canvas builder background, and a recreated web UI kit.
+description: Design system for Activepieces (open-source AI automation platform, "open source replacement for Zapier"). Use whenever designing, mocking, or building UI for Activepieces — the web app (flow builder, runs, connections, dashboard), docs, or marketing surfaces. Provides brand purple `#8142E3`, Inter type ramp with `sm` (14px) as body default, Tailwind neutrals, Hugeicons icons, Shadcn/Radix primitive conventions, the signature dotted-canvas builder background, and a recreated web UI kit.
 ---
 
 # Activepieces Design System
@@ -52,7 +52,7 @@ Read `README.md` in this folder **first** — it is the canonical reference. Thi
 1. **Primary is purple `hsl(257 74% 57%)` / `#8142E3`** — the shipping value from `packages/web/src/styles.css`. Not the `#9747FF` swatch some Figma files show. **Primary stays purple in dark mode** too (brand continuity) — use `.dark.blue-primary` to opt back into the repo's blue-in-dark behaviour.
 2. **Body text is 14px (`text-sm`), not 16**. Activepieces feels dense and tool-like. Headings use `-0.01em` to `-0.02em` tracking. The **agent editor's Configure panel** pairs 15px controls with 13px labels and meta, one step up from `text-sm` so a settings column reads at arm's length; treat that pair as local to that panel, not as a second ramp.
 3. **Sentence case everywhere**: headings, buttons, menu items, page titles. Proper nouns only for feature names (Flows, Runs, Pieces, MCP, Agents, Connections).
-4. **Lucide icons only**, 1.5–2px stroke, rounded caps. Default size `16` (`size-4`). Icon + text → `gap-2` (8px). No emoji in the product UI. No Unicode glyphs (✓ × ←) — always a Lucide component.
+4. **Hugeicons only**, 2px stroke, rounded caps. Default size `16` (`size-4`). Icon + text → `gap-2` (8px). No emoji in the product UI. No Unicode glyphs (✓ × ←) — always a Hugeicons glyph.
 5. **Borders are 1px**, color `neutral-200` (light) / `white/14` (dark). Never thicker. (Note: repo ships `white/10` in dark — we bump to `14%` so dividers stay readable against `neutral-900` surfaces.)
 6. **No negative margins.** Use `gap-*`, `p-*`, `space-*`. Explicitly banned in the repo's AGENTS.md.
 7. **Cards: white fill, 1px border, `radius-lg` (10px), NO shadow by default.** Shadows only on floating surfaces (popovers, menus, dialogs). One named exception: the **agents list and its first-run hero** use a 19px radius and a two-layer lift (`0 1px 2px` + `0 4px 12px -2px`, deepening on hover), because that surface is a showcase rather than a dense tool view. It is the only place that does, and new cards elsewhere stay 10px and flat.
@@ -135,10 +135,11 @@ Matter-of-fact, second-person, verb-first. No "Click here". No "Please". No hype
 ## Iconography
 
 ```html
-<!-- Load Lucide via CDN when building HTML prototypes -->
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<!-- Load the Hugeicons font via CDN when building HTML prototypes -->
+<link rel="stylesheet" href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css" />
+<i class="hgi-stroke hgi-delete-02"></i>
 ```
-Or inline SVGs from https://lucide.dev. Piece/integration icons: copy the real SVG from `packages/web/src/assets/img/piece/` — do not redraw. Piece tile is 38–48px rounded-square with an 8% tinted background of the piece's brand color.
+The class is the kebab-case name of the React glyph (`Delete02Icon` → `hgi-delete-02`). Or inline SVGs from https://hugeicons.com. Piece/integration icons: copy the real SVG from `packages/web/src/assets/img/piece/` — do not redraw. Piece tile is 38–48px rounded-square with an 8% tinted background of the piece's brand color.
 
 ## Surfaces & layout
 
@@ -175,6 +176,6 @@ Or inline SVGs from https://lucide.dev. Piece/integration icons: copy the real S
 
 1. Read `README.md` for depth.
 2. Import `colors_and_type.css` in your HTML.
-3. Load Inter (already in `fonts/`) and Lucide via CDN.
+3. Load Inter (already in `fonts/`) and the Hugeicons font via CDN.
 4. If building a web-app screen: open `ui_kits/web/index.html`, copy the relevant component file(s), and compose.
 5. Use sentence case, 14px body, 1px borders, purple `#8142E3` only for primary action + brand. Nothing else.

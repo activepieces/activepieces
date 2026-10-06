@@ -1,8 +1,9 @@
 import { ErrorCode } from '@activepieces/core-utils';
 import { ApFlagId, FlowRunWithRetryError } from '@activepieces/shared';
+import { LinkSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -50,7 +51,8 @@ export const FailedRetryRunsDialog = ({
                 >
                   <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 text-sm font-medium">
-                      <Icon
+                      <HugeiconsIcon
+                        icon={Icon}
                         className={cn('size-4 shrink-0', {
                           'text-danger-11': variant === 'error',
                           'text-success-11': variant === 'success',
@@ -89,7 +91,7 @@ export const FailedRetryRunsDialog = ({
                       )
                     }
                   >
-                    <ExternalLink className="size-4" />
+                    <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" />
                     <span className="sr-only">{t('Open run')}</span>
                   </Button>
                 </li>

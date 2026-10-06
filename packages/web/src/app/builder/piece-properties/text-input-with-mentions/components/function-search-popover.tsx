@@ -1,9 +1,10 @@
 import { AP_FUNCTIONS, ApFunction } from '@activepieces/core-formula';
-import { ExternalLink } from 'lucide-react';
+import { LinkSquare02Icon } from '@hugeicons/core-free-icons';
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -135,7 +136,7 @@ export function FunctionSearchPopover({
           onMouseDown={(e) => e.preventDefault()}
         >
           {t('See All')}
-          <ExternalLink className="w-3 h-3" />
+          <HugeiconsIcon icon={LinkSquare02Icon} className="w-3 h-3" />
         </a>
       )}
     </div>

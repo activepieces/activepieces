@@ -1,9 +1,10 @@
+import { Copy01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Copy } from 'lucide-react';
 import React, { forwardRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button, ButtonProps } from '@/components/ui/button';
 import {
   Tooltip,
@@ -48,7 +49,11 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
 
     const content = (
       <>
-        {isCopied ? <Check /> : <Copy />}
+        {isCopied ? (
+          <HugeiconsIcon icon={Tick02Icon} />
+        ) : (
+          <HugeiconsIcon icon={Copy01Icon} />
+        )}
         {children}
       </>
     );

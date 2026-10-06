@@ -1,19 +1,19 @@
 import { tryCatch } from '@activepieces/core-utils';
+import {
+  Add01Icon,
+  Cursor01Icon,
+  DistributeHorizontalCenterIcon,
+  DistributeVerticalCenterIcon,
+  HandGrabIcon,
+  ImageDownload02Icon,
+  Loading02Icon,
+  MapsIcon,
+  MaximizeScreenIcon,
+  Remove01Icon,
+  StickyNote01Icon,
+} from '@hugeicons/core-free-icons';
 import { useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import {
-  Fullscreen,
-  GalleryHorizontalEnd,
-  GalleryVerticalEnd,
-  Hand,
-  ImageDown,
-  LoaderCircle,
-  Map,
-  Minus,
-  MousePointer,
-  Plus,
-  StickyNote,
-} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -136,7 +136,7 @@ const CanvasControls = ({
       <div className=" absolute flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-gray-1 border border-gray-6">
         <CanvasControlButton
           tooltip={t('Minimap' + (isMac() ? ' (⌘ + M)' : ' (Ctrl + M)'))}
-          icon={Map}
+          icon={MapsIcon}
           active={showMinimap}
           onClick={() => setShowMinimap(!showMinimap)}
         />
@@ -146,29 +146,33 @@ const CanvasControls = ({
       <div className="bg-gray-1 gap-2 flex items-center shadow-2xl justify-center border border-gray-6 p-1.5 rounded-lg pointer-events-auto">
         <CanvasControlButton
           tooltip={t('Zoom in')}
-          icon={Plus}
+          icon={Add01Icon}
           onClick={() => zoomIn({ duration: 0 })}
         />
         <CanvasControlButton
           tooltip={t('Zoom out')}
-          icon={Minus}
+          icon={Remove01Icon}
           onClick={() => zoomOut({ duration: 0 })}
         />
         <CanvasControlButton
           tooltip={t('Fit to view')}
-          icon={Fullscreen}
+          icon={MaximizeScreenIcon}
           onClick={() => handleFitToView({ isInitialRenderCall: false })}
         />
         <CanvasControlButton
           tooltip={t('Download as image')}
-          icon={isCapturingImage ? LoaderCircle : ImageDown}
+          icon={isCapturingImage ? Loading02Icon : ImageDownload02Icon}
           iconClassName={isCapturingImage ? 'animate-spin' : undefined}
           disabled={isCapturingImage}
           onClick={handleDownloadFlowAsImage}
         />
         <CanvasControlButton
           tooltip={isHorizontal ? t('Vertical layout') : t('Horizontal layout')}
-          icon={isHorizontal ? GalleryVerticalEnd : GalleryHorizontalEnd}
+          icon={
+            isHorizontal
+              ? DistributeVerticalCenterIcon
+              : DistributeHorizontalCenterIcon
+          }
           onClick={handleToggleOrientation}
         />
         <div>
@@ -176,20 +180,20 @@ const CanvasControls = ({
         </div>
         <CanvasControlButton
           tooltip={t('Grab mode')}
-          icon={Hand}
+          icon={HandGrabIcon}
           active={isInGrabMode}
           onClick={() => setPanningMode('grab')}
         />
         <CanvasControlButton
           tooltip={t('Select mode')}
-          icon={MousePointer}
+          icon={Cursor01Icon}
           active={!isInGrabMode}
           onClick={() => setPanningMode('pan')}
         />
         {!readonly && (
           <CanvasControlButton
             tooltip={t('Add note')}
-            icon={StickyNote}
+            icon={StickyNote01Icon}
             active={noteDragOverlayMode === NoteDragOverlayMode.CREATE}
             onClick={handleCreateNote}
           />

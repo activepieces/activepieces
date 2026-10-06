@@ -1,14 +1,19 @@
 import { isEmpty, isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  Alert02Icon,
+  CancelCircleIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import confetti from 'canvas-confetti';
 import { t } from 'i18next';
-import { Check, CircleX, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { FullLogo } from '@/components/custom/full-logo';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
@@ -156,7 +161,7 @@ const TrialActivationScreen = ({
           <div className="flex flex-col gap-6">
             <div className="relative grid size-11 place-items-center rounded-full bg-accent-3">
               <span className="absolute inset-0 rounded-full bg-accent-5 animate-ping" />
-              <LoadingSpinner className="relative size-[18px] stroke-accent-11" />
+              <LoadingSpinner className="relative size-[18px] text-accent-11" />
             </div>
             <TrialActivationCopy
               heading={t('Activating your trial')}
@@ -194,7 +199,8 @@ const TrialActivationScreen = ({
         {view === 'success' && (
           <div className="flex flex-col gap-6">
             <div className="grid size-11 place-items-center rounded-full bg-success-3">
-              <Check
+              <HugeiconsIcon
+                icon={Tick02Icon}
                 className="size-[22px] text-success-11"
                 strokeWidth={2.2}
               />
@@ -222,7 +228,10 @@ const TrialActivationScreen = ({
         {view === 'not_admin' && (
           <div className="flex flex-col gap-6">
             <div className="grid size-11 place-items-center rounded-full bg-warning-4">
-              <TriangleAlert className="size-[22px] text-warning-11" />
+              <HugeiconsIcon
+                icon={Alert02Icon}
+                className="size-[22px] text-warning-11"
+              />
             </div>
             <TrialActivationCopy
               heading={t('A platform admin needs to do this')}
@@ -245,7 +254,10 @@ const TrialActivationScreen = ({
         {view === 'failed' && (
           <div className="flex flex-col gap-6">
             <div className="grid size-11 place-items-center rounded-full bg-danger-3">
-              <CircleX className="size-[22px] text-danger-11" />
+              <HugeiconsIcon
+                icon={CancelCircleIcon}
+                className="size-[22px] text-danger-11"
+              />
             </div>
             <TrialActivationCopy
               heading={t("We couldn't activate your trial")}

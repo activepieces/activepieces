@@ -7,6 +7,7 @@ import {
   DateTimePickerWithRange,
   PresetKey,
 } from '@/components/custom/date-time-picker-range';
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 
 import { DataTableInputCheckbox } from './data-table-checkbox-filter';
 import { DataTableInputPopover } from './data-table-input-popover';
@@ -20,7 +21,7 @@ type DropdownFilterProps = {
   options: {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }> | string;
+    icon?: IconSvgElement | string;
   }[];
 };
 
@@ -37,7 +38,7 @@ type CheckboxjhFilterProps = {
 
 export type DataTableFilterProps = {
   title?: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: IconSvgElement;
 } & (
   | DropdownFilterProps
   | InputFilterProps

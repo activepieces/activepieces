@@ -4,32 +4,33 @@ import {
   PopulatedFlow,
   Table,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ArrowDown,
-  Bot,
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  CornerUpLeft,
-  Download,
-  Folder,
-  Link,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Share2,
-  Star,
-  Table2,
-  Trash2,
-  Workflow,
-} from 'lucide-react';
+  Add01Icon,
+  ArrowDown01Icon,
+  ArrowDown02Icon,
+  ArrowRight01Icon,
+  ArrowTurnBackwardIcon,
+  Copy01Icon,
+  Delete02Icon,
+  Download04Icon,
+  Folder01Icon,
+  Link02Icon,
+  MoreHorizontalIcon,
+  PencilEdit01Icon,
+  Robot01Icon,
+  Share08Icon,
+  StarIcon,
+  TableIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -132,7 +133,7 @@ export const AutomationsTableRow = ({
             onLoadMore?.();
           }}
         >
-          <ArrowDown className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowDown02Icon} className="h-4 w-4" />
           <span>
             {t('Load {count} more items...', { count: item.loadMoreCount })}
           </span>
@@ -163,7 +164,8 @@ export const AutomationsTableRow = ({
                 onClick={onTogglePin}
                 className="p-0.5 rounded-md hover:bg-gray-3 transition-colors"
               >
-                <Star
+                <HugeiconsIcon
+                  icon={StarIcon}
                   className={cn(
                     'h-4 w-4',
                     isPinned
@@ -187,9 +189,15 @@ export const AutomationsTableRow = ({
           {item.type === 'folder' && (
             <span className="absolute -left-5 flex items-center justify-center w-5">
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 shrink-0 text-gray-11" />
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  className="h-4 w-4 shrink-0 text-gray-11"
+                />
               ) : (
-                <ChevronRight className="h-4 w-4 shrink-0 text-gray-11" />
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  className="h-4 w-4 shrink-0 text-gray-11"
+                />
               )}
             </span>
           )}
@@ -273,7 +281,7 @@ export const AutomationsTableRow = ({
                   className="h-8 w-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 transition-opacity"
                   aria-label={t('Create inside folder')}
                 >
-                  <Plus className="h-4 w-4" />
+                  <HugeiconsIcon icon={Add01Icon} className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
             </CreateNewMenu>
@@ -289,8 +297,9 @@ export const AutomationsTableRow = ({
               size="icon"
               className="h-8 w-8"
               disabled={isAgentItem(item) && !userHasPermissionToWriteAgent}
+              data-testid="automation-row-actions"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <HugeiconsIcon icon={MoreHorizontalIcon} className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -303,13 +312,13 @@ export const AutomationsTableRow = ({
                   toast.success(t('URL copied to clipboard'));
                 }}
               >
-                <Link className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={Link02Icon} className="h-4 w-4 mr-2" />
                 {t('Copy URL')}
               </DropdownMenuItem>
             )}
 
             <DropdownMenuItem onClick={onRename}>
-              <Pencil className="h-4 w-4 mr-2" />
+              <HugeiconsIcon icon={PencilEdit01Icon} className="h-4 w-4 mr-2" />
               {t('Rename')}
             </DropdownMenuItem>
 
@@ -321,7 +330,7 @@ export const AutomationsTableRow = ({
                 {isDuplicating ? (
                   <LoadingSpinner className="mr-2" />
                 ) : (
-                  <Copy className="h-4 w-4 mr-2" />
+                  <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4 mr-2" />
                 )}
                 {isDuplicating ? t('Duplicating...') : t('Duplicate')}
               </DropdownMenuItem>
@@ -334,21 +343,24 @@ export const AutomationsTableRow = ({
                   setIsMoveOpen(true);
                 }}
               >
-                <CornerUpLeft className="h-4 w-4 mr-2" />
+                <HugeiconsIcon
+                  icon={ArrowTurnBackwardIcon}
+                  className="h-4 w-4 mr-2"
+                />
                 {t('Move To')}
               </DropdownMenuItem>
             )}
 
             {isFlowItem(item) && !embedState.hideExportAndImportFlow && (
               <DropdownMenuItem onClick={() => onExportFlow(item.data)}>
-                <Download className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={Download04Icon} className="h-4 w-4 mr-2" />
                 {t('Export')}
               </DropdownMenuItem>
             )}
 
             {isTableItem(item) && (
               <DropdownMenuItem onClick={() => onExportTable(item.data)}>
-                <Download className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={Download04Icon} className="h-4 w-4 mr-2" />
                 {t('Export')}
               </DropdownMenuItem>
             )}
@@ -359,7 +371,7 @@ export const AutomationsTableRow = ({
                 flowVersionId={item.data.version.id}
               >
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Share2 className="h-4 w-4 mr-2" />
+                  <HugeiconsIcon icon={Share08Icon} className="h-4 w-4 mr-2" />
                   {t('Share')}
                 </DropdownMenuItem>
               </ShareTemplateDialog>
@@ -371,7 +383,7 @@ export const AutomationsTableRow = ({
                 onSelect={() => setIsDeleteAgentOpen(true)}
                 className="text-danger-11 focus:text-danger-11"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-2" />
                 {t('Delete')}
               </DropdownMenuItem>
             ) : (
@@ -387,7 +399,7 @@ export const AutomationsTableRow = ({
                   onSelect={(e) => e.preventDefault()}
                   className="text-danger-11 focus:text-danger-11"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-2" />
                   {t('Delete')}
                 </DropdownMenuItem>
               </ConfirmDialog>
@@ -423,13 +435,33 @@ export const AutomationsTableRow = ({
 const RowItemIcon = ({ item }: { item: TreeItem }) => {
   switch (item.type) {
     case 'folder':
-      return <Folder className="h-4 w-4 text-gray-11 fill-gray-11" />;
+      return (
+        <HugeiconsIcon
+          icon={Folder01Icon}
+          className="h-4 w-4 text-gray-11 fill-gray-11"
+        />
+      );
     case 'flow':
-      return <Workflow className="h-4 w-4 text-accent-11" />;
+      return (
+        <HugeiconsIcon
+          icon={WorkflowSquare02Icon}
+          className="h-4 w-4 text-accent-11"
+        />
+      );
     case 'agent':
-      return <Bot className="h-4 w-4 text-swatch-6-mark" />;
+      return (
+        <HugeiconsIcon
+          icon={Robot01Icon}
+          className="h-4 w-4 text-swatch-6-mark"
+        />
+      );
     default:
-      return <Table2 className="h-4 w-4 text-swatch-8-mark" />;
+      return (
+        <HugeiconsIcon
+          icon={TableIcon}
+          className="h-4 w-4 text-swatch-8-mark"
+        />
+      );
   }
 };
 

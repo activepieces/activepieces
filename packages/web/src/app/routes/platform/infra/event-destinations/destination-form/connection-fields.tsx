@@ -1,8 +1,13 @@
+import {
+  Add01Icon,
+  Delete02Icon,
+  LockKeyholeIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Lock, Plus, TrashIcon } from 'lucide-react';
 import { useId } from 'react';
 import { UseFormReturn, useFieldArray, useWatch } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { MaskedInput } from '@/components/custom/masked-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -98,7 +103,11 @@ export const HeadersField = ({
               form.trigger('headers').catch(() => undefined);
             }}
           >
-            <TrashIcon className="size-4 text-danger-11" aria-hidden="true" />
+            <HugeiconsIcon
+              icon={Delete02Icon}
+              className="size-4 text-danger-11"
+              aria-hidden="true"
+            />
             <span className="sr-only">{t('Remove')}</span>
           </Button>
         </div>
@@ -110,7 +119,7 @@ export const HeadersField = ({
         className="self-start"
         onClick={() => append({ name: '', value: '' })}
       >
-        <Plus className="size-4" />
+        <HugeiconsIcon icon={Add01Icon} className="size-4" />
         {t('Add header')}
       </Button>
     </div>
@@ -120,7 +129,7 @@ export const HeadersField = ({
 export const EncryptedHeadersNotice = () => {
   return (
     <Alert>
-      <Lock className="size-4" />
+      <HugeiconsIcon icon={LockKeyholeIcon} className="size-4" />
       <AlertTitle>{t('Header values are encrypted')}</AlertTitle>
       <AlertDescription>
         {t('After you save, a value can be replaced but not read back.')}

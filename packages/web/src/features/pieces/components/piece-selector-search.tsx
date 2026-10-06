@@ -1,6 +1,7 @@
+import { ArrowLeft02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowLeftIcon } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { usePieceSearchContext } from '@/features/pieces/stores/piece-search-context';
@@ -38,7 +39,7 @@ const PiecesSearchInput = ({
             setSelectedPieceInExplore(null);
           }}
         >
-          <ArrowLeftIcon className="size-4" />
+          <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
         </Button>
       )}
       <SearchInput

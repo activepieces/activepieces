@@ -1,6 +1,7 @@
 import { brandColors } from '@activepieces/shared';
-import { LineChart, Clock } from 'lucide-react';
+import { ChartLineData02Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 
 type TagWithBrightProps = {
@@ -47,8 +48,12 @@ export const TagWithBright = ({
             transform: 'translateX(-100%)',
           }}
         />
-        {index === 0 && <LineChart className="relative" />}
-        {index === 1 && <Clock className="relative" />}
+        {index === 0 && (
+          <HugeiconsIcon icon={ChartLineData02Icon} className="relative" />
+        )}
+        {index === 1 && (
+          <HugeiconsIcon icon={Clock01Icon} className="relative" />
+        )}
         {prefix && <span className="relative font-medium">{prefix}</span>}
         <span className="relative font-semibold">{title}</span>
       </Badge>

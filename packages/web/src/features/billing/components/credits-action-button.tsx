@@ -1,8 +1,12 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  CircleArrowUp01Icon,
+  CoinsDollarIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowUpCircle, Coins } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -55,7 +59,7 @@ export function CreditsActionButton({
           className={className}
           onClick={openManagePlanDialog}
         >
-          <ArrowUpCircle />
+          <HugeiconsIcon icon={CircleArrowUp01Icon} />
           {t('Upgrade plan')}
         </Button>
       );
@@ -69,7 +73,7 @@ export function CreditsActionButton({
             className={className}
             onClick={() => setAutoRechargeOpen(true)}
           >
-            <Coins />
+            <HugeiconsIcon icon={CoinsDollarIcon} />
             {action.feature.autoTopUp?.enabled
               ? t('Edit auto recharge')
               : t('Enable auto recharge')}

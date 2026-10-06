@@ -4,11 +4,15 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { PropertyExecutionType, PropertySettings } from '@activepieces/shared';
+import {
+  FunctionSquareIcon,
+  InformationCircleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Info, SquareFunction } from 'lucide-react';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -134,7 +138,10 @@ function PropertyGroupTabs({
                 aria-label={group.description}
                 className="text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:text-gray-12"
               >
-                <Info className="size-3.5" />
+                <HugeiconsIcon
+                  icon={InformationCircleIcon}
+                  className="size-3.5"
+                />
               </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
@@ -200,7 +207,8 @@ function PropertyGroupTabs({
                   </span>
                   {property.required && <RequiredFieldAsterisk />}
                   {dynamic ? (
-                    <SquareFunction
+                    <HugeiconsIcon
+                      icon={FunctionSquareIcon}
                       aria-hidden
                       className={cn(
                         'size-3.5 shrink-0',

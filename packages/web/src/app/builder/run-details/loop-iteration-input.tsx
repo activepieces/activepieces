@@ -5,10 +5,11 @@ import {
   StepOutputStatus,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -231,9 +232,9 @@ const LoopIterationInputButton = ({
       size="icon"
     >
       {isIncreasing ? (
-        <ChevronUp className="w-2 h-2"></ChevronUp>
+        <HugeiconsIcon icon={ArrowUp01Icon} className="w-2 h-2" />
       ) : (
-        <ChevronDown className="w-2 h-2"></ChevronDown>
+        <HugeiconsIcon icon={ArrowDown01Icon} className="w-2 h-2" />
       )}
     </Button>
   );

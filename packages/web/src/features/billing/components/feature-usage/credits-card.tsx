@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { PlatformBillingInformation } from '@activepieces/shared';
+import { Clock01Icon } from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Clock } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Progress } from '@/components/ui/progress';
 
 import { billingUtils, CreditsResetLine } from '../../utils/billing-utils';
@@ -53,7 +54,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
       {!isNil(footer) && (
         <div className="flex flex-col gap-1 border-t p-4 text-sm text-gray-11">
           <div className="flex items-center gap-2">
-            <Clock className="size-4 shrink-0" />
+            <HugeiconsIcon icon={Clock01Icon} className="size-4 shrink-0" />
             <span>
               {footer.label}{' '}
               <span className="font-semibold text-gray-12">{footer.value}</span>

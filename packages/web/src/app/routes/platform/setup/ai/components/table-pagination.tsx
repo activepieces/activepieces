@@ -1,6 +1,7 @@
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +39,7 @@ export function TablePagination({
           disabled={page === 0}
           onClick={() => onPageChange(page - 1)}
         >
-          <ChevronLeft className="size-4" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
         </Button>
         <span className="px-2 text-xs text-gray-11 tabular-nums">
           {t('Page {page} of {pages}', {
@@ -52,7 +53,7 @@ export function TablePagination({
           disabled={page >= pageCount - 1}
           onClick={() => onPageChange(page + 1)}
         >
-          <ChevronRight className="size-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
         </Button>
       </div>
     </div>

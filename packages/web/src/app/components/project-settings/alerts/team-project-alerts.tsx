@@ -1,7 +1,12 @@
 import { Permission } from '@activepieces/core-utils';
+import {
+  Delete02Icon,
+  Notification01Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Bell, Trash, UserRound } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -43,7 +48,10 @@ export const TeamProjectAlerts = () => {
   return (
     <>
       <Alert variant="default">
-        <Bell className="inline w-4 h-4 text-warning-11" />
+        <HugeiconsIcon
+          icon={Notification01Icon}
+          className="inline w-4 h-4 text-warning-11"
+        />
         <div className="flex flex-col gap-1">
           <AlertTitle>{t('Frequency')}</AlertTitle>
           <AlertDescription className="text-sm">
@@ -55,7 +63,7 @@ export const TeamProjectAlerts = () => {
       </Alert>
       <Item variant="outline" size="sm">
         <ItemMedia variant="icon">
-          <UserRound />
+          <HugeiconsIcon icon={UserIcon} />
         </ItemMedia>
         <ItemContent>
           <ItemTitle>{t('Notify flow owners')}</ItemTitle>
@@ -109,7 +117,7 @@ export const TeamProjectAlerts = () => {
             {alertsData.map((alert) => (
               <Item key={alert.id} variant="outline" size="sm">
                 <ItemMedia variant="icon">
-                  <Bell />
+                  <HugeiconsIcon icon={Notification01Icon} />
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle>{alert.receiver}</ItemTitle>
@@ -124,7 +132,10 @@ export const TeamProjectAlerts = () => {
                         onClick={() => deleteAlert(alert)}
                         disabled={writeAlertPermission === false}
                       >
-                        <Trash className="size-4 text-danger-11" />
+                        <HugeiconsIcon
+                          icon={Delete02Icon}
+                          className="size-4 text-danger-11"
+                        />
                       </Button>
                     </TooltipTrigger>
                     {writeAlertPermission === false && (

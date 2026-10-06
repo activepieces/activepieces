@@ -1,9 +1,15 @@
+import {
+  Cancel01Icon,
+  Delete02Icon,
+  Download04Icon,
+  FolderTransferIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download, FolderInput, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -54,7 +60,10 @@ export const AutomationsSelectionBar = ({
                 onClick={onMoveClick}
                 disabled={isMoving || !hasMovableItems}
               >
-                <FolderInput className="h-4 w-4 mr-1" />
+                <HugeiconsIcon
+                  icon={FolderTransferIcon}
+                  className="h-4 w-4 mr-1"
+                />
                 {t('Move to')}
               </Button>
             )}
@@ -68,7 +77,10 @@ export const AutomationsSelectionBar = ({
                 {isExporting ? (
                   <LoadingSpinner className="size-4 mr-2" />
                 ) : (
-                  <Download className="size-4 mr-2" />
+                  <HugeiconsIcon
+                    icon={Download04Icon}
+                    className="size-4 mr-2"
+                  />
                 )}
                 {isExporting ? t('Exporting') : t('Export')}
               </Button>
@@ -95,8 +107,9 @@ export const AutomationsSelectionBar = ({
                 size="sm"
                 className="text-danger-11 hover:text-danger-11"
                 disabled={isDeleting}
+                data-testid="automations-bulk-delete"
               >
-                <Trash2 className="h-4 w-4 mr-1" />
+                <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-1" />
                 {t('Delete')}
               </Button>
             </ConfirmDialog>
@@ -110,7 +123,7 @@ export const AutomationsSelectionBar = ({
               className="h-8 w-8"
               onClick={onClearSelection}
             >
-              <X className="h-4 w-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
             </Button>
           </div>
         </motion.div>

@@ -2,11 +2,12 @@ import {
   FlowRunStatus,
   PlatformMetricsStatusPoint,
 } from '@activepieces/shared';
+import { ChartLineData02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { LineChart as LineChartIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartConfig,
@@ -112,14 +113,20 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
           <Skeleton className="h-[300px] w-full" />
         ) : !hasSelection ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <LineChartIcon className="size-10 text-gray-11" />
+            <HugeiconsIcon
+              icon={ChartLineData02Icon}
+              className="size-10 text-gray-11"
+            />
             <p className="text-sm text-gray-11">
               {t('Select at least one status to display')}
             </p>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <LineChartIcon className="size-10 text-gray-11" />
+            <HugeiconsIcon
+              icon={ChartLineData02Icon}
+              className="size-10 text-gray-11"
+            />
             <p className="text-sm text-gray-11">
               {t('No runs in this period')}
             </p>

@@ -1,5 +1,5 @@
+import { File02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { FileText } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
@@ -43,7 +43,7 @@ export function DocumentPreview({
 
   return (
     <PreviewCard
-      icon={FileText}
+      icon={File02Icon}
       label={label ?? t('Document')}
       actions={actions}
       renderExpanded={

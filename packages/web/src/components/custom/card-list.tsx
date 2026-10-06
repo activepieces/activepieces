@@ -1,7 +1,8 @@
+import { PackageOpenIcon } from '@hugeicons/core-free-icons';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { PackageOpen } from 'lucide-react';
 import React, { forwardRef } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Empty,
   EmptyDescription,
@@ -111,7 +112,7 @@ const CardListEmpty = React.memo(({ message }: CardListEmptyProps) => {
     <Empty className="h-full">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <PackageOpen />
+          <HugeiconsIcon icon={PackageOpenIcon} />
         </EmptyMedia>
         <EmptyDescription>{message}</EmptyDescription>
       </EmptyHeader>

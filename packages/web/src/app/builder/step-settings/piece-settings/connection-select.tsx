@@ -11,22 +11,25 @@ import {
   PieceTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Plus,
-  Globe,
-  Key,
-  Cable,
-  Check,
-  Unplug,
-  X,
-  LucideIcon,
-} from 'lucide-react';
+  Add01Icon,
+  Cancel01Icon,
+  ConnectIcon,
+  Globe02Icon,
+  Key01Icon,
+  Tick02Icon,
+  UnplugIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -182,7 +185,8 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       statusDisplay && (
                         <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5 pointer-events-none">
                           <span className="flex items-center gap-1 text-xs text-gray-11 select-none pointer-events-none">
-                            <statusDisplay.Icon
+                            <HugeiconsIcon
+                              icon={statusDisplay.Icon}
                               className={cn(
                                 'size-3.5 shrink-0',
                                 statusDisplay.iconClassName,
@@ -203,7 +207,10 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                   }}
                                   disabled={!hasPermissionToCreateConnection}
                                 >
-                                  <Cable className="size-3.5" />
+                                  <HugeiconsIcon
+                                    icon={ConnectIcon}
+                                    className="size-3.5"
+                                  />
                                 </Button>
                               </span>
                             </TooltipTrigger>
@@ -237,7 +244,10 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
                           >
                             <span className="flex items-center gap-1 text-xs">
-                              <statusDisplay.Icon className="size-3.5 shrink-0" />
+                              <HugeiconsIcon
+                                icon={statusDisplay.Icon}
+                                className="size-3.5 shrink-0"
+                              />
                               {statusDisplay.label}
                             </span>
                             <span className="size-6 shrink-0" />
@@ -267,7 +277,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             },
                           )}
                         >
-                          <Plus size={16} />
+                          <HugeiconsIcon icon={Add01Icon} size={16} />
                           {t('Create Connection')}
                         </span>
                       </SelectAction>
@@ -292,11 +302,19 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                           >
                             <div className="flex items-center gap-2 w-full min-w-0">
                               {connection.usingSecretManager && (
-                                <Key size={16} className="shrink-0" />
+                                <HugeiconsIcon
+                                  icon={Key01Icon}
+                                  size={16}
+                                  className="shrink-0"
+                                />
                               )}
                               {connection.scope ===
                                 AppConnectionScope.PLATFORM && (
-                                <Globe size={16} className="shrink-0" />
+                                <HugeiconsIcon
+                                  icon={Globe02Icon}
+                                  size={16}
+                                  className="shrink-0"
+                                />
                               )}
                               <span className="truncate min-w-0">
                                 {connection.displayName}
@@ -313,7 +331,8 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                     { 'ml-auto': !accountIdentifier },
                                   )}
                                 >
-                                  <rowStatus.Icon
+                                  <HugeiconsIcon
+                                    icon={rowStatus.Icon}
                                     className={cn(
                                       'size-3.5 shrink-0',
                                       rowStatus.iconClassName,
@@ -372,7 +391,11 @@ function SelectedConnectionLabel({
   if (isNil(connection)) {
     return (
       <div className="truncate grow shrink flex items-center gap-2 text-gray-11">
-        <Unplug size={16} className="shrink-0 text-danger-11" />
+        <HugeiconsIcon
+          icon={UnplugIcon}
+          size={16}
+          className="shrink-0 text-danger-11"
+        />
         {t('Connection not found')}
       </div>
     );
@@ -380,33 +403,33 @@ function SelectedConnectionLabel({
   return (
     <div className="truncate grow shrink flex items-center gap-2">
       {connection.scope === AppConnectionScope.PLATFORM && (
-        <Globe size={16} className="shrink-0" />
+        <HugeiconsIcon icon={Globe02Icon} size={16} className="shrink-0" />
       )}
       {connection.displayName}
     </div>
   );
 }
 function getConnectionStatusDisplay(status: AppConnectionStatus): {
-  Icon: LucideIcon;
+  Icon: IconSvgElement;
   iconClassName: string;
   label: string;
 } {
   switch (status) {
     case AppConnectionStatus.ACTIVE:
       return {
-        Icon: Check,
+        Icon: Tick02Icon,
         iconClassName: 'text-success-11',
         label: t('Connected'),
       };
     case AppConnectionStatus.ERROR:
       return {
-        Icon: X,
+        Icon: Cancel01Icon,
         iconClassName: 'text-danger-11',
         label: t('Error'),
       };
     case AppConnectionStatus.MISSING:
       return {
-        Icon: Unplug,
+        Icon: UnplugIcon,
         iconClassName: 'text-gray-11',
         label: t('Missing'),
       };

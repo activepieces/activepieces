@@ -1,9 +1,10 @@
+import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -84,7 +85,7 @@ function ManageMemoriesContent() {
           disabled={instruction.trim().length === 0}
           onClick={() => instruct.mutate()}
         >
-          <ArrowUp className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowUp02Icon} className="h-4 w-4" />
         </Button>
       </div>
     </>

@@ -1,9 +1,10 @@
 import { ImageGeneratedEvent } from '@activepieces/shared';
+import { Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
 
@@ -30,7 +31,7 @@ export function GeneratedImageCard({ image }: { image: ImageGeneratedEvent }) {
           <p className="min-w-0 truncate text-xs text-gray-11">{caption}</p>
           <a href={image.url} download target="_blank" rel="noreferrer">
             <Button variant="ghost" size="icon-sm">
-              <Download className="size-4" />
+              <HugeiconsIcon icon={Download04Icon} className="size-4" />
             </Button>
           </a>
         </div>

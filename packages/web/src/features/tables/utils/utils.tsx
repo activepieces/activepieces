@@ -1,14 +1,15 @@
 import { ExportTableResponse, FieldType } from '@activepieces/shared';
-import JSZip from 'jszip';
 import {
-  Type,
-  Calendar,
-  CalendarClock,
-  Hash,
-  ChevronDownCircle,
-} from 'lucide-react';
+  Calendar03Icon,
+  CalendarClockIcon,
+  CircleArrowDown01Icon,
+  HashIcon,
+  TextIcon,
+} from '@hugeicons/core-free-icons';
+import JSZip from 'jszip';
 import { createContext, ReactNode } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { downloadFile } from '@/lib/dom-utils';
 
 import {
@@ -19,15 +20,15 @@ import {
 function getColumnIcon(type: FieldType): ReactNode {
   switch (type) {
     case FieldType.TEXT:
-      return <Type className="h-4 w-4" />;
+      return <HugeiconsIcon icon={TextIcon} className="h-4 w-4" />;
     case FieldType.DATE:
-      return <Calendar className="h-4 w-4" />;
+      return <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4" />;
     case FieldType.DATETIME:
-      return <CalendarClock className="h-4 w-4" />;
+      return <HugeiconsIcon icon={CalendarClockIcon} className="h-4 w-4" />;
     case FieldType.NUMBER:
-      return <Hash className="h-4 w-4" />;
+      return <HugeiconsIcon icon={HashIcon} className="h-4 w-4" />;
     case FieldType.STATIC_DROPDOWN:
-      return <ChevronDownCircle className="h-4 w-4" />;
+      return <HugeiconsIcon icon={CircleArrowDown01Icon} className="h-4 w-4" />;
     default:
       return null;
   }

@@ -1,9 +1,14 @@
 import { isNil } from '@activepieces/core-utils';
 import { AgentPieceTool, mcpToolNameUtils } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Cancel01Icon,
+  PuzzleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus, Puzzle, X } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   AccordionContent,
@@ -123,7 +128,7 @@ export const AgentPieceToolComponent = ({
               src={pieceMetadata.logoUrl}
               alt={pieceMetadata.displayName}
               className="size-8 p-1.5"
-              fallback={<Puzzle className="h-5 w-5" />}
+              fallback={<HugeiconsIcon icon={PuzzleIcon} className="h-5 w-5" />}
             />
 
             <span className="text-sm font-medium">
@@ -189,7 +194,10 @@ export const AgentPieceToolComponent = ({
                           transition
                         "
                       >
-                        <X className="h-3 w-3" />
+                        <HugeiconsIcon
+                          icon={Cancel01Icon}
+                          className="h-3 w-3"
+                        />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>{t('Remove tool')}</TooltipContent>
@@ -210,7 +218,7 @@ export const AgentPieceToolComponent = ({
             })
           }
         >
-          <Plus className="size-3 mr-1" />
+          <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
           {t('Add Action')}
         </Button>
       </AccordionContent>

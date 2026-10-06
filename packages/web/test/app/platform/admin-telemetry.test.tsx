@@ -71,17 +71,16 @@ vi.mock('@/components/custom/multi-select-piece-property', () => ({
   MultiSelectPieceProperty: () => null,
 }));
 vi.mock('@/components/ui/sonner', () => ({ internalErrorToast: vi.fn() }));
-vi.mock('@/components/custom/animated-icon-button', () => ({
-  AnimatedIconButton: ({
+vi.mock('@/components/custom/icon-button', () => ({
+  IconButton: ({
     children,
     icon: _icon,
-    iconSize: _iconSize,
+
     ...rest
   }: React.PropsWithChildren<Record<string, unknown>>) => (
     <button {...rest}>{children}</button>
   ),
 }));
-vi.mock('@/components/icons/plus', () => ({ PlusIcon: () => null }));
 vi.mock('@/components/ui/sidebar-shadcn', () => ({
   SidebarMenuButton: ({
     children,

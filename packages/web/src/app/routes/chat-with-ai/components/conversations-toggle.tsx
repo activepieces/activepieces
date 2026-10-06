@@ -1,6 +1,7 @@
+import { HistoryIcon, SidebarLeft01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { HistoryIcon, PanelLeftCloseIcon } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 export const ConversationsToggle = ({
@@ -18,6 +19,10 @@ export const ConversationsToggle = ({
     onClick={onClick}
     className="size-[30px] shrink-0 text-gray-11"
   >
-    {open ? <PanelLeftCloseIcon size={14} /> : <HistoryIcon size={14} />}
+    {open ? (
+      <HugeiconsIcon icon={SidebarLeft01Icon} size={14} />
+    ) : (
+      <HugeiconsIcon icon={HistoryIcon} size={14} />
+    )}
   </Button>
 );

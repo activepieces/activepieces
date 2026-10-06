@@ -1,9 +1,10 @@
 import { ProjectType } from '@activepieces/shared';
+import { Menu01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlignJustify } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useId, useMemo, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchInput } from '@/components/custom/search-input';
 import {
   ApProjectDisplay,
@@ -200,7 +201,7 @@ export function ProjectPickerCard({
                   }}
                 >
                   <ChatOptionBadge>
-                    <AlignJustify className="size-4" />
+                    <HugeiconsIcon icon={Menu01Icon} className="size-4" />
                   </ChatOptionBadge>
                   <span className="flex-1 leading-snug">
                     {t('Show all {num} projects', { num: projects.length })}

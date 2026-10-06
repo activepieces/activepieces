@@ -1,8 +1,9 @@
 import { AgentOutputFieldType } from '@activepieces/shared';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -54,7 +55,7 @@ export const AddFieldPopover = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-full" disabled={disabled}>
-          <Plus className="h-4 w-4 mr-2" />
+          <HugeiconsIcon icon={Add01Icon} className="h-4 w-4 mr-2" />
           {t('Add Field')}
         </Button>
       </PopoverTrigger>

@@ -5,15 +5,19 @@ import {
   ProjectType,
   UserStatus,
 } from '@activepieces/shared';
+import {
+  LockKeyholeIcon,
+  Settings01Icon,
+  UserAdd01Icon,
+  UserMultipleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { UsersRound, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { PageHeader } from '@/components/custom/page-header';
-import { SettingsIcon } from '@/components/icons/settings';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -112,7 +116,7 @@ export const ProjectDashboardPageHeader = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Lock className="w-4 h-4" />
+              <HugeiconsIcon icon={LockKeyholeIcon} className="w-4 h-4" />
             </TooltipTrigger>
             <TooltipContent>
               <p>
@@ -141,26 +145,24 @@ export const ProjectDashboardPageHeader = ({
             setSettingsOpen(true);
           }}
         >
-          <UsersRound className="w-4 h-4" />
+          <HugeiconsIcon icon={UserMultipleIcon} className="w-4 h-4" />
           <span className="text-sm font-medium">
             {activeProjectMembers?.length}
           </span>
         </Button>
       )}
       {showInviteUserButton && (
-        <AnimatedIconButton
-          icon={UserRoundPlusIcon}
-          iconSize={16}
+        <IconButton
+          icon={UserAdd01Icon}
           variant="ghost"
           size="sm"
           onClick={() => setInviteOpen(true)}
         >
           <span className="text-sm font-medium">{t('Add Members')}</span>
-        </AnimatedIconButton>
+        </IconButton>
       )}
-      <AnimatedIconButton
-        icon={SettingsIcon}
-        iconSize={16}
+      <IconButton
+        icon={Settings01Icon}
         variant="ghost"
         size="icon"
         className="h-8 w-8"

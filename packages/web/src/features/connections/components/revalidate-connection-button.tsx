@@ -1,6 +1,7 @@
+import { RefreshIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { RefreshCw } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -30,7 +31,10 @@ export const RevalidateConnectionButton = ({
           disabled={isPending}
           onClick={() => mutate(connectionId)}
         >
-          <RefreshCw className={cn('size-4', { 'animate-spin': isPending })} />
+          <HugeiconsIcon
+            icon={RefreshIcon}
+            className={cn('size-4', { 'animate-spin': isPending })}
+          />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{t('Recheck connection')}</TooltipContent>

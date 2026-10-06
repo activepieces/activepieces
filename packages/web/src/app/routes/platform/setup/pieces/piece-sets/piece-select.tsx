@@ -1,8 +1,9 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { Tick02Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { VirtualizedScrollArea } from '@/components/custom/virtualized-scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +74,10 @@ export function PieceSelect({
                 {t('Select a piece')}
               </span>
             )}
-            <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+            <HugeiconsIcon
+              icon={UnfoldMoreIcon}
+              className="size-4 shrink-0 opacity-50"
+            />
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -121,7 +125,8 @@ export function PieceSelect({
                     <span className="flex-1 truncate text-left">
                       {piece.displayName}
                     </span>
-                    <Check
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
                       className={cn(
                         'size-4 shrink-0',
                         piece.name === value ? 'opacity-100' : 'opacity-0',

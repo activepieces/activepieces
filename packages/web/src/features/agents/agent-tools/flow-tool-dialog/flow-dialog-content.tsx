@@ -4,11 +4,12 @@ import {
   mcpToolNameUtils,
   PopulatedFlow,
 } from '@activepieces/shared';
+import { WorkflowSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 
@@ -123,7 +124,10 @@ export const FlowDialogContent = ({
       {filteredFlows.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-5 flex size-14 items-center justify-center rounded-xl border bg-gray-3/40">
-            <Workflow className="size-7 text-gray-11" />
+            <HugeiconsIcon
+              icon={WorkflowSquare02Icon}
+              className="size-7 text-gray-11"
+            />
           </div>
 
           <div className="text-base font-semibold text-gray-12">

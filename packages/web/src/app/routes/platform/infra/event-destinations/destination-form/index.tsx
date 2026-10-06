@@ -1,8 +1,8 @@
 import { isNil } from '@activepieces/core-utils';
 import { EventDestination } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import {
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
@@ -340,7 +341,11 @@ const StepHeader = ({
                   )}
                 >
                   {isDone ? (
-                    <Check className="size-3.5" strokeWidth={3} />
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
+                      className="size-3.5"
+                      strokeWidth={3}
+                    />
                   ) : (
                     index + 1
                   )}

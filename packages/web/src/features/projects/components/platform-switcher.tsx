@@ -1,9 +1,10 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { Add01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, Plus } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,7 +59,8 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
             className="text-sm p-2 break-all cursor-pointer"
           >
             {platform.name}
-            <Check
+            <HugeiconsIcon
+              icon={Tick02Icon}
               className={cn(
                 'ml-auto h-4 w-4 shrink-0',
                 currentPlatform?.id === platform.id
@@ -76,7 +78,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
             onClick={() => setCreateDialogOpen(true)}
             className="text-sm p-2 cursor-pointer"
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={Add01Icon} className="mr-2 h-4 w-4" />
             {t('Create Platform')}
           </DropdownMenuItem>
         </>

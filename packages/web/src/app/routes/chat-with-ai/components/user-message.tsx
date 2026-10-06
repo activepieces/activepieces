@@ -1,8 +1,9 @@
+import { Attachment01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Paperclip } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Message,
   MessageAction,
@@ -57,7 +58,7 @@ export const UserMessage = memo(function UserMessage({
                     key={i}
                     className="inline-flex items-center gap-1 rounded-md bg-gray-1/60 px-2 py-0.5 text-xs text-gray-11"
                   >
-                    <Paperclip className="size-3" />
+                    <HugeiconsIcon icon={Attachment01Icon} className="size-3" />
                     <span className="max-w-[150px] truncate">{name}</span>
                   </span>
                 ))}

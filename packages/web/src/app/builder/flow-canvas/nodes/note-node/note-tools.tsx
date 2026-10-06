@@ -1,10 +1,11 @@
 import { NoteColorVariant } from '@activepieces/shared';
+import { Delete02Icon } from '@hugeicons/core-free-icons';
 import { Editor } from '@tiptap/core';
 import { t } from 'i18next';
-import { TrashIcon } from 'lucide-react';
 import { forwardRef, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   MarkdownTools,
   ToolWrapper,
@@ -48,7 +49,10 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
                 deleteNote(id);
               }}
             >
-              <TrashIcon className="size-4 text-danger-11" />
+              <HugeiconsIcon
+                icon={Delete02Icon}
+                className="size-4 text-danger-11"
+              />
             </Button>
           </ToolWrapper>
         </div>

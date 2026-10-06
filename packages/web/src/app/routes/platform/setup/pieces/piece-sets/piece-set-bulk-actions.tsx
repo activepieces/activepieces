@@ -4,10 +4,15 @@ import {
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  ViewIcon,
+  ViewOffSlashIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -68,9 +73,9 @@ export const BulkPieceSetActions = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm">
-            <Eye className="mr-1 size-4" />
+            <HugeiconsIcon icon={ViewIcon} className="mr-1 size-4" />
             {t('Include')}
-            <ChevronDown className="ml-1 size-3.5" />
+            <HugeiconsIcon icon={ArrowDown01Icon} className="ml-1 size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -100,7 +105,7 @@ export const BulkPieceSetActions = ({
         size="sm"
         onClick={() => applyUpdate('excluded')}
       >
-        <EyeOff className="mr-1 size-4" />
+        <HugeiconsIcon icon={ViewOffSlashIcon} className="mr-1 size-4" />
         {t('Exclude')}
       </Button>
       <ConfirmExcludingRequiredActionsDialog

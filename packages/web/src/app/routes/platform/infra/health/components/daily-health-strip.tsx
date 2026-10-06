@@ -1,8 +1,9 @@
 import { PlatformMetricsHealthDay } from '@activepieces/shared';
+import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ArrowUpRight } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -53,7 +54,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                 className="h-7 w-7 shrink-0"
                 onClick={onSeeRuns}
               >
-                <ArrowUpRight className="h-4 w-4" />
+                <HugeiconsIcon icon={ArrowUpRight01Icon} className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('View runs health')}</TooltipContent>

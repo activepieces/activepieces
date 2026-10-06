@@ -1,7 +1,8 @@
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -197,7 +198,7 @@ function MentionChipsInput({
                   removeChip(index);
                 }}
               >
-                <X className="size-3.5" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
               </button>
             )}
           </div>

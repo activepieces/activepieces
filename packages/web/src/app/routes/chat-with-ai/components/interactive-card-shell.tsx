@@ -1,8 +1,9 @@
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -43,7 +44,7 @@ export function InteractiveCardShell({
             onClick={onDismiss}
             aria-label={t('Dismiss')}
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </Button>
         </div>
       </div>

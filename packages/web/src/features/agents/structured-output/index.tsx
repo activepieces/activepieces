@@ -1,7 +1,8 @@
 import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -74,7 +75,10 @@ export const AgentStructuredOutput = ({
                           onClick={() => handleRemoveField(field.displayName)}
                           disabled={disabled}
                         >
-                          <X className="h-4 w-4" />
+                          <HugeiconsIcon
+                            icon={Cancel01Icon}
+                            className="h-4 w-4"
+                          />
                         </Button>
                       </div>
                     </div>

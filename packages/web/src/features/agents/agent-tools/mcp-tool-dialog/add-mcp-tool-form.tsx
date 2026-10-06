@@ -7,10 +7,11 @@ import {
   McpProtocol,
   ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import {
@@ -328,7 +329,7 @@ export const AddMcpToolForm = ({
                     variant="ghost"
                     onClick={() => removeHeaderField(index)}
                   >
-                    <X className="size-4" />
+                    <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
                   </Button>
                 )}
               </div>

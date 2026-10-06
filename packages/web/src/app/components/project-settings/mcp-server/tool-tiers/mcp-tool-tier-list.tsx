@@ -1,18 +1,21 @@
 import { Permission } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ChevronRight,
-  Eye,
-  LucideIcon,
-  Pencil,
-  Play,
-  Trash2,
-} from 'lucide-react';
+  ArrowRight01Icon,
+  Delete02Icon,
+  PencilEdit01Icon,
+  PlayIcon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -229,7 +232,7 @@ function TierRow({
   return (
     <Item>
       <ItemMedia variant="icon">
-        <Icon className="size-4 text-gray-11" />
+        <HugeiconsIcon icon={Icon} className="size-4 text-gray-11" />
       </ItemMedia>
       <ItemContent>
         <ItemTitle>
@@ -264,7 +267,7 @@ function TierRow({
           })}
         >
           {countLabel}
-          <ChevronRight className="size-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
         </Button>
         <div className="flex w-8 justify-end">
           {!tier.locked && (
@@ -305,11 +308,11 @@ function TitleBadge({ label, tooltip }: { label: string; tooltip: string }) {
 
 const NO_TOOLS: string[] = [];
 
-const TIER_ICON: Record<McpToolTier, LucideIcon> = {
-  read: Eye,
-  draft: Pencil,
-  live: Play,
-  delete: Trash2,
+const TIER_ICON: Record<McpToolTier, IconSvgElement> = {
+  read: ViewIcon,
+  draft: PencilEdit01Icon,
+  live: PlayIcon,
+  delete: Delete02Icon,
 };
 
 type McpToolTierListProps = {

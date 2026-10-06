@@ -1,15 +1,16 @@
-import { t } from 'i18next';
 import {
-  Bot,
-  FolderPlus,
-  Loader2,
-  Sparkles,
-  Table2,
-  Upload,
-  Workflow,
-} from 'lucide-react';
+  AiMagicIcon,
+  FolderAddIcon,
+  Robot01Icon,
+  TableIcon,
+  Upload01Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
+import { Spinner } from '@/components/ui/spinner';
+import { t } from 'i18next';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
@@ -68,9 +69,14 @@ export const CreateNewMenu = ({
             className="cursor-pointer"
           >
             {isCreatingFlow ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Spinner
+                className="h-4 w-4 mr-2 animate-spin"
+              />
             ) : (
-              <Workflow className="h-4 w-4 mr-2" />
+              <HugeiconsIcon
+                icon={WorkflowSquare02Icon}
+                className="h-4 w-4 mr-2"
+              />
             )}
             {isCreatingFlow ? t('Creating...') : t('New Flow')}
           </DropdownMenuItem>
@@ -83,7 +89,7 @@ export const CreateNewMenu = ({
               onSelect={() => onSelectTemplate()}
               className="cursor-pointer"
             >
-              <Sparkles className="h-4 w-4 mr-2" />
+              <HugeiconsIcon icon={AiMagicIcon} className="h-4 w-4 mr-2" />
               {t('Start from Template')}
             </DropdownMenuItem>
           </PermissionNeededTooltip>
@@ -102,9 +108,11 @@ export const CreateNewMenu = ({
               className="cursor-pointer"
             >
               {isCreatingTable ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Spinner
+                  className="h-4 w-4 mr-2 animate-spin"
+                />
               ) : (
-                <Table2 className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={TableIcon} className="h-4 w-4 mr-2" />
               )}
               {isCreatingTable ? t('Creating...') : t('New Table')}
             </DropdownMenuItem>
@@ -124,9 +132,11 @@ export const CreateNewMenu = ({
               className="cursor-pointer"
             >
               {isCreatingAgent ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Spinner
+                  className="h-4 w-4 mr-2 animate-spin"
+                />
               ) : (
-                <Bot className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={Robot01Icon} className="h-4 w-4 mr-2" />
               )}
               {isCreatingAgent ? t('Creating...') : t('New Agent')}
             </DropdownMenuItem>
@@ -146,7 +156,10 @@ export const CreateNewMenu = ({
                     onClick={onImportFlow}
                     className="cursor-pointer"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <HugeiconsIcon
+                      icon={Upload01Icon}
+                      className="h-4 w-4 mr-2"
+                    />
                     {t('Import Flow')}
                   </DropdownMenuItem>
                 </PermissionNeededTooltip>
@@ -160,7 +173,10 @@ export const CreateNewMenu = ({
                     onClick={onImportTable}
                     className="cursor-pointer"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <HugeiconsIcon
+                      icon={Upload01Icon}
+                      className="h-4 w-4 mr-2"
+                    />
                     {t('Import Table')}
                   </DropdownMenuItem>
                 </PermissionNeededTooltip>
@@ -179,7 +195,7 @@ export const CreateNewMenu = ({
                 onClick={onCreateFolder}
                 className="cursor-pointer"
               >
-                <FolderPlus className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={FolderAddIcon} className="h-4 w-4 mr-2" />
                 {t('New Folder')}
               </DropdownMenuItem>
             </PermissionNeededTooltip>

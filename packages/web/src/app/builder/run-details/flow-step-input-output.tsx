@@ -13,11 +13,16 @@ import {
   StepOutputType,
   RunInternalError,
 } from '@activepieces/shared';
+import {
+  Download04Icon,
+  InformationCircleIcon,
+  ShieldAlertIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download, Info, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -145,7 +150,11 @@ export const FlowStepInputOutput = () => {
   if (message) {
     return (
       <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
-        <Info size={36} className="text-gray-11" />
+        <HugeiconsIcon
+          icon={InformationCircleIcon}
+          size={36}
+          className="text-gray-11"
+        />
         <h4 className="px-6 text-sm text-center text-gray-11">{message}</h4>
       </div>
     );
@@ -160,7 +169,7 @@ export const FlowStepInputOutput = () => {
         </div>
         <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
           <div className="flex items-center justify-center size-12 rounded-full bg-gray-3 text-gray-11">
-            <Info className="size-6" />
+            <HugeiconsIcon icon={InformationCircleIcon} className="size-6" />
           </div>
           <div className="flex flex-col gap-1.5 max-w-[280px]">
             <span className="text-sm font-medium text-gray-12">
@@ -316,10 +325,13 @@ const InternalErrorPanel = ({
   <ScrollArea className="h-full">
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <ShieldAlert className="w-4 h-4 text-danger-11 shrink-0" />
+        <HugeiconsIcon
+          icon={ShieldAlertIcon}
+          className="w-4 h-4 text-danger-11 shrink-0"
+        />
         <span className="text-sm font-medium">{t('Internal error')}</span>
         <Badge variant="outline" className="gap-1">
-          <ShieldAlert className="w-3 h-3" />
+          <HugeiconsIcon icon={ShieldAlertIcon} className="w-3 h-3" />
           {t('Platform Admin Only')}
         </Badge>
       </div>
@@ -346,7 +358,10 @@ const InternalErrorPanel = ({
 
 const TruncatedInputNotice = () => (
   <div className="flex items-start gap-2 p-3 bg-gray-3 rounded-md text-sm">
-    <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
+    <HugeiconsIcon
+      icon={InformationCircleIcon}
+      className="w-4 h-4 mt-0.5 text-gray-11 shrink-0"
+    />
     <span>
       {t(
         'Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values.',
@@ -370,7 +385,10 @@ const SlicedOutputDownload = ({
 }) => (
   <div className="flex flex-col gap-3 p-4 bg-gray-3 rounded-md">
     <div className="flex items-start gap-2 text-sm">
-      <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
+      <HugeiconsIcon
+        icon={InformationCircleIcon}
+        className="w-4 h-4 mt-0.5 text-gray-11 shrink-0"
+      />
       <span>
         {t(
           'Output is too large to display inline ({size}). Download to inspect.',
@@ -385,7 +403,7 @@ const SlicedOutputDownload = ({
         rel="noopener noreferrer"
         download
       >
-        <Download className="w-4 h-4" />
+        <HugeiconsIcon icon={Download04Icon} className="w-4 h-4" />
         {t('Download output')}
       </a>
     </Button>

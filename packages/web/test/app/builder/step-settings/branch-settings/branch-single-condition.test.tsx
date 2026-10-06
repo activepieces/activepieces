@@ -13,7 +13,7 @@
  * SearchableSelect and TextInputWithMentions are stubbed, the first so the
  * test can invoke the component's real onChange exactly as picking an option
  * would, the second because the mentions editor is a tiptap instance. Every
- * other child renders for real, including the InvalidStepIcon whose visibility
+ * other child renders for real, including the invalid-condition icon whose visibility
  * is one of the flags this bug affected. This file uses raw react-dom + React's
  * act rather than @testing-library/react (not a dependency of this package).
  */

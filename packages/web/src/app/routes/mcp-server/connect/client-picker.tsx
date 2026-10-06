@@ -1,9 +1,10 @@
+import { ArrowRight01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronRight, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import { BackLink } from '@/components/custom/back-link';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -58,7 +59,10 @@ export function ClientPicker({
             </div>
           </div>
           <div className="relative flex items-center">
-            <Search className="pointer-events-none absolute left-3.5 size-4 text-gray-11" />
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="pointer-events-none absolute left-3.5 size-4 text-gray-11"
+            />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -147,7 +151,7 @@ function ClientGroupSection({
             </div>
             <span className="hidden shrink-0 items-center gap-1.5 rounded-md border bg-gray-1 px-3.5 py-2 text-sm font-semibold sm:flex">
               {t('See the raw config')}
-              <ChevronRight className="size-3.5" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
             </span>
           </button>
         ))

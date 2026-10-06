@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { AiRouterMatchMode } from '@activepieces/shared';
+import { InformationCircleIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, Info } from 'lucide-react';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -27,7 +28,12 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
       {shown.map((route) => (
         <div key={route.name} className="flex items-center gap-2">
           <span className="flex size-4 shrink-0 items-center justify-center">
-            {route.chosen && <Check className="size-3.5 text-accent-11" />}
+            {route.chosen && (
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                className="size-3.5 text-accent-11"
+              />
+            )}
           </span>
           <TextWithTooltip tooltipMessage={route.name}>
             <span
@@ -63,7 +69,10 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
       )}
       {!isNil(floor) && (
         <div className="flex items-start gap-2 border-t pt-2 text-xs text-gray-11">
-          <Info className="size-3.5 shrink-0 mt-0.5" />
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-3.5 shrink-0 mt-0.5"
+          />
           <span>
             {t(
               '{route} scored {percent}%, under your {floor}% floor, so {fallback} ran',

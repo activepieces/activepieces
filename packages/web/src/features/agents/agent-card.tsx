@@ -3,8 +3,10 @@ import {
   AgentVisibility,
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
+import { LockKeyholeIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Lock } from 'lucide-react';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 import { AgentActionsMenu } from './agent-actions-menu';
 import { AgentMark } from './agent-mark';
@@ -65,7 +67,8 @@ export const AgentCard = ({
                 {agent.displayName}
               </span>
               {agent.visibility === AgentVisibility.RESTRICTED && (
-                <Lock
+                <HugeiconsIcon
+                  icon={LockKeyholeIcon}
                   size={12}
                   className="shrink-0 text-gray-11"
                   aria-label={t('Only you and the people you shared it with')}

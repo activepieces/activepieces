@@ -8,10 +8,15 @@ import {
   PieceAction,
   PieceTrigger,
 } from '@activepieces/shared';
+import {
+  Alert02Icon,
+  ArrowUp02Icon,
+  InformationCircleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlertTriangle, ArrowUp, Info } from 'lucide-react';
 import semver from 'semver';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { formUtils, pieceSelectorUtils, piecesApi } from '@/features/pieces';
 
@@ -102,9 +107,9 @@ export function LatestVersionAvailableAlert({
   return (
     <Alert variant={isLatestMinorOrMajor ? 'warning' : 'default'}>
       {isLatestMinorOrMajor ? (
-        <AlertTriangle className="size-4" />
+        <HugeiconsIcon icon={Alert02Icon} className="size-4" />
       ) : (
-        <ArrowUp className="size-4" />
+        <HugeiconsIcon icon={ArrowUp02Icon} className="size-4" />
       )}
       <AlertTitle>
         {isLatestMinorOrMajor
@@ -125,7 +130,7 @@ export function LatestVersionAvailableAlert({
 export function MinorOrMajorSelectionAlert() {
   return (
     <Alert variant="warning">
-      <AlertTriangle className="size-4" />
+      <HugeiconsIcon icon={Alert02Icon} className="size-4" />
       <AlertDescription>{t('MajorUpgradeNote')}</AlertDescription>
     </Alert>
   );
@@ -134,7 +139,7 @@ export function MinorOrMajorSelectionAlert() {
 export function PatchUpgradeInfoAlert() {
   return (
     <Alert>
-      <Info className="size-4" />
+      <HugeiconsIcon icon={InformationCircleIcon} className="size-4" />
       <AlertDescription>
         {t('Settings will carry over. Retest as the output may have changed.')}
       </AlertDescription>
@@ -145,7 +150,7 @@ export function PatchUpgradeInfoAlert() {
 export function PatchDowngradeInfoAlert() {
   return (
     <Alert>
-      <Info className="size-4" />
+      <HugeiconsIcon icon={InformationCircleIcon} className="size-4" />
       <AlertDescription>
         {t(
           "You're switching to an older patch. Your settings will be kept where possible.",

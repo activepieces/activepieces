@@ -1,9 +1,10 @@
 import { FileProducedEvent } from '@activepieces/shared';
+import { Download04Icon, File01Icon } from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
-import { Download, FileIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
@@ -71,7 +72,7 @@ function FileChip({ file }: { file: FileProducedEvent }) {
       transition={{ duration: 0.3 }}
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3">
-        <FileIcon className="size-4 text-gray-11" />
+        <HugeiconsIcon icon={File01Icon} className="size-4 text-gray-11" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{label}</p>
@@ -82,7 +83,7 @@ function FileChip({ file }: { file: FileProducedEvent }) {
       </div>
       <a href={file.url} download target="_blank" rel="noreferrer">
         <Button variant="ghost" size="icon-sm">
-          <Download className="size-4" />
+          <HugeiconsIcon icon={Download04Icon} className="size-4" />
         </Button>
       </a>
     </motion.div>
@@ -137,7 +138,7 @@ export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
             </p>
             <a href={file.url} download target="_blank" rel="noreferrer">
               <Button variant="ghost" size="icon-sm">
-                <Download className="size-4" />
+                <HugeiconsIcon icon={Download04Icon} className="size-4" />
               </Button>
             </a>
           </div>
@@ -156,7 +157,10 @@ export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
       return (
         <div className="w-full overflow-hidden rounded-xl border bg-panel">
           <div className="flex items-center gap-2 border-b border-gray-6 px-3 py-2">
-            <FileIcon className="size-4 shrink-0 text-gray-11" />
+            <HugeiconsIcon
+              icon={File01Icon}
+              className="size-4 shrink-0 text-gray-11"
+            />
             <span className="truncate text-xs font-medium text-gray-11">
               {label}
             </span>

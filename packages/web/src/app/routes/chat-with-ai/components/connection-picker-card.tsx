@@ -3,13 +3,14 @@ import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
+import { Add01Icon, RefreshIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Plus, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { chatApi } from '@/features/chat/lib/chat-api';
@@ -65,7 +66,10 @@ function SelectedState({
             showTooltip={false}
           />
           <div className="absolute -bottom-0.5 -right-0.5 bg-success-9 rounded-full p-0.5">
-            <Check className="h-2 w-2 text-on-success" />
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              className="h-2 w-2 text-on-success"
+            />
           </div>
         </div>
         <div className="flex-1 min-w-0">
@@ -402,7 +406,7 @@ export function ConnectionPickerCard({
                       disabled={isPieceLoading}
                       onClick={handleNewConnection}
                     >
-                      <Plus className="h-3 w-3" />
+                      <HugeiconsIcon icon={Add01Icon} className="h-3 w-3" />
                       {t('Connect')}
                     </Button>
                   ) : (
@@ -413,7 +417,7 @@ export function ConnectionPickerCard({
                       disabled={isPieceLoading || isLoadingStatuses}
                       onClick={() => handleReconnect(conn.externalId)}
                     >
-                      <RefreshCw className="h-3 w-3" />
+                      <HugeiconsIcon icon={RefreshIcon} className="h-3 w-3" />
                       {t('Reconnect')}
                     </Button>
                   ))}
@@ -461,7 +465,7 @@ export function ConnectionPickerCard({
               disabled={isPieceLoading}
               onClick={handleNewConnection}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={Add01Icon} className="h-3.5 w-3.5" />
               {t('Connect')}
             </Button>
           </div>
@@ -475,7 +479,7 @@ export function ConnectionPickerCard({
               disabled={!selectedExternalId}
               onClick={handleContinue}
             >
-              <Check className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={Tick02Icon} className="h-3.5 w-3.5" />
               {t('Continue')}
             </Button>
           </div>

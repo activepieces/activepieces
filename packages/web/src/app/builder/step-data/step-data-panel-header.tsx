@@ -1,9 +1,9 @@
 import { StepOutputStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 
 import { StepStatusIcon } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 type StepDataPanelHeaderStatus = 'success' | 'failed' | 'testing' | 'idle';
@@ -71,7 +71,7 @@ const StepDataPanelStatusBadge = ({
   if (status === 'testing') {
     return (
       <div className="flex items-center gap-1.5 text-sm text-accent-11">
-        <Loader2 className="size-4 animate-spin" />
+        <Spinner className="size-4 animate-spin" />
         <span className="font-medium">{t('Testing...')}</span>
       </div>
     );

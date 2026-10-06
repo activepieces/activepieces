@@ -1,8 +1,9 @@
 import { InvitationType } from '@activepieces/shared';
+import { Globe02Icon, UserCheck01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Globe, UserCheck } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TagInput, TagMeta } from '@/components/custom/tag-input';
 import { Command, CommandGroup, CommandList } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -46,13 +47,15 @@ function UserSuggestionsPopover({
       if (platformUserEmails.has(trimmed.toLowerCase())) {
         return {
           className: 'text-accent-11 bg-accent-3 border-accent-7',
-          icon: <UserCheck className="size-3 shrink-0" />,
+          icon: (
+            <HugeiconsIcon icon={UserCheck01Icon} className="size-3 shrink-0" />
+          ),
           tooltip: t('Platform member'),
         };
       }
       return {
         className: 'text-accent-11 bg-accent-3 border-accent-7',
-        icon: <Globe className="size-3 shrink-0" />,
+        icon: <HugeiconsIcon icon={Globe02Icon} className="size-3 shrink-0" />,
         tooltip: isPlatformInvite ? t('New User') : t('New Member'),
       };
     },

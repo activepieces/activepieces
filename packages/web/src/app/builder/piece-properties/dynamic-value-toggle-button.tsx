@@ -1,7 +1,8 @@
+import { FunctionSquareIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { SquareFunction } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
@@ -26,7 +27,8 @@ function DynamicValueToggleButton({
           aria-label={t('Dynamic value')}
           className="shrink-0"
         >
-          <SquareFunction
+          <HugeiconsIcon
+            icon={FunctionSquareIcon}
             className={cn('size-5', {
               'text-gray-12': pressed,
               'text-gray-11': !pressed,

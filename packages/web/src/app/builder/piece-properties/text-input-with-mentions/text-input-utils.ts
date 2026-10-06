@@ -1,12 +1,13 @@
 import { AP_FUNCTIONS, formulaEvaluator } from '@activepieces/core-formula';
 import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import { VariableIcon } from '@hugeicons/core-free-icons';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
-import { Variable as VariableIcon } from 'lucide-react';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { StepMetadata } from '@/features/pieces';
 
 import {
@@ -474,7 +475,8 @@ function convertTiptapJsonToText(
 
 // eslint-disable-next-line testing-library/render-result-naming-convention
 const VARIABLE_ICON_SVG_MARKUP = renderToStaticMarkup(
-  createElement(VariableIcon, {
+  createElement(HugeiconsIcon, {
+    icon: VariableIcon,
     className: 'w-4 h-4 shrink-0 text-accent-11',
     'aria-hidden': true,
   }),

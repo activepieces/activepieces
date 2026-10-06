@@ -1,11 +1,16 @@
 import { ApFlagId } from '@activepieces/shared';
+import {
+  Globe02Icon,
+  Tick02Icon,
+  UnfoldMoreIcon,
+} from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, Globe } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,7 +55,7 @@ export const LanguageToggle = () => {
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium flex items-center gap-2">
-        <Globe className="w-4 h-4" />
+        <HugeiconsIcon icon={Globe02Icon} className="w-4 h-4" />
         {t('Language')}
       </Label>
       <Popover modal={true} open={isOpen} onOpenChange={setIsOpen}>
@@ -71,7 +76,10 @@ export const LanguageToggle = () => {
             ) : (
               t('Select language')
             )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <HugeiconsIcon
+              icon={UnfoldMoreIcon}
+              className="ml-2 h-4 w-4 shrink-0 opacity-50"
+            />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
@@ -94,7 +102,8 @@ export const LanguageToggle = () => {
                       className="flex items-center justify-between py-2 text-sm"
                     >
                       <div className="flex items-center gap-2">{label}</div>
-                      <Check
+                      <HugeiconsIcon
+                        icon={Tick02Icon}
                         className={cn(
                           'h-4 w-4',
                           value === selectedLanguage

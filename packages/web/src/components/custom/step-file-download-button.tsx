@@ -1,6 +1,7 @@
+import { ViewIcon, ViewOffSlashIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -30,7 +31,11 @@ export function StepFileDownloadButton({
         disabled={isExpired}
         onClick={() => downloadStepFile({ fileUrl, fileName })}
       >
-        {isExpired ? <EyeOff /> : <Eye />}
+        {isExpired ? (
+          <HugeiconsIcon icon={ViewOffSlashIcon} />
+        ) : (
+          <HugeiconsIcon icon={ViewIcon} />
+        )}
         {t('Download File')}
       </Button>
     </span>

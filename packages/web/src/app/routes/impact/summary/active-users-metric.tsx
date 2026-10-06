@@ -1,6 +1,6 @@
 import { PlatformAnalyticsReport, UserStatus } from '@activepieces/shared';
+import { UserMultipleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Users } from 'lucide-react';
 
 import { MetricCard, MetricCardSkeleton } from './metric-card';
 
@@ -23,7 +23,7 @@ export const ActiveUsersMetric = ({ report }: ActiveUsersMetricProps) => {
 
   return (
     <MetricCard
-      icon={Users}
+      icon={UserMultipleIcon}
       title={t('Active Users')}
       value={activeUsers.toLocaleString()}
       description={t('Users actively using the platform')}

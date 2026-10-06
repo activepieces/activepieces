@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
-import { Mail } from 'lucide-react';
+import { Mail01Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   HoverCard,
   HoverCardTrigger,
@@ -81,7 +82,10 @@ export const ApAvatar = ({
               {user.firstName} {user.lastName}
             </h4>
             <div className="flex items-center gap-2">
-              <Mail className="size-3.5 shrink-0 text-gray-11" />
+              <HugeiconsIcon
+                icon={Mail01Icon}
+                className="size-3.5 shrink-0 text-gray-11"
+              />
               <span className="truncate text-xs text-gray-11">
                 {user.email}
               </span>

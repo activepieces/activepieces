@@ -1,8 +1,17 @@
 import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  Cancel01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 import React, { ReactNode, useRef } from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -97,13 +106,13 @@ export function ActivityDetailSheet({
                 <NavButton
                   label={t('Previous')}
                   shortcut="↑"
-                  icon={ChevronUp}
+                  icon={ArrowUp01Icon}
                   onClick={onPrevious}
                 />
                 <NavButton
                   label={t('Next')}
                   shortcut="↓"
-                  icon={ChevronDown}
+                  icon={ArrowDown01Icon}
                   onClick={onNext}
                 />
                 <SheetClose asChild>
@@ -113,7 +122,7 @@ export function ActivityDetailSheet({
                     className="text-gray-11"
                     aria-label={t('Close')}
                   >
-                    <X className="size-4" />
+                    <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
                   </Button>
                 </SheetClose>
               </div>
@@ -170,13 +179,13 @@ function ActivityDetail({
             <span className="flex shrink-0 items-center gap-2">
               {row.status === 'SUCCEEDED' ? (
                 <StatusIconWithText
-                  icon={Check}
+                  icon={Tick02Icon}
                   text={t('Succeeded')}
                   variant="success"
                 />
               ) : (
                 <StatusIconWithText
-                  icon={X}
+                  icon={Cancel01Icon}
                   text={t('Failed')}
                   variant="error"
                 />
@@ -425,7 +434,7 @@ function NavButton({ label, shortcut, icon: Icon, onClick }: NavButtonProps) {
             onClick={onClick}
             aria-label={label}
           >
-            <Icon className="size-4" />
+            <HugeiconsIcon icon={Icon} className="size-4" />
           </Button>
         </span>
       </TooltipTrigger>
@@ -460,7 +469,7 @@ type ActivityDetailSheetProps = {
 type NavButtonProps = {
   label: string;
   shortcut: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: IconSvgElement;
   onClick: (() => void) | undefined;
 };
 

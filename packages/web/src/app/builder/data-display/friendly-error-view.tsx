@@ -1,18 +1,20 @@
 import { FriendlyPieceError, isNil } from '@activepieces/core-utils';
-import { t } from 'i18next';
 import {
-  AlertOctagon,
-  AlertTriangle,
-  Hourglass,
-  KeyRound,
-  Search,
-  ServerCrash,
-  ShieldOff,
-  XCircle,
-  type LucideIcon,
-} from 'lucide-react';
+  Alert02Icon,
+  CancelCircleIcon,
+  HourglassIcon,
+  Key01Icon,
+  Search01Icon,
+  SecurityBlockIcon,
+  ServerCrashIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +54,10 @@ const FriendlyErrorView = ({
       )}
     >
       <div className={cn('flex items-start gap-3 px-4 py-3', tone.headerBg)}>
-        <Icon className={cn('size-5 mt-0.5 shrink-0', tone.iconColor)} />
+        <HugeiconsIcon
+          icon={Icon}
+          className={cn('size-5 mt-0.5 shrink-0', tone.iconColor)}
+        />
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={cn('text-sm font-medium', tone.headlineColor)}>
@@ -112,7 +117,7 @@ const pickDisplayMessage = (error: FriendlyPieceError): string | undefined => {
 };
 
 type StatusPresentation = {
-  Icon: LucideIcon;
+  Icon: IconSvgElement;
   headline: string;
   hint: string;
   tone: StatusTone;
@@ -144,7 +149,7 @@ const getStatusPresentation = (
 ): StatusPresentation => {
   if (isNil(status)) {
     return {
-      Icon: AlertOctagon,
+      Icon: Alert02Icon,
       headline: t('Step failed'),
       hint: t(
         'The step did not complete successfully. Check the step configuration, or contact support if the issue persists.',
@@ -154,7 +159,7 @@ const getStatusPresentation = (
   }
   if (status === 401) {
     return {
-      Icon: KeyRound,
+      Icon: Key01Icon,
       headline: t('Authentication failed'),
       hint: t(
         'The connected account could not authenticate with the service. Try reconnecting the account, or check that the credentials have not expired or been revoked.',
@@ -164,7 +169,7 @@ const getStatusPresentation = (
   }
   if (status === 403) {
     return {
-      Icon: ShieldOff,
+      Icon: SecurityBlockIcon,
       headline: t('Permission denied'),
       hint: t(
         'The connected account does not have permission for this action.',
@@ -174,7 +179,7 @@ const getStatusPresentation = (
   }
   if (status === 404) {
     return {
-      Icon: Search,
+      Icon: Search01Icon,
       headline: t('Resource not found'),
       hint: t(
         'The service could not find the requested resource. Double-check the IDs or names in the step input.',
@@ -184,7 +189,7 @@ const getStatusPresentation = (
   }
   if (status === 408 || status === 504) {
     return {
-      Icon: Hourglass,
+      Icon: HourglassIcon,
       headline: t('Request timed out'),
       hint: t(
         'The service did not respond in time. This is usually a temporary issue — try the step again in a few moments.',
@@ -194,7 +199,7 @@ const getStatusPresentation = (
   }
   if (status === 429) {
     return {
-      Icon: Hourglass,
+      Icon: HourglassIcon,
       headline: t('Too many requests'),
       hint: t(
         'The service is rate-limiting this account. Wait a few minutes and try again, or reduce how frequently this flow runs.',
@@ -204,7 +209,7 @@ const getStatusPresentation = (
   }
   if (status >= 500) {
     return {
-      Icon: ServerCrash,
+      Icon: ServerCrashIcon,
       headline: t('The service is unavailable'),
       hint: t(
         "The service reported an internal error. This isn't an issue with your configuration — try again later, and check the service's status page if it persists.",
@@ -214,7 +219,7 @@ const getStatusPresentation = (
   }
   if (status === 400 || status === 422) {
     return {
-      Icon: AlertTriangle,
+      Icon: Alert02Icon,
       headline: t('The request was rejected'),
       hint: t(
         'The service rejected the request. Review the step input and verify each field matches what the service expects.',
@@ -224,7 +229,7 @@ const getStatusPresentation = (
   }
   if (status >= 400 && status < 500) {
     return {
-      Icon: AlertTriangle,
+      Icon: Alert02Icon,
       headline: t('The request was rejected'),
       hint: t(
         'The service rejected the request. Review the step input and the message below for details.',
@@ -233,7 +238,7 @@ const getStatusPresentation = (
     };
   }
   return {
-    Icon: XCircle,
+    Icon: CancelCircleIcon,
     headline: t('Step failed'),
     hint: t(
       'The step did not complete successfully. Check the step configuration and the message below.',

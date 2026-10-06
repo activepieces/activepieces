@@ -1,7 +1,8 @@
+import { Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button, ButtonProps } from '@/components/ui/button';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
@@ -47,7 +48,7 @@ export const DownloadButton = ({
           onClick={() => downloadFile()}
           {...props}
         >
-          <Download className="size-4"></Download>
+          <HugeiconsIcon icon={Download04Icon} className="size-4" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side={tooltipSide}>{t('Download')}</TooltipContent>

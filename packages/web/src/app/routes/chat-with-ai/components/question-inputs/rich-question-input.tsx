@@ -1,10 +1,15 @@
+import {
+  ArrowRight01Icon,
+  ArrowRight02Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
 import { t } from 'i18next';
-import { ArrowRight, Check, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { DateRange } from 'react-day-picker';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -18,7 +23,7 @@ import { cn } from '@/lib/utils';
 
 import { normalizePieceName } from '../../lib/message-parsers';
 
-import { DynamicLucideIcon } from './question-icon';
+import { DynamicIcon } from './question-icon';
 
 function MultiChoiceInput({
   options,
@@ -57,7 +62,9 @@ function MultiChoiceInput({
                 selected && 'border-accent-9 bg-accent-9 text-on-accent',
               )}
             >
-              {selected && <Check className="size-3.5" />}
+              {selected && (
+                <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
+              )}
             </span>
             {option.piece ? (
               <PieceIconWithPieceName
@@ -68,7 +75,7 @@ function MultiChoiceInput({
               />
             ) : (
               option.icon && (
-                <DynamicLucideIcon
+                <DynamicIcon
                   name={option.icon}
                   className="size-4 text-gray-11"
                 />
@@ -237,9 +244,9 @@ export function RichQuestionInput({
         >
           {isLastStep ? t('Send') : t('Next')}
           {isLastStep ? (
-            <ArrowRight className="size-4" />
+            <HugeiconsIcon icon={ArrowRight02Icon} className="size-4" />
           ) : (
-            <ChevronRight className="size-4" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
           )}
         </Button>
       </div>

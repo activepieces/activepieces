@@ -5,24 +5,25 @@ import {
   AppConnectionWithoutSensitiveData,
   PlatformRole,
 } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Clock01Icon,
+  Delete02Icon,
+  Exchange01Icon,
+  Globe02Icon,
+  Pulse01Icon,
+  PuzzleIcon,
+  Tick02Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Globe,
-  Trash2,
-  Clock,
-  Activity,
-  Workflow,
-  Puzzle,
-} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
@@ -36,11 +37,11 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { PlusIcon } from '@/components/icons/plus';
-import { ReplaceIcon } from '@/components/icons/replace';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -141,20 +142,20 @@ function AppConnectionsPage() {
               value: status,
             };
           }),
-          icon: CheckIcon,
+          icon: Tick02Icon,
         },
         {
           type: 'select',
           title: t('Pieces'),
           accessorKey: 'pieceName',
-          icon: Puzzle,
+          icon: PuzzleIcon,
           options: pieceOptions,
         },
         {
           type: 'input',
           title: t('Name'),
           accessorKey: 'displayName',
-          icon: Puzzle,
+          icon: PuzzleIcon,
         },
       ],
       4,
@@ -173,7 +174,7 @@ function AppConnectionsPage() {
           <DataTableColumnHeader
             column={column}
             title={t('Name')}
-            icon={Puzzle}
+            icon={PuzzleIcon}
           />
         ),
         cell: ({ row }) => {
@@ -207,7 +208,10 @@ function AppConnectionsPage() {
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Globe className="w-4 h-4 shrink-0" />
+                    <HugeiconsIcon
+                      icon={Globe02Icon}
+                      className="w-4 h-4 shrink-0"
+                    />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
@@ -229,7 +233,7 @@ function AppConnectionsPage() {
           <DataTableColumnHeader
             column={column}
             title={t('Status')}
-            icon={Activity}
+            icon={Pulse01Icon}
           />
         ),
         cell: ({ row }) => {
@@ -254,7 +258,7 @@ function AppConnectionsPage() {
           <DataTableColumnHeader
             column={column}
             title={t('Connected At')}
-            icon={Clock}
+            icon={Clock01Icon}
           />
         ),
         cell: ({ row }) => {
@@ -272,7 +276,7 @@ function AppConnectionsPage() {
           <DataTableColumnHeader
             column={column}
             title={t('Flows')}
-            icon={Workflow}
+            icon={WorkflowSquare02Icon}
           />
         ),
         cell: ({ row }) => {
@@ -378,7 +382,10 @@ function AppConnectionsPage() {
                     className="text-danger-11 hover:text-danger-11"
                     onClick={() => setShowDeleteDialog(true)}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    <HugeiconsIcon
+                      icon={Delete02Icon}
+                      className="h-4 w-4 mr-1"
+                    />
                     {t('Delete')} ({deletableRows.length})
                   </Button>
                 </ConfirmationDeleteDialog>
@@ -404,14 +411,13 @@ function AppConnectionsPage() {
             refetch();
           }}
         >
-          <AnimatedIconButton
-            icon={ReplaceIcon}
-            iconSize={16}
+          <IconButton
+            icon={Exchange01Icon}
             variant="outline"
             disabled={!userHasPermissionToWriteAppConnection}
           >
             {t('Replace')}
-          </AnimatedIconButton>
+          </IconButton>
         </ReplaceConnectionsDialog>
       </PermissionNeededTooltip>,
       <PermissionNeededTooltip
@@ -425,14 +431,13 @@ function AppConnectionsPage() {
             refetch();
           }}
         >
-          <AnimatedIconButton
-            icon={PlusIcon}
-            iconSize={16}
+          <IconButton
+            icon={Add01Icon}
             size="sm"
             disabled={!userHasPermissionToWriteAppConnection}
           >
             {t('New Connection')}
-          </AnimatedIconButton>
+          </IconButton>
         </NewConnectionDialog>
       </PermissionNeededTooltip>,
     ],
@@ -445,7 +450,9 @@ function AppConnectionsPage() {
         emptyStateTextDescription={t(
           'Come back later when you create a automation to manage your connections',
         )}
-        emptyStateIcon={<Globe className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={Globe02Icon} className="size-14" />
+        }
         columns={columns}
         page={filteredData}
         isLoading={connectionsLoading}

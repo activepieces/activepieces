@@ -1,8 +1,15 @@
+import {
+  Cancel01Icon,
+  Delete02Icon,
+  RefreshIcon,
+  Tick02Icon,
+  UnfoldMoreIcon,
+} from '@hugeicons/core-free-icons';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, RefreshCcw, Trash2, X } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SelectUtilButton } from '@/components/custom/select-util-button';
 import {
   Command,
@@ -177,7 +184,7 @@ export const SearchableSelect = <T,>({
                   : selectedOption.label
                 : placeholder}
             </span>
-            <ChevronsUpDown className="text-gray-11" />
+            <HugeiconsIcon icon={UnfoldMoreIcon} className="text-gray-11" />
           </Button>
           <div className="absolute top-2 right-10 z-50 flex items-center gap-2">
             {showDeselect && !disabled && selectedOption && !loading && (
@@ -188,7 +195,7 @@ export const SearchableSelect = <T,>({
                   e.preventDefault();
                   onChange(null);
                 }}
-                Icon={X}
+                Icon={Cancel01Icon}
               ></SelectUtilButton>
             )}
             {showRefresh && !loading && (
@@ -201,7 +208,7 @@ export const SearchableSelect = <T,>({
                     onRefresh();
                   }
                 }}
-                Icon={RefreshCcw}
+                Icon={RefreshIcon}
               ></SelectUtilButton>
             )}
           </div>
@@ -283,10 +290,14 @@ export const SearchableSelect = <T,>({
                                   onOptionDelete(option.value);
                                 }}
                               >
-                                <Trash2 className="size-3.5" />
+                                <HugeiconsIcon
+                                  icon={Delete02Icon}
+                                  className="size-3.5"
+                                />
                               </button>
                             )}
-                            <Check
+                            <HugeiconsIcon
+                              icon={Tick02Icon}
                               className={cn(
                                 'absolute inset-0 size-4',
                                 selectedOption?.value !== option.value

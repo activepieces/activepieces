@@ -5,20 +5,25 @@ import {
   unique,
 } from '@activepieces/core-utils';
 import { ApFlagId, EventDestination } from '@activepieces/shared';
+import {
+  Add01Icon,
+  CheckListIcon,
+  Globe02Icon,
+  RssIcon,
+} from '@hugeicons/core-free-icons';
 import { useQueries } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Globe, ListChecks, Radio } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { PlusIcon } from '@/components/icons/plus';
 import { Switch } from '@/components/ui/switch';
 import { flowHooks, flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -111,7 +116,7 @@ const EventDestinationsPage = () => {
           <DataTableColumnHeader
             column={column}
             title={t('Destination')}
-            icon={Globe}
+            icon={Globe02Icon}
           />
         ),
         cell: ({ row }) => (
@@ -136,7 +141,7 @@ const EventDestinationsPage = () => {
           <DataTableColumnHeader
             column={column}
             title={t('Events')}
-            icon={ListChecks}
+            icon={CheckListIcon}
           />
         ),
         cell: ({ row }) => (
@@ -190,17 +195,16 @@ const EventDestinationsPage = () => {
           'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
         )}
       >
-        <AnimatedIconButton
+        <IconButton
           {...adminControl(
             AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN,
           )}
-          icon={PlusIcon}
-          iconSize={16}
+          icon={Add01Icon}
           size="sm"
           asChild
         >
           <Link to={`${EVENT_STREAMING_PATH}/new`}>{t('New Destination')}</Link>
-        </AnimatedIconButton>
+        </IconButton>
       </DashboardPageHeader>
       <div className="flex w-full flex-col px-4 pb-6">
         <DataTable
@@ -227,7 +231,7 @@ const EventDestinationsPage = () => {
           )}
           emptyStateIcon={
             <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-lg bg-gray-3">
-              <Radio className="size-5" />
+              <HugeiconsIcon icon={RssIcon} className="size-5" />
             </span>
           }
           emptyStateAction={<DestinationStartCards />}

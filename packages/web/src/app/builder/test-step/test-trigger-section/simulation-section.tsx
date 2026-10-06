@@ -1,7 +1,8 @@
+import { AlertCircleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlertCircle } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,10 @@ export const SimulationNote = ({
 
       {note && (
         <Alert>
-          <AlertCircle className="h-4 w-4 text-warning-11" />
+          <HugeiconsIcon
+            icon={AlertCircleIcon}
+            className="h-4 w-4 text-warning-11"
+          />
           <div className="flex flex-col gap-1">
             <AlertTitle>{t('Action Required')}:</AlertTitle>
             <AlertDescription>

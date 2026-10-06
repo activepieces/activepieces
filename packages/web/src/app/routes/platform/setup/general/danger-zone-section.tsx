@@ -1,8 +1,9 @@
 import { hasActiveSubscription } from '@activepieces/shared';
+import { Delete02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -36,7 +37,7 @@ export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
           disabled={hasSubscription}
           onClick={() => setIsDeleteOpen(true)}
         >
-          <Trash2 className="size-3.5" />
+          <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
           {t('Delete platform')}
         </Button>
       </div>

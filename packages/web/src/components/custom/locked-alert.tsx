@@ -1,5 +1,6 @@
-import { Lock } from 'lucide-react';
+import { LockKeyholeIcon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface LockedAlertProps {
@@ -16,7 +17,10 @@ export const LockedAlert = ({
   return (
     <Alert className="flex items-center gap-4">
       <div className="flex items-start gap-3">
-        <Lock className="h-lh w-4 shrink-0 text-gray-12" />
+        <HugeiconsIcon
+          icon={LockKeyholeIcon}
+          className="h-lh w-4 shrink-0 text-gray-12"
+        />
         <div>
           <AlertTitle className="font-semibold">{title}</AlertTitle>
           <AlertDescription className="text-gray-11">

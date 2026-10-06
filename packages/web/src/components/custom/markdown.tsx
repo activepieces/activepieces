@@ -1,13 +1,20 @@
 import { MarkdownVariant } from '@activepieces/shared';
+import {
+  Alert02Icon,
+  Copy01Icon,
+  Idea01Icon,
+  InformationCircleIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import gfm from 'remark-gfm';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import { Alert, AlertDescription } from '../ui/alert';
@@ -53,12 +60,14 @@ const Container = ({
       {variant !== MarkdownVariant.BORDERLESS && (
         <>
           {(variant === MarkdownVariant.INFO || variant === undefined) && (
-            <Info />
+            <HugeiconsIcon icon={InformationCircleIcon} />
           )}
           {variant === MarkdownVariant.WARNING && (
-            <AlertTriangle className="stroke-warning-11" />
+            <HugeiconsIcon icon={Alert02Icon} className="text-warning-11" />
           )}
-          {variant === MarkdownVariant.TIP && <Lightbulb />}
+          {variant === MarkdownVariant.TIP && (
+            <HugeiconsIcon icon={Idea01Icon} />
+          )}
         </>
       )}
       <AlertDescription className="grow w-full">{children}</AlertDescription>
@@ -126,9 +135,9 @@ const ApMarkdown = React.memo(
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (
-                      <Check className="size-3.5" />
+                      <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
                     ) : (
-                      <Copy className="size-3.5" />
+                      <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
                     )}
                   </Button>
                 </div>

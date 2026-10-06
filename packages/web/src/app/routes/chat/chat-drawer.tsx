@@ -3,11 +3,12 @@ import {
   RunEnvironment,
   WebsocketClientEvent,
 } from '@activepieces/shared';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
 import { useRef } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { ChatDrawerSource } from '@/app/builder/types';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useSocket } from '@/components/providers/socket-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -78,7 +79,7 @@ export const ChatDrawer = () => {
                 className="text-gray-12"
                 onClick={() => setChatDrawerOpenSource(null)}
               >
-                <ArrowRight className="h-5 w-5" />
+                <HugeiconsIcon icon={ArrowRight02Icon} className="h-5 w-5" />
               </Button>
               <DrawerTitle>Chat</DrawerTitle>
             </div>

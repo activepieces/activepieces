@@ -1,7 +1,8 @@
+import { Cancel01Icon, Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download, X } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ImageWithFallback } from '@/components/custom/image-with-fallback';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -40,7 +41,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
               title={t('Download')}
               onClick={() => imageUrl && downloadImage(imageUrl)}
             >
-              <Download className="h-4 w-4" />
+              <HugeiconsIcon icon={Download04Icon} className="h-4 w-4" />
               <span className="sr-only">{t('Download')}</span>
             </Button>
             <Button
@@ -49,7 +50,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
               title={t('Close')}
               onClick={() => onOpenChange(false)}
             >
-              <X className="h-4 w-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
               <span className="sr-only">{t('Close')}</span>
             </Button>
           </div>

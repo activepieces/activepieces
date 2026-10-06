@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 
 import { Input, InputProps } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,7 @@ function ClearableInput({
           <SelectUtilButton
             tooltipText={t('Clear')}
             onClick={() => onClear()}
-            Icon={X}
+            Icon={Cancel01Icon}
           />
         </div>
       )}

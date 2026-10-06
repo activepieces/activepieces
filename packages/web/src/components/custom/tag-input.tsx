@@ -1,9 +1,10 @@
 'use client';
 
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { XIcon } from 'lucide-react';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import type { InputProps } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -162,7 +163,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                         onChange(value.filter((i) => i !== item));
                       }}
                     >
-                      <XIcon className="size-3" />
+                      <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
                     </button>
                   </Badge>
                 );

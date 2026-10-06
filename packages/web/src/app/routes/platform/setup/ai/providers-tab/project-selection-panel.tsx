@@ -3,12 +3,13 @@ import {
   Project,
   ProjectType,
 } from '@activepieces/shared';
+import { FolderOpenIcon, Search01Icon } from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { FolderOpen, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -91,7 +92,12 @@ export function ProjectSelectionPanel({
     <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
       <div className="flex flex-wrap items-center gap-2 p-3">
         <InputWithIcon
-          icon={<Search className="size-4 shrink-0 text-gray-11" />}
+          icon={
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="size-4 shrink-0 text-gray-11"
+            />
+          }
           value={search}
           onChange={(event) => {
             setSearch(event.target.value);
@@ -123,7 +129,12 @@ export function ProjectSelectionPanel({
               ? t('No project is selected yet.')
               : t('No project matches your search.')
           }
-          emptyStateIcon={<FolderOpen className="size-10 text-gray-11" />}
+          emptyStateIcon={
+            <HugeiconsIcon
+              icon={FolderOpenIcon}
+              className="size-10 text-gray-11"
+            />
+          }
         />
       </div>
       <TablePagination

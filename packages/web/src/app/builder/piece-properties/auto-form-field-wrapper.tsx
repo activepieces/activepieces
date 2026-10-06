@@ -8,13 +8,14 @@ import {
   FlowTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
+import { Calendar03Icon, File01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Calendar, File } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -265,10 +266,13 @@ function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
     <Tooltip>
       <TooltipTrigger asChild>
         {property.type === PropertyType.FILE ? (
-          <File className="w-4 h-4 stroke-gray-12/55"></File>
+          <HugeiconsIcon icon={File01Icon} className="size-4 text-gray-12/55" />
         ) : (
           property.type === PropertyType.DATE_TIME && (
-            <Calendar className="w-4 h-4 stroke-gray-12/55"></Calendar>
+            <HugeiconsIcon
+              icon={Calendar03Icon}
+              className="size-4 text-gray-12/55"
+            />
           )
         )}
       </TooltipTrigger>

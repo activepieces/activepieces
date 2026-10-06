@@ -1,7 +1,9 @@
 import { CreateOtpRequestBody, OtpType } from '@activepieces/shared';
+import { MailValidation01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { MailCheck } from 'lucide-react';
 import { toast } from 'sonner';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 import { authMutations } from '../hooks/auth-hooks';
 
@@ -21,7 +23,7 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
   return (
     <div className="gap-2 w-full flex flex-col">
       <div className="gap-4 w-full flex flex-row items-center justify-center">
-        <MailCheck className="w-16 h-16" />
+        <HugeiconsIcon icon={MailValidation01Icon} className="w-16 h-16" />
         <span className="text-left w-fit">
           {type === OtpType.EMAIL_VERIFICATION
             ? t('We sent you a link to complete your registration to')

@@ -1,18 +1,19 @@
-import { t } from 'i18next';
 import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from 'lucide-react';
+  Alert02Icon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+  InformationCircleIcon,
+  } from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTheme } from '@/components/providers/theme-provider';
 import {
   INTERNAL_ERROR_MESSAGE,
   MUTATION_ERROR_TOAST_ID,
 } from '@/lib/mutation-feedback';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 export { INTERNAL_ERROR_MESSAGE };
@@ -58,11 +59,15 @@ function Toaster({ ...props }: ToasterProps) {
         descriptionClassName: 'text-inherit!',
       }}
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: (
+          <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-4" />
+        ),
+        info: <HugeiconsIcon icon={InformationCircleIcon} className="size-4" />,
+        warning: <HugeiconsIcon icon={Alert02Icon} className="size-4" />,
+        error: <HugeiconsIcon icon={CancelCircleIcon} className="size-4" />,
+        loading: (
+          <Spinner className="size-4 animate-spin" />
+        ),
       }}
       style={
         {

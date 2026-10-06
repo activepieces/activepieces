@@ -1,7 +1,8 @@
+import { Alert02Icon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { RefreshCw, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -36,7 +37,7 @@ export function DataFetchErrorState({
     <Empty className={cn('px-4 py-10', className)}>
       <EmptyHeader>
         <EmptyMedia variant="icon" className="bg-warning-3 text-warning-11">
-          <TriangleAlert />
+          <HugeiconsIcon icon={Alert02Icon} />
         </EmptyMedia>
         <EmptyTitle>{t('Trouble loading {entity}', { entity })}</EmptyTitle>
         <EmptyDescription>
@@ -53,7 +54,7 @@ export function DataFetchErrorState({
             loading={isRetrying}
             onClick={handleRetry}
           >
-            <RefreshCw />
+            <HugeiconsIcon icon={RefreshIcon} />
             {t('Try again')}
           </Button>
         </EmptyContent>

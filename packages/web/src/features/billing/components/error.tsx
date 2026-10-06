@@ -1,8 +1,13 @@
+import {
+  AlertCircleIcon,
+  Home03Icon,
+  RefreshIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 
@@ -29,7 +34,10 @@ export const Error = () => {
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center space-y-6">
             <div className="mx-auto w-20 h-20 bg-danger-3 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-10 h-10 text-danger-11" />
+              <HugeiconsIcon
+                icon={AlertCircleIcon}
+                className="w-10 h-10 text-danger-11"
+              />
             </div>
 
             <div className="space-y-3">
@@ -57,7 +65,7 @@ export const Error = () => {
                 onClick={() => navigate('/platform/billing')}
                 className="w-full"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={RefreshIcon} className="w-4 h-4 mr-2" />
                 {t('Try Again')}
               </Button>
 
@@ -66,7 +74,7 @@ export const Error = () => {
                 variant="outline"
                 className="w-full"
               >
-                <Home className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={Home03Icon} className="w-4 h-4 mr-2" />
                 {t('Go to Dashboard')}
               </Button>
             </div>

@@ -1,7 +1,8 @@
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { Command as CommandPrimitive } from 'cmdk';
-import { SearchIcon } from 'lucide-react';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Dialog,
   DialogContent,
@@ -84,7 +85,10 @@ function CommandInput({
         containerClassName,
       )}
     >
-      <SearchIcon className="size-4 shrink-0 opacity-50" />
+      <HugeiconsIcon
+        icon={Search01Icon}
+        className="size-4 shrink-0 opacity-50"
+      />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(

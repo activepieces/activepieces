@@ -1,9 +1,14 @@
+import {
+  AnalyticsDownIcon,
+  AnalyticsUpIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, TrendingUp, TrendingDown } from 'lucide-react';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
@@ -51,7 +56,7 @@ export const Success = () => {
     switch (action) {
       case 'upgrade':
         return {
-          icon: TrendingUp,
+          icon: AnalyticsUpIcon,
           iconBg: 'bg-success-3',
           iconColor: 'text-success-11',
           title: t('Successfully Upgraded!'),
@@ -59,7 +64,7 @@ export const Success = () => {
         };
       case 'downgrade':
         return {
-          icon: TrendingDown,
+          icon: AnalyticsDownIcon,
           iconBg: 'bg-warning-3',
           iconColor: 'text-warning-11',
           title: t('Plan Downgraded'),
@@ -67,7 +72,7 @@ export const Success = () => {
         };
       case 'create':
         return {
-          icon: Check,
+          icon: Tick02Icon,
           iconBg: 'bg-accent-3',
           iconColor: 'text-accent-11',
           title: t('Success!'),
@@ -75,7 +80,7 @@ export const Success = () => {
         };
       default:
         return {
-          icon: Check,
+          icon: Tick02Icon,
           iconBg: 'bg-accent-3',
           iconColor: 'text-accent-11',
           title: t('Success!'),
@@ -115,7 +120,10 @@ export const Success = () => {
                 config.iconBg,
               )}
             >
-              <IconComponent className={cn('w-10 h-10', config.iconColor)} />
+              <HugeiconsIcon
+                icon={IconComponent}
+                className={cn('w-10 h-10', config.iconColor)}
+              />
             </div>
 
             <div className="space-y-2">

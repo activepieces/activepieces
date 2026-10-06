@@ -7,25 +7,25 @@ import {
   ApplicationEventName,
   summarizeApplicationEvent,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Bot,
-  CheckIcon,
-  CircleArrowUp,
-  Eye,
-  Folder,
-  History,
-  Key,
-  Link2,
-  Logs,
-  Undo2,
-  Users,
-  Wand,
-  Workflow,
-  FileText,
-  User,
-  Clock,
-} from 'lucide-react';
+  CircleArrowUp01Icon,
+  Clock01Icon,
+  File02Icon,
+  Folder01Icon,
+  HistoryIcon,
+  Key01Icon,
+  LeftToRightListDashIcon,
+  Link02Icon,
+  MagicWand01Icon,
+  Robot01Icon,
+  Tick02Icon,
+  Undo03Icon,
+  UserIcon,
+  UserMultipleIcon,
+  ViewIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -33,6 +33,7 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable, DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -71,7 +72,7 @@ export default function AuditLogsPage() {
           value: action,
         };
       }),
-      icon: Wand,
+      icon: MagicWand01Icon,
     },
     {
       type: 'select',
@@ -84,7 +85,7 @@ export default function AuditLogsPage() {
             value: user.id,
           };
         }) ?? [],
-      icon: Users,
+      icon: UserMultipleIcon,
     },
     {
       type: 'select',
@@ -97,13 +98,13 @@ export default function AuditLogsPage() {
             value: project.id,
           };
         }) ?? [],
-      icon: Folder,
+      icon: Folder01Icon,
     },
     {
       type: 'date',
       title: t('Created'),
       accessorKey: 'created',
-      icon: CheckIcon,
+      icon: Tick02Icon,
     },
   ];
 
@@ -127,7 +128,9 @@ export default function AuditLogsPage() {
         emptyStateTextDescription={t(
           'Come back later when you have some activity to audit',
         )}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={HistoryIcon} className="size-14" />
+        }
         filters={filters}
         columns={[
           {
@@ -137,7 +140,7 @@ export default function AuditLogsPage() {
               <DataTableColumnHeader
                 column={column}
                 title={t('Action')}
-                icon={Wand}
+                icon={MagicWand01Icon}
               />
             ),
             cell: ({ row }) => {
@@ -159,7 +162,7 @@ export default function AuditLogsPage() {
               <DataTableColumnHeader
                 column={column}
                 title={t('Details')}
-                icon={FileText}
+                icon={File02Icon}
               />
             ),
             cell: ({ row }) => {
@@ -177,7 +180,7 @@ export default function AuditLogsPage() {
               <DataTableColumnHeader
                 column={column}
                 title={t('Performed By')}
-                icon={User}
+                icon={UserIcon}
               />
             ),
             cell: ({ row }) => {
@@ -191,7 +194,7 @@ export default function AuditLogsPage() {
               <DataTableColumnHeader
                 column={column}
                 title={t('Project')}
-                icon={Folder}
+                icon={Folder01Icon}
               />
             ),
             cell: ({ row }) => {
@@ -214,7 +217,7 @@ export default function AuditLogsPage() {
               <DataTableColumnHeader
                 column={column}
                 title={t('Created')}
-                icon={Clock}
+                icon={Clock01Icon}
               />
             ),
             cell: ({ row }) => {
@@ -239,7 +242,10 @@ export default function AuditLogsPage() {
                   setIsSheetOpen(true);
                 }}
               >
-                <Eye className="size-4 text-gray-11" />
+                <HugeiconsIcon
+                  icon={ViewIcon}
+                  className="size-4 text-gray-11"
+                />
               </Button>
             ),
           },
@@ -339,7 +345,9 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.FLOW_RUN_RESUMED:
     case ApplicationEventName.FLOW_RUN_RETRIED:
       return {
-        icon: <Logs className="size-4" />,
+        icon: (
+          <HugeiconsIcon icon={LeftToRightListDashIcon} className="size-4" />
+        ),
         tooltip: t('Flow Run'),
       };
     case ApplicationEventName.FLOW_CREATED:
@@ -349,42 +357,42 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.FLOW_ACTIVATED:
     case ApplicationEventName.FLOW_DEACTIVATED:
       return {
-        icon: <Workflow className="size-4" />,
+        icon: <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-4" />,
         tooltip: t('Flow'),
       };
     case ApplicationEventName.FLOW_PIECES_UPGRADED:
       return {
-        icon: <CircleArrowUp className="size-4" />,
+        icon: <HugeiconsIcon icon={CircleArrowUp01Icon} className="size-4" />,
         tooltip: t('Flow pieces upgraded'),
       };
     case ApplicationEventName.FLOW_PIECES_REVERTED:
       return {
-        icon: <Undo2 className="size-4" />,
+        icon: <HugeiconsIcon icon={Undo03Icon} className="size-4" />,
         tooltip: t('Flow pieces reverted'),
       };
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_DELETED:
     case ApplicationEventName.FOLDER_UPDATED:
       return {
-        icon: <Folder className="size-4" />,
+        icon: <HugeiconsIcon icon={Folder01Icon} className="size-4" />,
         tooltip: t('Folder'),
       };
     case ApplicationEventName.CONNECTION_DELETED:
     case ApplicationEventName.CONNECTION_UPSERTED:
       return {
-        icon: <Link2 className="size-4" />,
+        icon: <HugeiconsIcon icon={Link02Icon} className="size-4" />,
         tooltip: t('Connection'),
       };
     case ApplicationEventName.VARIABLE_UPSERTED:
     case ApplicationEventName.VARIABLE_DELETED:
     case ApplicationEventName.VARIABLE_VALUE_REVEALED:
       return {
-        icon: <Link2 className="size-4" />,
+        icon: <HugeiconsIcon icon={Link02Icon} className="size-4" />,
         tooltip: t('Variable'),
       };
     case ApplicationEventName.AGENT_ACTION_EXECUTED:
       return {
-        icon: <Bot className="size-4" />,
+        icon: <HugeiconsIcon icon={Robot01Icon} className="size-4" />,
         tooltip: t('Agent action'),
       };
     case ApplicationEventName.USER_SIGNED_UP:
@@ -392,12 +400,12 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.USER_PASSWORD_RESET:
     case ApplicationEventName.USER_EMAIL_VERIFIED:
       return {
-        icon: <Users className="size-4" />,
+        icon: <HugeiconsIcon icon={UserMultipleIcon} className="size-4" />,
         tooltip: t('User'),
       };
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return {
-        icon: <Key className="size-4" />,
+        icon: <HugeiconsIcon icon={Key01Icon} className="size-4" />,
         tooltip: t('Signing Key'),
       };
     default:

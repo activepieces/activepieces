@@ -1,10 +1,14 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import { AIProviderModel } from '@activepieces/shared';
+import {
+  Tick02Icon,
+  UnfoldMoreIcon,
+} from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +25,7 @@ import {
 } from '@/components/ui/popover';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 import { aiModelHooks } from './hooks';
@@ -224,7 +229,9 @@ export function AIModelSelector({
             >
               {providersLoading ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Spinner
+                    className="h-4 w-4 animate-spin"
+                  />
                   <span>{t('Loading...')}</span>
                 </div>
               ) : selectedProvider ? (
@@ -247,7 +254,10 @@ export function AIModelSelector({
                     : t('Select provider')}
                 </span>
               )}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              <HugeiconsIcon
+                icon={UnfoldMoreIcon}
+                className="ml-2 h-4 w-4 shrink-0 opacity-50"
+              />
             </Button>
           </PopoverTrigger>
           <PopoverContent
@@ -277,7 +287,8 @@ export function AIModelSelector({
                       )}
                       <span>{option.label}</span>
                     </div>
-                    <Check
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
                       className={cn(
                         'ml-auto h-4 w-4',
                         selectedConfigId === option.configId
@@ -310,7 +321,9 @@ export function AIModelSelector({
             >
               {modelsLoading ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Spinner
+                    className="h-4 w-4 animate-spin"
+                  />
                   <span>{t('Loading...')}</span>
                 </div>
               ) : selectedModel ? (
@@ -327,7 +340,10 @@ export function AIModelSelector({
                     : t('Select model')}
                 </span>
               )}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              <HugeiconsIcon
+                icon={UnfoldMoreIcon}
+                className="ml-2 h-4 w-4 shrink-0 opacity-50"
+              />
             </Button>
           </PopoverTrigger>
           <PopoverContent
@@ -346,7 +362,8 @@ export function AIModelSelector({
                     className="cursor-pointer"
                   >
                     <span className="flex-1">{model.name}</span>
-                    <Check
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
                       className={cn(
                         'ml-auto h-4 w-4',
                         selectedModel === model.id

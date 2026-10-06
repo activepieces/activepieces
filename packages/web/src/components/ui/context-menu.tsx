@@ -1,7 +1,8 @@
-import { CheckIcon, ChevronRightIcon } from 'lucide-react';
+import { ArrowRight01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { ContextMenu as ContextMenuPrimitive } from 'radix-ui';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 function ContextMenu({
@@ -118,7 +119,7 @@ function ContextMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto" />
+      <HugeiconsIcon icon={ArrowRight01Icon} className="ml-auto" />
     </ContextMenuPrimitive.SubTrigger>
   );
 }
@@ -161,7 +162,7 @@ function ContextMenuCheckboxItem({
     >
       <span className="pointer-events-none absolute right-2.5 flex items-center justify-center">
         <ContextMenuPrimitive.ItemIndicator>
-          <CheckIcon />
+          <HugeiconsIcon icon={Tick02Icon} />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -189,7 +190,7 @@ function ContextMenuRadioItem({
     >
       <span className="pointer-events-none absolute right-2.5 flex items-center justify-center">
         <ContextMenuPrimitive.ItemIndicator>
-          <CheckIcon />
+          <HugeiconsIcon icon={Tick02Icon} />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}

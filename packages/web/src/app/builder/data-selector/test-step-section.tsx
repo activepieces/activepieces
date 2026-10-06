@@ -1,6 +1,7 @@
+import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowUpRight } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -25,7 +26,7 @@ export const TestStepSection = ({ stepName }: { stepName: string }) => {
         className="h-6 px-2 text-xs text-accent-11 hover:text-accent-11 hover:bg-accent-3 shrink-0"
       >
         {isTrigger ? t('Go to trigger') : t('Go to step')}
-        <ArrowUpRight className="size-3" />
+        <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3" />
       </Button>
     </div>
   );

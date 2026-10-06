@@ -4,9 +4,10 @@ import {
   ProjectIcon,
   ProjectType,
 } from '@activepieces/shared';
-import { User } from 'lucide-react';
+import { UserIcon } from '@hugeicons/core-free-icons';
 import { useContext } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Avatar } from '@/components/ui/avatar';
 import { SidebarContext } from '@/components/ui/sidebar-shadcn';
 import {
@@ -67,10 +68,11 @@ export const ApProjectDisplay = ({
         iconClassName,
       )}
     >
-      <User className="size-5" />
+      <HugeiconsIcon icon={UserIcon} className="size-5" />
     </span>
   ) : (
-    <User
+    <HugeiconsIcon
+      icon={UserIcon}
       className={cn('size-5 flex items-center justify-center', iconClassName)}
     />
   );

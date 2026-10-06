@@ -6,11 +6,12 @@ import {
   FlowTrigger,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { Button } from '@/components/ui/button';
 import {
@@ -79,7 +80,10 @@ export const FailedStepDialog = ({
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
+              <HugeiconsIcon
+                icon={RunStatusIcon}
+                className="size-4 shrink-0 text-danger-11"
+              />
               <span className="truncate">
                 {flowName || t('Internal error')}
               </span>
@@ -119,7 +123,7 @@ export const FailedStepDialog = ({
                 )
               }
             >
-              <ArrowRight className="size-4" />
+              <HugeiconsIcon icon={ArrowRight02Icon} className="size-4" />
               {t('Go to run')}
             </Button>
           </DialogFooter>
@@ -153,7 +157,10 @@ export const FailedStepDialog = ({
       <DialogContent className="max-w-lg" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
+            <HugeiconsIcon
+              icon={RunStatusIcon}
+              className="size-4 shrink-0 text-danger-11"
+            />
             <span className="truncate">{flowName || t('Run Failed')}</span>
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -197,7 +204,7 @@ export const FailedStepDialog = ({
               )
             }
           >
-            <ArrowRight className="size-4" />
+            <HugeiconsIcon icon={ArrowRight02Icon} className="size-4" />
             {t('Go to run')}
           </Button>
         </DialogFooter>

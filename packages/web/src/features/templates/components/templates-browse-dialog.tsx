@@ -1,10 +1,14 @@
 import { Template, TemplateType } from '@activepieces/shared';
+import {
+  DashboardSquare01Icon,
+  Search01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { LayoutGrid, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -131,7 +135,10 @@ export const TemplatesBrowseDialog = ({
 
           <div className="px-6 pb-3 flex-shrink-0">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11" />
+              <HugeiconsIcon
+                icon={Search01Icon}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11"
+              />
               <Input
                 placeholder={t('Search templates by name or description')}
                 value={search}
@@ -186,7 +193,7 @@ export const TemplatesBrowseDialog = ({
               <Empty className="min-h-[300px]">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <LayoutGrid />
+                    <HugeiconsIcon icon={DashboardSquare01Icon} />
                   </EmptyMedia>
                   <EmptyTitle>{t('No templates found')}</EmptyTitle>
                   <EmptyDescription>

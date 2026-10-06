@@ -1,17 +1,18 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  CheckCircle2Icon,
-  LayoutGridIcon,
+  AiMagicIcon,
+  CheckmarkCircle02Icon,
+  DashboardSquare01Icon,
   PuzzleIcon,
-  SparklesIcon,
-  WrenchIcon,
-} from 'lucide-react';
+  Wrench01Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Popover,
   PopoverContent,
@@ -48,17 +49,17 @@ const getTabsList = (
     {
       value: PieceSelectorTabType.EXPLORE,
       name: t('Explore'),
-      icon: <LayoutGridIcon className="size-5" />,
+      icon: <HugeiconsIcon icon={DashboardSquare01Icon} className="size-5" />,
     },
     {
       value: PieceSelectorTabType.APPS,
       name: t('Apps'),
-      icon: <PuzzleIcon className="size-5" />,
+      icon: <HugeiconsIcon icon={PuzzleIcon} className="size-5" />,
     },
     {
       value: PieceSelectorTabType.UTILITY,
       name: t('Utility'),
-      icon: <WrenchIcon className="size-5" />,
+      icon: <HugeiconsIcon icon={Wrench01Icon} className="size-5" />,
     },
   ];
 
@@ -71,14 +72,14 @@ const getTabsList = (
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
-      icon: <SparklesIcon className="size-5" />,
+      icon: <HugeiconsIcon icon={AiMagicIcon} className="size-5" />,
     });
   }
   if (replaceOrAddAction) {
     baseTabs.push({
       value: PieceSelectorTabType.APPROVALS,
       name: t('Approvals'),
-      icon: <CheckCircle2Icon className="size-5" />,
+      icon: <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-5" />,
     });
   }
   return baseTabs;

@@ -2,12 +2,13 @@ import {
   AP_MAXIMUM_PROFILE_PICTURE_SIZE,
   PROFILE_PICTURE_ALLOWED_TYPES,
 } from '@activepieces/shared';
+import { Camera01Icon, Mail01Icon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Camera, Mail } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import {
   Dialog,
@@ -95,7 +96,10 @@ export function AccountSettingsDialog({
                   data-theme="dark"
                   className="absolute inset-0 flex items-center justify-center bg-scrim rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <Camera className="h-5 w-5 text-gray-12" />
+                  <HugeiconsIcon
+                    icon={Camera01Icon}
+                    className="h-5 w-5 text-gray-12"
+                  />
                 </div>
                 <input
                   ref={fileInputRef}
@@ -111,7 +115,7 @@ export function AccountSettingsDialog({
                   {user?.firstName} {user?.lastName}
                 </div>
                 <div className="text-xs text-gray-11 flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5" />
+                  <HugeiconsIcon icon={Mail01Icon} className="w-3.5 h-3.5" />
                   {user?.email}
                 </div>
               </div>

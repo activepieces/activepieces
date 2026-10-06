@@ -1,6 +1,7 @@
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 type SidebarHeaderProps = {
@@ -29,7 +30,7 @@ const SidebarHeader = ({
         }}
         aria-label={t('Close')}
       >
-        <X size={16} />
+        <HugeiconsIcon icon={Cancel01Icon} size={16} />
       </Button>
     </div>
   );

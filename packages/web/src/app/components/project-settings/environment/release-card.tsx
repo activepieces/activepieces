@@ -1,6 +1,7 @@
+import { PackageIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Package } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { projectCollectionUtils } from '@/features/projects';
@@ -13,7 +14,7 @@ const ReleaseCard = () => {
     <Card className="w-full px-4 py-4">
       <div className="flex w-full gap-2 justify-center items-center">
         <div className="flex flex-col gap-2 text-center mr-2">
-          <Package className="size-8" />
+          <HugeiconsIcon icon={PackageIcon} className="size-8" />
         </div>
         <div className="flex grow flex-col">
           <div className="text-lg">{t('Releases')}</div>

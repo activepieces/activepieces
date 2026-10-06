@@ -1,7 +1,8 @@
+import { Pulse01Icon, WorkflowSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Activity, Workflow } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +19,7 @@ export const DestinationStartCards = () => {
     <div className="mb-10 mt-4 grid w-full max-w-[640px] grid-cols-1 gap-3 sm:grid-cols-2 text-left">
       <StartCard
         to={newDestinationPath('otel')}
-        icon={<Activity className="size-4" />}
+        icon={<HugeiconsIcon icon={Pulse01Icon} className="size-4" />}
         isPrimary={true}
         title={t('Send to an OpenTelemetry tool')}
         description={t(
@@ -29,7 +30,7 @@ export const DestinationStartCards = () => {
       </StartCard>
       <StartCard
         to={newDestinationPath('webhook')}
-        icon={<Workflow className="size-4" />}
+        icon={<HugeiconsIcon icon={WorkflowSquare02Icon} className="size-4" />}
         isPrimary={false}
         title={t('Handle events in a flow')}
         description={t(

@@ -2,11 +2,12 @@ import { deepMergeAndCast } from '@activepieces/core-utils';
 import { ApFlagId, SourceCode } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
+import { PackageIcon, SourceCodeIcon } from '@hugeicons/core-free-icons';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { t } from 'i18next';
-import { Code, Package } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -122,7 +123,7 @@ const CodeEditor = ({
             size={'sm'}
             onClick={applyCodeToCurrentStep}
           >
-            <Code className="w-3 h-3" />
+            <HugeiconsIcon icon={SourceCodeIcon} className="w-3 h-3" />
             {t('Use code')}
           </Button>
         ) : (
@@ -134,7 +135,7 @@ const CodeEditor = ({
                 size={'sm'}
                 onClick={() => {}}
               >
-                <Package className="w-4 h-4" />
+                <HugeiconsIcon icon={PackageIcon} className="w-4 h-4" />
                 {t('Add package')}
               </Button>
             </AddNpmDialog>

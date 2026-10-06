@@ -1,6 +1,7 @@
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -58,7 +59,7 @@ export const AutomationsPagination = ({
         disabled={currentPage === 0}
         className="gap-1"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
         {t('Previous')}
       </Button>
       <Button
@@ -69,7 +70,7 @@ export const AutomationsPagination = ({
         className="gap-1"
       >
         {t('Next')}
-        <ChevronRight className="h-4 w-4" />
+        <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
       </Button>
     </div>
   );

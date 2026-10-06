@@ -1,9 +1,14 @@
 import { Permission } from '@activepieces/core-utils';
 import { AgentSummary } from '@activepieces/shared';
+import {
+  Delete02Icon,
+  FolderTransferIcon,
+  MoreHorizontalIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { FolderInput, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -37,13 +42,13 @@ export const AgentActionsMenu = ({ agent }: AgentActionsMenuProps) => {
             aria-label={t('Agent actions')}
             className="pointer-events-none size-7 rounded-full opacity-0 transition-opacity focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
           >
-            <MoreHorizontal size={16} />
+            <HugeiconsIcon icon={MoreHorizontalIcon} size={16} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {canMove && (
             <DropdownMenuItem onSelect={() => setMoving(true)}>
-              <FolderInput />
+              <HugeiconsIcon icon={FolderTransferIcon} />
               {t('Move to another project')}
             </DropdownMenuItem>
           )}
@@ -51,7 +56,7 @@ export const AgentActionsMenu = ({ agent }: AgentActionsMenuProps) => {
             variant="destructive"
             onSelect={() => setDeleting(true)}
           >
-            <Trash2 />
+            <HugeiconsIcon icon={Delete02Icon} />
             {t('Delete')}
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -5,10 +5,11 @@ import {
   Step,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { PlayIcon, TestTube01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { FlaskConical, Play } from 'lucide-react';
 import React, { useContext } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { piecesHooks } from '@/features/pieces';
 
@@ -116,7 +117,7 @@ const TestStepSectionImplementation = React.memo(
             </div>
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
               <div className="flex items-center justify-center size-12 rounded-full bg-accent-3 text-accent-11">
-                <FlaskConical className="size-6" />
+                <HugeiconsIcon icon={TestTube01Icon} className="size-6" />
               </div>
               <div className="flex flex-col gap-1.5 max-w-[280px]">
                 <span className="text-sm font-medium text-gray-12">
@@ -136,7 +137,10 @@ const TestStepSectionImplementation = React.memo(
                   disabled={!currentStep.valid || isLoadingDynamicProperties}
                   className="bg-accent-9 text-on-accent hover:bg-accent-9/90"
                 >
-                  <Play className="size-3.5 fill-current" />
+                  <HugeiconsIcon
+                    icon={PlayIcon}
+                    className="size-3.5 fill-current"
+                  />
                   {t('Test Step')}
                 </Button>
               </TestButtonTooltip>

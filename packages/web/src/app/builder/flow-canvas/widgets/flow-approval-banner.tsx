@@ -4,11 +4,12 @@ import {
   isNil,
   Permission,
 } from '@activepieces/shared';
+import { ShieldAlertIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 
 import { RightSideBarType } from '@/app/builder/types';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -116,7 +117,7 @@ const FlowApprovalBanner = () => {
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
-        <ShieldAlert className="size-5" />
+        <HugeiconsIcon icon={ShieldAlertIcon} className="size-5" />
         <div className="flex flex-col">
           <span>{t('Awaiting approval to publish this flow.')}</span>
           <Tooltip>

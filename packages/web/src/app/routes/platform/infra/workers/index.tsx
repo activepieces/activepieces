@@ -6,21 +6,22 @@ import {
   WorkerMachineType,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Server,
-  Clock,
-  Cpu,
-  MemoryStick,
-  HardDrive,
-  Zap,
-  Layers,
-} from 'lucide-react';
+  ChipIcon,
+  Clock01Icon,
+  FlashIcon,
+  HardDriveIcon,
+  Layers01Icon,
+  RamMemoryIcon,
+  ServerStack01Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import prettyBytes from 'pretty-bytes';
 import React from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Alert,
   AlertAction,
@@ -69,7 +70,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
         <div className="flex flex-col gap-4 pt-4">
           {isCloud && fleetType === WorkerMachineType.SHARED && (
             <Alert variant="info">
-              <Zap size={16} />
+              <HugeiconsIcon icon={FlashIcon} size={16} />
               <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
               <AlertDescription className="text-xs">
                 {t(
@@ -87,7 +88,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           )}
           {isCloud && fleetType === WorkerMachineType.DEDICATED && (
             <Alert variant="success">
-              <Zap size={16} />
+              <HugeiconsIcon icon={FlashIcon} size={16} />
               <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
               <AlertDescription className="text-xs">
                 {t(
@@ -122,7 +123,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
 
           {!isLoading && (workersData ?? []).length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
-              <Server className="size-14" />
+              <HugeiconsIcon icon={ServerStack01Icon} className="size-14" />
               <p className="font-medium text-gray-12">
                 {t('No workers found')}
               </p>
@@ -214,7 +215,8 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <Server
+            <HugeiconsIcon
+              icon={ServerStack01Icon}
               size={18}
               className={cn('shrink-0', {
                 'text-danger-11': !isOnline,
@@ -236,7 +238,10 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
                     variant="outline"
                     className="border-accent-7 bg-accent-3 text-accent-11"
                   >
-                    <Layers className="size-3 shrink-0" />
+                    <HugeiconsIcon
+                      icon={Layers01Icon}
+                      className="size-3 shrink-0"
+                    />
                     {worker.workerGroupId.replaceAll('_', ' ')}
                   </Badge>
                 ) : (
@@ -284,7 +289,7 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
         <StatBar
           label={
             <>
-              <Cpu className="size-3" />
+              <HugeiconsIcon icon={ChipIcon} className="size-3" />
               <span>CPU</span>
             </>
           }
@@ -294,7 +299,7 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
         <StatBar
           label={
             <>
-              <MemoryStick className="size-3" />
+              <HugeiconsIcon icon={RamMemoryIcon} className="size-3" />
               <span>RAM</span>
             </>
           }
@@ -306,7 +311,7 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
         <StatBar
           label={
             <>
-              <HardDrive className="size-3" />
+              <HugeiconsIcon icon={HardDriveIcon} className="size-3" />
               <span>Disk</span>
             </>
           }
@@ -320,7 +325,7 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
       <CardFooter className="justify-between pt-0 gap-2">
         <div className="flex items-center gap-3 text-xs text-gray-11 min-w-0">
           <span className="flex items-center gap-1 truncate">
-            <Clock size={12} className="shrink-0" />
+            <HugeiconsIcon icon={Clock01Icon} size={12} className="shrink-0" />
             {t('seen')} {timeAgo}
           </span>
         </div>

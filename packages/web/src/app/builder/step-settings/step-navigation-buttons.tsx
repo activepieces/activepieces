@@ -1,10 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowTriggerType, flowStructureUtil } from '@activepieces/shared';
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -55,7 +56,7 @@ const StepNavigationButtons = () => {
               }
               aria-label={t('Previous step')}
             >
-              <ChevronLeft className="size-4" />
+              <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Previous step')}</TooltipContent>
@@ -71,7 +72,7 @@ const StepNavigationButtons = () => {
               }
               aria-label={t('Next step')}
             >
-              <ChevronRight className="size-4" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Next step')}</TooltipContent>
