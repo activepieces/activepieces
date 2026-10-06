@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { AlertTriangle, Check, Copy, RefreshCcw } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { Button } from '@/components/ui/button';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -29,6 +28,43 @@ function buildDiagnosticsText(
     componentStack ?? '(no component stack)',
   ].join('\n');
 }
+
+const StandaloneCopyButton = ({ textToCopy }: { textToCopy: string }) => {
+  const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy diagnostics:', err);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="absolute right-2 top-2 size-7 text-gray-11 hover:text-gray-12 hover:bg-gray-3"
+      onClick={handleCopy}
+    >
+      {copied ? (
+        <Check className="size-4 text-green-500" />
+      ) : (
+        <Copy className="size-4" />
+      )}
+    </Button>
+  );
+};
 
 const ErrorFallbackContent = ({
   error,
@@ -86,11 +122,8 @@ const ErrorFallbackContent = ({
           </button>
           {showDetails && (
             <div className="relative w-full text-left">
-              <CopyButton
+              <StandaloneCopyButton
                 textToCopy={buildDiagnosticsText(error, componentStack)}
-                variant="ghost"
-                withoutTooltip
-                className="absolute right-2 top-2 size-7 text-gray-11"
               />
               <pre className="max-h-56 overflow-auto rounded-lg border bg-gray-3/40 p-4 pr-12 font-mono text-xs leading-relaxed text-gray-11 whitespace-pre-wrap break-words">
                 {buildDiagnosticsText(error, componentStack)}
