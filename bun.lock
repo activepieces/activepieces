@@ -4036,6 +4036,18 @@
         "@types/mime-types": "2.1.1",
       },
     },
+    "packages/pieces/community/google-workspace": {
+      "name": "@activepieces/piece-google-workspace",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/googlechat": {
       "name": "@activepieces/piece-googlechat",
       "version": "0.1.8",
@@ -11810,6 +11822,7 @@
 
     "@activepieces/piece-google-vertexai": ["@activepieces/piece-google-vertexai@workspace:packages/pieces/community/google-vertexai"],
 
+    "@activepieces/piece-google-workspace": ["@activepieces/piece-google-workspace@workspace:packages/pieces/community/google-workspace"],
     "@activepieces/piece-googlechat": ["@activepieces/piece-googlechat@workspace:packages/pieces/community/googlechat"],
 
     "@activepieces/piece-gorgias": ["@activepieces/piece-gorgias@workspace:packages/pieces/community/gorgias"],
