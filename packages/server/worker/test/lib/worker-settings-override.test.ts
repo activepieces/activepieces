@@ -117,6 +117,7 @@ describe('worker settings override', () => {
         delete process.env.AP_EXECUTION_MODE
         delete process.env.AP_WORKER_GROUP_ID
         delete process.env.AP_REUSE_SANDBOX
+        delete process.env.AP_SANDBOX_MEMORY_LIMIT
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
         })
@@ -189,6 +190,15 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_ONLY)
+    }, 10_000)
+
+    it('local AP_SANDBOX_MEMORY_LIMIT overrides server-provided limit', async () => {
+        process.env.AP_SANDBOX_MEMORY_LIMIT = '2097152'
+        const serverSettings = buildWorkerSettingsResponse({ SANDBOX_MEMORY_LIMIT: '1048576' })
+        await connectAndWaitForSettings(serverSettings)
+
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.SANDBOX_MEMORY_LIMIT).toBe('2097152')
     }, 10_000)
 
     it('worker group + SANDBOX_PROCESS passes validation', async () => {
