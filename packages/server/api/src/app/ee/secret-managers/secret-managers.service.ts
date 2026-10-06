@@ -3,6 +3,7 @@ import { ConnectSecretManagerRequest, SecretManagerConfig, SecretManagerConnecti
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
+import { planFeatures } from '../../platform/plan-features'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagerProvider } from './secret-manager-providers/secret-manager-providers'
 import { SecretManagerEntity } from './secret-manager.entity'
@@ -106,6 +107,11 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 
     getSecret: async ({ connectionId, path, platformId, projectIds }: { connectionId: string, path: string, platformId: string, projectIds?: string[] }): Promise<string> => {
+        await planFeatures(log).assertEnabled({
+            platformId,
+            feature: 'secretManagersEnabled',
+            message: 'Secret managers are not on this platform\'s plan',
+        })
         const qb = secretManagerRepository()
             .createQueryBuilder('sm')
             .where('sm.id = :connectionId', { connectionId })
@@ -212,6 +218,9 @@ async function checkConnection(log: FastifyBaseLogger, config: SecretManagerConf
 }
 
 function handleResolveError<T>({ error, throwOnFailure, originalValue }: { error: unknown, throwOnFailure: boolean, originalValue: T }): T {
+    if (error instanceof ActivepiecesError && error.error.code === ErrorCode.FEATURE_DISABLED) {
+        throw error
+    }
     
     
     if (!throwOnFailure) {

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
+import { planFeatures } from '../../../platform/plan-features'
 import { platformRepo, platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
@@ -27,6 +28,11 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
         },
         async getSamlConfigOrThrow(platformId: string | null): Promise<SamlConfigResult> {
             assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
+            await planFeatures(log).assertEnabled({
+                platformId,
+                feature: 'ssoEnabled',
+                message: 'Single sign-on is not on this platform\'s plan. Sign in with your email instead.',
+            })
             const platform = await platformService(log).getOneWithFederatedAuthOrThrow(platformId)
             const saml = platform.federatedAuthProviders.saml
             assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')

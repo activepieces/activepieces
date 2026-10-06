@@ -38,6 +38,7 @@ export const signingKeyController: FastifyPluginAsyncZod = async (app) => {
         assertNotNullOrUndefined(platformId, 'platformId')
         const signingKey = await signingKeyService.get({
             id: req.params.id,
+            platformId,
         })
         if (isNil(signingKey)) {
             throw new ActivepiecesError({
