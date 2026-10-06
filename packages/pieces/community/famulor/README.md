@@ -16,6 +16,8 @@ Audio previews return an Activepieces file. Avatar and greeting uploads use the 
 
 **List assistant picture gallery** returns picture IDs and light/dark previews for **Set assistant avatar**. **Reply to a conversation** supports email and messaging replies; Attachments accepts a JSON array of objects with `filename`, MIME `type` and base64 `content`. Email supports up to five files, messaging supports one, and decoded files must total at most 3 MB. An attachment-only reply can leave Text blank. Check the external channel before retrying a response with `delivery_status=unconfirmed`.
 
+**Create messaging connector** can connect an existing SMS-capable workspace phone number using **Platform → sms** and **Linked Phone Number Id**. Automatic replies remain off for SMS unless **Ai Enabled** is explicitly set to true; leave it blank to use the channel default. **Update messaging connector** can pause or enable automatic replies. **List History** and **List Messaging Connectors** accept SMS channel filters. SMS conversation replies require plain text within one segment (160 GSM-7 units or 70 UTF-16 units); the API rejects oversized replies rather than truncating them.
+
 Calls, SMS, campaigns, purchases and other paid operations can consume credits. Testing a write action executes it against the connected workspace; use explicit test data and check costs first.
 
 ## Triggers

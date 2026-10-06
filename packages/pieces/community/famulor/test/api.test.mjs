@@ -121,6 +121,47 @@ describe('current API transport', () => {
     await expect(action.run(context({ body_kind: 'email', body_text: 'Test' }))).rejects.toThrow('required');
     expect(send).not.toHaveBeenCalled();
   });
+  it.each(['native', 'guided'])('creates an SMS channel without enabling automatic replies for %s inputs', async (kind) => {
+    const id = 'createMessagingConnector';
+    const props = kind === 'native' ? famulor.actions()[id].props : await apiOperation.props.input.props({ operation: id });
+    expect(props.body_platform.options.options).toContainEqual({ label: 'sms', value: 'sms' });
+    expect(props.body_linked_phone_number_id).toBeDefined();
+    expect(props.body_ai_enabled.type).toBe('STATIC_DROPDOWN');
+    expect(props.body_ai_enabled.defaultValue).toBeUndefined();
+    const values = { body_platform: 'sms', body_name: 'Test SMS channel', body_assistant_id: '00000000-0000-4000-8000-000000000001', body_linked_phone_number_id: '00000000-0000-4000-8000-000000000002', body_ai_enabled: null };
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
+    await (kind === 'native' ? famulor.actions()[id] : apiOperation).run(context(kind === 'native' ? values : { operation: id, input: values }));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.lastCall[0]).toMatchObject({ method: 'POST', url: 'https://app.famulor.io/api/v1/messaging-connectors', retries: 0, body: { platform: 'sms', name: 'Test SMS channel', assistant_id: values.body_assistant_id, linked_phone_number_id: values.body_linked_phone_number_id } });
+    expect(send.mock.lastCall[0].body).not.toHaveProperty('ai_enabled');
+  });
+  it.each(['native', 'guided'].flatMap((kind) => [false, true].map((enabled) => [kind, enabled])))('preserves the explicit SMS automatic-reply choice for %s creation: %s', async (kind, enabled) => {
+    const id = 'createMessagingConnector';
+    const values = { body_platform: 'sms', body_name: 'Test SMS channel', body_assistant_id: '00000000-0000-4000-8000-000000000001', body_linked_phone_number_id: '00000000-0000-4000-8000-000000000002', body_ai_enabled: enabled };
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
+    await (kind === 'native' ? famulor.actions()[id] : apiOperation).run(context(kind === 'native' ? values : { operation: id, input: values }));
+    expect(send.mock.lastCall[0].body).toEqual({ platform: 'sms', name: 'Test SMS channel', assistant_id: values.body_assistant_id, linked_phone_number_id: values.body_linked_phone_number_id, ai_enabled: enabled });
+  });
+  it.each(['native', 'guided'].flatMap((kind) => [false, true].map((enabled) => [kind, enabled])))('sets automatic channel replies without changing other settings for %s updates: %s', async (kind, enabled) => {
+    const id = 'updateMessagingConnector';
+    const values = { path_id: '00000000-0000-4000-8000-000000000001', body_ai_enabled: enabled };
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
+    await (kind === 'native' ? famulor.actions()[id] : apiOperation).run(context(kind === 'native' ? values : { operation: id, input: values }));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.lastCall[0]).toMatchObject({ method: 'PATCH', url: 'https://app.famulor.io/api/v1/messaging-connectors/00000000-0000-4000-8000-000000000001', body: { ai_enabled: enabled } });
+    expect(send.mock.lastCall[0].body).toEqual({ ai_enabled: enabled });
+  });
+  it.each(['native', 'guided'])('filters SMS history and channels for %s requests', async (kind) => {
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
+    for (const [id, field] of [['listHistory', 'type'], ['listMessagingConnectors', 'platform']]) {
+      const values = { [`query_${field}`]: 'sms' };
+      await (kind === 'native' ? famulor.actions()[id] : apiOperation).run(context(kind === 'native' ? values : { operation: id, input: values }));
+      const request = send.mock.lastCall[0];
+      expect(request.method).toBe('GET');
+      expect(new URL(request.url).searchParams.get(field)).toBe('sms');
+    }
+    expect(send).toHaveBeenCalledTimes(2);
+  });
   it('lists and plays TTS voices without a realtime variant query', async () => {
     const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
     await famulor.actions().listVoices.run(context({ query_mode: 'tts', query_language: 'de', query_realtime_variant: null }));
