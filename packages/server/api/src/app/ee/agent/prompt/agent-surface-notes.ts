@@ -2,9 +2,8 @@ import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource, agentToolSkills, SKILLS_NOTE_HEADING } from '@activepieces/shared'
 import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
+function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
     source: AgentRunSource
-    messageSource?: 'onboarding'
     currentDate: string
     searchAvailable: boolean
     fetchAvailable: boolean
@@ -35,7 +34,6 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
         + (isChat && agentsAvailable ? AGENTS_NOTE : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')
-        + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
         + (source === AgentRunSource.AGENT ? RECONNECT_NOTE : '')
         + ((source === AgentRunSource.AGENT || isChat) && agentsAvailable ? SELF_EDIT_NOTE : '')
         + (isNil(skillSurface) ? '' : agentToolSkills.renderSkillsNote({ surface: skillSurface }))
@@ -165,7 +163,11 @@ function stripRunNotes(instructions: string): string {
     return instructions.slice(0, Math.min(...boundaries)).trim()
 }
 
-export const agentSurfaceNotes = { buildRunNotes, stripRunNotes }
+function onboardingNote({ source, messageSource }: { source: AgentRunSource, messageSource?: 'onboarding' }): string | null {
+    return source === AgentRunSource.CHAT && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE.trimStart() : null
+}
+
+export const agentSurfaceNotes = { buildRunNotes, onboardingNote, stripRunNotes }
 
 const RECONNECT_NOTE = [
     '\n\n## When one of your tools cannot sign in',
