@@ -150,7 +150,7 @@ async function validateConnection({ request, log }: { request: ConfigureRepoRequ
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_GIT_CREDENTIALS,
             params: {
-                message: error instanceof Error ? error.message : String(error),
+                message: error instanceof Error ? error.message.replaceAll(keyPath, '<ssh-key>') : String(error),
             },
         })
     }
@@ -159,6 +159,9 @@ async function validateConnection({ request, log }: { request: ConfigureRepoRequ
         if (!isNil(keyRemovalError)) {
             log.error({ error: keyRemovalError }, '[gitHelper#validateConnection] Failed to delete the temporary SSH key')
         }
-        await tryCatch(() => fs.rm(tmpFolder, { recursive: true, force: true }))
+        const { error: folderRemovalError } = await tryCatch(() => fs.rm(tmpFolder, { recursive: true, force: true }))
+        if (!isNil(folderRemovalError)) {
+            log.warn({ error: folderRemovalError }, '[gitHelper#validateConnection] Failed to delete the temporary repository folder')
+        }
     }
 }
