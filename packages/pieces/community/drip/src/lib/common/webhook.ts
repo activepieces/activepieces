@@ -7,9 +7,9 @@ const TOKEN_PARAM = 'ap_token';
 const CLAIM_SLOTS = 256;
 const CLAIM_SETTLE_MS = 500;
 const ABANDONED_CLAIM_MS = 60_000;
-const SLOT_DELETE_BATCH = 32;
+const SLOT_BATCH = 32;
 const SLOT_CAPACITY = 16;
-const SLOT_WRITE_ATTEMPTS = 3;
+const INDEX_WRITE_ATTEMPTS = 3;
 
 async function enable({ token, accountId, webhookUrl, store, storeKey, event }: EnableParams): Promise<void> {
   const account = dripApi.parseAccountId(accountId);
@@ -41,10 +41,17 @@ async function disable({ token, store, storeKey }: DisableParams): Promise<void>
   }
   await deleteWebhook({ token, accountId: stored.userId, webhookId: stored.webhookId });
   await store.delete(storeKey);
-  const slots = Array.from({ length: CLAIM_SLOTS }, (_, slot) => slotKeyOf({ storeKey, slot }));
-  for (let start = 0; start < slots.length; start += SLOT_DELETE_BATCH) {
-    await Promise.all(slots.slice(start, start + SLOT_DELETE_BATCH).map((slotKey) => store.delete(slotKey)));
+  const indexKeys = Array.from({ length: CLAIM_SLOTS }, (_, slot) => indexKeyOf({ storeKey, slot }));
+  for (let start = 0; start < indexKeys.length; start += SLOT_BATCH) {
+    await Promise.all(indexKeys.slice(start, start + SLOT_BATCH).map((indexKey) => clearIndex({ store, indexKey })));
   }
+}
+
+async function clearIndex({ store, indexKey }: { store: Store; indexKey: string }): Promise<void> {
+  for (const claimKey of await readIndex({ store, indexKey })) {
+    await store.delete(claimKey);
+  }
+  await store.delete(indexKey);
 }
 
 async function handle({ token, store, storeKey, event, payload, matches }: HandleParams): Promise<unknown[]> {
@@ -84,45 +91,25 @@ async function handle({ token, store, storeKey, event, payload, matches }: Handl
 }
 
 async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey: string; key: string }): Promise<boolean> {
-  const slotKey = claimKeyOf({ storeKey, key });
-  const existing = (await readSlot({ store, slotKey }))[key];
-  if (existing !== undefined && !isAbandoned({ claim: existing, now: Date.now() })) {
+  const claimKey = claimKeyOf({ storeKey, key });
+  const existing = await store.get<DeliveryClaim>(claimKey);
+  if (existing !== null && existing !== undefined && !isAbandoned({ claim: existing, now: Date.now() })) {
     return false;
   }
   const claim: DeliveryClaim = { token: randomUUID(), at: Date.now(), done: false };
   try {
-    await writeEntry({ store, slotKey, key, claim });
+    await store.put<DeliveryClaim>(claimKey, claim);
     await dripApi.sleep(CLAIM_SETTLE_MS);
-    const winner = (await readSlot({ store, slotKey }))[key];
-    if (winner !== undefined && winner.token !== claim.token) {
+    const winner = await store.get<DeliveryClaim>(claimKey);
+    if (winner !== null && winner !== undefined && winner.token !== claim.token) {
       return false;
     }
-    await saveEntry({ store, slotKey, key, claim: { ...claim, done: true } });
+    await indexClaim({ store, indexKey: indexKeyOf({ storeKey, slot: slotOf(key) }), claimKey });
+    await store.put<DeliveryClaim>(claimKey, { ...claim, done: true });
     return true;
   } catch (error) {
-    await releaseClaim({ store, slotKey, key, claimToken: claim.token });
+    await releaseClaim({ store, claimKey, claimToken: claim.token });
     throw error;
-  }
-}
-
-async function readSlot({ store, slotKey }: { store: Store; slotKey: string }): Promise<Record<string, DeliveryClaim>> {
-  const slot = await store.get<DeliverySlot>(slotKey);
-  return dripApi.isRecord(slot) && dripApi.isRecord(slot.entries) ? slot.entries : {};
-}
-
-async function writeEntry({ store, slotKey, key, claim }: { store: Store; slotKey: string; key: string; claim: DeliveryClaim }): Promise<void> {
-  const others = Object.entries(await readSlot({ store, slotKey })).filter(([entryKey]) => entryKey !== key);
-  const kept = others.sort(([, a], [, b]) => (b.at ?? 0) - (a.at ?? 0)).slice(0, SLOT_CAPACITY - 1);
-  await store.put<DeliverySlot>(slotKey, { entries: Object.fromEntries([...kept, [key, claim]]) });
-}
-
-async function saveEntry({ store, slotKey, key, claim }: { store: Store; slotKey: string; key: string; claim: DeliveryClaim }): Promise<void> {
-  for (let attempt = 0; attempt < SLOT_WRITE_ATTEMPTS; attempt++) {
-    await writeEntry({ store, slotKey, key, claim });
-    const saved = (await readSlot({ store, slotKey }))[key];
-    if (saved?.token === claim.token && saved.done === claim.done) {
-      return;
-    }
   }
 }
 
@@ -130,24 +117,46 @@ function isAbandoned({ claim, now }: { claim: DeliveryClaim; now: number }): boo
   return claim.done === false && typeof claim.at === 'number' && now - claim.at > ABANDONED_CLAIM_MS;
 }
 
-async function releaseClaim({ store, slotKey, key, claimToken }: { store: Store; slotKey: string; key: string; claimToken: string }): Promise<void> {
+async function releaseClaim({ store, claimKey, claimToken }: { store: Store; claimKey: string; claimToken: string }): Promise<void> {
   try {
-    const entries = await readSlot({ store, slotKey });
-    if (entries[key]?.token === claimToken) {
-      const rest = Object.fromEntries(Object.entries(entries).filter(([entryKey]) => entryKey !== key));
-      await store.put<DeliverySlot>(slotKey, { entries: rest });
+    const current = await store.get<DeliveryClaim>(claimKey);
+    if (current?.token === claimToken) {
+      await store.delete(claimKey);
     }
   } catch {
     return;
   }
 }
 
-function claimKeyOf({ storeKey, key }: { storeKey: string; key: string }): string {
-  return slotKeyOf({ storeKey, slot: parseInt(key.slice(0, 2), 16) % CLAIM_SLOTS });
+async function readIndex({ store, indexKey }: { store: Store; indexKey: string }): Promise<string[]> {
+  const list = await store.get<unknown>(indexKey);
+  return Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string') : [];
 }
 
-function slotKeyOf({ storeKey, slot }: { storeKey: string; slot: number }): string {
-  return `${storeKey}_d_${slot}`;
+async function indexClaim({ store, indexKey, claimKey }: { store: Store; indexKey: string; claimKey: string }): Promise<void> {
+  for (let attempt = 0; attempt < INDEX_WRITE_ATTEMPTS; attempt++) {
+    const next = [...(await readIndex({ store, indexKey })).filter((item) => item !== claimKey), claimKey];
+    const evicted = next.slice(0, Math.max(0, next.length - SLOT_CAPACITY));
+    await store.put<string[]>(indexKey, next.slice(-SLOT_CAPACITY));
+    for (const old of evicted) {
+      await store.delete(old);
+    }
+    if ((await readIndex({ store, indexKey })).includes(claimKey)) {
+      return;
+    }
+  }
+}
+
+function slotOf(key: string): number {
+  return parseInt(key.slice(0, 2), 16) % CLAIM_SLOTS;
+}
+
+function claimKeyOf({ storeKey, key }: { storeKey: string; key: string }): string {
+  return `${storeKey}_d_${key.slice(0, 40)}`;
+}
+
+function indexKeyOf({ storeKey, slot }: { storeKey: string; slot: number }): string {
+  return `${storeKey}_i_${slot}`;
 }
 
 function withToken({ url, secret }: { url: string; secret: string }): string {
@@ -257,11 +266,10 @@ export const dripWebhook = {
   SLOT_CAPACITY,
   ABANDONED_CLAIM_MS,
   claimKeyOf,
+  indexKeyOf,
 };
 
 type DeliveryClaim = { token: string; at?: number; done?: boolean };
-
-type DeliverySlot = { entries?: Record<string, DeliveryClaim> };
 
 export type DripWebhookInformation = {
   webhookId: string;
