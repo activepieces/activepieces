@@ -1,7 +1,9 @@
 import { ActivepiecesError, ErrorCode, FlowId, isNil } from '@activepieces/core-utils'
 import { ChatUIResponse, FormInputType, FormResponse, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { defaultTheme } from '../../../flags/theme'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { planFeatures } from '../../../platform/plan-features'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { flowVersionService } from '../../flow-version/flow-version.service'
@@ -77,13 +79,14 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         }
         const platformId = await projectService(log).getPlatformId(flow.projectId)
         const platform = await platformService(log).getOneOrThrow(platformId)
+        const brandingEnabled = await planFeatures(log).isEnabled({ platformId, feature: 'customAppearanceEnabled' })
         return {
             id: flow.id,
             title: flow.version.displayName,
             props: flow.version.trigger.settings.input,
             projectId: flow.projectId,
-            platformLogoUrl: platform.logoIconUrl,
-            platformName: platform.name,
+            platformLogoUrl: brandingEnabled ? platform.logoIconUrl : defaultTheme.logos.logoIconUrl,
+            platformName: brandingEnabled ? platform.name : defaultTheme.websiteName,
         }
     },
 })

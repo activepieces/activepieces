@@ -11,6 +11,7 @@ import { distributedLock, distributedStore } from '../database/redis-connections
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
+import { planFeatures } from '../platform/plan-features'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -370,6 +371,14 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function assertOwnKeysAllowed({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    await planFeatures(log).assertEnabled({
+        platformId,
+        feature: 'aiProvidersEnabled',
+        message: 'Your own AI provider keys are not on this platform\'s plan',
+    })
+}
+
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
     return plan.activepiecesAiProviderHidden
@@ -601,6 +610,9 @@ function appliesChatModelIdRule({ provider, config }: { provider: AIProviderName
 }
 
 async function decryptRowAuth({ aiProvider, platformId, log }: { aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {
+    if (aiProvider.provider !== AIProviderName.ACTIVEPIECES) {
+        await assertOwnKeysAllowed({ platformId, log })
+    }
     const auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
     if (aiProvider.provider === AIProviderName.ACTIVEPIECES && !hasManagedKey(auth)) {
         return enrichWithKeysIfNeeded({ providerId: aiProvider.id, platformId, log })

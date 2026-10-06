@@ -10,7 +10,7 @@ import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provi
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentApprovalGate } from './agent-approval-gate'
 import { agentConversationService } from './agent-conversation-service'
-import { agentHelpers } from './agent-helpers'
+import { agentHelpers, SAVED_AGENTS_NOT_ON_PLAN } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
 import { agentService } from './agent-service'
 import { agentPrompt } from './prompt/agent-prompt'
@@ -107,6 +107,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
+        if (!isNil(conversation.agentId)) {
+            await agentHelpers.assertAgentsSurfaceAvailable({ platformId, log, message: SAVED_AGENTS_NOT_ON_PLAN })
+        }
         const agent = isNil(conversation.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })

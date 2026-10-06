@@ -7,6 +7,7 @@ import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
+import { planFeatures } from '../../../../platform/plan-features'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 
@@ -83,7 +84,11 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
 }
 
 const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<PlatformWithoutFederatedAuth | null> => {
-    return platformId ? platformService(log).getOne(platformId) : null
+    if (!platformId) {
+        return null
+    }
+    const brandingEnabled = await planFeatures(log).isEnabled({ platformId, feature: 'customAppearanceEnabled' })
+    return brandingEnabled ? platformService(log).getOne(platformId) : null
 }
 
 const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs): Promise<string> => {

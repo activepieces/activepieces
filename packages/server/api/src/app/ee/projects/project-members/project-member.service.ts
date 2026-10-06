@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, ProjectRole, SeekPage, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, ProjectRole, RoleType, SeekPage, UserId } from '@activepieces/core-utils'
 import { ApEdition, DefaultProjectRole, PlatformRole, ProjectMember, ProjectMemberId, ProjectMemberWithUser, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,6 +7,7 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
+import { planFeatures } from '../../../platform/plan-features'
 import { projectService } from '../../../project/project-service'
 import { UserSchema } from '../../../user/user-entity'
 import { userService } from '../../../user/user-service'
@@ -135,8 +136,13 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         const projectRole = await projectRoleService.getOneOrThrowById({
             id: member.projectRoleId,
         })
-
-        return projectRole
+        if (projectRole.type !== RoleType.CUSTOM) {
+            return projectRole
+        }
+        const customRolesEnabled = await planFeatures(log).isEnabled({ platformId: project.platformId, feature: 'customRolesEnabled' })
+        return customRolesEnabled
+            ? projectRole
+            : projectRoleService.getOneOrThrow({ name: DefaultProjectRole.VIEWER, platformId: project.platformId })
     },
     async update(params: UpdateMemberRole): Promise<ProjectMember> {
         const projectRole = await projectRoleService.getOneOrThrow({

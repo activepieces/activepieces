@@ -104,6 +104,16 @@ describe('connection-resolver service', () => {
         await expect(resolver.obtain('missing')).rejects.toThrow(ConnectionNotFoundError)
     })
 
+    it('fails with the plan message on 402 rather than a generic loading failure', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify({ code: 'FEATURE_DISABLED', params: { message: 'Global connections are not on this platform\'s plan' } }),
+            { status: 402, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(resolver.obtain('my-connection')).rejects.toThrow('Global connections are not on this platform\'s plan')
+    })
+
     it('throws ConnectionExpiredError when status is ERROR', async () => {
         const connection = makeConnection({ status: AppConnectionStatus.ERROR })
         vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
