@@ -1,7 +1,7 @@
 import { ApFile, Property, createAction } from '@activepieces/pieces-framework';
 import { smtpAuth } from '../..';
 import { smtpCommon } from '../common';
-import { Attachment, Headers } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 import { sendEmailActionOutputSchema } from '../output-schemas';
 
@@ -91,7 +91,7 @@ export const sendEmail = createAction({
 
     const attachments = propsValue['attachments'] as {file: ApFile; name: string | undefined; }[];
 
-    const attachment_data: Attachment[] = attachments.map(({file, name}) => {
+    const attachment_data: Mail.Attachment[] = attachments.map(({file, name}) => {
       const lookupResult = mime.lookup(
         file.extension ? file.extension : ''
       );
@@ -113,7 +113,7 @@ export const sendEmail = createAction({
       text: propsValue.body_type === 'plain_text' ? propsValue.body : undefined,
       html: propsValue.body_type === 'html' ? propsValue.body : undefined,
       attachments: attachment_data ? attachment_data : undefined,
-      headers: propsValue.customHeaders as Headers,
+      headers: propsValue.customHeaders as Mail.Headers,
     };
 
     return await sendWithRetry(transporter, mailOptions);

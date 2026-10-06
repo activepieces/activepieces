@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
@@ -83,7 +84,12 @@ export const AllowedDomainDialog = ({
       }}
     >
       <DialogTrigger asChild>
-        <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
+        <Button
+          {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
+          size={'sm'}
+          variant={'basic'}
+          onClick={() => setOpen(true)}
+        >
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>
@@ -162,6 +168,7 @@ export const AllowedDomainDialog = ({
                 {t('Cancel')}
               </Button>
               <Button
+                {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_SUBMIT)}
                 loading={isPending}
                 disabled={!form.formState.isValid}
                 type="submit"

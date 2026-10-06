@@ -7,6 +7,7 @@ import {
   PermissionRow,
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 export function PermissionGrid({
@@ -43,7 +44,7 @@ export function PermissionGrid({
                 className={cn(
                   'size-1.5 shrink-0 rounded-full',
                   changedRowKeys?.includes(row.key)
-                    ? 'bg-accent-11'
+                    ? 'bg-accent-10'
                     : 'bg-transparent',
                 )}
               />
@@ -122,6 +123,7 @@ function Box({
           disabled={disabled}
           aria-label={label}
           onCheckedChange={(value) => onCheckedChange(value === true)}
+          {...adminControl(AdminControl.ROLES_PERMISSION_TOGGLE)}
         />
       ) : (
         <span

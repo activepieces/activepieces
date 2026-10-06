@@ -129,11 +129,11 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     },
     {
         name: 'flow_building',
-        loadWhen: 'before creating, editing, testing or publishing any flow or automation',
+        loadWhen: 'before creating, editing, testing or publishing any flow or automation, including a solution of several flows and tables in one folder',
         guideTopic: 'build_flow',
         entersBuildPhase: true,
         toolNames: [
-            'ap_build_flow', 'ap_add_step', 'ap_update_step', 'ap_delete_step', 'ap_update_trigger',
+            'ap_build_flow', 'ap_create_folder', 'ap_add_step', 'ap_update_step', 'ap_delete_step', 'ap_update_trigger',
             'ap_validate_flow', 'ap_validate_step_config', 'ap_test_flow', 'ap_test_step',
             'ap_search_actions', 'ap_search_triggers', 'ap_set_build_plan', 'ap_lock_and_publish',
         ],

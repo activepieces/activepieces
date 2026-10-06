@@ -55,6 +55,24 @@ After 2 failed fixes on the same step, step back and try one structurally differ
 Before sharing, re-read the request: right trigger, every constraint present as a real step or filter, real field IDs, output where they wanted it, and (if recurring) an actual anti-reprocessing step. Fix gaps first.
 Then show each tested case as one line, `input → what the flow produced`, share the link, and close with the brief: the assumptions you made (each editable) and the obvious next improvements, with quick-reply chips for the top one or two.
 
+## Several jobs: a solution of small flows in one folder
+List the jobs in the request first: intake, processing, storage, reporting, approval, alerting. One job is one flow. Two or more jobs, or a job several flows need, is a **solution**: a folder of small flows, one job each, joined by subflows and Tables. Do this without being asked; one big flow breaks everywhere at once and hides which part failed.
+- Example: "when an order comes in by webhook, save it, and send me a daily summary" is **Receive orders** (webhook → Call Flow), **Save order** (Callable Flow → Tables create) and **Daily order summary** (schedule → Tables find → message), in an `Order intake` folder with an `Orders` table.
+- Work shared by several entry points (a webhook and a form, two schedules) goes in ONE Callable subflow that each entry flow calls. Never copy the same steps into two flows.
+
+How to build one:
+1. **Folder:** `ap_create_folder` with a name for the whole solution; pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
+2. **Names:** each flow named for its one job in plain words ("Save order", never "Flow 2").
+3. **Order:** tables, then subflows, then the flows that call them; each needs an id the previous one returned.
+4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow` with `exampleData.sampleData` listing every input, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read inputs as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (empty at run time). Add `returnResponse` only if a caller needs data back.
+5. **Caller:** a `callFlow` step with `flowId` = the subflow's **externalId** (from `ap_build_flow`, not its flow id), `mode: "simple"`, every sample-data key in `flowProps.payload` as an object, and `waitForResponse` only when the subflow returns a response.
+6. **Tables steps:** `table_id` is the table's **externalId**; form `values` are keyed by field externalId.
+7. **Check the whole solution:** once every flow passes its own checks, run `ap_validate_flow({folderName})` and fix what it lists until it returns ✅. Use it too to check an existing solution.
+8. **Build card:** one for the whole solution: `flowName` is the solution name, one step per flow and table, `flowId` the entry flow.
+
+Testing: a Call Flow only reaches a published subflow, so a caller's test fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow` and trigger data shaped `{"data": <its sample data>}`, and test the caller's steps before the Call Flow.
+Turning it on: one "Turn it on?" card for the whole solution; on yes, publish the subflows first and their callers last.
+
 ## Turn it on?
 Chat never publishes on its own. End every validated flow with one quick-reply card, "Turn it on?" ("Turn it on" / "Not yet"). Only a yes calls `ap_lock_and_publish({flowId})`. Never call a flow live, running or active unless publish succeeded; until then it's "a draft, not running yet". For other flows, report the status the tools show.
 
