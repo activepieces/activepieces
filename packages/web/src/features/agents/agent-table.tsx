@@ -16,14 +16,14 @@ import { AgentActionsMenu } from './agent-actions-menu';
 import { AgentMark } from './agent-mark';
 import { AgentToolStack } from './agent-tool-stack';
 
-const PRIVATE_DOT_COLOR = '#A3A3A3';
+const PRIVATE_DOT_COLOR = 'var(--gray-11)';
 
 export const AgentTable = ({
   agents,
   projectDotColorFor,
   onOpen,
 }: AgentTableProps) => (
-  <div className="overflow-x-auto rounded-[10px] border border-border">
+  <div className="overflow-x-auto rounded-[10px] border border-gray-6">
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
@@ -55,7 +55,7 @@ export const AgentTable = ({
                   {agent.visibility === AgentVisibility.RESTRICTED && (
                     <Lock
                       size={12}
-                      className="shrink-0 text-muted-foreground"
+                      className="shrink-0 text-gray-11"
                       aria-label={t(
                         'Only you and the people you shared it with',
                       )}
@@ -68,7 +68,7 @@ export const AgentTable = ({
               <TextWithTooltip
                 tooltipMessage={agent.description ?? t('No description yet')}
               >
-                <span className="block truncate text-muted-foreground">
+                <span className="block truncate text-gray-11">
                   {agent.description ?? t('No description yet')}
                 </span>
               </TextWithTooltip>
