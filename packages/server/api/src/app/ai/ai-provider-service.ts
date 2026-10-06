@@ -3,6 +3,7 @@ import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
 import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, aiProviderUtils, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
+import { EntityManager, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
@@ -193,23 +194,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
             await platformModelTierService.assertKeyCanBeDeleted({ manager, platformId, configId: providerId })
-            const row = await aiProviderRepo(manager).findOneBy({ platformId, id: providerId })
-            await aiProviderRepo(manager).delete({
-                platformId,
-                id: providerId,
-            })
-            return row
+            return deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
         })
-        if (!isNil(deleted) && deleted.provider === AIProviderName.ACTIVEPIECES) {
-            await revokeStoredManagedKey({ auth: deleted.auth, platformId, log })
-        }
+        await revokeKeyIfManaged({ row: deleted, log })
     },
     async deleteManagedProvider({ platformId }: { platformId: PlatformId }): Promise<void> {
-        const managed = await aiProviderRepo().findOneBy({ platformId, provider: AIProviderName.ACTIVEPIECES })
-        if (isNil(managed)) {
-            return
-        }
-        await this.delete(platformId, managed.id)
+        const deleted = await transaction((manager) => deleteRowForUpdate({ manager, where: { platformId, provider: AIProviderName.ACTIVEPIECES } }))
+        await revokeKeyIfManaged({ row: deleted, log })
     },
     async recordKeyObservation({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
         const status = classifyProviderOutcome(signal)
@@ -583,6 +574,22 @@ async function storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth, a
         .execute()
     const row = await getRowByIdOrThrow({ platformId, configId: providerId })
     return encryptUtils.decryptObject<AIProviderAuthConfig>(row.auth)
+}
+
+async function deleteRowForUpdate({ manager, where }: { manager: EntityManager, where: FindOptionsWhere<AIProviderSchema> }): Promise<AIProviderSchema | null> {
+    const row = await aiProviderRepo(manager).findOne({ where, lock: { mode: 'pessimistic_write' } })
+    if (isNil(row)) {
+        return null
+    }
+    await aiProviderRepo(manager).delete({ platformId: row.platformId, id: row.id })
+    return row
+}
+
+async function revokeKeyIfManaged({ row, log }: { row: AIProviderSchema | null, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(row) || row.provider !== AIProviderName.ACTIVEPIECES) {
+        return
+    }
+    await revokeStoredManagedKey({ auth: row.auth, platformId: row.platformId, log })
 }
 
 function managedKeyHash(auth: AIProviderAuthConfig): string | undefined {

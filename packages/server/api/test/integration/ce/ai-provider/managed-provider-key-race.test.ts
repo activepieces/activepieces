@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, apId, isNil } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
@@ -171,6 +171,39 @@ describe('managed AI provider deletion', () => {
         await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
 
         await aiProviderService(app.log).delete(ctx.platform.id, await findManagedRowId(ctx.platform.id))
+
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+    })
+
+    it('revokes the minted key when an admin deletes the managed provider mid-mint', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(async () => {
+            await aiProviderService(app.log).delete(ctx.platform.id, await findManagedRowId(ctx.platform.id))
+            return { key: 'sk-or-1', data: mockOpenRouterKey('hash-1') }
+        })
+
+        await expect(aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)).rejects.toThrow()
+
+        expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
+        expect(await db.findOneBy('ai_provider', { platformId: ctx.platform.id, provider: AIProviderName.ACTIVEPIECES })).toBeNull()
+    })
+
+    it('removes the managed provider on teardown even when a live tier references it', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        const managedId = await findManagedRowId(ctx.platform.id)
+        await db.save('platform_model_tier', {
+            id: apId(),
+            platformId: ctx.platform.id,
+            name: 'Legacy tier',
+            emoji: '⚡',
+            position: 0,
+            entries: [{ configId: managedId, modelId: 'openai/gpt-4o' }],
+            isDefault: true,
+        })
+        await expect(aiProviderService(app.log).delete(ctx.platform.id, managedId)).rejects.toThrow()
+
+        await aiProviderService(app.log).deleteManagedProvider({ platformId: ctx.platform.id })
 
         expect(deleteKey).toHaveBeenCalledExactlyOnceWith({ hash: 'hash-1' })
         expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
