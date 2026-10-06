@@ -1,6 +1,6 @@
-import { isObject } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AGENT_SKILLS, AgentSkill, agentToolSkills, chatBilling, GET_TOOL_SCHEMA_NAME, LAZY_TOOL_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SkillSurface } from '@activepieces/shared'
-import { asSchema, jsonSchema, Schema, tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { asSchema, jsonSchema, JSONSchema7, Schema, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { cardTitleFields, plainJsonSchema } from './tool-primitives'
 
@@ -136,13 +136,32 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
                 return { success: false, error: new Error(`"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`) }
             }
-            const inner = await asSchema(target.inputSchema).validate?.(input)
-            if (inner?.success === false) {
+            const inner = await validateToolInput({ target, input })
+            if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
-            return { success: true, value: { ...parsed.data, input: inner?.success === true ? inner.value : input } }
+            return { success: true, value: { ...parsed.data, input: inner.value } }
         },
     })
+}
+
+async function validateToolInput({ target, input }: { target: ToolSet[string], input: Record<string, unknown> }): Promise<ToolInputCheck> {
+    const schema = asSchema(target.inputSchema)
+    if (schema.validate !== undefined) {
+        const result = await schema.validate(input)
+        return result.success ? { success: true, value: isObject(result.value) ? result.value : input } : result
+    }
+    const { data: zodSchema } = await tryCatch(async () => z.fromJSONSchema(zodJsonSchema(await schema.jsonSchema)))
+    if (isNil(zodSchema)) {
+        return { success: true, value: input }
+    }
+    const result = zodSchema.safeParse(input)
+    return result.success ? { success: true, value: input } : { success: false, error: new Error(result.error.message) }
+}
+
+function zodJsonSchema(schema: JSONSchema7): z.core.JSONSchema.JSONSchema {
+    const plain: z.core.JSONSchema.JSONSchema = JSON.parse(JSON.stringify(schema))
+    return plain
 }
 
 async function renderSkill({ skill, guide, registry, core }: {
@@ -199,6 +218,8 @@ export type LazyToolChunkResult = {
     hold?: { callId: string, chunk: Record<string, unknown> }
     release?: string
 }
+
+type ToolInputCheck = { success: true, value: Record<string, unknown> } | { success: false, error: Error }
 
 type LazyToolInput = z.infer<typeof LAZY_TOOL_OUTER_SCHEMA>
 

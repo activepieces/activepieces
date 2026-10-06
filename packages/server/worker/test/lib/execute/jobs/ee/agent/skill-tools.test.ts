@@ -1,5 +1,5 @@
 import { LAZY_TOOL_NAME, MAX_CORE_TOOLS } from '@activepieces/shared'
-import { asSchema, Schema, tool, ToolSet } from 'ai'
+import { asSchema, jsonSchema, Schema, tool, ToolSet } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { buildSkillSurface, unwrapLazyToolChunk } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
@@ -74,6 +74,37 @@ describe('buildSkillSurface', () => {
 })
 
 describe('ap_lazy_tool', () => {
+    function surfaceWithJsonSchemaTool(execute: (input: unknown) => Promise<unknown>) {
+        return buildSkillSurface({
+            tools: {
+                ...stubTools(CHAT_TOOL_NAMES),
+                ap_rename_flow: tool({
+                    description: 'Rename a flow.',
+                    inputSchema: jsonSchema<Record<string, unknown>>({ type: 'object', properties: { flowId: { type: 'string' } }, required: ['flowId'] }),
+                    execute,
+                }),
+            },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+    }
+
+    it('checks a tool that only has a JSON schema, like an MCP tool, before running it', async () => {
+        const surface = surfaceWithJsonSchemaTool(async () => ({ renamed: true }))
+        const rejected = await validateWrapped({ surface, value: { tool: 'ap_rename_flow', input: {} } })
+        expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_rename_flow"')
+        expect(errorMessageOf(rejected)).toContain('Input schema')
+        expect((await validateWrapped({ surface, value: { tool: 'ap_rename_flow', input: { flowId: 'f1' } } })).success).toBe(true)
+    })
+
+    it('hands a JSON-schema tool its input unchanged', async () => {
+        const execute = vi.fn(async () => ({ renamed: true }))
+        await executeWrapped({ surface: surfaceWithJsonSchemaTool(execute), toolName: 'ap_rename_flow', input: { flowId: 'f1' } })
+        expect(execute).toHaveBeenCalledWith({ flowId: 'f1' }, CALL_OPTIONS)
+    })
+
     it('runs the inner tool with the original call options', async () => {
         await expect(executeWrapped({ surface: chatSurface(), toolName: 'ap_add_step', input: { value: 'x' } })).resolves.toEqual({ ran: 'ap_add_step', value: 'x' })
     })
