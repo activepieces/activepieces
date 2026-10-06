@@ -217,6 +217,33 @@ describe('Props resolver', () => {
         evaluateSpy.mockRestore()
     })
 
+    test('flatten array path keeps the JSON shape of live step output values', async () => {
+        const createdAt = new Date('2026-10-06T10:00:00.000Z')
+        const state = await executionState.upsertStep('step_5', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { rows: [{ createdAt, note: undefined }, { createdAt, note: 'b' }] },
+        }))
+        const { resolvedInput } = await propsResolverService.resolve({
+            unresolvedInput: {
+                dates: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\', \'createdAt\'])}}',
+                notes: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\', \'note\'])}}',
+            },
+            executionState: state,
+        })
+        expect(resolvedInput).toEqual({ dates: [createdAt.toJSON(), createdAt.toJSON()], notes: ['b'] })
+
+        const { resolvedInput: viaScript } = await propsResolverService.resolve({
+            unresolvedInput: {
+                dates: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\'].concat([\'createdAt\']))}}',
+                notes: '{{flattenNestedKeys(step_5[\'output\'], [\'rows\'].concat([\'note\']))}}',
+            },
+            executionState: state,
+        })
+        expect(resolvedInput).toEqual(viaScript)
+    })
+
     test('flatten array path on a missing step resolves to an empty string', async () => {
         const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(step_7.output, [\'users\', \'name\'])}}', executionState })
         expect(resolvedInput).toEqual('')

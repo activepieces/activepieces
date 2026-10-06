@@ -36,9 +36,12 @@ export const scriptEvaluator = {
 }
 
 function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
+    if (typeof data === 'object' && data !== null && 'toJSON' in data && typeof data.toJSON === 'function') {
+        return flattenNestedKeys(data.toJSON(), pathToMatch)
+    }
     if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
         for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-            if (key === pathToMatch[0]) {
+            if (key === pathToMatch[0] && value !== undefined) {
                 return flattenNestedKeys(value, pathToMatch.slice(1))
             }
         }
