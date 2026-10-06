@@ -3325,5 +3325,10 @@
   "{count, plural, =1 {Task finished} other {# tasks finished}}": "{count, plural, =1 {Task finished} other {# tasks finished}}",
   "Needs your input": "Needs your input",
   "Task": "Task",
-  "Asked by {taskTitle}": "Asked by {taskTitle}"
+  "Asked by {taskTitle}": "Asked by {taskTitle}",
+  "{count, plural, =1 {1 task} other {# tasks}}": "{count, plural, =1 {1 task} other {# tasks}}",
+  "Exit full screen": "Exit full screen",
+  "Full screen": "Full screen",
+  "Findings": "Findings",
+  "Made": "Made"
 }

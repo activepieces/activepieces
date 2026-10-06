@@ -63,6 +63,8 @@ export type ChatStoreState = {
   builds: Record<string, BuildState>;
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
+  taskPanelToolCallId: string | null;
+  taskPanelAutoOpen: boolean;
 
   setConversationId: (conversationId: string | null) => void;
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
@@ -71,6 +73,8 @@ export type ChatStoreState = {
   dismissForm: (messageId: string) => void;
   resetInteractions: () => void;
   resetBuilds: () => void;
+  openTaskPanel: (toolCallId: string) => void;
+  closeTaskPanel: () => void;
 };
 
 export type ChatStore = ReturnType<typeof createChatStore>;
@@ -94,6 +98,8 @@ export const createChatStore = () =>
     builds: {},
     dismissedGateIds: {},
     lastDismissedFormId: null,
+    taskPanelToolCallId: null,
+    taskPanelAutoOpen: true,
 
     approveGate: (gateId: string, payload?: Record<string, unknown>) => {
       set((prev) => dismissAndCleanup(prev, gateId));
@@ -119,10 +125,17 @@ export const createChatStore = () =>
         toolCallMeta: {},
         dismissedGateIds: {},
         lastDismissedFormId: null,
+        taskPanelToolCallId: null,
       });
     },
     resetBuilds: () => {
       set({ builds: {} });
+    },
+    openTaskPanel: (toolCallId: string) => {
+      set({ taskPanelToolCallId: toolCallId });
+    },
+    closeTaskPanel: () => {
+      set({ taskPanelToolCallId: null, taskPanelAutoOpen: false });
     },
   }));
 

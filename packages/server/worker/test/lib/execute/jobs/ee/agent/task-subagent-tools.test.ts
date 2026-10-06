@@ -83,6 +83,28 @@ describe('createTaskSubagentTools', () => {
         expect(mainPhase.phase).toBe('build')
     })
 
+    it('streams its status steps as a timeline', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Built.', artifacts: [] }, EXECUTION_OPTIONS)
+            return {
+                ...turnResult(),
+                uiParts: [
+                    { type: PersistedAgentPartType.THINKING_STATUS, text: 'Looking at your Leads table' },
+                    { type: PersistedAgentPartType.THINKING_STATUS, text: '  ' },
+                    { type: PersistedAgentPartType.THINKING_STATUS, text: 'Checking the flow works' },
+                ],
+            }
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })
+
+        const result = await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        expect(result).toMatchObject({ activity: { statusLine: 'Checking the flow works', timeline: [
+            { kind: 'status', text: 'Looking at your Leads table' },
+            { kind: 'status', text: 'Checking the flow works' },
+        ] } })
+    })
+
     it('keeps the card details out of what the main model reads', async () => {
         const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })
 
