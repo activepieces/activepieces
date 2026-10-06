@@ -4020,6 +4020,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/google-translate": {
+      "name": "@activepieces/piece-google-translate",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/google-vertexai": {
       "name": "@activepieces/piece-google-vertexai",
       "version": "0.1.7",
@@ -11808,6 +11820,7 @@
 
     "@activepieces/piece-google-tasks": ["@activepieces/piece-google-tasks@workspace:packages/pieces/community/google-tasks"],
 
+    "@activepieces/piece-google-translate": ["@activepieces/piece-google-translate@workspace:packages/pieces/community/google-translate"],
     "@activepieces/piece-google-vertexai": ["@activepieces/piece-google-vertexai@workspace:packages/pieces/community/google-vertexai"],
 
     "@activepieces/piece-googlechat": ["@activepieces/piece-googlechat@workspace:packages/pieces/community/googlechat"],
