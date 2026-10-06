@@ -10,6 +10,7 @@ import { folkProps } from '../common/props';
 export const companyUpdated = createTrigger({
   auth: folkAuth,
   name: 'company_updated',
+  classification: 'READ',
   displayName: 'Company Updated',
   description: 'Fires when a company is updated in your Folk workspace.',
   aiMetadata: {

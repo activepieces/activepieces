@@ -7,6 +7,7 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Form, FormField } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -154,19 +155,18 @@ export const PredefinedInputsForm = () => {
     <Form {...form}>
       <ScrollArea className="h-full">
         <div className="flex items-start border-b gap-3 p-4">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-sm border bg-background">
-            <img
-              className="size-8 object-contain"
-              src={selectedPiece?.logoUrl}
-              alt={selectedPiece?.displayName}
-            />
-          </div>
+          <LogoPlate
+            className="size-11 rounded-sm p-1.5"
+            border
+            src={selectedPiece?.logoUrl}
+            alt=""
+          />
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium">
               {selectedAction?.displayName}
             </div>
             {selectedAction?.description && (
-              <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+              <p className="mt-0.5 text-xs text-gray-11 line-clamp-2">
                 {selectedAction.description}
               </p>
             )}

@@ -27,11 +27,11 @@ function SpreadsheetTable({
     <div className={cn('overflow-auto', className)}>
       <table className="w-full table-fixed text-sm">
         <thead className="sticky top-0 z-10">
-          <tr className="border-b border-border bg-muted">
+          <tr className="border-b border-gray-6 bg-gray-3">
             {table.headers.map((header, i) => (
               <th
                 key={i}
-                className="break-words bg-muted px-3 py-2 text-left align-top font-medium text-muted-foreground"
+                className="break-words bg-gray-3 px-3 py-2 text-left align-top font-medium text-gray-11"
               >
                 {header}
               </th>
@@ -42,14 +42,12 @@ function SpreadsheetTable({
           {rows.map((row, rowIdx) => (
             <tr
               key={rowIdx}
-              className="border-b border-border transition-colors last:border-b-0 hover:bg-accent/30"
+              className="border-b border-gray-6 transition-colors last:border-b-0 hover:bg-gray-4/30"
             >
               {row.map((cell, colIdx) => (
                 <td key={colIdx} className="px-3 py-2 align-top">
                   {cell === '' ? (
-                    <span className="italic text-muted-foreground/40">
-                      {t('empty')}
-                    </span>
+                    <span className="italic text-gray-11">{t('empty')}</span>
                   ) : (
                     <span className="whitespace-pre-wrap break-words">
                       {cell}
@@ -62,7 +60,7 @@ function SpreadsheetTable({
         </tbody>
       </table>
       {truncated && (
-        <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+        <div className="border-t border-gray-6 px-3 py-2 text-xs text-gray-11">
           {t('Showing {shown} of {total} rows — expand to see all', {
             shown: rows.length,
             total: totalRows,

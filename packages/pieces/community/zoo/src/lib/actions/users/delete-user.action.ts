@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteUserAction = createAction({
   name: 'delete_user',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete User',
   description: 'Delete your user account',
   audience: 'both',

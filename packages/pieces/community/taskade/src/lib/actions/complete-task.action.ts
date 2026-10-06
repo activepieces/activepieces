@@ -6,6 +6,7 @@ import { TaskadeAPIClient } from '../common/client';
 export const completeTaskAction = createAction({
 	auth: taskadeAuth,
 	name: 'taskade-complete-task',
+	classification: 'WRITE',
 	displayName: 'Complete Task',
 	description: 'Complete a task in a project.',
 	audience: 'both',

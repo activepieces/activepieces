@@ -6,6 +6,7 @@ import { EmailOctopusClient } from "../common/client";
 export const createList = createAction({
     auth: emailOctopusAuth,
     name: 'create_list',
+    classification: 'WRITE',
     displayName: 'Create List',
     description: 'Creates a new mailing list.',
     audience: 'both',

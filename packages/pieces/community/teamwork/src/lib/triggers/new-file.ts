@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newFile = createTrigger({
 	name: 'new_file',
+	classification: 'READ',
 	displayName: 'New File',
 	description: 'Fires when a new file is added.',
 	aiMetadata: {

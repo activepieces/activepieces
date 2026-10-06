@@ -16,6 +16,7 @@ const TRIGGER_KEY = 'dimo-ignition-trigger';
 export const ignitionTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'ignition-trigger',
+	classification: 'READ',
 	displayName: 'Ignition Status Trigger',
 	description: 'Triggers when vehicle ignition status changes (ON/OFF).',
 	aiMetadata: {

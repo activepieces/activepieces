@@ -1,3 +1,4 @@
+import { PlatformConfigurationSettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Activity, Server } from 'lucide-react';
 import { Control } from 'react-hook-form';
@@ -15,8 +16,6 @@ import { Switch } from '@/components/ui/switch';
 
 import { TrackedEventsDialog } from './tracked-events-dialog';
 
-import type { ConfigurationsFormValues } from './index';
-
 export const TelemetrySection = ({
   control,
   disabled,
@@ -25,7 +24,7 @@ export const TelemetrySection = ({
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <h2 className="text-base font-semibold">{t('Telemetry')}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t(
             'Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.',
           )}
@@ -95,6 +94,6 @@ export const TelemetrySection = ({
 };
 
 type TelemetrySectionProps = {
-  control: Control<ConfigurationsFormValues>;
+  control: Control<PlatformConfigurationSettings>;
   disabled: boolean;
 };

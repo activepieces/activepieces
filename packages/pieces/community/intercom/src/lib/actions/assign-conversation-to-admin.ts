@@ -6,6 +6,7 @@ import { conversationIdProp } from '../common/props';
 export const assignConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'assignConversationAction',
+	classification: 'WRITE',
 	displayName: 'Assign conversation to an admin or a team',
 	description: '(Re)assign conversation to a specific admin or team.',
 	audience: 'both',

@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getUserAction = createAction({
   name: 'get_user',
+  classification: 'READ',
   displayName: 'Get User',
   description: 'Retrieve your user information',
   audience: 'both',

@@ -23,6 +23,11 @@ import {
   ImapConnectionLostError,
   ImapEmailNotFoundError,
 } from './errors';
+import {
+  assertFolderExists,
+  assertUidPlusForDelete,
+  transferMessages,
+} from './message';
 
 type Message = {
   data: ParsedMail & { uid: number };
@@ -50,7 +55,11 @@ async function confirmEmailExists(
     { uid: true }
   );
 
-  if (!searchResult || searchResult.length === 0) {
+  if (searchResult === false) {
+    throw new ImapError('The server rejected the search for the email.');
+  }
+
+  if (searchResult.length === 0) {
     throw new ImapEmailNotFoundError();
   }
 }
@@ -81,6 +90,7 @@ async function copyEmail<T extends { success: boolean; newUid?: number }>({
     auth,
     sourceMailbox,
     async (imapClient) => {
+      await assertFolderExists({ client: imapClient, path: targetMailbox });
       await confirmEmailExists(imapClient, uid);
 
       const result: false | CopyResponseObject = await imapClient.messageCopy(
@@ -108,12 +118,31 @@ async function deleteEmail<T extends { success: boolean }>({
   mailbox: string;
   uid: number;
 }): Promise<T> {
-  return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
-    await confirmEmailExists(imapClient, uid);
-    await imapClient.messageDelete({ uid: uid.toString() }, { uid: true });
+  return (await performMailboxOperation(
+    auth,
+    mailbox,
+    async (imapClient) => {
+      assertUidPlusForDelete({ client: imapClient });
+      await confirmEmailExists(imapClient, uid);
+      const deleted = await imapClient.messageDelete(
+        { uid: uid.toString() },
+        { uid: true }
+      );
+      if (!deleted) {
+        throw new ImapError('The server refused to delete the email.');
+      }
+      const remaining = await imapClient.search(
+        { uid: uid.toString() },
+        { uid: true }
+      );
+      if (remaining === false || remaining.length > 0) {
+        throw new ImapError('The email is still present after the delete.');
+      }
 
-    return { success: true };
-  })) as T;
+      return { success: true };
+    },
+    { readOnly: false }
+  )) as T;
 }
 
 async function fetchEmails<T extends Message[]>({
@@ -169,21 +198,20 @@ async function moveEmail<T extends { success: boolean; newUid?: number }>({
     auth,
     sourceMailbox,
     async (imapClient) => {
+      await assertFolderExists({ client: imapClient, path: targetMailbox });
       await confirmEmailExists(imapClient, uid);
 
-      const result: false | CopyResponseObject = await imapClient.messageMove(
-        { uid: uid.toString() },
-        targetMailbox,
-        { uid: true }
-      );
+      const result = await transferMessages({
+        client: imapClient,
+        uids: [uid],
+        target: targetMailbox,
+        mode: 'move',
+      });
 
-      if (result) {
-        const newUid = result.uidMap?.get(uid);
-        return { success: true, newUid };
-      }
-
-      return { success: false };
-    }
+      const newUid = result.uidMap?.get(uid);
+      return { success: true, newUid };
+    },
+    { readOnly: false }
   )) as T;
 }
 
@@ -199,10 +227,10 @@ async function parseStream(stream: Readable) {
   });
 }
 
-async function performImapOperation(
+async function performImapOperation<T>(
   auth: ImapAuth,
-  callback: (imapClient: ImapFlow) => Promise<unknown>
-) {
+  callback: (imapClient: ImapFlow) => Promise<T>
+): Promise<T> {
   let imapClient: ImapFlow | null = null;
 
   try {
@@ -220,7 +248,10 @@ async function performImapOperation(
       throw new ImapConnectionTimeoutError();
     } else if (imapError.code === 'ERR_SSL_PACKET_LENGTH_TOO_LONG') {
       throw new ImapSslPacketLengthTooLongError();
-    } else if (imapError.responseText?.includes('AUTH')) {
+    } else if (
+      imapError.responseText?.includes('AUTH') ||
+      ('authenticationFailed' in imapError && imapError.authenticationFailed === true)
+    ) {
       throw new ImapAuthenticationError();
     } else if (imapError.message?.includes('IMAP connection')) {
       throw new ImapConnectionLostError();
@@ -228,10 +259,17 @@ async function performImapOperation(
       throw new ImapCertificateError();
     } else if (imapError instanceof ImapError) {
       throw imapError;
+    } else if (
+      imapError.code === 'NotFound' ||
+      ('mailboxMissing' in imapError && imapError.mailboxMissing === true)
+    ) {
+      throw new ImapMailboxNotFoundError();
     }
 
     throw new ImapError(
-      imapError.message || 'Failed to perform IMAP operation'
+      imapError.responseText ||
+        imapError.message ||
+        'Failed to perform IMAP operation'
     );
   } finally {
     try {

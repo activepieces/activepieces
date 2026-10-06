@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const getPaymentLinkPayments = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-payment-link-payments',
+  classification: 'SEARCH',
   displayName: 'Get Payments',
   description: 'List all the payments associated with the payment link. This API must be called using a backend bearer token.',
   audience: 'both',

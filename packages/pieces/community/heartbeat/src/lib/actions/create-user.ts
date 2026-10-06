@@ -14,6 +14,7 @@ import * as z from 'zod/mini'
 export const heartBeatCreateUser = createAction({
   auth: heartbeatAuth,
   name: 'heartbeat_create_user',
+  classification: 'WRITE',
   displayName: 'Create User',
   description: 'Create a new user in a Heartbeat community',
   audience: 'both',

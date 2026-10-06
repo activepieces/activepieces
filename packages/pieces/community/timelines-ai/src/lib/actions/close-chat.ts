@@ -5,6 +5,7 @@ import { chatDropdown } from '../common/properties';
 export const closeChat = createAction({
   auth: timelinesAiAuth,
   name: 'closeChat',
+  classification: 'WRITE',
   displayName: 'Close Chat',
   description: 'Programmatically mark a chat as closed by its chat_id.',
   audience: 'both',

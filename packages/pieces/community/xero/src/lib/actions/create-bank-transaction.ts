@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroCreateBankTransaction = createAction({
   auth: xeroAuth,
   name: 'xero_create_bank_transaction',
+  classification: 'WRITE',
   displayName: 'Create Bank Transaction',
   description: 'Creates a new Spend/Receive Money bank transaction.',
   audience: 'both',

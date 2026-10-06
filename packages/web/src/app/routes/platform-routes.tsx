@@ -1,5 +1,5 @@
-import React, { Suspense } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { Suspense, useMemo } from 'react';
+import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
@@ -7,10 +7,26 @@ import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
 
-const SettingsBilling = React.lazy(() => import('./platform/billing'));
-const SettingsUsage = React.lazy(() => import('./platform/usage'));
+import { LegacyPathRedirect } from './platform/legacy-path-redirect';
+import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
+import {
+  PlanFeatureGuard,
+  PlanFeatureSample,
+} from './platform/plan-feature-sample';
+import { useAdminControlClicks } from './platform/use-admin-control-clicks';
+import { useAdminPageViewed } from './platform/use-admin-page-viewed';
+
+const SettingsBilling = React.lazy(() =>
+  import('./platform/billing').then((m) => ({ default: m.BillingPlanTab })),
+);
+const SettingsUsage = React.lazy(() =>
+  import('./platform/billing').then((m) => ({ default: m.BillingUsageTab })),
+);
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
+);
+const EventDestinationFormPage = React.lazy(
+  () => import('./platform/infra/event-destinations/destination-form'),
 );
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
 const PlatformConfigurationsPage = React.lazy(() =>
@@ -59,9 +75,14 @@ const GlobalConnectionsTable = React.lazy(() =>
     default: m.GlobalConnectionsTable,
   })),
 );
-const PlatformPiecesPage = React.lazy(() =>
+const PiecesListPage = React.lazy(() =>
   import('./platform/setup/pieces').then((m) => ({
-    default: m.PlatformPiecesPage,
+    default: m.PiecesListTab,
+  })),
+);
+const PieceSetsPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
+    default: m.PieceSetsTab,
   })),
 );
 const PieceSetDetailsPage = React.lazy(() =>
@@ -79,9 +100,10 @@ const PlatformConnectionsPage = React.lazy(
   () => import('./platform/connections'),
 );
 
-function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
-}
+const HEALTH_TAB_PATHS = { system: '', runs: 'runs', queue: 'queue' };
+const WORKERS_TAB_PATHS = { health: '', 'worker-groups': 'groups' };
+const AI_TAB_PATHS = { providers: '', capabilities: 'capabilities' };
+const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'piece-sets' };
 
 export const platformRoutes = [
   {
@@ -110,7 +132,7 @@ export const platformRoutes = [
     path: '/platform/users',
     element: (
       <PlatformLayout>
-        <PageTitle title="Users">
+        <PageTitle title="Members">
           <SuspenseWrapper>
             <UsersPage />
           </SuspenseWrapper>
@@ -131,57 +153,101 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Setup">
-          <Navigate to="/platform/setup/ai" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/ai',
+    path: '/platform/ai',
     element: (
       <PlatformLayout>
         <PageTitle title="AI Center">
-          <SuspenseWrapper>
-            <AIProvidersPage />
-          </SuspenseWrapper>
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="providers" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/setup/ai-capabilities',
-    element: <Navigate to="/platform/setup/ai?tab=capabilities" replace />,
-  },
-  {
-    path: '/platform/setup/mcp',
+    path: '/platform/ai/capabilities',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP Server">
+        <PageTitle title="AI Capabilities">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="capabilities" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/mcp',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="MCP Tools">
           <SuspenseWrapper>
-            <PlatformMcpPage />
+            <PlatformMcpPage section="access" />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/setup/pieces',
+    path: '/platform/mcp/tools',
+    element: <Navigate to="/platform/mcp" replace />,
+  },
+  {
+    path: '/platform/mcp/activity',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="MCP Activity">
+          <SuspenseWrapper>
+            <PlatformMcpPage section="activity" />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/pieces',
     element: (
       <PlatformLayout>
         <PageTitle title="Pieces">
-          <SuspenseWrapper>
-            <PlatformPiecesPage />
-          </SuspenseWrapper>
+          <LegacyTabRedirect
+            basePath="/platform/pieces"
+            tabPaths={PIECES_TAB_PATHS}
+          >
+            <SuspenseWrapper>
+              <PiecesListPage />
+            </SuspenseWrapper>
+          </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/setup/pieces/piece-sets/:id',
+    path: '/platform/pieces/piece-sets',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Piece Sets">
+          <LegacyTabRedirect
+            basePath="/platform/pieces"
+            tabPaths={PIECES_TAB_PATHS}
+          >
+            <SuspenseWrapper>
+              <PieceSetsPage />
+            </SuspenseWrapper>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/pieces/piece-sets/:id',
     element: (
       <PlatformLayout>
         <PageTitle title="Piece Set">
@@ -193,31 +259,35 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/connections',
+    path: '/platform/connections/global',
     element: (
       <PlatformLayout>
-        <PageTitle title="Connections">
-          <SuspenseWrapper>
-            <GlobalConnectionsTable />
-          </SuspenseWrapper>
+        <PageTitle title="Global Connections">
+          <PlanFeatureSample feature="globalConnections">
+            <SuspenseWrapper>
+              <GlobalConnectionsTable />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/setup/templates',
+    path: '/platform/templates',
     element: (
       <PlatformLayout>
         <PageTitle title="Templates">
-          <SuspenseWrapper>
-            <PlatformTemplatesPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="templates">
+            <SuspenseWrapper>
+              <PlatformTemplatesPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/setup/general',
+    path: '/platform/general',
     element: (
       <PlatformLayout>
         <PageTitle title="General">
@@ -229,11 +299,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/branding',
-    element: <Navigate to="/platform/setup/general" replace />,
-  },
-  {
-    path: '/platform/setup/billing',
+    path: '/platform/billing',
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
@@ -245,7 +311,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/usage',
+    path: '/platform/usage',
     element: (
       <PlatformLayout>
         <PageTitle title="Usage">
@@ -257,7 +323,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/billing/success',
+    path: '/platform/billing/success',
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
@@ -267,7 +333,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/billing/error',
+    path: '/platform/billing/error',
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
@@ -277,123 +343,176 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Security">
-          <Navigate to="/platform/security/audit-logs" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/api-keys',
+    path: '/platform/api-keys',
     element: (
       <PlatformLayout>
         <PageTitle title="API Keys">
-          <SuspenseWrapper>
-            <ApiKeysPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="apiKeys">
+            <SuspenseWrapper>
+              <ApiKeysPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/security/secret-managers',
+    path: '/platform/secret-managers',
     element: (
       <PlatformLayout>
         <PageTitle title="Secret managers">
-          <SuspenseWrapper>
-            <SecretManagersPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="secretManagers">
+            <SuspenseWrapper>
+              <SecretManagersPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/security/audit-logs',
+    path: '/platform/audit-log',
     element: (
       <PlatformLayout>
         <PageTitle title="Audit Logs">
-          <SuspenseWrapper>
-            <AuditLogsPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="auditLogs">
+            <SuspenseWrapper>
+              <AuditLogsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/security/embed',
+    path: '/platform/embedding',
     element: (
       <PlatformLayout>
         <PageTitle title="Embedding">
-          <SuspenseWrapper>
-            <EmbedPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="embedding">
+            <SuspenseWrapper>
+              <EmbedPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/security/sso',
+    path: '/platform/sso',
     element: (
       <PlatformLayout>
         <PageTitle title="SSO">
-          <SuspenseWrapper>
-            <SSOPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="sso">
+            <SuspenseWrapper>
+              <SSOPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/security/project-roles',
+    path: '/platform/users/roles',
     element: (
       <PlatformLayout>
-        <PageTitle title="Project Roles">
-          <SuspenseWrapper>
-            <ProjectRolePage />
-          </SuspenseWrapper>
+        <PageTitle title="Roles & Access">
+          <PlanFeatureSample feature="projectRoles">
+            <SuspenseWrapper>
+              <ProjectRolePage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/infrastructure',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Infrastructure">
-          <Navigate to="/platform/infrastructure/workers" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/workers',
+    path: '/platform/workers',
     element: (
       <PlatformLayout>
         <PageTitle title="Workers">
-          <SuspenseWrapper>
-            <SettingsWorkersPage />
-          </SuspenseWrapper>
+          <LegacyTabRedirect
+            basePath="/platform/workers"
+            tabPaths={WORKERS_TAB_PATHS}
+          >
+            <SuspenseWrapper>
+              <SettingsWorkersPage section="health" />
+            </SuspenseWrapper>
+          </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/infrastructure/health',
+    path: '/platform/workers/groups',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Worker Groups">
+          <LegacyTabRedirect
+            basePath="/platform/workers"
+            tabPaths={WORKERS_TAB_PATHS}
+          >
+            <SuspenseWrapper>
+              <SettingsWorkersPage section="worker-groups" />
+            </SuspenseWrapper>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/health',
     element: (
       <PlatformLayout>
         <PageTitle title="Health">
-          <SuspenseWrapper>
-            <SettingsHealthPage />
-          </SuspenseWrapper>
+          <LegacyTabRedirect
+            basePath="/platform/health"
+            tabPaths={HEALTH_TAB_PATHS}
+          >
+            <SuspenseWrapper>
+              <SettingsHealthPage section="system" />
+            </SuspenseWrapper>
+          </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/infrastructure/configurations',
+    path: '/platform/health/runs',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Runs Health">
+          <LegacyTabRedirect
+            basePath="/platform/health"
+            tabPaths={HEALTH_TAB_PATHS}
+          >
+            <SuspenseWrapper>
+              <SettingsHealthPage section="runs" />
+            </SuspenseWrapper>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/health/queue',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Queue Health">
+          <LegacyTabRedirect
+            basePath="/platform/health"
+            tabPaths={HEALTH_TAB_PATHS}
+          >
+            <SuspenseWrapper>
+              <SettingsHealthPage section="queue" />
+            </SuspenseWrapper>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/configurations',
     element: (
       <PlatformLayout>
         <PageTitle title="Configurations">
@@ -405,7 +524,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/triggers',
+    path: '/platform/triggers',
     element: (
       <PlatformLayout>
         <PageTitle title="Trigger Health">
@@ -417,15 +536,54 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/event-destinations',
+    path: '/platform/audit-log/streaming',
     element: (
       <PlatformLayout>
         <PageTitle title="Event Streaming">
-          <SuspenseWrapper>
-            <EventDestinationsPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="eventStreaming">
+            <SuspenseWrapper>
+              <EventDestinationsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
   },
+  ...[
+    { path: '/platform/audit-log/streaming/new', title: 'New Destination' },
+    { path: '/platform/audit-log/streaming/:id', title: 'Edit Destination' },
+  ].map(({ path, title }) => ({
+    path,
+    element: (
+      <PlatformLayout>
+        <PageTitle title={title}>
+          <PlanFeatureGuard feature="eventStreaming">
+            <SuspenseWrapper>
+              <EventDestinationFormPage />
+            </SuspenseWrapper>
+          </PlanFeatureGuard>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  })),
+  ...[
+    '/platform/setup/*',
+    '/platform/security/*',
+    '/platform/infrastructure/*',
+  ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
 ];
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  const page = useAdminPage();
+  useAdminPageViewed(page);
+  useAdminControlClicks(page);
+  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
+}
+
+function useAdminPage(): string {
+  const { pathname } = useLocation();
+  return useMemo(
+    () => matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname,
+    [pathname],
+  );
+}

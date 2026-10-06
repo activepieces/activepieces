@@ -24,6 +24,7 @@ function toContextArray(result: unknown): SessionContext[] {
 export const listContexts = createAction({
   auth: hedyAuth,
   name: 'list-contexts',
+  classification: 'SEARCH',
   displayName: 'List Session Contexts',
   description: 'Retrieve all session contexts.',
   audience: 'both',

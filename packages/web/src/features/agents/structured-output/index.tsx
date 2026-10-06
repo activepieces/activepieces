@@ -62,7 +62,7 @@ export const AgentStructuredOutput = ({
                           {field.displayName}
                         </span>
                         {field.description && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-gray-11">
                             {field.description}
                           </span>
                         )}
@@ -84,7 +84,7 @@ export const AgentStructuredOutput = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="text-muted-foreground text-sm">
+          <div className="text-gray-11 text-sm">
             {t('No structured output fields yet.')}
           </div>
         )}

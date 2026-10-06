@@ -45,6 +45,7 @@ const polling: Polling<
 export const updatedNoteTrigger = createTrigger({
   auth: granolaAuth,
   name: 'updated_note',
+  classification: 'READ',
   displayName: 'Updated Note',
   description:
     'Triggers when an existing meeting note is updated in Granola (e.g. summary edited, attendees changed).',

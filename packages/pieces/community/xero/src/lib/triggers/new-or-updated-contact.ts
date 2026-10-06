@@ -12,6 +12,7 @@ import { props } from '../common/props';
 export const xeroNewOrUpdatedContact = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_or_updated_contact',
+  classification: 'READ',
   displayName: 'New or Updated Contact',
   description: 'Fires when a contact is created or updated (via Xero webhooks).',
   aiMetadata: {

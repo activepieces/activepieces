@@ -15,6 +15,7 @@ type StreakComment = {
 export const createCommentAction = createAction({
   auth: streakAuth,
   name: 'create_comment',
+  classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Add a comment to a box.',
   audience: 'both',

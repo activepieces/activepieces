@@ -7,6 +7,7 @@ import { callIdDropdown } from '../common/props';
 export const getCall = createAction({
   auth: retellAiAuth,
   name: 'get_call',
+  classification: 'READ',
   displayName: 'Get Call',
   description: 'Retrieve detailed data of a specific call (e.g., transcript), given a Call ID.',
   audience: 'both',

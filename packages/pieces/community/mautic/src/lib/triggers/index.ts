@@ -376,6 +376,7 @@ function registerTrigger({
   return createTrigger({
     auth: mauticAuth,
     name: `mautic_${name}_trigger`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

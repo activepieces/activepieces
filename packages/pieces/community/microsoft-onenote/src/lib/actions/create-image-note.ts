@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const createImageNote = createAction({
 	auth: oneNoteAuth,
 	name: 'create_image_note',
+	classification: 'WRITE',
 	displayName: 'Create Image Note',
 	description: 'Create a note containing an embedded image via a public image URL.',
 	audience: 'both',

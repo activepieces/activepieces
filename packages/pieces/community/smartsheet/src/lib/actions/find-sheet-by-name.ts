@@ -6,6 +6,7 @@ import { smartsheetCommon } from '../common';
 export const findSheetByName = createAction({
   auth: smartsheetAuth,
   name: 'find_sheet_by_name',
+  classification: 'SEARCH',
   displayName: 'Find Sheet(s)',
   description: 'Fetches existings sheets matching provided filter criteria.',
   audience: 'both',

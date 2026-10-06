@@ -5,6 +5,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const unsubscribePerson = createAction({
   name: 'unsubscribe_person', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'DESTRUCTIVE',
   auth: talkableAuth,
   displayName: 'Unsubscribe person',
   description: 'Unsubscribe person by email',

@@ -108,6 +108,13 @@ describe('modulo', () => {
     });
     expect(await modulo.run(ctx)).toBe(-1);
   });
+
+  test('throws on zero divisor', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 10, second_number: 0 },
+    });
+    await expect(modulo.run(ctx)).rejects.toThrow();
+  });
 });
 
 describe('generateRandom', () => {
@@ -120,4 +127,46 @@ describe('generateRandom', () => {
     expect(result).toBeLessThanOrEqual(10);
   });
 
+  test('stays inside decimal bounds', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 1.5, second_number: 3.5 },
+    });
+    for (let i = 0; i < 50; i++) {
+      const result = await generateRandom.run(ctx);
+      expect(result).toBeGreaterThanOrEqual(2);
+      expect(result).toBeLessThanOrEqual(3);
+    }
+  });
+
+  test('accepts reversed bounds', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 10, second_number: 1 },
+    });
+    for (let i = 0; i < 50; i++) {
+      const result = await generateRandom.run(ctx);
+      expect(result).toBeGreaterThanOrEqual(1);
+      expect(result).toBeLessThanOrEqual(10);
+    }
+  });
+
+  test('returns the bound when both are equal', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 7, second_number: 7 },
+    });
+    expect(await generateRandom.run(ctx)).toBe(7);
+  });
+
+  test('throws when the range holds no whole number', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 1.2, second_number: 1.8 },
+    });
+    await expect(generateRandom.run(ctx)).rejects.toThrow();
+  });
+
+  test('throws when both bounds are the same decimal', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 2.5, second_number: 2.5 },
+    });
+    await expect(generateRandom.run(ctx)).rejects.toThrow();
+  });
 });

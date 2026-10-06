@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDate
 export const updateOrder = createAction({
   auth: ninjapipeAuth,
   name: 'update_order',
+  classification: 'WRITE',
   displayName: 'Update Order',
   description: 'Updates an order by ID.',
   audience: 'both',

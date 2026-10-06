@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const newCompanyTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'new-company',
+	classification: 'READ',
 	displayName: 'New Company',
 	description: 'Triggers when a new company is created.',
 	aiMetadata: {

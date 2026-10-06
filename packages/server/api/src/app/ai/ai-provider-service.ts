@@ -1,9 +1,10 @@
-import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
-import { modelCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivepiecesError, AiProviderCredentials, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
+import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, aiProviderUtils, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
 import { distributedLock, distributedStore } from '../database/redis-connections'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
@@ -12,6 +13,7 @@ import { encryptUtils } from '../helper/encryption'
 import { platformService } from '../platform/platform.service'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviderHealth } from './ai-provider-health'
+import { platformModelTierService } from './platform-model-tier-service'
 import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
@@ -29,6 +31,7 @@ const CONFIRM_MIN_INTERVAL_SECONDS = 10
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
+        await modelTierCatalog.warmUp()
         cron.schedule('0 0 * * *', () => {
             log.info('Clearing AI provider models cache')
             modelsCache.clear()
@@ -143,15 +146,22 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         }
 
-        if (request.enabledForChat === true) {
-            await aiProviderRepo().manager.transaction(async (manager) => {
+        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds)
+        await transaction(async (manager) => {
+            if (changesModelScope) {
+                await platformModelTierService.assertKeyScopeKeepsTiers({
+                    manager,
+                    platformId,
+                    configId: providerId,
+                    modelScope: request.modelScope,
+                    modelIds: request.modelIds,
+                })
+            }
+            if (request.enabledForChat === true) {
                 await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
-                await manager.update(AIProviderEntity, providerId, updates)
-            })
-        }
-        else {
-            await aiProviderRepo().update(providerId, updates)
-        }
+            }
+            await manager.update(AIProviderEntity, providerId, updates)
+        })
     },
 
     async getChatProviderName({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<AIProviderName | null> {
@@ -181,9 +191,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
-        await aiProviderRepo().delete({
-            platformId,
-            id: providerId,
+        await transaction(async (manager) => {
+            await platformModelTierService.assertKeyCanBeDeleted({ manager, platformId, configId: providerId })
+            await aiProviderRepo(manager).delete({
+                platformId,
+                id: providerId,
+            })
         })
     },
     async recordKeyObservation({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
@@ -198,6 +211,26 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const demotesHealthyKey = status !== 'active' && aiProvider.status === 'active'
         if (!demotesHealthyKey || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
             await aiProviderHealth(log).record({ platformId, providerId, signal })
+            return
+        }
+        await distributedStore.runOnceWithin(
+            getAiProviderConfirmKey(providerId),
+            CONFIRM_MIN_INTERVAL_SECONDS,
+            () => this.recheck({ platformId, providerId, expectVersion: aiProvider.statusVersion }),
+        )
+    },
+
+    async confirmReportedOutcome({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
+        const status = classifyProviderOutcome(signal)
+        if (status === 'no_change') {
+            return
+        }
+        const aiProvider = await aiProviderRepo().findOneBy({ id: providerId, platformId })
+        if (isNil(aiProvider) || aiProvider.status === status || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+            return
+        }
+        if (aiProviders[aiProvider.provider].validationSkipsModelEndpoint === true) {
+            await aiProviderHealth(log).record({ platformId, providerId, signal, expectVersion: aiProvider.statusVersion })
             return
         }
         await distributedStore.runOnceWithin(
@@ -247,6 +280,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
         const auth = await decryptRowAuth({ aiProvider, platformId, log })
         return { ...aiProviderCredentials({ provider: aiProvider.provider, auth, config: aiProvider.config }), configId: aiProvider.id, platformId, modelScope: aiProvider.modelScope, modelIds: aiProvider.modelIds }
+    },
+    async credentialsForTierKey({ platformId, key }: { platformId: PlatformId, key: AIProviderSchema }): Promise<AiProviderCredentials> {
+        const auth = await decryptRowAuth({ aiProvider: key, platformId, log })
+        return aiProviderCredentials({ provider: key.provider, auth, config: key.config })
     },
     async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
         await ensureManagedProviderRow({ platformId })
@@ -440,7 +477,8 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             throw error
         }
         const catalog = await modelCatalog.load()
-        modelsCache.set(cacheKey, data.map(model => ({
+        const offerableModels = appliesChatModelIdRule({ provider, config }) ? data.filter(model => model.type !== AIProviderModelType.TEXT || aiProviderUtils.isChatModelId({ modelId: model.id })) : data
+        modelsCache.set(cacheKey, offerableModels.map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,
@@ -448,6 +486,10 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
         })))
     }
     return modelsCache.get(cacheKey)!
+}
+
+function appliesChatModelIdRule({ provider, config }: { provider: AIProviderName, config: AIProviderConfig }): boolean {
+    return !('models' in config) && aiProviders[provider].modelIdsAreCustomerNamed !== true
 }
 
 async function decryptRowAuth({ aiProvider, platformId, log }: { aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderAuthConfig> {

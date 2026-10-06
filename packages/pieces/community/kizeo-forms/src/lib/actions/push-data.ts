@@ -6,6 +6,7 @@ import { kizeoFormsAuth } from '../..';
 export const pushData = createAction({
   auth: kizeoFormsAuth,
   name: 'push_data', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   displayName: 'Push Data',
   description: 'Push a data to a form',
   audience: 'both',

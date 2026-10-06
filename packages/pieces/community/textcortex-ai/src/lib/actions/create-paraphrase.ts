@@ -7,6 +7,7 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createParaphrase = createAction({
   auth: textcortexAuth,
   name: 'create_paraphrase',
+  classification: 'READ',
   displayName: 'Create Paraphrase',
   description: 'Rewrite text while preserving its meaning.',
   audience: 'both',

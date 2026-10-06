@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppP
 export const createCommentAction = createAction({
   auth: podioAuth,
   name: 'create_comment',
+  classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Post a comment on an item or task.',
   audience: 'both',

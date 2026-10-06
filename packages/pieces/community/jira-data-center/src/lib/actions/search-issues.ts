@@ -6,6 +6,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const searchIssuesAction = createAction({
 	name: 'search_issues',
+	classification: 'SEARCH',
 	displayName: 'Search Issues',
 	description: 'Search for issues with JQL',
 	audience: 'both',

@@ -7,6 +7,7 @@ import { leadSelectDropdownProp } from '../common/props';
 export const getLeadAction = createAction({
     auth: hunterAuth,
     name: 'get-lead',
+    classification: 'READ',
     displayName: 'Get Lead',
     description: 'Retrieve details of a specific lead.',
     audience: 'both',

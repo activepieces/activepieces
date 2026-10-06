@@ -148,3 +148,135 @@ describe('tier native model ids', () => {
         }
     })
 })
+
+describe('aiProviderUtils.isChatModelId', () => {
+    const isChat = (modelId: string) => aiProviderUtils.isChatModelId({ modelId })
+
+    it.each([
+        'whisper-1',
+        'canary-whisper',
+        'tts-1',
+        'tts-1-hd-1106',
+        'gpt-4o-mini-tts',
+        'gpt-4o-transcribe',
+        'qwen-tts',
+    ])('rejects %s, which speaks audio rather than chat', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'text-embedding-3-small',
+        'text-embedding-3-large',
+        'text-embedding-v3',
+        'gemini-embedding-001',
+        'embedding-3',
+        'bge-reranker-v2-m3',
+    ])('rejects %s, which returns vectors the chat actions cannot read', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'omni-moderation-latest',
+        'text-moderation-stable',
+        'sora-2',
+        'sora',
+        'codex-mini-latest',
+        'computer-use-preview',
+        'babbage-002',
+        'davinci-002',
+        'gpt-4o-realtime-preview',
+        'gpt-4o-audio-preview',
+        'glm-4-voice',
+        'speech-01-turbo',
+    ])('rejects %s, which needs an endpoint other than chat completion', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'gpt-image-1',
+        'gpt-image-2',
+        'dall-e-3',
+        'dall-e-2',
+        'chatgpt-image-latest',
+    ])('rejects %s, so an image model never lands in a text dropdown', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'gpt-4o',
+        'gpt-4.1-mini',
+        'o3',
+        'claude-sonnet-4-6',
+        'gemini-2.5-pro',
+        'deepseek-chat',
+        'kimi-k2',
+    ])('accepts %s', (modelId) => {
+        expect(isChat(modelId)).toBe(true)
+    })
+
+    it.each([
+        'ft:gpt-4o-2024-08-06:acme:support:9xYz',
+        'ft:gpt-4o-2024-08-06:acme:content-moderation:9xYz',
+        'ft:gpt-4o-mini-2024-07-18:voiceflow::AbCd',
+        'ft:gpt-4o-mini-2024-07-18:acme:tts-helper:AbCd',
+        'ft:gpt-4o-mini-2024-07-18:personal::AbCd:ckpt-step-100',
+        'ft:open-mistral-7b:voice-bot:20240514:7e773925',
+        'gpt-35-turbo-0613.ft-b044a9d3cf9c4228b5d393567f693b83',
+        'gpt-4o-mini-2024-07-18.ft-0ab3f80e-voice-agent',
+    ])('accepts the fine-tune %s, judged by its base model rather than the name its owner chose', (modelId) => {
+        expect(isChat(modelId)).toBe(true)
+    })
+
+    it('rejects a fine-tune whose base model cannot chat', () => {
+        expect(isChat('ft:babbage-002:acme::AbCd')).toBe(false)
+    })
+
+    it('accepts a model id nobody has seen, so a self-hoster keeps their own model', () => {
+        expect(isChat('my-company-llm-v2')).toBe(true)
+    })
+
+    it('accepts an image-reading chat model, which the bare image rule used to eat', () => {
+        expect(isChat('gpt-4o-image-input')).toBe(true)
+    })
+
+    it('ignores case and surrounding space, so a provider echoing an odd id still filters', () => {
+        expect(isChat(' WHISPER-1 ')).toBe(false)
+        expect(isChat(' GPT-4O ')).toBe(true)
+    })
+})
+
+describe('Google models that Google has deprecated', () => {
+    const deprecated = ['gemini-2.5-pro', 'gemini-2.5-flash']
+
+    it('are not offered to someone using their own Google key, since new Google projects cannot call them', () => {
+        for (const provider of [AIProviderName.GOOGLE, AIProviderName.VERTEX]) {
+            const offered = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+            expect(offered.some((id) => deprecated.includes(id))).toBe(false)
+            expect(offered.length).toBeGreaterThan(0)
+        }
+    })
+
+    it('still run for a step or key that chose them, but only after every current model', () => {
+        const runnable = aiProviderUtils.runnableChatModelIds({ provider: AIProviderName.GOOGLE })
+        const offered = (aiProviderUtils.getCuratedChatModels({ provider: AIProviderName.GOOGLE }) ?? []).map((model) => model.id)
+
+        expect(runnable.slice(0, offered.length)).toEqual(offered)
+        expect(runnable.slice(offered.length)).toEqual(deprecated)
+    })
+
+    it('still run on Activepieces credits, so steps saved with them keep working', () => {
+        for (const model of deprecated) {
+            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES]).toContain(`google/${model}`)
+        }
+    })
+
+    it('are still recognised as our own model ids, so analytics and billing keep the name', () => {
+        for (const model of deprecated) {
+            expect(aiProviderUtils.isCuratedChatModelId({ modelId: model })).toBe(true)
+        }
+    })
+
+    it('are never the default for image generation with a Google key', () => {
+        expect(AI_PROVIDER_CAPABILITIES[AIProviderName.GOOGLE].defaultImageModel).toBe('gemini-3.1-flash-image')
+    })
+})

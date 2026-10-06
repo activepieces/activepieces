@@ -20,5 +20,17 @@
   "sonar-reasoning-pro": "sonar-reasoning-pro",
   "sonar-reasoning": "sonar-raisonnement",
   "sonar-pro": "sonar-pro",
-  "sonar": "sonar"
+  "sonar": "sonar",
+  "Presence Penalty": "Pénalité de présence",
+  "Frequency Penalty": "Pénalité de fréquence",
+  "Longest reply in tokens, about 4 characters each.": "Réponse la plus longue en jetons, environ 4 caractères chacun.",
+  "What you want the model to answer or do.": "Ce que le modèle doit répondre ou faire.",
+  "Messages sent before the question, such as a system instruction.": "Messages envoyés avant la question, comme une instruction système.",
+  "From 0 to 1. Adjust this or Temperature, not both.": "De 0 à 1. Ajustez ceci ou la température, pas les deux.",
+  "From 0 to 2. Lower is more focused, higher is more varied.": "De 0 à 2. Plus bas est plus ciblé, plus haut est plus varié.",
+  "To get your API key:\n1. Open [API Keys](https://console.perplexity.ai/project/keys) in the Perplexity API Console.\n2. Create a new key.\n3. Copy the key and paste it here.": "Pour obtenir votre clé API :\n1. Ouvrez [API Keys](https://console.perplexity.ai/project/keys) dans la Perplexity API Console.\n2. Créez une nouvelle clé.\n3. Copiez la clé et collez-la ici.",
+  "Ask a question and get an answer sourced from the live web.": "Posez une question et obtenez une réponse tirée du web en direct.",
+  "Pro models dig deeper and Reasoning models think before answering.": "Les modèles Pro creusent davantage et les modèles Reasoning réfléchissent avant de répondre.",
+  "Higher values push the model toward new topics.": "Des valeurs plus élevées orientent le modèle vers de nouveaux sujets.",
+  "Higher values make the model repeat itself less.": "Des valeurs plus élevées réduisent les répétitions du modèle."
 }

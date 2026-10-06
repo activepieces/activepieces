@@ -22,6 +22,7 @@ function sleep(ms: number): Promise<void> {
 
 export const updateRecord = createAction({
   name: 'update_record',
+  classification: 'WRITE',
   auth: vtigerAuth,
   displayName: 'Update Record',
   description: 'Update a Record',

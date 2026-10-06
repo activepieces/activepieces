@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const makePhoneCall = createAction({
   auth: famulorAuth,
   name: 'makePhoneCall',
+  classification: 'WRITE',
   displayName: 'Make Phone Call',
   description: 'Initiate an AI-powered phone call to a customer.',
   audience: 'both',

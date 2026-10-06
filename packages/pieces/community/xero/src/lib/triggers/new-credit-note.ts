@@ -106,6 +106,7 @@ AppConnectionValueForAuthProperty<typeof xeroAuth>,
 export const xeroNewCreditNote = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_credit_note',
+  classification: 'READ',
   displayName: 'New Credit Note',
   description: 'Fires when a new credit note is created.',
   aiMetadata: {

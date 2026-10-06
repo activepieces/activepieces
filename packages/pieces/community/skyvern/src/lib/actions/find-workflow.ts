@@ -8,6 +8,7 @@ import { ListWorkflowResponse } from '../common/props';
 export const findWorkflowAction = createAction({
 	auth: skyvernAuth,
 	name: 'find-workflow',
+	classification: 'SEARCH',
 	displayName: 'Find Workflow',
 	description: 'Finds workflow based on title.',
 	audience: 'both',

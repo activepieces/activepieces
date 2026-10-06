@@ -55,9 +55,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return platformPlan
     },
 
-    async onPlatformCreated(platformId: string): Promise<void> {
-        await createInitialBilling(platformId)
+    async onPlatformCreated(platformId: string): Promise<PlatformPlan> {
+        const platformPlan = await createInitialBilling(platformId)
         await enrollBillingProviderOnCreate(platformId, log)
+        return platformPlan
     },
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {

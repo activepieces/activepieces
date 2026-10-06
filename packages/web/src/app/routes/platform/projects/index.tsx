@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import {
   DataTable,
   RowDataWithActions,
@@ -40,6 +39,7 @@ import {
 } from '@/features/projects';
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
 
@@ -50,7 +50,6 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isEnabled = platform.plan.billedTeamProjectsLimit !== 0;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
 
@@ -268,6 +267,7 @@ export default function ProjectsPage() {
                 )}
                 entityName={t('Projects')}
                 buttonText={t('Delete')}
+                controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
                     (row) => row.id !== currentProject?.id,
@@ -289,8 +289,9 @@ export default function ProjectsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     disabled={!canDeleteAny}
+                    {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
                   >
                     <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
@@ -340,6 +341,7 @@ export default function ProjectsPage() {
               <Button
                 variant="ghost"
                 className="size-8 p-0"
+                {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}
                 onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -362,98 +364,89 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <LockedFeatureGuard
-      featureKey="PROJECTS"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Projects')}
-      lockDescription={t(
-        'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
-    >
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
-          title={t('Projects')}
-          description={t('Manage your automation projects')}
-        />
-        <div className="px-6 pt-4">
-          <Item variant="outline">
-            <ItemMedia variant="icon">
-              <UserCircle />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
-              <ItemDescription>
-                {t(
-                  'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
-                )}
-              </ItemDescription>
-            </ItemContent>
-            <ItemActions>
-              <Switch
-                checked={platform.autoCreatePersonalProjects}
-                onCheckedChange={(checked) =>
-                  toggleAutoCreatePersonalProjects(checked)
-                }
-                disabled={isAutoCreatePersonalProjectsPending}
-              />
-            </ItemActions>
-          </Item>
-        </div>
-        <DataTable
-          emptyStateTextTitle={t('No projects found')}
-          emptyStateTextDescription={t(
-            'Start by creating projects to manage your automation teams',
-          )}
-          emptyStateIcon={<Package className="size-14" />}
-          onRowClick={async (project) => {
-            await projectCollectionUtils.setCurrentProject(project.id);
-            navigate('/');
-          }}
-          filters={[
-            {
-              type: 'input',
-              title: t('Name'),
-              accessorKey: 'displayName',
-              icon: CheckIcon,
-            },
-            {
-              type: 'select',
-              title: t('Type'),
-              accessorKey: 'type',
-              options: Object.values(ProjectType).map((type) => {
-                return {
-                  label:
-                    formatUtils.convertEnumToHumanReadable(type) + ' Project',
-                  value: type,
-                };
-              }),
-              icon: CheckIcon,
-            },
-          ]}
-          columns={columnsWithCheckbox}
-          page={{
-            data: allProjectsWithGlobalConnectionsCount,
-            next: null,
-            previous: null,
-          }}
-          isLoading={false}
-          isError={false}
-          errorStateEntity={t('projects')}
-          clientPagination={true}
-          bulkActions={bulkActions}
-          toolbarButtons={toolbarButtons}
-          actions={actions}
-        />
-        <EditProjectDialog
-          open={editDialogOpen}
-          onClose={() => {
-            setEditDialogOpen(false);
-          }}
-          initialValues={editDialogInitialValues}
-          projectId={editDialogProjectId}
-        />
+    <div className="flex flex-col w-full">
+      <DashboardPageHeader
+        title={t('Projects')}
+        description={t('Manage your automation projects')}
+      />
+      <div className="px-6 pt-4">
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <UserCircle />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
+            <ItemDescription>
+              {t(
+                'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
+              )}
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Switch
+              checked={platform.autoCreatePersonalProjects}
+              onCheckedChange={(checked) =>
+                toggleAutoCreatePersonalProjects(checked)
+              }
+              disabled={isAutoCreatePersonalProjectsPending}
+              {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
+            />
+          </ItemActions>
+        </Item>
       </div>
-    </LockedFeatureGuard>
+      <DataTable
+        emptyStateTextTitle={t('No projects found')}
+        emptyStateTextDescription={t(
+          'Start by creating projects to manage your automation teams',
+        )}
+        emptyStateIcon={<Package className="size-14" />}
+        onRowClick={async (project) => {
+          await projectCollectionUtils.setCurrentProject(project.id);
+          navigate('/');
+        }}
+        filters={[
+          {
+            type: 'input',
+            title: t('Name'),
+            accessorKey: 'displayName',
+            icon: CheckIcon,
+          },
+          {
+            type: 'select',
+            title: t('Type'),
+            accessorKey: 'type',
+            options: Object.values(ProjectType).map((type) => {
+              return {
+                label:
+                  formatUtils.convertEnumToHumanReadable(type) + ' Project',
+                value: type,
+              };
+            }),
+            icon: CheckIcon,
+          },
+        ]}
+        columns={columnsWithCheckbox}
+        page={{
+          data: allProjectsWithGlobalConnectionsCount,
+          next: null,
+          previous: null,
+        }}
+        isLoading={false}
+        isError={false}
+        errorStateEntity={t('projects')}
+        clientPagination={true}
+        bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
+        actions={actions}
+      />
+      <EditProjectDialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+        }}
+        initialValues={editDialogInitialValues}
+        projectId={editDialogProjectId}
+      />
+    </div>
   );
 }

@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const validateRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'validateRegistrationFolder',
+  classification: 'WRITE',
   displayName: 'Valider le dossier de formation',
   description: "Passer l'état du dossier de formation à l'état validé",
   audience: 'both',

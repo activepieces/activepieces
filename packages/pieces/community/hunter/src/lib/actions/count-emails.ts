@@ -7,6 +7,7 @@ import { domainProp, companyProp, emailTypeProp } from '../common/props';
 export const countEmailsAction = createAction({
     auth: hunterAuth,
     name: 'count-emails',
+    classification: 'READ',
     displayName: 'Count Emails',
     description: 'Returns the number of email addresses found for a domain or company.',
     audience: 'both',

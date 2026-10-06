@@ -12,17 +12,17 @@ export const subtraction = createAction({
   outputSchema: subtractionActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Subtraction',
-  description: 'Subtract the first number from the second number',
-  aiMetadata: { description: 'Compute the difference of two numbers. Critical: the operand order is the reverse of what the prop names suggest, because it returns second_number - first_number; put the amount being subtracted in first_number and the value it is subtracted from in second_number. Pick this for a two-operand subtraction only, using the sibling Addition, Multiplication, Division, or Modulo actions for other operations and the Code piece for multi-term formulas; read-only and idempotent.', idempotent: true },
+  description: 'Subtract one number from another.',
+  aiMetadata: { description: 'Compute the difference of two numbers. It returns second_number - first_number: first_number is the amount being subtracted (labelled "Number to Subtract") and second_number is the value it is subtracted from (labelled "Starting Number"). Pick this for a two-operand subtraction only, using the sibling Addition, Multiplication, Division, or Modulo actions for other operations and the Code piece for multi-term formulas; read-only and idempotent.', idempotent: true },
   props: {
     first_number: Property.Number({
-      displayName: 'First Number',
-      description: undefined,
+      displayName: 'Number to Subtract',
+      description: 'This amount is taken away from the starting number.',
       required: true,
     }),
     second_number: Property.Number({
-      displayName: 'Second Number',
-      description: undefined,
+      displayName: 'Starting Number',
+      description: 'The result is this number minus the number above.',
       required: true,
     }),
   },

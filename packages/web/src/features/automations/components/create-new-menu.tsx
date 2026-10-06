@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import {
+  Bot,
   FolderPlus,
   Loader2,
   Sparkles,
@@ -28,8 +29,11 @@ export const CreateNewMenu = ({
   userHasPermissionToWriteFolder,
   isCreatingFlow = false,
   isCreatingTable = false,
+  isCreatingAgent = false,
+  userHasPermissionToWriteAgent = false,
   onCreateFlow,
   onCreateTable,
+  onCreateAgent,
   onCreateFolder,
   onImportFlow,
   onImportTable,
@@ -41,7 +45,7 @@ export const CreateNewMenu = ({
 
   const showFolder = scope === 'root' && !embedState.hideFolders;
   const showTemplate = scope === 'root';
-  const busy = isCreatingFlow || isCreatingTable;
+  const busy = isCreatingFlow || isCreatingTable || isCreatingAgent;
 
   return (
     <DropdownMenu
@@ -103,6 +107,28 @@ export const CreateNewMenu = ({
                 <Table2 className="h-4 w-4 mr-2" />
               )}
               {isCreatingTable ? t('Creating...') : t('New Table')}
+            </DropdownMenuItem>
+          </PermissionNeededTooltip>
+        )}
+
+        {onCreateAgent && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToWriteAgent}
+          >
+            <DropdownMenuItem
+              disabled={!userHasPermissionToWriteAgent || busy}
+              onSelect={(e) => {
+                e.preventDefault();
+                onCreateAgent();
+              }}
+              className="cursor-pointer"
+            >
+              {isCreatingAgent ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Bot className="h-4 w-4 mr-2" />
+              )}
+              {isCreatingAgent ? t('Creating...') : t('New Agent')}
             </DropdownMenuItem>
           </PermissionNeededTooltip>
         )}
@@ -173,8 +199,11 @@ type CreateNewMenuProps = {
   userHasPermissionToWriteFolder: boolean;
   isCreatingFlow?: boolean;
   isCreatingTable?: boolean;
+  isCreatingAgent?: boolean;
+  userHasPermissionToWriteAgent?: boolean;
   onCreateFlow: () => void;
   onCreateTable: () => void;
+  onCreateAgent?: () => void;
   onCreateFolder?: () => void;
   onImportFlow: () => void;
   onImportTable: () => void;
@@ -185,5 +214,6 @@ type CreateNewMenuProps = {
 export type CreateInFolderKind =
   | 'flow'
   | 'table'
+  | 'agent'
   | 'import-flow'
   | 'import-table';

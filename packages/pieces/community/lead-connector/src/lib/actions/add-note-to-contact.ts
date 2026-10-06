@@ -1,9 +1,6 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  addNoteToContact,
-  getContacts,
-  getUsers,
-} from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { addNoteToContact } from '../common';
+import { leadConnectorProps } from '../common/props';
 import { leadConnectorAuth } from '../..';
 
 export const addNoteToContactAction = createAction({
@@ -15,56 +12,16 @@ export const addNoteToContactAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Appends a note (free-text body attributed to a user) to an existing GoHighLevel/LeadConnector contact. Requires the contact ID and the authoring user ID. Not idempotent — each call appends a new note even if the text is identical.', idempotent: false },
   props: {
-    contact: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Contact',
-      description: 'The contact to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
-        return {
-          options: contacts.map((contact) => {
-            return {
-              label: contact.contactName,
-              value: contact.id,
-            };
-          }),
-        };
-      },
-    }),
+    contact: leadConnectorProps.contact({ required: true }),
     note: Property.ShortText({
       displayName: 'Note',
       required: true,
+      placeholder: 'Called and left a voicemail.',
     }),
-    user: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'User',
+    user: leadConnectorProps.user({
+      displayName: 'Author',
+      description: 'The team member the note is credited to.',
       required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const users = await getUsers(auth as OAuth2PropertyValue);
-        return {
-          options: users.map((user: any) => {
-            return {
-              label: `${user.firstName} ${user.lastName}`,
-              value: user.id,
-            };
-          }),
-        };
-      },
     }),
   },
 

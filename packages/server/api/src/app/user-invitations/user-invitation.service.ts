@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, PlatformRole, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, PlatformRole, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -13,6 +13,8 @@ import { domainHelper } from '../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -235,9 +237,22 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     },
     async accept({ invitationId, platformId }: AcceptParams): Promise<AcceptResult> {
         const invitation = await this.getOneOrThrow({ id: invitationId, platformId })
+        const firstAcceptance = invitation.status !== InvitationStatus.ACCEPTED
         await repo().update(invitation.id, {
             status: InvitationStatus.ACCEPTED,
         })
+        if (firstAcceptance) {
+            rejectedPromiseHandler(telemetry(log).trackPlatform({
+                platformId,
+                event: {
+                    name: TelemetryEventName.INVITE_ACCEPTED,
+                    payload: {
+                        platformId,
+                        type: invitation.type === InvitationType.PLATFORM ? 'platform' : 'project',
+                    },
+                },
+            }), log)
+        }
         const identity = await userIdentityService(log).getIdentityByEmail(invitation.email)
         if (isNil(identity)) {
             return { registered: false }

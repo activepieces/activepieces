@@ -9,6 +9,7 @@ import { operationNameProperty, sharedModuleProps } from '../common/props';
 export const callOperation = createAction({
 	auth: workdayAuth,
 	name: 'call_operation',
+	classification: 'WRITE',
 	displayName: 'Call Operation',
 	description:
 		'Calls a Workday REST sub-resource or SOAP operation (e.g. approve, close, submit).',

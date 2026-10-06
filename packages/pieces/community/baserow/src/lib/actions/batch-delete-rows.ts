@@ -1,14 +1,16 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
+import { batchDeleteRowsOutputSchema } from '../output-schemas';
 
 export const batchDeleteRowsAction = createAction({
   name: 'baserow_batch_delete_rows',
   classification: 'DESTRUCTIVE',
+  outputSchema: batchDeleteRowsOutputSchema,
   displayName: 'Batch Delete Rows',
   description:
     'Deletes multiple rows in a single request. Accepts up to 200 row IDs.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Permanently deletes many Baserow rows in one request from a list of numeric row IDs, up to 200 per call. Use for bulk removal of known rows; for a single row use Delete Row. Destructive — verify the IDs first (List Rows or Find Row can supply them). Not idempotent against changing data once the rows are removed.',

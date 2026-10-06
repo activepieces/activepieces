@@ -243,9 +243,12 @@ async function resolveFlowVersionUpgrades({ flowVersion, log }: ResolveFlowVersi
 }
 
 async function sendUpgradeAuditEvent({ platformId, projectId, flowId, flowVersionId, decisions, log }: SendUpgradeAuditEventParams): Promise<void> {
-    projectId = projectId ?? await flowRepo().findOneByOrFail({ id: flowId }).then((flow) => flow.projectId)
-    platformId = platformId ?? await projectService(log).getPlatformId(projectId!)
-    applicationEvents(log).sendUserEvent({ platformId, projectId }, {
+    const resolvedProjectId = projectId ?? (await flowRepo().findOneBy({ id: flowId }))?.projectId
+    if (isNil(resolvedProjectId)) {
+        return
+    }
+    const resolvedPlatformId = platformId ?? await projectService(log).getPlatformId(resolvedProjectId)
+    applicationEvents(log).sendUserEvent({ platformId: resolvedPlatformId, projectId: resolvedProjectId }, {
         action: ApplicationEventName.FLOW_PIECES_UPGRADED,
         data: {
             flowId,

@@ -12,6 +12,7 @@ export const getAllListItems = createAction({
   auth: kizeoFormsAuth,
 
   name: 'get_all_list_items',
+  classification: 'SEARCH',
   displayName: 'Get All List Items',
   description: 'Get all items from a specific list',
   audience: 'both',

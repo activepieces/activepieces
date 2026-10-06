@@ -1,13 +1,12 @@
-import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepieces/pieces-framework';
 
 type AIModelType = 'text' | 'image';
 
-function managedModelLabel({ modelId, modelType }: { modelId: string; modelType: AIModelType }): string | undefined {
-  const tiers = modelType === 'image' ? ACTIVEPIECES_IMAGE_TIERS : ACTIVEPIECES_CHAT_TIERS;
-  return tiers.find((tier) => tier.modelId === modelId)?.label;
+function managedImageModelLabel({ modelId }: { modelId: string }): string | undefined {
+  return ACTIVEPIECES_IMAGE_TIERS.find((tier) => tier.modelId === modelId)?.label;
 }
 
 async function listProviders(ctx: {
@@ -21,6 +20,24 @@ async function listProviders(ctx: {
     },
   });
   return body;
+}
+
+async function listFlowTiers(ctx: {
+  server: { apiUrl: string; token: string };
+}): Promise<ListedTier[]> {
+  const { data } = await tryCatch(async () => {
+    const { body } = await httpClient.sendRequest<ListedTiers>({
+      method: HttpMethod.GET,
+      url: `${ctx.server.apiUrl}v1/ai-providers/tiers`,
+      headers: {
+        Authorization: `Bearer ${ctx.server.token}`,
+      },
+    });
+    return body.flow.tiers;
+  });
+  return isNil(data) || data.length === 0
+    ? ACTIVEPIECES_CHAT_TIERS.map(({ id, label }) => ({ id, label }))
+    : data;
 }
 
 function providerOptionsOf(provider: ListedProvider): {
@@ -101,11 +118,20 @@ export const aiProps = <T extends AIModelType>({
         return {
           disabled: true,
           options: [],
-          placeholder: 'Select AI Provider',
+          placeholder: 'Select a provider first',
         };
       }
 
       const { provider, configId } = selection;
+      if (provider === AIProviderName.ACTIVEPIECES && modelType === 'text') {
+        const tiers = await listFlowTiers(ctx);
+        return {
+          placeholder: 'Select AI Model',
+          disabled: false,
+          options: tiers.map((tier) => ({ label: tier.label, value: tier.id })),
+        };
+      }
+
       const { body: allModels } =
         await httpClient.sendRequest<AIProviderModel[]>({
           method: HttpMethod.GET,
@@ -121,9 +147,9 @@ export const aiProps = <T extends AIModelType>({
         disabled: false,
         options: allModels
           .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedModelLabel({ modelId: model.id, modelType }) !== undefined)
+          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedImageModelLabel({ modelId: model.id }) !== undefined)
           .map(model => ({
-            label: provider === AIProviderName.ACTIVEPIECES ? (managedModelLabel({ modelId: model.id, modelType }) ?? model.name) : model.name,
+            label: provider === AIProviderName.ACTIVEPIECES ? (managedImageModelLabel({ modelId: model.id }) ?? model.name) : model.name,
             value: model.id,
           })),
       };
@@ -156,4 +182,13 @@ type AIPropsParams<T extends AIModelType> = {
 
 type ListedProvider = Omit<ProjectAIProvider, 'keys'> & {
   keys?: ProjectAIProvider['keys'];
+};
+
+type ListedTier = {
+  id: string;
+  label: string;
+};
+
+type ListedTiers = {
+  flow: { tiers: ListedTier[] };
 };
