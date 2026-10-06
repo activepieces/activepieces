@@ -7,6 +7,7 @@ import { rawQueryOutputSchema } from '../output-schemas';
 export const findRecordsByQuery = createAction({
     auth: salesforceAuth,
     name: 'find_records_by_query',
+    classification: 'SEARCH',
     displayName: 'Find Records by Query (Advanced)',
     description: 'Finds records in an object using a SOQL WHERE clause.',
     audience: 'human',

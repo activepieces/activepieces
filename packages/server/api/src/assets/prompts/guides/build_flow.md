@@ -33,6 +33,32 @@ The majority are 2–5 linear steps: a schedule or form/webhook trigger and a co
 
 **Exception — reprocessing safety is never "over-building".** The rule above does NOT license skipping an anti-reprocessing mechanism on a recurring flow that reads persistent data. That mechanism is required correctness (see the next section), not a "to be safe" extra — leaving it out is a silent bug, not a simpler flow.
 
+## A use case with several jobs is a solution: small flows in one folder
+Before you build, list the jobs in the request: intake, enrichment or processing, storage, reporting, approval, alerting. One job is one flow, as above. Two or more jobs, or a job several flows need, is a **solution**: build a folder of small flows, each doing one job, joined by subflows and Tables. Don't wait for the user to ask; most people don't know subflows exist. One big flow does every job in one place, so one failure breaks all of them and nobody can tell which part failed.
+
+Example: "when an order comes in by webhook, save it, and send me a daily summary" is three jobs:
+- **Receive orders** (webhook → Call Flow)
+- **Save order** (Callable Flow → Tables create)
+- **Daily order summary** (schedule → Tables find → message)
+
+All three go in an `Order intake` folder with an `Orders` table.
+
+**Shared work goes in one subflow.** When several entry points feed the same processing (a webhook and a form, two schedules, two apps), put that processing in ONE Callable subflow. Each entry flow then only receives its input and calls the subflow. Never copy the same steps into two flows: every later fix would have to be made twice. For example, "leads come from a webhook and a form; score each with AI and save it" is **Score and save lead** (Callable Flow → AI → Tables create), called by **Receive webhook lead** and **Receive form lead**.
+
+How to build one:
+1. **Folder:** `ap_create_folder` with a name for the whole solution. Pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
+2. **Names:** name each flow for its one job, in plain words ("Save order", not "Flow 2" or "Order flow helper").
+3. **Order:** tables first, then subflows, then the flows that call them. Each step needs an id the previous one returned.
+4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow`, with `exampleData.sampleData` listing every input it takes, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read each input as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (that is empty at run time). Add a `returnResponse` step only if a caller needs data back.
+5. **Caller:** a `callFlow` step with `flowId` set to the subflow's **externalId** (the one `ap_build_flow` returned, not its flow id). Use `mode: "simple"` and send every key of the subflow's sample data in `flowProps.payload` as an object. Set `waitForResponse` only when the subflow has a Return Response step.
+6. **Tables steps:** `table_id` is the table's **externalId**. Form `values` are keyed by field externalId.
+7. **Check the whole solution:** after every flow passes its own checks, call `ap_validate_flow({folderName})`. Fix each issue it lists and run it again until it returns ✅. Use it as well to check whether an existing solution fits together, instead of inspecting flows by hand.
+8. **Build card:** one card for the whole solution. `flowName` is the solution name, there is one step per flow and table, and `flowId` is the entry flow.
+
+Testing: a Call Flow only reaches a subflow that is published and turned on, so a caller's test run fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow`, using mock trigger data shaped the way a caller delivers it: `{"data": <its sample data>}`. Test the caller's steps before the Call Flow.
+
+Turning it on: one "Turn it on?" card for the whole solution. On yes, call `ap_set_phase('build')`, then publish the subflows first and the flows that call them last.
+
 ## Recurring flows must not reprocess
 **Before you build, answer one question: does this run more than once, and does it read data that persists between runs?** If a scheduled/recurring flow reads a source that keeps its data (a sheet, a Table, an inbox, any record set), that source holds the SAME rows again on the next run. A flow shaped `read-all → act → done` will redo run N's work on run N+1 — re-sending, re-paying, re-notifying. This is the #1 silent logic bug: it validates fine, a single test run looks perfect, and the damage only appears on the second run.
 
@@ -111,7 +137,11 @@ Wire the **specific fields** a step consumes, never an entire upstream output. A
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
 - **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
 - **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → test for real with cases (below) → reflect → `ap_manage_notes`.
-- Share the flow link. The flow is a draft — do NOT auto-publish.
+- Share the flow link, then finish per "Turn it on?" below. Never auto-publish, and never leave a validated flow ending on "open it to review".
+
+## Turn it on? — the one way every built flow ends
+Chat NEVER publishes on its own. A flow only runs once published, so once it validates (and passes its test, when a test ran), end with exactly one `ap_show_quick_replies` (or `ap_show_questions`) card: "Turn it on?" with chips like "Turn it on" / "Not yet". Only a yes publishes: call `ap_lock_and_publish({flowId})` right away, then say it is live. "Not yet" leaves it a draft.
+**Never say a flow you just built is live, running, active or turned on unless `ap_lock_and_publish` succeeded for it.** If publish returned an error, say so and fix it. Until then call it "a draft, not running yet". For a flow you did not just build, report the status the tools show (`ap_list_flows` shows it), never a guess.
 
 **After `ap_build_flow`** it creates the skeleton but does NOT validate configs or field mappings. You MUST: (1) `ap_validate_step_config` on the trigger and each step, (2) fix any errors with `ap_update_step`/`ap_update_trigger`, (3) `ap_validate_flow` to confirm all steps are valid.
 

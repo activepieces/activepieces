@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updateOrgAction = createAction({
   name: 'update_org',
+  classification: 'WRITE',
   displayName: 'Update Organization',
   description: 'Update your organization details',
   audience: 'both',

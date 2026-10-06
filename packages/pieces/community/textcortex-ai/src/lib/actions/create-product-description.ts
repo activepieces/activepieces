@@ -7,6 +7,7 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createProductDescription = createAction({
   auth: textcortexAuth,
   name: 'create_product_description',
+  classification: 'READ',
   displayName: 'Create Product Description',
   description: 'Create a product description using details like name, brand, category, features, keywords.',
   audience: 'both',

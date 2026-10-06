@@ -9,6 +9,7 @@ import { workdaySoapRequest } from '../common';
 export const createJobRequisition = createAction({
 	auth: workdayAuth,
 	name: 'create_job_requisition',
+	classification: 'WRITE',
 	displayName: 'Create Job Requisition',
 	description: 'Creates a new job requisition in Workday.',
 	audience: 'both',

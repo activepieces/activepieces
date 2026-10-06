@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const emailBouncedTrigger = createTrigger({
   auth: lobstermailAuth,
   name: 'email_bounced',
+  classification: 'READ',
   displayName: 'Email Bounced',
   description:
     'Triggers when an outbound email fails to deliver. Use this to update CRM records, retry with a different address, or alert your team.',

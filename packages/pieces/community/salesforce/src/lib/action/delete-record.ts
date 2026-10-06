@@ -7,6 +7,7 @@ import { successOutputSchema } from '../output-schemas';
 export const deleteRecord = createAction({
     auth: salesforceAuth,
     name: 'delete_record',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Record',
     description: 'Deletes an existing record in an object.',
     audience: 'human',

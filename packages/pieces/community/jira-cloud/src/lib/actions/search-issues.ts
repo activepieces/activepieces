@@ -8,6 +8,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 import { issueListOutputSchema } from '../output-schemas';
 export const searchIssues = createAction({
   name: 'search_issues',
+  classification: 'SEARCH',
   displayName: 'Search Issues',
   description: 'Search for issues with JQL',
   audience: 'human',

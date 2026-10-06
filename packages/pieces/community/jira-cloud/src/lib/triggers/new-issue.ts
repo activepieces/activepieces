@@ -11,6 +11,7 @@ const polling = createJiraPolling({ timeField: 'created' });
 
 export const newIssue = createTrigger({
   name: 'new_issue',
+  classification: 'READ',
   displayName: 'New Issue',
   description: 'Triggers when a new issue is created',
   aiMetadata: {

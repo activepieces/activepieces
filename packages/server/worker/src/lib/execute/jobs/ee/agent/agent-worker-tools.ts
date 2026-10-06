@@ -3,15 +3,17 @@ import { createCrossProjectTools } from './tools/cross-project-tools'
 import { createDisplayTools } from './tools/display-tools'
 import { createEmailTools } from './tools/email-tools'
 import { createEventEmitter } from './tools/event-emitter'
-import { wrapTestFlowGate } from './tools/flow-gate-tools'
+import { wrapDeleteGate, wrapTestFlowGate } from './tools/flow-gate-tools'
 import { createAgentSurfaceTools, createBuildPlanTools, createLocalTools, createPhaseTools, createStructuredOutputTool, createThinkingTools } from './tools/session-tools'
-import { extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout, wrapToolsWithTaint } from './tools/tool-primitives'
+import { createTaintState, extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, previousReplyReadData, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout, wrapToolsWithTaint } from './tools/tool-primitives'
 import { createImageTools, createProviderSearchTools, createScrapeTools, createSearchTools, createWebTools, falImageGenerator, providerImageGenerator } from './tools/web-media-tools'
 
 export { AgentEventEmitter, GateDecision, TaintState } from './tools/tool-primitives'
 
 export const agentWorkerTools = {
     wrapToolsWithTaint,
+    previousReplyReadData,
+    createTaintState,
     createEventEmitter,
     createDisplayTools,
     createAgentSurfaceTools,
@@ -26,6 +28,7 @@ export const agentWorkerTools = {
     providerImageGenerator,
     createEmailTools,
     wrapTestFlowGate,
+    wrapDeleteGate,
     createThinkingTools,
     createPhaseTools,
     createBuildPlanTools,

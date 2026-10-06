@@ -5,6 +5,7 @@ import { dappierCommon } from '../common';
 
 export const lifestyleNewsSearch = createAction({
   name: 'lifestyle_news_search',
+  classification: 'SEARCH',
   auth: dappierAuth,
   displayName: 'Lifestyle News',
   description:

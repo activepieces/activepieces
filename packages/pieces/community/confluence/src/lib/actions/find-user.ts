@@ -11,6 +11,7 @@ type UserSearchResult = {
 export const findUserAction = createAction({
 	auth: confluenceAuth,
 	name: 'find-user',
+	classification: 'SEARCH',
 	displayName: 'Find User',
 	description: 'Looks up Confluence users by name, email, or keyword.',
 	audience: 'both',

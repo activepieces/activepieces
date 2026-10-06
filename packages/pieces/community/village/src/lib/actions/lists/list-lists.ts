@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const listLists = createAction({
   auth: villageAuth,
   name: 'list_lists',
+  classification: 'SEARCH',
   displayName: 'List all lists',
   description:
     'Get all your saved lists of people or companies. Supports pagination, filtering by type, and searching by title.',

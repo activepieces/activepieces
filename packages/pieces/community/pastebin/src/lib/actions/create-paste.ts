@@ -6,6 +6,7 @@ import { pastebinAuth } from '../..';
 export default createAction({
   auth: pastebinAuth,
   name: 'create_paste',
+  classification: 'WRITE',
   displayName: 'Create Paste',
   description: 'Creates a new paste',
   audience: 'both',

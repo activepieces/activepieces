@@ -63,13 +63,13 @@ const AboveTriggerButton = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="bg-builder-background">
+        <div className="bg-gray-2">
           <Button
             variant="ghost"
             className={cn(
-              'h-8 bg-background border-input hover:border-border  border p-2.5 border-solid rounded-lg animate-fade',
+              'h-8 bg-gray-1 border-gray-6 border p-2.5 border-solid rounded-lg animate-fade',
               {
-                'bg-primary-100/50! dark:text-primary-foreground  text-primary hover:text-primary disabled:pointer-events-auto hover:border-primary!  border-primary/50':
+                'bg-accent-3! text-accent-11 hover:text-accent-11 disabled:pointer-events-auto hover:border-accent-9!  border-accent-7':
                   showPrimaryBg,
               },
             )}
@@ -82,9 +82,9 @@ const AboveTriggerButton = ({
               {showKeyboardShortcut && (
                 <span
                   className={cn(
-                    'text-[10px] bg-muted h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap text-muted-foreground',
+                    'text-[10px] bg-gray-3 h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap text-gray-11',
                     {
-                      'bg-primary/13 text-primary': showPrimaryBg,
+                      'bg-accent-5 text-accent-11': showPrimaryBg,
                     },
                   )}
                 >

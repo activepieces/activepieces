@@ -8,6 +8,7 @@ import { getIssueHistoryActionOutputSchema } from '../output-schemas';
 export const getIssueHistoryAction = createAction({
   auth: youtrackAuth,
   name: 'get_issue_history',
+  classification: 'READ',
   outputSchema: getIssueHistoryActionOutputSchema,
   displayName: 'Get Issue History',
   description: 'Retrieves the full change history (activity log) for a specific issue.',

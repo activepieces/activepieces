@@ -28,6 +28,7 @@ import { returningAiAuth } from '../auth';
 export const replyMessage = createAction({
   auth:returningAiAuth,
   name: 'replyMessage',
+  classification: 'WRITE',
   displayName: 'Reply Message',
   description: 'Reply to a specific message as a chosen user in a channel.',
   audience: 'both',

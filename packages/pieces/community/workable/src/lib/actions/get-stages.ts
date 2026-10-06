@@ -6,6 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const getStages = createAction({
   auth: workableAuth,
   name: 'getStages',
+  classification: 'SEARCH',
   displayName: 'Get Stages',
   description: 'Gets stages in your recruitment pipeline stages.',
   audience: 'both',

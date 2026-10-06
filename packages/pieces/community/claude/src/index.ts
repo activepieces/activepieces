@@ -18,7 +18,7 @@ import { claudeAuth } from './lib/auth';
 export const claude = createPiece({
   displayName: 'Anthropic Claude',
   auth: claudeAuth,
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['dennisrongo','kishanprmr'],

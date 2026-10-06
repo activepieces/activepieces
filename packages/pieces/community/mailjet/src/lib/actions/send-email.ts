@@ -5,6 +5,7 @@ import { mailjetAuth } from '../auth';
 export const sendEmail = createAction({
   auth: mailjetAuth,
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send a text, HTML or template email through Mailjet',
   audience: 'both',

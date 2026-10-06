@@ -6,6 +6,7 @@ import { WebhookInformation } from '../common/types';
 export const newTableFieldProcessed = createTrigger({
   auth: parseurAuth,
   name: 'newTableFieldProcessed',
+  classification: 'READ',
   displayName: 'New Table Field Processed',
   description:
     'Fires when a document with table fields is processed, and triggers for each row (table field) separately.',

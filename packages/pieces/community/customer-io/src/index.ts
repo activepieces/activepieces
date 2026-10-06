@@ -4,6 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createEvent } from './lib/actions/create_event';
+import { newReportingEvent } from './lib/trigger/new-reporting-event';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { customerIOCommon } from './lib/common';
 import { Buffer } from 'buffer';
@@ -71,5 +72,5 @@ export const customerIo: any = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [newReportingEvent],
 });

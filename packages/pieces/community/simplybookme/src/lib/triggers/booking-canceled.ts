@@ -4,6 +4,7 @@ import { simplybookAuth} from '../common';
 export const bookingCanceled = createTrigger({
   auth: simplybookAuth,
   name: 'booking_canceled',
+  classification: 'READ',
   displayName: 'Booking Cancellation',
   description: 'Triggers when a booking is canceled in SimplyBook.me',
   aiMetadata: {

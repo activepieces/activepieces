@@ -7,6 +7,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createPageFromTemplateAction = createAction({
     auth:confluenceAuth,
     name:'create-page-from-template',
+    classification: 'WRITE',
     displayName:'Create Page from Template',
     description:'Creates a new page from a template with the given title and variables.',
     audience: 'both',

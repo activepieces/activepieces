@@ -4,6 +4,7 @@ import { ListTeamMembersRequest } from 'fathom-typescript/dist/esm/sdk/models/op
 
 export const findTeamMember = createAction({
   name: 'findTeamMember',
+  classification: 'SEARCH',
   displayName: 'Find Team Member',
   description: 'Find team member based on email',
   audience: 'both',

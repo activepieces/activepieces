@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const createContact = createAction({
     auth: salesforceAuth,
     name: 'create_contact',
+    classification: 'WRITE',
     displayName: 'Create Contact',
     description: 'Creates a new contact record.',
     audience: 'human',

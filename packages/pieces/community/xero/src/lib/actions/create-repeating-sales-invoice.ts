@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroCreateRepeatingSalesInvoice = createAction({
   auth: xeroAuth,
   name: 'xero_create_repeating_sales_invoice',
+  classification: 'WRITE',
   displayName: 'Create Repeating Sales Invoice',
   description: 'Creates a repeating sales invoice (Accounts Receivable).',
   audience: 'both',

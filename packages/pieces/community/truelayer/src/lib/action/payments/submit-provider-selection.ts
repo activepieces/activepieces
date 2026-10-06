@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitProviderSelection = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-provider-selection',
+  classification: 'WRITE',
   displayName: 'Submit Provider Selection',
   description: 'Submit the provider details selected by the PSU. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

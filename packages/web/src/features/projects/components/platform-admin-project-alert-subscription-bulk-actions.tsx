@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { alertMutations } from '@/features/alerts';
 import { userHooks } from '@/hooks/user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
   selectedProjects,
@@ -52,6 +53,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         size="sm"
         disabled={isRunning}
         onClick={handleSubscribe}
+        {...adminControl(AdminControl.PROJECTS_SUBSCRIBE_RUN)}
       >
         <BellPlus className="mr-1 w-4" />
         {t('Subscribe to alerts')}
@@ -61,6 +63,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         size="sm"
         disabled={isRunning}
         onClick={() => setConfirmUnsubscribeOpen(true)}
+        {...adminControl(AdminControl.PROJECTS_UNSUBSCRIBE_OPEN)}
       >
         <BellMinus className="mr-1 w-4" />
         {t('Unsubscribe from alerts')}
@@ -89,7 +92,11 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
             >
               {t('Cancel')}
             </Button>
-            <Button variant="destructive" onClick={handleUnsubscribe}>
+            <Button
+              variant="destructive"
+              onClick={handleUnsubscribe}
+              {...adminControl(AdminControl.PROJECTS_UNSUBSCRIBE_CONFIRM)}
+            >
               {t('Unsubscribe')}
             </Button>
           </DialogFooter>

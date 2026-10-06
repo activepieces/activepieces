@@ -106,6 +106,7 @@ AppConnectionValueForAuthProperty<typeof xeroAuth>,
 export const xeroNewPurchaseOrder = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_purchase_order',
+  classification: 'READ',
   displayName: 'New Purchase Order',
   description: 'Fires when a new purchase order is created or enters a specific status for the first time.',
   aiMetadata: {

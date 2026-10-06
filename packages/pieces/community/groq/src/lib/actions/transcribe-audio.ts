@@ -9,20 +9,20 @@ export const transcribeAudio = createAction({
 	name: 'transcribe-audio',
 	classification: 'READ',
 	displayName: 'Transcribe Audio',
-	description: 'Transcribes audio into text in the input language.',
+	description: 'Turn speech in an audio file into text, in the language spoken.',
 	aiMetadata: { description: 'Runs Groq speech-to-text (Whisper) over an uploaded audio file and returns the spoken content transcribed in its original language; a response-format prop switches between plain text, JSON, and verbose JSON with segment timings. Choose this over the sibling Translate Audio action whenever the transcript must stay in the language that was spoken, since Translate Audio always renders English. Requires an audio file (flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, webm) and a Whisper model, with an optional ISO-639-1 language hint that improves accuracy; not idempotent: each call re-runs the model and may return slightly different text.', idempotent: false },
 	props: {
 		file: Property.File({
 			displayName: 'Audio File',
 			required: true,
 			description:
-				'The audio file to transcribe. Supported formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, webm.',
+				'flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm.',
 		}),
 		model: Property.Dropdown({
 			displayName: 'Model',
 			auth: groqAuth,
 			required: true,
-			description: 'The model to use for transcription.',
+			description: 'whisper-large-v3 is the most accurate; turbo is faster.',
 			refreshers: [],
 			defaultValue: 'whisper-large-v3',
 			options: async ({ auth }) => {
@@ -59,7 +59,7 @@ export const transcribeAudio = createAction({
 					return {
 						disabled: true,
 						options: [],
-						placeholder: "Couldn't load models, API key is invalid",
+						placeholder: "Couldn't load models. Check your API key or try again.",
 					};
 				}
 			},
@@ -67,26 +67,30 @@ export const transcribeAudio = createAction({
 		language: Property.ShortText({
 			displayName: 'Language',
 			required: false,
+			advanced: true,
+			placeholder: 'en',
 			description:
-				'The language of the input audio in ISO-639-1 format (e.g., "en" for English). This will improve accuracy and latency.',
+				'ISO-639-1 code of the spoken language, for better accuracy.',
 		}),
 		prompt: Property.LongText({
 			displayName: 'Prompt',
 			required: false,
+			advanced: true,
 			description:
-				"An optional text to guide the model's style or continue a previous audio segment. The prompt should match the audio language.",
+				"Spellings or text that came just before, in the audio's language.",
 		}),
 		temperature: Property.Number({
 			displayName: 'Temperature',
 			required: false,
+			advanced: true,
 			description:
-				'The sampling temperature, between 0 and 1. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+				'From 0 to 1. Groq recommends 0.',
 			defaultValue: 0,
 		}),
 		responseFormat: Property.StaticDropdown({
 			displayName: 'Response Format',
 			required: false,
-			description: 'The format of the transcript output.',
+			description: 'Text returns the words alone; Verbose JSON adds segment timings.',
 			defaultValue: 'json',
 			options: {
 				disabled: false,

@@ -11,8 +11,8 @@ export function useMcpServerUrl({
   serverUrl: string;
   isReachableFromInternet: boolean;
 } {
-  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const base = (publicUrl ?? '').replace(/\/$/, '');
+  const { data: mcpUrl } = flagsHooks.useFlag<string>(ApFlagId.MCP_URL);
+  const base = (mcpUrl ?? '').replace(/\/$/, '');
   const path = serverType === McpServerType.PLATFORM ? '/mcp/platform' : '/mcp';
   return {
     serverUrl: `${base}${path}`,

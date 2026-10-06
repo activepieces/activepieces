@@ -6,6 +6,7 @@ import { oracleDbProps } from '../common/props';
 export const findRowAction = createAction({
   auth: oracleDbAuth,
   name: 'find_row',
+  classification: 'SEARCH',
   displayName: 'Find Row',
   description: 'Find rows in an Oracle table',
   audience: 'both',

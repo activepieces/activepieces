@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const getConversation = createAction({
   auth: famulorAuth,
   name: 'getConversation',
+  classification: 'READ',
   displayName: 'Get Conversation',
   description: 'Retrieve the full message history for a conversation.',
   audience: 'both',

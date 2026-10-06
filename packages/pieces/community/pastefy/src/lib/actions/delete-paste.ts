@@ -5,6 +5,7 @@ import { pastefyAuth } from '../..';
 export default createAction({
   auth: pastefyAuth,
   name: 'delete_paste',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Paste',
   description: 'Deletes a paste',
   audience: 'both',

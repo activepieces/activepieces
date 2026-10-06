@@ -6,6 +6,7 @@ import { ninjapipeApiCall, extractItems, flattenArray, getAuth, ninjapipeCommon 
 export const listTasks = createAction({
   auth: ninjapipeAuth,
   name: 'list_tasks',
+  classification: 'SEARCH',
   displayName: 'List Tasks',
   description: 'Retrieves the tasks of a project as a flat list. Use parent_id on each item to build a tree.',
   audience: 'both',

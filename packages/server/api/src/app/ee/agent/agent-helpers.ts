@@ -350,6 +350,25 @@ async function claimConversationForRun({ conversationId, runId }: { conversation
     })
 }
 
+async function acquireStreamingLock({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<StreamingLockResult> {
+    const builder = conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: AgentConversationStatus.STREAMING })
+        .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
+    if (!isNil(runId)) {
+        builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
+    }
+    const result = await builder.returning('id').execute()
+    const lockedRows: unknown[] = result.raw ?? []
+    if (lockedRows.length > 0) {
+        return 'acquired'
+    }
+    const current = await conversationRepo().findOneBy({ id: conversationId })
+    const supersededByNewerRun = !isNil(runId) && !isNil(current?.activeRunId) && current.activeRunId !== runId
+    return supersededByNewerRun ? 'superseded' : 'busy'
+}
+
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
     const flowToolRequests = tools.filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
     if (flowToolRequests.length === 0) {
@@ -411,6 +430,7 @@ async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: s
 export const agentHelpers = {
     jobFieldsFromConfig,
     claimConversationForRun,
+    acquireStreamingLock,
     resolveFlowTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,
@@ -439,3 +459,5 @@ export const agentHelpers = {
 }
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>
+
+export type StreamingLockResult = 'acquired' | 'busy' | 'superseded'

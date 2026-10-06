@@ -58,6 +58,7 @@ const polling: Polling<
 export const newPublishedPost = createTrigger({
   auth: letmepostAuth,
   name: 'new_published_post',
+  classification: 'READ',
   displayName: 'New Published Post',
   description: 'Triggers when a post is published',
   aiMetadata: {

@@ -7,6 +7,7 @@ import { deploymentTargetProperty, vercelProjectDropdown } from '../common/props
 export const createDeployment = createAction({
   auth: vercelAuth,
   name: 'create_deployment',
+  classification: 'WRITE',
   displayName: 'Create Deployment',
   description:
     'Create a deployment for an existing Vercel project using either a redeploy source deployment ID or a git source payload.',

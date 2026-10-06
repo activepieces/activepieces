@@ -70,13 +70,13 @@ export const MultiSelectFilter = ({
           <span>{label}</span>
           {selectedValues.length > 0 && (
             <div className="flex items-center gap-1 ml-1">
-              <div className="h-4 w-px bg-border" />
+              <div className="h-4 w-px bg-gray-6" />
               {selectedValues.length <= 2 ? (
                 selectedLabels.map((labelText, idx) => (
                   <Badge
                     key={selectedValues[idx]}
                     variant="outline"
-                    className="px-1.5 py-0 text-xs font-normal rounded-sm bg-muted max-w-[15vw] min-w-0"
+                    className="px-1.5 py-0 text-xs font-normal rounded-sm bg-gray-3 max-w-[15vw] min-w-0"
                   >
                     <span className="truncate">{labelText}</span>
                   </Badge>
@@ -84,7 +84,7 @@ export const MultiSelectFilter = ({
               ) : (
                 <Badge
                   variant="outline"
-                  className="px-1.5 py-0 text-xs font-normal rounded-sm bg-muted"
+                  className="px-1.5 py-0 text-xs font-normal rounded-sm bg-gray-3"
                 >
                   {selectedValues.length} selected
                 </Badge>
@@ -97,7 +97,7 @@ export const MultiSelectFilter = ({
         {searchable && (
           <div className="px-2 pt-2 pb-1 border-b">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-11" />
               <Input
                 placeholder={t('Search...')}
                 value={search}
@@ -110,14 +110,14 @@ export const MultiSelectFilter = ({
         <ScrollArea className="max-h-[300px]">
           <div className="p-2 space-y-1">
             {filteredOptions.length === 0 ? (
-              <div className="px-2 py-4 text-sm text-center text-muted-foreground">
+              <div className="px-2 py-4 text-sm text-center text-gray-11">
                 {t('No results')}
               </div>
             ) : (
               filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-accent cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-gray-4 cursor-pointer"
                   onClick={() => toggleValue(option.value)}
                 >
                   <Checkbox

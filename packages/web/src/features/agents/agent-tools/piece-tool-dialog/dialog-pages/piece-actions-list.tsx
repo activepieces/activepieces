@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -56,7 +57,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
     <ScrollArea className="overflow-y-auto">
       <div className="px-4 py-3 border-b">
         <div className="relative border rounded-sm">
-          <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
           <Input
             placeholder={t('Search')}
             value={searchQuery}
@@ -83,7 +84,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
                 ${
                   isDisabled
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-accent cursor-pointer'
+                    : 'hover:bg-gray-4 cursor-pointer'
                 }
               `}
               onClick={() => {
@@ -93,13 +94,12 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
               }}
             >
               <div className="flex gap-2">
-                <div className="size-9 flex items-center justify-center rounded-sm border bg-background">
-                  <img
-                    className="size-6 object-contain"
-                    src={selectedPiece.logoUrl}
-                    alt={selectedPiece.displayName}
-                  />
-                </div>
+                <LogoPlate
+                  className="size-9 rounded-sm p-1.5"
+                  border
+                  src={selectedPiece.logoUrl}
+                  alt={selectedPiece.displayName}
+                />
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -108,14 +108,14 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
                     </span>
 
                     {isDisabled && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-11">
                         {t('(Already added)')}
                       </span>
                     )}
                   </div>
 
                   {action.description && (
-                    <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                    <div className="text-xs text-gray-11 mt-0.5 line-clamp-2">
                       {action.description}
                     </div>
                   )}
@@ -126,7 +126,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
         })}
 
         {filteredActions.length === 0 && (
-          <div className="text-center text-muted-foreground py-8">
+          <div className="text-center text-gray-11 py-8">
             {t('No actions found')}
           </div>
         )}

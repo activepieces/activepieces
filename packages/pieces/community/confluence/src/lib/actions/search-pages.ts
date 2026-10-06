@@ -16,6 +16,7 @@ type CqlSearchResponse = {
 export const searchPagesAction = createAction({
 	auth: confluenceAuth,
 	name: 'search-pages',
+	classification: 'SEARCH',
 	displayName: 'Search Content (CQL)',
 	description:
 		'Search Confluence content with CQL (Confluence Query Language). Example: `type = "page" AND space = "DOCS" AND title ~ "release"`.',

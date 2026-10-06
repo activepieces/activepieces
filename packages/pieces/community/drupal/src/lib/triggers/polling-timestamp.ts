@@ -44,6 +44,7 @@ const polling: Polling<DrupalAuthType, { name: string }> = {
 export const drupalPollingTimestamp = createTrigger({
   auth: drupalAuth,
   name: 'drupalPollingTimestamp',
+  classification: 'READ',
   displayName: 'Polling by timestamp',
   description: 'A trigger that polls the Drupal site by timestamp.',
   aiMetadata: {

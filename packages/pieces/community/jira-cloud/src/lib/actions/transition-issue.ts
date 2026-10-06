@@ -13,6 +13,7 @@ import { legacyTransitionIssueOutputSchema } from '../output-schemas';
 export const transitionIssueAction = createAction({
   auth: jiraCloudAuth,
   name: 'transition_issue',
+  classification: 'WRITE',
   displayName: 'Transition Issue',
   description:
     'Moves an issue to a new status by executing a workflow transition.',

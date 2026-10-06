@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroSendInvoiceEmail = createAction({
   auth: xeroAuth,
   name: 'xero_send_invoice_email',
+  classification: 'WRITE',
   displayName: 'Send Sales Invoice by Email',
   description: 'Sends a sales invoice via email to a contact.',
   audience: 'both',

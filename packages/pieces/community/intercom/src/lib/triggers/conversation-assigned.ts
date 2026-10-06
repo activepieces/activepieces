@@ -4,6 +4,7 @@ import { intercomClient } from '../common';
 
 export const conversationAssigned = createTrigger({
 	name: 'conversationAssigned',
+	classification: 'READ',
 	displayName: 'Conversation assigned to any Intercom admin',
 	description: 'Triggers when a conversation is assigned to an admin',
 	aiMetadata: {

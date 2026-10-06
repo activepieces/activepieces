@@ -5,6 +5,7 @@ import { PlanDropdown, TaskDropdown } from '../common/properties';
 export const deleteTask = createAction({
   auth: microsoft365PlannerAuth,
   name: 'deleteTask',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Task',
   description: 'Remove a specific task by ID.',
   audience: 'both',

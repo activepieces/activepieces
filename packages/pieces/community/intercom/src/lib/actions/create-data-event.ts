@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 export const createDataEventAction = createAction({
 	auth: intercomAuth,
 	name: 'create-data-event',
+	classification: 'WRITE',
 	displayName: 'Create Data Event',
 	description: 'Submits a data event for a contact.',
 	audience: 'both',

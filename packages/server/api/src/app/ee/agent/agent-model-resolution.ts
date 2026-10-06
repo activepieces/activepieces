@@ -15,6 +15,16 @@ function resolveTier({ tierId, surface }: { tierId: string | null, surface: Mode
     return modelTierCatalog.current(surface).resolveTier({ tierId })
 }
 
+function resolveRunTier({ provider, modelName, selectedModel, surface }: { provider: AIProviderName, modelName: string | null, selectedModel: string | null, surface: ModelTierSurface }): ModelTier {
+    if (surface === 'chat') {
+        return resolveTier({ tierId: selectedModel, surface })
+    }
+    const namedTier = provider === AIProviderName.ACTIVEPIECES && !isNil(modelName) && isTierId({ modelName })
+        ? findTier({ tierId: modelName, surface })
+        : undefined
+    return namedTier ?? resolveTier({ tierId: null, surface })
+}
+
 function nativeModelIdFor({ tier }: { tier: ModelTier }): string | null {
     return tier.nativeModelId ?? ACTIVEPIECES_CHAT_TIERS.find((shipped) => shipped.id === tier.id)?.nativeModelId ?? null
 }
@@ -68,10 +78,11 @@ function resolveNamedModelId({ provider, modelName, surface, modelScope, modelId
     const requested = isTierId({ modelName }) ? publishedTierModelId({ tierId: modelName, surface, log }) : modelName
     const candidates = managedModelCandidates({ surface, modelScope, modelIds })
     if (!candidates.includes(requested)) {
+        const message = `The model "${modelName}" is not available on Activepieces AI credits. Available models: ${candidates.join(', ')}`
         throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: { message: `The model "${modelName}" is not available on Activepieces AI credits. Available models: ${candidates.join(', ')}` },
-        })
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider, message },
+        }, message)
     }
     return requested
 }
@@ -85,7 +96,7 @@ function resolveModelIdForProvider({ provider, selectedModel, surface, config, m
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
         return tier.modelId
     }
-    const candidates = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+    const candidates = aiProviderUtils.runnableChatModelIds({ provider })
     const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelIdFor({ tier })
     return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }
@@ -116,6 +127,7 @@ export const agentModelResolution = {
     surfaceOf,
     findTier,
     resolveTier,
+    resolveRunTier,
     nativeModelIdFor,
     resolveNamedModelId,
     resolveModelIdForProvider,

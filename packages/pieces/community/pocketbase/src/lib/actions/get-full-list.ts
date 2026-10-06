@@ -5,6 +5,7 @@ import { pocketbaseAuthenticate, normalizeHost } from '../common/client';
 
 export const getFullList = createAction({
   name: 'getFullList',
+  classification: 'SEARCH',
   displayName: 'Get Full List',
   description: 'Gets all the data for a given collection',
   audience: 'both',

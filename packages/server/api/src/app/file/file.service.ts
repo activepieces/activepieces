@@ -326,7 +326,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type GetDataResponse = {
+export type GetDataResponse = {
     metadata?: Record<string, string>
     data: Buffer
     fileName?: string

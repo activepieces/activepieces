@@ -7,6 +7,7 @@ import { customFields, statusId } from '../common/props';
 export const createLead = createAction({
 	auth: closeAuth,
 	name: 'create_lead',
+	classification: 'WRITE',
 	displayName: 'Create Lead',
 	description: 'Creates a new lead.',
 	audience: 'both',

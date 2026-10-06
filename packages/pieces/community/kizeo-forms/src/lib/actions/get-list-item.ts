@@ -7,6 +7,7 @@ export const getListItem = createAction({
   auth: kizeoFormsAuth,
 
   name: 'get_list_item',
+  classification: 'READ',
   displayName: 'Get List Item',
   description: 'Get a specific item from a list',
   audience: 'both',

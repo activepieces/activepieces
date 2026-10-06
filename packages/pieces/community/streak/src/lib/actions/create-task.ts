@@ -19,6 +19,7 @@ type StreakTask = {
 export const createTaskAction = createAction({
   auth: streakAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Create a new task on a box.',
   audience: 'both',

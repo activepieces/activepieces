@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findSubscriber = createAction({
   auth: smooveAuth,
   name: 'findSubscriber',
+  classification: 'SEARCH',
   displayName: 'Find Subscriber',
   description: 'Search for subscribers by unique identifiers (ID, email, phone, external ID) or name',
   audience: 'both',

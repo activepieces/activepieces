@@ -7,6 +7,7 @@ export const getDataDefinition = createAction({
   auth: kizeoFormsAuth,
 
   name: 'get_data_definition', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'READ',
   displayName: 'Get Data Definition',
   description: 'Get the definition of a data',
   audience: 'both',

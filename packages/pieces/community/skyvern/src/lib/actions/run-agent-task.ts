@@ -6,6 +6,7 @@ import { skyvernApiCall } from '../common/client';
 export const runAgentTaskAction = createAction({
 	auth: skyvernAuth,
 	name: 'run-agent-task',
+	classification: 'WRITE',
 	displayName: 'Run Agent Task',
 	description: 'Runs task with specified prompt.',
 	audience: 'both',

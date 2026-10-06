@@ -7,6 +7,7 @@ import { figmaAuth } from '../auth';
 export const postCommentAction = createAction({
   auth: figmaAuth,
   name: 'post_comment',
+  classification: 'WRITE',
   displayName: 'Post File Comment',
   description: 'Post file comment',
   audience: 'both',

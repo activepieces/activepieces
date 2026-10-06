@@ -5,6 +5,7 @@ import { documentDropdown, watermarkTextDropdown, customWatermarkTextInput } fro
 
 export const downloadDocument = createAction({
   name: 'downloadDocument',
+  classification: 'READ',
   displayName: 'Download Document',
   description: 'Downloads a document as PDF.',
   audience: 'both',

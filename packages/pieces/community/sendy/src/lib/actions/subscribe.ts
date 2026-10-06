@@ -10,6 +10,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const subscribeAction = createAction({
   name: 'subscribe',
+  classification: 'WRITE',
   auth: sendyAuth,
   displayName: 'Subscribe Updated',
   description: 'Add a new subscriber to a list',
