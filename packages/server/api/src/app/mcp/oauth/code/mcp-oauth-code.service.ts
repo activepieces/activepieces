@@ -29,6 +29,7 @@ export const mcpOAuthCodeService = {
             codeChallengeMethod: params.codeChallengeMethod,
             scopes: params.scopes ?? [],
             state: params.state ?? null,
+            nonce: params.nonce ?? null,
             expiresAt: new Date(Date.now() + CODE_TTL_10_MINUTES_MS).toISOString(),
             used: false,
             created: new Date().toISOString(),
@@ -73,4 +74,5 @@ type CreateCodeParams = {
     codeChallengeMethod: string
     scopes?: string[]
     state?: string
+    nonce?: string | null
 }

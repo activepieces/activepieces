@@ -9,6 +9,7 @@ import {
 
 export const listTemplates = createAction({
   name: 'listTemplates',
+  classification: 'SEARCH',
   displayName: 'Find Templates by Name',
   description: 'Search for reusable signing templates by name.',
   audience: 'both',

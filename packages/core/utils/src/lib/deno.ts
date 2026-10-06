@@ -1,5 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { nanoid } from 'nanoid'
+import { sandboxError, SandboxErrorPayload } from './sandbox-error'
 
 export const deno = {
     /**
@@ -7,10 +8,11 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, timeoutMs }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
         const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
         child.stdin.end(buildRunProgram({ body, marker }))
+        const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
 
         return new Promise((resolve, reject) => {
             let capturedStdout = ''
@@ -28,6 +30,7 @@ export const deno = {
             })
 
             child.on('close', (code, signal) => {
+                clearTimeout(killTimer)
                 void removeDenoDir(denoDir)
                 if (settled) {
                     return
@@ -40,7 +43,7 @@ export const deno = {
                 }
 
                 if (resultJson === null) {
-                    reject(buildError({ message: `Deno process exited with code ${code} and signal ${signal} without returning a result`, stdout: userOutput, stderr: capturedStderr }))
+                    reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} without returning a result`, stdout: userOutput, stderr: capturedStderr }))
                     return
                 }
 
@@ -49,17 +52,21 @@ export const deno = {
                     message = JSON.parse(resultJson)
                 }
                 catch {
-                    reject(buildError({ message: 'Deno process returned a malformed result', stdout: userOutput, stderr: capturedStderr }))
+                    const processDied = code !== 0 || signal !== null
+                    const error = processDied
+                        ? `Deno process exited with code ${code} and signal ${signal} while writing its result`
+                        : 'Deno process returned a malformed result'
+                    reject(sandboxError.build({ error, stdout: userOutput, stderr: capturedStderr }))
                     return
                 }
 
                 if (!message.success) {
-                    reject(buildError({ message: message.error, stdout: userOutput, stderr: capturedStderr }))
+                    reject(sandboxError.build({ error: message.error, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else if (code !== 0) {
                     // e.g. an unhandled rejection fired after the result was printed — deno exits
                     // non-zero, so the run must fail even though a success marker exists.
-                    reject(buildError({ message: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
+                    reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else {
                     resolve(message.result)
@@ -67,12 +74,13 @@ export const deno = {
             })
 
             child.on('error', (error) => {
+                clearTimeout(killTimer)
                 void removeDenoDir(denoDir)
                 if (settled) {
                     return
                 }
                 settled = true
-                reject(buildError({ message: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: capturedStdout, stderr: capturedStderr }))
+                reject(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: capturedStdout, stderr: capturedStderr }))
             })
         })
     },
@@ -166,12 +174,25 @@ function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermissio
 
 function buildRunProgram({ body, marker }: { body: string, marker: string }): string {
     return `
+${sandboxError.payloadSource}
+let settled = false;
+const emit = (payload) => {
+    if (settled) return;
+    settled = true;
+    console.log(${JSON.stringify(marker)} + JSON.stringify(payload));
+};
+globalThis.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    emit({ success: false, error: toErrorPayload(event.reason) });
+    Deno.exit(1);
+});
 try {
 ${body}
-    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: true, result: result ?? null }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    emit({ success: true, result: result ?? null });
 }
 catch (error) {
-    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: false, error: (error && error.stack) || String(error) }));
+    emit({ success: false, error: toErrorPayload(error) });
     Deno.exit(1);
 }
 `
@@ -187,17 +208,6 @@ function extractResult(stdout: string, marker: string): { userOutput: string, re
     const resultJson = newline === -1 ? after : after.slice(0, newline)
     const trailing = newline === -1 ? '' : after.slice(newline + 1)
     return { userOutput: stdout.slice(0, idx) + trailing, resultJson }
-}
-
-function buildError({ message, stdout, stderr }: BuildErrorParams): Error {
-    const parts: string[] = [message ?? 'Code execution failed']
-    if (stdout.trim()) {
-        parts.push(`\n--- stdout ---\n${stdout.trim()}`)
-    }
-    if (stderr.trim()) {
-        parts.push(`\n--- stderr ---\n${stderr.trim()}`)
-    }
-    return new Error(parts.join(''))
 }
 
 const DEFAULT_MEMORY_LIMIT_MB = 128
@@ -221,6 +231,7 @@ type DenoProgramParams = {
     resolveNodeModules?: boolean
     env?: Record<string, string>
     denoDirBase?: string
+    timeoutMs?: number
 }
 
 type SpawnDenoParams = {
@@ -240,17 +251,11 @@ type NodeApis = {
     fs: typeof import('node:fs/promises')
 }
 
-type BuildErrorParams = {
-    message: string
-    stdout: string
-    stderr: string
-}
-
 type DenoResultMessage = {
     success: true
     result: unknown
 } | {
     success: false
-    error: string
+    error: SandboxErrorPayload
 }
 

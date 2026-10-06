@@ -8,48 +8,73 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### The AI provider config endpoint is removed
+#### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
 
-`GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
+Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
 
-The route only ever accepted an engine token, so it was never reachable with a user token, an API key or from the browser. `GET /v1/ai-providers` and `GET /v1/ai-providers/:provider/models` are unchanged.
-
-#### What you need to do
-
-Nothing on a normal upgrade. Every flow is moved to the AI piece version that runs on the worker the first time its version is read, before it can run.
-
-If you serve pieces from your own registry, make sure it carries the AI piece at `0.11.0` or later. A flow left on an earlier version would still try to fetch its provider credentials over this endpoint and fail.
-
-#### AI steps are billed on what each call costs, not on a fixed price per model
-
-The managed Activepieces AI provider used to charge a fixed number of credits per model per step, taken from a table calibrated at roughly a thousand tokens per call. A short call was charged about right; a long one was charged the same as a short one while costing us many times more.
-
-Every managed AI call is now billed on the dollar cost the provider reports for that call, converted at `AP_AI_CREDIT_USD_VALUE` (default `0.0005`, so one credit is a twentieth of a cent of model spend). A call on your own API key is billed a flat one credit per model call. Tool calls stay at one credit each.
-
-This changes what the same flow costs in both directions. A short prompt on an expensive model gets much cheaper; a long document through Extract Structured Data gets dearer. The credit cost shown in the model picker and in the credits breakdown is gone, because there is no longer a fixed number to show.
-
-A step or a chat turn on your own API key costs the same as it did: one credit, plus one per tool call. An agent still counts as one credit however many times it goes back to the model.
+Get File used to return a `file_url` that contained the bot token, which put the token in the run's step output. From 0.8.0 the output no longer has `file_url`. With **Download File** on, it still returns the content as `file_content_base64`.
 
 #### What you need to do
 
-Nothing to configure. Self-hosters who want a different conversion rate can set `AP_AI_CREDIT_USD_VALUE` to the dollar value of one credit.
+If a flow branches on Get Chat or Get Chat Member returning `ok: false`, handle the failure with the step's error handling options instead. If a later step reads Get File's `file_url`, turn on **Download File** and use `file_content_base64`. Steps keep running on the version they were built with until you upgrade them.
 
-#### AI steps now consume credits on your own API key too
+#### Helm chart 0.5.0 uses the cluster's default StorageClass again
 
-`POST /v1/ai/execute` refuses to start an AI step when the platform is out of credits, whatever provider the step uses. Previously only the managed Activepieces provider was gated, so a platform that had exhausted its credits kept running AI steps as long as they used its own key.
-
-Credits are only enforced where a billing provider is configured, so a Community self-host is unaffected.
+Chart 0.4.0 set the app's cache volume to the `local-path` StorageClass whenever `persistence.storageClassName` was unset, which only exists on k3s-style clusters, so new installs elsewhere stayed `Pending`. From 0.5.0 an unset value uses the cluster's default StorageClass again, as chart 0.3.x did. A StatefulSet's volume class cannot change after it is created, so `helm upgrade` keeps the class your release already uses.
 
 #### What you need to do
 
-Nothing, unless you run AI steps on your own provider key on a platform that sits at zero credits. Those steps now fail with a credits error instead of running. Top up, or raise the plan's credit allowance.
+If your release was created with chart 0.4.0, you never set `persistence.storageClassName`, and you deploy by rendering the chart without a cluster connection (Argo CD, `helm template | kubectl apply`), pin the class your StatefulSet was created with before upgrading, or every sync fails with `updates to statefulset spec ... are forbidden`:
 
-#### Files passed to an AI step are capped at `AP_MAX_FILE_SIZE_MB`
+```yaml
+persistence:
+  storageClassName: "local-path"
+```
 
-Extract Structured Data and Generate Image used to read file inputs straight from the flow's memory, so no Activepieces-side size limit applied. Those files are now stored and fetched by the worker that runs the model, which puts them under the same per-file limit as every other file the engine writes: `AP_MAX_FILE_SIZE_MB`, 25 MB by default.
+Direct `helm upgrade` needs no change. A new install on a cluster with no default StorageClass (`kubectl get storageclass` shows none marked `(default)`) must set `persistence.storageClassName`, or the cache volume and the app pod stay `Pending`.
 
-The limit is per file, not per step, so several large files in one step are fine as long as each is under it. On Activepieces Cloud the limit is 10 MB and is not configurable.
+#### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
+
+Read File used to send the connection's Zoho access token to whatever URL it was given, including hosts outside Zoho. From Zoho CRM 0.4.0 it only fetches `https` URLs on the connection's own Zoho API host under `/crm/` (for example `https://www.zohoapis.com/crm/bulk/v8/read/<job>/result`), or on that data centre's download hosts (for example `https://download-accl.zoho.com/v2/crm/...` for a data backup). Custom Zoho function URLs (`/crm/.../functions/...`) and URLs in another data centre are refused. Any other URL fails before a request is made. Redirects are followed only to those same hosts; a redirect anywhere else stops the download before that host is requested. The file is streamed, so the deployment's file size limit (`AP_MAX_FILE_SIZE_MB`) applies.
+
+Custom API Call keeps working with paths such as `/Leads` and with full URLs on the connection's own API host (for example `https://www.zohoapis.com/crm/v8/...`). A full URL on any other host, including other Zoho hosts, now fails before a request is made instead of receiving the token.
 
 #### What you need to do
 
-Nothing unless an AI step handles files larger than 25 MB. Those steps now fail with a size error naming the limit. Raise `AP_MAX_FILE_SIZE_MB` on a self-hosted installation if you need more.
+Nothing if your Read File steps point at Zoho CRM backup, bulk-read or API file URLs of the connected account, and your Custom API Call steps use a path or a URL on the connection's API host. If a step calls any other URL, replace it with the HTTP piece's Send HTTP Request action. Steps keep running on the version they were built with until you upgrade them.
+
+#### Instagram for Business no longer reports success when a reel fails to publish
+
+Publishing a reel uploads the video to Instagram and then waits for Instagram to finish processing it before the post goes live. The piece used to give up after about a hundred seconds and return the boolean `false`, which the flow recorded as a **successful** step. Anything downstream carried on with `false` where a media id was expected, and nothing in the run said the post had not been published.
+
+Upload Reel now throws when Instagram reports an error, and waits up to five minutes, which is the window Instagram's own guidance describes. Upload Photo waits for the same signal instead of publishing blind, so a container Instagram rejects now surfaces as a failed step rather than a confusing error from the next call.
+
+The piece also moves from Graph API v17.0, which expired on 12 September 2025, to v23.0.
+
+#### What you need to do
+
+If a flow branches on the output of Upload Reel being `false`, that branch will no longer be taken — the step fails instead. Handle the failure with the step's error handling options, or with a branch on the run status.
+
+Reconnect your Instagram connections. The piece now requests the permissions needed for comments, insights, content management, direct messages and Page metadata, and a token issued before this release does not carry them. Steps that were saved earlier will also ask you to select the Page again, because messaging needs the Facebook Page id that the Page dropdown now stores.
+
+#### WhatsApp Business' Send Message and Send Media return the API response instead of the HTTP envelope
+
+The WhatsApp Business piece returned two different shapes depending on which action you used. `Send Template Message` returned the WhatsApp Cloud API payload directly, while `Send Message` and `Send Media` returned the whole HTTP response, so the same payload sat one level down under `body`, alongside `status` and `headers`.
+
+Both actions now return the API payload directly, matching `Send Template Message` and every other action in the piece. A step that produced
+
+```json
+{ "status": 200, "headers": { }, "body": { "messaging_product": "whatsapp", "messages": [{ "id": "wamid.…" }] } }
+```
+
+now produces
+
+```json
+{ "messaging_product": "whatsapp", "contacts": [{ "input": "…", "wa_id": "…" }], "messages": [{ "id": "wamid.…" }] }
+```
+
+The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE` constant. It previously split between `v17.0` (expired September 2025) and `v20.0` (expires 24 September 2026).
+
+#### What you need to do
+
+Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.

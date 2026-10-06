@@ -6,6 +6,7 @@ export const deleteEventProps = {
   calendar_id: googleCalendarCommon.calendarDropdown('writer'),
   eventId: Property.ShortText({
     displayName: 'Event ID',
+    description: 'Paste the ID from the event URL or a previous step.',
     required: true,
   }),
 };

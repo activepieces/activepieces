@@ -7,6 +7,7 @@ const MAX_ENTITY_IDS = 1000;
 export const checkListMembership = createAction({
   auth: villageAuth,
   name: 'check_list_membership',
+  classification: 'SEARCH',
   displayName: 'Check list membership',
   description:
     'Check which lists contain the given entities. Returns a map of entity_id to the lists that contain it. Entities not in any list are omitted.',

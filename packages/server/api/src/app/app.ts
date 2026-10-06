@@ -16,6 +16,7 @@ import { aiProviderModule } from './ai/ai-provider.module'
 import { aiToolConfigModule } from './ai/ai-tool-config.module'
 import { aiUsageHooks } from './ai/ai-usage-hooks'
 import { aiUsageService } from './ai/ai-usage-service'
+import { platformModelTierModule } from './ai/platform-model-tier.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -53,6 +54,7 @@ import { appearanceHelper } from './ee/helper/appearance-helper'
 import { licenseKeyUsageReportModule } from './ee/license-key-usage-report/license-key-usage-report-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
+import { pieceSetRequiredActions } from './ee/pieces/piece-set/piece-set-required-actions'
 import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
@@ -60,6 +62,7 @@ import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates
 import { autumnBillingProvider } from './ee/platform/platform-plan/billing-providers/autumn-billing'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { platformTeardownJobs } from './ee/platform/platform-teardown-jobs'
+import { eventDestinationEntitlementHooks } from './ee/platform-webhooks/event-destination-entitlement-hooks'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
@@ -73,6 +76,7 @@ import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { userModule } from './ee/users/user.module'
+import { eventDestinationHooks } from './event-destinations/event-destinations-hooks'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
@@ -121,6 +125,7 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { resumePageHooks } from './waitpoints/resume-page-hooks'
+import { sweepOverdueDeadlines } from './waitpoints/waitpoint-deadline-sweep'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
@@ -265,6 +270,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
+    await app.register(platformModelTierModule)
     await app.register(licenseKeyUsageReportModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
@@ -290,6 +296,21 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             name: SystemJobName.CHAT_STALE_SWEEP,
             data: {},
             jobId: SystemJobName.CHAT_STALE_SWEEP,
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '* * * * *',
+        },
+    })
+
+    systemJobHandlers.registerJobHandler(SystemJobName.WAITPOINT_DEADLINE_SWEEP, async () => {
+        await sweepOverdueDeadlines({ log: app.log })
+    })
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
+            data: {},
+            jobId: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
         },
         schedule: {
             type: 'repeated',
@@ -361,8 +382,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
-            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
+            flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
+            eventDestinationHooks.set(eventDestinationEntitlementHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -401,8 +423,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
-            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
+            flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
+            eventDestinationHooks.set(eventDestinationEntitlementHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)

@@ -1,21 +1,19 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { calcomAuth } from './lib/auth';
+import { actions } from './lib/actions';
 import { triggers } from './lib/triggers';
 
-export const calcomAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'API Key provided by cal.com',
-  required: true,
-});
+export { calcomAuth };
 
 export const calcom = createPiece({
   displayName: 'Cal.com',
   description: 'Open-source alternative to Calendly',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/cal.com.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: calcomAuth,
-  actions: [],
+  actions,
   triggers,
 });

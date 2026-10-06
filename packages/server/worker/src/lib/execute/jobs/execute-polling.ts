@@ -61,7 +61,7 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                 }
             }
 
-            await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: result.status })
+            await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: result.status, error: result.error })
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }

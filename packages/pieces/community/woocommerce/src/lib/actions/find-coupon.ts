@@ -14,7 +14,7 @@ export const wooFindCoupon = createAction({
   classification: 'READ',
   displayName: 'Find Coupon',
   description: 'Find a Coupon',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves a single coupon from a WooCommerce store by its numeric coupon ID, including the discount type, amount, usage limits and restrictions. Use when an agent already has a coupon ID and needs the full coupon record. Read-only and idempotent.',

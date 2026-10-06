@@ -14,7 +14,7 @@ export const wooFindOrders = createAction({
   classification: 'READ',
   displayName: 'Find Orders',
   description: 'Search orders by status, customer or date',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Searches orders in a WooCommerce store, optionally narrowed by status, customer ID, or a created-after date, and returns a list of full order records. Use when an agent needs to process a batch of orders rather than one known order. Read-only and idempotent. Returns an array, newest first.',

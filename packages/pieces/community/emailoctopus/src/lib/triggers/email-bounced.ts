@@ -6,6 +6,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 export const emailBounced = createTrigger({
     auth: emailOctopusAuth,
     name: 'email_bounced',
+    classification: 'READ',
     displayName: 'Email Bounced',
     description: 'Triggers when an email to a recipient bounces from a specific campaign.',
     aiMetadata: {

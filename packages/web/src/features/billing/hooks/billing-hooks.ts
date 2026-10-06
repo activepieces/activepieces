@@ -218,7 +218,7 @@ export const billingMutations = {
     return useMutation({
       mutationFn: async () => {
         const { url } = await platformBillingApi.setupPayment({
-          redirectUrl: `${window.location.origin}/platform/setup/billing/success?action=setup`,
+          redirectUrl: `${window.location.origin}/platform/billing/success?action=setup`,
         });
         if (url) {
           window.open(url, '_blank');

@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const searchAds = createAction({
   auth: pubrioAuth,
   name: 'search_ads',
+  classification: 'SEARCH',
   displayName: 'Search Advertisements',
   description: 'Search company advertisements and ad campaigns',
   audience: 'both',

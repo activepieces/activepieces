@@ -16,5 +16,14 @@
   "Title": "标题",
   "Description": "描述",
   "A URL we can access for the photo": "A URL we can access for the photo",
-  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "A URL we can access for the video (Limit: 1GB or 20 minutes)"
+  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "A URL we can access for the video (Limit: 1GB or 20 minutes)",
+  "Photo URL": "照片 URL",
+  "Video URL": "视频 URL",
+  "Pages you gave access to when connecting your account.": "连接帐户时你授予访问权限的主页。",
+  "Facebook adds a preview card for this link below the post.": "Facebook 会在帖子下方为此链接添加预览卡片。",
+  "Public URL of the image, so Facebook can download it.": "图片的公开 URL，以便 Facebook 下载。",
+  "Post text shown with the photo.": "与照片一起显示的帖子文字。",
+  "Public URL of the video file, up to 1 GB or 20 minutes.": "视频文件的公开 URL，最大 1 GB 或 20 分钟。",
+  "Name of the video, shown on the Page's Videos tab.": "视频名称，显示在主页的“视频”标签页中。",
+  "Post text shown with the video.": "与视频一起显示的帖子文字。"
 }

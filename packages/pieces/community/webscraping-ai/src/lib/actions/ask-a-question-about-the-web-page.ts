@@ -4,6 +4,7 @@ import { webscrapingAiAuth, webscrapingAiCommon } from '../common';
 export const askAQuestionAboutTheWebPage = createAction({
   auth: webscrapingAiAuth,
   name: 'askAQuestionAboutTheWebPage',
+  classification: 'READ',
   displayName: 'Ask a Question About the Web Page',
   description: 'Gets an answer to a question about a given webpage.',
   audience: 'both',

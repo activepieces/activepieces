@@ -8,6 +8,7 @@ import { tagIdProp } from '../common/props';
 
 export const conversationPartTagged = createTrigger({
   name: 'conversationPartTagged',
+  classification: 'READ',
   displayName: 'Tag added to a conversation part',
   description: 'Triggers when a conversation part is tagged.',
   aiMetadata: {

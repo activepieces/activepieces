@@ -6,6 +6,7 @@ import { postizApiCall, postizCommon } from '../common';
 export const getPlatformAnalytics = createAction({
   auth: postizAuth,
   name: 'get_platform_analytics',
+  classification: 'READ',
   displayName: 'Get Platform Analytics',
   description:
     'Retrieve analytics (followers, impressions, engagement) for a connected channel',

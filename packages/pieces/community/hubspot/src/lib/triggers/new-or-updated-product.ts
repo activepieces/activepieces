@@ -75,8 +75,8 @@ export const newOrUpdatedProductTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-product',
 	classification: 'READ',
-	displayName: 'Product Recently Created or Updated',
-	description: 'Triggers when a product recently created or updated.',
+	displayName: 'New or Updated Product',
+	description: 'Triggers when a product is created or updated.',
 	aiMetadata: {
 		description:
 			'Fires when a product is created or modified in the HubSpot product library. Each event represents one product record with properties such as name, description, price, and tax. Polls by last-modified date, so both new and edited products trigger it.',
@@ -84,15 +84,13 @@ export const newOrUpdatedProductTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                                    
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.PRODUCT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

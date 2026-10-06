@@ -6,6 +6,7 @@ import { postizApiCall, postizCommon } from '../common';
 export const createPost = createAction({
   auth: postizAuth,
   name: 'create_post',
+  classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Create or schedule a post on one or more connected channels',
   audience: 'both',

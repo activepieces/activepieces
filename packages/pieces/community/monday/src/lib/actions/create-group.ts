@@ -9,7 +9,7 @@ export const createGroupAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Group',
   description: 'Creates a new group in board.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new group (section that holds items) on a monday.com board. Use to organize items under a named section before adding them. Not idempotent: each call creates a separate group even with the same name.', idempotent: false },
   outputSchema: createGroupActionOutputSchema,
   props: {

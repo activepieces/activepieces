@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const listMonitors = createAction({
   auth: pubrioAuth,
   name: 'list_monitors',
+  classification: 'SEARCH',
   displayName: 'List Monitors',
   description: 'List all monitors with pagination',
   audience: 'both',

@@ -52,7 +52,7 @@ export { googleDocsAuth, getAccessToken, GoogleDocsAuthValue } from './lib/auth'
 export const googleDocs = createPiece({
 	displayName: 'Google Docs',
 	description: 'Create and edit documents online',
-	minimumSupportedRelease: '0.86.4',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/google-docs.png',
 	categories: [PieceCategory.CONTENT_AND_FILES],
 	authors: [

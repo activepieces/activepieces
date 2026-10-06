@@ -28,6 +28,7 @@ import {
   FormField,
   FormLabel,
   FormItem,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -68,7 +69,14 @@ const createPropertySchema = (input: FormInputWithName): ZodType => {
         ? z.string().min(1, t('This field is required'))
         : z.string();
     case FormInputType.FILE:
-      return z.unknown();
+      return input.required
+        ? z
+            .unknown()
+            .refine(
+              (value) => value instanceof File,
+              t('This field is required'),
+            )
+        : z.unknown();
   }
 };
 
@@ -89,6 +97,9 @@ function buildSchema(inputs: FormInputWithName[]) {
     ),
   };
 }
+const isTruthyQueryValue = (value: string) =>
+  ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
+
 const handleDownloadFile = (fileBase: FileResponseInterface) => {
   const link = document.createElement('a');
   if ('url' in fileBase) {
@@ -130,7 +141,10 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   inputs.current.forEach((input) => {
     const queryValue = queryParamsLowerCase[input.name.toLowerCase()];
     if (queryValue !== undefined) {
-      defaultValues[input.name] = queryValue;
+      defaultValues[input.name] =
+        input.type === FormInputType.TOGGLE
+          ? isTruthyQueryValue(queryValue)
+          : queryValue;
     }
   });
 
@@ -197,7 +211,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       <div className="container py-20">
         <Form {...reactForm}>
           <form onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}>
-            <Card className="w-[500px] mx-auto">
+            <Card className="w-full max-w-[500px] mx-auto">
               <CardHeader>
                 <CardTitle className="text-center">{form?.title}</CardTitle>
               </CardHeader>
@@ -212,77 +226,83 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                         render={({ field }) => (
                           <>
                             {input.type === FormInputType.TOGGLE && (
-                              <>
-                                <FormItem className="flex items-center gap-2 h-full">
+                              <FormItem className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
                                   <FormControl>
                                     <Checkbox
+                                      id={input.name}
                                       onCheckedChange={(e) => field.onChange(e)}
-                                      checked={field.value as boolean}
+                                      checked={field.value === true}
                                     ></Checkbox>
                                   </FormControl>
                                   <FormLabel
                                     htmlFor={input.name}
-                                    className="flex items-center"
+                                    className="flex items-center gap-1"
+                                    showRequiredIndicator={input.required}
                                   >
                                     {input.displayName}
                                   </FormLabel>
-                                </FormItem>
-                                <ReadMoreDescription
-                                  text={input.description ?? ''}
-                                />
-                              </>
+                                </div>
+                                {input.description && (
+                                  <ReadMoreDescription
+                                    text={input.description}
+                                  />
+                                )}
+                                <FormMessage />
+                              </FormItem>
                             )}
                             {input.type !== FormInputType.TOGGLE && (
                               <FormItem className="flex flex-col gap-1">
                                 <FormLabel
                                   htmlFor={input.name}
-                                  className="flex items-center justify-between"
+                                  className="flex items-center gap-1"
+                                  showRequiredIndicator={input.required}
                                 >
-                                  {input.displayName} {input.required && '*'}
+                                  {input.displayName}
                                 </FormLabel>
-                                <FormControl className="flex flex-col gap-1">
-                                  <>
-                                    {input.type === FormInputType.TEXT_AREA && (
-                                      <Textarea
-                                        {...field}
-                                        name={input.name}
-                                        id={input.name}
-                                        onChange={field.onChange}
-                                        value={
-                                          field.value as string | undefined
-                                        }
-                                      />
-                                    )}
-                                    {input.type === FormInputType.TEXT && (
-                                      <Input
-                                        {...field}
-                                        onChange={field.onChange}
-                                        id={input.name}
-                                        name={input.name}
-                                        value={
-                                          field.value as string | undefined
-                                        }
-                                      />
-                                    )}
-                                    {input.type === FormInputType.FILE && (
-                                      <Input
-                                        name={input.name}
-                                        id={input.name}
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) {
-                                            field.onChange(file);
-                                          }
-                                        }}
-                                        placeholder={input.displayName}
-                                        type="file"
-                                      />
-                                    )}
-                                    <ReadMoreDescription
-                                      text={input.description ?? ''}
+                                {input.type === FormInputType.TEXT_AREA && (
+                                  <FormControl>
+                                    <Textarea
+                                      {...field}
+                                      name={input.name}
+                                      id={input.name}
+                                      onChange={field.onChange}
+                                      value={String(field.value ?? '')}
                                     />
-                                  </>
-                                </FormControl>
+                                  </FormControl>
+                                )}
+                                {input.type === FormInputType.TEXT && (
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      onChange={field.onChange}
+                                      id={input.name}
+                                      name={input.name}
+                                      value={String(field.value ?? '')}
+                                    />
+                                  </FormControl>
+                                )}
+                                {input.type === FormInputType.FILE && (
+                                  <FormControl>
+                                    <Input
+                                      name={input.name}
+                                      id={input.name}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          field.onChange(file);
+                                        }
+                                      }}
+                                      type="file"
+                                    />
+                                  </FormControl>
+                                )}
+                                {input.description && (
+                                  <ReadMoreDescription
+                                    text={input.description}
+                                  />
+                                )}
+                                <FormMessage />
                               </FormItem>
                             )}
                           </>

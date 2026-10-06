@@ -10,7 +10,7 @@ export const youtubeListPlaylistsAction = createAction({
   classification: 'SEARCH',
   displayName: 'List Playlists',
   description: 'List the playlists on a channel.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists the playlists belonging to a YouTube channel using playlists.list, returning each playlist title, description, item count and privacy status. Use it to discover a playlist ID before calling List Playlist Items. Read-only and idempotent.',
@@ -19,19 +19,25 @@ export const youtubeListPlaylistsAction = createAction({
   props: {
     channelId: Property.ShortText({
       displayName: 'Channel ID',
-      description: 'Channel ID starting with `UC`.',
+      description: "The channel's ID, which starts with UC.",
+      placeholder: 'UC_x5XG1OV2P6uZZ5FSM9Ttw',
       required: true,
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
-      description: 'Number of playlists to return (1-50, default 25).',
+      description: 'How many playlists to return, up to 50.',
+      display: 'stepper',
+      min: 1,
+      max: 50,
+      step: 1,
       required: false,
       defaultValue: 25,
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'Token from a previous response, to fetch the next page.',
+      description: 'The nextPageToken from an earlier run, to get the next page.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

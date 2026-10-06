@@ -12,7 +12,7 @@ export const createContactAction = createAction({
 	name: 'create-contact',
 	classification: 'WRITE',
 	displayName: 'Create Contact',
-	description: 'Creates a contact in Hubspot.',
+	description: 'Creates a contact in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Creates a new contact record in HubSpot from the supplied property values, then returns the created contact. Use when you specifically need a new contact; to avoid duplicates when a contact may already exist, prefer Create or Update Contact, which upserts on email. Not idempotent: each call creates a separate contact.', idempotent: false },
 	outputSchema: crmObjectOutputSchema,
@@ -20,16 +20,15 @@ export const createContactAction = createAction({
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.CONTACT, []),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
-                                            
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.CONTACT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

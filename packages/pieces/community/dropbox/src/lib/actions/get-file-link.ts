@@ -24,10 +24,6 @@ export const dropboxGetFileLink = createAction({
     }),
   },
   async run(context) {
-    const params = {
-      path: context.propsValue.path,
-    };
-
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.dropboxapi.com/2/files/get_temporary_link`,

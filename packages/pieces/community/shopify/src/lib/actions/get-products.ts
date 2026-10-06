@@ -5,6 +5,7 @@ import { getProducts } from '../common';
 export const getProductsAction = createAction({
   auth: shopifyAuth,
   name: 'get_products',
+  classification: 'SEARCH',
   displayName: 'Get Products',
   description: `Get existing products by title.`,
   audience: 'both',

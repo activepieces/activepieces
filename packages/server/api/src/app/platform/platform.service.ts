@@ -11,6 +11,7 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { defaultTheme } from '../flags/theme'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
+import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
@@ -73,7 +74,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: savedPlatform.id,
         })
 
-        await platformPlanService(log).onPlatformCreated(savedPlatform.id)
+        const platformPlan = await platformPlanService(log).onPlatformCreated(savedPlatform.id)
+        const { error: telemetryError } = await tryCatch(() => telemetry(log).identifyPlatformGroup({
+            platformId: savedPlatform.id,
+            properties: { name: savedPlatform.name, plan: platformPlan.plan ?? null, createdAt: savedPlatform.created },
+        }))
+        if (!isNil(telemetryError)) {
+            log.warn({ error: telemetryError, platform: { id: savedPlatform.id } }, 'Failed to identify the platform group')
+        }
 
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
@@ -113,7 +121,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 if (invalidatePreviousTokens) {
                     await rotateTokenVersion(identityId)
                 }
-                await reportSignup({ identityId, user: owner, projectId: personalProject.id, log })
+                await reportSignup({ identityId, user: owner, platformId: platform.id, projectId: personalProject.id, log })
                 const response = await authenticationUtils(log).getProjectAndToken({
                     userId: owner.id,
                     platformId: platform.id,
@@ -301,17 +309,18 @@ async function linkOwnerToPlatform({ ownerId, platformId, identityId, name, inva
         log,
     })
     if (!isNil(response.projectId)) {
-        rejectedPromiseHandler(reportSignup({ identityId, user: owner, projectId: response.projectId, log }), log)
+        rejectedPromiseHandler(reportSignup({ identityId, user: owner, platformId, projectId: response.projectId, log }), log)
     }
     return { response, provisioned: true }
 }
 
-async function reportSignup({ identityId, user, projectId, log }: ReportSignupParams): Promise<void> {
+async function reportSignup({ identityId, user, platformId, projectId, log }: ReportSignupParams): Promise<void> {
     await authenticationUtils(log).sendTelemetry({
         identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
         user,
         projectId,
     })
+    rejectedPromiseHandler(telemetry(log).aliasIdentity({ identityId, userId: user.id, platformId }), log)
 }
 
 function isSameTokenVersion(current: string | undefined, caller: string | undefined): boolean {
@@ -461,6 +470,7 @@ type FinishExistingPlatformParams = {
 type ReportSignupParams = {
     identityId: string
     user: User
+    platformId: string
     projectId: string
     log: FastifyBaseLogger
 }

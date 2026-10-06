@@ -55,6 +55,11 @@ jobs:
             exit 1
           fi
           echo "Release tag base '$TAG_BASE' matches package.json version '$PACKAGE_VERSION'."
+          CHART_APP_VERSION="$(sed -n 's/^appVersion: "\(.*\)"/\1/p' deploy/activepieces-helm/Chart.yaml)"
+          if [ "$CHART_APP_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Helm chart appVersion '$CHART_APP_VERSION' does not match package.json version '$PACKAGE_VERSION'. Bump deploy/activepieces-helm/Chart.yaml."
+            exit 1
+          fi
 
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
@@ -178,6 +183,7 @@ jobs:
             npm pkg set version="$TAG_BASE"
             sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
             grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
+            sed -i -E "s|^appVersion: .*|appVersion: \"$TAG_BASE\"|" deploy/activepieces-helm/Chart.yaml
           fi
           if git diff --quiet; then
             echo "main already matches $TAG, nothing to sync."
@@ -185,7 +191,7 @@ jobs:
           fi
           BRANCH="automated/sync-main-$TAG"
           git checkout -b "$BRANCH"
-          git add package.json docker-compose.yml docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx
+          git add package.json docker-compose.yml deploy/activepieces-helm/Chart.yaml docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx
           git commit -m "chore(release): sync main after $TAG"
           git push -f origin "$BRANCH"
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT

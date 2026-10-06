@@ -8,6 +8,20 @@ export const formErrors = {
     messageRequiresContentOrFiles: 'messageRequiresContentOrFiles',
     agentConfigTooLarge: 'agentConfigTooLarge',
     invalidGcpResourceId: 'invalidGcpResourceId',
+    duplicateRouteName: 'duplicateRouteName',
+    atLeastOne: 'atLeastOne',
+    wholeNumber: 'wholeNumber',
+    atMostTenThousand: 'atMostTenThousand',
+    tierNameTooLong: 'tierNameTooLong',
+    tierDescriptionTooLong: 'tierDescriptionTooLong',
+    invalidEmoji: 'invalidEmoji',
+    tierTooManyModels: 'tierTooManyModels',
+    tierDuplicateModel: 'tierDuplicateModel',
+    tierThinkingBudgetInvalid: 'tierThinkingBudgetInvalid',
+    invalidHeaderName: 'invalidHeaderName',
+    reservedHeaderName: 'reservedHeaderName',
+    duplicateHeaderName: 'duplicateHeaderName',
+    invalidHeaderValue: 'invalidHeaderValue',
 } as const
 
 export const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/

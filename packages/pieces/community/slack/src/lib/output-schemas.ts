@@ -153,6 +153,11 @@ export const threadRepliesActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'messages', label: 'Messages', listItems: messageFields, labelKey: 'text' },
     { key: 'has_more', label: 'Has More', format: 'boolean' },
+    {
+      key: 'response_metadata',
+      label: 'Response Metadata',
+      children: [{ key: 'next_cursor', label: 'Next Cursor' }],
+    },
   ],
 };
 

@@ -21,8 +21,9 @@ export const getFileAction = createAction({
 	props: {
 		fileId: Property.ShortText({
 			displayName: 'File ID',
+			description: 'Found in trigger output or the file link.',
+			placeholder: 'F0123ABC456',
 			required: true,
-			description: 'You can pass the file ID from the New Message Trigger payload.',
 		}),
 	},
 	async run(context) {

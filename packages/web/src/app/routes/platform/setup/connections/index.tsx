@@ -19,7 +19,6 @@ import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -51,7 +50,10 @@ import {
 import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+
+import { sampleData } from '../../sample-data';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
@@ -76,13 +78,13 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
 ];
 
 const GlobalConnectionsTable = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
   const { checkAccess } = useAuthorization();
   const location = useLocation();
-  const { platform } = platformHooks.useCurrentPlatform();
 
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
@@ -103,6 +105,7 @@ const GlobalConnectionsTable = () => {
           <CopyTextTooltip
             title={t('External ID')}
             text={row.original.externalId || ''}
+            controlId={AdminControl.CONNECTIONS_EXTERNAL_ID_COPY}
           >
             <div className="flex items-center gap-2 w-fit">
               <PieceIconWithPieceName
@@ -229,6 +232,7 @@ const GlobalConnectionsTable = () => {
     staleTime: 0,
     gcTime: 0,
   });
+  const isSample = !platform.plan.globalConnectionsEnabled;
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -256,6 +260,7 @@ const GlobalConnectionsTable = () => {
                 warning={<DeleteConnectionWarning />}
                 entityName="connections"
                 buttonText={t('Delete')}
+                controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
                 mutationFn={async () => {
                   try {
                     await bulkDeleteGlobalConnections.mutateAsync(
@@ -272,8 +277,11 @@ const GlobalConnectionsTable = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
+                    {...adminControl(
+                      AdminControl.CONNECTIONS_CONNECTION_DELETE_OPEN,
+                    )}
                   >
                     <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
@@ -298,7 +306,12 @@ const GlobalConnectionsTable = () => {
           refetchGlobalConnections();
         }}
       >
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <AnimatedIconButton
+          icon={PlusIcon}
+          iconSize={16}
+          size="sm"
+          {...adminControl(AdminControl.CONNECTIONS_CONNECTION_OPEN)}
+        >
           {t('New Connection')}
         </AnimatedIconButton>
       </NewConnectionDialog>,
@@ -308,40 +321,28 @@ const GlobalConnectionsTable = () => {
 
   return (
     <div className="flex-col w-full">
-      <LockedFeatureGuard
-        featureKey="GLOBAL_CONNECTIONS"
-        locked={!platform.plan.globalConnectionsEnabled}
-        lockTitle={t('Enable Global Connections')}
-        lockDescription={t(
-          'Manage platform-wide connections to external systems.',
+      <DashboardPageHeader
+        description={t('Manage platform-wide connections to external systems.')}
+        title={t('Global Connections')}
+      />
+      <DataTable
+        emptyStateTextTitle={t('No global connections found')}
+        emptyStateTextDescription={t(
+          'Create a global connection that can be shared to multiple projects',
         )}
-        lockVideoUrl="https://cdn.activepieces.com/videos/showcase/global-connections.mp4"
-      >
-        <DashboardPageHeader
-          description={t(
-            'Manage platform-wide connections to external systems.',
-          )}
-          title={t('Global Connections')}
-        />
-        <DataTable
-          emptyStateTextTitle={t('No global connections found')}
-          emptyStateTextDescription={t(
-            'Create a global connection that can be shared to multiple projects',
-          )}
-          emptyStateIcon={<Globe className="size-14" />}
-          columns={columns}
-          page={globalConnections}
-          isLoading={isLoadingGlobalConnections}
-          isError={isGlobalConnectionsError}
-          errorStateEntity={t('connections')}
-          onRetry={refetchGlobalConnections}
-          filters={filters}
-          selectColumn={true}
-          onSelectedRowsChange={setSelectedRows}
-          bulkActions={bulkActions}
-          toolbarButtons={toolbarButtons}
-        />
-      </LockedFeatureGuard>
+        emptyStateIcon={<Globe className="size-14" />}
+        columns={columns}
+        page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
+        isLoading={isSample ? false : isLoadingGlobalConnections}
+        isError={isGlobalConnectionsError}
+        errorStateEntity={t('connections')}
+        onRetry={refetchGlobalConnections}
+        filters={filters}
+        selectColumn={true}
+        onSelectedRowsChange={setSelectedRows}
+        bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { projectId, taskId, workspaceId } from '../common/props';
 export const findTimeEntryAction = createAction({
 	auth: clockifyAuth,
 	name: 'find-time-entry',
+	classification: 'SEARCH',
 	displayName: 'Find Time Entry',
 	description: 'Finds a time entry by description, start datetime or end datetime.',
 	audience: 'both',

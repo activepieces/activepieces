@@ -5,6 +5,7 @@ import { gotifyAuth } from '../auth';
 export const sendNotification = createAction({
   auth: gotifyAuth,
   name: 'send_notification',
+  classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to gotify',
   audience: 'both',

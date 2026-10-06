@@ -33,7 +33,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
         return userRepo().save(user)
     },
-    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<User> {
+    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<GetOrCreateWithProjectResult> {
         const user = await this.getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
@@ -54,9 +54,9 @@ export const userService = (log: FastifyBaseLogger) => ({
                     type: ProjectType.PERSONAL,
                 })
             }
-            return newUser
+            return { user: newUser, created: true }
         }
-        return user
+        return { user, created: false }
     },
     async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
         await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
@@ -393,4 +393,9 @@ type UpdatePlatformIdParams = {
 type GetOrCreateWithProjectParams = {
     identity: UserIdentity
     platformId: string
+}
+
+type GetOrCreateWithProjectResult = {
+    user: User
+    created: boolean
 }

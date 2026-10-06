@@ -8,6 +8,7 @@ import { reportIdProperty } from '../common/props';
 export const getReport = createAction({
 	auth: workdayAuth,
 	name: 'get_report',
+	classification: 'READ',
 	displayName: 'Get Report',
 	description: 'Fetches a Workday report by ID or web service alias.',
 	audience: 'both',

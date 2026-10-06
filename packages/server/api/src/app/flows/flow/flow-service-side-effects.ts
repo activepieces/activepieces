@@ -38,10 +38,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
-        if (
-            flowToDelete.status === FlowStatus.DISABLED ||
-            isNil(flowToDelete.publishedVersionId)
-        ) {
+        if (isNil(flowToDelete.publishedVersionId)) {
             return
         }
         await triggerSourceService(log).disable({

@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createAList = createAction({
   auth: smooveAuth, 
   name: 'createAList',
+  classification: 'WRITE',
   displayName: 'Create a List',
   description: 'Create a new mailing list with custom settings and descriptions',
   audience: 'both',

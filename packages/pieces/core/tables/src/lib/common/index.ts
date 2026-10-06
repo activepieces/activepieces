@@ -32,10 +32,9 @@ const getFieldTypeText = (fieldType: FieldType) => {
 export const tablesCommon = {
   table_id: Property.Dropdown({
     auth: PieceAuth.None(),
-    displayName: 'Table Name',
+    displayName: 'Table',
     required: true,
     refreshers: [],
-    refreshOnSearch: true,
     options: async (_propsValue, context) => {
       try {
         const tables = await fetchAllTables(context);
@@ -62,7 +61,7 @@ export const tablesCommon = {
 
   record_id: Property.ShortText({
     displayName: 'Record ID',
-    description: 'The ID of the record to do the action on.',
+    description: 'Usually comes from a Find Records step or a table trigger.',
     required: true,
   }),
 
@@ -115,7 +114,7 @@ export const tablesCommon = {
       const tableFields = await this.getTableFields({ tableId, context });
       if (!Array.isArray(tableFields) || tableFields.length === 0) {
         fields['markdown'] = Property.MarkDown({
-          value: `We couldn't find any fields in the selected table. Please add fields to the table first.`,
+          value: `This table has no fields yet. Add fields to the table first.`,
           variant: MarkdownVariant.INFO,
         });
         return fields;
@@ -166,7 +165,7 @@ export const tablesCommon = {
     } catch (e) {
       console.error('Error fetching fields:', e);
       fields['markdown'] = Property.MarkDown({
-        value: `We couldn't find any fields in the selected table. Please add fields to the table first.`,
+        value: `Couldn't load the fields of this table. Try again.`,
         variant: MarkdownVariant.INFO,
       });
 

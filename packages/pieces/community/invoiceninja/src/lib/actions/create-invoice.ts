@@ -10,6 +10,7 @@ import { invoiceninjaAuth } from '../..';
 export const createInvoice = createAction({
   auth: invoiceninjaAuth,
   name: 'create_invoice',
+  classification: 'WRITE',
   displayName: 'Create Invoice',
   description: 'Creates an invoice in Invoice Ninja for billing purposes.',
   audience: 'both',

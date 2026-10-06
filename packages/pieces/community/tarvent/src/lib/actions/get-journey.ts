@@ -5,6 +5,7 @@ import { makeClient } from '../common';
 export const getJourney = createAction({
   auth: tarventAuth,
   name: 'tarvent_get_journey',
+  classification: 'SEARCH',
   displayName: 'Find Journey',
   description: 'Finds a journey by name, status or tags.',
   audience: 'both',

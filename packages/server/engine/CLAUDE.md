@@ -3,7 +3,7 @@
 ## Error Handling
 
 - **Always throw `ExecutionError` subclasses** (from `@activepieces/shared`) instead of plain `Error`. The engine uses `tryCatchAndThrowOnEngineError` which only propagates errors of type `ExecutionErrorType.ENGINE` — plain `Error` instances are silently swallowed and treated as user-level failures.
-- Use `EngineGenericError` for engine-level failures (e.g., failed API calls to the server).
+- Use `EngineGenericError` for engine-level failures — but **only when the failure means the engine or its own infrastructure is broken**, because `tryCatchAndThrowOnEngineError` *rethrows* ENGINE errors instead of returning them. An executor that wraps an API client in it and then branches on the returned `error` has written dead code: the run dies with `INTERNAL_ERROR` and pages oncall, and the executor's `failStep` never runs. A call that proxies a third-party service (the AI router's gateway) fails for reasons that are not our bug, so it throws a USER-level `ExecutionError` and the step goes FAILED.
 - Use the existing specific error classes (`ConnectionNotFoundError`, `StorageLimitError`, `PausedFlowTimeoutError`, etc.) when applicable.
 
 ## USER vs ENGINE errors during input resolution

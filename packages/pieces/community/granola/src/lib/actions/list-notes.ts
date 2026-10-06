@@ -10,6 +10,7 @@ import {
 export const listNotesAction = createAction({
   auth: granolaAuth,
   name: 'list_notes',
+  classification: 'SEARCH',
   displayName: 'List Notes',
   description: 'List your meeting notes with optional date filters.',
   audience: 'both',

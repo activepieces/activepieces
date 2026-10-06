@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const listPartnerships = createAction({
   auth: wedofAuth,
   name: 'listPartnerships',
+  classification: 'SEARCH',
   displayName: "Lister les partenariats",
   description: "Récupère l'ensemble des partenariats d'une certification",
   audience: 'both',

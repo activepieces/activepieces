@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteVideo = createAction({
   name: 'delete_video',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Video',
   description: 'Delete a video from Vimeo',
   audience: 'both',

@@ -5,6 +5,7 @@ import { manychatAuth } from '../auth';
 
 export const removeTagFromUserAction = createAction({
   name: 'removeTagFromUser',
+  classification: 'WRITE',
   displayName: 'Remove Tag from User',
   description: 'Remove a tag from a user.',
   audience: 'both',

@@ -6,6 +6,7 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    LATEST_FLOW_SCHEMA_VERSION,
     PackageType,
     PieceType,
     PopulatedFlow,
@@ -793,6 +794,45 @@ describe('Flow Operations API', () => {
             const afterImport = await ctx.get(`/v1/flows/${flow.id}`)
             const persisted: PopulatedFlow = afterImport?.json()
             expect(persisted.version.trigger.nextAction).toBeUndefined()
+        })
+
+        it('imports an old template whose piece version the upgrade register moves forward', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: {
+                    displayName: 'Event handler',
+                    trigger: {
+                        type: FlowTriggerType.PIECE,
+                        name: 'trigger',
+                        displayName: 'Catch Webhook',
+                        valid: true,
+                        lastUpdatedDate: new Date().toISOString(),
+                        settings: {
+                            pieceName: '@activepieces/piece-webhook',
+                            pieceVersion: '0.1.33',
+                            triggerName: 'catch_webhook',
+                            input: { authType: 'none', authFields: {} },
+                            propertySettings: {},
+                        },
+                    },
+                    schemaVersion: '20',
+                    notes: [],
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body: PopulatedFlow = response?.json()
+            expect(body.version.schemaVersion).toBe(LATEST_FLOW_SCHEMA_VERSION)
+            expect(body.version.trigger.type).toBe(FlowTriggerType.PIECE)
+            expect(body.version.trigger.settings.pieceVersion).not.toBe('0.1.33')
         })
     })
 

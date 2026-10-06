@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroCreateInventoryItem = createAction({
   auth: xeroAuth,
   name: 'xero_create_inventory_item',
+  classification: 'WRITE',
   displayName: 'Create Inventory Item',
   description: 'Creates a new inventory item in Xero.',
   audience: 'both',

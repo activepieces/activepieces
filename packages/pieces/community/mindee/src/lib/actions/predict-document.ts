@@ -7,6 +7,7 @@ import { mindeeAuth } from '../..';
 export const mindeePredictDocumentAction = createAction({
   auth: mindeeAuth,
   name: 'mindee_predict_document',
+  classification: 'READ',
   displayName: 'Extract Document',
   description: 'Parse details of a document using OCR.',
   audience: 'both',

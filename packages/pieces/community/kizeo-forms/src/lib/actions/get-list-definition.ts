@@ -7,6 +7,7 @@ export const getListDefinition = createAction({
   auth: kizeoFormsAuth,
 
   name: 'get_list_definition',
+  classification: 'READ',
   displayName: 'Get List Definition',
   description: 'Get the definition of a list',
   audience: 'both',

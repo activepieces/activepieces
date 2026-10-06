@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const extendTrialSubscriptionAction = createAction({
   name: 'extend_trial_subscription',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Extend Trial Subscription',
   description:

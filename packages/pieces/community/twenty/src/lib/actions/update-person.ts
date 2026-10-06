@@ -6,6 +6,7 @@ import { twentyRequest, parseSingleRecord } from '../common';
 export const updatePerson = createAction({
   auth: twentyAuth,
   name: 'update_person',
+  classification: 'WRITE',
   displayName: 'Update Person',
   description: 'Updates an existing person record in Twenty CRM.',
   audience: 'both',

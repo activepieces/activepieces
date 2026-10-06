@@ -6,10 +6,12 @@ import {
 import { jiraCloudAuth } from '../../auth';
 import { createJiraPolling } from '../common/polling';
 
+import { issueOutputSchema } from '../output-schemas';
 const polling = createJiraPolling();
 
 export const updatedIssue = createTrigger({
   name: 'updated_issue',
+  classification: 'READ',
   displayName: 'Updated Issue',
   description: 'Triggers when an issue is updated',
   aiMetadata: {
@@ -18,6 +20,7 @@ export const updatedIssue = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueOutputSchema,
   props: {
     jql: Property.LongText({
       displayName: 'JQL',

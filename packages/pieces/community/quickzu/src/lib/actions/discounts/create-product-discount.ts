@@ -15,6 +15,7 @@ import { ProductDiscountInput } from '../../common/types';
 export const createProductDiscountAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_create_product_discount',
+  classification: 'WRITE',
   displayName: 'Create Product Discount',
   description: 'Creates a new discount for category or product level.',
   audience: 'both',

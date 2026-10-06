@@ -14,7 +14,7 @@ export const wooUpdateOrder = createAction({
   classification: 'WRITE',
   displayName: 'Update Order',
   description: 'Update an order, most commonly its status',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates an existing WooCommerce order by ID. Most often used to move an order through its lifecycle by setting status (pending, processing, on-hold, completed, cancelled, refunded, failed), and can also set the customer note or transaction ID. Only the fields provided are changed. Idempotent: applying the same status twice leaves the order in the same state.',

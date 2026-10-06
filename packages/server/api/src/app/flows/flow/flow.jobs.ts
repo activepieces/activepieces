@@ -1,4 +1,5 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { FlowOperationStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
@@ -9,10 +10,12 @@ import { flowVersionRepo } from '../flow-version/flow-version.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
 import { flowRepo } from './flow.repo'
+import { flowService } from './flow.service'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
 const BATCH_SIZE = 1000
+const TOMBSTONE_REAP_LIMIT = 50
 
 export async function batchDeleteByFlowId(flowId: string): Promise<void> {
     while (true) {
@@ -73,6 +76,19 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         await batchDeleteByFlowId(flow.id)
         await flowRepo().delete({ id: flow.id })
         await flowExecutionCache(log).invalidate(flow.id)
+    },
+
+    reapTombstonedFlows: async () => {
+        const tombstoned = await flowRepo().find({
+            where: { operationStatus: FlowOperationStatus.DELETING },
+            order: { updated: 'ASC' },
+            take: TOMBSTONE_REAP_LIMIT,
+        })
+        if (tombstoned.length === 0) {
+            return
+        }
+        log.warn({ flowCount: tombstoned.length }, '[reapTombstonedFlows] Re-queueing deletions that never finished')
+        await Promise.all(tombstoned.map((flow) => flowService(log).addDeleteFlowJob(flow)))
     },
 
 })

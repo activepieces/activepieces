@@ -1,10 +1,10 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, isObject, SeekPage } from '@activepieces/core-utils';
 import { AgentConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { PlusIcon } from '@/components/icons/plus';
@@ -40,6 +40,12 @@ export function ChatWithAIPage() {
   const { conversationId: urlConversationId } = useParams<{
     conversationId: string;
   }>();
+  const location = useLocation();
+  const handedOverPrompt =
+    isObject(location.state) && typeof location.state.prompt === 'string'
+      ? location.state.prompt
+      : undefined;
+  const [initialPrompt, setInitialPrompt] = useState(handedOverPrompt);
   const [resetKey, setResetKey] = useState(0);
   const [pendingConversationId, setPendingConversationId] = useState<
     string | null
@@ -57,10 +63,11 @@ export function ChatWithAIPage() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Record the chat-page landing for the cloud rollout funnel (server is cloud-gated; no-op otherwise).
-    chatApi.recordLanding().catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (isNil(handedOverPrompt)) {
+      return;
+    }
+    navigate(location.pathname, { replace: true, state: null });
+  }, [handedOverPrompt, location.pathname, navigate]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarPinned((prev) => {
@@ -73,6 +80,7 @@ export function ChatWithAIPage() {
   const selectedConversationId = urlConversationId ?? null;
 
   const handleNewChat = useCallback(() => {
+    setInitialPrompt(undefined);
     setResetKey((k) => k + 1);
     setPendingConversationId(null);
     setConversationTitle(null);
@@ -94,6 +102,7 @@ export function ChatWithAIPage() {
 
   const handleConversationCreated = useCallback(
     (conversationId: string) => {
+      setInitialPrompt(undefined);
       setPendingConversationId(conversationId);
       window.history.replaceState(null, '', `/chat/${conversationId}`);
       void queryClient.invalidateQueries({
@@ -313,7 +322,7 @@ export function ChatWithAIPage() {
                       {t('Rename')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
+                      className="text-danger-11 focus:text-danger-11"
                       onClick={() => void handleDelete()}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
@@ -329,6 +338,7 @@ export function ChatWithAIPage() {
           <AIChatBox
             key={`${selectedConversationId ?? 'new'}-${resetKey}`}
             incognito={false}
+            initialPrompt={initialPrompt}
             conversationId={selectedConversationId}
             onTitleUpdate={handleTitleUpdate}
             onConversationCreated={handleConversationCreated}

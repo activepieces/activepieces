@@ -8,7 +8,6 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,
@@ -29,14 +28,17 @@ import {
 import { PieceIconList } from '@/features/pieces';
 import { templatesApi, templatesMutations } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import { sampleData } from '../../sample-data';
 
 import { CreateTemplateDialog } from './create-template-dialog';
 import { UpdateTemplateDialog } from './update-template-dialog';
 
 const PlatformTemplatesPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
-
   const [searchParams] = useSearchParams();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isSample = !platform.plan.manageTemplatesEnabled;
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
@@ -167,6 +169,7 @@ const PlatformTemplatesPage = () => {
                 'Are you sure you want to delete the selected templates?',
               )}
               entityName={t('Templates')}
+              controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
               mutationFn={async () => {
                 await bulkDeleteMutation.mutateAsync(
                   selectedRows.map((row) => row.id),
@@ -177,9 +180,10 @@ const PlatformTemplatesPage = () => {
             >
               {selectedRows.length > 0 && (
                 <Button
+                  {...adminControl(AdminControl.TEMPLATES_DELETE_OPEN)}
                   variant="ghost"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
+                  className="text-danger-11 hover:text-danger-11"
                 >
                   <Trash className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}
@@ -196,7 +200,12 @@ const PlatformTemplatesPage = () => {
   const toolbarButtons = useMemo(
     () => [
       <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <AnimatedIconButton
+          {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}
+          icon={PlusIcon}
+          iconSize={16}
+          size="sm"
+        >
           {t('New Template')}
         </AnimatedIconButton>
       </CreateTemplateDialog>,
@@ -204,65 +213,58 @@ const PlatformTemplatesPage = () => {
     [refetch],
   );
 
-  const isEnabled = platform.plan.manageTemplatesEnabled;
   return (
-    <LockedFeatureGuard
-      featureKey="TEMPLATES"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Templates')}
-      lockDescription={t(
-        'Convert the most common automations into reusable templates 1 click away from your users',
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
-    >
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
-          description={t(
-            'Convert the most common automations into reusable templates',
-          )}
-          title={t('Templates')}
-        />
-        <DataTable
-          emptyStateTextTitle={t('No templates found')}
-          emptyStateTextDescription={t(
-            'Create a template for your user to inspire them',
-          )}
-          emptyStateIcon={<FileText className="size-14" />}
-          columns={columnsWithCheckbox}
-          page={data}
-          hidePagination={true}
-          isLoading={isLoading}
-          isError={isError}
-          errorStateEntity={t('templates')}
-          onRetry={refetch}
-          bulkActions={bulkActions}
-          toolbarButtons={toolbarButtons}
-          actions={[
-            (row) => {
-              return (
-                <div className="flex items-end justify-end">
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <UpdateTemplateDialog
-                        onDone={() => refetch()}
-                        template={row}
+    <div className="flex flex-col w-full">
+      <DashboardPageHeader
+        description={t(
+          'Convert the most common automations into reusable templates',
+        )}
+        title={t('Templates')}
+      />
+      <DataTable
+        emptyStateTextTitle={t('No templates found')}
+        emptyStateTextDescription={t(
+          'Create a template for your user to inspire them',
+        )}
+        emptyStateIcon={<FileText className="size-14" />}
+        columns={columnsWithCheckbox}
+        page={isSample ? sampleData.templatesPage() : data}
+        hidePagination={true}
+        isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('templates')}
+        onRetry={refetch}
+        bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
+        actions={[
+          (row) => {
+            return (
+              <div className="flex items-end justify-end">
+                <Tooltip>
+                  <TooltipTrigger>
+                    <UpdateTemplateDialog
+                      onDone={() => refetch()}
+                      template={row}
+                    >
+                      <Button
+                        {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
+                        variant="ghost"
+                        className="size-8 p-0"
                       >
-                        <Button variant="ghost" className="size-8 p-0">
-                          <Pencil className="size-4" />
-                        </Button>
-                      </UpdateTemplateDialog>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {t('Edit template')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              );
-            },
-          ]}
-        />
-      </div>
-    </LockedFeatureGuard>
+                        <Pencil className="size-4" />
+                      </Button>
+                    </UpdateTemplateDialog>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('Edit template')}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            );
+          },
+        ]}
+      />
+    </div>
   );
 };
 

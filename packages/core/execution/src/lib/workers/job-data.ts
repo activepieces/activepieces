@@ -4,7 +4,7 @@ import { AIProviderName, AiStepAction, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
-import { CodeActionSchema, PieceActionSchema } from '../flows/actions/action'
+import { AiRouterMatchMode, CodeActionSchema, PieceActionSchema } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionType, AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
@@ -365,6 +365,8 @@ export const EventDestinationJobData = z.object({
     webhookId: z.string(),
     webhookUrl: z.string(),
     payload: z.unknown(), // EE audit-event schema stays in @activepieces/shared; engine does not need it
+    contentType: z.enum(['application/json', 'application/x-protobuf']).optional(),
+    hasHeaders: z.boolean().optional(),
     jobType: z.literal(WorkerJobType.EVENT_DESTINATION),
 })
 
@@ -415,6 +417,7 @@ const AiStepJobBase = z.object({
     provider: z.enum(AIProviderName),
     providerConfigId: z.string().optional(),
     modelId: z.string(),
+    modelTierId: z.string().optional(),
     prompt: z.string().optional(),
     maxOutputTokens: z.number().optional(),
     temperature: z.number().optional(),
@@ -455,12 +458,22 @@ export const GenerateImageJobData = AiStepJobBase.extend({
 })
 export type GenerateImageJobData = z.infer<typeof GenerateImageJobData>
 
+export const RouteJobData = AiStepJobBase.extend({
+    action: z.literal(AiStepAction.ROUTE),
+    state: z.string(),
+    question: z.string(),
+    options: z.record(z.string(), z.string()),
+    matchMode: z.enum(AiRouterMatchMode),
+})
+export type RouteJobData = z.infer<typeof RouteJobData>
+
 export const ExecuteAiJobData = z.discriminatedUnion('action', [
     AskAiJobData,
     SummarizeTextJobData,
     ClassifyTextJobData,
     ExtractStructuredDataJobData,
     GenerateImageJobData,
+    RouteJobData,
 ])
 export type ExecuteAiJobData = z.infer<typeof ExecuteAiJobData>
 

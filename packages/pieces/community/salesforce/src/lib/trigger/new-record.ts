@@ -14,15 +14,18 @@ import { querySalesforceApi, salesforcesCommon } from '../common';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
+import { newRecordTriggerOutputSchema } from '../output-schemas';
 
 export const newRecord = createTrigger({
   auth: salesforceAuth,
   name: 'new_record',
+  classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when there is new record',
   aiMetadata: {
     description: 'Fires once for each new record created for the selected Salesforce object, detected by polling for records whose CreatedDate is later than the last poll. Each event emits all fields of the created record. An optional SOQL where-clause condition can further filter which records trigger the event. Does not fire on updates to existing records.',
   },
+  outputSchema: newRecordTriggerOutputSchema,
   props: {
     object: salesforcesCommon.object,
     conditions: Property.LongText({

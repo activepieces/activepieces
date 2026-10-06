@@ -15,6 +15,7 @@ const triggerNameInStore = 'event_on_data_deleted_trigger';
 export const eventOnDataDeleted = createTrigger({
   auth: kizeoFormsAuth,
   name: 'event_on_data_deleted',
+  classification: 'READ',
   displayName: 'Event On Data Deleted',
   description: 'Handle EventOnData delete event via webhooks',
   aiMetadata: {

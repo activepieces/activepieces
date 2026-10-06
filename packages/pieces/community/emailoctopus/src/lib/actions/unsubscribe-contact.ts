@@ -8,6 +8,7 @@ import { emailOctopusProps } from "../common/props";
 export const unsubscribeContact = createAction({
     auth: emailOctopusAuth,
     name: 'unsubscribe_contact',
+    classification: 'DESTRUCTIVE',
     displayName: 'Unsubscribe Contact',
     description: 'Sets a contact\'s status to "Unsubscribed" in a specific list.',
     audience: 'both',

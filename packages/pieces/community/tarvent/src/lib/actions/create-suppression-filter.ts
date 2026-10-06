@@ -7,6 +7,7 @@ import { makeClient } from '../common';
 export const createSuppressionFilter = createAction({
   auth: tarventAuth,
   name: 'tarvent_create_suppression_filter',
+  classification: 'DESTRUCTIVE',
   displayName: 'Add Contact To Suppression List',
   description: 'Creates a suppression filter in your account to suppress a contact.',
   audience: 'both',

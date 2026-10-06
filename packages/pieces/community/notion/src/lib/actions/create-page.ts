@@ -11,7 +11,7 @@ export const createPage = createAction({
   classification: 'WRITE',
   displayName: 'Create Page',
   description:
-    'Create a new Notion page as a sub-page with custom title and content. Perfect for organizing documentation, notes, or creating structured page hierarchies.',
+    'Create a page inside another page, with a title and plain text.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,15 +19,19 @@ export const createPage = createAction({
     idempotent: false,
   },
   props: {
-    pageId: notionCommon.page,
+    pageId: {
+      ...notionCommon.page,
+      displayName: 'Parent Page',
+      description: 'The new page is created inside this page.',
+    },
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the page.',
+      placeholder: 'e.g. Meeting notes',
       required: false,
     }),
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content of the page.',
+      description: 'Plain text body. Markdown is not rendered.',
       required: false,
     }),
   },

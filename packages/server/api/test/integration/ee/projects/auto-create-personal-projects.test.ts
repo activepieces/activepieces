@@ -59,7 +59,7 @@ describe('Auto-create personal projects toggle', () => {
 
         const projectsBefore = await databaseConnection().getRepository('project').count({ where: { platformId: mockPlatform.id, type: ProjectType.PERSONAL } })
 
-        const user = await userService(mockLog).getOrCreateWithProject({
+        const { user } = await userService(mockLog).getOrCreateWithProject({
             identity,
             platformId: mockPlatform.id,
         })

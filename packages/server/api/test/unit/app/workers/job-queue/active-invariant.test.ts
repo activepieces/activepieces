@@ -134,7 +134,9 @@ async function runSimulation(params: { queueName: string, workers: number, jobs:
         }
     }
 
+    const releaseBlockedPolls = setTimeout(() => dispatcher.close(), durationMs)
     await Promise.all(Array.from({ length: workers }, (_, i) => workerLoop(`w${i + 1}`, i + 1)))
+    clearTimeout(releaseBlockedPolls)
     stop = true
     await sampler
 
@@ -168,6 +170,7 @@ describe('BullMQ active-list invariant: active <= total worker concurrency', () 
         const res = await runSimulation({ queueName: 'repro-bug', workers: 4, jobs: 5000, reclaimOnStop: false, durationMs: 5000 })
         // eslint-disable-next-line no-console
         console.log('[abandon-on-stop] maxActive=%d totalConcurrency=%d completed=%d stops=%d', res.maxActive, res.totalConcurrency, res.completed, res.stops)
+        expect(res.stops).toBeGreaterThan(0)
         expect(res.maxActive).toBeGreaterThan(res.totalConcurrency)
     }, 60_000)
 
@@ -175,6 +178,8 @@ describe('BullMQ active-list invariant: active <= total worker concurrency', () 
         const res = await runSimulation({ queueName: 'repro-fix', workers: 4, jobs: 5000, reclaimOnStop: true, durationMs: 5000 })
         // eslint-disable-next-line no-console
         console.log('[reclaim-on-stop] maxActive=%d totalConcurrency=%d completed=%d stops=%d', res.maxActive, res.totalConcurrency, res.completed, res.stops)
+        expect(res.completed).toBeGreaterThan(0)
+        expect(res.stops).toBeGreaterThan(0)
         expect(res.maxActive).toBeLessThanOrEqual(res.totalConcurrency)
     }, 60_000)
 })

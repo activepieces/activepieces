@@ -7,6 +7,7 @@ import { QuickbooksAccount, QuickbooksBillPayment, QuickbooksVendor } from '../l
 export const recordBillPaymentAction = createAction({
 	auth: quickbooksAuth,
 	name: 'record_bill_payment',
+	classification: 'WRITE',
 	displayName: 'Record Bill Payment (AP)',
 	description: 'Pays one or more vendor bills in QuickBooks, in full or in part, by check or credit card.',
 	audience: 'both',
