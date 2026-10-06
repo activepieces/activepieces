@@ -59,7 +59,7 @@ describe('agentToolSkills', () => {
     })
 
     it('lists deferred tools that no skill covers so the model can still find them', () => {
-        const names = agentToolSkills.uncataloguedToolNames({ surface: 'CHAT', allToolNames: ['ap_research_pieces', 'ap_add_step', 'mcp__gmail__send', 'ap_set_phase'] })
+        const names = agentToolSkills.uncataloguedToolNames({ surface: 'CHAT', allToolNames: ['ap_research_pieces', 'ap_add_step', 'mcp__gmail__send'] })
         expect(names).toEqual(['mcp__gmail__send'])
     })
 

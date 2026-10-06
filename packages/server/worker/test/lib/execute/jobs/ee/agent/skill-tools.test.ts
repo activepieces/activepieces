@@ -15,7 +15,7 @@ function stubTools(names: string[]): ToolSet {
 
 const CHAT_TOOL_NAMES = [
     'ap_update_thinking_status', 'ap_show_quick_replies', 'ap_research_pieces', 'ap_web_search', 'ap_remember', 'ap_list_flows',
-    'ap_add_step', 'ap_update_step', 'ap_build_flow', 'ap_test_flow', 'ap_list_connections', 'ap_list_runs', 'ap_set_phase', 'ap_load_guide',
+    'ap_add_step', 'ap_update_step', 'ap_build_flow', 'ap_test_flow', 'ap_list_connections', 'ap_list_runs',
     'mcp__gmail__send_email',
     'ap_rename_flow', 'ap_delete_flow', 'ap_list_tables', 'ap_create_table', 'ap_find_records', 'ap_insert_records',
 ]
@@ -58,8 +58,6 @@ describe('buildSkillSurface', () => {
         expect(surface.coreToolNames.length).toBeLessThanOrEqual(MAX_CORE_TOOLS)
         expect(surface.coreToolNames).not.toContain('ap_add_step')
         expect(surface.tools['ap_add_step']).toBeDefined()
-        expect(surface.tools['ap_set_phase']).toBeUndefined()
-        expect(surface.tools['ap_load_guide']).toBeUndefined()
     })
 
     it('lists tools no skill covers in the catalog note', () => {

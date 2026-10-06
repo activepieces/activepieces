@@ -23,10 +23,6 @@ function isMetaTool(toolName: string): boolean {
     return META_TOOL_NAMES.has(toolName)
 }
 
-function isRetiredUnderSkills(toolName: string): boolean {
-    return RETIRED_UNDER_SKILLS.has(toolName)
-}
-
 function effectiveToolCall({ toolName, input }: { toolName: string, input: unknown }): EffectiveToolCall {
     if (toolName !== LAZY_TOOL_NAME || !isRecord(input) || typeof input['tool'] !== 'string') {
         return { toolName, input }
@@ -41,7 +37,7 @@ function effectiveToolCall({ toolName, input }: { toolName: string, input: unkno
 
 function uncataloguedToolNames({ surface, allToolNames }: { surface: SkillSurface, allToolNames: string[] }): string[] {
     const covered = new Set([...coreToolNames({ surface }), ...AGENT_SKILLS.flatMap((skill) => skill.toolNames)])
-    return allToolNames.filter((name) => !covered.has(name) && !isMetaTool(name) && !isRetiredUnderSkills(name))
+    return allToolNames.filter((name) => !covered.has(name) && !isMetaTool(name))
 }
 
 function renderToolCatalog({ tools }: { tools: { name: string, description?: string }[] }): string {
@@ -84,7 +80,6 @@ const LAZY_TOOL_NAME = 'ap_lazy_tool'
 const LOAD_SKILL_NAME = 'ap_load_skill'
 const GET_TOOL_SCHEMA_NAME = 'ap_get_tool_schema'
 const META_TOOL_NAMES = new Set<string>([LAZY_TOOL_NAME, LOAD_SKILL_NAME, GET_TOOL_SCHEMA_NAME])
-const RETIRED_UNDER_SKILLS = new Set<string>(['ap_set_phase', 'ap_load_guide'])
 
 const MAX_CORE_TOOLS = 16
 
@@ -212,7 +207,6 @@ export const agentToolSkills = {
     coreToolNames,
     findSkill,
     isMetaTool,
-    isRetiredUnderSkills,
     effectiveToolCall,
     uncataloguedToolNames,
     renderToolCatalog,

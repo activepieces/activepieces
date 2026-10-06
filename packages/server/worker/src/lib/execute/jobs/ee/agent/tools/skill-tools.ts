@@ -4,14 +4,13 @@ import { asSchema, jsonSchema, Schema, tool, ToolExecutionOptions, ToolSet } fro
 import { z } from 'zod'
 import { cardTitleFields, plainJsonSchema, stableStringify } from './tool-primitives'
 
-export function buildSkillSurface({ tools, surface, guides, onSkillLoaded, canAffordPaidTool }: {
+export function buildSkillSurface({ tools: registry, surface, guides, onSkillLoaded, canAffordPaidTool }: {
     tools: ToolSet
     surface: SkillSurface
     guides: Record<string, string>
     onSkillLoaded: (skill: AgentSkill) => void
     canAffordPaidTool: () => boolean
 }): SkillSurfaceResult {
-    const registry = withoutRetiredTools(tools)
     const skillTools = createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordPaidTool })
     const surfaceTools = { ...registry, ...skillTools }
     const allToolNames = Object.keys(surfaceTools)
@@ -226,10 +225,6 @@ async function workerLabelKeys(schema: unknown): Promise<Set<string>> {
 
 function paidToolRefusal(toolName: string): string {
     return `"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`
-}
-
-function withoutRetiredTools(tools: ToolSet): ToolSet {
-    return Object.fromEntries(Object.entries(tools).filter(([name]) => !agentToolSkills.isRetiredUnderSkills(name)))
 }
 
 const OTHER_TOOLS_HEADING = '## Other tools you have'
