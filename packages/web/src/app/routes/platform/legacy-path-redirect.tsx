@@ -22,7 +22,7 @@ function resolve(pathname: string): string {
 }
 
 const LEGACY_PATHS: LegacyPath[] = [
-  { from: '/platform/setup/ai-capabilities', to: '/platform/ai/capabilities' },
+  { from: '/platform/setup/ai-capabilities', to: '/platform/ai' },
   { from: '/platform/setup/general', to: '/platform/general' },
   { from: '/platform/setup/branding', to: '/platform/general' },
   { from: '/platform/setup/ai', to: '/platform/ai' },

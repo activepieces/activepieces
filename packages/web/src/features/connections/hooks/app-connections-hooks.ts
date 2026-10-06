@@ -1,9 +1,4 @@
-import {
-  ApErrorParams,
-  ErrorCode,
-  isNil,
-  SeekPage,
-} from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
@@ -29,14 +24,14 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
-import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { appConnectionsApi } from '../api/app-connections';
 import { globalConnectionsApi } from '../api/global-connections';
 import {
+  appConnectionUtils,
   ConnectionNameAlreadyExists,
   NoProjectSelected,
   isConnectionNameUnique,
@@ -117,12 +112,16 @@ export const appConnectionsMutations = {
         return appConnectionsApi.upsert(formValues);
       },
       onSuccess: (connection) => {
-        // Every cached connection list is now out of date, whichever key it was fetched under.
-        // Refreshing only the caller's own query left other readers stale enough to describe a
-        // brand-new account as deleted.
-        void queryClient.invalidateQueries({ queryKey: ['app-connections'] });
+        queryClient
+          .invalidateQueries({ queryKey: ['app-connections'] })
+          .catch(() => undefined);
         setOpen(false, connection);
         setErrorMessage('');
+        toast.success(
+          reconnectConnection
+            ? t('{name} reconnected', { name: connection.displayName })
+            : t('{name} connected', { name: connection.displayName }),
+        );
       },
       onError: (err) => {
         if (err instanceof ConnectionNameAlreadyExists) {
@@ -133,71 +132,9 @@ export const appConnectionsMutations = {
           form.setError('request.projectIds', {
             message: err.message,
           });
-        } else if (api.isError(err)) {
-          const apError = err.response?.data as ApErrorParams;
-          switch (apError.code) {
-            case ErrorCode.INVALID_CLOUD_CLAIM: {
-              setErrorMessage(
-                t(
-                  'Could not claim the authorization code, make sure you have correct settings and try again.',
-                ),
-              );
-              break;
-            }
-            case ErrorCode.INVALID_CLAIM: {
-              setErrorMessage(
-                t('Connection failed with error {msg}', {
-                  msg: apError.params.message,
-                }),
-              );
-              break;
-            }
-            case ErrorCode.INVALID_APP_CONNECTION: {
-              setErrorMessage(
-                t('Connection failed with error {msg}', {
-                  msg: apError.params.error,
-                }),
-              );
-              break;
-            }
-            // can happen in embedding sdk connect method
-            case ErrorCode.PERMISSION_DENIED: {
-              setErrorMessage(
-                t(`You don't have the permission to create a connection.`),
-              );
-              break;
-            }
-            case ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED: {
-              setErrorMessage(
-                t('Secret was not found: "{msg}"', {
-                  msg: apError.params.message,
-                }),
-              );
-              break;
-            }
-            case ErrorCode.SECRET_MANAGER_CONNECTION_FAILED: {
-              setErrorMessage(
-                t('Failed to connect to secret manager with error: "{msg}"', {
-                  msg: apError.params.message,
-                }),
-              );
-              break;
-            }
-            case ErrorCode.VALIDATION: {
-              setErrorMessage(
-                t('Validation error: {msg}', {
-                  msg: apError.params.message,
-                }),
-              );
-              break;
-            }
-
-            default: {
-              setErrorMessage('Unexpected error, please contact support');
-              internalErrorToast();
-              console.error(err);
-            }
-          }
+        } else {
+          mutationFeedback.markShown(err);
+          setErrorMessage(appConnectionUtils.upsertErrorMessage(err));
         }
       },
     });
@@ -211,8 +148,11 @@ export const appConnectionsMutations = {
       onSuccess: () => {
         refetch();
       },
-      onError: () => {
-        internalErrorToast();
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the connections"),
+        });
       },
     });
   },
@@ -254,7 +194,11 @@ export const appConnectionsMutations = {
             message: error.message,
           });
         } else {
-          internalErrorToast();
+          mutationFeedback.markShown(error);
+          renameConnectionForm.setError('root.serverError', {
+            type: 'manual',
+            message: mutationFeedback.message(error),
+          });
         }
       },
     });
@@ -278,22 +222,18 @@ export const appConnectionsMutations = {
               ),
             },
         );
-        if (connection.status === AppConnectionStatus.ACTIVE) {
-          toast.success(t('Success'), {
-            description: t('Connection is working.'),
-            duration: 3000,
-          });
-        } else {
-          toast.error(t('Connection failed'), {
-            description: t(
-              'This connection is no longer working. Reconnect it.',
-            ),
-            duration: 3000,
-          });
-        }
+        appConnectionUtils.showRevalidationResult({
+          status: connection.status,
+          failureDescription: t(
+            'This connection is no longer working. Reconnect it.',
+          ),
+        });
       },
-      onError: () => {
-        internalErrorToast();
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't check the connection"),
+        });
       },
     });
   },
@@ -313,25 +253,11 @@ export const appConnectionsMutations = {
         setDialogOpen(false);
         refetch();
       },
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (
-            apError?.code === ErrorCode.VALIDATION ||
-            apError?.code === ErrorCode.AUTHORIZATION
-          ) {
-            toast.error(t('Error'), {
-              description: t(
-                apError.params.message ?? 'Failed to replace connections',
-              ),
-            });
-            return;
-          }
-        }
-        toast.error(t('Error'), {
-          description: t('Failed to replace connections'),
-        });
-      },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't replace the connections"),
+        }),
     });
   },
 };

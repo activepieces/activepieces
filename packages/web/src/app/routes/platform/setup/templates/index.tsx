@@ -1,41 +1,54 @@
-import { Template, TemplateType } from '@activepieces/shared';
+import { Template, TemplateStatus, TemplateType } from '@activepieces/shared';
 import {
   Add01Icon,
-  Clock01Icon,
+  Archive02Icon,
+  CheckmarkCircle02Icon,
+  DashboardSquare01Icon,
   Delete02Icon,
-  File02Icon,
   PencilEdit01Icon,
   PuzzleIcon,
-  Tag01Icon,
 } from '@hugeicons/core-free-icons';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { useState, useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
+  BulkAction,
   DataTable,
   RowDataWithActions,
-  BulkAction,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { FormattedDate } from '@/components/custom/formatted-date';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { IconButton } from '@/components/custom/icon-button';
+import {
+  DateCell,
+  MutedCell,
+  NameCell,
+  TagsCell,
+} from '@/components/custom/list/list-cells';
+import { ListSearch, ListToolbar } from '@/components/custom/list/list-toolbar';
+import { RowMenu } from '@/components/custom/list/row-menu';
+import { Page } from '@/components/custom/page';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PieceIconList } from '@/features/pieces';
-import { templatesApi, templatesMutations } from '@/features/templates';
+import { PieceIcon, piecesHooks } from '@/features/pieces';
+import {
+  templateKeys,
+  templatesApi,
+  templatesHooks,
+  templatesMutations,
+} from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
@@ -44,242 +57,368 @@ import { CreateTemplateDialog } from './create-template-dialog';
 import { UpdateTemplateDialog } from './update-template-dialog';
 
 const PlatformTemplatesPage = () => {
-  const [searchParams] = useSearchParams();
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.manageTemplatesEnabled;
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get(SEARCH_PARAM)?.trim() ?? '';
+  const category = searchParams.get(CATEGORY_PARAM) ?? '';
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['templates', searchParams.toString()],
+    queryKey: [...templateKeys.platformCustom, search, category],
     staleTime: 0,
-    queryFn: () => {
-      return templatesApi.list({
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      templatesApi.list({
         type: TemplateType.CUSTOM,
-      });
-    },
+        search: search === '' ? undefined : search,
+        category: category === '' ? undefined : category,
+      }),
+    enabled: platform.plan.manageTemplatesEnabled,
   });
+  const { data: knownCategories } = templatesHooks.useTemplateCategories();
+  const [editing, setEditing] = useState<Template | null>(null);
+  const [deleting, setDeleting] = useState<Template[] | null>(null);
+  const clearSelectionAfterDelete = useRef<(() => void) | null>(null);
 
-  const [selectedRows, setSelectedRows] = useState<Template[]>([]);
+  const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates();
+  const { mutate: setStatus } = templatesMutations.useSetTemplateStatus();
 
-  const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
-    onSuccess: () => {
-      refetch();
-      toast.success(t('Templates deleted successfully'), {
-        duration: 3000,
-      });
-    },
-  });
+  const templates = useMemo(
+    () => (isSample ? sampleTemplates({ search, category }) : data?.data ?? []),
+    [isSample, data, search, category],
+  );
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...(knownCategories ?? []),
+          ...templates.flatMap((template) => template.categories),
+          ...(category === '' ? [] : [category]),
+        ]),
+      )
+        .sort((a, b) => a.localeCompare(b))
+        .map((value) => ({ label: value, value })),
+    [knownCategories, templates, category],
+  );
 
-  const columnsWithCheckbox: ColumnDef<RowDataWithActions<Template>>[] = [
-    {
-      id: 'select',
-      accessorKey: 'select',
-      size: 40,
-      minSize: 40,
-      maxSize: 40,
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getRowModel().rows.length > 0 &&
-            table.getRowModel().rows.every((row) => row.getIsSelected())
-          }
-          onCheckedChange={(value) => {
-            table.toggleAllRowsSelected(!!value);
-            const allRows = table.getRowModel().rows.map((row) => row.original);
-            setSelectedRows(value ? allRows : []);
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
+  const setTemplateStatus = useStableCallback(
+    ({
+      template,
+      nextStatus,
+    }: {
+      template: Template;
+      nextStatus: TemplateStatus;
+    }) =>
+      setStatus({
+        template,
+        status: nextStatus,
+        previousStatus: template.status,
+      }),
+  );
 
-        return (
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              let newSelectedRows = [...selectedRows];
-              if (value) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<Template>>[] => [
+      {
+        accessorKey: 'name',
+        size: 360,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Template')} />
+        ),
+        cell: ({ row }) => (
+          <NameCell
+            stacked
+            title={row.original.name}
+            badge={
+              row.original.status === TemplateStatus.ARCHIVED ? (
+                <Badge variant="outline">{t('Archived')}</Badge>
+              ) : undefined
+            }
+            sub={row.original.summary}
           />
-        );
+        ),
       },
-    },
+      {
+        id: 'pieces',
+        size: 136,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Pieces')} />
+        ),
+        cell: ({ row }) => <TemplatePieces names={row.original.pieces} />,
+      },
+      {
+        id: 'categories',
+        size: 220,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Categories')} />
+        ),
+        cell: ({ row }) => <TagsCell tags={row.original.categories} />,
+      },
+      {
+        accessorKey: 'author',
+        size: 160,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Author')} />
+        ),
+        cell: ({ row }) => <MutedCell>{row.original.author}</MutedCell>,
+      },
+      {
+        accessorKey: 'created',
+        size: 112,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Created')} />
+        ),
+        cell: ({ row }) => (
+          <DateCell value={row.original.created} mode="short" />
+        ),
+      },
+      {
+        accessorKey: 'updated',
+        size: 132,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Updated')} />
+        ),
+        cell: ({ row }) => <DateCell value={row.original.updated} />,
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => {
+          const archived = row.original.status === TemplateStatus.ARCHIVED;
+          return (
+            <div className="flex justify-end">
+              <RowMenu
+                items={[
+                  {
+                    label: t('Edit'),
+                    icon: PencilEdit01Icon,
+                    onSelect: () => setEditing(row.original),
+                    control: AdminControl.TEMPLATES_EDIT_OPEN,
+                  },
+                  {
+                    label: archived ? t('Publish') : t('Archive'),
+                    icon: archived ? CheckmarkCircle02Icon : Archive02Icon,
+                    control: archived
+                      ? AdminControl.TEMPLATES_PUBLISH_RUN
+                      : AdminControl.TEMPLATES_ARCHIVE_RUN,
+                    onSelect: () =>
+                      setTemplateStatus({
+                        template: row.original,
+                        nextStatus: archived
+                          ? TemplateStatus.PUBLISHED
+                          : TemplateStatus.ARCHIVED,
+                      }),
+                  },
+                  {
+                    label: t('Delete'),
+                    icon: Delete02Icon,
+                    destructive: true,
+                    onSelect: () => setDeleting([row.original]),
+                    control: AdminControl.TEMPLATES_DELETE_OPEN,
+                  },
+                ]}
+              />
+            </div>
+          );
+        },
+      },
+    ],
+    [setTemplateStatus],
+  );
+
+  const bulkActions: BulkAction<Template>[] = [
     {
-      accessorKey: 'name',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Name')}
-          icon={Tag01Icon}
-        />
+      render: (selectedRows, resetSelection) => (
+        <Button
+          {...adminControl(AdminControl.TEMPLATES_DELETE_OPEN)}
+          variant="ghost"
+          size="sm"
+          className="text-danger-11 hover:text-danger-11"
+          onClick={(e) => {
+            e.stopPropagation();
+            clearSelectionAfterDelete.current = resetSelection;
+            setDeleting(selectedRows);
+          }}
+        >
+          <HugeiconsIcon icon={Delete02Icon} />
+          {t('Delete')}
+        </Button>
       ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.name}</div>;
-      },
-    },
-    {
-      accessorKey: 'createdAt',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Created')}
-          icon={Clock01Icon}
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <FormattedDate date={new Date(row.original.created)} />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'pieces',
-      size: 100,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Pieces')}
-          icon={PuzzleIcon}
-        />
-      ),
-      cell: ({ row }) => {
-        const trigger = row.original.flows?.[0]?.trigger;
-        if (!trigger) return null;
-        return <PieceIconList trigger={trigger} maxNumberOfIconsToShow={2} />;
-      },
     },
   ];
 
-  const bulkActions: BulkAction<Template>[] = useMemo(
-    () => [
-      {
-        render: (
-          _selectedRows: RowDataWithActions<Template>[],
-          resetSelection: () => void,
-        ) => (
-          <div onClick={(e) => e.stopPropagation()}>
-            <ConfirmationDeleteDialog
-              title={t('Delete Templates')}
-              message={t(
-                'Are you sure you want to delete the selected templates?',
-              )}
-              entityName={t('Templates')}
-              controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
-              mutationFn={async () => {
-                await bulkDeleteMutation.mutateAsync(
-                  selectedRows.map((row) => row.id),
-                );
-                resetSelection();
-                setSelectedRows([]);
-              }}
-            >
-              {selectedRows.length > 0 && (
-                <Button
-                  {...adminControl(AdminControl.TEMPLATES_DELETE_OPEN)}
-                  variant="ghost"
-                  size="sm"
-                  className="text-danger-11 hover:text-danger-11"
-                >
-                  <HugeiconsIcon icon={Delete02Icon} className="mr-1 w-4" />
-                  {`${t('Delete')} (${selectedRows.length})`}
-                </Button>
-              )}
-            </ConfirmationDeleteDialog>
-          </div>
-        ),
-      },
-    ],
-    [selectedRows, bulkDeleteMutation],
-  );
-
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <IconButton
-          {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}
-          icon={Add01Icon}
-          size="sm"
-        >
-          {t('New Template')}
-        </IconButton>
-      </CreateTemplateDialog>,
-    ],
-    [refetch],
+  const filtered = search !== '' || category !== '';
+  const newTemplateButton = (
+    <CreateTemplateDialog>
+      <Button {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}>
+        <HugeiconsIcon icon={Add01Icon} />
+        {t('New template')}
+      </Button>
+    </CreateTemplateDialog>
   );
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
-        description={t(
-          'Convert the most common automations into reusable templates',
-        )}
-        title={t('Templates')}
+    <Page>
+      <AdminPageHeader page="templates">{newTemplateButton}</AdminPageHeader>
+      <ListToolbar
+        search={
+          <ListSearch
+            param={SEARCH_PARAM}
+            placeholder={t('Search templates')}
+          />
+        }
+        filters={
+          <DataTableFilter
+            type="select"
+            single
+            title={t('Category')}
+            accessorKey={CATEGORY_PARAM}
+            options={categoryOptions}
+          />
+        }
       />
       <DataTable
-        emptyStateTextTitle={t('No templates found')}
-        emptyStateTextDescription={t(
-          'Create a template for your user to inspire them',
-        )}
-        emptyStateIcon={<HugeiconsIcon icon={File02Icon} className="size-14" />}
-        columns={columnsWithCheckbox}
-        page={isSample ? sampleData.templatesPage() : data}
+        emptyStateTextTitle={
+          filtered ? t('No template matches') : t('No templates yet')
+        }
+        emptyStateTextDescription={
+          filtered
+            ? t('Try a different search or clear a filter.')
+            : t(
+                'Publish a flow your teams keep rebuilding so anyone can start from it instead of a blank canvas.',
+              )
+        }
+        emptyStateIcon={<HugeiconsIcon icon={DashboardSquare01Icon} />}
+        emptyStateAction={filtered ? undefined : newTemplateButton}
+        columns={columns}
+        page={{ data: templates, next: null, previous: null }}
+        onRowClick={(row) => setEditing(row)}
         hidePagination={true}
-        isLoading={isLoading}
-        isError={isError}
+        isLoading={isLoading && !isSample}
+        isError={isError && !isSample}
         errorStateEntity={t('templates')}
         onRetry={refetch}
+        selectColumn={true}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
-        actions={[
-          (row) => {
-            return (
-              <div className="flex items-end justify-end">
-                <Tooltip>
-                  <TooltipTrigger>
-                    <UpdateTemplateDialog
-                      onDone={() => refetch()}
-                      template={row}
-                    >
-                      <Button
-                        {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
-                        variant="ghost"
-                        className="size-8 p-0"
-                      >
-                        <HugeiconsIcon
-                          icon={PencilEdit01Icon}
-                          className="size-4"
-                        />
-                      </Button>
-                    </UpdateTemplateDialog>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t('Edit template')}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            );
-          },
-        ]}
       />
-    </div>
+      {editing && (
+        <UpdateTemplateDialog
+          open
+          onOpenChange={(open) => !open && setEditing(null)}
+          template={editing}
+        />
+      )}
+      {deleting && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleting(null);
+              clearSelectionAfterDelete.current = null;
+            }
+          }}
+          title={
+            deleting.length === 1
+              ? t('Delete {name}?', { name: deleting[0].name })
+              : t('Delete {count} templates?', { count: deleting.length })
+          }
+          description={
+            deleting.length === 1
+              ? t(
+                  'Builders can no longer start a flow from this template. Flows already created from it keep working.',
+                )
+              : t(
+                  'Builders can no longer start a flow from these templates. Flows already created from them keep working.',
+                )
+          }
+          confirmLabel={t('Delete')}
+          controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
+          errorTitle={
+            deleting.length === 1
+              ? t("Couldn't delete the template")
+              : t("Couldn't delete the templates")
+          }
+          onConfirm={async () => {
+            await bulkDeleteMutation.mutateAsync(deleting);
+            clearSelectionAfterDelete.current?.();
+          }}
+        />
+      )}
+    </Page>
   );
 };
+
+function TemplatePieces({ names }: { names: string[] }) {
+  const { summaries } = piecesHooks.usePieceSummariesByNames({
+    names,
+    skipProjectFilter: true,
+  });
+  const uniqueNames = [...new Set(names)];
+  if (uniqueNames.length === 0) {
+    return <MutedCell>{null}</MutedCell>;
+  }
+  const byName = new Map(summaries.map((piece) => [piece.name, piece]));
+  const shown = uniqueNames.slice(0, MAX_PIECE_LOGOS);
+  const rest = uniqueNames.length - shown.length;
+  return (
+    <div className="flex items-center gap-1">
+      {shown.map((name) => {
+        const piece = byName.get(name);
+        return piece ? (
+          <PieceIcon
+            key={name}
+            size="xs"
+            border
+            displayName={piece.displayName}
+            logoUrl={piece.logoUrl}
+            showTooltip
+          />
+        ) : (
+          <Tooltip key={name}>
+            <TooltipTrigger asChild>
+              <span
+                aria-label={pieceLabel(name)}
+                className="flex size-6 shrink-0 items-center justify-center rounded-md border bg-gray-3 text-gray-11 [&_svg]:size-3.5"
+              >
+                <HugeiconsIcon icon={PuzzleIcon} />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t('{name} (not installed)', { name: pieceLabel(name) })}
+            </TooltipContent>
+          </Tooltip>
+        );
+      })}
+      {rest > 0 && (
+        <span className="text-xs text-gray-11 tabular-nums">+{rest}</span>
+      )}
+    </div>
+  );
+}
+
+function pieceLabel(name: string): string {
+  return name.replace(/^@[^/]+\/piece-/, '').replace(/-/g, ' ');
+}
+
+function sampleTemplates({
+  search,
+  category,
+}: {
+  search: string;
+  category: string;
+}): Template[] {
+  const query = search.toLowerCase();
+  return sampleData
+    .templatesPage()
+    .data.filter(
+      (template) =>
+        (category === '' || template.categories.includes(category)) &&
+        (query === '' ||
+          template.name.toLowerCase().includes(query) ||
+          template.summary.toLowerCase().includes(query)),
+    );
+}
+
+const SEARCH_PARAM = 'search';
+const CATEGORY_PARAM = 'category';
+const MAX_PIECE_LOGOS = 3;
 
 export { PlatformTemplatesPage };

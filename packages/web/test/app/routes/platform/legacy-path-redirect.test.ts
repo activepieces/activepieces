@@ -9,7 +9,7 @@ describe('legacyPathUtils.resolve', () => {
     ['/platform/security/project-roles', '/platform/users/roles'],
     ['/platform/setup/connections', '/platform/connections/global'],
     ['/platform/setup/branding', '/platform/general'],
-    ['/platform/setup/ai-capabilities', '/platform/ai/capabilities'],
+    ['/platform/setup/ai-capabilities', '/platform/ai'],
     ['/platform/setup/ai/capabilities', '/platform/ai/capabilities'],
     [
       '/platform/setup/pieces/piece-sets/abc123',

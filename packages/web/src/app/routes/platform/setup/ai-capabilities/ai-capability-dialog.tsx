@@ -14,8 +14,10 @@ import { LinkSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +50,7 @@ import {
   aiToolConfigMutations,
 } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { aiCapabilitySources, AiToolCapabilityInfo } from './catalog';
 
@@ -152,7 +155,12 @@ function CapabilityForm({
   });
   const source = form.watch('source');
   const selectedAiProvider = aiProviders.find((p) => p.id === source);
-  const { data: models = [] } = aiProviderQueries.useConfigModels(
+  const {
+    data: models = [],
+    isLoading: modelsLoading,
+    isError: modelsError,
+    refetch: refetchModels,
+  } = aiProviderQueries.useConfigModels(
     needsModel ? selectedAiProvider?.id : undefined,
   );
   const imageModels = isNil(selectedAiProvider)
@@ -169,6 +177,11 @@ function CapabilityForm({
 
   const saveCallbacks: SaveCallbacks = {
     onSuccess: () => {
+      toast.success(
+        existingConfig?.enabled
+          ? t('{name} updated', { name: capabilityInfo.name })
+          : t('{name} connected', { name: capabilityInfo.name }),
+      );
       onSaved();
       onClose();
     },
@@ -178,7 +191,9 @@ function CapabilityForm({
         message:
           error.response?.data?.params?.message ??
           error.response?.data?.message ??
-          t('Failed to save. Please check the API key and try again.'),
+          (mutationFeedback.isNetworkError(error)
+            ? mutationFeedback.message(error)
+            : t('Failed to save. Please check the API key and try again.')),
       });
     },
   };
@@ -188,6 +203,9 @@ function CapabilityForm({
     aiToolConfigMutations.useUpdateAiToolConfig(saveCallbacks);
 
   const handleSubmit = (values: FormValues) => {
+    if (isPending || isReenabling) {
+      return;
+    }
     form.clearErrors('root.serverError');
     const reusesSavedKey =
       !isNil(existingConfig) &&
@@ -223,9 +241,18 @@ function CapabilityForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="flex flex-col gap-4"
+      >
         <DialogHeader>
-          <DialogTitle>{capabilityInfo.name}</DialogTitle>
+          <DialogTitle>
+            {existingConfig?.enabled
+              ? t('Change {name}', { name: capabilityInfo.name.toLowerCase() })
+              : t('Connect {name}', {
+                  name: capabilityInfo.name.toLowerCase(),
+                })}
+          </DialogTitle>
           <DialogDescription>{capabilityInfo.description}</DialogDescription>
         </DialogHeader>
 
@@ -274,10 +301,22 @@ function CapabilityForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('Image model')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={modelsLoading || imageModels.length === 0}
+                >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t('Choose a model')}>
+                      <SelectValue
+                        placeholder={
+                          modelsLoading
+                            ? t('Loading models…')
+                            : imageModels.length === 0
+                            ? t('This key has no image models')
+                            : t('Choose a model')
+                        }
+                      >
                         {selectedModel && (
                           <span className="flex min-w-0 items-baseline gap-2">
                             <span className="truncate">
@@ -304,6 +343,12 @@ function CapabilityForm({
                     ))}
                   </SelectContent>
                 </Select>
+                {modelsError && (
+                  <DataFetchErrorState
+                    entity={t('models')}
+                    onRetry={refetchModels}
+                  />
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -316,7 +361,7 @@ function CapabilityForm({
             name="apiKey"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('API Key')}</FormLabel>
+                <FormLabel>{t('API key')}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -334,13 +379,16 @@ function CapabilityForm({
                     href={selectedProvider.signupUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-gray-11 hover:underline"
+                    className="inline-flex w-fit items-center gap-1 text-xs text-gray-11 hover:text-gray-12 hover:underline"
                     {...adminControl(AdminControl.AI_API_KEY_LINK)}
                   >
                     {t('Get a {provider} API key', {
                       provider: selectedProvider.name,
                     })}
-                    <HugeiconsIcon icon={LinkSquare02Icon} className="size-3" />
+                    <HugeiconsIcon
+                      icon={LinkSquare02Icon}
+                      className="size-3.5"
+                    />
                   </a>
                 )}
                 <FormMessage />

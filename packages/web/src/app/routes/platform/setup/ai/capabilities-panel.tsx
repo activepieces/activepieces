@@ -1,0 +1,239 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils';
+import {
+  AiProviderToolConfig,
+  AIProviderWithoutSensitiveData,
+  AiToolCapability,
+  AiToolConfigWithoutSensitiveData,
+  AiToolProvider,
+} from '@activepieces/shared';
+import {
+  Globe02Icon,
+  Image01Icon,
+  Search01Icon,
+  UnplugIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
+import { useState } from 'react';
+
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
+import { RowMenu } from '@/components/custom/list/row-menu';
+import { SettingRow } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  aiToolConfigMutations,
+  aiToolConfigQueries,
+} from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import { AiCapabilityDialog } from '../ai-capabilities/ai-capability-dialog';
+import {
+  AI_TOOL_CATALOG,
+  aiCapabilitySources,
+  AiToolCapabilityInfo,
+} from '../ai-capabilities/catalog';
+
+export function CapabilityRows({
+  providers,
+}: {
+  providers: AIProviderWithoutSensitiveData[];
+}) {
+  const {
+    data: configs,
+    isLoading,
+    isError,
+    refetch,
+  } = aiToolConfigQueries.useAiToolConfigs();
+  const chatProvider =
+    providers.find((provider) => provider.enabledForChat) ??
+    providers.find(
+      (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
+    );
+
+  if (isError) {
+    return (
+      <DataFetchErrorState
+        entity={t('assistant capabilities')}
+        onRetry={refetch}
+      />
+    );
+  }
+
+  return (
+    <>
+      {AI_TOOL_CATALOG.map((capabilityInfo) => {
+        const config = configs?.find(
+          (c) => c.capability === capabilityInfo.capability,
+        );
+        return (
+          <CapabilityRow
+            key={capabilityInfo.capability}
+            capabilityInfo={capabilityInfo}
+            config={config}
+            providers={providers}
+            chatProviderFallback={
+              chatProvider &&
+              aiCapabilitySources.servesByDefault({
+                capability: capabilityInfo.capability,
+                provider: chatProvider,
+              })
+                ? chatProvider
+                : undefined
+            }
+            isLoading={isLoading}
+            onSaved={() => refetch()}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+function CapabilityRow({
+  capabilityInfo,
+  config,
+  providers,
+  chatProviderFallback,
+  isLoading,
+  onSaved,
+}: {
+  capabilityInfo: AiToolCapabilityInfo;
+  config?: AiToolConfigWithoutSensitiveData;
+  providers: AIProviderWithoutSensitiveData[];
+  chatProviderFallback?: AIProviderWithoutSensitiveData;
+  isLoading: boolean;
+  onSaved: () => void;
+}) {
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const { mutateAsync: deleteConfig } =
+    aiToolConfigMutations.useDeleteAiToolConfig();
+  const { mutate: disconnectWithUndo } =
+    aiToolConfigMutations.useDisconnectWithUndo();
+  const restorable = config?.provider === AiToolProvider.AI_PROVIDER;
+  const disconnect = () => {
+    if (!config) {
+      return;
+    }
+    if (restorable) {
+      disconnectWithUndo({
+        type: 'disconnect',
+        config,
+        name: capabilityInfo.name,
+      });
+      return;
+    }
+    setDisconnectOpen(true);
+  };
+  const Icon = CAPABILITY_ICON[capabilityInfo.capability];
+  const connectedProvider = capabilityInfo.providers.find(
+    (provider) => provider.id === config?.provider,
+  );
+  const providerChoice = AiProviderToolConfig.safeParse(config?.config);
+  const chosenProvider = providerChoice.success
+    ? providers.find((p) => p.id === providerChoice.data.aiProviderId)
+    : undefined;
+  const configured = config?.enabled === true;
+  const sourceName = configured
+    ? chosenProvider?.name ?? connectedProvider?.name
+    : chatProviderFallback?.name;
+  const chosenModelId =
+    configured && providerChoice.success
+      ? providerChoice.data.modelId
+      : undefined;
+  const statusText = isNil(sourceName)
+    ? t('Off')
+    : configured
+    ? [sourceName, chosenModelId].filter(Boolean).join(' · ')
+    : t('Through {provider}', { provider: sourceName });
+
+  return (
+    <SettingRow
+      icon={<HugeiconsIcon icon={Icon} />}
+      title={capabilityInfo.name}
+      description={capabilityInfo.description}
+    >
+      {isLoading ? (
+        <Skeleton className="hidden h-4 w-32 sm:block" />
+      ) : (
+        <StatusDot
+          tone={isNil(sourceName) ? 'neutral' : 'success'}
+          className="hidden max-w-56 sm:inline-flex"
+        >
+          <TextWithTooltip tooltipMessage={statusText}>
+            <span className="truncate">{statusText}</span>
+          </TextWithTooltip>
+        </StatusDot>
+      )}
+      {isLoading ? (
+        <Skeleton className="h-8 w-16 rounded-lg" />
+      ) : (
+        <div className="flex items-center gap-1">
+          <AiCapabilityDialog
+            capabilityInfo={capabilityInfo}
+            existingConfig={config}
+            defaultProviderId={chatProviderFallback?.id}
+            onSaved={onSaved}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+            >
+              {configured ? t('Change') : t('Set up')}
+            </Button>
+          </AiCapabilityDialog>
+          {config && (
+            <RowMenu
+              items={[
+                {
+                  label: t('Disconnect'),
+                  icon: UnplugIcon,
+                  destructive: true,
+                  control: AdminControl.AI_CAPABILITY_RESET_OPEN,
+                  onSelect: disconnect,
+                },
+              ]}
+            />
+          )}
+        </div>
+      )}
+      {config && !restorable && (
+        <ConfirmDialog
+          open={disconnectOpen}
+          onOpenChange={setDisconnectOpen}
+          title={t('Disconnect {name}?', {
+            name: capabilityInfo.name.toLowerCase(),
+          })}
+          description={
+            chatProviderFallback
+              ? t('Chat goes back to using {provider}.', {
+                  provider: chatProviderFallback.name,
+                })
+              : t(
+                  'This removes the saved API key and disables this capability.',
+                )
+          }
+          onConfirm={() => deleteConfig(config.id)}
+          successMessage={t('{name} disconnected', {
+            name: capabilityInfo.name,
+          })}
+          confirmLabel={t('Disconnect')}
+          controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
+        />
+      )}
+    </SettingRow>
+  );
+}
+
+const CAPABILITY_ICON: Record<AiToolCapability, IconSvgElement> = {
+  [AiToolCapability.WEB_SEARCH]: Search01Icon,
+  [AiToolCapability.WEB_SCRAPING]: Globe02Icon,
+  [AiToolCapability.IMAGE_GENERATION]: Image01Icon,
+};

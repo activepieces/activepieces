@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -103,6 +103,49 @@ describe('Platform API', () => {
                 saml: null,
             })
             expect(responseBody.cloudAuthEnabled).toBe(false)
+        }),
+
+        it('refuses to turn off the last way to sign in', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: false,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        }),
+
+        it('does not count SAML as a way to sign in until its domain is verified', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: samlOnlyPlatform(SsoDomainVerificationStatus.PENDING_VERIFICATION),
+            })
+            const response = await turnOffEmailSignIn({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        }),
+
+        it('lets email sign-in go off when SAML is set up on a verified domain', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: samlOnlyPlatform(SsoDomainVerificationStatus.VERIFIED),
+            })
+            const response = await turnOffEmailSignIn({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         }),
 
         it('updates the platform logo icons', async () => {
@@ -1179,3 +1222,43 @@ describe('Platform API', () => {
         })
     })
 })
+
+function samlOnlyPlatform(status: SsoDomainVerificationStatus) {
+    const ssoDomain = `${apId().toLowerCase()}.example.com`
+    return {
+        emailAuthEnabled: true,
+        googleAuthEnabled: false,
+        federatedAuthProviders: {
+            saml: {
+                idpCertificate: faker.internet.password(),
+                idpMetadata: faker.internet.password(),
+            },
+        },
+        ssoDomain,
+        ssoDomainVerification: {
+            status,
+            record: {
+                type: SsoDomainVerificationRecordType.TXT,
+                name: `_activepieces.${ssoDomain}`,
+                value: 'token',
+            },
+            createdAt: new Date().toISOString(),
+        },
+    }
+}
+
+async function turnOffEmailSignIn({ ownerId, platformId }: { ownerId: string, platformId: string }) {
+    const testToken = await generateMockToken({
+        type: PrincipalType.USER,
+        id: ownerId,
+        platform: { id: platformId },
+    })
+    return app?.inject({
+        method: 'POST',
+        url: `/api/v1/platforms/${platformId}`,
+        headers: {
+            authorization: `Bearer ${testToken}`,
+        },
+        body: { emailAuthEnabled: false },
+    })
+}

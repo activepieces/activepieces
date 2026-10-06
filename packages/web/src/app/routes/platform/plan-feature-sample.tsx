@@ -48,10 +48,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: rolesPlan.isLocked,
     teaser: PLATFORM_FEATURES.projectRoles,
   },
-  globalConnections: {
-    isLocked: (plan) => !plan.globalConnectionsEnabled,
-    teaser: PLATFORM_FEATURES.globalConnections,
-  },
   templates: {
     isLocked: (plan) => !plan.manageTemplatesEnabled,
     teaser: PLATFORM_FEATURES.templates,
@@ -107,7 +103,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
 type PlanFeature =
   | 'sso'
   | 'projectRoles'
-  | 'globalConnections'
   | 'templates'
   | 'embedding'
   | 'apiKeys'

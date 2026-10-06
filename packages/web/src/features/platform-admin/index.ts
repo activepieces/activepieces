@@ -56,3 +56,9 @@ export {
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
 } from './stores/refresh-analytics-context';
+export {
+  PLATFORM_CONNECTIONS_PARAMS,
+  platformAppConnectionsCache,
+  platformAppConnectionsMutations,
+  platformAppConnectionsQueries,
+} from './hooks/platform-app-connections-hooks';

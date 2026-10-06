@@ -8,6 +8,7 @@ import { Error, Success } from '@/features/billing';
 import { PlatformLayout } from '../components/platform-layout';
 
 import { AdminNotFound } from './platform/admin-not-found';
+import { GlobalConnectionsRedirect } from './platform/connections/global-connections-redirect';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import {
@@ -76,15 +77,15 @@ const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
+const AIKeyDetailPage = React.lazy(() =>
+  import('./platform/setup/ai/key-detail-page').then((m) => ({
+    default: m.AIKeyDetailPage,
+  })),
+);
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const GeneralPage = React.lazy(() =>
   import('./platform/setup/general').then((m) => ({
     default: m.GeneralPage,
-  })),
-);
-const GlobalConnectionsTable = React.lazy(() =>
-  import('./platform/setup/connections').then((m) => ({
-    default: m.GlobalConnectionsTable,
   })),
 );
 const PiecesListPage = React.lazy(() =>
@@ -182,7 +183,7 @@ export const platformRoutes = [
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
             <PlanFeatureSample feature="aiProviders">
               <SuspenseWrapper>
-                <AIProvidersPage section="providers" />
+                <AIProvidersPage />
               </SuspenseWrapper>
             </PlanFeatureSample>
           </LegacyTabRedirect>
@@ -192,16 +193,16 @@ export const platformRoutes = [
   },
   {
     path: '/platform/ai/capabilities',
+    element: <RedirectKeepingSearch to="/platform/ai" />,
+  },
+  {
+    path: '/platform/ai/keys/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI capabilities">
-          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <PlanFeatureSample feature="aiProviders">
-              <SuspenseWrapper>
-                <AIProvidersPage section="capabilities" />
-              </SuspenseWrapper>
-            </PlanFeatureSample>
-          </LegacyTabRedirect>
+        <PageTitle title="AI key">
+          <SuspenseWrapper>
+            <AIKeyDetailPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -302,13 +303,7 @@ export const platformRoutes = [
     path: '/platform/connections/global',
     element: (
       <PlatformLayout>
-        <PageTitle title="Global connections">
-          <PlanFeatureSample feature="globalConnections">
-            <SuspenseWrapper>
-              <GlobalConnectionsTable />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
-        </PageTitle>
+        <GlobalConnectionsRedirect />
       </PlatformLayout>
     ),
   },

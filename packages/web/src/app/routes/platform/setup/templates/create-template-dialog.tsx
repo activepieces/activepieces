@@ -1,19 +1,21 @@
 import {
+  formErrors,
   TemplateTag as TemplateTagType,
   FlowVersionTemplate,
   TemplateType,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { FileInput } from '@/components/custom/file-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -22,33 +24,41 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { templateUtils } from '@/features/flows';
-import { templatesApi } from '@/features/templates';
+import { templatesMutations } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
-
-import { Textarea } from '../../../../../components/ui/textarea';
-
-const CreateFlowTemplateSchema = z.object({
-  displayName: z.string().min(1, t('Name is required')),
-  summary: z.string(),
-  description: z.string(),
-  blogUrl: z.string(),
-  template: FlowVersionTemplate,
-  tags: z.array(TemplateTagType).optional(),
-  categories: z.array(z.string()).optional(),
-});
-type CreateFlowTemplateSchema = z.infer<typeof CreateFlowTemplateSchema>;
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const CreateTemplateDialog = ({
   children,
-  onDone,
 }: {
   children: React.ReactNode;
-  onDone: () => void;
 }) => {
   const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('New template')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'Upload a flow exported as JSON. Builders in every project can start from it.',
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <CreateTemplateForm
+          key={open ? 'open' : 'closed'}
+          onClose={() => setOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+function CreateTemplateForm({ onClose }: { onClose: () => void }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const form = useForm<CreateFlowTemplateSchema>({
     defaultValues: {
@@ -60,199 +70,201 @@ export const CreateTemplateDialog = ({
       categories: [],
       template: undefined,
     },
+    mode: 'onChange',
     resolver: zodResolver(CreateFlowTemplateSchema),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['create-template'],
-    mutationFn: () => {
-      const formValue = form.getValues();
-      const author = currentUser
-        ? `${currentUser.firstName} ${currentUser.lastName}`
-        : 'Unknown User';
-
-      const flowTemplate: FlowVersionTemplate = {
-        ...formValue.template,
-        displayName: formValue.displayName,
-        valid: formValue.template.valid ?? true,
-      };
-
-      return templatesApi.create({
-        flows: [flowTemplate],
-        type: TemplateType.CUSTOM,
-        name: formValue.displayName,
-        summary: formValue.summary,
-        description: formValue.description,
-        tags: formValue.tags || [],
-        blogUrl: formValue.blogUrl,
-        metadata: null,
-        author,
-        categories: formValue.categories || [],
-      });
-    },
-    onSuccess: () => {
-      onDone();
-      setOpen(false);
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        form.setError('template', {
-          message: error.message,
+  const { mutate: createTemplate, isPending } =
+    templatesMutations.useCreateTemplate({
+      onError: (error) => {
+        mutationFeedback.markShown(error);
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
         });
-      }
-    },
-  });
+      },
+    });
 
-  const onSubmit = () => {
-    if (!form.getValues().template) {
-      form.setError('template', {
-        message: t('Template is required'),
-      });
+  const onSubmit = (values: CreateFlowTemplateSchema) => {
+    if (isPending || !values.template) {
       return;
     }
-
-    mutate();
+    form.clearErrors('root.serverError');
+    const author = currentUser
+      ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
+      : '';
+    createTemplate(
+      {
+        flows: [
+          {
+            ...values.template,
+            displayName: values.displayName,
+            valid: values.template.valid ?? true,
+          },
+        ],
+        type: TemplateType.CUSTOM,
+        name: values.displayName,
+        summary: values.summary,
+        description: values.description,
+        tags: values.tags ?? [],
+        blogUrl: values.blogUrl,
+        metadata: null,
+        author,
+        categories: values.categories ?? [],
+      },
+      { onSuccess: onClose },
+    );
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        setOpen(open);
-        form.reset();
-      }}
-    >
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Create New Template')}</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <FormField
-              name="displayName"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="name" showRequiredIndicator>
-                    {t('Name')}
-                  </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="name"
-                    placeholder={t('Template Name')}
-                    className="rounded-md"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="summary"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="summary">{t('Summary')}</Label>
-                  <Input
-                    {...field}
-                    id="summary"
-                    placeholder={t('Template Summary')}
-                    className="rounded-md"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="description"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="description">{t('Description')}</Label>
-
-                  <Textarea
-                    {...field}
-                    required
-                    id="description"
-                    className="rounded-md"
-                    placeholder={t('Template Description')}
-                  />
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="blogUrl"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="blogUrl"
-                    placeholder={t('Template Blog URL')}
-                    className="rounded-md"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="template"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="template" showRequiredIndicator>
-                    {t('Template')}
-                  </Label>
-                  <Input
-                    type="file"
-                    accept=".json"
-                    onChange={(e) => {
-                      e.target.files &&
-                        e.target.files[0].text().then((text) => {
-                          const flowTemplate = templateUtils.extractFlow(text);
-                          if (flowTemplate) {
-                            field.onChange(flowTemplate);
-                          } else {
-                            form.setError('template', {
-                              message: t('Invalid JSON'),
-                            });
-                          }
-                        });
-                    }}
-                    required
-                    id="template"
-                    placeholder={t('Template')}
-                    className="rounded-md"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
+    <Form {...form}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <FormField
+          name="displayName"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="name">{t('Name')}</Label>
+              <Input
+                {...field}
+                id="name"
+                autoFocus
+                placeholder={t('e.g. Refund alerts for finance')}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="summary"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="summary">{t('Summary (optional)')}</Label>
+              <Input
+                {...field}
+                id="summary"
+                placeholder={t('One line shown under the name')}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="description">{t('Description (optional)')}</Label>
+              <Textarea
+                {...field}
+                id="description"
+                placeholder={t('What the flow does and what it needs')}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="blogUrl"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="blogUrl">{t('Blog URL (optional)')}</Label>
+              <Input {...field} id="blogUrl" placeholder="https://" />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="template"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="template">{t('Flow file')}</Label>
+              <FileInput
+                accept=".json"
+                onChange={(event) =>
+                  readFlowFile({
+                    file: event.target.files?.[0],
+                    onFlow: (flow) =>
+                      form.setValue('template', flow, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      }),
+                    onInvalid: () =>
+                      form.setError('template', {
+                        message: t('Invalid JSON'),
+                      }),
+                  })
+                }
+                id="template"
+                name={field.name}
+                placeholder={t('Choose a .json file')}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
-          <Button
-            variant={'outline'}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setOpen(false);
-            }}
-          >
+          <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
           <Button
             {...adminControl(AdminControl.TEMPLATES_NEW_SUBMIT)}
-            disabled={isPending}
+            type="submit"
+            disabled={!form.formState.isValid}
             loading={isPending}
-            onClick={(e) => {
-              form.handleSubmit(onSubmit)(e);
-            }}
           >
-            {t('Save')}
+            {t('Create')}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </form>
+    </Form>
   );
-};
+}
+
+function readFlowFile({
+  file,
+  onFlow,
+  onInvalid,
+}: {
+  file: File | undefined;
+  onFlow: (flow: FlowVersionTemplate) => void;
+  onInvalid: () => void;
+}): void {
+  if (!file) {
+    return;
+  }
+  file
+    .text()
+    .then((text) => {
+      const flow = templateUtils.extractFlow(text);
+      if (flow) {
+        onFlow(flow);
+        return;
+      }
+      onInvalid();
+    })
+    .catch(onInvalid);
+}
+
+const CreateFlowTemplateSchema = z.object({
+  displayName: z.string().trim().min(1, formErrors.required),
+  summary: z.string(),
+  description: z.string(),
+  blogUrl: z.string(),
+  template: FlowVersionTemplate.optional().refine(
+    (template) => template !== undefined,
+    { message: formErrors.required },
+  ),
+  tags: z.array(TemplateTagType).optional(),
+  categories: z.array(z.string()).optional(),
+});
+
+type CreateFlowTemplateSchema = z.infer<typeof CreateFlowTemplateSchema>;
+
+export const templateFileUtils = { readFlowFile };

@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -55,6 +56,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -76,7 +78,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -126,12 +128,17 @@ function ConnectProviderForm({
           message:
             data?.params?.message ??
             data?.message ??
-            t('The provider rejected these credentials.'),
+            (mutationFeedback.isNetworkError(error)
+              ? mutationFeedback.message(error)
+              : t('The provider rejected these credentials.')),
         });
       },
     });
 
   const handleSubmit = (values: ConnectFormValues) => {
+    if (connecting) {
+      return;
+    }
     form.clearErrors('root.serverError');
     const request = providerRequestUtils.buildCreateRequest({
       provider: values.provider,
@@ -169,37 +176,28 @@ function ConnectProviderForm({
               name="provider"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
-                  <Select
+                  <FormLabel>{t('Provider')}</FormLabel>
+                  <SearchableSelect
                     value={field.value}
-                    onValueChange={(selected) => {
-                      const next = selected as AIProviderName;
+                    placeholder={t('Select provider')}
+                    disabled={editing !== undefined}
+                    options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
+                      value: candidate.provider,
+                      label: candidate.name,
+                    }))}
+                    valuesRendering={(value) => (
+                      <ProviderOption provider={value} />
+                    )}
+                    onChange={(next) => {
+                      if (next === null) {
+                        return;
+                      }
                       field.onChange(next);
                       form.setValue('credentials', emptyCredentialsOf(next));
                       form.setValue('headers', {});
                       form.setValue('name', defaultNameOf(next));
                     }}
-                    disabled={editing !== undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Select provider')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SUPPORTED_AI_PROVIDERS.map((candidate) => (
-                        <SelectItem
-                          key={candidate.provider}
-                          value={candidate.provider}
-                        >
-                          <div className="flex items-center gap-2">
-                            <ProviderLogo info={candidate} size="sm" />
-                            <span>{candidate.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -212,7 +210,7 @@ function ConnectProviderForm({
               name="name"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
+                  <FormLabel>{t('Name')}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder={t('e.g. Marketing')} />
                   </FormControl>
@@ -292,8 +290,10 @@ function CredentialFieldInput({
       name={`credentials.${field.key}`}
       render={({ field: formField }) => (
         <FormItem className="flex flex-col gap-1.5">
-          <FormLabel showRequiredIndicator={!field.optional}>
-            {field.label}
+          <FormLabel>
+            {field.optional
+              ? t('{label} (optional)', { label: field.label })
+              : field.label}
           </FormLabel>
           {field.options ? (
             <Select value={formField.value} onValueChange={formField.onChange}>
@@ -327,9 +327,7 @@ function CredentialFieldInput({
             </FormControl>
           )}
           {field.description && (
-            <FormDescription className="text-xs">
-              {field.description}
-            </FormDescription>
+            <FormDescription>{field.description}</FormDescription>
           )}
           <FormMessage />
         </FormItem>
@@ -359,17 +357,32 @@ function SecretInput({
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         tabIndex={-1}
         onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-gray-11 hover:text-gray-12"
+        className="absolute top-1/2 right-1 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >
         {visible ? (
-          <HugeiconsIcon icon={ViewOffSlashIcon} className="size-4" />
+          <HugeiconsIcon icon={ViewOffSlashIcon} />
         ) : (
-          <HugeiconsIcon icon={ViewIcon} className="size-4" />
+          <HugeiconsIcon icon={ViewIcon} />
         )}
       </Button>
+    </div>
+  );
+}
+
+function ProviderOption({ provider }: { provider: unknown }) {
+  const info = SUPPORTED_AI_PROVIDERS.find(
+    (candidate) => candidate.provider === provider,
+  );
+  if (!info) {
+    return null;
+  }
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <ProviderLogo info={info} size="sm" />
+      <span className="truncate">{info.name}</span>
     </div>
   );
 }

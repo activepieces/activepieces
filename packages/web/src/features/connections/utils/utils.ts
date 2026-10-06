@@ -1,5 +1,7 @@
 import {
+  ApErrorParams,
   assertNotNullOrUndefined,
+  ErrorCode,
   isNil,
   apId,
 } from '@activepieces/core-utils';
@@ -25,11 +27,14 @@ import {
   UnplugIcon,
 } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
+import { toast } from 'sonner';
 
 import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 import { OAuth2App } from '@/features/connections/utils/oauth2-utils';
 import { formUtils } from '@/features/pieces/utils/form-utils';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { appConnectionsApi } from '../api/app-connections';
 import { globalConnectionsApi } from '../api/global-connections';
@@ -49,6 +54,29 @@ export class NoProjectSelected extends Error {
 }
 
 export const appConnectionUtils = {
+  showRevalidationResult({
+    status,
+    failureDescription,
+    toastId,
+  }: {
+    status: AppConnectionStatus;
+    failureDescription: string;
+    toastId?: string;
+  }) {
+    if (status === AppConnectionStatus.ACTIVE) {
+      toast.success(t('Success'), {
+        id: toastId,
+        description: t('Connection is working.'),
+        duration: 3000,
+      });
+      return;
+    }
+    toast.error(t('Connection failed'), {
+      id: toastId,
+      description: failureDescription,
+      duration: 3000,
+    });
+  },
   getStatusIcon(status: AppConnectionStatus): {
     variant: 'default' | 'success' | 'error';
     icon: IconSvgElement;
@@ -78,6 +106,41 @@ export const appConnectionUtils = {
     return typeof accountIdentifier === 'string' && accountIdentifier.length > 0
       ? accountIdentifier
       : undefined;
+  },
+  upsertErrorMessage(error: unknown): string {
+    const apError = api.isError(error)
+      ? (error.response?.data as ApErrorParams | undefined)
+      : undefined;
+    switch (apError?.code) {
+      case ErrorCode.INVALID_CLOUD_CLAIM:
+        return t(
+          'Could not claim the authorization code, make sure you have correct settings and try again.',
+        );
+      case ErrorCode.INVALID_CLAIM:
+        return t('Connection failed with error {msg}', {
+          msg: apError.params.message,
+        });
+      case ErrorCode.INVALID_APP_CONNECTION:
+        return t('Connection failed with error {msg}', {
+          msg: apError.params.error,
+        });
+      case ErrorCode.PERMISSION_DENIED:
+        return t(`You don't have the permission to create a connection.`);
+      case ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED:
+        return t('Secret was not found: "{msg}"', {
+          msg: apError.params.message,
+        });
+      case ErrorCode.SECRET_MANAGER_CONNECTION_FAILED:
+        return t('Failed to connect to secret manager with error: "{msg}"', {
+          msg: apError.params.message,
+        });
+      case ErrorCode.VALIDATION:
+        return t('Validation error: {msg}', {
+          msg: apError.params.message,
+        });
+      default:
+        return mutationFeedback.message(error);
+    }
   },
 };
 

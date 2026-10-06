@@ -1,17 +1,16 @@
-import {
-  PROJECT_COLOR_PALETTE,
-  Project,
-  ProjectType,
-} from '@activepieces/shared';
+import { Project, ProjectType } from '@activepieces/shared';
 import { FolderOpenIcon, Search01Icon } from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
+import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 
 import { SelectedOnlyButton } from '../components/selected-only-button';
 import { pageSlice, TablePagination } from '../components/table-pagination';
@@ -43,126 +42,123 @@ export function ProjectSelectionPanel({
     rows.length > 0 &&
     rows.every((project) => selectedIds.includes(project.id));
 
-  const toggleProject = (projectId: string) => {
+  const toggleProject = useStableCallback((projectId: string) => {
     onChange(
       selectedIds.includes(projectId)
         ? selectedIds.filter((id) => id !== projectId)
         : [...selectedIds, projectId],
     );
-  };
-  const toggleRows = () => {
+  });
+  const toggleRows = useStableCallback(() => {
     const rowIds = rows.map((project) => project.id);
     onChange(
       allRowsSelected
         ? selectedIds.filter((id) => !rowIds.includes(id))
         : [...new Set([...selectedIds, ...rowIds])],
     );
-  };
+  });
 
-  const columns: ColumnDef<RowDataWithActions<Project>>[] = [
-    {
-      accessorKey: 'name',
-      header: () => (
-        <div className="flex items-center gap-2.5">
-          <Checkbox checked={allRowsSelected} onCheckedChange={toggleRows} />
-          <span>{t('Project')}</span>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2.5">
-          <Checkbox
-            checked={selectedIds.includes(row.original.id)}
-            className="pointer-events-none"
-          />
-          <ProjectSwatch project={row.original} />
-          <span className="text-sm font-medium">
-            {row.original.displayName}
-          </span>
-          {row.original.type === ProjectType.PERSONAL && (
-            <span className="rounded-full bg-gray-3 px-1.5 py-px text-xs text-gray-11">
-              {t('Personal')}
+  const isSelected = useStableCallback((id: string) =>
+    selectedIds.includes(id),
+  );
+  const isPageSelected = useStableCallback(() => allRowsSelected);
+
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<Project>>[] => [
+      {
+        accessorKey: 'name',
+        header: () => (
+          <div className="flex items-center gap-2.5">
+            <Checkbox
+              aria-label={t('Select all projects on this page')}
+              checked={isPageSelected()}
+              onCheckedChange={toggleRows}
+            />
+            <span>{t('Project')}</span>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2.5">
+            <Checkbox
+              aria-label={t('Select {name}', {
+                name: row.original.displayName,
+              })}
+              checked={isSelected(row.original.id)}
+              onClick={(event) => event.stopPropagation()}
+              onCheckedChange={() => toggleProject(row.original.id)}
+            />
+            <ProjectAvatar project={row.original} size="sm" />
+            <span className="min-w-0 truncate text-sm font-medium">
+              {row.original.displayName}
             </span>
-          )}
-        </div>
-      ),
-    },
-  ];
+            {row.original.type === ProjectType.PERSONAL && (
+              <Badge variant="outline">{t('Personal')}</Badge>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [isSelected, isPageSelected, toggleProject, toggleRows],
+  );
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
-      <div className="flex flex-wrap items-center gap-2 p-3">
-        <InputWithIcon
-          icon={
-            <HugeiconsIcon
-              icon={Search01Icon}
-              className="size-4 shrink-0 text-gray-11"
-            />
-          }
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(0);
-          }}
-          placeholder={t('Search {count} projects', { count: projects.length })}
-          className="max-w-xs grow-0"
-        />
-        <SelectedOnlyButton
-          pressed={showSelectedOnly}
-          onToggle={() => {
-            setShowSelectedOnly(!showSelectedOnly);
-            setPage(0);
-          }}
-        />
-      </div>
-      <div className="border-t border-gray-6/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
-        <DataTable
-          columns={columns}
-          page={{ data: rows, next: null, previous: null }}
-          isLoading={false}
-          isError={false}
-          errorStateEntity={t('projects')}
-          hidePagination={true}
-          onRowClick={(row) => toggleProject(row.id)}
-          emptyStateTextTitle={t('No projects found')}
-          emptyStateTextDescription={
-            showSelectedOnly
-              ? t('No project is selected yet.')
-              : t('No project matches your search.')
-          }
-          emptyStateIcon={
-            <HugeiconsIcon
-              icon={FolderOpenIcon}
-              className="size-10 text-gray-11"
-            />
-          }
-        />
-      </div>
+    <div className="flex flex-col gap-3">
+      <DataTable
+        columns={columns}
+        page={{ data: rows, next: null, previous: null }}
+        isLoading={false}
+        isError={false}
+        errorStateEntity={t('projects')}
+        hidePagination={true}
+        onRowClick={(row) => toggleProject(row.id)}
+        emptyStateTextTitle={t('No projects found')}
+        emptyStateTextDescription={
+          showSelectedOnly
+            ? t('No project is selected yet.')
+            : t('No project matches your search.')
+        }
+        emptyStateIcon={
+          <HugeiconsIcon
+            icon={FolderOpenIcon}
+            className="size-10 text-gray-11"
+          />
+        }
+        customFilters={[
+          <InputWithIcon
+            key="search"
+            icon={
+              <HugeiconsIcon
+                icon={Search01Icon}
+                className="size-4 shrink-0 text-gray-11"
+              />
+            }
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+            }}
+            placeholder={t('Search {count} projects', {
+              count: projects.length,
+            })}
+            className="max-w-xs grow-0"
+          />,
+          <SelectedOnlyButton
+            key="selected-only"
+            pressed={showSelectedOnly}
+            onToggle={() => {
+              setShowSelectedOnly(!showSelectedOnly);
+              setPage(0);
+            }}
+          />,
+        ]}
+      />
       <TablePagination
         page={currentPage}
         pageSize={PAGE_SIZE}
         total={filtered.length}
         onPageChange={setPage}
-        className="border-t border-gray-6/60 p-3"
       />
     </div>
-  );
-}
-
-export function ProjectSwatch({ project }: { project: Project }) {
-  const palette = project.icon?.color
-    ? PROJECT_COLOR_PALETTE[project.icon.color]
-    : undefined;
-  return (
-    <span
-      className="flex size-5 shrink-0 items-center justify-center rounded-md bg-gray-3 text-xs font-medium"
-      style={
-        palette
-          ? { backgroundColor: palette.color, color: palette.textColor }
-          : undefined
-      }
-    >
-      {project.displayName.charAt(0).toUpperCase()}
-    </span>
   );
 }
 

@@ -1,0 +1,159 @@
+import { AIProviderName, tryCatch } from '@activepieces/core-utils';
+import { Key01Icon } from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
+import { useRef, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { Page, PageColumns, PageHeader } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  aiProviderMutations,
+  aiProviderQueries,
+} from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
+
+import { aiKeyFormat } from './ai-key-format';
+import { ConfigDetail } from './providers-tab/config-detail';
+import { useAiKeyActions } from './use-ai-key-actions';
+
+export function AIKeyDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const leavingOnPurpose = useRef(false);
+  const {
+    data: providers,
+    isLoading,
+    isError,
+    refetch,
+  } = aiProviderQueries.useAiProviderConfigs();
+  const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
+  const actions = useAiKeyActions({
+    refetch,
+    onConnected: (createdId) => navigate(`/platform/ai/keys/${createdId}`),
+    onDeleted: () => {
+      leavingOnPurpose.current = true;
+      navigate('/platform/ai');
+    },
+  });
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { mutateAsync: updateProvider, isPending: isSaving } =
+    aiProviderMutations.useUpdateAiProvider({
+      onSuccess: async () => {
+        await refetch();
+        toast.success(t('Changes saved'));
+      },
+      onError: (error) => {
+        setSaveError(mutationFeedback.message(error));
+      },
+    });
+
+  if (!platform.plan.aiProvidersEnabled) {
+    return <Navigate to="/platform/ai" replace />;
+  }
+
+  const back = { label: t('AI providers'), to: '/platform/ai' };
+
+  if (isLoading) {
+    return (
+      <Page>
+        <PageHeader back={back} title={<Skeleton className="h-8 w-48" />} />
+        <PageColumns
+          main={<Skeleton className="h-64 rounded-2xl" />}
+          aside={<Skeleton className="h-48 rounded-2xl" />}
+        />
+      </Page>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Page>
+        <PageHeader back={back} title={t('AI key')} />
+        <Panel flush>
+          <DataFetchErrorState entity={t('this key')} onRetry={refetch} />
+        </Panel>
+      </Page>
+    );
+  }
+
+  const config = (providers ?? []).find(
+    (provider) =>
+      provider.id === id && provider.provider !== AIProviderName.ACTIVEPIECES,
+  );
+  const info = config
+    ? aiKeyFormat.providerInfo({ provider: config.provider })
+    : undefined;
+
+  if (!config || !info) {
+    return (
+      <Page>
+        <PageHeader back={back} title={t('AI key')} />
+        <Panel flush>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <HugeiconsIcon icon={Key01Icon} />
+              </EmptyMedia>
+              <EmptyTitle>{t('This key no longer exists')}</EmptyTitle>
+              <EmptyDescription>
+                {t(
+                  'It may have been deleted. Your other keys are on the AI page.',
+                )}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/platform/ai')}
+              >
+                {t('Back to AI')}
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </Panel>
+      </Page>
+    );
+  }
+
+  return (
+    <>
+      <ConfigDetail
+        key={config.id}
+        config={config}
+        info={info}
+        projects={projects}
+        isSaving={isSaving}
+        saveError={saveError}
+        onSave={(request) => {
+          setSaveError(null);
+          return tryCatch(() =>
+            updateProvider({ providerId: config.id, request }),
+          );
+        }}
+        onDelete={() => actions.askToDelete(config)}
+        onReplaceCredentials={() => actions.replaceCredentials(config)}
+        isRechecking={actions.isRechecking}
+        onRecheck={() => actions.recheck(config)}
+        onDiscard={() => setSaveError(null)}
+        leavingOnPurpose={leavingOnPurpose}
+      />
+      {actions.dialogs}
+    </>
+  );
+}
