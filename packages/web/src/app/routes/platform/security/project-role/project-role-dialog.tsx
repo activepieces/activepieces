@@ -214,7 +214,7 @@ function RoleDialogBody({
                       !isRenaming &&
                       'cursor-text hover:bg-gray-3 hover:text-gray-11',
                     isRenaming &&
-                      'border border-accent-8 bg-transparent ring-[1px] ring-accent-8/50',
+                      'border border-gray-8 bg-transparent ring-[1px] ring-gray-8/50',
                   )}
                 />
                 {!isBuiltIn && !isRenaming && (

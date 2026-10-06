@@ -136,7 +136,7 @@ function ClientGroupSection({
             key={client.key}
             type="button"
             onClick={() => nav.showClient(client.key)}
-            className="flex items-center gap-3.5 rounded-md border border-dashed bg-gray-3/40 px-4.5 py-4 text-left transition-colors hover:border-accent-8"
+            className="flex items-center gap-3.5 rounded-md border border-dashed bg-gray-3/40 px-4.5 py-4 text-left transition-colors hover:border-gray-8"
           >
             <ClientIcon icon={client.icon} className="size-8.5" />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">

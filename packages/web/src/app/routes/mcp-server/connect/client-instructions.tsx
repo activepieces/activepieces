@@ -102,7 +102,7 @@ export function ClientInstructions({
           <button
             type="button"
             onClick={nav.showBrowse}
-            className="flex items-center gap-2.5 rounded-md border px-4 py-3.5 text-left transition-colors hover:border-accent-8"
+            className="flex items-center gap-2.5 rounded-md border px-4 py-3.5 text-left transition-colors hover:border-gray-8"
           >
             <Plug className="size-4 shrink-0 text-gray-11" />
             <span className="flex-1 text-sm text-gray-11">

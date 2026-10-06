@@ -390,7 +390,7 @@ function ConfigRow({
       }}
       className={cn(
         'group flex items-center gap-4 px-5 py-3 transition-colors',
-        'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-8',
+        'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">

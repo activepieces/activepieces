@@ -117,7 +117,7 @@ export function buildGrantsColumns({
             <span
               className={cn(
                 'size-1.5 shrink-0 rounded-full',
-                lastUsed.isActiveToday ? 'bg-success-11' : 'bg-transparent',
+                lastUsed.isActiveToday ? 'bg-success-10' : 'bg-transparent',
               )}
             />
             <span className={cn(!lastUsed.isActiveToday && 'text-gray-11')}>
