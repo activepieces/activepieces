@@ -48,7 +48,7 @@ export const HeadersField = ({
       aria-labelledby={headingId}
       className="flex flex-col gap-2"
     >
-      <span id={headingId} className="text-sm font-medium">
+      <span id={headingId} className="text-sm font-medium text-gray-12">
         {t('Headers')}
       </span>
       {fields.map((row, index) => (
@@ -97,7 +97,7 @@ export const HeadersField = ({
             type="button"
             variant="outline"
             size="icon"
-            className="size-9 shrink-0"
+            className="shrink-0"
             onClick={() => {
               remove(index);
               form.trigger('headers').catch(() => undefined);

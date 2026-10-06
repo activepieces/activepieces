@@ -19,23 +19,22 @@ export const DestinationKindCard = ({
       <span
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md',
-          isSelected ? 'bg-accent-3 text-accent-11' : 'bg-gray-3',
+          isSelected ? 'bg-accent-3 text-accent-11' : 'bg-gray-3 text-gray-11',
         )}
       >
         <HugeiconsIcon icon={Icon} className="size-4" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-2">
         <span className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium">{option.title}</span>
+          <span className="text-sm font-medium text-gray-12">
+            {option.title}
+          </span>
           {trailing}
         </span>
         <span className="text-sm font-normal leading-normal text-gray-11">
           {option.description}
         </span>
-        <Badge
-          variant="outline"
-          className="rounded-md font-normal text-gray-11"
-        >
+        <Badge variant="outline" className="font-normal text-gray-11">
           {option.formatLabel}
         </Badge>
       </span>

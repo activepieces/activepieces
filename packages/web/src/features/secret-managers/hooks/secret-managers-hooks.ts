@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { secretManagersApi } from '../api/secret-managers-api';
 
@@ -24,7 +25,7 @@ export const secretManagersHooks = {
       ? undefined
       : authenticationSession.getProjectId()!;
     return useQuery<SecretManagerConnectionWithStatus[]>({
-      queryKey: ['secret-managers', projectId],
+      queryKey: ['secret-managers', projectId, connectedOnly === true],
       queryFn: async () => {
         const result = await secretManagersApi.list({ projectId });
         if (connectedOnly) {
@@ -51,9 +52,9 @@ export const secretManagersHooks = {
       ConnectSecretManagerRequest
     >({
       mutationFn: secretManagersApi.create,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Connected successfully'));
+      onSuccess: async (created) => {
+        await queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
+        toast.success(t('{name} connected', { name: created.name }));
         onSuccess();
       },
       onError,
@@ -73,9 +74,9 @@ export const secretManagersHooks = {
       { id: string; config: ConnectSecretManagerRequest }
     >({
       mutationFn: ({ id, config }) => secretManagersApi.update(id, config),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Updated successfully'));
+      onSuccess: async (updated) => {
+        await queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
+        toast.success(t('{name} saved', { name: updated.name }));
         onSuccess();
       },
       onError,
@@ -84,10 +85,15 @@ export const secretManagersHooks = {
   useDeleteSecretManagerConnection: () => {
     const queryClient = useQueryClient();
     return useMutation<void, Error, string>({
-      mutationFn: (id) => secretManagersApi.delete(id),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Deleted successfully'));
+      mutationFn: async (id) => {
+        await secretManagersApi.delete(id);
+        await queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
+      },
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the vault"),
+        });
       },
     });
   },
@@ -95,10 +101,26 @@ export const secretManagersHooks = {
     const queryClient = useQueryClient();
     return useMutation<void, Error, string | undefined>({
       mutationFn: (connectionId) => secretManagersApi.clearCache(connectionId),
+      onMutate: () => {
+        toast.loading(t('Clearing cached values…'), {
+          id: CLEAR_CACHE_TOAST_ID,
+        });
+      },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Cache cleared successfully'));
+        toast.success(t('Fresh values are fetched on the next run'), {
+          id: CLEAR_CACHE_TOAST_ID,
+        });
+      },
+      onError: (error) => {
+        toast.dismiss(CLEAR_CACHE_TOAST_ID);
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't clear the cached values"),
+        });
       },
     });
   },
 };
+
+const CLEAR_CACHE_TOAST_ID = 'secret-manager-clear-cache';

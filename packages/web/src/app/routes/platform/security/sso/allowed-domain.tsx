@@ -1,188 +1,79 @@
-import {
-  PlatformWithoutSensitiveData,
-  UpdatePlatformRequestBody,
-} from '@activepieces/shared';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
-import { useMutation } from '@tanstack/react-query';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
-import { platformApi } from '@/api/platforms-api';
-import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { AdminControl, adminControl } from '@/lib/admin-control';
+import { Panel } from '@/components/custom/panel';
+import { ChipListField } from '@/components/custom/settings-parts';
+import { ssoMutations } from '@/features/platform-admin';
+import { userHooks } from '@/hooks/user-hooks';
+import { AdminControl } from '@/lib/admin-control';
 
-type AllowedDomainDialogProps = {
-  platform: PlatformWithoutSensitiveData;
-  refetch: () => Promise<void>;
-};
-
-const AllowedDomainsFormValues = z.object({
-  allowedAuthDomains: z.array(
-    z.object({
-      domain: z.string().min(1),
-    }),
-  ),
-});
-type AllowedDomainsFormValues = z.infer<typeof AllowedDomainsFormValues>;
-
-export const AllowedDomainDialog = ({
-  platform,
-  refetch,
-}: AllowedDomainDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const form = useForm<AllowedDomainsFormValues>({
-    defaultValues: {
-      allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map(
-        (domain) => ({
-          domain,
-        }),
-      ),
-    },
-    resolver: zodResolver(AllowedDomainsFormValues),
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'allowedAuthDomains',
-  });
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
-      await platformApi.update(request, platform.id);
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Allowed domains updated'), {
-        duration: 3000,
-      });
-      setOpen(false);
-    },
-  });
+export const AllowedDomainsPanel = ({ platform }: AllowedDomainsPanelProps) => {
+  const domains = platform.allowedAuthDomains ?? [];
+  const { mutate, mutateAsync } = ssoMutations.useAllowedDomains();
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const ownDomain = currentUser?.email
+    ? normalizeDomain(currentUser.email.split('@')[1] ?? '')
+    : null;
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset();
-        }
-        setOpen(open);
-      }}
+    <Panel
+      title={t('Allowed email domains')}
+      description={t(
+        'Only addresses on these domains can sign up, sign in or be invited. Empty means anyone.',
+      )}
     >
-      <DialogTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
-          size={'sm'}
-          variant={'ghost'}
-          onClick={() => setOpen(true)}
-        >
-          {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={form.handleSubmit((data) => {
-              mutate({
-                allowedAuthDomains: data.allowedAuthDomains.map(
-                  (d) => d.domain,
-                ),
-                enforceAllowedAuthDomains:
-                  data.allowedAuthDomains.length === 0 ? false : true,
-              });
-            })}
-          >
-            <div className="flex flex-col gap-1">
-              <div className="text-gray-11 text-sm">
-                {t(
-                  'Enter the allowed domains for the users to authenticate with. An empty list will allow all domains.',
-                )}
-              </div>
-            </div>
-            {fields.map((field, index) => (
-              <FormField
-                key={field.id}
-                name={`allowedAuthDomains.${index}.domain`}
-                render={({ field }) => (
-                  <FormItem className="grid space-y-4">
-                    <div className="flex space-x-2">
-                      <Input
-                        {...field}
-                        id={`allowedAuthDomains.${index}`}
-                        placeholder={t('example.com')}
-                        className="rounded-md"
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => remove(index)}
-                        variant="outline"
-                        size="sm"
-                        className="h-10"
-                      >
-                        <HugeiconsIcon
-                          icon={Cancel01Icon}
-                          className="w-4 h-4"
-                        />
-                      </Button>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            ))}
-            <Button
-              type="button"
-              onClick={() => append({ domain: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <HugeiconsIcon icon={Add01Icon} className="size-4" />
-              {t('Add Domain')}
-            </Button>
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setOpen(false)}
-                type="button"
-              >
-                {t('Cancel')}
-              </Button>
-              <Button
-                {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_SUBMIT)}
-                loading={isPending}
-                disabled={!form.formState.isValid}
-                type="submit"
-              >
-                {t('Save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      <ChipListField
+        values={domains}
+        placeholder="example.com"
+        emptyLabel={t('No domains set. Anyone can sign up.')}
+        submitControl={AdminControl.SSO_ALLOWED_DOMAINS_SUBMIT}
+        validate={(value) => {
+          if (
+            domains.some(
+              (domain) => normalizeDomain(domain) === normalizeDomain(value),
+            )
+          ) {
+            return t('Already in the list');
+          }
+          if (!value.includes('.')) {
+            return t('Enter a domain such as example.com');
+          }
+          if (
+            domains.length === 0 &&
+            ownDomain &&
+            normalizeDomain(value) !== ownDomain
+          ) {
+            return t(
+              'Add your own domain, {domain}, first so you can still sign in.',
+              { domain: ownDomain },
+            );
+          }
+          return null;
+        }}
+        onAdd={(value) =>
+          mutateAsync({ type: 'add', value: normalizeDomain(value) })
+        }
+        onRemove={(value) => {
+          if (domains.length > 1 && normalizeDomain(value) === ownDomain) {
+            toast.error(t("Can't remove your own domain yet"), {
+              description: t(
+                'Remove the other domains first. Otherwise you can no longer sign in.',
+              ),
+            });
+            return;
+          }
+          mutate({ type: 'remove', value });
+        }}
+      />
+    </Panel>
   );
+};
+
+function normalizeDomain(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+type AllowedDomainsPanelProps = {
+  platform: PlatformWithoutSensitiveData;
 };

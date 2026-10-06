@@ -148,6 +148,32 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         }),
 
+        it('refuses to move the SSO domain when SAML is the only way to sign in', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: { ssoEnabled: true },
+                platform: {
+                    ...samlOnlyPlatform(SsoDomainVerificationStatus.VERIFIED),
+                    emailAuthEnabled: false,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authn/saml/sso-domain',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { ssoDomain: `${apId().toLowerCase()}.example.org` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        }),
+
         it('updates the platform logo icons', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {

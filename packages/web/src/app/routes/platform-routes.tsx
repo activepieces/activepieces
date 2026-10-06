@@ -11,10 +11,7 @@ import { AdminNotFound } from './platform/admin-not-found';
 import { GlobalConnectionsRedirect } from './platform/connections/global-connections-redirect';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
-import {
-  PlanFeatureGuard,
-  PlanFeatureSample,
-} from './platform/plan-feature-sample';
+import { PlanFeatureSample } from './platform/plan-feature-sample';
 import { RedirectKeepingSearch } from './platform/redirect-keeping-search';
 import { useAdminControlClicks } from './platform/use-admin-control-clicks';
 import { useAdminPageViewed } from './platform/use-admin-page-viewed';
@@ -620,11 +617,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title={title}>
-          <PlanFeatureGuard feature="eventStreaming">
+          <PlanFeatureSample feature="eventStreaming">
             <SuspenseWrapper>
               <EventDestinationFormPage />
             </SuspenseWrapper>
-          </PlanFeatureGuard>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),

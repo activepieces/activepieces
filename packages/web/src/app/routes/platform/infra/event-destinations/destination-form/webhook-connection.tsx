@@ -8,12 +8,11 @@ import {
 } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 import { UseFormReturn, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { HorizontalSeparatorWithText } from '@/components/custom/horizontal-separator-with-text';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -27,9 +26,8 @@ import { Input } from '@/components/ui/input';
 import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
-import { destinationErrors } from '../lib/destination-errors';
 import {
   destinationFormUtils,
   DestinationFormValues,
@@ -163,17 +161,19 @@ const GenerateHandlerFlowCard = ({
         });
       },
       onError: (error) => {
-        toast.error(t('Error'), {
-          description: api.isError(error)
-            ? destinationErrors.describe(error)
-            : error.message,
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't generate the handler flow"),
         });
       },
     });
 
   const handleGenerate = () => {
     if (isNil(webhookPrefixUrl) || webhookPrefixUrl === '') {
-      toast.error(t('Webhook URL prefix is not configured.'));
+      mutationFeedback.error({
+        error: new Error(t('Webhook URL prefix is not configured.')),
+        title: t("Couldn't generate the handler flow"),
+      });
       return;
     }
     importHandlerFlow({
@@ -189,12 +189,12 @@ const GenerateHandlerFlowCard = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
-      <span className="flex size-10 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
-        <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-[18px]" />
+    <div className="flex flex-wrap items-start gap-3 rounded-xl border p-4">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
+        <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-4" />
       </span>
-      <div className="flex max-w-[460px] flex-col gap-1">
-        <span className="text-sm font-medium">
+      <div className="flex min-w-60 flex-1 flex-col gap-1">
+        <span className="text-sm font-medium text-gray-12">
           {t('Create a handler flow')}
         </span>
         <span className="text-sm leading-normal text-gray-11">
@@ -222,23 +222,23 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
   const { data: flow } = flowHooks.useGetFlow({ flowId });
 
   return (
-    <div className="flex w-full items-center gap-3 rounded-lg border p-4">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
+    <div className="flex w-full items-center gap-3 rounded-xl border p-4">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
         <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-4" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-sm font-medium">
+        <span className="truncate text-sm font-medium text-gray-12">
           {flow?.version.displayName ?? t('Handler flow')}
         </span>
+        {!isNil(flow) && (
+          <StatusDot
+            tone={isNil(flow.publishedVersionId) ? 'warning' : 'success'}
+            className="text-xs text-gray-11"
+          >
+            {isNil(flow.publishedVersionId) ? t('Draft') : t('Published')}
+          </StatusDot>
+        )}
       </div>
-      {!isNil(flow) && (
-        <Badge
-          className="rounded-md"
-          variant={isNil(flow.publishedVersionId) ? 'warning' : 'success'}
-        >
-          {isNil(flow.publishedVersionId) ? t('Draft') : t('Published')}
-        </Badge>
-      )}
       <Button
         {...adminControl(AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_LINK)}
         type="button"

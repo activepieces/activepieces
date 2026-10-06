@@ -1,4 +1,4 @@
-import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
+import { ErrorCode } from '@activepieces/core-utils';
 import {
   ConnectSecretManagerRequest,
   ConnectSecretManagerRequestSchema,
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -25,7 +26,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -33,15 +33,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { ProjectSelector } from '@/features/connections';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { secretManagersUtils } from './util';
 
@@ -53,19 +49,19 @@ const AddEditSecretManagerConnectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>{children}</DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>{t('Edit')}</TooltipContent>
-      </Tooltip>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>
             {connection
-              ? `${t('Edit')} ${connection.name}`
-              : t('New Secret Manager Connection')}
+              ? t('Edit {name}', { name: connection.name })
+              : t('Connect a vault')}
           </DialogTitle>
+          <DialogDescription>
+            {t(
+              'The connection is tested before it is saved. The credentials you enter here are the only thing stored on the platform.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <AddEditSecretManagerForm
           key={open ? 'open' : 'closed'}
@@ -114,6 +110,9 @@ const AddEditSecretManagerForm = ({
   const isPending = isCreating || isUpdating;
 
   const handleSubmit = (values: ConnectSecretManagerRequest) => {
+    if (isPending) {
+      return;
+    }
     form.clearErrors('root.serverError');
     if (isEdit && connection) {
       updateConnection({ id: connection.id, config: values });
@@ -125,146 +124,133 @@ const AddEditSecretManagerForm = ({
   return (
     <Form {...form}>
       <form
-        className="grid space-y-4"
+        className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
-        <ScrollArea className="max-h-[500px]">
-          <div className="grid space-y-3">
-            {!isEdit && (
-              <FormField
-                name="providerId"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <Label htmlFor="provider-select" showRequiredIndicator>
-                      {t('Provider')}
-                    </Label>
-                    <Select
-                      value={field.value ?? ''}
-                      onValueChange={(val) => {
-                        const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
-                          (p) => p.id === val,
+        <div className="flex flex-col gap-4">
+          {!isEdit && (
+            <FormField
+              name="providerId"
+              render={({ field }) => (
+                <FormItem>
+                  <Label htmlFor="provider-select">{t('Provider')}</Label>
+                  <Select
+                    value={field.value ?? ''}
+                    onValueChange={(val) => {
+                      const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
+                        (p) => p.id === val,
+                      );
+                      field.onChange(val);
+                      if (provider) {
+                        form.setValue(
+                          'config',
+                          secretManagersUtils.getEmptySecretManagerConfig(
+                            provider.id,
+                          ),
                         );
-                        field.onChange(val);
-                        if (provider) {
-                          form.setValue(
-                            'config',
-                            secretManagersUtils.getEmptySecretManagerConfig(
-                              provider.id,
-                            ),
-                          );
-                        }
-                      }}
-                    >
-                      <SelectTrigger id="provider-select">
-                        <SelectValue placeholder={t('Select a provider')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            <div className="flex items-center gap-2">
-                              <LogoPlate
-                                src={provider.logo}
-                                alt={provider.name}
-                                size="xxs"
-                              />
-                              <span>{provider.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              name="name"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <Label htmlFor="connection-name" showRequiredIndicator>
-                    {t('Name')}
-                  </Label>
-                  <Input
-                    {...field}
-                    id="connection-name"
-                    placeholder={t('e.g. Production HashiCorp')}
-                    className="rounded-md"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="scope"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <Label htmlFor="connection-scope" showRequiredIndicator>
-                    {t('Scope')}
-                  </Label>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="connection-scope">
-                      <SelectValue placeholder={t('Select scope')} />
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="provider-select">
+                      <SelectValue placeholder={t('Select a provider')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={SecretManagerConnectionScope.PLATFORM}>
-                        {t('Platform')}
-                      </SelectItem>
-                      <SelectItem value={SecretManagerConnectionScope.PROJECT}>
-                        {t('Project')}
-                      </SelectItem>
+                      {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          <div className="flex items-center gap-2">
+                            <LogoPlate
+                              src={provider.logo}
+                              alt={provider.name}
+                              size="xxs"
+                            />
+                            <span>{provider.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          )}
 
-            {watchedScope === SecretManagerConnectionScope.PROJECT && (
-              <ProjectSelector control={form.control} name="projectIds" />
+          <FormField
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <Label htmlFor="connection-name">{t('Name')}</Label>
+                <Input
+                  {...field}
+                  id="connection-name"
+                  placeholder={t('e.g. Production HashiCorp')}
+                />
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
-            {selectedProvider &&
-              Object.entries(selectedProvider.fields).map(
-                ([fieldId, field]) => (
-                  <FormField
-                    key={fieldId}
-                    name={`config.${fieldId}`}
-                    render={({ field: formField }) => (
-                      <FormItem className="space-y-2">
-                        <Label
-                          htmlFor={fieldId}
-                          showRequiredIndicator={!field.optional}
-                        >
-                          {field.displayName}
-                        </Label>
-                        <div className="flex gap-2 items-center justify-center">
-                          <Input
-                            {...formField}
-                            id={fieldId}
-                            placeholder={field.placeholder}
-                            className="rounded-md"
-                            type={field.type}
-                            value={formField.value}
-                          />
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ),
-              )}
-          </div>
-        </ScrollArea>
+          <FormField
+            name="scope"
+            render={({ field }) => (
+              <FormItem>
+                <Label htmlFor="connection-scope">{t('Available to')}</Label>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="connection-scope">
+                    <SelectValue placeholder={t('Select scope')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SecretManagerConnectionScope.PLATFORM}>
+                      {t('Every project')}
+                    </SelectItem>
+                    <SelectItem value={SecretManagerConnectionScope.PROJECT}>
+                      {t('Only the projects I choose')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {watchedScope === SecretManagerConnectionScope.PROJECT && (
+            <ProjectSelector control={form.control} name="projectIds" />
+          )}
+
+          {selectedProvider &&
+            Object.entries(selectedProvider.fields).map(([fieldId, field]) => (
+              <FormField
+                key={fieldId}
+                name={`config.${fieldId}`}
+                render={({ field: formField }) => (
+                  <FormItem>
+                    <Label htmlFor={fieldId}>
+                      {field.optional
+                        ? t('{label} (optional)', {
+                            label: field.displayName,
+                          })
+                        : field.displayName}
+                    </Label>
+                    <Input
+                      {...formField}
+                      id={fieldId}
+                      placeholder={field.placeholder}
+                      type={field.type}
+                      value={formField.value ?? ''}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+        </div>
         {form.formState.errors.root?.serverError && (
           <FormMessage>
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}
 
-        <DialogFooter className="mt-1">
+        <DialogFooter>
           <Button
             variant="outline"
             type="button"
@@ -278,10 +264,11 @@ const AddEditSecretManagerForm = ({
           </Button>
           <Button
             loading={isPending}
+            disabled={isEdit && !form.formState.isDirty}
             type="submit"
             {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_SUBMIT)}
           >
-            {t('Save')}
+            {isEdit ? t('Save') : t('Connect')}
           </Button>
         </DialogFooter>
       </form>
@@ -289,27 +276,20 @@ const AddEditSecretManagerForm = ({
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handleMutationError(
   error: Error,
-  form: ReturnType<typeof useForm<any>>,
+  form: ReturnType<typeof useForm<ConnectSecretManagerRequest>>,
 ): void {
-  if (api.isError(error)) {
-    const apError = error.response?.data as ApErrorParams;
-    if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: t('Failed to connect to secret manager with error: "{msg}"', {
-          msg: apError.params?.message,
-        }),
-      });
-    }
-  } else {
-    form.setError('root.serverError', {
-      type: 'manual',
-      message: t('Failed to connect to secret manager, please check console'),
-    });
-  }
+  const message = api.isApError(
+    error,
+    ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
+  )
+    ? t('Failed to connect to secret manager with error: "{msg}"', {
+        msg: mutationFeedback.message(error),
+      })
+    : mutationFeedback.message(error);
+  form.setError('root.serverError', { type: 'manual', message });
+  mutationFeedback.markShown(error);
 }
 
 type AddEditSecretManagerConnectionDialogProps = {

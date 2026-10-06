@@ -87,9 +87,11 @@ export const TestEventCard = ({
     !isNil(headerBlocker);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4">
+    <div className="flex flex-col gap-3 rounded-xl border p-4">
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium">{t('Send test event')}</span>
+        <span className="text-sm font-medium text-gray-12">
+          {t('Send test event')}
+        </span>
         <span className="text-sm text-gray-11">{description}</span>
       </div>
       <div className="flex gap-2">
@@ -141,7 +143,7 @@ export const TestEventCard = ({
 
       {isCurrent && !isNil(testError) && (
         <div className="flex flex-col gap-2 border-t pt-3">
-          <Badge className="self-start rounded-md" variant="destructive">
+          <Badge className="self-start" variant="destructive">
             {t('Failed')}
           </Badge>
           <p className="text-xs text-danger-11">
@@ -155,7 +157,6 @@ export const TestEventCard = ({
           <div className="flex items-center gap-2.5">
             {!isNil(testResult.status) && (
               <Badge
-                className="rounded-md"
                 variant={
                   testResult.status < SUCCESS_STATUS_CEILING
                     ? 'success'
@@ -167,9 +168,7 @@ export const TestEventCard = ({
               </Badge>
             )}
             {!isNil(testResult.errorCode) && (
-              <Badge className="rounded-md" variant="destructive">
-                {t('Failed')}
-              </Badge>
+              <Badge variant="destructive">{t('Failed')}</Badge>
             )}
             <span className="text-sm text-gray-11">
               {t('{duration} ms', { duration: testResult.durationMs })}
@@ -186,7 +185,7 @@ export const TestEventCard = ({
           <span className="text-xs font-medium text-gray-11">
             {t('Body sent')}
           </span>
-          <pre className="max-h-40 overflow-auto rounded-md border bg-gray-2 px-4 py-3 font-mono text-xs leading-relaxed text-gray-11">
+          <pre className="max-h-40 overflow-auto rounded-lg border bg-gray-2 px-4 py-3 font-mono text-xs leading-relaxed text-gray-11">
             {JSON.stringify(testResult.renderedBody, null, 2)}
           </pre>
         </div>

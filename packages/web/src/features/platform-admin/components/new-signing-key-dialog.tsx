@@ -1,148 +1,194 @@
-import {
-  AddSigningKeyRequestBody,
-  AddSigningKeyResponse,
-} from '@activepieces/shared';
+import { AddSigningKeyResponse, formErrors } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signingKeyApi } from '@/features/platform-admin/api/signing-key-api';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
-type NewSigningKeyDialogProps = {
-  children: React.ReactNode;
-  onCreate: () => void;
-};
+import { signingKeyMutations } from '../hooks/signing-key-hooks';
 
 export const NewSigningKeyDialog = ({
-  children,
+  open,
+  onOpenChange,
   onCreate,
 }: NewSigningKeyDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const [signingKey, setSigningKey] = useState<
-    AddSigningKeyResponse | undefined
-  >(undefined);
-  const form = useForm<AddSigningKeyRequestBody>({
-    resolver: zodResolver(AddSigningKeyRequestBody),
-  });
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => signingKeyApi.create(form.getValues()),
-    onSuccess: (key) => {
-      setSigningKey(key);
-      onCreate();
-    },
-  });
-
+  const [secretShown, setSecretShown] = useState(false);
   return (
     <Dialog
       open={open}
-      onOpenChange={(open) => {
-        setOpen(open);
-        form.reset();
+      onOpenChange={(next) => {
+        if (!next && secretShown) {
+          return;
+        }
+        onOpenChange(next);
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {signingKey ? t('Signing Key Created') : t('Create Signing Key')}
-          </DialogTitle>
-        </DialogHeader>
-        {signingKey && (
-          <div className="p-4">
-            <div className="flex flex-col items-start gap-2">
-              <span>
-                {t(
-                  'Please save this secret key somewhere safe and accessible. For security reasons,',
-                )}{' '}
-                <span className="font-semibold">
-                  {t(
-                    "you won't be able to view it again after closing this dialog.",
-                  )}
-                </span>
-              </span>
-              <CopyToClipboardInput
-                useInput={false}
-                fileName={signingKey.displayName}
-                textToCopy={signingKey.privateKey}
-                controlId={AdminControl.EMBEDDING_SIGNING_KEY_SECRET_COPY}
-              />
-            </div>
-          </div>
-        )}
-        {!signingKey && (
-          <Form {...form}>
-            <form
-              className="grid space-y-4"
-              onSubmit={form.handleSubmit(() => mutate())}
-            >
-              <FormField
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem className="grid space-y-4">
-                    <Label htmlFor="displayName">{t('Name')}</Label>
-                    <Input
-                      {...field}
-                      required
-                      id="displayName"
-                      className="rounded-md"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {form?.formState?.errors?.root?.serverError && (
-                <FormMessage>
-                  {form.formState.errors.root.serverError.message}
-                </FormMessage>
-              )}
-            </form>
-          </Form>
-        )}
-        <DialogFooter>
-          {!signingKey ? (
-            <>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                {t('Cancel')}
-              </Button>
-              <Button
-                {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_SUBMIT)}
-                disabled={isPending || !form.formState.isValid}
-                loading={isPending}
-                onClick={() => mutate()}
-              >
-                {t('Save')}
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant={'secondary'}
-              onClick={() => {
-                setSigningKey(undefined);
-                setOpen(false);
-              }}
-            >
-              {t('Done')}
-            </Button>
-          )}
-        </DialogFooter>
+      <DialogContent showCloseButton={!secretShown}>
+        <NewSigningKeyBody
+          key={open ? 'open' : 'closed'}
+          onCreate={onCreate}
+          onSecretShown={() => setSecretShown(true)}
+          onClose={() => {
+            setSecretShown(false);
+            onOpenChange(false);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
+};
+
+function NewSigningKeyBody({
+  onCreate,
+  onSecretShown,
+  onClose,
+}: {
+  onCreate: () => Promise<unknown>;
+  onSecretShown: () => void;
+  onClose: () => void;
+}) {
+  const [signingKey, setSigningKey] = useState<
+    AddSigningKeyResponse | undefined
+  >(undefined);
+  const form = useForm<FormSchema>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: { displayName: '' },
+    mode: 'onChange',
+  });
+
+  const { mutate, isPending } = signingKeyMutations.useCreateSigningKey({
+    onSuccess: async (key) => {
+      setSigningKey(key);
+      onSecretShown();
+      await onCreate();
+    },
+    onError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
+    },
+  });
+
+  if (signingKey) {
+    return (
+      <>
+        <DialogHeader>
+          <DialogTitle>{t('Copy your private key now')}</DialogTitle>
+          <DialogDescription>
+            {t('This is the only time {name} is shown in full.', {
+              name: signingKey.displayName,
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          <CopyToClipboardInput
+            useInput={false}
+            fileName={signingKey.displayName}
+            textToCopy={signingKey.privateKey}
+            controlId={AdminControl.EMBEDDING_SIGNING_KEY_SECRET_COPY}
+          />
+          <Alert variant="warning">
+            <HugeiconsIcon icon={Alert02Icon} />
+            <AlertDescription>
+              {t(
+                'Store it somewhere safe. Once this dialog closes, nobody can see it again.',
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
+        <DialogFooter>
+          <Button type="button" onClick={onClose}>
+            {t("I've copied it")}
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t('New signing key')}</DialogTitle>
+        <DialogDescription>
+          {t(
+            'Your app keeps the private key and uses it to sign tokens. Only the public half is stored here.',
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={form.handleSubmit((values) => {
+            if (isPending) {
+              return;
+            }
+            form.clearErrors('root.serverError');
+            mutate(values);
+          })}
+        >
+          <FormField
+            control={form.control}
+            name="displayName"
+            render={({ field }) => (
+              <FormItem>
+                <Label htmlFor="displayName">{t('Name')}</Label>
+                <Input {...field} id="displayName" autoFocus />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root?.serverError && (
+            <p className="text-sm text-danger-11">
+              {form.formState.errors.root.serverError.message}
+            </p>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t('Cancel')}
+            </Button>
+            <Button
+              {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_SUBMIT)}
+              type="submit"
+              loading={isPending}
+              disabled={!form.formState.isValid}
+            >
+              {t('Create')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
+}
+
+const FormSchema = z.object({
+  displayName: z.string().trim().min(1, formErrors.required),
+});
+
+type FormSchema = z.infer<typeof FormSchema>;
+
+type NewSigningKeyDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreate: () => Promise<unknown>;
 };

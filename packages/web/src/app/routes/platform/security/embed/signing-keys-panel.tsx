@@ -1,0 +1,188 @@
+import { SigningKey } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Delete02Icon,
+  Download04Icon,
+  Key01Icon,
+} from '@hugeicons/core-free-icons';
+import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
+import { useMemo, useState } from 'react';
+
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import {
+  DateCell,
+  MutedCell,
+  NameCell,
+} from '@/components/custom/list/list-cells';
+import { RowMenu } from '@/components/custom/list/row-menu';
+import { PageSection } from '@/components/custom/page';
+import { Button } from '@/components/ui/button';
+import {
+  NewSigningKeyDialog,
+  signingKeyMutations,
+} from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+
+export const SigningKeysPanel = ({
+  signingKeys,
+  isLoading,
+  isError,
+  refetch,
+}: SigningKeysPanelProps) => {
+  const [deleting, setDeleting] = useState<SigningKey | null>(null);
+  const [creating, setCreating] = useState(false);
+  const { mutateAsync: deleteKey } = signingKeyMutations.useDeleteSigningKey();
+  const newKeyButton = (
+    <Button
+      variant="outline"
+      {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
+      onClick={() => setCreating(true)}
+    >
+      <HugeiconsIcon icon={Add01Icon} />
+      {t('New signing key')}
+    </Button>
+  );
+
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<SigningKey>>[] => [
+      {
+        accessorKey: 'displayName',
+        size: 400,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Key')} />
+        ),
+        cell: ({ row }) => (
+          <NameCell
+            stacked
+            title={row.original.displayName}
+            sub={
+              <span className="flex min-w-0 items-center gap-1">
+                <span className="truncate font-mono">{row.original.id}</span>
+                <CopyButton
+                  textToCopy={row.original.id}
+                  variant="ghost"
+                  size="icon-xs"
+                  tooltipSide="right"
+                  aria-label={t('Copy key ID')}
+                />
+              </span>
+            }
+          />
+        ),
+      },
+      {
+        accessorKey: 'algorithm',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Algorithm')} />
+        ),
+        cell: ({ row }) => <MutedCell>{row.original.algorithm}</MutedCell>,
+      },
+      {
+        accessorKey: 'created',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Created')} />
+        ),
+        cell: ({ row }) => (
+          <DateCell value={row.original.created} mode="short" />
+        ),
+      },
+      {
+        id: 'actions',
+        size: 56,
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <RowMenu
+              items={[
+                {
+                  label: t('Download public key'),
+                  icon: Download04Icon,
+                  onSelect: () => downloadPublicKey(row.original),
+                },
+                {
+                  label: t('Delete'),
+                  icon: Delete02Icon,
+                  destructive: true,
+                  control: AdminControl.EMBEDDING_SIGNING_KEY_DELETE_OPEN,
+                  onSelect: () => setDeleting(row.original),
+                },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
+  return (
+    <PageSection
+      title={t('Signing keys')}
+      description={t(
+        'Your app signs a short-lived token with the private key; the public half here lets the user in.',
+      )}
+      action={signingKeys.length > 0 ? newKeyButton : undefined}
+    >
+      <DataTable
+        columns={columns}
+        page={{ data: signingKeys, next: null, previous: null }}
+        isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('signing keys')}
+        onRetry={refetch}
+        hidePagination
+        emptyStateTextTitle={t('No signing keys yet')}
+        emptyStateTextDescription={t(
+          'Create one and your app can sign a token that lets a user straight into the builder.',
+        )}
+        emptyStateIcon={<HugeiconsIcon icon={Key01Icon} />}
+        emptyStateAction={newKeyButton}
+      />
+      <NewSigningKeyDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onCreate={refetch}
+      />
+      {deleting && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDeleting(null)}
+          title={t('Delete {name}?', { name: deleting.displayName })}
+          description={t(
+            'Anything signing tokens with this key stops being able to sign users in.',
+          )}
+          consequence={t('Every token signed with it is rejected immediately.')}
+          confirmLabel={t('Delete')}
+          onConfirm={() => deleteKey(deleting.id)}
+          successMessage={t('{name} deleted', { name: deleting.displayName })}
+          controlId={AdminControl.EMBEDDING_SIGNING_KEY_DELETE_CONFIRM}
+        />
+      )}
+    </PageSection>
+  );
+};
+
+function downloadPublicKey(signingKey: SigningKey) {
+  const blob = new Blob([signingKey.publicKey], {
+    type: 'application/x-pem-file',
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `${signingKey.displayName}.pub.pem`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+type SigningKeysPanelProps = {
+  signingKeys: SigningKey[];
+  isLoading: boolean;
+  isError: boolean;
+  refetch: () => Promise<unknown>;
+};

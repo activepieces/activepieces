@@ -19,6 +19,10 @@ const debounce = vi.hoisted(() => {
   return state;
 });
 
+const feedback = vi.hoisted(() => ({ undo: vi.fn() }));
+
+vi.mock('@/lib/mutation-feedback', () => ({ mutationFeedback: feedback }));
+
 const authorization = vi.hoisted(() => {
   const grantedPermissions: string[] = [];
   return { grantedPermissions, useAuthorization: vi.fn() };
@@ -102,13 +106,13 @@ vi.mock(
   }),
 );
 
-vi.mock('@/components/custom/delete-dialog', () => ({
-  ConfirmationDeleteDialog: (props: DialogMockProps) =>
+vi.mock('@/components/custom/confirm-dialog', () => ({
+  ConfirmDialog: (props: DialogMockProps) =>
     props.open ? (
       <div data-dialog="true">
-        <p>{props.message}</p>
-        <button data-confirm="true" onClick={() => props.mutationFn()}>
-          {props.buttonText}
+        <p>{props.description}</p>
+        <button data-confirm="true" onClick={() => props.onConfirm()}>
+          {props.confirmLabel}
         </button>
       </div>
     ) : null,
@@ -185,6 +189,7 @@ beforeEach(() => {
   document.body.appendChild(container);
   root = createRoot(container);
   authorization.useAuthorization.mockClear();
+  feedback.undo.mockReset();
   debounce.deferred = false;
 });
 
@@ -333,6 +338,59 @@ describe('McpToolTierList saving', () => {
   });
 });
 
+describe('McpToolTierList undo', () => {
+  it('offers undo once a save succeeds and restores the tools from before it', async () => {
+    const saves: SaveParams[] = [];
+    render({
+      scope: 'platform',
+      onUpdateDisabledTools: (params) => saves.push(params),
+    });
+
+    toggle('Delete');
+    expect(feedback.undo).not.toHaveBeenCalled();
+    act(() => saves[0].onSuccess?.());
+
+    expect(feedback.undo).toHaveBeenCalledTimes(1);
+    expect(tierSwitch('Delete').checked).toBe(false);
+
+    let undone: Promise<unknown> = Promise.resolve();
+    act(() => {
+      undone = feedback.undo.mock.calls[0][0].onUndo();
+    });
+    expect(saves[1].tools).toEqual([]);
+    expect(tierSwitch('Delete').checked).toBe(true);
+    act(() => saves[1].onSuccess?.());
+    await expect(undone).resolves.toBeUndefined();
+  });
+
+  it('rejects the undo when restoring fails, so the toolkit can report it', async () => {
+    const saves: SaveParams[] = [];
+    render({
+      scope: 'platform',
+      onUpdateDisabledTools: (params) => saves.push(params),
+    });
+
+    toggle('Delete');
+    act(() => saves[0].onSuccess?.());
+    let undone: Promise<unknown> = Promise.resolve();
+    act(() => {
+      undone = feedback.undo.mock.calls[0][0].onUndo();
+    });
+    const failure = new Error('offline');
+    act(() => saves[1].onError?.(failure));
+
+    await expect(undone).rejects.toBe(failure);
+  });
+
+  it('offers no undo when the caller never reports success', () => {
+    render({ onUpdateDisabledTools: ({ onSettled }) => onSettled() });
+
+    toggle('Delete');
+
+    expect(feedback.undo).not.toHaveBeenCalled();
+  });
+});
+
 describe('McpToolTierList, when the platform switched tools off', () => {
   it('locks a tier the platform turned off entirely', () => {
     render({ platformDisabledTools: DELETE_TOOLS });
@@ -375,6 +433,8 @@ describe('McpToolTierList, when the platform switched tools off', () => {
 
 type ListProps = Parameters<typeof McpToolTierList>[0];
 
+type SaveParams = Parameters<ListProps['onUpdateDisabledTools']>[0];
+
 type ChildrenProps = { children: React.ReactNode };
 
 type SheetCallbacks = {
@@ -392,7 +452,7 @@ type SwitchMockProps = {
 
 type DialogMockProps = {
   open: boolean;
-  message: React.ReactNode;
-  buttonText: string;
-  mutationFn: () => Promise<void>;
+  description: React.ReactNode;
+  confirmLabel: string;
+  onConfirm: () => Promise<void> | void;
 };

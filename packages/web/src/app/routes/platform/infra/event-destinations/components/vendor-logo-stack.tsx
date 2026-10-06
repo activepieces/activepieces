@@ -1,25 +1,30 @@
 import { t } from 'i18next';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
+
 export const VendorLogoStack = () => {
   return (
     <div className="flex items-center gap-2 pt-2">
       <div className="flex">
         {VENDOR_LOGOS.map((logo) => (
           <span key={logo.name} className="w-5 shrink-0 overflow-visible">
-            <span
+            <LogoPlate
+              size="xs"
+              border
               title={logo.name}
-              className="flex size-[26px] items-center justify-center rounded-full border-2 border-gray-1 bg-gray-5"
-            >
-              <svg
-                role="img"
-                aria-label={logo.name}
-                viewBox="0 0 24 24"
-                className="size-3.5"
-                fill={logo.color}
-              >
-                <path d={logo.path} />
-              </svg>
-            </span>
+              className="rounded-full"
+              fallback={
+                <svg
+                  role="img"
+                  aria-label={logo.name}
+                  viewBox="0 0 24 24"
+                  className="size-3.5"
+                  fill={logo.color}
+                >
+                  <path d={logo.path} />
+                </svg>
+              }
+            />
           </span>
         ))}
       </div>

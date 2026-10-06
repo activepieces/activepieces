@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { apiKeyApi } from '../api/api-key-api';
 
@@ -32,9 +34,12 @@ export const apiKeyMutations = {
   useDeleteApiKey: () => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: (keyId: string) => apiKeyApi.delete(keyId),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: apiKeyKeys.all });
+      mutationFn: async (keyId: string) => {
+        await apiKeyApi.delete(keyId);
+        await queryClient.invalidateQueries({ queryKey: apiKeyKeys.all });
+      },
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't revoke the key") });
       },
     });
   },

@@ -1,49 +1,68 @@
+import { isNil, tryCatch, unique } from '@activepieces/core-utils';
 import {
-  isNil,
-  tryCatch,
-  tryCatchSync,
-  unique,
-} from '@activepieces/core-utils';
-import { ApFlagId, EventDestination } from '@activepieces/shared';
+  ApFlagId,
+  EventDestination,
+  EventDestinationFormat,
+} from '@activepieces/shared';
 import {
   Add01Icon,
-  CheckListIcon,
+  Delete02Icon,
   Globe02Icon,
+  LinkSquare02Icon,
+  PencilEdit01Icon,
+  Pulse01Icon,
   RssIcon,
+  WorkflowSquare02Icon,
 } from '@hugeicons/core-free-icons';
 import { useQueries } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { useCallback, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { IconButton } from '@/components/custom/icon-button';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import {
+  DateCell,
+  MutedCell,
+  NameCell,
+} from '@/components/custom/list/list-cells';
+import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
+import { Page } from '@/components/custom/page';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Switch } from '@/components/ui/switch';
 import { flowHooks, flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useStableCallback } from '@/hooks/use-stable-callback';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { useNewWindow } from '@/lib/navigation-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { sampleData } from '../../sample-data';
 
+import { DeleteDestinationDialog } from './components/delete-destination-dialog';
 import { DestinationStartCards } from './components/destination-start-cards';
-import EventDestinationActions from './components/event-destination-actions';
-import { destinationErrors } from './lib/destination-errors';
+import { destinationSummary } from './lib/destination-summary';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
 import { eventGroupUtils } from './lib/event-groups';
 import { EVENT_STREAMING_PATH } from './lib/event-streaming-path';
-import { parseFlowIdFromUrl } from './lib/parse-flow-id-from-url';
+import {
+  parseFlowIdFromUrl,
+  ParsedDestination,
+} from './lib/parse-flow-id-from-url';
 
 const EventDestinationsPage = () => {
   const navigate = useNavigate();
-  const openNewWindow = useNewWindow();
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
   const {
@@ -58,26 +77,36 @@ const EventDestinationsPage = () => {
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
+  const [deleting, setDeleting] = useState<DestinationRow | null>(null);
   const totalEventCount = eventGroupUtils.countEvents();
+
+  const parsedDestinations = useMemo(
+    () =>
+      destinations.map((destination) => ({
+        destination,
+        parsed: parseFlowIdFromUrl({
+          url: destination.url,
+          webhookPrefixUrl: webhookPrefixUrl ?? null,
+        }),
+      })),
+    [destinations, webhookPrefixUrl],
+  );
 
   const flowIds = useMemo(
     () =>
       unique(
-        destinations.flatMap((destination) => {
-          const parsed = parseFlowIdFromUrl({
-            url: destination.url,
-            webhookPrefixUrl: webhookPrefixUrl ?? null,
-          });
-          return parsed.kind === 'flow' ? [parsed.flowId] : [];
-        }),
+        parsedDestinations.flatMap(({ parsed }) =>
+          parsed.kind === 'flow' ? [parsed.flowId] : [],
+        ),
       ),
-    [destinations, webhookPrefixUrl],
+    [parsedDestinations],
   );
 
   const flowQueries = useQueries({
     queries: flowIds.map((flowId) => ({
       queryKey: flowHooks.createFlowQueryKeys({ flowId, versionId: undefined }),
       queryFn: () => flowsApi.get(flowId).catch(() => null),
+      enabled: !isSample,
     })),
   });
 
@@ -90,154 +119,220 @@ const EventDestinationsPage = () => {
     return new Map(entries);
   }, [flowQueries, flowIds]);
 
-  const destinationTitle = useCallback(
-    (destination: EventDestination) => {
-      const parsed = parseFlowIdFromUrl({
-        url: destination.url,
-        webhookPrefixUrl: webhookPrefixUrl ?? null,
-      });
-      if (parsed.kind === 'flow') {
-        return (
-          flowDisplayNameById.get(parsed.flowId) ??
-          t('Destination (flow {flowId})', { flowId: parsed.flowId })
-        );
-      }
-      const { data: url } = tryCatchSync(() => new URL(destination.url));
-      return url?.host ?? destination.url;
-    },
-    [flowDisplayNameById, webhookPrefixUrl],
+  const rows: DestinationRow[] = parsedDestinations.map(
+    ({ destination, parsed }) => ({
+      id: destination.id,
+      destination,
+      parsed,
+      title: destinationSummary.title({
+        destination,
+        parsed,
+        flowDisplayName:
+          parsed.kind === 'flow'
+            ? flowDisplayNameById.get(parsed.flowId)
+            : undefined,
+      }),
+    }),
   );
 
-  const columns: ColumnDef<RowDataWithActions<EventDestination>>[] = useMemo(
-    () => [
+  const isEmpty = !isSample && !isLoading && !isError && rows.length === 0;
+
+  const openDestination = (row: DestinationRow) =>
+    navigate(`${EVENT_STREAMING_PATH}/${row.id}`);
+
+  const menuItems = useStableCallback((row: DestinationRow): RowMenuItem[] => [
+    {
+      label: t('Edit'),
+      icon: PencilEdit01Icon,
+      control: AdminControl.EVENT_DESTINATIONS_DESTINATION_EDIT_OPEN,
+      onSelect: () => openDestination(row),
+    },
+    {
+      label: t('Open flow'),
+      icon: LinkSquare02Icon,
+      hidden: row.parsed.kind !== 'flow',
+      control: AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_LINK,
+      onSelect: () => {
+        if (row.parsed.kind === 'flow') {
+          window.open(
+            `/flows/${row.parsed.flowId}`,
+            '_blank',
+            'noopener,noreferrer',
+          );
+        }
+      },
+    },
+    {
+      label: t('Delete'),
+      icon: Delete02Icon,
+      destructive: true,
+      control: AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
+      onSelect: () => setDeleting(row),
+    },
+  ]);
+
+  const columns = useMemo(
+    (): ColumnDef<RowDataWithActions<DestinationRow>>[] => [
       {
-        id: 'destination',
+        accessorKey: 'destination',
+        size: 420,
         header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Destination')}
-            icon={Globe02Icon}
-          />
+          <DataTableColumnHeader column={column} title={t('Destination')} />
         ),
         cell: ({ row }) => (
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <TextWithTooltip tooltipMessage={destinationTitle(row.original)}>
-              <span className="truncate text-sm font-medium">
-                {destinationTitle(row.original)}
-              </span>
-            </TextWithTooltip>
-            <TextWithTooltip tooltipMessage={row.original.url}>
-              <span className="truncate font-mono text-xs text-gray-11">
-                {row.original.url}
-              </span>
-            </TextWithTooltip>
-          </div>
+          <NameCell
+            stacked
+            media={<DestinationIcon row={row.original} />}
+            title={row.original.title}
+            sub={destinationSummary.formatLabel({
+              format: row.original.destination.format,
+              parsed: row.original.parsed,
+            })}
+          />
         ),
       },
       {
-        id: 'events',
-        size: 120,
+        accessorKey: 'events',
+        size: 140,
         header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Events')}
-            icon={CheckListIcon}
-          />
+          <DataTableColumnHeader column={column} title={t('Events')} />
         ),
         cell: ({ row }) => (
-          <span className="text-sm text-gray-11">
-            {row.original.events.length === totalEventCount
+          <MutedCell>
+            {row.original.destination.events.length === totalEventCount
               ? t('All {total}', { total: totalEventCount })
               : t('{count} of {total}', {
-                  count: row.original.events.length,
+                  count: row.original.destination.events.length,
                   total: totalEventCount,
                 })}
-          </span>
+          </MutedCell>
         ),
       },
       {
-        id: 'enabled',
-        size: 100,
-        notClickable: true,
+        accessorKey: 'created',
+        size: 112,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Created')} />
+        ),
+        cell: ({ row }) => (
+          <DateCell value={row.original.destination.created} mode="short" />
+        ),
+      },
+      {
+        accessorKey: 'enabled',
+        size: 96,
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={t('Enabled')} />
         ),
         cell: ({ row }) => (
-          <Switch
-            checked={row.original.enabled}
-            aria-label={t('Enable {destination}', {
-              destination: destinationTitle(row.original),
-            })}
-            onCheckedChange={(enabled) =>
-              toggleDestination({ destinationId: row.original.id, enabled })
-            }
-          />
+          <span className="flex" onClick={(event) => event.stopPropagation()}>
+            <Switch
+              checked={row.original.destination.enabled}
+              disabled={isSample}
+              aria-label={t('Enable {destination}', {
+                destination: row.original.title,
+              })}
+              onCheckedChange={(enabled) =>
+                toggleDestination({
+                  destinationId: row.original.id,
+                  enabled,
+                }).catch(() => undefined)
+              }
+            />
+          </span>
         ),
       },
       {
         id: 'actions',
-        size: 60,
-        notClickable: true,
-        header: () => null,
+        size: 56,
         cell: ({ row }) => (
-          <EventDestinationActions destination={row.original} />
+          <div className="flex justify-end">
+            <RowMenu items={menuItems(row.original)} />
+          </div>
         ),
       },
     ],
-    [destinationTitle, totalEventCount],
+    [isSample, menuItems, totalEventCount],
+  );
+
+  const newButton = (
+    <Button
+      asChild
+      {...adminControl(AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN)}
+    >
+      <Link to={`${EVENT_STREAMING_PATH}/new`}>
+        <HugeiconsIcon icon={Add01Icon} />
+        {t('New destination')}
+      </Link>
+    </Button>
   );
 
   return (
-    <>
-      <DashboardPageHeader
-        title={t('Event Streaming')}
-        description={t(
-          'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
-        )}
-      >
-        <IconButton
-          {...adminControl(
-            AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN,
-          )}
-          icon={Add01Icon}
-          size="sm"
-          asChild
-        >
-          <Link to={`${EVENT_STREAMING_PATH}/new`}>{t('New Destination')}</Link>
-        </IconButton>
-      </DashboardPageHeader>
-      <div className="flex w-full flex-col px-4 pb-6">
+    <Page>
+      <AdminPageHeader page="eventStreaming">{newButton}</AdminPageHeader>
+      {isEmpty ? (
+        <Empty className="rounded-2xl bg-panel shadow-edge">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <HugeiconsIcon icon={RssIcon} />
+            </EmptyMedia>
+            <EmptyTitle>{t('No destinations yet')}</EmptyTitle>
+            <EmptyDescription>
+              {t(
+                'Stream every audit event on your platform over OpenTelemetry (OTLP), or send it to a flow.',
+              )}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="max-w-2xl">
+            <DestinationStartCards />
+          </EmptyContent>
+        </Empty>
+      ) : (
         <DataTable
-          columns={columns}
-          page={{ data: destinations, next: null, previous: null }}
-          isLoading={isLoading}
-          isError={isError}
-          errorStateEntity={t('destinations')}
-          onRetry={eventDestinationsCollectionUtils.refetch}
-          hidePagination={true}
-          onRowClick={(row, newWindow) =>
-            newWindow
-              ? openNewWindow(`${EVENT_STREAMING_PATH}/${row.id}`)
-              : navigate(`${EVENT_STREAMING_PATH}/${row.id}`)
-          }
-          toolbarButtons={[
-            <span key="count" className="shrink-0 text-xs text-gray-11">
-              {t('destinationsCount', { count: destinations.length })}
-            </span>,
-          ]}
           emptyStateTextTitle={t('No destinations yet')}
           emptyStateTextDescription={t(
             'Stream every audit event on your platform over OpenTelemetry (OTLP), or send it to a flow.',
           )}
-          emptyStateIcon={
-            <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-lg bg-gray-3">
-              <HugeiconsIcon icon={RssIcon} className="size-5" />
-            </span>
+          emptyStateIcon={<HugeiconsIcon icon={RssIcon} />}
+          columns={columns}
+          page={{ data: rows, next: null, previous: null }}
+          hidePagination={true}
+          onRowClick={(row) => openDestination(row)}
+          isLoading={!isSample && isLoading}
+          isError={!isSample && isError}
+          errorStateEntity={t('destinations')}
+          onRetry={() =>
+            eventDestinationsCollectionUtils.refetch().catch(() => undefined)
           }
-          emptyStateAction={<DestinationStartCards />}
         />
-      </div>
-    </>
+      )}
+      {deleting && (
+        <DeleteDestinationDialog
+          destination={deleting.destination}
+          title={deleting.title}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleting(null);
+            }
+          }}
+        />
+      )}
+    </Page>
+  );
+};
+
+const DestinationIcon = ({ row }: { row: DestinationRow }) => {
+  const Icon =
+    row.parsed.kind === 'flow'
+      ? WorkflowSquare02Icon
+      : row.destination.format === EventDestinationFormat.RAW
+      ? Globe02Icon
+      : Pulse01Icon;
+  return (
+    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
+      <HugeiconsIcon icon={Icon} />
+    </span>
   );
 };
 
@@ -256,8 +351,27 @@ async function toggleDestination({
       }).isPersisted.promise,
   );
   if (!isNil(error)) {
-    toast.error(destinationErrors.describe(error));
+    mutationFeedback.error({
+      error,
+      title: t("Couldn't update the destination"),
+    });
+    return;
   }
+  mutationFeedback.undo({
+    message: enabled ? t('Destination turned on') : t('Destination paused'),
+    onUndo: () =>
+      eventDestinationsCollectionUtils.update({
+        destinationId,
+        request: { enabled: !enabled },
+      }).isPersisted.promise,
+  });
 }
+
+type DestinationRow = {
+  id: string;
+  destination: EventDestination;
+  parsed: ParsedDestination;
+  title: string;
+};
 
 export default EventDestinationsPage;

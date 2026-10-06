@@ -1,178 +1,130 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
-import {
-  CheckmarkCircle02Icon,
-  Globe02Icon,
-  LockKeyholeIcon,
-  Mail01Icon,
-} from '@hugeicons/core-free-icons';
+import { PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { toast } from 'sonner';
 
-import { CenteredPage } from '@/app/components/centered-page';
-import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { AllowedDomainsPanel } from '@/app/routes/platform/security/sso/allowed-domain';
+import {
+  SamlDangerZone,
+  SamlDetailsPanel,
+} from '@/app/routes/platform/security/sso/saml-details-panel';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { Badge } from '@/components/ui/badge';
-import {
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-} from '@/components/ui/item';
+import { Page } from '@/components/custom/page';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
-
 const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const locked = !platform.plan.ssoEnabled;
 
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const ssoDomainVerified =
     platform.ssoDomainVerification?.status ===
     SsoDomainVerificationStatus.VERIFIED;
-  const emailAuthEnabled = platform.emailAuthEnabled;
 
-  const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Email authentication updated'), { duration: 3000 });
-      },
-    });
-
-  const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Google authentication updated'), { duration: 3000 });
-      },
-    });
+  const { mutate: toggleSignIn } = ssoMutations.useToggleSignInMethod();
+  const methodsOn = [
+    platform.emailAuthEnabled,
+    platform.googleAuthEnabled,
+    samlConnected && ssoDomainVerified,
+  ].filter(Boolean).length;
+  const onlyMethodLeft = methodsOn <= 1;
 
   return (
-    <CenteredPage
-      title={t('Single Sign On')}
-      description={t('Manage single sign on providers')}
-    >
-      <div className="flex flex-col gap-4">
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <HugeiconsIcon icon={Globe02Icon} />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Allowed Domains')}</ItemTitle>
-            <ItemDescription>
-              {t('Restrict authentication to specific email domains.')}
-            </ItemDescription>
-            {(platform?.allowedAuthDomains ?? []).length > 0 && (
-              <div className="mt-1 gap-2 flex">
-                {(platform?.allowedAuthDomains ?? []).map((text, index) => (
-                  <Badge key={index} variant={'outline'}>
-                    {text}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </ItemContent>
-          <ItemActions>
-            <AllowedDomainDialog platform={platform} refetch={refetch} />
-          </ItemActions>
-        </Item>
+    <Page width="narrow">
+      <AdminPageHeader page="sso" />
 
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <img className="size-6" src={GoogleIcon} alt="icon" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>Google</ItemTitle>
-            <ItemDescription>
-              {t("Allow logins through google's single sign-on functionality.")}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
+      <Panel
+        title={t('Ways to sign in')}
+        description={
+          onlyMethodLeft
+            ? t('At least one way to sign in has to stay on.')
+            : undefined
+        }
+        flush
+      >
+        <SettingRows>
+          <SettingRow
+            title={t('Email and password')}
+            description={t('Turning this off leaves only the providers below.')}
+          >
+            <Switch
+              {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
+              aria-label={t('Email and password')}
+              checked={platform.emailAuthEnabled}
+              disabled={platform.emailAuthEnabled && onlyMethodLeft}
+              onCheckedChange={(enabled) =>
+                toggleSignIn({ method: 'email', enabled })
+              }
+            />
+          </SettingRow>
+          <SettingRow
+            title={t('Google')}
+            description={t('People sign in with their Google account.')}
+          >
             <Switch
               {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
+              aria-label={t('Google')}
               checked={platform.googleAuthEnabled}
-              onCheckedChange={() =>
-                toggleGoogleAuth({
-                  googleAuthEnabled: !platform.googleAuthEnabled,
-                })
+              disabled={platform.googleAuthEnabled && onlyMethodLeft}
+              onCheckedChange={(enabled) =>
+                toggleSignIn({ method: 'google', enabled })
               }
-              disabled={isGoogleAuthPending}
             />
-          </ItemActions>
-        </Item>
-
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <HugeiconsIcon icon={LockKeyholeIcon} />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('SAML 2.0')}</ItemTitle>
-            <ItemDescription>
-              {t(
-                "Allow logins through saml 2.0's single sign-on functionality.",
-              )}
-            </ItemDescription>
-            {platform.ssoDomain && (
-              <div className="mt-1 gap-2 flex items-center">
-                <Badge variant="outline">{platform.ssoDomain}</Badge>
-                {ssoDomainVerified ? (
-                  <span className="flex items-center gap-1 text-xs text-success-11">
-                    <HugeiconsIcon
-                      icon={CheckmarkCircle02Icon}
-                      className="size-3"
-                    />
-                    {t('Verified')}
-                  </span>
-                ) : (
-                  <span className="text-xs text-warning-11">
-                    {t('Pending verification')}
-                  </span>
-                )}
-              </div>
+          </SettingRow>
+          <SettingRow
+            title={t('SAML 2.0')}
+            description={
+              platform.ssoDomain
+                ? t('Domain {domain}', { domain: platform.ssoDomain })
+                : t(
+                    'Connect an identity provider so people sign in with the account your company already gave them.',
+                  )
+            }
+          >
+            {samlConnected && (
+              <StatusDot tone={ssoDomainVerified ? 'success' : 'warning'}>
+                {ssoDomainVerified ? t('Connected') : t('Waiting for DNS')}
+              </StatusDot>
             )}
-          </ItemContent>
-          <ItemActions>
             <ConfigureSamlDialog
               platform={platform}
               refetch={refetch}
               connected={samlConnected}
-            />
-          </ItemActions>
-        </Item>
+            >
+              <Button
+                {...adminControl(AdminControl.SSO_SAML_OPEN)}
+                variant="outline"
+                size="sm"
+              >
+                {samlConnected && <HugeiconsIcon icon={PencilEdit01Icon} />}
+                {samlConnected ? t('Edit') : t('Set up')}
+              </Button>
+            </ConfigureSamlDialog>
+          </SettingRow>
+        </SettingRows>
+      </Panel>
 
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <HugeiconsIcon icon={Mail01Icon} />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Allowed Email Login')}</ItemTitle>
-            <ItemDescription>
-              {t('Allow logins through email and password.')}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Switch
-              {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
-              checked={emailAuthEnabled}
-              onCheckedChange={() =>
-                toggleEmailAuthentication({
-                  emailAuthEnabled: !platform.emailAuthEnabled,
-                })
-              }
-              disabled={isEmailAuthPending}
-            />
-          </ItemActions>
-        </Item>
-      </div>
-    </CenteredPage>
+      <AllowedDomainsPanel platform={platform} />
+
+      {!locked && (samlConnected || platform.ssoDomain) && (
+        <SamlDetailsPanel
+          platform={platform}
+          refetch={refetch}
+          connected={samlConnected}
+        />
+      )}
+
+      {!locked && samlConnected && (
+        <SamlDangerZone platform={platform} refetch={refetch} />
+      )}
+    </Page>
   );
 };
 

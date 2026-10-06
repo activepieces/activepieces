@@ -3,19 +3,21 @@ import { ApFlagId } from '@activepieces/shared';
 import {
   ArrowRight01Icon,
   Delete02Icon,
+  LockKeyholeIcon,
   PencilEdit01Icon,
   PlayIcon,
   ViewIcon,
 } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   HugeiconsIcon,
   type IconSvgElement,
 } from '@/components/custom/hugeicons-icon';
+import { Panel, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,9 +25,7 @@ import {
   ItemActions,
   ItemContent,
   ItemDescription,
-  ItemGroup,
   ItemMedia,
-  ItemSeparator,
   ItemTitle,
 } from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
@@ -37,6 +37,7 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { getToolCategories } from '../utils/mcp-tools-metadata';
@@ -83,13 +84,48 @@ export function McpToolTierList({
     [disabledTools, platformDisabledTools],
   );
 
-  const save = useDebouncedCallback((tools: string[]) => {
+  const batchStart = useRef<string[] | null>(null);
+
+  const send = ({
+    tools,
+    onSuccess,
+    onError,
+  }: {
+    tools: string[];
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
+  }) => {
     onUpdateDisabledTools({
       tools,
       onSettled: () =>
         setPendingDisabledTools((current) =>
           current === tools ? null : current,
         ),
+      onSuccess,
+      onError,
+    });
+  };
+
+  const restore = (tools: string[]) =>
+    new Promise<void>((resolve, reject) => {
+      setPendingDisabledTools(tools);
+      send({ tools, onSuccess: () => resolve(), onError: reject });
+    });
+
+  const save = useDebouncedCallback((tools: string[]) => {
+    const before = batchStart.current;
+    batchStart.current = null;
+    send({
+      tools,
+      onSuccess: () => {
+        if (before === null) {
+          return;
+        }
+        mutationFeedback.undo({
+          message: t('Tools updated'),
+          onUndo: () => restore(before),
+        });
+      },
     });
   }, 300);
 
@@ -105,6 +141,9 @@ export function McpToolTierList({
     const next = enabled
       ? disabledTools.filter((name) => !names.includes(name))
       : [...disabledTools, ...names.filter((n) => !disabledTools.includes(n))];
+    if (batchStart.current === null) {
+      batchStart.current = disabledTools;
+    }
     setPendingDisabledTools(next);
     save(next);
   };
@@ -136,17 +175,17 @@ export function McpToolTierList({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {readOnly && (
         <p className="text-sm text-gray-11">
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
-      <ItemGroup className="rounded-lg border bg-gray-1">
-        {tiers.map((tier, index) => (
-          <Fragment key={tier.id}>
-            {index > 0 && <ItemSeparator />}
+      <Panel flush>
+        <SettingRows>
+          {tiers.map((tier) => (
             <TierRow
+              key={tier.id}
               tier={tier}
               offTools={offTools}
               platformDisabledTools={platformDisabledTools}
@@ -159,9 +198,9 @@ export function McpToolTierList({
                 })
               }
             />
-          </Fragment>
-        ))}
-      </ItemGroup>
+          ))}
+        </SettingRows>
+      </Panel>
 
       <McpToolsSheet
         tier={tiers.find((tier) => tier.id === openTierId) ?? null}
@@ -175,11 +214,11 @@ export function McpToolTierList({
         onSetAll={({ names, enabled }) => setToolsEnabled({ names, enabled })}
       />
 
-      <ConfirmationDeleteDialog
+      <ConfirmDialog
         open={pendingDeleteTools !== null}
         onOpenChange={(open) => !open && setPendingDeleteTools(null)}
         title={t('Turn on Delete tools?')}
-        message={
+        description={
           scope === 'platform'
             ? t(
                 'MCP clients will be able to use the delete tools you are turning on, in every project their user can edit, unless the project turned them off. Deleted items cannot be restored.',
@@ -188,9 +227,8 @@ export function McpToolTierList({
                 'MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.',
               )
         }
-        buttonText={t('Turn on')}
-        entityName={t('Delete tools')}
-        mutationFn={async () => {
+        confirmLabel={t('Turn on')}
+        onConfirm={async () => {
           if (pendingDeleteTools !== null) {
             applyToolsEnabled({ names: pendingDeleteTools, enabled: true });
           }
@@ -232,17 +270,11 @@ function TierRow({
   return (
     <Item>
       <ItemMedia variant="icon">
-        <HugeiconsIcon icon={Icon} className="size-4 text-gray-11" />
+        <HugeiconsIcon icon={Icon} className="text-gray-11" />
       </ItemMedia>
-      <ItemContent>
+      <ItemContent className="min-w-48">
         <ItemTitle>
           {copy.label}
-          {tier.locked && (
-            <TitleBadge
-              label={t('Always on')}
-              tooltip={t('Other tools need these to work.')}
-            />
-          )}
           {offForPlatform && (
             <TitleBadge
               label={t('Off for the platform')}
@@ -252,9 +284,11 @@ function TierRow({
             />
           )}
         </ItemTitle>
-        <ItemDescription>{copy.description}</ItemDescription>
+        <ItemDescription className="line-clamp-none">
+          {copy.description}
+        </ItemDescription>
       </ItemContent>
-      <ItemActions className="gap-4">
+      <ItemActions className="ml-auto gap-4">
         <Button
           variant="ghost"
           size="sm"
@@ -267,10 +301,25 @@ function TierRow({
           })}
         >
           {countLabel}
-          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} />
         </Button>
-        <div className="flex w-8 justify-end">
-          {!tier.locked && (
+        <div className="flex w-24 justify-end">
+          {tier.locked ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  tabIndex={0}
+                  className="flex items-center gap-1.5 text-sm text-gray-11 outline-hidden"
+                >
+                  <HugeiconsIcon icon={LockKeyholeIcon} className="size-3.5" />
+                  {t('Always on')}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t('Other tools need these to work.')}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
             <Switch
               {...adminControl(AdminControl.MCP_TIER_TOGGLE)}
               checked={editable.length > 0 && editableOn === editable.length}
@@ -297,7 +346,7 @@ function TitleBadge({ label, tooltip }: { label: string; tooltip: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="secondary" className="font-normal" tabIndex={0}>
+        <Badge variant="secondary" tabIndex={0}>
           {label}
         </Badge>
       </TooltipTrigger>
@@ -323,6 +372,8 @@ type McpToolTierListProps = {
   onUpdateDisabledTools: (params: {
     tools: string[];
     onSettled: () => void;
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
   }) => void;
 };
 

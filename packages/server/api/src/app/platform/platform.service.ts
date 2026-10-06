@@ -406,6 +406,7 @@ async function assertSomeSignInMethodStaysOn({ params, updatedPlatform, federate
     const touchesSignInMethods = params.emailAuthEnabled === false
         || params.googleAuthEnabled === false
         || params.federatedAuthProviders?.saml === null
+        || params.ssoDomain !== undefined
     if (!touchesSignInMethods || updatedPlatform.emailAuthEnabled || updatedPlatform.googleAuthEnabled) {
         return
     }

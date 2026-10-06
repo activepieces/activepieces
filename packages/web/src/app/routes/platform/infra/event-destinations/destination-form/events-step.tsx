@@ -99,6 +99,11 @@ export const EventsStep = ({
                 placeholder={t('Search events')}
                 value={search}
                 onChange={setSearch}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                  }
+                }}
               />
               <Button
                 type="button"
@@ -115,8 +120,8 @@ export const EventsStep = ({
               </Button>
             </div>
 
-            <div className="grid min-h-[340px] grid-cols-[240px_minmax(0,1fr)] overflow-hidden rounded-lg border">
-              <nav className="flex flex-col gap-0.5 border-r bg-gray-3 p-1.5">
+            <div className="grid min-h-80 grid-cols-1 overflow-hidden rounded-xl border sm:grid-cols-[13rem_minmax(0,1fr)]">
+              <nav className="flex flex-col gap-0.5 border-b bg-gray-2 p-1.5 sm:border-r sm:border-b-0">
                 {visibleGroups.map((group) => {
                   const isActive = group.key === activeGroup?.key;
                   const selectedCount = group.events.filter((event) =>
@@ -129,10 +134,10 @@ export const EventsStep = ({
                       onClick={() => setActiveGroupKey(group.key)}
                       aria-current={isActive ? 'true' : undefined}
                       className={cn(
-                        'flex h-[34px] items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors',
+                        'flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-left text-sm outline-hidden transition-colors focus-visible:ring-3 focus-visible:ring-gray-8/50',
                         isActive
-                          ? 'bg-panel font-semibold text-gray-12'
-                          : 'hover:bg-gray-4',
+                          ? 'bg-panel font-medium text-gray-12 shadow-edge'
+                          : 'text-gray-11 hover:bg-gray-3 hover:text-gray-12',
                       )}
                     >
                       <span className="flex-1 truncate">{group.title}</span>
@@ -147,7 +152,7 @@ export const EventsStep = ({
                 })}
               </nav>
 
-              <div className="flex flex-col gap-1 px-[18px] py-3.5">
+              <div className="flex flex-col gap-1 px-4 py-3">
                 {activeGroup === undefined ? (
                   <p className="py-6 text-center text-sm text-gray-11">
                     {t('No events match your search')}

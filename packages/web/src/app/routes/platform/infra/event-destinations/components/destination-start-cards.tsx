@@ -16,7 +16,7 @@ import { VendorLogoStack } from './vendor-logo-stack';
 
 export const DestinationStartCards = () => {
   return (
-    <div className="mb-10 mt-4 grid w-full max-w-[640px] grid-cols-1 gap-3 sm:grid-cols-2 text-left">
+    <div className="grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2">
       <StartCard
         to={newDestinationPath('otel')}
         icon={<HugeiconsIcon icon={Pulse01Icon} className="size-4" />}
@@ -60,18 +60,18 @@ const StartCard = ({
     <Link
       {...adminControl(AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN)}
       to={to}
-      className="flex gap-3 rounded-lg border p-4 transition-colors hover:bg-gray-3"
+      className="flex gap-3 rounded-xl border bg-panel p-4 transition-colors hover:bg-gray-3"
     >
       <span
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md',
-          isPrimary ? 'bg-accent-3 text-accent-11' : 'bg-gray-5 text-gray-12',
+          isPrimary ? 'bg-accent-3 text-accent-11' : 'bg-gray-3 text-gray-11',
         )}
       >
         {icon}
       </span>
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-sm font-medium">{title}</span>
+        <span className="text-sm font-medium text-gray-12">{title}</span>
         <span className="text-sm leading-normal text-gray-11">
           {description}
         </span>

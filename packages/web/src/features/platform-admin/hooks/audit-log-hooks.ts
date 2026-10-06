@@ -34,10 +34,14 @@ export const auditLogQueries = {
           action: action ?? undefined,
           projectId: projectId ?? undefined,
           userId: userId ?? undefined,
-          createdBefore: searchParams.get('createdBefore') ?? undefined,
-          createdAfter: searchParams.get('createdAfter') ?? undefined,
+          createdBefore: validDate(searchParams.get('createdBefore')),
+          createdAfter: validDate(searchParams.get('createdAfter')),
         });
       },
     });
   },
 };
+
+function validDate(value: string | null): string | undefined {
+  return value !== null && !Number.isNaN(Date.parse(value)) ? value : undefined;
+}

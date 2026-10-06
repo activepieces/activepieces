@@ -160,7 +160,6 @@ export enum AdminControl {
   SECRET_MANAGERS_CONNECTION_EDIT_OPEN = 'secret-managers.connection-edit.open',
   SECRET_MANAGERS_CONNECTION_OPEN = 'secret-managers.connection.open',
   SECRET_MANAGERS_CONNECTION_SUBMIT = 'secret-managers.connection.submit',
-  SSO_ALLOWED_DOMAINS_OPEN = 'sso.allowed-domains.open',
   SSO_ALLOWED_DOMAINS_SUBMIT = 'sso.allowed-domains.submit',
   SSO_EMAIL_LOGIN_TOGGLE = 'sso.email-login.toggle',
   SSO_GOOGLE_TOGGLE = 'sso.google.toggle',
