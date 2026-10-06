@@ -1,11 +1,13 @@
-import { isEmpty, isNil } from '@activepieces/core-utils'
+import { join } from 'path'
+import { isEmpty } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ForceReinstallPieceRequest, WorkerRpcContract } from '@activepieces/shared'
 import { pieceInstaller } from './cache/pieces/piece-installer'
 import { ProvisionInput, SandboxSettings } from './types'
+import { distributedDiskLock } from './utils/distributed-lock'
 
 const FORCE_REINSTALL_COOLDOWN_MS = 5 * 60 * 1000
-const lastForceReinstallAt = new Map<string, number>()
+const FORCE_REINSTALL_LOCK_TIMEOUT_MS = 60 * 1000
 
 export const engineRpcHandlers = ({ log, basePath, getSettings, provision }: EngineRpcHandlersParams): WorkerRpcContract => ({
     async forceReinstallPiece({ pieceName, pieceVersion }: ForceReinstallPieceRequest): Promise<void> {
@@ -13,25 +15,28 @@ export const engineRpcHandlers = ({ log, basePath, getSettings, provision }: Eng
         if (isEmpty(piecesToReinstall)) {
             return
         }
-        const cooldownKey = `${pieceName}@${pieceVersion}`
-        const lastAttemptAt = lastForceReinstallAt.get(cooldownKey)
-        if (!isNil(lastAttemptAt) && Date.now() - lastAttemptAt < FORCE_REINSTALL_COOLDOWN_MS) {
+        const ran = await distributedDiskLock(join(basePath, 'locks')).runExclusiveWithCooldown({
+            key: `force-reinstall-${pieceName}@${pieceVersion}`,
+            timeoutMs: FORCE_REINSTALL_LOCK_TIMEOUT_MS,
+            cooldownMs: FORCE_REINSTALL_COOLDOWN_MS,
+            fn: async () => {
+                log.warn({
+                    piece: { name: pieceName, version: pieceVersion },
+                }, '[engineRpcHandlers] Engine failed to require a piece module, forcing piece reinstall')
+                await pieceInstaller(log, basePath, getSettings).install({
+                    pieces: piecesToReinstall,
+                    includeFilters: true,
+                    publicApiUrl: provision.publicApiUrl,
+                    engineToken: provision.engineToken,
+                    force: true,
+                })
+            },
+        })
+        if (!ran) {
             log.warn({
                 piece: { name: pieceName, version: pieceVersion },
             }, '[engineRpcHandlers] Skipping forced piece reinstall, last attempt is within cooldown')
-            return
         }
-        lastForceReinstallAt.set(cooldownKey, Date.now())
-        log.warn({
-            piece: { name: pieceName, version: pieceVersion },
-        }, '[engineRpcHandlers] Engine failed to require a piece module, forcing piece reinstall')
-        await pieceInstaller(log, basePath, getSettings).install({
-            pieces: piecesToReinstall,
-            includeFilters: true,
-            publicApiUrl: provision.publicApiUrl,
-            engineToken: provision.engineToken,
-            force: true,
-        })
     },
 })
 
