@@ -14,7 +14,7 @@ export const newDirectMessageTrigger = createTrigger({
   description: 'Fires when a chosen admin receives a direct message.',
   classification: 'READ',
   aiMetadata: {
-    description: 'Fires once when the chosen admin receives a direct message and returns the chat ID, sender and receiver IDs and the message (content, time, attachments), re-read from Heartbeat.',
+    description: 'Fires once when the chosen admin receives a direct message and returns the chat ID, the sender ID (from the stored message), the receiver ID (the chosen admin) and the message (content, time, attachments), re-read from Heartbeat. Messages the admin sent and chats that do not include the admin are ignored.',
   },
   props: {
     adminUserId: heartbeatProps.id({ displayName: 'Admin User ID', description: 'The admin whose incoming direct messages fire this trigger. Use List Members (Admins Only) to find the ID.', required: true }),
@@ -46,7 +46,12 @@ export const newDirectMessageTrigger = createTrigger({
       ),
     );
     const message = messages?.find((item) => item['id'] === messageId) ?? null;
-    if (message === null) {
+    const adminUserId = heartbeatApi.uuid({ value: context.propsValue.adminUserId, label: 'Admin User ID' });
+    const senderUserId = typeof message?.['userID'] === 'string' ? message['userID'] : null;
+    if (message === null || senderUserId === null || senderUserId === adminUserId) {
+      return [];
+    }
+    if (!(await isAdminChat({ token: context.auth.secret_text, chatId, adminUserId, senderUserId, messages: messages ?? [] }))) {
       return [];
     }
     if (!(await heartbeatWebhooks.isFirstDelivery({ store: context.store, key: `DIRECT_MESSAGE:${messageId}` }))) {
@@ -56,8 +61,8 @@ export const newDirectMessageTrigger = createTrigger({
       {
         chatId,
         messageId,
-        senderUserId: message['userID'] ?? heartbeatWebhooks.uuidOrNull(payload['senderUserID']),
-        receiverUserId: heartbeatWebhooks.uuidOrNull(payload['receiverUserID']),
+        senderUserId,
+        receiverUserId: adminUserId,
         content: message['content'] ?? null,
         createdAt: message['createdAt'] ?? null,
         images: message['images'] ?? [],
@@ -66,3 +71,25 @@ export const newDirectMessageTrigger = createTrigger({
     ];
   },
 });
+
+async function isAdminChat({ token, chatId, adminUserId, senderUserId, messages }: AdminChatCheck): Promise<boolean> {
+  if (messages.some((item) => item['userID'] === adminUserId)) {
+    return true;
+  }
+  const chat = await heartbeatApi.request<unknown>({
+    token,
+    method: HttpMethod.PUT,
+    path: '/directChats',
+    operation: 'get direct chat',
+    body: { userID1: adminUserId, userID2: senderUserId },
+  });
+  return heartbeatApi.isRecord(chat) && chat['chatID'] === chatId;
+}
+
+type AdminChatCheck = {
+  token: string;
+  chatId: string;
+  adminUserId: string;
+  senderUserId: string;
+  messages: Record<string, unknown>[];
+};

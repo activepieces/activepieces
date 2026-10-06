@@ -14,7 +14,7 @@ export const newMentionTrigger = createTrigger({
   description: 'Fires when chosen members or groups are @mentioned in a thread or comment.',
   classification: 'READ',
   aiMetadata: {
-    description: 'Fires once when one of the chosen members or groups is @mentioned in a new thread or comment (optionally only in some channels). Returns who was mentioned, the author ID, and the thread and comment, re-read from Heartbeat.',
+    description: 'Fires once when one of the chosen members or groups is @mentioned in a new thread or comment (optionally only in some channels). Returns which of the chosen members or groups were mentioned (read from the stored content, not the webhook), the author ID, and the thread and comment, re-read from Heartbeat.',
   },
   props: {
     userIds: heartbeatProps.ids({ displayName: 'Mentioned User IDs', description: 'Fire when any of these members is mentioned. Use List Members to find IDs.', required: false }),
@@ -71,13 +71,26 @@ export const newMentionTrigger = createTrigger({
     if (commentId !== null && comment === null) {
       return [];
     }
+    const channelIds = heartbeatApi.uuidList({ value: context.propsValue.channelIds, label: 'Channel IDs' });
+    if (channelIds.length > 0 && !channelIds.includes(String(thread['channelID']))) {
+      return [];
+    }
+    const content = comment === null ? thread['content'] : comment['content'];
+    const mentionedTargets = matchTargets({
+      mentions: mentionsIn(typeof content === 'string' ? content : ''),
+      userIds: heartbeatApi.uuidList({ value: context.propsValue.userIds, label: 'Mentioned User IDs' }),
+      groupIds: heartbeatApi.uuidList({ value: context.propsValue.groupIds, label: 'Mentioned Group IDs' }),
+    });
+    if (mentionedTargets.length === 0) {
+      return [];
+    }
     if (!(await heartbeatWebhooks.isFirstDelivery({ store: context.store, key: `MENTION:${commentId ?? threadId}` }))) {
       return [];
     }
     return [
       {
         sourceType: commentId === null ? 'THREAD' : 'COMMENT',
-        mentionedUsers: payload['mentionedUsers'] ?? null,
+        mentionedUsers: mentionedTargets,
         authorUserId: comment?.['userID'] ?? thread['userID'] ?? null,
         channelId: thread['channelID'] ?? null,
         threadId,
@@ -90,6 +103,26 @@ export const newMentionTrigger = createTrigger({
     ];
   },
 });
+
+function mentionsIn(html: string): Mention[] {
+  const found = new Map<string, Mention>();
+  for (const match of html.matchAll(MENTION_REFERENCE)) {
+    const type = match[1].toUpperCase();
+    const id = match[2].toLowerCase();
+    found.set(`${type}:${id}`, { id, type });
+  }
+  return [...found.values()];
+}
+
+function matchTargets({ mentions, userIds, groupIds }: { mentions: Mention[]; userIds: string[]; groupIds: string[] }): Mention[] {
+  const users = new Set(userIds.map((id) => id.toLowerCase()));
+  const groups = new Set(groupIds.map((id) => id.toLowerCase()));
+  return mentions.filter((mention) => (mention.type === 'USER' ? users.has(mention.id) : groups.has(mention.id)));
+}
+
+const MENTION_REFERENCE = /data-id=["']mention\.([a-z]+)\.([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})["']/gi;
+
+type Mention = { id: string; type: string };
 
 function findComment({ thread, commentId }: { thread: Record<string, unknown>; commentId: string }): Record<string, unknown> | null {
   const comments = heartbeatApi.recordList(thread['comments']);

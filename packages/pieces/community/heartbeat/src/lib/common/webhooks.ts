@@ -1,4 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createHash, randomUUID } from 'crypto';
 import { heartbeatApi } from './client';
 
 async function deleteWebhook({ token, webhookId }: { token: string; webhookId: string }): Promise<void> {
@@ -55,12 +56,33 @@ async function disable({ token, store }: { token: string; store: WebhookStore })
 }
 
 async function isFirstDelivery({ store, key }: { store: WebhookStore; key: string }): Promise<boolean> {
-  const seen = (await store.get<string[]>(SEEN_STORE_KEY)) ?? [];
-  if (seen.includes(key)) {
+  const claimKey = claimKeyOf(key);
+  if ((await store.get<DeliveryClaim>(claimKey)) !== null) {
     return false;
   }
-  await store.put<string[]>(SEEN_STORE_KEY, [...seen, key].slice(-MAX_SEEN_KEYS));
+  const token = randomUUID();
+  await store.put<DeliveryClaim>(claimKey, { token });
+  await heartbeatApi.sleep(CLAIM_SETTLE_MS);
+  const winner = await store.get<DeliveryClaim>(claimKey);
+  if (winner?.token !== token) {
+    return false;
+  }
+  await rememberClaim({ store, claimKey });
   return true;
+}
+
+function claimKeyOf(key: string): string {
+  return `${CLAIM_KEY_PREFIX}${createHash('sha256').update(key).digest('hex').slice(0, 32)}`;
+}
+
+async function rememberClaim({ store, claimKey }: { store: WebhookStore; claimKey: string }): Promise<void> {
+  const seen = (await store.get<string[]>(SEEN_STORE_KEY)) ?? [];
+  const next = [...seen.filter((item) => item !== claimKey), claimKey];
+  const evicted = next.slice(0, Math.max(0, next.length - MAX_SEEN_KEYS));
+  await store.put<string[]>(SEEN_STORE_KEY, next.slice(-MAX_SEEN_KEYS));
+  for (const old of evicted) {
+    await store.delete(old);
+  }
 }
 
 function payloadOf(body: unknown): Record<string, unknown> {
@@ -97,6 +119,8 @@ async function fetchOrNull<T>(load: () => Promise<T>): Promise<T | null> {
 const WEBHOOK_STORE_KEY = 'heartbeat_webhook';
 const SEEN_STORE_KEY = 'heartbeat_seen_deliveries';
 const MAX_SEEN_KEYS = 500;
+const CLAIM_KEY_PREFIX = 'hb_delivery_';
+const CLAIM_SETTLE_MS = 500;
 
 export const heartbeatWebhooks = {
   enable,
@@ -108,9 +132,12 @@ export const heartbeatWebhooks = {
   MAX_SEEN_KEYS,
   WEBHOOK_STORE_KEY,
   SEEN_STORE_KEY,
+  claimKeyOf,
 };
 
 type StoredWebhook = { webhookId: string };
+
+type DeliveryClaim = { token: string };
 
 type WebhookStore = {
   get<T>(key: string): Promise<T | null>;

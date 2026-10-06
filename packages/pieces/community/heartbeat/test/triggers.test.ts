@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { heartbeatApi } from '../src/lib/common/client';
 import { heartbeatWebhooks } from '../src/lib/common/webhooks';
 import { newMemberTrigger } from '../src/lib/triggers/new-member';
 import { newThreadTrigger } from '../src/lib/triggers/new-thread';
@@ -18,9 +19,11 @@ const WEBHOOK_URL = 'https://example.ngrok.dev/api/v1/webhooks/flow123';
 
 beforeEach(() => {
 	vi.useFakeTimers();
+	vi.spyOn(heartbeatApi, 'sleep').mockResolvedValue(undefined);
 });
 
 afterEach(() => {
+	vi.restoreAllMocks();
 	vi.useRealTimers();
 	vi.unstubAllGlobals();
 });
@@ -78,8 +81,33 @@ describe('webhook lifecycle', () => {
 		}
 		const seenKeys = store.read(heartbeatWebhooks.SEEN_STORE_KEY);
 		expect(Array.isArray(seenKeys) && seenKeys.length).toBe(heartbeatWebhooks.MAX_SEEN_KEYS);
+		expect(store.read(heartbeatWebhooks.claimKeyOf('k0'))).toBeUndefined();
+		expect(store.read(heartbeatWebhooks.claimKeyOf(`k${heartbeatWebhooks.MAX_SEEN_KEYS + 9}`))).toBeDefined();
 		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'k0' })).toBe(true);
 		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'k0' })).toBe(false);
+	});
+	test('claim keys stay short and are one entry per delivery', () => {
+		const key = heartbeatWebhooks.claimKeyOf(`THREAD_CREATE:${IDS.thread}:${IDS.channel}`);
+		expect(key.length).toBeLessThanOrEqual(48);
+		expect(key).not.toBe(heartbeatWebhooks.claimKeyOf(`THREAD_CREATE:${IDS.thread}:${IDS.category}`));
+	});
+	test('two overlapping deliveries of one event emit once', async () => {
+		const store = memoryStore();
+		const [first, second] = await Promise.all([
+			heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' }),
+			heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' }),
+		]);
+		expect([first, second].filter(Boolean)).toHaveLength(1);
+	});
+	test('overlapping deliveries of different events both emit and keep each other', async () => {
+		const store = memoryStore();
+		const results = await Promise.all([
+			heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' }),
+			heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:b' }),
+		]);
+		expect(results).toEqual([true, true]);
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:a' })).toBe(false);
+		expect(await heartbeatWebhooks.isFirstDelivery({ store, key: 'MENTION:b' })).toBe(false);
 	});
 });
 
@@ -143,28 +171,64 @@ describe('trigger runs re-fetch and dedupe', () => {
 		expect(await hook({ trigger: newThreadTrigger, name: 'run', context })).toHaveLength(1);
 		expect(await hook({ trigger: newThreadTrigger, name: 'run', context })).toHaveLength(0);
 	});
-	test('new mention picks the nested comment', async () => {
-		const reply = { id: IDS.comment, userID: IDS.user, content: '<p>hey</p>' };
+	const mentionOf = (id: string, kind = 'user') => `<p>Hi <span class="reference" data-denotation-char="@" data-id="mention.${kind}.${id}" data-value="X">@X</span></p>`;
+	test('new mention picks the nested comment and reads mentions from its stored content', async () => {
+		const reply = { id: IDS.comment, userID: IDS.user, content: mentionOf(IDS.user) };
 		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel, userID: IDS.admin, url: 'u', comments: [{ id: 'c0', children: [reply] }] } }]));
-		const events = await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ body: { mentionedUsers: [{ id: IDS.user, type: 'USER' }], userID: IDS.user, source: { type: 'COMMENT', channelID: IDS.channel, threadID: IDS.thread, commentID: IDS.comment } } }) });
+		const events = await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ propsValue: { userIds: [IDS.user] }, body: { mentionedUsers: [{ id: IDS.admin, type: 'USER' }], userID: IDS.user, source: { type: 'COMMENT', channelID: IDS.channel, threadID: IDS.thread, commentID: IDS.comment } } }) });
 		expect(events).toHaveLength(1);
 		const event = Array.isArray(events) ? events[0] : undefined;
-		expect(event).toMatchObject({ sourceType: 'COMMENT', commentId: IDS.comment, authorUserId: IDS.user, content: '<p>hey</p>', thread: { id: IDS.thread } });
+		expect(event).toMatchObject({ sourceType: 'COMMENT', commentId: IDS.comment, authorUserId: IDS.user, content: reply.content, thread: { id: IDS.thread } });
+		expect(event).toHaveProperty('mentionedUsers', [{ id: IDS.user, type: 'USER' }]);
 		expect(event).not.toHaveProperty('thread.comments');
+	});
+	test('new mention ignores supplied member IDs that the stored content does not mention', async () => {
+		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel, content: '<p>no mentions here</p>', comments: [] } }]));
+		const context = triggerContext({ propsValue: { userIds: [IDS.user] }, body: { mentionedUsers: [{ id: IDS.user, type: 'USER' }], source: { threadID: IDS.thread } } });
+		expect(await hook({ trigger: newMentionTrigger, name: 'run', context })).toEqual([]);
+	});
+	test('new mention ignores mentions of members or groups that were not chosen', async () => {
+		stubFetch(replies([{ body: { id: IDS.thread, channelID: IDS.channel, content: mentionOf(IDS.admin) + mentionOf(IDS.role, 'group'), comments: [] } }]));
+		const context = triggerContext({ propsValue: { userIds: [IDS.user], groupIds: [IDS.group] }, body: { source: { threadID: IDS.thread } } });
+		expect(await hook({ trigger: newMentionTrigger, name: 'run', context })).toEqual([]);
+	});
+	test('new mention matches a chosen group and honours the channel filter', async () => {
+		const thread = { id: IDS.thread, channelID: IDS.channel, content: mentionOf(IDS.group, 'group'), comments: [] };
+		stubFetch(replies([{ body: thread }]));
+		const events = await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ propsValue: { groupIds: [IDS.group], channelIds: [IDS.channel] }, body: { source: { threadID: IDS.thread } } }) });
+		expect(events).toMatchObject([{ sourceType: 'THREAD', mentionedUsers: [{ id: IDS.group, type: 'GROUP' }] }]);
+		const otherChannel = triggerContext({ propsValue: { groupIds: [IDS.group], channelIds: [IDS.category] }, body: { source: { threadID: IDS.thread } } });
+		expect(await hook({ trigger: newMentionTrigger, name: 'run', context: otherChannel })).toEqual([]);
 	});
 	test('new mention ignores a comment ID that is not in the thread', async () => {
 		stubFetch(replies([{ body: { id: IDS.thread, comments: [] } }]));
-		expect(await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ body: { source: { threadID: IDS.thread, commentID: IDS.comment } } }) })).toEqual([]);
+		expect(await hook({ trigger: newMentionTrigger, name: 'run', context: triggerContext({ propsValue: { userIds: [IDS.user] }, body: { source: { threadID: IDS.thread, commentID: IDS.comment } } }) })).toEqual([]);
 	});
-	test('new direct message emits the matching message from the chat', async () => {
-		const seen = stubFetch(replies([{ body: [{ id: 'x' }, { id: IDS.message, userID: IDS.user, content: '<p>hi</p>', createdAt: 't' }] }]));
-		const result = await hook({ trigger: newDirectMessageTrigger, name: 'run', context: triggerContext({ body: { senderUserID: IDS.user, receiverUserID: IDS.admin, chatID: IDS.chat, chatMessageID: IDS.message } }) });
-		expect(seen[0].path).toBe(`/directMessages/${IDS.chat}`);
+	test('new direct message takes sender from the stored message and receiver from the chosen admin', async () => {
+		const seen = stubFetch(replies([{ body: [{ id: 'x', userID: IDS.admin }, { id: IDS.message, userID: IDS.user, content: '<p>hi</p>', createdAt: 't' }] }]));
+		const result = await hook({ trigger: newDirectMessageTrigger, name: 'run', context: triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { senderUserID: IDS.group, receiverUserID: IDS.role, chatID: IDS.chat, chatMessageID: IDS.message } }) });
+		expect(seen.map((r) => r.path)).toEqual([`/directMessages/${IDS.chat}`]);
 		expect(result).toEqual([{ chatId: IDS.chat, messageId: IDS.message, senderUserId: IDS.user, receiverUserId: IDS.admin, content: '<p>hi</p>', createdAt: 't', images: [], files: [] }]);
+	});
+	test('new direct message confirms the chat belongs to the admin when the admin has not written in it', async () => {
+		const seen = stubFetch((request) => (request.method === 'PUT' ? { body: { chatID: IDS.chat } } : { body: [{ id: IDS.message, userID: IDS.user }] }));
+		const context = triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } });
+		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toHaveLength(1);
+		expect(seen[1]).toMatchObject({ method: 'PUT', path: '/directChats', body: { userID1: IDS.admin, userID2: IDS.user } });
+	});
+	test('new direct message ignores chats that do not include the admin', async () => {
+		stubFetch((request) => (request.method === 'PUT' ? { body: { chatID: IDS.thread } } : { body: [{ id: IDS.message, userID: IDS.user }] }));
+		const context = triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } });
+		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toEqual([]);
+	});
+	test('new direct message ignores messages the admin sent', async () => {
+		stubFetch(replies([{ body: [{ id: IDS.message, userID: IDS.admin }] }]));
+		const context = triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } });
+		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context })).toEqual([]);
 	});
 	test('new direct message drops unknown message IDs', async () => {
 		stubFetch(replies([{ body: [{ id: 'x' }] }]));
-		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context: triggerContext({ body: { chatID: IDS.chat, chatMessageID: IDS.message } }) })).toEqual([]);
+		expect(await hook({ trigger: newDirectMessageTrigger, name: 'run', context: triggerContext({ propsValue: { adminUserId: IDS.admin }, body: { chatID: IDS.chat, chatMessageID: IDS.message } }) })).toEqual([]);
 	});
 });
 
