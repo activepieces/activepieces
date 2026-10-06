@@ -74,6 +74,32 @@ describe('buildSkillSurface', () => {
     })
 })
 
+describe('buildSkillSurface cap', () => {
+    function agentSurface(toolCount: number) {
+        return buildSkillSurface({ tools: stubTools(Array.from({ length: toolCount }, (_, i) => `tool_${i}`)), surface: 'AGENT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
+    }
+
+    it('sends every tool directly when the set, skill tools included, fits the cap', () => {
+        const surface = agentSurface(MAX_CORE_TOOLS - 2)
+        expect(surface.coreToolNames).toHaveLength(MAX_CORE_TOOLS)
+        expect(surface.catalogNote).toBe('')
+    })
+
+    it('stops sending every tool once the skill tools push the set past the cap', () => {
+        const surface = agentSurface(MAX_CORE_TOOLS - 1)
+        expect(surface.coreToolNames.length).toBeLessThanOrEqual(MAX_CORE_TOOLS)
+        expect(surface.catalogNote).toContain('tool_0')
+    })
+})
+
+describe('paid tools', () => {
+    it('refuses a direct call to a paid tool the balance cannot cover', async () => {
+        const surface = buildSkillSurface({ tools: stubTools(CHAT_TOOL_NAMES), surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => false })
+        await expect(surface.tools['mcp__gmail__send_email']?.execute?.({ value: 'x' }, CALL_OPTIONS)).resolves.toEqual({ error: expect.stringContaining('needs credits') })
+        await expect(surface.tools['ap_add_step']?.execute?.({ value: 'x' }, CALL_OPTIONS)).resolves.toEqual({ ran: 'ap_add_step', value: 'x' })
+    })
+})
+
 describe('ap_lazy_tool', () => {
     function surfaceWithJsonSchemaTool(execute: (input: unknown) => Promise<unknown>) {
         return buildSkillSurface({
@@ -144,6 +170,18 @@ describe('ap_lazy_tool', () => {
         expect(received).toEqual({ to: 'a@b.co' })
     })
 
+    it('never fills a real title input with the pill label', async () => {
+        const surface = buildSkillSurface({
+            tools: { ...stubTools(CHAT_TOOL_NAMES), ap_send_email: tool({ description: 'Create a task.', inputSchema: z.object({ title: z.string().describe('Task title') }), execute: vi.fn() }) },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+        const rejected = await validateWrapped({ surface, value: { tool: 'ap_send_email', input: {}, title: 'Create task' } })
+        expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_send_email"')
+    })
+
     it('hands a JSON-schema tool its input unchanged', async () => {
         const execute = vi.fn(async () => ({ renamed: true }))
         await executeWrapped({ surface: surfaceWithJsonSchemaTool(execute), toolName: 'ap_rename_flow', input: { flowId: 'f1' } })
@@ -211,3 +249,27 @@ describe('unwrapLazyToolChunk', () => {
 })
 
 type ValidationResult<T> = Awaited<ReturnType<NonNullable<Schema<T>['validate']>>>
+
+describe('ap_get_tool_schema', () => {
+    async function schemaOf(inputSchema: z.ZodType<Record<string, unknown>>): Promise<unknown> {
+        const surface = buildSkillSurface({
+            tools: { ...stubTools(CHAT_TOOL_NAMES), ap_create_task: tool({ description: 'Create a task.', inputSchema, execute: vi.fn() }) },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+        return surface.tools['ap_get_tool_schema']?.execute?.({ tool: 'ap_create_task' }, CALL_OPTIONS)
+    }
+
+    it('hides the pill labels the worker adds', async () => {
+        const result = await schemaOf(z.object({ to: z.string(), ...cardTitleFields }))
+        expect(result).toMatchObject({ inputSchema: { properties: { to: { type: 'string' } } } })
+        expect(result).not.toMatchObject({ inputSchema: { properties: { title: expect.anything() } } })
+    })
+
+    it('keeps a real title input', async () => {
+        const result = await schemaOf(z.object({ title: z.string().describe('Task title') }))
+        expect(result).toMatchObject({ inputSchema: { properties: { title: { type: 'string', description: 'Task title' } }, required: ['title'] } })
+    })
+})
