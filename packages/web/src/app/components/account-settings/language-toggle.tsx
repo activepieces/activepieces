@@ -1,9 +1,5 @@
 import { ApFlagId } from '@activepieces/shared';
-import {
-  Globe02Icon,
-  Tick02Icon,
-  UnfoldMoreIcon,
-} from '@hugeicons/core-free-icons';
+import { Tick02Icon, UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -11,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { SettingRow } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -21,13 +17,13 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Spinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { localesMap } from '@/lib/locale-utils';
 import { cn } from '@/lib/utils';
@@ -53,59 +49,69 @@ export const LanguageToggle = () => {
   });
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium flex items-center gap-2">
-        <HugeiconsIcon icon={Globe02Icon} className="w-4 h-4" />
-        {t('Language')}
-      </Label>
+    <SettingRow
+      title={t('Language')}
+      description={
+        <>
+          {t('The language used across the app.')}
+          {showCommunity && (
+            <>
+              {' '}
+              <Link
+                rel="noopener noreferrer"
+                target="_blank"
+                to="https://www.activepieces.com/docs/about/i18n"
+              >
+                {t('Help translate')}
+              </Link>
+            </>
+          )}
+        </>
+      }
+    >
       <Popover modal={true} open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            size="sm"
             role="combobox"
+            aria-label={t('Language')}
             className={cn(
-              'w-full justify-between font-normal',
+              'w-40 justify-between font-normal',
               !selectedLanguage && 'text-gray-11',
             )}
             disabled={isPending}
           >
             {isPending ? (
-              <LoadingSpinner className="w-4 h-4" />
-            ) : selectedLanguage ? (
-              localesMap[selectedLanguage as keyof typeof localesMap]
+              <Spinner />
             ) : (
-              t('Select language')
+              <span className="truncate">
+                {selectedLanguage
+                  ? localesMap[selectedLanguage as keyof typeof localesMap]
+                  : t('Select language')}
+              </span>
             )}
-            <HugeiconsIcon
-              icon={UnfoldMoreIcon}
-              className="ml-2 h-4 w-4 shrink-0 opacity-50"
-            />
+            <HugeiconsIcon icon={UnfoldMoreIcon} className="text-gray-11" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-full p-0" align="end">
           <Command>
-            <CommandInput
-              placeholder={i18n.t('Search language...')}
-              className="h-8 text-sm"
-            />
+            <CommandInput placeholder={i18n.t('Search language...')} />
             <CommandList>
               <ScrollArea className="h-[200px] w-[300px]">
-                <CommandEmpty className="py-4 text-center text-sm">
-                  {i18n.t('No language found.')}
-                </CommandEmpty>
+                <CommandEmpty>{i18n.t('No language found.')}</CommandEmpty>
                 <CommandGroup>
                   {Object.entries(localesMap).map(([value, label]) => (
                     <CommandItem
                       value={value}
                       key={value}
                       onSelect={(value) => mutate(value)}
-                      className="flex items-center justify-between py-2 text-sm"
+                      className="justify-between"
                     >
-                      <div className="flex items-center gap-2">{label}</div>
+                      {label}
                       <HugeiconsIcon
                         icon={Tick02Icon}
                         className={cn(
-                          'h-4 w-4',
                           value === selectedLanguage
                             ? 'opacity-100'
                             : 'opacity-0',
@@ -119,18 +125,6 @@ export const LanguageToggle = () => {
           </Command>
         </PopoverContent>
       </Popover>
-      {showCommunity && (
-        <div className="pt-1">
-          <Link
-            className="text-xs text-accent-11 hover:underline font-medium"
-            rel="noopener noreferrer"
-            target="_blank"
-            to="https://www.activepieces.com/docs/about/i18n"
-          >
-            {t('Help translate Activepieces →')}
-          </Link>
-        </div>
-      )}
-    </div>
+    </SettingRow>
   );
 };

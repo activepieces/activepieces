@@ -19,7 +19,9 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
-    useCurrentPlatform: () => ({ platform: { plan: { ssoEnabled: true } } }),
+    useCurrentPlatform: () => ({
+      platform: { plan: { ssoEnabled: true, managePiecesEnabled: true } },
+    }),
   },
 }));
 vi.mock('@/hooks/flags-hooks', () => ({
@@ -105,12 +107,12 @@ describe('admin control click telemetry', () => {
   });
 
   it('names the page by its route, never by the id in the URL', async () => {
-    visit('/platform/pieces/piece-sets/ps_42');
+    visit('/platform/pieces/policies/ps_42');
     fireEvent.click(await screen.findByText('Save'));
     expect(capturedClicks()).toEqual([
       {
         control: AdminControl.PIECE_SETS_SAVE_SUBMIT,
-        page: '/platform/pieces/piece-sets/:id',
+        page: '/platform/pieces/policies/:id',
       },
     ]);
   });

@@ -23,9 +23,9 @@ export const HelpAndFeedback = () => {
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-md cursor-pointer">
-        <HugeiconsIcon icon={HelpCircleIcon} className="w-4 h-4 mr-2" />
-        {t('Help & Feedback')}
+      <DropdownMenuSubTrigger>
+        <HugeiconsIcon icon={HelpCircleIcon} />
+        {t('Help & feedback')}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-[220px]">
         <DropdownMenuItem asChild>
@@ -37,7 +37,7 @@ export const HelpAndFeedback = () => {
           >
             <div className="flex items-center gap-2">
               <HugeiconsIcon icon={BookOpen01Icon} className="size-4" />
-              <span>Documentation</span>
+              <span>{t('Documentation')}</span>
             </div>
           </Link>
         </DropdownMenuItem>
@@ -59,7 +59,7 @@ export const HelpAndFeedback = () => {
         {showCommunity && (
           <>
             <div className="flex text-xs text-gray-11 items-center gap-2 px-2 py-1">
-              <span>Need Help?</span>
+              <span>{t('Need help?')}</span>
             </div>
             <DropdownMenuItem asChild>
               <Link
@@ -70,7 +70,7 @@ export const HelpAndFeedback = () => {
               >
                 <div className="flex items-center gap-2">
                   <HugeiconsIcon icon={HelpCircleIcon} className="size-4" />
-                  <span>{t('Community Support')}</span>
+                  <span>{t('Community support')}</span>
                 </div>
               </Link>
             </DropdownMenuItem>

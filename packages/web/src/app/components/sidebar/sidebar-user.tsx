@@ -1,34 +1,44 @@
-import { isNil } from '@activepieces/core-utils';
+import { PlatformRole } from '@activepieces/shared';
 import {
+  ComputerIcon,
   Logout03Icon,
+  Moon02Icon,
+  PaletteIcon,
+  Sun03Icon,
   UnfoldMoreIcon,
   UserSettings01Icon,
 } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { useTheme } from '@/components/providers/theme-provider';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar-shadcn';
+} from '@/components/ui/sidebar';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
 
 import { AccountSettingsDialog } from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
@@ -37,92 +47,122 @@ export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
+  const { preference, setPreference } = useTheme();
   const queryClient = useQueryClient();
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  const navigate = useNavigate();
+
   if (!user || embedState.isEmbedded) {
     return null;
   }
 
+  const fullName = `${user.firstName} ${user.lastName}`;
+
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
+    navigate('/sign-in');
   };
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild className="w-full">
-            <SidebarMenuButton className="h-10! pl-2! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-2!">
-              <div className="size-[22px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
-                <UserAvatar
-                  className={cn('size-full object-cover', {
-                    'scale-150': isNil(user.imageUrl),
-                  })}
-                  name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
-                  imageUrl={user.imageUrl}
-                  size={22}
-                  disableTooltip={true}
-                />
-              </div>
-
-              {!isCollapsed && (
-                <>
-                  <span className="truncate">
-                    {user.firstName + ' ' + user.lastName}
-                  </span>
-                  <HugeiconsIcon
-                    icon={UnfoldMoreIcon}
-                    className="ml-auto size-4"
-                  />
-                </>
-              )}
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              tooltip={fullName}
+              className="data-open:bg-gray-3"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <UserAvatar
+                className="size-8! shrink-0 overflow-hidden rounded-full object-cover"
+                name={fullName}
+                email={user.email}
+                imageUrl={user.imageUrl}
+                size={32}
+                disableTooltip={true}
+              />
+              <span className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
+                <span className="truncate font-medium text-gray-12">
+                  {fullName}
+                </span>
+                <span className="truncate text-xs text-gray-11">
+                  {user.email}
+                </span>
+              </span>
+              <HugeiconsIcon
+                icon={UnfoldMoreIcon}
+                className="ml-auto text-gray-11 group-data-[collapsible=icon]:hidden"
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-999"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-60"
             side="top"
             align="start"
-            sideOffset={10}
+            sideOffset={8}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <div className="size-8 shrink-0 overflow-hidden rounded-full">
-                  <UserAvatar
-                    className="size-full object-cover"
-                    name={user.firstName + ' ' + user.lastName}
-                    email={user.email}
-                    imageUrl={user.imageUrl}
-                    size={32}
-                    disableTooltip={true}
-                  />
-                </div>
-
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {user.firstName + ' ' + user.lastName}
+            <DropdownMenuLabel className="flex flex-col items-start gap-2 px-2 py-1.5 font-normal">
+              <span className="flex w-full min-w-0 items-center gap-2.5">
+                <UserAvatar
+                  className="size-8 shrink-0 overflow-hidden rounded-full object-cover"
+                  name={fullName}
+                  email={user.email}
+                  imageUrl={user.imageUrl}
+                  size={32}
+                  disableTooltip={true}
+                />
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-medium text-gray-12">
+                    {fullName}
                   </span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div>
-              </div>
+                  <span className="truncate text-xs text-gray-11">
+                    {user.email}
+                  </span>
+                </span>
+              </span>
+              <Badge variant="secondary">
+                {platformRoleLabel(user.platformRole)}
+              </Badge>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
-                <HugeiconsIcon
-                  icon={UserSettings01Icon}
-                  className="w-4 h-4 mr-2"
-                />
-                {t('Account Settings')}
+                <HugeiconsIcon icon={UserSettings01Icon} />
+                {t('Account settings')}
               </DropdownMenuItem>
-
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <HugeiconsIcon icon={PaletteIcon} />
+                  {t('Theme')}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-44">
+                  <DropdownMenuRadioGroup
+                    value={preference}
+                    onValueChange={(value) =>
+                      setPreference(readThemePreference(value))
+                    }
+                  >
+                    <DropdownMenuRadioItem value="light">
+                      <HugeiconsIcon icon={Sun03Icon} />
+                      {t('Light')}
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="dark">
+                      <HugeiconsIcon icon={Moon02Icon} />
+                      {t('Dark')}
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="system">
+                      <HugeiconsIcon icon={ComputerIcon} />
+                      {t('System')}
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
               <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <HugeiconsIcon icon={Logout03Icon} className="w-4 h-4 mr-2" />
+              <HugeiconsIcon icon={Logout03Icon} />
               {t('Log out')}
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -136,3 +176,21 @@ export function SidebarUser() {
     </SidebarMenu>
   );
 }
+
+function platformRoleLabel(role: PlatformRole): string {
+  if (role === PlatformRole.ADMIN) {
+    return t('Platform admin');
+  }
+  if (role === PlatformRole.OPERATOR) {
+    return t('Operator');
+  }
+  return t('Member');
+}
+
+function readThemePreference(value: string): 'light' | 'dark' | 'system' {
+  return (
+    THEME_PREFERENCES.find((preference) => preference === value) ?? 'system'
+  );
+}
+
+const THEME_PREFERENCES = ['light', 'dark', 'system'] as const;

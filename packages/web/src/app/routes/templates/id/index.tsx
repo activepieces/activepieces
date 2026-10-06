@@ -26,7 +26,7 @@ import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { useSidebar } from '@/components/ui/sidebar';
 import { UseTemplateDialog } from '@/features/templates/components/use-template-dialog';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
