@@ -24,7 +24,7 @@ export const AgentChatWelcome = ({
           {t('Ask {name} anything', { name: displayName })}
         </span>
         {description !== null && (
-          <span className="max-w-[400px] text-center text-sm leading-[150%] text-muted-foreground">
+          <span className="max-w-[400px] text-center text-sm leading-[150%] text-gray-11">
             {description}
           </span>
         )}

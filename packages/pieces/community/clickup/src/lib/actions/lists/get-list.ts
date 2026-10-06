@@ -9,14 +9,15 @@ export const getClickupList = createAction({
 
   name: 'get_list',
   classification: 'READ',
-  description: 'Gets a list in a ClickUp',
+  description: 'Get one ClickUp list by its ID.',
   audience: 'human',
   aiMetadata: { description: 'Read-only: fetch the details of a single ClickUp list by its list ID. Use when you already know the list ID; does not modify anything and is safe to call repeatedly.', idempotent: true },
   displayName: 'Get List',
   props: {
     list_id: Property.ShortText({
-      description: 'The id of the list to get',
       displayName: 'List ID',
+      description: "The number at the end of the list's URL in ClickUp.",
+      placeholder: 'e.g. 901204567890',
       required: true,
     }),
   },

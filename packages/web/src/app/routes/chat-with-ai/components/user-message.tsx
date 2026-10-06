@@ -49,13 +49,13 @@ export const UserMessage = memo(function UserMessage({
     >
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
-          <div className="bg-muted rounded-2xl rounded-br-md px-2.5 py-1 text-sm">
+          <div className="bg-gray-3 rounded-2xl rounded-br-md px-2.5 py-1 text-sm">
             {fileNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {fileNames.map((name, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1 rounded-md bg-background/60 px-2 py-0.5 text-xs text-muted-foreground"
+                    className="inline-flex items-center gap-1 rounded-md bg-gray-1/60 px-2 py-0.5 text-xs text-gray-11"
                   >
                     <Paperclip className="size-3" />
                     <span className="max-w-[150px] truncate">{name}</span>
