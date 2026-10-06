@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, ConsumableFeatureId, EnterpriseTrialStatus, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, UnconsumableFeatureId } from '@activepieces/shared'
 import {
     type AggregateEventsResponse,
     Autumn,
@@ -168,6 +168,10 @@ export const autumnUtils = {
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
         await autumnUtils.invalidateBillingOverview(platformId)
         await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
+        const previousTrialEndsAt = previousPlan?.enterpriseTrialEndsAt ?? null
+        if (!isNil(previousTrialEndsAt) && isNil(entitlements.enterpriseTrial)) {
+            rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialEnded({ platformId, endedAt: new Date(previousTrialEndsAt).toISOString() }), log)
+        }
         const currentSubscription = autumnUtils.selectCurrentBaseSubscription(autumnUtils.toBaseSubscriptions(customer))
         rejectedPromiseHandler(platformPlanTelemetry(log).onEntitlementsRefreshed({
             platformId,
@@ -213,6 +217,8 @@ export const autumnUtils = {
             scheduledUsersLimit: entitlements.scheduledUsersLimit,
             activeFlowsLimit: toPlatformPlanLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
+            enterpriseTrialStartedAt: msToIsoOrNull(entitlements.enterpriseTrial?.startedAt),
+            enterpriseTrialEndsAt: msToIsoOrNull(entitlements.enterpriseTrial?.endsAt),
         }
     },
     async readBalance({ platformId, featureId }: BalanceCacheRef): Promise<CreditsBalanceCache | null> {
@@ -280,7 +286,7 @@ export const autumnConsole = {
         return plans.map(toPurchasablePlan)
     },
     async enrollFree({ email }: { email: string }): Promise<AutumnEnrollmentCredentials> {
-        return consoleRequest<AutumnEnrollmentCredentials>({ path: '/api/v1/billing/enroll', body: { email } })
+        return consoleRequest<AutumnEnrollmentCredentials>({ path: '/api/v1/billing/enroll', token: consoleSecretIfConfigured(), body: { email } })
     },
     async activate({ licenseKey }: { licenseKey: string }): Promise<AutumnEnrollmentCredentials> {
         return consoleRequest<AutumnEnrollmentCredentials>({ path: '/api/v1/billing/activate', token: licenseKey })
@@ -343,6 +349,22 @@ export const autumnConsole = {
             body: { autumnCustomerId: creds.autumnCustomerId, action },
         })
     },
+    async getEnterpriseTrial({ autumnCustomerId, autumnApiKey, ownerEmail, edition }: ConsoleCustomerCall & EnterpriseTrialOwner): Promise<EnterpriseTrialStatus> {
+        return consoleRequest<EnterpriseTrialStatus>({
+            path: '/api/v1/billing/enterprise-trial',
+            method: 'get',
+            token: edition === 'cloud' ? consoleSecretOrThrow() : autumnApiKey,
+            query: { autumnCustomerId, ownerEmail, edition },
+        })
+    },
+    async startEnterpriseTrial(params: ConsoleCustomerCall & EnterpriseTrialOwner & { platformId: string, appUrl: string }): Promise<EnterpriseTrialStatus> {
+        const { autumnApiKey, ...body } = params
+        return consoleRequest<EnterpriseTrialStatus>({
+            path: '/api/v1/billing/enterprise-trial/start',
+            token: params.edition === 'cloud' ? consoleSecretOrThrow() : autumnApiKey,
+            body,
+        })
+    },
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
@@ -370,11 +392,16 @@ async function consoleRequest<T>({ path, method = 'post', token, body, query }: 
 }
 
 function consoleSecretOrThrow(): string {
-    const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
-    if (isNil(secret) || isEmpty(secret)) {
+    const secret = consoleSecretIfConfigured()
+    if (isNil(secret)) {
         throw new Error('CONSOLE_API_SECRET_KEY is not configured')
     }
     return secret
+}
+
+function consoleSecretIfConfigured(): string | undefined {
+    const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
+    return isNil(secret) || isEmpty(secret) ? undefined : secret
 }
 
 function balanceCacheKey({ platformId, featureId }: BalanceCacheRef): string {
@@ -464,7 +491,25 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
         grantedFeatureIds: autumnUtils.toGrantedFeatureIds(customer),
         balances,
         scheduledUsersLimit: toScheduledUsersLimit(baseSubscriptions),
+        enterpriseTrial: toLiveEnterpriseTrial(customer),
     }
+}
+
+function toLiveEnterpriseTrial(customer: GetCustomerResponse): LiveEnterpriseTrial | null {
+    const now = Date.now()
+    const subscription = customer.subscriptions.find((candidate) =>
+        candidate.planId === PlanName.ENTERPRISE_TRIAL
+        && candidate.status === 'active'
+        && !isNil(candidate.trialEndsAt)
+        && candidate.trialEndsAt > now)
+    if (isNil(subscription) || isNil(subscription.trialEndsAt)) {
+        return null
+    }
+    return { startedAt: subscription.startedAt, endsAt: subscription.trialEndsAt }
+}
+
+function msToIsoOrNull(ms: number | null | undefined): string | null {
+    return isNil(ms) ? null : new Date(ms).toISOString()
 }
 
 function toEntitlementPlans(attachments: AutumnPlanAttachments): EntitlementPlan[] {
@@ -556,6 +601,12 @@ type AutumnEntitlements = {
     grantedFeatureIds: ReadonlySet<string>
     balances: Record<string, AutumnFeatureBalance>
     scheduledUsersLimit: number | null
+    enterpriseTrial: LiveEnterpriseTrial | null
+}
+
+type LiveEnterpriseTrial = {
+    startedAt: number
+    endsAt: number
 }
 
 type AutumnPlanAttachment = {
@@ -598,6 +649,11 @@ type NotProjectedFromAutumn =
     | 'workerGroupId'
 
 type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>
+
+type EnterpriseTrialOwner = {
+    ownerEmail: string
+    edition: 'cloud' | 'ee'
+}
 
 type AutumnEnrollmentCredentials = {
     autumnCustomerId: string
