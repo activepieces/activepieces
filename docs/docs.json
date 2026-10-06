@@ -653,6 +653,17 @@
                         ]
                      },
                      {
+                        "group": "Variables",
+                        "icon": "key",
+                        "pages": [
+                           "endpoints/variables/schema",
+                           "endpoints/variables/create",
+                           "endpoints/variables/list",
+                           "endpoints/variables/update",
+                           "endpoints/variables/delete"
+                        ]
+                     },
+                     {
                         "group": "Flows",
                         "icon": "bolt",
                         "pages": [
