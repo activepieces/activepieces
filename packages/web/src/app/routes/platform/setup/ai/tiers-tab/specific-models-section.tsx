@@ -11,6 +11,7 @@ import {
   Loader2,
   Plus,
   RefreshCw,
+  TriangleAlert,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -43,6 +44,7 @@ export function SpecificModelsSection({
   ownKeys,
   keyModels,
   visible,
+  projectsWithoutTier,
   onMakeTier,
 }: SpecificModelsSectionProps) {
   const { mutate: setVisible, isPending } =
@@ -129,6 +131,18 @@ export function SpecificModelsSection({
                 ? t('Builders can pick these directly.')
                 : t('Builders only see tiers.')}
             </p>
+            {!cannotHide && projectsWithoutTier > 0 && (
+              <p className="flex items-center gap-1 text-xs text-warning-11">
+                <TriangleAlert className="size-3 shrink-0" />
+                {visible
+                  ? t('hidingLeavesProjectsEmpty', {
+                      count: projectsWithoutTier,
+                    })
+                  : t('projectsWithNothingToPick', {
+                      count: projectsWithoutTier,
+                    })}
+              </p>
+            )}
           </div>
         </div>
         {models.length > SEARCH_THRESHOLD && (
@@ -319,6 +333,7 @@ type SpecificModelsSectionProps = {
   ownKeys: AIProviderWithoutSensitiveData[];
   keyModels: KeyModelsById;
   visible: boolean;
+  projectsWithoutTier: number;
   onMakeTier: (entry: PlatformModelTierEntry) => void;
 };
 

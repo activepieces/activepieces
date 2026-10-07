@@ -34,10 +34,16 @@ export function TierEntryRow({
   warnings,
   menu,
   loading,
+  skipped,
 }: TierEntryRowProps) {
   const isMain = index === 0;
   return (
-    <div className="flex items-stretch gap-3 px-2">
+    <div
+      className={cn(
+        'flex items-stretch gap-3 px-2 transition-opacity',
+        skipped && 'opacity-50',
+      )}
+    >
       <div className="flex w-4 shrink-0 flex-col items-center">
         <span className={cn('w-px flex-1', !isMain && 'bg-gray-6')} />
         <Tooltip>
@@ -67,12 +73,45 @@ export function TierEntryRow({
         config={config}
         model={model}
         nameSuffix={
-          warnings.length > 0 ? <WarningsPopover warnings={warnings} /> : null
+          <>
+            {config !== undefined && config.projectScope !== 'all' && (
+              <ScopeChip config={config} />
+            )}
+            {skipped && (
+              <span className="shrink-0 rounded-full border border-gray-6 px-1.5 text-xss text-gray-11">
+                {t('Skipped in this project')}
+              </span>
+            )}
+            {warnings.length > 0 && <WarningsPopover warnings={warnings} />}
+          </>
         }
         trailing={menu}
         loading={loading}
       />
     </div>
+  );
+}
+
+function ScopeChip({ config }: { config: AIProviderWithoutSensitiveData }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          tabIndex={0}
+          className="shrink-0 rounded-full border border-gray-6 bg-gray-2 px-1.5 text-xss text-gray-11"
+        >
+          {config.projectScope === 'except'
+            ? t('exceptProjectsCount', { count: config.projectIds.length })
+            : t('projectsCount', { count: config.projectIds.length })}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-64">
+        {t(
+          "{key} only serves some projects. This model doesn't run in the others.",
+          { key: config.name },
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -134,4 +173,5 @@ type TierEntryRowProps = {
   warnings: EntryWarning[];
   menu: ReactNode;
   loading: boolean;
+  skipped: boolean;
 };

@@ -3,6 +3,7 @@ import {
   AiProviderKeyStatus,
   AIProviderModel,
   AIProviderModelType,
+  aiProviderUtils,
   AIProviderWithoutSensitiveData,
   PlatformModelTier,
   PlatformModelTierEntry,
@@ -303,6 +304,142 @@ function tradeOffsAgainst({
   return [...smaller, ...noTools];
 }
 
+function keyServesProject({
+  config,
+  projectId,
+}: {
+  config: Pick<AIProviderWithoutSensitiveData, 'projectScope' | 'projectIds'>;
+  projectId: string;
+}): boolean {
+  switch (config.projectScope) {
+    case 'selected':
+      return config.projectIds.includes(projectId);
+    case 'except':
+      return !config.projectIds.includes(projectId);
+    default:
+      return true;
+  }
+}
+
+function entryRunsIn({
+  entry,
+  config,
+  projectId,
+}: {
+  entry: PlatformModelTierEntry;
+  config: AIProviderWithoutSensitiveData | undefined;
+  projectId: string;
+}): boolean {
+  return (
+    config !== undefined &&
+    keyServesProject({ config, projectId }) &&
+    (config.modelScope !== 'selected' || config.modelIds.includes(entry.modelId))
+  );
+}
+
+function tierReach({
+  tier,
+  configsById,
+  projectIds,
+}: {
+  tier: PlatformModelTier;
+  configsById: Map<string, AIProviderWithoutSensitiveData>;
+  projectIds: string[];
+}): TierReach {
+  const [main, ...fallbacks] = tier.entries;
+  const runsIn = (entry: PlatformModelTierEntry, projectId: string) =>
+    entryRunsIn({ entry, config: configsById.get(entry.configId), projectId });
+  const available =
+    main === undefined
+      ? []
+      : projectIds.filter((projectId) => runsIn(main, projectId));
+  const skippedFallbacks = fallbacks.flatMap((entry) => {
+    const projectCount = available.filter(
+      (projectId) => !runsIn(entry, projectId),
+    ).length;
+    return projectCount === 0 ? [] : [{ entry, projectCount }];
+  });
+  return {
+    unavailableCount: projectIds.length - available.length,
+    skippedFallbacks,
+  };
+}
+
+function projectsWithoutTier({
+  tiers,
+  configsById,
+  projectIds,
+}: {
+  tiers: PlatformModelTier[];
+  configsById: Map<string, AIProviderWithoutSensitiveData>;
+  projectIds: string[];
+}): number {
+  return projectIds.filter(
+    (projectId) =>
+      !tiers.some(
+        (tier) =>
+          tier.entries[0] !== undefined &&
+          entryRunsIn({
+            entry: tier.entries[0],
+            config: configsById.get(tier.entries[0].configId),
+            projectId,
+          }),
+      ),
+  ).length;
+}
+
+function keyScopeImpact({
+  tiers,
+  configsById,
+  config,
+  projectIds,
+}: {
+  tiers: PlatformModelTier[];
+  configsById: Map<string, AIProviderWithoutSensitiveData>;
+  config: AIProviderWithoutSensitiveData;
+  projectIds: string[];
+}): KeyScopeImpact[] {
+  const nextConfigs = new Map(configsById).set(config.id, config);
+  const skippedOnKey = (reach: TierReach) =>
+    reach.skippedFallbacks
+      .filter(({ entry }) => entry.configId === config.id)
+      .reduce((sum, { projectCount }) => sum + projectCount, 0);
+  return tiers.flatMap((tier) => {
+    if (!tier.entries.some((entry) => entry.configId === config.id)) {
+      return [];
+    }
+    const before = tierReach({ tier, configsById, projectIds });
+    const after = tierReach({ tier, configsById: nextConfigs, projectIds });
+    const lostProjects = after.unavailableCount - before.unavailableCount;
+    const skippedProjects = skippedOnKey(after) - skippedOnKey(before);
+    return lostProjects > 0 || skippedProjects > 0
+      ? [{ tierName: tier.name, lostProjects, skippedProjects }]
+      : [];
+  });
+}
+
+function toolsVerdict({
+  config,
+  entry,
+  model,
+}: {
+  config: AIProviderWithoutSensitiveData | undefined;
+  entry: PlatformModelTierEntry | undefined;
+  model: AIProviderModel | undefined;
+}): ToolsVerdict {
+  if (model?.metadata?.supportsToolCalling === false) {
+    return 'noTools';
+  }
+  const curated =
+    config === undefined
+      ? undefined
+      : aiProviderUtils.getCuratedChatModels({ provider: config.provider });
+  return entry !== undefined &&
+    curated?.some((curatedModel) => curatedModel.id === entry.modelId) === true
+    ? 'recommended'
+    : null;
+}
+
 export const modelMeta = {
   isOwnKey,
   providerInfoOf,
@@ -320,6 +457,12 @@ export const modelMeta = {
   addFallback,
   removeAt,
   moveEntry,
+  keyServesProject,
+  entryRunsIn,
+  tierReach,
+  projectsWithoutTier,
+  keyScopeImpact,
+  toolsVerdict,
 };
 
 export type KeyModelsById = Record<
@@ -354,3 +497,16 @@ export type EntryWarning =
   | { code: 'modelGone'; keyName: string }
   | { code: 'smallerContext'; contextTokens: number; mainContextTokens: number }
   | { code: 'keyStatus'; status: AiProviderKeyStatus };
+
+export type TierReach = {
+  unavailableCount: number;
+  skippedFallbacks: { entry: PlatformModelTierEntry; projectCount: number }[];
+};
+
+export type KeyScopeImpact = {
+  tierName: string;
+  lostProjects: number;
+  skippedProjects: number;
+};
+
+export type ToolsVerdict = 'noTools' | 'recommended' | null;

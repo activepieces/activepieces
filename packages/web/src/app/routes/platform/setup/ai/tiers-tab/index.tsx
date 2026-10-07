@@ -10,10 +10,18 @@ import { Link } from 'react-router-dom';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
+import { projectCollectionUtils } from '@/features/projects';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -45,6 +53,14 @@ export function TiersTab() {
   const [dialog, setDialog] = useState<TierDialogState>({ open: false });
   const [deleting, setDeleting] = useState<PlatformModelTier | null>(null);
   const [focusTarget, setFocusTarget] = useState<HTMLElement | null>(null);
+  const [previewProjectId, setPreviewProjectId] = useState<string | null>(
+    null,
+  );
+  const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
+  const projectIds = useMemo(
+    () => projects.map((project) => project.id),
+    [projects],
+  );
 
   const ownKeys = useMemo(
     () => allConfigs.filter(modelMeta.isOwnKey),
@@ -56,6 +72,8 @@ export function TiersTab() {
   );
   const liveTiers = tiers ?? [];
   const specificModelsVisible = configuration?.aiSpecificModelsVisible ?? true;
+  const someKeyIsScoped = ownKeys.some((key) => key.projectScope !== 'all');
+  const showPreview = someKeyIsScoped && projects.length > 1;
 
   const openCreate = ({
     trigger,
@@ -90,7 +108,34 @@ export function TiersTab() {
           )}
         />
         {!isError && !noKeys && (
-          <Button
+          <div className="flex shrink-0 items-center gap-2">
+            {showPreview && (
+              <Select
+                value={previewProjectId ?? ALL_PROJECTS}
+                onValueChange={(value) =>
+                  setPreviewProjectId(value === ALL_PROJECTS ? null : value)
+                }
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="w-48"
+                  aria-label={t('Preview as project')}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value={ALL_PROJECTS}>
+                    {t('All projects')}
+                  </SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {t('As {project}', { project: project.displayName })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button
             id={NEW_TIER_BUTTON_ID}
             size="sm"
             className="shrink-0"
@@ -100,6 +145,7 @@ export function TiersTab() {
             <Plus className="size-4" />
             {t('New tier')}
           </Button>
+          </div>
         )}
       </div>
 
@@ -128,6 +174,8 @@ export function TiersTab() {
                       configsById={configsById}
                       ownKeys={ownKeys}
                       keyModels={keyModels}
+                      projectIds={projectIds}
+                      previewProjectId={previewProjectId}
                       reducedMotion={reducedMotion}
                       onEdit={(trigger) => {
                         setFocusTarget(trigger);
@@ -148,6 +196,11 @@ export function TiersTab() {
             ownKeys={ownKeys}
             keyModels={keyModels}
             visible={specificModelsVisible}
+            projectsWithoutTier={modelMeta.projectsWithoutTier({
+              tiers: liveTiers,
+              configsById,
+              projectIds,
+            })}
             onMakeTier={(entry) =>
               openCreate({
                 trigger:
@@ -321,3 +374,4 @@ function TiersSkeleton() {
 }
 
 const NEW_TIER_BUTTON_ID = 'new-tier-button';
+const ALL_PROJECTS = 'all-projects';

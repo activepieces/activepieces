@@ -282,6 +282,97 @@ describe('modelMeta entry operations', () => {
   });
 });
 
+describe('modelMeta project scope', () => {
+  const open = key('open', {});
+  const onlyA = key('onlyA', { projectScope: 'selected', projectIds: ['A'] });
+  const notA = key('notA', { projectScope: 'except', projectIds: ['A'] });
+  const configsById = new Map([open, onlyA, notA].map((config) => [config.id, config]));
+  const projectIds = ['A', 'B', 'C'];
+
+  it('mirrors the server rule for which projects a key serves', () => {
+    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: onlyA, projectId }))).toEqual(['A']);
+    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: notA, projectId }))).toEqual(['B', 'C']);
+    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: open, projectId }))).toEqual(projectIds);
+  });
+
+  it('counts the projects a tier is missing from and the fallbacks skipped where it runs', () => {
+    const reach = modelMeta.tierReach({
+      tier: tier('t', [
+        { configId: notA.id, modelId: 'main' },
+        { configId: onlyA.id, modelId: 'fallback' },
+      ]),
+      configsById,
+      projectIds,
+    });
+
+    expect(reach.unavailableCount).toBe(1);
+    expect(reach.skippedFallbacks).toEqual([
+      { entry: { configId: onlyA.id, modelId: 'fallback' }, projectCount: 2 },
+    ]);
+  });
+
+  it('counts projects left with no tier at all', () => {
+    expect(
+      modelMeta.projectsWithoutTier({
+        tiers: [tier('t', [{ configId: onlyA.id, modelId: 'main' }])],
+        configsById,
+        projectIds,
+      }),
+    ).toBe(2);
+  });
+
+  it('reports what narrowing a key does to the tiers that use it', () => {
+    const tiers = [
+      { ...tier('Expert', [{ configId: open.id, modelId: 'main' }]), name: 'Expert' },
+      {
+        ...tier('Fast', [
+          { configId: notA.id, modelId: 'main' },
+          { configId: open.id, modelId: 'fallback' },
+        ]),
+        name: 'Fast',
+      },
+      { ...tier('Other', [{ configId: notA.id, modelId: 'main' }]), name: 'Other' },
+    ];
+
+    const impact = modelMeta.keyScopeImpact({
+      tiers,
+      configsById,
+      config: { ...open, projectScope: 'selected', projectIds: ['A'] },
+      projectIds,
+    });
+
+    expect(impact).toEqual([
+      { tierName: 'Expert', lostProjects: 2, skippedProjects: 0 },
+      { tierName: 'Fast', lostProjects: 0, skippedProjects: 2 },
+    ]);
+  });
+
+  it('flags a main model that cannot call tools and recommends a curated one', () => {
+    const openAi = key('k', { provider: AIProviderName.OPENAI });
+    expect(
+      modelMeta.toolsVerdict({
+        config: openAi,
+        entry: { configId: 'k', modelId: 'x' },
+        model: model('x', { supportsToolCalling: false }),
+      }),
+    ).toBe('noTools');
+    expect(
+      modelMeta.toolsVerdict({
+        config: openAi,
+        entry: { configId: 'k', modelId: 'gpt-4.1' },
+        model: model('gpt-4.1', {}),
+      }),
+    ).toBe('recommended');
+    expect(
+      modelMeta.toolsVerdict({
+        config: openAi,
+        entry: { configId: 'k', modelId: 'some-model' },
+        model: undefined,
+      }),
+    ).toBeNull();
+  });
+});
+
 function model(
   id: string,
   metadata: AIProviderModel['metadata'] | Record<string, never>,

@@ -11,12 +11,14 @@ import {
   Brain,
   Info,
   Loader2,
+  MessageSquare,
   MoreHorizontal,
   Pencil,
   Plus,
   Replace,
   Star,
   Trash2,
+  TriangleAlert,
   Zap,
   LucideIcon,
 } from 'lucide-react';
@@ -40,6 +42,7 @@ import {
 import {
   KeyModelsById,
   modelMeta,
+  ToolsVerdict,
 } from '@/features/agents/ai-model/model-meta';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -54,6 +57,8 @@ export function TierCard({
   configsById,
   ownKeys,
   keyModels,
+  projectIds,
+  previewProjectId,
   reducedMotion,
   onEdit,
   onDelete,
@@ -77,6 +82,28 @@ export function TierCard({
   const thinkingChip = tierThinking.chipLabel({
     budget: tier.thinkingBudget ?? null,
   });
+  const tools = modelMeta.toolsVerdict({
+    config:
+      mainEntry === undefined ? undefined : configsById.get(mainEntry.configId),
+    entry: mainEntry,
+    model: mainModel,
+  });
+  const notices = cardNotices({
+    tier,
+    configsById,
+    keyModels,
+    projectIds,
+    previewProjectId,
+    tools,
+    mainName: mainModel?.name ?? mainEntry?.modelId ?? '',
+  });
+  const unavailableHere =
+    previewProjectId !== null &&
+    modelMeta.tierReach({
+      tier,
+      configsById,
+      projectIds: [previewProjectId],
+    }).unavailableCount === 1;
   const canAddFallback = tier.entries.length < MAX_ENTRIES;
   const noFallbacks = tier.entries.length === 1;
   const fallbackPicker = (trigger: ReactNode) => (
@@ -104,7 +131,10 @@ export function TierCard({
 
   return (
     <section
-      className="flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel"
+      className={cn(
+        'flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel transition-opacity',
+        unavailableHere && 'opacity-60',
+      )}
       aria-label={tier.name}
     >
       <header className="flex items-center gap-3 px-5 py-4">
@@ -138,6 +168,11 @@ export function TierCard({
             {thinkingChip !== undefined && (
               <TierTag icon={Brain}>{thinkingChip}</TierTag>
             )}
+            {tools === 'recommended' && (
+              <TierTag icon={MessageSquare}>
+                {t('Recommended for chat')}
+              </TierTag>
+            )}
             {showSpinner && (
               <Loader2
                 className="size-3.5 animate-spin text-gray-10"
@@ -147,6 +182,19 @@ export function TierCard({
           </div>
           {tier.description && (
             <p className="truncate text-xs text-gray-11">{tier.description}</p>
+          )}
+          {notices.length > 0 && (
+            <ul className="flex flex-col gap-0.5 pt-1">
+              {notices.map((notice) => (
+                <li
+                  key={notice}
+                  className="flex items-start gap-1.5 text-xs text-warning-11"
+                >
+                  <TriangleAlert className="mt-0.5 size-3 shrink-0" />
+                  <span>{notice}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
         <DropdownMenu>
@@ -236,6 +284,16 @@ export function TierCard({
                   config={config}
                   model={model}
                   loading={keyModels[entry.configId]?.isLoading === true}
+                  skipped={
+                    previewProjectId !== null &&
+                    !isMain &&
+                    !unavailableHere &&
+                    !modelMeta.entryRunsIn({
+                      entry,
+                      config,
+                      projectId: previewProjectId,
+                    })
+                  }
                   warnings={modelMeta.warningsFor({
                     entry,
                     isMain,
@@ -372,6 +430,56 @@ export function TierCard({
   );
 }
 
+function cardNotices({
+  tier,
+  configsById,
+  keyModels,
+  projectIds,
+  previewProjectId,
+  tools,
+  mainName,
+}: {
+  tier: PlatformModelTier;
+  configsById: Map<string, AIProviderWithoutSensitiveData>;
+  keyModels: KeyModelsById;
+  projectIds: string[];
+  previewProjectId: string | null;
+  tools: ToolsVerdict;
+  mainName: string;
+}): string[] {
+  const noTools =
+    tools === 'noTools'
+      ? [
+          t("Not offered in chat or agents — {model} can't call tools", {
+            model: mainName,
+          }),
+        ]
+      : [];
+  if (previewProjectId !== null) {
+    const here = modelMeta.tierReach({
+      tier,
+      configsById,
+      projectIds: [previewProjectId],
+    });
+    return here.unavailableCount === 1
+      ? [t("Not available in this project — its main model's key doesn't serve it")]
+      : noTools;
+  }
+  const reach = modelMeta.tierReach({ tier, configsById, projectIds });
+  const unavailable =
+    reach.unavailableCount > 0
+      ? [t('tierUnavailableInProjects', { count: reach.unavailableCount })]
+      : [];
+  const skipped = reach.skippedFallbacks.map(({ entry, projectCount }) =>
+    t('fallbackSkippedInProjects', {
+      model:
+        modelMeta.catalogModel({ keyModels, entry })?.name ?? entry.modelId,
+      count: projectCount,
+    }),
+  );
+  return [...unavailable, ...skipped, ...noTools];
+}
+
 function TierTag({
   icon: Icon,
   className,
@@ -491,6 +599,8 @@ type TierCardProps = {
   configsById: Map<string, AIProviderWithoutSensitiveData>;
   ownKeys: AIProviderWithoutSensitiveData[];
   keyModels: KeyModelsById;
+  projectIds: string[];
+  previewProjectId: string | null;
   reducedMotion: boolean;
   onEdit: (trigger: HTMLElement | null) => void;
   onDelete: (trigger: HTMLElement | null) => void;

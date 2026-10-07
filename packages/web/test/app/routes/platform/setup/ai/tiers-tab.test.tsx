@@ -32,6 +32,7 @@ const state = vi.hoisted(() => ({
     refetch: () => Promise.resolve(),
   },
   keyModels: {} as KeyModelsById,
+  projects: [] as { id: string; displayName: string }[],
   configuration: {
     data: { aiSpecificModelsVisible: true } as
       | { aiSpecificModelsVisible: boolean }
@@ -73,6 +74,11 @@ vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
   },
 }));
 
+vi.mock('@/features/projects', () => ({
+  projectCollectionUtils: {
+    useAllPlatformProjects: () => ({ data: state.projects }),
+  },
+}));
 vi.mock('@/hooks/platform-configuration-hooks', () => ({
   platformConfigurationHooks: {
     queryKey: ['platform-configuration'],
@@ -123,6 +129,10 @@ beforeEach(() => {
     },
   };
   state.configuration = { data: { aiSpecificModelsVisible: true } };
+  state.projects = [
+    { id: 'A', displayName: 'Sales' },
+    { id: 'B', displayName: 'Ops' },
+  ];
 });
 
 describe('TiersTab states', () => {
@@ -234,6 +244,40 @@ describe('TiersTab states', () => {
     renderTab();
     expect(screen.getByText('Builders only see tiers.')).toBeDefined();
     expect(screen.getByText('Claude Haiku')).toBeDefined();
+  });
+
+  it('warns when a tier is missing from projects its main key does not serve', () => {
+    state.configs = {
+      ...state.configs,
+      data: [key('k1', { projectScope: 'selected', projectIds: ['A'] })],
+    };
+    state.tiers = {
+      ...state.tiers,
+      data: [
+        tier('expert', { entries: [{ configId: 'k1', modelId: 'sonnet' }] }),
+      ],
+    };
+    renderTab();
+    expect(screen.getByText('tierUnavailableInProjects')).toBeDefined();
+    expect(screen.getByText('projectsCount')).toBeDefined();
+    expect(
+      screen.getByRole('combobox', { name: 'Preview as project' }),
+    ).toBeDefined();
+    expect(screen.getByText('hidingLeavesProjectsEmpty')).toBeDefined();
+  });
+
+  it('shows no scope notices or preview when every key serves every project', () => {
+    state.tiers = {
+      ...state.tiers,
+      data: [
+        tier('expert', { entries: [{ configId: 'k1', modelId: 'sonnet' }] }),
+      ],
+    };
+    renderTab();
+    expect(screen.queryByText('tierUnavailableInProjects')).toBeNull();
+    expect(
+      screen.queryByRole('combobox', { name: 'Preview as project' }),
+    ).toBeNull();
   });
 });
 
