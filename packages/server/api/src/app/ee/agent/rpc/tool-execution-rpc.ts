@@ -326,7 +326,7 @@ async function pieceToolModel({ configuredRun, input, log }: { configuredRun: Co
     const { projectId, platformId, modelTierId } = configuredRun
     const granted = isNil(modelTierId) || isNil(input.providerConfigId)
         ? null
-        : await aiModelCandidates(log).grantedEntryConfig({ platformId, tierId: modelTierId, configId: input.providerConfigId, modelId: input.modelId })
+        : await aiModelCandidates(log).grantedEntryConfig({ platformId, tierId: modelTierId, configId: input.providerConfigId, modelId: input.modelId, scope: { type: 'project', projectId } })
     if (!isNil(granted)) {
         return aiUtils.createModel({ credentials: granted, modelId: input.modelId, platformId, providerConfigId: granted.configId })
     }
