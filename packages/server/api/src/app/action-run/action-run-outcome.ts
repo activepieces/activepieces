@@ -34,12 +34,13 @@ function isWatcherTimeout(error: unknown): boolean {
 
 export function deriveActionRunOutcome({ result }: { result: Result<EngineActionResponse, unknown> }): ActionRunOutcome {
     if (!isNil(result.error) || isNil(result.data)) {
+        const watcherTimedOut = isWatcherTimeout(result.error)
         return {
-            status: isWatcherTimeout(result.error) ? FlowRunStatus.TIMEOUT : FlowRunStatus.INTERNAL_ERROR,
+            status: watcherTimedOut ? FlowRunStatus.TIMEOUT : FlowRunStatus.INTERNAL_ERROR,
             output: null,
             logs: null,
             errorMessage: result.error instanceof Error ? result.error.message : String(result.error),
-            neverStarted: false,
+            neverStarted: !watcherTimedOut,
         }
     }
     const engineResponse = result.data
