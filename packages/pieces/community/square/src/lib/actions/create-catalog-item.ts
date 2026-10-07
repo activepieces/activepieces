@@ -29,7 +29,6 @@ export const createCatalogItemAction = createAction({
   outputSchema: squareOutputSchemas.catalogItem,
   async run(context) {
     const { idempotency_key: _ignored, ...input } = context.propsValue;
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'create_catalog_item', input });
-    return squareOps.createCatalogItem({ auth: context.auth, props: context.propsValue, idempotencyKey });
+    return squareIdempotency.execute({ context, action: 'create_catalog_item', input, send: ({ idempotencyKey }) => squareOps.createCatalogItem({ auth: context.auth, props: context.propsValue, idempotencyKey }) });
   },
 });

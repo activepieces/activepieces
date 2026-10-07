@@ -106,8 +106,12 @@ function variation({ required, itemProp = 'item', displayName = 'Variation', des
       }
       try {
         const body = await squareClient.request<unknown>({ auth, method: HttpMethod.GET, path: ['v2', 'catalog', 'object', itemId], operation: 'read the item' });
-        const item = squareShape.catalogItem(squareShape.rec({ value: body, key: 'object' }));
-        const options = item.variations.map((v) => ({ label: variationLabel(v), value: v.id ?? '' }));
+        const itemData = squareShape.rec({ value: squareShape.rec({ value: body, key: 'object' }), key: 'item_data' });
+        const options = squareShape
+          .list({ value: itemData, key: 'variations' })
+          .map((raw) => squareShape.variation(raw))
+          .filter((v) => v.id !== null)
+          .map((v) => ({ label: variationLabel(v), value: v.id ?? '' }));
         return options.length > 0 ? { disabled: false, options } : { disabled: true, placeholder: 'This item has no variations.', options: [] };
       } catch (error) {
         return failed({ error, what: 'variations' });
@@ -201,7 +205,7 @@ function cursorProp() {
 function idempotencyKey() {
   return Property.ShortText({
     displayName: 'Idempotency Key',
-    description: 'Optional, up to 45 characters. Leave empty: a key is derived from this run and the inputs, so a retried step returns the same record instead of creating a second one.',
+    description: 'Optional, up to 45 characters. Leave empty: the step keeps one key until Square confirms the request, so a retried step returns the same record and each loop iteration gets its own.',
     required: false,
   });
 }

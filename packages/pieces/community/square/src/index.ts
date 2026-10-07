@@ -3,6 +3,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { squareAuth } from './lib/auth';
 import { squareClient } from './lib/common/client';
+import { squareShape } from './lib/common/shape';
 import { triggers } from './lib/triggers';
 import { adjustInventoryAction } from './lib/actions/adjust-inventory';
 import { adjustInventoryByIdAction } from './lib/actions/ai/adjust-inventory-by-id';
@@ -113,10 +114,13 @@ export const square = createPiece({
     createCustomApiCallAction({
       baseUrl: () => squareClient.BASE_URL,
       auth: squareAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.access_token}`,
-        'Square-Version': squareClient.SQUARE_VERSION,
-      }),
+      authMapping: async (auth, propsValue) => {
+        squareClient.assertSquareUrl({ url: squareShape.rec({ value: propsValue, key: 'url' })['url'] });
+        return {
+          Authorization: `Bearer ${auth.access_token}`,
+          'Square-Version': squareClient.SQUARE_VERSION,
+        };
+      },
     }),
   ],
   triggers,

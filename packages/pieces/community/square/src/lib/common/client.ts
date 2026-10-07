@@ -198,6 +198,28 @@ function responseBodyOf(error: unknown): unknown {
   return isRecord(response) ? response['body'] : undefined;
 }
 
+function assertSquareUrl({ url }: { url: unknown }): void {
+  if (typeof url !== 'string') {
+    return;
+  }
+  const trimmed = url.trim();
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(trimmed) && !trimmed.startsWith('//')) {
+    return;
+  }
+  const allowed = new URL(BASE_URL);
+  const parsed = URL.canParse(trimmed) ? new URL(trimmed) : null;
+  if (
+    parsed === null ||
+    parsed.protocol !== allowed.protocol ||
+    parsed.hostname !== allowed.hostname ||
+    parsed.port !== '' ||
+    parsed.username !== '' ||
+    parsed.password !== ''
+  ) {
+    throw new Error(`Custom API Call only sends the Square token to ${BASE_URL}. Use a path like /v2/locations or a full ${BASE_URL} URL.`);
+  }
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -207,6 +229,7 @@ export const squareClient = {
   segment,
   isRecord,
   resolveLocation,
+  assertSquareUrl,
   BASE_URL,
   SQUARE_VERSION,
 };

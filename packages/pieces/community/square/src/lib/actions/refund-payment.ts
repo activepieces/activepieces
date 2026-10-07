@@ -39,22 +39,27 @@ export const refundPaymentAction = createAction({
       throw new Error(`Payment "${paymentId}" has no amount to refund.`);
     }
     const minor = squareMoney.toMinor({ amount: p.amount, currency: payment.currency, label: 'Amount to Refund' });
-    const remaining = payment.total_minor - (payment.refunded_minor ?? 0);
-    if (minor > remaining) {
-      throw new Error(`Amount to Refund ${p.amount} is more than the ${squareMoney.format({ minor: remaining, currency: payment.currency })} ${payment.currency} left to refund on this payment.`);
-    }
     const payload = squareOps.dropUndefined({
       payment_id: paymentId,
       amount_money: { amount: minor, currency: payment.currency },
       reason: squareInputs.text(p.reason),
     });
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'refund_payment', input: payload });
-    const body = await squareClient.request<unknown>({
-      auth: context.auth,
-      method: HttpMethod.POST,
-      path: ['v2', 'refunds'],
-      body: { ...payload, idempotency_key: idempotencyKey },
-      operation: 'refund the payment',
+    const remaining = payment.total_minor - (payment.refunded_minor ?? 0);
+    if (minor > remaining && !(await squareIdempotency.isResend({ context, action: 'refund_payment', input: payload }))) {
+      throw new Error(`Amount to Refund ${p.amount} is more than the ${squareMoney.format({ minor: remaining, currency: payment.currency })} ${payment.currency} left to refund on this payment.`);
+    }
+    const body = await squareIdempotency.execute({
+      context,
+      action: 'refund_payment',
+      input: payload,
+      send: ({ idempotencyKey }) =>
+        squareClient.request<unknown>({
+          auth: context.auth,
+          method: HttpMethod.POST,
+          path: ['v2', 'refunds'],
+          body: { ...payload, idempotency_key: idempotencyKey },
+          operation: 'refund the payment',
+        }),
     });
     return squareShape.refund(squareShape.requireObject({ body, key: 'refund', what: 'refund' }));
   },

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { square } from '../src';
 import { triggers } from '../src/lib/triggers';
 import { squareSamples } from '../src/lib/triggers/samples';
-import { connection, memoryStore, stubFetch } from './helpers';
+import { connection, memoryStore, stubFetch, TOKEN } from './helpers';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -20,6 +20,38 @@ function trigger(name: string) {
 function runContext({ body, propsValue = {}, store = memoryStore() }: { body: unknown; propsValue?: Record<string, unknown>; store?: ReturnType<typeof memoryStore> }) {
   return { auth: connection(), propsValue, store, payload: { body, headers: {}, queryParams: {} } };
 }
+
+describe('custom api call', () => {
+  function customCall() {
+    const found = square.actions()['custom_api_call'];
+    if (!found) {
+      throw new Error('missing custom_api_call');
+    }
+    return found;
+  }
+  const call = (url: string) =>
+    customCall().run({ auth: connection(), propsValue: { url: { url }, method: 'GET', headers: {}, queryParams: {}, failsafe: false }, store: memoryStore() });
+
+  test.each([
+    'https://evil.example.com/v2/locations',
+    'https://connect.squareup.com.evil.io/v2/locations',
+    'http://connect.squareup.com/v2/locations',
+    'https://user@connect.squareup.com/v2/locations',
+    'https://connect.squareup.com:8443/v2/locations',
+    'HTTPS://evil.example.com/v2',
+  ])('refuses to send the token to %s', async (url) => {
+    const seen = stubFetch(() => ({ body: {} }));
+    await expect(call(url)).rejects.toThrow('only sends the Square token');
+    expect(seen).toHaveLength(0);
+  });
+
+  test.each(['/v2/locations', 'https://connect.squareup.com/v2/locations'])('sends %s to Square with the token', async (url) => {
+    const seen = stubFetch(() => ({ body: { locations: [] } }));
+    await call(url);
+    expect(seen[0].url.startsWith('https://connect.squareup.com/v2/locations')).toBe(true);
+    expect(seen[0].headers.get('authorization')).toBe(`Bearer ${TOKEN}`);
+  });
+});
 
 describe('webhook signature', () => {
   const secret = 'sig-key';
@@ -51,14 +83,52 @@ describe('trigger runs', () => {
     expect(await t.run(runContext({ body: { ...squareSamples.new_customer, event_id: 'other' }, store }))).toHaveLength(1);
   });
 
-  test('keeps the dedupe list bounded', async () => {
+  test('keeps the dedupe state bounded', async () => {
     const store = memoryStore();
     const t = trigger('new_payment');
-    for (let i = 0; i < 520; i++) {
+    for (let i = 0; i < 700; i++) {
       await t.run(runContext({ body: { ...squareSamples.new_payment, event_id: `e${i}` }, store }));
     }
-    const stored = await store.get<unknown[]>('square_recent_event_ids');
-    expect(stored?.length).toBe(500);
+    const sizes = await Promise.all(Array.from({ length: 64 }, (_, slot) => store.get<unknown[]>(`square_seen_events_${slot}`)));
+    expect(sizes.every((entries) => (entries?.length ?? 0) <= 100)).toBe(true);
+    expect(await store.get('square_seen_events_64')).toBeNull();
+  });
+
+  test('a failed order read does not mark the event as seen', async () => {
+    const store = memoryStore();
+    const seen = stubFetch((_request, index) =>
+      index === 0 ? { status: 500, body: { errors: [{ code: 'INTERNAL_SERVER_ERROR' }] } } : { body: { order: { id: 'eA3vssLHKJrv9H0IdJCM3gNqfdcZY', state: 'OPEN' } } },
+    );
+    const t = trigger('new_order');
+    const props = { include_full_order: true };
+    await expect(t.run(runContext({ body: squareSamples.new_order, propsValue: props, store }))).rejects.toThrow('500');
+    expect(await t.run(runContext({ body: squareSamples.new_order, propsValue: props, store }))).toHaveLength(1);
+    expect(await t.run(runContext({ body: squareSamples.new_order, propsValue: props, store }))).toHaveLength(0);
+    expect(seen).toHaveLength(2);
+  });
+
+  test('a delivery in progress blocks a concurrent copy until its claim goes stale', async () => {
+    const store = memoryStore();
+    const t = trigger('new_customer');
+    const eventId = squareSamples.new_customer.event_id;
+    const slotKeys = Array.from({ length: 64 }, (_, slot) => `square_seen_events_${slot}`);
+    const now = Date.now();
+    await Promise.all(slotKeys.map((key) => store.put(key, [{ id: eventId, at: now, token: 'other-job', done: false }])));
+    expect(await t.run(runContext({ body: squareSamples.new_customer, store }))).toHaveLength(0);
+    const stale = now - 3 * 60 * 1000;
+    await Promise.all(slotKeys.map((key) => store.put(key, [{ id: eventId, at: stale, token: 'crashed-job', done: false }])));
+    expect(await t.run(runContext({ body: squareSamples.new_customer, store }))).toHaveLength(1);
+  });
+
+  test('different events sharing a slot keep each other', async () => {
+    const store = memoryStore();
+    const t = trigger('new_payment');
+    const ids = Array.from({ length: 200 }, (_, i) => `evt-${i}`);
+    for (const id of ids) {
+      await t.run(runContext({ body: { ...squareSamples.new_payment, event_id: id }, store }));
+    }
+    const replays = await Promise.all(ids.map((id) => t.run(runContext({ body: { ...squareSamples.new_payment, event_id: id }, store }))));
+    expect(replays.every((events) => events.length === 0)).toBe(true);
   });
 
   test('location filter drops events from other locations', async () => {

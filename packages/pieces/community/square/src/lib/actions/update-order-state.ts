@@ -37,7 +37,6 @@ export const updateOrderStateAction = createAction({
     if (state !== 'COMPLETED' && state !== 'CANCELED') {
       throw new Error('New State must be COMPLETED or CANCELED.');
     }
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'update_order_state', input: { orderId, state } });
-    return squareOps.setOrderState({ auth: context.auth, orderId, state, idempotencyKey });
+    return squareIdempotency.execute({ context, action: 'update_order_state', input: { orderId, state }, send: ({ idempotencyKey }) => squareOps.setOrderState({ auth: context.auth, orderId, state, idempotencyKey }) });
   },
 });

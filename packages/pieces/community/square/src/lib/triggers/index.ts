@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { squareAuth } from '../auth';
@@ -7,9 +8,11 @@ import { squareShape } from '../common/shape';
 import { squareOutputSchemas } from '../output-schemas';
 import { squareSamples } from './samples';
 
-const DEDUPE_STORE_KEY = 'square_recent_event_ids';
+const DEDUPE_KEY_PREFIX = 'square_seen_events_';
+const DEDUPE_SLOT_COUNT = 64;
 const DEDUPE_WINDOW_MS = 15 * 60 * 1000;
-const DEDUPE_MAX_ENTRIES = 500;
+const DEDUPE_CLAIM_TIMEOUT_MS = 2 * 60 * 1000;
+const DEDUPE_MAX_PER_SLOT = 100;
 
 const triggerData: TriggerDefinition[] = [
   {
@@ -132,36 +135,88 @@ export const triggers = triggerData.map((trigger) =>
           return [];
         }
       }
-      if (await isDuplicate({ store: context.store, eventId: squareShape.str({ value: body, key: 'event_id' }) })) {
+      const claim = await claimEvent({ store: context.store, eventId: squareShape.str({ value: body, key: 'event_id' }) });
+      if (claim === 'duplicate') {
         return [];
       }
-      if (trigger.orderSummary && context.propsValue['include_full_order'] === true) {
-        const orderId = squareShape.str({ value: squareShape.rec({ value: body, key: 'data' }), key: 'id' });
-        if (!orderId) {
-          return [body];
-        }
-        const order = await fetchOrder({ auth: context.auth, orderId });
-        return order === null ? [] : [{ ...body, order }];
+      try {
+        const events = await buildEvents({ trigger, body, auth: context.auth, includeFullOrder: context.propsValue['include_full_order'] === true });
+        await finishClaim({ store: context.store, claim, succeeded: true });
+        return events;
+      } catch (error) {
+        await finishClaim({ store: context.store, claim, succeeded: false }).catch(() => undefined);
+        throw error;
       }
-      return [body];
     },
   }),
 );
 
-async function isDuplicate({ store, eventId }: { store: DedupeStore; eventId: string | null }): Promise<boolean> {
+async function buildEvents({ trigger, body, auth, includeFullOrder }: { trigger: TriggerDefinition; body: Record<string, unknown>; auth: SquareAuth; includeFullOrder: boolean }): Promise<unknown[]> {
+  if (!trigger.orderSummary || !includeFullOrder) {
+    return [body];
+  }
+  const orderId = squareShape.str({ value: squareShape.rec({ value: body, key: 'data' }), key: 'id' });
+  if (!orderId) {
+    return [body];
+  }
+  const order = await fetchOrder({ auth, orderId });
+  return order === null ? [] : [{ ...body, order }];
+}
+
+async function claimEvent({ store, eventId }: { store: DedupeStore; eventId: string | null }): Promise<Claim | 'duplicate'> {
   if (!eventId) {
-    return false;
+    return null;
+  }
+  const key = slotKey({ eventId });
+  const now = Date.now();
+  const before = await readSlot({ store, key, now });
+  if (before.some((entry) => entry.id === eventId && blocks({ entry, now }))) {
+    return 'duplicate';
+  }
+  const token = crypto.randomUUID();
+  const mine: SeenEvent = { id: eventId, at: now, token, done: false };
+  await store.put(key, [...before.filter((entry) => entry.id !== eventId).slice(-(DEDUPE_MAX_PER_SLOT - 1)), mine]);
+  const after = await readSlot({ store, key, now });
+  const winner = after.find((entry) => entry.id === eventId);
+  if (winner !== undefined && winner.token !== token) {
+    return 'duplicate';
+  }
+  if (winner === undefined) {
+    await store.put(key, [...after.slice(-(DEDUPE_MAX_PER_SLOT - 1)), mine]);
+  }
+  return { key, eventId, token };
+}
+
+async function finishClaim({ store, claim, succeeded }: { store: DedupeStore; claim: Claim; succeeded: boolean }): Promise<void> {
+  if (claim === null) {
+    return;
   }
   const now = Date.now();
-  const stored = await store.get<unknown>(DEDUPE_STORE_KEY);
-  const recent = (Array.isArray(stored) ? stored : []).filter(
-    (entry): entry is SeenEvent => squareShape.isRecord(entry) && typeof entry['id'] === 'string' && typeof entry['at'] === 'number' && now - entry['at'] < DEDUPE_WINDOW_MS,
+  const entries = (await readSlot({ store, key: claim.key, now })).filter((entry) => entry.token !== claim.token);
+  const updated = succeeded ? [...entries.filter((entry) => entry.id !== claim.eventId).slice(-(DEDUPE_MAX_PER_SLOT - 1)), { id: claim.eventId, at: now, token: claim.token, done: true }] : entries;
+  await store.put(claim.key, updated);
+}
+
+async function readSlot({ store, key, now }: { store: DedupeStore; key: string; now: number }): Promise<SeenEvent[]> {
+  const stored = await store.get<unknown>(key);
+  return (Array.isArray(stored) ? stored : []).filter(
+    (entry): entry is SeenEvent =>
+      squareShape.isRecord(entry) &&
+      typeof entry['id'] === 'string' &&
+      typeof entry['at'] === 'number' &&
+      typeof entry['token'] === 'string' &&
+      typeof entry['done'] === 'boolean' &&
+      now - entry['at'] < DEDUPE_WINDOW_MS,
   );
-  if (recent.some((entry) => entry.id === eventId)) {
-    return true;
-  }
-  await store.put(DEDUPE_STORE_KEY, [...recent.slice(-(DEDUPE_MAX_ENTRIES - 1)), { id: eventId, at: now }]);
-  return false;
+}
+
+function blocks({ entry, now }: { entry: SeenEvent; now: number }): boolean {
+  return entry.done || now - entry.at < DEDUPE_CLAIM_TIMEOUT_MS;
+}
+
+function slotKey({ eventId }: { eventId: string }): string {
+  const slot = crypto.createHash('sha256').update(eventId).digest().readUInt32BE(0) % DEDUPE_SLOT_COUNT;
+  return `${DEDUPE_KEY_PREFIX}${slot}`;
 }
 
 async function fetchOrder({ auth, orderId }: { auth: SquareAuth; orderId: string }) {
@@ -214,7 +269,9 @@ type TriggerDefinition = {
   orderSummary: boolean;
 };
 
-type SeenEvent = { id: string; at: number };
+type SeenEvent = { id: string; at: number; token: string; done: boolean };
+
+type Claim = { key: string; eventId: string; token: string } | null;
 
 type DedupeStore = {
   get: <T>(key: string) => Promise<T | null>;

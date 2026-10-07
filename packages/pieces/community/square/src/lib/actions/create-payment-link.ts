@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { squareAuth } from '../auth';
-import { squareIdempotency } from '../common/idempotency';
+import { IdempotencyStore, squareIdempotency } from '../common/idempotency';
 import { squareInputs } from '../common/inputs';
 import { squareOps } from '../common/operations';
 import { squareProps } from '../common/props';
@@ -42,16 +42,22 @@ function linkProps() {
 async function runCreateLink({ context, locationLabel }: { context: LinkContext; locationLabel: string }) {
   const p = context.propsValue;
   const input = { location_id: p['location_id'], name: p['name'], amount: p['amount'], currency: p['currency'], description: p['description'], payment_note: p['payment_note'], redirect_url: p['redirect_url'] };
-  return squareOps.createPaymentLink({
-    auth: context.auth,
-    locationId: squareInputs.optionalId({ value: p['location_id'], label: locationLabel }),
-    name: squareInputs.requireText({ value: p['name'], label: 'Item Name' }),
-    amount: p['amount'],
-    currency: p['currency'],
-    description: squareInputs.text(p['description']),
-    paymentNote: squareInputs.text(p['payment_note']),
-    redirectUrl: squareInputs.url({ value: p['redirect_url'], label: 'Redirect URL' }),
-    idempotencyKey: squareIdempotency.fromContext({ context, action: 'create_payment_link', input }),
+  return squareIdempotency.execute({
+    context,
+    action: 'create_payment_link',
+    input,
+    send: ({ idempotencyKey }) =>
+      squareOps.createPaymentLink({
+        auth: context.auth,
+        locationId: squareInputs.optionalId({ value: p['location_id'], label: locationLabel }),
+        name: squareInputs.requireText({ value: p['name'], label: 'Item Name' }),
+        amount: p['amount'],
+        currency: p['currency'],
+        description: squareInputs.text(p['description']),
+        paymentNote: squareInputs.text(p['payment_note']),
+        redirectUrl: squareInputs.url({ value: p['redirect_url'], label: 'Redirect URL' }),
+        idempotencyKey,
+      }),
   });
 }
 
@@ -60,6 +66,7 @@ export const paymentLinkShared = { linkProps, runCreateLink };
 type LinkContext = {
   auth: { access_token: string };
   propsValue: Record<string, unknown>;
+  store: IdempotencyStore;
   run?: { id: string };
   step?: { name: string };
 };

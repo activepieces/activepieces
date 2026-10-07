@@ -30,13 +30,18 @@ export const createCustomerAction = createAction({
     if (!['given_name', 'family_name', 'company_name', 'email_address', 'phone_number'].some((key) => fields[key] !== undefined)) {
       throw new Error('Fill at least one of First Name, Last Name, Company, Email or Phone.');
     }
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'create_customer', input: fields });
-    const body = await squareClient.request<unknown>({
-      auth: context.auth,
-      method: HttpMethod.POST,
-      path: ['v2', 'customers'],
-      body: { ...fields, idempotency_key: idempotencyKey },
-      operation: 'create the customer',
+    const body = await squareIdempotency.execute({
+      context,
+      action: 'create_customer',
+      input: fields,
+      send: ({ idempotencyKey }) =>
+        squareClient.request<unknown>({
+          auth: context.auth,
+          method: HttpMethod.POST,
+          path: ['v2', 'customers'],
+          body: { ...fields, idempotency_key: idempotencyKey },
+          operation: 'create the customer',
+        }),
     });
     return squareShape.customer(squareShape.requireObject({ body, key: 'customer', what: 'customer' }));
   },

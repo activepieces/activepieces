@@ -29,7 +29,6 @@ export const updateItemVariationPriceAction = createAction({
   async run(context) {
     const variationId = squareInputs.requireId({ value: context.propsValue.variation_id, label: 'Variation' });
     const { item: _item, ...input } = context.propsValue;
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'update_item_variation_price', input });
-    return squareOps.updateVariation({ auth: context.auth, variationId, props: context.propsValue, idempotencyKey });
+    return squareIdempotency.execute({ context, action: 'update_item_variation_price', input, send: ({ idempotencyKey }) => squareOps.updateVariation({ auth: context.auth, variationId, props: context.propsValue, idempotencyKey }) });
   },
 });

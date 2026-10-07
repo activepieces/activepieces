@@ -39,13 +39,19 @@ export const createOrderByIdAction = createAction({
   async run(context) {
     const p = context.propsValue;
     const input = { location_id: p.location_id, customer_id: p.customer_id, items: p.line_items, reference_id: p.reference_id };
-    return squareOps.createOrder({
-      auth: context.auth,
-      locationId: squareInputs.optionalId({ value: p.location_id, label: 'Location ID' }),
-      customerId: squareInputs.optionalId({ value: p.customer_id, label: 'Customer ID' }),
-      referenceId: squareInputs.text(p.reference_id),
-      items: p.line_items,
-      idempotencyKey: squareIdempotency.fromContext({ context, action: 'create_order', input }),
+    return squareIdempotency.execute({
+      context,
+      action: 'create_order',
+      input,
+      send: ({ idempotencyKey }) =>
+        squareOps.createOrder({
+          auth: context.auth,
+          locationId: squareInputs.optionalId({ value: p.location_id, label: 'Location ID' }),
+          customerId: squareInputs.optionalId({ value: p.customer_id, label: 'Customer ID' }),
+          referenceId: squareInputs.text(p.reference_id),
+          items: p.line_items,
+          idempotencyKey,
+        }),
     });
   },
 });

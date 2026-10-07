@@ -32,7 +32,6 @@ export const setInventoryCountAction = createAction({
       locationId: squareInputs.requireId({ value: p.location_id, label: 'Location' }),
       quantity: squareMoney.quantity({ value: p.quantity, label: 'Quantity In Stock', allowZero: true }),
     });
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'set_inventory_count', input: change });
-    return squareOps.changeInventory({ auth: context.auth, change: { ...change, physical_count: { ...change.physical_count, occurred_at: new Date().toISOString() } }, idempotencyKey });
+    return squareIdempotency.execute({ context, action: 'set_inventory_count', input: change, send: ({ idempotencyKey }) => squareOps.changeInventory({ auth: context.auth, change: { ...change, physical_count: { ...change.physical_count, occurred_at: new Date().toISOString() } }, idempotencyKey }) });
   },
 });

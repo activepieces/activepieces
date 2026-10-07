@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
+import { SquareApiError } from '../src/lib/common/client';
 import { squareIdempotency } from '../src/lib/common/idempotency';
+import { memoryStore, sharedContext } from './helpers';
 import { squareInputs } from '../src/lib/common/inputs';
 import { squareMoney } from '../src/lib/common/money';
 
@@ -59,28 +61,63 @@ describe('money', () => {
 });
 
 describe('idempotency keys', () => {
-  const base = { custom: undefined, runId: 'run-1', stepName: 'step_1', action: 'refund_payment', input: { a: 1, b: { c: 2 } } };
+  const rejected = () => new SquareApiError({ operation: 'x', status: 400, responseBody: { errors: [{ code: 'BAD_REQUEST' }] } });
+  const lost = () => new SquareApiError({ operation: 'x', status: 502, responseBody: 'bad gateway' });
+  const input = { a: 1, b: { c: 2 } };
 
-  test('same run, step, action and input give the same key', () => {
-    const first = squareIdempotency.key(base);
-    expect(first).toHaveLength(40);
-    expect(squareIdempotency.key({ ...base, input: { b: { c: 2 }, a: 1 } })).toBe(first);
+  async function attempt({ store, fail, propsValue = {}, value = input }: { store: ReturnType<typeof memoryStore>; fail?: () => Error; propsValue?: Record<string, unknown>; value?: unknown }) {
+    const keys: string[] = [];
+    const run = squareIdempotency.execute({
+      context: sharedContext({ propsValue, store }),
+      action: 'record_external_payment',
+      input: value,
+      send: async ({ idempotencyKey }) => {
+        keys.push(idempotencyKey);
+        if (fail) {
+          throw fail();
+        }
+        return idempotencyKey;
+      },
+    });
+    await run.catch(() => undefined);
+    return keys[0];
+  }
+
+  test('loop iterations with the same input get different keys', async () => {
+    const store = memoryStore();
+    const first = await attempt({ store });
+    const second = await attempt({ store });
+    expect(first).not.toBe(second);
+    expect(first.length).toBeLessThanOrEqual(45);
   });
 
-  test('a different run, step or input gives a new key', () => {
-    const first = squareIdempotency.key(base);
-    expect(squareIdempotency.key({ ...base, runId: 'run-2' })).not.toBe(first);
-    expect(squareIdempotency.key({ ...base, stepName: 'step_2' })).not.toBe(first);
-    expect(squareIdempotency.key({ ...base, input: { a: 2, b: { c: 2 } } })).not.toBe(first);
+  test('a retry after a lost response reuses the key, then the next iteration gets a new one', async () => {
+    const store = memoryStore();
+    const failed = await attempt({ store, fail: lost });
+    const retried = await attempt({ store });
+    const next = await attempt({ store });
+    expect(retried).toBe(failed);
+    expect(next).not.toBe(failed);
   });
 
-  test('custom keys win and are length checked', () => {
-    expect(squareIdempotency.key({ ...base, custom: ' my-key ' })).toBe('my-key');
-    expect(() => squareIdempotency.key({ ...base, custom: 'x'.repeat(46) })).toThrow('at most 45');
+  test('a definite rejection frees the key', async () => {
+    const store = memoryStore();
+    const failed = await attempt({ store, fail: rejected });
+    expect(await attempt({ store })).not.toBe(failed);
   });
 
-  test('without a run id each call is unique', () => {
-    expect(squareIdempotency.key({ ...base, runId: undefined })).not.toBe(squareIdempotency.key({ ...base, runId: undefined }));
+  test('a different input does not reuse a pending key', async () => {
+    const store = memoryStore();
+    const failed = await attempt({ store, fail: lost });
+    expect(await attempt({ store, value: { a: 2 } })).not.toBe(failed);
+    expect(squareIdempotency.canonical({ b: { c: 2 }, a: 1 })).toBe(squareIdempotency.canonical(input));
+  });
+
+  test('custom keys win and are length checked', async () => {
+    const store = memoryStore();
+    expect(await attempt({ store, propsValue: { idempotency_key: ' my-key ' } })).toBe('my-key');
+    expect(await attempt({ store, propsValue: { idempotency_key: ' my-key ' } })).toBe('my-key');
+    expect(() => squareIdempotency.customKey({ value: 'x'.repeat(46) })).toThrow('at most 45');
   });
 });
 

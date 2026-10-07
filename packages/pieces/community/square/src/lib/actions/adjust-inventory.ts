@@ -35,8 +35,7 @@ export const adjustInventoryAction = createAction({
       quantity: squareMoney.quantity({ value: p.quantity, label: 'Quantity' }),
       reason: squareInputs.requireText({ value: p.reason, label: 'Reason' }),
     });
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'adjust_inventory', input: change });
-    return squareOps.changeInventory({ auth: context.auth, change: { ...change, adjustment: { ...change.adjustment, occurred_at: new Date().toISOString() } }, idempotencyKey });
+    return squareIdempotency.execute({ context, action: 'adjust_inventory', input: change, send: ({ idempotencyKey }) => squareOps.changeInventory({ auth: context.auth, change: { ...change, adjustment: { ...change.adjustment, occurred_at: new Date().toISOString() } }, idempotencyKey }) });
   },
 });
 

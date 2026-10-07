@@ -87,13 +87,18 @@ export const recordExternalPaymentAction = createAction({
       external_details: source === 'EXTERNAL' ? { type: externalType, source: externalSource } : undefined,
       autocomplete: true,
     });
-    const idempotencyKey = squareIdempotency.fromContext({ context, action: 'record_external_payment', input: payload });
-    const body = await squareClient.request<unknown>({
-      auth: context.auth,
-      method: HttpMethod.POST,
-      path: ['v2', 'payments'],
-      body: { ...payload, idempotency_key: idempotencyKey },
-      operation: 'record the payment',
+    const body = await squareIdempotency.execute({
+      context,
+      action: 'record_external_payment',
+      input: payload,
+      send: ({ idempotencyKey }) =>
+        squareClient.request<unknown>({
+          auth: context.auth,
+          method: HttpMethod.POST,
+          path: ['v2', 'payments'],
+          body: { ...payload, idempotency_key: idempotencyKey },
+          operation: 'record the payment',
+        }),
     });
     return squareShape.payment(squareShape.requireObject({ body, key: 'payment', what: 'payment' }));
   },
