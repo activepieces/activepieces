@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { gscClient, GscApiError, GscAuth } from './client';
+import { gscClient, GscAuth } from './client';
 import { AnalyticsQuery, Dimension } from './inputs';
 import { gscShape } from './shape';
 
@@ -19,11 +19,8 @@ async function addSite({ auth, siteUrl }: { auth: GscAuth; siteUrl: string }): P
   try {
     const site = await getSite({ auth, siteUrl });
     return { success: true, siteUrl, permissionLevel: site.permissionLevel || null };
-  } catch (error) {
-    if (error instanceof GscApiError) {
-      return { success: true, siteUrl, permissionLevel: null };
-    }
-    throw error;
+  } catch {
+    return { success: true, siteUrl, permissionLevel: null };
   }
 }
 

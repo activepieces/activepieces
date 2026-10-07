@@ -192,12 +192,21 @@ function filters({ value }: { value: unknown }): AnalyticsFilter[] {
     if (!operator) {
       throw new Error(`${position}: operator must be one of ${OPERATORS.join(', ')}.`);
     }
-    const expression = text(Reflect.get(item, 'expression'));
-    if (expression.length === 0) {
+    const raw: unknown = Reflect.get(item, 'expression');
+    const expression = typeof raw === 'string' ? raw : text(raw);
+    if (expression.trim().length === 0) {
       throw new Error(`${position}: expression is empty.`);
     }
-    return { dimension, operator, expression: dimension === 'device' ? expression.toUpperCase() : expression };
+    return { dimension, operator, expression: deviceName({ dimension, operator, expression }) };
   });
+}
+
+function deviceName({ dimension, operator, expression }: { dimension: string; operator: string; expression: string }): string {
+  if (dimension !== 'device' || (operator !== 'equals' && operator !== 'notEquals')) {
+    return expression;
+  }
+  const device = DEVICES.find((name) => name === expression.trim().toUpperCase());
+  return device ?? expression;
 }
 
 function choice<T extends string>({ value, options, label }: { value: unknown; options: readonly T[]; label: string }): T | undefined {
@@ -278,6 +287,8 @@ export const FILTER_DIMENSIONS = ['query', 'page', 'country', 'device', 'searchA
 export const OPERATORS = ['equals', 'notEquals', 'contains', 'notContains', 'includingRegex', 'excludingRegex'] as const;
 export const SEARCH_TYPES = ['web', 'image', 'video', 'news', 'discover', 'googleNews'] as const;
 export const AGGREGATION_TYPES = ['auto', 'byPage', 'byProperty', 'byNewsShowcasePanel'] as const;
+const DEVICES = ['DESKTOP', 'MOBILE', 'TABLET'];
+
 export const DATA_STATES = ['final', 'all', 'hourly_all'] as const;
 
 export const gscInputs = {

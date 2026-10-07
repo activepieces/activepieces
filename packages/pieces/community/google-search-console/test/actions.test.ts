@@ -54,6 +54,22 @@ describe('sites', () => {
     expect(await addSite.run(context({ siteUrl: SITE }))).toEqual({ success: true, siteUrl: SITE, permissionLevel: null });
   });
 
+  test('add site still succeeds when the follow-up read hits a network error', async () => {
+    let calls = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        calls += 1;
+        if (calls === 1) {
+          return new Response(null, { status: 204 });
+        }
+        throw new TypeError('fetch failed');
+      }),
+    );
+    expect(await addSite.run(context({ siteUrl: SITE }))).toEqual({ success: true, siteUrl: SITE, permissionLevel: null });
+    expect(calls).toBe(2);
+  });
+
   test('add site fails when the PUT fails', async () => {
     stubFetch(() => ({ status: 400, body: googleError({ code: 400, message: 'Invalid site URL', reason: 'invalid' }) }));
     await expect(addSite.run(context({ siteUrl: SITE }))).rejects.toThrow('Invalid site URL');

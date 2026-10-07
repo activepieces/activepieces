@@ -97,6 +97,15 @@ describe('analytics query', () => {
     expect(() => gscInputs.filters({ value: [{ dimension: 'query', operator: 'contains', expression: ' ' }] })).toThrow('expression is empty');
   });
 
+  test('filter expressions are sent exactly as given except device names for equals/notEquals', () => {
+    expect(gscInputs.filters({ value: [{ dimension: 'device', operator: 'includingRegex', expression: '^\\w+$' }] })).toEqual([
+      { dimension: 'device', operator: 'includingRegex', expression: '^\\w+$' },
+    ]);
+    expect(gscInputs.filters({ value: [{ dimension: 'query', operator: 'contains', expression: ' shoes ' }] })).toEqual([{ dimension: 'query', operator: 'contains', expression: ' shoes ' }]);
+    expect(gscInputs.filters({ value: [{ dimension: 'device', operator: 'notEquals', expression: ' tablet ' }] })).toEqual([{ dimension: 'device', operator: 'notEquals', expression: 'TABLET' }]);
+    expect(gscInputs.filters({ value: [{ dimension: 'device', operator: 'contains', expression: 'mob' }] })).toEqual([{ dimension: 'device', operator: 'contains', expression: 'mob' }]);
+  });
+
   const base = { startDate: '2026-09-01', endDate: '2026-09-30', searchType: undefined, filters: [], aggregationType: undefined, dataState: undefined, rowLimit: undefined, startRow: undefined };
 
   test('hour forces hourly_all and rejects another data state', () => {
