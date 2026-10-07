@@ -10,11 +10,12 @@ export function EnterpriseTrialSalesLink({
   surface,
   label,
   size,
+  variant = 'outline',
   className,
 }: EnterpriseTrialSalesLinkProps) {
   const { capture } = useTelemetry();
   return (
-    <Button variant="outline" size={size} className={className} asChild>
+    <Button variant={variant} size={size} className={className} asChild>
       <a
         href={planSelectorUtils.SALES_URL}
         target="_blank"
@@ -35,6 +36,7 @@ export function EnterpriseTrialSalesLink({
 type EnterpriseTrialSalesLinkProps = {
   surface: string;
   label?: string;
-  size?: 'sm' | 'default';
+  size?: 'xs' | 'sm' | 'default';
+  variant?: 'outline' | 'default' | 'link';
   className?: string;
 };

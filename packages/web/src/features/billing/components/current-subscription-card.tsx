@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { billingUtils } from '../utils/billing-utils';
+
+import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
 type CurrentSubscriptionCardProps = {
   info: PlatformBillingInformation;
@@ -23,9 +26,9 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
-  const trialEndsAt = liveEnterpriseTrialEndsAt(info);
+  const trialEndsAt = enterpriseTrialHooks.useLiveTrialEndsAt();
 
-  if (!isNil(trialEndsAt)) {
+  if (!isNil(trialEndsAt) && !isPaid) {
     return (
       <div
         className={cn(
@@ -57,10 +60,23 @@ export const CurrentSubscriptionCard = ({
               plan: planTitle(info),
             })}
           </span>
+          <span className="text-sm text-gray-11">
+            {t(
+              'To keep Enterprise features after that, talk to sales. Plus and Team plans add credits and seats but not Enterprise features.',
+            )}
+          </span>
         </div>
-        <Button className="w-full" onClick={onExplorePlans}>
-          {t('Upgrade')}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <EnterpriseTrialSalesLink
+            surface="enterprise_trial_billing"
+            variant="default"
+            className="flex-1"
+            label={t('Talk to sales')}
+          />
+          <Button variant="outline" className="flex-1" onClick={onExplorePlans}>
+            {t('Explore plans')}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -111,16 +127,6 @@ export const CurrentSubscriptionCard = ({
     </div>
   );
 };
-
-function liveEnterpriseTrialEndsAt(
-  info: PlatformBillingInformation,
-): string | null {
-  const endsAt = info.plan.enterpriseTrialEndsAt;
-  if (isNil(endsAt) || dayjs(endsAt).isBefore(dayjs())) {
-    return null;
-  }
-  return endsAt;
-}
 
 function planTitle(info: PlatformBillingInformation): string {
   if (!billingUtils.isPaidPlan(info.plan.plan)) {

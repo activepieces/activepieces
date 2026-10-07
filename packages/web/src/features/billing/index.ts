@@ -38,9 +38,14 @@ export type { FeatureKey } from './components/request-trial';
 export { TIER_LABELS } from './utils/feature-tier';
 export type { FeatureTier } from './utils/feature-tier';
 export { PLATFORM_FEATURES } from './utils/platform-features';
+export { EnterpriseTrialBillingStatus } from './components/enterprise-trial-billing-status';
 export { EnterpriseTrialCta } from './components/enterprise-trial-cta';
 export { EnterpriseTrialDialog } from './components/enterprise-trial-dialog';
 export { EnterpriseTrialEndedDialog } from './components/enterprise-trial-ended-dialog';
 export { EnterpriseTrialEndingAlert } from './components/enterprise-trial-ending-alert';
 export { EnterpriseTrialPill } from './components/enterprise-trial-pill';
-export { enterpriseTrialHooks } from './hooks/enterprise-trial-hooks';
+export {
+  enterpriseTrialHooks,
+  enterpriseTrialKey,
+} from './hooks/enterprise-trial-hooks';
+export { useEnterpriseTrialDesignStore } from './stores/enterprise-trial-design-state';

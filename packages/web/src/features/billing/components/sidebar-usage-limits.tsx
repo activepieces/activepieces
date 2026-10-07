@@ -16,10 +16,15 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
+import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { billingUtils, BILLING_DATE_FORMAT } from '../utils/billing-utils';
 
 import { CreditsActionButton } from './credits-action-button';
+import {
+  EnterpriseTrialLine,
+  EnterpriseTrialPill,
+} from './enterprise-trial-pill';
 
 export const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -34,6 +39,8 @@ export const SidebarUsageLimits = React.memo(() => {
     severity,
   } = useCreditsUsage();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const trial = enterpriseTrialHooks.useTrial();
+  const inTrial = trial.state === 'active';
 
   const inWarning = !isUnlimited && severity !== 'default';
   const canManage = isPlatformAdmin && inWarning;
@@ -65,7 +72,7 @@ export const SidebarUsageLimits = React.memo(() => {
   }
 
   if (isNil(creditsRemaining)) {
-    return null;
+    return inTrial ? <EnterpriseTrialPill /> : null;
   }
 
   const creditsText = billingUtils.formatCredits(creditsRemaining);
@@ -77,7 +84,8 @@ export const SidebarUsageLimits = React.memo(() => {
   });
   return (
     <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
-      <div className="flex items-center justify-between gap-2">
+      {inTrial && <EnterpriseTrialLine trial={trial} />}
+      <div className="flex h-5 items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
           <span className="text-sm font-semibold truncate">{creditsText}</span>
           <span className="text-xs text-gray-11">{t('credits')}</span>
@@ -91,7 +99,7 @@ export const SidebarUsageLimits = React.memo(() => {
           {t('{percent}% used', { percent: percentUsed })}
         </Badge>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex h-5 items-center gap-2">
         {!isNil(resetLine) && (
           <TextWithTooltip
             tooltipMessage={resetLine.label + ' ' + resetLine.value}
@@ -104,7 +112,7 @@ export const SidebarUsageLimits = React.memo(() => {
         <span className="grow"></span>
         {isPlatformAdmin && (
           <Link to="/platform/billing" className="shrink-0">
-            <Button variant="link" size="xs">
+            <Button variant="link" size="xs" className="h-5 px-0">
               {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
             </Button>
           </Link>

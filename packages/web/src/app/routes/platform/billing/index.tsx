@@ -27,6 +27,7 @@ import {
   UsersCard,
   billingMutations,
   billingUtils,
+  EnterpriseTrialBillingStatus,
   enterpriseTrialHooks,
   useCancelSubscriptionGuard,
   useManagePlanDialogStore,
@@ -59,6 +60,7 @@ export function BillingPlanTab() {
             <BillingRefreshButton />
           </div>
           <Separator />
+          <EnterpriseTrialBillingStatus />
           <PlanTab platform={platform} info={info} />
         </div>
       )}
@@ -156,15 +158,18 @@ function PlanTab({ platform, info }: PlanTabProps) {
               <div className="flex flex-col gap-2">
                 <span>
                   {isNil(trialEndsAt)
-                    ? t('Your current plan is {plan}.', {
+                    ? `${t('Your current plan is {plan}.', {
                         plan: info.autumnPlanName ?? t('Free'),
-                      })
-                    : t('You are on the Enterprise Trial until {date}.', {
-                        date: dayjs(trialEndsAt).format('MMM D, YYYY'),
-                      })}{' '}
-                  {t(
-                    'Upgrade anytime to get more credits and unlock features.',
-                  )}
+                      })} ${t(
+                        'Upgrade anytime to get more credits and unlock features.',
+                      )}`
+                    : t(
+                        "You're on a free Enterprise trial until {date}, on top of your {plan} plan. The trial adds Enterprise features only; your credits still come from {plan} and don't change.",
+                        {
+                          date: dayjs(trialEndsAt).format('MMM D, YYYY'),
+                          plan: info.autumnPlanName ?? t('Free'),
+                        },
+                      )}
                 </span>
                 <LinkButton
                   {...adminControl(AdminControl.BILLING_PLANS_OPEN)}

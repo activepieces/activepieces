@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Sparkles } from 'lucide-react';
-import { ReactNode } from 'react';
+import { cloneElement, isValidElement, ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -43,13 +43,20 @@ export function EnterpriseTrialCta({
   }
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
-      {fallback}
-      <Button type="button" variant="outline" className="gap-2" onClick={open}>
+      <Button type="button" className="gap-2" onClick={open}>
         <Sparkles className="size-4" />
         {t('Start free trial')}
       </Button>
+      {asSecondary(fallback)}
     </div>
   );
+}
+
+function asSecondary(node: ReactNode): ReactNode {
+  if (isValidElement<{ variant?: string }>(node) && node.type === Button) {
+    return cloneElement(node, { variant: 'outline' });
+  }
+  return node;
 }
 
 type EnterpriseTrialCtaProps = {
