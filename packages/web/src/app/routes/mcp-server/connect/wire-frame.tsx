@@ -70,83 +70,93 @@ export function WireFrame({
   }, []);
 
   return (
-    <div ref={stageRef} className="relative w-full xl:px-[184px] xl:pb-[100px]">
-      {layout?.visible && (
-        <svg
-          className="pointer-events-none absolute inset-0 hidden xl:block"
-          width={layout.width}
-          height={layout.height}
-          aria-hidden
-        >
-          {WIRES.map((wire, index) => {
-            const from = anchor({
-              box: layout.rects.get(wire.from[0]),
-              side: wire.from[1],
-              at: wire.from[2],
-            });
-            const target = anchor({
-              box: layout.rects.get(wire.to[0]),
-              side: wire.to[1],
-              at: wire.to[2],
-            });
-            if (!from || !target) return null;
-            const to = target;
-            return (
-              <g key={`${wire.from[0]}-${wire.from[1]}-${wire.to[0]}`}>
-                <path
-                  d={roundedPath(waypoints({ from, to, wire }))}
-                  fill="none"
-                  strokeWidth={1.5}
-                  pathLength={1}
-                  strokeDasharray={1}
-                  strokeDashoffset={animate ? 1 : 0}
-                  className="stroke-gray-7"
-                >
-                  {animate && (
-                    <animate
-                      attributeName="stroke-dashoffset"
-                      from="1"
-                      to="0"
-                      dur="0.9s"
-                      begin={`${0.2 + index * 0.07}s`}
-                      fill="freeze"
-                      calcMode="spline"
-                      keyTimes="0;1"
-                      keySplines="0.25 0.1 0.25 1"
-                    />
-                  )}
-                </path>
-                <circle cx={from.x} cy={from.y} r={3} className="fill-gray-9" />
-                <circle cx={to.x} cy={to.y} r={3} className="fill-gray-9" />
-              </g>
-            );
-          })}
-        </svg>
-      )}
+    <div className="@container w-full">
+      <div
+        ref={stageRef}
+        className="relative w-full @min-[1040px]:px-[184px] @min-[1040px]:pb-[100px]"
+      >
+        {layout?.visible && (
+          <svg
+            className="pointer-events-none absolute inset-0 hidden @min-[1040px]:block"
+            width={layout.width}
+            height={layout.height}
+            aria-hidden
+          >
+            {WIRES.map((wire, index) => {
+              const from = anchor({
+                box: layout.rects.get(wire.from[0]),
+                side: wire.from[1],
+                at: wire.from[2],
+              });
+              const target = anchor({
+                box: layout.rects.get(wire.to[0]),
+                side: wire.to[1],
+                at: wire.to[2],
+              });
+              if (!from || !target) return null;
+              const to = target;
+              return (
+                <g key={`${wire.from[0]}-${wire.from[1]}-${wire.to[0]}`}>
+                  <path
+                    d={roundedPath(waypoints({ from, to, wire }))}
+                    fill="none"
+                    strokeWidth={1.5}
+                    pathLength={1}
+                    strokeDasharray={1}
+                    strokeDashoffset={animate ? 1 : 0}
+                    className="stroke-gray-7"
+                  >
+                    {animate && (
+                      <animate
+                        attributeName="stroke-dashoffset"
+                        from="1"
+                        to="0"
+                        dur="0.9s"
+                        begin={`${0.2 + index * 0.07}s`}
+                        fill="freeze"
+                        calcMode="spline"
+                        keyTimes="0;1"
+                        keySplines="0.25 0.1 0.25 1"
+                      />
+                    )}
+                  </path>
+                  <circle
+                    cx={from.x}
+                    cy={from.y}
+                    r={3}
+                    className="fill-gray-9"
+                  />
+                  <circle cx={to.x} cy={to.y} r={3} className="fill-gray-9" />
+                </g>
+              );
+            })}
+          </svg>
+        )}
 
-      {NODES.map((node, index) => (
-        <div
-          key={node.id}
-          ref={(element) => {
-            if (element) nodeRefs.current.set(node.id, element);
-            else nodeRefs.current.delete(node.id);
-          }}
-          style={{
-            left: node.left,
-            top: node.top,
-            animationDelay: `${index * 60}ms`,
-          }}
-          className="absolute hidden -translate-x-1/2 -translate-y-1/2 animate-in fade-in zoom-in-95 duration-500 fill-mode-both motion-reduce:animate-none xl:block"
-        >
-          <NodeChip node={node} />
+        {NODES.map((node, index) => (
+          <div
+            key={node.id}
+            ref={(element) => {
+              if (element) nodeRefs.current.set(node.id, element);
+              else nodeRefs.current.delete(node.id);
+            }}
+            style={{
+              left: node.left,
+              top: node.top,
+              animationDelay: `${index * 60}ms`,
+            }}
+            className="absolute hidden -translate-x-1/2 -translate-y-1/2 animate-in fade-in zoom-in-95 duration-500 fill-mode-both motion-reduce:animate-none @min-[1040px]:block"
+          >
+            <NodeChip node={node} />
+          </div>
+        ))}
+
+        <div className="flex justify-center pb-8 @min-[1040px]:h-[136px] @min-[1040px]:items-center @min-[1040px]:pb-0">
+          <div ref={headerRef}>{header}</div>
         </div>
-      ))}
-
-      <div className="flex justify-center pb-8 xl:h-[176px] xl:items-center xl:pb-0">
-        <div ref={headerRef}>{header}</div>
-      </div>
-      <div ref={contentRef} className="relative xl:mt-14">
-        {children}
+        <div ref={contentRef} className="relative @min-[1040px]:mt-14">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -276,8 +286,9 @@ function prefersReducedMotion(): boolean {
 
 const CONTENT_ID = 'content';
 const HEADER_ID = 'header';
-const MIN_FRAME_WIDTH = 900;
+const MIN_FRAME_WIDTH = 1040;
 const GUTTER = '76px';
+const STEPPED_GUTTER = '100px';
 
 const APP_LOGOS = [
   { name: 'Slack', logo: 'https://cdn.activepieces.com/pieces/slack.png' },
@@ -291,12 +302,12 @@ const APP_LOGOS = [
 ];
 
 const NODES: FrameNode[] = [
-  { id: 'apps', kind: 'apps', left: '120px', top: '70px' },
+  { id: 'apps', kind: 'apps', left: '120px', top: '50px' },
   {
     id: 'tools',
     kind: 'feature',
     left: 'calc(100% - 110px)',
-    top: '70px',
+    top: '50px',
     icon: Wrench,
     label: () => t('MCP tools'),
   },
@@ -311,7 +322,7 @@ const NODES: FrameNode[] = [
   {
     id: 'agents',
     kind: 'feature',
-    left: GUTTER,
+    left: STEPPED_GUTTER,
     top: '70%',
     icon: Bot,
     label: () => t('Agents'),
@@ -327,7 +338,7 @@ const NODES: FrameNode[] = [
   {
     id: 'approvals',
     kind: 'feature',
-    left: `calc(100% - ${GUTTER})`,
+    left: `calc(100% - ${STEPPED_GUTTER})`,
     top: '70%',
     icon: CheckCheck,
     label: () => t('Approvals'),
@@ -346,10 +357,14 @@ const WIRES: Wire[] = [
   { from: [HEADER_ID, 'left'], to: ['apps', 'right'], via: [{ x: 0.5 }] },
   { from: [HEADER_ID, 'right'], to: ['tools', 'left'], via: [{ x: 0.5 }] },
   { from: ['apps', 'bottom'], to: ['flows', 'top'], via: [{ y: 0.5 }] },
-  { from: ['flows', 'bottom'], to: ['agents', 'top'], via: [] },
+  { from: ['flows', 'bottom'], to: ['agents', 'top'], via: [{ y: 0.55 }] },
   { from: ['agents', 'bottom'], to: ['runs', 'left'], via: [] },
-  { from: ['runs', 'right'], to: ['approvals', 'bottom'], via: [] },
-  { from: ['approvals', 'top'], to: ['tables', 'bottom'], via: [] },
+  {
+    from: ['runs', 'right'],
+    to: ['approvals', 'bottom'],
+    via: [{ x: 0.45 }, { y: { off: -16 } }],
+  },
+  { from: ['approvals', 'top'], to: ['tables', 'bottom'], via: [{ y: 0.45 }] },
   { from: ['tables', 'top'], to: ['tools', 'bottom'], via: [{ y: 0.5 }] },
 ];
 

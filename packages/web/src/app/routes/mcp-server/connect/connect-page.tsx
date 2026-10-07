@@ -6,7 +6,6 @@ import { ReactNode } from 'react';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import { formatUtils } from '@/lib/format-utils';
-import { cn } from '@/lib/utils';
 
 import { ClientIcon } from '../client-icon';
 import {
@@ -18,6 +17,7 @@ import { mcpClientDisplay } from '../mcp-client-display';
 import { useMcpNav } from '../mcp-nav';
 import { PageBand } from '../page-band';
 
+import { ClientRotator } from './client-rotator';
 import { ConnectHome, useConnectHome } from './use-connect-home';
 import { WireFrame } from './wire-frame';
 
@@ -44,19 +44,10 @@ export function ConnectPage({
     <PageBand className="py-12">
       <WireFrame
         header={
-          <header className="flex max-w-[520px] flex-col items-center gap-4 text-center">
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-              {t('Do more with {brand}, everywhere you use AI.', {
-                brand: home.brandName,
-              })}
-            </h1>
-            <p className="text-balance text-base text-gray-11">
-              {t(
-                '{count, plural, =1 {Your AI can now act in 1 app, build and fix flows, and work with your tables, using the connections and permissions you already have.} other {Your AI can now act in # apps, build and fix flows, and work with your tables, using the connections and permissions you already have.}}',
-                { count: home.pieceCount },
-              )}
-            </p>
-          </header>
+          <h1 className="flex w-fit flex-col items-center gap-2 text-center text-3xl font-semibold leading-tight tracking-tight">
+            <span>{t('Control all your apps and data from')}</span>
+            <ClientRotator />
+          </h1>
         }
       >
         <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-2">
@@ -106,33 +97,47 @@ function ClientGroupCard({
   home: ConnectHome;
   isReachableFromInternet: boolean;
 }) {
+  const nav = useMcpNav();
   if (clients.length === 0) return null;
   return (
     <Card title={title}>
       <ul className="flex flex-col divide-y">
-        {clients.map((client) => (
-          <li
-            key={client.key}
-            className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-          >
-            <ClientIcon icon={client.icon} className="size-8 rounded-lg" />
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-sm font-medium">{client.name}</span>
-              <span className="text-xs text-gray-11">{client.setupHint}</span>
-            </span>
-            {home.grantsByClient.has(client.key) && (
-              <span className="flex items-center gap-1.5 text-xs text-gray-11">
-                <span className="size-1.5 rounded-full bg-success-10" />
-                {t('Connected')}
+        {clients.map((client) => {
+          const clientGrants = home.grantsByClient.get(client.key);
+          return (
+            <li
+              key={client.key}
+              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+            >
+              <ClientIcon icon={client.icon} className="size-8 rounded-lg" />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-sm font-medium">{client.name}</span>
+                {clientGrants ? (
+                  <ConnectionStatus grants={clientGrants} />
+                ) : (
+                  <span className="text-xs text-gray-11">
+                    {client.setupHint}
+                  </span>
+                )}
               </span>
-            )}
-            <InstallButton
-              client={client}
-              onStart={home.startWatching}
-              isReachableFromInternet={isReachableFromInternet}
-            />
-          </li>
-        ))}
+              {clientGrants ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => nav.showTab('connections')}
+                >
+                  {t('Manage')}
+                </Button>
+              ) : (
+                <InstallButton
+                  client={client}
+                  onStart={home.startWatching}
+                  isReachableFromInternet={isReachableFromInternet}
+                />
+              )}
+            </li>
+          );
+        })}
       </ul>
     </Card>
   );
@@ -235,25 +240,29 @@ function ConnectedCard({ grants }: { grants: McpOAuthGrant[] }) {
                 {grant.projectName ?? t('All projects')}
               </span>
             </span>
-            <span className="flex shrink-0 items-center gap-1.5 text-xs text-gray-11">
-              <span
-                className={cn(
-                  'size-1.5 rounded-full',
-                  grant.lastUsedAt ? 'bg-success-10' : 'bg-gray-9',
-                )}
-              />
-              {grant.lastUsedAt
-                ? t('Used {ago}', {
-                    ago: formatUtils.formatDateToAgo(
-                      new Date(grant.lastUsedAt),
-                    ),
-                  })
-                : t('Waiting for first call')}
-            </span>
+            <ConnectionStatus grants={[grant]} />
           </li>
         ))}
       </ul>
     </Card>
+  );
+}
+
+function ConnectionStatus({ grants }: { grants: McpOAuthGrant[] }) {
+  const lastUsed = grants
+    .map((grant) => grant.lastUsedAt)
+    .filter((value): value is string => value !== null)
+    .sort()
+    .at(-1);
+  return (
+    <span className="flex shrink-0 items-center gap-1.5 text-xs text-gray-11">
+      <span className="size-1.5 rounded-full bg-success-10" />
+      {lastUsed
+        ? t('Connected · used {ago}', {
+            ago: formatUtils.formatDateToAgo(new Date(lastUsed)),
+          })
+        : t('Connected · no calls yet')}
+    </span>
   );
 }
 

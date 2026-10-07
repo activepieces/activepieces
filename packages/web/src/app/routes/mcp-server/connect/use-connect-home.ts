@@ -1,8 +1,6 @@
 import { McpOAuthGrant } from '@activepieces/shared';
 import { useMemo, useState } from 'react';
 
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { CatalogClient } from '../mcp-client-catalog';
@@ -24,8 +22,6 @@ export function useConnectHome({
     },
     refetchInterval: isWatching ? WATCH_INTERVAL_MS : false,
   });
-  const { pieces } = piecesHooks.usePieces({ skipProjectFilter: true });
-  const { websiteName } = flagsHooks.useWebsiteBranding();
 
   const grants = useMemo(
     () => sortByLastUsed(grantsQuery.data?.data ?? []),
@@ -36,8 +32,6 @@ export function useConnectHome({
     clients,
     grants,
     grantsByClient: groupByClient({ grants, clients }),
-    brandName: websiteName,
-    pieceCount: pieces?.length ?? 0,
     startWatching: () => setWatchUntil(Date.now() + WATCH_DURATION_MS),
   };
 }

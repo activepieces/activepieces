@@ -3380,13 +3380,13 @@
   "Show full output": "Show full output",
   "MCP tools": "MCP tools",
   "Runs and audit": "Runs and audit",
-  "Do more with {brand}, everywhere you use AI.": "Do more with {brand}, everywhere you use AI.",
-  "{count, plural, =1 {Your AI can now act in 1 app, build and fix flows, and work with your tables, using the connections and permissions you already have.} other {Your AI can now act in # apps, build and fix flows, and work with your tables, using the connections and permissions you already have.}}": "{count, plural, =1 {Your AI can now act in 1 app, build and fix flows, and work with your tables, using the connections and permissions you already have.} other {Your AI can now act in # apps, build and fix flows, and work with your tables, using the connections and permissions you already have.}}",
+  "Control all your apps and data from": "Control all your apps and data from",
+  "Manage": "Manage",
   "MCP server URL": "MCP server URL",
   "Works with any MCP client over Streamable HTTP or SSE. Point it at the link and it works.": "Works with any MCP client over Streamable HTTP or SSE. Point it at the link and it works.",
   "Set up any MCP client": "Set up any MCP client",
   "One-time sign-in \u00b7 No API keys \u00b7 Revoke anytime": "One-time sign-in \u00b7 No API keys \u00b7 Revoke anytime",
   "Connected now": "Connected now",
-  "Manage": "Manage",
-  "Used {ago}": "Used {ago}"
+  "Connected \u00b7 used {ago}": "Connected \u00b7 used {ago}",
+  "Connected \u00b7 no calls yet": "Connected \u00b7 no calls yet"
 }
