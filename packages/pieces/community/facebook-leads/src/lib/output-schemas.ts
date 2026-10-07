@@ -3,6 +3,13 @@ import { OutputSchema } from '@activepieces/pieces-framework';
 const leadFields: OutputSchema['fields'] = [
 	{ key: 'lead_id', label: 'Lead ID' },
 	{ key: 'form_id', label: 'Form ID' },
+	{ key: 'platform', label: 'Platform' },
+	{ key: 'ad_id', label: 'Ad ID' },
+	{ key: 'ad_name', label: 'Ad Name' },
+	{ key: 'adset_id', label: 'Ad Set ID' },
+	{ key: 'adset_name', label: 'Ad Set Name' },
+	{ key: 'campaign_id', label: 'Campaign ID' },
+	{ key: 'campaign_name', label: 'Campaign Name' },
 	{ key: 'created_time', label: 'Submitted At', format: 'datetime' },
 	{
 		key: 'data',
