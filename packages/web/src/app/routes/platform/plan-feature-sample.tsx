@@ -129,6 +129,16 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
         'https://www.activepieces.com/docs/admin-guide/guides/event-streaming',
     },
   },
+  piecePolicies: {
+    isLocked: (plan) => !plan.managePiecesEnabled,
+    teaser: {
+      featureKey: 'PIECES',
+      title: 'Unlock Piece Policies',
+      description:
+        'Decide which pieces and actions each project can use, and which actions a flow must use before it can be published.',
+      tier: 'enterprise',
+    },
+  },
   aiProviders: {
     isLocked: (plan) => !plan.aiProvidersEnabled,
     teaser: {
@@ -151,6 +161,7 @@ type PlanFeature =
   | 'secretManagers'
   | 'auditLogs'
   | 'eventStreaming'
+  | 'piecePolicies'
   | 'aiProviders';
 
 type PlanFeatureSampleSpec = {

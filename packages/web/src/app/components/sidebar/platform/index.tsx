@@ -85,7 +85,7 @@ export function PlatformNav() {
             { to: '/platform/pieces', label: t('Pieces'), end: true },
             {
               to: '/platform/pieces/piece-sets',
-              label: t('Piece Sets'),
+              label: t('Piece policies'),
               locked: !platform.plan.managePiecesEnabled,
               tier: PLATFORM_FEATURES.pieces.tier,
             },
