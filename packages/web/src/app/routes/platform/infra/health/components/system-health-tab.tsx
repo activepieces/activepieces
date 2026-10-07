@@ -14,21 +14,21 @@ import {
 import React from 'react';
 import semver from 'semver';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import {
+  SettingsPanel,
+  SettingsRow,
+  StatusDot,
+  StatusTone,
+} from '@/app/components/admin';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent } from '@/components/ui/card';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 import { DailyHealthStrip } from './daily-health-strip';
 
 const HARDWARE_DOCS_LINK =
   'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications';
-
-const PRODUCTION_SETUP_LINK =
-  'https://www.activepieces.com/docs/install/configure-operate/production-setup#what-it-looks-like';
 
 // Matches UNKNOWN_VERSION in @activepieces/server-utils: the sentinel the backend reports when
 // it could not read its release from package.json. Not importable here (server-only package).
@@ -164,41 +164,31 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <Alert variant="primary">
         <Info />
         <AlertDescription className="text-pretty">
           {t(
             'In production setups, we recommend a ratio of about 1 app instance to 10 workers.',
-          )}{' '}
-          <a
-            {...adminControl(AdminControl.HEALTH_PRODUCTION_SETUP_LINK)}
-            href={PRODUCTION_SETUP_LINK}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t('Learn more')}
-          </a>
+          )}
         </AlertDescription>
       </Alert>
-      <div className="flex flex-col gap-4">
-        <HealthCard
-          title={t('App')}
-          description={t('API server, UI and webhook routing')}
-          icon={<Server className="size-4" />}
-          rows={appRows}
-          loading={isPending}
-        />
-        <HealthCard
-          title={t('Workers')}
-          description={t('Machines that execute your flows')}
-          icon={<Boxes className="size-4" />}
-          rows={workerRows}
-          loading={isPending}
-        />
-      </div>
+      <HealthCard
+        title={t('App')}
+        description={t('API server, UI and webhook routing')}
+        icon={<Server className="size-4" />}
+        rows={appRows}
+        loading={isPending}
+      />
+      <HealthCard
+        title={t('Workers')}
+        description={t('Machines that execute your flows')}
+        icon={<Boxes className="size-4" />}
+        rows={workerRows}
+        loading={isPending}
+      />
       <DailyHealthStrip onSeeRuns={onSeeRuns} />
-    </div>
+    </>
   );
 }
 
@@ -222,103 +212,62 @@ function HealthCard({
   loading: boolean;
 }) {
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center gap-3 border-b px-4 py-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11">
+    <SettingsPanel
+      title={
+        <span className="flex items-center gap-2">
           {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold leading-tight">{title}</p>
-          <p className="text-xs text-gray-11">{description}</p>
-        </div>
-      </div>
-      <CardContent className="divide-y p-0">
-        {rows.map((row) => (
-          <HealthRowItem key={row.id} row={row} loading={loading} />
-        ))}
-      </CardContent>
-    </Card>
+          {title}
+        </span>
+      }
+      description={description}
+      flush
+    >
+      {rows.map((row) => (
+        <HealthRowItem key={row.id} row={row} loading={loading} />
+      ))}
+    </SettingsPanel>
   );
 }
 
 function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
   const status = loading ? 'loading' : row.status;
+  const config = STATUS_CONFIG[status];
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div
-        className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-md',
-          status === 'failed'
-            ? 'bg-danger-3 text-danger-11'
-            : status === 'passed'
-            ? 'bg-success-3 text-success-11'
-            : 'bg-gray-3 text-gray-11',
-        )}
-      >
-        {row.icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium">{row.title}</span>
+    <SettingsRow
+      icon={row.icon}
+      title={
+        <>
+          {row.title}
           {row.link && (
             <a
               {...adminControl(AdminControl.HEALTH_CHECK_DOCS_LINK)}
               href={row.link}
               target="_blank"
               rel="noreferrer"
+              aria-label={t('Open docs')}
               className="text-gray-11 hover:text-gray-12"
             >
-              <ExternalLink className="size-3.5" />
+              <ExternalLink aria-hidden className="size-3.5" />
             </a>
           )}
-        </div>
-        <div className="text-xs text-gray-11">{row.message}</div>
-      </div>
-      <StatusPill status={status} />
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: Status }) {
-  if (status === 'loading') {
-    return (
-      <span className="flex items-center gap-1.5 text-xs text-gray-11">
-        <LoadingSpinner className="size-3.5" />
-        {t('Checking')}
-      </span>
-    );
-  }
-  const config = STATUS_CONFIG[status];
-  return (
-    <span
-      className={cn(
-        'flex items-center gap-1.5 text-xs font-medium',
-        config.text,
-      )}
+        </>
+      }
+      description={row.message}
     >
-      <span className={cn('size-1.5 rounded-full', config.dot)} />
-      {t(config.label)}
-    </span>
+      <StatusDot tone={config.tone} pulse={status === 'loading'}>
+        {config.label()}
+      </StatusDot>
+    </SettingsRow>
   );
 }
 
-const STATUS_CONFIG = {
-  passed: {
-    label: 'Passed',
-    text: 'text-success-11',
-    dot: 'bg-success-10',
-  },
-  failed: {
-    label: 'Needs attention',
-    text: 'text-danger-11',
-    dot: 'bg-danger-10',
-  },
-  na: {
-    label: 'Not applicable',
-    text: 'text-gray-11',
-    dot: 'bg-gray-9',
-  },
-} as const;
+const STATUS_CONFIG: Record<Status, { label: () => string; tone: StatusTone }> =
+  {
+    loading: { label: () => t('Checking'), tone: 'neutral' },
+    passed: { label: () => t('Passed'), tone: 'success' },
+    failed: { label: () => t('Needs attention'), tone: 'danger' },
+    na: { label: () => t('Not applicable'), tone: 'neutral' },
+  };
 
 type Status = 'passed' | 'failed' | 'na' | 'loading';
 

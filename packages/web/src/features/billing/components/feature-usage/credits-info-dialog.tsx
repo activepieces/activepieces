@@ -36,7 +36,7 @@ export const CreditsInfoDialog = () => {
       <DialogContent
         showCloseButton
         aria-describedby={undefined}
-        className="max-w-[625px] gap-0 overflow-hidden p-0"
+        className="max-w-xl max-h-[calc(100dvh-2rem)] gap-0 overflow-hidden p-0"
       >
         <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-6 py-12">
           <DialogTitle className="relative flex items-center gap-2 text-2xl font-semibold text-accent-11">

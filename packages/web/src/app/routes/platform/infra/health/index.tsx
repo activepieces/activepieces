@@ -4,7 +4,11 @@ import { Calendar } from 'lucide-react';
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import {
   Select,
   SelectContent,
@@ -61,15 +65,16 @@ export default function SettingsHealthPage({
   };
 
   return (
-    <div className="flex flex-col w-full max-w-[40rem] mx-auto gap-4 px-4">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Health')}
         description={t('Check the status of your platform and its components')}
+        resources={adminPageResources.health}
       >
         {(section === 'runs' || section === 'queue') && (
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger size="sm" className="w-auto">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="size-4" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent side="bottom" align="end">
@@ -81,7 +86,7 @@ export default function SettingsHealthPage({
             </SelectContent>
           </Select>
         )}
-      </DashboardPageHeader>
+      </AdminPageHeader>
 
       {section === 'system' && (
         <SystemHealthTab
@@ -106,7 +111,7 @@ export default function SettingsHealthPage({
       {section === 'queue' && (
         <QueueTab live={live} isLoading={isLiveLoading} />
       )}
-    </div>
+    </AdminPage>
   );
 }
 

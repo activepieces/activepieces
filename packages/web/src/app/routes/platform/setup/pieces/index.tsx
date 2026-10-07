@@ -18,14 +18,19 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -179,17 +184,23 @@ export const PiecesListTab = () => {
     );
 
   return (
-    <>
-      <DashboardPageHeader
+    <AdminPage fill>
+      <AdminPageHeader
         title={t('Pieces')}
         description={t('Manage the pieces that are available to your users')}
-      />
+        resources={adminPageResources.pieces}
+      >
+        <InstallPieceDialog
+          onInstallPiece={() => refetchPieces()}
+          scope={PieceScope.PLATFORM}
+        />
+      </AdminPageHeader>
       <PiecesLockedBanner
         message={t(
           "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
         )}
       />
-      <DataTable
+      <AdminDataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(
           'Start by installing pieces that you want to use in your automations',
@@ -217,16 +228,11 @@ export const PiecesListTab = () => {
           <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
           <DownloadPiecesReportButton key="download-report" />,
           <SyncPiecesButton key="sync" />,
-          <InstallPieceDialog
-            key="install"
-            onInstallPiece={() => refetchPieces()}
-            scope={PieceScope.PLATFORM}
-          />,
         ]}
         virtualizeRows={true}
         hidePagination={true}
       />
-    </>
+    </AdminPage>
   );
 };
 
