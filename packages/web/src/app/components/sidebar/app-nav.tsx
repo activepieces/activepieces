@@ -188,7 +188,7 @@ function ProjectsGroup() {
   const { data: currentUser } = userHooks.useCurrentUser();
   const location = useLocation();
   const navigate = useNavigate();
-  const { state, isMobile } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === 'collapsed' && !isMobile;
   const showCreateProject =
     platform.plan.billedTeamProjectsLimit !== 0 &&
@@ -249,6 +249,9 @@ function ProjectsGroup() {
                   projects={projects ?? []}
                   className={PROJECTS_HEADER_ICON_BUTTON}
                   onCreate={(project) => {
+                    if (isMobile) {
+                      setOpenMobile(false);
+                    }
                     navigate(`/projects/${project.id}/automations`);
                   }}
                 />
@@ -307,7 +310,7 @@ function ProjectItem({
           layout={prefersReducedMotion ? false : 'position'}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           type="button"
-          aria-label={name}
+          aria-current={active ? 'page' : undefined}
           onClick={(event) => {
             event.stopPropagation();
             if (isMobile) {

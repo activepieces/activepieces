@@ -92,7 +92,7 @@ export function AccountSettingsDialog({
             />
             <span
               data-theme="dark"
-              className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100"
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
             >
               <Camera className="size-4 text-gray-12" />
             </span>
