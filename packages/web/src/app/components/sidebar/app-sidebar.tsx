@@ -119,6 +119,13 @@ function AppHeader() {
       draggable={false}
     />
   );
+  const brandName = (
+    <span className={sidebarStyles.labelFade}>
+      {showSwitcher
+        ? currentPlatform?.name ?? t('platform')
+        : branding.websiteName}
+    </span>
+  );
 
   const brandButton =
     showSwitcher && !collapsed ? (
@@ -133,35 +140,31 @@ function AppHeader() {
           <ChevronsUpDown className="text-gray-9" />
         </SidebarMenuButton>
       </PlatformSwitcher>
-    ) : (
+    ) : collapsed ? (
       <SidebarMenuButton
-        asChild
         className={BRAND_BUTTON}
         tooltip={t('Open sidebar')}
+        aria-label={t('Open sidebar')}
+        aria-expanded={false}
+        onClick={toggleSidebar}
       >
+        {logo}
+        {brandName}
+      </SidebarMenuButton>
+    ) : (
+      <SidebarMenuButton asChild className={BRAND_BUTTON}>
         <Link
           to="/"
-          aria-label={collapsed ? t('Open sidebar') : undefined}
           onClick={(event) => {
             if (event.detail > 1) {
               event.preventDefault();
               return;
             }
-            if (!collapsed) {
-              closeMobileSheet();
-              return;
-            }
-            event.preventDefault();
-            event.stopPropagation();
-            toggleSidebar();
+            closeMobileSheet();
           }}
         >
           {logo}
-          <span className={sidebarStyles.labelFade}>
-            {showSwitcher
-              ? currentPlatform?.name ?? t('platform')
-              : branding.websiteName}
-          </span>
+          {brandName}
         </Link>
       </SidebarMenuButton>
     );

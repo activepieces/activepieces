@@ -38,10 +38,15 @@ export const TextWithTooltip = ({
   }, [clampsItsOwnLines]);
 
   useEffect(() => {
+    const element = textRef.current;
+    if (!element) {
+      return;
+    }
     checkTruncation();
-    window.addEventListener('resize', checkTruncation);
-    return () => window.removeEventListener('resize', checkTruncation);
-  }, [checkTruncation]);
+    const observer = new ResizeObserver(checkTruncation);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [checkTruncation, isTruncated]);
 
   const childWithRef = React.cloneElement(children, {
     ref: textRef,
