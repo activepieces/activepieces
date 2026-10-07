@@ -346,6 +346,36 @@ describe('createTaskSubagentTools', () => {
         expect(result).toMatchObject({ status: 'done', summary: 'Saved on retry.' })
     })
 
+    it('gives every task its own guides, so a guide the main chat loaded still reaches the task', async () => {
+        const guideResults: unknown[] = []
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            guideResults.push(await params.tools['ap_load_guide'].execute?.({ topic: 'build_flow' }, EXECUTION_OPTIONS))
+            guideResults.push(await params.tools['ap_load_guide'].execute?.({ topic: 'build_flow' }, EXECUTION_OPTIONS))
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const mainGuide = tool({ description: 'Load a guide', inputSchema: z.object({ topic: z.string() }), execute: async () => 'You already loaded the "build_flow" guide earlier in this turn' })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: { ...toolSet(['ap_build_flow']), ap_load_guide: mainGuide } })
+
+        await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        expect(guideResults[0]).toBe('BUILD FLOW GUIDE')
+        expect(guideResults[1]).toEqual(expect.stringContaining('earlier in this task'))
+    })
+
+    it('never gives a task the tools that create, change or publish saved agents', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool']) })
+
+        await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        expect(Object.keys(runAgentTurn.mock.calls[0][0].tools)).not.toEqual(expect.arrayContaining(['ap_create_agent']))
+        expect(Object.keys(runAgentTurn.mock.calls[0][0].tools).filter((name) => name.includes('agent'))).toEqual([])
+    })
+
     it('offers research only when web search is available', () => {
         expect(createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })).not.toHaveProperty('ap_deep_research')
     })
@@ -380,6 +410,7 @@ const finishTask = vi.fn()
 const MODELS: RunAgentTurnParams['models'] = [{ model: 'test-model', provider: AIProviderName.OPENAI, modelId: 'm', thinkingBudget: 0 }]
 
 const BASE_PARAMS = {
+    guides: { build_flow: 'BUILD FLOW GUIDE' },
     models: MODELS,
     tier: { id: 'smart', thinkingBudget: 0, modelId: 'm' },
     taskPrompt: 'TASK PROMPT',

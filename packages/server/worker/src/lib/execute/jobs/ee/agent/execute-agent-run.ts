@@ -265,7 +265,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 run: (stepMcpToolSet) => {
                     const baseTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
                     const taskTools = createTaskSubagentTools({
-                        tools: baseTools, models: turnModels, tier: config.tier,
+                        tools: baseTools, guides: config.guides, models: turnModels, tier: config.tier,
                         taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
                         beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
                         finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
