@@ -13,7 +13,7 @@ const MALFORMED_INPUT = '{ query: "activepieces pricing", }'
 
 async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_INPUT }: { repairText: string, toolInput?: string }): Promise<RepairTurn> {
     const ranWith: unknown[] = []
-    const repairFormats: unknown[] = []
+    const repairPrompts: string[] = []
     let streamed = 0
     const model = new MockLanguageModelV3({
         doStream: async () => {
@@ -34,7 +34,10 @@ async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_
             return { stream: convertArrayToReadableStream(parts) }
         },
         doGenerate: async (options) => {
-            repairFormats.push(options.responseFormat)
+            if (options.responseFormat?.type === 'json') {
+                throw new Error('400 strict json_schema')
+            }
+            repairPrompts.push(JSON.stringify(options.prompt))
             return {
                 content: [{ type: 'text' as const, text: repairText }],
                 finishReason: { unified: 'stop' as const, raw: 'stop' },
@@ -66,7 +69,7 @@ async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_
         abortSignal: new AbortController().signal,
         log: silentLog,
     })
-    return { ranWith, repairFormats }
+    return { ranWith, repairPrompts }
 }
 
 describe('repairing a tool call the model got wrong', () => {
@@ -103,10 +106,10 @@ describe('repairing a tool call the model got wrong', () => {
     })
 
     it('repairs valid JSON whose field has the wrong type for the tool schema', async () => {
-        const { ranWith, repairFormats } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":"123"}' })
+        const { ranWith, repairPrompts } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":"123"}' })
 
         expect(ranWith).toEqual([{ query: '123' }])
-        expect(repairFormats).toEqual([expect.objectContaining({ type: 'json', schema: expect.objectContaining({ properties: { query: expect.objectContaining({ type: 'string' }) } }) })])
+        expect(repairPrompts).toEqual([expect.stringContaining('\\"query\\":{\\"type\\":\\"string\\"')])
     })
 
     it('does not run the tool when the repaired input still does not match the schema', async () => {
@@ -118,5 +121,5 @@ describe('repairing a tool call the model got wrong', () => {
 
 type RepairTurn = {
     ranWith: unknown[]
-    repairFormats: unknown[]
+    repairPrompts: string[]
 }
