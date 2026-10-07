@@ -1,4 +1,7 @@
-import { ListMcpOAuthGrantsRequestQuery } from '@activepieces/shared';
+import {
+  ListMcpOAuthGrantsRequestQuery,
+  McpOAuthGrant,
+} from '@activepieces/shared';
 import {
   keepPreviousData,
   useMutation,
@@ -13,15 +16,45 @@ import { mcpGrantsApi } from './mcp-grants-api';
 const GRANTS_QUERY_KEY = ['mcp-oauth-grants'];
 
 export const mcpGrantsQueries = {
-  useGrants({ request, refetchInterval }: UseGrantsParams) {
+  useGrants({ request }: UseGrantsParams) {
     return useQuery({
       queryKey: [...GRANTS_QUERY_KEY, request],
       queryFn: () => mcpGrantsApi.list(request),
       placeholderData: keepPreviousData,
+    });
+  },
+  useAllGrants({ request, refetchInterval }: UseAllGrantsParams) {
+    return useQuery({
+      queryKey: [...GRANTS_QUERY_KEY, 'all', request],
+      queryFn: () => listAllGrants({ request }),
       refetchInterval,
     });
   },
 };
+
+async function listAllGrants({
+  request,
+}: {
+  request: AllGrantsRequest;
+}): Promise<McpOAuthGrant[]> {
+  const collect = async ({
+    cursor,
+    pagesLeft,
+  }: {
+    cursor: string | undefined;
+    pagesLeft: number;
+  }): Promise<McpOAuthGrant[]> => {
+    const page = await mcpGrantsApi.list({
+      ...request,
+      cursor,
+      limit: PAGE_SIZE,
+    });
+    if (!page.next || pagesLeft <= 1) return page.data;
+    const rest = await collect({ cursor: page.next, pagesLeft: pagesLeft - 1 });
+    return [...page.data, ...rest];
+  };
+  return collect({ cursor: undefined, pagesLeft: MAX_PAGES });
+}
 
 export const mcpGrantsMutations = {
   useRevoke() {
@@ -39,7 +72,19 @@ export const mcpGrantsMutations = {
   },
 };
 
+const PAGE_SIZE = 100;
+const MAX_PAGES = 20;
+
 type UseGrantsParams = {
   request: ListMcpOAuthGrantsRequestQuery;
-  refetchInterval?: number | false | (() => number | false);
+};
+
+type AllGrantsRequest = Omit<
+  ListMcpOAuthGrantsRequestQuery,
+  'cursor' | 'limit'
+>;
+
+type UseAllGrantsParams = {
+  request: AllGrantsRequest;
+  refetchInterval: () => number | false;
 };

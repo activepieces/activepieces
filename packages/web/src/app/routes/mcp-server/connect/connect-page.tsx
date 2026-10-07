@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, KeyRound } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { formatUtils } from '@/lib/format-utils';
@@ -59,7 +60,17 @@ export function ConnectPage({
             <ClientGroupCard {...group('editors')} {...rowProps} />
           </div>
           <div className="flex flex-col gap-6">
-            {home.grants.length > 0 && <ConnectedCard grants={home.grants} />}
+            {home.isGrantsError ? (
+              <Card title={t('Connected now')}>
+                <DataFetchErrorState
+                  entity={t('connections')}
+                  onRetry={home.refetchGrants}
+                  className="py-4"
+                />
+              </Card>
+            ) : (
+              home.grants.length > 0 && <ConnectedCard grants={home.grants} />
+            )}
             <ServerUrlCard serverUrl={serverUrl} />
             <ClientGroupCard {...group('chat')} {...rowProps} />
           </div>

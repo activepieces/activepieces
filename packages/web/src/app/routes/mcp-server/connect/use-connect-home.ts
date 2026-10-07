@@ -23,11 +23,8 @@ export function useConnectHome({
 }) {
   const clients = useMemo(() => orderClients(catalogClients), [catalogClients]);
   const userId = authenticationSession.getCurrentUserId();
-  const grantsQuery = mcpGrantsQueries.useGrants({
-    request: {
-      limit: MAX_GRANTS,
-      ...(userId === null ? {} : { memberIds: [userId] }),
-    },
+  const grantsQuery = mcpGrantsQueries.useAllGrants({
+    request: userId === null ? {} : { memberIds: [userId] },
     refetchInterval: () =>
       watch.until !== null && Date.now() < watch.until
         ? WATCH_INTERVAL_MS
@@ -35,7 +32,7 @@ export function useConnectHome({
   });
 
   const grants = useMemo(
-    () => sortByLastUsed(grantsQuery.data?.data ?? []),
+    () => sortByLastUsed(grantsQuery.data ?? []),
     [grantsQuery.data],
   );
 
@@ -44,6 +41,8 @@ export function useConnectHome({
     grants,
     grantsByClient: groupByClient({ grants, clients }),
     startWatching: watch.start,
+    isGrantsError: grantsQuery.isError,
+    refetchGrants: grantsQuery.refetch,
   };
 }
 
@@ -75,7 +74,6 @@ function sortByLastUsed(grants: McpOAuthGrant[]): McpOAuthGrant[] {
   );
 }
 
-const MAX_GRANTS = 100;
 const WATCH_INTERVAL_MS = 4000;
 const WATCH_DURATION_MS = 10 * 60 * 1000;
 const CLIENT_ORDER = [
