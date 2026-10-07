@@ -21,32 +21,6 @@ vi.mock('i18next', () => ({
     ),
 }));
 
-describe('modelMeta.costLevel', () => {
-  const level = (input: number, output: number) =>
-    modelMeta.costLevel({
-      metadata: {
-        inputCostPerMillionTokens: input,
-        outputCostPerMillionTokens: output,
-      },
-    });
-
-  it('buckets the blended price into five fixed levels', () => {
-    expect(level(0.1, 0.4)).toBe(1);
-    expect(level(0.5, 0.5)).toBe(2);
-    expect(level(1, 2.9)).toBe(2);
-    expect(level(1, 3)).toBe(3);
-    expect(level(3, 15)).toBe(4);
-    expect(level(15, 75)).toBe(5);
-  });
-
-  it('has no level without both prices', () => {
-    expect(modelMeta.costLevel({ metadata: undefined })).toBeNull();
-    expect(
-      modelMeta.costLevel({ metadata: { inputCostPerMillionTokens: 1 } }),
-    ).toBeNull();
-  });
-});
-
 describe('modelMeta formatting', () => {
   it('formats context windows compactly and prices without noise', () => {
     expect(modelMeta.formatContext({ tokens: 200_000 })).toBe('200K');

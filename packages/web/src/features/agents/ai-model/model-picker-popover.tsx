@@ -1,7 +1,15 @@
+import { isNil } from '@activepieces/core-utils';
 import { AIProviderModel } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Brain, Check, ChevronDown, ChevronRight, Wrench } from 'lucide-react';
-import { ReactNode, useDeferredValue, useMemo, useRef, useState } from 'react';
+import {
+  ReactNode,
+  useDeferredValue,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   Command,
@@ -38,7 +46,19 @@ export function ModelPickerPopover<T>({
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const [highlighted, setHighlighted] = useState('');
   const [activeItem, setActiveItem] = useState<ModelPickerItem<T> | null>(null);
+  const [rowTop, setRowTop] = useState(0);
+  const [detailTop, setDetailTop] = useState(0);
   const movedByKeyboard = useRef(false);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelClose = () => {
+    if (!isNil(closeTimer.current)) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
   const needle = useDeferredValue(search.trim().toLowerCase());
   const visible = useMemo(
     () =>
@@ -70,6 +90,36 @@ export function ModelPickerPopover<T>({
     group.collapsible !== true ||
     needle !== '' ||
     (toggled[group.id] ?? group.defaultOpen === true);
+
+  const showDetail = ({
+    item,
+    row,
+  }: {
+    item: ModelPickerItem<T>;
+    row: Element | null | undefined;
+  }) => {
+    setActiveItem(item);
+    const frame = frameRef.current;
+    if (isNil(frame) || isNil(row)) {
+      return;
+    }
+    setRowTop(
+      row.getBoundingClientRect().top - frame.getBoundingClientRect().top,
+    );
+  };
+
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    const card = cardRef.current;
+    if (isNil(frame) || isNil(card)) {
+      return;
+    }
+    const frameTop = frame.getBoundingClientRect().top;
+    const highest = VIEWPORT_MARGIN - frameTop;
+    const lowest =
+      window.innerHeight - VIEWPORT_MARGIN - frameTop - card.offsetHeight;
+    setDetailTop(Math.max(highest, Math.min(rowTop, lowest)));
+  }, [rowTop, activeItem]);
 
   const pick = (item: ModelPickerItem<T>) => {
     onPick(item.value);
@@ -114,7 +164,12 @@ export function ModelPickerPopover<T>({
         setHighlighted(value);
         const item = itemByValue.get(value);
         if (item !== undefined && movedByKeyboard.current) {
-          setActiveItem(item);
+          showDetail({
+            item,
+            row: Array.from(
+              frameRef.current?.querySelectorAll('[cmdk-item]') ?? [],
+            ).find((row) => row.getAttribute('data-value') === value),
+          });
         }
       }}
       onKeyDown={(event) => {
@@ -143,14 +198,9 @@ export function ModelPickerPopover<T>({
               ? event.target.closest('[cmdk-item]')
               : null;
           const item = itemByValue.get(row?.getAttribute('data-value') ?? '');
-          if (item !== undefined) {
+          if (item !== undefined && item !== activeItem) {
             movedByKeyboard.current = false;
-            setActiveItem(item);
-          }
-        }}
-        onPointerLeave={() => {
-          if (!movedByKeyboard.current) {
-            setActiveItem(null);
+            showDetail({ item, row });
           }
         }}
       >
@@ -229,15 +279,37 @@ export function ModelPickerPopover<T>({
           detail === undefined ? 'w-[420px]' : 'w-[400px]',
         )}
       >
-        {list}
-        {detail !== undefined && activeItem !== null && (
-          <div
-            data-testid="model-picker-detail"
-            className="absolute top-0 right-full mr-2 hidden w-[280px] rounded-md border bg-panel p-4 text-gray-12 shadow-md sm:block"
-          >
-            {detail(activeItem)}
-          </div>
-        )}
+        <div
+          ref={frameRef}
+          className="relative"
+          onPointerEnter={cancelClose}
+          onPointerLeave={() => {
+            if (movedByKeyboard.current) {
+              return;
+            }
+            cancelClose();
+            closeTimer.current = setTimeout(
+              () => setActiveItem(null),
+              DETAIL_CLOSE_DELAY_MS,
+            );
+          }}
+        >
+          {list}
+          {detail !== undefined && activeItem !== null && (
+            <div
+              ref={cardRef}
+              className="absolute right-full hidden pr-2 transition-[top] duration-150 ease-out sm:block"
+              style={{ top: detailTop }}
+            >
+              <div
+                data-testid="model-picker-detail"
+                className="w-[300px] rounded-lg border bg-panel p-5 text-gray-12 shadow-lg"
+              >
+                {detail(activeItem)}
+              </div>
+            </div>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -268,10 +340,7 @@ function PickerRow<T>({
   ];
   return (
     <span
-      className={cn(
-        'flex w-full min-w-0 flex-col gap-0.5',
-        indented && 'pl-14',
-      )}
+      className={cn('flex w-full min-w-0 flex-col gap-0.5', indented && 'pl-7')}
     >
       <span className="flex w-full min-w-0 items-center gap-2">
         {item.leading}
@@ -383,6 +452,8 @@ function itemValue<T>({
 }
 
 const GROUP_CAP = 30;
+const DETAIL_CLOSE_DELAY_MS = 150;
+const VIEWPORT_MARGIN = 12;
 
 export type ModelPickerItem<T> = {
   id: string;

@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import { aiModelHooks } from './hooks';
-import { CostBar, ModelDetail, ModelDetailCard } from './model-detail-card';
+import { ModelDetail, ModelDetailCard } from './model-detail-card';
 import { modelMeta } from './model-meta';
 import { ModelPickerGroup, ModelPickerPopover } from './model-picker-popover';
 
@@ -48,7 +48,7 @@ export function ModelPicker({
   );
 
   if (isLoading) {
-    return <Skeleton className={cn('h-14 w-full rounded-lg', className)} />;
+    return <Skeleton className={cn('h-9 w-full', className)} />;
   }
 
   return (
@@ -86,7 +86,7 @@ export function ModelPicker({
         disabled={disabled}
         data-testid="model-picker-trigger"
         className={cn(
-          'flex min-h-14 w-full min-w-0 items-center gap-3 rounded-lg border bg-panel px-3 py-2 text-left shadow-xs transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50 data-[state=open]:border-gray-8',
+          'flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-panel px-2.5 text-left text-sm transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50',
           className,
         )}
       >
@@ -132,7 +132,10 @@ export function modelPickerView({
         description: tier.description ?? undefined,
         model: tier.main,
         runsOn: tier.main.keyName,
-        fallbacks: tier.fallbacks.map((fallback) => fallback.name),
+        fallbacks: tier.fallbacks.map((fallback) => ({
+          name: fallback.name,
+          keyName: fallback.keyName,
+        })),
         showPrices: true,
       },
     };
@@ -196,7 +199,7 @@ export function modelPickerView({
           title: model.name,
           leading: <KeyLogo logoUrl={info.logoUrl} name={info.name} />,
           model: optionModel,
-          runsOn: `${info.name} · ${key.name}`,
+          runsOn: key.name,
           fallbacks: [],
           showPrices: true,
         },
@@ -287,20 +290,8 @@ function resolveCurrent({
           kind: 'tier',
           id: tier.id,
           label: tier.name,
-          leading: <TierTile emoji={tier.emoji} size="lg" />,
+          leading: <TierTile emoji={tier.emoji} size="sm" />,
           source: isNil(movedTo) ? t('Tier') : t('Moved'),
-          facts: [
-            tier.main.name,
-            ...(tier.fallbacks.length === 0
-              ? []
-              : [
-                  t('{n, plural, =1 {+1 fallback} other {+# fallbacks}}', {
-                    n: tier.fallbacks.length,
-                  }),
-                ]),
-            ...contextFact({ model: tier.main }),
-          ],
-          costLevel: modelMeta.costLevel({ metadata: tier.main.metadata }),
         };
   }
   if (shown.provider === AIProviderName.ACTIVEPIECES) {
@@ -313,13 +304,8 @@ function resolveCurrent({
           kind: 'credits',
           id: tier.id,
           label: tier.label,
-          leading: <CreditTile tierId={tier.id} size="lg" />,
+          leading: <CreditTile tierId={tier.id} size="sm" />,
           source: t('Credits'),
-          facts: [
-            creditDescriptionOf({ tierId: tier.id }) ?? tier.model.modelId,
-            ...contextFact({ model: tier.model }),
-          ],
-          costLevel: modelMeta.costLevel({ metadata: tier.model.metadata }),
         };
   }
   const key =
@@ -340,47 +326,21 @@ function resolveCurrent({
           kind: 'hidden',
           id: shown.modelId,
           label: shown.modelId,
-          leading: <WarningTile />,
+          leading: (
+            <TriangleAlert className="size-4 shrink-0 text-warning-11" />
+          ),
           source: t('Hidden by admin'),
-          facts: [t('Still runs, but no longer offered')],
-          costLevel: null,
         }
       : unavailablePick({ label: shown.modelId });
   }
   const info = modelMeta.providerInfoOf({ provider: key.provider });
-  const metadata = model.metadata;
   return {
     kind: 'model',
     id: model.id,
     configId: key.providerConfigId,
     label: model.name,
-    leading: <KeyLogo logoUrl={info.logoUrl} name={info.name} size="sm" />,
+    leading: <KeyLogo logoUrl={info.logoUrl} name={info.name} size="xxs" />,
     source: key.name,
-    facts: [
-      ...(isNil(metadata?.contextTokens)
-        ? []
-        : [
-            t('{context} context', {
-              context: modelMeta.formatContext({
-                tokens: metadata.contextTokens,
-              }),
-            }),
-          ]),
-      ...(isNil(metadata?.inputCostPerMillionTokens) ||
-      isNil(metadata?.outputCostPerMillionTokens)
-        ? []
-        : [
-            t('{input} / {output} per 1M', {
-              input: modelMeta.formatPrice({
-                perMillion: metadata.inputCostPerMillionTokens,
-              }),
-              output: modelMeta.formatPrice({
-                perMillion: metadata.outputCostPerMillionTokens,
-              }),
-            }),
-          ]),
-    ],
-    costLevel: modelMeta.costLevel({ metadata }),
   };
 }
 
@@ -389,10 +349,8 @@ function emptyPick(): CurrentPick {
     kind: 'empty',
     id: '',
     label: t('Pick a model'),
-    leading: <EmptyTile />,
+    leading: null,
     source: '',
-    facts: [t('Tiers, credits and your keys')],
-    costLevel: null,
   };
 }
 
@@ -401,37 +359,27 @@ function unavailablePick({ label }: { label: string }): CurrentPick {
     kind: 'unavailable',
     id: '',
     label,
-    leading: <WarningTile />,
+    leading: <TriangleAlert className="size-4 shrink-0 text-warning-11" />,
     source: t('Unavailable'),
-    facts: [t('Pick another model')],
-    costLevel: null,
   };
 }
 
 function TriggerContent({ current }: { current: CurrentPick }) {
   const warn = current.kind === 'unavailable' || current.kind === 'hidden';
-  const facts = warn ? current.facts : [current.source, ...current.facts];
   return (
     <>
       {current.leading}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-medium text-gray-12">
-            {current.label}
+      <span className="truncate font-medium text-gray-12">{current.label}</span>
+      {current.source !== '' &&
+        (warn ? (
+          <span className="shrink-0 rounded-full bg-warning-3 px-1.5 py-0.5 text-xss leading-none text-warning-11">
+            {current.source}
           </span>
-          {warn && (
-            <span className="shrink-0 rounded-full bg-warning-3 px-1.5 py-0.5 text-xss leading-none text-warning-11">
-              {current.source}
-            </span>
-          )}
-        </span>
-        <span className="truncate text-xs text-gray-11">
-          {facts.filter((fact) => fact !== '').join(' · ')}
-        </span>
-      </span>
-      {current.costLevel !== null && (
-        <CostBar level={current.costLevel} compact />
-      )}
+        ) : (
+          <span className="min-w-0 shrink truncate rounded-full bg-gray-3 px-1.5 py-0.5 text-xss leading-none text-gray-11">
+            {current.source}
+          </span>
+        ))}
     </>
   );
 }
@@ -478,32 +426,6 @@ function CreditTile({
   );
 }
 
-function WarningTile() {
-  return (
-    <span
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-md bg-warning-3',
-        TILE_SIZE.lg,
-      )}
-    >
-      <TriangleAlert className="size-4 text-warning-11" />
-    </span>
-  );
-}
-
-function EmptyTile() {
-  return (
-    <span
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-md bg-gray-3',
-        TILE_SIZE.lg,
-      )}
-    >
-      <Sparkles className="size-4 text-gray-11" />
-    </span>
-  );
-}
-
 function KeyLogo({
   logoUrl,
   name,
@@ -511,7 +433,7 @@ function KeyLogo({
 }: {
   logoUrl: string;
   name: string;
-  size?: 'xs' | 'sm';
+  size?: 'xxs' | 'xs';
 }) {
   return <LogoPlate src={logoUrl} alt={name} size={size} tint />;
 }
@@ -539,17 +461,6 @@ function TierBadges({
       )}
     </>
   );
-}
-
-function contextFact({ model }: { model: OptionModel }): string[] {
-  const tokens = model.metadata?.contextTokens;
-  return isNil(tokens)
-    ? []
-    : [
-        t('{context} context', {
-          context: modelMeta.formatContext({ tokens }),
-        }),
-      ];
 }
 
 function contextOf({ model }: { model: OptionModel }): string | undefined {
@@ -581,15 +492,13 @@ type CurrentPick = {
   label: string;
   leading: ReactNode;
   source: string;
-  facts: string[];
-  costLevel: number | null;
 };
 
-type TileSize = 'md' | 'lg';
+type TileSize = 'sm' | 'md';
 
 const TILE_SIZE: Record<TileSize, string> = {
+  sm: 'size-5 text-xs',
   md: 'size-6 text-sm',
-  lg: 'size-8 text-base',
 };
 
 type PickerView = {

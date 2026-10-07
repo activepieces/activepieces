@@ -3,7 +3,7 @@ icon: 🎛️
 ---
 # Model Picker
 
-The one picker a builder uses to choose what an agent, chat or AI step runs on. It lists what the current project may use, in three sections, and shows a side card with each model's data.
+The one picker a builder uses to choose what an agent, chat or AI step runs on. It lists what the current project may use, in three sections. Hovering a row opens a side card with that model's data, to the left of the list at the row's height. The card stays open while the pointer moves onto it.
 
 **ModelChoice** — the stored pick: `{ type: 'tier', tierId }` or `{ type: 'model', provider, providerConfigId, modelId }`. A credits pick is a `model` on the managed Activepieces key with `modelId` set to the credits tier id, so there are two kinds, not three.
 - *Avoid:* "credits choice" as a third kind.
@@ -21,10 +21,6 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 3. The credits default.
 4. The first tier.
 5. The first key model.
-
-**Cost bar** — five fixed buckets on the blended `(input + output) / 2` $ per 1M tokens: under 0.5, 2, 8 and 25, then 25 and up. The same model gets the same bar everywhere. Credits rows show the bar but no $ figures.
-
-**Tier colour** — `swatchUtils.varsForSeed({ seed: tierId })`, the shared 12-hue swatch palette. There is no column for it.
 
 ## Gotchas
 - cmdk's `CommandItem` replaces any `onPointerMove` you pass it with its own hover-select. The picker reads hover on `CommandList` instead, from the closest `[cmdk-item]`'s `data-value`. Its `onValueChange` also fires when the list opens, because cmdk highlights the first row. So the detail card only follows `onValueChange` after an arrow key has been pressed.

@@ -168,7 +168,7 @@ describe('modelPickerView', () => {
       modelId: 'smart',
     });
     expect(detailById.get('tier:tier-expert')?.fallbacks).toEqual([
-      'gpt-6-mini name',
+      { name: 'gpt-6-mini name', keyName: 'Team key' },
     ]);
     expect(detailById.get('credits:smart')?.showPrices).toBe(false);
     expect(detailById.size).toBe(5);

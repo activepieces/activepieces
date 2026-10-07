@@ -186,7 +186,7 @@ describe('ModelPickerPopover', () => {
     expect(detail()).toBe('detail of gamma model 1');
   });
 
-  it('opens the detail card only on hover and closes it when the pointer leaves', () => {
+  it('opens the detail card only on hover and closes it shortly after the pointer leaves', async () => {
     mountKeys();
     const detail = () =>
       document.querySelector('[data-testid="model-picker-detail"]')
@@ -203,8 +203,14 @@ describe('ModelPickerPopover', () => {
 
     act(() => {
       document
-        .querySelector('[cmdk-list]')
-        ?.dispatchEvent(new MouseEvent('pointerout', { bubbles: true }));
+        .querySelector('[cmdk-root]')
+        ?.parentElement?.dispatchEvent(
+          new MouseEvent('pointerout', { bubbles: true }),
+        );
+    });
+    expect(detail()).toBe('detail of gamma model 1');
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
     });
     expect(detail()).toBeUndefined();
   });

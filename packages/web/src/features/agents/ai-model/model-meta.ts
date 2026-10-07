@@ -59,24 +59,6 @@ function formatPrice({ perMillion }: { perMillion: number }): string {
     : `$${perMillion.toFixed(2)}`;
 }
 
-function costLevel({
-  metadata,
-}: {
-  metadata: AIProviderModel['metadata'];
-}): number | null {
-  if (
-    metadata?.inputCostPerMillionTokens === undefined ||
-    metadata.outputCostPerMillionTokens === undefined
-  ) {
-    return null;
-  }
-  const blended =
-    (metadata.inputCostPerMillionTokens + metadata.outputCostPerMillionTokens) /
-    2;
-  const below = COST_LEVEL_CEILINGS.findIndex((ceiling) => blended < ceiling);
-  return below === -1 ? COST_LEVEL_CEILINGS.length + 1 : below + 1;
-}
-
 function metaParts({ model }: { model: AIProviderModel }): string[] {
   const metadata = model.metadata;
   if (metadata === undefined) {
@@ -465,7 +447,6 @@ export const modelMeta = {
   scopedTextModels,
   formatContext,
   formatPrice,
-  costLevel,
   metaParts,
   entryKey,
   sameEntry,
@@ -484,8 +465,6 @@ export const modelMeta = {
   keyScopeImpact,
   toolsVerdict,
 };
-
-const COST_LEVEL_CEILINGS = [0.5, 2, 8, 25];
 
 export type KeyModelsById = Record<
   string,
