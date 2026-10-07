@@ -22,7 +22,7 @@ packages/pieces/community/{name}/
 └── src/i18n/translation.json
 ```
 
-For a complete example: see `packages/pieces/community/airtable/`.
+For a complete example: see `packages/pieces/community/gmail/`.
 
 ## Auth Patterns
 
