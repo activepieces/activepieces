@@ -3,6 +3,7 @@
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { ApEdition, TelemetryEventName } from '@activepieces/shared';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter, useRoutes } from 'react-router-dom';
@@ -24,6 +25,10 @@ vi.mock('@/hooks/platform-hooks', () => ({
 }));
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: ApEdition.CLOUD }) },
+}));
+vi.mock('@/hooks/authorization-hooks', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useIsPlatformAdmin: () => true,
 }));
 vi.mock('@/features/billing/stores/manage-plan-dialog-state', () => ({
   useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
@@ -54,9 +59,15 @@ const PlatformRoutes = () => useRoutes(platformRoutes);
 
 const visit = (url: string) =>
   render(
-    <MemoryRouter initialEntries={[url]}>
-      <PlatformRoutes />
-    </MemoryRouter>,
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <MemoryRouter initialEntries={[url]}>
+        <PlatformRoutes />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 
 const capturedViews = () =>

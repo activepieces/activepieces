@@ -125,7 +125,7 @@ beforeEach(() => {
 
 describe('platform admin telemetry', () => {
   it('reports the upgrade click from the sample overlay with its tier', () => {
-    render(
+    renderWithQueryClient(
       <FeatureSample
         locked
         title="Unlock Audit Logs"
@@ -187,7 +187,7 @@ describe('platform admin telemetry', () => {
   });
 
   it('names the feature by its stable key on every surface, not the title', () => {
-    render(
+    renderWithQueryClient(
       <UpgradeFeatureDialog
         open
         onOpenChange={vi.fn()}
