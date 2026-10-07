@@ -74,7 +74,14 @@ async function sendGet<T>({
 	responseType: 'arraybuffer' | 'text';
 }) {
 	const { data, error } = await tryCatch(() =>
-		httpClient.sendRequest<T>({ method: HttpMethod.GET, url, responseType }),
+		withDeadline({
+			promise: httpClient.sendRequest<T>({
+				method: HttpMethod.GET,
+				url,
+				responseType,
+				timeout: FETCH_TIMEOUT_MS,
+			}),
+		}),
 	);
 	if (error) {
 		const status = error instanceof HttpError ? ` (HTTP ${error.response.status})` : '';
@@ -84,6 +91,17 @@ async function sendGet<T>({
 		);
 	}
 	return data;
+}
+
+function withDeadline<T>({ promise }: { promise: Promise<T> }): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const deadline = new Promise<never>((_, reject) => {
+		timer = setTimeout(
+			() => reject(new Error(`timed out after ${FETCH_TIMEOUT_MS / 1000}s`)),
+			FETCH_TIMEOUT_MS,
+		);
+	});
+	return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
 }
 
 function describeCause({ cause }: { cause: unknown }): string {
@@ -185,6 +203,7 @@ function clampLimit({ limit }: { limit: number | undefined }): number {
 }
 
 const DEFAULT_LIMIT = 20;
+const FETCH_TIMEOUT_MS = 20_000;
 const MAX_LIMIT = 100;
 
 type FetchedPage = {

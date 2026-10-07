@@ -50,7 +50,10 @@ function findAdvertisedFeeds({
 	html: string;
 	baseUrl: string;
 }): AdvertisedFeed[] {
-	const feeds = (html.match(/<link\b[^>]*>/gi) ?? [])
+	const page = html.replace(HTML_COMMENT, '');
+	const baseHref = parseAttributes({ tag: page.match(BASE_TAG)?.[0] ?? '' })['href'];
+	const documentBase = (baseHref && resolveUrl({ href: baseHref, baseUrl })) || baseUrl;
+	const feeds = (page.match(LINK_TAG) ?? [])
 		.map((tag) => parseAttributes({ tag }))
 		.filter(
 			(attrs) =>
@@ -59,7 +62,7 @@ function findAdvertisedFeeds({
 				Boolean(attrs['href']),
 		)
 		.flatMap((attrs) => {
-			const resolved = resolveUrl({ href: attrs['href'] ?? '', baseUrl });
+			const resolved = resolveUrl({ href: attrs['href'] ?? '', baseUrl: documentBase });
 			return resolved
 				? [
 						{
@@ -100,6 +103,10 @@ function resolveUrl({ href, baseUrl }: { href: string; baseUrl: string }): strin
 		return null;
 	}
 }
+
+const HTML_COMMENT = /<!--[\s\S]*?-->/g;
+const LINK_TAG = /<link\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+const BASE_TAG = /<base\b(?:[^>"']|"[^"]*"|'[^']*')*>/i;
 
 const NAMED_ENTITIES: Record<string, string | undefined> = {
 	amp: '&',
