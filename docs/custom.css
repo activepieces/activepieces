@@ -167,3 +167,122 @@
 .dark .pp .pp-rcard .pp-ic { color: #c9c8d2; }
 .dark .pp .pp-reveal { background: #202026; }
 .dark .pp .pp-fb-row { border-bottom-color: #2d2d34; }
+
+/* ==========================================================================
+   Piece version range chart for install/architecture/piece-syncing
+   All rules are scoped under .vr to avoid touching Mintlify's own styles.
+   ========================================================================== */
+.vr {
+  --vr-accent: #0f766e;
+  --vr-accent-fg: #ffffff;
+  --vr-accent-wash: rgba(15, 118, 110, 0.10);
+  --vr-marker: #c2410c;
+  --vr-fg: #171717;
+  --vr-muted: #737373;
+  --vr-border: #e5e5e5;
+  --vr-track: #f5f5f5;
+  --vr-bg: #ffffff;
+
+  box-sizing: border-box;
+  border: 1px solid var(--vr-border);
+  border-radius: 12px;
+  background: var(--vr-bg);
+  padding: 20px 16px 16px;
+  margin: 16px 0 24px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--vr-fg);
+}
+.vr *, .vr *::before, .vr *::after { box-sizing: border-box; }
+
+.vr-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+.vr-head-axis { color: var(--vr-muted); font-weight: 500; }
+
+.vr-rows { display: flex; flex-direction: column; gap: 6px; }
+.vr-row { display: grid; grid-template-columns: 128px 1fr; align-items: center; gap: 12px; }
+.vr-label { display: flex; flex-direction: column; line-height: 1.25; }
+.vr-name { font-weight: 600; font-variant-numeric: tabular-nums; }
+.vr-status { font-size: 12px; font-weight: 500; }
+.vr-status-on { color: var(--vr-accent); }
+.vr-status-off { color: var(--vr-marker); }
+
+.vr-track { position: relative; height: 22px; border-radius: 6px; background: var(--vr-track); }
+.vr-bar {
+  position: absolute; top: 0; bottom: 0;
+  display: flex; align-items: center;
+  padding: 0 8px; border-radius: 6px;
+  font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.vr-bar-on { background: var(--vr-accent); color: var(--vr-accent-fg); border: 1px solid var(--vr-accent); }
+.vr-bar-off { background: transparent; color: var(--vr-muted); border: 1.5px dashed var(--vr-muted); }
+.vr-bar-open { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right-style: none; }
+.vr-marker {
+  position: absolute; top: -6px; bottom: -6px; width: 2px; margin-left: -1px;
+  background: var(--vr-marker); border-radius: 1px; pointer-events: none;
+  transition: left 120ms ease;
+}
+
+.vr-row-axis { margin-top: -2px; }
+.vr-axis { position: relative; height: 20px; border-top: 1px solid var(--vr-border); }
+.vr-tick {
+  position: absolute; top: 4px; transform: translateX(-50%);
+  font-size: 11px; color: var(--vr-muted); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.vr-tick:first-child { transform: none; }
+.vr-tick:last-child { transform: translateX(-100%); }
+
+.vr-control { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; margin: 20px 0 12px; cursor: pointer; }
+.vr-control-label { font-size: 13px; font-weight: 600; }
+.vr-control-value { font-weight: 600; font-variant-numeric: tabular-nums; min-width: 48px; text-align: right; }
+.vr-slider { width: 100%; margin: 0; accent-color: var(--vr-accent); cursor: pointer; }
+
+.vr-result { padding: 10px 12px; border-radius: 8px; background: var(--vr-accent-wash); font-size: 13px; }
+
+.vr-search { position: relative; margin-bottom: 16px; }
+.vr-search-input {
+  width: 100%; height: 38px; padding: 0 12px;
+  border: 1px solid var(--vr-border); border-radius: 8px;
+  background: var(--vr-bg); color: var(--vr-fg); font: inherit; outline: none;
+}
+.vr-search-input:focus { border-color: var(--vr-accent); box-shadow: 0 0 0 3px var(--vr-accent-wash); }
+.vr-menu {
+  position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0;
+  display: flex; flex-direction: column; padding: 4px;
+  border: 1px solid var(--vr-border); border-radius: 8px; background: var(--vr-bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.vr-menu-item {
+  display: flex; justify-content: space-between; gap: 12px; width: 100%;
+  padding: 8px 10px; border: 0; border-radius: 6px; background: transparent;
+  color: var(--vr-fg); font: inherit; text-align: left; cursor: pointer;
+}
+.vr-menu-item:hover, .vr-menu-item:focus-visible { background: var(--vr-track); outline: none; }
+.vr-menu-meta { color: var(--vr-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.vr-menu-empty { padding: 8px 10px; color: var(--vr-muted); }
+.vr-empty { padding: 24px 12px; text-align: center; color: var(--vr-muted); border: 1px dashed var(--vr-border); border-radius: 8px; }
+.vr-footnote { margin-top: 12px; font-size: 12px; color: var(--vr-muted); }
+
+@media (max-width: 520px) {
+  .vr-row { grid-template-columns: 104px 1fr; gap: 8px; }
+  .vr-name { font-size: 12px; }
+  .vr-head-axis { display: none; }
+  .vr-bar { font-size: 0; padding: 0; }
+  .vr-tick:nth-child(even) { display: none; }
+  .vr-control { grid-template-columns: 1fr auto; }
+  .vr-control-label { grid-column: 1 / -1; }
+}
+
+.dark .vr {
+  --vr-accent: #2dd4bf;
+  --vr-accent-fg: #042f2e;
+  --vr-accent-wash: rgba(45, 212, 191, 0.12);
+  --vr-marker: #fb923c;
+  --vr-fg: #e8e8ea;
+  --vr-muted: #9a9aa5;
+  --vr-border: #2d2d34;
+  --vr-track: #232329;
+  --vr-bg: #1b1b20;
+}
