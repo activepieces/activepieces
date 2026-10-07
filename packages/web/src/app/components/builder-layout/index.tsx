@@ -10,7 +10,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { PrimaryRail } from '../primary-rail';
+import { AppSidebar } from '../sidebar/app-sidebar';
 
 export function BuilderLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,12 +26,20 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      {!embedState.isEmbedded && <PrimaryRail />}
+    <div
+      className={cn(
+        'flex h-full w-full overflow-hidden',
+        !embedState.isEmbedded && 'max-md:h-svh max-md:flex-col',
+      )}
+    >
+      {!embedState.isEmbedded && <AppSidebar mode="app" />}
       <SidebarProvider
         hoverMode={!searchOpen}
         defaultOpen={false}
-        className="flex-1 min-w-0 w-auto will-change-transform"
+        className={cn(
+          'flex-1 min-w-0 w-auto will-change-transform',
+          !embedState.isEmbedded && 'max-md:h-auto max-md:min-h-0',
+        )}
       >
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
           <div

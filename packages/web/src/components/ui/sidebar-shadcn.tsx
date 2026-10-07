@@ -47,6 +47,8 @@ function SidebarProvider({
   open: openProp,
   onOpenChange: setOpenProp,
   hoverMode = false,
+  shortcutIgnoresEditable = false,
+  keyboardShortcut = true,
   className,
   style,
   children,
@@ -56,6 +58,8 @@ function SidebarProvider({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hoverMode?: boolean;
+  shortcutIgnoresEditable?: boolean;
+  keyboardShortcut?: boolean;
 }) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
@@ -83,10 +87,9 @@ function SidebarProvider({
         typeof value === 'function' ? value(persistedOpen) : value;
       if (setOpenProp) {
         setOpenProp(openState);
-      } else {
-        _setOpen(openState);
+        return;
       }
-
+      _setOpen(openState);
       localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
@@ -138,10 +141,14 @@ function SidebarProvider({
   }, [isMobile, setOpen, setOpenMobile]);
 
   React.useEffect(() => {
+    if (!keyboardShortcut) {
+      return;
+    }
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-        (event.metaKey || event.ctrlKey)
+        (event.metaKey || event.ctrlKey) &&
+        !(shortcutIgnoresEditable && isEditableTarget(event.target))
       ) {
         event.preventDefault();
         toggleSidebar();
@@ -150,7 +157,7 @@ function SidebarProvider({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleSidebar]);
+  }, [toggleSidebar, shortcutIgnoresEditable, keyboardShortcut]);
 
   const state = open ? 'expanded' : 'collapsed';
 
@@ -287,7 +294,7 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear',
+          'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
           variant === 'floating' || variant === 'inset'
@@ -302,7 +309,7 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex',
+          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:flex',
           side === 'left'
             ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
             : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
@@ -316,7 +323,7 @@ function Sidebar({
           !hoverMode &&
             state === 'collapsed' &&
             collapsible === 'icon' &&
-            '[&_*]:!cursor-nesw-resize [&_button]:!cursor-pointer [&_button]:relative [&_button]:z-20 [&_button_*]:!cursor-pointer [&_a]:!cursor-pointer [&_a]:relative [&_a]:z-20 [&_a_*]:!cursor-pointer [&_[role=button]]:!cursor-pointer [&_[role=button]]:relative [&_[role=button]]:z-20 [&_[role=button]_*]:!cursor-pointer [&_[data-sidebar=menu-button]]:!cursor-pointer [&_[data-sidebar=menu-button]]:relative [&_[data-sidebar=menu-button]]:z-20 [&_[data-sidebar=menu-button]_*]:!cursor-pointer cursor-nesw-resize',
+            'cursor-ew-resize [&_a]:cursor-pointer [&_button]:cursor-pointer [&_[role=button]]:cursor-pointer',
           shouldElevateZIndex && 'z-55',
           className,
         )}
@@ -325,21 +332,17 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className={cn(
-            'flex h-full w-full flex-col bg-gray-2 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-gray-6 group-data-[variant=floating]:shadow',
-            !hoverMode &&
-              state === 'collapsed' &&
-              collapsible === 'icon' &&
-              'relative',
-          )}
+          className="flex h-full w-full flex-col bg-gray-2 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-gray-6 group-data-[variant=floating]:shadow"
+          onClick={
+            !hoverMode && state === 'collapsed' && collapsible === 'icon'
+              ? (event) => {
+                  if (!isInteractiveTarget(event.target)) {
+                    setOpen(true);
+                  }
+                }
+              : undefined
+          }
         >
-          {!hoverMode && state === 'collapsed' && collapsible === 'icon' && (
-            <div
-              className="absolute inset-0 z-10 !cursor-nesw-resize"
-              onClick={() => setOpen(true)}
-              aria-hidden="true"
-            />
-          )}
           {children}
         </div>
       </div>
@@ -503,8 +506,8 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        'flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-normal text-gray-11 ring-gray-8 outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
-        'group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0',
+        'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-[height,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0',
         className,
       )}
       {...props}
@@ -571,18 +574,18 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center text-left text-sm ring-gray-8 outline-hidden transition-[width,height,padding] hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-normal data-[active=true]:text-gray-12 data-open:hover:bg-gray-4 data-open:hover:text-gray-12 group-has-data-[sidebar=menu-action]/menu-item:pr-8   [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0',
+  'peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm text-gray-12 ring-gray-8 outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-inset active:bg-gray-5 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-gray-4 data-open:hover:text-gray-12 data-[active=true]:bg-gray-5 data-[active=true]:hover:bg-gray-5 data-[active=true]:font-medium data-[active=true]:text-gray-12 [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate',
   {
     variants: {
       variant: {
-        default: 'hover:bg-gray-4 active:bg-gray-4 hover:text-gray-12',
+        default: 'hover:bg-gray-4 hover:text-gray-12',
         outline:
-          'bg-gray-1 shadow-[0_0_0_1px_var(--gray-6)] hover:bg-gray-4 hover:text-gray-12 hover:shadow-[0_0_0_1px_var(--gray-4)]',
+          'bg-gray-1 shadow-edge hover:bg-gray-4 hover:text-gray-12 hover:shadow-edge',
       },
       size: {
-        default: 'h-7 text-sm',
-        sm: 'h-6 text-xs',
-        lg: 'h-12 text-sm ',
+        default: 'h-8 text-sm',
+        sm: 'h-7 text-sm',
+        lg: 'h-11 text-sm',
       },
     },
     defaultVariants: {
@@ -658,12 +661,12 @@ function SidebarMenuAction({
       data-slot="sidebar-menu-action"
       data-sidebar="menu-action"
       className={cn(
-        'absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-gray-12 ring-gray-8 outline-hidden transition-transform peer-hover/menu-button:text-gray-12 hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'absolute top-1 right-1 flex aspect-square w-6 items-center justify-center rounded-md p-0 text-gray-12 ring-gray-8 outline-hidden transition-transform peer-hover/menu-button:text-gray-12 hover:bg-gray-5 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-inset [&>svg]:size-4 [&>svg]:shrink-0',
         'after:absolute after:-inset-2 md:after:hidden',
-        'peer-data-[size=sm]/menu-button:top-1',
-        'peer-data-[size=default]/menu-button:top-1.5',
+        'peer-data-[size=sm]/menu-button:top-0.5',
+        'peer-data-[size=default]/menu-button:top-1',
         'peer-data-[size=lg]/menu-button:top-2.5',
-        'group-data-[collapsible=icon]:hidden',
+        'transition-opacity duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:absolute! group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none',
         showOnHover &&
           'peer-data-[active=true]/menu-button:text-gray-12 group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-open:opacity-100 md:opacity-0',
         className,
@@ -738,8 +741,8 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
       data-slot="sidebar-menu-sub"
       data-sidebar="menu-sub"
       className={cn(
-        'mx-3.5 flex min-w-0 flex-col gap-1 border-l border-gray-6 px-2.5 py-0.5',
-        'group-data-[collapsible=icon]:hidden',
+        'ml-6 flex min-w-0 flex-col gap-0.5 py-0.5',
+
         className,
       )}
       {...props}
@@ -781,15 +784,32 @@ function SidebarMenuSubButton({
       data-size={size}
       data-active={isActive}
       className={cn(
-        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-gray-12 ring-gray-8 outline-hidden hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
-        'data-[active=true]:bg-gray-4 data-[active=true]:font-medium data-[active=true]:text-gray-12',
+        'flex h-8 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-gray-11 ring-gray-8 outline-hidden hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-inset active:bg-gray-5 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
+        'data-[active=true]:bg-gray-5 data-[active=true]:hover:bg-gray-5 data-[active=true]:font-medium data-[active=true]:text-gray-12',
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',
-        'group-data-[collapsible=icon]:hidden',
+
         className,
       )}
       {...props}
     />
+  );
+}
+
+function isInteractiveTarget(target: EventTarget | null) {
+  return (
+    target instanceof Element &&
+    target.closest('a, button, input, select, textarea, [role="button"]') !==
+      null
+  );
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target.closest('input, textarea, select, [contenteditable="true"]') !==
+        null)
   );
 }
 
