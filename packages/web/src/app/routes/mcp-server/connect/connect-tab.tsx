@@ -9,6 +9,7 @@ import { useMcpNav } from '../mcp-nav';
 import { ClientInstructions } from './client-instructions';
 import { ClientPicker } from './client-picker';
 import { ConnectPage } from './connect-page';
+import { useConnectWatch } from './use-connect-home';
 
 export function ConnectTab({
   serverUrl,
@@ -18,6 +19,7 @@ export function ConnectTab({
   isReachableFromInternet: boolean;
 }) {
   const { view, clientKey } = useMcpNav();
+  const watch = useConnectWatch();
   const { websiteName } = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
@@ -45,6 +47,7 @@ export function ConnectTab({
   return (
     <ConnectPage
       clients={clients}
+      watch={watch}
       serverUrl={serverUrl}
       isReachableFromInternet={isReachableFromInternet}
     />

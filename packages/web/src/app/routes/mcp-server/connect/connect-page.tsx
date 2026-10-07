@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, KeyRound } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -18,19 +19,21 @@ import { useMcpNav } from '../mcp-nav';
 import { PageBand } from '../page-band';
 
 import { ClientRotator } from './client-rotator';
-import { ConnectHome, useConnectHome } from './use-connect-home';
+import { ConnectHome, ConnectWatch, useConnectHome } from './use-connect-home';
 import { WireFrame } from './wire-frame';
 
 export function ConnectPage({
   clients,
+  watch,
   serverUrl,
   isReachableFromInternet,
 }: {
   clients: CatalogClient[];
+  watch: ConnectWatch;
   serverUrl: string;
   isReachableFromInternet: boolean;
 }) {
-  const home = useConnectHome({ clients });
+  const home = useConnectHome({ clients, watch });
   const groupLabels = new Map(
     mcpClientCatalog.groups().map((group) => [group.key, group.label]),
   );
@@ -159,7 +162,14 @@ function InstallButton({
   if (action && !isBlocked) {
     return (
       <Button variant="outline" size="sm" asChild onClick={onStart}>
-        <a href={action.href} target="_blank" rel="noreferrer">
+        <a
+          href={action.href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={t('Install {client} (opens in a new tab)', {
+            client: client.name,
+          })}
+        >
           {t('Install')}
           <ArrowUpRight />
         </a>
@@ -170,6 +180,7 @@ function InstallButton({
     <Button
       variant="outline"
       size="sm"
+      aria-label={t('Set up {client}', { client: client.name })}
       onClick={() => {
         onStart();
         nav.showClient(client.key);
@@ -223,26 +234,32 @@ function ConnectedCard({ grants }: { grants: McpOAuthGrant[] }) {
       }
     >
       <ul className="flex flex-col gap-3">
-        {grants.slice(0, MAX_GRANTS_SHOWN).map((grant) => (
-          <li key={grant.id} className="flex items-center gap-3">
-            <ClientIcon
-              icon={mcpClientDisplay.icon(grant.clientKey)}
-              className="size-8 rounded-lg"
-            />
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-medium">
-                {mcpClientDisplay.label({
-                  key: grant.clientKey,
-                  clientName: grant.clientName,
-                })}
+        {grants.slice(0, MAX_GRANTS_SHOWN).map((grant) => {
+          const name = mcpClientDisplay.label({
+            key: grant.clientKey,
+            clientName: grant.clientName,
+          });
+          const project = grant.projectName ?? t('All projects');
+          return (
+            <li key={grant.id} className="flex items-center gap-3">
+              <ClientIcon
+                icon={mcpClientDisplay.icon(grant.clientKey)}
+                className="size-8 rounded-lg"
+              />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <TextWithTooltip tooltipMessage={name}>
+                  <span className="truncate text-sm font-medium">{name}</span>
+                </TextWithTooltip>
+                <TextWithTooltip tooltipMessage={project}>
+                  <span className="truncate text-xs text-gray-11">
+                    {project}
+                  </span>
+                </TextWithTooltip>
               </span>
-              <span className="truncate text-xs text-gray-11">
-                {grant.projectName ?? t('All projects')}
-              </span>
-            </span>
-            <ConnectionStatus grants={[grant]} />
-          </li>
-        ))}
+              <ConnectionStatus grants={[grant]} />
+            </li>
+          );
+        })}
       </ul>
     </Card>
   );

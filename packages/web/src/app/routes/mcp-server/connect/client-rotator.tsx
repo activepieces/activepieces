@@ -1,3 +1,4 @@
+import { useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -7,18 +8,24 @@ import { MCP_CLIENT_BRANDING } from '../mcp-client-display';
 
 export function ClientRotator() {
   const [index, setIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (prefersReducedMotion()) return;
+    if (reduceMotion || isPaused) return;
     const timer = setInterval(
       () => setIndex((current) => (current + 1) % ROTATING_CLIENTS.length),
       ROTATE_MS,
     );
     return () => clearInterval(timer);
-  }, []);
+  }, [reduceMotion, isPaused]);
 
   return (
-    <span className="inline-grid align-bottom" aria-live="off">
+    <span
+      className="inline-grid align-bottom"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {ROTATING_CLIENTS.map((client, position) => {
         const isActive = position === index;
         return (
@@ -42,10 +49,6 @@ export function ClientRotator() {
       })}
     </span>
   );
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 const ROTATE_MS = 2500;

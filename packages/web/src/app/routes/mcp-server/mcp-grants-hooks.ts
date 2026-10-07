@@ -41,5 +41,5 @@ export const mcpGrantsMutations = {
 
 type UseGrantsParams = {
   request: ListMcpOAuthGrantsRequestQuery;
-  refetchInterval?: number | false;
+  refetchInterval?: number | false | (() => number | false);
 };

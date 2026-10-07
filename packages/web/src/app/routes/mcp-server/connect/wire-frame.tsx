@@ -8,6 +8,7 @@ import {
   Workflow,
   Wrench,
 } from 'lucide-react';
+import { useReducedMotion } from 'motion/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
@@ -24,7 +25,7 @@ export function WireFrame({
   const contentRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef(new Map<string, HTMLElement>());
   const [layout, setLayout] = useState<StageLayout | null>(null);
-  const animate = !prefersReducedMotion();
+  const animate = !useReducedMotion();
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -278,10 +279,6 @@ function roundedPath(points: Point[]): string {
     return `L ${before.x} ${before.y} Q ${point.x} ${point.y} ${after.x} ${after.y}`;
   });
   return [`M ${first.x} ${first.y}`, ...segments].join(' ');
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 const CONTENT_ID = 'content';

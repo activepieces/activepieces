@@ -6,21 +6,32 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { CatalogClient } from '../mcp-client-catalog';
 import { mcpGrantsQueries } from '../mcp-grants-hooks';
 
+export function useConnectWatch(): ConnectWatch {
+  const [until, setUntil] = useState<number | null>(null);
+  return {
+    until,
+    start: () => setUntil(Date.now() + WATCH_DURATION_MS),
+  };
+}
+
 export function useConnectHome({
   clients: catalogClients,
+  watch,
 }: {
   clients: CatalogClient[];
+  watch: ConnectWatch;
 }) {
   const clients = useMemo(() => orderClients(catalogClients), [catalogClients]);
-  const [watchUntil, setWatchUntil] = useState<number | null>(null);
-  const isWatching = watchUntil !== null && Date.now() < watchUntil;
   const userId = authenticationSession.getCurrentUserId();
   const grantsQuery = mcpGrantsQueries.useGrants({
     request: {
       limit: MAX_GRANTS,
       ...(userId === null ? {} : { memberIds: [userId] }),
     },
-    refetchInterval: isWatching ? WATCH_INTERVAL_MS : false,
+    refetchInterval: () =>
+      watch.until !== null && Date.now() < watch.until
+        ? WATCH_INTERVAL_MS
+        : false,
   });
 
   const grants = useMemo(
@@ -32,7 +43,7 @@ export function useConnectHome({
     clients,
     grants,
     grantsByClient: groupByClient({ grants, clients }),
-    startWatching: () => setWatchUntil(Date.now() + WATCH_DURATION_MS),
+    startWatching: watch.start,
   };
 }
 
@@ -64,7 +75,7 @@ function sortByLastUsed(grants: McpOAuthGrant[]): McpOAuthGrant[] {
   );
 }
 
-const MAX_GRANTS = 50;
+const MAX_GRANTS = 100;
 const WATCH_INTERVAL_MS = 4000;
 const WATCH_DURATION_MS = 10 * 60 * 1000;
 const CLIENT_ORDER = [
@@ -81,3 +92,8 @@ const CLIENT_ORDER = [
 ];
 
 export type ConnectHome = ReturnType<typeof useConnectHome>;
+
+export type ConnectWatch = {
+  until: number | null;
+  start: () => void;
+};
