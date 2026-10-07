@@ -48,6 +48,10 @@ Custom and private pieces are never touched by the sync job.
 
 ## Which piece version does your instance get?
 
+Each piece version declares which Activepieces versions it supports using a minimum supported release and, optionally, a maximum supported release. 
+
+When your instance syncs with the Activepieces piece registry, it only receives piece versions that are compatible with the Activepieces version it's running.
+
 ## Server compatibility
 
 Every piece declares a `minimumSupportedRelease` (and optional `maximumSupportedRelease`) in its definition: the range of Activepieces server releases it works on. The catalog filters pieces against the running server's release, so an out-of-range piece is never listed in the builder and never served from the registry.
