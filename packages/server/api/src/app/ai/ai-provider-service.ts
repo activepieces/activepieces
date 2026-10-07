@@ -70,6 +70,22 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             : models
     },
 
+    async listKeysForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectKeyModels[]> {
+        const rows = await listVisibleRows({ platformId, log })
+        const ranked = rankRows(rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope: { type: 'project', projectId } })))
+        const chatRowId = pickChatRow(ranked)?.id
+        return Promise.all(ranked.map(async (row) => {
+            const { data } = row.provider === AIProviderName.ACTIVEPIECES
+                ? { data: null }
+                : await tryCatch(() => fetchModels({ aiProvider: row, platformId, log }))
+            return {
+                row,
+                isChatKey: row.id === chatRowId,
+                models: isNil(data) ? null : data.filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id })),
+            }
+        }))
+    },
+
     async listModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderModel[]> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId })
         return fetchModels({ aiProvider, platformId, log })
@@ -622,3 +638,9 @@ function getModelsCacheKey({ provider, auth, config }: { provider: AIProviderNam
 }
 
 export type { ProviderScope }
+
+export type ProjectKeyModels = {
+    row: AIProviderSchema
+    isChatKey: boolean
+    models: AIProviderModel[] | null
+}

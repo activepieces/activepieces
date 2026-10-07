@@ -1,4 +1,4 @@
-import { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderConfig, AiProviderCredentials, AiProviderKeyStatus, AIProviderModelType, AIProviderName, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BaseModelSchema, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
+import { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderConfig, AiProviderCredentials, AiProviderKeyStatus, AIProviderModelType, AIProviderName, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BaseModelSchema, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, Nullable, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderCredentials, aiProviderCredentials, AIProviderModelType, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, ProviderModelConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
@@ -333,3 +333,77 @@ export type { ActivepiecesChatTier, ActivepiecesImageTier, AIProviderCapabilitie
 export const AI_PIECE_COST_BILLING_VERSION = '0.11.0'
 
 export * from './platform-model-tier'
+
+export const ModelOptionsSurface = z.enum(['flow', 'agent', 'chat'])
+
+export const ModelChoice = z.discriminatedUnion('type', [
+    z.object({
+        type: z.literal('tier'),
+        tierId: z.string(),
+    }),
+    z.object({
+        type: z.literal('model'),
+        provider: z.enum(AIProviderName),
+        providerConfigId: z.string(),
+        modelId: z.string(),
+    }),
+])
+
+export const OptionModel = z.object({
+    provider: z.enum(AIProviderName),
+    modelId: z.string(),
+    name: z.string(),
+    keyName: z.string(),
+    metadata: AIProviderModelMetadata.optional(),
+})
+
+export const ModelOptionsTier = z.object({
+    id: z.string(),
+    name: z.string(),
+    emoji: z.string(),
+    description: Nullable(z.string()),
+    isDefault: z.boolean(),
+    isFast: z.boolean(),
+    main: OptionModel,
+    fallbacks: z.array(OptionModel),
+})
+
+export const ModelOptionsCredits = z.object({
+    providerConfigId: z.string(),
+    defaultTierId: z.string(),
+    tiers: z.array(z.object({
+        id: z.string(),
+        label: z.string(),
+        model: OptionModel,
+    })),
+})
+
+export const ModelOptionsKey = z.object({
+    providerConfigId: z.string(),
+    provider: z.enum(AIProviderName),
+    name: z.string(),
+    models: z.array(AIProviderModel),
+})
+
+export const ModelOptions = z.object({
+    tiers: z.array(ModelOptionsTier),
+    credits: Nullable(ModelOptionsCredits),
+    keys: z.array(ModelOptionsKey),
+    defaultChoice: Nullable(ModelChoice),
+    movedTiers: z.record(z.string(), z.string()),
+    specificModelsHidden: z.boolean(),
+})
+
+export const ListModelOptionsRequest = z.object({
+    projectId: z.string(),
+    surface: ModelOptionsSurface,
+})
+
+export type ModelOptionsSurface = z.infer<typeof ModelOptionsSurface>
+export type ModelChoice = z.infer<typeof ModelChoice>
+export type OptionModel = z.infer<typeof OptionModel>
+export type ModelOptionsTier = z.infer<typeof ModelOptionsTier>
+export type ModelOptionsCredits = z.infer<typeof ModelOptionsCredits>
+export type ModelOptionsKey = z.infer<typeof ModelOptionsKey>
+export type ModelOptions = z.infer<typeof ModelOptions>
+export type ListModelOptionsRequest = z.infer<typeof ListModelOptionsRequest>
