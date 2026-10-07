@@ -50,7 +50,7 @@ function findAdvertisedFeeds({
 	html: string;
 	baseUrl: string;
 }): AdvertisedFeed[] {
-	const page = html.replace(HTML_COMMENT, '');
+	const page = html.replace(NON_MARKUP, '');
 	const baseHref = parseAttributes({ tag: page.match(BASE_TAG)?.[0] ?? '' })['href'];
 	const documentBase = (baseHref && resolveUrl({ href: baseHref, baseUrl })) || baseUrl;
 	const feeds = (page.match(LINK_TAG) ?? [])
@@ -104,7 +104,7 @@ function resolveUrl({ href, baseUrl }: { href: string; baseUrl: string }): strin
 	}
 }
 
-const HTML_COMMENT = /<!--[\s\S]*?-->/g;
+const NON_MARKUP = /<!--[\s\S]*?-->|<(script|style|template)\b[\s\S]*?<\/\1\s*>/gi;
 const LINK_TAG = /<link\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
 const BASE_TAG = /<base\b(?:[^>"']|"[^"]*"|'[^']*')*>/i;
 
