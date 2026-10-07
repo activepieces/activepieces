@@ -265,6 +265,21 @@ describe('customLambdaCall', () => {
       expect(signedQueries.at(-1)).toEqual({ Marker: ['a', 'b'] });
     });
 
+    it('given a mixed-case Content-Type with a body, should send a single lowercase content-type', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
+
+      await customLambdaCall(accessKey, server, {
+        method: HttpMethod.POST,
+        path: '/2015-03-31/functions',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: { FunctionName: 'billing' },
+      });
+
+      const sent = vi.mocked(fetch).mock.calls[0][1]?.headers as Record<string, string>;
+      expect(Object.keys(sent).filter((key) => key.toLowerCase() === 'content-type')).toEqual(['content-type']);
+      expect(sent['content-type']).toBe('application/json; charset=utf-8');
+    });
+
     it('given a space in the query, should send the same encoding that was signed', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 

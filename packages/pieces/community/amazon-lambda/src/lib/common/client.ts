@@ -162,7 +162,7 @@ export async function customLambdaCall(
 
   const bodyString = input.body === undefined ? undefined : JSON.stringify(input.body);
   const headers = userHeaders(input.headers);
-  if (bodyString) headers['content-type'] = 'application/json';
+  if (bodyString && !headers['content-type']) headers['content-type'] = 'application/json';
 
   const signed = await signRequest({
     credentials,
@@ -401,7 +401,7 @@ function userHeaders(headers: Record<string, unknown> | undefined): Record<strin
   for (const [key, value] of Object.entries(headers)) {
     if (value === undefined || value === null) continue;
     if (/^(host|authorization)$/i.test(key)) continue;
-    out[key] = String(value);
+    out[key.toLowerCase()] = String(value);
   }
   return out;
 }

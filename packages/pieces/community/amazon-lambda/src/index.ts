@@ -9,7 +9,7 @@ export const amazonLambda = createPiece({
   displayName: 'AWS Lambda',
   description: 'Invoke functions and watch for new ones',
   auth: awsLambdaCombinedAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.90.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-lambda.png',
   authors: ['eliseukadesh67'],
   categories: [PieceCategory.DEVELOPER_TOOLS],

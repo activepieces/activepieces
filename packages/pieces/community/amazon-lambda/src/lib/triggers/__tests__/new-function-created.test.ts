@@ -10,7 +10,6 @@ vi.mock('../../common/client', () => ({ listFunctions }));
 const {
   newFunctionCreated,
   remember,
-  PENDING_FUNCTION_ARNS_KEY,
   SEEN_FUNCTION_ARNS_KEY,
 } = await import('../new-function-created');
 
@@ -52,29 +51,29 @@ describe('remember', () => {
 
     expect(emitted).toEqual([]);
     expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toEqual([billing.FunctionArn]);
-    expect(store.data[PENDING_FUNCTION_ARNS_KEY]).toEqual([]);
   });
 
-  it('should emit a new ARN and only confirm it on the next poll', async () => {
+  it('should emit a new ARN once and stay quiet on the next poll', async () => {
     const store = memoryStore({ [SEEN_FUNCTION_ARNS_KEY]: [billing.FunctionArn] });
     const updated = { ...billing, LastModified: '2026-09-28T18:00:00.000+0000' };
 
     const emitted = await remember(store, [updated, invoices], false);
 
     expect(emitted).toEqual([invoices]);
-    expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toEqual([billing.FunctionArn]);
-    expect(store.data[PENDING_FUNCTION_ARNS_KEY]).toEqual([invoices.FunctionArn]);
+    expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toEqual([billing.FunctionArn, invoices.FunctionArn]);
 
     const second = await remember(store, [updated, invoices], false);
 
-    expect(second).toEqual([invoices]);
-    expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toEqual([billing.FunctionArn, invoices.FunctionArn]);
-    expect(store.data[PENDING_FUNCTION_ARNS_KEY]).toEqual([invoices.FunctionArn]);
+    expect(second).toEqual([]);
+  });
 
-    const third = await remember(store, [updated, invoices], false);
+  it('should forget a deleted ARN so a function recreated with that name fires again', async () => {
+    const store = memoryStore({ [SEEN_FUNCTION_ARNS_KEY]: [billing.FunctionArn, invoices.FunctionArn] });
 
-    expect(third).toEqual([]);
-    expect(store.data[PENDING_FUNCTION_ARNS_KEY]).toEqual([]);
+    expect(await remember(store, [billing], false)).toEqual([]);
+    expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toEqual([billing.FunctionArn]);
+
+    expect(await remember(store, [billing, invoices], false)).toEqual([invoices]);
   });
 
   it('should split a snapshot that would exceed the store value limit', async () => {
@@ -98,12 +97,10 @@ describe('remember', () => {
     const next = await remember(store, [...functions, created], false);
 
     expect(next).toEqual([created]);
-    expect(store.data[PENDING_FUNCTION_ARNS_KEY]).toEqual([created.FunctionArn]);
 
     await newFunctionCreated.onDisable({ store } as never);
     expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toBeUndefined();
     expect(store.data[`${SEEN_FUNCTION_ARNS_KEY}-1`]).toBeUndefined();
-    expect(store.data[PENDING_FUNCTION_ARNS_KEY]).toBeUndefined();
   });
 
   it('should stay quiet on the first poll when enabling never ran', async () => {
@@ -134,7 +131,6 @@ describe('newFunctionCreated', () => {
     await newFunctionCreated.onDisable({ auth, store, server, propsValue: {} } as never);
     expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toBeUndefined();
     expect(store.data[`${SEEN_FUNCTION_ARNS_KEY}-1`]).toBeUndefined();
-    expect(store.data[PENDING_FUNCTION_ARNS_KEY]).toBeUndefined();
   });
 
   it('should return a sample of current functions from test without changing the snapshot', async () => {
