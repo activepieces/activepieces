@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,7 +68,7 @@ export const NewApiKeyDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>
             {apiKey ? t('API Key Created') : t('Create API Key')}

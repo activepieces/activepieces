@@ -11,7 +11,8 @@ import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { AdminDataTable } from '@/app/components/admin';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Input } from '@/components/ui/input';
 import {
@@ -65,7 +66,8 @@ export function ByProjectView({
     <div className="relative">
       <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11" />
       <Input
-        className="pl-8 w-[240px]"
+        size="sm"
+        className="w-60 pl-8"
         placeholder={t('Search projects')}
         defaultValue={displayName ?? ''}
         onChange={(e) => {
@@ -89,7 +91,7 @@ export function ByProjectView({
   );
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <p className="flex items-center gap-2 text-sm text-gray-11">
         <BarChart3 className="size-4 shrink-0" />
         {t(
@@ -97,7 +99,7 @@ export function ByProjectView({
         )}
       </p>
 
-      <DataTable
+      <AdminDataTable
         columns={columns}
         page={page}
         isLoading={isLoading}
@@ -153,7 +155,7 @@ function buildColumns({
       }: {
         row: { original: RowDataWithActions<ProjectWithLimits> };
       }) => (
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
           <ProjectAvatar project={row.original} />
           <TextWithTooltip tooltipMessage={row.original.displayName}>
             <p className="text-sm font-medium truncate">
@@ -247,7 +249,8 @@ function WorkerGroupCell({
     <div className="flex flex-col gap-1">
       <Select value={selectValue} onValueChange={handleChange}>
         <SelectTrigger
-          className={cn('w-[200px]', isOffline && 'border-danger-9')}
+          size="sm"
+          className={cn('w-50', isOffline && 'border-danger-9')}
         >
           <div className="flex items-center gap-2 min-w-0">
             <Cpu
@@ -355,8 +358,9 @@ function ConcurrencyCell({
     <Input
       type="text"
       inputMode="numeric"
+      size="sm"
       max={poolSlots > 0 ? poolSlots : undefined}
-      className="w-[150px]"
+      className="w-36"
       placeholder={concurrencyPlaceholder}
       value={concurrencyInput}
       onChange={(e) => handleChange(e.target.value)}

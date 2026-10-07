@@ -23,7 +23,7 @@ const SyncPiecesButton = () => {
           loading={isPending}
           size={'sm'}
         >
-          <RefreshCcw className="w-4 h-4 mr-2" /> Sync from Cloud
+          <RefreshCcw /> Sync from Cloud
         </Button>
       )}
     </>

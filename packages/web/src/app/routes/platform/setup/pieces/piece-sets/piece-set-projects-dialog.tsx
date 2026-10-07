@@ -10,6 +10,7 @@ import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -255,7 +256,7 @@ export const PieceSetProjectsDialog = ({
           <ChevronDown className="size-3.5 text-gray-11 shrink-0" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <AssignProjectsForm
           key={open ? 'open' : 'closed'}
           pieceSet={pieceSet}

@@ -16,8 +16,8 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('lucide-react', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  Crown: (props: Record<string, unknown>) =>
-    React.createElement('span', { ...props, 'data-testid': 'crown' }),
+  Gem: (props: Record<string, unknown>) =>
+    React.createElement('span', { ...props, 'data-testid': 'gem' }),
 }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
@@ -123,28 +123,28 @@ beforeEach(() => {
 });
 
 describe('create project gating', () => {
-  it('crowns the button when the plan includes no team projects', () => {
+  it('marks the button with a gem when the plan includes no team projects', () => {
     teamProjectsLimit = 0;
     renderWithQueryClient(
       <CreateProjectButton variant="full" projects={usedTeamProjects(0)} />,
     );
-    expect(screen.getByTestId('crown')).toBeDefined();
+    expect(screen.getByTestId('gem')).toBeDefined();
   });
 
-  it('crowns the button when the team project allowance is used up', () => {
+  it('marks the button with a gem when the team project allowance is used up', () => {
     teamProjectsLimit = 3;
     renderWithQueryClient(
       <CreateProjectButton variant="full" projects={usedTeamProjects(3)} />,
     );
-    expect(screen.getByTestId('crown')).toBeDefined();
+    expect(screen.getByTestId('gem')).toBeDefined();
   });
 
-  it('crowns every variant, including the sidebar rail', () => {
+  it('marks every variant with a gem, including the sidebar rail', () => {
     teamProjectsLimit = 0;
     renderWithQueryClient(
       <CreateProjectButton variant="icon" projects={usedTeamProjects(0)} />,
     );
-    expect(screen.getByTestId('crown')).toBeDefined();
+    expect(screen.getByTestId('gem')).toBeDefined();
   });
 
   it('refuses on the click instead of after the form is filled in', () => {

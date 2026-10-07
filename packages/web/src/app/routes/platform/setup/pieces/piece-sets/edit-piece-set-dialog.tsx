@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -141,7 +142,7 @@ export const EditPieceSetDialog = ({
 }: EditPieceSetDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Edit Piece Set')}</DialogTitle>
         </DialogHeader>

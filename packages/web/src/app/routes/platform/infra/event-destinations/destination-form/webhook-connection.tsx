@@ -5,8 +5,8 @@ import { ExternalLink, Info, Plus, Workflow } from 'lucide-react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { SettingsPanel, StatusDot } from '@/app/components/admin';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -68,71 +68,76 @@ export const WebhookConnection = ({
         </>
       )}
 
-      <FormField
-        control={form.control}
-        name="url"
-        rules={{ deps: ['headers'] }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel showRequiredIndicator>
-              {isEdit || isHandlerFlow
-                ? t('Endpoint URL')
-                : t('Use your own webhook URL')}
-            </FormLabel>
-            <FormControl>
-              <Input placeholder="https://" {...field} />
-            </FormControl>
-            {url === '' && (
-              <FormDescription>
-                {t(
-                  'Any endpoint that accepts a JSON POST. Headers and a test send appear after you paste a URL.',
-                )}
-              </FormDescription>
-            )}
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {isHandlerFlow && (
-        <>
-          <HandlerFlowCard flowId={handlerFlowId} />
-          <Alert>
-            <Info className="size-4" />
-            <AlertTitle>
-              {isEdit
-                ? t('Keep this flow published so it receives events')
-                : t('Publish the flow before you create the destination')}
-            </AlertTitle>
-            <AlertDescription>
-              {t(
-                'The flow receives each selected event as a plain JSON object.',
+      <SettingsPanel>
+        <FormField
+          control={form.control}
+          name="url"
+          rules={{ deps: ['headers'] }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel showRequiredIndicator>
+                {isEdit || isHandlerFlow
+                  ? t('Endpoint URL')
+                  : t('Use your own webhook URL')}
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="https://" {...field} />
+              </FormControl>
+              {url === '' && (
+                <FormDescription>
+                  {t(
+                    'Any endpoint that accepts a JSON POST. Headers and a test send appear after you paste a URL.',
+                  )}
+                </FormDescription>
               )}
-            </AlertDescription>
-          </Alert>
-        </>
-      )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {isHandlerFlow && (
+          <>
+            <HandlerFlowCard flowId={handlerFlowId} />
+            <Alert>
+              <Info className="size-4" />
+              <AlertTitle>
+                {isEdit
+                  ? t('Keep this flow published so it receives events')
+                  : t('Publish the flow before you create the destination')}
+              </AlertTitle>
+              <AlertDescription>
+                {t(
+                  'The flow receives each selected event as a plain JSON object.',
+                )}
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
+
+        {url !== '' && (
+          <>
+            <HeadersField
+              form={form}
+              storedHeaderNames={storedHeaderNames}
+              keyPlaceholder="Authorization"
+            />
+            <EncryptedHeadersNotice />
+          </>
+        )}
+      </SettingsPanel>
 
       {url !== '' && (
-        <>
-          <HeadersField
-            form={form}
-            storedHeaderNames={storedHeaderNames}
-            keyPlaceholder="Authorization"
-          />
-          <EncryptedHeadersNotice />
-          <TestEventCard
-            form={form}
-            description={
-              isHandlerFlow
-                ? t(
-                    'Sends a sample to the handler flow, which runs it like any other event. Publish the flow first, or the test answers 404.',
-                  )
-                : t('Sends one of your selected events to the endpoint above.')
-            }
-            storedHeaderNames={storedHeaderNames}
-          />
-        </>
+        <TestEventCard
+          form={form}
+          description={
+            isHandlerFlow
+              ? t(
+                  'Sends a sample to the handler flow, which runs it like any other event. Publish the flow first, or the test answers 404.',
+                )
+              : t('Sends one of your selected events to the endpoint above.')
+          }
+          storedHeaderNames={storedHeaderNames}
+        />
       )}
     </div>
   );
@@ -183,32 +188,34 @@ const GenerateHandlerFlowCard = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border p-6 text-center">
-      <span className="flex size-10 items-center justify-center rounded-xl bg-accent-3 text-accent-11">
-        <Workflow className="size-[18px]" />
-      </span>
-      <div className="flex max-w-[460px] flex-col gap-1">
-        <span className="text-sm font-medium">
-          {t('Create a handler flow')}
+    <SettingsPanel>
+      <div className="flex flex-col items-center gap-4 py-2 text-center">
+        <span className="flex size-10 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
+          <Workflow className="size-5" />
         </span>
-        <span className="text-sm leading-normal text-gray-11">
-          {t(
-            "We'll create a flow with a webhook trigger, loaded with sample data for {count, plural, =1 {the event} other {the # events}} you picked. Add steps for Slack, Gmail, or any app.",
-            { count: selectedEvents.length },
-          )}
-        </span>
+        <div className="flex max-w-md flex-col gap-1">
+          <span className="text-sm font-medium">
+            {t('Create a handler flow')}
+          </span>
+          <span className="text-sm leading-normal text-gray-11">
+            {t(
+              "We'll create a flow with a webhook trigger, loaded with sample data for {count, plural, =1 {the event} other {the # events}} you picked. Add steps for Slack, Gmail, or any app.",
+              { count: selectedEvents.length },
+            )}
+          </span>
+        </div>
+        <Button
+          {...adminControl(AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_RUN)}
+          type="button"
+          onClick={handleGenerate}
+          disabled={isImporting || selectedEvents.length === 0}
+          loading={isImporting}
+        >
+          <Plus className="size-4" />
+          {t('Generate handler flow')}
+        </Button>
       </div>
-      <Button
-        {...adminControl(AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_RUN)}
-        type="button"
-        onClick={handleGenerate}
-        disabled={isImporting || selectedEvents.length === 0}
-        loading={isImporting}
-      >
-        <Plus className="size-4" />
-        {t('Generate handler flow')}
-      </Button>
-    </div>
+    </SettingsPanel>
   );
 };
 
@@ -216,7 +223,7 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
   const { data: flow } = flowHooks.useGetFlow({ flowId });
 
   return (
-    <div className="flex w-full items-center gap-3 rounded-xl border p-4">
+    <div className="flex w-full items-center gap-3 rounded-lg border p-4">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
         <Workflow className="size-4" />
       </span>
@@ -226,9 +233,11 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
         </span>
       </div>
       {!isNil(flow) && (
-        <Badge variant={isNil(flow.publishedVersionId) ? 'warning' : 'success'}>
+        <StatusDot
+          tone={isNil(flow.publishedVersionId) ? 'warning' : 'success'}
+        >
           {isNil(flow.publishedVersionId) ? t('Draft') : t('Published')}
-        </Badge>
+        </StatusDot>
       )}
       <Button
         {...adminControl(AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_LINK)}

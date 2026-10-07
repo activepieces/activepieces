@@ -1,6 +1,6 @@
 import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Crown, Plus } from 'lucide-react';
+import { Gem, Plus } from 'lucide-react';
 import React from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -111,7 +111,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           className={cn('hover:bg-gray-4', className)}
           {...control}
         >
-          {locked ? <Crown className="text-accent-11" /> : <Plus />}
+          {locked ? <Gem className="text-accent-11" /> : <Plus />}
         </Button>
       );
     case 'full':
@@ -142,7 +142,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           {...control}
         >
           {locked ? (
-            <Crown className="size-4 text-accent-11" />
+            <Gem className="size-4 text-accent-11" />
           ) : (
             <Plus className="size-4" />
           )}

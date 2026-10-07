@@ -2,7 +2,12 @@ import { PlatformBillingInformation } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 
-import { Separator } from '@/components/ui/separator';
+import {
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+  adminSurface,
+} from '@/app/components/admin';
 import {
   Tooltip,
   TooltipContent,
@@ -13,13 +18,15 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 export function UsageTab({ platform, info }: UsageTabProps) {
   return (
-    <div className="flex w-full flex-col gap-4 p-6">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-xl font-medium">{t('Usage')}</h1>
+    <AdminPage>
+      <AdminPageHeader
+        title={t('Usage')}
+        description={t('Track your workspace usage across your plan limits.')}
+        resources={adminPageResources.usage}
+        badge={
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="size-3.5 text-gray-11 cursor-help" />
+              <Info className="size-4 cursor-help text-gray-11" />
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-60">
               <p className="text-sm">
@@ -27,16 +34,17 @@ export function UsageTab({ platform, info }: UsageTabProps) {
               </p>
             </TooltipContent>
           </Tooltip>
-        </div>
-        <div className="text-sm text-gray-11">
-          {t('Track your workspace usage across your plan limits.')}
-        </div>
-      </div>
-      <Separator />
-      <FeatureUsageCards platformSubscription={info} />
-      <Separator />
-      <ProjectsUsageTable platformId={platform.id} />
-    </div>
+        }
+      />
+      <FeatureUsageCards
+        platformSubscription={info}
+        cardClassName={adminSurface.card}
+      />
+      <ProjectsUsageTable
+        platformId={platform.id}
+        frameClassName={adminSurface.listFrame}
+      />
+    </AdminPage>
   );
 }
 
