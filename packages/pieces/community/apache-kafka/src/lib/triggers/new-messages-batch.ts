@@ -40,8 +40,13 @@ export const newMessagesBatch = createTrigger({
       commit: false,
     })
   },
-  async onEnable() {
-    return
+  async onEnable(context) {
+    await kafkaClient.pinStartOffsets({
+      auth: context.auth.props,
+      topic: context.propsValue.topic,
+      consumerGroup: context.propsValue.consumerGroup,
+      fromBeginning: kafkaConfig.readStartFrom(context.propsValue.startFrom),
+    })
   },
   async onDisable() {
     return

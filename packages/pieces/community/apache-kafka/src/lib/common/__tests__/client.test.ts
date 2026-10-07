@@ -4,6 +4,18 @@ const kafkaMock = vi.hoisted(() => {
   const adminConnect = vi.fn(async () => undefined)
   const adminDisconnect = vi.fn(async () => undefined)
   const describeCluster = vi.fn(async () => ({ brokers: [], controller: null, clusterId: 'cluster' }))
+  const fetchTopicOffsets = vi.fn(async () => [
+    { partition: 0, offset: '20', low: '3', high: '20' },
+    { partition: 1, offset: '9', low: '0', high: '9' },
+  ])
+  const fetchOffsets = vi.fn(async () => [{
+    topic: 'orders',
+    partitions: [
+      { partition: 0, offset: '-1', metadata: null },
+      { partition: 1, offset: '8', metadata: null },
+    ],
+  }])
+  const setOffsets = vi.fn(async () => undefined)
   const producerConnect = vi.fn(async () => undefined)
   const producerDisconnect = vi.fn(async () => undefined)
   const send = vi.fn(async () => [{
@@ -46,6 +58,9 @@ const kafkaMock = vi.hoisted(() => {
     adminConnect,
     adminDisconnect,
     describeCluster,
+    fetchTopicOffsets,
+    fetchOffsets,
+    setOffsets,
     producerConnect,
     producerDisconnect,
     send,
@@ -69,6 +84,9 @@ vi.mock('kafkajs', () => ({
         connect: kafkaMock.adminConnect,
         disconnect: kafkaMock.adminDisconnect,
         describeCluster: kafkaMock.describeCluster,
+        fetchTopicOffsets: kafkaMock.fetchTopicOffsets,
+        fetchOffsets: kafkaMock.fetchOffsets,
+        setOffsets: kafkaMock.setOffsets,
       }
     }
 
@@ -171,6 +189,7 @@ describe('kafkaClient', () => {
     ])
 
     kafkaMock.commitOffsets.mockClear()
+    kafkaMock.setOffsets.mockClear()
     await kafkaClient.consume({
       auth,
       topic: 'orders',
@@ -181,6 +200,43 @@ describe('kafkaClient', () => {
       commit: false,
     })
     expect(kafkaMock.commitOffsets).not.toHaveBeenCalled()
+    expect(kafkaMock.setOffsets).not.toHaveBeenCalled()
+  })
+
+  it('pins the start offset of every partition without a commit before a trigger run reads', async () => {
+    await kafkaClient.consume({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      maxMessages: 1,
+      pollTimeoutSeconds: 1,
+      fromBeginning: false,
+      commit: true,
+    })
+    expect(kafkaMock.setOffsets).toHaveBeenCalledWith({
+      groupId: 'activepieces-orders',
+      topic: 'orders',
+      partitions: [{ partition: 0, offset: '20' }],
+    })
+    expect(kafkaMock.setOffsets.mock.invocationCallOrder[0]).toBeLessThan(kafkaMock.consumerConnect.mock.invocationCallOrder[0])
+  })
+
+  it('leaves the group untouched when every partition already has a commit', async () => {
+    kafkaMock.fetchOffsets.mockResolvedValueOnce([{
+      topic: 'orders',
+      partitions: [
+        { partition: 0, offset: '20', metadata: null },
+        { partition: 1, offset: '9', metadata: null },
+      ],
+    }])
+    await kafkaClient.pinStartOffsets({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      fromBeginning: true,
+    })
+    expect(kafkaMock.setOffsets).not.toHaveBeenCalled()
+    expect(kafkaMock.adminDisconnect).toHaveBeenCalled()
   })
 
   it('returns a partial batch once messages stop arriving', async () => {

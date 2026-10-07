@@ -43,6 +43,26 @@ describe('kafkaRecords', () => {
     ])
   })
 
+  it('starts each partition without a commit at the chosen end of the topic', () => {
+    const topicOffsets = [
+      { partition: 0, low: '3', high: '20' },
+      { partition: 1, low: '0', high: '9' },
+      { partition: 2, low: '5', high: '5' },
+    ]
+    const committed = [
+      { partition: 0, offset: '-1' },
+      { partition: 1, offset: '7' },
+    ]
+    expect(kafkaRecords.startOffsetPlan({ topicOffsets, committed, fromBeginning: false })).toEqual([
+      { partition: 0, offset: '20' },
+      { partition: 2, offset: '5' },
+    ])
+    expect(kafkaRecords.startOffsetPlan({ topicOffsets, committed, fromBeginning: true })).toEqual([
+      { partition: 0, offset: '3' },
+      { partition: 2, offset: '5' },
+    ])
+  })
+
   it('returns one batch item or one item per message', () => {
     const records = [{
       topic: 'orders',

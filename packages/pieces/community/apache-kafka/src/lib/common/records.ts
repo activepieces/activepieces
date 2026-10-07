@@ -3,6 +3,7 @@ import { type Message } from 'kafkajs'
 export const kafkaRecords = {
   toRecord,
   commitPlan,
+  startOffsetPlan,
   readOutboundMessage,
   readOutboundMessages,
   toKafkaMessage,
@@ -48,6 +49,17 @@ function commitPlan({ topic, records }: {
     partition,
     offset: (offset + BigInt(1)).toString(),
   }))
+}
+
+function startOffsetPlan({ topicOffsets, committed, fromBeginning }: {
+  topicOffsets: { partition: number, low: string, high: string }[]
+  committed: { partition: number, offset: string }[]
+  fromBeginning: boolean
+}): { partition: number, offset: string }[] {
+  const pinned = new Set(committed.filter((entry) => BigInt(entry.offset) >= BigInt(0)).map((entry) => entry.partition))
+  return topicOffsets
+    .filter((entry) => !pinned.has(entry.partition))
+    .map((entry) => ({ partition: entry.partition, offset: fromBeginning ? entry.low : entry.high }))
 }
 
 function readOutboundMessages(value: unknown): OutboundMessage[] {

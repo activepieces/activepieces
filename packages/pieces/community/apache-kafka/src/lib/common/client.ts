@@ -5,6 +5,7 @@ import { kafkaRecords, type KafkaRecord } from './records'
 export const kafkaClient = {
   validate,
   publishMessages,
+  pinStartOffsets,
   consume,
 }
 
@@ -70,6 +71,36 @@ async function publishMessages({ auth, topic, messages }: {
   }
 }
 
+async function pinStartOffsets({ auth, topic, consumerGroup, fromBeginning }: {
+  auth: KafkaAuthInput
+  topic: string
+  consumerGroup: string
+  fromBeginning: boolean
+}): Promise<void> {
+  const topicName = kafkaConfig.readTopic(topic)
+  const groupId = kafkaConfig.readConsumerGroup(consumerGroup)
+  const admin = new Kafka(kafkaConfig.build(auth)).admin()
+  try {
+    await admin.connect()
+    const [topicOffsets, groupOffsets] = await Promise.all([
+      admin.fetchTopicOffsets(topicName),
+      admin.fetchOffsets({ groupId, topics: [topicName] }),
+    ])
+    const partitions = kafkaRecords.startOffsetPlan({
+      topicOffsets,
+      committed: groupOffsets.find((entry) => entry.topic === topicName)?.partitions ?? [],
+      fromBeginning,
+    })
+    if (partitions.length > 0) {
+      await admin.setOffsets({ groupId, topic: topicName, partitions })
+    }
+  } catch (error) {
+    throw new Error(kafkaConfig.describeError({ error, brokers: auth.brokers, topic: topicName }))
+  } finally {
+    await admin.disconnect().catch(() => undefined)
+  }
+}
+
 async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSeconds, fromBeginning, commit }: {
   auth: KafkaAuthInput
   topic: string
@@ -83,6 +114,9 @@ async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSec
   const groupId = kafkaConfig.readConsumerGroup(consumerGroup)
   const limit = kafkaConfig.readMaxMessages(maxMessages)
   const pollTimeoutMs = kafkaConfig.readPollTimeoutMs(pollTimeoutSeconds)
+  if (commit) {
+    await pinStartOffsets({ auth, topic: topicName, consumerGroup: groupId, fromBeginning })
+  }
   const consumer = new Kafka(kafkaConfig.build(auth)).consumer({
     groupId,
     maxWaitTimeInMs: 500,
