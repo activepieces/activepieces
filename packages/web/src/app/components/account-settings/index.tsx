@@ -4,29 +4,22 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Camera, Mail } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { userHooks, userMutations } from '@/hooks/user-hooks';
 
 import { LanguageToggle } from './language-toggle';
 import { ThemeToggle } from './theme-toggle';
-
-export interface AccountSettingsDialogProps {
-  open: boolean;
-  onClose: () => void;
-}
 
 export function AccountSettingsDialog({
   open,
@@ -48,6 +41,7 @@ export function AccountSettingsDialog({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (file) {
       if (file.size > AP_MAXIMUM_PROFILE_PICTURE_SIZE) {
         toast.error(t('File size exceeds 5MB limit'));
@@ -61,72 +55,78 @@ export function AccountSettingsDialog({
       }
       uploadMutation.mutate(file);
     }
-    event.target.value = '';
   };
 
   const handleAvatarClick = () => {
+    if (uploadMutation.isPending) {
+      return;
+    }
     fileInputRef.current?.click();
   };
 
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
+  const email = user?.email ?? '';
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-full max-h-[90vh] pb-4 flex flex-col px-5">
+      <DialogContent className="max-h-[90svh] max-w-md gap-5 overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-semibold">
-            {t('Account Settings')}
-          </DialogTitle>
+          <DialogTitle>{t('Account Settings')}</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1" viewPortClassName="px-1">
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div
-                className="relative group cursor-pointer"
-                onClick={handleAvatarClick}
-              >
-                <UserAvatar
-                  name={(user?.firstName ?? '') + ' ' + (user?.lastName ?? '')}
-                  email={user?.email ?? ''}
-                  size={64}
-                  disableTooltip
-                  imageUrl={user?.imageUrl}
-                />
-                <div
-                  data-theme="dark"
-                  className="absolute inset-0 flex items-center justify-center bg-scrim rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Camera className="h-5 w-5 text-gray-12" />
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  className="hidden"
-                  onChange={handleFileChange}
-                  disabled={uploadMutation.isPending}
-                />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold">
-                  {user?.firstName} {user?.lastName}
-                </div>
-                <div className="text-xs text-gray-11 flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5" />
-                  {user?.email}
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ThemeToggle />
-              <LanguageToggle />
-            </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label={t('Upload File')}
+            className="group relative shrink-0 rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50 aria-disabled:cursor-not-allowed"
+            onClick={handleAvatarClick}
+            aria-disabled={uploadMutation.isPending}
+            aria-busy={uploadMutation.isPending}
+          >
+            <UserAvatar
+              name={fullName}
+              email={email}
+              size={40}
+              disableTooltip
+              imageUrl={user?.imageUrl}
+            />
+            <span
+              data-theme="dark"
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+              <Camera className="size-4 text-gray-12" />
+            </span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={uploadMutation.isPending}
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TextWithTooltip tooltipMessage={fullName}>
+              <p className="truncate text-sm font-medium text-gray-12">
+                {fullName}
+              </p>
+            </TextWithTooltip>
+            <TextWithTooltip tooltipMessage={email}>
+              <p className="truncate text-xs text-gray-11">{email}</p>
+            </TextWithTooltip>
           </div>
-        </ScrollArea>
-        <DialogFooter />
+        </div>
+
+        <div className="flex flex-col divide-y divide-gray-6 rounded-xl border border-gray-6">
+          <ThemeToggle />
+          <LanguageToggle />
+        </div>
       </DialogContent>
     </Dialog>
   );
+}
+
+export interface AccountSettingsDialogProps {
+  open: boolean;
+  onClose: () => void;
 }
