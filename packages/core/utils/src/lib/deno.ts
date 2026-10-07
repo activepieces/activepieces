@@ -85,11 +85,6 @@ export const deno = {
         })
     },
 
-    /**
-     * Spawns one long-lived Deno process that holds globals in its own heap and
-     * evaluates scripts on demand, so repeated evaluations against the same data
-     * serialize it once instead of once per run.
-     */
     async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, idleTimeoutMs = DEFAULT_SESSION_IDLE_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
         const marker = newResultMarker()
         const { child, denoPath, denoDir } = await spawnDeno({
@@ -109,12 +104,6 @@ export const deno = {
         let capturedStderr = ''
         let idleTimer: ReturnType<typeof setTimeout> | null = null
 
-        // A no-progress watchdog, not a per-command deadline: the engine sends sibling
-        // expressions concurrently but the child runs them one at a time, so a command may
-        // wait behind others. We only kill when the child produces no reply at all for
-        // idleTimeoutMs — a wedged event loop or corrupted reply channel — never for a
-        // command merely queued behind slower ones. Reset on every reply, armed while work
-        // is pending. On trip, kill the child; the sandbox respawns a clean session.
         const refreshWatchdog = (): void => {
             if (idleTimer !== null) {
                 clearTimeout(idleTimer)

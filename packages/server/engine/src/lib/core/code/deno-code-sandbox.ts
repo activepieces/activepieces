@@ -104,15 +104,6 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 return livePromise
             }
 
-            // Pushes every context global into the child, then resolves once they are all there.
-            //
-            // Sibling expressions in one step resolve concurrently (applyFunctionToValues uses
-            // Promise.all), so several runs call this at the same time and would each re-send the
-            // same large step output. sentGlobals holds, per key, the value sent and the promise
-            // of that send, so a concurrent caller finds the in-flight send and awaits it instead
-            // of starting a second one. A new value (different reference) supersedes it with a
-            // fresh send. If a send fails, its entry is removed so the next run retries rather than
-            // treating the never-arrived global as present.
             const syncGlobals = async ({ session, sentGlobals }: LiveScriptSession): Promise<void> => {
                 await Promise.all(Object.entries(context).map(([key, value]) => {
                     const alreadySent = sentGlobals.get(key)
