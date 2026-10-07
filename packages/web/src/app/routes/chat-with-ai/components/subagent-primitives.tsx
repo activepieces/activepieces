@@ -1,9 +1,10 @@
-import { SubagentActivity } from '@activepieces/shared';
+import { SubagentActivity, SubagentTimelineEntry } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Hand, Loader2, Minus } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
+import { FaviconOrGlobe } from '@/components/prompt-kit/source';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -79,14 +80,40 @@ export function AppLogos({ pieces }: { pieces: string[] }) {
   const apps = pieces.filter(
     (pieceName) => !PLUMBING_PIECES.includes(pieceName),
   );
-  if (apps.length === 0) return null;
-  const shown = apps.slice(0, MAX_LOGOS);
-  const extra = apps.length - shown.length;
   return (
-    <div className="flex shrink-0 items-center gap-1">
-      {shown.map((pieceName) => (
+    <LogoStack
+      items={apps.map((pieceName) => (
         <AppLogo key={pieceName} pieceName={pieceName} />
       ))}
+    />
+  );
+}
+
+export function ReadFavicons({
+  timeline,
+}: {
+  timeline: SubagentTimelineEntry[];
+}) {
+  return (
+    <LogoStack
+      items={readPages(timeline).map((page) => (
+        <span
+          key={page.url}
+          className="flex size-5 items-center justify-center rounded-full bg-panel"
+        >
+          <FaviconOrGlobe url={page.url} size="sm" />
+        </span>
+      ))}
+    />
+  );
+}
+
+function LogoStack({ items }: { items: React.ReactNode[] }) {
+  if (items.length === 0) return null;
+  const extra = items.length - MAX_LOGOS;
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {items.slice(0, MAX_LOGOS)}
       {extra > 0 && (
         <span className="text-xss text-gray-11 tabular-nums">+{extra}</span>
       )}
@@ -143,6 +170,20 @@ function AppLogo({ pieceName }: { pieceName: string }) {
     />
   );
 }
+
+function readPages(
+  timeline: SubagentTimelineEntry[],
+): { url: string; title?: string }[] {
+  const pages = timeline.flatMap((entry) =>
+    entry.kind === 'read' ? [{ url: entry.url, title: entry.title }] : [],
+  );
+  return pages.filter(
+    (page, index) =>
+      pages.findIndex((other) => other.url === page.url) === index,
+  );
+}
+
+export const subagentTimelineUtils = { readPages };
 
 const MAX_LOGOS = 3;
 const PLUMBING_PIECES = ['@activepieces/piece-subflows'];

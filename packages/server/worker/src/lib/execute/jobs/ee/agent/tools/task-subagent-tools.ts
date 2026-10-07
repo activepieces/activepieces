@@ -1,11 +1,12 @@
-import { isNil, isObject, omit, tryCatch } from '@activepieces/core-utils'
-import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { isNil, isObject, omit, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentLink, subagentProgressId, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
+import pLimit from 'p-limit'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
 import { createPhaseTools } from './session-tools'
 import { taskContext } from './task-context'
-import { AgentEventEmitter } from './tool-primitives'
+import { AgentEventEmitter, extractResultText } from './tool-primitives'
 
 export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<TaskDeps, 'workerTools' | 'taskPrompt'> & {
     tools: ToolSet
@@ -19,6 +20,7 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
         taskPrompt,
         workerTools: Object.fromEntries(Object.entries(tools).filter(([name]) => !NOT_FOR_TASKS.includes(name))),
     }
+    const searchAvailable = Object.hasOwn(tools, WEB_SEARCH_TOOL)
     return {
         [TASK_TOOL_NAME]: tool({
             description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: goals that can run in parallel (several calls in one step run at once), like the separate flows of a multi-flow solution; or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build a single flow and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
@@ -26,6 +28,23 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
             toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls'])) }),
             execute: async ({ title, brief, taskId }, { toolCallId }) => runTask({ deps, title, brief, taskId, progressId: toolCallId }),
         }),
+        ...(searchAvailable ? {
+            [RESEARCH_TOOL_NAME]: tool({
+                description: 'Research one or more subjects in depth on the live web. One sub-agent per subject runs in parallel: it searches, reads the actual pages and returns a short sourced brief, and the user watches the research live. Use it whenever the answer needs facts from real pages, such as comparing tools or vendors, pricing and plans, reviews and complaints, competitors, or API docs. Prefer it over several ap_web_search calls. Use ap_web_search only for one quick fact. Compare the briefs and do the final step yourself (the recommendation, the image, the build).',
+                inputSchema: researchInput,
+                toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify({ tasks: output.tasks.map((task: TaskRunOutput) => omit(task, ['activity', 'billedToolCalls'])) }) }),
+                execute: async ({ question, subjects, context }, { toolCallId }) => {
+                    const researchSlot = pLimit(RESEARCHERS_AT_ONCE)
+                    const tasks = await Promise.all(subjects.map((subject, index) => researchSlot(() => runTask({
+                        deps,
+                        title: subject,
+                        brief: [question, `Subject: ${subject}`, ...(isNil(context) ? [] : [context])].join('\n\n'),
+                        progressId: subagentProgressId.forSubject({ toolCallId, index }),
+                    }))))
+                    return { tasks, billedToolCalls: tasks.flatMap((task) => task.billedToolCalls ?? []) }
+                },
+            }),
+        } : {}),
     }
 }
 
@@ -269,12 +288,60 @@ function finalActivity({ title, turn, result, startedAt }: { title: string, turn
 }
 
 function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
-    return parts.flatMap((part): SubagentTimelineEntry[] => {
-        if (part.type !== PersistedAgentPartType.THINKING_STATUS) {
+    const entries = parts.flatMap((part): SubagentTimelineEntry[] => {
+        if (part.type === PersistedAgentPartType.THINKING_STATUS) {
+            const text = part.text.trim()
+            return text.length > 0 ? [{ kind: 'status', text }] : []
+        }
+        if (part.type !== PersistedAgentPartType.TOOL_CALL || !isObject(part.input)) {
             return []
         }
-        const text = part.text.trim()
-        return text.length > 0 ? [{ kind: 'status', text }] : []
+        const query = part.input['query']
+        if (part.toolName === WEB_SEARCH_TOOL && typeof query === 'string') {
+            return [{ kind: 'search', query, results: searchResults(part.output) }]
+        }
+        const url = part.input['url']
+        const pageWasRead = PAGE_READ_TOOLS.includes(part.toolName) && typeof url === 'string' && part.status === PersistedToolCallStatus.COMPLETED && returnedPage(part.output)
+        return pageWasRead ? [{ kind: 'read', url }] : []
+    })
+    const titles = new Map(entries.flatMap((entry) => entry.kind === 'search' ? entry.results : []).map((link) => [link.url, link.title]))
+    return entries.map((entry) => {
+        const title = entry.kind === 'read' ? titles.get(entry.url) : undefined
+        return isNil(title) ? entry : { ...entry, title }
+    })
+}
+
+function unwrapLargeResponse(value: unknown): unknown {
+    if (isNil(value)) {
+        return value
+    }
+    const text = extractResultText(value)
+    if (!text.startsWith(LARGE_RESPONSE_MARKER)) {
+        return value
+    }
+    return parseToJsonIfPossible(text.slice(text.indexOf('\n\n') + 2))
+}
+
+function returnedPage(output: unknown): boolean {
+    if (isNil(output)) {
+        return false
+    }
+    const parsed = parseToJsonIfPossible(output)
+    const hasPageText = isObject(parsed) && (typeof parsed['content'] === 'string' || typeof parsed['markdown'] === 'string')
+    return hasPageText || extractResultText(parsed).startsWith(LARGE_RESPONSE_MARKER)
+}
+
+function searchResults(output: unknown): SubagentLink[] {
+    const parsed = unwrapLargeResponse(parseToJsonIfPossible(output))
+    if (!isObject(parsed) || !Array.isArray(parsed['results'])) {
+        return []
+    }
+    return parsed['results'].flatMap((result): SubagentLink[] => {
+        if (!isObject(result) || typeof result['url'] !== 'string' || result['url'].length === 0) {
+            return []
+        }
+        const title = typeof result['title'] === 'string' && result['title'].length > 0 ? result['title'] : undefined
+        return [{ url: result['url'], ...(isNil(title) ? {} : { title }) }]
     })
 }
 
@@ -318,6 +385,12 @@ const taskInput = z.object({
     taskId: z.string().optional().describe('Continue a task from earlier in this conversation instead of starting a new one'),
 })
 
+const researchInput = z.object({
+    question: z.string().min(1).describe('What to find out, with the details that matter (team size, budget, region, what to compare)'),
+    subjects: z.array(z.string().min(1)).min(1).describe('One entry per thing to research, e.g. ["Asana", "ClickUp", "Monday.com"]. Each gets its own sub-agent.'),
+    context: z.string().optional().describe('Anything else the researchers should know'),
+})
+
 const taskResult = z.object({
     status: z.enum(['done', 'blocked', 'failed']),
     summary: z.string().describe('A few plain sentences: what you did and what the main assistant should tell the user'),
@@ -332,13 +405,19 @@ const STATUS_BY_RESULT: Record<TaskResult['status'], FinishAgentTaskRequest['sta
 }
 
 const TASK_TOOL_NAME = 'ap_run_task'
+const RESEARCH_TOOL_NAME = 'ap_deep_research'
+const RESEARCHERS_AT_ONCE = 4
 const GUIDE_TOOL_NAME = 'ap_load_guide'
 const REPORT_REQUEST = `You stopped without reporting. Call ${TASK_COMPLETION_TOOL_NAME} now with your result.`
 const CONTINUE_REQUEST = 'You were cut off. Continue from where you stopped.'
 const MAX_CONTINUATIONS = 2
+const WEB_SEARCH_TOOL = 'ap_web_search'
+const PAGE_READ_TOOLS = ['ap_fetch_url', 'ap_scrape_url']
+const LARGE_RESPONSE_MARKER = '[LARGE RESPONSE'
 
 const NOT_FOR_TASKS = [
     TASK_TOOL_NAME,
+    RESEARCH_TOOL_NAME,
     ...AGENT_SURFACE_TOOLS,
     'ap_show_questions',
     'ap_show_quick_replies',

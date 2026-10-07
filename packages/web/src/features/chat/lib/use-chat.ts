@@ -13,6 +13,7 @@ import {
   ToolProgressEvent,
   AgentMessageSource,
   SubagentActivity,
+  subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -90,6 +91,7 @@ function restoreReceiptsIntoStore({
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
+const TASK_PANEL_DOCKS_FROM = '(min-width: 1024px)';
 const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_send_email',
   'ap_test_flow',
@@ -229,10 +231,13 @@ function appendTrailingPart({
   messages: ChatUIMessage[];
   part: ReturnType<typeof buildGatePart>;
 }): ChatUIMessage[] {
+  const baseToolCallId = subagentProgressId.baseOf(part.toolCallId);
   const alreadyAnchored = messages.some((m) =>
     m.parts.some(
       (existing) =>
-        'toolCallId' in existing && existing.toolCallId === part.toolCallId,
+        'toolCallId' in existing &&
+        (existing.toolCallId === part.toolCallId ||
+          existing.toolCallId === baseToolCallId),
     ),
   );
   if (alreadyAnchored) return messages;
@@ -257,6 +262,10 @@ function appendTrailingPart({
 
 function progressOf(activity: SubagentActivity): number {
   return activity.stepCount + (activity.timeline?.length ?? 0);
+}
+
+function isWideScreen(): boolean {
+  return window.matchMedia(TASK_PANEL_DOCKS_FROM).matches;
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
@@ -420,6 +429,11 @@ export function useAgentChat({
         if (isStale) {
           return prev;
         }
+        const opensPanel =
+          prev.taskPanelAutoOpen &&
+          prev.taskPanelToolCallId === null &&
+          isWideScreen() &&
+          (event.data.timeline ?? []).some((entry) => entry.kind === 'search');
         return {
           toolCallMeta: {
             ...prev.toolCallMeta,
@@ -428,6 +442,7 @@ export function useAgentChat({
               subagent: event.data,
             },
           },
+          ...(opensPanel ? { taskPanelToolCallId: event.toolCallId } : {}),
         };
       });
     },

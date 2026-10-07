@@ -23,6 +23,7 @@ const GUIDES: Record<string, string> = Object.fromEntries(
 const TASK_TEMPLATE = loadPromptTemplate('task-subagent-prompt.md')
 
 const SUBAGENTS_NOTE = loadPromptTemplate('chat-subagents-note.md').trim()
+const RESEARCH_NOTE = loadPromptTemplate('chat-research-note.md').trim()
 
 function sanitizeProjectName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
@@ -114,6 +115,7 @@ export const agentPrompt = {
     buildTaskSystemPrompt,
     guides: GUIDES,
     subagentsNote: SUBAGENTS_NOTE,
+    researchNote: RESEARCH_NOTE,
     projectDisplayName,
     sources: {
         ...PROMPT_TEMPLATES,
