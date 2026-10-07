@@ -35,8 +35,8 @@
   "Middle East (UAE) [me-central-1]": "Moyen Orient (UAE) [me-central-1]",
   "\nThis piece allows you to send messages to Amazon SNS topics.\n\nRefer to [this](https://docs.aws.amazon.com/general/latest/gr/sns.html) for **Region**. Leave the **Endpoint** blank. \n": "\nThis piece allows you to send messages to Amazon SNS topics.\n\nRefer to [this](https://docs.aws.amazon.com/general/latest/gr/sns.html) for **Region**. Leave the **Endpoint** blank. \n",
   "Send Message": "Envoyer un message",
-  "Sends a message to an Amazon SNS topic.": "Envoie un message à un sujet du SNS Amazon.",
+  "Sends a message to an Amazon SNS topic.": "Sends a message to an Amazon SNS topic.",
   "Topic": "Sujet",
   "Message": "Message",
-  "Select a topic": "Sélectionnez un sujet"
+  "Select a topic": "Select a topic"
 }
