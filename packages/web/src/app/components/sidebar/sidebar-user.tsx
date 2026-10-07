@@ -137,14 +137,14 @@ export function SidebarUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
-                <UserCogIcon className="w-4 h-4 mr-2" />
+                <UserCogIcon className="size-4" />
                 {t('Account Settings')}
               </DropdownMenuItem>
               <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="size-4" />
               {t('Log out')}
             </DropdownMenuItem>
           </DropdownMenuContent>

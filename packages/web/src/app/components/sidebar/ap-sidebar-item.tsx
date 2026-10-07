@@ -2,7 +2,7 @@ import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronRight, Gem } from 'lucide-react';
 import React, { ComponentType, ReactNode, useRef, useState } from 'react';
-import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
+import { Link, matchPath, useLocation } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
@@ -28,7 +28,6 @@ import { sidebarStyles } from './sidebar-styles';
 
 export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const { capture } = useTelemetry();
   const iconRef = useRef<AnimatedIconHandle | null>(null);
@@ -114,15 +113,15 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
   const toggleGroup = () => setExpandOverride({ pathname, open: !isExpanded });
 
-  const handleGroupClick = () => {
-    if (isLinkActive) {
-      toggleGroup();
-      return;
+  const handleRowClick = () => {
+    closeMobileSheet();
+    item.onClick?.();
+    if (hasSubItems) {
+      setExpandOverride({ pathname: item.to, open: true });
     }
-    const [firstSubItem] = subItems;
-    handleSubItemClick(firstSubItem);
-    setExpandOverride(null);
-    navigate(keepSearchWithinSection(firstSubItem.to));
+    if (isPremium && !isRouteActive({ pathname, to: item.to, end: true })) {
+      captureLockedClick({ path: item.to, tier: parentTier });
+    }
   };
 
   const label = (
@@ -139,40 +138,18 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     </span>
   );
 
-  const button = hasSubItems ? (
-    <SidebarMenuButton
-      isActive={isRowHighlighted}
-      aria-expanded={showSubItems}
-      aria-label={isCollapsed ? collapsedName : undefined}
-      tooltip={collapsedTooltip}
-      onClick={handleGroupClick}
-      className="pr-8"
-      {...hoverHandlers}
-    >
-      {icon}
-      {label}
-    </SidebarMenuButton>
-  ) : (
+  const button = (
     <SidebarMenuButton
       asChild
       isActive={isRowHighlighted}
       tooltip={collapsedTooltip}
+      className={cn(hasSubItems && 'pr-8')}
     >
       <Link
-        to={item.to}
+        to={keepSearchWithinSection(item.to)}
         aria-label={isCollapsed ? collapsedName : undefined}
         aria-current={isRowHighlighted ? 'page' : undefined}
-        onClick={(event) => {
-          event.stopPropagation();
-          closeMobileSheet();
-          item.onClick?.();
-          if (
-            isPremium &&
-            !isRouteActive({ pathname, to: item.to, end: true })
-          ) {
-            captureLockedClick({ path: item.to, tier: parentTier });
-          }
-        }}
+        onClick={handleRowClick}
         {...hoverHandlers}
       >
         {icon}
