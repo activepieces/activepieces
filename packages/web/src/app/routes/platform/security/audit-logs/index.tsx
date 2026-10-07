@@ -29,8 +29,13 @@ import {
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
+import { DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -117,12 +122,13 @@ export default function AuditLogsPage() {
   const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
-        description={t('Track activities done within your platform')}
+    <AdminPage>
+      <AdminPageHeader
         title={t('Audit Logs')}
+        description={t('Track activities done within your platform')}
+        resources={adminPageResources.auditLogs}
       />
-      <DataTable
+      <AdminDataTable
         emptyStateTextTitle={t('No audit logs found')}
         emptyStateTextDescription={t(
           'Come back later when you have some activity to audit',
@@ -327,7 +333,7 @@ export default function AuditLogsPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </AdminPage>
   );
 }
 

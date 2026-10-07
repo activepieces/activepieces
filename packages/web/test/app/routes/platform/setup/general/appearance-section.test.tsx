@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   invalidate: vi.fn(async (_filters: unknown) => undefined),
   saving: Promise.resolve() as Promise<unknown>,
+  upgradeClick: vi.fn(),
 }));
 
 vi.mock('i18next', () => ({
@@ -67,6 +68,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
     queryKey: ['flags'],
+    useFlag: () => ({ data: undefined }),
     useWebsiteBranding: () => ({
       colors: {
         avatar: '#515151',
@@ -119,8 +121,9 @@ vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
   ColorPreview: () => null,
 }));
 
-vi.mock('@/app/components/feature-banner', () => ({
-  FeatureBanner: () => null,
+vi.mock('@/features/billing', () => ({
+  TIER_LABELS: { enterprise: 'Enterprise' },
+  useUpgradeClick: () => state.upgradeClick,
 }));
 
 import { AppearanceSection } from '@/app/routes/platform/setup/general/appearance-section';
@@ -442,6 +445,50 @@ describe('AppearanceSection', () => {
         'Failed to save changes. Please try again.',
       ),
     ).toBe(true);
+  });
+});
+
+describe('AppearanceSection on a plan without branding', () => {
+  beforeEach(() => {
+    state.update.mockReset();
+    state.update.mockResolvedValue(undefined);
+    state.upgradeClick.mockClear();
+    state.saving = Promise.resolve();
+    state.customAppearanceEnabled = false;
+    state.primaryColor = '#6e41e2';
+    state.brandColor = '#6e41e2';
+    state.themeColors = null;
+    state.statusColors = {};
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('lets the admin try a colour and turns save into upgrade', async () => {
+    await render();
+    await type({ selector: 'input[aria-label="colour"]', value: '#123456' });
+    expect(container.textContent).toContain("Branding preview isn't saved");
+    expect(container.querySelector('button[type="submit"]')).toBeNull();
+    await act(async () => {
+      buttonNamed({ name: 'Upgrade to save' }).click();
+    });
+    expect(state.upgradeClick).toHaveBeenCalledWith(
+      expect.objectContaining({ feature: 'BRANDING', tier: 'enterprise' }),
+    );
+  });
+
+  it('still saves a name change while branding is only previewed', async () => {
+    await render();
+    await type({ selector: 'input[aria-label="colour"]', value: '#123456' });
+    await type({ selector: '#name', value: 'Contoso' });
+    expect(submitButton().textContent).toBe('Save name');
+    await save();
+    const fields = sentFields();
+    expect(fields.name).toBe('Contoso');
+    expect(fields.primaryColor).toBeUndefined();
+    expect(fields.themeColors).toBeUndefined();
   });
 });
 

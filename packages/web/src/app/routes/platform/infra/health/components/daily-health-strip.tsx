@@ -3,14 +3,8 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpRight } from 'lucide-react';
 
+import { SettingsPanel } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -34,87 +28,76 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
   const days = data?.days ?? [];
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col gap-1">
-            <CardTitle className="text-base font-medium">
-              {t('Daily job health')}
-            </CardTitle>
-            <CardDescription>
-              {t('Stability of platform jobs over the last 30 days.')}
-            </CardDescription>
-          </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon-xs" onClick={onSeeRuns}>
-                <ArrowUpRight className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('View runs health')}</TooltipContent>
-          </Tooltip>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Skeleton className="h-10 w-full" />
-        ) : (
-          <div className="flex items-end gap-1 h-10">
-            {days.map((day) => {
-              const healthy = isHealthy(day);
-              return (
-                <Tooltip key={day.day}>
-                  <TooltipTrigger asChild>
-                    <div
-                      className={cn(
-                        'flex-1 h-full rounded-md transition-colors',
-                        healthy
-                          ? 'bg-success-9 hover:bg-success-9/80'
-                          : 'bg-danger-9 hover:bg-danger-9/80',
-                      )}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent className="flex flex-col gap-1.5 min-w-[14rem] p-3 text-sm">
-                    <span className="text-sm font-semibold">
-                      {dayjs(day.day).format('MMM DD, YYYY')}
-                    </span>
-                    {healthy ? (
-                      <span className="text-gray-11">{t('Healthy')}</span>
-                    ) : (
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center justify-between gap-6">
-                          <span className="text-gray-11">
-                            {t('Internal errors')}
-                          </span>
-                          <span className="font-medium tabular-nums">
-                            {day.internalErrors}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-6">
-                          <span className="text-gray-11">
-                            {t('Affected flows')}
-                          </span>
-                          <span className="font-medium tabular-nums">
-                            {day.affectedFlows}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-6">
-                          <span className="text-gray-11">
-                            {t('Stuck jobs')}
-                          </span>
-                          <span className="font-medium tabular-nums">
-                            {day.stuckJobs}
-                          </span>
-                        </div>
-                      </div>
+    <SettingsPanel
+      title={t('Daily job health')}
+      description={t('Stability of platform jobs over the last 30 days.')}
+      action={
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon-xs" onClick={onSeeRuns}>
+              <ArrowUpRight className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('View runs health')}</TooltipContent>
+        </Tooltip>
+      }
+    >
+      {isLoading ? (
+        <Skeleton className="h-10 w-full" />
+      ) : (
+        <div className="flex items-end gap-1 h-10">
+          {days.map((day) => {
+            const healthy = isHealthy(day);
+            return (
+              <Tooltip key={day.day}>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      'flex-1 h-full rounded-md transition-colors',
+                      healthy
+                        ? 'bg-success-9 hover:bg-success-9/80'
+                        : 'bg-danger-9 hover:bg-danger-9/80',
                     )}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                  />
+                </TooltipTrigger>
+                <TooltipContent className="flex flex-col gap-1.5 min-w-[14rem] p-3 text-sm">
+                  <span className="text-sm font-semibold">
+                    {dayjs(day.day).format('MMM DD, YYYY')}
+                  </span>
+                  {healthy ? (
+                    <span className="text-gray-11">{t('Healthy')}</span>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-6">
+                        <span className="text-gray-11">
+                          {t('Internal errors')}
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {day.internalErrors}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-6">
+                        <span className="text-gray-11">
+                          {t('Affected flows')}
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {day.affectedFlows}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-6">
+                        <span className="text-gray-11">{t('Stuck jobs')}</span>
+                        <span className="font-medium tabular-nums">
+                          {day.stuckJobs}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      )}
+    </SettingsPanel>
   );
 }

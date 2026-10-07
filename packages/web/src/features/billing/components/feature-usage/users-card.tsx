@@ -9,13 +9,14 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
 
 import { billingUtils } from '../../utils/billing-utils';
 import { DetailRow } from '../detail-row';
 
 import { ManageSeatsDialog } from './manage-seats-dialog';
 
-export const UsersCard = ({ info, feature }: UsersCardProps) => {
+export const UsersCard = ({ info, feature, className }: UsersCardProps) => {
   const { usage, includedSeats, additionalSeats } = info;
   const used = usage.users;
   const hasAdditionalSeats = !isNil(additionalSeats) && additionalSeats > 0;
@@ -28,8 +29,13 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
-      <span className="text-lg font-semibold text-gray-12">
+    <div
+      className={cn(
+        'flex flex-col gap-4 rounded-xl border bg-panel p-5',
+        className,
+      )}
+    >
+      <span className="text-base font-semibold text-gray-12">
         {isNil(effectiveTotal)
           ? t('{used} seats', { used: used.toLocaleString() })
           : t('{used}/{total} seats', {
@@ -39,7 +45,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
       </span>
 
       {hasInvitedSeats && (
-        <div className="flex flex-col gap-1.5 text-sm">
+        <div className="flex flex-col gap-2 text-sm">
           <DetailRow
             label={t('Active')}
             value={usage.activeUsers.toLocaleString()}
@@ -52,7 +58,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
       )}
 
       {hasAdditionalSeats && !capBinds && (
-        <div className="flex flex-col gap-1.5 text-sm">
+        <div className="flex flex-col gap-2 text-sm">
           <DetailRow
             label={t('Plan seats')}
             value={included.toLocaleString()}
@@ -84,12 +90,12 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
           >
             {hasAdditionalSeats ? (
               <>
-                <Pencil className="mr-2 size-4" />
+                <Pencil className="size-4" />
                 {t('Manage Seats')}
               </>
             ) : (
               <>
-                <Plus className="mr-2 size-4" />
+                <Plus className="size-4" />
                 {t('Add Seats')}
               </>
             )}
@@ -112,4 +118,5 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
 type UsersCardProps = {
   info: PlatformBillingInformation;
   feature: SeatsBillableFeature;
+  className?: string;
 };

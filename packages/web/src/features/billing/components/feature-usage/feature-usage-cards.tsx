@@ -12,6 +12,7 @@ import {
   usageIndicatorClass,
   usageTrackClass,
 } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 import { billingUtils } from '../../utils/billing-utils';
 
@@ -19,20 +20,32 @@ const HIDE_WHEN_UNLIMITED = ['active-flows', 'team-projects'];
 
 export function FeatureUsageCards({
   platformSubscription,
+  cardClassName,
 }: {
   platformSubscription: PlatformBillingInformation;
+  cardClassName?: string;
 }) {
   const metrics = resolveUsageMetrics(platformSubscription);
   return (
-    <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {metrics.map((metric) => (
-        <UsageMetricCard key={metric.key} metric={metric} />
+        <UsageMetricCard
+          key={metric.key}
+          metric={metric}
+          className={cardClassName}
+        />
       ))}
     </div>
   );
 }
 
-function UsageMetricCard({ metric }: { metric: UsageMetric }) {
+function UsageMetricCard({
+  metric,
+  className,
+}: {
+  metric: UsageMetric;
+  className?: string;
+}) {
   const Icon = metric.icon;
   const isUnlimited = isNil(metric.included);
   const percent = billingUtils.percentUsed({
@@ -41,9 +54,14 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
   });
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-gray-3/30 p-5">
+    <div
+      className={cn(
+        'flex flex-col gap-4 rounded-xl bg-gray-3/30 p-5',
+        className,
+      )}
+    >
       <div className="flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-md border bg-gray-1 text-gray-11">
+        <span className="flex size-7 items-center justify-center rounded-lg border bg-gray-1 text-gray-11">
           <Icon className="size-4" />
         </span>
         <span className="text-sm font-medium text-gray-12">
@@ -74,7 +92,7 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
       </div>
 
       {!isUnlimited && (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <Progress
             value={percent}
             className={usageTrackClass(percent / 100)}

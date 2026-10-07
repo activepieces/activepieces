@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { AdminEmpty, AdminSection, adminSurface } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,7 +38,7 @@ import {
 } from '@/components/ui/tooltip';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
-import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import { ModeRadioCards } from './mode-radio-cards';
 import { PieceSelect } from './piece-select';
@@ -83,12 +84,7 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
     });
 
   return (
-    <div
-      className={cn(
-        'flex flex-1 min-h-0 max-w-3xl flex-col gap-5',
-        DASHBOARD_CONTENT_PADDING_X,
-      )}
-    >
+    <div className="flex min-h-0 max-w-3xl flex-1 flex-col gap-6">
       <ModeRadioCards
         title={t('Publishing flows rule')}
         value={requiredActions.mode}
@@ -116,36 +112,34 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
         }
       />
 
-      <div className="flex flex-1 min-h-0 flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <div className="flex flex-1 flex-col gap-0.5">
-            <span className="text-sm font-semibold">
-              {t('Required actions')}
-            </span>
-            {requiredActionsGroupedByPiece.length > 0 && (
-              <span className="text-sm text-gray-11">
-                {t('requiredActionsAcrossPieces', {
-                  actionCount: actionsInLatestPieceVersionCount,
-                  pieceCount: requiredActionsGroupedByPiece.length,
-                })}
-              </span>
-            )}
-          </div>
+      <AdminSection
+        className="min-h-0 flex-1"
+        title={t('Required actions')}
+        description={
+          requiredActionsGroupedByPiece.length > 0
+            ? t('requiredActionsAcrossPieces', {
+                actionCount: actionsInLatestPieceVersionCount,
+                pieceCount: requiredActionsGroupedByPiece.length,
+              })
+            : undefined
+        }
+        action={
           <Button
             variant="outline"
             onClick={() => setEditDialog({ open: true, pieceName: null })}
           >
-            <Plus className="size-4" />
+            <Plus />
             {t('Add actions')}
           </Button>
-        </div>
+        }
+      >
         {isLoading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="size-6 animate-spin text-gray-11" />
           </div>
         ) : requiredActionsGroupedByPiece.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
-            <div className="flex flex-col gap-3 pr-3">
+            <div className="flex flex-col gap-4 pr-3">
               {requiredActionsGroupedByPiece.map((group) => (
                 <PieceRequiredActionsCard
                   key={group.pieceName}
@@ -164,23 +158,21 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
             </div>
           </ScrollArea>
         ) : (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-10 text-center">
-            <ListChecks className="size-8 text-gray-11" />
-            <span className="text-sm font-medium">
-              {t('No required actions')}
-            </span>
-            <span className="max-w-sm text-sm text-gray-11">
-              {requiredActions.mode === RequiredActionsMode.ALL
+          <AdminEmpty
+            icon={<ListChecks />}
+            title={t('No required actions')}
+            description={
+              requiredActions.mode === RequiredActionsMode.ALL
                 ? t(
                     'Choose actions that flows in projects assigned to this set must include before they can publish.',
                   )
                 : t(
                     'Choose actions that flows in projects assigned to this set must include at least one of before they can publish.',
-                  )}
-            </span>
-          </div>
+                  )
+            }
+          />
         )}
-      </div>
+      </AdminSection>
 
       <Dialog
         open={editDialog.open}
@@ -219,8 +211,8 @@ function PieceRequiredActionsCard({
     group.actions.length - actionNamesNotInLatestPieceVersion.length;
 
   return (
-    <div className="overflow-hidden rounded-xl border shadow-xs">
-      <div className="flex flex-col gap-3 px-4 py-3">
+    <div className={cn(adminSurface.card, 'overflow-hidden')}>
+      <div className="flex flex-col gap-4 p-5">
         <div className="flex items-center gap-3">
           <PieceIcon
             size="sm"
@@ -292,7 +284,7 @@ function PieceRequiredActionsCard({
         </div>
       </div>
       {actionNamesNotInLatestPieceVersion.length > 0 && (
-        <div className="flex items-center gap-2 border-t bg-gray-3/50 px-4 py-2.5 text-sm text-gray-11">
+        <div className="flex items-center gap-2 border-t bg-gray-3/50 px-5 py-3 text-sm text-gray-11">
           <Info className="size-4 shrink-0" />
           <span className="flex-1">
             {t('actionsNotInLatestPieceVersion', {

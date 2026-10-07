@@ -13,9 +13,14 @@ import { useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
@@ -183,12 +188,18 @@ const EventDestinationsPage = () => {
   );
 
   return (
-    <>
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Event Streaming')}
+        badge={
+          <span className="text-sm tabular-nums text-gray-11">
+            {t('destinationsCount', { count: destinations.length })}
+          </span>
+        }
         description={t(
           'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
         )}
+        resources={adminPageResources.eventStreaming}
       >
         <AnimatedIconButton
           {...adminControl(
@@ -201,40 +212,32 @@ const EventDestinationsPage = () => {
         >
           <Link to={`${EVENT_STREAMING_PATH}/new`}>{t('New Destination')}</Link>
         </AnimatedIconButton>
-      </DashboardPageHeader>
-      <div className="flex w-full flex-col px-4 pb-6">
-        <DataTable
-          bordered={true}
-          columns={columns}
-          page={{ data: destinations, next: null, previous: null }}
-          isLoading={isLoading}
-          isError={isError}
-          errorStateEntity={t('destinations')}
-          onRetry={eventDestinationsCollectionUtils.refetch}
-          hidePagination={true}
-          onRowClick={(row, newWindow) =>
-            newWindow
-              ? openNewWindow(`${EVENT_STREAMING_PATH}/${row.id}`)
-              : navigate(`${EVENT_STREAMING_PATH}/${row.id}`)
-          }
-          toolbarButtons={[
-            <span key="count" className="shrink-0 text-xs text-gray-11">
-              {t('destinationsCount', { count: destinations.length })}
-            </span>,
-          ]}
-          emptyStateTextTitle={t('No destinations yet')}
-          emptyStateTextDescription={t(
-            'Stream every audit event on your platform over OpenTelemetry (OTLP), or send it to a flow.',
-          )}
-          emptyStateIcon={
-            <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-xl bg-gray-3">
-              <Radio className="size-5" />
-            </span>
-          }
-          emptyStateAction={<DestinationStartCards />}
-        />
-      </div>
-    </>
+      </AdminPageHeader>
+      <AdminDataTable
+        columns={columns}
+        page={{ data: destinations, next: null, previous: null }}
+        isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('destinations')}
+        onRetry={eventDestinationsCollectionUtils.refetch}
+        hidePagination={true}
+        onRowClick={(row, newWindow) =>
+          newWindow
+            ? openNewWindow(`${EVENT_STREAMING_PATH}/${row.id}`)
+            : navigate(`${EVENT_STREAMING_PATH}/${row.id}`)
+        }
+        emptyStateTextTitle={t('No destinations yet')}
+        emptyStateTextDescription={t(
+          'Stream every audit event on your platform over OpenTelemetry (OTLP), or send it to a flow.',
+        )}
+        emptyStateIcon={
+          <span className="mt-10 flex size-11 items-center justify-center rounded-lg bg-gray-3">
+            <Radio className="size-5" />
+          </span>
+        }
+        emptyStateAction={<DestinationStartCards />}
+      />
+    </AdminPage>
   );
 };
 

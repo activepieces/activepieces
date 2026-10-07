@@ -116,7 +116,7 @@ export const CreatePieceSetDialog = ({
           {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
           disabled={!isEnabled}
         >
-          <Plus className="size-4 mr-1" />
+          <Plus />
           {t('New Piece Set')}
         </Button>
       </DialogTrigger>

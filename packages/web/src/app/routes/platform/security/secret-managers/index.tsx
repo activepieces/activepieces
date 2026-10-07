@@ -12,15 +12,19 @@ import {
   Trash,
   Globe,
   Activity,
-  XIcon,
 } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  StatusDot,
+  adminPageResources,
+} from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -120,28 +124,12 @@ const SecretManagersPage = () => {
       cell: ({ row }) => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
-          return (
-            <Badge variant="outline" className="text-gray-11">
-              {t('Not configured')}
-            </Badge>
-          );
+          return <StatusDot tone="neutral">{t('Not configured')}</StatusDot>;
         }
         if (connected) {
-          return (
-            <StatusIconWithText
-              icon={Activity}
-              text={t('Connected')}
-              variant="success"
-            />
-          );
+          return <StatusDot tone="success">{t('Connected')}</StatusDot>;
         }
-        return (
-          <StatusIconWithText
-            icon={XIcon}
-            text={t('Disconnected')}
-            variant="error"
-          />
-        );
+        return <StatusDot tone="danger">{t('Disconnected')}</StatusDot>;
       },
     },
     {
@@ -153,7 +141,7 @@ const SecretManagersPage = () => {
             <AddEditSecretManagerConnectionDialog connection={connection}>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 {...adminControl(
                   AdminControl.SECRET_MANAGERS_CONNECTION_EDIT_OPEN,
                 )}
@@ -179,7 +167,7 @@ const SecretManagersPage = () => {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon-sm"
                       {...adminControl(
                         AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_OPEN,
                       )}
@@ -198,23 +186,23 @@ const SecretManagersPage = () => {
   ];
 
   return (
-    <div className="flex-col w-full">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Secret Managers')}
         description={t('Manage Secret Manager connections')}
+        resources={adminPageResources.secretManagers}
       >
         <AddEditSecretManagerConnectionDialog>
           <AnimatedIconButton
             icon={PlusIcon}
             iconSize={16}
-            size="sm"
             {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_OPEN)}
           >
             {t('New Connection')}
           </AnimatedIconButton>
         </AddEditSecretManagerConnectionDialog>
-      </DashboardPageHeader>
-      <DataTable
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
           'Add a secret manager connection to manage your secrets',
@@ -228,7 +216,7 @@ const SecretManagersPage = () => {
         onRetry={refetchConnections}
         hidePagination={true}
       />
-    </div>
+    </AdminPage>
   );
 };
 
@@ -246,7 +234,7 @@ const SecretManagerClearCacheButton = ({
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           loading={isClearingCache}
           onClick={() => clearCache(connection.id)}
           {...adminControl(AdminControl.SECRET_MANAGERS_CACHE_RUN)}

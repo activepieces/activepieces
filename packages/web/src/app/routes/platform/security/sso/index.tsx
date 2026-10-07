@@ -1,20 +1,19 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckCircle, LockIcon, MailIcon, Earth } from 'lucide-react';
+import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { CenteredPage } from '@/app/components/centered-page';
+import {
+  AdminPage,
+  AdminPageHeader,
+  SettingsPanel,
+  SettingsRow,
+  StatusDot,
+  adminPageResources,
+} from '@/app/components/admin';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Badge } from '@/components/ui/badge';
-import {
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -30,6 +29,7 @@ const SSOPage = () => {
     platform.ssoDomainVerification?.status ===
     SsoDomainVerificationStatus.VERIFIED;
   const emailAuthEnabled = platform.emailAuthEnabled;
+  const allowedDomains = platform.allowedAuthDomains ?? [];
 
   const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
     ssoMutations.useUpdatePlatformSso({
@@ -50,120 +50,102 @@ const SSOPage = () => {
     });
 
   return (
-    <CenteredPage
-      title={t('Single Sign On')}
-      description={t('Manage single sign on providers')}
-    >
-      <div className="flex flex-col gap-4">
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <Earth />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Allowed Domains')}</ItemTitle>
-            <ItemDescription>
+    <AdminPage width="narrow">
+      <AdminPageHeader
+        title={t('Single Sign On')}
+        description={t('Manage single sign on providers')}
+        resources={adminPageResources.sso}
+      />
+      <SettingsPanel flush>
+        <SettingsRow
+          icon={<Earth />}
+          title={t('Allowed Domains')}
+          description={
+            <div className="flex flex-col gap-2">
               {t('Restrict authentication to specific email domains.')}
-            </ItemDescription>
-            {(platform?.allowedAuthDomains ?? []).length > 0 && (
-              <div className="mt-1 gap-2 flex">
-                {(platform?.allowedAuthDomains ?? []).map((text, index) => (
-                  <Badge key={index} variant={'outline'}>
-                    {text}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </ItemContent>
-          <ItemActions>
-            <AllowedDomainDialog platform={platform} refetch={refetch} />
-          </ItemActions>
-        </Item>
+              {allowedDomains.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {allowedDomains.map((domain) => (
+                    <Badge key={domain} variant="outline">
+                      {domain}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          }
+        >
+          <AllowedDomainDialog platform={platform} refetch={refetch} />
+        </SettingsRow>
 
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <img className="size-6" src={GoogleIcon} alt="icon" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>Google</ItemTitle>
-            <ItemDescription>
-              {t("Allow logins through google's single sign-on functionality.")}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Switch
-              {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
-              checked={platform.googleAuthEnabled}
-              onCheckedChange={() =>
-                toggleGoogleAuth({
-                  googleAuthEnabled: !platform.googleAuthEnabled,
-                })
-              }
-              disabled={isGoogleAuthPending}
-            />
-          </ItemActions>
-        </Item>
+        <SettingsRow
+          icon={<img className="size-5" src={GoogleIcon} alt="icon" />}
+          title="Google"
+          description={t(
+            "Allow logins through google's single sign-on functionality.",
+          )}
+        >
+          <Switch
+            {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
+            checked={platform.googleAuthEnabled}
+            onCheckedChange={() =>
+              toggleGoogleAuth({
+                googleAuthEnabled: !platform.googleAuthEnabled,
+              })
+            }
+            disabled={isGoogleAuthPending}
+          />
+        </SettingsRow>
 
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <LockIcon />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('SAML 2.0')}</ItemTitle>
-            <ItemDescription>
+        <SettingsRow
+          icon={<LockIcon />}
+          title={t('SAML 2.0')}
+          description={
+            <div className="flex flex-col gap-2">
               {t(
                 "Allow logins through saml 2.0's single sign-on functionality.",
               )}
-            </ItemDescription>
-            {platform.ssoDomain && (
-              <div className="mt-1 gap-2 flex items-center">
-                <Badge variant="outline">{platform.ssoDomain}</Badge>
-                {ssoDomainVerified ? (
-                  <span className="flex items-center gap-1 text-xs text-success-11">
-                    <CheckCircle className="size-3" />
-                    {t('Verified')}
-                  </span>
-                ) : (
-                  <span className="text-xs text-warning-11">
-                    {t('Pending verification')}
-                  </span>
-                )}
-              </div>
-            )}
-          </ItemContent>
-          <ItemActions>
-            <ConfigureSamlDialog
-              platform={platform}
-              refetch={refetch}
-              connected={samlConnected}
-            />
-          </ItemActions>
-        </Item>
+              {platform.ssoDomain && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{platform.ssoDomain}</Badge>
+                  <StatusDot
+                    tone={ssoDomainVerified ? 'success' : 'warning'}
+                    className="text-xs text-gray-11"
+                  >
+                    {ssoDomainVerified
+                      ? t('Verified')
+                      : t('Pending verification')}
+                  </StatusDot>
+                </div>
+              )}
+            </div>
+          }
+        >
+          <ConfigureSamlDialog
+            platform={platform}
+            refetch={refetch}
+            connected={samlConnected}
+          />
+        </SettingsRow>
 
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <MailIcon />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Allowed Email Login')}</ItemTitle>
-            <ItemDescription>
-              {t('Allow logins through email and password.')}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Switch
-              {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
-              checked={emailAuthEnabled}
-              onCheckedChange={() =>
-                toggleEmailAuthentication({
-                  emailAuthEnabled: !platform.emailAuthEnabled,
-                })
-              }
-              disabled={isEmailAuthPending}
-            />
-          </ItemActions>
-        </Item>
-      </div>
-    </CenteredPage>
+        <SettingsRow
+          icon={<MailIcon />}
+          title={t('Allowed Email Login')}
+          description={t('Allow logins through email and password.')}
+        >
+          <Switch
+            {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
+            checked={emailAuthEnabled}
+            onCheckedChange={() =>
+              toggleEmailAuthentication({
+                emailAuthEnabled: !platform.emailAuthEnabled,
+              })
+            }
+            disabled={isEmailAuthPending}
+          />
+        </SettingsRow>
+      </SettingsPanel>
+    </AdminPage>
   );
 };
 
