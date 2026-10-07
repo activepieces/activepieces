@@ -3,6 +3,7 @@ import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage,
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
+import { platformModelTierService } from '../../ai/platform-model-tier-service'
 import { transaction } from '../../core/db/transaction'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowRunEntity } from '../../flows/flow-run/flow-run-entity'
@@ -55,12 +56,24 @@ async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityMa
     return locked.projectId
 }
 
+async function modelChoiceFrom({ platformId, modelName, modelTierId }: { platformId: string, modelName: string | null | undefined, modelTierId: string | null | undefined }): Promise<ModelChoice> {
+    if (!isNil(modelTierId)) {
+        await platformModelTierService.getForRun({ platformId, id: modelTierId })
+        return { modelTierId, modelName: null }
+    }
+    if (!isNil(modelName)) {
+        return { modelName, modelTierId: null }
+    }
+    return modelTierId === null ? { modelTierId: null } : {}
+}
+
 export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
         const agent = isNil(request.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
         const builder = request.builder === true
+        const modelChoice = await modelChoiceFrom({ platformId, modelName: request.modelName, modelTierId: request.modelTierId })
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
@@ -74,7 +87,8 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             agentId: agent?.id ?? null,
             source: builder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
-            modelName: request.modelName ?? null,
+            modelName: modelChoice.modelName ?? null,
+            modelTierId: modelChoice.modelTierId ?? null,
             messages: [],
         }))
         log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation created')
@@ -206,7 +220,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
         const updates = {
             ...spreadIfDefined('title', request.title),
-            ...spreadIfDefined('modelName', request.modelName),
+            ...await modelChoiceFrom({ platformId, modelName: request.modelName, modelTierId: request.modelTierId }),
         }
 
         if (Object.keys(updates).length > 0) {
@@ -326,4 +340,9 @@ type UpdateConversationParams = ConversationIdentifier & {
 type SetMessageFeedbackParams = ConversationIdentifier & {
     messageIndex: number
     request: SetAgentMessageFeedbackRequest
+}
+
+type ModelChoice = {
+    modelName?: string | null
+    modelTierId?: string | null
 }
