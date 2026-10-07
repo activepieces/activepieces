@@ -51,6 +51,7 @@ import { formatUtils } from '@/lib/format-utils';
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
 import { DefaultProjectsNote } from './default-projects-note';
+import { InvitedProjectSelect } from './invited-project-select';
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
 const buildInvalidEmailsMessage = (emails: string[]): string => {
@@ -92,6 +93,7 @@ const FormSchema = z.object({
     message: t('Please select platform role'),
   }),
   projectRole: z.string().optional(),
+  projectId: z.string().optional(),
 });
 
 type FormSchema = z.infer<typeof FormSchema>;
@@ -164,6 +166,10 @@ const InviteUserDialogInternal = ({
               email: email.trim().toLowerCase(),
               type: data.type,
               platformRole: data.platformRole,
+              ...invitedProjectFields({
+                data,
+                projectRolesEnabled: platform.plan.projectRolesEnabled,
+              }),
             })
           : userInvitationApi.invite({
               email: email.trim().toLowerCase(),
@@ -221,6 +227,7 @@ const InviteUserDialogInternal = ({
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
+      projectId: undefined,
     },
   });
 
@@ -233,9 +240,15 @@ const InviteUserDialogInternal = ({
     enteredEmails.some(
       (email) => !platformUserEmails.has(email.trim().toLowerCase()),
     );
+  const selectedProjectId = form.watch('projectId');
   const joinsDefaultProjects =
     invitationType === InvitationType.PROJECT ||
     selectedPlatformRole === PlatformRole.MEMBER;
+  const requiresProject = requiresInvitedProject({
+    type: invitationType,
+    platformRole: selectedPlatformRole,
+    projectRolesEnabled: platform.plan.projectRolesEnabled,
+  });
 
   const handleEmailsChange = useCallback(
     (emails: ReadonlyArray<string>) => {
@@ -259,7 +272,18 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    if (data.type === InvitationType.PROJECT && !data.projectRole) {
+    if (requiresProject && !data.projectId) {
+      form.setError('projectId', {
+        type: 'required',
+        message: t('Please select a project'),
+      });
+      return;
+    }
+
+    if (
+      (data.type === InvitationType.PROJECT || requiresProject) &&
+      !data.projectRole
+    ) {
       form.setError('projectRole', {
         type: 'required',
         message: t('Please select a project role'),
@@ -370,6 +394,25 @@ const InviteUserDialogInternal = ({
                   {form.getValues().type === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />
                   )}
+                  {requiresProject && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="projectId"
+                        render={({ field }) => (
+                          <FormItem className="grid gap-3">
+                            <Label>{t('Project')}</Label>
+                            <InvitedProjectSelect
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <ProjectRoleSelect form={form} />
+                    </>
+                  )}
                   {form.getValues().type === InvitationType.PROJECT && (
                     <ProjectRoleSelect form={form} />
                   )}
@@ -378,7 +421,7 @@ const InviteUserDialogInternal = ({
                       invitedProjectId={
                         invitationType === InvitationType.PROJECT
                           ? project.id
-                          : undefined
+                          : selectedProjectId
                       }
                       includesPersonalProject={isPlatformInvite}
                       invitesSomeoneNew={invitesSomeoneNew}
@@ -455,6 +498,34 @@ const InviteUserDialogInternal = ({
     </>
   );
 };
+
+function requiresInvitedProject({
+  type,
+  platformRole,
+  projectRolesEnabled,
+}: RequiresInvitedProjectParams): boolean {
+  return (
+    type === InvitationType.PLATFORM &&
+    platformRole === PlatformRole.MEMBER &&
+    projectRolesEnabled
+  );
+}
+
+function invitedProjectFields({
+  data,
+  projectRolesEnabled,
+}: InvitedProjectFieldsParams): { projectId?: string; projectRole?: string } {
+  if (
+    !requiresInvitedProject({
+      type: data.type,
+      platformRole: data.platformRole,
+      projectRolesEnabled,
+    })
+  ) {
+    return {};
+  }
+  return { projectId: data.projectId, projectRole: data.projectRole };
+}
 
 function getDialogDescription({
   hasLinks,
@@ -581,4 +652,15 @@ type InviteUserDialogProps = {
   open: boolean;
   setOpen: (_open: boolean) => void;
   onInviteSuccess?: () => void;
+};
+
+type RequiresInvitedProjectParams = {
+  type: InvitationType;
+  platformRole: PlatformRole;
+  projectRolesEnabled: boolean;
+};
+
+type InvitedProjectFieldsParams = {
+  data: FormSchema;
+  projectRolesEnabled: boolean;
 };

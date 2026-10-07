@@ -89,6 +89,7 @@ export const ProjectMetaData = z.object({
 export type ProjectMetaData = z.infer<typeof ProjectMetaData>
 
 export const ProjectWithLimitsWithPlatform = z.object({
+    platformId: z.string(),
     platformName: z.string(),
     projects: z.array(ProjectWithLimits),
 })

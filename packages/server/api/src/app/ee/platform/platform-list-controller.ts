@@ -27,6 +27,7 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
                 isPrivileged: userService(request.log).isUserPrivileged(platformUser),
             }).then((projects) => projects.data)
             return {
+                platformId: platform.id,
                 platformName: platform.name,
                 projects,
             }
@@ -36,7 +37,7 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function getPlatformsForUser(identityId: string, log: FastifyBaseLogger) {
-    return platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
+    return platformService(log).listPlatformsForIdentity({ identityId })
 }
 
 const ListProjectsForPlatforms = {
