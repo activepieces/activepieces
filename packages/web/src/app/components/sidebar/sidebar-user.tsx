@@ -6,6 +6,7 @@ import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -38,6 +40,8 @@ export function SidebarUser() {
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = state === 'collapsed' && !isMobile;
 
   if (!user || embedState.isEmbedded) {
     return null;
@@ -80,12 +84,16 @@ export function SidebarUser() {
                   sidebarStyles.labelFade,
                 )}
               >
-                <span className="truncate font-medium text-gray-12">
-                  {fullName}
-                </span>
-                <span className="truncate text-xs text-gray-11">
-                  {user.email}
-                </span>
+                <SidebarRowText
+                  text={fullName}
+                  className="font-medium text-gray-12"
+                  plain={isCollapsed}
+                />
+                <SidebarRowText
+                  text={user.email}
+                  className="text-xs text-gray-11"
+                  plain={isCollapsed}
+                />
               </span>
               <ChevronsUpDown
                 className={cn('ml-auto text-gray-9', sidebarStyles.labelFade)}
@@ -112,12 +120,14 @@ export function SidebarUser() {
                   disableTooltip={true}
                 />
                 <span className="flex min-w-0 flex-col">
-                  <span className="truncate text-sm font-medium text-gray-12">
-                    {fullName}
-                  </span>
-                  <span className="truncate text-xs text-gray-11">
-                    {user.email}
-                  </span>
+                  <SidebarRowText
+                    text={fullName}
+                    className="text-sm font-medium text-gray-12"
+                  />
+                  <SidebarRowText
+                    text={user.email}
+                    className="text-xs text-gray-11"
+                  />
                 </span>
               </span>
               <Badge variant="secondary">
@@ -146,6 +156,25 @@ export function SidebarUser() {
         onClose={() => setAccountSettingsOpen(false)}
       />
     </SidebarMenu>
+  );
+}
+
+function SidebarRowText({
+  text,
+  className,
+  plain = false,
+}: {
+  text: string;
+  className: string;
+  plain?: boolean;
+}) {
+  if (plain) {
+    return <span className={cn('truncate', className)}>{text}</span>;
+  }
+  return (
+    <TextWithTooltip tooltipMessage={text}>
+      <span className={className}>{text}</span>
+    </TextWithTooltip>
   );
 }
 
