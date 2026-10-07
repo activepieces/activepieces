@@ -73,10 +73,10 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
         const builder = request.builder === true
-        const modelChoice = await modelChoiceFrom({ platformId, projectId: agent?.projectId ?? null, modelName: request.modelName, modelTierId: request.modelTierId, log })
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
+        const modelChoice = await modelChoiceFrom({ platformId, projectId: agent?.projectId ?? builderProjectId, modelName: request.modelName, modelTierId: request.modelTierId, log })
         const conversation = await transaction(async (entityManager) => entityManager.getRepository(AgentConversationEntity).save({
             id: id ?? apId(),
             platformId,

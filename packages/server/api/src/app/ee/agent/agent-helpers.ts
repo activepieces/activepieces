@@ -8,10 +8,8 @@ import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
 import { z } from 'zod'
-import { aiKeyScope } from '../../ai/ai-key-scope'
 import { aiModelCandidates } from '../../ai/ai-model-candidates'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
-import { platformModelTierService } from '../../ai/platform-model-tier-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
@@ -111,26 +109,6 @@ async function assertProjectSwitchKeepsKey({ platformId, provider, providerConfi
     throw new ActivepiecesError({
         code: ErrorCode.AUTHORIZATION,
         params: { message: 'the AI provider key this run resolved is not available to the project it tried to switch to' },
-    })
-}
-
-async function assertProjectSwitchKeepsTier({ platformId, tierId, fromProjectId, toProjectId }: { platformId: string, tierId: string, fromProjectId: string | null, toProjectId: string | null }): Promise<void> {
-    if (isNil(fromProjectId) || fromProjectId === toProjectId) {
-        return
-    }
-    const from: ProviderScope = { type: 'project', projectId: fromProjectId }
-    const target: ProviderScope = isNil(toProjectId) ? { type: 'platform' } : { type: 'project', projectId: toProjectId }
-    const [run, fast] = await Promise.all([
-        platformModelTierService.getForRun({ platformId, id: tierId, scope: from }),
-        platformModelTierService.getFastForRun({ platformId, scope: from }),
-    ])
-    const keys = [...run.entries, ...(fast?.entries ?? [])].map((entry) => entry.key)
-    if (keys.every((key) => aiKeyScope.rowAllowsScope({ row: key, scope: target }))) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.AUTHORIZATION,
-        params: { message: 'a model this run can use is not available to the project it tried to switch to' },
     })
 }
 
@@ -477,7 +455,6 @@ export const agentHelpers = {
     runScopeOrThrow,
     selectRunProject,
     assertProjectSwitchKeepsKey,
-    assertProjectSwitchKeepsTier,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

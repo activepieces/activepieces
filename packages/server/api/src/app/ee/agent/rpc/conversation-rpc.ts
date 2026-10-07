@@ -3,6 +3,7 @@ import { AgentConversationStatus, AgentCreditsLeftRequest, AgentRunSource, FileC
 import { FastifyBaseLogger } from 'fastify'
 import { readConversationFile } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
+import { agentModelTier } from '.././agent-model-tier'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
 import { chatToolBilling } from '.././chat-tool-billing'
 import { fileService } from '../../../file/file.service'
@@ -163,7 +164,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             })
         }
         if (!isNil(conversation) && !isNil(conversation.modelTierId)) {
-            await agentHelpers.assertProjectSwitchKeepsTier({
+            await agentModelTier(log).assertProjectSwitchKeepsTier({
                 platformId: conversation.platformId,
                 tierId: conversation.modelTierId,
                 fromProjectId: conversation.projectId ?? null,

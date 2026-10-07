@@ -115,6 +115,58 @@ describe('a chat on a platform tier', () => {
     })
 })
 
+describe('a tier chat that clears or switches its project', () => {
+    it('refuses to clear the project while a kept key is limited to some projects', async () => {
+        const { ctx, tier, keyId } = await tierOnKey({ servesOwnProject: true })
+        const conversation = await createConversation({ ctx, body: { modelTierId: tier.id } })
+        await db.update('agent_conversation', conversation.id, { projectId: ctx.project.id })
+
+        await expect(agentRpcHandlers(app.log).updateProjectContext({ conversationId: conversation.id, projectId: null, provider: AIProviderName.OPENAI, providerConfigId: keyId }))
+            .rejects.toMatchObject({ error: { code: ErrorCode.AUTHORIZATION } })
+    })
+
+    it('clears and re-selects a project when every key of the tier is open to all projects', async () => {
+        const { ctx, tier, keyId } = await tierOnKey({ servesOwnProject: true })
+        await db.update('ai_provider', keyId, { projectScope: 'all', projectIds: [] })
+        const conversation = await createConversation({ ctx, body: { modelTierId: tier.id } })
+        await db.update('agent_conversation', conversation.id, { projectId: ctx.project.id })
+        const target = await otherProject({ ctx })
+
+        await agentRpcHandlers(app.log).updateProjectContext({ conversationId: conversation.id, projectId: null, provider: AIProviderName.OPENAI, providerConfigId: keyId })
+        await agentRpcHandlers(app.log).updateProjectContext({ conversationId: conversation.id, projectId: target.id, provider: AIProviderName.OPENAI, providerConfigId: keyId })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored.projectId).toBe(target.id)
+    })
+
+    it('ignores a fallback the chat cannot use when checking a switch', async () => {
+        mockCatalogWithoutToolsFor({ modelId: NO_TOOLS_MODEL })
+        const ctx = await context()
+        const openKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const limitedKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        await db.update('ai_provider', limitedKey.id, { projectScope: 'selected', projectIds: [ctx.project.id] })
+        const tier = await createTier({ ctx, entries: [{ configId: openKey.id, modelId: TIER_MODEL }, { configId: limitedKey.id, modelId: NO_TOOLS_MODEL }] })
+        const conversation = await createConversation({ ctx, body: { modelTierId: tier.id } })
+        await db.update('agent_conversation', conversation.id, { projectId: ctx.project.id })
+        const target = await otherProject({ ctx })
+
+        await agentRpcHandlers(app.log).updateProjectContext({ conversationId: conversation.id, projectId: target.id, provider: AIProviderName.OPENAI, providerConfigId: openKey.id })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored.projectId).toBe(target.id)
+    })
+})
+
+describe('a new-agent builder chat on a tier', () => {
+    it('refuses a tier its builder project cannot use', async () => {
+        const { ctx, tier } = await tierOnKey({ servesOwnProject: false })
+
+        const response = await ctx.post(CONVERSATIONS_URL, { builder: true, projectId: ctx.project.id, modelTierId: tier.id })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+})
+
 describe('the tier grant for tools', () => {
     it('grants a model of the tier on its own key inside the project, and nothing else', async () => {
         const { ctx, tier, keyId } = await tierOnKey({ servesOwnProject: true })
@@ -192,6 +244,12 @@ async function tierOnKey({ servesOwnProject, fallbackModelId }: { servesOwnProje
     const response = await ctx.post('/v1/platform-model-tiers', { name: 'Expert', emoji: '🧠', description: null, entries })
     expect(response.statusCode).toBe(StatusCodes.OK)
     return { ctx, tier: response.json(), keyId: key.id }
+}
+
+async function createTier({ ctx, entries }: { ctx: TestContext, entries: { configId: string, modelId: string }[] }): Promise<{ id: string }> {
+    const response = await ctx.post('/v1/platform-model-tiers', { name: 'Expert', emoji: '🧠', description: null, entries })
+    expect(response.statusCode).toBe(StatusCodes.OK)
+    return response.json()
 }
 
 async function otherProject({ ctx }: { ctx: TestContext }): Promise<{ id: string }> {

@@ -29,20 +29,15 @@ export const aiModelCandidates = (log: FastifyBaseLogger) => ({
 
     async resolveConfigs({ platformId, tierId, scope }: { platformId: PlatformId, tierId: string, scope: ProviderScope }): Promise<TierConfigs> {
         const forRun = await platformModelTierService.getForRun({ platformId, id: tierId, scope })
-        const candidates = await readableCandidates({ platformId, forRun, log })
-        if (candidates.length === 0) {
+        const configs = await this.configsFor({ platformId, forRun })
+        if (configs.candidates.length === 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `No model in tier "${forRun.tier.name}" can run` } })
         }
-        return { tier: forRun.tier, candidates }
+        return configs
     },
 
-    async resolveFastConfig({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierConfigs | null> {
-        const forRun = await platformModelTierService.getFastForRun({ platformId, scope })
-        if (isNil(forRun)) {
-            return null
-        }
-        const candidates = await readableCandidates({ platformId, forRun, log })
-        return candidates.length === 0 ? null : { tier: forRun.tier, candidates }
+    async configsFor({ platformId, forRun }: { platformId: PlatformId, forRun: TierForRun }): Promise<TierConfigs> {
+        return { tier: forRun.tier, candidates: await readableCandidates({ platformId, forRun, log }) }
     },
 
     async grantedEntryConfig({ platformId, tierId, configId, modelId, scope }: { platformId: PlatformId, tierId: string, configId: string, modelId: string, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
