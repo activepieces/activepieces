@@ -1,9 +1,19 @@
+function personalProjectsActive({ autoCreatePersonalProjects, projectRolesEnabled }: PersonalProjectsActiveParams): boolean {
+    return autoCreatePersonalProjects || !projectRolesEnabled
+}
+
 function activeDefaultProjectIds({ defaultProjectIds, projectRolesEnabled }: ActiveDefaultProjectIdsParams): string[] {
     return projectRolesEnabled ? defaultProjectIds : []
 }
 
 export const newMemberSettingsUtils = {
+    personalProjectsActive,
     activeDefaultProjectIds,
+}
+
+type PersonalProjectsActiveParams = {
+    autoCreatePersonalProjects: boolean
+    projectRolesEnabled: boolean
 }
 
 type ActiveDefaultProjectIdsParams = {
