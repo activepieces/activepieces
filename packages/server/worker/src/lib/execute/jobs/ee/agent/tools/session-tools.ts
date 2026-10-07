@@ -1,5 +1,5 @@
 import { spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentOutputField, AgentOutputFieldType, AgentPhase, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AgentOutputField, AgentOutputFieldType, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { AgentEventEmitter, GateDecision, gateNoResponseMessage, QUESTION_ICON_NAMES, TaintState } from './tool-primitives'
@@ -175,28 +175,6 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                 }
                 eventEmitter.emitBuildPlan(event)
                 return { ok: true, buildId }
-            },
-        }),
-    }
-}
-
-export function createPhaseTools({ onPhaseChange }: {
-    onPhaseChange: (phase: AgentPhase) => void
-}): ToolSet {
-    let lastPhase: AgentPhase | null = null
-    return {
-        ap_set_phase: tool({
-            description: 'Switch your working phase (silent, internal — no thinking status). Start in "discovery" (understanding the goal, reading data). Call this with "build" the moment you begin constructing, editing, testing, or running an automation — e.g. right after you load the build_flow or one_time_task guide. This unlocks the build/execution tools.',
-            inputSchema: z.object({
-                phase: z.enum(['discovery', 'build']).describe('"discovery" while scoping/reading; "build" once you start building or executing'),
-            }),
-            execute: async (input) => {
-                if (lastPhase === input.phase) {
-                    return { phase: input.phase, note: 'Already in this phase — no change.' }
-                }
-                lastPhase = input.phase
-                onPhaseChange(input.phase)
-                return { phase: input.phase }
             },
         }),
     }

@@ -99,7 +99,7 @@ describe('repairing a call in skills mode', () => {
     it('still repairs a core tool called directly with input that fails its schema', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
         const model = scriptedModel({
-            toolCalls: [{ id: 'direct-1', toolName: 'ap_web_search', input: '{"query":42}' }],
+            toolCalls: [{ id: 'direct-1', toolName: 'ap_research_pieces', input: '{"query":42}' }],
             repairText: '{"query":"42"}',
         })
 
@@ -109,6 +109,75 @@ describe('repairing a call in skills mode', () => {
         expect(model.doGenerateCalls[0]?.responseFormat).toEqual(expect.objectContaining({ type: 'json' }))
         expect(search).toHaveBeenCalledWith({ query: '42' }, expect.objectContaining({ toolCallId: 'direct-1' }))
     })
+
+    it('runs a deferred tool called by name through ap_lazy_tool', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'direct-1', toolName: 'ap_web_search', input: '{"query":"more"}' }] })
+
+        await runSkillsTurn({ model, search })
+
+        expect(search).toHaveBeenCalledWith({ query: 'more' }, expect.objectContaining({ toolCallId: 'direct-1' }))
+    })
+
+    it('reminds the model to use ap_lazy_tool after rerouting a call it made by name', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'direct-1', toolName: 'ap_web_search', input: '{"query":"more"}' }] })
+
+        await runSkillsTurn({ model, search })
+
+        expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).toContain('next time call ap_lazy_tool with tool: \\"ap_web_search\\"')
+    })
+
+    it('adds no reminder when the model already called ap_lazy_tool', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'lazy-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":"more"}}' }] })
+
+        await runSkillsTurn({ model, search })
+
+        expect(search).toHaveBeenCalledWith({ query: 'more' }, expect.objectContaining({ toolCallId: 'lazy-1' }))
+        expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).not.toContain('next time call ap_lazy_tool')
+    })
+})
+
+describe('the build phase in skills mode', () => {
+    async function phaseAfter({ toolCall }: { toolCall: ScriptedToolCall }): Promise<{ phase: string, secondStepThinking: unknown }> {
+        const model = scriptedModel({ toolCalls: [toolCall] })
+        const phaseState: { phase: 'discovery' | 'build' } = { phase: 'discovery' }
+        await runAgentTurn({
+            model,
+            provider: AIProviderName.ANTHROPIC,
+            systemPrompt: 'You are a test agent.',
+            messages: [{ role: 'user', content: 'build it' }],
+            tools: fillerTools(),
+            allToolNames: Object.keys(fillerTools()),
+            tier: TIER,
+            modelId: TIER.modelId,
+            phaseState,
+            abortSignal: new AbortController().signal,
+            log: SILENT_LOG,
+            sinks: { drainStream: (result) => result.consumeStream() },
+            skills: { surface: 'CHAT', guides: { build_flow: 'BUILD GUIDE' } },
+        })
+        return { phase: phaseState.phase, secondStepThinking: model.doStreamCalls[1]?.providerOptions?.['anthropic']?.['thinking'] }
+    }
+
+    it('turns thinking on once the flow building skill is loaded', async () => {
+        const result = await phaseAfter({ toolCall: { id: 'load-1', toolName: 'ap_load_skill', input: '{"skill":"flow_building"}' } })
+        expect(result.phase).toBe('build')
+        expect(result.secondStepThinking).toMatchObject({ type: 'enabled' })
+    })
+
+    it('turns thinking on once a build tool runs through ap_lazy_tool', async () => {
+        const result = await phaseAfter({ toolCall: { id: 'add-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_add_step","input":{}}' } })
+        expect(result.phase).toBe('build')
+        expect(result.secondStepThinking).toMatchObject({ type: 'enabled' })
+    })
+
+    it('keeps thinking off while the agent only reads', async () => {
+        const result = await phaseAfter({ toolCall: { id: 'read-1', toolName: 'ap_list_flows', input: '{}' } })
+        expect(result.phase).toBe('discovery')
+        expect(result.secondStepThinking).not.toMatchObject({ type: 'enabled' })
+    })
 })
 
 async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, search: () => Promise<typeof SEARCH_RESULT> }): Promise<void> {
@@ -117,8 +186,12 @@ async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, se
         provider: AIProviderName.ANTHROPIC,
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'research this' }],
-        tools: { ...fillerTools(), ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }) },
-        allToolNames: [...Object.keys(fillerTools()), 'ap_web_search'],
+        tools: {
+            ...fillerTools(),
+            ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }),
+            ap_research_pieces: tool({ description: 'research pieces', inputSchema: z.object({ query: z.string() }), execute: search }),
+        },
+        allToolNames: [...Object.keys(fillerTools()), 'ap_web_search', 'ap_research_pieces'],
         tier: TIER,
         modelId: TIER.modelId,
         phaseState: { phase: 'discovery' },

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { chatBilling } from '../../src/lib/ee/agent/chat-billing'
 import { AGENT_SKILLS, agentToolSkills, CORE_TOOL_NAMES, LAZY_TOOL_NAME, MAX_CORE_TOOLS } from '../../src/lib/ee/agent/tool-skills'
 
 describe('agentToolSkills', () => {
@@ -48,13 +49,17 @@ describe('agentToolSkills', () => {
         expect(CORE_TOOL_NAMES.AGENT).toContain('ap_show_connection_picker')
     })
 
+    it('keeps paid tools out of every core list', () => {
+        expect(Object.values(CORE_TOOL_NAMES).flat().filter((name) => chatBilling.isPaidTool(name))).toEqual([])
+    })
+
     it('always sends the thinking-status tool directly', () => {
         expect(CORE_TOOL_NAMES.CHAT).toContain('ap_update_thinking_status')
         expect(CORE_TOOL_NAMES.AGENT).toContain('ap_update_thinking_status')
     })
 
     it('lists deferred tools that no skill covers so the model can still find them', () => {
-        const names = agentToolSkills.uncataloguedToolNames({ surface: 'CHAT', allToolNames: ['ap_research_pieces', 'ap_add_step', 'mcp__gmail__send', 'ap_set_phase'] })
+        const names = agentToolSkills.uncataloguedToolNames({ surface: 'CHAT', allToolNames: ['ap_research_pieces', 'ap_add_step', 'mcp__gmail__send'] })
         expect(names).toEqual(['mcp__gmail__send'])
     })
 

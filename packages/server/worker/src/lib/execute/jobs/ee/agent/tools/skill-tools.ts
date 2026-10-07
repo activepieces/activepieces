@@ -1,31 +1,31 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AGENT_SKILLS, AgentSkill, agentToolSkills, chatBilling, GET_TOOL_SCHEMA_NAME, LAZY_TOOL_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SkillSurface } from '@activepieces/shared'
-import { asSchema, jsonSchema, Schema, tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { asSchema, jsonSchema, JSONValue, Schema, tool, ToolExecutionOptions, ToolResultPart, ToolSet } from 'ai'
 import { z } from 'zod'
-import { cardTitleFields, plainJsonSchema } from './tool-primitives'
+import { cardTitleFields, plainJsonSchema, stableStringify } from './tool-primitives'
 
-export function buildSkillSurface({ tools, surface, guides, onSkillLoaded, canAffordPaidTool }: {
+export function buildSkillSurface({ tools: registry, surface, guides, onSkillLoaded, canAffordPaidTool, wasRerouted = (): boolean => false }: {
     tools: ToolSet
     surface: SkillSurface
     guides: Record<string, string>
     onSkillLoaded: (skill: AgentSkill) => void
     canAffordPaidTool: () => boolean
+    wasRerouted?: (toolCallId: string) => boolean
 }): SkillSurfaceResult {
-    const registry = withoutRetiredTools(tools)
-    const skillTools = createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordPaidTool })
+    const skillTools = createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordPaidTool, wasRerouted })
     const surfaceTools = { ...registry, ...skillTools }
     const allToolNames = Object.keys(surfaceTools)
-    if (Object.keys(registry).length <= MAX_CORE_TOOLS) {
-        return { tools: surfaceTools, coreToolNames: allToolNames, catalogNote: '' }
-    }
-    const coreToolNames = agentToolSkills.coreToolNames({ surface }).filter((name) => allToolNames.includes(name))
-    const uncatalogued = agentToolSkills.uncataloguedToolNames({ surface, allToolNames })
+    const directToolNames = allToolNames.length <= MAX_CORE_TOOLS
+        ? allToolNames
+        : agentToolSkills.coreToolNames({ surface }).filter((name) => allToolNames.includes(name))
+    const coreToolNames = directToolNames.filter((name) => !chatBilling.isPaidTool(name))
+    const uncatalogued = agentToolSkills.uncataloguedToolNames({ surface, allToolNames }).filter((name) => !coreToolNames.includes(name))
     return {
         tools: surfaceTools,
         coreToolNames,
         catalogNote: uncatalogued.length === 0
             ? ''
-            : `\n\n${OTHER_TOOLS_HEADING}\nRun these with \`${LAZY_TOOL_NAME}\`; fetch a schema with \`${GET_TOOL_SCHEMA_NAME}\` first.\n${agentToolSkills.renderToolCatalog({ tools: uncatalogued.map((name) => ({ name, description: descriptionOf(registry[name]) })) })}`,
+            : `\n\n${OTHER_TOOLS_HEADING}\nThese are not attached to you, so calling one by its own name fails. Fetch its schema with \`${GET_TOOL_SCHEMA_NAME}\`, then call \`${LAZY_TOOL_NAME}\` with the name as \`tool\` and the arguments as \`input\`.\n${agentToolSkills.renderToolCatalog({ tools: uncatalogued.map((name) => ({ name, description: descriptionOf(registry[name]) })) })}`,
     }
 }
 
@@ -58,12 +58,13 @@ export function unwrapLazyToolChunk({ chunk, heldStarts }: {
     return { emit: [chunk] }
 }
 
-function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordPaidTool }: {
+function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordPaidTool, wasRerouted }: {
     registry: ToolSet
     surface: SkillSurface
     guides: Record<string, string>
     onSkillLoaded: (skill: AgentSkill) => void
     canAffordPaidTool: () => boolean
+    wasRerouted: (toolCallId: string) => boolean
 }): ToolSet {
     const loadedSkills = new Set<string>()
     const core = new Set(agentToolSkills.coreToolNames({ surface }))
@@ -86,7 +87,7 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
                 }
                 loadedSkills.add(skill.name)
                 onSkillLoaded(skill)
-                return renderSkill({ skill, guide: skill.guideTopic === undefined ? undefined : guides[skill.guideTopic], registry, core })
+                return renderSkill({ skill, guide: skill.guideTopic === undefined ? undefined : guides[skill.guideTopic], registry, core, canAffordPaidTool })
             },
         }),
     }
@@ -103,6 +104,9 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
                 if (target === undefined || agentToolSkills.isMetaTool(toolName)) {
                     return { error: `There is no tool named "${toolName}".` }
                 }
+                if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
+                    return { error: paidToolRefusal(toolName) }
+                }
                 return { tool: toolName, description: descriptionOf(target), inputSchema: await jsonSchemaOf(target) }
             },
         }),
@@ -116,8 +120,21 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
                 }
                 return target.execute(input, options)
             },
+            toModelOutput: ({ toolCallId, input, output }) => lazyToolModelOutput({ output, reroutedTool: wasRerouted(toolCallId) ? input.tool : undefined }),
         }),
     }
+}
+
+function lazyToolModelOutput({ output, reroutedTool }: { output: JSONValue | undefined, reroutedTool: string | undefined }): ToolResultPart['output'] {
+    const note = isNil(reroutedTool) ? undefined : `Note: "${reroutedTool}" is not attached to you, so calling it by its own name does not work. It ran this time; next time call ${LAZY_TOOL_NAME} with tool: "${reroutedTool}" and its arguments as input.`
+    if (typeof output === 'string') {
+        return { type: 'text', value: isNil(note) ? output : `${output}\n\n${note}` }
+    }
+    const value = output ?? null
+    if (isNil(note)) {
+        return { type: 'json', value }
+    }
+    return { type: 'json', value: isObject(value) && !Array.isArray(value) ? { ...value, note } : { result: value, note } }
 }
 
 function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSet, canAffordPaidTool: () => boolean }): Schema<LazyToolInput> {
@@ -134,7 +151,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
                 return { success: false, error: new Error(`There is no tool named "${toolName}". Use a name from a loaded skill or from your instructions.`) }
             }
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
-                return { success: false, error: new Error(`"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`) }
+                return { success: false, error: new Error(paidToolRefusal(toolName)) }
             }
             const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input }) })
             if (!inner.success) {
@@ -160,29 +177,32 @@ async function validateToolInput({ target, input }: { target: ToolSet[string], i
 }
 
 async function withOuterLabels({ target, outer, input }: { target: ToolSet[string], outer: Record<string, unknown>, input: Record<string, unknown> }): Promise<Record<string, unknown>> {
-    const schema = plainJsonSchema(await asSchema(target.inputSchema).jsonSchema)
-    const declared = isObject(schema.properties) ? Object.keys(schema.properties) : []
-    const labels = Object.fromEntries([...LABEL_FIELDS]
-        .filter((key) => declared.includes(key) && input[key] === undefined && typeof outer[key] === 'string')
+    const labelKeys = await workerLabelKeys(plainJsonSchema(await asSchema(target.inputSchema).jsonSchema))
+    const labels = Object.fromEntries([...labelKeys]
+        .filter((key) => input[key] === undefined && typeof outer[key] === 'string')
         .map((key) => [key, outer[key]]))
     return { ...input, ...labels }
 }
 
-async function renderSkill({ skill, guide, registry, core }: {
+async function renderSkill({ skill, guide, registry, core, canAffordPaidTool }: {
     skill: AgentSkill
     guide: string | undefined
     registry: ToolSet
     core: Set<string>
+    canAffordPaidTool: () => boolean
 }): Promise<string> {
-    const toolNames = skill.toolNames.filter((name) => name in registry && !core.has(name))
+    const available = skill.toolNames.filter((name) => name in registry && !core.has(name))
+    const unaffordable = canAffordPaidTool() ? [] : available.filter((name) => chatBilling.isPaidTool(name))
+    const toolNames = available.filter((name) => !unaffordable.includes(name))
     const sections = await Promise.all(toolNames.map(async (name) => {
         const target = registry[name]
-        return `### ${name}\n${descriptionOf(target)}\nInput schema: ${JSON.stringify(target === undefined ? {} : await jsonSchemaOf(target))}`
+        return `### ${name}\n${descriptionOf(target)}\nCall: ${LAZY_TOOL_NAME} with tool: "${name}" and input matching this schema: ${JSON.stringify(target === undefined ? {} : await jsonSchemaOf(target))}`
     }))
     return [
         `# Skill: ${skill.name}`,
         ...(guide === undefined ? [] : [guide]),
-        ...(sections.length === 0 ? [] : [`## Tools (run with ${LAZY_TOOL_NAME})`, ...sections]),
+        ...(sections.length === 0 ? [] : [`## Tools: call each one through ${LAZY_TOOL_NAME}, never by its own name`, ...sections]),
+        ...(unaffordable.length === 0 ? [] : [`Not available, the balance cannot cover these paid tools: ${unaffordable.join(', ')}. Tell the user if the task needs them.`]),
     ].join('\n\n')
 }
 
@@ -194,18 +214,32 @@ async function jsonSchemaOf(target: ToolSet[string]): Promise<unknown> {
     return withoutNoise(plainJsonSchema(await asSchema(target.inputSchema).jsonSchema))
 }
 
-function withoutNoise(schema: unknown): unknown {
+async function withoutNoise(schema: unknown): Promise<unknown> {
     if (!isObject(schema)) {
         return schema
     }
+    const labelKeys = await workerLabelKeys(schema)
     const properties = isObject(schema['properties'])
-        ? Object.fromEntries(Object.entries(schema['properties']).filter(([key]) => !LABEL_FIELDS.has(key)))
+        ? Object.fromEntries(Object.entries(schema['properties']).filter(([key]) => !labelKeys.has(key)))
         : undefined
     return Object.fromEntries(Object.entries({ ...schema, properties }).filter(([key, value]) => value !== undefined && !SCHEMA_NOISE_KEYS.has(key)))
 }
 
-function withoutRetiredTools(tools: ToolSet): ToolSet {
-    return Object.fromEntries(Object.entries(tools).filter(([name]) => !agentToolSkills.isRetiredUnderSkills(name)))
+async function workerLabelKeys(schema: unknown): Promise<Set<string>> {
+    if (!isObject(schema) || !isObject(schema['properties'])) {
+        return new Set()
+    }
+    const properties = schema['properties']
+    const required = Array.isArray(schema['required']) ? schema['required'] : []
+    const labelSchema = plainJsonSchema(await LABEL_SCHEMA.jsonSchema)
+    const labelProperties = isObject(labelSchema.properties) ? labelSchema.properties : {}
+    return new Set([...LABEL_FIELDS].filter((key) => key in properties
+        && !required.includes(key)
+        && stableStringify(properties[key]) === stableStringify(labelProperties[key])))
+}
+
+function paidToolRefusal(toolName: string): string {
+    return `"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`
 }
 
 const OTHER_TOOLS_HEADING = '## Other tools you have'
@@ -215,6 +249,7 @@ const LAZY_TOOL_OUTER_SCHEMA = z.object({
     ...cardTitleFields,
 })
 const LABEL_FIELDS = new Set(Object.keys(cardTitleFields))
+const LABEL_SCHEMA = asSchema(z.object(cardTitleFields))
 const SCHEMA_NOISE_KEYS = new Set(['$schema', 'additionalProperties'])
 
 export type LazyToolChunkResult = {

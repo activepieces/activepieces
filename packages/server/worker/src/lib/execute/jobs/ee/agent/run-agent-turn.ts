@@ -67,6 +67,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         ...(isNil(stepCeiling) ? [] : [isStepCount(stepCeiling)]),
         creditsRanOut,
     ]
+    const reroutedCallIds = new Set<string>()
     const skillSurface = isNil(skills) ? null : buildSkillSurface({
         tools,
         surface: skills.surface,
@@ -77,6 +78,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             }
         },
         canAffordPaidTool: () => paidToolsAffordable,
+        wasRerouted: (toolCallId) => reroutedCallIds.has(toolCallId),
     })
     const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
     const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
@@ -142,7 +144,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             const disableThinking = isFirstStep || phaseState.phase === 'discovery' || forcesCompletion
             const usesFastModel = isFirstStep && !isNil(fastModel)
             const visibleTools = skillSurface?.coreToolNames ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
-            const phaseTools = visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name))
+            const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider })
             const stepContext = isLastAllowedStep
@@ -160,6 +162,11 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         },
         repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
+                if (!isNil(skillSurface) && toolCall.toolName in skillSurface.tools && isParsableJson(toolCall.input)) {
+                    log.info({ toolName: toolCall.toolName }, 'Rerouting a deferred tool called by name through ap_lazy_tool')
+                    reroutedCallIds.add(toolCall.toolCallId)
+                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: JSON.parse(toolCall.input) }) }
+                }
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
             }

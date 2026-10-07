@@ -23,10 +23,6 @@ function isMetaTool(toolName: string): boolean {
     return META_TOOL_NAMES.has(toolName)
 }
 
-function isRetiredUnderSkills(toolName: string): boolean {
-    return RETIRED_UNDER_SKILLS.has(toolName)
-}
-
 function effectiveToolCall({ toolName, input }: { toolName: string, input: unknown }): EffectiveToolCall {
     if (toolName !== LAZY_TOOL_NAME || !isRecord(input) || typeof input['tool'] !== 'string') {
         return { toolName, input }
@@ -41,7 +37,7 @@ function effectiveToolCall({ toolName, input }: { toolName: string, input: unkno
 
 function uncataloguedToolNames({ surface, allToolNames }: { surface: SkillSurface, allToolNames: string[] }): string[] {
     const covered = new Set([...coreToolNames({ surface }), ...AGENT_SKILLS.flatMap((skill) => skill.toolNames)])
-    return allToolNames.filter((name) => !covered.has(name) && !isMetaTool(name) && !isRetiredUnderSkills(name))
+    return allToolNames.filter((name) => !covered.has(name) && !isMetaTool(name))
 }
 
 function renderToolCatalog({ tools }: { tools: { name: string, description?: string }[] }): string {
@@ -54,7 +50,7 @@ function renderToolCatalog({ tools }: { tools: { name: string, description?: str
 function renderSkillsNote({ surface }: { surface: SkillSurface }): string {
     const lines = [
         `\n\n${SKILLS_NOTE_HEADING}`,
-        `Only a few tools are attached to you directly. Every other tool named in these instructions or listed below is real and reachable: run it with \`${LAZY_TOOL_NAME}\` by passing its name as \`tool\` and its arguments as \`input\`, exactly as you would call it directly.`,
+        `Only a few tools are attached to you directly. Every other tool named in these instructions or listed below is real and reachable, but calling it by its own name fails: call \`${LAZY_TOOL_NAME}\` with its name as \`tool\` and its arguments as \`input\`, e.g. \`${LAZY_TOOL_NAME}({ "tool": "ap_validate_flow", "input": { "flowId": "..." } })\`.`,
         `Never guess a tool's arguments. Load the skill that covers the work with \`${LOAD_SKILL_NAME}\`, which returns the playbook and the input schema of every tool in it, or fetch one tool's schema with \`${GET_TOOL_SCHEMA_NAME}\`. A loaded skill stays in the conversation, so do not load it again.`,
         'If a call is rejected for its input, fix it from the schema in the error and retry once.',
     ]
@@ -84,7 +80,6 @@ const LAZY_TOOL_NAME = 'ap_lazy_tool'
 const LOAD_SKILL_NAME = 'ap_load_skill'
 const GET_TOOL_SCHEMA_NAME = 'ap_get_tool_schema'
 const META_TOOL_NAMES = new Set<string>([LAZY_TOOL_NAME, LOAD_SKILL_NAME, GET_TOOL_SCHEMA_NAME])
-const RETIRED_UNDER_SKILLS = new Set<string>(['ap_set_phase', 'ap_load_guide'])
 
 const MAX_CORE_TOOLS = 16
 
@@ -96,7 +91,6 @@ const CORE_TOOL_NAMES: Record<SkillSurface, readonly string[]> = {
         'ap_update_thinking_status',
         'ap_show_quick_replies',
         'ap_research_pieces',
-        'ap_web_search',
         'ap_remember',
         'ap_list_flows',
         'ap_show_questions',
@@ -188,10 +182,10 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     },
     {
         name: 'web_and_media',
-        loadWhen: 'before reading a web page, scraping a site, generating an image or sending an email',
+        loadWhen: 'before searching the web, reading a web page, scraping a site, generating an image or sending an email',
         guideTopic: 'web_research',
         entersBuildPhase: false,
-        toolNames: ['ap_fetch_url', 'ap_scrape_url', 'ap_generate_image', 'ap_send_email'],
+        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_generate_image', 'ap_send_email'],
     },
     {
         name: 'interaction',
@@ -213,7 +207,6 @@ export const agentToolSkills = {
     coreToolNames,
     findSkill,
     isMetaTool,
-    isRetiredUnderSkills,
     effectiveToolCall,
     uncataloguedToolNames,
     renderToolCatalog,

@@ -572,6 +572,7 @@ function DisplayToolCard({
   const data = part.input as Record<string, unknown>;
   const toolName = chatPartUtils.getToolPartName(part);
   const parsedOutput = chatPartUtils.parseToolOutput(part);
+  if (parsedOutput.state === 'error') return null;
   const toolOutput =
     parsedOutput.state === 'success'
       ? (parsedOutput.data as Record<string, unknown>)

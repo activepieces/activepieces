@@ -219,9 +219,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 provider,
                 providerConfigId: config.providerConfigId,
                 modelId: config.modelId,
-                ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
+                ctx, eventEmitter, log, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, ...spreadIfDefined('flowRunId', flowRunId), platformId, userId, userEmail: config.userEmail,
-                guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
+                dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 agentsAvailable: config.agentsAvailable,
                 abortSignal: abortController.signal,
@@ -540,14 +540,13 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, rea
     }
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, modelId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, modelId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     provider: AIProviderName
     providerConfigId: string
     modelId: string
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
-    phaseState: { phase: AgentPhase }
     taintState: TaintState
     mcpToolSet: Record<string, unknown>
     webTools: ToolSet
@@ -559,7 +558,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     platformId: string
     userId: string
     userEmail: string
-    guides: Record<string, string>
     dryRun: boolean
     discoveryOnly: boolean
     emailEnabled: boolean
@@ -700,14 +698,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
         ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
-    const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
-        phaseState.phase = phase
-    } })
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({
         eventEmitter,
         getProjectId: () => projectState.projectId,
@@ -778,7 +773,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             crossProject: crossProjectTools,
             web: webTools,
             thinking: thinkingTools,
-            phase: phaseTools,
             buildPlan: buildPlanTools,
             email: emailTools,
             agentSurface: agentSurfaceTools,
