@@ -9,7 +9,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { GlobalSearchProvider } from './global-search/global-search-context';
-import { PlatformSidebar } from './sidebar/platform';
+import { AppSidebar } from './sidebar/app-sidebar';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -19,21 +19,27 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
     <AllowOnlyLoggedInUserOnlyGuard>
       <GlobalSearchProvider>
         {showPlatformAdminDashboard ? (
-          <SidebarProvider open={true} style={PLATFORM_SIDEBAR_STYLE}>
-            <PlatformSidebar />
-            <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
-              <div className="flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden">
-                <div
-                  id="dashboard-content-container"
-                  className="relative flex flex-col h-full bg-gray-1 rounded-xl shadow-panel border overflow-clip"
-                >
-                  <div className="flex flex-col flex-1 overflow-auto">
-                    {children}
+          <div className="flex h-full w-full overflow-hidden max-md:h-svh max-md:flex-col">
+            <AppSidebar mode="platform" />
+            <SidebarProvider
+              open={true}
+              keyboardShortcut={false}
+              className="flex-1 min-w-0 w-auto max-md:h-auto max-md:min-h-0"
+            >
+              <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
+                <div className="flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden max-md:pl-2 max-md:pt-2">
+                  <div
+                    id="dashboard-content-container"
+                    className="relative flex flex-col h-full bg-gray-1 rounded-xl shadow-panel border overflow-clip"
+                  >
+                    <div className="flex flex-col flex-1 overflow-auto">
+                      {children}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SidebarInset>
-          </SidebarProvider>
+              </SidebarInset>
+            </SidebarProvider>
+          </div>
         ) : (
           <Navigate to="/" />
         )}
@@ -42,9 +48,3 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
-
-const PLATFORM_SIDEBAR_STYLE: React.CSSProperties & {
-  '--sidebar-width': string;
-} = {
-  '--sidebar-width': '16rem',
-};
