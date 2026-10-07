@@ -1009,6 +1009,28 @@ describe('key scope hardening', () => {
         expect(renamed.statusCode).toBe(StatusCodes.OK)
     })
 
+    it('refuses to drop the model a capability uses from its key', async () => {
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        await db.save('ai_tool_config', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            platformId: ctx.platform.id,
+            capability: 'IMAGE_GENERATION',
+            provider: 'ai_provider',
+            config: { aiProviderId: key.id, modelId: 'gpt-image-1' },
+            auth: { iv: 'unused', data: 'unused' },
+            enabled: true,
+        })
+
+        const dropping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, modelScope: 'selected', modelIds: ['gpt-4o'] })
+        const keeping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, modelScope: 'selected', modelIds: ['gpt-4o', 'gpt-image-1'] })
+
+        expect(dropping.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(dropping.body).toContain('image generation')
+        expect(keeping.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('refuses to drop a typed-in model that a tier uses, even when the key allows all models', async () => {
         const models = [
             { modelId: 'kept-model', modelName: 'Kept', modelType: AIProviderModelType.TEXT },

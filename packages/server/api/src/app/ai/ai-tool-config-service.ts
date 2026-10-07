@@ -115,7 +115,9 @@ async function saveUnderPlatformLock({ platformId, choice, write }: { platformId
         const parsed = AiProviderToolConfig.safeParse(choice)
         if (parsed.success) {
             const key = await manager.getRepository(AIProviderEntity).findOneBy({ platformId, id: parsed.data.aiProviderId })
-            if (isNil(key) || key.projectScope !== 'all') {
+            const modelId = parsed.data.modelId
+            const dropsModel = !isNil(key) && !isNil(modelId) && key.modelScope === 'selected' && !key.modelIds.includes(modelId)
+            if (isNil(key) || key.projectScope !== 'all' || dropsModel) {
                 throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This AI provider cannot be used for this capability' } })
             }
         }

@@ -153,7 +153,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(manualModelIds)
         await transaction(async (manager) => {
             await platformModelTierService.lockPlatform({ manager, platformId })
-            await assertCapabilitiesKeepAllProjects({ manager, platformId, providerId, projectScope: request.projectScope })
+            await assertCapabilitiesKeepKey({ manager, platformId, providerId, request })
             if (changesModelScope) {
                 await platformModelTierService.assertKeyScopeKeepsTiers({
                     manager,
@@ -442,21 +442,31 @@ function manualModelIdsOf({ config }: { config: unknown }): string[] | undefined
     return parsed.success ? parsed.data.models.map((model) => model.modelId) : undefined
 }
 
-async function assertCapabilitiesKeepAllProjects({ manager, platformId, providerId, projectScope }: { manager: EntityManager, platformId: PlatformId, providerId: string, projectScope: AiProviderProjectScope | undefined }): Promise<void> {
-    if (isNil(projectScope) || projectScope === 'all') {
+async function assertCapabilitiesKeepKey({ manager, platformId, providerId, request }: { manager: EntityManager, platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest }): Promise<void> {
+    const changesScope = !isNil(request.projectScope) || !isNil(request.modelScope) || !isNil(request.modelIds)
+    if (!changesScope) {
         return
     }
+    const key = await manager.getRepository(AIProviderEntity).findOneByOrFail({ platformId, id: providerId })
+    const next = {
+        projectScope: request.projectScope ?? key.projectScope,
+        modelScope: request.modelScope ?? key.modelScope,
+        modelIds: request.modelIds ?? key.modelIds,
+    }
     const toolConfigs = await manager.getRepository(AiToolConfigEntity).findBy({ platformId, provider: AiToolProvider.AI_PROVIDER })
-    const capabilities = toolConfigs
-        .filter((toolConfig) => {
-            const choice = AiProviderToolConfig.safeParse(toolConfig.config)
-            return choice.success && choice.data.aiProviderId === providerId
-        })
-        .map((toolConfig) => CAPABILITY_LABELS[toolConfig.capability])
-    if (capabilities.length > 0) {
+    const broken = toolConfigs.flatMap((toolConfig) => {
+        const choice = AiProviderToolConfig.safeParse(toolConfig.config)
+        if (!choice.success || choice.data.aiProviderId !== providerId) {
+            return []
+        }
+        const losesProjects = next.projectScope !== 'all'
+        const losesModel = !isNil(choice.data.modelId) && next.modelScope === 'selected' && !next.modelIds.includes(choice.data.modelId)
+        return losesProjects || losesModel ? [CAPABILITY_LABELS[toolConfig.capability]] : []
+    })
+    if (broken.length > 0) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
-            params: { message: `This key powers ${capabilities.join(', ')} for every project. Pick another key there before limiting which projects can use it.` },
+            params: { message: `This key powers ${broken.join(', ')} for every project. Pick another key there before limiting its projects or removing that model.` },
         })
     }
 }
