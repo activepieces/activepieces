@@ -1,9 +1,11 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { newLead } from './lib/triggers/new-lead';
-import { facebookLeadsAuth } from './lib/auth';
 import crypto from 'node:crypto';
 
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+
+import { facebookLeadsAuth } from './lib/auth';
+import { facebookLeadsClient } from './lib/common/client';
+import { newLeadTrigger } from './lib/triggers/new-lead';
 
 export const facebookLeads = createPiece({
 	displayName: 'Facebook Leads',
@@ -13,8 +15,14 @@ export const facebookLeads = createPiece({
 	authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'AbdulTheActivePiecer'],
 	categories: [PieceCategory.MARKETING],
 	auth: facebookLeadsAuth,
-	actions: [],
-	triggers: [newLead],
+	actions: [
+		createCustomApiCallAction({
+			auth: facebookLeadsAuth,
+			baseUrl: () => facebookLeadsClient.baseUrl(),
+			authMapping: async (auth) => ({ Authorization: `Bearer ${auth.access_token}` }),
+		}),
+	],
+	triggers: [newLeadTrigger],
 	events: {
 		parseAndReply: (context) => {
 			const payload = context.payload;

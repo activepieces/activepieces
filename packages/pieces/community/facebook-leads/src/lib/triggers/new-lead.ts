@@ -1,9 +1,12 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { facebookLeadsCommon } from '../common';
-import { facebookLeadsAuth } from '../auth';
-import { FacebookTriggerPayloadBody, FacebookPageDropdown } from '../common/types';
 
-export const newLead = createTrigger({
+import { facebookLeadsAuth } from '../auth';
+import { facebookLeadsApi } from '../common/api';
+import { facebookLeadsProps } from '../common/props';
+
+import type { FacebookLeadsLead, FacebookLeadsWebhookPayload } from '../common/types';
+
+export const newLeadTrigger = createTrigger({
 	auth: facebookLeadsAuth,
 	name: 'new_lead',
 	classification: 'READ',
@@ -16,59 +19,87 @@ export const newLead = createTrigger({
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: {},
 	props: {
-		page: facebookLeadsCommon.page,
-		form: facebookLeadsCommon.form,
+		page: facebookLeadsProps.page({ required: true }),
+		form: facebookLeadsProps.form({ required: false }),
 	},
 
 	async onEnable(context) {
-		const page = context.propsValue['page'] as FacebookPageDropdown;
-		await facebookLeadsCommon.subscribePageToApp(page.id, page.accessToken);
+		const page = context.propsValue.page;
+		await facebookLeadsApi.subscribePageToApp({
+			pageId: page.id,
+			accessToken: page.accessToken,
+		});
 
 		context.app.createListeners({ events: ['lead'], identifierValue: page.id });
 	},
 
 	async onDisable() {
-		//
+		return;
 	},
 	async test(context) {
-		let form = context.propsValue.form as string;
-		const page = context.propsValue.page as FacebookPageDropdown;
+		let form = context.propsValue.form;
+		const page = context.propsValue.page;
 		if (form == undefined || form == '' || form == null) {
-			const forms = await facebookLeadsCommon.getPageForms(page.id, page.accessToken);
+			const forms = await facebookLeadsApi.getPageForms({
+				pageId: page.id,
+				accessToken: page.accessToken,
+			});
 
 			form = forms[0].id;
 		}
 
-		const response = await facebookLeadsCommon.loadSampleData(form, context.auth.access_token);
-		return response.data.map((lead) => facebookLeadsCommon.transformLeadData(lead));
+		const leads = await facebookLeadsApi.listFormLeads({
+			formId: form,
+			accessToken: context.auth.access_token,
+		});
+		return leads.map((lead) => transformLeadData({ lead }));
 	},
 
-	//Return new lead
 	async run(context) {
-		let leadPings: any[] = [];
-		const leads: any[] = [];
 		const form = context.propsValue.form;
-		const payloadBody = context.payload.body as FacebookTriggerPayloadBody;
+		const payloadBody = context.payload.body;
+		const entries = isWebhookPayload(payloadBody) ? payloadBody.entry : [];
 
-		if (form !== undefined && form !== '' && form !== null) {
-			for (const lead of payloadBody.entry) {
-				if (form == lead.changes[0].value.form_id) {
-					leadPings.push(lead);
-				}
-			}
-		} else {
-			leadPings = payloadBody.entry;
-		}
+		const leadPings =
+			form !== undefined && form !== '' && form !== null
+				? entries.filter((lead) => form == lead.changes[0].value.form_id)
+				: entries;
 
+		const leads = [];
 		for (const lead of leadPings) {
-			const leadData = await facebookLeadsCommon.getLeadDetails(
-				lead.changes[0].value.leadgen_id,
-				context.auth.access_token,
-			);
-			const transformLead = facebookLeadsCommon.transformLeadData(leadData);
-			leads.push(transformLead);
+			const leadData = await facebookLeadsApi.getLead({
+				leadId: lead.changes[0].value.leadgen_id,
+				accessToken: context.auth.access_token,
+			});
+			leads.push(transformLeadData({ lead: leadData }));
 		}
 
 		return leads;
 	},
 });
+
+function isWebhookPayload(body: unknown): body is FacebookLeadsWebhookPayload {
+	return typeof body === 'object' && body !== null && 'entry' in body && Array.isArray(body.entry);
+}
+
+function transformLeadData({ lead }: { lead: FacebookLeadsLead }) {
+	return {
+		lead_id: lead.id,
+		form_id: lead.form_id,
+		platform: lead.platform,
+		ad_id: lead.ad_id,
+		ad_name: lead.ad_name,
+		adset_id: lead.adset_id,
+		adset_name: lead.adset_name,
+		campaign_id: lead.campaign_id,
+		campaign_name: lead.campaign_name,
+		created_time: lead.created_time,
+		data: lead.field_data.reduce(
+			(acc, field) => ({
+				...acc,
+				[field.name]: field.values && field.values.length > 0 ? field.values[0] : null,
+			}),
+			{},
+		),
+	};
+}
