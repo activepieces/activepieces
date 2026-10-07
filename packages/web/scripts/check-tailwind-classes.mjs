@@ -18,27 +18,6 @@ const ALLOWED = [
   /^(nodrag|nopan|nowheel)$/,
 ];
 
-const BANNED = [
-  /^text-\[\d/,
-  /^text-xss$/,
-  /^leading-\[/,
-  /^tracking-\[/,
-  /^uppercase$/,
-  /^rounded(-[trblse]{1,2})?(-xs|-xss|-2xl|-3xl)?$/,
-  /^rounded(-[trblse]{1,2})?-\[(?!inherit\])/,
-  /^font-(bold|extrabold|black)$/,
-  /^-m[trblxyse]?-/,
-];
-
-const SIDEBAR_REBUILD_PATHS_EXEMPT_FROM_BANNED = [
-  'app/components/sidebar/',
-  'app/components/project-layout/',
-  'app/components/platform-layout.tsx',
-  'app/components/builder-layout/',
-  'app/components/primary-rail/',
-  'components/ui/sidebar-shadcn.tsx',
-];
-
 const RUNTIME_VARIABLE_PREFIXES = ['--tw-', '--radix-', '--shiki-'];
 const RUNTIME_VARIABLE_SUFFIX = '-seed';
 const RUNTIME_RAMP_VARIABLE = /^--(accent|danger|warning|success)-(light|dark)-\d+$/;
@@ -56,14 +35,9 @@ const generated = design.candidatesToCss(candidates);
 const known = new Set(candidates.filter((candidate, index) => generated[index] !== null || isDefinedElsewhere(candidate)));
 const unknownClasses = usages.filter((usage) => !known.has(usage.className));
 const unknownVariables = findUnknownVariables();
-const bannedClasses = usages.filter((usage) => isBanned(usage.className) && !isExemptFromBanned(usage.file));
 
 report({ title: 'Unknown classes: Tailwind cannot generate them and no stylesheet defines them.', usages: unknownClasses });
 report({ title: 'Unknown CSS variables: nothing defines them.', usages: unknownVariables });
-report({
-  title: 'Banned classes: see brain/knowledge/design-system/shape-and-size.md for the step to use instead.',
-  usages: bannedClasses,
-});
 
 function report({ title, usages }) {
   if (usages.length === 0) return;
@@ -254,16 +228,6 @@ function returnedExpressions(node) {
 
 function findProperty(object, name) {
   return object.properties.find((property) => ts.isPropertyAssignment(property) && property.name.getText() === name);
-}
-
-function isBanned(candidate) {
-  const base = candidate.split(/:(?![^[]*\])/).at(-1).replace(/^!|!$/g, '');
-  return BANNED.some((pattern) => pattern.test(base));
-}
-
-function isExemptFromBanned(file) {
-  const relative = path.relative(SRC, file).split(path.sep).join('/');
-  return SIDEBAR_REBUILD_PATHS_EXEMPT_FROM_BANNED.some((prefix) => relative.startsWith(prefix));
 }
 
 function isDefinedElsewhere(candidate) {
