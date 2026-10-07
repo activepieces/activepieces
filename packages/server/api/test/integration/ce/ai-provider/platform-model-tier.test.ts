@@ -278,6 +278,31 @@ describe('Platform model tiers API', () => {
         })
     })
 
+    describe('last tier and specific models', () => {
+        it('shows specific models again in the same step that deletes the last tier', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
+            await ctx.post(CONFIGURATIONS, { aiSpecificModelsVisible: false })
+
+            const removed = await ctx.delete(`${TIERS}/${tier.id}`)
+
+            expect(removed.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect((await ctx.get(CONFIGURATIONS)).json()).toMatchObject({ aiSpecificModelsVisible: true })
+        })
+
+        it('keeps specific models hidden when the delete is refused', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const first = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'First' }) })
+            await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Second' }) })
+            await ctx.post(CONFIGURATIONS, { aiSpecificModelsVisible: false })
+
+            const refused = await ctx.delete(`${TIERS}/${first.id}`)
+
+            expect(refused.statusCode).toBe(StatusCodes.CONFLICT)
+            expect((await ctx.get(CONFIGURATIONS)).json()).toMatchObject({ aiSpecificModelsVisible: false })
+        })
+    })
+
     describe('key guard', () => {
         it('refuses to delete a key a tier uses', async () => {
             const key = await seedKey({ testCtx: ctx })
@@ -338,3 +363,4 @@ async function findWithDeleted({ id }: { id: string }): Promise<unknown> {
 }
 
 const TIERS = '/v1/platform-model-tiers'
+const CONFIGURATIONS = '/v1/platform-configurations'

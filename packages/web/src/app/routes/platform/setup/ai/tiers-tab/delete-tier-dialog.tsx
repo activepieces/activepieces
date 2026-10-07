@@ -1,12 +1,9 @@
-import { tryCatch } from '@activepieces/core-utils';
 import { PlatformModelTier } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
-import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,7 +24,6 @@ import {
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 
 export function DeleteTierDialog({
   tier,
@@ -70,14 +66,12 @@ function DeleteTierForm({
   const replacements = tiers.filter((candidate) => candidate.id !== tier.id);
   const isLast = replacements.length === 0;
   const [replacedBy, setReplacedBy] = useState<string | undefined>(undefined);
-  const [flipping, setFlipping] = useState(false);
-  const { mutate: remove, isPending: removing } =
+  const { mutate: remove, isPending: busy } =
     platformModelTierMutations.useDelete();
   const replacement = replacements.find(
     (candidate) => candidate.id === replacedBy,
   );
   const needsFlip = isLast && !specificModelsVisible;
-  const busy = removing || flipping;
 
   const keepOpen = (event: Event) => {
     if (busy) {
@@ -85,45 +79,20 @@ function DeleteTierForm({
     }
   };
 
-  const restoreHidden = async () => {
-    await tryCatch(() =>
-      platformConfigurationApi.update({ aiSpecificModelsVisible: false }),
-    );
-    await queryClient.invalidateQueries({
-      queryKey: platformConfigurationHooks.queryKey,
-    });
-  };
-
-  const confirm = async () => {
-    if (needsFlip) {
-      setFlipping(true);
-      const { error: flipError } = await tryCatch(() =>
-        platformConfigurationApi.update({ aiSpecificModelsVisible: true }),
-      );
-      setFlipping(false);
-      if (flipError) {
-        toast.error(
-          api.serverErrorMessage(flipError) ??
-            t('Could not show specific models to builders'),
-        );
-        return;
-      }
-      await queryClient.invalidateQueries({
-        queryKey: platformConfigurationHooks.queryKey,
-      });
-    }
+  const confirm = () =>
     remove(
       { id: tier.id, replacedBy },
       {
-        onSuccess: onClose,
-        onError: () => {
-          if (needsFlip) {
-            restoreHidden().catch(() => undefined);
-          }
+        onSuccess: () => {
+          queryClient
+            .invalidateQueries({
+              queryKey: platformConfigurationHooks.queryKey,
+            })
+            .catch(() => undefined);
+          onClose();
         },
       },
     );
-  };
 
   return (
     <DialogContent
