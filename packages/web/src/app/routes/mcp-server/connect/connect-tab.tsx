@@ -8,7 +8,7 @@ import { useMcpNav } from '../mcp-nav';
 
 import { ClientInstructions } from './client-instructions';
 import { ClientPicker } from './client-picker';
-import { ConnectLanding } from './connect-landing';
+import { ConnectPage } from './connect-page';
 
 export function ConnectTab({
   serverUrl,
@@ -42,5 +42,11 @@ export function ConnectTab({
     return <ClientPicker clients={clients} serverUrl={serverUrl} />;
   }
 
-  return <ConnectLanding clients={clients} serverUrl={serverUrl} />;
+  return (
+    <ConnectPage
+      clients={clients}
+      serverUrl={serverUrl}
+      isReachableFromInternet={isReachableFromInternet}
+    />
+  );
 }
