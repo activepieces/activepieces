@@ -278,7 +278,10 @@ function OAuth2ConnectionSettings({
                   <Button
                     size={'sm'}
                     variant={'ghost'}
-                    className={cn(hasCode && 'text-danger-11')}
+                    className={cn(
+                      'font-medium text-accent-11',
+                      hasCode && 'text-danger-11',
+                    )}
                     disabled={!isConnectButtonEnabled}
                     loading={loading}
                     type="button"

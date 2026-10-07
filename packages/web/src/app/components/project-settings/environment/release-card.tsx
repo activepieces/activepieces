@@ -29,7 +29,7 @@ const ReleaseCard = () => {
                 releasesEnabled: !project.releasesEnabled,
               })
             }
-            className={cn('', {
+            className={cn('font-medium text-accent-11', {
               'text-danger-11': project.releasesEnabled,
             })}
           >

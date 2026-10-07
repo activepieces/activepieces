@@ -173,7 +173,7 @@ const DataSelectorNodeContent = ({
               }
             }}
             className={cn(
-              'text-accent-11 opacity-0 transition-opacity',
+              'font-medium text-accent-11 opacity-0 transition-opacity',
               'group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >
