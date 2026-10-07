@@ -3366,7 +3366,6 @@
   "Show full output": "Show full output",
   "MCP tools": "MCP tools",
   "Runs and audit": "Runs and audit",
-  "Control all your apps and data from": "Control all your apps and data from",
   "Manage": "Manage",
   "MCP server URL": "MCP server URL",
   "Works with any MCP client over Streamable HTTP or SSE. Point it at the link and it works.": "Works with any MCP client over Streamable HTTP or SSE. Point it at the link and it works.",
@@ -3376,5 +3375,7 @@
   "Connected \u00b7 used {ago}": "Connected \u00b7 used {ago}",
   "Connected \u00b7 no calls yet": "Connected \u00b7 no calls yet",
   "Install {client} (opens in a new tab)": "Install {client} (opens in a new tab)",
-  "Set up {client}": "Set up {client}"
+  "Set up {client}": "Set up {client}",
+  "Control all your apps and": "Control all your apps and",
+  "data from": "data from"
 }

@@ -48,9 +48,12 @@ export function ConnectPage({
     <PageBand className="py-12">
       <WireFrame
         header={
-          <h1 className="flex w-fit flex-col items-center gap-2 text-center text-3xl font-semibold leading-tight tracking-tight">
-            <span>{t('Control all your apps and data from')}</span>
-            <ClientRotator />
+          <h1 className="flex w-fit flex-col items-center gap-1 text-center text-3xl font-semibold leading-tight tracking-tight">
+            <span>{t('Control all your apps and')}</span>
+            <span className="flex items-center gap-2.5">
+              {t('data from')}
+              <ClientRotator />
+            </span>
           </h1>
         }
       >

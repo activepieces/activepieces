@@ -22,7 +22,7 @@ export function ClientRotator() {
 
   return (
     <span
-      className="inline-grid align-bottom"
+      className="inline-grid"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -36,13 +36,13 @@ export function ClientRotator() {
               backgroundColor: `color-mix(in oklab, ${client.tint} 14%, transparent)`,
             }}
             className={cn(
-              'col-start-1 row-start-1 inline-flex items-center justify-center gap-3 rounded-xl px-3 transition-all duration-500 motion-reduce:transition-none',
+              'col-start-1 row-start-1 inline-flex items-center gap-2 justify-self-start rounded-xl py-1 pl-1.5 pr-3 transition-all duration-200 motion-reduce:transition-none',
               isActive
                 ? 'translate-y-0 opacity-100'
-                : 'pointer-events-none translate-y-2 opacity-0',
+                : 'pointer-events-none translate-y-1 opacity-0',
             )}
           >
-            <ClientIcon icon={client.icon} className="size-8 rounded-lg" />
+            <ClientIcon icon={client.icon} className="size-7 rounded-lg" />
             {client.name}
           </span>
         );
