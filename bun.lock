@@ -1189,7 +1189,7 @@
     },
     "packages/pieces/community/bika": {
       "name": "@activepieces/piece-bika",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1198,6 +1198,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/billplz": {
