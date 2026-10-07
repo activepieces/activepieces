@@ -49,7 +49,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAgentsNavVisible } from '@/features/agents';
-import { EnterpriseTrialPill, SidebarUsageLimits } from '@/features/billing';
+import { SidebarUsageLimits } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
@@ -179,8 +179,7 @@ export function PrimaryRail() {
         </div>
 
         {!collapsed && (
-          <div className="mx-2 mb-1 flex flex-col gap-2">
-            <EnterpriseTrialPill />
+          <div className="mx-2 mb-1">
             <SidebarUsageLimits />
           </div>
         )}

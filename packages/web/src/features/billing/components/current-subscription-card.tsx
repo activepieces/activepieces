@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { billingUtils } from '../utils/billing-utils';
+
+import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
 type CurrentSubscriptionCardProps = {
   info: PlatformBillingInformation;
@@ -23,9 +26,10 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
-  const trialEndsAt = liveEnterpriseTrialEndsAt(info);
+  const trial = enterpriseTrialHooks.useTrial();
+  const trialEndsAt = trial.state === 'active' ? trial.endsAt : null;
 
-  if (!isNil(trialEndsAt)) {
+  if (!isNil(trialEndsAt) && !isPaid) {
     return (
       <div
         className={cn(
@@ -40,27 +44,35 @@ export const CurrentSubscriptionCard = ({
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-2">
             <span className="text-2xl font-semibold">
-              {t('Enterprise Trial')}
+              {t('Enterprise trial')}
             </span>
             <Badge variant="outline" className="rounded-full">
               {t('{count, plural, =1 {1 day left} other {# days left}}', {
-                count: Math.max(
-                  1,
-                  Math.ceil(dayjs(trialEndsAt).diff(dayjs(), 'hour') / 24),
-                ),
+                count: trial.daysLeft,
               })}
             </Badge>
           </span>
           <span className="text-sm text-gray-11">
-            {t('Ends {date}, then you go back to the {plan}.', {
-              date: dayjs(trialEndsAt).format('MMM D, YYYY'),
-              plan: planTitle(info),
-            })}
+            {t(
+              'Ends {date}, then you are back on the {plan} plan. Your credits are not affected. To keep Enterprise features, talk to sales.',
+              {
+                date: dayjs(trialEndsAt).format('MMM D, YYYY'),
+                plan: trial.basePlanName,
+              },
+            )}
           </span>
         </div>
-        <Button className="w-full" onClick={onExplorePlans}>
-          {t('Upgrade')}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <EnterpriseTrialSalesLink
+            surface="enterprise_trial_billing"
+            variant="default"
+            className="flex-1"
+            label={t('Talk to sales')}
+          />
+          <Button variant="outline" className="flex-1" onClick={onExplorePlans}>
+            {t('Explore plans')}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -111,16 +123,6 @@ export const CurrentSubscriptionCard = ({
     </div>
   );
 };
-
-function liveEnterpriseTrialEndsAt(
-  info: PlatformBillingInformation,
-): string | null {
-  const endsAt = info.plan.enterpriseTrialEndsAt;
-  if (isNil(endsAt) || dayjs(endsAt).isBefore(dayjs())) {
-    return null;
-  }
-  return endsAt;
-}
 
 function planTitle(info: PlatformBillingInformation): string {
   if (!billingUtils.isPaidPlan(info.plan.plan)) {

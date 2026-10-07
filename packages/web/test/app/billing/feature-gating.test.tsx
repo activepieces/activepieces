@@ -165,7 +165,9 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /contact sales/i }),
+    ).toBeDefined();
     expect(screen.queryByRole('button', { name: /explore plans/i })).toBeNull();
   });
 
@@ -176,7 +178,9 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /explore plans/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /explore plans/i }),
+    ).toBeDefined();
     expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
   });
 
@@ -212,7 +216,9 @@ describe('feature teaser', () => {
     render(
       <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
     );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /contact sales/i }),
+    ).toBeDefined();
   });
 
   it('drops contact sales only where the caller opts out', () => {
@@ -230,7 +236,7 @@ describe('feature teaser', () => {
 
   it('plays the showcase video on cloud', () => {
     edition = 'cloud';
-    const { container } = render(
+    const { container } = renderWithQueryClient(
       <FeatureTeaser
         featureKey="API"
         title="Enable API Keys"
@@ -252,7 +258,9 @@ describe('feature sample', () => {
         <div />
       </FeatureSample>,
     );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /contact sales/i }),
+    ).toBeDefined();
   });
 
   it('shows no sales form for a surface with no feature key', () => {
