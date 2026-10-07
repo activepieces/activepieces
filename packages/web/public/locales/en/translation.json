@@ -3392,5 +3392,7 @@
   "Need more time to evaluate? Our team can extend it by 14 days.": "Need more time to evaluate? Our team can extend it by 14 days.",
   "Go to Billing": "Go to Billing",
   "To keep Enterprise features after that, talk to sales. Plus and Team plans add credits and seats but not Enterprise features.": "To keep Enterprise features after that, talk to sales. Plus and Team plans add credits and seats but not Enterprise features.",
-  "You're on a free Enterprise trial until {date}, on top of your {plan} plan. The trial adds Enterprise features only; your credits still come from {plan} and don't change.": "You're on a free Enterprise trial until {date}, on top of your {plan} plan. The trial adds Enterprise features only; your credits still come from {plan} and don't change."
+  "You're on a free Enterprise trial until {date}, on top of your {plan} plan. The trial adds Enterprise features only; your credits still come from {plan} and don't change.": "You're on a free Enterprise trial until {date}, on top of your {plan} plan. The trial adds Enterprise features only; your credits still come from {plan} and don't change.",
+  "We could not start your trial": "We could not start your trial",
+  "The Enterprise trial is not available for your platform right now. Please try again later, or talk to our team.": "The Enterprise trial is not available for your platform right now. Please try again later, or talk to our team."
 }

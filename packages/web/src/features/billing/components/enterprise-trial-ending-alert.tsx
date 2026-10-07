@@ -18,7 +18,8 @@ export function EnterpriseTrialEndingAlert() {
   const trial = enterpriseTrialHooks.useTrial();
   const { endedBanner } = useEnterpriseTrialDesignStore();
   const dismissKey = `${DISMISS_KEY_PREFIX}${dayjs().format('YYYY-MM-DD')}`;
-  const [dismissed, setDismissed] = useState(() => readFlag(dismissKey));
+  const [dismissedKey, setDismissedKey] = useState<string | null>(null);
+  const dismissed = dismissedKey === dismissKey || readFlag(dismissKey);
 
   const ending = trial.state === 'active' && trial.lastDay;
   const ended = trial.state === 'ended' && endedBanner;
@@ -96,7 +97,7 @@ export function EnterpriseTrialEndingAlert() {
               className="text-warning-11 hover:bg-warning-4 hover:text-warning-12"
               onClick={() => {
                 writeFlag(dismissKey);
-                setDismissed(true);
+                setDismissedKey(dismissKey);
               }}
             >
               <X className="size-3.5" />

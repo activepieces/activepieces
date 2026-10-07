@@ -54,14 +54,19 @@ export function EnterpriseTrialDialog() {
           onOpenAutoFocus={(event) => event.preventDefault()}
           className={cn(
             isNil(result)
-              ? 'gap-0 overflow-hidden p-0 sm:max-w-3xl sm:rounded-2xl'
+              ? 'max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-3xl sm:rounded-2xl'
               : 'p-6 sm:max-w-md sm:rounded-2xl',
           )}
         >
           {open && result === 'active' && (
             <TrialStarted endsAt={start.data?.endsAt ?? null} onClose={close} />
           )}
-          {open && result === 'used' && <TrialAlreadyUsed />}
+          {open && (result === 'used' || result === 'ended') && (
+            <TrialAlreadyUsed />
+          )}
+          {open && (result === 'unavailable' || result === 'eligible') && (
+            <TrialNotStarted onClose={close} />
+          )}
           {open && isNil(result) && (
             <StartTrial
               isPending={start.isPending}
@@ -266,6 +271,33 @@ function TrialAlreadyUsed() {
       <div className="flex justify-end">
         <EnterpriseTrialSalesLink
           surface="enterprise_trial_used"
+          variant="default"
+          label={t('Talk to sales')}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TrialNotStarted({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 pr-6">
+        <DialogTitle className="text-base font-semibold">
+          {t('We could not start your trial')}
+        </DialogTitle>
+        <DialogDescription>
+          {t(
+            'The Enterprise trial is not available for your platform right now. Please try again later, or talk to our team.',
+          )}
+        </DialogDescription>
+      </div>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <Button variant="outline" onClick={onClose}>
+          {t('Close')}
+        </Button>
+        <EnterpriseTrialSalesLink
+          surface="enterprise_trial_unavailable"
           variant="default"
           label={t('Talk to sales')}
         />

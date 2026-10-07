@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { useEffect, useReducer } from 'react';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -26,6 +27,7 @@ export const enterpriseTrialHooks = {
       queryKey: enterpriseTrialKey(platform.id),
       queryFn: platformBillingApi.getEnterpriseTrial,
       staleTime: 60 * 1000,
+      refetchInterval: (query) => refetchAfterTrialEnds(query.state.data),
       enabled,
     });
   },
@@ -50,12 +52,30 @@ export const enterpriseTrialHooks = {
     const { embedState } = useEmbedding();
     const isPlatformAdmin = useIsPlatformAdmin();
     const basePlanName = toBasePlanName(platform.plan.plan);
+    useRerenderAt(
+      status?.state === 'active'
+        ? status.endsAt
+        : platform.plan.enterpriseTrialEndsAt,
+    );
     if (embedState.isEmbedded) {
       return NO_TRIAL;
     }
     const planEndsAt = platform.plan.enterpriseTrialEndsAt;
     const liveFromPlan =
       !isNil(planEndsAt) && dayjs(planEndsAt).isAfter(dayjs());
+    if (
+      status?.state === 'active' &&
+      !isNil(status.endsAt) &&
+      !dayjs(status.endsAt).isAfter(dayjs())
+    ) {
+      return {
+        ...NO_TRIAL,
+        state: 'ended',
+        endsAt: new Date(status.endsAt),
+        isPlatformAdmin,
+        basePlanName,
+      };
+    }
     if (status?.state === 'active' && !isNil(status.endsAt)) {
       return toActiveTrial({
         endsAt: status.endsAt,
@@ -101,6 +121,35 @@ function useCanManageEnterpriseTrial(): boolean {
     isPlatformAdmin &&
     !embedState.isEmbedded
   );
+}
+
+function useRerenderAt(moment: string | Date | null | undefined): void {
+  const [, rerender] = useReducer((tick: number) => tick + 1, 0);
+  const at = isNil(moment) ? null : dayjs(moment).valueOf();
+  useEffect(() => {
+    if (isNil(at)) {
+      return;
+    }
+    const delay = at - Date.now();
+    if (delay <= 0 || delay > MAX_TIMER_MS) {
+      return;
+    }
+    const timer = setTimeout(rerender, delay + END_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, [at]);
+}
+
+function refetchAfterTrialEnds(
+  status: EnterpriseTrialStatus | undefined,
+): number | false {
+  if (status?.state !== 'active' || isNil(status.endsAt)) {
+    return false;
+  }
+  const msUntilEnd = dayjs(status.endsAt).diff(dayjs());
+  if (msUntilEnd <= 0) {
+    return EXPIRED_POLL_MS;
+  }
+  return Math.min(msUntilEnd + END_GRACE_MS, MAX_POLL_MS);
 }
 
 function toBasePlanName(plan: string | null | undefined): string {
@@ -152,6 +201,10 @@ const NO_TRIAL: EnterpriseTrial = {
 
 export const ENTERPRISE_TRIAL_DAYS = 7;
 const ENDING_SOON_HOURS = 48;
+const END_GRACE_MS = 5 * 1000;
+const EXPIRED_POLL_MS = 60 * 1000;
+const MAX_POLL_MS = 60 * 60 * 1000;
+const MAX_TIMER_MS = 2 ** 31 - 1;
 const LAST_DAY_HOURS = 36;
 
 export type EnterpriseTrial = {
