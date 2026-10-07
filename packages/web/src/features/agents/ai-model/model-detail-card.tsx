@@ -116,7 +116,13 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
   );
 }
 
-export function CostBar({ level }: { level: number }) {
+export function CostBar({
+  level,
+  compact = false,
+}: {
+  level: number;
+  compact?: boolean;
+}) {
   return (
     <span
       className="flex gap-0.5"
@@ -127,7 +133,8 @@ export function CostBar({ level }: { level: number }) {
         <span
           key={segment}
           className={cn(
-            'h-1.5 w-4 rounded-full',
+            'h-1.5 rounded-full',
+            compact ? 'w-2' : 'w-4',
             segment <= level ? costColor({ level }) : 'bg-gray-4',
           )}
         />
@@ -157,7 +164,7 @@ function costColor({ level }: { level: number }): string {
   if (level <= 2) {
     return 'bg-success-9';
   }
-  return level === 3 ? 'bg-warning-9' : 'bg-danger-9';
+  return level <= 4 ? 'bg-warning-9' : 'bg-danger-9';
 }
 
 const COST_SEGMENTS = [1, 2, 3, 4, 5];

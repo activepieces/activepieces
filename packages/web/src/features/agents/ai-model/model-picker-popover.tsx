@@ -1,7 +1,7 @@
 import { AIProviderModel } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Brain, Check, ChevronDown, ChevronRight, Wrench } from 'lucide-react';
-import { ReactNode, useDeferredValue, useMemo, useState } from 'react';
+import { ReactNode, useDeferredValue, useMemo, useRef, useState } from 'react';
 
 import {
   Command,
@@ -38,6 +38,7 @@ export function ModelPickerPopover<T>({
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const [highlighted, setHighlighted] = useState('');
   const [activeItem, setActiveItem] = useState<ModelPickerItem<T> | null>(null);
+  const movedByKeyboard = useRef(false);
   const needle = useDeferredValue(search.trim().toLowerCase());
   const visible = useMemo(
     () =>
@@ -87,9 +88,9 @@ export function ModelPickerPopover<T>({
             disabled={item.disabled}
             aria-disabled={item.disabled}
             onSelect={() => pick(item)}
-            className={cn(group.collapsible === true && 'pl-4')}
+            className="group"
           >
-            <PickerRow item={item} />
+            <PickerRow item={item} indented={group.collapsible === true} />
           </CommandItem>
         ))}
         {shown.length < group.items.length && (
@@ -112,13 +113,15 @@ export function ModelPickerPopover<T>({
       onValueChange={(value) => {
         setHighlighted(value);
         const item = itemByValue.get(value);
-        if (item !== undefined) {
+        if (item !== undefined && movedByKeyboard.current) {
           setActiveItem(item);
         }
       }}
-      className={cn(
-        detail !== undefined && 'w-[380px] rounded-md border shadow-md',
-      )}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          movedByKeyboard.current = true;
+        }
+      }}
     >
       <CommandInput
         placeholder={t('Search models')}
@@ -134,13 +137,32 @@ export function ModelPickerPopover<T>({
           'overflow-y-auto',
           detail === undefined ? 'max-h-80' : 'max-h-96',
         )}
+        onPointerMove={(event) => {
+          const row =
+            event.target instanceof Element
+              ? event.target.closest('[cmdk-item]')
+              : null;
+          const item = itemByValue.get(row?.getAttribute('data-value') ?? '');
+          if (item !== undefined) {
+            movedByKeyboard.current = false;
+            setActiveItem(item);
+          }
+        }}
+        onPointerLeave={() => {
+          if (!movedByKeyboard.current) {
+            setActiveItem(null);
+          }
+        }}
       >
         <CommandEmpty>{emptyText}</CommandEmpty>
         {sections.map((section) => (
           <CommandGroup
             key={section.id}
             heading={section.heading}
-            className="[&_[cmdk-group-heading]]:sticky [&_[cmdk-group-heading]]:top-0 [&_[cmdk-group-heading]]:z-10 [&_[cmdk-group-heading]]:bg-panel"
+            className={cn(
+              '[&_[cmdk-group-heading]]:sticky [&_[cmdk-group-heading]]:top-0 [&_[cmdk-group-heading]]:z-10 [&_[cmdk-group-heading]]:bg-panel',
+              detail !== undefined && '[&_[cmdk-group-heading]]:pt-2.5',
+            )}
           >
             {section.groups.map((group) =>
               group.collapsible === true ? (
@@ -163,9 +185,10 @@ export function ModelPickerPopover<T>({
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                       {group.heading}
                     </span>
-                    <span className="text-xs tabular-nums text-gray-10">
+                    <span className="w-10 shrink-0 text-right text-xs tabular-nums text-gray-10">
                       {group.items.length}
                     </span>
+                    <span className="size-4 shrink-0" />
                   </CommandItem>
                   {isOpen(group) && renderItems(group)}
                 </div>
@@ -199,31 +222,34 @@ export function ModelPickerPopover<T>({
       ) : (
         <PopoverTrigger asChild>{children}</PopoverTrigger>
       )}
-      {detail === undefined ? (
-        <PopoverContent align={align} className="w-[420px] p-0">
-          {list}
-        </PopoverContent>
-      ) : (
-        <PopoverContent
-          align={align}
-          className="flex w-auto items-start gap-2 border-0 bg-transparent p-0 shadow-none"
-        >
-          {list}
-          {activeItem !== null && (
-            <div
-              data-testid="model-picker-detail"
-              className="hidden w-[280px] rounded-md border bg-panel p-4 shadow-md sm:block"
-            >
-              {detail(activeItem)}
-            </div>
-          )}
-        </PopoverContent>
-      )}
+      <PopoverContent
+        align={align}
+        className={cn(
+          'relative p-0',
+          detail === undefined ? 'w-[420px]' : 'w-[400px]',
+        )}
+      >
+        {list}
+        {detail !== undefined && activeItem !== null && (
+          <div
+            data-testid="model-picker-detail"
+            className="absolute top-0 right-full mr-2 hidden w-[280px] rounded-md border bg-panel p-4 text-gray-12 shadow-md sm:block"
+          >
+            {detail(activeItem)}
+          </div>
+        )}
+      </PopoverContent>
     </Popover>
   );
 }
 
-function PickerRow<T>({ item }: { item: ModelPickerItem<T> }) {
+function PickerRow<T>({
+  item,
+  indented,
+}: {
+  item: ModelPickerItem<T>;
+  indented: boolean;
+}) {
   const metadata = item.model?.metadata;
   const meta = [
     ...(metadata?.contextTokens === undefined
@@ -239,13 +265,25 @@ function PickerRow<T>({ item }: { item: ModelPickerItem<T> }) {
             perMillion: metadata.outputCostPerMillionTokens,
           })}`,
         ]),
-    ...(item.trailing === undefined ? [] : [item.trailing]),
   ];
   return (
-    <span className="flex w-full min-w-0 flex-col gap-0.5">
+    <span
+      className={cn(
+        'flex w-full min-w-0 flex-col gap-0.5',
+        indented && 'pl-14',
+      )}
+    >
       <span className="flex w-full min-w-0 items-center gap-2">
         {item.leading}
-        <span className="truncate text-sm" title={item.name}>
+        <span
+          className={cn(
+            'truncate text-sm',
+            indented
+              ? 'text-gray-11 group-data-[selected=true]:text-gray-12'
+              : item.description !== undefined && 'font-medium',
+          )}
+          title={item.name}
+        >
           {item.name}
         </span>
         {item.badges}
@@ -274,6 +312,11 @@ function PickerRow<T>({ item }: { item: ModelPickerItem<T> }) {
               <title>{t('Supports reasoning')}</title>
             </Brain>
           )}
+          {item.trailing !== undefined && (
+            <span className="w-10 text-right text-xs tabular-nums text-gray-11">
+              {item.trailing}
+            </span>
+          )}
           <Check
             className={cn(
               'size-4 text-gray-11',
@@ -283,7 +326,7 @@ function PickerRow<T>({ item }: { item: ModelPickerItem<T> }) {
         </span>
       </span>
       {item.description !== undefined && (
-        <span className="truncate pl-9 text-xs text-gray-11">
+        <span className="truncate pl-8 text-xs text-gray-11">
           {item.description}
         </span>
       )}

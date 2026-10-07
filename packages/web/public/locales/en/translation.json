@@ -3455,5 +3455,9 @@
   "Web search": "Web search",
   "Your keys": "Your keys",
   "Your tiers": "Your tiers",
-  "{size} tokens": "{size} tokens"
+  "{size} tokens": "{size} tokens",
+  "Pick another model": "Pick another model",
+  "Still runs, but no longer offered": "Still runs, but no longer offered",
+  "Tiers, credits and your keys": "Tiers, credits and your keys",
+  "{n, plural, =1 {+1 fallback} other {+# fallbacks}}": "{n, plural, =1 {+1 fallback} other {+# fallbacks}}"
 }

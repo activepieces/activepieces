@@ -186,6 +186,29 @@ describe('ModelPickerPopover', () => {
     expect(detail()).toBe('detail of gamma model 1');
   });
 
+  it('opens the detail card only on hover and closes it when the pointer leaves', () => {
+    mountKeys();
+    const detail = () =>
+      document.querySelector('[data-testid="model-picker-detail"]')
+        ?.textContent;
+    expect(detail()).toBeUndefined();
+
+    const row = Array.from(rows()).find((candidate) =>
+      candidate.textContent?.includes('gamma model 1'),
+    );
+    act(() => {
+      row?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true }));
+    });
+    expect(detail()).toBe('detail of gamma model 1');
+
+    act(() => {
+      document
+        .querySelector('[cmdk-list]')
+        ?.dispatchEvent(new MouseEvent('pointerout', { bubbles: true }));
+    });
+    expect(detail()).toBeUndefined();
+  });
+
   it('filters with its own matcher and drops empty groups', async () => {
     mount();
     typeSearch('alpha');
