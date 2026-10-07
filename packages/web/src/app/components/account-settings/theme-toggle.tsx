@@ -1,50 +1,73 @@
 import { t } from 'i18next';
-import { Monitor, Moon, Palette, Sun } from 'lucide-react';
+import { ChevronsUpDown, Monitor, Moon, Sun } from 'lucide-react';
 
-import { useTheme } from '@/components/providers/theme-provider';
-import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  ThemePreference,
+  useTheme,
+} from '@/components/providers/theme-provider';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+import { SETTING_TRIGGER_CLASS, SettingRow } from './setting-row';
 
 export const ThemeToggle = () => {
   const { preference, setPreference } = useTheme();
+  const current = THEME_OPTIONS.find((option) => option.value === preference);
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium flex items-center gap-2">
-        <Palette className="w-4 h-4" />
-        {t('Theme')}
-      </Label>
-      <Select value={preference} onValueChange={setPreference}>
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="light" className="text-sm py-2">
-            <div className="flex items-center gap-2">
-              <Sun className="w-4 h-4" />
-              Light
-            </div>
-          </SelectItem>
-          <SelectItem value="dark" className="text-sm py-2">
-            <div className="flex items-center gap-2">
-              <Moon className="w-4 h-4" />
-              Dark
-            </div>
-          </SelectItem>
-          <SelectItem value="system" className="text-sm py-2">
-            <div className="flex items-center gap-2">
-              <Monitor className="w-4 h-4" />
-              System
-            </div>
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
+    <SettingRow title={t('Theme')}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={`${t('Theme')}, ${current?.label ?? ''}`}
+            className={SETTING_TRIGGER_CLASS}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              {current && <current.icon className="text-gray-11" />}
+              <span className="truncate">{current?.label}</span>
+            </span>
+            <ChevronsUpDown className="text-gray-11" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuRadioGroup
+            value={preference}
+            onValueChange={(value) => {
+              const next = THEME_OPTIONS.find(
+                (option) => option.value === value,
+              );
+              if (next) {
+                setPreference(next.value);
+              }
+            }}
+          >
+            {THEME_OPTIONS.map((option) => (
+              <DropdownMenuRadioItem key={option.value} value={option.value}>
+                <option.icon className="text-gray-11" />
+                {option.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </SettingRow>
   );
 };
+
+const THEME_OPTIONS: {
+  value: ThemePreference;
+  label: string;
+  icon: typeof Sun;
+}[] = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
+];

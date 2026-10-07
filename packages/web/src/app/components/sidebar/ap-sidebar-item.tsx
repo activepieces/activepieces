@@ -1,8 +1,8 @@
 import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Crown } from 'lucide-react';
-import React, { ComponentType, useEffect, useRef, useState } from 'react';
-import { Link, matchPath, useLocation } from 'react-router-dom';
+import { ChevronRight, Crown } from 'lucide-react';
+import React, { ComponentType, ReactNode, useRef, useState } from 'react';
+import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
@@ -24,26 +24,36 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { sidebarItemUtils } from './ap-sidebar-item-utils';
+import { sidebarStyles } from './sidebar-styles';
 
 export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
-  const { state } = useSidebar();
+  const navigate = useNavigate();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const { capture } = useTelemetry();
   const iconRef = useRef<AnimatedIconHandle | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
+  const [expandOverride, setExpandOverride] = useState<ExpandOverride | null>(
+    null,
+  );
   const pathname = location.pathname;
-  const isLinkActive = isRouteActive({ pathname, to: item.to });
-  const isCollapsed = state === 'collapsed';
+  const isLinkActive = isRouteActive({
+    pathname,
+    to: item.activeOn ?? item.to,
+  });
+  const isCollapsed = state === 'collapsed' && !isMobile;
   const subItems = item.subItems ?? [];
   const hasSubItems = subItems.length > 0;
-  const [isExpanded, setIsExpanded] = useState(isLinkActive);
+  const isExpanded =
+    expandOverride?.pathname === pathname ? expandOverride.open : isLinkActive;
   const showSubItems = hasSubItems && isExpanded && !isCollapsed;
   const isSubItemLocked = (subItem: SidebarSubItemType) =>
     Boolean(item.locked) || Boolean(subItem.locked);
   const isCrowned = hasSubItems
     ? subItems.every(isSubItemLocked)
     : Boolean(item.locked);
-  const isRowHighlighted = !hasSubItems && isLinkActive;
+  const isRowHighlighted = hasSubItems
+    ? isLinkActive && !showSubItems
+    : isLinkActive;
   const parentTier = item.tier ?? subItems.find(isSubItemLocked)?.tier;
 
   const captureLockedClick = ({ path, tier }: LockedClick) =>
@@ -51,6 +61,12 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       name: TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
       payload: { path, tier },
     });
+
+  const closeMobileSheet = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   const keepSearchWithinSection = (to: string) => {
     if (!hasSubItems || !isLinkActive) {
@@ -60,35 +76,96 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     return shared === '' ? to : `${to}?${shared}`;
   };
 
-  useEffect(() => {
+  const isSubItemActive = (subItem: SidebarSubItemType) =>
+    isRouteActive({ pathname, to: subItem.to, end: subItem.end });
+
+  const handleSubItemClick = (subItem: SidebarSubItemType) => {
+    closeMobileSheet();
+    if (
+      isSubItemLocked(subItem) &&
+      !isRouteActive({ pathname, to: subItem.to, end: true })
+    ) {
+      captureLockedClick({ path: subItem.to, tier: subItem.tier ?? item.tier });
+    }
+  };
+
+  const hoverHandlers = {
+    onMouseEnter: () => iconRef.current?.startAnimation?.(),
+    onMouseLeave: () => iconRef.current?.stopAnimation?.(),
+  };
+
+  const plainIcon = item.icon && renderIcon({ Icon: item.icon, ref: iconRef });
+  const icon = isCrowned ? <CrownGlyph className="size-4" /> : plainIcon;
+  const lockedLabel = `${item.label}, ${t('Requires a plan upgrade')}`;
+  const collapsedName = isCrowned ? lockedLabel : item.label;
+
+  const collapsedTooltip = isCrowned
+    ? {
+        children: (
+          <span className="flex flex-col">
+            <span>{item.label}</span>
+            <span className="opacity-70">
+              <LockedText tier={parentTier} />
+            </span>
+          </span>
+        ),
+      }
+    : item.label;
+
+  const toggleGroup = () => setExpandOverride({ pathname, open: !isExpanded });
+
+  const handleGroupClick = () => {
     if (isLinkActive) {
-      setIsExpanded(true);
+      toggleGroup();
+      return;
     }
-  }, [isLinkActive]);
+    const [firstSubItem] = subItems;
+    handleSubItemClick(firstSubItem);
+    setExpandOverride(null);
+    navigate(keepSearchWithinSection(firstSubItem.to));
+  };
 
-  useEffect(() => {
-    if (isHovered) {
-      iconRef.current?.startAnimation?.();
-    } else {
-      iconRef.current?.stopAnimation?.();
-    }
-  }, [isHovered]);
+  const label = (
+    <span
+      className={cn(
+        'flex min-w-0 flex-1 items-center gap-1.5',
+        sidebarStyles.labelFade,
+      )}
+    >
+      <span className="truncate">{item.label}</span>
+      {isCrowned && (
+        <span className="sr-only">{t('Requires a plan upgrade')}</span>
+      )}
+    </span>
+  );
 
-  const button = (
+  const button = hasSubItems ? (
+    <SidebarMenuButton
+      isActive={isRowHighlighted}
+      aria-expanded={showSubItems}
+      aria-label={isCollapsed ? collapsedName : undefined}
+      tooltip={collapsedTooltip}
+      onClick={handleGroupClick}
+      className="pr-8"
+      {...hoverHandlers}
+    >
+      {icon}
+      {label}
+    </SidebarMenuButton>
+  ) : (
     <SidebarMenuButton
       asChild
-      className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
-        'bg-gray-4 hover:bg-gray-4!': isRowHighlighted,
-        'pr-8': hasSubItems && !isCollapsed,
-      })}
+      isActive={isRowHighlighted}
+      tooltip={collapsedTooltip}
     >
       <Link
-        to={keepSearchWithinSection(item.to)}
+        to={item.to}
+        aria-label={isCollapsed ? collapsedName : undefined}
         aria-current={isRowHighlighted ? 'page' : undefined}
-        onClick={() => {
-          if (hasSubItems) {
-            setIsExpanded(true);
-          }
+        onClick={(event) => {
+          event.stopPropagation();
+          closeMobileSheet();
+          item.onClick?.();
           if (
             isCrowned &&
             !isRouteActive({ pathname, to: item.to, end: true })
@@ -96,18 +173,13 @@ export const ApSidebarItem = (item: SidebarItemType) => {
             captureLockedClick({ path: item.to, tier: parentTier });
           }
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        {...hoverHandlers}
       >
-        {item.icon && renderIcon({ Icon: item.icon, ref: iconRef })}
-        {!isCollapsed && (
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span
-              className={cn('truncate', { 'font-medium': isRowHighlighted })}
-            >
-              {item.label}
-            </span>
-            {isCrowned && <CrownMark />}
+        {icon}
+        {label}
+        {item.badge && (
+          <span className={cn('ml-auto flex', sidebarStyles.labelFade)}>
+            {item.badge}
           </span>
         )}
       </Link>
@@ -116,98 +188,108 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
   return (
     <SidebarMenuItem>
-      {isCrowned && !isCollapsed ? (
-        <LockedTooltip tier={parentTier}>{button}</LockedTooltip>
+      {isCrowned ? (
+        <LockedTooltip tier={parentTier} disabled={isCollapsed}>
+          {button}
+        </LockedTooltip>
       ) : (
         button
       )}
-      {!isCollapsed && hasSubItems && (
+      {hasSubItems && (
         <SidebarMenuAction
-          className="right-1.5 text-gray-9"
           aria-label={isExpanded ? t('Collapse') : t('Expand')}
-          aria-expanded={isExpanded}
-          onClick={() => setIsExpanded((expanded) => !expanded)}
+          aria-expanded={showSubItems}
+          aria-hidden={isCollapsed || undefined}
+          tabIndex={isCollapsed ? -1 : undefined}
+          onClick={toggleGroup}
+          className="text-gray-9"
         >
-          {isExpanded ? (
-            <ChevronDown aria-hidden />
-          ) : (
-            <ChevronRight aria-hidden />
-          )}
+          <ChevronRight
+            aria-hidden
+            className={cn(sidebarStyles.rotate, isExpanded && 'rotate-90')}
+          />
         </SidebarMenuAction>
       )}
-      {showSubItems && (
-        <SidebarMenuSub className="mx-0 ml-7 border-0 px-0 py-1">
-          {subItems.map((subItem) => {
-            const shut = isSubItemLocked(subItem);
-            const subItemTier = subItem.tier ?? item.tier;
-            const subItemActive = isRouteActive({
-              pathname,
-              to: subItem.to,
-              end: subItem.end,
-            });
-            const subButton = (
-              <SidebarMenuSubButton
-                asChild
-                isActive={subItemActive}
-                className="h-8"
-              >
-                <Link
-                  to={keepSearchWithinSection(subItem.to)}
-                  aria-current={subItemActive ? 'page' : undefined}
-                  onClick={
-                    shut &&
-                    !isRouteActive({ pathname, to: subItem.to, end: true })
-                      ? () =>
-                          captureLockedClick({
-                            path: subItem.to,
-                            tier: subItemTier,
-                          })
-                      : undefined
-                  }
-                >
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <span className="truncate">{subItem.label}</span>
-                    {shut && !isCrowned && <CrownMark />}
-                  </span>
-                </Link>
-              </SidebarMenuSubButton>
-            );
-            return (
-              <SidebarMenuSubItem key={subItem.to}>
-                {shut && !isCrowned ? (
-                  <LockedTooltip tier={subItemTier}>{subButton}</LockedTooltip>
-                ) : (
-                  subButton
-                )}
-              </SidebarMenuSubItem>
-            );
-          })}
-        </SidebarMenuSub>
+      {hasSubItems && (
+        <div
+          className={cn(
+            sidebarStyles.expand,
+            showSubItems
+              ? 'visible grid-rows-[1fr] opacity-100'
+              : 'invisible grid-rows-[0fr] opacity-0',
+          )}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <SidebarMenuSub>
+              {subItems.map((subItem) => {
+                const shut = isSubItemLocked(subItem);
+                const active = isSubItemActive(subItem);
+                const subButton = (
+                  <SidebarMenuSubButton asChild isActive={active}>
+                    <Link
+                      to={keepSearchWithinSection(subItem.to)}
+                      aria-current={active ? 'page' : undefined}
+                      onClick={() => handleSubItemClick(subItem)}
+                    >
+                      <span className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
+                        <span className="truncate">{subItem.label}</span>
+                        {shut && !isCrowned && (
+                          <CrownMark className="size-3.5" />
+                        )}
+                      </span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                );
+                return (
+                  <SidebarMenuSubItem key={subItem.to}>
+                    {shut && !isCrowned ? (
+                      <LockedTooltip tier={subItem.tier ?? item.tier}>
+                        {subButton}
+                      </LockedTooltip>
+                    ) : (
+                      subButton
+                    )}
+                  </SidebarMenuSubItem>
+                );
+              })}
+            </SidebarMenuSub>
+          </div>
+        </div>
       )}
     </SidebarMenuItem>
   );
 };
 
-function LockedTooltip({ tier, children }: LockedTooltipProps) {
+function LockedText({ tier }: { tier?: FeatureTier }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const namedTier = edition === ApEdition.COMMUNITY ? undefined : tier;
 
+  return namedTier === undefined
+    ? t('Not included in your plan')
+    : t('Included in the {tier} plan', { tier: TIER_LABELS[namedTier] });
+}
+
+function LockedTooltip({ tier, disabled, children }: LockedTooltipProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="right" align="center">
-        {namedTier === undefined
-          ? t('Not included in your plan')
-          : t('Included in the {tier} plan', { tier: TIER_LABELS[namedTier] })}
+      <TooltipContent side="right" align="center" hidden={disabled}>
+        <LockedText tier={tier} />
       </TooltipContent>
     </Tooltip>
   );
 }
 
-function CrownMark() {
+function CrownGlyph({ className }: { className: string }) {
+  return (
+    <Crown aria-hidden className={cn('shrink-0 text-accent-10', className)} />
+  );
+}
+
+function CrownMark({ className }: { className: string }) {
   return (
     <>
-      <Crown aria-hidden className="size-3.5! shrink-0 text-gray-9" />
+      <CrownGlyph className={className} />
       <span className="sr-only">{t('Requires a plan upgrade')}</span>
     </>
   );
@@ -233,7 +315,7 @@ function renderIcon({
   ref: React.RefObject<AnimatedIconHandle | null>;
 }) {
   return React.createElement(Icon, {
-    className: 'size-5 shrink-0 pointer-events-none',
+    className: 'size-4 shrink-0 pointer-events-none',
     ref,
   } as { className: string });
 }
@@ -254,10 +336,19 @@ export type SidebarItemType = {
   locked?: boolean;
   tier?: FeatureTier;
   subItems?: SidebarSubItemType[];
+  activeOn?: string;
+  badge?: ReactNode;
+  onClick?: () => void;
+};
+
+type ExpandOverride = {
+  pathname: string;
+  open: boolean;
 };
 
 type LockedTooltipProps = {
   tier?: FeatureTier;
+  disabled?: boolean;
   children: React.ReactElement;
 };
 

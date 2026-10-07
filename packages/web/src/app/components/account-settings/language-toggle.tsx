@@ -1,7 +1,7 @@
 import { ApFlagId } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, Globe } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -16,7 +16,6 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
@@ -26,6 +25,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { localesMap } from '@/lib/locale-utils';
 import { cn } from '@/lib/utils';
+
+import { SETTING_TRIGGER_CLASS, SettingRow } from './setting-row';
 
 export const LanguageToggle = () => {
   const { i18n } = useTranslation();
@@ -47,41 +48,55 @@ export const LanguageToggle = () => {
     },
   });
 
+  const languageLabel = selectedLanguage
+    ? localesMap[selectedLanguage as keyof typeof localesMap]
+    : t('Select language');
+
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium flex items-center gap-2">
-        <Globe className="w-4 h-4" />
-        {t('Language')}
-      </Label>
+    <SettingRow
+      title={t('Language')}
+      description={
+        showCommunity ? (
+          <Link
+            className="text-accent-11 hover:underline"
+            rel="noopener noreferrer"
+            target="_blank"
+            to="https://www.activepieces.com/docs/about/i18n"
+          >
+            {t('Help translate Activepieces →')}
+          </Link>
+        ) : undefined
+      }
+    >
       <Popover modal={true} open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            size="sm"
             role="combobox"
+            aria-label={`${t('Language')}, ${languageLabel}`}
             className={cn(
-              'w-full justify-between font-normal',
+              SETTING_TRIGGER_CLASS,
               !selectedLanguage && 'text-gray-11',
             )}
             disabled={isPending}
           >
             {isPending ? (
-              <LoadingSpinner className="w-4 h-4" />
-            ) : selectedLanguage ? (
-              localesMap[selectedLanguage as keyof typeof localesMap]
+              <LoadingSpinner className="size-4" />
             ) : (
-              t('Select language')
+              <span className="truncate">{languageLabel}</span>
             )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="text-gray-11" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-60 p-0" align="end">
           <Command>
             <CommandInput
               placeholder={i18n.t('Search language...')}
               className="h-8 text-sm"
             />
             <CommandList>
-              <ScrollArea className="h-[200px] w-[300px]">
+              <ScrollArea className="h-[200px]">
                 <CommandEmpty className="py-4 text-center text-sm">
                   {i18n.t('No language found.')}
                 </CommandEmpty>
@@ -91,12 +106,12 @@ export const LanguageToggle = () => {
                       value={value}
                       key={value}
                       onSelect={(value) => mutate(value)}
-                      className="flex items-center justify-between py-2 text-sm"
+                      className="justify-between text-sm"
                     >
-                      <div className="flex items-center gap-2">{label}</div>
+                      {label}
                       <Check
                         className={cn(
-                          'h-4 w-4',
+                          'size-4',
                           value === selectedLanguage
                             ? 'opacity-100'
                             : 'opacity-0',
@@ -110,18 +125,6 @@ export const LanguageToggle = () => {
           </Command>
         </PopoverContent>
       </Popover>
-      {showCommunity && (
-        <div className="pt-1">
-          <Link
-            className="text-xs text-accent-11 hover:underline font-medium"
-            rel="noopener noreferrer"
-            target="_blank"
-            to="https://www.activepieces.com/docs/about/i18n"
-          >
-            {t('Help translate Activepieces →')}
-          </Link>
-        </div>
-      )}
-    </div>
+    </SettingRow>
   );
 };
