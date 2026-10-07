@@ -13,10 +13,18 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Activity, ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
+import { Activity, KeyRound, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
+import {
+  AdminPageHeader,
+  AdminSection,
+  DangerZone,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+} from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   LeaveWithoutSavingDialog,
@@ -36,8 +44,6 @@ import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
-
-import { SectionHeader } from '../components/section-header';
 
 import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
@@ -152,37 +158,26 @@ export function ConfigDetail({
   };
 
   return (
-    <div className="flex grow flex-col gap-8 pb-4">
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex w-fit items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
-        >
-          <ChevronLeft className="size-4" />
-          {t('Providers')}
-        </button>
-        <div className="flex items-start gap-3">
-          <ProviderLogo info={info} />
-          <div className="flex min-w-0 flex-col gap-1">
-            <h1 className="truncate text-lg font-semibold leading-none tracking-tight">
-              {draft.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-11">
-              <span>{info.name}</span>
-              <KeyStatusBadge status={config.status} />
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      <AdminPageHeader
+        title={draft.name}
+        back={{ label: t('Providers'), to: '/platform/ai' }}
+        badge={<KeyStatusBadge status={config.status} />}
+        description={
+          <span className="flex items-center gap-2">
+            <ProviderLogo info={info} size="sm" />
+            {info.name}
+          </span>
+        }
+        resources={adminPageResources.aiProviders}
+      />
 
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={t('General')}
-          description={t('How this key is labelled and authorised.')}
-        />
-        <div className="flex flex-col divide-y divide-gray-6/60 rounded-xl border border-gray-6/60">
-          <div className="flex flex-col gap-1.5 p-4">
+      <AdminSection
+        title={t('General')}
+        description={t('How this key is labelled and authorised.')}
+      >
+        <SettingsPanel flush>
+          <div className="flex flex-col gap-2 px-5 py-4">
             <Label htmlFor="config-name">{t('Name')}</Label>
             <Input
               id="config-name"
@@ -197,20 +192,11 @@ export function ConfigDetail({
               <p className="text-sm text-danger-11">{t(formErrors.required)}</p>
             )}
           </div>
-          <div className="flex items-center justify-between gap-3 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
-                <KeyRound className="size-4 text-gray-11" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">
-                  {t('Credentials')}
-                </p>
-                <p className="mt-1 truncate font-mono text-xs text-gray-11">
-                  {t('Stored securely')}
-                </p>
-              </div>
-            </div>
+          <SettingsRow
+            icon={<KeyRound />}
+            title={t('Credentials')}
+            description={t('Stored securely')}
+          >
             <Button
               variant="outline"
               size="sm"
@@ -219,21 +205,12 @@ export function ConfigDetail({
             >
               {t('Replace')}
             </Button>
-          </div>
-          <div className="flex items-center justify-between gap-3 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
-                <Activity className="size-4 text-gray-11" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">
-                  {t('Status')}
-                </p>
-                {statusDetail && (
-                  <p className="mt-1 text-xs text-gray-11">{statusDetail}</p>
-                )}
-              </div>
-            </div>
+          </SettingsRow>
+          <SettingsRow
+            icon={<Activity />}
+            title={t('Status')}
+            description={statusDetail || undefined}
+          >
             <Button
               variant="outline"
               size="sm"
@@ -243,22 +220,24 @@ export function ConfigDetail({
             >
               {t('Recheck')}
             </Button>
-          </div>
-        </div>
-      </section>
+          </SettingsRow>
+        </SettingsPanel>
+      </AdminSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <SectionHeader
+      <AdminSection
+        title={
+          <SectionTitle
             title={t('Models')}
             count={isLoadingModels ? undefined : enabledModelCount}
-            description={
-              manualModels
-                ? t('Model ids exposed through this key.')
-                : t('Which of this key’s models the platform may use.')
-            }
           />
-          {!manualModels && (
+        }
+        description={
+          manualModels
+            ? t('Model ids exposed through this key.')
+            : t('Which of this key’s models the platform may use.')
+        }
+        action={
+          manualModels ? undefined : (
             <ScopeTabs
               value={draft.modelScope}
               onChange={(value) =>
@@ -273,8 +252,9 @@ export function ConfigDetail({
                 { value: 'selected', label: t('Only selected') },
               ]}
             />
-          )}
-        </div>
+          )
+        }
+      >
         {manualModels ? (
           <ManualModelList
             models={draft.models}
@@ -290,23 +270,25 @@ export function ConfigDetail({
             />
           )
         )}
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <SectionHeader
+      <AdminSection
+        title={
+          <SectionTitle
             title={t('Project access')}
             count={allowedProjectCount}
-            description={
-              draft.projectScope === 'except'
-                ? t(
-                    'Every project except these — new projects get access automatically.',
-                  )
-                : draft.projectScope === 'selected'
-                ? t('Only these projects can use this key.')
-                : t('Every project on this platform can use it.')
-            }
           />
+        }
+        description={
+          draft.projectScope === 'except'
+            ? t(
+                'Every project except these — new projects get access automatically.',
+              )
+            : draft.projectScope === 'selected'
+            ? t('Only these projects can use this key.')
+            : t('Every project on this platform can use it.')
+        }
+        action={
           <ScopeTabs
             value={draft.projectScope}
             onChange={(value) =>
@@ -327,7 +309,8 @@ export function ConfigDetail({
               { value: 'except', label: t('All except') },
             ]}
           />
-        </div>
+        }
+      >
         {draft.projectScope !== 'all' && (
           <ProjectSelectionPanel
             projects={projects}
@@ -335,33 +318,23 @@ export function ConfigDetail({
             onChange={(projectIds) => setDraft({ ...draft, projectIds })}
           />
         )}
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={t('Danger zone')}
-          description={t('Irreversible actions for this key.')}
-        />
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-danger-6 p-4">
-          <div className="min-w-0">
-            <p className="text-sm font-medium leading-none">
-              {t('Delete this key')}
-            </p>
-            <p className="mt-1 text-sm text-gray-11">
-              {t('Steps and agents using it will stop working.')}
-            </p>
-          </div>
+      <DangerZone>
+        <SettingsRow
+          title={t('Delete this key')}
+          description={t('Steps and agents using it will stop working.')}
+        >
           <Button
-            variant="outline"
+            variant="destructive"
             size="sm"
-            className="shrink-0 gap-2 border-danger-7 text-danger-11 enabled:hover:bg-danger-3 enabled:hover:text-danger-11"
             onClick={() => setDeleteOpen(true)}
             {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
           >
             <Trash2 className="size-4" />
             {t('Delete')}
           </Button>
-        </div>
+        </SettingsRow>
         <ConfirmationDeleteDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
@@ -376,7 +349,7 @@ export function ConfigDetail({
             onBack();
           }}
         />
-      </section>
+      </DangerZone>
 
       {dirty && (
         <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
@@ -409,7 +382,20 @@ export function ConfigDetail({
         onKeepEditing={() => leaveBlocker.reset?.()}
         onDiscard={() => leaveBlocker.proceed?.()}
       />
-    </div>
+    </>
+  );
+}
+
+function SectionTitle({ title, count }: { title: string; count?: number }) {
+  return (
+    <span className="flex items-baseline gap-2">
+      {title}
+      {count !== undefined && (
+        <span className="text-sm font-normal tabular-nums text-gray-11">
+          {count}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -424,7 +410,7 @@ function ScopeTabs({
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-44 shrink-0">
+      <SelectTrigger size="sm" className="w-44 shrink-0">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

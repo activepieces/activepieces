@@ -2,7 +2,14 @@ import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
-import { CenteredPage } from '@/app/components/centered-page';
+import {
+  AdminEmpty,
+  AdminPage,
+  AdminPageHeader,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+} from '@/app/components/admin';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -14,15 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
@@ -39,47 +37,45 @@ const ApiKeysPage = () => {
   const keys: ApiKeyResponseWithoutValue[] = isSample
     ? sampleData.apiKeysPage().data
     : data?.data ?? [];
+  const showLoading = isLoading && !isSample;
 
   return (
-    <CenteredPage
-      title={t('API Keys')}
-      description={t('Manage API keys to access Activepieces APIs.')}
-      actions={
+    <AdminPage width="narrow">
+      <AdminPageHeader
+        title={t('API Keys')}
+        description={t('Manage API keys to access Activepieces APIs.')}
+        resources={adminPageResources.apiKeys}
+      >
         <NewApiKeyDialog onCreate={() => refetch()}>
           <AnimatedIconButton
             icon={PlusIcon}
             iconSize={16}
-            size="sm"
             {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
           >
             {t('New API Key')}
           </AnimatedIconButton>
         </NewApiKeyDialog>
-      }
-    >
-      {isLoading && !isSample && (
-        <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+      </AdminPageHeader>
+
+      {showLoading && <SkeletonList numberOfItems={3} className="h-18" />}
+
+      {!showLoading && keys.length === 0 && (
+        <AdminEmpty
+          className="flex-none"
+          icon={<Key />}
+          title={t('No API keys yet. Create one to get started.')}
+        />
       )}
 
-      {!isLoading && keys.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-          <Key className="size-10" />
-          <p className="text-sm">
-            {t('No API keys yet. Create one to get started.')}
-          </p>
-        </div>
-      )}
-
-      {!isLoading && keys.length > 0 && (
-        <ItemGroup className="gap-2">
+      {!showLoading && keys.length > 0 && (
+        <SettingsPanel flush>
           {keys.map((apiKey) => (
-            <Item key={apiKey.id} variant="outline" size="sm">
-              <ItemMedia variant="icon">
-                <Key />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{apiKey.displayName}</ItemTitle>
-                <ItemDescription className="text-xs">
+            <SettingsRow
+              key={apiKey.id}
+              icon={<Key />}
+              title={apiKey.displayName}
+              description={
+                <span className="text-xs">
                   <span className="font-mono">
                     sk-...{apiKey.truncatedValue}
                   </span>
@@ -95,49 +91,48 @@ const ApiKeysPage = () => {
                   ) : (
                     <> · {t('Never used')}</>
                   )}
-                </ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <DropdownMenu modal={true}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm">
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <ConfirmationDeleteDialog
-                      title={t('Revoke API Key')}
-                      message={t(
-                        'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
+                </span>
+              }
+            >
+              <DropdownMenu modal={true}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <ConfirmationDeleteDialog
+                    title={t('Revoke API Key')}
+                    message={t(
+                      'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
+                    )}
+                    entityName={t('API Key')}
+                    buttonText={t('Revoke')}
+                    controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
+                    mutationFn={async () => {
+                      await apiKeyApi.delete(apiKey.id);
+                      refetch();
+                    }}
+                    onError={() => internalErrorToast()}
+                  >
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={(e) => e.preventDefault()}
+                      {...adminControl(
+                        AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
                       )}
-                      entityName={t('API Key')}
-                      buttonText={t('Revoke')}
-                      controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
-                      mutationFn={async () => {
-                        await apiKeyApi.delete(apiKey.id);
-                        refetch();
-                      }}
-                      onError={() => internalErrorToast()}
                     >
-                      <DropdownMenuItem
-                        className="text-danger-11 focus:text-danger-11"
-                        onSelect={(e) => e.preventDefault()}
-                        {...adminControl(
-                          AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
-                        )}
-                      >
-                        <Trash className="size-4 mr-2 text-danger-11" />
-                        {t('Revoke API Key')}
-                      </DropdownMenuItem>
-                    </ConfirmationDeleteDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </ItemActions>
-            </Item>
+                      <Trash className="size-4" />
+                      {t('Revoke API Key')}
+                    </DropdownMenuItem>
+                  </ConfirmationDeleteDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SettingsRow>
           ))}
-        </ItemGroup>
+        </SettingsPanel>
       )}
-    </CenteredPage>
+    </AdminPage>
   );
 };
 

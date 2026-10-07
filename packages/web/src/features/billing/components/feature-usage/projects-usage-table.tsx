@@ -20,9 +20,11 @@ import { projectCollectionUtils } from '@/features/projects';
 export function ProjectsUsageTable({
   platformId,
   enabled = true,
+  frameClassName,
 }: {
   platformId: string;
   enabled?: boolean;
+  frameClassName?: string;
 }) {
   const [range, setRange] = useState<{ from: Date; to: Date }>(() => ({
     from: dayjs().subtract(30, 'day').startOf('day').toDate(),
@@ -47,8 +49,8 @@ export function ProjectsUsageTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <h2 className="text-base font-semibold text-gray-12">
           {t('Credits Usage by Project')}
         </h2>
         <DateTimePickerWithRange
@@ -63,6 +65,8 @@ export function ProjectsUsageTable({
         />
       </div>
       <DataTable
+        bordered={frameClassName !== undefined}
+        frameClassName={frameClassName}
         columns={COLUMNS}
         page={page}
         isLoading={isLoading}

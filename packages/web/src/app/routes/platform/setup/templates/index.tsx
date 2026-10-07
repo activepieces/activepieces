@@ -7,13 +7,14 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
-  DataTable,
-  RowDataWithActions,
-  BulkAction,
-} from '@/components/custom/data-table';
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -197,31 +198,26 @@ const PlatformTemplatesPage = () => {
     [selectedRows, bulkDeleteMutation],
   );
 
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <AnimatedIconButton
-          {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}
-          icon={PlusIcon}
-          iconSize={16}
-          size="sm"
-        >
-          {t('New Template')}
-        </AnimatedIconButton>
-      </CreateTemplateDialog>,
-    ],
-    [refetch],
-  );
-
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
+        title={t('Templates')}
         description={t(
           'Convert the most common automations into reusable templates',
         )}
-        title={t('Templates')}
-      />
-      <DataTable
+        resources={adminPageResources.templates}
+      >
+        <CreateTemplateDialog onDone={() => refetch()}>
+          <AnimatedIconButton
+            {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}
+            icon={PlusIcon}
+            iconSize={16}
+          >
+            {t('New Template')}
+          </AnimatedIconButton>
+        </CreateTemplateDialog>
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No templates found')}
         emptyStateTextDescription={t(
           'Create a template for your user to inspire them',
@@ -235,7 +231,6 @@ const PlatformTemplatesPage = () => {
         errorStateEntity={t('templates')}
         onRetry={refetch}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
         actions={[
           (row) => {
             return (
@@ -264,7 +259,7 @@ const PlatformTemplatesPage = () => {
           },
         ]}
       />
-    </div>
+    </AdminPage>
   );
 };
 

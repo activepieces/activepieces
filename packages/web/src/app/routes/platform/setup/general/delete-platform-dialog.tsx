@@ -73,7 +73,12 @@ const DeletePlatformForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(() => deletePlatform())}>
+      <form
+        onSubmit={(event) => {
+          event.stopPropagation();
+          form.handleSubmit(() => deletePlatform())(event);
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t('Delete platform')}</DialogTitle>
           <DialogDescription className="flex flex-col gap-3">

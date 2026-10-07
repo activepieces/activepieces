@@ -114,7 +114,7 @@ export const CustomizeSelectorDialog = ({
           variant="outline"
           size="sm"
         >
-          <Settings2Icon className="size-4 mr-2" />
+          <Settings2Icon />
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>

@@ -6,7 +6,6 @@ import { Check } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import {
-  Link,
   Navigate,
   useNavigate,
   useParams,
@@ -14,20 +13,17 @@ import {
 } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { CenteredPage } from '@/app/components/centered-page';
+import {
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+  adminSurface,
+} from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -67,9 +63,9 @@ const EditDestination = ({ destinationId }: { destinationId: string }) => {
   switch (opened.status) {
     case 'loading':
       return (
-        <div className="w-full mx-auto py-6 px-6">
-          <SkeletonList numberOfItems={4} className="w-full h-[72px]" />
-        </div>
+        <AdminPage width="medium">
+          <SkeletonList numberOfItems={4} className="h-18 w-full" />
+        </AdminPage>
       );
     case 'error':
       return (
@@ -192,75 +188,65 @@ const DestinationForm = ({
         });
 
   return (
-    <CenteredPage
-      widthClassName="max-w-full px-6"
-      breadcrumb={
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to={EVENT_STREAMING_PATH}>{t('Event Streaming')}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                {isEdit ? t('Edit destination') : t('New destination')}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      }
-      title={isEdit ? t('Edit destination') : t('New destination')}
+    <AdminPage
+      width="medium"
       footer={
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(EVENT_STREAMING_PATH)}
-            disabled={isSaving}
-          >
-            {t('Cancel')}
-          </Button>
-          <span className="flex-1" />
-          <span className="self-center pr-2 text-sm text-gray-11">
-            {footerStatus}
-          </span>
-          {!isEdit && stepIndex > DESTINATION_STEP && (
+        <div
+          className={cn(adminSurface.saveBar, 'sticky bottom-0 z-20 mt-auto')}
+        >
+          <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-6">
+            <span className="min-w-0 flex-1 text-sm text-gray-11">
+              {footerStatus}
+            </span>
             <Button
               type="button"
               variant="outline"
-              onClick={() => setStepIndex(stepIndex - 1)}
-            >
-              {t('Back')}
-            </Button>
-          )}
-          {!isEdit && !isLastStep && (
-            <Button type="button" onClick={goToNextStep}>
-              {t('Continue')}
-            </Button>
-          )}
-          {showSubmit && (
-            <Button
-              {...adminControl(
-                isEdit
-                  ? AdminControl.EVENT_DESTINATIONS_DESTINATION_UPDATE_SUBMIT
-                  : AdminControl.EVENT_DESTINATIONS_DESTINATION_CREATE_SUBMIT,
-              )}
-              type="button"
-              loading={isSaving}
+              onClick={() => navigate(EVENT_STREAMING_PATH)}
               disabled={isSaving}
-              onClick={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
             >
-              {isEdit ? t('Save changes') : t('Create destination')}
+              {t('Cancel')}
             </Button>
-          )}
-        </>
+            {!isEdit && stepIndex > DESTINATION_STEP && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStepIndex(stepIndex - 1)}
+              >
+                {t('Back')}
+              </Button>
+            )}
+            {!isEdit && !isLastStep && (
+              <Button type="button" onClick={goToNextStep}>
+                {t('Continue')}
+              </Button>
+            )}
+            {showSubmit && (
+              <Button
+                {...adminControl(
+                  isEdit
+                    ? AdminControl.EVENT_DESTINATIONS_DESTINATION_UPDATE_SUBMIT
+                    : AdminControl.EVENT_DESTINATIONS_DESTINATION_CREATE_SUBMIT,
+                )}
+                type="button"
+                loading={isSaving}
+                disabled={isSaving}
+                onClick={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
+              >
+                {isEdit ? t('Save changes') : t('Create destination')}
+              </Button>
+            )}
+          </div>
+        </div>
       }
     >
+      <AdminPageHeader
+        back={{ label: t('Event Streaming'), to: EVENT_STREAMING_PATH }}
+        title={isEdit ? t('Edit destination') : t('New destination')}
+        resources={adminPageResources.eventStreaming}
+      />
       <Form {...form}>
         <form
-          className="flex max-w-[50rem] flex-col gap-6"
+          className="flex flex-col gap-6"
           onSubmit={(event) => event.preventDefault()}
         >
           <StepHeader
@@ -295,7 +281,7 @@ const DestinationForm = ({
         onKeepEditing={() => leaveBlocker.reset?.()}
         onDiscard={() => leaveBlocker.proceed?.()}
       />
-    </CenteredPage>
+    </AdminPage>
   );
 };
 

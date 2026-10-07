@@ -19,16 +19,21 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  StatusDot,
+  StatusTone,
+  adminPageResources,
+} from '@/app/components/admin';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
-  DataTable,
   DataTableFilters,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -36,7 +41,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { appConnectionUtils } from '@/features/connections';
 import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
@@ -149,18 +153,11 @@ export default function PlatformConnectionsPage() {
           icon={Activity}
         />
       ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const { variant, icon: Icon } =
-          appConnectionUtils.getStatusIcon(status);
-        return (
-          <StatusIconWithText
-            icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
-            variant={variant}
-          />
-        );
-      },
+      cell: ({ row }) => (
+        <StatusDot tone={CONNECTION_STATUS_TONE[row.original.status]}>
+          {formatUtils.convertEnumToHumanReadable(row.original.status)}
+        </StatusDot>
+      ),
     },
     {
       accessorKey: 'projects',
@@ -225,35 +222,38 @@ export default function PlatformConnectionsPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Connections')}
         description={t(
           'All app connections across every project on this platform',
         )}
+        resources={adminPageResources.connections}
       />
-      {owners?.truncated && (
-        <div className="px-6 pb-2 text-xs text-gray-11">
-          {t('Owner filter is limited to the first {count} owners', {
-            count: MAX_PLATFORM_APP_CONNECTION_OWNERS,
-          })}
-        </div>
-      )}
-      <DataTable
-        emptyStateTextTitle={t('No connections found')}
-        emptyStateTextDescription={t(
-          'Connections created in any project on this platform will appear here.',
+      <div className="flex flex-col gap-2">
+        {owners?.truncated && (
+          <p className="text-xs text-gray-11">
+            {t('Owner filter is limited to the first {count} owners', {
+              count: MAX_PLATFORM_APP_CONNECTION_OWNERS,
+            })}
+          </p>
         )}
-        emptyStateIcon={<Unplug className="size-14" />}
-        columns={columns}
-        page={connections}
-        isLoading={isLoading}
-        isError={isError}
-        errorStateEntity={t('connections')}
-        onRetry={refetch}
-        filters={filters}
-      />
-    </div>
+        <AdminDataTable
+          emptyStateTextTitle={t('No connections found')}
+          emptyStateTextDescription={t(
+            'Connections created in any project on this platform will appear here.',
+          )}
+          emptyStateIcon={<Unplug className="size-14" />}
+          columns={columns}
+          page={connections}
+          isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('connections')}
+          onRetry={refetch}
+          filters={filters}
+        />
+      </div>
+    </AdminPage>
   );
 }
 
@@ -311,4 +311,10 @@ const ProjectsCell = ({
       </TooltipContent>
     </Tooltip>
   );
+};
+
+const CONNECTION_STATUS_TONE: Record<AppConnectionStatus, StatusTone> = {
+  [AppConnectionStatus.ACTIVE]: 'success',
+  [AppConnectionStatus.ERROR]: 'danger',
+  [AppConnectionStatus.MISSING]: 'neutral',
 };

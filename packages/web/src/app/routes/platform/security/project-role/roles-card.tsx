@@ -36,7 +36,7 @@ export function RolesCard({
   const newRoleButton = !platform.plan.customRolesEnabled ? (
     <Tooltip>
       <TooltipTrigger>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" disabled>
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} disabled>
           {t('New role')}
         </AnimatedIconButton>
       </TooltipTrigger>
@@ -49,7 +49,6 @@ export function RolesCard({
       <AnimatedIconButton
         icon={PlusIcon}
         iconSize={16}
-        size="sm"
         {...adminControl(AdminControl.ROLES_NEW_OPEN)}
       >
         {t('New role')}
@@ -58,40 +57,37 @@ export function RolesCard({
   );
 
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="text-base font-medium">{t('Roles')}</h2>
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(toRolesTab(value))}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList>
-            <TabsTrigger value="project" className="gap-2">
-              {t('Project roles')}
-              {!isNil(projectRolesCount) && (
-                <span className="text-gray-11">{projectRolesCount}</span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="platform" className="gap-2">
-              {t('Platform roles')}
-              <span className="text-gray-11">{platformRolesCount}</span>
-            </TabsTrigger>
-          </TabsList>
-          {activeTab === 'project' && newRoleButton}
-        </div>
-        <TabsContent value="project">
-          <ProjectRolesList
-            projectRoles={projectRoles}
-            isLoading={isLoading}
-            isError={isError}
-            refetch={refetch}
-          />
-        </TabsContent>
-        <TabsContent value="platform">
-          <PlatformRolesList />
-        </TabsContent>
-      </Tabs>
-    </section>
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(toRolesTab(value))}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <TabsList>
+          <TabsTrigger value="project" className="gap-2">
+            {t('Project roles')}
+            {!isNil(projectRolesCount) && (
+              <span className="text-gray-11">{projectRolesCount}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="platform" className="gap-2">
+            {t('Platform roles')}
+            <span className="text-gray-11">{platformRolesCount}</span>
+          </TabsTrigger>
+        </TabsList>
+        {activeTab === 'project' && newRoleButton}
+      </div>
+      <TabsContent value="project">
+        <ProjectRolesList
+          projectRoles={projectRoles}
+          isLoading={isLoading}
+          isError={isError}
+          refetch={refetch}
+        />
+      </TabsContent>
+      <TabsContent value="platform">
+        <PlatformRolesList />
+      </TabsContent>
+    </Tabs>
   );
 }
 

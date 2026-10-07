@@ -24,6 +24,7 @@ import {
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const selectMock = vi.hoisted(() => ({
@@ -158,23 +159,25 @@ describe('ConfigDetail save (manual models)', () => {
     onSave = vi.fn().mockResolvedValue(undefined);
     act(() => {
       root.render(
-        <ConfigDetail
-          config={gatewayConfig}
-          info={{
-            provider: AIProviderName.CLOUDFLARE_GATEWAY,
-            name: 'Cloudflare AI Gateway',
-            markdown: '',
-            logoUrl: '',
-          }}
-          projects={[]}
-          isSaving={false}
-          onSave={onSave}
-          onDelete={async () => undefined}
-          onReplaceCredentials={() => undefined}
-          isRechecking={false}
-          onRecheck={() => undefined}
-          onBack={() => undefined}
-        />,
+        <MemoryRouter>
+          <ConfigDetail
+            config={gatewayConfig}
+            info={{
+              provider: AIProviderName.CLOUDFLARE_GATEWAY,
+              name: 'Cloudflare AI Gateway',
+              markdown: '',
+              logoUrl: '',
+            }}
+            projects={[]}
+            isSaving={false}
+            onSave={onSave}
+            onDelete={async () => undefined}
+            onReplaceCredentials={() => undefined}
+            isRechecking={false}
+            onRecheck={() => undefined}
+            onBack={() => undefined}
+          />
+        </MemoryRouter>,
       );
     });
   };
