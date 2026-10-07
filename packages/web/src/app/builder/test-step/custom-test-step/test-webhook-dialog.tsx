@@ -84,6 +84,7 @@ const CatchWebhookAuthSettings = z.object({
       authFields: z
         .object({
           headerName: z.string().optional(),
+          hmacHeaderName: z.string().optional(),
         })
         .optional(),
     }),
@@ -418,8 +419,8 @@ function describeAuthRequirement(trigger: FlowTrigger): string | null {
     case 'none':
       return null;
     case 'header': {
-      const headerName = authFields?.headerName?.trim();
-      if (isNil(headerName) || headerName === '' || headerName.includes('{{')) {
+      const headerName = toLiteralHeaderName(authFields?.headerName);
+      if (isNil(headerName)) {
         return t(
           'This trigger only accepts requests that include its authentication header. Add the header in the Headers tab before you send.',
         );
@@ -433,11 +434,27 @@ function describeAuthRequirement(trigger: FlowTrigger): string | null {
       return t(
         'This trigger uses Basic Auth. Add an Authorization header with the username and password from the trigger settings before you send.',
       );
-    case 'hmac':
+    case 'hmac': {
+      const headerName = toLiteralHeaderName(authFields?.hmacHeaderName);
+      if (isNil(headerName)) {
+        return t(
+          'This trigger checks an HMAC signature. Add the signature header with the signature of the exact request body before you send. You can also send the sample to the Test URL from the service that signs the request.',
+        );
+      }
       return t(
-        'This trigger checks an HMAC signature, so it rejects requests sent from this dialog. Send the sample to the Test URL from the service that signs the request.',
+        'This trigger checks an HMAC signature. Add the {headerName} header with the signature of the exact request body before you send. You can also send the sample to the Test URL from the service that signs the request.',
+        { headerName },
       );
+    }
   }
+}
+
+function toLiteralHeaderName(headerName: string | undefined): string | null {
+  const trimmed = headerName?.trim();
+  if (isNil(trimmed) || trimmed === '' || trimmed.includes('{{')) {
+    return null;
+  }
+  return trimmed;
 }
 
 TestWebhookDialog.displayName = 'TestWebhookDialog';

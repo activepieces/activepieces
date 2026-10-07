@@ -208,12 +208,20 @@ describe('TestWebhookDialog (trigger)', () => {
       note: 'This trigger uses Basic Auth. Add an Authorization header with the username and password from the trigger settings before you send.',
     },
     {
-      name: 'an HMAC signature',
+      name: 'an HMAC signature in a named header',
       input: {
         authType: 'hmac',
         authFields: { hmacHeaderName: 'x-signature', hmacSecret: 's3cret' },
       },
-      note: 'This trigger checks an HMAC signature, so it rejects requests sent from this dialog. Send the sample to the Test URL from the service that signs the request.',
+      note: 'This trigger checks an HMAC signature. Add the x-signature header with the signature of the exact request body before you send. You can also send the sample to the Test URL from the service that signs the request.',
+    },
+    {
+      name: 'an HMAC signature in a header whose name is a template',
+      input: {
+        authType: 'hmac',
+        authFields: { hmacHeaderName: '{{trigger.signatureHeader}}' },
+      },
+      note: 'This trigger checks an HMAC signature. Add the signature header with the signature of the exact request body before you send. You can also send the sample to the Test URL from the service that signs the request.',
     },
   ])(
     'tells the user before sending that the trigger requires $name',
