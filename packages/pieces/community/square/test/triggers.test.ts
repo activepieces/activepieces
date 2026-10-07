@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { square } from '../src';
 import { triggers } from '../src/lib/triggers';
@@ -131,6 +132,29 @@ describe('trigger runs', () => {
     expect(replays.every((events) => events.length === 0)).toBe(true);
   });
 
+  test('every emitted event carries the platform dedupe key square:<event_id>', async () => {
+    stubFetch(() => ({ body: { order: { id: 'eA3vssLHKJrv9H0IdJCM3gNqfdcZY', state: 'OPEN' } } }));
+    const cases: { name: string; body: { event_id: string }; propsValue: Record<string, unknown> }[] = [
+      { name: 'new_customer', body: squareSamples.new_customer, propsValue: {} },
+      { name: 'new_payment', body: squareSamples.new_payment, propsValue: {} },
+      { name: 'new_order', body: squareSamples.new_order, propsValue: { include_full_order: true } },
+    ];
+    for (const { name, body, propsValue } of cases) {
+      const events = await trigger(name).run(runContext({ body, propsValue }));
+      expect(events).toHaveLength(1);
+      expect(Reflect.get(Object(events[0]), DEDUPE_KEY_PROPERTY)).toBe(`square:${body.event_id}`);
+    }
+    const noId = await trigger('new_customer').run(runContext({ body: { ...squareSamples.new_customer, event_id: undefined } }));
+    expect(Object.keys(Object(noId[0]))).not.toContain(DEDUPE_KEY_PROPERTY);
+  });
+
+  test('sample data and output schemas do not carry the dedupe key', () => {
+    for (const t of triggers) {
+      expect(JSON.stringify(t.sampleData)).not.toContain(DEDUPE_KEY_PROPERTY);
+      expect(JSON.stringify(t.outputSchema ?? {})).not.toContain(DEDUPE_KEY_PROPERTY);
+    }
+  });
+
   test('location filter drops events from other locations', async () => {
     const t = trigger('new_payment');
     expect(await t.run(runContext({ body: squareSamples.new_payment, propsValue: { location_id: 'OTHER' } }))).toHaveLength(0);
@@ -154,7 +178,7 @@ describe('trigger runs', () => {
   test('without the opt-in the order payload is unchanged and nothing is fetched', async () => {
     const seen = stubFetch(() => ({ body: {} }));
     const t = trigger('order_updated');
-    expect(await t.run(runContext({ body: squareSamples.order_updated }))).toEqual([squareSamples.order_updated]);
+    expect(await t.run(runContext({ body: squareSamples.order_updated }))).toEqual([{ ...squareSamples.order_updated, [DEDUPE_KEY_PROPERTY]: `square:${squareSamples.order_updated.event_id}` }]);
     expect(seen).toHaveLength(0);
   });
 

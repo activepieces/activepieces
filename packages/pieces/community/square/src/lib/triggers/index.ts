@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { DEDUPE_KEY_PROPERTY, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { squareAuth } from '../auth';
 import { squareClient, SquareApiError, SquareAuth } from '../common/client';
 import { squareProps } from '../common/props';
@@ -135,14 +135,15 @@ export const triggers = triggerData.map((trigger) =>
           return [];
         }
       }
-      const claim = await claimEvent({ store: context.store, eventId: squareShape.str({ value: body, key: 'event_id' }) });
+      const eventId = squareShape.str({ value: body, key: 'event_id' });
+      const claim = await claimEvent({ store: context.store, eventId });
       if (claim === 'duplicate') {
         return [];
       }
       try {
         const events = await buildEvents({ trigger, body, auth: context.auth, includeFullOrder: context.propsValue['include_full_order'] === true });
         await finishClaim({ store: context.store, claim, succeeded: true });
-        return events;
+        return withDedupeKey({ events, eventId });
       } catch (error) {
         await finishClaim({ store: context.store, claim, succeeded: false }).catch(() => undefined);
         throw error;
@@ -151,7 +152,14 @@ export const triggers = triggerData.map((trigger) =>
   }),
 );
 
-async function buildEvents({ trigger, body, auth, includeFullOrder }: { trigger: TriggerDefinition; body: Record<string, unknown>; auth: SquareAuth; includeFullOrder: boolean }): Promise<unknown[]> {
+function withDedupeKey({ events, eventId }: { events: Record<string, unknown>[]; eventId: string | null }): Record<string, unknown>[] {
+  if (!eventId) {
+    return events;
+  }
+  return events.map((event) => ({ ...event, [DEDUPE_KEY_PROPERTY]: `square:${eventId}` }));
+}
+
+async function buildEvents({ trigger, body, auth, includeFullOrder }: { trigger: TriggerDefinition; body: Record<string, unknown>; auth: SquareAuth; includeFullOrder: boolean }): Promise<Record<string, unknown>[]> {
   if (!trigger.orderSummary || !includeFullOrder) {
     return [body];
   }
