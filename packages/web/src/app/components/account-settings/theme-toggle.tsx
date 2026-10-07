@@ -18,7 +18,8 @@ import { SETTING_TRIGGER_CLASS, SettingRow } from './setting-row';
 
 export const ThemeToggle = () => {
   const { preference, setPreference } = useTheme();
-  const current = THEME_OPTIONS.find((option) => option.value === preference);
+  const options = themeOptions();
+  const current = options.find((option) => option.value === preference);
 
   return (
     <SettingRow title={t('Theme')}>
@@ -41,15 +42,13 @@ export const ThemeToggle = () => {
           <DropdownMenuRadioGroup
             value={preference}
             onValueChange={(value) => {
-              const next = THEME_OPTIONS.find(
-                (option) => option.value === value,
-              );
+              const next = options.find((option) => option.value === value);
               if (next) {
                 setPreference(next.value);
               }
             }}
           >
-            {THEME_OPTIONS.map((option) => (
+            {options.map((option) => (
               <DropdownMenuRadioItem key={option.value} value={option.value}>
                 <option.icon className="text-gray-11" />
                 {option.label}
@@ -62,12 +61,16 @@ export const ThemeToggle = () => {
   );
 };
 
-const THEME_OPTIONS: {
+function themeOptions(): ThemeOption[] {
+  return [
+    { value: 'light', label: t('Light'), icon: Sun },
+    { value: 'dark', label: t('Dark'), icon: Moon },
+    { value: 'system', label: t('System'), icon: Monitor },
+  ];
+}
+
+type ThemeOption = {
   value: ThemePreference;
   label: string;
   icon: typeof Sun;
-}[] = [
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'dark', label: 'Dark', icon: Moon },
-  { value: 'system', label: 'System', icon: Monitor },
-];
+};

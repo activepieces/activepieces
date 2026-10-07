@@ -5,6 +5,7 @@ import {
   ProjectType,
   ProjectWithLimits,
   TemplateTelemetryEventType,
+  tryCatchSync,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -27,7 +28,8 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -193,9 +195,7 @@ function ProjectsGroup() {
   const showCreateProject =
     platform.plan.billedTeamProjectsLimit !== 0 &&
     currentUser?.platformRole === PlatformRole.ADMIN;
-  const [sort, setSort] = useState<ProjectSort>(() =>
-    readStoredSort(localStorage.getItem(PROJECT_SORT_KEY)),
-  );
+  const [sort, setSort] = useState<ProjectSort>(readStoredSort);
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -208,7 +208,7 @@ function ProjectsGroup() {
 
   const changeSort = (next: ProjectSort) => {
     setSort(next);
-    localStorage.setItem(PROJECT_SORT_KEY, next);
+    tryCatchSync(() => localStorage.setItem(PROJECT_SORT_KEY, next));
   };
 
   const openProject = ({
@@ -356,7 +356,7 @@ function ProjectSortMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={t('Sort pinned projects')}
+        aria-label={t('Sort projects')}
         className={cn(
           PROJECTS_HEADER_ICON_BUTTON,
           'flex items-center justify-center data-[state=open]:bg-gray-5',
@@ -369,40 +369,22 @@ function ProjectSortMenu({
         side="right"
         className={cn('w-48', sidebarStyles.menuSurface)}
       >
-        <SortOption
-          label={t('Recently added')}
-          active={sort === 'added'}
-          onClick={() => onChange('added')}
-        />
-        <SortOption
-          label={t('Recently used')}
-          active={sort === 'recency'}
-          onClick={() => onChange('recency')}
-        />
-        <SortOption
-          label={t('Alphabetical')}
-          active={sort === 'alphabetical'}
-          onClick={() => onChange('alphabetical')}
-        />
+        <DropdownMenuRadioGroup
+          value={sort}
+          onValueChange={(value) => onChange(parseSort(value))}
+        >
+          <DropdownMenuRadioItem value="added">
+            {t('Recently added')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="recency">
+            {t('Recently used')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="alphabetical">
+            {t('Alphabetical')}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function SortOption({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <DropdownMenuItem onClick={onClick} className="justify-between">
-      {label}
-      {active && <span className="text-accent-11">✓</span>}
-    </DropdownMenuItem>
   );
 }
 
@@ -420,8 +402,13 @@ function scrollActiveProjectIntoView(list: HTMLUListElement | null) {
     activeRect.top - listRect.top - (listRect.height - activeRect.height) / 2;
 }
 
-function readStoredSort(stored: string | null): ProjectSort {
-  return PROJECT_SORTS.find((sort) => sort === stored) ?? 'added';
+function readStoredSort(): ProjectSort {
+  const { data } = tryCatchSync(() => localStorage.getItem(PROJECT_SORT_KEY));
+  return parseSort(data);
+}
+
+function parseSort(value: string | null): ProjectSort {
+  return PROJECT_SORTS.find((sort) => sort === value) ?? 'added';
 }
 
 function lastFlowUpdatedAt(project: ProjectWithLimits): number {
