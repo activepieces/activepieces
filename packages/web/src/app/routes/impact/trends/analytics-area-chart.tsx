@@ -59,7 +59,7 @@ export function AnalyticsAreaChart({
 
   return (
     <Card ref={chartRef}>
-      <CardHeader className="space-y-0 pb-2">
+      <CardHeader className="gap-0 pb-2">
         <div className="flex items-start justify-between">
           <div className="space-y-0.5">
             <CardTitle className="text-base font-medium">{title}</CardTitle>
