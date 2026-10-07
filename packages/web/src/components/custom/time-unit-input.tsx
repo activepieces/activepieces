@@ -206,7 +206,7 @@ const TimeUnitPickerInput = React.forwardRef<
           );
         }}
       >
-        <div className="w-full"></div>
+        <div className="w-full -translate-y-2"></div>
       </AutoComplete>
     </>
   );

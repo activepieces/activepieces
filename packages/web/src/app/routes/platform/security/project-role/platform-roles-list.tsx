@@ -45,7 +45,7 @@ export function PlatformRolesList() {
                       <Badge
                         tabIndex={0}
                         variant="secondary"
-                        className="tracking-wider focus-visible:ring-[1px] focus-visible:ring-gray-8/50 focus-visible:outline-none"
+                        className="focus-visible:ring-[1px] focus-visible:ring-gray-8/50 focus-visible:outline-none"
                       >
                         {t('Built in')}
                       </Badge>
@@ -55,7 +55,7 @@ export function PlatformRolesList() {
                     </TooltipContent>
                   </Tooltip>
                   {platformRole.isDefaultForNewMembers && (
-                    <Badge variant="info" className="tracking-wider">
+                    <Badge variant="info" className="">
                       {t('Default for new people')}
                     </Badge>
                   )}

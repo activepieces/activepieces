@@ -177,9 +177,7 @@ function RoleDialogBody({
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {isCreate && (
-            <p className="text-xs font-medium tracking-wider text-gray-11">
-              {t('New role')}
-            </p>
+            <p className="text-xs font-medium text-gray-11">{t('New role')}</p>
           )}
           {isCreate ? (
             <>
@@ -224,10 +222,7 @@ function RoleDialogBody({
                   />
                 )}
               </span>
-              <Badge
-                variant={isBuiltIn ? 'secondary' : 'info'}
-                className="tracking-wider"
-              >
+              <Badge variant={isBuiltIn ? 'secondary' : 'info'} className="">
                 {isBuiltIn ? t('Built in') : t('Custom')}
               </Badge>
             </DialogTitle>

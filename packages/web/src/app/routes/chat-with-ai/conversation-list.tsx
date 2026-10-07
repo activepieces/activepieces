@@ -146,7 +146,7 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 tracking-wider text-gray-11 transition-colors hover:text-gray-12"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}

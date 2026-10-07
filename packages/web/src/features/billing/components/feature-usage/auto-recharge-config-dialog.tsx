@@ -316,7 +316,7 @@ function CreditsAmountSelect({
               }
             }}
             onBlur={commitCustom}
-            placeholder={t('Custom amount (rounded-md up to nearest 1,000)')}
+            placeholder={t('Custom amount (rounded up to nearest 1,000)')}
             className="w-full bg-transparent text-sm outline-none"
           />
           <span className="shrink-0 text-sm text-gray-11">{t('credits')}</span>

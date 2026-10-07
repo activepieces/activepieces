@@ -87,7 +87,7 @@ export function ProjectRolesList({
                     variant={
                       role.type === RoleType.DEFAULT ? 'secondary' : 'info'
                     }
-                    className="tracking-wider"
+                    className=""
                   >
                     {role.type === RoleType.DEFAULT
                       ? t('Built in')

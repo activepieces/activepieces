@@ -270,7 +270,7 @@ export function FunctionTooltipCard({
     >
       {fnDef.deprecated && (
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="px-1.5 py-0.5 rounded-md bg-warning-4 text-warning-11 font-semibold tracking-wide text-xs">
+          <span className="px-1.5 py-0.5 rounded-md bg-warning-4 text-warning-11 font-semibold text-xs">
             {t('Deprecated')}
           </span>
           {fnDef.deprecated.replacement && (
@@ -308,9 +308,7 @@ export function FunctionTooltipCard({
         </div>
       )}
       <div className="space-y-1">
-        <p className="text-xs font-semibold text-gray-12/70 tracking-wide">
-          Example
-        </p>
+        <p className="text-xs font-semibold text-gray-12/70">Example</p>
         <code className="block bg-gray-4 rounded-md px-2 py-1.5 text-xs font-mono text-gray-12 break-all leading-relaxed">
           {t(fnDef.example)}
         </code>

@@ -15,7 +15,7 @@ export function OnboardingWelcome() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
-            className="text-balance font-serif text-3xl font-semibold leading-tight sm:text-4xl"
+            className="text-balance font-serif text-3xl font-semibold leading-tight"
           >
             <span
               className="bg-clip-text font-semibold leading-tight text-transparent"
