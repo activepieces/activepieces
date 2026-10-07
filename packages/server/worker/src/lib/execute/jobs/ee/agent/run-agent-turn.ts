@@ -160,6 +160,10 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         },
         repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
+                if (!isNil(skillSurface) && toolCall.toolName in skillSurface.tools && isParsableJson(toolCall.input)) {
+                    log.info({ toolName: toolCall.toolName }, 'Rerouting a deferred tool called by name through ap_lazy_tool')
+                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: JSON.parse(toolCall.input) }) }
+                }
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
             }

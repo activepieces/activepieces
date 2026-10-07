@@ -109,6 +109,15 @@ describe('repairing a call in skills mode', () => {
         expect(model.doGenerateCalls[0]?.responseFormat).toEqual(expect.objectContaining({ type: 'json' }))
         expect(search).toHaveBeenCalledWith({ query: '42' }, expect.objectContaining({ toolCallId: 'direct-1' }))
     })
+
+    it('runs a deferred tool called by name through ap_lazy_tool', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'direct-1', toolName: 'ap_web_search', input: '{"query":"more"}' }] })
+
+        await runSkillsTurn({ model, search })
+
+        expect(search).toHaveBeenCalledWith({ query: 'more' }, expect.objectContaining({ toolCallId: 'direct-1' }))
+    })
 })
 
 describe('the build phase in skills mode', () => {
