@@ -166,7 +166,7 @@ async function folderTreeOptions({
 	const options: FolderOption[] = [];
 	let requests = 0;
 	let incomplete = false;
-	for (const folder of folders) {
+	for (const [index, folder] of folders.entries()) {
 		if (options.length >= limit) {
 			return { options, requests, incomplete: true };
 		}
@@ -175,7 +175,8 @@ async function folderTreeOptions({
 		if (!folder.id || !folder.childFolderCount) {
 			continue;
 		}
-		if (requests >= requestLimit) {
+		const subtreeLimit = limit - options.length - (folders.length - index - 1);
+		if (requests >= requestLimit || subtreeLimit <= 0) {
 			incomplete = true;
 			continue;
 		}
@@ -189,7 +190,7 @@ async function folderTreeOptions({
 			prefix,
 			folders: children.folders,
 			parentPath: `${label} / `,
-			limit: limit - options.length,
+			limit: subtreeLimit,
 			requestLimit: requestLimit - requests,
 		});
 		options.push(...subtree.options);
