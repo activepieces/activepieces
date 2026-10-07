@@ -62,7 +62,7 @@ export const ExploreTemplateCard = React.memo(
         </CardContent>
 
         <div
-          className="h-16 flex items-center px-4 rounded-b-lg transition-all duration-300"
+          className="h-16 flex items-center px-4 rounded-b-xl transition-all duration-300"
           style={{
             background: gradient || 'transparent',
           }}

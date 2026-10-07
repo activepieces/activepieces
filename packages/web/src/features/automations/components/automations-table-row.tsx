@@ -161,7 +161,7 @@ export const AutomationsTableRow = ({
             <TooltipTrigger asChild>
               <button
                 onClick={onTogglePin}
-                className="p-0.5 rounded hover:bg-gray-3 transition-colors"
+                className="p-0.5 rounded-md hover:bg-gray-3 transition-colors"
               >
                 <Star
                   className={cn(
@@ -269,8 +269,8 @@ export const AutomationsTableRow = ({
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  size="icon-sm"
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 transition-opacity"
                   aria-label={t('Create inside folder')}
                 >
                   <Plus className="h-4 w-4" />
@@ -286,8 +286,7 @@ export const AutomationsTableRow = ({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="icon-sm"
               disabled={isAgentItem(item) && !userHasPermissionToWriteAgent}
             >
               <MoreHorizontal className="h-4 w-4" />

@@ -8,7 +8,7 @@ interface ChatIntroProps {
 
 export function ChatIntro({ chatUI, botName }: ChatIntroProps) {
   return (
-    <div className="flex items-center justify-center py-8 px-4 font-bold">
+    <div className="flex items-center justify-center py-8 px-4 font-semibold">
       <div className="flex flex-col items-center gap-1">
         <div className="flex items-center justify-center p-3 rounded-full">
           <img

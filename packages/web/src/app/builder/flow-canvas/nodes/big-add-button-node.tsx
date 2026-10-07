@@ -72,7 +72,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                       width: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                     }}
                     id={id}
-                    className={cn('rounded-lg bg-gray-1 relative', {
+                    className={cn('rounded-xl bg-gray-1 relative', {
                       'bg-accent-9/80':
                         isShowingDropIndicator || isPieceSelectorOpened,
                       'shadow-add-button':
@@ -92,8 +92,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                       >
                         <span>
                           <Button
-                            variant="transparent"
-                            className="w-full h-full flex items-center enabled:hover:bg-gray-4 rounded-lg border-gray-6 border-solid border"
+                            variant="ghost"
+                            className="w-full h-full flex items-center enabled:hover:bg-gray-4 rounded-xl border-gray-6 border-solid border"
                           >
                             <Plus
                               className={cn('w-6 h-6 text-gray-12 ', {

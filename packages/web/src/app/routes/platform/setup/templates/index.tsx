@@ -249,7 +249,7 @@ const PlatformTemplatesPage = () => {
                       <Button
                         {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
                         variant="ghost"
-                        className="size-8 p-0"
+                        size="icon-sm"
                       >
                         <Pencil className="size-4" />
                       </Button>

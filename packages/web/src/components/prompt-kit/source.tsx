@@ -39,7 +39,7 @@ function FaviconOrGlobe({ url, size }: { url: string; size: 'sm' | 'md' }) {
     <LogoPlate
       src={favicon}
       alt=""
-      className={cn(imgSize, 'rounded-sm')}
+      className={cn(imgSize, 'rounded-md')}
       fallback={<Globe className={globeSize} />}
     />
   );

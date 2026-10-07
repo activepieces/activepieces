@@ -18,8 +18,8 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="size-7 text-gray-11 hover:text-gray-12"
+          size="icon-xs"
+          className="text-gray-11 hover:text-gray-12"
           title={t('Sandboxes')}
         >
           <Box size={14} />
@@ -55,7 +55,7 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
                     {t('Box')} #{sandbox.boxId}
                   </td>
                   <td className="px-3 py-2">
-                    <Badge variant={sandbox.busy ? 'accent' : 'secondary'}>
+                    <Badge variant={sandbox.busy ? 'info' : 'secondary'}>
                       {sandbox.busy ? t('Busy') : t('Idle')}
                     </Badge>
                   </td>

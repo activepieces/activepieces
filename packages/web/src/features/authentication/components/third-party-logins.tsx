@@ -106,7 +106,8 @@ const ThirdPartyLogin = React.memo(
         {thirdPartyAuthProviders?.google && (
           <Button
             variant="outline"
-            className="h-10 w-full rounded-lg text-sm font-normal"
+            size="lg"
+            className="w-full font-normal"
             onClick={(e) =>
               handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
             }
@@ -118,7 +119,8 @@ const ThirdPartyLogin = React.memo(
         {!hideSaml && isCloud && (
           <Button
             variant="outline"
-            className="h-10 w-full rounded-lg text-sm font-normal"
+            size="lg"
+            className="w-full font-normal"
             onClick={() => {
               capture({
                 name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
@@ -136,7 +138,8 @@ const ThirdPartyLogin = React.memo(
         {!hideSaml && !isCloud && thirdPartyAuthProviders?.saml && (
           <Button
             variant="outline"
-            className="h-10 w-full rounded-lg text-sm font-normal"
+            size="lg"
+            className="w-full font-normal"
             onClick={() => {
               capture({
                 name: TelemetryEventName.FEDERATED_LOGIN_STARTED,

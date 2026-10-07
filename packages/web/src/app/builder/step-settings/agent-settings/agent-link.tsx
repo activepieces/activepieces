@@ -207,7 +207,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           </Button>
         </PermissionNeededTooltip>
       ) : (
-        <div className="flex flex-col gap-2.5 rounded-lg border p-3">
+        <div className="flex flex-col gap-2.5 rounded-xl border p-3">
           {summaryText && (
             <TextWithTooltip tooltipMessage={summaryText}>
               <p className="line-clamp-2 text-xs text-gray-11">{summaryText}</p>
@@ -217,7 +217,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           {(!isNil(modelLabel) || toolChips.length > 0) && (
             <div className="flex flex-wrap items-center gap-1.5">
               {!isNil(modelLabel) && (
-                <Badge variant="accent" className="font-normal">
+                <Badge variant="secondary" className="font-normal">
                   {modelLabel}
                 </Badge>
               )}

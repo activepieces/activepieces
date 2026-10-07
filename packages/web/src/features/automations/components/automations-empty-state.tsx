@@ -95,7 +95,7 @@ const GetStartedCard = ({
       <CardContent className="p-0">
         <div className="flex items-center gap-3 px-4 py-4">
           <div
-            className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconBgClass}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBgClass}`}
           >
             {icon}
           </div>
@@ -161,7 +161,7 @@ const SuggestedTemplateCard = ({
       </CardContent>
 
       <div
-        className="h-14 flex items-center px-4 rounded-b-lg transition-all duration-300"
+        className="h-14 flex items-center px-4 rounded-b-xl transition-all duration-300"
         style={{
           background: gradient || 'rgba(0,0,0,0.02)',
         }}
@@ -189,7 +189,7 @@ const TemplateCardSkeleton = () => {
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-6 w-24 mt-2" />
       </CardContent>
-      <div className="h-14 bg-gray-3/30 rounded-b-lg" />
+      <div className="h-14 bg-gray-3/30 rounded-b-xl" />
     </Card>
   );
 };

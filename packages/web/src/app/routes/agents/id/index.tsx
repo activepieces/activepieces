@@ -73,11 +73,11 @@ const needsAModel = (agent: Agent): boolean => {
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
     <div className="flex h-[60px] shrink-0 items-center gap-[14px] border-b border-gray-6 px-6">
-      <Skeleton className="size-12 rounded-[14px]" />
+      <Skeleton className="size-12 rounded-xl" />
       <Skeleton className="h-5 w-[220px]" />
     </div>
     <div className="flex grow items-center justify-center p-6">
-      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-[19px]" />
+      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-xl" />
     </div>
   </div>
 );
@@ -231,13 +231,13 @@ const AgentEditorContent = () => {
           type="button"
           aria-label={t('Back')}
           onClick={() => navigate(backTo)}
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-gray-11 transition-colors hover:bg-gray-4 hover:text-gray-12"
+          className="flex size-7 shrink-0 items-center justify-center rounded-xl text-gray-11 transition-colors hover:bg-gray-4 hover:text-gray-12"
         >
           <ChevronLeft size={16} />
         </button>
         <AgentMark size="sm" icon={agent.icon} color={agent.color} />
         <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-          <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+          <span className="truncate text-base font-semibold leading-5 tracking-tight">
             {agent.displayName}
           </span>
           <span className="truncate text-xs leading-4 text-gray-11">
@@ -248,7 +248,6 @@ const AgentEditorContent = () => {
           <Button
             type="button"
             variant="ghost"
-            className="gap-2 px-2"
             aria-pressed={runsVisible}
             onClick={toggleRuns}
           >
@@ -258,7 +257,6 @@ const AgentEditorContent = () => {
           <Button
             type="button"
             variant="ghost"
-            className="gap-2 px-2"
             aria-pressed={configureOpen}
             onClick={toggleConfigure}
           >

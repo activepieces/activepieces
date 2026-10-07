@@ -182,7 +182,7 @@ function McpToolTestingDialog({
                     )}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-lg text-center">
+                  <div className="p-4 rounded-xl text-center">
                     <p className="text-sm text-gray-11">
                       {t('No input fields defined in the schema')}
                     </p>
