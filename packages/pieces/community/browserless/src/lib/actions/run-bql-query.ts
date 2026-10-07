@@ -1,7 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browserlessAuth } from '../common/auth';
-import { browserlessCommon } from '../common/client';
+import { BrowserlessApiError, browserlessApi } from '../common/client';
+import { browserlessBody } from '../common/props';
+import { browserlessValues } from '../common/values';
+import { browserlessOutputSchemas } from '../output-schemas';
 
 export const runBqlQuery = createAction({
     name: 'run_bql_query',
@@ -9,7 +12,7 @@ export const runBqlQuery = createAction({
     displayName: 'Run BQL Query',
     description: 'Execute Browser Query Language (BQL) GraphQL-based queries for advanced browser automation',
     audience: 'both',
-    aiMetadata: { description: 'Runs a raw Browser Query Language (BQL) GraphQL query against a headless Chromium browser for advanced automation such as navigation, clicking, typing, and multi-step scripted browser flows. Use when the simpler screenshot/scrape/PDF actions cannot express the interaction; requires a valid BQL query string and supports session options like stealth, proxy, and cookies. Not idempotent: the query can perform stateful browser actions and side-effecting navigation, so repeating it may not yield the same result.', idempotent: false },
+    aiMetadata: { description: 'Runs a raw Browser Query Language (BQL) GraphQL query against a headless Chromium browser for advanced automation such as navigation, clicking, typing, and multi-step scripted browser flows. Use when the simpler screenshot/scrape/PDF actions cannot express the interaction; requires a valid BQL query string and supports session options like stealth, proxy, and cookies. It fails when the query returns errors and no data; partial results keep their errors in the output. Not idempotent: the query can click, type and submit forms, so a retry can repeat those effects.', idempotent: false },
     auth: browserlessAuth,
     props: {
         query: Property.LongText({
@@ -176,121 +179,117 @@ export const runBqlQuery = createAction({
             }
         }),
     },
+    outputSchema: browserlessOutputSchemas.runBqlQuery,
     async run(context) {
-        const requestBody: any = {
-            query: context.propsValue.query,
+        const props = context.propsValue;
+        if (!browserlessBody.nonEmpty(props.query)) {
+            throw new Error('Enter a BQL query.');
+        }
+        const timeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 1 });
+        const slowMo = browserlessBody.optionalNumber({ value: props.slowMo, label: 'Slow Motion', min: 0 });
+        const viewportWidth = browserlessBody.optionalNumber({ value: props.viewportWidth, label: 'Viewport Width', min: 1 });
+        const viewportHeight = browserlessBody.optionalNumber({ value: props.viewportHeight, label: 'Viewport Height', min: 1 });
+        const useProxy = browserlessBody.nonEmpty(props.proxy) && props.proxy !== 'none';
+        const cookies = (props.cookies ?? [])
+            .map(browserlessValues.record)
+            .filter((cookie) => browserlessBody.nonEmpty(String(cookie['name'] ?? '')))
+            .map((cookie) => ({
+                name: String(cookie['name']),
+                value: String(cookie['value'] ?? ''),
+                ...(browserlessBody.nonEmpty(stringOrUndefined(cookie['url'])) ? { url: cookie['url'] } : {}),
+                ...(browserlessBody.nonEmpty(stringOrUndefined(cookie['domain'])) ? { domain: cookie['domain'] } : {}),
+                ...(browserlessBody.nonEmpty(stringOrUndefined(cookie['path'])) ? { path: cookie['path'] } : {}),
+                ...(typeof cookie['secure'] === 'boolean' ? { secure: cookie['secure'] } : {}),
+                ...(typeof cookie['httpOnly'] === 'boolean' ? { httpOnly: cookie['httpOnly'] } : {}),
+                ...(browserlessBody.nonEmpty(stringOrUndefined(cookie['sameSite'])) ? { sameSite: cookie['sameSite'] } : {}),
+                ...(cookie['expires'] !== undefined && cookie['expires'] !== null && cookie['expires'] !== '' ? { expires: Number(cookie['expires']) } : {}),
+            }));
+
+        const query = {
+            timeout,
+            stealth: props.stealth === undefined || props.stealth === null ? undefined : props.stealth,
+            headless: props.headless === undefined || props.headless === null ? undefined : props.headless,
+            humanlike: props.humanlike === true ? true : undefined,
+            proxy: useProxy ? props.proxy : undefined,
+            proxyCountry: useProxy && browserlessBody.nonEmpty(props.proxyCountry) ? props.proxyCountry.trim() : undefined,
+            proxySticky: useProxy && props.proxySticky === true ? true : undefined,
+            blockAds: props.blockAds === true ? true : undefined,
+            blockConsentModals: props.blockConsentModals === true ? true : undefined,
+            record: props.record === true ? true : undefined,
+            slowMo,
+            ignoreHTTPSErrors: props.ignoreHTTPSErrors === true ? true : undefined,
+            userAgent: browserlessBody.nonEmpty(props.userAgent) ? props.userAgent.trim() : undefined,
+            viewport: viewportWidth !== undefined && viewportHeight !== undefined ? `${viewportWidth}x${viewportHeight}` : undefined,
+            cookies: cookies.length > 0 ? JSON.stringify(cookies) : undefined,
         };
 
-        if (context.propsValue.variables) {
-            requestBody.variables = context.propsValue.variables;
-        }
-
-        if (context.propsValue.operationName) {
-            requestBody.operationName = context.propsValue.operationName;
-        }
-
-        let resourceUri = '/chromium/bql';
-
-        const queryParams: string[] = [];
-
-        if (context.propsValue.timeout) {
-            queryParams.push(`timeout=${context.propsValue.timeout}`);
-        }
-
-        if (context.propsValue.stealth !== undefined) {
-            queryParams.push(`stealth=${context.propsValue.stealth}`);
-        }
-
-        if (context.propsValue.headless !== undefined) {
-            queryParams.push(`headless=${context.propsValue.headless}`);
-        }
-
-        if (context.propsValue.humanlike) {
-            queryParams.push(`humanlike=true`);
-        }
-
-        if (context.propsValue.proxy && context.propsValue.proxy !== 'none') {
-            queryParams.push(`proxy=${context.propsValue.proxy}`);
-            if (context.propsValue.proxyCountry) {
-                queryParams.push(`proxyCountry=${context.propsValue.proxyCountry}`);
-            }
-            if (context.propsValue.proxySticky) {
-                queryParams.push(`proxySticky=true`);
-            }
-        }
-
-        if (context.propsValue.blockAds) {
-            queryParams.push(`blockAds=true`);
-        }
-
-        if (context.propsValue.blockConsentModals) {
-            queryParams.push(`blockConsentModals=true`);
-        }
-
-        if (context.propsValue.record) {
-            queryParams.push(`record=true`);
-        }
-
-        if (context.propsValue.slowMo) {
-            queryParams.push(`slowMo=${context.propsValue.slowMo}`);
-        }
-
-        if (context.propsValue.ignoreHTTPSErrors) {
-            queryParams.push(`ignoreHTTPSErrors=true`);
-        }
-
-        if (context.propsValue.userAgent) {
-            queryParams.push(`userAgent=${encodeURIComponent(context.propsValue.userAgent)}`);
-        }
-
-        if (context.propsValue.viewportWidth && context.propsValue.viewportHeight) {
-            queryParams.push(`viewport=${context.propsValue.viewportWidth}x${context.propsValue.viewportHeight}`);
-        }
-
-        if (context.propsValue.cookies && context.propsValue.cookies.length > 0) {
-            const cookiesJson = JSON.stringify(context.propsValue.cookies.map((cookie: any) => ({
-                name: cookie.name,
-                value: cookie.value,
-                ...(cookie.url && { url: cookie.url }),
-                ...(cookie.domain && { domain: cookie.domain }),
-                ...(cookie.path && { path: cookie.path }),
-                ...(cookie.secure !== undefined && { secure: cookie.secure }),
-                ...(cookie.httpOnly !== undefined && { httpOnly: cookie.httpOnly }),
-                ...(cookie.sameSite && { sameSite: cookie.sameSite }),
-                ...(cookie.expires !== undefined && { expires: cookie.expires })
-            })));
-            queryParams.push(`cookies=${encodeURIComponent(cookiesJson)}`);
-        }
-
-        if (queryParams.length > 0) {
-            resourceUri += `?${queryParams.join('&')}`;
-        }
-
-        const response = await browserlessCommon.apiCall({
+        const response = await browserlessApi.request<unknown>({
             auth: context.auth.props,
             method: HttpMethod.POST,
-            resourceUri,
-            body: requestBody,
+            path: '/chromium/bql',
+            body: {
+                query: props.query,
+                ...(props.variables && Object.keys(props.variables).length > 0 ? { variables: props.variables } : {}),
+                ...(browserlessBody.nonEmpty(props.operationName) ? { operationName: props.operationName.trim() } : {}),
+            },
+            query,
+            timeoutMs: timeout === undefined ? undefined : timeout + 30_000,
+            operation: 'Run BQL Query',
         });
 
-        let parsedResult;
-        try {
-            parsedResult = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
-        } catch (error) {
-            parsedResult = response.body;
+        const parsed = parseBody(response.body);
+        const data = readField({ value: parsed, key: 'data' });
+        const errors = readField({ value: parsed, key: 'errors' });
+        const hasData = data !== null && typeof data === 'object' && Object.keys(data).length > 0;
+        if (!hasData && Array.isArray(errors) && errors.length > 0) {
+            throw new BrowserlessApiError({
+                message: `Run BQL Query failed: ${errors.map(errorText).join('; ').slice(0, 1000)}`,
+                status: response.status,
+                responseBody: parsed,
+            });
         }
 
         return {
             success: true,
-            data: parsedResult?.data || null,
-            errors: parsedResult?.errors || null,
-            result: parsedResult,
+            data: hasData ? data : null,
+            errors: Array.isArray(errors) && errors.length > 0 ? errors : null,
+            result: parsed,
             metadata: {
                 browserType: 'chromium',
-                executionTime: response.headers?.['x-response-time'] || 'unknown',
+                executionTime: browserlessApi.headerValue({ headers: response.headers, name: 'x-response-time' }) ?? 'unknown',
                 timestamp: new Date().toISOString(),
-                stealth: context.propsValue.stealth || false,
-            }
+                stealth: props.stealth === true,
+            },
         };
     },
 });
+
+function parseBody(body: unknown): unknown {
+    if (typeof body !== 'string') {
+        return body;
+    }
+    try {
+        return JSON.parse(body);
+    } catch {
+        return body;
+    }
+}
+
+function readField({ value, key }: { value: unknown; key: string }): unknown {
+    if (typeof value !== 'object' || value === null) {
+        return null;
+    }
+    const field: unknown = Reflect.get(value, key);
+    return field ?? null;
+}
+
+function errorText(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+        return error.message;
+    }
+    return JSON.stringify(error);
+}
+
+function stringOrUndefined(value: unknown): string | undefined {
+    return typeof value === 'string' ? value : undefined;
+}
