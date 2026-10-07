@@ -6,6 +6,8 @@ import { browserlessBody, browserlessProps } from '../common/props';
 import { browserlessValues } from '../common/values';
 import { browserlessOutputSchemas } from '../output-schemas';
 
+const DEFAULT_LIMIT = 10;
+
 export const startCrawl = createAction({
     auth: browserlessAuth,
     name: 'start_crawl',
@@ -24,7 +26,7 @@ export const startCrawl = createAction({
             displayName: 'Maximum Pages',
             description: 'Stop after this many pages (capped by your plan); each page costs units.',
             required: false,
-            defaultValue: 10,
+            defaultValue: DEFAULT_LIMIT,
         }),
         maxDepth: Property.Number({
             displayName: 'Maximum Link Depth',
@@ -91,14 +93,14 @@ export const startCrawl = createAction({
     async run(context) {
         const props = context.propsValue;
         const url = browserlessBody.httpUrl({ value: props.url, label: 'URL' });
-        const limit = browserlessBody.optionalNumber({ value: props.limit, label: 'Maximum Pages', min: 1 });
+        const limit = browserlessBody.optionalNumber({ value: props.limit, label: 'Maximum Pages', min: 1 }) ?? DEFAULT_LIMIT;
         const maxDepth = browserlessBody.optionalNumber({ value: props.maxDepth, label: 'Maximum Link Depth', min: 0, max: 20 });
         const includePaths = browserlessBody.textList(props.includePaths);
         const excludePaths = browserlessBody.textList(props.excludePaths);
         const formats = browserlessBody.textList(props.formats);
         const scrapeOptions = {
             ...(formats.length > 0 ? { formats } : {}),
-            ...(typeof props.onlyMainContent === 'boolean' ? { onlyMainContent: props.onlyMainContent } : {}),
+            onlyMainContent: props.onlyMainContent !== false,
             ...(browserlessBody.nonEmpty(props.proxy) ? { proxy: props.proxy } : {}),
         };
 
@@ -108,7 +110,7 @@ export const startCrawl = createAction({
             path: '/crawl',
             body: {
                 url,
-                ...(limit !== undefined ? { limit: Math.floor(limit) } : {}),
+                limit: Math.floor(limit),
                 ...(maxDepth !== undefined ? { maxDepth: Math.floor(maxDepth) } : {}),
                 ...(includePaths.length > 0 ? { includePaths } : {}),
                 ...(excludePaths.length > 0 ? { excludePaths } : {}),

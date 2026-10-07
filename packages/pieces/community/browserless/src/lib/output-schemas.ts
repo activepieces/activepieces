@@ -210,7 +210,7 @@ const smartScrape: OutputSchema = {
         { key: 'markdown', label: 'Markdown' },
         { key: 'raw_text', label: 'Plain Text' },
         { key: 'html', label: 'HTML', format: 'html' },
-        { key: 'content', label: 'Other Content', description: 'Parsed JSON or extracted PDF text when the URL is not an HTML page.' },
+        { key: 'content', label: 'Other Content', description: 'Parsed JSON or extracted PDF text when the URL is not an HTML page. JSON longer than Maximum Characters comes back as cut JSON text with truncated=true.' },
         { key: 'title', label: 'Page Title' },
         { key: 'description', label: 'Page Description' },
         { key: 'language', label: 'Language' },

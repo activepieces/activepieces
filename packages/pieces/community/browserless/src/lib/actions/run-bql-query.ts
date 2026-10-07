@@ -6,6 +6,8 @@ import { browserlessBody } from '../common/props';
 import { browserlessValues } from '../common/values';
 import { browserlessOutputSchemas } from '../output-schemas';
 
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 export const runBqlQuery = createAction({
     name: 'run_bql_query',
     classification: 'WRITE',
@@ -34,7 +36,7 @@ export const runBqlQuery = createAction({
             displayName: 'Timeout (ms)',
             description: 'Maximum execution time in milliseconds',
             required: false,
-            defaultValue: 30000,
+            defaultValue: DEFAULT_TIMEOUT_MS,
         }),
 
         stealth: Property.Checkbox({
@@ -185,7 +187,7 @@ export const runBqlQuery = createAction({
         if (!browserlessBody.nonEmpty(props.query)) {
             throw new Error('Enter a BQL query.');
         }
-        const timeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 1 });
+        const timeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 1 }) ?? DEFAULT_TIMEOUT_MS;
         const slowMo = browserlessBody.optionalNumber({ value: props.slowMo, label: 'Slow Motion', min: 0 });
         const viewportWidth = browserlessBody.optionalNumber({ value: props.viewportWidth, label: 'Viewport Width', min: 1 });
         const viewportHeight = browserlessBody.optionalNumber({ value: props.viewportHeight, label: 'Viewport Height', min: 1 });
@@ -207,8 +209,8 @@ export const runBqlQuery = createAction({
 
         const query = {
             timeout,
-            stealth: props.stealth === undefined || props.stealth === null ? undefined : props.stealth,
-            headless: props.headless === undefined || props.headless === null ? undefined : props.headless,
+            stealth: props.stealth !== false,
+            headless: props.headless !== false,
             humanlike: props.humanlike === true ? true : undefined,
             proxy: useProxy ? props.proxy : undefined,
             proxyCountry: useProxy && browserlessBody.nonEmpty(props.proxyCountry) ? props.proxyCountry.trim() : undefined,
@@ -233,7 +235,7 @@ export const runBqlQuery = createAction({
                 ...(browserlessBody.nonEmpty(props.operationName) ? { operationName: props.operationName.trim() } : {}),
             },
             query,
-            timeoutMs: timeout === undefined ? undefined : timeout + 30_000,
+            timeoutMs: timeout + 30_000,
             operation: 'Run BQL Query',
         });
 

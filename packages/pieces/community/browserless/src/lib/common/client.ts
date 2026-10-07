@@ -53,6 +53,13 @@ async function request<T = unknown>({
             timeout: clampTimeout(timeoutMs),
             followRedirects: false,
         });
+        if (response.status < 200 || response.status >= 300) {
+            throw new BrowserlessApiError({
+                message: `${operation} failed: Browserless answered with status ${response.status} instead of a result. Redirects are not followed, so check the Custom Base URL points straight at the Browserless API.`,
+                status: response.status,
+                responseBody: response.body,
+            });
+        }
         return {
             status: response.status,
             body: response.body,

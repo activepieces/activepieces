@@ -97,6 +97,16 @@ describe('request', () => {
         stubFetch(replies([{ status, body: { message: 'vendor says no' } }]));
         await expect(browserlessApi.request({ auth: sfo, method: HttpMethod.POST, path: '/pdf', body: {}, operation: 'PDF' })).rejects.toThrow(message);
     });
+    test.each([301, 302, 307, 308])('status %s is an error, not a result', async (status) => {
+        stubFetch(replies([{ status, text: 'moved' }]));
+        const error = await browserlessApi.request({ auth: sfo, method: HttpMethod.POST, path: '/pdf', body: {}, responseType: 'arraybuffer', operation: 'PDF' }).catch((e: unknown) => e);
+        expect(error).toBeInstanceOf(BrowserlessApiError);
+        if (!(error instanceof BrowserlessApiError)) {
+            return;
+        }
+        expect(error.status).toBe(status);
+        expect(error.message).toMatch(new RegExp(`^PDF failed: Browserless answered with status ${status}.*Redirects are not followed`));
+    });
     test('clamps the client deadline', () => {
         expect(browserlessApi.clampTimeout(undefined)).toBe(300_000);
         expect(browserlessApi.clampTimeout(10_000)).toBe(10_000);

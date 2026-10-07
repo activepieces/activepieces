@@ -6,6 +6,10 @@ import { browserlessBody } from '../common/props';
 import { browserlessValues } from '../common/values';
 import { browserlessOutputSchemas } from '../output-schemas';
 
+const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_WAIT_UNTIL = 'networkidle2';
+const DEFAULT_VIEWPORT = { width: 1920, height: 1080 };
+
 export const scrapeUrl = createAction({
     name: 'scrape_url',
     classification: 'READ',
@@ -126,13 +130,13 @@ export const scrapeUrl = createAction({
             displayName: 'Timeout (ms)',
             description: 'Maximum time to wait for the page to load',
             required: false,
-            defaultValue: 30000,
+            defaultValue: DEFAULT_TIMEOUT_MS,
         }),
         waitUntil: Property.StaticDropdown({
             displayName: 'Wait Until',
             description: 'When to consider navigation complete',
             required: false,
-            defaultValue: 'networkidle2',
+            defaultValue: DEFAULT_WAIT_UNTIL,
             options: {
                 options: [
                     { label: 'Load Event', value: 'load' },
@@ -151,13 +155,13 @@ export const scrapeUrl = createAction({
             displayName: 'Viewport Width',
             description: 'Browser viewport width in pixels',
             required: false,
-            defaultValue: 1920,
+            defaultValue: DEFAULT_VIEWPORT.width,
         }),
         viewportHeight: Property.Number({
             displayName: 'Viewport Height',
             description: 'Browser viewport height in pixels',
             required: false,
-            defaultValue: 1080,
+            defaultValue: DEFAULT_VIEWPORT.height,
         }),
     },
     outputSchema: browserlessOutputSchemas.scrapeUrl,
@@ -175,16 +179,16 @@ export const scrapeUrl = createAction({
             throw new Error('Add at least one CSS selector under Elements to Extract.');
         }
 
-        const navigationTimeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 0 });
+        const navigationTimeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 0 }) ?? DEFAULT_TIMEOUT_MS;
         const selectorTimeout = browserlessBody.optionalNumber({ value: props.waitForSelectorTimeout, label: 'Wait for Selector Timeout', min: 0 });
         const eventTimeout = browserlessBody.optionalNumber({ value: props.waitForEventTimeout, label: 'Wait for Event Timeout', min: 0 });
         const waitForTimeout = browserlessBody.optionalNumber({ value: props.waitForTimeout, label: 'Wait Timeout', min: 0 });
-        const viewportWidth = browserlessBody.optionalNumber({ value: props.viewportWidth, label: 'Viewport Width', min: 1 });
-        const viewportHeight = browserlessBody.optionalNumber({ value: props.viewportHeight, label: 'Viewport Height', min: 1 });
+        const viewportWidth = browserlessBody.optionalNumber({ value: props.viewportWidth, label: 'Viewport Width', min: 1 }) ?? DEFAULT_VIEWPORT.width;
+        const viewportHeight = browserlessBody.optionalNumber({ value: props.viewportHeight, label: 'Viewport Height', min: 1 }) ?? DEFAULT_VIEWPORT.height;
 
         const gotoOptions = {
-            ...(navigationTimeout !== undefined ? { timeout: navigationTimeout } : {}),
-            ...(browserlessBody.nonEmpty(props.waitUntil) ? { waitUntil: props.waitUntil } : {}),
+            timeout: navigationTimeout,
+            waitUntil: browserlessBody.nonEmpty(props.waitUntil) ? props.waitUntil : DEFAULT_WAIT_UNTIL,
         };
         const debugOpts = {
             ...(props.debugConsole === true ? { console: true } : {}),
@@ -208,13 +212,13 @@ export const scrapeUrl = createAction({
         const requestBody = {
             url: props.url,
             elements,
-            ...(Object.keys(gotoOptions).length > 0 ? { gotoOptions } : {}),
+            gotoOptions,
             ...(browserlessBody.nonEmpty(props.waitForSelector)
                 ? {
                       waitForSelector: {
                           selector: props.waitForSelector.trim(),
                           ...(selectorTimeout !== undefined ? { timeout: selectorTimeout } : {}),
-                          ...(props.waitForSelectorHidden === true ? { hidden: true } : props.waitForSelectorVisible === true ? { visible: true } : {}),
+                          ...(props.waitForSelectorHidden === true ? { hidden: true } : props.waitForSelectorVisible !== false ? { visible: true } : {}),
                       },
                   }
                 : {}),
@@ -226,7 +230,7 @@ export const scrapeUrl = createAction({
             ...(props.bestAttempt === true ? { bestAttempt: true } : {}),
             ...(browserlessBody.nonEmpty(props.waitForFunction) ? { waitForFunction: { fn: props.waitForFunction } } : {}),
             ...(browserlessBody.nonEmpty(props.userAgent) ? { userAgent: { userAgent: props.userAgent.trim() } } : {}),
-            ...(viewportWidth !== undefined && viewportHeight !== undefined ? { viewport: { width: viewportWidth, height: viewportHeight } } : {}),
+            viewport: { width: viewportWidth, height: viewportHeight },
             ...(cookies.length > 0 ? { cookies } : {}),
         };
 

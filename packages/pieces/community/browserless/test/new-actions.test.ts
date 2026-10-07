@@ -106,6 +106,24 @@ describe('smart_scrape', () => {
         const { output } = await runAction({ action: smartScrape, propsValue: { url: 'https://api.example.com/x.json', formats: ['html'] } });
         expect(output).toMatchObject({ html: null, content: { a: 1 } });
     });
+    test('JSON content longer than Maximum Characters is cut to JSON text and flagged', async () => {
+        const content = { text: 'x'.repeat(200) };
+        stubFetch(replies([{ body: { ...okResponse, contentType: 'application/json', content, screenshot: null } }]));
+        const { output } = await runAction({ action: smartScrape, propsValue: { url: 'https://api.example.com/x.json', maxCharacters: 50 } });
+        expect(output).toMatchObject({ content: JSON.stringify(content).slice(0, 50), truncated: true });
+    });
+    test('JSON content within the limit, or with no limit, stays parsed', async () => {
+        const content = { text: 'x'.repeat(200) };
+        stubFetch(replies([{ body: { ...okResponse, contentType: 'application/json', content, screenshot: null } }]));
+        const { output } = await runAction({ action: smartScrape, propsValue: { url: 'https://api.example.com/x.json', maxCharacters: 0 } });
+        expect(output).toMatchObject({ content, truncated: false });
+    });
+    test('agents that leave Maximum Characters empty still get the 100000 cap on JSON', async () => {
+        const content = ['y'.repeat(150_000)];
+        stubFetch(replies([{ body: { ...okResponse, contentType: 'application/json', content, screenshot: null } }]));
+        const { output } = await runAction({ action: smartScrape, propsValue: { url: 'https://api.example.com/x.json' } });
+        expect(output).toMatchObject({ content: JSON.stringify(content).slice(0, 100_000), truncated: true });
+    });
 });
 
 describe('search_web', () => {
@@ -159,7 +177,7 @@ describe('map_website', () => {
         const seen = stubFetch(replies([{ body: ['https://example.com/a'] }, { body: { success: false, error: 'Invalid URL' } }]));
         const { output } = await runAction({ action: mapWebsite, propsValue: { url: 'https://example.com' } });
         expect(output).toMatchObject({ count: 1, links: [{ url: 'https://example.com/a' }] });
-        expect(seen[0].body).toEqual({ url: 'https://example.com', limit: 500 });
+        expect(seen[0].body).toEqual({ url: 'https://example.com', limit: 500, includeSubdomains: true, ignoreQueryParameters: true });
         await expect(runAction({ action: mapWebsite, propsValue: { url: 'https://example.com' } })).rejects.toThrow(/Invalid URL/);
     });
 });
@@ -182,6 +200,11 @@ describe('crawl actions', () => {
         });
         expect(output).toEqual({ crawl_id: 'crawl_abc123', url: 'https://example.com/docs', status: 'in-progress' });
         expect(missingSchemaPaths({ output, fields: browserlessOutputSchemas.startCrawl.fields })).toEqual([]);
+    });
+    test('start_crawl applies the 10-page cap and main-content default when an agent leaves them empty', async () => {
+        const seen = stubFetch(replies([{ body: { success: true, id: 'crawl_abc123' } }]));
+        await runAction({ action: startCrawl, propsValue: { url: 'https://example.com' } });
+        expect(seen[0].body).toEqual({ url: 'https://example.com', limit: 10, scrapeOptions: { onlyMainContent: true } });
     });
     test('get_crawl reads a batch and the next skip', async () => {
         const seen = stubFetch(

@@ -116,7 +116,7 @@ export const smartScrape = createAction({
         const markdown = browserlessBody.cap({ text: browserlessValues.stringOrNull(body['markdown']), max: maxCharacters });
         const rawText = browserlessBody.cap({ text: browserlessValues.stringOrNull(body['rawText']), max: maxCharacters });
         const html = browserlessBody.cap({ text: isHtml && formats.includes('html') && typeof content === 'string' ? content : null, max: maxCharacters });
-        const otherContent = typeof content === 'string' ? browserlessBody.cap({ text: content, max: maxCharacters }) : { text: null, truncated: false };
+        const otherContent = isHtml ? { value: null, truncated: false } : capContent({ content, max: maxCharacters });
         const links = Array.isArray(body['links']) ? browserlessValues.stringList(body['links']) : null;
 
         return {
@@ -132,8 +132,8 @@ export const smartScrape = createAction({
             markdown: markdown.text,
             raw_text: rawText.text,
             html: html.text,
-            content: isHtml ? null : typeof content === 'string' ? otherContent.text : content ?? null,
-            truncated: markdown.truncated || rawText.truncated || html.truncated || (!isHtml && otherContent.truncated),
+            content: otherContent.value,
+            truncated: markdown.truncated || rawText.truncated || html.truncated || otherContent.truncated,
             links,
             links_count: links === null ? 0 : links.length,
             screenshot_file: screenshot,
@@ -142,3 +142,18 @@ export const smartScrape = createAction({
     },
 });
 
+
+function capContent({ content, max }: { content: unknown; max: number }): { value: unknown; truncated: boolean } {
+    if (content === undefined || content === null) {
+        return { value: null, truncated: false };
+    }
+    if (typeof content === 'string') {
+        const capped = browserlessBody.cap({ text: content, max });
+        return { value: capped.text, truncated: capped.truncated };
+    }
+    const serialized = JSON.stringify(content);
+    if (max === 0 || serialized === undefined || serialized.length <= max) {
+        return { value: content, truncated: false };
+    }
+    return { value: serialized.slice(0, max), truncated: true };
+}

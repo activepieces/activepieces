@@ -5,7 +5,7 @@ import { getWebsitePerformance } from '../src/lib/actions/get-website-performanc
 import { runBqlQuery } from '../src/lib/actions/run-bql-query';
 import { scrapeUrl } from '../src/lib/actions/scrape-url';
 import { browserlessOutputSchemas } from '../src/lib/output-schemas';
-import { TOKEN, missingSchemaPaths, replies, runAction, stubFetch } from './helpers';
+import { TOKEN, actionContext, missingSchemaPaths, replies, runAction, stubFetch } from './helpers';
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff]);
 
@@ -92,6 +92,12 @@ describe('generate_pdf', () => {
         await expect(runAction({ action: generatePdf, propsValue: { url: 'https://a.com', html: '<p>' } })).rejects.toThrow(/Cannot provide both/);
         await expect(runAction({ action: generatePdf, propsValue: { url: 'https://a.com', scale: 3 } })).rejects.toThrow(/Scale must be at most 2/);
     });
+    test('a redirect from a custom endpoint fails instead of saving the redirect body as a PDF', async () => {
+        stubFetch(replies([{ status: 302, text: '<a href="/login">Found</a>', headers: { location: 'https://proxy.example/login' } }]));
+        const { context, written } = actionContext({ propsValue: { url: 'https://example.com' }, authProps: { region: 'custom', customBaseUrl: 'https://proxy.example' } });
+        await expect(generatePdf.run(context)).rejects.toThrow(/Generate PDF failed: Browserless answered with status 302.*Redirects are not followed/);
+        expect(written).toEqual([]);
+    });
 });
 
 describe('scrape_url', () => {
@@ -129,6 +135,17 @@ describe('scrape_url', () => {
         expect(output).toMatchObject({ success: true, data: scrapeResponse, metadata: { elementsCount: 2, site_status_code: 200 } });
         expect(missingSchemaPaths({ output, fields: browserlessOutputSchemas.scrapeUrl.fields })).toEqual([]);
     });
+    test('advertised defaults are sent when an agent leaves them empty', async () => {
+        const seen = stubFetch(replies([{ body: scrapeResponse }]));
+        await runAction({ action: scrapeUrl, propsValue: { url: 'https://example.com', elements: [{ selector: 'h1' }], waitForSelector: '#main' } });
+        expect(seen[0].body).toEqual({
+            url: 'https://example.com',
+            elements: [{ selector: 'h1' }],
+            gotoOptions: { timeout: 30000, waitUntil: 'networkidle2' },
+            waitForSelector: { selector: '#main', visible: true },
+            viewport: { width: 1920, height: 1080 },
+        });
+    });
     test('a blank selector is refused', async () => {
         stubFetch(replies([{ body: scrapeResponse }]));
         await expect(runAction({ action: scrapeUrl, propsValue: { url: 'https://example.com', elements: [{ selector: ' ' }] } })).rejects.toThrow(/needs a CSS selector/);
@@ -152,6 +169,19 @@ describe('run_bql_query', () => {
         expect(seen[0].body).toEqual({ query: 'mutation { goto(url: "https://example.com") { status } }' });
         expect(output).toMatchObject({ success: true, data: { goto: { status: 200 } }, errors: null });
         expect(missingSchemaPaths({ output, fields: browserlessOutputSchemas.runBqlQuery.fields })).toEqual([]);
+    });
+    test('advertised defaults are sent when an agent leaves them empty', async () => {
+        const seen = stubFetch(replies([{ body: { data: { goto: { status: 200 } } } }]));
+        await runAction({ action: runBqlQuery, propsValue: { query: 'mutation { x }' } });
+        expect(seen[0].query.get('timeout')).toBe('30000');
+        expect(seen[0].query.get('stealth')).toBe('true');
+        expect(seen[0].query.get('headless')).toBe('true');
+    });
+    test('unticked stealth and headless are sent as false', async () => {
+        const seen = stubFetch(replies([{ body: { data: { goto: { status: 200 } } } }]));
+        await runAction({ action: runBqlQuery, propsValue: { query: 'mutation { x }', stealth: false, headless: false } });
+        expect(seen[0].query.get('stealth')).toBe('false');
+        expect(seen[0].query.get('headless')).toBe('false');
     });
     test('errors without data fail the step', async () => {
         stubFetch(replies([{ body: { data: null, errors: [{ message: 'Timed out waiting for selector' }] } }]));
