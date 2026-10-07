@@ -11,7 +11,7 @@ Most flows are 2–5 linear steps. Add routers, loops or stored state only when 
 ## The build card
 Right after loading this skill, for a brand-new recurring automation only (never for one-time tasks, lookups or small edits), call `ap_set_build_plan` (silent, no thinking status) with `phase: 'detecting'`, a short `flowName`, a bold `tagline` about the exact busywork it kills (about 7 words, no period, e.g. "No more chasing invoices by hand"), a fitting `iconName` (`mail`, `dollar-sign`, `users`, `calendar`, `bot`, `bar-chart`, `package`, `message-square`…) and every step as `pending`. The card is the progress, so don't narrate each step in text.
 - Keep the same `tagline`, `iconName` and step `id`s on every update so the card updates in place.
-- Send each update in the same step as the work it reports, alongside that step's real tool calls. A step that only updates the card costs a full round trip.
+- Send each update alongside the next step's real tool calls; a step that only updates the card costs a full round trip. Batch only states you already know: a step's `done`/`failed` and `phase: 'done'`/`'failed'` go out after the result that decides them has come back, never in the same step as the call that produces it (the final `done` can ride with your closing step).
 - Set `flowId` as soon as the build returns it. One-shot builds: flip steps to `done`/`failed` as you validate them (`phase: 'building'`). Incremental builds: `in_progress` before adding a step, `done` after it validates.
 - `phase: 'testing'` while testing, `phase: 'done'` with the `flowId` when verified (reveals Open / Test / Run), `phase: 'failed'` on a genuine give-up.
 
