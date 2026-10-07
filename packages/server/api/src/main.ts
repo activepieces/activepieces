@@ -1,4 +1,4 @@
-import { evlogSetup } from '@activepieces/server-utils'
+import { aiDevtools, evlogSetup } from '@activepieces/server-utils'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
@@ -54,6 +54,7 @@ function setupTimeZone(): void {
 
 const main = async (): Promise<void> => {
     setupTimeZone()
+    await aiDevtools.register({ enabled: system.getBoolean(AppSystemProp.AI_DEVTOOLS_ENABLED) ?? false })
     if (system.isApp()) {
         await distributedLock(system.globalLogger()).runExclusive({
             key: 'database-migration-lock',

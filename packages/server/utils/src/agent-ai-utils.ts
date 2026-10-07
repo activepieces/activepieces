@@ -136,7 +136,7 @@ function buildTelemetry({ functionId }: { functionId: string }): TelemetryOption
     if (isNil(logger)) {
         return undefined
     }
-    return { functionId, integrations: [createEvlogIntegration(logger)] }
+    return { functionId, integrations: [createEvlogIntegration(logger), ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? [])] }
 }
 
 function toRecord(value: unknown): Record<string, unknown> {
