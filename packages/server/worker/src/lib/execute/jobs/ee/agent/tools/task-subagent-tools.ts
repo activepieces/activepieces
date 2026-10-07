@@ -1,5 +1,5 @@
 import { isNil, isObject, omit, tryCatch } from '@activepieces/core-utils'
-import { AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentTaskArtifact, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentTaskArtifact, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
@@ -36,7 +36,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
     taskId?: string
     progressId: string
 }): Promise<TaskRunOutput> {
-    const { workerTools, models, tier, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log } = deps
+    const { workerTools, guides, models, tier, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log } = deps
     if (abortSignal.aborted) {
         return { status: 'failed', summary: 'Stopped before it started.' }
     }
@@ -56,6 +56,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
         ...createPhaseTools({ onPhaseChange: (phase) => {
             phaseState.phase = phase
         } }),
+        ...taskGuideTool({ guides, mainGuideTool: workerTools[GUIDE_TOOL_NAME] }),
         ...finishTool(finish),
     }
     const turnParams: RunAgentTurnParams = {
@@ -195,6 +196,30 @@ function outOfBudget(turn: AgentTurnResult): boolean {
     return turn.creditsExhausted || turn.budgetExceeded
 }
 
+function taskGuideTool({ guides, mainGuideTool }: { guides: Record<string, string>, mainGuideTool: ToolSet[string] | undefined }): ToolSet {
+    if (isNil(mainGuideTool)) {
+        return {}
+    }
+    const loaded = new Set<string>()
+    return {
+        [GUIDE_TOOL_NAME]: tool({
+            description: mainGuideTool.description,
+            inputSchema: z.object({ topic: z.string().describe('Which guide to load') }),
+            execute: async ({ topic }) => {
+                const guide = guides[topic]
+                if (isNil(guide)) {
+                    return `No guide found for "${topic}".`
+                }
+                if (loaded.has(topic)) {
+                    return `You already loaded the "${topic}" guide earlier in this task. Re-read it above instead of reloading.`
+                }
+                loaded.add(topic)
+                return guide
+            },
+        }),
+    }
+}
+
 function finishTool(finish: { result?: TaskResult }): ToolSet {
     return {
         [TASK_COMPLETION_TOOL_NAME]: tool({
@@ -299,12 +324,14 @@ const STATUS_BY_RESULT: Record<TaskResult['status'], FinishAgentTaskRequest['sta
 }
 
 const TASK_TOOL_NAME = 'ap_run_task'
+const GUIDE_TOOL_NAME = 'ap_load_guide'
 const REPORT_REQUEST = `You stopped without reporting. Call ${TASK_COMPLETION_TOOL_NAME} now with your result.`
 const CONTINUE_REQUEST = 'You were cut off. Continue from where you stopped.'
 const MAX_CONTINUATIONS = 2
 
 const NOT_FOR_TASKS = [
     TASK_TOOL_NAME,
+    ...AGENT_SURFACE_TOOLS,
     'ap_show_questions',
     'ap_show_quick_replies',
     'ap_show_connection_picker',
@@ -327,6 +354,7 @@ type TaskResult = z.infer<typeof taskResult>
 
 type TaskDeps = {
     workerTools: ToolSet
+    guides: Record<string, string>
     models: RunAgentTurnParams['models']
     tier: RunAgentTurnParams['tier']
     taskPrompt: string
