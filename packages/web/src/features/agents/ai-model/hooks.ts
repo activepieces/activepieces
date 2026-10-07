@@ -3,6 +3,7 @@ import {
   AIProviderModel,
   AIProviderModelType,
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
+  ModelOptionsSurface,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
@@ -65,6 +66,18 @@ export const aiModelHooks = {
         isNil(projectId) ? [] : aiProviderApi.listForProject(projectId),
     });
   },
+
+  useModelOptions: ({
+    projectId,
+    surface,
+  }: {
+    projectId: string;
+    surface: ModelOptionsSurface;
+  }) =>
+    useQuery({
+      queryKey: ['ai-model-options', projectId, surface],
+      queryFn: () => aiProviderApi.listModelOptions({ projectId, surface }),
+    }),
 
   useGetModelsForProvider: (provider?: AIProviderName, configId?: string) => {
     const projectId = authenticationSession.getProjectId();

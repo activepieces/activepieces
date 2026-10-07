@@ -1,15 +1,10 @@
 // @vitest-environment jsdom
+import { AIProviderName } from '@activepieces/core-utils';
+import { ModelChoice } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-type ModelPick = {
-  provider?: string;
-  model?: string;
-  configId?: string;
-  picked?: 'user' | 'default';
-};
 
 const pendingSaves: { onSuccess?: () => void }[] = [];
 
@@ -28,43 +23,26 @@ vi.mock('@/hooks/authorization-hooks', () => ({
   useAuthorization: () => ({ checkAccess: () => true }),
 }));
 vi.mock('@/features/agents', () => ({
-  AIModelSelector: ({ onChange }: { onChange: (value: ModelPick) => void }) => (
+  ModelPicker: ({ onChange }: { onChange: (value: ModelChoice) => void }) => (
     <>
       <button
         data-testid="model"
         onClick={() =>
           onChange({
-            provider: 'openai',
-            model: 'gpt-5',
-            configId: undefined,
-            picked: 'user',
+            type: 'model',
+            provider: AIProviderName.OPENAI,
+            providerConfigId: 'key-1',
+            modelId: 'gpt-5',
           })
         }
       />
       <button
-        data-testid="model-replaced-by-default"
-        onClick={() =>
-          onChange({
-            provider: 'openai',
-            model: 'gpt-5-mini',
-            configId: undefined,
-            picked: 'default',
-          })
-        }
-      />
-      <button
-        data-testid="model-filled-by-default"
-        onClick={() =>
-          onChange({
-            provider: 'openai',
-            model: 'gpt-5',
-            configId: undefined,
-            picked: 'default',
-          })
-        }
+        data-testid="tier"
+        onClick={() => onChange({ type: 'tier', tierId: 'tier-1' })}
       />
     </>
   ),
+  PROVIDER_EMBEDDING_MODELS: {},
   AgentStructuredOutput: () => <div data-testid="structured" />,
   KnowledgeBaseSection: () => <div data-testid="knowledge" />,
   useAgentsAvailable: () => true,
@@ -150,31 +128,19 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('the leave guard only speaks for edits a person made', () => {
-  it('lets you leave after the selector swapped in a model by itself', async () => {
-    const onExit = vi.fn();
-    renderScreen({ onExit });
-    await settle();
-
-    screen.getByTestId('model-replaced-by-default').click();
-    await settle();
-    clickBack();
-    await settle();
-
-    expect(screen.queryByText('Leave without saving?')).toBeNull();
-    expect(onExit).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps a model the selector filled in for a blank agent', async () => {
+  it('asks for a model on a blank agent until a tier is picked', async () => {
     renderScreen({ onExit: vi.fn() });
     await settle();
     expect(
       screen.queryByText('Pick a model so this agent can answer.'),
     ).toBeTruthy();
 
-    screen.getByTestId('model-filled-by-default').click();
+    screen.getByTestId('tier').click();
     await settle();
 
-    expect(screen.queryByText('Pick a model so this agent can answer.')).toBeNull();
+    expect(
+      screen.queryByText('Pick a model so this agent can answer.'),
+    ).toBeNull();
   });
 
   it('still stops you when the model was picked by hand', async () => {

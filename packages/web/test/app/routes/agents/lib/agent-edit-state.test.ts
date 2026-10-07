@@ -1,3 +1,4 @@
+import { AIProviderName } from '@activepieces/core-utils';
 import { describe, expect, it } from 'vitest';
 
 import { agentEditState } from '@/app/routes/agents/lib/agent-edit-state';
@@ -229,6 +230,65 @@ describe('serverMovedWhileTyping', () => {
         lastSeen: config('what was there'),
         unsavedTyping: false,
       }),
+    ).toBe(false);
+  });
+});
+
+describe('agentEditState model choice', () => {
+  it('maps a tier pick to only the tier id and back', () => {
+    const pick = agentEditState.modelPickOf({
+      choice: { type: 'tier', tierId: 'tier-1' },
+    });
+    expect(pick).toEqual({
+      provider: null,
+      modelName: null,
+      providerConfigId: null,
+      modelTierId: 'tier-1',
+    });
+    expect(agentEditState.modelChoiceOf({ config: pick })).toEqual({
+      type: 'tier',
+      tierId: 'tier-1',
+    });
+    expect(agentEditState.hasModel({ config: pick })).toBe(true);
+  });
+
+  it('maps a model pick to provider, key and model, and clears the tier', () => {
+    const pick = agentEditState.modelPickOf({
+      choice: {
+        type: 'model',
+        provider: AIProviderName.OPENAI,
+        providerConfigId: 'key-1',
+        modelId: 'gpt-5',
+      },
+    });
+    expect(pick).toEqual({
+      provider: AIProviderName.OPENAI,
+      modelName: 'gpt-5',
+      providerConfigId: 'key-1',
+      modelTierId: null,
+    });
+    expect(
+      agentEditState.modelPickChanged({
+        picked: pick,
+        current: { ...pick, modelTierId: 'tier-1' },
+      }),
+    ).toBe(true);
+  });
+
+  it('reads a legacy row without a key id and treats no model as missing', () => {
+    expect(
+      agentEditState.modelChoiceOf({
+        config: { provider: AIProviderName.OPENAI, modelName: 'gpt-5' },
+      }),
+    ).toEqual({
+      type: 'model',
+      provider: AIProviderName.OPENAI,
+      providerConfigId: '',
+      modelId: 'gpt-5',
+    });
+    expect(agentEditState.modelChoiceOf({ config: {} })).toBeNull();
+    expect(
+      agentEditState.hasModel({ config: { provider: AIProviderName.OPENAI } }),
     ).toBe(false);
   });
 });

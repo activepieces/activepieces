@@ -1,6 +1,6 @@
 import { AIProviderModel } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Brain, Check, Wrench } from 'lucide-react';
+import { Brain, Check, ChevronDown, ChevronRight, Wrench } from 'lucide-react';
 import { ReactNode, useDeferredValue, useMemo, useState } from 'react';
 
 import {
@@ -30,10 +30,14 @@ export function ModelPickerPopover<T>({
   onOpenChange,
   align = 'end',
   anchorOnly = false,
+  detail,
   children,
 }: ModelPickerPopoverProps<T>) {
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const [highlighted, setHighlighted] = useState('');
+  const [activeItem, setActiveItem] = useState<ModelPickerItem<T> | null>(null);
   const needle = useDeferredValue(search.trim().toLowerCase());
   const visible = useMemo(
     () =>
@@ -50,11 +54,130 @@ export function ModelPickerPopover<T>({
         .filter((group) => group.items.length > 0),
     [groups, needle],
   );
+  const sections = useMemo(() => sectionsOf({ groups: visible }), [visible]);
+  const itemByValue = useMemo(
+    () =>
+      new Map(
+        visible.flatMap((group) =>
+          group.items.map((item) => [itemValue({ group, item }), item]),
+        ),
+      ),
+    [visible],
+  );
+
+  const isOpen = (group: ModelPickerGroup<T>) =>
+    group.collapsible !== true ||
+    needle !== '' ||
+    (toggled[group.id] ?? group.defaultOpen === true);
 
   const pick = (item: ModelPickerItem<T>) => {
     onPick(item.value);
     onOpenChange(false);
   };
+
+  const renderItems = (group: ModelPickerGroup<T>) => {
+    const isExpanded = expanded.includes(group.id);
+    const shown = isExpanded ? group.items : group.items.slice(0, GROUP_CAP);
+    return (
+      <>
+        {shown.map((item) => (
+          <CommandItem
+            key={item.id}
+            value={itemValue({ group, item })}
+            disabled={item.disabled}
+            aria-disabled={item.disabled}
+            onSelect={() => pick(item)}
+            className={cn(group.collapsible === true && 'pl-4')}
+          >
+            <PickerRow item={item} />
+          </CommandItem>
+        ))}
+        {shown.length < group.items.length && (
+          <CommandItem
+            value={`${group.id}:show-all`}
+            onSelect={() => setExpanded((current) => [...current, group.id])}
+            className="justify-center text-xs text-accent-11"
+          >
+            {t('Show all {count}', { count: group.items.length })}
+          </CommandItem>
+        )}
+      </>
+    );
+  };
+
+  const list = (
+    <Command
+      shouldFilter={false}
+      value={highlighted}
+      onValueChange={(value) => {
+        setHighlighted(value);
+        const item = itemByValue.get(value);
+        if (item !== undefined) {
+          setActiveItem(item);
+        }
+      }}
+      className={cn(
+        detail !== undefined && 'w-[380px] rounded-md border shadow-md',
+      )}
+    >
+      <CommandInput
+        placeholder={t('Search models')}
+        value={search}
+        onValueChange={(value) => {
+          setSearch(value);
+          setExpanded([]);
+        }}
+      />
+      {notices}
+      <CommandList
+        className={cn(
+          'overflow-y-auto',
+          detail === undefined ? 'max-h-80' : 'max-h-96',
+        )}
+      >
+        <CommandEmpty>{emptyText}</CommandEmpty>
+        {sections.map((section) => (
+          <CommandGroup
+            key={section.id}
+            heading={section.heading}
+            className="[&_[cmdk-group-heading]]:sticky [&_[cmdk-group-heading]]:top-0 [&_[cmdk-group-heading]]:z-10 [&_[cmdk-group-heading]]:bg-panel"
+          >
+            {section.groups.map((group) =>
+              group.collapsible === true ? (
+                <div key={group.id}>
+                  <CommandItem
+                    value={`${group.id}:toggle`}
+                    aria-expanded={isOpen(group)}
+                    onSelect={() =>
+                      setToggled((current) => ({
+                        ...current,
+                        [group.id]: !isOpen(group),
+                      }))
+                    }
+                  >
+                    {isOpen(group) ? (
+                      <ChevronDown className="size-3.5 text-gray-10" />
+                    ) : (
+                      <ChevronRight className="size-3.5 text-gray-10" />
+                    )}
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      {group.heading}
+                    </span>
+                    <span className="text-xs tabular-nums text-gray-10">
+                      {group.items.length}
+                    </span>
+                  </CommandItem>
+                  {isOpen(group) && renderItems(group)}
+                </div>
+              ) : (
+                <div key={group.id}>{renderItems(group)}</div>
+              ),
+            )}
+          </CommandGroup>
+        ))}
+      </CommandList>
+    </Command>
+  );
 
   return (
     <Popover
@@ -64,6 +187,9 @@ export function ModelPickerPopover<T>({
         if (!next) {
           setSearch('');
           setExpanded([]);
+          setToggled({});
+          setHighlighted('');
+          setActiveItem(null);
         }
         onOpenChange(next);
       }}
@@ -73,65 +199,26 @@ export function ModelPickerPopover<T>({
       ) : (
         <PopoverTrigger asChild>{children}</PopoverTrigger>
       )}
-      <PopoverContent align={align} className="w-[420px] p-0">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder={t('Search models')}
-            value={search}
-            onValueChange={(value) => {
-              setSearch(value);
-              setExpanded([]);
-            }}
-          />
-          {notices}
-          <CommandList className="max-h-80 overflow-y-auto">
-            <CommandEmpty>{emptyText}</CommandEmpty>
-            {visible.map((group) => {
-              const isExpanded = expanded.includes(group.id);
-              const shown = isExpanded
-                ? group.items
-                : group.items.slice(0, GROUP_CAP);
-              return (
-                <CommandGroup
-                  key={group.id}
-                  heading={
-                    <span className="flex items-center gap-2">
-                      {group.heading}
-                      <span className="ml-auto tabular-nums text-gray-10">
-                        {group.items.length}
-                      </span>
-                    </span>
-                  }
-                  className="[&_[cmdk-group-heading]]:sticky [&_[cmdk-group-heading]]:top-0 [&_[cmdk-group-heading]]:z-10 [&_[cmdk-group-heading]]:bg-panel"
-                >
-                  {shown.map((item) => (
-                    <CommandItem
-                      key={item.id}
-                      value={`${group.id}:${item.id}`}
-                      disabled={item.disabled}
-                      aria-disabled={item.disabled}
-                      onSelect={() => pick(item)}
-                    >
-                      <PickerRow item={item} />
-                    </CommandItem>
-                  ))}
-                  {shown.length < group.items.length && (
-                    <CommandItem
-                      value={`${group.id}:show-all`}
-                      onSelect={() =>
-                        setExpanded((current) => [...current, group.id])
-                      }
-                      className="justify-center text-xs text-accent-11"
-                    >
-                      {t('Show all {count}', { count: group.items.length })}
-                    </CommandItem>
-                  )}
-                </CommandGroup>
-              );
-            })}
-          </CommandList>
-        </Command>
-      </PopoverContent>
+      {detail === undefined ? (
+        <PopoverContent align={align} className="w-[420px] p-0">
+          {list}
+        </PopoverContent>
+      ) : (
+        <PopoverContent
+          align={align}
+          className="flex w-auto items-start gap-2 border-0 bg-transparent p-0 shadow-none"
+        >
+          {list}
+          {activeItem !== null && (
+            <div
+              data-testid="model-picker-detail"
+              className="hidden w-[280px] rounded-md border bg-panel p-4 shadow-md sm:block"
+            >
+              {detail(activeItem)}
+            </div>
+          )}
+        </PopoverContent>
+      )}
     </Popover>
   );
 }
@@ -152,6 +239,7 @@ function PickerRow<T>({ item }: { item: ModelPickerItem<T> }) {
             perMillion: metadata.outputCostPerMillionTokens,
           })}`,
         ]),
+    ...(item.trailing === undefined ? [] : [item.trailing]),
   ];
   return (
     <span className="flex w-full min-w-0 flex-col gap-0.5">
@@ -160,6 +248,7 @@ function PickerRow<T>({ item }: { item: ModelPickerItem<T> }) {
         <span className="truncate text-sm" title={item.name}>
           {item.name}
         </span>
+        {item.badges}
         {item.subtitle !== undefined && (
           <span className="truncate text-xs text-gray-11">{item.subtitle}</span>
         )}
@@ -193,11 +282,61 @@ function PickerRow<T>({ item }: { item: ModelPickerItem<T> }) {
           />
         </span>
       </span>
+      {item.description !== undefined && (
+        <span className="truncate pl-9 text-xs text-gray-11">
+          {item.description}
+        </span>
+      )}
       {item.note !== undefined && (
         <span className="pl-6 text-xs text-warning-11">{item.note}</span>
       )}
     </span>
   );
+}
+
+function sectionsOf<T>({
+  groups,
+}: {
+  groups: ModelPickerGroup<T>[];
+}): PickerSection<T>[] {
+  return groups.reduce<PickerSection<T>[]>((sections, group) => {
+    const last = sections[sections.length - 1];
+    if (
+      group.section !== undefined &&
+      last !== undefined &&
+      last.id === group.section
+    ) {
+      return [
+        ...sections.slice(0, -1),
+        { ...last, groups: [...last.groups, group] },
+      ];
+    }
+    return [
+      ...sections,
+      {
+        id: group.section ?? group.id,
+        heading: group.sectionHeading ?? (
+          <span className="flex items-center gap-2">
+            {group.heading}
+            <span className="ml-auto tabular-nums text-gray-10">
+              {group.items.length}
+            </span>
+          </span>
+        ),
+        groups: [group],
+      },
+    ];
+  }, []);
+}
+
+function itemValue<T>({
+  group,
+  item,
+}: {
+  group: ModelPickerGroup<T>;
+  item: ModelPickerItem<T>;
+}): string {
+  return `${group.id}:${item.id}`;
 }
 
 const GROUP_CAP = 30;
@@ -208,6 +347,9 @@ export type ModelPickerItem<T> = {
   name: string;
   searchText: string;
   subtitle?: string;
+  description?: string;
+  trailing?: string;
+  badges?: ReactNode;
   leading?: ReactNode;
   model?: AIProviderModel;
   note?: string;
@@ -219,6 +361,16 @@ export type ModelPickerGroup<T> = {
   id: string;
   heading: ReactNode;
   items: ModelPickerItem<T>[];
+  section?: string;
+  sectionHeading?: ReactNode;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+};
+
+type PickerSection<T> = {
+  id: string;
+  heading: ReactNode;
+  groups: ModelPickerGroup<T>[];
 };
 
 type ModelPickerPopoverProps<T> = {
@@ -230,5 +382,6 @@ type ModelPickerPopoverProps<T> = {
   onOpenChange: (open: boolean) => void;
   align?: 'start' | 'end';
   anchorOnly?: boolean;
+  detail?: (item: ModelPickerItem<T>) => ReactNode;
   children: ReactNode;
 };

@@ -101,6 +101,91 @@ describe('ModelPickerPopover', () => {
     ).not.toBeNull();
   });
 
+  const mountKeys = () => {
+    act(() => {
+      root = createRoot(document.body);
+      root.render(
+        <ModelPickerPopover
+          groups={[
+            {
+              id: 'open-key',
+              section: 'keys',
+              heading: 'Open key',
+              collapsible: true,
+              defaultOpen: true,
+              items: items('gamma', 2),
+            },
+            {
+              id: 'closed-key',
+              section: 'keys',
+              heading: 'Closed key',
+              collapsible: true,
+              items: items('delta', 4),
+            },
+          ]}
+          emptyText="No models match"
+          onPick={() => undefined}
+          open
+          onOpenChange={() => undefined}
+          detail={(item) => <span>detail of {item.name}</span>}
+        >
+          <button type="button">Pick</button>
+        </ModelPickerPopover>,
+      );
+    });
+  };
+
+  const toggleRow = (label: string) =>
+    Array.from(rows()).find((row) => row.textContent?.includes(label));
+
+  it('shows a collapsed key as one toggle row and opens it on select or search', async () => {
+    mountKeys();
+    expect(rows()).toHaveLength(1 + 2 + 1);
+    expect(bodyText()).not.toContain('delta model 1');
+
+    act(() => {
+      toggleRow('Closed key')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true }),
+      );
+    });
+    expect(bodyText()).toContain('delta model 1');
+
+    act(() => {
+      toggleRow('Closed key')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true }),
+      );
+    });
+    expect(bodyText()).not.toContain('delta model 1');
+
+    typeSearch('delta model 2');
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(bodyText()).toContain('delta model 2');
+    expect(bodyText()).not.toContain('Open key');
+  });
+
+  it('shows the detail of the highlighted item, skips disabled rows and keeps it on a toggle row', () => {
+    mountKeys();
+    const detail = () =>
+      document.querySelector('[data-testid="model-picker-detail"]')
+        ?.textContent;
+    const pressDown = () =>
+      act(() => {
+        document
+          .querySelector('[cmdk-root]')
+          ?.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+          );
+      });
+
+    expect(detail()).toBeUndefined();
+    pressDown();
+    expect(detail()).toBe('detail of gamma model 1');
+    pressDown();
+    expect(detail()).toBe('detail of gamma model 1');
+  });
+
   it('filters with its own matcher and drops empty groups', async () => {
     mount();
     typeSearch('alpha');

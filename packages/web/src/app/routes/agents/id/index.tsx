@@ -26,6 +26,8 @@ import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
+import { agentEditState } from '../lib/agent-edit-state';
+
 import { AgentChatView } from './agent-chat-view';
 import {
   AgentConfigurePanel,
@@ -66,8 +68,9 @@ const SLIDING_ASIDE =
   'shrink-0 overflow-hidden border-gray-6 transition-[width] duration-200';
 
 const needsAModel = (agent: Agent): boolean => {
-  const running = agent.published ?? agent.draft;
-  return isNil(running.provider) || isNil(running.modelName);
+  return !agentEditState.hasModel({
+    config: agent.published ?? agent.draft,
+  });
 };
 
 const AgentEditorSkeleton = () => (

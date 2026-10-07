@@ -21,6 +21,32 @@ vi.mock('i18next', () => ({
     ),
 }));
 
+describe('modelMeta.costLevel', () => {
+  const level = (input: number, output: number) =>
+    modelMeta.costLevel({
+      metadata: {
+        inputCostPerMillionTokens: input,
+        outputCostPerMillionTokens: output,
+      },
+    });
+
+  it('buckets the blended price into five fixed levels', () => {
+    expect(level(0.1, 0.4)).toBe(1);
+    expect(level(0.5, 0.5)).toBe(2);
+    expect(level(1, 2.9)).toBe(2);
+    expect(level(1, 3)).toBe(3);
+    expect(level(3, 15)).toBe(4);
+    expect(level(15, 75)).toBe(5);
+  });
+
+  it('has no level without both prices', () => {
+    expect(modelMeta.costLevel({ metadata: undefined })).toBeNull();
+    expect(
+      modelMeta.costLevel({ metadata: { inputCostPerMillionTokens: 1 } }),
+    ).toBeNull();
+  });
+});
+
 describe('modelMeta formatting', () => {
   it('formats context windows compactly and prices without noise', () => {
     expect(modelMeta.formatContext({ tokens: 200_000 })).toBe('200K');
@@ -286,13 +312,27 @@ describe('modelMeta project scope', () => {
   const open = key('open', {});
   const onlyA = key('onlyA', { projectScope: 'selected', projectIds: ['A'] });
   const notA = key('notA', { projectScope: 'except', projectIds: ['A'] });
-  const configsById = new Map([open, onlyA, notA].map((config) => [config.id, config]));
+  const configsById = new Map(
+    [open, onlyA, notA].map((config) => [config.id, config]),
+  );
   const projectIds = ['A', 'B', 'C'];
 
   it('mirrors the server rule for which projects a key serves', () => {
-    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: onlyA, projectId }))).toEqual(['A']);
-    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: notA, projectId }))).toEqual(['B', 'C']);
-    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: open, projectId }))).toEqual(projectIds);
+    expect(
+      projectIds.filter((projectId) =>
+        modelMeta.keyServesProject({ config: onlyA, projectId }),
+      ),
+    ).toEqual(['A']);
+    expect(
+      projectIds.filter((projectId) =>
+        modelMeta.keyServesProject({ config: notA, projectId }),
+      ),
+    ).toEqual(['B', 'C']);
+    expect(
+      projectIds.filter((projectId) =>
+        modelMeta.keyServesProject({ config: open, projectId }),
+      ),
+    ).toEqual(projectIds);
   });
 
   it('counts the projects a tier is missing from and the fallbacks skipped where it runs', () => {
@@ -323,7 +363,10 @@ describe('modelMeta project scope', () => {
 
   it('reports what narrowing a key does to the tiers that use it', () => {
     const tiers = [
-      { ...tier('Expert', [{ configId: open.id, modelId: 'main' }]), name: 'Expert' },
+      {
+        ...tier('Expert', [{ configId: open.id, modelId: 'main' }]),
+        name: 'Expert',
+      },
       {
         ...tier('Fast', [
           { configId: notA.id, modelId: 'main' },
@@ -331,7 +374,10 @@ describe('modelMeta project scope', () => {
         ]),
         name: 'Fast',
       },
-      { ...tier('Other', [{ configId: notA.id, modelId: 'main' }]), name: 'Other' },
+      {
+        ...tier('Other', [{ configId: notA.id, modelId: 'main' }]),
+        name: 'Other',
+      },
     ];
 
     const impact = modelMeta.keyScopeImpact({
