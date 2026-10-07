@@ -20,7 +20,10 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
-import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
+import {
+  platformModelTierMutations,
+  platformModelTierQueries,
+} from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -50,6 +53,8 @@ export function TiersTab() {
     platformConfigurationHooks.useCurrentPlatformConfiguration();
   const allConfigs = useMemo(() => configs ?? [], [configs]);
   const keyModels = platformModelTierQueries.useKeyModels(allConfigs);
+  const { mutate: reorder, isPending: reordering } =
+    platformModelTierMutations.useReorder();
   const [dialog, setDialog] = useState<TierDialogState>({ open: false });
   const [deleting, setDeleting] = useState<PlatformModelTier | null>(null);
   const [focusTarget, setFocusTarget] = useState<HTMLElement | null>(null);
@@ -160,7 +165,7 @@ export function TiersTab() {
           ) : (
             <div className="flex flex-col gap-4">
               <AnimatePresence initial={false}>
-                {liveTiers.map((tier) => (
+                {liveTiers.map((tier, position) => (
                   <motion.div
                     key={tier.id}
                     layout={!reducedMotion}
@@ -185,6 +190,30 @@ export function TiersTab() {
                         setFocusTarget(trigger);
                         setDeleting(tier);
                       }}
+                      onMoveUp={
+                        position === 0 || reordering
+                          ? undefined
+                          : () =>
+                              reorder({
+                                tierIds: movedIds({
+                                  tiers: liveTiers,
+                                  from: position,
+                                  to: position - 1,
+                                }),
+                              })
+                      }
+                      onMoveDown={
+                        position === liveTiers.length - 1 || reordering
+                          ? undefined
+                          : () =>
+                              reorder({
+                                tierIds: movedIds({
+                                  tiers: liveTiers,
+                                  from: position,
+                                  to: position + 1,
+                                }),
+                              })
+                      }
                     />
                   </motion.div>
                 ))}
@@ -240,6 +269,20 @@ export function TiersTab() {
       />
     </div>
   );
+}
+
+function movedIds({
+  tiers,
+  from,
+  to,
+}: {
+  tiers: PlatformModelTier[];
+  from: number;
+  to: number;
+}): string[] {
+  const ids = tiers.map((tier) => tier.id);
+  const without = ids.filter((_, index) => index !== from);
+  return [...without.slice(0, to), ids[from], ...without.slice(to)];
 }
 
 function focusBack({ target }: { target: HTMLElement | null }): void {

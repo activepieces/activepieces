@@ -68,7 +68,7 @@ export function ConfigDetail({
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
-  onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
+  onSave: (request: UpdateAIProviderRequest) => Promise<{ error: unknown }>;
   onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
@@ -152,7 +152,7 @@ export function ConfigDetail({
     return save();
   };
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
@@ -160,11 +160,11 @@ export function ConfigDetail({
       ? manualConfigParse.data
       : undefined;
     if (nameMissing || saveInFlight.current) {
-      return;
+      return false;
     }
     saveInFlight.current = true;
     try {
-      await onSave({
+      const { error } = await onSave({
         displayName: draft.name.trim(),
         modelScope: draft.modelScope,
         modelIds: manualModels
@@ -178,6 +178,7 @@ export function ConfigDetail({
             }
           : {}),
       });
+      return error === null || error === undefined;
     } finally {
       saveInFlight.current = false;
     }
@@ -457,7 +458,11 @@ export function ConfigDetail({
         isDanger={false}
         buttonText={t('Save anyway')}
         showToast={false}
-        mutationFn={save}
+        mutationFn={async () => {
+          if (!(await save())) {
+            throw new Error('Saving the key failed');
+          }
+        }}
       />
 
       <LeaveWithoutSavingDialog

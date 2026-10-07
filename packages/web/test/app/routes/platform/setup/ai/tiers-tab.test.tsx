@@ -64,6 +64,7 @@ vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
     useUpdate: () => mutation(),
     useDelete: () => mutation(),
     useSetSpecificModelsVisible: () => mutation(),
+    useReorder: () => mutation(),
   },
 }));
 

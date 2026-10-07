@@ -62,6 +62,8 @@ export function TierCard({
   reducedMotion,
   onEdit,
   onDelete,
+  onMoveUp,
+  onMoveDown,
 }: TierCardProps) {
   const { mutate: update, isPending } = platformModelTierMutations.useUpdate();
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
@@ -238,6 +240,18 @@ export function TierCard({
                 {t('Use as fast model')}
               </DropdownMenuItem>
             )}
+            {onMoveUp !== undefined && (
+              <DropdownMenuItem onSelect={onMoveUp}>
+                <ArrowUp className="size-4" />
+                {t('Move up')}
+              </DropdownMenuItem>
+            )}
+            {onMoveDown !== undefined && (
+              <DropdownMenuItem onSelect={onMoveDown}>
+                <ArrowDown className="size-4" />
+                {t('Move down')}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-danger-11"
@@ -306,7 +320,7 @@ export function TierCard({
                       isMain={isMain}
                       disabled={isPending}
                       canMoveUp={position > 0}
-                      canMoveDown={!last}
+                      canMoveDown={position < tier.entries.length - 1}
                       onChangeMain={() => setMainPickerOpen(true)}
                       onMoveUp={() =>
                         move({ from: position, to: position - 1 })
@@ -604,4 +618,6 @@ type TierCardProps = {
   reducedMotion: boolean;
   onEdit: (trigger: HTMLElement | null) => void;
   onDelete: (trigger: HTMLElement | null) => void;
+  onMoveUp: (() => void) | undefined;
+  onMoveDown: (() => void) | undefined;
 };

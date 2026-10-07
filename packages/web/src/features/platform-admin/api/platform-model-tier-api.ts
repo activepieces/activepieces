@@ -25,6 +25,11 @@ export const platformModelTierApi = {
       request,
     );
   },
+  reorder({ tierIds }: { tierIds: string[] }) {
+    return api.post<PlatformModelTier[]>('/v1/platform-model-tiers/reorder', {
+      tierIds,
+    });
+  },
   remove({ id, replacedBy }: { id: string; replacedBy?: string }) {
     return api.delete<void>(
       `/v1/platform-model-tiers/${id}`,

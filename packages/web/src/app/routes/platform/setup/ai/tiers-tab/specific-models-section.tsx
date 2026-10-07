@@ -63,18 +63,20 @@ export function SpecificModelsSection({
     item.model.name.toLowerCase().includes(needle) ||
     item.model.id.toLowerCase().includes(needle);
   const groups = ownKeys
-    .map((config) => ({
-      config,
-      state: keyModels[config.id],
-      items: models.filter(
-        (item) => item.config.id === config.id && matches(item),
-      ),
-    }))
+    .map((config) => {
+      const keyMatches = config.name.toLowerCase().includes(needle);
+      return {
+        config,
+        keyMatches,
+        state: keyModels[config.id],
+        items: models.filter(
+          (item) =>
+            item.config.id === config.id && (keyMatches || matches(item)),
+        ),
+      };
+    })
     .filter(
-      (group) =>
-        needle === '' ||
-        group.items.length > 0 ||
-        group.config.name.toLowerCase().includes(needle),
+      (group) => needle === '' || group.items.length > 0 || group.keyMatches,
     );
 
   return (

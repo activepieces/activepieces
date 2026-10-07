@@ -135,6 +135,41 @@ export const platformModelTierMutations = {
       onSettled: () => settle({ queryClient }),
     });
   },
+  useReorder: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationKey: platformModelTierKeys.admin,
+      mutationFn: ({ tierIds }: { tierIds: string[] }) =>
+        platformModelTierApi.reorder({ tierIds }),
+      onMutate: async ({ tierIds }) => {
+        await queryClient.cancelQueries({
+          queryKey: platformModelTierKeys.admin,
+        });
+        const previous = queryClient.getQueryData<PlatformModelTier[]>(
+          platformModelTierKeys.admin,
+        );
+        queryClient.setQueryData<PlatformModelTier[]>(
+          platformModelTierKeys.admin,
+          (old) =>
+            old &&
+            tierIds.flatMap((id) => old.filter((tier) => tier.id === id)),
+        );
+        return { previous };
+      },
+      onSuccess: (tiers) => {
+        queryClient.setQueryData<PlatformModelTier[]>(
+          platformModelTierKeys.admin,
+          tiers,
+        );
+        toast.success(t('Saved'), { duration: TOAST_SUCCESS_MS });
+      },
+      onError: (error, _variables, context) => {
+        restore({ queryClient, previous: context?.previous });
+        toastError({ error, fallback: t('Could not reorder tiers') });
+      },
+      onSettled: () => settle({ queryClient }),
+    });
+  },
   useDelete: () => {
     const queryClient = useQueryClient();
     return useMutation({

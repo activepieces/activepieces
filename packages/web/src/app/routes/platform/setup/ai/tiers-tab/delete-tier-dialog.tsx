@@ -85,6 +85,15 @@ function DeleteTierForm({
     }
   };
 
+  const restoreHidden = async () => {
+    await tryCatch(() =>
+      platformConfigurationApi.update({ aiSpecificModelsVisible: false }),
+    );
+    await queryClient.invalidateQueries({
+      queryKey: platformConfigurationHooks.queryKey,
+    });
+  };
+
   const confirm = async () => {
     if (needsFlip) {
       setFlipping(true);
@@ -103,7 +112,17 @@ function DeleteTierForm({
         queryKey: platformConfigurationHooks.queryKey,
       });
     }
-    remove({ id: tier.id, replacedBy }, { onSuccess: onClose });
+    remove(
+      { id: tier.id, replacedBy },
+      {
+        onSuccess: onClose,
+        onError: () => {
+          if (needsFlip) {
+            restoreHidden().catch(() => undefined);
+          }
+        },
+      },
+    );
   };
 
   return (
