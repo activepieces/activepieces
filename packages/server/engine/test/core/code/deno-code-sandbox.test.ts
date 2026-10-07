@@ -374,13 +374,29 @@ describe('denoCodeSandbox permission boundary', () => {
         })
     })
 
-    describe('deno.createSession timeout', () => {
-        it('times out and kills the child when a script wedges the event loop', async () => {
+    describe('deno.createSession idle watchdog', () => {
+        it('kills the child when a script wedges the event loop with no reply', async () => {
             const { deno } = await import('@activepieces/core-utils')
-            const session = await deno.createSession({ bootstrapBody: '', permissions: [], commandTimeoutMs: 500 })
+            const session = await deno.createSession({ bootstrapBody: '', permissions: [], idleTimeoutMs: 500 })
             try {
-                await expectRejection(session.run({ script: '(() => { while (true) {} })()' }), /timed out/)
+                await expectRejection(session.run({ script: '(() => { while (true) {} })()' }), /no progress/)
                 expect(session.isAlive()).toBe(false)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('does not trip when queued commands each make progress, even past the idle timeout total', async () => {
+            const { deno } = await import('@activepieces/core-utils')
+            // Four 300ms runs fired concurrently are serialized by the child (~1.2s total),
+            // but each reply resets the 700ms idle timer, so none of them is killed.
+            const session = await deno.createSession({ bootstrapBody: '', permissions: [], idleTimeoutMs: 700 })
+            try {
+                const runs = Array.from({ length: 4 }, (_, i) =>
+                    session.run({ script: `new Promise((r) => setTimeout(() => r(${i}), 300))` }))
+                expect(await Promise.all(runs)).toEqual([0, 1, 2, 3])
+                expect(session.isAlive()).toBe(true)
             }
             finally {
                 session.dispose()

@@ -93,7 +93,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                         bootstrapBody,
                         permissions: [],
                         cwd: tmpdir(),
-                    }).then((session) => ({ session, sentGlobals: new Map<string, unknown>() }))
+                    }).then((session) => ({ session, sentGlobals: new Map<string, SentGlobal>() }))
                     attempt.catch(() => {
                         if (livePromise === attempt) {
                             livePromise = null
@@ -104,13 +104,30 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 return livePromise
             }
 
+            // Pushes every context global into the child, then resolves once they are all there.
+            //
+            // Sibling expressions in one step resolve concurrently (applyFunctionToValues uses
+            // Promise.all), so several runs call this at the same time and would each re-send the
+            // same large step output. sentGlobals holds, per key, the value sent and the promise
+            // of that send, so a concurrent caller finds the in-flight send and awaits it instead
+            // of starting a second one. A new value (different reference) supersedes it with a
+            // fresh send. If a send fails, its entry is removed so the next run retries rather than
+            // treating the never-arrived global as present.
             const syncGlobals = async ({ session, sentGlobals }: LiveScriptSession): Promise<void> => {
-                for (const [key, value] of Object.entries(context)) {
-                    if (!sentGlobals.has(key) || sentGlobals.get(key) !== value) {
-                        await session.setGlobal({ key, value })
-                        sentGlobals.set(key, value)
+                await Promise.all(Object.entries(context).map(([key, value]) => {
+                    const alreadySent = sentGlobals.get(key)
+                    if (alreadySent !== undefined && alreadySent.value === value) {
+                        return alreadySent.send
                     }
-                }
+                    const send = session.setGlobal({ key, value })
+                    sentGlobals.set(key, { value, send })
+                    send.catch(() => {
+                        if (sentGlobals.get(key)?.send === send) {
+                            sentGlobals.delete(key)
+                        }
+                    })
+                    return send
+                }))
             }
 
             return {
@@ -163,7 +180,12 @@ function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, strin
     return env
 }
 
+type SentGlobal = {
+    value: unknown
+    send: Promise<void>
+}
+
 type LiveScriptSession = {
     session: DenoSession
-    sentGlobals: Map<string, unknown>
+    sentGlobals: Map<string, SentGlobal>
 }

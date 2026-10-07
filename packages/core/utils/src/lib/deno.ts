@@ -90,7 +90,7 @@ export const deno = {
      * evaluates scripts on demand, so repeated evaluations against the same data
      * serialize it once instead of once per run.
      */
-    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, commandTimeoutMs = DEFAULT_SESSION_COMMAND_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
+    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, idleTimeoutMs = DEFAULT_SESSION_IDLE_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
         const marker = newResultMarker()
         const { child, denoPath, denoDir } = await spawnDeno({
             entry: { body: buildSessionProgram({ bootstrapBody, marker }) },
@@ -107,6 +107,27 @@ export const deno = {
         let alive = true
         let stdoutBuffer = ''
         let capturedStderr = ''
+        let idleTimer: ReturnType<typeof setTimeout> | null = null
+
+        // A no-progress watchdog, not a per-command deadline: the engine sends sibling
+        // expressions concurrently but the child runs them one at a time, so a command may
+        // wait behind others. We only kill when the child produces no reply at all for
+        // idleTimeoutMs — a wedged event loop or corrupted reply channel — never for a
+        // command merely queued behind slower ones. Reset on every reply, armed while work
+        // is pending. On trip, kill the child; the sandbox respawns a clean session.
+        const refreshWatchdog = (): void => {
+            if (idleTimer !== null) {
+                clearTimeout(idleTimer)
+                idleTimer = null
+            }
+            if (!alive || pending.size === 0) {
+                return
+            }
+            idleTimer = setTimeout(() => {
+                child.kill('SIGKILL')
+                failAllPending(sandboxError.build({ error: `Deno session made no progress for ${idleTimeoutMs}ms`, stdout: '', stderr: capturedStderr }))
+            }, idleTimeoutMs)
+        }
 
         const settleResponse = (line: string): void => {
             let message: SessionReply | null = null
@@ -124,6 +145,7 @@ export const deno = {
                 return
             }
             pending.delete(message.id)
+            refreshWatchdog()
             if (message.success) {
                 command.resolve(message.result)
             }
@@ -157,6 +179,10 @@ export const deno = {
 
         const failAllPending = (error: Error): void => {
             alive = false
+            if (idleTimer !== null) {
+                clearTimeout(idleTimer)
+                idleTimer = null
+            }
             for (const command of pending.values()) {
                 command.reject(error)
             }
@@ -186,23 +212,11 @@ export const deno = {
                 return Promise.reject(stringifyError)
             }
             return new Promise((resolve, reject) => {
-                // A script that wedges the event loop or corrupts the reply channel would
-                // otherwise hold this promise — and the engine behind it — forever. Time it
-                // out and kill the child; the sandbox respawns a clean session on the next run.
-                const timer = setTimeout(() => {
-                    if (pending.delete(id)) {
-                        alive = false
-                        child.kill('SIGKILL')
-                        reject(sandboxError.build({ error: `Deno session command timed out after ${commandTimeoutMs}ms`, stdout: '', stderr: capturedStderr }))
-                    }
-                }, commandTimeoutMs)
-                pending.set(id, {
-                    resolve: (value) => { clearTimeout(timer); resolve(value) },
-                    reject: (error) => { clearTimeout(timer); reject(error) },
-                })
+                pending.set(id, { resolve, reject })
+                refreshWatchdog()
                 child.stdin.write(payload, (writeError) => {
                     if (writeError && pending.delete(id)) {
-                        clearTimeout(timer)
+                        refreshWatchdog()
                         reject(sandboxError.build({ error: `Failed to write to deno session: ${writeError.message}`, stdout: '', stderr: capturedStderr }))
                     }
                 })
@@ -463,7 +477,7 @@ function extractResult(stdout: string, marker: string): { userOutput: string, re
 }
 
 const DEFAULT_MEMORY_LIMIT_MB = 128
-const DEFAULT_SESSION_COMMAND_TIMEOUT_MS = 30_000
+const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 30_000
 
 export enum DenoPermission {
     ALL = 'ALL',
@@ -500,7 +514,7 @@ type DenoSessionParams = {
     cwd?: string
     memoryLimitMb?: number
     env?: Record<string, string>
-    commandTimeoutMs?: number
+    idleTimeoutMs?: number
 }
 
 type SessionSetGlobalParams = {
