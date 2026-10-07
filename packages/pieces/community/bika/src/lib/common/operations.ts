@@ -91,7 +91,8 @@ async function humanFind({
   let records: BikaRecord[] = [];
   let hasMore = true;
   let last: BikaEnvelope | undefined;
-  while (records.length < max && hasMore) {
+  let pages = 0;
+  while (records.length < max && hasMore && pages < HUMAN_MAX_PAGES) {
     if (last !== undefined) {
       await bikaHelpers.wait(PAGE_GAP_MS);
     }
@@ -100,6 +101,7 @@ async function humanFind({
       ...target,
       query: recordQuery({ pageSize: Math.min(size, max - records.length), filter: filterText, offset: cursor }),
     });
+    pages += 1;
     const page = bikaParse.toRecordPage(last.data);
     records = [...records, ...page.records];
     hasMore = page.hasMore;

@@ -12,10 +12,12 @@ import { findRecordAction } from '../src/lib/actions/find-record';
 import { findRecordsAction } from '../src/lib/actions/find-records';
 import { listSpacesAction } from '../src/lib/actions/list-spaces';
 import { updateRecordAction } from '../src/lib/actions/update-record';
+import { bikaHelpers } from '../src/lib/common/client';
 import { context, ok, RECORDS_PATH, stubFetch } from './helpers';
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const record = { id: 'rec1', fields: { Name: 'Ada' }, createdAt: '2026-10-07T10:00:00.000Z', updatedAt: '2026-10-07T11:00:00.000Z' };
@@ -82,6 +84,15 @@ describe('human actions', () => {
     expect(seen[1].query.get('pageSize')).toBe('1');
     expect(result.data.records.map((item) => item.id)).toEqual(['rec1', 'rec2', 'rec3']);
     expect(result.data).toMatchObject({ hasMore: true, offset: 'cur2' });
+  });
+
+  test('find stops after 20 requests on short pages and returns the cursor', async () => {
+    vi.spyOn(bikaHelpers, 'wait').mockResolvedValue(undefined);
+    const seen = stubFetch((_request, index) => ok({ records: [{ ...record, id: `rec${index}` }], hasMore: true, offset: `cur${index}` }));
+    const result = await findRecordsAction.run(context({ space_id: 'spc1', database_id: 'dat1', maxRecords: 1000, pageSize: 50 }));
+    expect(seen).toHaveLength(20);
+    expect(result.data.records).toHaveLength(20);
+    expect(result.data).toMatchObject({ hasMore: true, offset: 'cur19' });
   });
 
   test('find stops when Bika has no more records and defaults to 100', async () => {
@@ -158,6 +169,30 @@ describe('agent actions', () => {
     expect(String(result.records[0].fields['Notes'])).toHaveLength(4000);
     expect(Object.keys(result.records[0].fields)).toEqual(['Notes', 'Files']);
     expect(result.records[0].fields['Files']).toEqual([{ id: 'att1', name: 'a.png', mime_type: 'image/png', size: 3, url: 'https://s/a.png' }]);
+  });
+
+  test('find records caps nested lists and objects and reports the field', async () => {
+    const long = 'x'.repeat(5000);
+    stubFetch(() =>
+      ok({
+        records: [
+          {
+            id: 'rec1',
+            fields: {
+              Nested: [[long]],
+              Meta: { note: long, tags: Array.from({ length: 150 }, (_item, index) => `t${index}`) },
+              Small: { note: 'ok', list: [['a']] },
+            },
+          },
+        ],
+        hasMore: false,
+      }),
+    );
+    const result = await findRecordsByIdAction.run(context({ space_id: 'spc1', database_id: 'dat1' }));
+    expect(result.truncated_fields).toEqual(['Nested', 'Meta']);
+    expect(result.records[0].fields['Nested']).toEqual([['x'.repeat(4000)]]);
+    expect(result.records[0].fields['Meta']).toEqual({ note: 'x'.repeat(4000), tags: Array.from({ length: 100 }, (_item, index) => `t${index}`) });
+    expect(result.records[0].fields['Small']).toEqual({ note: 'ok', list: [['a']] });
   });
 
   test('find records validates limit and sort order before calling Bika', async () => {

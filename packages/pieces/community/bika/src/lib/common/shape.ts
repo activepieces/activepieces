@@ -155,9 +155,18 @@ function capValue(value: unknown): { value: unknown; truncated: boolean } {
     return value.length > MAX_TEXT_LENGTH ? { value: value.slice(0, MAX_TEXT_LENGTH), truncated: true } : { value, truncated: false };
   }
   if (Array.isArray(value)) {
-    const items = value.slice(0, MAX_ARRAY_ITEMS).map((item) => (isAttachment(item) ? shapeAttachment(item) : capValue(item).value));
-    const textCut = value.slice(0, MAX_ARRAY_ITEMS).some((item) => typeof item === 'string' && item.length > MAX_TEXT_LENGTH);
-    return { value: items, truncated: value.length > MAX_ARRAY_ITEMS || textCut };
+    const results = value.slice(0, MAX_ARRAY_ITEMS).map((item) => (isAttachment(item) ? { value: shapeAttachment(item), truncated: false } : capValue(item)));
+    return {
+      value: results.map((result) => result.value),
+      truncated: value.length > MAX_ARRAY_ITEMS || results.some((result) => result.truncated),
+    };
+  }
+  if (bikaHelpers.isRecord(value)) {
+    const results = Object.entries(value).map(([key, item]) => ({ key, result: capValue(item) }));
+    return {
+      value: Object.fromEntries(results.map(({ key, result }) => [key, result.value])),
+      truncated: results.some(({ result }) => result.truncated),
+    };
   }
   return { value, truncated: false };
 }
