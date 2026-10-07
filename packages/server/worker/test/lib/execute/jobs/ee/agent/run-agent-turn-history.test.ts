@@ -36,8 +36,7 @@ describe('the history a turn leaves behind', () => {
         const creditsLeft = vi.fn().mockResolvedValue(100)
 
         await runAgentTurn({
-            model: updateThenConfirm(),
-            provider: AIProviderName.ANTHROPIC,
+            models: [{ model: updateThenConfirm(), provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
             systemPrompt: 'You are a test agent.',
             messages: [{ role: 'user', content: 'Change the instructions of New agent to: Reply in Arabic.' }],
             tools: {
@@ -45,7 +44,6 @@ describe('the history a turn leaves behind', () => {
             },
             allToolNames: ['ap_update_agent'],
             tier: TIER,
-            modelId: TIER.modelId,
             phaseState: { phase: 'build' },
             abortSignal: new AbortController().signal,
             log: SILENT_LOG,

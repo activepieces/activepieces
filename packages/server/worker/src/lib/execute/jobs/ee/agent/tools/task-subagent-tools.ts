@@ -73,6 +73,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
         sinks: {
             drainStream: async (result) => {
                 await result.consumeStream()
+                return undefined
             },
             onProgress: ({ uiParts }) => report(runningActivity({ title, uiParts, startedAt })),
         },
