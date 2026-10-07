@@ -3349,5 +3349,7 @@
   "Enterprise features are now switched off. Need more time? Talk to our team to get 14 more days, or upgrade to keep everything unlocked.": "Enterprise features are now switched off. Need more time? Talk to our team to get 14 more days, or upgrade to keep everything unlocked.",
   "Your Enterprise trial ends {date}. Enterprise features will switch off after that.": "Your Enterprise trial ends {date}. Enterprise features will switch off after that.",
   "Trial ended": "Trial ended",
-  "You are on the Enterprise Trial until {date}.": "You are on the Enterprise Trial until {date}."
+  "You are on the Enterprise Trial until {date}.": "You are on the Enterprise Trial until {date}.",
+  "Your Enterprise trial has ended, and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to deactivate to continue.": "Your Enterprise trial has ended, and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to deactivate to continue.",
+  "Only the platform owner can choose who keeps a seat on the {plan} plan. Ask them to sign in, or upgrade to add seats.": "Only the platform owner can choose who keeps a seat on the {plan} plan. Ask them to sign in, or upgrade to add seats."
 }
