@@ -17,7 +17,7 @@ export const createCustomerAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Creates a Square customer profile; needs at least one of first name, last name, company, email or phone. Square allows duplicate emails, so run Find Customers first to avoid duplicates. A retried step in the same run returns the same customer; a new run creates another.',
+      'Creates a Square customer profile; needs at least one of first name, last name, company, email or phone. Square allows duplicate emails, so run Find Customers first to avoid duplicates. A retried step returns the same customer instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

@@ -14,7 +14,7 @@ export const createCatalogItemByIdAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a Square catalog item with one variation (name, optional price as a decimal like "12.50", SKU, category ID). Price uses the main location currency unless Currency is given; no price means variable pricing. Search Catalog Items first to avoid duplicates. A retried step in the same run returns the same item; a new run creates another.',
+      'Creates a Square catalog item with one variation (name, optional price as a decimal like "12.50", SKU, category ID). Price uses the main location currency unless Currency is given; no price means variable pricing. Search Catalog Items first to avoid duplicates. A retried step returns the same item instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

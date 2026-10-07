@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { squareAuth } from '../auth';
-import { IdempotencyStore, squareIdempotency } from '../common/idempotency';
+import { squareIdempotency } from '../common/idempotency';
 import { squareInputs } from '../common/inputs';
 import { squareOps } from '../common/operations';
 import { squareProps } from '../common/props';
@@ -14,7 +14,7 @@ export const createPaymentLinkAction = createAction({
   description: 'Creates a Square checkout link for a fixed amount that you can send to a buyer. Needs a connection created or reconnected with piece version 1.0.0 or later.',
   audience: 'human',
   aiMetadata: {
-    description: 'Creates a quick-pay checkout link at a location picked from a list; agents use Create Payment Link (by ID). A retried step in the same run returns the same link.',
+    description: 'Creates a quick-pay checkout link at a location picked from a list; agents use Create Payment Link (by ID). A retried step returns the same link instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {
@@ -66,7 +66,6 @@ export const paymentLinkShared = { linkProps, runCreateLink };
 type LinkContext = {
   auth: { access_token: string };
   propsValue: Record<string, unknown>;
-  store: IdempotencyStore;
   run?: { id: string };
   step?: { name: string };
 };

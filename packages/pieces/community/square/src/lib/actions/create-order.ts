@@ -15,7 +15,7 @@ export const createOrderAction = createAction({
   description: 'Creates an open order (no payment is taken).',
   audience: 'human',
   aiMetadata: {
-    description: 'Creates an OPEN Square order from items picked in lists; agents use Create Order (by ID). No payment is taken. A retried step in the same run returns the same order.',
+    description: 'Creates an OPEN Square order from items picked in lists; agents use Create Order (by ID). No payment is taken. A retried step returns the same order instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

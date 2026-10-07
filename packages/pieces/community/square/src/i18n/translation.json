@@ -161,7 +161,7 @@
   "YYYY-MM-DD, or 0000-MM-DD when the year is unknown.": "YYYY-MM-DD, or 0000-MM-DD when the year is unknown.",
   "Your own ID for this customer, for example from your CRM.": "Your own ID for this customer, for example from your CRM.",
   "Two-letter country code, for example US.": "Two-letter country code, for example US.",
-  "Optional, up to 45 characters. Leave empty: the step keeps one key until Square confirms the request, so a retried step returns the same record and each loop iteration gets its own.": "Optional, up to 45 characters. Leave empty: the step keeps one key until Square confirms the request, so a retried step returns the same record and each loop iteration gets its own.",
+  "Optional, up to 45 characters. Leave empty: a retried step returns the same record, but identical calls in one run (such as a loop with the same input) count as one. Set a unique value, like the loop item, to keep them separate.": "Optional, up to 45 characters. Leave empty: a retried step returns the same record, but identical calls in one run (such as a loop with the same input) count as one. Set a unique value, like the loop item, to keep them separate.",
   "For example +14155550123.": "For example +14155550123.",
   "Exact match, or partial match (contains) for email, phone and reference ID.": "Exact match, or partial match (contains) for email, phone and reference ID.",
   "How many results to return (1-100, default 50).": "How many results to return (1-100, default 50).",

@@ -64,10 +64,6 @@ export function context(propsValue: Record<string, unknown>) {
   };
 }
 
-export function sharedContext({ propsValue, store }: { propsValue: Record<string, unknown>; store: ReturnType<typeof memoryStore> }) {
-  return { ...context(propsValue), store };
-}
-
 export const LOCATION = { location: { id: 'LOC1', status: 'ACTIVE', currency: 'USD', name: 'Main' } };
 
 export type SeenRequest = {

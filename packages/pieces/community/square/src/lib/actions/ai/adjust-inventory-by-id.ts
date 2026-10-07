@@ -17,7 +17,7 @@ export const adjustInventoryByIdAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes stock relative to the current count: RECEIVED adds the quantity to IN_STOCK, SOLD or WASTE removes it. Use Set Inventory Count (by ID) to set an absolute count after a stock take. Needs INVENTORY_WRITE (reconnect older connections). A retried step in the same run is not applied twice; a new run adjusts again.',
+      'Changes stock relative to the current count: RECEIVED adds the quantity to IN_STOCK, SOLD or WASTE removes it. Use Set Inventory Count (by ID) to set an absolute count after a stock take. Needs INVENTORY_WRITE (reconnect older connections). A retried step returns the same change instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

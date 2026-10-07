@@ -11,7 +11,7 @@ import { recordExternalPaymentAction } from '../src/lib/actions/record-external-
 import { refundPaymentAction } from '../src/lib/actions/refund-payment';
 import { searchOrdersByIdAction } from '../src/lib/actions/ai/search-orders-by-id';
 import { squareProps } from '../src/lib/common/props';
-import { connection, context, LOCATION, memoryStore, sharedContext, stubFetch } from './helpers';
+import { connection, context, LOCATION, stubFetch } from './helpers';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -85,9 +85,8 @@ describe('inventory', () => {
   test('adjust maps the reason to Square states and keeps the key stable across retries', async () => {
     const seen = stubFetch((_request, index) => (index === 0 ? { status: 503, body: { errors: [{ code: 'SERVICE_UNAVAILABLE' }] } } : { body: { counts: [{ catalog_object_id: 'V1', location_id: 'L1', state: 'IN_STOCK', quantity: '7' }] } }));
     const props = { variation_id: 'V1', location_id: 'L1', reason: 'SOLD', quantity: '2' };
-    const store = memoryStore();
-    await expect(adjustInventoryByIdAction.run(sharedContext({ propsValue: props, store }))).rejects.toThrow('503');
-    const result = await adjustInventoryByIdAction.run(sharedContext({ propsValue: props, store }));
+    await expect(adjustInventoryByIdAction.run(context(props))).rejects.toThrow('503');
+    const result = await adjustInventoryByIdAction.run(context(props));
     const body = Object(seen[0].json);
     expect(Reflect.get(body, 'changes')[0]).toMatchObject({ type: 'ADJUSTMENT', adjustment: { from_state: 'IN_STOCK', to_state: 'SOLD', quantity: '2', catalog_object_id: 'V1', from_location_id: 'L1', to_location_id: 'L1' } });
     expect(Reflect.get(body, 'idempotency_key')).toBe(Reflect.get(Object(seen[1].json), 'idempotency_key'));
@@ -150,14 +149,15 @@ describe('money actions', () => {
     expect(seen[1].json).toMatchObject({ source_id: 'CASH', amount_money: { amount: 100, currency: 'USD' }, cash_details: { buyer_supplied_money: { amount: 100, currency: 'USD' } }, location_id: 'LOC1', autocomplete: true });
   });
 
-  test('two identical cash payments in a loop are both recorded', async () => {
+  test('identical cash payments in one run share a key unless Idempotency Key separates them', async () => {
     const seen = stubFetch((request) => (request.method === 'GET' ? { body: LOCATION } : { body: { payment: { id: 'P1', amount_money: { amount: 1000, currency: 'USD' } } } }));
-    const store = memoryStore();
-    await recordExternalPaymentAction.run(sharedContext({ propsValue: { source: 'CASH', amount: '10.00' }, store }));
-    await recordExternalPaymentAction.run(sharedContext({ propsValue: { source: 'CASH', amount: '10.00' }, store }));
+    await recordExternalPaymentAction.run(context({ source: 'CASH', amount: '10.00' }));
+    await recordExternalPaymentAction.run(context({ source: 'CASH', amount: '10.00' }));
+    await recordExternalPaymentAction.run(context({ source: 'CASH', amount: '10.00', idempotency_key: 'loop-item-1' }));
+    await recordExternalPaymentAction.run(context({ source: 'CASH', amount: '10.00', idempotency_key: 'loop-item-2' }));
     const keys = seen.filter((request) => request.method === 'POST').map((request) => Reflect.get(Object(request.json), 'idempotency_key'));
-    expect(keys).toHaveLength(2);
-    expect(keys[0]).not.toBe(keys[1]);
+    expect(keys[0]).toBe(keys[1]);
+    expect(keys.slice(2)).toEqual(['loop-item-1', 'loop-item-2']);
   });
 
   test('external payment needs a type and source', async () => {
@@ -165,10 +165,13 @@ describe('money actions', () => {
     await expect(recordExternalPaymentAction.run(context({ source: 'EXTERNAL', amount: '1.00' }))).rejects.toThrow('External Type is required');
   });
 
-  test('refund refuses more than the refundable amount', async () => {
-    const seen = stubFetch(() => ({ body: { payment: { id: 'P1', total_money: { amount: 1000, currency: 'USD' }, refunded_money: { amount: 600, currency: 'USD' } } } }));
+  test('refund maps Square over-refund errors to what is left to refund', async () => {
+    stubFetch((request) =>
+      request.method === 'GET'
+        ? { body: { payment: { id: 'P1', total_money: { amount: 1000, currency: 'USD' }, refunded_money: { amount: 600, currency: 'USD' } } } }
+        : { status: 400, body: { errors: [{ code: 'REFUND_AMOUNT_INVALID', detail: 'The requested refund amount exceeds the amount available to refund.' }] } },
+    );
     await expect(refundPaymentAction.run(context({ payment_id: 'P1', amount: '4.01' }))).rejects.toThrow('4.00 USD left to refund');
-    expect(seen.filter((request) => request.method === 'POST')).toHaveLength(0);
   });
 
   test('refund retried after a lost response resends the same key even when nothing is left to refund', async () => {
@@ -180,9 +183,8 @@ describe('money actions', () => {
       }
       return index === 1 ? { status: 500, body: { errors: [{ code: 'INTERNAL_SERVER_ERROR' }] } } : { body: { refund: { id: 'R1', status: 'PENDING', amount_money: { amount: 1000, currency: 'USD' } } } };
     });
-    const store = memoryStore();
-    await expect(refundPaymentAction.run(sharedContext({ propsValue: { payment_id: 'P1', amount: '10' }, store }))).rejects.toThrow('500');
-    const result = await refundPaymentAction.run(sharedContext({ propsValue: { payment_id: 'P1', amount: '10' }, store }));
+    await expect(refundPaymentAction.run(context({ payment_id: 'P1', amount: '10' }))).rejects.toThrow('500');
+    const result = await refundPaymentAction.run(context({ payment_id: 'P1', amount: '10' }));
     const posts = seen.filter((request) => request.method === 'POST').map((request) => Reflect.get(Object(request.json), 'idempotency_key'));
     expect(posts).toHaveLength(2);
     expect(posts[0]).toBe(posts[1]);

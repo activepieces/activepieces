@@ -205,7 +205,7 @@ function cursorProp() {
 function idempotencyKey() {
   return Property.ShortText({
     displayName: 'Idempotency Key',
-    description: 'Optional, up to 45 characters. Leave empty: the step keeps one key until Square confirms the request, so a retried step returns the same record and each loop iteration gets its own.',
+    description: 'Optional, up to 45 characters. Leave empty: a retried step returns the same record, but identical calls in one run (such as a loop with the same input) count as one. Set a unique value, like the loop item, to keep them separate.',
     required: false,
   });
 }

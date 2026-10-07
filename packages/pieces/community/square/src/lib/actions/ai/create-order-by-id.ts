@@ -15,7 +15,7 @@ export const createOrderByIdAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates an OPEN Square order (no payment taken). Each line item is either a catalog variation ID (from Search Catalog Items) with a quantity, or a custom name plus a decimal price like "12.50" in the location currency. Orders cannot be deleted, only canceled with Update Order State. A retried step in the same run returns the same order; a new run creates another.',
+      'Creates an OPEN Square order (no payment taken). Each line item is either a catalog variation ID (from Search Catalog Items) with a quantity, or a custom name plus a decimal price like "12.50" in the location currency. Orders cannot be deleted, only canceled with Update Order State. A retried step returns the same order instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

@@ -15,7 +15,7 @@ export const adjustInventoryAction = createAction({
   description: 'Adds or removes stock for an item variation. Needs a connection created or reconnected with piece version 1.0.0 or later.',
   audience: 'human',
   aiMetadata: {
-    description: 'Adds or removes stock for a variation picked from lists; agents use Adjust Inventory (by ID). A retried step in the same run is not applied twice; a new run adjusts again.',
+    description: 'Adds or removes stock for a variation picked from lists; agents use Adjust Inventory (by ID). A retried step returns the same change instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

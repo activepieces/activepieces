@@ -13,7 +13,7 @@ export const createCatalogItemAction = createAction({
   description: 'Adds a product or service with one price to the Square catalog.',
   audience: 'human',
   aiMetadata: {
-    description: 'Creates a catalog item with one variation; agents use Create Catalog Item (by ID). A retried step in the same run returns the same item.',
+    description: 'Creates a catalog item with one variation; agents use Create Catalog Item (by ID). A retried step returns the same item instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

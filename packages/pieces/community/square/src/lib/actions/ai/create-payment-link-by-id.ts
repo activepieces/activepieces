@@ -13,7 +13,7 @@ export const createPaymentLinkByIdAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a Square quick-pay checkout link (URL) for one named item at a fixed decimal amount like "12.50", at a location ID (empty = main location). It only creates the link; nothing is sent to anyone and no money moves until a buyer pays. Needs PAYMENTS_WRITE (reconnect older connections). A retried step in the same run returns the same link; a new run creates another.',
+      'Creates a Square quick-pay checkout link (URL) for one named item at a fixed decimal amount like "12.50", at a location ID (empty = main location). It only creates the link; nothing is sent to anyone and no money moves until a buyer pays. Needs PAYMENTS_WRITE (reconnect older connections). A retried step returns the same link instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

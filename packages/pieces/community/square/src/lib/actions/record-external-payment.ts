@@ -22,7 +22,7 @@ export const recordExternalPaymentAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Records a completed CASH or EXTERNAL payment in Square for money already received elsewhere; it never charges a card. Amount is a decimal string like "12.50" in the location currency; with an Order ID it must equal the order total due. Needs PAYMENTS_WRITE (reconnect older connections). A retried step in the same run is not recorded twice; a new run records another payment.',
+      'Records a completed CASH or EXTERNAL payment in Square for money already received elsewhere; it never charges a card. Amount is a decimal string like "12.50" in the location currency; with an Order ID it must equal the order total due. Needs PAYMENTS_WRITE (reconnect older connections). A retried step returns the same payment instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {

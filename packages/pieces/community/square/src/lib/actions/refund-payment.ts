@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { squareAuth } from '../auth';
-import { squareClient } from '../common/client';
+import { squareClient, SquareApiError } from '../common/client';
 import { squareIdempotency } from '../common/idempotency';
 import { squareInputs } from '../common/inputs';
 import { squareMoney } from '../common/money';
@@ -20,7 +20,7 @@ export const refundPaymentAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Refunds an amount of a completed Square payment back to the buyer; cannot be undone. Not offered to agents. A retried step in the same run does not refund twice; a new run refunds again.',
+      'Refunds an amount of a completed Square payment back to the buyer; cannot be undone. Not offered to agents. A retried step returns the same refund instead of repeating the write, and identical calls within one run (for example a loop with the same input) count as one; set Idempotency Key (for example to the loop item) to keep them separate. A new run writes again.',
     idempotent: false,
   },
   props: {
@@ -44,23 +44,29 @@ export const refundPaymentAction = createAction({
       amount_money: { amount: minor, currency: payment.currency },
       reason: squareInputs.text(p.reason),
     });
-    const remaining = payment.total_minor - (payment.refunded_minor ?? 0);
-    if (minor > remaining && !(await squareIdempotency.isResend({ context, action: 'refund_payment', input: payload }))) {
-      throw new Error(`Amount to Refund ${p.amount} is more than the ${squareMoney.format({ minor: remaining, currency: payment.currency })} ${payment.currency} left to refund on this payment.`);
-    }
-    const body = await squareIdempotency.execute({
-      context,
-      action: 'refund_payment',
-      input: payload,
-      send: ({ idempotencyKey }) =>
-        squareClient.request<unknown>({
-          auth: context.auth,
-          method: HttpMethod.POST,
-          path: ['v2', 'refunds'],
-          body: { ...payload, idempotency_key: idempotencyKey },
-          operation: 'refund the payment',
-        }),
-    });
+    const body = await squareIdempotency
+      .execute({
+        context,
+        action: 'refund_payment',
+        input: payload,
+        send: ({ idempotencyKey }) =>
+          squareClient.request<unknown>({
+            auth: context.auth,
+            method: HttpMethod.POST,
+            path: ['v2', 'refunds'],
+            body: { ...payload, idempotency_key: idempotencyKey },
+            operation: 'refund the payment',
+          }),
+      })
+      .catch((error: unknown) => {
+        if (error instanceof SquareApiError && error.code === 'REFUND_AMOUNT_INVALID') {
+          const remaining = Math.max(0, (payment.total_minor ?? 0) - (payment.refunded_minor ?? 0));
+          throw new Error(
+            `Amount to Refund ${p.amount} is more than the ${squareMoney.format({ minor: remaining, currency: payment.currency ?? '' })} ${payment.currency ?? ''} left to refund on this payment.`,
+          );
+        }
+        throw error;
+      });
     return squareShape.refund(squareShape.requireObject({ body, key: 'refund', what: 'refund' }));
   },
 });
