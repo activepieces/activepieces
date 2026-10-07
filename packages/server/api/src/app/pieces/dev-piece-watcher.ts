@@ -8,6 +8,7 @@ import chokidar from 'chokidar'
 import { FastifyInstance } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { pieceCache } from './metadata/piece-cache'
 import { filePiecesUtils } from './metadata/utils/file-pieces-utils'
 import { invalidateDevPieceCache } from './metadata/utils/piece-cache-utils'
 
@@ -51,6 +52,7 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
         }))
 
         invalidateDevPieceCache()
+        await pieceCache(app.log).invalidate()
         app.io.emit(WebsocketClientEvent.REFRESH_PIECE)
         app.log.info('Changes are ready! Please refresh the frontend to see the new updates.')
     }

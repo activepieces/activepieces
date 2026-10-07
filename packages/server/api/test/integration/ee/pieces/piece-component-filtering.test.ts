@@ -96,7 +96,7 @@ describe('Piece Component Filtering (EE)', () => {
 
             const piece = createMockPieceMetadata({ name: 'visible-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const token = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
             const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${mockProject.id}`, headers: { authorization: `Bearer ${token}` } })
@@ -111,7 +111,7 @@ describe('Piece Component Filtering (EE)', () => {
 
             const piece = createMockPieceMetadata({ name: 'hidden-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${mockProject.id}`, headers: { authorization: `Bearer ${token}` } })
 
@@ -126,7 +126,7 @@ describe('Piece Component Filtering (EE)', () => {
             const allowed = createMockPieceMetadata({ name: 'allowed-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             const blocked = createMockPieceMetadata({ name: 'blocked-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', [allowed, blocked])
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${mockProject.id}`, headers: { authorization: `Bearer ${token}` } })
 
@@ -142,7 +142,7 @@ describe('Piece Component Filtering (EE)', () => {
             const excluded = createMockPieceMetadata({ name: 'excluded-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             const visible = createMockPieceMetadata({ name: 'visible-piece-2', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', [excluded, visible])
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${mockProject.id}`, headers: { authorization: `Bearer ${token}` } })
 
@@ -172,7 +172,7 @@ describe('Piece Component Filtering (EE)', () => {
 
             const piece = createMockPieceMetadata({ name: 'fallback-piece', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const token = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
             const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${mockProject.id}`, headers: { authorization: `Bearer ${token}` } })
@@ -219,7 +219,7 @@ describe('Piece Component Filtering (EE)', () => {
 
             const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({
                 method: 'GET',
@@ -235,7 +235,7 @@ describe('Piece Component Filtering (EE)', () => {
 
             const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({
                 method: 'GET',
@@ -268,7 +268,7 @@ describe('Piece Component Filtering (EE)', () => {
 
             const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const token = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
             const response = await app!.inject({
@@ -328,7 +328,7 @@ describe('Piece Component Filtering (EE)', () => {
                 triggers: {},
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({
                 method: 'GET',
@@ -357,7 +357,7 @@ describe('Piece Component Filtering (EE)', () => {
                 triggers: {},
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({
                 method: 'GET',
@@ -385,7 +385,7 @@ describe('Piece Component Filtering (EE)', () => {
                 triggers: {},
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({
                 method: 'GET',
@@ -416,7 +416,7 @@ describe('Piece Component Filtering (EE)', () => {
                 },
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await app!.inject({
                 method: 'GET',
@@ -468,7 +468,7 @@ describe('Piece Component Filtering (EE)', () => {
                 triggers: {},
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const token = await generateMockToken({
                 type: PrincipalType.USER,
@@ -500,7 +500,7 @@ describe('Piece Component Filtering (EE)', () => {
                 triggers: {},
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const token = await generateMockToken({
                 type: PrincipalType.USER,
@@ -554,7 +554,7 @@ describe('Piece Component Filtering (EE)', () => {
                 triggers: {},
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const result = await pieceMetadataService(mockLog).get({ name: 'mcp-piece', projectId: mockProject.id, platformId: mockPlatform.id })
 
@@ -578,7 +578,7 @@ describe('Piece Component Filtering (EE)', () => {
                 triggers: {},
             })
             await db.save('piece_metadata', piece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const result = await pieceMetadataService(mockLog).get({ name: 'mcp-hidden-piece', projectId: mockProject.id, platformId: mockPlatform.id })
 

@@ -40,7 +40,7 @@ describe('Piece Metadata API', () => {
             })
             await db.save('piece_metadata', mockPieceMetadata)
 
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const ctx = await createTestContext(app!, {
             })
@@ -64,7 +64,7 @@ describe('Piece Metadata API', () => {
             })
             await db.save('piece_metadata', mockPieceMetadata)
 
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
@@ -154,7 +154,7 @@ describe('Piece Metadata API', () => {
                 mockPieceMetadataD,
             ])
 
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -213,7 +213,7 @@ describe('Piece Metadata API', () => {
             })
             await db.save('piece_metadata', [officialPieceA, customPieceA])
 
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const tokenA = await generateMockToken({
                 type: PrincipalType.USER,
@@ -293,7 +293,7 @@ describe('Piece Metadata API', () => {
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
             })
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             // act
             const exactVersionResponse = await app?.inject({
@@ -355,7 +355,7 @@ describe('Piece Metadata API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadataA, mockPieceMetadataB])
 
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -394,7 +394,7 @@ describe('Piece Metadata API', () => {
             })
             await db.save('piece_metadata', [mockPieceMetadataA, mockPieceMetadataB])
 
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,

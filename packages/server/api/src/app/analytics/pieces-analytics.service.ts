@@ -63,12 +63,9 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                     }
                 }
             }
-            for (const id in activeProjects) {
-                await pieceMetadataService(log).updateUsage({
-                    id,
-                    usage: activeProjects[id].size,
-                })
-            }
+            await pieceMetadataService(log).updateUsages({
+                usages: Object.entries(activeProjects).map(([id, projects]) => ({ id, usage: projects.size })),
+            })
             log.info('Synced pieces analytics finished')
         })
         await systemJobsSchedule(log).upsertJob({

@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify'
 import { initializeDatabase } from '../../src/app/database'
 import { databaseConnection, resetDatabaseConnection } from '../../src/app/database/database-connection'
 import { databaseSeeds } from '../../src/app/database/seeds'
+import { system } from '../../src/app/helper/system/system'
+import { pieceCache } from '../../src/app/pieces/metadata/piece-cache'
 import { setupServer } from '../../src/app/server'
 
 const GLOBAL_KEY = '__TEST_ENV__'
@@ -66,6 +68,7 @@ async function cleanDatabase(): Promise<void> {
         await ds.query(`TRUNCATE TABLE ${tableNames} CASCADE`)
     }
     await databaseSeeds.run()
+    await pieceCache(system.globalLogger()).invalidate()
 }
 
 type TestGlobalState = {
