@@ -119,7 +119,14 @@ function failureOf(error: unknown): { status: number; responseBody: unknown } | 
 }
 
 function isAbortError(error: unknown): boolean {
-  return isRecord(error) && (error['name'] === 'AbortError' || error['name'] === 'TimeoutError');
+  let current: unknown = error;
+  for (let depth = 0; depth < 5 && isRecord(current); depth++) {
+    if (current['name'] === 'AbortError' || current['name'] === 'TimeoutError' || current['code'] === 'ABORT_ERR') {
+      return true;
+    }
+    current = current['cause'];
+  }
+  return false;
 }
 
 function toQueryParams(query: ZoomQuery | undefined): Record<string, string> {

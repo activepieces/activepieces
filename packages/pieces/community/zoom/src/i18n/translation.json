@@ -144,7 +144,7 @@
   "Email the host and alternative hosts that the meeting was cancelled.": "Email the host and alternative hosts that the meeting was cancelled.",
   "Email registrants that the meeting was cancelled.": "Email registrants that the meeting was cancelled.",
   "Start date in YYYY-MM-DD format (UTC), for example 2026-10-01.": "Start date in YYYY-MM-DD format (UTC), for example 2026-10-01.",
-  "End date in YYYY-MM-DD format (UTC), at most one month after From Date. Defaults to today, or to one month after From Date if that is earlier.": "End date in YYYY-MM-DD format (UTC), at most one month after From Date. Defaults to today, or to one month after From Date if that is earlier.",
+  "End date in YYYY-MM-DD format (UTC), at most one month after From Date. Defaults to today, or to one month after From Date if that is earlier. Required with Next Page Token: use the To value from the previous page so every page covers the same dates.": "End date in YYYY-MM-DD format (UTC), at most one month after From Date. Defaults to today, or to one month after From Date if that is earlier. Required with Next Page Token: use the To value from the previous page so every page covers the same dates.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
   "Appended to the URL as ?key=value.": "Appended to the URL as ?key=value.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",

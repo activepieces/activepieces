@@ -60,6 +60,23 @@ describe('zoomClient.request', () => {
     expect(String(error)).toContain('GET /users/me');
   });
 
+  it('reports a timeout clearly when the abort error is wrapped as a cause', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockRejectedValueOnce(new TypeError('fetch failed', { cause: new DOMException('The operation timed out', 'TimeoutError') }));
+    const error = await zoomClient.request({ accessToken: 'abc', method: HttpMethod.POST, path: '/users/me/meetings', body: { topic: 'x' } }).catch((e: unknown) => e);
+    expect(String(error)).toContain('Zoom did not answer within 30 seconds (POST /users/me/meetings)');
+    expect(error).not.toBeInstanceOf(ZoomApiError);
+  });
+
+  it('keeps HTTP failures as Zoom API errors, not timeouts', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ status: 504, body: { message: 'Gateway timeout' } }));
+    const error = await zoomClient.request({ accessToken: 'abc', method: HttpMethod.GET, path: '/users/me' }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ZoomApiError);
+    expect(String(error)).toContain('HTTP 504');
+    expect(String(error)).not.toContain('did not answer');
+  });
+
   it('rethrows other network errors unchanged', async () => {
     const fetchMock = installFetch();
     fetchMock.mockRejectedValueOnce(new TypeError('fetch failed'));

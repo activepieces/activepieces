@@ -42,6 +42,29 @@ describe('Recordings', () => {
     expect(listRecordingsHelpers.recordingRange({ from: '2026-01-31', to: undefined, today })).toEqual({ from: '2026-01-31', to: '2026-02-28' });
   });
 
+  it('returns the date range it used so the next page can reuse it', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 9, 5, 23, 59)));
+    try {
+      const fetchMock = installFetch();
+      fetchMock.mockResolvedValueOnce(jsonResponse({ body: { meetings: [], next_page_token: 'tok2' } }));
+      const result = await runAction({ action: zoomListRecordings, propsValue: { from: '2026-09-20' } });
+      expect(result).toMatchObject({ from: '2026-09-20', to: '2026-10-05', next_page_token: 'tok2', has_more: true });
+      vi.setSystemTime(new Date(Date.UTC(2026, 9, 6, 0, 1)));
+      fetchMock.mockResolvedValueOnce(jsonResponse({ body: { meetings: [], next_page_token: '' } }));
+      await runAction({ action: zoomListRecordings, propsValue: { from: '2026-09-20', to: '2026-10-05', next_page_token: 'tok2' } });
+      expect(requestOf({ fetchMock, call: 1 }).url).toBe('https://api.zoom.us/v2/users/me/recordings?from=2026-09-20&to=2026-10-05&page_size=30&next_page_token=tok2');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('requires To Date with a page token so the range cannot shift between pages', async () => {
+    const fetchMock = installFetch();
+    await expect(runAction({ action: zoomListRecordings, propsValue: { from: '2026-09-20', next_page_token: 'tok2' } })).rejects.toThrow('To Date is required when Next Page Token is set');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('maps Zoom paid-plan errors to a clear message', async () => {
     const fetchMock = installFetch();
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: 400, body: { code: 200, message: 'Only available for Paid account.' } }));
