@@ -199,7 +199,7 @@ export function ConfigDetail({
           </div>
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
                 <KeyRound className="size-4 text-gray-11" />
               </div>
               <div className="min-w-0">
@@ -222,7 +222,7 @@ export function ConfigDetail({
           </div>
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
                 <Activity className="size-4 text-gray-11" />
               </div>
               <div className="min-w-0">

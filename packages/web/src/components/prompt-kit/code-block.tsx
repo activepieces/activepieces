@@ -89,7 +89,7 @@ function CodeBlockCode({
   }, [code, language, theme]);
 
   const classNames = cn(
-    'w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4 transition-opacity duration-300',
+    'w-full overflow-x-auto text-sm [&>pre]:px-4 [&>pre]:py-4 transition-opacity duration-300',
     className,
   );
 

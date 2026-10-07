@@ -139,7 +139,7 @@ export function McpToolTierList({
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
-      <ItemGroup className="rounded-lg border bg-gray-1">
+      <ItemGroup className="rounded-xl border bg-gray-1">
         {tiers.map((tier, index) => (
           <Fragment key={tier.id}>
             {index > 0 && <ItemSeparator />}
@@ -294,7 +294,7 @@ function TitleBadge({ label, tooltip }: { label: string; tooltip: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="neutral" className="font-normal" tabIndex={0}>
+        <Badge variant="secondary" className="font-normal" tabIndex={0}>
           {label}
         </Badge>
       </TooltipTrigger>

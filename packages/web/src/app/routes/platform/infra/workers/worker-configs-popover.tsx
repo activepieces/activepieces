@@ -18,8 +18,8 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="size-7 text-gray-11 hover:text-gray-12"
+          size="icon-xs"
+          className="text-gray-11 hover:text-gray-12"
           title={t('Configs')}
         >
           <SlidersHorizontal size={14} />

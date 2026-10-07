@@ -158,7 +158,7 @@ const ImageTool = ({
       >
         <div className="flex items-center gap-2 min-w-[200px]">
           <Input
-            className="h-8"
+            size="sm"
             onPointerDown={(ev) => ev.stopPropagation()}
             onKeyDown={(ev) => ev.key === 'Enter' && handleAddImage()}
             type="text"

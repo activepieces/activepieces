@@ -191,7 +191,6 @@ export const AppearanceSection = () => {
                     required
                     id="name"
                     placeholder={t('Platform Name')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -217,7 +216,6 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="logoFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
               />
             </div>
             <div className="grid space-y-2">
@@ -231,7 +229,6 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="iconFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
               />
             </div>
             <div className="grid space-y-2">
@@ -245,7 +242,6 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="faviconFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
               />
             </div>
 
@@ -359,7 +355,7 @@ const ColorRow = ({
 }: ColorRowProps) => {
   const shownColor = color ?? defaultColor;
   return (
-    <FormItem className="flex flex-col gap-3 space-y-0 rounded-lg border border-gray-6 p-3">
+    <FormItem className="flex flex-col gap-3 space-y-0 rounded-xl border border-gray-6 p-3">
       <div className="flex items-center gap-3">
         <ColorPicker
           side="top"
@@ -372,7 +368,7 @@ const ColorRow = ({
         <div className="flex min-w-0 flex-1 flex-col">
           <FormLabel className="font-normal">{label}</FormLabel>
           <span className="text-xs text-gray-11">
-            <span className="font-mono uppercase">{shownColor}</span>
+            <span className="font-mono ">{shownColor}</span>
             {isDefault && ` · ${t('Default')}`}
           </span>
         </div>

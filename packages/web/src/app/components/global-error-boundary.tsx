@@ -102,9 +102,9 @@ const ErrorFallbackContent = ({
             <span className="text-xs text-gray-11">{detailsLabel}</span>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-xs"
               aria-label={t('Copy')}
-              className="size-7 text-gray-11"
+              className="text-gray-11"
               onClick={() => {
                 writeToClipboard(diagnostics)
                   .then(() => flashCopyState('copied'))
@@ -118,7 +118,7 @@ const ErrorFallbackContent = ({
               )}
             </Button>
           </div>
-          <pre className="max-h-56 overflow-auto rounded-lg border bg-gray-3/40 p-4 font-mono text-xs leading-relaxed text-gray-11 whitespace-pre-wrap break-words select-all">
+          <pre className="max-h-56 overflow-auto rounded-xl border bg-gray-3/40 p-4 font-mono text-xs leading-relaxed text-gray-11 whitespace-pre-wrap break-words select-all">
             {diagnostics}
           </pre>
         </div>

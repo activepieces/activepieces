@@ -84,7 +84,7 @@ const VerificationRow = ({ record }: { record: EmbedVerificationRecord }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
+        <span className="text-xs font-mono px-1.5 py-0.5 rounded-md bg-gray-3">
           {record.type}
         </span>
         <span className="text-xs text-gray-11">

@@ -4,8 +4,8 @@ icon: 🎨
 
 # Design System
 
-How the web app's visual language is defined. Colour is fully specified on its own page, *colour*;
-this page is the glossary around it.
+How the web app's visual language is defined. Colour is fully specified on its own page, *colour*, and type,
+control height, radius and spacing on *shape-and-size*; this page is the glossary around them.
 
 **Step** — a position 1–12 in a colour scale. The number *is* the meaning, in both themes; there are no
 semantic aliases. See *colour* for the job of each step. _Avoid_: "token" for a step, "shade", "ramp step"
@@ -32,6 +32,9 @@ rather than "what does this mean?" — projects, avatars, chart series. Not a sc
 
 **Plate** — the light chip a third-party logo sits on. It is a light island, so it stays light in both
 themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders one.
+
+**Role radius** — the radius a shape gets from what it is (row, control, surface) before nesting adjusts it.
+See *shape-and-size*.
 
 ## Gotchas
 

@@ -190,7 +190,6 @@ const AddEditSecretManagerForm = ({
                     {...field}
                     id="connection-name"
                     placeholder={t('e.g. Production HashiCorp')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -245,7 +244,6 @@ const AddEditSecretManagerForm = ({
                             {...formField}
                             id={fieldId}
                             placeholder={field.placeholder}
-                            className="rounded-sm"
                             type={field.type}
                             value={formField.value}
                           />

@@ -52,7 +52,7 @@ export function ActionReceiptCard({
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-gray-11 break-words">
+        <p className="px-3.5 pb-2.5 text-xs leading-relaxed text-gray-11 break-words">
           {receipt.errorMessage}
         </p>
       )}
@@ -78,7 +78,7 @@ export function ActionReceiptCard({
               )}
             </button>
             <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-              <div className="mt-1.5 rounded-lg bg-gray-3/30 overflow-hidden">
+              <div className="mt-1.5 rounded-xl bg-gray-3/30 overflow-hidden">
                 <SimpleJsonViewer
                   data={tryParseJson(receipt.output)}
                   hideCopyButton={true}

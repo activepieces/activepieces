@@ -539,7 +539,7 @@ const ReplaceConnectionsDialog = ({
             </span>
 
             <DialogFooter>
-              <Button type="button" variant="accent" onClick={handleBack}>
+              <Button type="button" variant="secondary" onClick={handleBack}>
                 {t('Back')}
               </Button>
               <Button

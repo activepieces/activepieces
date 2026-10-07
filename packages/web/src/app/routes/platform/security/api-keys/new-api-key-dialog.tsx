@@ -104,7 +104,7 @@ export const NewApiKeyDialog = ({
             </div>
             <DialogFooter>
               <Button
-                variant={'accent'}
+                variant={'secondary'}
                 onClick={() => {
                   setApiKey(undefined);
                   setOpen(false);
@@ -132,7 +132,6 @@ export const NewApiKeyDialog = ({
                       {...field}
                       required
                       placeholder={t('API Key Name')}
-                      className="rounded-sm"
                     />
                     <FormMessage />
                   </FormItem>

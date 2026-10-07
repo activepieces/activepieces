@@ -29,14 +29,14 @@ export function DocumentPreview({
 
   const actions = (
     <>
-      <CopyButton textToCopy={markdown} variant="ghost" className="size-8" />
+      <CopyButton textToCopy={markdown} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName={fileName}
         textToDownload={markdown}
         mimeType="text/markdown"
         extension="md"
         variant="ghost"
-        className="size-8"
+        size="icon-sm"
       />
     </>
   );

@@ -69,8 +69,8 @@ export function AnalyticsAreaChart({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                size="icon"
-                className="h-8 w-8 print:hidden"
+                size="icon-sm"
+                className="print:hidden"
                 onClick={() => downloadChartAsPng(chartRef, downloadFilename)}
               >
                 <Download className="h-4 w-4" />

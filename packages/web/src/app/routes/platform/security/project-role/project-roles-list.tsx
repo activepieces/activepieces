@@ -85,9 +85,9 @@ export function ProjectRolesList({
                   </button>
                   <Badge
                     variant={
-                      role.type === RoleType.DEFAULT ? 'accent' : 'inverted'
+                      role.type === RoleType.DEFAULT ? 'secondary' : 'info'
                     }
-                    className="shrink-0 text-xss uppercase tracking-wider"
+                    className="tracking-wider"
                   >
                     {role.type === RoleType.DEFAULT
                       ? t('Built in')

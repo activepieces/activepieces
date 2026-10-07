@@ -341,7 +341,7 @@ export default function ProjectsPage() {
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                className="size-8 p-0"
+                size="icon-sm"
                 {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}
                 onClick={async (e) => {
                   e.stopPropagation();

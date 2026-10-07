@@ -168,7 +168,6 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                   id="email"
                   type="text"
                   placeholder={'email@example.com'}
-                  className="rounded-sm"
                   tabIndex={1}
                   data-testid="sign-in-email"
                   onChange={(e) => {
@@ -214,17 +213,17 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder={'********'}
-                    className="rounded-sm pr-10"
+                    className="pr-10"
                     tabIndex={2}
                     data-testid="sign-in-password"
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
+                    size="icon-xs"
                     tabIndex={-1}
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
