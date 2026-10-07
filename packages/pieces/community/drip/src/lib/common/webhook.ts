@@ -89,24 +89,28 @@ async function claimDelivery({ store, storeKey, key }: { store: Store; storeKey:
     return false;
   }
   const claim: DeliveryClaim = { key, token: randomUUID(), at: Date.now() };
-  for (const cellKey of preferredCells({ cells, states, key }).slice(0, 2)) {
+  const order = preferredCells({ cells, states, key });
+  for (const cellKey of order) {
     const outcome = await tryCell({ store, cellKey, claim });
     if (outcome === 'lost') {
       return false;
     }
-    if (outcome === 'taken') {
-      continue;
+    if (outcome === 'won') {
+      return recordDone({ store, cells, cellKey, claim });
     }
-    try {
-      if ((await readCells({ store, cells })).some((state) => state.done?.key === key)) {
-        return false;
-      }
-      await store.put<DeliveryClaim>(doneKeyOf(cellKey), claim);
-    } catch (error) {
-      await releaseClaim({ store, cellKey, claimToken: claim.token });
-      throw error;
+  }
+  return recordDone({ store, cells, cellKey: order[0], claim });
+}
+
+async function recordDone({ store, cells, cellKey, claim }: { store: Store; cells: string[]; cellKey: string; claim: DeliveryClaim }): Promise<boolean> {
+  try {
+    if ((await readCells({ store, cells })).some((state) => state.done?.key === claim.key)) {
+      return false;
     }
-    return true;
+    await store.put<DeliveryClaim>(doneKeyOf(cellKey), claim);
+  } catch (error) {
+    await releaseClaim({ store, cellKey, claimToken: claim.token });
+    throw error;
   }
   return true;
 }

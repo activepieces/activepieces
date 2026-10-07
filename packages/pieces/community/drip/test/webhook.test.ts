@@ -280,6 +280,25 @@ describe('run', () => {
     expect(store.read(first)).toMatchObject({ key: 'e'.repeat(64) });
     expect(store.read(dripWebhook.doneKeyOf(second))).toMatchObject({ key: dedupeKeyOf(d) });
   });
+  test('a delivery whose claim cells are all taken during the settle wait is still recorded before it is emitted', async () => {
+    const store = stored({ key: NEW_SUB_KEY });
+    const d = delivery();
+    const key = dedupeKeyOf(d);
+    const cells = cellsOf(d);
+    const put = store.put;
+    let contended = true;
+    store.put = async <T>(cellKey: string, value: T): Promise<T> => {
+      const result = await put(cellKey, value);
+      if (contended && cells.includes(cellKey) && Reflect.get(Object(value), 'key') === key) {
+        await put(cellKey, { key: `other-${cellKey}`, token: 'other', at: Date.now() });
+      }
+      return result;
+    };
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(1);
+    contended = false;
+    expect(cells.some((cell) => Reflect.get(Object(store.read(dripWebhook.doneKeyOf(cell))), 'key') === key)).toBe(true);
+    await expect(call<unknown[]>({ trigger: dripNewSubscriberEvent, fn: 'run', context: ctx({ store, payload: d }) })).resolves.toHaveLength(0);
+  });
   test('an unfinished claim blocks a retry until it is abandoned, then the retry emits', async () => {
     const store = stored({ key: NEW_SUB_KEY });
     const d = delivery();
