@@ -40,7 +40,7 @@ export function DataTableColumnHeader<TData, TValue>({
             column.clearSorting();
           }
         }}
-        className={`h-auto text-gray-12 p-0 hover:bg-transparent ${className}`}
+        className={`h-auto text-gray-12 p-0 has-[>svg]:px-0 hover:bg-transparent ${className}`}
       >
         {Icon && <Icon className="h-4 w-4 text-gray-12 flex-shrink-0 mr-2" />}
         {title}

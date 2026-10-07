@@ -368,7 +368,7 @@ const ColorRow = ({
         <div className="flex min-w-0 flex-1 flex-col">
           <FormLabel className="font-normal">{label}</FormLabel>
           <span className="text-xs text-gray-11">
-            <span className="font-mono ">{shownColor}</span>
+            <span className="font-mono uppercase">{shownColor}</span>
             {isDefault && ` · ${t('Default')}`}
           </span>
         </div>

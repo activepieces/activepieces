@@ -229,7 +229,7 @@ const AgentsPageContent = () => {
           <h1
             className={cn(
               'text-2xl leading-7.5 tracking-tight',
-              firstRun && 'text-4xl font-semibold leading-9.5 tracking-tight',
+              firstRun && 'text-3xl font-semibold leading-9.5 tracking-tight',
             )}
           >
             {firstRun

@@ -90,7 +90,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
       </div>
 
       <div className="flex min-h-0 flex-col gap-1">
-        <span className="px-2.5 pb-1 text-xs font-medium tracking-wide text-gray-11">
+        <span className="px-2.5 pb-1 text-xs font-medium text-gray-11">
           Recent
         </span>
         {RECENT_CHATS.map((title, index) => (

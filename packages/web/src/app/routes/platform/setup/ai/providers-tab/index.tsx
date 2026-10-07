@@ -407,9 +407,7 @@ function ProviderGroup({
         )}
       </div>
       <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
-        <p className="text-xs font-medium tracking-wide text-gray-11">
-          {t('Keys')}
-        </p>
+        <p className="text-xs font-medium text-gray-11">{t('Keys')}</p>
       </div>
       <div>
         {configs.map((config) => (
@@ -700,7 +698,7 @@ function EmptyProviders({
         ))}
       </div>
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-medium tracking-wide text-gray-11">
+        <p className="text-xs font-medium text-gray-11">
           {t('Or choose another provider')}
         </p>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">

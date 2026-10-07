@@ -19,7 +19,7 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
         className={cn(
           'justify-end text-gray-11 text-sm items-center flex gap-1 transition group ',
           {
-            '-translate-y-7.5': position === 'sticky',
+            '-translate-y-full': position === 'sticky',
             'justify-center': position === 'static',
           },
         )}

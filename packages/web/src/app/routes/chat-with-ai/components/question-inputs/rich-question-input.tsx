@@ -177,7 +177,7 @@ function ColorInput({
           maxLength={7}
           onChange={(e) => onChange(e.target.value)}
           size="sm"
-          className="w-28 font-mono text-sm"
+          className="w-28 font-mono text-sm uppercase"
         />
       </div>
     </div>
