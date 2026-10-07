@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { create } from 'zustand';
 
@@ -39,10 +39,13 @@ export function useRailOpenState() {
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const collapsed = railIsCollapsed({ preference, pathname, openedOn });
 
-  const onOpenChange = (open: boolean) => {
-    setOpenedOn(pathname);
-    setCollapsed(!open);
-  };
+  const onOpenChange = useCallback(
+    (open: boolean) => {
+      setOpenedOn(pathname);
+      setCollapsed(!open);
+    },
+    [pathname, setCollapsed],
+  );
 
   return { open: !collapsed, onOpenChange };
 }

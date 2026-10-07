@@ -200,7 +200,7 @@ function ProjectsGroup() {
 
   useEffect(() => {
     scrollActiveProjectIntoView(listRef.current);
-  }, [location.pathname, projects.length]);
+  }, [location.pathname, projects.length, sort]);
 
   if (projects.length === 0) {
     return null;

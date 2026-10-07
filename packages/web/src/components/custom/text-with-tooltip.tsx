@@ -43,6 +43,9 @@ export const TextWithTooltip = ({
       return;
     }
     checkTruncation();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
     const observer = new ResizeObserver(checkTruncation);
     observer.observe(element);
     return () => observer.disconnect();
