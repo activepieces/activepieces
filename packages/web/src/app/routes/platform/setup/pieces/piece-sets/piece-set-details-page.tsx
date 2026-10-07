@@ -55,6 +55,7 @@ import {
   RequiredActionsList,
   RequiredActionsSheet,
 } from './required-actions';
+import { useShowEmbedKey } from './use-show-embed-key';
 
 const PieceSetDetailsPage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -223,8 +224,7 @@ function PieceSetDetails({
     }).catch(() => undefined);
   };
 
-  const { platform } = platformHooks.useCurrentPlatform();
-  const showKey = platform.plan.embeddingEnabled;
+  const showKey = useShowEmbedKey();
   const metaParts = [
     showKey
       ? pieceSet.key

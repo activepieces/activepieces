@@ -58,6 +58,7 @@ import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
 import { pieceSetSamples } from './piece-set-samples';
 import { PolicyConfirmDialog } from './policy-ui';
+import { useShowEmbedKey } from './use-show-embed-key';
 
 export function PieceSetsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -135,8 +136,7 @@ function PieceSetsList({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const search = searchParams.get(SEARCH_PARAM) ?? '';
-  const { platform } = platformHooks.useCurrentPlatform();
-  const showKey = platform.plan.embeddingEnabled;
+  const showKey = useShowEmbedKey();
   const [creating, setCreating] = useState(false);
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
   const [editingSet, setEditingSet] = useState<PieceSet | null>(null);

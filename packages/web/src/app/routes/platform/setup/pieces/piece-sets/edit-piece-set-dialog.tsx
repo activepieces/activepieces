@@ -24,10 +24,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { pieceSetFormErrors } from './piece-set-form-errors';
+import { useShowEmbedKey } from './use-show-embed-key';
 
 type EditPieceSetDialogProps = {
   open: boolean;
@@ -48,8 +48,7 @@ const EditPieceSetForm = ({
   currentName: string;
   currentKey: string | null;
 }) => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const showKey = platform.plan.embeddingEnabled;
+  const showKey = useShowEmbedKey();
   const form = useForm<FormValues>({
     resolver: zodResolver(
       showKey && currentKey !== null ? formSchemaWithKey : formSchema,
