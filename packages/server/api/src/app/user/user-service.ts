@@ -45,7 +45,10 @@ export const userService = (log: FastifyBaseLogger) => ({
                 defaultProjectIds: await platformService(log).listDefaultProjectIds({ platformId }),
                 projectRolesEnabled: platform.plan.projectRolesEnabled,
             })
-            const createsPersonalProject = platform.autoCreatePersonalProjects
+            const createsPersonalProject = newMemberSettingsUtils.personalProjectsActive({
+                autoCreatePersonalProjects: platform.autoCreatePersonalProjects,
+                projectRolesEnabled: platform.plan.projectRolesEnabled,
+            })
             const { newUser, personalProject } = await transaction(async (entityManager) => {
                 const createdUser = await this.create({
                     identityId: identity.id,
