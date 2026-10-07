@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
@@ -10,21 +10,11 @@ export const gmailRemoveLabelFromEmailAction = createAction({
   classification: 'WRITE',
   displayName: 'Remove Label From Email',
   description: 'Remove a label from an email message.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Removes an existing label from a single email message by message ID, leaving its other labels untouched. Look up the label with List Labels and the message ID with Search Email or Get Message. Idempotent: true — removing a label the message does not carry has no additional effect.',
-    idempotent: true,
-  },
+  audience: 'human',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description:
-        'The Gmail message ID to unlabel (obtain from Search Email or Get Message).',
-      required: true,
-    }),
+    message_id: GmailProps.message,
     label: GmailProps.label({
-      description: 'The label to remove from the message.',
+      description: 'Label to remove.',
       required: true,
     }),
   },

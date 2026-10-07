@@ -4,7 +4,7 @@ import {
   Trigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
+import { SHOPIFY_API_VERSION, shopifyAuth, shopifyAuthHelpers } from './auth';
 
 export const createShopifyWebhookTrigger = ({
   name,
@@ -24,6 +24,7 @@ export const createShopifyWebhookTrigger = ({
   createTrigger({
     auth: shopifyAuth,
     name,
+    classification: 'READ',
     description,
     aiMetadata,
     displayName,
@@ -31,17 +32,15 @@ export const createShopifyWebhookTrigger = ({
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-      const shopName = context.auth.props.shopName;
+      const shopName = shopifyAuthHelpers.getShopName(context.auth);
       const response = await httpClient.sendRequest<{
         webhook: {
           id: string;
         };
       }>({
         method: HttpMethod.POST,
-        url: `https://${shopName}.myshopify.com/admin/api/2023-01/webhooks.json`,
-        headers: {
-          'X-Shopify-Access-Token': context.auth.props.adminToken,
-        },
+        url: `https://${shopName}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}/webhooks.json`,
+        headers: shopifyAuthHelpers.getAuthHeaders(context.auth),
         body: {
           webhook: {
             topic: topic,
@@ -55,17 +54,15 @@ export const createShopifyWebhookTrigger = ({
     },
     async onDisable(context) {
       const webhookId = await context.store.get<string>(`shopify_webhook_id`);
-      const shopName = context.auth.props.shopName;
+      const shopName = shopifyAuthHelpers.getShopName(context.auth);
       await httpClient.sendRequest<{
         webhook: {
           id: string;
         };
       }>({
         method: HttpMethod.DELETE,
-        url: `https://${shopName}.myshopify.com/admin/api/2023-01/webhooks/${webhookId}.json`,
-        headers: {
-          'X-Shopify-Access-Token': context.auth.props.adminToken,
-        },
+        url: `https://${shopName}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}/webhooks/${webhookId}.json`,
+        headers: shopifyAuthHelpers.getAuthHeaders(context.auth),
       });
       await context.store?.put(`shopify_webhook_id`, null);
     },

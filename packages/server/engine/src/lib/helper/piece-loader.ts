@@ -1,10 +1,11 @@
 import fs from 'fs/promises'
 import { createRequire } from 'node:module'
 import path from 'path'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, trimVersionFromAlias } from '@activepieces/shared'
+import { EngineGenericError, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, RequireError, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
+import { workerSocket } from '../worker-socket'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -17,7 +18,7 @@ export const pieceLoader = {
                 devPieces,
             })
             const piecePath = await pieceLoader.getPiecePath({ packageName, devPieces })
-            const module = loadAndCapPieces(piecePath)
+            const module = await requireWithReinstallRetry({ piecePath, pieceName, pieceVersion })
 
             const piece = extractPieceFromModule<Piece>({
                 module,
@@ -131,63 +132,29 @@ export const pieceLoader = {
     },
 }
 
-const MAX_LOADED_PIECES = 5
-const engineRequire = createRequire(__filename)
-const loadedPieceEntries = new Map<string, true>()
-const baselineModuleIds = new Set(Object.keys(engineRequire.cache))
+const MODULE_RESOLUTION_ERROR_CODES = ['MODULE_NOT_FOUND', 'ERR_MODULE_NOT_FOUND']
 
-function loadAndCapPieces(piecePath: string): Record<string, unknown> {
-    const disposableRequire = createRequire(__filename)
-    const resolvedEntry = disposableRequire.resolve(piecePath)
-    const loadedModule: Record<string, unknown> = disposableRequire(resolvedEntry)
-    loadedPieceEntries.delete(resolvedEntry)
-    loadedPieceEntries.set(resolvedEntry, true)
-    if (loadedPieceEntries.size > MAX_LOADED_PIECES) {
-        const leastRecentEntry = loadedPieceEntries.keys().next().value
-        if (!isNil(leastRecentEntry)) {
-            loadedPieceEntries.delete(leastRecentEntry)
-            evictPieceSubtree(leastRecentEntry)
-            global.gc?.()
-        }
-    }
-    return loadedModule
+function isModuleResolutionError(error: unknown): boolean {
+    return error instanceof Error && 'code' in error && typeof error.code === 'string' && MODULE_RESOLUTION_ERROR_CODES.includes(error.code)
 }
 
-function evictPieceSubtree(evictedEntry: string): void {
-    const survivorReachable = collectReachableModules([...loadedPieceEntries.keys()])
-    const evictedReachable = collectReachableModules([evictedEntry])
-    const doomed = new Set([...evictedReachable].filter((id) => !survivorReachable.has(id) && !baselineModuleIds.has(id)))
-    if (doomed.size === 0) {
-        return
+async function requireWithReinstallRetry({ piecePath, pieceName, pieceVersion }: RequireWithReinstallRetryParams): Promise<Record<string, unknown>> {
+    const { data: module, error: requireError } = tryCatchSync<Record<string, unknown>>(() => createRequire(__filename)(piecePath))
+    if (!requireError) {
+        return module
     }
-    for (const id of Object.keys(engineRequire.cache)) {
-        const mod = engineRequire.cache[id]
-        if (!isNil(mod) && !doomed.has(id)) {
-            mod.children = mod.children.filter((child) => !doomed.has(child.id))
-        }
+    if (!isModuleResolutionError(requireError)) {
+        throw requireError
     }
-    if (!isNil(engineRequire.main)) {
-        engineRequire.main.children = engineRequire.main.children.filter((child) => !doomed.has(child.id))
+    const reinstalled = await workerSocket.requestPieceReinstall({ pieceName, pieceVersion })
+    if (!reinstalled) {
+        throw new RequireError(piecePath, requireError)
     }
-    for (const id of doomed) {
-        Reflect.deleteProperty(engineRequire.cache, id)
+    const { data: retriedModule, error: retryError } = tryCatchSync<Record<string, unknown>>(() => createRequire(__filename)(piecePath))
+    if (retryError) {
+        throw new RequireError(piecePath, retryError)
     }
-}
-
-function collectReachableModules(rootIds: string[]): Set<string> {
-    const reachable = new Set<string>()
-    const stack = rootIds.filter((id) => !isNil(engineRequire.cache[id]))
-    while (stack.length > 0) {
-        const id = stack.pop()
-        if (isNil(id) || reachable.has(id)) {
-            continue
-        }
-        reachable.add(id)
-        for (const child of engineRequire.cache[id]?.children ?? []) {
-            stack.push(child.id)
-        }
-    }
-    return reachable
+    return retriedModule
 }
 
 async function findInDistFolder(packageName: string): Promise<string | null> {
@@ -304,6 +271,12 @@ async function resolveEntryFromPackageDir(packageDir: string): Promise<string> {
 type GetPiecePathParams = {
     packageName: string
     devPieces: string[]
+}
+
+type RequireWithReinstallRetryParams = {
+    piecePath: string
+    pieceName: string
+    pieceVersion: string
 }
 
 type LoadPieceParams = {

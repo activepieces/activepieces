@@ -6,6 +6,7 @@ import { reachinboxCommon } from '../common';
 export const addBlocklist = createAction({
   auth: ReachinboxAuth,
   name: 'addBlocklist',
+  classification: 'WRITE',
   displayName: 'Add Blocklist',
   description: 'Add email addresses, domains, and keywords to the blocklist.',
   audience: 'both',

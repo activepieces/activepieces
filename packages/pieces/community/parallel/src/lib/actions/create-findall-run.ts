@@ -6,6 +6,7 @@ import { FINDALL_GENERATORS, parallelClient } from '../common/client';
 export const createFindAllRunAction = createAction({
   auth: parallelAuth,
   name: 'create_findall_run',
+  classification: 'SEARCH',
   displayName: 'Create FindAll Run',
   description:
     'Discover and verify entities matching plain-language criteria. Match conditions can be supplied directly or auto-generated from the objective.',

@@ -53,6 +53,7 @@ const polling: Polling<
 export const newUserMessage = createTrigger({
   auth: wonderchatAuth,
   name: 'newUserMessage',
+  classification: 'READ',
   displayName: 'New User Message',
   description:
     'Triggers when a new message is sent by a user in a specific chatlog.',

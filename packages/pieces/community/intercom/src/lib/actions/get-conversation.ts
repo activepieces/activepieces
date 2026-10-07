@@ -6,6 +6,7 @@ import { intercomClient } from '../common';
 export const getConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'get-conversation',
+	classification: 'READ',
 	displayName: 'Retrieve a Conversation',
 	description: 'Retrieves a specific conversation by ID.',
 	audience: 'both',

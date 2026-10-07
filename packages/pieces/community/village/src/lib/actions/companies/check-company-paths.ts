@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const checkCompanyPaths = createAction({
   auth: villageAuth,
   name: 'check_company_paths',
+  classification: 'READ',
   displayName: 'Check Company Paths',
   description:
     'Quickly check if you have connections to a company without fetching full details. Returns whether paths exist, an overall score, count of reachable people, and avatar thumbnails.',

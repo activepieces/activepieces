@@ -7,6 +7,7 @@ import { API_ENDPOINTS, FORMALITY_LEVELS, LANGUAGES } from '../common/common';
 export const createTranslation = createAction({
   auth: textcortexAuth,
   name: 'create_translation',
+  classification: 'READ',
   displayName: 'Create Translation',
   description: 'Translate input text into a target language.',
   audience: 'both',

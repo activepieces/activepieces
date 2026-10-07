@@ -4,7 +4,7 @@ import { t } from 'i18next';
 
 const FREE_PLAN_ID = 'free';
 const ANNUAL_INTERVAL = 'year';
-const SALES_URL = 'https://activepieces.com/sales';
+const SALES_URL = 'https://www.activepieces.com/sales?ap_cta=app_plan_selector';
 
 function stripPlanInterval(name: string): string {
   return name.replace(/\s*\((annual|monthly|yearly)\)\s*/i, '').trim();
@@ -142,7 +142,7 @@ function actionFor({
 }
 
 function buildSuccessUrl(action: CheckoutAction): string {
-  return `${window.location.origin}/platform/setup/billing/success?action=${action}`;
+  return `${window.location.origin}/platform/billing/success?action=${action}`;
 }
 
 function dropToFreeWarning(additionalSeats: number | null | undefined): string {

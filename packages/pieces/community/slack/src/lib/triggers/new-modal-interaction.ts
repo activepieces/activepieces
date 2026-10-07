@@ -19,7 +19,8 @@ export const newModalInteractionTrigger = createTrigger({
         info: interactivitySetupInfo,
         interactionType: Property.StaticDropdown({
             displayName: 'Interaction Type',
-            description: 'Select the type of modal interaction to trigger on.',
+            description:
+                'Submit fires on send, Close fires when the modal is dismissed.',
             required: true,
             defaultValue: 'view_submission',
             options: {

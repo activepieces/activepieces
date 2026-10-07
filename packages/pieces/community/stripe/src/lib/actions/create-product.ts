@@ -13,7 +13,7 @@ export const stripeCreateProduct = createAction({
   classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Product',
-  description: 'Create a new product object in Stripe.',
+  description: 'Create a product you can add prices to.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -23,37 +23,38 @@ export const stripeCreateProduct = createAction({
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',
-      description:
-        'The product’s name, meant to be displayable to the customer.',
+      description: 'Shown to customers at checkout and on invoices.',
       required: true,
+      placeholder: 'Premium Plan',
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description:
-        'The product’s description, meant to be displayable to the customer.',
+      description: 'Shown to customers under the product name.',
       required: false,
     }),
     active: Property.Checkbox({
       displayName: 'Active',
-      description:
-        'Whether the product is currently available for purchase. Defaults to true.',
+      description: 'Turn off to hide the product from new purchases.',
       required: false,
+      defaultValue: true,
     }),
     images: Property.Array({
       displayName: 'Image URLs',
-      description: 'A list of up to 8 URLs of images for this product.',
+      description: 'Up to 8 public image links.',
       required: false,
     }),
     url: Property.ShortText({
       displayName: 'Product URL',
-      description: 'A publicly-accessible online page for this product.',
+      description: 'A public page about this product.',
       required: false,
+      advanced: true,
+      placeholder: 'https://example.com/premium',
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
-      description:
-        'A set of key-value pairs to store additional information about the product.',
+      description: 'Extra key/value data to store on the product.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: productOutputSchema,

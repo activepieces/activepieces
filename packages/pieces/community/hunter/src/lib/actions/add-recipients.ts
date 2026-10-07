@@ -14,6 +14,7 @@ const MAX_LEAD_IDS = 50;
 export const addRecipientsAction = createAction({
     auth: hunterAuth,
     name: 'add-recipients',
+    classification: 'WRITE',
     displayName: 'Add Recipients',
     description: 'Add one or multiple recipients to a campaign.',
     audience: 'both',

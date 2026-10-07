@@ -57,6 +57,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, { f
 export const newFormCreated = createTrigger({
     auth: smooveAuth,
     name: 'newFormCreated',
+    classification: 'READ',
     displayName: 'New Form Created',
     description: 'Fires when a new form/landing page is created in your Smoove account',
     aiMetadata: {

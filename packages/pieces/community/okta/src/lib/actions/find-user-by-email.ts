@@ -11,11 +11,6 @@ export const findUserByEmailAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Searches Okta for a user by exact email address and returns the first match. Use as a read-only lookup to resolve an email to an Okta user (e.g. to obtain a user ID before a lifecycle or group action). Idempotent — returns a not-found indicator when no user matches.', idempotent: true },
   props: {
-    domain: Property.ShortText({
-      displayName: 'Okta Domain',
-      description: 'Your Okta organization domain',
-      required: true,
-    }),
     email: Property.ShortText({
       displayName: 'Email',
       description: 'The user email address',
@@ -28,8 +23,7 @@ export const findUserByEmailAction = createAction({
     const response = await makeOktaRequest(
       context.auth,
       `/users?search=profile.email eq "${email}"`,
-      HttpMethod.GET,
-      context.propsValue.domain
+      HttpMethod.GET
     );
 
     if (response.body && response.body.length > 0) {

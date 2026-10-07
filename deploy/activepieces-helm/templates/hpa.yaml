@@ -7,8 +7,13 @@ metadata:
     {{- include "activepieces.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
+    {{- if eq (include "activepieces.workloadType" .) "statefulset" }}
     apiVersion: apps/v1
-    kind: Deployment
+    kind: StatefulSet
+    {{- else }}
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    {{- end }}
     name: {{ include "activepieces.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}

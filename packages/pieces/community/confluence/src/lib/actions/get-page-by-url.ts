@@ -6,6 +6,7 @@ import { confluenceApiCall, parsePageIdFromUrl } from '../common';
 export const getPageByUrlAction = createAction({
 	auth: confluenceAuth,
 	name: 'get-page-by-url',
+	classification: 'READ',
 	displayName: 'Get Page by URL',
 	description:
 		'Fetches a page by its Confluence web URL (extracts the page ID automatically).',

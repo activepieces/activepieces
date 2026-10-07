@@ -14,14 +14,14 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/custom/empty';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/empty';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
@@ -112,7 +112,7 @@ export function GrantsTab() {
         selectColumn={true}
         bordered={true}
         toolbarButtons={[
-          <span key="expiry" className="text-sm text-muted-foreground">
+          <span key="expiry" className="text-sm text-gray-11">
             {t('each expires 30 days after sign-in')}
           </span>,
         ]}
@@ -122,7 +122,7 @@ export function GrantsTab() {
               <ConfirmationDeleteDialog
                 title={t('Revoke access')}
                 message={t(
-                  'Revoking {entityName}. Access ends within 15 minutes. The client will ask to sign in again.',
+                  'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
                   { entityName: t('revokedGrants', { count: rows.length }) },
                 )}
                 entityName={t('revokedGrants', { count: rows.length })}
@@ -146,7 +146,7 @@ export function GrantsTab() {
         emptyStateIcon={<Plug className="size-10" />}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-gray-11">
         <span>
           {t(
             'Two rows for one client is normal — signing in again creates a second connection. Revoking one leaves the other alive.',
@@ -156,7 +156,7 @@ export function GrantsTab() {
           href={DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="font-semibold text-primary hover:underline"
+          className="font-semibold text-accent-11 hover:underline"
         >
           {t('How connecting works')} ↗
         </a>

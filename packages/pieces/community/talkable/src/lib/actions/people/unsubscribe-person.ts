@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
+import { TALKABLE_API_URL } from '../../common/constants';
 
 export const unsubscribePerson = createAction({
   name: 'unsubscribe_person', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'DESTRUCTIVE',
   auth: talkableAuth,
   displayName: 'Unsubscribe person',
   description: 'Unsubscribe person by email',
@@ -17,7 +19,6 @@ export const unsubscribePerson = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth.props;
     const personUnsubscribeResponse = await httpClient
       .sendRequest<string[]>({

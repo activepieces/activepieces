@@ -51,6 +51,14 @@ const listColumns = async ({ client, table }: { client: Client, table: PostgresT
     return result.rows.map((row) => row.column_name);
 }
 
+const listColumnDetails = async ({ client, table }: { client: Client, table: PostgresTable }): Promise<PostgresColumn[]> => {
+    const result = await client.query<PostgresColumn>(
+        `SELECT column_name, data_type, is_nullable, column_default, is_identity, is_generated FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position`,
+        [table.table_schema, table.table_name]
+    );
+    return result.rows;
+}
+
 const isPostgresTable = (value: unknown): value is PostgresTable => {
     if (typeof value !== 'object' || value === null) {
         return false;
@@ -180,6 +188,7 @@ export const postgresCommon = {
 export const postgresUtils = {
     listTables,
     listColumns,
+    listColumnDetails,
     isPostgresTable,
     qualifiedName,
     quoteIdentifier,
@@ -188,4 +197,13 @@ export const postgresUtils = {
 export type PostgresTable = {
     table_schema: string;
     table_name: string;
+};
+
+export type PostgresColumn = {
+    column_name: string;
+    data_type: string;
+    is_nullable: string;
+    column_default: string | null;
+    is_identity: string;
+    is_generated: string;
 };

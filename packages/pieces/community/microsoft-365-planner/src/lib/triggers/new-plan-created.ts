@@ -31,6 +31,7 @@ const polling: Polling<
 export const newPlanCreated = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newPlanCreated',
+  classification: 'READ',
   displayName: 'New Plan Created',
   description: 'Triggers when a new Plan is created in Microsoft 365 Planner.',
   aiMetadata: {

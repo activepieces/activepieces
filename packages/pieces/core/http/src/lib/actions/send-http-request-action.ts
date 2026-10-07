@@ -2,9 +2,11 @@ import {
   httpClient,
   HttpError,
   HttpHeaders,
+  HttpMethod,
   HttpRequest,
   QueryParams,
   AuthenticationType,
+  acceptsRequestBody,
   toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import {
@@ -95,27 +97,41 @@ export const httpSendRequestAction = createAction({
         return {};
       },
     }),
-    body_type: Property.StaticDropdown({
+    body_type: Property.Dropdown({
       displayName: 'Body Type',
-      description: 'How to encode the request body. Leave as None for GET requests.',
+      description: 'How to encode the request body.',
       required: false,
       defaultValue: 'none',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'JSON', value: 'json' },
-          { label: 'Form Data', value: 'form_data' },
-          { label: 'Raw', value: 'raw' },
-        ],
+      auth: PieceAuth.None(),
+      refreshers: ['method'],
+      options: async ({ method }) => {
+        if (!acceptsRequestBody(method as HttpMethod)) {
+          return {
+            disabled: true,
+            placeholder: 'Not available for GET or HEAD requests',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: [
+            { label: 'None', value: 'none' },
+            { label: 'JSON', value: 'json' },
+            { label: 'Form Data', value: 'form_data' },
+            { label: 'Raw', value: 'raw' },
+          ],
+        };
       },
     }),
     body: Property.DynamicProperties({
       displayName: 'Body',
-      refreshers: ['body_type'],
+      refreshers: ['body_type', 'method'],
       required: false,
       auth: PieceAuth.None(),
-      props: async ({ body_type }): Promise<DynamicPropsValue> => {
+      props: async ({ body_type, method }): Promise<DynamicPropsValue> => {
+        if (!acceptsRequestBody(method as HttpMethod)) {
+          return {};
+        }
         if (body_type === 'json') {
           return {
             data: Property.Json({

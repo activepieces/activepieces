@@ -6,14 +6,6 @@ export const defaultValue = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'defaultValue',
   classification: 'READ',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   displayName: 'Use Default Value if Input is Empty',
   description:
     'Checks your input and returns the default value, if the input is an empty text or list',

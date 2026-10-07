@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const findJournalBatches = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'find_journal_batches',
+    classification: 'SEARCH',
     displayName: 'Find Journal Batches',
     description: 'Search for journal batches with optional filters.',
     audience: 'both',

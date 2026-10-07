@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
+import { TALKABLE_API_URL } from '../../common/constants';
 
 export const createPurchasesBatch = createAction({
   name: 'create_purchases_batch', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   auth: talkableAuth,
   displayName: 'Create batch of purchases',
   description: 'Create batch of purchases in Talkable',
@@ -59,7 +61,6 @@ export const createPurchasesBatch = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth.props;
     const createPurchasesBatch = await httpClient
       .sendRequest<string[]>({

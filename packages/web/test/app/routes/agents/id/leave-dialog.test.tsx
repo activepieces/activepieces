@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { LeaveWithoutSavingDialog } from '@/app/routes/agents/id/configure-panel';
+import { LeaveWithoutSavingDialog } from '@/components/custom/leave-without-saving';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 

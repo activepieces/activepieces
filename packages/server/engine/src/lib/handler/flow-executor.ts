@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
+import { aiRouterExecuter } from './ai-router-executor'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
@@ -23,6 +24,7 @@ function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
         [FlowActionType.PIECE]: pieceExecutor,
         [FlowActionType.ROUTER]: routerExecuter,
+        [FlowActionType.AI_ROUTER]: aiRouterExecuter,
     }
     return executors
 }

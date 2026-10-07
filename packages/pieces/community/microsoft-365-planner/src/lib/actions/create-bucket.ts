@@ -5,6 +5,7 @@ import { OrderHintProperty, PlanDropdown } from '../common/properties';
 export const createBucket = createAction({
   auth: microsoft365PlannerAuth,
   name: 'createBucket',
+  classification: 'WRITE',
   displayName: 'Create Bucket',
   description: 'Create a bucket (category) under a plan.',
   audience: 'both',

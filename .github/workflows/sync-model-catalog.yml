@@ -60,3 +60,14 @@ jobs:
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://cdn.activepieces.com/ai/model-catalog.json?run=$GITHUB_RUN_ID" || true)
           [ "$STATUS" = "200" ] || { echo "Publish verification failed: HTTP $STATUS"; exit 1; }
+
+      - name: Notify Discord on failure
+        if: failure()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg branch "$BRANCH" --arg url "$RUN_URL" \
+            '{content: "🚨 **Sync AI Model Catalog Workflow Failed** 🚨\n\n**Branch:** \($branch)\n**Action URL:** \($url)\n\nThe AI model catalog sync did not finish. Please check the logs for more details."}' \
+            | curl --fail --silent --show-error -H "Content-Type: application/json" -X POST -d @- "$WEBHOOK"

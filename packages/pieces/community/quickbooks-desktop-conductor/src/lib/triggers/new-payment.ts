@@ -31,6 +31,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksDeskto
 export const newPaymentTrigger = createTrigger({
   auth: quickbooksDesktopConductorAuth,
   name: 'new_payment',
+  classification: 'READ',
   displayName: 'New Payment',
   description: 'Fires once when a new customer payment is recorded (Accounts Receivable) in QuickBooks Desktop — a "Receive Payment" transaction, e.g. from the Record Payment action\'s Customer Payment mode. Create-only: editing an existing payment does not re-fire it. Vendor bill payments (Accounts Payable) do not fire this trigger.',
   aiMetadata: {

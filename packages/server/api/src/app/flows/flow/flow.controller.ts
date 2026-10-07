@@ -145,6 +145,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.projectId,
+            includeDeleting: true,
         })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,

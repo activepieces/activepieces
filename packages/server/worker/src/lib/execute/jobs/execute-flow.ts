@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { onCallService } from '@activepieces/server-utils'
+import { onCallService, wideEvent } from '@activepieces/server-utils'
 import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowActionType, FlowRunStatus, flowStructureUtil, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
@@ -188,6 +188,8 @@ function toInternalError(source: RunInternalErrorSource, error: unknown): RunInt
 }
 
 async function reportFlowStatus({ ctx, data, status, internalError, failedStep }: ReportFlowStatusParams): Promise<void> {
+    const willRetry = status === FlowRunStatus.INTERNAL_ERROR && !ctx.lastAttempt
+    recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment: data.environment, failedStepName: failedStep?.name })
     // A status report has no log file of its own; carry logsFileId only for an internalError the server may
     // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
@@ -199,6 +201,7 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         ...(isNil(internalError) ? {} : { logsFileId: data.logsFileId }),
         internalError,
         failedStep,
+        willRetry,
         ...spreadIfDefined('workerHandlerId', data.workerHandlerId ?? undefined),
         ...spreadIfDefined('httpRequestId', data.httpRequestId),
     })
@@ -207,9 +210,23 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
-            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
+            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId, willRetry },
         }).catch((e) => ctx.log.error({ flowRun: { id: data.runId }, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
     }
+}
+
+function recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment, failedStepName }: RecordRunOutcomeParams): void {
+    wideEvent.set({ flowRun: { status, willRetry, environment } })
+    if (!isNil(failedStepName)) {
+        wideEvent.set({ step: { name: failedStepName } })
+    }
+    if (isNil(internalError)) {
+        return
+    }
+    wideEvent.set({ flowRun: { internalErrorSource: internalError.source, ...spreadIfDefined('internalErrorCode', internalError.code) } })
+    const error = new Error(internalError.message)
+    error.stack = internalError.message
+    wideEvent.error(error)
 }
 
 function isDedicatedWorker(): boolean {
@@ -222,6 +239,14 @@ type ReportFlowStatusParams = {
     status: FlowRunStatus
     internalError?: RunInternalError
     failedStep?: FailedStep
+}
+
+type RecordRunOutcomeParams = {
+    status: FlowRunStatus
+    internalError?: RunInternalError
+    willRetry: boolean
+    environment: ExecuteFlowJobData['environment']
+    failedStepName?: string
 }
 
 type FindStepOwningPieceParams = {

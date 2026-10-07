@@ -6,7 +6,11 @@ import Redis from 'ioredis'
 import { DistributedStore } from '../../database/redis/distributed-store-factory'
 import { QueueName } from './index'
 
-export const redisMetadataKey = (runId: ApId): string => `runs_metadata:${runId}`
+export const redisMetadataKey = ({ projectId, runId }: RedisMetadataKeyParams): string => `runs_metadata:${projectId}:${runId}`
+
+export const legacyRedisMetadataKey = (runId: ApId): string => `runs_metadata:${runId}`
+
+export const runsMetadataDeduplicationId = ({ projectId, runId }: RedisMetadataKeyParams): string => `${projectId}-${runId}`
 
 export const runsMetadataQueueFactory = ({
     createRedisConnection,
@@ -41,7 +45,7 @@ export const runsMetadataQueueFactory = ({
 
             const cleanedParams = stripToRunsMetadataUpsertData(params)
 
-            await distributedStore.merge(redisMetadataKey(cleanedParams.id), {
+            await distributedStore.merge(redisMetadataKey({ projectId: cleanedParams.projectId, runId: cleanedParams.id }), {
                 ...cleanedParams,
                 requestId: apId(),
             })
@@ -49,7 +53,7 @@ export const runsMetadataQueueFactory = ({
             await queueInstance.add(
                 'update-run-metadata',
                 { runId: cleanedParams.id, projectId: cleanedParams.projectId },
-                { deduplication: { id: cleanedParams.id } },
+                { deduplication: { id: runsMetadataDeduplicationId({ projectId: cleanedParams.projectId, runId: cleanedParams.id }) } },
             )
         },
 
@@ -71,7 +75,7 @@ const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
     'triggeredBy', 'startTime', 'finishTime', 'status', 'tags',
     'failedStep', 'stepNameToTest', 'parentRunId', 'failParentOnFailure',
     'logsFileId', 'updated', 'stepsCount', 'requestId',
-    'provisionMs', 'bootMs', 'runMs',
+    'provisionMs', 'bootMs', 'runMs', 'willRetry',
 ]
 
 function stripToRunsMetadataUpsertData(params: RunsMetadataUpsertData): RunsMetadataUpsertData {
@@ -82,6 +86,11 @@ function stripToRunsMetadataUpsertData(params: RunsMetadataUpsertData): RunsMeta
         }
     }
     return result as RunsMetadataUpsertData
+}
+
+type RedisMetadataKeyParams = {
+    projectId: ApId
+    runId: ApId
 }
 
 type RunsMetadataQueueFactoryParams = {
@@ -123,4 +132,5 @@ export type RunsMetadataUpsertData = {
     provisionMs?: number
     bootMs?: number
     runMs?: number
+    willRetry?: boolean
 }

@@ -1,19 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { addTagToTicketOutputSchema } from '../output-schemas';
 
 export const addTagToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'add-tag-to-ticket',
+  outputSchema: addTagToTicketOutputSchema,
   classification: 'WRITE',
   displayName: 'Add Tag to Ticket',
   description: 'Apply one or more tags to a ticket.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Adds one or more tags to a ticket identified by ticket ID, merging with the ticket\'s existing tags rather than replacing them (unlike Update Ticket, which overwrites the tag set). Use to label or categorize a ticket without disturbing tags already present. At least one tag is required. Effectively idempotent for tags already present (Zendesk de-duplicates), so re-running with the same tags leaves the set unchanged.', idempotent: true },
   props: {
     ticket_id: ticketIdDropdown,
@@ -60,16 +62,12 @@ export const addTagToTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/tags.json`,
+        url: `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}/tags.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body,
       });
 

@@ -1,7 +1,8 @@
-import { ActivepiecesError, apId, ApId, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { CreateProjectRoleRequestBody } from '@activepieces/shared'
 import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
 
@@ -74,33 +75,63 @@ export const projectRoleService = {
             platformId,
         })
         if (projectRoleExists) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: params.name, message: 'Project Role name already exists' },
-            })
+            throw nameAlreadyExists(params.name)
         }
 
-        return projectRoleRepo().save({
-            id: apId(),
+        const id = apId()
+        const { error } = await tryCatch(() => projectRoleRepo().save({
+            id,
             platformId,
             ...params,
-        })
+        }))
+        if (error) {
+            rethrowNameConflict({ error, name: params.name })
+        }
+        return projectRoleRepo().findOneByOrFail({ id })
     },
 
     async update(params: UpdateParams): Promise<ProjectRole> {
-        await projectRoleRepo().update({
+        if (!isNil(params.name)) {
+            const existing = await this.getOne({ name: params.name, platformId: params.platformId })
+            if (!isNil(existing) && existing.id !== params.id) {
+                throw nameAlreadyExists(params.name)
+            }
+        }
+        const { error } = await tryCatch(() => projectRoleRepo().update({
             id: params.id,
             platformId: params.platformId,
         }, {
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('permissions', params.permissions),
-        })
+        }))
+        if (error) {
+            rethrowNameConflict({ error, name: params.name })
+        }
         return projectRoleRepo().findOneByOrFail({ id: params.id, platformId: params.platformId })
     },
 
     async delete({ name, platformId }: DeleteParams): Promise<void> {
         await projectRoleRepo().delete({ name, platformId })
     },
+}
+
+function nameAlreadyExists(name: string | undefined): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `Project role name already exists: ${name}` },
+    })
+}
+
+function rethrowNameConflict({ error, name }: RethrowNameConflictParams): never {
+    if (isUniqueViolation(error)) {
+        throw nameAlreadyExists(name)
+    }
+    throw error
+}
+
+type RethrowNameConflictParams = {
+    error: unknown
+    name: string | undefined
 }
 
 type UpdateParams = {

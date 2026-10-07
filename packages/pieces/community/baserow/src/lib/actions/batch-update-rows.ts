@@ -1,14 +1,16 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
+import { batchRowsOutputSchema } from '../output-schemas';
 
 export const batchUpdateRowsAction = createAction({
   name: 'baserow_batch_update_rows',
   classification: 'WRITE',
+  outputSchema: batchRowsOutputSchema,
   displayName: 'Batch Update Rows',
   description:
     'Updates multiple rows in a single request. Each row must include an "id" field. Accepts up to 200 rows.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates many existing Baserow rows in one request from a JSON array, up to 200 rows per call. Every object must carry an "id" identifying the row plus the fields to change. Use for bulk edits to known rows instead of repeated Update Row calls. Idempotent: re-sending the same id/field values converges those rows to the same state.',

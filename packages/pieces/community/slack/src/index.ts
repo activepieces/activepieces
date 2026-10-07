@@ -11,6 +11,7 @@ import { requestActionMessageAction } from './lib/actions/request-action-message
 import { requestApprovalDirectMessageAction } from './lib/actions/request-approval-direct-message';
 import { requestSendApprovalMessageAction } from './lib/actions/request-approval-message';
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action';
+import { slackSendMessageToMultipleUsersAction } from './lib/actions/send-message-to-multiple-users';
 import { slackSendMessageAction } from './lib/actions/send-message-action';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { newReactionRemoved } from './lib/triggers/new-reaction-removed';
@@ -100,7 +101,7 @@ export { slackAuth, slackOAuth2Auth } from './lib/auth';
 export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
@@ -118,7 +119,6 @@ export const slack = createPiece({
               action.type === 'button' &&
               action.value?.startsWith(server.publicUrl)
             ) {
-              // We don't await the promise as we don't handle the response anyway
               httpClient.sendRequest({
                 url: action.value,
                 method: HttpMethod.POST,
@@ -168,7 +168,6 @@ export const slack = createPiece({
       }
     },
     verify: ({ webhookSecret, payload }) => {
-      // Construct the signature base string
       const timestamp = payload.headers['x-slack-request-timestamp'];
       const signature = payload.headers['x-slack-signature'];
       const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
@@ -191,6 +190,7 @@ export const slack = createPiece({
   actions: [
     addRectionToMessageAction,
     slackSendDirectMessageAction,
+    slackSendMessageToMultipleUsersAction,
     slackSendMessageAction,
     requestApprovalDirectMessageAction,
     requestSendApprovalMessageAction,
@@ -281,10 +281,11 @@ export const slack = createPiece({
       },
       extraProps: {
         useUserToken: Property.Checkbox({
-          displayName: 'Use user token',
-          description: 'Use user token instead of bot token',
-          required: true,
+          displayName: 'Use User Token',
+          description: 'Authenticate with the user token instead of the bot token.',
+          required: false,
           defaultValue: false,
+          advanced: true,
         }),
       },
     }),

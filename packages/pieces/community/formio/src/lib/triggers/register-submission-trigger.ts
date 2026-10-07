@@ -45,6 +45,7 @@ export function registerSubmissionTrigger({
   return createTrigger({
     auth: formioAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata: { description: aiDescription },

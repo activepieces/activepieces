@@ -7,7 +7,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/custom/empty';
+} from '@/components/ui/empty';
 
 export const EmptyTemplatesView = () => {
   return (

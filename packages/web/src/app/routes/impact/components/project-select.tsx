@@ -63,7 +63,7 @@ export function ProjectSelect({
         >
           {selectedProject?.type === ProjectType.TEAM ? (
             <Avatar
-              className="size-4 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+              className="size-4 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
               style={{
                 backgroundColor:
                   PROJECT_COLOR_PALETTE[selectedProject.icon.color].color,
@@ -102,13 +102,13 @@ export function ProjectSelect({
                 <div
                   onClick={() => handleSelect(item.id)}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent',
-                    isSelected && 'bg-accent',
+                    'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-4',
+                    isSelected && 'bg-gray-4',
                   )}
                 >
                   {isTeam && project ? (
                     <Avatar
-                      className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+                      className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
                       style={{
                         backgroundColor:
                           PROJECT_COLOR_PALETTE[project.icon.color].color,
@@ -121,7 +121,7 @@ export function ProjectSelect({
                       </span>
                     </Avatar>
                   ) : (
-                    <LayoutGrid className="size-5 shrink-0 text-muted-foreground" />
+                    <LayoutGrid className="size-5 shrink-0 text-gray-11" />
                   )}
                   <span className="truncate flex-1">{item.displayName}</span>
                   <Check

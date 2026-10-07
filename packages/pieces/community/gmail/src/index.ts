@@ -35,6 +35,13 @@ import { gmailCreateLabelAction } from './lib/actions/create-label-action';
 import { gmailAddLabelToEmailAction } from './lib/actions/add-label-to-email-action';
 import { gmailRemoveLabelFromEmailAction } from './lib/actions/remove-label-from-email-action';
 import { gmailArchiveEmailAction } from './lib/actions/archive-email-action';
+import { gmailAiArchiveMessageAction } from './lib/actions/ai-archive-email-action';
+import { gmailGetOrCreateLabelAction } from './lib/actions/ai-create-label-action';
+import { gmailModifyLabelsAction } from './lib/actions/modify-labels-action';
+import { gmailTrashMessageAction } from './lib/actions/trash-message-action';
+import { gmailUntrashMessageAction } from './lib/actions/untrash-message-action';
+import { gmailUpdateLabelAction } from './lib/actions/update-label-action';
+import { gmailModifyThreadLabelsAction } from './lib/actions/modify-thread-labels-action';
 
 export {
   gmailAuth,
@@ -44,7 +51,7 @@ export {
 } from './lib/auth';
 
 export const gmail = createPiece({
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
   categories: [
     PieceCategory.COMMUNICATION,
@@ -80,6 +87,13 @@ export const gmail = createPiece({
     gmailAddLabelToEmailAction,
     gmailRemoveLabelFromEmailAction,
     gmailArchiveEmailAction,
+    gmailAiArchiveMessageAction,
+    gmailGetOrCreateLabelAction,
+    gmailModifyLabelsAction,
+    gmailTrashMessageAction,
+    gmailUntrashMessageAction,
+    gmailUpdateLabelAction,
+    gmailModifyThreadLabelsAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,

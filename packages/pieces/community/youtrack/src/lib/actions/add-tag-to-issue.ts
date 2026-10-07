@@ -7,6 +7,7 @@ import { addTagToIssueActionOutputSchema } from '../output-schemas';
 export const addTagToIssueAction = createAction({
   auth: youtrackAuth,
   name: 'add_tag_to_issue',
+  classification: 'WRITE',
   outputSchema: addTagToIssueActionOutputSchema,
   displayName: 'Add Tag to Issue',
   description: 'Adds an existing tag to an issue.',

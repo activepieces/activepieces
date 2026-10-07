@@ -52,9 +52,8 @@ test('should handle webhook with return response', async ({ page }) => {
   await page.getByText('Catch Webhook').click();
 
   // Grab webhook URL and build test URL
-  const webhookUrl = await page
-    .locator('input.grow.bg-background')
-    .inputValue();
+  const webhookUrl =
+    (await page.getByTestId('markdown-code-block').textContent())?.trim() ?? '';
   const runVersion = Math.floor(Math.random() * 100000);
   const urlWithParams = `${webhookUrl}/sync?targetRunVersion=${runVersion}`;
 

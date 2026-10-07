@@ -113,19 +113,19 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async provisionOrOnboard({ identityId }: ProvisionOrOnboardParams): Promise<AuthenticationResponse> {
+    async provisionOrOnboard({ identityId }: ProvisionOrOnboardParams): Promise<AuthenticationResult> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         if (!identity.verified || signupNames.isPlaceholderName(identity)) {
-            return this.getOnboardingResponse({ identityId })
+            return { response: await this.getOnboardingResponse({ identityId }), signedUp: false }
         }
-        const { response } = await platformService(log).createPlatformWithProject({
+        const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
             name: signupNames.platformNameFromSignup({ firstName: identity.firstName, email: identity.email }),
             invalidatePreviousTokens: false,
             isFirstPlatform: true,
             callerTokenVersion: undefined,
         })
-        return response
+        return { response, signedUp: provisioned }
     },
 
     async assertDomainIsAllowed({
@@ -301,6 +301,11 @@ type AssertUserIsInvitedToPlatformOrProjectParams = {
 
 type ProvisionOrOnboardParams = {
     identityId: string
+}
+
+export type AuthenticationResult = {
+    response: AuthenticationResponse
+    signedUp: boolean
 }
 
 type GetOnboardingResponseParams = {

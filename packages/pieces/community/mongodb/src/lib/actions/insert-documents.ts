@@ -6,6 +6,7 @@ import { mongodbCommon, mongodbConnect } from '../common';
 export default createAction({
   auth: mongodbAuth,
   name: 'insert_documents',
+  classification: 'WRITE',
   displayName: 'Insert Documents',
   description: 'Insert one or more documents into a collection',
   audience: 'both',

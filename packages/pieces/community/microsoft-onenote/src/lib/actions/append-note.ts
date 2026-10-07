@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const appendNote = createAction({
 	auth: oneNoteAuth,
 	name: 'append_note',
+	classification: 'WRITE',
 	displayName: 'Append Note',
 	description: 'Append content to the end of an existing note.',
 	audience: 'both',

@@ -18,6 +18,9 @@ const JAPANESE_BUNDLE = {
   Router: 'ルーター',
   'Split your flow into branches depending on condition(s)':
     '条件に応じてフローを分岐します',
+  'AI Router': 'AI ルーター',
+  'Ask one question and Jev, an evaluation model, picks the route':
+    '1つの質問をすると、評価モデルの Jev がルートを選びます',
   'Empty Trigger': '空のトリガー',
 };
 
@@ -65,7 +68,7 @@ describe('core step metadata translation', () => {
   it('translates every core action offered by the piece selector', () => {
     const coreActions = stepUtils.coreActionsMetadata();
 
-    expect(coreActions).toHaveLength(3);
+    expect(coreActions).toHaveLength(4);
     for (const step of coreActions) {
       expect(Object.values(JAPANESE_BUNDLE)).toContain(step.displayName);
       expect(Object.values(JAPANESE_BUNDLE)).toContain(step.description);

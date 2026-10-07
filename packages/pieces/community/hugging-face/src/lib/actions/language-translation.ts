@@ -14,7 +14,7 @@ export const languageTranslation = createAction({
     'Translate text between languages using specialized Hugging Face translation models',
   aiMetadata: {
     description:
-      'Translates a block of text with a dedicated Hugging Face machine-translation model, chosen either from the dropdown of Helsinki-NLP opus-mt language pairs or by passing any translation model ID in the custom-model field, which takes precedence over the dropdown. Use it instead of chat_completion whenever the task is purely translation, since these models are narrower and more consistent; the source and target language codes apply only to multilingual models, because a single-pair model already fixes the direction. Read-only and idempotent: it returns the translation and stores nothing.',
+      'Translates a block of text with a dedicated Hugging Face machine-translation model, chosen either from the dropdown of Helsinki-NLP opus-mt language pairs or by passing any translation model ID in the custom-model field, which takes precedence over the dropdown. Use it instead of generate_chat_completion whenever the task is purely translation, since these models are narrower and more consistent; the source and target language codes apply only to multilingual models, because a single-pair model already fixes the direction. Read-only and idempotent: it returns the translation and stores nothing.',
     idempotent: true,
   },
   outputSchema: languageTranslationOutputSchema,

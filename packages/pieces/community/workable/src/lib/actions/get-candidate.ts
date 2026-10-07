@@ -6,6 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const getCandidate = createAction({
   auth: workableAuth,
   name: 'getCandidate',
+  classification: 'READ',
   displayName: 'Get Candidate',
   description: "Gets candidate's information.",
   audience: 'both',

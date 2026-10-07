@@ -1,33 +1,51 @@
+import { AIProviderModelType, ProviderModelConfig } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export function ManualModelList({
-  modelIds,
+  models,
   onChange,
 }: {
-  modelIds: string[];
-  onChange: (modelIds: string[]) => void;
+  models: ProviderModelConfig[];
+  onChange: (models: ProviderModelConfig[]) => void;
 }) {
-  const [draft, setDraft] = useState('');
+  const [draftId, setDraftId] = useState('');
+  const [draftType, setDraftType] = useState<AIProviderModelType>(
+    AIProviderModelType.TEXT,
+  );
   const add = () => {
-    const value = draft.trim();
-    if (value.length === 0 || modelIds.includes(value)) {
+    const modelId = draftId.trim();
+    if (
+      modelId.length === 0 ||
+      models.some((model) => model.modelId === modelId)
+    ) {
       return;
     }
-    onChange([...modelIds, value]);
-    setDraft('');
+    onChange([
+      ...models,
+      { modelId, modelName: modelId, modelType: draftType },
+    ]);
+    setDraftId('');
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border/60">
-      <div className="flex max-w-xs items-center gap-2 p-3">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
+      <div className="flex items-center gap-2 p-3">
         <Input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          className="max-w-xs"
+          value={draftId}
+          onChange={(event) => setDraftId(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault();
@@ -36,31 +54,66 @@ export function ManualModelList({
           }}
           placeholder={t('e.g. openai/gpt-4o')}
         />
+        <Select
+          value={draftType}
+          onValueChange={(value) => setDraftType(modelTypeOf(value))}
+        >
+          <SelectTrigger className="w-28 shrink-0" aria-label={t('Model Type')}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.values(AIProviderModelType).map((type) => (
+              <SelectItem key={type} value={type}>
+                {modelTypeLabel(type)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button type="button" variant="outline" size="sm" onClick={add}>
           <Plus className="size-4" />
           {t('Add')}
         </Button>
       </div>
-      {modelIds.length === 0 ? (
-        <p className="border-t border-border/60 p-4 text-sm text-muted-foreground">
+      {models.length === 0 ? (
+        <p className="border-t border-gray-6/60 p-4 text-sm text-gray-11">
           {t(
             'This provider cannot list models automatically — add the model ids you want to expose.',
           )}
         </p>
       ) : (
-        <div className="flex flex-wrap gap-1.5 border-t border-border/60 p-3">
-          {modelIds.map((modelId) => (
+        <div className="flex flex-wrap gap-1.5 border-t border-gray-6/60 p-3">
+          {models.map((model) => (
             <span
-              key={modelId}
-              className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs"
+              key={model.modelId}
+              className="flex items-center gap-1.5 rounded-md bg-gray-3 px-2 py-1 font-mono text-xs"
             >
-              {modelId}
+              {model.modelId}
+              <button
+                type="button"
+                title={t('Model Type')}
+                onClick={() =>
+                  onChange(
+                    models.map((current) =>
+                      current.modelId === model.modelId
+                        ? { ...current, modelType: toggleModelType(current) }
+                        : current,
+                    ),
+                  )
+                }
+                className="rounded bg-gray-1 px-1 py-px font-sans text-xss uppercase tracking-wide text-gray-11 transition-colors hover:text-gray-12"
+              >
+                {modelTypeLabel(model.modelType)}
+              </button>
               <button
                 type="button"
                 onClick={() =>
-                  onChange(modelIds.filter((current) => current !== modelId))
+                  onChange(
+                    models.filter(
+                      (current) => current.modelId !== model.modelId,
+                    ),
+                  )
                 }
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-gray-11 transition-colors hover:text-gray-12"
               >
                 <X className="size-3" />
               </button>
@@ -70,4 +123,20 @@ export function ManualModelList({
       )}
     </div>
   );
+}
+
+function modelTypeOf(value: string): AIProviderModelType {
+  return value === AIProviderModelType.IMAGE
+    ? AIProviderModelType.IMAGE
+    : AIProviderModelType.TEXT;
+}
+
+function modelTypeLabel(modelType: AIProviderModelType): string {
+  return modelType === AIProviderModelType.IMAGE ? t('Image') : t('Text');
+}
+
+function toggleModelType(model: ProviderModelConfig): AIProviderModelType {
+  return model.modelType === AIProviderModelType.IMAGE
+    ? AIProviderModelType.TEXT
+    : AIProviderModelType.IMAGE;
 }

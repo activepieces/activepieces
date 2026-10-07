@@ -53,6 +53,7 @@ const inboundAssistantDropdown = () =>
 export const inboundCall = createTrigger({
     auth: famulorAuth,
     name: 'inboundCall',
+    classification: 'READ',
     displayName: 'Inbound Call Received',
     description: 'Triggers when an inbound call is received by your AI assistant.',
     aiMetadata: {

@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const listGroups = createAction({
   auth: villageAuth,
   name: 'list_groups',
+  classification: 'SEARCH',
   displayName: 'List Groups',
   description:
     'Get all groups (communities) you are a member of. Groups allow members to share network access with each other, expanding everyone\'s reach.',

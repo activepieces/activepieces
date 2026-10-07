@@ -9,6 +9,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
   export const getCertificationFolderSurvey = createAction({
     auth: wedofAuth,
     name: 'getCertificationFolderSurvey',
+    classification: 'READ',
     displayName: "Récupération d'une enquête",
     description: "Permet de récupérer une enquête associée à un dossier de certification",
     audience: 'both',

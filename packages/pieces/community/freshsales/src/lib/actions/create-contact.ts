@@ -9,6 +9,7 @@ import { freshsalesAuth } from '../auth';
 export const freshSalesCreateContact = createAction({
   auth: freshsalesAuth,
   name: 'freshsales_create_contact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Add new contact in Freshsales CRM',
   audience: 'both',

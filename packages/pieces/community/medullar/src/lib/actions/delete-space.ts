@@ -7,6 +7,7 @@ import { medullarPropsCommon } from '../common';
 export const deleteSpace = createAction({
   auth: medullarAuth,
   name: 'deleteSpace',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Space',
   description: 'Delete an existing Space.',
   audience: 'both',

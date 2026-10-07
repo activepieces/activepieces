@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getVolumeAction = createAction({
   name: 'get_volume',
+  classification: 'READ',
   displayName: 'Get Volume',
   description: 'Calculate the volume of a CAD file',
   audience: 'both',

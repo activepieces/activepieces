@@ -4,6 +4,7 @@ import { webscrapingAiAuth, webscrapingAiCommon } from '../common';
 export const scrapeWebsiteText = createAction({
   auth: webscrapingAiAuth,
   name: 'scrapeWebsiteText',
+  classification: 'READ',
   displayName: 'Scrape Website Text',
   description:
     'Returns the visible text content of a webpage specified by the URL.',

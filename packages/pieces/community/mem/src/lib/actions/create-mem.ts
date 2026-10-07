@@ -6,6 +6,7 @@ import { makeRequest } from '../common';
 export const createMemAction = createAction({
   auth: memAuth,
   name: 'create_mem',
+  classification: 'WRITE',
   displayName: 'Create Mem',
   description: 'Save any content to Mem.ai for intelligent processing and future reference.',
   audience: 'both',

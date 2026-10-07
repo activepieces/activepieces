@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/custom/empty';
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExploreTemplateCard } from '@/features/templates/components/explore-template-card';
 

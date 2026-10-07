@@ -16,18 +16,26 @@ import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 // Gate the UPDATE on the persisted owning run (activeRunId, claimed at turn start) so a run
 // preempted by a newer message matches zero rows — the ownership check is part of the write, with
 // no check-then-write window. A nil runId or unclaimed row (activeRunId IS NULL) writes freely.
-export async function updateConversationForRun({ conversationId, runId, updates }: {
+export async function updateConversationForRun({ conversationId, runId, updates, parameters, onlyWhileStreaming }: {
     conversationId: string
     runId?: string
     updates: Record<string, unknown>
+    parameters?: Record<string, unknown>
+    onlyWhileStreaming?: boolean
 }): Promise<boolean> {
     const builder = agentHelpers.conversationRepo()
         .createQueryBuilder()
         .update()
         .set(updates)
         .where('id = :id', { id: conversationId })
+    if (!isNil(parameters)) {
+        builder.setParameters(parameters)
+    }
     if (!isNil(runId)) {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
+    }
+    if (onlyWhileStreaming === true) {
+        builder.andWhere('status = :streamingStatus', { streamingStatus: AgentConversationStatus.STREAMING })
     }
     const result = await builder.returning('id').execute()
     const updatedRows: unknown[] = result.raw ?? []
@@ -58,6 +66,7 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
         platformId: conversation.platformId,
         userId: conversation.userId,
         source: conversation.source,
+        modelTierId: conversation.modelTierId ?? null,
         ...spreadIfDefined('agent', isNil(conversation.agentId) ? undefined : {
             id: conversation.agentId,
             ...spreadIfDefined('displayName', conversation.agent?.displayName),
@@ -65,13 +74,15 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
     }
 }
 
-export async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {
+export async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName, agentId, flowRunId }: {
     conversationId: string
     platformId: string
     userId: string
     source?: AgentRunSource
     projectId?: string | null
     modelName?: string | null
+    agentId?: string
+    flowRunId?: string
 }): Promise<AgentConversation> {
     if (source !== AgentRunSource.FLOW_STEP) {
         return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
@@ -89,6 +100,8 @@ export async function loadOrStartConversation({ conversationId, platformId, user
         projectId: projectId ?? null,
         userId,
         source: AgentRunSource.FLOW_STEP,
+        agentId: agentId ?? null,
+        flowRunId: flowRunId ?? null,
         title: null,
         modelName: modelName ?? null,
         messages: [],
@@ -188,6 +201,7 @@ export type ConfiguredToolRun = {
     platformId: string
     userId: string
     source: AgentRunSource
+    modelTierId: string | null
     agent?: { id: string, displayName?: string }
 }
 

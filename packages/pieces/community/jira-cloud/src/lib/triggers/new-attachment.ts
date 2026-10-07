@@ -8,6 +8,7 @@ import { jiraCloudAuth } from '../../auth';
 import { JiraPollingItem, createJiraPolling } from '../common/polling';
 import { ChangelogHistory } from '../common/types';
 
+import { newAttachmentTriggerOutputSchema } from '../output-schemas';
 type JiraAttachment = {
   id: string;
   self: string;
@@ -71,6 +72,7 @@ const polling = createJiraPolling({
 
 export const newAttachment = createTrigger({
   name: 'new_attachment',
+  classification: 'READ',
   displayName: 'New Attachment on Issue',
   description:
     'Fires when a file is attached to a Jira issue. Great for auto-saving screenshots to Google Drive, forwarding customer uploads to support tools, or archiving documents in S3.',
@@ -80,6 +82,7 @@ export const newAttachment = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: newAttachmentTriggerOutputSchema,
   props: {
     jql: Property.LongText({
       displayName: 'Only watch these issues (optional)',

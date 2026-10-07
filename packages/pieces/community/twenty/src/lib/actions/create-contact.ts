@@ -6,6 +6,7 @@ import { twentyRequest } from '../common';
 export const createContact = createAction({
   auth: twentyAuth,
   name: 'create_contact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Creates a new person record in your Twenty CRM workspace.',
   audience: 'both',

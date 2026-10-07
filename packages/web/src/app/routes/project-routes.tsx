@@ -18,6 +18,9 @@ import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
 import { ApprovalsPage } from './approvals';
 import { AutomationsPage } from './automations';
+import { LegacyPiecesRedirect } from './mcp-server/legacy-pieces-redirect';
+import { McpReachGuard } from './mcp-server/mcp-reach-guard';
+
 const AgentEditorPage = lazyWithRetry(
   () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
   'agent-editor',
@@ -89,22 +92,28 @@ const automationsPagePermissions = [
   Permission.READ_FOLDER,
 ];
 
+const agentEditorElement = (
+  <AgentsFlagGuard>
+    <ProjectDashboardLayout>
+      <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+        <PageTitle title="Agent">
+          <SuspenseWrapper>
+            <AgentEditorPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </RoutePermissionGuard>
+    </ProjectDashboardLayout>
+  </AgentsFlagGuard>
+);
+
 export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleAgent,
-    element: (
-      <AgentsFlagGuard>
-        <ProjectDashboardLayout>
-          <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
-            <PageTitle title="Agent">
-              <SuspenseWrapper>
-                <AgentEditorPage />
-              </SuspenseWrapper>
-            </PageTitle>
-          </RoutePermissionGuard>
-        </ProjectDashboardLayout>
-      </AgentsFlagGuard>
-    ),
+    element: agentEditorElement,
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.singleAgentRuns,
+    element: agentEditorElement,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.automations,
@@ -281,16 +290,20 @@ export const projectRoutes = [
     ),
   },
   {
+    path: '/mcp-server/pieces',
+    element: <LegacyPiecesRedirect />,
+  },
+  {
     path: '/mcp-server/:tab?',
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={[Permission.READ_MCP]}>
+        <McpReachGuard>
           <PageTitle title="MCP Server">
             <SuspenseWrapper>
               <McpServerPage />
             </SuspenseWrapper>
           </PageTitle>
-        </RoutePermissionGuard>
+        </McpReachGuard>
       </ProjectDashboardLayout>
     ),
   },

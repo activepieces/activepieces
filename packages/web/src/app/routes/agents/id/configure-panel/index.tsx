@@ -5,32 +5,36 @@ import {
   AgentIcon,
   AgentToolType,
   ColorName,
+  PICKABLE_COLOR_NAMES,
   DEFAULT_AGENT_MAX_STEPS,
   MAX_AGENT_STEP_BUDGET,
   PROJECT_COLOR_PALETTE,
+  PROJECT_COLOR_SWATCH,
   UpdateAgentRequest,
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { ChevronRight, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useForm } from 'react-hook-form';
-import { unstable_useBlocker, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { Dot } from '@/components/custom/dot';
-import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  LeaveWithoutSavingDialog,
+  useWarnBeforeLosingChanges,
+} from '@/components/custom/leave-without-saving';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -101,7 +105,7 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
   return (
     <FormItem className="flex flex-col gap-2">
       <PanelSectionLabel label={t('Project')} />
-      <div className="flex items-center justify-between gap-3 rounded-[10px] border border-border px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3 rounded-[10px] border border-gray-6 px-3 py-2.5">
         <ApProjectDisplay
           title={getProjectName(home)}
           icon={home.icon}
@@ -148,10 +152,10 @@ const AgentDangerZone = ({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border pt-5">
+    <div className="flex flex-col gap-2 border-t border-gray-6 pt-5">
       <PanelSectionLabel label={t('Delete this agent')} />
       <div className="flex items-start justify-between gap-4">
-        <span className="text-sm leading-5 text-muted-foreground">
+        <span className="text-sm leading-5 text-gray-11">
           {t(
             'Its instructions, its tools, and every conversation held with it go with it.',
           )}
@@ -169,7 +173,7 @@ const AgentDangerZone = ({
             type="button"
             variant="outline"
             size="sm"
-            className="shrink-0 gap-2 text-destructive hover:text-destructive"
+            className="shrink-0 gap-2 text-danger-11 hover:text-danger-11"
             onClick={() => setDeleting(true)}
           >
             <Trash2 size={14} />
@@ -185,11 +189,11 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border pt-5">
+    <div className="flex flex-col gap-2 border-t border-gray-6 pt-5">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-fit items-center gap-1.5 text-xs font-medium leading-4 text-muted-foreground transition-colors hover:text-foreground"
+        className="flex w-fit items-center gap-1.5 text-xs font-medium leading-4 text-gray-11 transition-colors hover:text-gray-12"
       >
         <ChevronRight
           size={14}
@@ -242,7 +246,7 @@ const ConfigureBehaviorTab = ({
       <FormItem className="flex flex-col gap-2">
         <PanelSectionLabel label={t('Model')} />
         {needsModel && (
-          <p className="text-[13px] leading-4 text-destructive">
+          <p className="text-[13px] leading-4 text-danger-11">
             {t('Pick a model so this agent can answer.')}
           </p>
         )}
@@ -374,7 +378,7 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Shape')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-border p-3">
+          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-gray-6 p-3">
             {Object.values(AgentIcon).map((iconName) => (
               <button
                 key={iconName}
@@ -383,7 +387,7 @@ const ConfigureSettingsTab = ({
                 onClick={() => field.onChange(iconName)}
                 className={cn(
                   'flex items-center justify-center rounded-[10px] p-[3px]',
-                  field.value === iconName && 'ring-2 ring-foreground',
+                  field.value === iconName && 'ring-2 ring-gray-12',
                 )}
               >
                 <AgentMark
@@ -404,8 +408,8 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Color')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-border p-3">
-            {Object.values(ColorName).map((colorName) => (
+          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-gray-6 p-3">
+            {PICKABLE_COLOR_NAMES.map((colorName) => (
               <button
                 key={colorName}
                 type="button"
@@ -413,7 +417,8 @@ const ConfigureSettingsTab = ({
                 onClick={() => field.onChange(colorName)}
                 className={cn(
                   'flex items-center justify-center rounded-full p-[3px]',
-                  field.value === colorName && 'ring-2 ring-foreground',
+                  PROJECT_COLOR_SWATCH[field.value] ===
+                    PROJECT_COLOR_SWATCH[colorName] && 'ring-2 ring-gray-12',
                 )}
               >
                 <span
@@ -446,70 +451,6 @@ const PanelSectionLabel = ({
   </FormLabel>
 );
 
-const useWarnBeforeLosingChanges = ({
-  hasChanges,
-  standDown,
-}: {
-  hasChanges: boolean;
-  standDown: React.RefObject<boolean>;
-}) => {
-  const blocker = unstable_useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasChanges &&
-      standDown.current !== true &&
-      currentLocation.pathname !== nextLocation.pathname,
-  );
-
-  useEffect(() => {
-    if (!hasChanges) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      if (standDown.current === true) return;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [hasChanges]);
-
-  return blocker;
-};
-
-const LeaveWithoutSavingDialog = ({
-  open,
-  onKeepEditing,
-  onDiscard,
-}: {
-  open: boolean;
-  onKeepEditing: () => void;
-  onDiscard: () => void;
-}) => (
-  <Dialog
-    open={open}
-    onOpenChange={(next) => {
-      if (!next) onKeepEditing();
-    }}
-  >
-    <DialogContent className="max-w-[420px]">
-      <DialogHeader>
-        <DialogTitle>{t('Leave without saving?')}</DialogTitle>
-        <DialogDescription>
-          {t(
-            'These edits have not gone live yet. Leave now and they are discarded.',
-          )}
-        </DialogDescription>
-      </DialogHeader>
-      <DialogFooter>
-        <Button variant="outline" onClick={onKeepEditing}>
-          {t('Keep editing')}
-        </Button>
-        <Button variant="destructive" onClick={onDiscard}>
-          {t('Discard changes')}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
-
 const formValuesOf = (agent: Agent): ConfigureAgentInput => ({
   displayName: agent.displayName,
   description: agent.description ?? '',
@@ -536,12 +477,12 @@ const ScrollFade = ({
   return (
     <div className={cn('relative', className)}>
       {scrolled && (
-        <div className="pointer-events-none absolute left-0 right-0 top-0 z-[1] h-5 bg-gradient-to-b from-background to-transparent" />
+        <div className="pointer-events-none absolute left-0 right-0 top-0 z-[1] h-5 bg-gradient-to-b from-gray-1 to-transparent" />
       )}
       <div
         ref={bodyRef}
         onScroll={() => setScrolled((bodyRef.current?.scrollTop ?? 0) > 5)}
-        className="scrollbar-thin h-full overflow-y-auto"
+        className="h-full overflow-y-auto"
       >
         {children}
       </div>
@@ -549,13 +490,10 @@ const ScrollFade = ({
   );
 };
 
-const AgentConfigurePanel = ({
-  agent,
-  onExit,
-}: {
-  agent: Agent;
-  onExit: () => void;
-}) => {
+const AgentConfigurePanel = forwardRef<
+  AgentConfigurePanelHandle,
+  { agent: Agent; onExit: () => void }
+>(({ agent, onExit }, ref) => {
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
     defaultValues: formValuesOf(agent),
@@ -658,6 +596,7 @@ const AgentConfigurePanel = ({
   };
 
   const requestExit = () => (unsavedTyping ? setExitRequested(true) : onExit());
+  useImperativeHandle(ref, () => ({ requestExit }));
 
   return (
     <Form {...form}>
@@ -684,13 +623,13 @@ const AgentConfigurePanel = ({
           defaultValue="behavior"
           className="flex min-h-0 grow flex-col gap-0"
         >
-          <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-border px-[18px]">
+          <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 px-[18px]">
             <div className="flex min-w-0 items-center gap-2">
               <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
                 {t('Configure')}
               </span>
               {unsavedTyping && (
-                <span className="flex shrink-0 items-center gap-1.5 text-xs leading-4 text-muted-foreground animate-in fade-in duration-200">
+                <span className="flex shrink-0 items-center gap-1.5 text-xs leading-4 text-gray-11 animate-in fade-in duration-200">
                   <Dot variant="primary" className="size-1.5" />
                   {t('Unsaved')}
                 </span>
@@ -723,13 +662,13 @@ const AgentConfigurePanel = ({
                 size="icon"
                 aria-label={t('Close')}
                 onClick={requestExit}
-                className="size-7 shrink-0 text-muted-foreground"
+                className="size-7 shrink-0 text-gray-11"
               >
                 <X size={16} />
               </Button>
             </div>
           </div>
-          <div className="flex h-[44px] shrink-0 items-stretch border-b border-border px-[18px]">
+          <div className="flex h-[44px] shrink-0 items-stretch border-b border-gray-6 px-[18px]">
             <TabsList variant="outline" className="h-full items-stretch gap-5">
               <TabsTrigger
                 value="behavior"
@@ -768,7 +707,7 @@ const AgentConfigurePanel = ({
                 />
               </TabsContent>
               {form.formState.errors.root?.serverError && (
-                <p className="mt-5 text-sm leading-4 text-destructive">
+                <p className="mt-5 text-sm leading-4 text-danger-11">
                   {form.formState.errors.root.serverError.message}
                 </p>
               )}
@@ -778,6 +717,8 @@ const AgentConfigurePanel = ({
       </form>
     </Form>
   );
-};
+});
+AgentConfigurePanel.displayName = 'AgentConfigurePanel';
 
-export { AgentConfigurePanel, LeaveWithoutSavingDialog };
+export { AgentConfigurePanel };
+export type AgentConfigurePanelHandle = { requestExit: () => void };

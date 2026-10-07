@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const findReceivablesInvoices = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'find_receivables_invoices',
+    classification: 'SEARCH',
     displayName: 'Find Receivables Invoices',
     description: 'Search for receivables invoices with optional filters.',
     audience: 'both',

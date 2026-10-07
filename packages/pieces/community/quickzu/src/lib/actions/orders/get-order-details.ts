@@ -5,6 +5,7 @@ import { makeClient, quickzuCommon } from '../../common';
 export const getOrderDetailsAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_get_order_details',
+  classification: 'READ',
   displayName: 'Get Order Details',
   description: 'Retrieves order details from store.',
   audience: 'both',

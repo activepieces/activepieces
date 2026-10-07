@@ -25,6 +25,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksDeskto
 export const newOrUpdatedInvoiceTrigger = createTrigger({
   auth: quickbooksDesktopConductorAuth,
   name: 'new_or_updated_invoice',
+  classification: 'READ',
   displayName: 'New or Updated Invoice',
   description: 'Fires when an invoice is created or updated (e.g. line items, balance, or payment status changed) in QuickBooks Desktop. One event per invoice change, not create-only.',
   aiMetadata: {

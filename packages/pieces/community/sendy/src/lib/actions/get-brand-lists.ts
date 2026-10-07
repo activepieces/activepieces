@@ -4,6 +4,7 @@ import { sendyAuth } from '../auth';
 
 export const getListsAction = createAction({
   name: 'get_brand_lists',
+  classification: 'SEARCH',
   auth: sendyAuth,
   displayName: 'Get Lists for a Brand',
   description: 'Get the Lists for a Brand',

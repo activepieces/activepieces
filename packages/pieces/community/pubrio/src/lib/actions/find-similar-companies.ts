@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const findSimilarCompanies = createAction({
   auth: pubrioAuth,
   name: 'find_similar_companies',
+  classification: 'SEARCH',
   displayName: 'Find Similar Companies',
   description:
     'Find companies similar to a given company by domain or LinkedIn URL',

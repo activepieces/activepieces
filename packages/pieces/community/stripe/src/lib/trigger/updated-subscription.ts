@@ -23,7 +23,7 @@ export const stripeUpdatedSubscription = createTrigger({
   name: 'updated_subscription',
   classification: 'READ',
   displayName: 'Updated Subscription',
-  description: 'Fires when an existing subscription is changed.',
+  description: 'Fires when a subscription changes, e.g. status or plan.',
   aiMetadata: {
     description:
       'Fires when an existing subscription is updated in Stripe (the customer.subscription.updated event), emitting the changed subscription. Optional filters narrow firing to a target new status or a specific customer ID. Use to react to plan changes, status transitions, or quantity updates.',
@@ -31,13 +31,12 @@ export const stripeUpdatedSubscription = createTrigger({
   props: {
     status: Property.StaticDropdown({
       displayName: 'New Status',
-      description:
-        'Only trigger when the subscription is updated to this status.',
+      description: "Only updates where the subscription's status is this.",
       required: false,
       options: {
         options: [
           { label: 'Incomplete', value: 'incomplete' },
-          { label: 'Incomplete - Expired', value: 'incomplete_expired' },
+          { label: 'Incomplete Expired', value: 'incomplete_expired' },
           { label: 'Trialing', value: 'trialing' },
           { label: 'Active', value: 'active' },
           { label: 'Past Due', value: 'past_due' },
@@ -49,8 +48,8 @@ export const stripeUpdatedSubscription = createTrigger({
     }),
     customer: Property.ShortText({
       displayName: 'Customer ID',
-      description:
-        'Only trigger for subscriptions belonging to this customer ID (e.g., `cus_...`).',
+      description: 'Only subscriptions for this customer. Empty: all.',
+      placeholder: 'cus_...',
       required: false,
     }),
   },

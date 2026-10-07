@@ -6,6 +6,7 @@ import { trueLayerCommon } from '../../common';
 export const createPayout = createAction({
   auth: trueLayerCommon.auth,
   name: 'create-payout',
+  classification: 'WRITE',
   displayName: 'Create payout',
   description: 'Pay out from one of your merchant accounts. ',
   audience: 'both',

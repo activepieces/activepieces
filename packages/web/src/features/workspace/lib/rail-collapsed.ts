@@ -8,10 +8,15 @@ const STORAGE_KEY = 'primary-rail-collapsed';
 // Inside one agent the rail is furniture: the page has its own header, its own
 // conversation list and its own panel. The route only asks for it closed, so an
 // explicit click on that page still wins until you navigate on.
-const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = [
+const AGENT_ROUTES = [
   routesThatRequireProjectId.singleAgent,
-  `/projects/:projectId${routesThatRequireProjectId.singleAgent}`,
+  routesThatRequireProjectId.singleAgentRuns,
 ];
+
+const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = AGENT_ROUTES.flatMap((route) => [
+  route,
+  `/projects/:projectId${route}`,
+]);
 
 function readInitial(): boolean {
   return localStorage.getItem(STORAGE_KEY) === 'true';

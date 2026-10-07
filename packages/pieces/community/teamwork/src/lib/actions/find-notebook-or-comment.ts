@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findNotebookOrComment = createAction({
 	name: 'find_notebook_or_comment',
+	classification: 'SEARCH',
 	displayName: 'Find Notebook / Notebook Comment',
 	description: 'Locate notebooks or note comments by search parameters.',
 	audience: 'both',
