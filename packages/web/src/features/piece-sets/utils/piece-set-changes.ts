@@ -264,8 +264,14 @@ function countRequiredActions(config: PieceSet['config']): number {
   return Object.values(config.requiredActions.actions).flat().length;
 }
 
-function sameConfig(a: PieceSet['config'], b: PieceSet['config']): boolean {
-  return canonicalConfig(a) === canonicalConfig(b);
+function sameConfig({
+  left,
+  right,
+}: {
+  left: PieceSet['config'];
+  right: PieceSet['config'];
+}): boolean {
+  return canonicalConfig(left) === canonicalConfig(right);
 }
 
 function canonicalConfig(config: PieceSet['config']): string {
@@ -297,7 +303,6 @@ export const pieceSetChanges = {
   isActionAllowed,
   countRequiredActions,
   sameConfig,
-  setPieceVisible,
 };
 
 export type PieceSetChange =

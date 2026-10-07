@@ -86,7 +86,7 @@ export function PlatformNav() {
             { to: '/platform/pieces', label: t('Pieces'), end: true },
             {
               to: '/platform/pieces/piece-sets',
-              label: t('{title}', pieceSetTerms.get()),
+              label: pieceSetTerms.get().title,
               locked: !platform.plan.managePiecesEnabled,
               tier: PLATFORM_FEATURES.pieces.tier,
             },

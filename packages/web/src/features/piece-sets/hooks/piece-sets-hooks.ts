@@ -10,6 +10,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { toast } from 'sonner';
 
 import { pieceCacheUtils } from '@/features/pieces';
@@ -101,50 +102,63 @@ export const pieceSetMutations = {
   useChangePieceSet: (id: string) => {
     const queryClient = useQueryClient();
     const queryKey = pieceSetKeys.one(id);
+    const mutationKey = [...queryKey, 'change'];
+    const latestChange = useRef(0);
+    const isLastPending = () => queryClient.isMutating({ mutationKey }) <= 1;
     const mutation = useMutation({
+      mutationKey,
       scope: { id: `piece-set-${id}` },
       mutationFn: async ({ change }: ChangeVariables) => {
-        const latest =
-          queryClient.getQueryData<PieceSet>(queryKey) ??
-          (await pieceSetsApi.get(id));
-        return pieceSetsApi.update(
+        const before = await pieceSetsApi.get(id);
+        const updated = await pieceSetsApi.update(
           id,
-          pieceSetChanges.toRequest({ pieceSet: latest, change }),
+          pieceSetChanges.toRequest({ pieceSet: before, change }),
         );
+        return { before, updated };
       },
       onMutate: async ({ change }) => {
         await queryClient.cancelQueries({ queryKey });
-        const previous = queryClient.getQueryData<PieceSet>(queryKey);
-        if (previous !== undefined) {
+        const current = queryClient.getQueryData<PieceSet>(queryKey);
+        if (current !== undefined) {
           queryClient.setQueryData(
             queryKey,
-            pieceSetChanges.apply({ pieceSet: previous, change }),
+            pieceSetChanges.apply({ pieceSet: current, change }),
           );
         }
-        return { previous };
       },
-      onSuccess: (updated, { change, isUndo }, context) => {
-        queryClient.setQueryData(queryKey, updated);
-        const previous = context?.previous;
+      onSuccess: ({ before, updated }, { change, isUndo }) => {
+        if (isLastPending()) {
+          queryClient.setQueryData(queryKey, updated);
+        }
+        latestChange.current += 1;
+        const changeNumber = latestChange.current;
         toast.success(
           isUndo ? t('Change undone') : describeChange(change),
-          isUndo || previous === undefined
+          isUndo
             ? undefined
             : {
                 action: {
                   label: t('Undo'),
-                  onClick: () =>
+                  onClick: () => {
+                    if (changeNumber !== latestChange.current) {
+                      toast.info(t('Only the latest change can be undone'));
+                      return;
+                    }
                     mutation.mutate({
-                      change: pieceSetChanges.inverse({ previous, change }),
+                      change: pieceSetChanges.inverse({
+                        previous: before,
+                        change,
+                      }),
                       isUndo: true,
-                    }),
+                    });
+                  },
                 },
               },
         );
       },
-      onError: (error, _, context) => {
-        if (context?.previous !== undefined) {
-          queryClient.setQueryData(queryKey, context.previous);
+      onError: (error) => {
+        if (isLastPending()) {
+          queryClient.invalidateQueries({ queryKey }).catch(() => undefined);
         }
         toast.error(t("Couldn't save changes"), {
           description: errorDescription(error),

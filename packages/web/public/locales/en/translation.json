@@ -3386,7 +3386,6 @@
   "All of these actions": "All of these actions",
   "Allow": "Allow",
   "Allow automatically": "Allow automatically",
-  "Allow new pieces": "Allow new pieces",
   "Allow pieces from the Blocked tab.": "Allow pieces from the Blocked tab.",
   "Allow {name}": "Allow {name}",
   "Allowed": "Allowed",
@@ -3411,7 +3410,6 @@
   "Every action below has to be in the flow.": "Every action below has to be in the flow.",
   "Every other project": "Every other project",
   "Every piece": "Every piece",
-  "Every piece except {count}": "Every piece except {count}",
   "Everything": "Everything",
   "Flows can be published without using any particular action.": "Flows can be published without using any particular action.",
   "Install a piece and it shows up here.": "Install a piece and it shows up here.",
@@ -3502,10 +3500,11 @@
   "This {term} no longer exists": "This {term} no longer exists",
   "piece {terms}": "piece {terms}",
   "this {term}": "this {term}",
-  "{Term}": "{Term}",
   "{Term} created": "{Term} created",
   "{Term} duplicated": "{Term} duplicated",
   "{count, plural, =0 {No projects use this {term}.} =1 {1 project moves to the Default {term}.} other {# projects move to the Default {term}.}}": "{count, plural, =0 {No projects use this {term}.} =1 {1 project moves to the Default {term}.} other {# projects move to the Default {term}.}}",
-  "{titleSingular}": "{titleSingular}",
-  "{title}": "{title}"
+  "Only the latest change can be undone": "Only the latest change can be undone",
+  "Another {term} already uses this name. Pick a different name.": "Another {term} already uses this name. Pick a different name.",
+  "Limit actions for {name}": "Limit actions for {name}",
+  "{count, plural, =1 {Every piece except 1} other {Every piece except # pieces}}": "{count, plural, =1 {Every piece except 1} other {Every piece except # pieces}}"
 }

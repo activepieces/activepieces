@@ -379,7 +379,7 @@ function ComponentSection({
                     {item.data.displayName}
                   </span>
                   {item.data.description && (
-                    <p className="truncate text-xs text-gray-11">
+                    <p className="text-xs text-gray-11">
                       {item.data.description}
                     </p>
                   )}
@@ -407,10 +407,10 @@ function hiddenNames({
   allNames: string[];
   selected: string[] | undefined;
 }): string[] {
-  if (mode !== 'selected') {
+  if (mode !== 'selected' || selected === undefined) {
     return [];
   }
-  return allNames.filter((name) => !(selected ?? []).includes(name));
+  return allNames.filter((name) => !selected.includes(name));
 }
 
 function sortedKey(names: string[]): string {

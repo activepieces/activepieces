@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { pieceSetFormErrors } from './piece-set-form-errors';
@@ -46,6 +47,7 @@ const DuplicatePieceSetForm = ({
   sourceName: string;
 }) => {
   const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
   const form = useForm<z.infer<typeof DuplicatePieceSetRequestBody>>({
     resolver: zodResolver(DuplicatePieceSetRequestBody),
     defaultValues: { name: t('{name} copy', { name: sourceName }) },
@@ -54,7 +56,12 @@ const DuplicatePieceSetForm = ({
 
   const { mutate: duplicateSet, isPending } =
     pieceSetMutations.useDuplicatePieceSet({
-      onError: (error) => pieceSetFormErrors.show({ form, error }),
+      onError: (error) =>
+        pieceSetFormErrors.show({
+          form,
+          error,
+          showKey: platform.plan.embeddingEnabled,
+        }),
     });
 
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {

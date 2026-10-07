@@ -63,6 +63,7 @@ const CreatePieceSetForm = ({
         form,
         error,
         keyField: showKey ? 'key' : undefined,
+        showKey,
       }),
   });
 

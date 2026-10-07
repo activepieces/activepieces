@@ -51,7 +51,9 @@ const EditPieceSetForm = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const showKey = platform.plan.embeddingEnabled;
   const form = useForm<FormValues>({
-    resolver: zodResolver(showKey ? formSchemaWithKey : formSchema),
+    resolver: zodResolver(
+      showKey && currentKey !== null ? formSchemaWithKey : formSchema,
+    ),
     defaultValues: {
       name: currentName,
       key: currentKey ?? '',
@@ -65,6 +67,7 @@ const EditPieceSetForm = ({
         form,
         error,
         keyField: showKey ? 'key' : undefined,
+        showKey,
       }),
   });
 
@@ -76,7 +79,7 @@ const EditPieceSetForm = ({
     updateSet(
       {
         id,
-        request: showKey ? { name, key } : { name },
+        request: showKey && key !== '' ? { name, key } : { name },
       },
       { onSuccess: () => onOpenChange(false) },
     );

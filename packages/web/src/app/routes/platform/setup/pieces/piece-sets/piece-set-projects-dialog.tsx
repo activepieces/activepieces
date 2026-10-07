@@ -244,7 +244,12 @@ export const PieceSetProjectsDialog = ({
             <DataFetchErrorState entity={t('projects')} onRetry={refetch} />
           </>
         ) : isLoading ? (
-          <SkeletonRows count={5} className="h-9 rounded-lg" />
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('Assign projects')}</DialogTitle>
+            </DialogHeader>
+            <SkeletonRows count={5} className="h-9 rounded-lg" />
+          </>
         ) : (
           <AssignProjectsForm
             key={open ? 'open' : 'closed'}

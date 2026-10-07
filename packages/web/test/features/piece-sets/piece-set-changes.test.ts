@@ -118,9 +118,12 @@ describe('pieceSetChanges.inverse', () => {
       pieceSet: changed,
       change: pieceSetChanges.inverse({ previous, change }),
     });
-    expect(pieceSetChanges.sameConfig(undone.config, previous.config)).toBe(
-      true,
-    );
+    expect(
+      pieceSetChanges.sameConfig({
+        left: undone.config,
+        right: previous.config,
+      }),
+    ).toBe(true);
   });
 
   it('restores the curated actions of a piece', () => {
@@ -162,9 +165,12 @@ describe('pieceSetChanges.inverse', () => {
       pieceSet: blocked,
       change: pieceSetChanges.inverse({ previous, change }),
     });
-    expect(pieceSetChanges.sameConfig(undone.config, previous.config)).toBe(
-      true,
-    );
+    expect(
+      pieceSetChanges.sameConfig({
+        left: undone.config,
+        right: previous.config,
+      }),
+    ).toBe(true);
   });
 
   it('restores the previous publishing rule', () => {
@@ -240,31 +246,31 @@ describe('pieceSetChanges.toRequest', () => {
 describe('pieceSetChanges.sameConfig', () => {
   it('ignores the order of exceptions and selections', () => {
     expect(
-      pieceSetChanges.sameConfig(
-        pieceSet({
+      pieceSetChanges.sameConfig({
+        left: pieceSet({
           pieces: {
             mode: PieceSelectionMode.EXCLUDE_ALL,
             exceptions: ['a', 'b'],
           },
         }).config,
-        pieceSet({
+        right: pieceSet({
           pieces: {
             mode: PieceSelectionMode.EXCLUDE_ALL,
             exceptions: ['b', 'a'],
           },
         }).config,
-      ),
+      }),
     ).toBe(true);
   });
 
   it('notices a changed mode', () => {
     expect(
-      pieceSetChanges.sameConfig(
-        pieceSet().config,
-        pieceSet({
+      pieceSetChanges.sameConfig({
+        left: pieceSet().config,
+        right: pieceSet({
           requiredActions: { mode: RequiredActionsMode.ALL, actions: {} },
         }).config,
-      ),
+      }),
     ).toBe(false);
   });
 });

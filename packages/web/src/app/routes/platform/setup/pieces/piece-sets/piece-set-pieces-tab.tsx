@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { AdminEmpty, SettingsPanel } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { SearchInput } from '@/components/custom/search-input';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
@@ -232,27 +233,11 @@ export const PieceSetPiecesTab = ({
             const allowed = access !== 'blocked';
             return (
               <div
-                {...adminControl(
-                  allowed ? AdminControl.PIECE_SETS_COMPONENTS_OPEN : undefined,
-                )}
                 key={piece.name}
-                role={allowed ? 'button' : undefined}
-                tabIndex={allowed ? 0 : undefined}
                 onClick={allowed ? () => setManagingPiece(piece) : undefined}
-                onKeyDown={(event) => {
-                  if (
-                    allowed &&
-                    event.target === event.currentTarget &&
-                    (event.key === 'Enter' || event.key === ' ')
-                  ) {
-                    event.preventDefault();
-                    setManagingPiece(piece);
-                  }
-                }}
                 className={cn(
                   'flex h-12 items-center gap-3 rounded-lg border-t border-gray-6 px-3 outline-hidden',
-                  allowed &&
-                    'cursor-pointer hover:bg-gray-2 focus-visible:bg-gray-2',
+                  allowed && 'cursor-pointer hover:bg-gray-2',
                 )}
               >
                 <span onClick={(event) => event.stopPropagation()}>
@@ -269,14 +254,16 @@ export const PieceSetPiecesTab = ({
                   logoUrl={piece.logoUrl}
                   showTooltip={false}
                 />
-                <span
-                  className={cn(
-                    'min-w-0 flex-1 truncate text-sm font-medium',
-                    allowed ? 'text-gray-12' : 'text-gray-11',
-                  )}
-                >
-                  {piece.displayName}
-                </span>
+                <TextWithTooltip tooltipMessage={piece.displayName}>
+                  <span
+                    className={cn(
+                      'min-w-0 flex-1 truncate text-sm font-medium',
+                      allowed ? 'text-gray-12' : 'text-gray-11',
+                    )}
+                  >
+                    {piece.displayName}
+                  </span>
+                </TextWithTooltip>
                 <span
                   className={cn(
                     'hidden shrink-0 items-center gap-1.5 text-sm tabular-nums sm:flex',
@@ -308,10 +295,22 @@ export const PieceSetPiecesTab = ({
                     }
                   />
                 </span>
-                <ChevronRight
-                  aria-hidden
-                  className={cn('size-4 text-gray-9', !allowed && 'invisible')}
-                />
+                <Button
+                  {...adminControl(AdminControl.PIECE_SETS_COMPONENTS_OPEN)}
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('Limit actions for {name}', {
+                    name: piece.displayName,
+                  })}
+                  disabled={!allowed}
+                  className={cn(!allowed && 'invisible')}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setManagingPiece(piece);
+                  }}
+                >
+                  <ChevronRight className="text-gray-9" />
+                </Button>
               </div>
             );
           })}

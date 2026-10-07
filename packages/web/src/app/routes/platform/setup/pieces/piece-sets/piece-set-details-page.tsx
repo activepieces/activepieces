@@ -79,7 +79,7 @@ function LivePieceSetDetails({ id }: { id: string }) {
       <AdminPage>
         <AdminPageHeader
           back={backLink()}
-          title={t('{titleSingular}', pieceSetTerms.get())}
+          title={pieceSetTerms.get().titleSingular}
         />
         <AdminEmpty
           icon={<Boxes />}
@@ -105,7 +105,7 @@ function LivePieceSetDetails({ id }: { id: string }) {
       <AdminPage>
         <AdminPageHeader
           back={backLink()}
-          title={t('{titleSingular}', pieceSetTerms.get())}
+          title={pieceSetTerms.get().titleSingular}
         />
         <SettingsPanel flush>
           <DataFetchErrorState
@@ -374,7 +374,6 @@ function PieceSetDetails({
                 </span>
                 <Switch
                   {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
-                  aria-label={t('Allow new pieces')}
                   checked={includesNewPieces}
                   disabled={piecesLoading}
                   onCheckedChange={toggleNewPieces}
@@ -507,7 +506,7 @@ function DetailsColumns({
 function backLink() {
   return {
     to: '/platform/pieces/piece-sets',
-    label: t('{title}', pieceSetTerms.get()),
+    label: pieceSetTerms.get().title,
   };
 }
 

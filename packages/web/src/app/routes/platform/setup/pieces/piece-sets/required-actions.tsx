@@ -557,7 +557,7 @@ function ActionPicker({
                       {action.displayName}
                     </span>
                     {action.description && (
-                      <span className="truncate text-xs text-gray-11">
+                      <span className="text-xs text-gray-11">
                         {action.description}
                       </span>
                     )}

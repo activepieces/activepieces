@@ -31,6 +31,7 @@ import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -168,15 +169,17 @@ function PieceSetsList({
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t('{Term}', pieceSetTerms.get())}
+            title={pieceSetTerms.get().Term}
           />
         ),
         cell: ({ row }) => (
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="flex min-w-0 items-center gap-2">
-              <span className="truncate font-medium text-gray-12">
-                {row.original.name}
-              </span>
+              <TextWithTooltip tooltipMessage={row.original.name}>
+                <span className="truncate font-medium text-gray-12">
+                  {row.original.name}
+                </span>
+              </TextWithTooltip>
               {row.original.isDefault && (
                 <Badge variant="outline">{t('Default')}</Badge>
               )}
@@ -335,7 +338,7 @@ function PieceSetsList({
   return (
     <AdminPage>
       <AdminPageHeader
-        title={t('{title}', pieceSetTerms.get())}
+        title={pieceSetTerms.get().title}
         description={t(
           'A {term} decides which pieces, actions and triggers its projects can use, and which actions a flow must use before it can be published.',
           pieceSetTerms.get(),
@@ -459,7 +462,10 @@ function selectionSentence(set: PieceSet): string {
   if (set.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL) {
     return count === 0
       ? t('Every piece')
-      : t('Every piece except {count}', { count });
+      : t(
+          '{count, plural, =1 {Every piece except 1} other {Every piece except # pieces}}',
+          { count },
+        );
   }
   return t('{count, plural, =1 {Only 1 piece} other {Only # pieces}}', {
     count,
