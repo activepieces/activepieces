@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  newMemberSettingsUtils,
   PlatformWithoutSensitiveData,
   ProjectWithLimits,
   ProjectType,
@@ -20,10 +21,12 @@ import {
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
-
-type ProjectsTableColumnsProps = {
-  platform: PlatformWithoutSensitiveData;
-};
+import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export const projectsTableColumns = ({
   platform,
@@ -42,12 +45,21 @@ export const projectsTableColumns = ({
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
         const isPersonal = row.original.type === ProjectType.PERSONAL;
+        const isDefault = newMemberSettingsUtils
+          .activeDefaultProjectIds({
+            defaultProjectIds: platform.defaultProjectIds,
+            projectRolesEnabled: platform.plan.projectRolesEnabled,
+          })
+          .includes(row.original.id);
 
         return (
           <div className="text-left flex items-center justify-start ">
             {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
             {isPersonal && <User className="size-4 mr-1.5"></User>}
-            <span className="font-medium">{row.original.displayName}</span>
+            <span className="flex items-baseline gap-1.5">
+              <span className="font-medium">{row.original.displayName}</span>
+              {isDefault && <DefaultProjectBadge />}
+            </span>
           </div>
         );
       },
@@ -169,4 +181,26 @@ export const projectsTableColumns = ({
   });
 
   return columns;
+};
+
+function DefaultProjectBadge() {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge
+          variant="accent"
+          className="h-4 px-1.5 py-0 text-xss leading-none"
+        >
+          {t('Default')}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        {t('All new members join this project as Editors.')}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+type ProjectsTableColumnsProps = {
+  platform: PlatformWithoutSensitiveData;
 };

@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, ProjectType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -33,6 +33,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
                 break
             case InvitationType.PLATFORM:
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                await assertPlatformInviteProject({ app, request, reply, invitation: request.body, platformId: request.principal.platform.id })
                 break
         }
         const platformId = request.principal.platform.id
@@ -44,8 +45,8 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             type,
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
-            projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
-            projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
+            projectId: request.body.projectId ?? null,
+            projectRoleId: projectRole?.id ?? null,
             status,
         }
 
@@ -132,11 +133,10 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
 
 
 const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest): Promise<ProjectRole | null> => {
-    const { type } = request
-    if (type === InvitationType.PLATFORM) {
+    const projectRoleName = request.projectRole
+    if (isNil(projectRoleName)) {
         return null
     }
-    const projectRoleName = request.projectRole
 
     const projectRole = await projectRoleService.getOneOrThrow({
         name: projectRoleName,
@@ -144,6 +144,30 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     })
     return projectRole
 }
+async function assertPlatformInviteProject({ app, request, reply, invitation, platformId }: AssertPlatformInviteProjectParams): Promise<void> {
+    if (invitation.type !== InvitationType.PLATFORM || (isNil(invitation.projectId) && isNil(invitation.projectRole))) {
+        return
+    }
+    if (isNil(invitation.projectId) || isNil(invitation.projectRole)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'projectId and projectRole must be sent together',
+            },
+        })
+    }
+    await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(app, request, reply)
+    const project = await projectService(request.log).getOne(invitation.projectId)
+    if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'The project must be a team project of this platform',
+            },
+        })
+    }
+}
+
 async function getProjectIdAndAssertPermission<R extends Principal>(
     app: FastifyInstance,
     request: FastifyRequest,
@@ -267,6 +291,14 @@ const UpsertUserInvitationRequestParams = {
             [StatusCodes.CREATED]: UserInvitationWithLink,
         },
     },
+}
+
+type AssertPlatformInviteProjectParams = {
+    app: FastifyInstance
+    request: FastifyRequest
+    reply: FastifyReply
+    invitation: SendUserInvitationRequest
+    platformId: string
 }
 
 type TrackInviteSentParams = {

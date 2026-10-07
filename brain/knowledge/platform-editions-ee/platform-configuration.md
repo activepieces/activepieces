@@ -8,7 +8,7 @@ A **Platform** is the top-level tenant namespace in Activepieces. Every install 
 
 ### Entities & services
 - `platform` entity: `ownerId`, `name`, `primaryColor` (drives the whole palette; see *design-system/colour*), `themeColors` (jsonb, set under Platform → General → *Colors*; only `themeColors.status` is rendered, as the status seeds served in the `theme` flag's `statusColors`; see *design-system/colour*), logo/favicon URLs, `cloudAuthEnabled`, `allowedAuthDomains`, `emailAuthEnabled`, `federatedAuthProviders` (jsonb OAuth2 + SAML), `pinnedPieces`, `pieceSelectorConfig` (jsonb, null = default tabs).
-- `platformService`: `create`, `update`, `getOneWithPlanAndUsageOrThrow`, `getOneWithPlanOrThrow` (flags only, used in auth guards), `listPlatformsForIdentityWithAtleastProject` (platform-switcher), `getOldestPlatform` (CE single-platform resolution).
+- `platformService`: `create`, `update`, `getOneWithPlanAndUsageOrThrow`, `getOneWithPlanOrThrow` (flags only, used in auth guards), `listPlatformsForIdentity` (platform-switcher and Cloud sign-in; platforms where the user has a project come first, but a platform where they have none is still listed so they land on its no-projects screen instead of being onboarded onto a new platform), `getOldestPlatform` (CE single-platform resolution).
 
 ### Endpoints
 - `GET /v1/platforms/:id` — plan + usage; sensitive SSO data stripped (`PlatformWithoutSensitiveData`).

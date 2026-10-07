@@ -147,8 +147,14 @@ export const userService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
         }))
 
-        const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
-        return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
+        const [usersWithMetaInformation, userIdsWithProjects] = await Promise.all([
+            Promise.all(data.map(this.getMetaInformation)),
+            projectService(log).listUserIdsWithProjects({ platformId, userIds: data.map((user) => user.id) }),
+        ])
+        return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation.map((user) => ({
+            ...user,
+            hasProjects: userIdsWithProjects.includes(user.id),
+        })), cursor)
     },
     async getByIdentityId({ identityId }: GetByIdentityId): Promise<UserSchema[]> {
         return userRepo().find({ where: { identityId } })
