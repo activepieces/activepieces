@@ -52,6 +52,12 @@ Each piece version declares which Activepieces versions it supports using a mini
 
 When your instance syncs with the Activepieces piece registry, it only receives piece versions that are compatible with the Activepieces version it's running.
 
+<Card title="Ask" icon="sparkles">
+  **Your instance sends its Activepieces version**
+
+  When the sync runs, your instance tells the Activepieces Cloud registry which Activepieces version it's running.
+</Card>
+
 ## Server compatibility
 
 Every piece declares a `minimumSupportedRelease` (and optional `maximumSupportedRelease`) in its definition: the range of Activepieces server releases it works on. The catalog filters pieces against the running server's release, so an out-of-range piece is never listed in the builder and never served from the registry.
