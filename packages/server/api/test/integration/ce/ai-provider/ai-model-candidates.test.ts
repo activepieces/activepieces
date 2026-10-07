@@ -3,6 +3,7 @@ import { AiStepAction, PlatformModelTier, PrincipalType } from '@activepieces/sh
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
+import { aiModelCandidates } from '../../../../src/app/ai/ai-model-candidates'
 import { aiRpcHandlers } from '../../../../src/app/ai/ai-rpc-handlers'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
@@ -90,6 +91,24 @@ describe('tier candidates', () => {
 
         expect(tierName).toBe('New')
         expect(candidates.map((candidate) => candidate.modelId)).toEqual(['new-model'])
+    })
+
+    it('resolves many tiers at once, following replacements and skipping removed or foreign ones', async () => {
+        const key = await seedKey({ testCtx: ctx })
+        const live = await createTier({ testCtx: ctx, name: 'Live', entries: [{ configId: key.id, modelId: 'live-model' }] })
+        const old = await createTier({ testCtx: ctx, name: 'Old', entries: [{ configId: key.id, modelId: 'old-model' }] })
+        const gone = await createTier({ testCtx: ctx, name: 'Gone', entries: [{ configId: key.id, modelId: 'gone-model' }] })
+        await ctx.delete(`${TIERS}/${old.id}`, { replacedBy: live.id })
+        await ctx.delete(`${TIERS}/${gone.id}`, { replacedBy: live.id })
+        const otherCtx = await createTestContext(app!)
+        const foreign = await createTier({ testCtx: otherCtx, name: 'Foreign', entries: [{ configId: (await seedKey({ testCtx: otherCtx })).id, modelId: 'foreign-model' }] })
+
+        const found = await aiModelCandidates(app!.log).firstCandidates({ platformId: ctx.platform.id, tierIds: [live.id, old.id, foreign.id, apId()] })
+
+        expect(found.get(live.id)?.modelId).toBe('live-model')
+        expect(found.get(old.id)?.modelId).toBe('live-model')
+        expect(found.get(foreign.id)).toBeNull()
+        expect(found.size).toBe(4)
     })
 
     it('fails a tier that was removed without a replacement', async () => {

@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroGetInvoiceHistory = createAction({
   auth: xeroAuth,
@@ -20,6 +21,7 @@ export const xeroGetInvoiceHistory = createAction({
       'Retrieve the history and notes for a Xero invoice by its InvoiceID. Read-only and idempotent; returns HistoryRecords describing changes, the acting user, timestamps, and details.',
     idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.historyEnvelope,
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.invoice_id(true),
