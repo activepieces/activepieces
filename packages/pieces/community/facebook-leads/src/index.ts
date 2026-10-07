@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 
+import { facebookLeadsAiActions } from './lib/actions/ai';
 import { facebookLeadsAuth } from './lib/auth';
 import { facebookLeadsClient } from './lib/common/client';
 import { newLeadTrigger } from './lib/triggers/new-lead';
@@ -10,12 +11,13 @@ import { newLeadTrigger } from './lib/triggers/new-lead';
 export const facebookLeads = createPiece({
 	displayName: 'Facebook Leads',
 	description: 'Capture leads from Facebook',
-	minimumSupportedRelease: '0.30.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
 	authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'AbdulTheActivePiecer'],
 	categories: [PieceCategory.MARKETING],
 	auth: facebookLeadsAuth,
 	actions: [
+		...facebookLeadsAiActions,
 		createCustomApiCallAction({
 			auth: facebookLeadsAuth,
 			baseUrl: () => facebookLeadsClient.baseUrl(),

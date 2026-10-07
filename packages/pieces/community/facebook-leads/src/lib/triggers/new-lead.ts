@@ -3,8 +3,9 @@ import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { facebookLeadsAuth } from '../auth';
 import { facebookLeadsApi } from '../common/api';
 import { facebookLeadsProps } from '../common/props';
+import { facebookLeadsUtils } from '../common/utils';
 
-import type { FacebookLeadsLead, FacebookLeadsWebhookPayload } from '../common/types';
+import type { FacebookLeadsWebhookPayload } from '../common/types';
 
 export const newLeadTrigger = createTrigger({
 	auth: facebookLeadsAuth,
@@ -37,9 +38,9 @@ export const newLeadTrigger = createTrigger({
 		return;
 	},
 	async test(context) {
-		let form = context.propsValue.form;
+		let form = selectedFormId({ form: context.propsValue.form });
 		const page = context.propsValue.page;
-		if (form == undefined || form == '' || form == null) {
+		if (form === undefined) {
 			const forms = await facebookLeadsApi.getPageForms({
 				pageId: page.id,
 				accessToken: page.accessToken,
@@ -52,16 +53,16 @@ export const newLeadTrigger = createTrigger({
 			formId: form,
 			accessToken: context.auth.access_token,
 		});
-		return leads.map((lead) => transformLeadData({ lead }));
+		return leads.map((lead) => facebookLeadsUtils.transformLeadData({ lead }));
 	},
 
 	async run(context) {
-		const form = context.propsValue.form;
+		const form = selectedFormId({ form: context.propsValue.form });
 		const payloadBody = context.payload.body;
 		const entries = isWebhookPayload(payloadBody) ? payloadBody.entry : [];
 
 		const leadPings =
-			form !== undefined && form !== '' && form !== null
+			form !== undefined
 				? entries.filter((lead) => form == lead.changes[0].value.form_id)
 				: entries;
 
@@ -71,7 +72,7 @@ export const newLeadTrigger = createTrigger({
 				leadId: lead.changes[0].value.leadgen_id,
 				accessToken: context.auth.access_token,
 			});
-			leads.push(transformLeadData({ lead: leadData }));
+			leads.push(facebookLeadsUtils.transformLeadData({ lead: leadData }));
 		}
 
 		return leads;
@@ -82,24 +83,11 @@ function isWebhookPayload(body: unknown): body is FacebookLeadsWebhookPayload {
 	return typeof body === 'object' && body !== null && 'entry' in body && Array.isArray(body.entry);
 }
 
-function transformLeadData({ lead }: { lead: FacebookLeadsLead }) {
-	return {
-		lead_id: lead.id,
-		form_id: lead.form_id,
-		platform: lead.platform,
-		ad_id: lead.ad_id,
-		ad_name: lead.ad_name,
-		adset_id: lead.adset_id,
-		adset_name: lead.adset_name,
-		campaign_id: lead.campaign_id,
-		campaign_name: lead.campaign_name,
-		created_time: lead.created_time,
-		data: lead.field_data.reduce(
-			(acc, field) => ({
-				...acc,
-				[field.name]: field.values && field.values.length > 0 ? field.values[0] : null,
-			}),
-			{},
-		),
-	};
+function selectedFormId({ form }: { form: string | undefined }): string | undefined {
+	if (form === undefined || form === null || form === '' || form === ALL_FORMS) {
+		return undefined;
+	}
+	return form;
 }
+
+const ALL_FORMS = 'all';

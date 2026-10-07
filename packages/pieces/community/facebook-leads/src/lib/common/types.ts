@@ -7,6 +7,7 @@ export type FacebookLeadsAuthValue = AppConnectionValueForAuthProperty<typeof fa
 export type FacebookLeadsPaginatedResponse<T> = {
 	data: T[];
 	paging?: {
+		cursors?: { before?: string; after?: string };
 		next?: string;
 	};
 };
@@ -41,6 +42,20 @@ export type FacebookLeadsForm = {
 	locale: string;
 	name: string;
 	status: string;
+	created_time?: string;
+	leads_count?: number;
+	expired_leads_count?: number;
+	questions?: unknown[];
+	privacy_policy_url?: string;
+	follow_up_action_url?: string;
+	page?: { id: string; name: string };
+};
+
+export type FacebookLeadsFormStatus = 'ACTIVE' | 'ARCHIVED';
+
+export type FacebookLeadsUser = {
+	id: string;
+	name: string;
 };
 
 export type FacebookLeadsLead = {
