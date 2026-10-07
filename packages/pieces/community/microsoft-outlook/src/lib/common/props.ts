@@ -2,6 +2,7 @@ import { OAuth2PropertyValue, Property, tryCatch } from '@activepieces/pieces-fr
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { MailFolder, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from './auth';
+import { outlookAtomicCommon } from './atomic-common';
 import { outlookCommon } from './client';
 
 type DropdownParams = {
@@ -117,9 +118,10 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 			const authValue = auth as OAuth2PropertyValue;
 			const client = outlookCommon.createClient(authValue);
 
+			const prefix = outlookCommon.mailboxPrefix(authValue);
 			const { folders, failed } = await fetchAllFolders({
 				client,
-				firstPageUrl: `${outlookCommon.mailboxPrefix(authValue)}/mailFolders?$top=100`,
+				firstPageUrl: `${prefix}/mailFolders?$top=100&$select=${FOLDER_SELECT}`,
 			});
 
 			if (failed && folders.length === 0) {
@@ -130,15 +132,46 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 				};
 			}
 
+			const options = await folderTreeOptions({ client, prefix, folders, parentPath: '', limit: MAX_FOLDERS });
 			return {
 				disabled: false,
-				options: folders.map((folder) => ({
-					label: folder.displayName || 'Unnamed folder',
-					value: folder.id || '',
-				})),
+				options,
 			};
 		},
 	});
+
+async function folderTreeOptions({
+	client,
+	prefix,
+	folders,
+	parentPath,
+	limit,
+}: {
+	client: Client;
+	prefix: string;
+	folders: MailFolder[];
+	parentPath: string;
+	limit: number;
+}): Promise<FolderOption[]> {
+	const options: FolderOption[] = [];
+	for (const folder of folders) {
+		if (options.length >= limit) {
+			break;
+		}
+		const label = `${parentPath}${folder.displayName || 'Unnamed folder'}`;
+		options.push({ label, value: folder.id || '' });
+		if (folder.id && folder.childFolderCount) {
+			const { folders: children } = await fetchAllFolders({
+				client,
+				firstPageUrl: `${prefix}/mailFolders/${outlookAtomicCommon.encodeGraphId(folder.id)}/childFolders?$top=100&$select=${FOLDER_SELECT}`,
+			});
+			options.push(
+				...(await folderTreeOptions({ client, prefix, folders: children, parentPath: `${label} / `, limit: limit - options.length })),
+			);
+		}
+	}
+	return options;
+}
 
 async function fetchAllFolders({ client, firstPageUrl }: { client: Client; firstPageUrl: string }): Promise<FolderPages> {
 	const folders: MailFolder[] = [];
@@ -161,7 +194,15 @@ function draftLabel(message: Message): string {
 	return firstRecipient ? `${subject} - to ${firstRecipient}` : subject;
 }
 
+const FOLDER_SELECT = 'id,displayName,childFolderCount';
+const MAX_FOLDERS = 2000;
+
 type FolderPages = {
 	folders: MailFolder[];
 	failed: boolean;
+};
+
+type FolderOption = {
+	label: string;
+	value: string;
 };
