@@ -135,8 +135,6 @@ export async function startDevPieceWatcher(app: FastifyInstance): Promise<void> 
         app.log.info(`Watching for changes: ${pieceInfo.pieceName}`)
     }
 
-    startBuild(pieceInfos)
-
     const cleanup = async () => {
         await watcher.close()
         for (const timer of debounceTimers.values()) {
