@@ -1,135 +1,180 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { saveContent } from '../api';
 import { cmsAuth } from '../auth';
+import { totalcmsApi } from '../common/client';
+import { totalcmsProps } from '../common/props';
+import { totalcmsShape } from '../common/shape';
+import { totalcmsOutputSchemas } from '../output-schemas';
 
 export const saveBlogPostAction = createAction({
   name: 'save_blog_post',
   classification: 'WRITE',
   auth: cmsAuth,
-  displayName: 'Save Blog Post',
-  description: 'Save blog content to Total CMS',
+  displayName: 'Create or Update Blog Post',
+  description: 'Creates a blog post, or updates the post with the given ID.',
   audience: 'both',
-  aiMetadata: { description: 'Creates or overwrites a blog post in a Total CMS blog, identified by the blog CMS ID (slug) plus a permalink, writing fields such as title, summary, content, author, categories, tags, and draft/featured/archived flags. Use to publish or edit a post. The permalink is the post key: reusing an existing permalink overwrites that post rather than creating a new one, so repeating the call with the same permalink and values is idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Creates a Total CMS blog post, or updates only the fields you pass on an existing post when Post ID matches one. Leave Post ID empty to create a post whose ID is made from the title. Creating twice with an empty Post ID fails on the duplicate ID; updates are safe to repeat.',
+    idempotent: false,
+  },
   props: {
-    slug: Property.ShortText({
-      displayName: 'CMS ID',
-      description: 'The CMS ID of the content to save',
-      required: true,
-    }),
-    permalink: Property.ShortText({
-      displayName: 'Permalink',
+    collection: totalcmsProps.collectionForSchema({ schema: 'blog', label: 'Blog' }),
+    post_id: totalcmsProps.objectIdText({
+      displayName: 'Post ID',
       description:
-        'The permalink of the blog post. Ensure this is unique or it will overwrite the existing post.',
-      required: true,
+        'The post ID (URL slug), for example my-first-post. If a post with this ID exists it is updated, otherwise a new post is created. Leave empty to create a new post with an ID made from the title.',
+      required: false,
     }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the blog post',
+      description: 'Required when creating a post.',
       required: false,
     }),
-    timestamp: Property.Number({
-      displayName: 'Date (Unix Timestamp)',
-      description: 'The date in unix timestamp format',
+    date: Property.DateTime({
+      displayName: 'Date',
+      description: 'The publication date. Defaults to now for new posts.',
       required: false,
     }),
-    summary: Property.LongText({
-      displayName: 'Summary',
-      description: 'The summary of the blog post',
-      required: false,
-    }),
-    content: Property.LongText({
-      displayName: 'Content',
-      description: 'The content of the blog post',
-      required: false,
-    }),
-    extra: Property.LongText({
-      displayName: 'Extra Content',
-      description: 'The extra content of the blog post',
-      required: false,
-    }),
-    extra2: Property.LongText({
-      displayName: 'Extra Content 2',
-      description: 'The extra content 2 of the blog post',
-      required: false,
-    }),
+    author: Property.ShortText({ displayName: 'Author', required: false }),
+    summary: Property.LongText({ displayName: 'Summary', description: 'HTML is allowed.', required: false }),
+    content: Property.LongText({ displayName: 'Content', description: 'The post body. HTML is allowed.', required: false }),
+    extra: Property.LongText({ displayName: 'Extra Content', description: 'HTML is allowed.', required: false }),
     media: Property.ShortText({
-      displayName: 'Media',
-      description: 'The media of the blog post',
+      displayName: 'Media URL',
+      description: 'A link to related media, such as a video or podcast episode.',
       required: false,
     }),
-    rssTitle: Property.ShortText({
-      displayName: 'RSS Title',
-      description: 'The RSS title of the blog post',
-      required: false,
-    }),
-    rssDescription: Property.ShortText({
-      displayName: 'RSS Description',
-      description: 'The RSS description of the blog post',
-      required: false,
-    }),
-    author: Property.ShortText({
-      displayName: 'Author',
-      description: 'The author of the blog post',
-      required: false,
-    }),
-    genre: Property.ShortText({
-      displayName: 'Genre',
-      description: 'The genre of the blog post',
-      required: false,
-    }),
-    categories: Property.ShortText({
+    categories: Property.Array({
       displayName: 'Categories',
-      description: 'A comma separated list of categories for the blog post',
+      description: 'Replaces the post categories. Leave empty to keep the current ones.',
       required: false,
     }),
-    tags: Property.ShortText({
+    tags: Property.Array({
       displayName: 'Tags',
-      description: 'A comma separated list of tags for the blog post',
+      description: 'Replaces the post tags. Leave empty to keep the current ones.',
       required: false,
     }),
-    labels: Property.ShortText({
-      displayName: 'Labels',
-      description: 'A comma separated list of labels for the blog post',
+    draft: Property.StaticDropdown({
+      displayName: 'Status',
+      description: 'Leave empty to keep the current status (new posts are published).',
       required: false,
+      options: {
+        options: [
+          { label: 'Published', value: 'published' },
+          { label: 'Draft', value: 'draft' },
+        ],
+      },
     }),
-    draft: Property.Checkbox({
-      displayName: 'Draft',
-      description: 'Set to true to save as a draft',
-      required: false,
-    }),
-    featured: Property.Checkbox({
+    featured: Property.StaticDropdown({
       displayName: 'Featured',
-      description: 'Set to true to save as a featured post',
+      description: 'Leave empty to keep the current value.',
       required: false,
-    }),
-    archived: Property.Checkbox({
-      displayName: 'Archived',
-      description: 'Set to true to save as an archived post',
-      required: false,
+      options: {
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+        ],
+      },
     }),
   },
+  outputSchema: totalcmsOutputSchemas.savedBlogPost,
   async run(context) {
-    const slug = context.propsValue.slug;
-    return await saveContent(context.auth, 'blog', slug, {
-      nodecode: true,
-      permalink: context.propsValue.permalink,
-      title: context.propsValue.title,
-      timestamp: context.propsValue.timestamp?.toString(),
-      summary: context.propsValue.summary,
-      content: context.propsValue.content,
-      extra: context.propsValue.extra,
-      extra2: context.propsValue.extra2,
-      media: context.propsValue.media,
-      rss_title: context.propsValue.rssTitle,
-      rss_description: context.propsValue.rssDescription,
-      author: context.propsValue.author,
-      genre: context.propsValue.genre,
-      categories: context.propsValue.categories,
-      tags: context.propsValue.tags,
-      labels: context.propsValue.labels,
-      draft: context.propsValue.draft ? 'true' : 'false',
-      featured: context.propsValue.featured ? 'true' : 'false',
-      archived: context.propsValue.archived ? 'true' : 'false',
+    const { propsValue, auth } = context;
+    const collection = totalcmsShape.requireId({ value: propsValue.collection, label: 'Collection ID' });
+    const fields = buildFields({ propsValue });
+    const postId = typeof propsValue.post_id === 'string' ? propsValue.post_id.trim() : '';
+    const existing = postId ? await totalcmsApi.findObject({ auth, collection, id: postId }) : null;
+    if (existing) {
+      if (Object.keys(fields).length === 0) {
+        throw new Error('Nothing to update. Fill in at least one field to change.');
+      }
+      const object = await totalcmsApi.patchObject({ auth, collection, id: postId, fields });
+      return { result: 'updated', ...totalcmsShape.typed({ collection, object }) };
+    }
+    if (typeof fields['title'] !== 'string') {
+      throw new Error('Title is required to create a new blog post.');
+    }
+    const object = await totalcmsApi.createObject({
+      auth,
+      collection,
+      fields: postId ? { id: postId, draft: false, ...fields } : { draft: false, ...fields },
     });
+    return { result: 'created', ...totalcmsShape.typed({ collection, object }) };
   },
 });
+
+const TEXT_KEYS: TextKey[] = ['title', 'author', 'summary', 'content', 'extra', 'media'];
+const LIST_KEYS: ListKey[] = ['categories', 'tags'];
+
+function buildFields({ propsValue }: { propsValue: BlogPostProps }): Record<string, unknown> {
+  const textEntries = TEXT_KEYS.flatMap((key) => {
+    const value = propsValue[key];
+    return typeof value === 'string' && value.trim().length > 0 ? [[key, value]] : [];
+  });
+  const listEntries = LIST_KEYS.flatMap((key) => {
+    const list = toStringList({ value: propsValue[key] });
+    return list.length > 0 ? [[key, list]] : [];
+  });
+  const fields: Record<string, unknown> = Object.fromEntries([...textEntries, ...listEntries]);
+  if (propsValue.date !== undefined && propsValue.date !== null && String(propsValue.date).length > 0) {
+    const date = new Date(String(propsValue.date));
+    if (Number.isNaN(date.getTime())) {
+      throw new Error('Date is not a valid date. Use a format such as 2026-12-31T18:00:00Z.');
+    }
+    fields['date'] = date.toISOString();
+  }
+  if (propsValue.media && !/^https?:\/\//i.test(propsValue.media.trim())) {
+    throw new Error('Media URL must start with http:// or https://.');
+  }
+  if (propsValue.draft === 'draft' || propsValue.draft === 'published') {
+    fields['draft'] = propsValue.draft === 'draft';
+  }
+  if (propsValue.featured === 'yes' || propsValue.featured === 'no') {
+    fields['featured'] = propsValue.featured === 'yes';
+  }
+  return fields;
+}
+
+function toStringList({ value }: { value: unknown }): string[] {
+  const list = typeof value === 'string' ? listFromString({ text: value }) : value;
+  if (!Array.isArray(list)) {
+    return [];
+  }
+  return list
+    .flatMap((item) => (typeof item === 'string' ? item.split(',') : typeof item === 'number' ? [String(item)] : []))
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function listFromString({ text }: { text: string }): unknown[] {
+  const trimmed = text.trim();
+  const parsed = trimmed.startsWith('[') ? parseJsonArray({ text: trimmed }) : null;
+  return parsed ?? [trimmed];
+}
+
+function parseJsonArray({ text }: { text: string }): unknown[] | null {
+  try {
+    const parsed: unknown = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+type BlogPostProps = {
+  title?: string;
+  author?: string;
+  summary?: string;
+  content?: string;
+  extra?: string;
+  media?: string;
+  categories?: unknown[];
+  tags?: unknown[];
+  date?: string;
+  draft?: string;
+  featured?: string;
+};
+
+type TextKey = 'title' | 'author' | 'summary' | 'content' | 'extra' | 'media';
+
+type ListKey = 'categories' | 'tags';
