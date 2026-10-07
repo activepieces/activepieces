@@ -182,6 +182,19 @@ describe('platform configuration', () => {
         expect((await ctx.get('/v1/platform-configurations'))!.json().aiSpecificModelsVisible).toBe(false)
     })
 
+    it('changes nothing when hiding specific models is refused alongside another setting', async () => {
+        const ctx = await createTestContext(app!)
+        const before = (await ctx.get('/v1/platform-configurations'))!.json().maxBarrierSignals
+        expect(before).not.toBe(maxBarrierSignalsBounds.min)
+
+        const refused = await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false, maxBarrierSignals: maxBarrierSignalsBounds.min })
+
+        expect(refused?.statusCode).toBe(StatusCodes.CONFLICT)
+        const after = (await ctx.get('/v1/platform-configurations'))!.json()
+        expect(after.maxBarrierSignals).toBe(before)
+        expect(after.aiSpecificModelsVisible).toBe(true)
+    })
+
     it('lets any platform member read the configuration, but only an admin write it', async () => {
         const ctx = await createTestContext(app!)
         const memberCtx = await createMemberContext(app!, ctx, {

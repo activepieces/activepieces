@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { platformModelTierService } from '../ai/platform-model-tier-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { distributedLock } from '../database/redis-connections'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -98,12 +99,15 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
             ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
             ...spreadIfNotUndefined('isInfraSetupTelemetryEnabled', isInfraSetupTelemetryEnabled),
             ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
+            ...spreadIfNotUndefined('aiSpecificModelsVisible', aiSpecificModelsVisible),
         }
         if (!isEmpty(patch)) {
-            await platformConfigurationRepo().update({ platformId }, patch)
-        }
-        if (!isNil(aiSpecificModelsVisible)) {
-            await platformModelTierService.setSpecificModelsVisible({ platformId, visible: aiSpecificModelsVisible })
+            await transaction(async (manager) => {
+                if (!isNil(aiSpecificModelsVisible)) {
+                    await platformModelTierService.assertSpecificModelsVisibilityAllowed({ manager, platformId, visible: aiSpecificModelsVisible })
+                }
+                await platformConfigurationRepo(manager).update({ platformId }, patch)
+            })
         }
         return platformConfigurationRepo().findOneByOrFail({ platformId })
     },
