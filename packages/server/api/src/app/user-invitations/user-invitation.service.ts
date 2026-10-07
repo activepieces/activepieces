@@ -72,30 +72,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                         platformId: invitation.platformId,
                         platformRole: invitation.platformRole,
                     })
+                    if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
+                        await addToInvitedProject({ invitation, userId: user.id, log, failsWithoutProjectRoles: false })
+                    }
                     break
                 }
                 case InvitationType.PROJECT: {
-                    const { projectId, projectRoleId } = invitation
-                    assertNotNullOrUndefined(projectId, 'projectId')
-                    assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
-                    const platform = await platformService(log).getOneWithPlanOrThrow(invitation.platformId)
-                    assertEqual(platform.plan.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
-
-                    const projectRole = await projectRoleService.getOneOrThrowById({
-                        id: projectRoleId,
-                    })
-
-                    const project = await projectService(log).exists({
-                        projectId,
-                        isSoftDeleted: false,
-                    })
-                    if (!isNil(project)) {
-                        await projectMemberService(log).upsert({
-                            projectId,
-                            userId: user.id,
-                            projectRoleName: projectRole.name,
-                        })
-                    }
+                    await addToInvitedProject({ invitation, userId: user.id, log, failsWithoutProjectRoles: true })
                     break
                 }
             }
@@ -103,6 +86,12 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 id: invitation.id,
             })
         }
+    },
+    async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
+        await repo(entityManager).update({ type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
+    },
+    async detachProjectRoleFromPlatformInvites({ projectRoleId }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
+        await repo().update({ type: InvitationType.PLATFORM, projectRoleId }, { projectId: null, projectRoleId: null })
     },
     async createInvitationRecord({
         email,
@@ -121,9 +110,9 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             type,
             email: email.toLowerCase().trim(),
             platformId,
-            projectRoleId: type === InvitationType.PLATFORM ? undefined : projectRoleId!,
+            projectRoleId: projectRoleId ?? undefined,
             platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
-            projectId: type === InvitationType.PLATFORM ? undefined : projectId!,
+            projectId: projectId ?? undefined,
         }, ['email', 'platformId', 'projectId'])
 
         return this.getOneOrThrow({
@@ -315,6 +304,33 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
     WHERE LOWER(identity.email) = LOWER(invitation.email)
 )`
 
+
+async function addToInvitedProject({ invitation, userId, log, failsWithoutProjectRoles }: AddToInvitedProjectParams): Promise<void> {
+    const { projectId, projectRoleId } = invitation
+    assertNotNullOrUndefined(projectId, 'projectId')
+    assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
+    const platform = await platformService(log).getOneWithPlanOrThrow(invitation.platformId)
+    if (!platform.plan.projectRolesEnabled && !failsWithoutProjectRoles) {
+        return
+    }
+    assertEqual(platform.plan.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
+    const projectRole = await projectRoleService.getOneOrThrowById({
+        id: projectRoleId,
+    })
+    const projectIsLive = await projectService(log).exists({
+        projectId,
+        isSoftDeleted: false,
+    })
+    if (!projectIsLive) {
+        return
+    }
+    await projectMemberService(log).upsert({
+        projectId,
+        userId,
+        projectRoleName: projectRole.name,
+    })
+}
+
 async function generateInvitationLink(userInvitation: UserInvitation, expireyInSeconds: number): Promise<string> {
     const token = await jwtUtils.sign({
         payload: {
@@ -343,6 +359,22 @@ const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyI
     })
     return userInvitation
 }
+type DetachProjectFromPlatformInvitesParams = {
+    projectId: string
+    entityManager: EntityManager
+}
+
+type DetachProjectRoleFromPlatformInvitesParams = {
+    projectRoleId: string
+}
+
+type AddToInvitedProjectParams = {
+    invitation: UserInvitation
+    userId: string
+    log: FastifyBaseLogger
+    failsWithoutProjectRoles: boolean
+}
+
 type ListUserParams = {
     platformId: string
     type: InvitationType
