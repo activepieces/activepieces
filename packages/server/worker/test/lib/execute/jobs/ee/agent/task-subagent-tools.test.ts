@@ -9,6 +9,7 @@ vi.mock('../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn', () => 
     runAgentTurn: (...args: unknown[]) => runAgentTurn(...args),
 }))
 
+import { RunAgentTurnParams } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { createTaskSubagentTools } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-subagent-tools'
 import { taskContext } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-context'
 
@@ -279,11 +280,11 @@ const emitSubagentProgress = vi.fn()
 const beginTask = vi.fn()
 const finishTask = vi.fn()
 
+const MODELS: RunAgentTurnParams['models'] = [{ model: 'test-model', provider: AIProviderName.OPENAI, modelId: 'm', thinkingBudget: 0 }]
+
 const BASE_PARAMS = {
-    model: 'test-model',
-    provider: AIProviderName.OPENAI,
+    models: MODELS,
     tier: { id: 'smart', thinkingBudget: 0, modelId: 'm' },
-    modelId: 'm',
     taskPrompt: 'TASK PROMPT',
     creditsLeftFor: () => undefined,
     beginTask,

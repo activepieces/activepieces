@@ -1,12 +1,15 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
+  HttpError,
   HttpMethod,
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroAttachments } from '../common/attachments';
+import { xeroOutputSchemas } from '../output-schemas';
 
 type ResourceType =
   | 'Invoices'
@@ -27,17 +30,19 @@ export const xeroUploadAttachment = createAction({
   classification: 'WRITE',
   displayName: 'Upload Attachment',
   description: 'Uploads an attachment to a specific Xero resource.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Attach a file (max 10MB) to an existing Xero record such as an invoice, bill, credit note, purchase order, quote, contact, or bank transaction, selected by resource type and ID. Pick this to add supporting documents (receipts, PDFs) to an already-created record, not to create the record itself. Not idempotent: it appends a new attachment per call; IncludeOnline only applies to ACCREC invoices and credit notes.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.attachmentEnvelope,
   props: {
     tenant_id: props.tenant_id,
     resource_type: Property.StaticDropdown({
       displayName: 'Resource Type',
-      description: 'The Xero resource to attach the file to.',
+      description:
+        'The Xero resource to attach the file to. Receipt works only on connections created before version 0.8.0.',
       required: true,
       options: {
         options: [
@@ -50,7 +55,7 @@ export const xeroUploadAttachment = createAction({
           { label: 'Contact', value: 'Contacts' },
           { label: 'Account', value: 'Accounts' },
           { label: 'Manual Journal', value: 'ManualJournals' },
-          { label: 'Receipt', value: 'Receipts' },
+          { label: 'Receipt (connections created before 0.8.0 only)', value: 'Receipts' },
           { label: 'Repeating Invoice', value: 'RepeatingInvoices' },
         ],
       },
@@ -171,7 +176,19 @@ export const xeroUploadAttachment = createAction({
           },
         };
 
-        const result = await httpClient.sendRequest<Record<string, any>>(request);
+        let result;
+        try {
+          result = await httpClient.sendRequest<Record<string, unknown[] | undefined>>(request);
+        } catch (error) {
+          if (resourceType === 'Receipts' && isMissingPermissionError({ error })) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: RECEIPTS_SCOPE_MESSAGE,
+            };
+          }
+          throw error;
+        }
         if (result.status === 200) {
           const items: any[] = result.body?.[cfg.arrayKey] ?? [];
           const options = items.slice(0, 100).map((item) => ({
@@ -224,7 +241,7 @@ export const xeroUploadAttachment = createAction({
 
     const endpoint = resource_type as string;
     const chosenFileName = file_name || file.filename || `attachment${file.extension ? '.' + file.extension : ''}`;
-    const inferredContentType = content_type || (file.extension ? `application/${file.extension}` : 'application/octet-stream');
+    const inferredContentType = content_type || xeroAttachments.mimeTypeFor({ fileName: chosenFileName, extension: file.extension });
 
     const includeOnlineAllowed = resource_type === 'Invoices' || resource_type === 'CreditNotes';
     const query = include_online && includeOnlineAllowed ? '?IncludeOnline=true' : '';
@@ -246,12 +263,27 @@ export const xeroUploadAttachment = createAction({
       },
     };
 
-    const result = await httpClient.sendRequest(request);
+    let result;
+    try {
+      result = await httpClient.sendRequest(request);
+    } catch (error) {
+      if (resource_type === 'Receipts' && isMissingPermissionError({ error })) {
+        throw new Error(RECEIPTS_SCOPE_MESSAGE);
+      }
+      throw error;
+    }
     if (result.status === 200) {
       return result.body;
     }
     return result;
   },
 });
+
+const RECEIPTS_SCOPE_MESSAGE =
+  'Xero refused access to Receipts (HTTP 401/403). Receipts need the accounting.classicexpenses permission, which Xero no longer grants to new connections. Only Xero connections created before Xero piece version 0.8.0 can attach files to Receipts; choose another resource type.';
+
+function isMissingPermissionError({ error }: { error: unknown }) {
+  return error instanceof HttpError && (error.response.status === 401 || error.response.status === 403);
+}
 
 

@@ -1,6 +1,6 @@
-import { AIProviderName, isNil, isObject, omit, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, omit, tryCatch } from '@activepieces/core-utils'
 import { AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { hasToolCall, isLoopFinished, LanguageModel, ModelMessage, tool, ToolSet } from 'ai'
+import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
 import { createPhaseTools } from './session-tools'
@@ -36,7 +36,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
     taskId?: string
     progressId: string
 }): Promise<TaskRunOutput> {
-    const { workerTools, model, provider, tier, modelId, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log } = deps
+    const { workerTools, models, tier, taskPrompt, creditsLeftFor, beginTask, finishTask, eventEmitter, abortSignal, log } = deps
     if (abortSignal.aborted) {
         return { status: 'failed', summary: 'Stopped before it started.' }
     }
@@ -59,14 +59,12 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
         ...finishTool(finish),
     }
     const turnParams: RunAgentTurnParams = {
-        model,
-        provider,
+        models,
         systemPrompt: taskPrompt,
         messages,
         tools: taskTools,
         allToolNames: Object.keys(taskTools),
         tier,
-        modelId,
         phaseState,
         abortSignal,
         log,
@@ -75,6 +73,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
         sinks: {
             drainStream: async (result) => {
                 await result.consumeStream()
+                return undefined
             },
             onProgress: ({ uiParts }) => report(runningActivity({ title, uiParts, startedAt })),
         },
@@ -336,10 +335,8 @@ type TaskResult = z.infer<typeof taskResult>
 
 type TaskDeps = {
     workerTools: ToolSet
-    model: LanguageModel
-    provider: AIProviderName
+    models: RunAgentTurnParams['models']
     tier: RunAgentTurnParams['tier']
-    modelId: string
     taskPrompt: string
     creditsLeftFor: (runKey: string) => RunAgentTurnParams['creditsLeft']
     beginTask: (input: { title: string, taskId?: string }) => Promise<BeginAgentTaskResponse>

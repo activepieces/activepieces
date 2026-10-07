@@ -419,6 +419,13 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
             if (!isNil(localExecutionMode)) {
                 response.EXECUTION_MODE = localExecutionMode
             }
+            const localSandboxMemoryLimit = system.get(WorkerSystemProp.SANDBOX_MEMORY_LIMIT)
+            if (!isNil(localSandboxMemoryLimit)) {
+                if (!/^[1-9]\d*$/.test(localSandboxMemoryLimit)) {
+                    throw new Error(`AP_SANDBOX_MEMORY_LIMIT must be a positive integer in KB. Got: ${localSandboxMemoryLimit}`)
+                }
+                response.SANDBOX_MEMORY_LIMIT = localSandboxMemoryLimit
+            }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
             if (!isNil(workerGroupId)) {
                 if (response.EDITION === ApEdition.CLOUD) {
@@ -433,7 +440,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
-            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
+            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })
     })

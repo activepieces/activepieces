@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreatePayment = createAction({
   auth: xeroAuth,
@@ -14,12 +15,13 @@ export const xeroCreatePayment = createAction({
   classification: 'WRITE',
   displayName: 'Create Payment',
   description: 'Applies a payment to an invoice.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Record a payment against an existing Xero invoice (or bill), paid from a specific bank account. Pick this once an invoice exists and you need to settle it for an amount up to the amount due. Not idempotent: each call records another payment, so re-running double-pays; resolve the target invoice and bank account IDs first (separate find/lookup actions).',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.paymentEnvelope,
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.payable_invoice_id(true),
