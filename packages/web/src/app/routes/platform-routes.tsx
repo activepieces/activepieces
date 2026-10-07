@@ -233,7 +233,7 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Sets">
+        <PageTitle title="Piece Policies">
           <LegacyTabRedirect
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
@@ -250,7 +250,7 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Set">
+        <PageTitle title="Piece Policy">
           <SuspenseWrapper>
             <PieceSetDetailsPage />
           </SuspenseWrapper>

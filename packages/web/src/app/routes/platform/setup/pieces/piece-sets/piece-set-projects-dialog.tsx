@@ -1,15 +1,9 @@
-import {
-  isNil,
-  PieceSet,
-  PROJECT_COLOR_PALETTE,
-  ProjectWithLimits,
-  tryCatch,
-} from '@activepieces/shared';
+import { isNil, PieceSet, ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
+import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -27,14 +21,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { SkeletonRows } from './policy-ui';
+
 type PieceSetProjectsDialogProps = {
   pieceSet: PieceSet;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 const isAssignedToSet = ({
@@ -63,6 +60,20 @@ function findCurrentSetName({
   return currentSet?.name ?? '';
 }
 
+function assignedFirst({
+  projects,
+  assignedIds,
+}: {
+  projects: ProjectWithLimits[];
+  assignedIds: string[];
+}): ProjectWithLimits[] {
+  const assigned = new Set(assignedIds);
+  return [
+    ...projects.filter((project) => assigned.has(project.id)),
+    ...projects.filter((project) => !assigned.has(project.id)),
+  ];
+}
+
 const AssignProjectsForm = ({
   pieceSet,
   allProjects,
@@ -75,15 +86,25 @@ const AssignProjectsForm = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const [selected, setSelected] = useState<string[]>(serverAssignedIds);
-  const { data: pieceSetsPage } = pieceSetQueries.usePieceSets({ limit: 100 });
-  const pieceSets = pieceSetsPage?.data ?? [];
+  const [orderedProjects] = useState(() =>
+    assignedFirst({ projects: allProjects, assignedIds: serverAssignedIds }),
+  );
+  const { mutate: setProjects, isPending: isSaving } =
+    pieceSetMutations.useSetProjects();
+  const { data: pieceSets = [] } = pieceSetQueries.useAllPieceSets();
   const movingCount = selected.filter(
-    (id) => !serverAssignedIds.includes(id),
+    (id) =>
+      !serverAssignedIds.includes(id) &&
+      !isNil(allProjects.find((project) => project.id === id)?.pieceSetId),
   ).length;
-  const assignMutation = pieceSetMutations.useAssignProjects();
-  const removeMutation = pieceSetMutations.useBulkRemoveProjects();
 
-  const isSaving = assignMutation.isPending || removeMutation.isPending;
+  const serverSet = new Set(serverAssignedIds);
+  const draftSet = new Set(selected);
+  const added = selected.filter((id) => !serverSet.has(id));
+  const removed = pieceSet.isDefault
+    ? []
+    : serverAssignedIds.filter((id) => !draftSet.has(id));
+  const dirty = added.length > 0 || removed.length > 0;
 
   const toggleProject = (projectId: string) => {
     setSelected((prev) =>
@@ -93,53 +114,36 @@ const AssignProjectsForm = ({
     );
   };
 
-  const handleSave = async () => {
-    const serverSet = new Set(serverAssignedIds);
-    const draftSet = new Set(selected);
-    const added = selected.filter((id) => !serverSet.has(id));
-    const removed = pieceSet.isDefault
-      ? []
-      : serverAssignedIds.filter((id) => !draftSet.has(id));
-
-    if (added.length === 0 && removed.length === 0) {
-      onOpenChange(false);
+  const handleSave = () => {
+    if (!dirty || isSaving) {
       return;
     }
-
-    const promises: Promise<unknown>[] = [];
-    if (added.length > 0) {
-      promises.push(
-        assignMutation.mutateAsync({ id: pieceSet.id, projectIds: added }),
-      );
-    }
-    if (removed.length > 0) {
-      promises.push(
-        removeMutation.mutateAsync({ id: pieceSet.id, projectIds: removed }),
-      );
-    }
-
-    const { error } = await tryCatch(() => Promise.all(promises));
-    if (error) {
-      toast.error(t('Failed to save changes. Please try again.'));
-      return;
-    }
-    onOpenChange(false);
+    setProjects(
+      { id: pieceSet.id, added, removed },
+      { onSuccess: () => onOpenChange(false) },
+    );
   };
 
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{t('Assigned projects')}</DialogTitle>
+        <DialogTitle>{t('Assign projects')}</DialogTitle>
         <DialogDescription>
-          {t('Choose which projects use this piece set.')}
+          {pieceSet.isDefault
+            ? t(
+                'Projects without a policy already use the Default policy. Pick projects to move back to it.',
+              )
+            : t('Choose which projects build with {name}.', {
+                name: pieceSet.name,
+              })}
         </DialogDescription>
       </DialogHeader>
-      <Command className="rounded-md border">
+      <Command className="rounded-xl border">
         <CommandInput placeholder={t('Search projects')} />
         <CommandList className="max-h-72 overflow-y-auto">
           <CommandEmpty>{t('No projects found')}</CommandEmpty>
           <CommandGroup>
-            {allProjects.map((project) => {
+            {orderedProjects.map((project) => {
               const checked = selected.includes(project.id);
               const locked =
                 pieceSet.isDefault && isAssignedToSet({ pieceSet, project });
@@ -152,6 +156,7 @@ const AssignProjectsForm = ({
                   onSelect={() => toggleProject(project.id)}
                 >
                   <Checkbox checked={checked} className="pointer-events-none" />
+                  <ProjectAvatar project={project} size="sm" />
                   <span className="truncate">{project.displayName}</span>
                   {!isAssignedToSet({ pieceSet, project }) && (
                     <span className="ml-auto shrink-0 text-xs text-gray-11">
@@ -168,13 +173,14 @@ const AssignProjectsForm = ({
       </Command>
       {movingCount > 0 && (
         <p className="text-xs text-warning-11">
-          {t('projectsMovingFromOtherSets', { count: movingCount })}
+          {t('projectsMovingFromOtherPolicies', { count: movingCount })}
         </p>
       )}
       <DialogFooter>
         <Button
           type="button"
           variant="outline"
+          disabled={isSaving}
           onClick={() => onOpenChange(false)}
         >
           {t('Cancel')}
@@ -183,6 +189,7 @@ const AssignProjectsForm = ({
           {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
           type="button"
           loading={isSaving}
+          disabled={!dirty}
           onClick={handleSave}
         >
           {t('Save')}
@@ -192,77 +199,53 @@ const AssignProjectsForm = ({
   );
 };
 
-export const PieceSetProjectsDialog = ({
-  pieceSet,
-}: PieceSetProjectsDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const { data: platformsData, isLoading } =
-    projectHooks.useProjectsForPlatforms();
-
+export const usePieceSetProjects = (pieceSet: PieceSet) => {
+  const {
+    data: platformsData,
+    isLoading,
+    isError,
+    refetch,
+  } = projectHooks.useProjectsForPlatforms();
   const allProjects = useMemo<ProjectWithLimits[]>(
     () => platformsData?.flatMap((p) => p.projects) ?? [],
     [platformsData],
   );
-
   const assignedProjects = useMemo(
     () =>
       allProjects.filter((project) => isAssignedToSet({ pieceSet, project })),
     [allProjects, pieceSet],
   );
+  return { allProjects, assignedProjects, isLoading, isError, refetch };
+};
 
-  const serverAssignedIds = useMemo(
-    () => assignedProjects.map((project) => project.id),
-    [assignedProjects],
-  );
-
+export const PieceSetProjectsDialog = ({
+  pieceSet,
+  open,
+  onOpenChange,
+}: PieceSetProjectsDialogProps) => {
+  const { allProjects, assignedProjects, isLoading, isError, refetch } =
+    usePieceSetProjects(pieceSet);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
-          variant="outline"
-          role="combobox"
-          disabled={isLoading}
-          className="font-normal"
-        >
-          {assignedProjects.length === 0 ? (
-            <span className="text-gray-11">{t('No projects assigned')}</span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <span className="flex items-center gap-0.5">
-                {assignedProjects.slice(0, 3).map((project) => (
-                  <span
-                    key={project.id}
-                    className="flex size-5 items-center justify-center rounded-md text-xs font-semibold"
-                    style={{
-                      backgroundColor:
-                        PROJECT_COLOR_PALETTE[project.icon.color].color,
-                      color:
-                        PROJECT_COLOR_PALETTE[project.icon.color].textColor,
-                    }}
-                  >
-                    {project.displayName.charAt(0).toUpperCase()}
-                  </span>
-                ))}
-              </span>
-              <span className="text-sm font-medium">
-                {t('projectsAssignedCount', {
-                  count: assignedProjects.length,
-                })}
-              </span>
-            </span>
-          )}
-          <ChevronDown className="size-3.5 text-gray-11 shrink-0" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <AssignProjectsForm
-          key={open ? 'open' : 'closed'}
-          pieceSet={pieceSet}
-          allProjects={allProjects}
-          serverAssignedIds={serverAssignedIds}
-          onOpenChange={setOpen}
-        />
+        {isError ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('Assign projects')}</DialogTitle>
+            </DialogHeader>
+            <DataFetchErrorState entity={t('projects')} onRetry={refetch} />
+          </>
+        ) : isLoading ? (
+          <SkeletonRows count={5} className="h-9 rounded-lg" />
+        ) : (
+          <AssignProjectsForm
+            key={open ? 'open' : 'closed'}
+            pieceSet={pieceSet}
+            allProjects={allProjects}
+            serverAssignedIds={assignedProjects.map((project) => project.id)}
+            onOpenChange={onOpenChange}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
