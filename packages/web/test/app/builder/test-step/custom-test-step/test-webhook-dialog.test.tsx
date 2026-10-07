@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import { FlowTrigger, FlowTriggerType } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   act,
@@ -8,12 +9,13 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiAnyMock, toastErrorMock, waitMock } = vi.hoisted(() => ({
-  apiAnyMock: vi.fn(),
+const { axiosMock, toastErrorMock, waitMock } = vi.hoisted(() => ({
+  axiosMock: vi.fn(),
   toastErrorMock: vi.fn(),
   waitMock: vi.fn(),
 }));
@@ -26,9 +28,10 @@ vi.mock('i18next', () => ({
     ),
 }));
 
+vi.mock('axios', () => ({ default: axiosMock }));
+
 vi.mock('@/lib/api', () => ({
   api: {
-    any: apiAnyMock,
     extractServerErrorMessage: (error: unknown, fallback: string) =>
       error instanceof Error ? error.message : fallback,
   },
@@ -67,9 +70,28 @@ vi.mock('@/components/ui/dialog', () => ({
 import TestWebhookDialog from '@/app/builder/test-step/custom-test-step/test-webhook-dialog';
 
 const NO_SAMPLE_NOTE =
-  'No sample data arrived after 30 seconds. If this trigger uses authentication, add the required header or credentials and send again.';
+  'No sample data arrived after 30 seconds. It can still arrive while this dialog stays open. If it does not, check the request and the trigger settings, then send again.';
 
-function mount() {
+function catchWebhookTrigger(input: Record<string, unknown>): FlowTrigger {
+  return {
+    name: 'trigger',
+    valid: true,
+    displayName: 'Catch Webhook',
+    lastUpdatedDate: '2026-10-07T00:00:00.000Z',
+    type: FlowTriggerType.PIECE,
+    settings: {
+      pieceName: '@activepieces/piece-webhook',
+      pieceVersion: '0.1.42',
+      triggerName: 'catch_webhook',
+      propertySettings: {},
+      input,
+    },
+  };
+}
+
+function mount(
+  trigger: FlowTrigger = catchWebhookTrigger({ authType: 'none' }),
+) {
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
@@ -79,7 +101,7 @@ function mount() {
         testingMode="trigger"
         open={true}
         onOpenChange={vi.fn()}
-        currentStep={{} as never}
+        currentStep={trigger}
       />
     </QueryClientProvider>,
   );
@@ -91,14 +113,14 @@ function sendButton() {
 
 describe('TestWebhookDialog (trigger)', () => {
   beforeEach(() => {
-    apiAnyMock.mockReset();
+    axiosMock.mockReset();
     toastErrorMock.mockReset();
     waitMock.mockReset();
     waitMock.mockResolvedValue(undefined);
   });
 
   it('stops loading and explains when no sample arrives after sending', async () => {
-    apiAnyMock.mockResolvedValue({});
+    axiosMock.mockResolvedValue({});
     let finishWait: () => void = () => undefined;
     waitMock.mockImplementation(
       () =>
@@ -117,22 +139,94 @@ describe('TestWebhookDialog (trigger)', () => {
     act(() => finishWait());
 
     await screen.findByText(NO_SAMPLE_NOTE);
-    expect(apiAnyMock).toHaveBeenCalledWith(
-      'https://cloud.example.com/api/v1/webhooks/flow-1/test',
-      expect.anything(),
+    expect(axiosMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://cloud.example.com/api/v1/webhooks/flow-1/test',
+      }),
     );
     expect(sendButton().disabled).toBe(false);
   });
 
+  it('sends a user-typed Authorization header unchanged', async () => {
+    axiosMock.mockResolvedValue({});
+    mount(catchWebhookTrigger({ authType: 'basic' }));
+
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Headers' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Item' }));
+    const [keyInput, valueInput] = within(
+      screen.getByRole('tabpanel'),
+    ).getAllByRole('textbox');
+    fireEvent.change(keyInput, { target: { value: 'Authorization' } });
+    fireEvent.change(valueInput, {
+      target: { value: 'Basic dXNlcjpzM2NyZXQ=' },
+    });
+    fireEvent.click(sendButton());
+
+    await waitFor(() => expect(axiosMock).toHaveBeenCalled());
+    expect(axiosMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: { Authorization: 'Basic dXNlcjpzM2NyZXQ=' },
+      }),
+    );
+  });
+
   it('re-enables Send and shows the server error when the request fails', async () => {
-    apiAnyMock.mockRejectedValue(new Error('Payload too large'));
+    axiosMock.mockRejectedValue(new Error('Payload too large'));
     mount();
 
     fireEvent.click(sendButton());
 
-    await waitFor(() => expect(apiAnyMock).toHaveBeenCalled());
+    await waitFor(() => expect(axiosMock).toHaveBeenCalled());
     await waitFor(() => expect(sendButton().disabled).toBe(false));
     expect(toastErrorMock).toHaveBeenCalledWith('Payload too large');
     expect(screen.queryAllByText(NO_SAMPLE_NOTE).length).toBe(0);
+  });
+
+  it.each([
+    {
+      name: 'a named auth header',
+      input: {
+        authType: 'header',
+        authFields: { headerName: 'x-api-key', headerValue: 'secret' },
+      },
+      note: 'This trigger only accepts requests that include the x-api-key header. Add the header in the Headers tab before you send.',
+    },
+    {
+      name: 'an auth header whose name is a template',
+      input: {
+        authType: 'header',
+        authFields: { headerName: "{{connections['webhook-key']}}" },
+      },
+      note: 'This trigger only accepts requests that include its authentication header. Add the header in the Headers tab before you send.',
+    },
+    {
+      name: 'Basic Auth',
+      input: {
+        authType: 'basic',
+        authFields: { username: 'user', password: 's3cret' },
+      },
+      note: 'This trigger uses Basic Auth. Add an Authorization header with the username and password from the trigger settings before you send.',
+    },
+    {
+      name: 'an HMAC signature',
+      input: {
+        authType: 'hmac',
+        authFields: { hmacHeaderName: 'x-signature', hmacSecret: 's3cret' },
+      },
+      note: 'This trigger checks an HMAC signature, so it rejects requests sent from this dialog. Send the sample to the Test URL from the service that signs the request.',
+    },
+  ])(
+    'tells the user before sending that the trigger requires $name',
+    ({ input, note }) => {
+      mount(catchWebhookTrigger(input));
+
+      expect(screen.getByText(note)).toBeTruthy();
+    },
+  );
+
+  it('shows no auth note when the trigger has no authentication', () => {
+    mount(catchWebhookTrigger({ authType: 'none', authFields: {} }));
+
+    expect(screen.queryAllByText(/^This trigger /).length).toBe(0);
   });
 });

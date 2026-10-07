@@ -1,8 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { t } from 'i18next';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -76,6 +77,19 @@ const WebhookRequest = z.object({
   method: z.nativeEnum(HttpMethod),
 });
 
+const CatchWebhookAuthSettings = z.object({
+  settings: z.object({
+    input: z.object({
+      authType: z.enum(['none', 'basic', 'header', 'hmac']),
+      authFields: z
+        .object({
+          headerName: z.string().optional(),
+        })
+        .optional(),
+    }),
+  }),
+});
+
 type TestWaitForNextWebhookDialogProps = {
   currentStep: FlowAction;
   open: boolean;
@@ -94,6 +108,7 @@ type TestWebhookDialogProps =
   | TestTriggerWebhookDialogProps;
 
 const TestTriggerWebhookDialog = ({
+  currentStep,
   open,
   onOpenChange,
 }: TestTriggerWebhookDialogProps) => {
@@ -101,10 +116,11 @@ const TestTriggerWebhookDialog = ({
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
   const flowId = useBuilderStateContext((state) => state.flow.id);
+  const authRequirement = describeAuthRequirement(currentStep);
   const {
     mutate: sendRequest,
     isPending,
-    isSuccess: noSampleReceived,
+    isSuccess: waitExpired,
   } = useMutation<unknown, Error, z.infer<typeof WebhookRequest>>({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
       await axios({
@@ -136,12 +152,18 @@ const TestTriggerWebhookDialog = ({
         <DialogHeader>
           <DialogTitle>{t('Send Sample Data to Webhook')}</DialogTitle>
         </DialogHeader>
-        {noSampleReceived && (
-          <Alert variant="destructive">
+        {authRequirement && (
+          <Alert>
+            <Info className="size-4" />
+            <AlertDescription>{authRequirement}</AlertDescription>
+          </Alert>
+        )}
+        {waitExpired && (
+          <Alert variant="warning">
             <AlertTriangle className="size-4" />
             <AlertDescription>
               {t(
-                'No sample data arrived after {seconds} seconds. If this trigger uses authentication, add the required header or credentials and send again.',
+                'No sample data arrived after {seconds} seconds. It can still arrive while this dialog stays open. If it does not, check the request and the trigger settings, then send again.',
                 { seconds: SAMPLE_DATA_WAIT_SECONDS },
               )}
             </AlertDescription>
@@ -385,6 +407,38 @@ const TestWebhookDialog = (props: TestWebhookDialogProps) => {
     );
   }
 };
+
+function describeAuthRequirement(trigger: FlowTrigger): string | null {
+  const parsed = CatchWebhookAuthSettings.safeParse(trigger);
+  if (!parsed.success) {
+    return null;
+  }
+  const { authType, authFields } = parsed.data.settings.input;
+  switch (authType) {
+    case 'none':
+      return null;
+    case 'header': {
+      const headerName = authFields?.headerName?.trim();
+      if (isNil(headerName) || headerName === '' || headerName.includes('{{')) {
+        return t(
+          'This trigger only accepts requests that include its authentication header. Add the header in the Headers tab before you send.',
+        );
+      }
+      return t(
+        'This trigger only accepts requests that include the {headerName} header. Add the header in the Headers tab before you send.',
+        { headerName },
+      );
+    }
+    case 'basic':
+      return t(
+        'This trigger uses Basic Auth. Add an Authorization header with the username and password from the trigger settings before you send.',
+      );
+    case 'hmac':
+      return t(
+        'This trigger checks an HMAC signature, so it rejects requests sent from this dialog. Send the sample to the Test URL from the service that signs the request.',
+      );
+  }
+}
 
 TestWebhookDialog.displayName = 'TestWebhookDialog';
 export default TestWebhookDialog;

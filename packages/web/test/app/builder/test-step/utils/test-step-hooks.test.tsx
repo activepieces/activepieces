@@ -6,11 +6,14 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { listMock, testMock, updateSampleDataMock } = vi.hoisted(() => ({
-  listMock: vi.fn(),
-  testMock: vi.fn(),
-  updateSampleDataMock: vi.fn(),
-}));
+const { listMock, testMock, updateSampleDataMock, waitMock } = vi.hoisted(
+  () => ({
+    listMock: vi.fn(),
+    testMock: vi.fn(),
+    updateSampleDataMock: vi.fn(),
+    waitMock: vi.fn(),
+  }),
+);
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -28,7 +31,7 @@ vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: { getProjectId: () => 'project-1' },
 }));
 
-vi.mock('@/lib/dom-utils', () => ({ wait: () => Promise.resolve() }));
+vi.mock('@/lib/dom-utils', () => ({ wait: waitMock }));
 
 vi.mock('react-hook-form', () => ({
   useFormContext: () => ({ getValues: () => ({ name: 'trigger' }) }),
@@ -77,6 +80,8 @@ describe('testStepHooks.useSimulateTrigger', () => {
     listMock.mockReset();
     testMock.mockReset();
     updateSampleDataMock.mockReset();
+    waitMock.mockReset();
+    waitMock.mockResolvedValue(undefined);
     testMock.mockResolvedValue({ data: [] });
   });
 
@@ -121,6 +126,24 @@ describe('testStepHooks.useSimulateTrigger', () => {
     act(() => result.current.mutate(abortController.signal));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(setErrorMessage).toHaveBeenLastCalledWith(undefined);
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('stays silent when the user cancels during the last wait', async () => {
+    listMock.mockResolvedValue({ data: [{ id: 'old-event', payload: {} }] });
+    const abortController = new AbortController();
+    waitMock.mockImplementation(async () => {
+      if (waitMock.mock.calls.length === 1000) {
+        abortController.abort();
+      }
+    });
+    const { result, setErrorMessage, onSuccess } = renderSimulateTrigger();
+
+    act(() => result.current.mutate(abortController.signal));
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(waitMock).toHaveBeenCalledTimes(1000);
     expect(setErrorMessage).toHaveBeenLastCalledWith(undefined);
     expect(onSuccess).not.toHaveBeenCalled();
   });
