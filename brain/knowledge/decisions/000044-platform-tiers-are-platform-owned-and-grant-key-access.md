@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: superseded by 000048-platform-tiers-follow-key-project-scope
 ---
 
 # Platform tiers are platform-owned and grant key access

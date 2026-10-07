@@ -30,7 +30,7 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async resolveAiModelCandidates(input: ResolveAiModelCandidatesRequest): Promise<ResolveAiModelCandidatesResponse> {
         await assertProjectBelongsToPlatform({ ...input, log })
-        return aiModelCandidates(log).resolve({ platformId: input.platformId, tierId: input.modelTierId })
+        return aiModelCandidates(log).resolve({ platformId: input.platformId, tierId: input.modelTierId, scope: { type: 'project', projectId: input.projectId } })
     },
 
     async reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void> {

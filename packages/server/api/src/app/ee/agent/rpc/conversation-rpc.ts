@@ -162,6 +162,14 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
                 params: { message: 'A flow-step agent run cannot move to another project' },
             })
         }
+        if (!isNil(conversation) && !isNil(conversation.modelTierId)) {
+            await agentHelpers.assertProjectSwitchKeepsTier({
+                platformId: conversation.platformId,
+                tierId: conversation.modelTierId,
+                fromProjectId: conversation.projectId ?? null,
+                toProjectId: input.projectId,
+            })
+        }
         if (!isNil(conversation) && isNil(conversation.modelTierId)) {
             await agentHelpers.assertProjectSwitchKeepsKey({
                 platformId: conversation.platformId,

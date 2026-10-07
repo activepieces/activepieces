@@ -8,8 +8,10 @@ import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
 import { z } from 'zod'
+import { aiKeyScope } from '../../ai/ai-key-scope'
 import { aiModelCandidates } from '../../ai/ai-model-candidates'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
+import { platformModelTierService } from '../../ai/platform-model-tier-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
@@ -112,6 +114,26 @@ async function assertProjectSwitchKeepsKey({ platformId, provider, providerConfi
     })
 }
 
+async function assertProjectSwitchKeepsTier({ platformId, tierId, fromProjectId, toProjectId }: { platformId: string, tierId: string, fromProjectId: string | null, toProjectId: string | null }): Promise<void> {
+    if (isNil(fromProjectId) || fromProjectId === toProjectId) {
+        return
+    }
+    const from: ProviderScope = { type: 'project', projectId: fromProjectId }
+    const target: ProviderScope = isNil(toProjectId) ? { type: 'platform' } : { type: 'project', projectId: toProjectId }
+    const [run, fast] = await Promise.all([
+        platformModelTierService.getForRun({ platformId, id: tierId, scope: from }),
+        platformModelTierService.getFastForRun({ platformId, scope: from }),
+    ])
+    const keys = [...run.entries, ...(fast?.entries ?? [])].map((entry) => entry.key)
+    if (keys.every((key) => aiKeyScope.rowAllowsScope({ row: key, scope: target }))) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'a model this run can use is not available to the project it tried to switch to' },
+    })
+}
+
 async function resolveRunProvider({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     if (isNil(provider)) {
         return resolveChatProvider({ platformId, scope, log })
@@ -132,7 +154,7 @@ async function resolveChatProvider({ platformId, scope, log }: { platformId: str
 
 async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
     if (!isNil(modelTierId)) {
-        await aiModelCandidates(log).firstCandidate({ platformId, tierId: modelTierId })
+        await aiModelCandidates(log).firstCandidate({ platformId, tierId: modelTierId, scope })
         return
     }
     if (isNil(provider)) {
@@ -183,16 +205,14 @@ async function resolveModelId({ platformId, providerConfig, selectedModel, surfa
     return picked.id
 }
 
-async function resolveImageModelId({ platformId, providerConfig, scope, grantedByTier = false, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, grantedByTier?: boolean, log: FastifyBaseLogger }): Promise<string | undefined> {
+async function resolveImageModelId({ platformId, providerConfig, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string | undefined> {
     const { provider, configId } = providerConfig
     const preferred = AI_PROVIDER_CAPABILITIES[provider].defaultImageModel
     if (isNil(preferred) || provider === AIProviderName.ACTIVEPIECES) {
         return preferred
     }
     const listed = await Promise.race([
-        tryCatch(() => grantedByTier
-            ? aiProviderService(log).listModelsForConfig({ platformId, configId })
-            : aiProviderService(log).listModels({ platformId, provider, scope, configId })),
+        tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId })),
         delay(IMAGE_MODEL_LOOKUP_TIMEOUT_MS, null),
     ])
     if (isNil(listed) || isNil(listed.data)) {
@@ -457,6 +477,7 @@ export const agentHelpers = {
     runScopeOrThrow,
     selectRunProject,
     assertProjectSwitchKeepsKey,
+    assertProjectSwitchKeepsTier,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

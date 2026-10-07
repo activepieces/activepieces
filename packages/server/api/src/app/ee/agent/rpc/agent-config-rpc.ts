@@ -89,7 +89,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
         const surface = agentHelpers.surfaceOf({ source: requestedSource })
         const modelTierId = tierIdForRun({ conversation, requestedTierId: input.modelTierId ?? null })
-        const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface })
+        const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface, scope: runScope })
         const providerConfig = isNil(tierRun)
             ? await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
             : tierRun.candidates[0].config
@@ -113,7 +113,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
         const imageModelId = !generatesImagesOnProvider
             ? undefined
-            : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, grantedByTier: !isNil(tierRun), log })
+            : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
 
         const lock = await agentHelpers.acquireStreamingLock({ conversationId, ...spreadIfDefined('runId', input.runId) })
         if (lock === 'superseded') {

@@ -3,7 +3,6 @@ import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage,
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
-import { platformModelTierService } from '../../ai/platform-model-tier-service'
 import { transaction } from '../../core/db/transaction'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowRunEntity } from '../../flows/flow-run/flow-run-entity'
@@ -15,6 +14,7 @@ import { agentApprovalGate } from './agent-approval-gate'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity } from './agent-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
+import { agentModelTier } from './agent-model-tier'
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
 
@@ -56,9 +56,9 @@ async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityMa
     return locked.projectId
 }
 
-async function modelChoiceFrom({ platformId, modelName, modelTierId }: { platformId: string, modelName: string | null | undefined, modelTierId: string | null | undefined }): Promise<ModelChoice> {
+async function modelChoiceFrom({ platformId, projectId, modelName, modelTierId, log }: { platformId: string, projectId: string | null, modelName: string | null | undefined, modelTierId: string | null | undefined, log: FastifyBaseLogger }): Promise<ModelChoice> {
     if (!isNil(modelTierId)) {
-        await platformModelTierService.getForRun({ platformId, id: modelTierId })
+        await agentModelTier(log).assertUsable({ platformId, tierId: modelTierId, scope: isNil(projectId) ? { type: 'platform' } : { type: 'project', projectId } })
         return { modelTierId, modelName: null }
     }
     if (!isNil(modelName)) {
@@ -73,7 +73,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
         const builder = request.builder === true
-        const modelChoice = await modelChoiceFrom({ platformId, modelName: request.modelName, modelTierId: request.modelTierId })
+        const modelChoice = await modelChoiceFrom({ platformId, projectId: agent?.projectId ?? null, modelName: request.modelName, modelTierId: request.modelTierId, log })
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
@@ -220,7 +220,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
         const updates = {
             ...spreadIfDefined('title', request.title),
-            ...await modelChoiceFrom({ platformId, modelName: request.modelName, modelTierId: request.modelTierId }),
+            ...await modelChoiceFrom({ platformId, projectId: conversation.projectId ?? null, modelName: request.modelName, modelTierId: request.modelTierId, log }),
         }
 
         if (Object.keys(updates).length > 0) {

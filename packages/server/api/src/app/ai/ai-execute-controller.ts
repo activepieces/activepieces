@@ -29,7 +29,7 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
         const requestId = apId()
         const log = request.log.child({ flowRun: { id: body.flowRunId }, requestId })
         const execution = aiExecution(log)
-        const model = await pickModel({ body, platformId: platform.id, log })
+        const model = await pickModel({ body, platformId: platform.id, projectId, log })
         const answerInThisRequest = isNil(body.waitpointId)
         const timeoutMs = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000
         const answer = answerInThisRequest ? execution.waitForAnswer({ requestId, timeoutMs }) : undefined
@@ -56,16 +56,17 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-async function pickModel({ body, platformId, log }: {
+async function pickModel({ body, platformId, projectId, log }: {
     body: z.infer<typeof ExecuteAiRequest>
     platformId: string
+    projectId: string
     log: FastifyBaseLogger
 }): Promise<PickedModel> {
     if (!isNil(body.modelTierId)) {
         if (body.action === AiStepAction.GENERATE_IMAGE) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Image steps pick a specific model, not a tier' } })
         }
-        return aiModelCandidates(log).firstCandidate({ platformId, tierId: body.modelTierId })
+        return aiModelCandidates(log).firstCandidate({ platformId, tierId: body.modelTierId, scope: { type: 'project', projectId } })
     }
     if (isNil(body.provider) || isNil(body.modelId)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Pick a tier or a provider and model' } })
