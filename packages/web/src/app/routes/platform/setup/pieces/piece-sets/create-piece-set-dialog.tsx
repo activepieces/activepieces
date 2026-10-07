@@ -23,7 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { pieceSetFormErrors } from './piece-set-form-errors';
@@ -45,6 +46,8 @@ const CreatePieceSetForm = ({
   onCreated: (pieceSet: PieceSet) => void;
   onOpenChange: (open: boolean) => void;
 }) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const showKey = platform.plan.embeddingEnabled;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,7 +59,11 @@ const CreatePieceSetForm = ({
 
   const { mutate: createSet, isPending } = pieceSetMutations.useCreatePieceSet({
     onError: (error) =>
-      pieceSetFormErrors.show({ form, error, keyField: 'key' }),
+      pieceSetFormErrors.show({
+        form,
+        error,
+        keyField: showKey ? 'key' : undefined,
+      }),
   });
 
   const handleSubmit = (data: FormValues) => {
@@ -65,7 +72,7 @@ const CreatePieceSetForm = ({
     }
     form.clearErrors('root.serverError');
     createSet(
-      { name: data.name, key: data.key || undefined },
+      { name: data.name, key: (showKey && data.key) || undefined },
       {
         onSuccess: (pieceSet) => {
           onOpenChange(false);
@@ -94,24 +101,27 @@ const CreatePieceSetForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="key"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Embed key (optional)')}</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder={t('e.g. sales')} />
-              </FormControl>
-              <FormDescription>
-                {t(
-                  'The embed SDK passes this key to put a project on this policy. Leave it empty to make one from the name.',
-                )}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {showKey && (
+          <FormField
+            control={form.control}
+            name="key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Embed key (optional)')}</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder={t('e.g. sales')} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The embed SDK passes this key to put a project on this {term}. Leave it empty to make one from the name.',
+                    pieceSetTerms.get(),
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         {form.formState.errors.root?.serverError && (
           <FormMessage>
             {form.formState.errors.root.serverError.message}
@@ -148,10 +158,11 @@ export const CreatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('New policy')}</DialogTitle>
+          <DialogTitle>{t('New {term}', pieceSetTerms.get())}</DialogTitle>
           <DialogDescription>
             {t(
-              'A new policy allows every piece. Narrow it down once it exists.',
+              'A new {term} allows every piece. Narrow it down once it exists.',
+              pieceSetTerms.get(),
             )}
           </DialogDescription>
         </DialogHeader>

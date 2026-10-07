@@ -20,7 +20,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChangePieceSet, pieceSetChanges } from '@/features/piece-sets';
+import {
+  ChangePieceSet,
+  pieceSetChanges,
+  pieceSetTerms,
+} from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
@@ -316,7 +320,8 @@ function RequiredActionsEditor({
         onRequestClose={requestClose}
         title={t('Publishing rule')}
         description={t(
-          'Actions every flow on this policy must use before it can be published.',
+          'Actions every flow on this {term} must use before it can be published.',
+          pieceSetTerms.get(),
         )}
         footer={
           dirty && (
@@ -571,7 +576,8 @@ function ActionPicker({
       {requiredNames.some((name) => !isAllowed(name)) && (
         <p className="text-xs text-gray-11">
           {t(
-            'Actions this policy does not allow yet are allowed when you make them required.',
+            'Actions this {term} does not allow yet are allowed when you make them required.',
+            pieceSetTerms.get(),
           )}
         </p>
       )}

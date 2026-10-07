@@ -19,6 +19,7 @@ import { api } from '@/lib/api';
 
 import { pieceSetsApi } from '../api/piece-sets-api';
 import { PieceSetChange, pieceSetChanges } from '../utils/piece-set-changes';
+import { pieceSetTerms } from '../utils/piece-set-terms';
 
 export const pieceSetKeys = {
   all: ['piece-sets'] as const,
@@ -69,7 +70,7 @@ export const pieceSetMutations = {
       mutationFn: (request: CreatePieceSetRequestBody) =>
         pieceSetsApi.create(request),
       onSuccess: () => {
-        toast.success(t('Policy created'));
+        toast.success(t('{Term} created', pieceSetTerms.get()));
         queryClient
           .invalidateQueries({ queryKey: pieceSetKeys.all })
           .catch(() => undefined);
@@ -170,7 +171,7 @@ export const pieceSetMutations = {
         refreshAfterProjectChange({ queryClient }).catch(() => undefined);
       },
       onError: (error) =>
-        toast.error(t("Couldn't delete the policy"), {
+        toast.error(t("Couldn't delete the {term}", pieceSetTerms.get()), {
           description: errorDescription(error),
         }),
     });
@@ -181,7 +182,7 @@ export const pieceSetMutations = {
       mutationFn: ({ id, name }: { id: string; name: string }) =>
         pieceSetsApi.duplicate(id, { name }),
       onSuccess: () => {
-        toast.success(t('Policy duplicated'));
+        toast.success(t('{Term} duplicated', pieceSetTerms.get()));
         queryClient
           .invalidateQueries({ queryKey: pieceSetKeys.all })
           .catch(() => undefined);

@@ -33,6 +33,7 @@ import {
   pieceSetChanges,
   pieceSetMutations,
   pieceSetQueries,
+  pieceSetTerms,
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -76,16 +77,22 @@ function LivePieceSetDetails({ id }: { id: string }) {
   if (api.isError(error) && error.response?.status === 404) {
     return (
       <AdminPage>
-        <AdminPageHeader back={backLink()} title={t('Piece policy')} />
+        <AdminPageHeader
+          back={backLink()}
+          title={t('{titleSingular}', pieceSetTerms.get())}
+        />
         <AdminEmpty
           icon={<Boxes />}
-          title={t('This policy no longer exists')}
+          title={t('This {term} no longer exists', pieceSetTerms.get())}
           description={t(
-            'It may have been deleted. Pick another policy from the list.',
+            'It may have been deleted. Pick another {term} from the list.',
+            pieceSetTerms.get(),
           )}
           action={
             <Button variant="outline" asChild>
-              <Link to={backLink().to}>{t('All policies')}</Link>
+              <Link to={backLink().to}>
+                {t('All {terms}', pieceSetTerms.get())}
+              </Link>
             </Button>
           }
         />
@@ -96,9 +103,15 @@ function LivePieceSetDetails({ id }: { id: string }) {
   if (isError) {
     return (
       <AdminPage>
-        <AdminPageHeader back={backLink()} title={t('Piece policy')} />
+        <AdminPageHeader
+          back={backLink()}
+          title={t('{titleSingular}', pieceSetTerms.get())}
+        />
         <SettingsPanel flush>
-          <DataFetchErrorState entity={t('this policy')} onRetry={refetch} />
+          <DataFetchErrorState
+            entity={t('this {term}', pieceSetTerms.get())}
+            onRetry={refetch}
+          />
         </SettingsPanel>
       </AdminPage>
     );
@@ -210,8 +223,14 @@ function PieceSetDetails({
     }).catch(() => undefined);
   };
 
+  const { platform } = platformHooks.useCurrentPlatform();
+  const showKey = platform.plan.embeddingEnabled;
   const metaParts = [
-    pieceSet.key ? t('Key {key}', { key: pieceSet.key }) : t('No key'),
+    showKey
+      ? pieceSet.key
+        ? t('Key {key}', { key: pieceSet.key })
+        : t('No key')
+      : null,
     projectsLoading
       ? null
       : t('{count, plural, =1 {1 project} other {# projects}}', {
@@ -285,7 +304,10 @@ function PieceSetDetails({
             <RailSection title={t('Applies to')}>
               {pieceSet.isDefault && (
                 <p className="text-sm text-gray-11">
-                  {t('Every project not on another policy.')}
+                  {t(
+                    'Every project not on another {term}.',
+                    pieceSetTerms.get(),
+                  )}
                 </p>
               )}
               {projectsLoading ? (
@@ -318,7 +340,7 @@ function PieceSetDetails({
               ) : (
                 !pieceSet.isDefault && (
                   <p className="text-sm text-gray-11">
-                    {t('No project uses this policy yet.')}
+                    {t('No project uses this {term} yet.', pieceSetTerms.get())}
                   </p>
                 )
               )}
@@ -341,7 +363,10 @@ function PieceSetDetails({
                   </span>
                   <span className="text-xs text-gray-11">
                     {includesNewPieces
-                      ? t('Pieces installed later are allowed on this policy.')
+                      ? t(
+                          'Pieces installed later are allowed on this {term}.',
+                          pieceSetTerms.get(),
+                        )
                       : t(
                           'Pieces installed later stay blocked until you allow them.',
                         )}
@@ -383,17 +408,20 @@ function PieceSetDetails({
               </Button>
             </RailSection>
 
-            <RailSection title={t('Embed key')}>
-              {pieceSet.key ? (
-                <CopyToClipboardInput textToCopy={pieceSet.key} useInput />
-              ) : (
-                <p className="text-sm text-gray-11">
-                  {t(
-                    'No embed key. Add one in Edit details to use this policy from the embed SDK.',
-                  )}
-                </p>
-              )}
-            </RailSection>
+            {showKey && (
+              <RailSection title={t('Embed key')}>
+                {pieceSet.key ? (
+                  <CopyToClipboardInput textToCopy={pieceSet.key} useInput />
+                ) : (
+                  <p className="text-sm text-gray-11">
+                    {t(
+                      'No embed key. Add one in Edit details to use this {term} from the embed SDK.',
+                      pieceSetTerms.get(),
+                    )}
+                  </p>
+                )}
+              </RailSection>
+            )}
           </SettingsPanel>
         }
       />
@@ -430,13 +458,16 @@ function PieceSetDetails({
         open={deleting}
         onOpenChange={setDeleting}
         title={t('Delete {name}?', { name: pieceSet.name })}
-        description={t('The policy is removed from the platform.')}
+        description={t(
+          'The {term} is removed from the platform.',
+          pieceSetTerms.get(),
+        )}
         consequence={
           projectsLoading
-            ? t('Its projects move to the Default policy.')
+            ? t('Its projects move to the Default {term}.', pieceSetTerms.get())
             : t(
-                '{count, plural, =0 {No projects use this policy.} =1 {1 project moves to the Default policy.} other {# projects move to the Default policy.}}',
-                { count: assignedProjects.length },
+                '{count, plural, =0 {No projects use this {term}.} =1 {1 project moves to the Default {term}.} other {# projects move to the Default {term}.}}',
+                { ...pieceSetTerms.get(), count: assignedProjects.length },
               )
         }
         typeToConfirm={
@@ -444,7 +475,7 @@ function PieceSetDetails({
             ? undefined
             : pieceSet.name
         }
-        confirmLabel={t('Delete policy')}
+        confirmLabel={t('Delete {term}', pieceSetTerms.get())}
         controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
         onConfirm={async () => {
           await deleteSet(pieceSet.id);
@@ -474,7 +505,10 @@ function DetailsColumns({
 }
 
 function backLink() {
-  return { to: '/platform/pieces/piece-sets', label: t('Piece policies') };
+  return {
+    to: '/platform/pieces/piece-sets',
+    label: t('{title}', pieceSetTerms.get()),
+  };
 }
 
 PieceSetDetailsPage.displayName = 'PieceSetDetailsPage';

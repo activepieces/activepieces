@@ -23,17 +23,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { pieceSetFormErrors } from './piece-set-form-errors';
-
-const formSchema = z.object({
-  name: z.string().trim().min(1, { message: formErrors.required }),
-  key: z.string().trim().min(1, { message: formErrors.required }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 type EditPieceSetDialogProps = {
   open: boolean;
@@ -54,8 +48,10 @@ const EditPieceSetForm = ({
   currentName: string;
   currentKey: string | null;
 }) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const showKey = platform.plan.embeddingEnabled;
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(showKey ? formSchemaWithKey : formSchema),
     defaultValues: {
       name: currentName,
       key: currentKey ?? '',
@@ -65,7 +61,11 @@ const EditPieceSetForm = ({
 
   const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
     onError: (error) =>
-      pieceSetFormErrors.show({ form, error, keyField: 'key' }),
+      pieceSetFormErrors.show({
+        form,
+        error,
+        keyField: showKey ? 'key' : undefined,
+      }),
   });
 
   const handleSubmit = ({ name, key }: FormValues) => {
@@ -76,7 +76,7 @@ const EditPieceSetForm = ({
     updateSet(
       {
         id,
-        request: { name, key },
+        request: showKey ? { name, key } : { name },
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -101,24 +101,27 @@ const EditPieceSetForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="key"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Embed key')}</FormLabel>
-              <FormControl>
-                <Input placeholder={t('e.g. sales')} {...field} />
-              </FormControl>
-              <FormDescription>
-                {t(
-                  'The embed SDK passes this key to put a project on this policy.',
-                )}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {showKey && (
+          <FormField
+            control={form.control}
+            name="key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Embed key')}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t('e.g. sales')} {...field} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The embed SDK passes this key to put a project on this {term}.',
+                    pieceSetTerms.get(),
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         {form.formState.errors.root?.serverError && (
           <FormMessage>
             {form.formState.errors.root.serverError.message}
@@ -170,3 +173,14 @@ export const EditPieceSetDialog = ({
     </Dialog>
   );
 };
+
+const formSchema = z.object({
+  name: z.string().trim().min(1, { message: formErrors.required }),
+  key: z.string().trim(),
+});
+
+const formSchemaWithKey = formSchema.extend({
+  key: z.string().trim().min(1, { message: formErrors.required }),
+});
+
+type FormValues = z.infer<typeof formSchema>;

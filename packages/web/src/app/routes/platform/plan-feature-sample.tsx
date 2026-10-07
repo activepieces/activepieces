@@ -133,7 +133,7 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.managePiecesEnabled,
     teaser: {
       featureKey: 'PIECES',
-      title: 'Unlock Piece Policies',
+      title: 'pieceSetTerm.unlockTitle',
       description:
         'Decide which pieces and actions each project can use, and which actions a flow must use before it can be published.',
       tier: 'enterprise',

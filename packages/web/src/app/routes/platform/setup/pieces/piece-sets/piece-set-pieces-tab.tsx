@@ -14,6 +14,7 @@ import {
   ChangePieceSet,
   PieceSetChange,
   pieceSetChanges,
+  pieceSetTerms,
 } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -126,7 +127,8 @@ export const PieceSetPiecesTab = ({
       flush
       title={t('Pieces')}
       description={t(
-        'Every piece on the platform, and what this policy allows of it.',
+        'Every piece on the platform, and what this {term} allows of it.',
+        pieceSetTerms.get(),
       )}
     >
       <div className="flex flex-wrap items-center gap-3 p-5">
@@ -404,7 +406,8 @@ const EMPTY_SEGMENT_DESCRIPTIONS: Record<Segment, () => string> = {
   all: () => t('Install a piece and it shows up here.'),
   allowed: () => t('Allow pieces from the Blocked tab.'),
   limited: () => t('Open an allowed piece to limit it to some of its actions.'),
-  blocked: () => t('Every piece is available on this policy.'),
+  blocked: () =>
+    t('Every piece is available on this {term}.', pieceSetTerms.get()),
 };
 
 type PieceAccess = 'allowed' | 'limited' | 'blocked';

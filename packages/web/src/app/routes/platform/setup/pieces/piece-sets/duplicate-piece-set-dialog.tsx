@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { pieceSetFormErrors } from './piece-set-form-errors';
@@ -129,13 +129,13 @@ export const DuplicatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
-          <DialogTitle>{t('Duplicate policy')}</DialogTitle>
+          <DialogTitle>
+            {t('Duplicate {term}', pieceSetTerms.get())}
+          </DialogTitle>
           <DialogDescription>
             {t(
-              'A new policy starts with the same pieces and actions as {name}.',
-              {
-                name: sourceName,
-              },
+              'A new {term} starts with the same pieces and actions as {name}.',
+              { ...pieceSetTerms.get(), name: sourceName },
             )}
           </DialogDescription>
         </DialogHeader>

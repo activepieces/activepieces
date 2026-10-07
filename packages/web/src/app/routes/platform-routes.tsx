@@ -2,6 +2,7 @@ import React, { Suspense, useMemo } from 'react';
 import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
+import { PieceSetPageTitle } from '@/app/routes/platform/setup/pieces/piece-sets/piece-set-page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { Error, Success } from '@/features/billing';
 
@@ -233,7 +234,7 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Policies">
+        <PieceSetPageTitle>
           <LegacyTabRedirect
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
@@ -242,7 +243,7 @@ export const platformRoutes = [
               <PieceSetsPage />
             </SuspenseWrapper>
           </LegacyTabRedirect>
-        </PageTitle>
+        </PieceSetPageTitle>
       </PlatformLayout>
     ),
   },
@@ -250,11 +251,11 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Policy">
+        <PieceSetPageTitle singular>
           <SuspenseWrapper>
             <PieceSetDetailsPage />
           </SuspenseWrapper>
-        </PageTitle>
+        </PieceSetPageTitle>
       </PlatformLayout>
     ),
   },

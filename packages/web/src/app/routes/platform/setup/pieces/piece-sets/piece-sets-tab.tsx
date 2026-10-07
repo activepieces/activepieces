@@ -45,6 +45,7 @@ import {
   pieceSetChanges,
   pieceSetMutations,
   pieceSetQueries,
+  pieceSetTerms,
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { projectHooks } from '@/features/projects';
@@ -133,6 +134,8 @@ function PieceSetsList({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const search = searchParams.get(SEARCH_PARAM) ?? '';
+  const { platform } = platformHooks.useCurrentPlatform();
+  const showKey = platform.plan.embeddingEnabled;
   const [creating, setCreating] = useState(false);
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
   const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
@@ -150,9 +153,9 @@ function PieceSetsList({
     return pieceSets.filter(
       (set) =>
         set.name.toLowerCase().includes(query) ||
-        (set.key ?? '').toLowerCase().includes(query),
+        (showKey && (set.key ?? '').toLowerCase().includes(query)),
     );
-  }, [pieceSets, search]);
+  }, [pieceSets, search, showKey]);
 
   const openSet = (set: PieceSet) =>
     navigate(`/platform/pieces/piece-sets/${set.id}`);
@@ -163,7 +166,10 @@ function PieceSetsList({
         accessorKey: 'name',
         size: 360,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Policy')} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('{Term}', pieceSetTerms.get())}
+          />
         ),
         cell: ({ row }) => (
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -181,21 +187,7 @@ function PieceSetsList({
           </div>
         ),
       },
-      {
-        accessorKey: 'key',
-        size: 150,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Embed key')} />
-        ),
-        cell: ({ row }) =>
-          row.original.key ? (
-            <span className="font-mono text-xs text-gray-11">
-              {row.original.key}
-            </span>
-          ) : (
-            <span className="text-gray-11">—</span>
-          ),
-      },
+      ...(showKey ? [embedKeyColumn()] : []),
       {
         id: 'appliesTo',
         size: 170,
@@ -326,7 +318,7 @@ function PieceSetsList({
         ),
       },
     ],
-    [projectCounts, projectsLoading],
+    [projectCounts, projectsLoading, showKey],
   );
 
   const newSetButton = (
@@ -335,7 +327,7 @@ function PieceSetsList({
       onClick={() => setCreating(true)}
     >
       <Plus />
-      {t('New policy')}
+      {t('New {term}', pieceSetTerms.get())}
     </Button>
   );
   const filtered = search.trim() !== '';
@@ -343,9 +335,10 @@ function PieceSetsList({
   return (
     <AdminPage>
       <AdminPageHeader
-        title={t('Piece policies')}
+        title={t('{title}', pieceSetTerms.get())}
         description={t(
-          'A policy decides which pieces, actions and triggers its projects can use, and which actions a flow must use before it can be published.',
+          'A {term} decides which pieces, actions and triggers its projects can use, and which actions a flow must use before it can be published.',
+          pieceSetTerms.get(),
         )}
         resources={adminPageResources.pieces}
       >
@@ -353,13 +346,16 @@ function PieceSetsList({
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={
-          filtered ? t('No policy matches') : t('No policies yet')
+          filtered
+            ? t('No {term} matches', pieceSetTerms.get())
+            : t('No {terms} yet', pieceSetTerms.get())
         }
         emptyStateTextDescription={
           filtered
             ? t('Try a different search.')
             : t(
-                'Every project uses the Default policy. Make a policy to give some projects fewer pieces, or require actions in their flows.',
+                'Every project uses the Default {term}. Make a {term} to give some projects fewer pieces, or require actions in their flows.',
+                pieceSetTerms.get(),
               )
         }
         emptyStateIcon={<Layers />}
@@ -368,7 +364,9 @@ function PieceSetsList({
         filters={[
           {
             type: 'input',
-            title: t('Search by name or embed key'),
+            title: showKey
+              ? t('Search by name or embed key')
+              : t('Search by name'),
             accessorKey: SEARCH_PARAM,
             icon: Search,
           },
@@ -377,7 +375,7 @@ function PieceSetsList({
         onRowClick={(row) => openSet(row)}
         isLoading={isLoading}
         isError={isError}
-        errorStateEntity={t('piece policies')}
+        errorStateEntity={t('piece {terms}', pieceSetTerms.get())}
         onRetry={onRetry}
         hidePagination
       />
@@ -408,19 +406,25 @@ function PieceSetsList({
           open
           onOpenChange={(open) => !open && setDeletingSet(null)}
           title={t('Delete {name}?', { name: deletingSet.name })}
-          description={t('The policy is removed from the platform.')}
+          description={t(
+            'The {term} is removed from the platform.',
+            pieceSetTerms.get(),
+          )}
           consequence={
             deletingSetProjects === undefined
-              ? t('Its projects move to the Default policy.')
+              ? t(
+                  'Its projects move to the Default {term}.',
+                  pieceSetTerms.get(),
+                )
               : t(
-                  '{count, plural, =0 {No projects use this policy.} =1 {1 project moves to the Default policy.} other {# projects move to the Default policy.}}',
-                  { count: deletingSetProjects },
+                  '{count, plural, =0 {No projects use this {term}.} =1 {1 project moves to the Default {term}.} other {# projects move to the Default {term}.}}',
+                  { ...pieceSetTerms.get(), count: deletingSetProjects },
                 )
           }
           typeToConfirm={
             deletingSetProjects === 0 ? undefined : deletingSet.name
           }
-          confirmLabel={t('Delete policy')}
+          confirmLabel={t('Delete {term}', pieceSetTerms.get())}
           controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
           onConfirm={async () => {
             await deleteSet(deletingSet.id);
@@ -430,6 +434,24 @@ function PieceSetsList({
       )}
     </AdminPage>
   );
+}
+
+function embedKeyColumn(): ColumnDef<RowDataWithActions<PieceSet>> {
+  return {
+    accessorKey: 'key',
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Embed key')} />
+    ),
+    cell: ({ row }) =>
+      row.original.key ? (
+        <span className="font-mono text-xs text-gray-11">
+          {row.original.key}
+        </span>
+      ) : (
+        <span className="text-gray-11">—</span>
+      ),
+  };
 }
 
 function selectionSentence(set: PieceSet): string {

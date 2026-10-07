@@ -22,7 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import {
+  pieceSetMutations,
+  pieceSetQueries,
+  pieceSetTerms,
+} from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -131,7 +135,8 @@ const AssignProjectsForm = ({
         <DialogDescription>
           {pieceSet.isDefault
             ? t(
-                'Projects without a policy already use the Default policy. Pick projects to move back to it.',
+                'Projects without a {term} already use the Default {term}. Pick projects to move back to it.',
+                pieceSetTerms.get(),
               )
             : t('Choose which projects build with {name}.', {
                 name: pieceSet.name,
@@ -173,7 +178,10 @@ const AssignProjectsForm = ({
       </Command>
       {movingCount > 0 && (
         <p className="text-xs text-warning-11">
-          {t('projectsMovingFromOtherPolicies', { count: movingCount })}
+          {t('projectsMovingFromOtherPolicies', {
+            ...pieceSetTerms.get(),
+            count: movingCount,
+          })}
         </p>
       )}
       <DialogFooter>

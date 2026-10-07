@@ -2,6 +2,7 @@ import { ErrorCode } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 
+import { pieceSetTerms } from '@/features/piece-sets';
 import { api } from '@/lib/api';
 
 function show<T extends FieldValues>({
@@ -19,7 +20,8 @@ function show<T extends FieldValues>({
       form.setError(keyField, {
         type: 'manual',
         message: t(
-          'Another policy already uses this embed key. Enter a different one.',
+          'Another {term} already uses this embed key. Enter a different one.',
+          pieceSetTerms.get(),
         ),
       });
       return;
@@ -28,10 +30,12 @@ function show<T extends FieldValues>({
       type: 'manual',
       message: keyField
         ? t(
-            'Another policy already uses the embed key made from this name. Pick a different name or enter an embed key.',
+            'Another {term} already uses the embed key made from this name. Pick a different name or enter an embed key.',
+            pieceSetTerms.get(),
           )
         : t(
-            'Another policy already uses the embed key made from this name. Pick a different name.',
+            'Another {term} already uses the embed key made from this name. Pick a different name.',
+            pieceSetTerms.get(),
           ),
     });
     return;
