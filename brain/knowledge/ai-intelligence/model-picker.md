@@ -27,6 +27,7 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 **Tier colour** — `swatchUtils.varsForSeed({ seed: tierId })`, the shared 12-hue swatch palette. There is no column for it.
 
 ## Gotchas
+- cmdk's `CommandItem` replaces any `onPointerMove` you pass it with its own hover-select. The picker reads hover on `CommandList` instead, from the closest `[cmdk-item]`'s `data-value`. Its `onValueChange` also fires when the list opens, because cmdk highlights the first row. So the detail card only follows `onValueChange` after an arrow key has been pressed.
 - The side card hides any row it has no data for. Catalog metadata comes from the CDN `model-catalog.json`, and its publish has failed before, so expect gaps.
 - A stored deleted tier shows its live replacement ("Moved"), because the runtime follows `replacedBy` too (`movedTiers` in the response).
 - A stored model that the admin hid with the specific-models toggle shows "Hidden by admin". It still runs, because the toggle is not enforced at run time.
