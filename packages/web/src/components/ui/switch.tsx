@@ -7,10 +7,13 @@ function Switch({
   className,
   size = 'default',
   indeterminate = false,
+  onCheckedChange,
   ...props
 }: SwitchProps) {
-  const controlledProps =
-    'checked' in props ? { checked: props.checked ?? false } : {};
+  const isControlled = props.checked !== undefined;
+  const [internalChecked, setInternalChecked] = React.useState(
+    props.defaultChecked ?? false,
+  );
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
@@ -23,7 +26,13 @@ function Switch({
         className,
       )}
       {...props}
-      {...controlledProps}
+      checked={isControlled ? props.checked : internalChecked}
+      onCheckedChange={(checked) => {
+        if (!isControlled) {
+          setInternalChecked(checked);
+        }
+        onCheckedChange?.(checked);
+      }}
       data-indeterminate={indeterminate || undefined}
     >
       <SwitchPrimitive.Thumb
