@@ -18,7 +18,7 @@ import {
   Unplug,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
@@ -195,6 +195,11 @@ function ProjectsGroup() {
   const [sort, setSort] = useState<ProjectSort>(() =>
     readStoredSort(localStorage.getItem(PROJECT_SORT_KEY)),
   );
+  const listRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    scrollActiveProjectIntoView(listRef.current);
+  }, [location.pathname, projects.length]);
 
   if (projects.length === 0) {
     return null;
@@ -227,7 +232,7 @@ function ProjectsGroup() {
   return (
     <>
       <SidebarSeparator className="mx-4" />
-      <SidebarGroup className="min-h-0 flex-1">
+      <SidebarGroup className="min-h-36 flex-1">
         <div
           inert={isCollapsed}
           className={cn('shrink-0', sidebarStyles.hideWhenCollapsed)}
@@ -252,6 +257,7 @@ function ProjectsGroup() {
           </div>
         </div>
         <SidebarMenu
+          ref={listRef}
           className={cn(
             'min-h-0 flex-1 gap-0.5',
             sidebarStyles.scrollArea,
@@ -383,6 +389,20 @@ function SortOption({
       {active && <span className="text-accent-11">✓</span>}
     </DropdownMenuItem>
   );
+}
+
+function scrollActiveProjectIntoView(list: HTMLUListElement | null) {
+  const active = list?.querySelector('[data-active=true]');
+  if (!list || !active) {
+    return;
+  }
+  const listRect = list.getBoundingClientRect();
+  const activeRect = active.getBoundingClientRect();
+  if (activeRect.top >= listRect.top && activeRect.bottom <= listRect.bottom) {
+    return;
+  }
+  list.scrollTop +=
+    activeRect.top - listRect.top - (listRect.height - activeRect.height) / 2;
 }
 
 function readStoredSort(stored: string | null): ProjectSort {

@@ -104,6 +104,7 @@ export const LanguageToggle = () => {
                   {Object.entries(localesMap).map(([value, label]) => (
                     <CommandItem
                       value={value}
+                      keywords={[label]}
                       key={value}
                       onSelect={(value) => mutate(value)}
                       className="justify-between text-sm"
