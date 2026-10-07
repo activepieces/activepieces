@@ -13,11 +13,12 @@ import { mcpGrantsApi } from './mcp-grants-api';
 const GRANTS_QUERY_KEY = ['mcp-oauth-grants'];
 
 export const mcpGrantsQueries = {
-  useGrants({ request }: UseGrantsParams) {
+  useGrants({ request, refetchInterval }: UseGrantsParams) {
     return useQuery({
       queryKey: [...GRANTS_QUERY_KEY, request],
       queryFn: () => mcpGrantsApi.list(request),
       placeholderData: keepPreviousData,
+      refetchInterval,
     });
   },
 };
@@ -40,4 +41,5 @@ export const mcpGrantsMutations = {
 
 type UseGrantsParams = {
   request: ListMcpOAuthGrantsRequestQuery;
+  refetchInterval?: number | false;
 };

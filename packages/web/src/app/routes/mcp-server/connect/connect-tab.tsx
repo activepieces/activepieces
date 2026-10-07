@@ -8,7 +8,11 @@ import { useMcpNav } from '../mcp-nav';
 
 import { ClientInstructions } from './client-instructions';
 import { ClientPicker } from './client-picker';
-import { ConnectLanding } from './connect-landing';
+import { DevDirectionPicker, useDevDirection } from './dev-direction-picker';
+import { TakeHub } from './take-hub';
+import { TakeLogoFirst } from './take-logo-first';
+import { TakeTranscript } from './take-transcript';
+import { useConnectHome } from './use-connect-home';
 
 export function ConnectTab({
   serverUrl,
@@ -42,5 +46,44 @@ export function ConnectTab({
     return <ClientPicker clients={clients} serverUrl={serverUrl} />;
   }
 
-  return <ConnectLanding clients={clients} serverUrl={serverUrl} />;
+  return (
+    <ConnectHomeView
+      clients={clients}
+      serverUrl={serverUrl}
+      isReachableFromInternet={isReachableFromInternet}
+    />
+  );
+}
+
+function ConnectHomeView({
+  clients,
+  serverUrl,
+  isReachableFromInternet,
+}: {
+  clients: ReturnType<typeof mcpClientCatalog.clients>;
+  serverUrl: string;
+  isReachableFromInternet: boolean;
+}) {
+  const dev = useDevDirection();
+  const home = useConnectHome({
+    clients,
+    forcedState: import.meta.env.DEV ? dev.settings.state : 'auto',
+  });
+  const props = { home, serverUrl, isReachableFromInternet };
+  const direction = import.meta.env.DEV ? dev.settings.direction : 'logos';
+
+  return (
+    <>
+      {home.isGrantsLoading ? null : direction === 'transcript' ? (
+        <TakeTranscript {...props} />
+      ) : direction === 'hub' ? (
+        <TakeHub {...props} />
+      ) : (
+        <TakeLogoFirst {...props} />
+      )}
+      {import.meta.env.DEV && (
+        <DevDirectionPicker settings={dev.settings} onChange={dev.update} />
+      )}
+    </>
+  );
 }
