@@ -227,7 +227,7 @@ const EventDestinationsPage = () => {
             'Stream every audit event on your platform over OpenTelemetry (OTLP), or send it to a flow.',
           )}
           emptyStateIcon={
-            <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-lg bg-gray-3">
+            <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-xl bg-gray-3">
               <Radio className="size-5" />
             </span>
           }

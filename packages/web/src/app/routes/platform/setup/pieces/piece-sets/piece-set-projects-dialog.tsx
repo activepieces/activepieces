@@ -223,7 +223,7 @@ export const PieceSetProjectsDialog = ({
           variant="outline"
           role="combobox"
           disabled={isLoading}
-          className="h-9 gap-2 rounded-lg pl-2.5 pr-2 font-normal"
+          className="font-normal"
         >
           {assignedProjects.length === 0 ? (
             <span className="text-gray-11">{t('No projects assigned')}</span>
@@ -233,7 +233,7 @@ export const PieceSetProjectsDialog = ({
                 {assignedProjects.slice(0, 3).map((project) => (
                   <span
                     key={project.id}
-                    className="flex size-5 items-center justify-center rounded-[5px] text-[9px] font-bold"
+                    className="flex size-5 items-center justify-center rounded-md text-xs font-semibold"
                     style={{
                       backgroundColor:
                         PROJECT_COLOR_PALETTE[project.icon.color].color,

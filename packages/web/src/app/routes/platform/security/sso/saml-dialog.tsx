@@ -57,7 +57,7 @@ export const ConfigureSamlDialog = ({
         <Button
           {...adminControl(AdminControl.SSO_SAML_OPEN)}
           size="sm"
-          variant="basic"
+          variant="ghost"
           onClick={() => setOpen(true)}
         >
           {connected ? t('Edit') : t('Enable')}
@@ -277,12 +277,7 @@ const DomainStep = ({
           render={({ field }) => (
             <FormItem className="grid space-y-2">
               <Label htmlFor="ssoDomain">{t('Domain')}</Label>
-              <Input
-                {...field}
-                id="ssoDomain"
-                placeholder="acme.com"
-                className="rounded-sm"
-              />
+              <Input {...field} id="ssoDomain" placeholder="acme.com" />
               <FormDescription>
                 {t(
                   'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
@@ -312,7 +307,7 @@ const DomainStep = ({
             <Button
               {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
               type="button"
-              variant="basic"
+              variant="ghost"
               className="text-danger-11"
               loading={disableAction.isDisabling}
               onClick={disableAction.onDisable}
@@ -453,7 +448,7 @@ Activepieces
                   required
                   id="idpMetadata"
                   rows={6}
-                  className="rounded-sm font-mono text-xs"
+                  className="font-mono text-xs"
                 />
                 <FormDescription>
                   {t(
@@ -469,12 +464,7 @@ Activepieces
             render={({ field }) => (
               <FormItem className="grid space-y-4">
                 <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
-                <Textarea
-                  {...field}
-                  required
-                  id="idpCertificate"
-                  className="rounded-sm"
-                />
+                <Textarea {...field} required id="idpCertificate" />
                 <FormMessage />
               </FormItem>
             )}
@@ -490,7 +480,7 @@ Activepieces
               <Button
                 {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
                 type="button"
-                variant="basic"
+                variant="ghost"
                 className="text-danger-11 mr-auto"
                 loading={disableAction.isDisabling}
                 onClick={disableAction.onDisable}
@@ -583,7 +573,7 @@ const VerificationRecordRow = ({
 }) => (
   <div className="flex flex-col gap-2 rounded-md border p-4">
     <div className="flex items-center gap-2">
-      <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
+      <span className="text-xs font-mono px-1.5 py-0.5 rounded-md bg-gray-3">
         {record.type}
       </span>
     </div>

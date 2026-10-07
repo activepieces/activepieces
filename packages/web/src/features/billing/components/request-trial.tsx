@@ -106,6 +106,6 @@ type RequestTrialProps = {
   featureKey: FeatureKey;
   surface?: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
   customButton?: React.ReactNode;
-  buttonVariant?: 'default' | 'basic';
+  buttonVariant?: 'default' | 'ghost';
   buttonSize?: 'default' | 'sm' | 'xs';
 };

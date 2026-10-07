@@ -72,7 +72,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
   return (
     <>
-      <div className="flex w-full flex-col rounded-lg border bg-gray-1 p-5 gap-4 sm:w-[475px]">
+      <div className="flex w-full flex-col rounded-xl border bg-gray-1 p-5 gap-4 sm:w-[475px]">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
             <Layers className="size-4" />
@@ -85,7 +85,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
         </div>
 
         <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold leading-tight">
+          <span className="text-2xl font-semibold leading-tight">
             {onlineWorkerCount}
           </span>
           <span className="text-sm text-gray-11">
@@ -98,14 +98,13 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+            <span className="text-xs font-medium tracking-wide text-gray-11">
               {t('PROJECTS')}
             </span>
             <Button
               {...adminControl(AdminControl.WORKERS_ASSIGN_OPEN)}
               variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
+              size="xs"
               onClick={() => setDialogOpen(true)}
             >
               <Plus className="size-3.5" />

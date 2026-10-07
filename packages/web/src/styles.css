@@ -191,23 +191,9 @@
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
 
-  --width-4_5: 1.125rem;
-
-  --height-4_5: 1.125rem;
-
   --transition-duration-1500: 1500ms;
 
-  --radius-lg: 0.75rem;
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-xs: calc(var(--radius) - 8px);
-  --radius-xss: calc(var(--radius) - 10px);
-
   --container-page-band: 1198px;
-
-  --text-xss: 0.65rem;
-  --text-3xl: 1.75rem;
-  --text-4xl: 2rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;

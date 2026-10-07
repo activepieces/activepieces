@@ -87,7 +87,7 @@ export const AllowedDomainDialog = ({
         <Button
           {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
           size={'sm'}
-          variant={'basic'}
+          variant={'ghost'}
           onClick={() => setOpen(true)}
         >
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
@@ -128,14 +128,11 @@ export const AllowedDomainDialog = ({
                         {...field}
                         id={`allowedAuthDomains.${index}`}
                         placeholder={t('example.com')}
-                        className="rounded-sm"
                       />
                       <Button
                         type="button"
                         onClick={() => remove(index)}
                         variant="outline"
-                        size="sm"
-                        className="h-10"
                       >
                         <X className="w-4 h-4" />
                       </Button>

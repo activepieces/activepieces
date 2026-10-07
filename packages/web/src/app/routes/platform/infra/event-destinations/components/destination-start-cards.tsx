@@ -59,7 +59,7 @@ const StartCard = ({
     <Link
       {...adminControl(AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN)}
       to={to}
-      className="flex gap-3 rounded-lg border p-4 transition-colors hover:bg-gray-3"
+      className="flex gap-3 rounded-xl border p-4 transition-colors hover:bg-gray-3"
     >
       <span
         className={cn(

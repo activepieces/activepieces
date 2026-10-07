@@ -100,7 +100,7 @@ export function ManualModelList({
                     ),
                   )
                 }
-                className="rounded bg-gray-1 px-1 py-px font-sans text-xss uppercase tracking-wide text-gray-11 transition-colors hover:text-gray-12"
+                className="rounded-md bg-gray-1 px-1 py-px font-sans text-xs tracking-wide text-gray-11 transition-colors hover:text-gray-12"
               >
                 {modelTypeLabel(model.modelType)}
               </button>

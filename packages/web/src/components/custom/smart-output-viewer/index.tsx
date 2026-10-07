@@ -67,7 +67,7 @@ function OutputViewerShell({
   };
 
   return (
-    <div className="rounded-lg border border-solid border-gray-6 overflow-hidden">
+    <div className="rounded-xl border border-solid border-gray-6 overflow-hidden">
       <Tabs defaultValue="friendly">
         <div className="px-3 py-2 flex border-solid border-b border-gray-6 items-center gap-1">
           <span className="grow">{title}</span>
@@ -90,11 +90,11 @@ function OutputViewerShell({
               tooltipSide="bottom"
             />
           </div>
-          <TabsList className="h-8">
-            <TabsTrigger value="friendly" className="text-xs px-2 h-6">
+          <TabsList>
+            <TabsTrigger value="friendly" className="text-xs">
               {t('Friendly View')}
             </TabsTrigger>
-            <TabsTrigger value="raw" className="text-xs px-2 h-6">
+            <TabsTrigger value="raw" className="text-xs">
               {t('Raw JSON')}
             </TabsTrigger>
           </TabsList>

@@ -68,7 +68,7 @@ export default function SettingsHealthPage({
       >
         {(section === 'runs' || section === 'queue') && (
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
-            <SelectTrigger className="w-auto gap-2 h-8">
+            <SelectTrigger size="sm" className="w-auto">
               <Calendar className="h-4 w-4" />
               <SelectValue />
             </SelectTrigger>

@@ -260,7 +260,7 @@ export default function PlatformConnectionsPage() {
 const ScopeBadge = ({ scope }: { scope: AppConnectionScope }) => {
   if (scope === AppConnectionScope.PLATFORM) {
     return (
-      <Badge variant="accent">
+      <Badge variant="secondary">
         <Globe />
         {t('Global')}
       </Badge>
