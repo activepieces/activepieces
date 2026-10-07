@@ -21,10 +21,12 @@ export function PreviewIconButton({
   icon: Icon,
   label,
   onClick,
+  className,
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
+  className?: string;
 }) {
   return (
     <Tooltip>
@@ -35,6 +37,7 @@ export function PreviewIconButton({
           type="button"
           onClick={onClick}
           aria-label={label}
+          className={className}
         >
           <Icon className="size-4" />
         </Button>

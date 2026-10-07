@@ -49,6 +49,7 @@ import {
   PersonalizationChipState,
 } from './components/personalization-chip';
 import { QuickReplies } from './components/quick-replies';
+import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
@@ -78,19 +79,21 @@ export function AIChatBox({
 
   return (
     <ChatStoreProvider>
-      <ChatBoxContent
-        incognito={incognito}
-        initialPrompt={initialPrompt}
-        agentId={agentId}
-        builder={builder}
-        onTurnEnd={onTurnEnd}
-        emptyState={emptyState}
-        footerNote={footerNote}
-        placeholder={placeholder}
-        conversationId={conversationId}
-        onTitleUpdate={onTitleUpdate}
-        onConversationCreated={onConversationCreated}
-      />
+      <TaskPanelLayout>
+        <ChatBoxContent
+          incognito={incognito}
+          initialPrompt={initialPrompt}
+          agentId={agentId}
+          builder={builder}
+          onTurnEnd={onTurnEnd}
+          emptyState={emptyState}
+          footerNote={footerNote}
+          placeholder={placeholder}
+          conversationId={conversationId}
+          onTitleUpdate={onTitleUpdate}
+          onConversationCreated={onConversationCreated}
+        />
+      </TaskPanelLayout>
     </ChatStoreProvider>
   );
 }

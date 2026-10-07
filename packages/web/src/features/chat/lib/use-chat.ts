@@ -256,7 +256,7 @@ function appendTrailingPart({
 }
 
 function progressOf(activity: SubagentActivity): number {
-  return activity.stepCount;
+  return activity.stepCount + (activity.timeline?.length ?? 0);
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);

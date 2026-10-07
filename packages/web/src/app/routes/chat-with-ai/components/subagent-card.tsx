@@ -2,10 +2,14 @@ import { isObject } from '@activepieces/core-utils';
 import { SubagentActivity } from '@activepieces/shared';
 import { t } from 'i18next';
 import { motion } from 'motion/react';
+import { useContext } from 'react';
+import { createPortal } from 'react-dom';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
+import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { AnyToolPart, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { cn } from '@/lib/utils';
 
 import {
   AppLogos,
@@ -13,6 +17,7 @@ import {
   LiveLine,
   StatusMark,
 } from './subagent-primitives';
+import { TaskPanel, TaskPanelSlotContext } from './task-panel';
 
 export function SubagentGroup({
   tasks,
@@ -23,6 +28,10 @@ export function SubagentGroup({
   toolCallMeta: Record<string, ToolCallMeta>;
   isStreaming: boolean;
 }) {
+  const panelToolCallId = useChatStoreContext((s) => s.taskPanelToolCallId);
+  const openTaskPanel = useChatStoreContext((s) => s.openTaskPanel);
+  const closeTaskPanel = useChatStoreContext((s) => s.closeTaskPanel);
+  const panelSlot = useContext(TaskPanelSlotContext);
   const activities = tasks.map(({ toolCallId, part }) => ({
     toolCallId,
     activity: resolveActivity({
@@ -33,6 +42,9 @@ export function SubagentGroup({
   }));
   const working = activities.some(
     ({ activity }) => activity.status === 'running',
+  );
+  const panelOpenHere = activities.some(
+    ({ toolCallId }) => toolCallId === panelToolCallId,
   );
 
   return (
@@ -54,27 +66,61 @@ export function SubagentGroup({
       </div>
       <div className="pb-1.5">
         {activities.map(({ toolCallId, activity }) => (
-          <SubagentRow key={toolCallId} activity={activity} />
+          <SubagentRow
+            key={toolCallId}
+            activity={activity}
+            selected={toolCallId === panelToolCallId}
+            onOpen={() => openTaskPanel(toolCallId)}
+          />
         ))}
       </div>
+      {panelOpenHere &&
+        panelSlot &&
+        panelToolCallId &&
+        createPortal(
+          <TaskPanel
+            tasks={activities}
+            selectedToolCallId={panelToolCallId}
+            onSelect={openTaskPanel}
+            onClose={closeTaskPanel}
+          />,
+          panelSlot,
+        )}
     </motion.div>
   );
 }
 
-function SubagentRow({ activity }: { activity: SubagentActivity }) {
+function SubagentRow({
+  activity,
+  selected,
+  onOpen,
+}: {
+  activity: SubagentActivity;
+  selected: boolean;
+  onOpen: () => void;
+}) {
   return (
-    <div className="flex items-center gap-3 px-4 py-2">
-      <StatusMark status={activity.status} />
-      <div className="min-w-0 flex-1">
-        <TextWithTooltip tooltipMessage={activity.title}>
-          <p className="truncate text-sm font-medium text-gray-12">
-            {activity.title}
-          </p>
-        </TextWithTooltip>
-        <LiveLine activity={activity} />
-      </div>
-      <AppLogos pieces={activity.pieces ?? []} />
-      <Duration activity={activity} />
+    <div className="px-1.5">
+      <button
+        type="button"
+        className={cn(
+          'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-gray-3',
+          selected && 'bg-gray-3',
+        )}
+        onClick={onOpen}
+      >
+        <StatusMark status={activity.status} />
+        <div className="min-w-0 flex-1">
+          <TextWithTooltip tooltipMessage={activity.title}>
+            <p className="truncate text-sm font-medium text-gray-12">
+              {activity.title}
+            </p>
+          </TextWithTooltip>
+          <LiveLine activity={activity} />
+        </div>
+        <AppLogos pieces={activity.pieces ?? []} />
+        <Duration activity={activity} />
+      </button>
     </div>
   );
 }
