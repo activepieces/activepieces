@@ -3534,5 +3534,7 @@
   "Contact sales to unlock the piece selector": "Contact sales to unlock the piece selector",
   "Contact sales to unlock custom roles": "Contact sales to unlock custom roles",
   "Enterprise trial": "Enterprise trial",
-  "last day": "last day"
+  "last day": "last day",
+  "Your Enterprise plan trial has ended, and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to deactivate to continue.": "Your Enterprise plan trial has ended, and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to deactivate to continue.",
+  "Only the platform owner can choose who keeps a seat on the {plan} plan. Ask them to sign in, or upgrade to add seats.": "Only the platform owner can choose who keeps a seat on the {plan} plan. Ask them to sign in, or upgrade to add seats."
 }
