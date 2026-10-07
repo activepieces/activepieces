@@ -176,6 +176,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const defaultProjectIds = isNil(params.defaultProjectIds)
             ? undefined
             : await validateDefaultProjectIds({ platform, defaultProjectIds: params.defaultProjectIds, log })
+        if (params.autoCreatePersonalProjects === false && platform.autoCreatePersonalProjects) {
+            await assertPersonalProjectsCanBeTurnedOff({ platform, log })
+        }
         const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
@@ -451,6 +454,18 @@ async function validateDefaultProjectIds({ platform, defaultProjectIds, log }: V
     return uniqueIds
 }
 
+async function assertPersonalProjectsCanBeTurnedOff({ platform, log }: AssertPersonalProjectsCanBeTurnedOffParams): Promise<void> {
+    const plan = await getPlan(log, platform)
+    if (!plan.projectRolesEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Turning personal projects off is not enabled for this platform',
+            },
+        })
+    }
+}
+
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     const { federatedAuthProviders: _omitted, ...rest } = platform
     return rest
@@ -484,6 +499,11 @@ type PlatformMembershipWithPlatform = {
 type ValidateDefaultProjectIdsParams = {
     platform: PlatformWithoutFederatedAuth
     defaultProjectIds: string[]
+    log: FastifyBaseLogger
+}
+
+type AssertPersonalProjectsCanBeTurnedOffParams = {
+    platform: PlatformWithoutFederatedAuth
     log: FastifyBaseLogger
 }
 
