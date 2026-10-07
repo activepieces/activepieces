@@ -1,15 +1,23 @@
 import { useReducedMotion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-import { ClientIcon } from '../client-icon';
 import { MCP_CLIENT_BRANDING } from '../mcp-client-display';
 
 export function ClientRotator() {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [widths, setWidths] = useState<number[]>([]);
+  const itemRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const measure = () =>
+      setWidths(itemRefs.current.map((item) => item?.offsetWidth ?? 0));
+    measure();
+    document.fonts.ready.then(measure).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (reduceMotion || isPaused) return;
@@ -20,9 +28,12 @@ export function ClientRotator() {
     return () => clearInterval(timer);
   }, [reduceMotion, isPaused]);
 
+  const width = widths[index];
+
   return (
     <span
-      className="inline-grid"
+      className="relative inline-block h-[1.25em] transition-[width] duration-200 motion-reduce:transition-none"
+      style={width ? { width } : undefined}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -31,18 +42,28 @@ export function ClientRotator() {
         return (
           <span
             key={client.name}
+            ref={(element) => {
+              itemRefs.current[position] = element;
+            }}
             aria-hidden={!isActive}
             style={{
-              backgroundColor: `color-mix(in oklab, ${client.tint} 14%, transparent)`,
+              color: `color-mix(in oklab, ${client.tint} 45%, currentColor)`,
             }}
             className={cn(
-              'col-start-1 row-start-1 inline-flex items-center gap-2 justify-self-start rounded-xl py-1 pl-1.5 pr-3 transition-all duration-200 motion-reduce:transition-none',
+              'absolute left-0 top-0 inline-flex h-full items-center gap-2.5 whitespace-nowrap transition-all duration-200 motion-reduce:transition-none',
               isActive
                 ? 'translate-y-0 opacity-100'
                 : 'pointer-events-none translate-y-1 opacity-0',
             )}
           >
-            <ClientIcon icon={client.icon} className="size-7 rounded-lg" />
+            <img
+              src={client.icon}
+              alt=""
+              className={cn(
+                'size-[0.9em] shrink-0 object-contain',
+                client.invertOnDark && 'dark:invert dark:hue-rotate-180',
+              )}
+            />
             {client.name}
           </span>
         );
@@ -54,19 +75,46 @@ export function ClientRotator() {
 const ROTATE_MS = 2500;
 
 const ROTATING_CLIENTS = [
-  { name: 'Claude', icon: MCP_CLIENT_BRANDING.claude.icon, tint: '#d97757' },
-  { name: 'ChatGPT', icon: MCP_CLIENT_BRANDING.chatgpt.icon, tint: '#10a37f' },
-  { name: 'Cursor', icon: MCP_CLIENT_BRANDING.cursor.icon, tint: '#8a8a8a' },
-  { name: 'Codex', icon: MCP_CLIENT_BRANDING.codex.icon, tint: '#8a8a8a' },
+  {
+    name: 'Claude',
+    icon: MCP_CLIENT_BRANDING.claude.icon,
+    tint: '#d97757',
+    invertOnDark: false,
+  },
+  {
+    name: 'ChatGPT',
+    icon: MCP_CLIENT_BRANDING.chatgpt.icon,
+    tint: '#10a37f',
+    invertOnDark: false,
+  },
+  {
+    name: 'Cursor',
+    icon: MCP_CLIENT_BRANDING.cursor.icon,
+    tint: '#8a8a8a',
+    invertOnDark: true,
+  },
+  {
+    name: 'Codex',
+    icon: MCP_CLIENT_BRANDING.codex.icon,
+    tint: '#8a8a8a',
+    invertOnDark: true,
+  },
   {
     name: 'Gemini',
     icon: MCP_CLIENT_BRANDING['gemini-cli'].icon,
     tint: '#4285f4',
+    invertOnDark: false,
   },
-  { name: 'VS Code', icon: MCP_CLIENT_BRANDING.vscode.icon, tint: '#007acc' },
+  {
+    name: 'VS Code',
+    icon: MCP_CLIENT_BRANDING.vscode.icon,
+    tint: '#007acc',
+    invertOnDark: false,
+  },
   {
     name: 'Windsurf',
     icon: MCP_CLIENT_BRANDING.windsurf.icon,
     tint: '#34e8bb',
+    invertOnDark: true,
   },
 ];
