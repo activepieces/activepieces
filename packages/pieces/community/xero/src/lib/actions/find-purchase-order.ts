@@ -7,6 +7,8 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroInput } from '../common/client';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroFindPurchaseOrder = createAction({
   auth: xeroAuth,
@@ -20,6 +22,7 @@ export const xeroFindPurchaseOrder = createAction({
       'Look up Xero purchase orders by exact number, exact reference, or GUID ID, with optional filters for contact, status, date range, and paging. Read-only and idempotent; use it to resolve a purchase-order ID or inspect orders before updating one. Searching by ID fetches that single record directly; the other modes run a filtered list query.',
     idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.purchaseOrderEnvelope,
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(false),
@@ -111,9 +114,9 @@ export const xeroFindPurchaseOrder = createAction({
     // Equality filter using where for non-ID searches
     const whereClauses: string[] = [];
     if (search_by === 'NUMBER') {
-      whereClauses.push(`PurchaseOrderNumber=="${String(value).replace(/"/g, '\\"')}"`);
+      whereClauses.push(`PurchaseOrderNumber==${xeroInput.whereString({ value: String(value) })}`);
     } else if (search_by === 'REFERENCE') {
-      whereClauses.push(`Reference=="${String(value).replace(/"/g, '\\"')}"`);
+      whereClauses.push(`Reference==${xeroInput.whereString({ value: String(value) })}`);
     }
     if (contact_id) {
       whereClauses.push(`Contact.ContactID==guid("${contact_id}")`);
