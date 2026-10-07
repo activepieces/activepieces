@@ -52,6 +52,18 @@ export const insertRowActionOutputSchema: OutputSchema = {
   ],
 };
 
+export const insertRowsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'rows',
+      label: 'Inserted Rows',
+      description:
+        'The inserted rows as stored by the database, including IDENTITY ids and defaults; each row\'s fields are the columns of the target table. Only present when Return Inserted Rows is enabled.',
+    },
+    { key: 'row_count', label: 'Inserted Row Count', format: 'number' },
+  ],
+};
+
 export const newOrUpdatedRowTriggerOutputSchema: OutputSchema = {
   fields: [
     {

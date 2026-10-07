@@ -68,6 +68,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof SoftrAuth>, Prop
 export const newDatabaseRecord = createTrigger({
 	auth: SoftrAuth,
 	name: 'newDatabaseRecord',
+	classification: 'READ',
 	displayName: 'New Database Record',
 	description: 'Triggers when a new record is added.',
 	aiMetadata: {

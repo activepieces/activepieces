@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const sendLogs = createAction({
   auth: coralogixAuth,
   name: 'sendLogs',
+  classification: 'WRITE',
   displayName: 'Send Logs',
   description: 'Send a single log to Coralogix Log Ingestion API.',
   audience: 'both',

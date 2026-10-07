@@ -3,6 +3,8 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs } from '@googleapis/docs';
 import { editTemplateActionOutputSchema } from '../output-schemas';
+import { documentIdProp } from '../common/props';
+import { toImageReplacements } from '../common/image-replacements';
 
 const PLACEHOLDER_FORMATS: Record<string, string> = {
   'curly_braces': '{{KEY}}',
@@ -20,46 +22,56 @@ export const createDocumentBasedOnTemplate = createAction({
   name: 'create_document_based_on_template',
   classification: 'WRITE',
   description:
-    'Edit a template file and replace the values with the ones provided',
+    'Fill a template by replacing its placeholders with your values.',
   audience: 'both',
   aiMetadata: {
     description:
       'Fills a Google Docs template in place by find-and-replacing placeholder tokens (e.g. [[KEY]] or {{KEY}}) with supplied key/value pairs and swapping placeholder images by object ID. Use when an agent has an existing template document and wants to merge data into it rather than build a doc from scratch. Requires the target document ID and the matching placeholder format; idempotent since re-running with the same values replaces no remaining placeholders and leaves the document unchanged.',
     idempotent: true,
   },
-  displayName: 'Edit template file',
+  displayName: 'Edit Template File',
   props: {
-    template: Property.ShortText({
-      displayName: 'Destination File',
-      description: 'The ID of the file to replace the values',
-      required: true,
-    }),
-    values: Property.Object({
-      displayName: 'Variables',
-      description: 'Dont include the placeholder format "[[]]" or "{{}}", only the key name and its value',
-      required: true,
-    }),
-    images: Property.Object({
-      displayName: 'Images',
-      description:
-        'Key: Image ID (get it manually from the Read File Action), Value: Image URL',
-      required: true,
+    template: documentIdProp({
+      description: 'Placeholders in this document are replaced in place.',
     }),
     placeholder_format: Property.StaticDropdown({
       displayName: 'Placeholder Format',
-      description: 'Choose the format of placeholders in your template',
       required: true,
       defaultValue: 'square_brackets',
+      display: 'cards',
       options: {
-          disabled: false,
-          options: [
-              { label: 'Curly Braces {{}}', value: 'curly_braces' },
-              { label: 'Square Brackets [[]]', value: 'square_brackets' },
-              { label: 'Single Curly Braces {}', value: 'single_curly' },
-              { label: 'Single Square Brackets []', value: 'single_square' }
-          ],
-        },
-  }),
+        options: [
+          { label: '{{KEY}}', value: 'curly_braces', description: 'Double curly braces' },
+          { label: '[[KEY]]', value: 'square_brackets', description: 'Double square brackets' },
+          { label: '{KEY}', value: 'single_curly', description: 'Single curly braces' },
+          { label: '[KEY]', value: 'single_square', description: 'Single square brackets' },
+        ],
+      },
+    }),
+    values: Property.Object({
+      displayName: 'Variables',
+      description: 'Key names without brackets. Each value replaces its placeholder.',
+      required: true,
+    }),
+    images: Property.Array({
+      displayName: 'Image Replacements',
+      description: 'Each row swaps one image in the document for a new one.',
+      required: false,
+      advanced: true,
+      properties: {
+        imageObjectId: Property.ShortText({
+          displayName: 'Image Object ID',
+          description: 'Found under inlineObjects in the Read Document output.',
+          required: true,
+          placeholder: 'kix.abc123def456',
+        }),
+        url: Property.ShortText({
+          displayName: 'New Image URL',
+          required: true,
+          placeholder: 'https://example.com/logo.png',
+        }),
+      },
+    }),
   },
   outputSchema: editTemplateActionOutputSchema,
   async run(context) {
@@ -88,12 +100,11 @@ export const createDocumentBasedOnTemplate = createAction({
       });
     }
 
-    for (const key in context.propsValue.images) {
-      const value = context.propsValue.images[key];
+    for (const { imageObjectId, url } of toImageReplacements(context.propsValue.images)) {
       requests.push({
         replaceImage: {
-          imageObjectId: key,
-          uri: String(value),
+          imageObjectId,
+          uri: url,
         },
       });
     }

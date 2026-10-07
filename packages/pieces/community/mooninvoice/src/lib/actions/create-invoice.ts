@@ -355,12 +355,12 @@ export const createInvoice = createAction({
       context.auth.props.secret_text
     );
 
-    const response = await makeRequest(
+    const response = await makeRequest({
       accessToken,
-      HttpMethod.POST,
-      '/create_invoice',
-      body
-    );
+      method: HttpMethod.POST,
+      path: '/create_invoice',
+      body,
+    });
 
     return response;
   },

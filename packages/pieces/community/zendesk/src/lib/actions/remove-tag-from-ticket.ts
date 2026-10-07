@@ -1,19 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { removeTagFromTicketOutputSchema } from '../output-schemas';
 
 export const removeTagFromTicketAction = createAction({
   auth: zendeskAuth,
   name: 'remove-tag-from-ticket',
+  outputSchema: removeTagFromTicketOutputSchema,
   classification: 'WRITE',
   displayName: 'Remove Tag(s) from Ticket',
   description: 'Remove one or more tags from a ticket.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Removes one or more tags from a ticket identified by ticket ID. Tags are removed from the existing tag set without disturbing other tags. If a tag does not exist on the ticket, it is silently ignored. Effectively idempotent for tags already absent.', idempotent: true },
   props: {
     ticket_id: ticketIdDropdown,
@@ -35,16 +37,12 @@ export const removeTagFromTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/tags.json`,
+        url: `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}/tags.json`,
         method: HttpMethod.DELETE,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           tags: tags,
         },

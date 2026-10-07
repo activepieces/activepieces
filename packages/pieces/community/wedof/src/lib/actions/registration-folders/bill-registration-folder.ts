@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const billRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'billRegistrationFolder',
+  classification: 'WRITE',
   displayName: 'Facturer le dossier de formation',
   description:
     'Associe le dossier de formation à un n° de facture et transmets les informations de facturation au financeur (EDOF par exemple)',

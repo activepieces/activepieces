@@ -43,14 +43,27 @@ describe('what a chat run may reach', () => {
 
 describe('what may reach the tools that build saved agents', () => {
     const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+    const SELF_EDIT_TOOLS = ['ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 
     it('a chat run and the builder, and no surface with nobody reading', () => {
         for (const toolName of AGENT_SURFACE_TOOLS) {
             expect(namesFor(AgentRunSource.CHAT), toolName).toContain(toolName)
             expect(namesFor(AgentRunSource.AGENT_BUILDER), toolName).toContain(toolName)
-            expect(namesFor(AgentRunSource.AGENT), toolName).not.toContain(toolName)
             expect(namesFor(AgentRunSource.FLOW_STEP), toolName).not.toContain(toolName)
         }
+    })
+
+    it('an agent talking to its owner may rewrite itself', () => {
+        for (const toolName of SELF_EDIT_TOOLS) {
+            expect(namesFor(AgentRunSource.AGENT), toolName).toContain(toolName)
+        }
+    })
+
+    it('and may not reach for another agent, or make a new one', () => {
+        const names = namesFor(AgentRunSource.AGENT)
+
+        expect(names).not.toContain('ap_list_agents')
+        expect(names).not.toContain('ap_create_agent')
     })
 })
 

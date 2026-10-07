@@ -116,6 +116,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
                 })
+                taintState.tainted = true
 
                 if (needsPreview) {
                     const previewData: ActionPreviewEvent = {
@@ -204,6 +205,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 status: z.string().optional().describe('Filter by status'),
             }),
             execute: async (input) => {
+                taintState.tainted = true
                 return truncateLargeResult(await executeWithTimeout('ap_list_across_projects', input))
             },
         }),
@@ -237,6 +239,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Optional extra values merged into `inputs`'),
             }),
             execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_run_code', toolInput)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const producedFiles = Array.isArray(resultObj['producedFiles']) ? resultObj['producedFiles'] : []
@@ -284,7 +287,16 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             inputSchema: z.object({
                 memory: z.string().describe('One concise durable preference/fact about the user'),
             }),
-            execute: async (toolInput) => {
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                if (taintState.tainted) {
+                    const label = `Remember: "${toolInput.memory}"`
+                    eventEmitter.emitActionPreview({ toolCallId, pieceName: '', actionName: 'ap_remember', actionDisplayName: label, input: toolInput, isBatch: false })
+                    await tryCatch(async () => onGateOpened?.({ gateId: toolCallId, toolName: 'ap_remember', displayName: label, toolInput }))
+                    const decision = await waitForApproval({ gateId: toolCallId })
+                    if (decision.outcome !== 'approved') {
+                        return { saved: false, message: decision.outcome === 'timeout' ? gateNoResponseMessage('memory approval') : 'The user chose not to save this. Do not retry it.' }
+                    }
+                }
                 return executeTool('ap_remember', toolInput)
             },
         }),

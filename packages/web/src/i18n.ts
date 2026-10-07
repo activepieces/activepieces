@@ -21,4 +21,3 @@ i18n
     nsSeparator: false,
     returnEmptyString: false,
   });
-export default i18n;

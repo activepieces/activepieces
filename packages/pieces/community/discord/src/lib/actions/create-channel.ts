@@ -12,22 +12,24 @@ export const discordCreateChannel = createAction({
   auth: discordAuth,
   name: 'create_channel',
   classification: 'WRITE',
-  description: 'create a channel',
+  description: 'Create a text channel in a server.',
   audience: 'human',
   aiMetadata: { description: 'Creates a new channel in a guild with the given name and optional topic, identified by guild ID. Use to provision a channel before posting to it. Requires the bot to have Manage Channels permission; not idempotent, since each call creates a separate channel even with the same name.', idempotent: false },
-  displayName: 'Create channel',
+  displayName: 'Create Channel',
   outputSchema: discordCreateChannelActionOutputSchema,
   props: {
     guild_id: discordCommon.guilds,
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'The name of the new channel',
+      description: 'Discord lowercases the name and turns spaces into dashes.',
+      placeholder: 'project-updates',
       required: true,
     }),
     topic: Property.LongText({
       displayName: 'Topic',
-      description: 'The topic of the new channel',
+      description: 'Shown at the top of the channel.',
       required: false,
+      advanced: true,
     }),
   },
 

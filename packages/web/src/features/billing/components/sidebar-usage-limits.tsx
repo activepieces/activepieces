@@ -54,7 +54,7 @@ export const SidebarUsageLimits = React.memo(() => {
 
   if (isNil(project) || isNil(usage)) {
     return (
-      <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
+      <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
         <div className="flex items-center justify-between">
           <Skeleton className="w-24 h-4" />
           <Skeleton className="w-14 h-4" />
@@ -68,25 +68,24 @@ export const SidebarUsageLimits = React.memo(() => {
     return null;
   }
 
-  const creditsText = billingUtils.formatCredits(Math.round(creditsRemaining));
+  const creditsText = billingUtils.formatCredits(creditsRemaining);
   const resetLine = billingUtils.resolveCreditsReset({
     creditsNextResetAt: usage.creditsNextResetAt,
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
-    isPaid,
     dateFormat: BILLING_DATE_FORMAT,
   });
   return (
-    <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
+    <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
           <span className="text-sm font-semibold truncate">{creditsText}</span>
-          <span className="text-xs text-muted-foreground">{t('credits')}</span>
+          <span className="text-xs text-gray-11">{t('credits')}</span>
         </div>
         <Badge
           className={cn(
             'shrink-0',
-            flowRunUtils.getStatusContainerClassName(severity),
+            flowRunUtils.getStatusContainerClassName({ variant: severity }),
           )}
         >
           {t('{percent}% used', { percent: percentUsed })}
@@ -97,14 +96,14 @@ export const SidebarUsageLimits = React.memo(() => {
           <TextWithTooltip
             tooltipMessage={resetLine.label + ' ' + resetLine.value}
           >
-            <span className="min-w-0 truncate text-xs text-muted-foreground">
+            <span className="min-w-0 truncate text-xs text-gray-11">
               {resetLine.label} {resetLine.value}
             </span>
           </TextWithTooltip>
         )}
         <span className="grow"></span>
         {isPlatformAdmin && (
-          <Link to="/platform/setup/billing" className="shrink-0">
+          <Link to="/platform/billing" className="shrink-0">
             <Button variant="link" size="xs">
               {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
             </Button>

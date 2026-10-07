@@ -32,6 +32,7 @@ export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
     secretAccessKey: z.string().check(z.minLength(1)),
+    sessionToken: z.optional(z.string()),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
@@ -235,8 +236,14 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const DEPRECATED_GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
+
+const DEPRECATED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.GOOGLE]: DEPRECATED_GOOGLE_CHAT_MODELS,
+    [AIProviderName.VERTEX]: DEPRECATED_GOOGLE_CHAT_MODELS,
+}
 
 const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
 
@@ -248,7 +255,7 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
-        ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
+        ...[...GOOGLE_CHAT_MODELS, ...DEPRECATED_GOOGLE_CHAT_MODELS].map((m) => `${AIProviderName.GOOGLE}/${m}`),
         ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
     ],
 }
@@ -277,6 +284,11 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
+function runnableChatModelIds({ provider }: { provider: AIProviderName }): string[] {
+    const offered = (getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+    return unique([...offered, ...(DEPRECATED_CHAT_MODELS_BY_PROVIDER[provider] ?? [])])
+}
+
 function canDisableReasoning({ modelId }: { modelId: string }): boolean {
     return REASONING_OPTIONAL_CHAT_MODELS.includes(modelId)
 }
@@ -292,12 +304,78 @@ function isManagedChatModelId({ modelId }: { modelId: string }): boolean {
     return managedChatModelIds().includes(modelId)
 }
 
-function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
-    if (ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === modelId)) {
-        return true
-    }
-    return Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).some((curatedIds) => curatedIds.includes(modelId))
+function curatedChatModelIds(): string[] {
+    return unique([
+        ...ACTIVEPIECES_CHAT_TIERS.flatMap((tier) => [tier.id, tier.modelId]),
+        ...Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).flatMap((curatedIds) => curatedIds ?? []),
+        ...Object.values(DEPRECATED_CHAT_MODELS_BY_PROVIDER).flatMap((deprecatedIds) => deprecatedIds ?? []),
+    ])
 }
+
+function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
+    return curatedChatModelIds().includes(modelId)
+}
+
+function isChatModelId({ modelId }: { modelId: string }): boolean {
+    const baseModelId = fineTuneBaseModelId({ modelId: modelId.trim().toLowerCase() })
+    if (NON_CHAT_MODEL_IDS.includes(baseModelId)) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_PREFIXES.some((prefix) => baseModelId.startsWith(prefix))) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_FRAGMENTS.some((fragment) => baseModelId.includes(fragment))) {
+        return false
+    }
+    const idTokens = baseModelId.split(MODEL_ID_TOKEN_SEPARATOR)
+    return !NON_CHAT_MODEL_ID_TOKENS.some((token) => idTokens.includes(token))
+}
+
+function fineTuneBaseModelId({ modelId }: { modelId: string }): string {
+    if (modelId.startsWith(FINE_TUNE_PREFIX)) {
+        return modelId.split(FINE_TUNE_SEGMENT_SEPARATOR)[1] ?? modelId
+    }
+    const azureFineTuneStart = modelId.indexOf(AZURE_FINE_TUNE_INFIX)
+    return azureFineTuneStart > 0 ? modelId.slice(0, azureFineTuneStart) : modelId
+}
+
+const FINE_TUNE_PREFIX = 'ft:'
+
+const FINE_TUNE_SEGMENT_SEPARATOR = ':'
+
+const AZURE_FINE_TUNE_INFIX = '.ft-'
+
+const NON_CHAT_MODEL_IDS = ['babbage-002', 'davinci-002', 'sora']
+
+const NON_CHAT_MODEL_ID_PREFIXES = [
+    'text-embedding-',
+    'text-moderation-',
+    'omni-moderation-',
+    'tts-',
+    'whisper-',
+    'dall-e-',
+    'sora-',
+    'computer-use-',
+    'codex-',
+    'gpt-image-',
+    'chatgpt-image-',
+]
+
+const NON_CHAT_MODEL_ID_FRAGMENTS = [
+    'realtime',
+    'audio',
+    'transcribe',
+    'whisper',
+    'embed',
+    'rerank',
+    'moderation',
+    'speech',
+    'voice',
+]
+
+const NON_CHAT_MODEL_ID_TOKENS = ['tts', 'asr']
+
+const MODEL_ID_TOKEN_SEPARATOR = /[-_.:/]/
 
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
 
@@ -360,105 +438,35 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
         defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
         supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
+        defaultImageModel: DEFAULT_IMAGE_MODELS[provider],
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
     }
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', nativeModelId: 'claude-haiku-4-5', thinkingBudget: 5_000, creditWeight: 2 },
-    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', nativeModelId: 'claude-sonnet-4-6', thinkingBudget: 10_000, creditWeight: 10 },
-    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', nativeModelId: 'claude-opus-4-7', thinkingBudget: 20_000, creditWeight: 20 },
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', nativeModelId: 'claude-haiku-4-5', thinkingBudget: 5_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', nativeModelId: 'claude-sonnet-4-6', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', nativeModelId: 'claude-opus-4-7', thinkingBudget: 20_000 },
 ] as const
-
-export const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
-    'ai21/jamba-large-1.7': 6,
-    'amazon/nova-premier-v1': 6,
-    'anthropic/claude-fable-5': 45,
-    'anthropic/claude-opus-4': 45,
-    'anthropic/claude-opus-4.1': 45,
-    'anthropic/claude-opus-4.5': 20,
-    'anthropic/claude-opus-4.6': 20,
-    'anthropic/claude-opus-4.7': 20,
-    'anthropic/claude-opus-4.7-fast': 200,
-    'anthropic/claude-opus-4.8-fast': 45,
-    'anthropic/claude-opus-5': 20,
-    'anthropic/claude-opus-5-fast': 45,
-    'anthropic/claude-sonnet-4': 10,
-    'anthropic/claude-sonnet-4.5': 10,
-    'anthropic/claude-sonnet-5': 6,
-    'cohere/command-a': 6,
-    'cohere/command-r-plus-08-2024': 6,
-    'google/gemini-2.5-flash': 2,
-    'google/gemini-2.5-pro': 6,
-    'google/gemini-2.5-pro-preview': 6,
-    'google/gemini-2.5-pro-preview-05-06': 6,
-    'google/gemini-3-flash-preview': 2,
-    'google/gemini-3-pro-image': 6,
-    'google/gemini-3-pro-image-preview': 6,
-    'google/gemini-3.1-pro-preview': 6,
-    'google/gemini-3.1-pro-preview-customtools': 6,
-    'google/gemini-3.5-flash': 6,
-    'google/gemini-3.6-flash': 6,
-    'google/gemini-3.7-flash': 6,
-    'mistralai/mistral-medium-3-5': 6,
-    'moonshotai/kimi-k3': 10,
-    'openai/gpt-4.1-mini': 2,
-    'openai/gpt-5.4-mini': 2,
-    'openai/gpt-5.4-nano': 2,
-    'openai/gpt-4': 45,
-    'openai/gpt-4-turbo': 20,
-    'openai/gpt-4-turbo-preview': 20,
-    'openai/gpt-4.1': 6,
-    'openai/gpt-4o': 6,
-    'openai/gpt-4o-2024-05-13': 10,
-    'openai/gpt-4o-2024-08-06': 6,
-    'openai/gpt-4o-2024-11-20': 6,
-    'openai/gpt-5': 6,
-    'openai/gpt-5-image': 6,
-    'openai/gpt-5-pro': 90,
-    'openai/gpt-5.1': 6,
-    'openai/gpt-5.1-codex': 6,
-    'openai/gpt-5.1-codex-max': 6,
-    'openai/gpt-5.2': 10,
-    'openai/gpt-5.2-chat': 10,
-    'openai/gpt-5.2-codex': 10,
-    'openai/gpt-5.2-pro': 200,
-    'openai/gpt-5.3-chat': 10,
-    'openai/gpt-5.3-codex': 10,
-    'openai/gpt-5.4': 10,
-    'openai/gpt-5.4-image-2': 10,
-    'openai/gpt-5.4-pro': 200,
-    'openai/gpt-5.5': 20,
-    'openai/gpt-5.5-pro': 200,
-    'openai/gpt-5.6-sol': 20,
-    'openai/gpt-5.6-sol-pro': 20,
-    'openai/gpt-audio': 6,
-    'openai/gpt-chat-latest': 20,
-    'openai/o1': 45,
-    'openai/o1-pro': 500,
-    'openai/o3': 6,
-    'openai/o3-pro': 90,
-    'perplexity/sonar-deep-research': 6,
-    'perplexity/sonar-pro': 10,
-    'perplexity/sonar-pro-search': 10,
-    'perplexity/sonar-reasoning-pro': 6,
-    'sakana/fugu-ultra': 20,
-    '~anthropic/claude-fable-latest': 45,
-    '~anthropic/claude-opus-latest': 20,
-    '~anthropic/claude-sonnet-latest': 6,
-    '~google/gemini-flash-latest': 6,
-    '~google/gemini-pro-latest': 6,
-    '~moonshotai/kimi-latest': 10,
-    '~openai/gpt-latest': 20,
-}
-
-export const MODELS_AWAITING_A_CREDIT_WEIGHT = ['x-ai/grok-4.20']
-
-export const DEFAULT_MANAGED_MODEL_WEIGHT = 2
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const
 
 export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
+
+export const ACTIVEPIECES_IMAGE_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'google/gemini-3.1-flash-lite-image' },
+    { id: 'smart', label: 'Expert', modelId: 'google/gemini-3.1-flash-image' },
+    { id: 'premium', label: 'Heavy', modelId: 'google/gemini-3-pro-image' },
+] as const
+
+export type ActivepiecesImageTier = typeof ACTIVEPIECES_IMAGE_TIERS[number]
+
+const DEFAULT_IMAGE_MODELS: Partial<Record<AIProviderName, string>> = {
+    [AIProviderName.ACTIVEPIECES]: ACTIVEPIECES_IMAGE_TIERS[0].modelId,
+    [AIProviderName.OPENROUTER]: 'google/gemini-3.1-flash-lite-image',
+    [AIProviderName.OPENAI]: 'gpt-image-1.5',
+    [AIProviderName.GOOGLE]: 'gemini-3.1-flash-image',
+}
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
@@ -483,10 +491,12 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
 export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
+    runnableChatModelIds,
     isCuratedChatModelId,
     managedChatModelIds,
     isManagedChatModelId,
     canDisableReasoning,
+    isChatModelId,
 }
 
 export const AI_PROVIDER_ENTITY_TYPES = {
@@ -510,5 +520,6 @@ export type AIProviderCapabilities = {
     defaultEmbeddingModel: string | undefined
     supportsEmbedding: boolean
     supportsImageGeneration: boolean
+    defaultImageModel: string | undefined
     webSearch: AIWebSearchMode | undefined
 }

@@ -7,22 +7,15 @@ export const pdfPageCount = createAction({
   name: 'pdfPageCount',
   classification: 'READ',
   displayName: 'PDF Page Count',
-  description: 'Get page count of PDF file.',
+  description: 'Count the pages in a PDF file or URL.',
   aiMetadata: { description: 'Returns the number of pages in a PDF given as an uploaded file or a URL. Use it as a cheap pre-check before any paging, splitting or looping logic — Extract PDF Pages performs the actual splitting and Extract Text pulls the content. Requires a loadable, non-encrypted PDF; read-only and idempotent.', idempotent: true },
   outputSchema: pdfPageCountActionOutputSchema,
   props: {
     file: Property.File({
       displayName: 'PDF File or URL',
+      placeholder: 'https://example.com/document.pdf',
       required: true,
     }),
-  },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
   },
   async run({ propsValue }) {
     try {

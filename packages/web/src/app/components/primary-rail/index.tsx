@@ -1,4 +1,3 @@
-import { Permission } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
@@ -33,7 +32,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -60,39 +58,47 @@ import {
   projectCollectionUtils,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
-import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
 import {
-  useAuthorization,
-  useIsPlatformAdmin,
-} from '@/hooks/authorization-hooks';
+  railIsCollapsed,
+  useRailCollapsed,
+} from '@/features/workspace/lib/rail-collapsed';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import AccountSettingsDialog from '../account-settings';
+import { AccountSettingsDialog } from '../account-settings';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
+import { mcpHooks } from '../project-settings/mcp-server/utils/mcp-hooks';
 
 export function PrimaryRail() {
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const {
-    collapsed,
-    setCollapsed,
-    toggle: toggleCollapsed,
-  } = useRailCollapsed();
+  const { preference, setCollapsed, toggle } = useRailCollapsed();
+  const { pathname } = useLocation();
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
-  const { checkAccess } = useAuthorization();
+  const isRailHidden = embedState.isEmbedded || embedState.hideSideNav;
+  const { reachesMcp } = mcpHooks.useMcpReach({ enabled: !isRailHidden });
 
-  if (embedState.isEmbedded || embedState.hideSideNav) {
+  if (isRailHidden) {
     return null;
   }
 
-  const openSidebar = () => setCollapsed(false);
+  const openSidebar = () => {
+    setOpenedOn(pathname);
+    setCollapsed(false);
+  };
+  const toggleCollapsed = () => {
+    setOpenedOn(pathname);
+    toggle();
+  };
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -100,7 +106,7 @@ export function PrimaryRail() {
         onClick={collapsed ? openSidebar : undefined}
         title={collapsed ? t('Open sidebar') : undefined}
         className={cn(
-          'flex h-svh shrink-0 flex-col bg-sidebar py-3 transition-[width] duration-150',
+          'flex h-svh shrink-0 flex-col overflow-hidden whitespace-nowrap bg-gray-2 py-3 transition-[width] duration-200 motion-reduce:transition-none',
           collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-62',
         )}
       >
@@ -130,7 +136,7 @@ export function PrimaryRail() {
                 }
               />
             )}
-            {checkAccess(Permission.READ_MCP) && (
+            {reachesMcp && (
               <RailNavButton
                 collapsed={collapsed}
                 to="/mcp-server"
@@ -207,7 +213,7 @@ function RailHeader({
               type="button"
               onClick={onToggle}
               aria-label={t('Open sidebar')}
-              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-accent"
+              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-gray-4"
             >
               <img
                 src={branding.logos.logoIconUrl}
@@ -229,7 +235,7 @@ function RailHeader({
                 setSearchOpen(true);
               }}
               aria-label={t('Search')}
-              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-11 hover:bg-gray-4 hover:text-gray-12"
             >
               <Search className="size-4" />
             </button>
@@ -246,7 +252,7 @@ function RailHeader({
         <TooltipTrigger asChild>
           <Link
             to="/"
-            className="flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-sidebar-accent"
+            className="flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-gray-4"
           >
             <img
               src={branding.logos.logoIconUrl}
@@ -264,7 +270,7 @@ function RailHeader({
           <PlatformSwitcher>
             <button
               type="button"
-              className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left hover:bg-sidebar-accent"
+              className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left hover:bg-gray-4"
             >
               <span className="flex-1 truncate text-sm font-medium">
                 {currentPlatform?.name ?? t('platform')}
@@ -285,7 +291,7 @@ function RailHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 shrink-0 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="size-8 shrink-0 rounded-full text-gray-11 hover:bg-gray-4 hover:text-gray-12"
               onClick={() => setSearchOpen(true)}
               aria-label={t('Search')}
             >
@@ -300,7 +306,7 @@ function RailHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 shrink-0 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="size-8 shrink-0 rounded-full text-gray-11 hover:bg-gray-4 hover:text-gray-12"
               onClick={onToggle}
               aria-label={t('Close sidebar')}
             >
@@ -326,7 +332,7 @@ function RailPlatformAdminButton({ collapsed }: { collapsed: boolean }) {
     <div className={cn('flex flex-col px-2 pb-1', collapsed && 'items-center')}>
       <div
         className={cn(
-          'mb-1 h-px shrink-0 bg-sidebar-border',
+          'mb-1 h-px shrink-0 bg-gray-6',
           collapsed ? 'w-6' : 'mx-3',
         )}
       />
@@ -368,12 +374,14 @@ function RailNavButton({
         onClick?.();
       }}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-gray-12 hover:bg-gray-4 hover:text-gray-12',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-10 px-3',
-        active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
+        active && 'bg-gray-4 font-medium text-gray-12',
       )}
     >
-      <Icon className={cn('size-[18px] shrink-0', active && 'text-primary')} />
+      <Icon
+        className={cn('size-[18px] shrink-0', active && 'text-accent-11')}
+      />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   );
@@ -445,13 +453,13 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
     >
       <div
         className={cn(
-          'mb-1 h-px shrink-0 bg-sidebar-border',
+          'mb-1 h-px shrink-0 bg-gray-6',
           collapsed ? 'w-6' : 'mx-3',
         )}
       />
       {!collapsed && (
         <div className="flex shrink-0 items-center gap-1 py-0.5 pl-3 pr-1">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-sidebar-foreground/50">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
             {t('Projects')}
           </span>
           <div className="ml-auto flex items-center gap-0.5">
@@ -508,7 +516,7 @@ function ProjectRow({
 
   const badge = (
     <span
-      className="flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold"
+      className="flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold leading-none"
       style={
         palette
           ? { backgroundColor: palette.color, color: palette.textColor }
@@ -518,7 +526,7 @@ function ProjectRow({
       {isTeam ? (
         name.charAt(0).toUpperCase()
       ) : (
-        <Lock className="size-3 text-sidebar-foreground/70" />
+        <Lock className="size-3 text-gray-11" />
       )}
     </span>
   );
@@ -534,9 +542,9 @@ function ProjectRow({
       }}
       aria-label={name}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-gray-12 hover:bg-gray-4 hover:text-gray-12',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-9 w-full px-3',
-        active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
+        active && 'bg-gray-4 font-medium text-gray-12',
       )}
     >
       {badge}
@@ -571,7 +579,7 @@ function PinnedSortMenu({
         aria-label={t('Sort pinned projects')}
         className={cn(
           RAIL_HEADER_ICON_BUTTON,
-          'flex items-center justify-center data-[state=open]:bg-sidebar-accent',
+          'flex items-center justify-center data-[state=open]:bg-gray-4',
         )}
       >
         <SlidersHorizontal className="size-3.5" />
@@ -609,7 +617,7 @@ function PinnedMenuOption({
   return (
     <DropdownMenuItem onClick={onClick} className="justify-between">
       {label}
-      {active && <span className="text-primary">✓</span>}
+      {active && <span className="text-accent-11">✓</span>}
     </DropdownMenuItem>
   );
 }
@@ -664,7 +672,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { reset } = useTelemetry();
   const navigate = useNavigate();
 
   if (!user) {
@@ -674,7 +681,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
-    reset();
     navigate('/sign-in');
   };
 
@@ -694,7 +700,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
                 aria-label={t('Account')}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
-                  'flex items-center gap-2 rounded-full hover:bg-sidebar-accent',
+                  'flex items-center gap-2 rounded-full hover:bg-gray-4',
                   collapsed
                     ? 'size-9 cursor-pointer justify-center'
                     : 'h-10 min-w-0 flex-1 px-2',
@@ -771,7 +777,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0 cursor-pointer rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="size-8 shrink-0 cursor-pointer rounded-full text-gray-11 hover:bg-gray-4 hover:text-gray-12"
             onClick={(e) => {
               e.stopPropagation();
               setAccountSettingsOpen(true);
@@ -793,7 +799,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
 }
 
 const RAIL_HEADER_ICON_BUTTON =
-  'size-6 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground [&_svg]:size-3.5!';
+  'size-6 rounded-md text-gray-11 hover:bg-gray-4 hover:text-gray-12 [&_svg]:size-3.5!';
 
 const PINNED_SORT_KEY = 'rail-pinned-sort';
 

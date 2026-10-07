@@ -7,10 +7,12 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroUpdatePurchaseOrder = createAction({
   auth: xeroAuth,
   name: 'xero_update_purchase_order',
+  classification: 'WRITE',
   displayName: 'Update Purchase Order',
   description: 'Updates details of an existing purchase order.',
   audience: 'both',
@@ -19,6 +21,7 @@ export const xeroUpdatePurchaseOrder = createAction({
       'Update an existing Xero purchase order identified by its ID, changing fields such as status, delivery address/instructions, attention-to, telephone, or expected arrival date. Idempotent on a fixed purchase-order ID. To raise a new order use Create Purchase Order instead.',
     idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.purchaseOrderEnvelope,
   props: {
     tenant_id: props.tenant_id,
     purchase_order_id: props.purchase_order_id(true),

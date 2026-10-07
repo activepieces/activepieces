@@ -1,7 +1,7 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, ToolProgressEvent } from '@activepieces/shared'
-import { ToolExecutionOptions } from 'ai'
+import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, ToolProgressEvent } from '@activepieces/shared'
+import { ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
 export const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
@@ -180,9 +180,45 @@ export type TaintState = { tainted: boolean }
 type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
+export function createTaintState({ carried }: { carried: boolean }): TrackedTaintState {
+    let readInReply = false
+    return {
+        get tainted() {
+            return carried || readInReply
+        },
+        set tainted(value: boolean) {
+            readInReply = value
+        },
+        readInThisReply: () => readInReply,
+    }
+}
+
+export function previousReplyReadData(previousUiMessages: unknown[]): boolean {
+    const lastReply = [...previousUiMessages].reverse().find((message) => isObject(message) && message['role'] === PersistedAgentRole.ASSISTANT)
+    return PersistedAgentMessageSchema.safeParse(lastReply).data?.tainted === true
+}
+
+export function wrapToolsWithTaint({ tools, taintState }: { tools: ToolSet, taintState: TaintState }): ToolSet {
+    return Object.fromEntries(Object.entries(tools).map(([name, toolDef]) => {
+        const run = toolDef.execute
+        if (typeof run !== 'function') {
+            return [name, toolDef]
+        }
+        return [name, {
+            ...toolDef,
+            execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
+                if (agentToolPhases.taintsTurn(name)) {
+                    taintState.tainted = true
+                }
+                return run(input, options)
+            },
+        }]
+    }))
+}
+
 export type ResolvedToolConfig = { provider: string, apiKey: string, config?: Record<string, unknown> }
 export type ImageStyle = 'realistic' | 'graphic_text' | 'brand_vector' | 'abstract'
 export type ImageAspect = 'square' | 'landscape' | 'portrait'
 export type ScrapedPage = { markdown: string, metadata: Record<string, unknown> }
 export type GeneratedImage = { bytes: Buffer, mediaType: string, extension: string }
-
+export type TrackedTaintState = TaintState & { readInThisReply: () => boolean }

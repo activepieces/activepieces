@@ -6,6 +6,7 @@ import type { Agent } from 'contextual-client/resources/agents';
 export const queryAgentAction = createAction({
   auth: contextualAiAuth,
   name: 'query_agent',
+  classification: 'READ',
   displayName: 'Query Agent',
   description: 'Send a message to a Contextual AI agent and get a response',
   audience: 'both',

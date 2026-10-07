@@ -9,6 +9,7 @@ import { fetchAllLists, getApiKey, getBaseUrl, sendgridAuth } from '../common';
 export const createOrUpdateContact = createAction({
   auth: sendgridAuth,
   name: 'create_or_update_contact',
+  classification: 'WRITE',
   displayName: 'Create or Update Contact',
   description: 'Add or update a contact, optionally adding them to a list',
   audience: 'both',

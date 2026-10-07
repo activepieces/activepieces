@@ -5,6 +5,7 @@ import { folkClient } from '../common/client';
 export const companyCustomFieldUpdated = createTrigger({
   auth: folkAuth,
   name: 'company_custom_field_updated',
+  classification: 'READ',
   displayName: 'Company Groups Updated',
   description:
     "Fires when a company's group assignments are updated in your Folk workspace.",

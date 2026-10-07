@@ -14,10 +14,10 @@ export const wooCreateOrder = createAction({
   classification: 'WRITE',
   displayName: 'Create Order',
   description: 'Create an order with one or more line items',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Creates a new order in a WooCommerce store from a list of product IDs and quantities, with an optional customer, status, and billing email. Use when an agent needs to place an order on a customer behalf. Not idempotent: each call creates a separate order.',
+      'Creates a new order in a WooCommerce store from a list of product IDs and quantities, with an optional customer, status, billing email, and payment gateway (payment method id, with an optional display title). Use when an agent needs to place an order on a customer behalf. Not idempotent: each call creates a separate order.',
     idempotent: false,
   },
   auth: wooAuth,
@@ -62,6 +62,12 @@ export const wooCreateOrder = createAction({
       description: 'Email address for the order',
       required: false,
     }),
+    payment_method: Property.ShortText({
+      displayName: 'Payment Method ID',
+      description:
+        'Payment gateway id the order is associated with, e.g. bacs, cheque or cod',
+      required: false,
+    }),
     payment_method_title: Property.ShortText({
       displayName: 'Payment Method Title',
       description: 'Human-readable payment method, e.g. Direct bank transfer',
@@ -70,8 +76,14 @@ export const wooCreateOrder = createAction({
   },
   async run(configValue) {
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
-    const { line_items, customer_id, status, billing_email, payment_method_title } =
-      configValue.propsValue;
+    const {
+      line_items,
+      customer_id,
+      status,
+      billing_email,
+      payment_method,
+      payment_method_title,
+    } = configValue.propsValue;
 
     const body: Record<string, unknown> = {
       line_items: line_items.map((item) => {
@@ -90,6 +102,9 @@ export const wooCreateOrder = createAction({
     }
     if (billing_email) {
       body['billing'] = { email: billing_email };
+    }
+    if (payment_method) {
+      body['payment_method'] = payment_method;
     }
     if (payment_method_title) {
       body['payment_method_title'] = payment_method_title;

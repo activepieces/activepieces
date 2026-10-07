@@ -5,6 +5,7 @@ import { makeClient } from '../../common';
 export const listCategoriesAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_categories',
+  classification: 'SEARCH',
   displayName: 'List Categories',
   description: 'Retrieves all categories from store.',
   audience: 'both',

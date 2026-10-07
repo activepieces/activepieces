@@ -6,6 +6,7 @@ import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
 export const deleteContact = createAction({
   auth: ninjapipeAuth,
   name: 'delete_contact',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Contact',
   description: 'Deletes a contact by ID.',
   audience: 'both',

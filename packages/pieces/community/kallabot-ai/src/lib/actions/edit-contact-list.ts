@@ -4,6 +4,7 @@ import { kallabotAuth } from '../..';
 
 export const editContactListAction = createAction({
     name: 'edit-contact-list',
+    classification: 'DESTRUCTIVE',
     displayName: 'Edit Contact List',
     description: 'Update/replace all contacts in an existing contact list.',
     audience: 'both',

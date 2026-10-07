@@ -7,6 +7,7 @@ import { Project } from '@activepieces/pieces-framework';
 export const createAttachment = createAction({
   auth: meistertaskAuth,
   name: 'create_attachment',
+  classification: 'WRITE',
   displayName: 'Create Attachment',
   description: 'Creates a new attachment',
   audience: 'both',

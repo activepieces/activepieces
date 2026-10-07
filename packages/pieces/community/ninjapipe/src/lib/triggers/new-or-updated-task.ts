@@ -9,6 +9,7 @@ const polling = buildProjectTasksPolling('updated_at');
 export const newOrUpdatedTask = createTrigger({
   auth: ninjapipeAuth,
   name: 'new_or_updated_task',
+  classification: 'READ',
   displayName: 'New or Updated Task',
   description: 'Triggers when a task in the selected project is created or updated.',
   aiMetadata: {

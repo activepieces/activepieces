@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const createFolderAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_create_folder',
+  classification: 'WRITE',
   displayName: 'Create Folder',
   description: 'Creates a new folder at path you specify.',
   audience: 'both',

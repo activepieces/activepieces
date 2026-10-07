@@ -6,6 +6,7 @@ import { groupDropdown } from '../common/properties';
 export const createPlan = createAction({
   auth: microsoft365PlannerAuth,
   name: 'createPlan',
+  classification: 'WRITE',
   displayName: 'Create Plan',
   description: 'Create a new planner plan',
   audience: 'both',

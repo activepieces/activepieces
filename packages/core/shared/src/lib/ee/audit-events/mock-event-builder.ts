@@ -2,6 +2,8 @@ import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/cor
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import {
     AgentActionExecutedEvent,
+    AgentActionKind,
+    AgentActionOutcome,
     AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
@@ -28,16 +30,27 @@ import {
 
 export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventParams): ApplicationEvent => {
     const isoNow = new Date().toISOString()
-    const baseEnvelope = {
+    const project = { displayName: 'Dream Department' }
+    const user = {
+        id: apId(),
+        email: 'sample@example.com',
+        firstName: 'Sample',
+        lastName: 'User',
+    }
+    const workerEnvelope = {
         id: apId(),
         created: isoNow,
         updated: isoNow,
-        ip: '127.0.0.1',
         platformId,
         projectId,
-        userId: apId(),
     }
-    const project = { displayName: 'Dream Department' }
+    const baseEnvelope = {
+        ...workerEnvelope,
+        ip: '127.0.0.1',
+        userId: user.id,
+        userEmail: user.email,
+        projectDisplayName: project.displayName,
+    }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
     const flowVersion = {
         id: apId(),
@@ -46,12 +59,6 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         created: isoNow,
         updated: isoNow,
     }
-    const user = {
-        id: apId(),
-        email: 'sample@example.com',
-        firstName: 'Sample',
-        lastName: 'User',
-    }
 
     switch (event) {
         case ApplicationEventName.FLOW_RUN_STARTED:
@@ -59,7 +66,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         case ApplicationEventName.FLOW_RUN_RESUMED:
         case ApplicationEventName.FLOW_RUN_RETRIED: {
             const mock: FlowRunEvent = {
-                ...baseEnvelope,
+                ...workerEnvelope,
                 action: event,
                 data: {
                     flowRun: {
@@ -228,7 +235,8 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     flow: { id: apId(), runId: apId() },
                     conversation: { id: apId(), source: AgentRunSource.FLOW_STEP },
                     agent: { id: apId(), displayName: 'Marketing agent' },
-                    action: { pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
+                    action: { kind: AgentActionKind.PIECE, pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
+                    outcome: AgentActionOutcome.SUCCEEDED,
                     connection: { externalId: apId(), label: 'marketing@acme.com' },
                 },
             }

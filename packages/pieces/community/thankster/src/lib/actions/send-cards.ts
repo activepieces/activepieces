@@ -4,6 +4,7 @@ import { thanksterAuth } from '../..';
 
 export const sendCards = createAction({
   name: 'send_handwritten_cards',
+  classification: 'WRITE',
   displayName: 'Send Cards',
   description: 'Automatically send handwritten cards.',
   audience: 'both',

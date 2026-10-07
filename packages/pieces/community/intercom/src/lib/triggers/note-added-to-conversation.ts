@@ -6,6 +6,7 @@ import { intercomClient } from '../common';
 export const noteAddedToConversation = createTrigger({
 	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
 	name: 'noteAddedToConversation',
+	classification: 'READ',
 	displayName: 'Note added to conversation',
 	description: 'Triggers when a note is added to a conversation',
 	aiMetadata: {

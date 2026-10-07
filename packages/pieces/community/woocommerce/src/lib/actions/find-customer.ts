@@ -14,7 +14,7 @@ export const wooFindCustomer = createAction({
   classification: 'READ',
   displayName: 'Find Customer',
   description: 'Find a Customer',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Looks up customers in a WooCommerce store by exact email address. Use when an agent needs to resolve a shopper to their customer record or ID before referencing them. Read-only and idempotent. Requires the email; returns matching customers (empty if none match).',

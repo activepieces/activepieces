@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { redditAuth } from '../auth';
+import { redditApi, RedditListing } from '../common/client';
+import { getRedditPostDetailsOutputSchema } from '../output-schemas';
 
 export const getRedditPostDetails = createAction({
   auth: redditAuth,
   name: 'getRedditPostDetails',
+  outputSchema: getRedditPostDetailsOutputSchema,
   classification: 'READ',
   displayName: 'Get Post Details',
   description: 'Fetch detailed information about a specific Reddit post using its ID.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up one specific Reddit post by its ID and returns its full metadata (title, author, body, score, counts, flags). Use it when you already have a post ID and need details for that single post, not to browse a subreddit. Accepts the ID with or without the t3_ prefix. Read-only and idempotent.', idempotent: true },
   props: {
     post_id: Property.ShortText({
@@ -18,73 +21,29 @@ export const getRedditPostDetails = createAction({
     }),
   },
   async run(context) {
-    let postId = context.propsValue.post_id.trim();
-    if (postId.startsWith('t3_')) {
-      postId = postId.slice(3);
-    }
-
-    const url = `https://oauth.reddit.com/api/info?id=t3_${postId}`;
-
-    const response = await httpClient.sendRequest({
+    const listing = await redditApi.request<RedditListing>({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url,
-      headers: {
-        'Authorization': `Bearer ${context.auth.access_token}`,
-        'User-Agent': 'ActivePieces Reddit Client',
-        'Content-Type': 'application/json',
-      },
-      timeout: 5000,
+      path: '/api/info',
+      query: { id: redditApi.toFullname({ value: context.propsValue.post_id, prefix: 't3_' }) },
     });
 
-    if (response.status !== 200) {
-      return {
-        error: `Failed to retrieve post details: ${response.status}`,
-        details: response.body,
-      };
-    }
-
-    const children = response.body?.data?.children ?? [];
-
-    if (children.length === 0) {
+    const post = listing.data.children[0];
+    if (!post) {
       return { error: 'No post found with the given ID' };
     }
 
-    const data = children[0].data;
-
-    const result: Record<string, unknown> = {
-      id: data.id,
-      title: data.title,
-      author: data.author,
-      author_fullname: data.author_fullname,
-      subreddit: data.subreddit,
-      subreddit_id: data.subreddit_id,
-      selftext: data.selftext,
-      selftext_html: data.selftext_html,
-      score: data.score,
-      upvote_ratio: data.upvote_ratio,
-      created_utc: data.created_utc,
-      permalink: data.permalink,
-      url: data.url,
-      domain: data.domain,
-      num_comments: data.num_comments,
-      is_self: data.is_self,
-      is_video: data.is_video,
-      is_original_content: data.is_original_content,
-      over_18: data.over_18,
-      spoiler: data.spoiler,
-      locked: data.locked,
-      stickied: data.stickied,
-      post_hint: data.post_hint,
+    const data = post.data;
+    return {
+      ...Object.fromEntries(POST_DETAIL_FIELDS.map((key) => [key, data[key]])),
+      ...(data['media'] ? { media: data['media'] } : {}),
+      ...(data['gallery_data'] ? { gallery_data: data['gallery_data'] } : {}),
     };
-
-    if (data.media) {
-      result['media'] = data.media;
-    }
-
-    if (data.gallery_data) {
-      result['gallery_data'] = data.gallery_data;
-    }
-
-    return result;
   },
 });
+
+const POST_DETAIL_FIELDS = [
+  'id', 'title', 'author', 'author_fullname', 'subreddit', 'subreddit_id', 'selftext', 'selftext_html', 'score',
+  'upvote_ratio', 'created_utc', 'permalink', 'url', 'domain', 'num_comments', 'is_self', 'is_video',
+  'is_original_content', 'over_18', 'spoiler', 'locked', 'stickied', 'post_hint',
+] as const;

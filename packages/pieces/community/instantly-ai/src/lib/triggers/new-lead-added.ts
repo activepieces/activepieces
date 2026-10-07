@@ -61,6 +61,7 @@ const polling: Polling<
 export const newLeadAddedTrigger = createTrigger({
   auth: instantlyAiAuth,
   name: 'new_lead_added',
+  classification: 'READ',
   displayName: 'New Lead Added',
   description: 'Triggers when a new lead is added to a campaign',
   aiMetadata: {

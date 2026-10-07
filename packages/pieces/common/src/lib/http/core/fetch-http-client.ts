@@ -93,7 +93,7 @@ export class FetchHttpClient extends BaseHttpClient {
   }
 }
 
-function acceptsRequestBody(method: HttpMethod): boolean {
+export function acceptsRequestBody(method: HttpMethod): boolean {
   return method !== HttpMethod.GET && method !== HttpMethod.HEAD;
 }
 

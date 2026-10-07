@@ -1,28 +1,30 @@
 import { Readable } from 'node:stream'
 import { apId } from '@activepieces/core-utils'
-import { FilesService } from '@activepieces/pieces-framework'
+import { FilesService, UploadedFile } from '@activepieces/pieces-framework'
 import { EngineGenericError, FileSizeError, FileType } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
 
 export function createFileUploader({ engineToken, apiUrl }: CreateFileUploaderParams): FilesService {
+    const upload = async ({ fileName, data }: { fileName: string, data: Buffer | Readable }): Promise<UploadedFile> => {
+        if (!Buffer.isBuffer(data) && !(data instanceof Readable)) {
+            throw new Error(`Expected file data to be a Buffer or Readable stream, but received ${describeType(data)}`)
+        }
+        const maxBytes = resolveMaxFileSizeBytes()
+        const payload = Buffer.isBuffer(data) ? data : await drainToBuffer({ stream: data, maxBytes })
+        assertWithinLimit({ sizeInBytes: payload.length, maxBytes })
+        const { fileId, readUrl } = await engineFileApi.upload({
+            engineToken,
+            apiUrl,
+            fileId: apId(),
+            type: FileType.FLOW_STEP_FILE,
+            fileName,
+            data: payload,
+        })
+        return { id: fileId, url: readUrl }
+    }
     return {
-        write: async ({ fileName, data }: { fileName: string, data: Buffer | Readable }): Promise<string> => {
-            if (!Buffer.isBuffer(data) && !(data instanceof Readable)) {
-                throw new Error(`Expected file data to be a Buffer or Readable stream, but received ${describeType(data)}`)
-            }
-            const maxBytes = resolveMaxFileSizeBytes()
-            const payload = Buffer.isBuffer(data) ? data : await drainToBuffer({ stream: data, maxBytes })
-            assertWithinLimit({ sizeInBytes: payload.length, maxBytes })
-            const { readUrl } = await engineFileApi.upload({
-                engineToken,
-                apiUrl,
-                fileId: apId(),
-                type: FileType.FLOW_STEP_FILE,
-                fileName,
-                data: payload,
-            })
-            return readUrl
-        },
+        upload,
+        write: async (params: { fileName: string, data: Buffer | Readable }): Promise<string> => (await upload(params)).url,
     }
 }
 

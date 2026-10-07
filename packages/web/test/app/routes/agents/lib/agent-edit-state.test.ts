@@ -56,122 +56,6 @@ describe('sameConfig', () => {
   });
 });
 
-describe('headerStatus', () => {
-  it('says live right after a launch, even while the refetch is in flight', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: true,
-        justLaunched: true,
-        live: null,
-        hasChanges: true,
-      }),
-    ).toBe('live');
-  });
-
-  it('asks for a model before anything else, since nothing can run without one', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: true,
-        justLaunched: false,
-        live: config(),
-        hasChanges: false,
-      }),
-    ).toBe('needs-model');
-  });
-
-  it('says pending for an agent that was never published', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: null,
-        hasChanges: true,
-      }),
-    ).toBe('pending');
-  });
-
-  it('says pending while a staged draft differs from the live copy', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: config(),
-        hasChanges: true,
-      }),
-    ).toBe('pending');
-  });
-
-  it('says live only when a published copy exists and nothing differs', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: config(),
-        hasChanges: false,
-      }),
-    ).toBe('live');
-  });
-
-  it('never claims live for an unpublished agent with no changes, which cannot happen but must not lie', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: null,
-        hasChanges: false,
-      }),
-    ).toBe('pending');
-  });
-});
-
-describe('modeIntent', () => {
-  it('stages only when switching to test with unsaved typing and nothing blocking', () => {
-    expect(
-      agentEditState.modeIntent({
-        next: 'test',
-        unsavedTyping: true,
-        blockedReason: null,
-      }),
-    ).toBe('stage');
-  });
-
-  it('switches without writing when there is nothing unsaved to stage', () => {
-    expect(
-      agentEditState.modeIntent({
-        next: 'test',
-        unsavedTyping: false,
-        blockedReason: null,
-      }),
-    ).toBe('switch');
-  });
-
-  it.each(['model', 'instructions'])(
-    'never stages an unrunnable config (%s missing), so the draft is not overwritten',
-    (reason) => {
-      expect(
-        agentEditState.modeIntent({
-          next: 'test',
-          unsavedTyping: true,
-          blockedReason: reason,
-        }),
-      ).toBe('switch');
-    },
-  );
-
-  it.each(['edit', 'configure', 'settings', ''])(
-    'never stages when moving to %s, because only test needs the draft persisted',
-    (next) => {
-      expect(
-        agentEditState.modeIntent({
-          next,
-          unsavedTyping: true,
-          blockedReason: null,
-        }),
-      ).toBe('switch');
-    },
-  );
-});
-
 describe('createWriteLock', () => {
   it('lets the first claim through', () => {
     expect(agentEditState.createWriteLock().claim()).toBe(true);
@@ -312,5 +196,39 @@ describe('agentEditState.modelPickChanged', () => {
         current: pick,
       }),
     ).toBe(true);
+  });
+});
+
+describe('serverMovedWhileTyping', () => {
+  const config = (instructions: string) => ({ draft: { instructions } });
+
+  it('is true when the agent changed under a form someone is typing in', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('chat changed this'),
+        lastSeen: config('what was there'),
+        unsavedTyping: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('is false when nothing moved, so a refetch of the same values is not a conflict', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('same'),
+        lastSeen: config('same'),
+        unsavedTyping: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when nobody is typing, because the form can simply take the new values', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('chat changed this'),
+        lastSeen: config('what was there'),
+        unsavedTyping: false,
+      }),
+    ).toBe(false);
   });
 });

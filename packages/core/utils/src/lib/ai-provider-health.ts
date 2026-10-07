@@ -81,6 +81,14 @@ export function isTransientProviderError(text: string): boolean {
     return TRANSIENT_ERROR_PATTERN.test(text)
 }
 
+export function isProviderBillingError(text: string): boolean {
+    return BILLING_BODY_PATTERN.test(text)
+}
+
+export function isProviderRateLimitError(text: string): boolean {
+    return RATE_LIMIT_BODY_PATTERN.test(text)
+}
+
 export function classifyProviderOutcome({ statusCode, body, message }: ProviderOutcomeSignal): AiProviderKeyStatus | NoStatusChange {
     if (!isNil(statusCode)) {
         return classifyByStatus({ statusCode, haystack: `${body ?? ''} ${message ?? ''}` })
@@ -95,6 +103,18 @@ export function classifyProviderOutcome({ statusCode, body, message }: ProviderO
     return text.length === 0 ? 'no_change' : 'unreachable'
 }
 
+export function isFallbackWorthy({ statusCode, body, message, retryable }: ProviderOutcomeSignal): boolean {
+    const haystack = `${body ?? ''} ${message ?? ''}`
+    if (isProviderBillingError(haystack)) {
+        return true
+    }
+    if (!isNil(statusCode)) {
+        return FALLBACK_STATUS_CODES.has(statusCode) || statusCode >= 500
+    }
+    const text = message ?? ''
+    return retryable === true || isProviderCreditError(text) || isTransientProviderError(text)
+}
+
 function classifyByStatus({ statusCode, haystack }: { statusCode: number, haystack: string }): AiProviderKeyStatus | NoStatusChange {
     if (statusCode >= 200 && statusCode < 300) {
         return 'active'
@@ -105,10 +125,10 @@ function classifyByStatus({ statusCode, haystack }: { statusCode: number, haysta
     if (statusCode === 402) {
         return 'out_of_credits'
     }
-    if (statusCode === 429 && RATE_LIMIT_BODY_PATTERN.test(haystack)) {
+    if (statusCode === 429 && isProviderRateLimitError(haystack)) {
         return 'no_change'
     }
-    if (BILLING_BODY_PATTERN.test(haystack)) {
+    if (isProviderBillingError(haystack)) {
         return 'out_of_credits'
     }
     if (statusCode === 429) {
@@ -130,13 +150,15 @@ function isNil<T>(value: T | null | undefined): value is null | undefined {
 const MAX_OBSERVED_BODY_LENGTH = 2000
 const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
-const TRANSIENT_ERROR_PATTERN = /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|try again|econnreset|etimedout|socket hang up|service unavailable/i
+const TRANSIENT_ERROR_PATTERN = /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|econnreset|etimedout|socket hang up|service unavailable|aborted/i
 
 const BILLING_BODY_PATTERN = /insufficient_quota|credit[_ ]balance|billing_hard_limit_reached|billing|\bcredits?\b|out of funds|payment required/i
 
 const RATE_LIMIT_BODY_PATTERN = /per minute|per day|per_minute|per_day|requests? per|tokens? per|rate.?limit|resource_exhausted|\brpm\b|\btpm\b/i
 
 const MODEL_NOT_FOUND_PATTERN = /model|deployment|engine/i
+
+const FALLBACK_STATUS_CODES = new Set([401, 402, 403, 404, 408, 429])
 
 export const AiProviderKeyStatus = z.enum(['active', 'out_of_credits', 'rejected', 'unreachable'])
 export type AiProviderKeyStatus = z.infer<typeof AiProviderKeyStatus>
@@ -147,6 +169,8 @@ export type ProviderOutcomeSignal = {
     statusCode?: number
     body?: string
     message?: string
+    retryable?: boolean
+    fromProvider?: boolean
 }
 
 export type ProviderOutcomeReporter = (signal: ProviderOutcomeSignal) => void | Promise<void>

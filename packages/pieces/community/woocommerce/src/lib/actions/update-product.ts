@@ -14,7 +14,7 @@ export const wooUpdateProduct = createAction({
   classification: 'WRITE',
   displayName: 'Update Product',
   description: 'Update a product, for example its price or stock level',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates an existing WooCommerce product by ID. Commonly used to change price, sale price, stock quantity, or publish status. Only the fields provided are changed; everything else is left untouched. Idempotent: sending the same values twice leaves the product in the same state.',

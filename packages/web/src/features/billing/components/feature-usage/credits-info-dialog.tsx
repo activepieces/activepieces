@@ -1,8 +1,4 @@
-import {
-  ACTIVEPIECES_CHAT_TIERS,
-  ApEdition,
-  ApFlagId,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, Coins } from 'lucide-react';
 import React from 'react';
@@ -33,7 +29,7 @@ export const CreditsInfoDialog = () => {
   });
   return (
     <Dialog>
-      <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline">
+      <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline">
         {t('Usage breakdown')}
         <ArrowUpRight className="size-3.5" />
       </DialogTrigger>
@@ -42,8 +38,8 @@ export const CreditsInfoDialog = () => {
         aria-describedby={undefined}
         className="max-w-[625px] gap-0 overflow-hidden p-0"
       >
-        <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-violet-50 px-6 py-12 dark:bg-violet-950/30">
-          <DialogTitle className="relative flex items-center gap-2 text-2xl font-bold text-purple-900 dark:text-purple-200">
+        <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-6 py-12">
+          <DialogTitle className="relative flex items-center gap-2 text-2xl font-bold text-accent-11">
             <Coins className="size-6" />
             {t('Credits FAQ')}
           </DialogTitle>
@@ -61,10 +57,10 @@ export const CreditsInfoDialog = () => {
                 value={String(index)}
                 className="border-b last:border-b-0"
               >
-                <AccordionTrigger className="px-0 py-4 text-base text-foreground hover:no-underline">
+                <AccordionTrigger className="px-0 py-4 text-base text-gray-12 hover:no-underline">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="px-0 pb-4 text-sm text-muted-foreground">
+                <AccordionContent className="px-0 pb-4 text-sm text-gray-11">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -86,7 +82,7 @@ function CreditsCostTable({
   const items = buildCostItems({ includeActivepiecesModels, chatEnabled });
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[10px] border">
-      <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-muted-foreground">
+      <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-gray-11">
         <span className="flex-1">{t('Action')}</span>
         <span className="w-40 text-right">{t('Credits')}</span>
       </div>
@@ -97,7 +93,7 @@ function CreditsCostTable({
             <div
               key={item.label}
               className={cn(
-                'bg-muted px-2 py-1.5 text-center text-xs font-semibold uppercase text-muted-foreground',
+                'bg-gray-3 px-2 py-1.5 text-center text-xs font-semibold uppercase text-gray-11',
                 border,
               )}
             >
@@ -109,16 +105,14 @@ function CreditsCostTable({
           <div
             key={item.action}
             className={cn(
-              'flex items-center gap-2 px-3 py-2 text-sm text-foreground',
+              'flex items-center gap-2 px-3 py-2 text-sm text-gray-12',
               border,
             )}
           >
             <div className="flex flex-1 flex-col">
               <span>{item.action}</span>
               {item.sub && (
-                <span className="text-xs text-muted-foreground">
-                  {item.sub}
-                </span>
+                <span className="text-xs text-gray-11">{item.sub}</span>
               )}
             </div>
             <span className="w-40 shrink-0 text-right">{item.credits}</span>
@@ -165,17 +159,19 @@ function buildCostItems({
     {
       kind: 'row',
       action: chatEnabled ? t('Agent/Chat') : t('Agent'),
-      sub: t('sum of tools use + model cost per message'),
+      sub: t('sum of tools use + what each message costs'),
       credits: t('see below'),
     },
   ];
   const activepiecesModels: CostItem[] = includeActivepiecesModels
-    ? ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
-        kind: 'row',
-        action: t(tier.label),
-        sub: modelByActivepieces,
-        credits: String(tier.creditWeight),
-      }))
+    ? [
+        {
+          kind: 'row',
+          action: t('Activepieces AI'),
+          sub: modelByActivepieces,
+          credits: t('what the call costs'),
+        },
+      ]
     : [];
   const ai: CostItem[] = [
     { kind: 'section', label: t('AI Steps (per call)') },
@@ -208,11 +204,7 @@ function buildFaqs({
       question: t('How are credits consumed?'),
       answer: (
         <div className="flex flex-col gap-2.5">
-          <span>
-            {t(
-              "Each action in Activepieces has a fixed credit cost. Here's a breakdown:",
-            )}
-          </span>
+          <span>{t("Here's what each action in Activepieces costs:")}</span>
           <CreditsCostTable
             includeActivepiecesModels={isCloud}
             chatEnabled={chatEnabled}

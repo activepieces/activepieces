@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  flowCanvasUtils as sharedFlowCanvasUtils,
   FlowActionType,
   flowStructureUtil,
   FlowTriggerType,
@@ -161,8 +160,8 @@ export const FlowCanvas = React.memo(
       selectedSteps.forEach((step) => {
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
-          step.type === FlowActionType.ROUTER ||
-          sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+          flowStructureUtil.isBranchedAction(step) ||
+          flowStructureUtil.hasContinueOnFailureBranches(step)
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)
@@ -205,7 +204,7 @@ export const FlowCanvas = React.memo(
     return (
       <div
         ref={containerRef}
-        className="size-full relative overflow-hidden z-30 bg-builder-background"
+        className="size-full relative overflow-hidden z-30 bg-gray-2"
         onMouseMove={(event) => {
           const cursorPosition = { x: event.clientX, y: event.clientY };
           setCursorPosition(cursorPosition);
@@ -215,7 +214,7 @@ export const FlowCanvas = React.memo(
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               key={`canvas-${canvasOrientation}`}
-              className="bg-builder-background"
+              className="bg-gray-2"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
                 reactFlowStore.getState().unselectNodesAndEdges();
@@ -252,8 +251,8 @@ export const FlowCanvas = React.memo(
                 gap={10}
                 size={1}
                 variant={BackgroundVariant.Dots}
-                bgColor={`var(--builder-background)`}
-                color={`var(--builder-background-pattern)`}
+                bgColor={`var(--gray-2)`}
+                color={`var(--gray-8)`}
               />
               <Minimap key={graphKey} />
             </ReactFlow>
@@ -270,6 +269,7 @@ const getChildrenKey = (step: Step) => {
     case FlowActionType.LOOP_ON_ITEMS:
       return step.firstLoopAction ? step.firstLoopAction.name : '';
     case FlowActionType.ROUTER:
+    case FlowActionType.AI_ROUTER:
       return step.children.reduce((routerKey, child) => {
         const childrenKey = child
           ? flowStructureUtil
@@ -283,8 +283,7 @@ const getChildrenKey = (step: Step) => {
       }, '');
     case FlowActionType.CODE:
     case FlowActionType.PIECE: {
-      const cofEnabled =
-        sharedFlowCanvasUtils.hasContinueOnFailureBranches(step);
+      const cofEnabled = flowStructureUtil.hasContinueOnFailureBranches(step);
       const branches = step.continueOnFailureBranches;
       const onSuccessKey = branches?.onSuccess
         ? flowStructureUtil
@@ -308,10 +307,9 @@ const createGraphKey = (
   const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
-      const branchesNames =
-        step.type === FlowActionType.ROUTER
-          ? step.settings.branches.map((branch) => branch.branchName).join('-')
-          : '0';
+      const branchesNames = flowStructureUtil.isBranchedAction(step)
+        ? step.settings.branches.map((branch) => branch.branchName).join('-')
+        : '0';
       const childrenKey = getChildrenKey(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''

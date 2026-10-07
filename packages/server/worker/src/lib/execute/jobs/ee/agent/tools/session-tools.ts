@@ -1,8 +1,8 @@
-import { spreadIfDefined } from '@activepieces/core-utils'
+import { spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AgentOutputField, AgentOutputFieldType, AgentPhase, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { tool, ToolSet } from 'ai'
+import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
-import { AgentEventEmitter, QUESTION_ICON_NAMES } from './tool-primitives'
+import { AgentEventEmitter, GateDecision, gateNoResponseMessage, QUESTION_ICON_NAMES, TaintState } from './tool-primitives'
 
 export function createLocalTools({ onSetProjectContext, projects }: {
     onSetProjectContext: (projectId: string | null) => Promise<{ success: boolean, error?: string }>
@@ -43,9 +43,26 @@ export function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-export function createAgentSurfaceTools({ executeTool }: {
+export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval, onGateOpened }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
+    taintState: TaintState
+    eventEmitter: AgentEventEmitter
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
+    onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
+    const runAfterApprovalIfTainted = async ({ toolName, toolInput, toolCallId }: { toolName: string, toolInput: Record<string, unknown>, toolCallId: string }): Promise<unknown> => {
+        if (taintState.tainted) {
+            const label = AGENT_CHANGE_LABELS[toolName] ?? toolName
+            eventEmitter.emitActionPreview({ toolCallId, pieceName: '', actionName: toolName, actionDisplayName: label, input: toolInput, isBatch: false })
+            await tryCatch(async () => onGateOpened?.({ gateId: toolCallId, toolName, displayName: label, toolInput }))
+            const decision = await waitForApproval({ gateId: toolCallId })
+            if (decision.outcome !== 'approved') {
+                const text = decision.outcome === 'timeout' ? gateNoResponseMessage('agent change approval') : 'The user declined this change to the agent. Do not retry it; ask what they want instead.'
+                return { error: text }
+            }
+        }
+        return executeTool(toolName, taintState.tainted ? { ...toolInput, approvedGateId: toolCallId } : toolInput)
+    }
     return {
         ap_list_agents: tool({
             description: 'List the saved agents in the active project, with whether each one is published. Call it before offering to create an agent, so you build on what exists instead of adding a near-duplicate, and when the user asks what agents they have.',
@@ -58,53 +75,53 @@ export function createAgentSurfaceTools({ executeTool }: {
         ap_add_agent_tool: tool({
             description: 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.',
             inputSchema: z.object({
-                agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
+                agentId: z.string().optional().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent. Leave it out when you are changing the agent this conversation belongs to'),
                 pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
                 actionNames: z.array(z.string()).describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
                 connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
                 publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
             }),
-            execute: async (toolInput) => {
-                return executeTool('ap_add_agent_tool', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId })
             },
         }),
 
         ap_remove_agent_tool: tool({
             description: 'Take piece actions away from a saved agent, when the user no longer wants it doing that or a tool was added by mistake. Pass every action to remove in one call. If two of the agent\'s pieces share an action name, pass pieceName to say which one.',
             inputSchema: z.object({
-                agentId: z.string().describe('The id returned by ap_list_agents'),
+                agentId: z.string().optional().describe('The id returned by ap_list_agents. Leave it out when you are changing the agent this conversation belongs to'),
                 actionNames: z.array(z.string()).describe('Action names to remove, e.g. ["gmail_search_mail"]'),
                 pieceName: z.string().optional().describe('Full piece name, only needed when the same action name is on two of the agent\'s pieces'),
                 publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
             }),
-            execute: async (toolInput) => {
-                return executeTool('ap_remove_agent_tool', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_remove_agent_tool', toolInput, toolCallId })
             },
         }),
 
         ap_update_agent: tool({
             description: 'Change a saved agent\'s name, description or instructions, and publish it. Send the full new instructions, not a diff — they replace what is there. Pass publish: true whenever the user wants the result live, including when they only ask you to publish and change nothing else.',
             inputSchema: z.object({
-                agentId: z.string().describe('The id returned by ap_list_agents or ap_create_agent'),
+                agentId: z.string().optional().describe('The id returned by ap_list_agents or ap_create_agent. Leave it out when you are changing the agent this conversation belongs to'),
                 displayName: z.string().optional(),
                 description: z.string().optional(),
                 instructions: z.string().optional().describe('The agent\'s full new standing brief, in second person'),
                 publish: z.boolean().optional().describe('Make the change live for flows and chats in the same step'),
             }),
-            execute: async (toolInput) => {
-                return executeTool('ap_update_agent', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_update_agent', toolInput, toolCallId })
             },
         }),
 
         ap_create_agent: tool({
-            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do.',
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. If you have read the user\'s data in this reply, they are asked to approve it first.',
             inputSchema: z.object({
                 displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
                 instructions: z.string().describe('The agent\'s standing brief, in second person'),
                 description: z.string().optional().describe('One line on what it is for'),
             }),
-            execute: async (toolInput) => {
-                return executeTool('ap_create_agent', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_create_agent', toolInput, toolCallId })
             },
         }),
     }
@@ -212,3 +229,10 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
     }
 }
 
+
+const AGENT_CHANGE_LABELS: Record<string, string> = {
+    ap_add_agent_tool: 'Add tools to a saved agent',
+    ap_remove_agent_tool: 'Remove tools from a saved agent',
+    ap_update_agent: 'Change a saved agent',
+    ap_create_agent: 'Create a saved agent',
+}

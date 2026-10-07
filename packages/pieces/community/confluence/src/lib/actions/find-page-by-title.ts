@@ -14,6 +14,7 @@ type ConfluencePage = {
 export const findPageByTitleAction = createAction({
 	auth: confluenceAuth,
 	name: 'find-page-by-title',
+	classification: 'SEARCH',
 	displayName: 'Find Page by Title',
 	description: 'Finds a page by exact title, optionally scoped to a space.',
 	audience: 'both',

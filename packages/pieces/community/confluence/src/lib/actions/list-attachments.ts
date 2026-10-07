@@ -7,6 +7,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const listAttachmentsAction = createAction({
 	auth: confluenceAuth,
 	name: 'list-attachments',
+	classification: 'SEARCH',
 	displayName: 'List Attachments',
 	description: 'Lists all attachments on a page.',
 	audience: 'both',

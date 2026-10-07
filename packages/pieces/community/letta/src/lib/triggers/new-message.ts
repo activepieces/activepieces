@@ -84,6 +84,7 @@ const polling: Polling<
 export const newMessage = createTrigger({
   auth: lettaAuth,
   name: 'newMessage',
+  classification: 'READ',
   displayName: 'New Message',
   description: 'Triggers when an agent uses send_message',
   aiMetadata: {

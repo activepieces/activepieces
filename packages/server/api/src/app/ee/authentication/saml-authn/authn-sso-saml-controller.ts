@@ -1,12 +1,14 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { ApplicationEventName, PrincipalType } from '@activepieces/shared'
+import { ApplicationEventName, PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
 import { networkUtils } from '../../../helper/network-utils'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
+import { telemetry } from '../../../helper/telemetry.utils'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformMustHaveFeatureEnabled } from '../ee-authorization'
 import { authnSsoSamlService } from './authn-sso-saml-service'
@@ -43,6 +45,17 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
                 source: 'sso',
             },
         })
+        rejectedPromiseHandler(telemetry(req.log).trackUser({
+            userId: response.id,
+            platformId,
+            event: {
+                name: TelemetryEventName.SIGNED_IN,
+                payload: {
+                    userId: response.id,
+                    platformId,
+                },
+            },
+        }), req.log)
         return res.redirect(url.toString())
     })
 

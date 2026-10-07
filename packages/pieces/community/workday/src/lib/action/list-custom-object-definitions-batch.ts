@@ -6,6 +6,7 @@ import { flattenRecord } from '../common/fields';
 export const listCustomObjectDefinitionsBatch = createAction({
 	auth: workdayAuth,
 	name: 'list_custom_object_definitions_batch',
+	classification: 'SEARCH',
 	displayName: 'List Custom Object Definitions (Batch)',
 	description:
 		'Lists all custom object definitions available in your Workday tenant.',

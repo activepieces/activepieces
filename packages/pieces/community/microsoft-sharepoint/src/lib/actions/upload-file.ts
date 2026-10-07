@@ -13,6 +13,7 @@ const CHUNK_SIZE = 10 * 1024 * 1024;
 export const uploadFile = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Uploads a new file at path you specify.',
   audience: 'both',

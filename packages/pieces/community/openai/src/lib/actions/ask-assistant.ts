@@ -16,14 +16,14 @@ export const askAssistant = createAction({
   name: 'ask_assistant',
   classification: 'WRITE',
   displayName: 'Ask Assistant',
-  description: 'Ask a GPT assistant anything you want!',
+  description: 'Send a question to an assistant you set up in OpenAI.',
   aiMetadata: { description: 'Sends a question to a GPT Assistant that already exists in the connected OpenAI account, selected from the assistant dropdown, and waits for the Assistants run to finish before returning the assistant messages produced after that question. Two modes: with a memory key it reuses one stored thread across runs and flows so the assistant remembers earlier turns, without one it opens a throwaway thread each time. Prefer ask_chatgpt when there is no saved Assistant or when the model and sampling parameters must be chosen per call. Requires an assistant already configured on the OpenAI side; not idempotent: each call creates a thread message and a new run.', idempotent: false },
   props: {
     assistant: Property.Dropdown({
   auth: openaiAuth,
       displayName: 'Assistant',
       required: true,
-      description: 'The assistant which will generate the completion.',
+      description: 'An assistant from your OpenAI account.',
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -41,9 +41,9 @@ export const askAssistant = createAction({
 
           return {
             disabled: false,
-            options: assistants.data.map((assistant: any) => {
+            options: assistants.data.map((assistant) => {
               return {
-                label: assistant.name,
+                label: assistant.name ?? assistant.id,
                 value: assistant.id,
               };
             }),
@@ -52,19 +52,22 @@ export const askAssistant = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: "Couldn't load assistants, API key is invalid",
+            placeholder: "Couldn't load assistants. Check your API key or try again.",
           };
         }
       },
     }),
     prompt: Property.LongText({
       displayName: 'Question',
+      description: 'What you want the assistant to answer or do.',
+      placeholder: 'e.g. Draft a reply to this customer',
       required: true,
     }),
     memoryKey: Property.ShortText({
-      displayName: 'Memory Key',
+      displayName: 'Conversation Memory ID',
       description:
-        'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave your assistant without memory of previous messages.',
+        'Runs that share this ID continue one conversation. Empty: no memory.',
+      placeholder: 'e.g. support-chat-42',
       required: false,
     }),
   },
@@ -79,6 +82,13 @@ export const askAssistant = createAction({
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;
+    const failedRunStatuses: string[] = [
+      'failed',
+      'cancelled',
+      'expired',
+      'incomplete',
+      'requires_action',
+    ];
     let response: any;
     let thread: any;
 
@@ -88,7 +98,7 @@ export const askAssistant = createAction({
       if (!thread) {
         thread = await openai.beta.threads.create();
 
-        store.put(memoryKey, thread, StoreScope.PROJECT);
+        await store.put(memoryKey, thread, StoreScope.PROJECT);
       }
     } else {
       thread = await openai.beta.threads.create();
@@ -118,6 +128,14 @@ export const askAssistant = createAction({
           messages.data.findIndex((m) => m.id == message.id)
         );
         break;
+      }
+      if (failedRunStatuses.includes(runCheck.status)) {
+        const reason = runCheck.last_error?.message;
+        throw new Error(
+          reason
+            ? `The assistant run ended with status ${runCheck.status}: ${reason}`
+            : `The assistant run ended with status ${runCheck.status}.`
+        );
       }
 
       await sleep(runCheckDelay);

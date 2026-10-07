@@ -21,6 +21,7 @@ interface NewPaidTriggerPayload {
 
 export const newSuccessfulInstallmentPaymentViaRespaid = createTrigger({
     name: 'new_successful_installment_payment_via_respaid',
+    classification: 'READ',
     displayName: 'New Successful Installment Payment via Respaid',
     description: "Triggers when one of the installment payments is made for a given case within a collection's payment plan.",
     aiMetadata: {

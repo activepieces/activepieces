@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const getWhatsAppSenders = createAction({
   auth: famulorAuth,
   name: 'getWhatsAppSenders',
+  classification: 'SEARCH',
   displayName: 'Get WhatsApp Senders',
   description: 'List WhatsApp Business senders linked to your account.',
   audience: 'both',

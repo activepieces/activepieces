@@ -140,11 +140,11 @@ export function MultiQuestionForm({
   if (submitted) {
     return (
       <motion.div
-        className="my-3 flex items-center gap-2 text-sm text-muted-foreground"
+        className="my-3 flex items-center gap-2 text-sm text-gray-11"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <Check className="size-4 text-green-600 dark:text-green-400" />
+        <Check className="size-4 text-success-11" />
         <span>{t('Answers submitted')}</span>
       </motion.div>
     );
@@ -167,7 +167,7 @@ export function MultiQuestionForm({
           >
             <Label
               htmlFor={fieldId}
-              className="block text-base font-semibold leading-snug text-foreground"
+              className="block text-base font-semibold leading-snug text-gray-12"
             >
               {q.question}
             </Label>
@@ -315,8 +315,8 @@ function ChoiceBody({
               onClick={() => onPick(option.label)}
               aria-pressed={selected}
               className={cn(
-                'flex flex-col items-center gap-2 rounded-xl border border-border/60 px-3 py-4 text-center text-sm transition-colors hover:bg-muted',
-                selected && 'border-primary/50 bg-primary/5',
+                'flex flex-col items-center gap-2 rounded-xl border border-gray-6/60 px-3 py-4 text-center text-sm transition-colors hover:bg-gray-3',
+                selected && 'border-accent-7 bg-accent-3 hover:bg-accent-4',
               )}
             >
               <OptionIcon
@@ -346,7 +346,7 @@ function ChoiceBody({
                 <div className="px-3">
                   <Separator
                     className={cn(
-                      'bg-border/60 transition-opacity duration-150',
+                      'bg-gray-6/60 transition-opacity duration-150',
                       isMidSepHidden(i) && 'opacity-0',
                     )}
                   />
@@ -404,9 +404,9 @@ function ChoiceBody({
                   }
                 }}
                 className={cn(
-                  'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-muted outline-none',
-                  focusedRow === i && !selected && 'bg-muted',
-                  selected && 'bg-muted-foreground/15',
+                  'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-gray-3 outline-none',
+                  focusedRow === i && !selected && 'bg-gray-3 hover:bg-gray-4',
+                  selected && 'bg-gray-4 hover:bg-gray-5',
                 )}
               >
                 {option.piece || option.icon ? (
@@ -420,9 +420,9 @@ function ChoiceBody({
                   <span
                     aria-hidden
                     className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-xs font-medium text-muted-foreground transition-colors',
-                      focusedRow === i && 'bg-foreground text-background',
-                      selected && 'bg-foreground text-background',
+                      'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
+                      focusedRow === i && 'bg-gray-12 text-gray-1',
+                      selected && 'bg-gray-12 text-gray-1',
                     )}
                   >
                     {i + 1}
@@ -431,7 +431,7 @@ function ChoiceBody({
                 <span className="flex-1 min-w-0 leading-snug">
                   <span className="block">{option.label}</span>
                   {option.description && (
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block text-xs text-gray-11">
                       {option.description}
                     </span>
                   )}
@@ -447,7 +447,7 @@ function ChoiceBody({
           <div className="px-3">
             <Separator
               className={cn(
-                'bg-border/60 transition-opacity duration-150',
+                'bg-gray-6/60 transition-opacity duration-150',
                 isBottomSepHidden && 'opacity-0',
               )}
             />
@@ -464,15 +464,15 @@ function ChoiceBody({
               setFocusedRow((prev) => (prev === 'custom' ? null : prev))
             }
             className={cn(
-              'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-muted focus-within:bg-muted',
-              isCustomTextActive && 'bg-muted',
+              'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-gray-3 focus-within:bg-gray-3',
+              isCustomTextActive && 'bg-gray-3 hover:bg-gray-4',
             )}
           >
             <span
               aria-hidden
               className={cn(
-                'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-muted-foreground transition-colors group-focus-within:bg-foreground group-focus-within:text-background',
-                isCustomTextActive && 'bg-foreground text-background',
+                'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-11 transition-colors group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
+                isCustomTextActive && 'bg-gray-12 text-gray-1',
               )}
             >
               <Pencil className="size-3.5" />

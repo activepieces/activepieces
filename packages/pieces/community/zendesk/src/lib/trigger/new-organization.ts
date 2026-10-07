@@ -3,11 +3,12 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { newOrganizationOutputSchema } from '../output-schemas';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_new_organization_webhook';
 
@@ -28,6 +29,7 @@ interface ZendeskOrganization {
 
 export const newOrganization = createTrigger({
   name: 'new_organization',
+  outputSchema: newOrganizationOutputSchema,
   classification: 'READ',
   displayName: 'New Organization',
   description: 'Fires when a new organization record is created. Uses Zendesk event webhook (no Trigger needed).',
@@ -63,16 +65,12 @@ export const newOrganization = createTrigger({
       const response = await httpClient.sendRequest<{
         webhook: { id: string };
       }>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/webhooks`,
+        url: `${getZendeskBaseUrl(authentication)}/webhooks`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           webhook: {
             name: `Activepieces New Organization Webhook - ${Date.now()}`,
@@ -98,13 +96,9 @@ export const newOrganization = createTrigger({
     if (webhookId) {
       try {
         await httpClient.sendRequest({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/webhooks/${webhookId}`,
+          url: `${getZendeskBaseUrl(authentication)}/webhooks/${webhookId}`,
           method: HttpMethod.DELETE,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
       } catch (error) {
         console.warn(`Warning: Failed to delete webhook ${webhookId}:`, (error as Error).message);

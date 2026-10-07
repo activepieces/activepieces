@@ -1,8 +1,22 @@
-import { auditEnricher, auditRedactPreset, enricherPlugin, initLogger, RedactConfig } from 'evlog'
+import os from 'os'
+import { isNil } from '@activepieces/core-utils'
+import { auditEnricher, auditRedactPreset, DrainContext, enricherPlugin, initLogger, RedactConfig } from 'evlog'
 import { apLogger, ApLogger } from './ap-logger'
 import { evlogDrains, EvlogDrainConfig } from './evlog-drains'
 
-// Module-level flush function; replaced each time init() is called.
+const HOSTNAME = os.hostname()
+
+function wrapDrainWithHost(
+    inner: (ctx: DrainContext) => void | Promise<void>,
+): (ctx: DrainContext) => Promise<void> {
+    return async (ctx: DrainContext) => {
+        if (isNil(ctx.event['host'])) {
+            ctx.event['host'] = HOSTNAME
+        }
+        await inner(ctx)
+    }
+}
+
 let activeFlusher: (() => Promise<void>) = async () => undefined
 
 // Evlog does not support trace/fatal natively; map to nearest equivalents.
@@ -124,6 +138,8 @@ function init({ params }: { params: EvlogSetupParams }): ApLogger {
     const resolved = evlogDrains.resolve({ config: params.drainConfig })
     activeFlusher = resolved.flush
 
+    const drainWithHost = resolved.drain ? wrapDrainWithHost(resolved.drain) : undefined
+
     initLogger({
         env: { service: params.drainConfig.serviceName, version: params.version, environment: params.environment },
         pretty: params.logPretty ?? false,
@@ -140,9 +156,7 @@ function init({ params }: { params: EvlogSetupParams }): ApLogger {
             ],
         },
         redact: REDACT_CONFIG,
-        drain: resolved.drain,
-        // Fills audit.context (requestId, traceId, ip, userAgent) on audit-bearing
-        // events only; all other events pass through untouched.
+        drain: drainWithHost,
         plugins: [enricherPlugin('audit-context', auditEnricher())],
     })
 
@@ -158,6 +172,7 @@ async function flush(): Promise<void> {
 export const evlogSetup = {
     init,
     flush,
+    wrapDrainWithHost,
 }
 
 export type EvlogSetupParams = {

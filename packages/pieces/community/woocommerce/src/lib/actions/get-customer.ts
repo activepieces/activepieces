@@ -14,7 +14,7 @@ export const wooGetCustomer = createAction({
   classification: 'READ',
   displayName: 'Get Customer',
   description: 'Retrieve a single customer by their ID',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves one customer from a WooCommerce store by their numeric customer ID, including billing and shipping addresses. Use when an agent has a customer ID rather than an email address; Find Customer searches by email instead. Read-only and idempotent.',

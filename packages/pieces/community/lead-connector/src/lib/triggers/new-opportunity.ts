@@ -1,4 +1,4 @@
-import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -6,7 +6,8 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { leadConnectorAuth } from '../..';
-import { getOpportunities, getPipelines } from '../common';
+import { getOpportunities } from '../common';
+import { leadConnectorProps } from '../common/props';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAuth>, { pipeline: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -35,30 +36,8 @@ export const newOpportunity = createTrigger({
     description: 'Fires when a new opportunity is created in a specific GoHighLevel/LeadConnector pipeline (selected by pipeline ID). Represents the newly created opportunity; scoped to the chosen pipeline only.',
   },
   props: {
-    pipeline: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Pipeline',
-      description: 'The ID of the pipeline to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-          };
-        }
-
-        const pipelines = await getPipelines(auth as OAuth2PropertyValue);
-        return {
-          options: pipelines.map((pipeline: any) => {
-            return {
-              label: pipeline.name,
-              value: pipeline.id,
-            };
-          }),
-        };
-      },
+    pipeline: leadConnectorProps.pipeline({
+      description: 'Runs for each new opportunity in this pipeline.',
     }),
   },
   type: TriggerStrategy.POLLING,

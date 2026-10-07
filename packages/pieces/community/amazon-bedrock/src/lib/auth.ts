@@ -80,6 +80,11 @@ export const awsBedrockAuth = PieceAuth.CustomAuth({
       description: 'Your AWS secret access key. Only shown once when you create the access key — store it safely.',
       required: true,
     }),
+    sessionToken: PieceAuth.SecretText({
+      displayName: 'Session Token',
+      description: 'Only for temporary credentials from AWS SSO or STS. They expire.',
+      required: false,
+    }),
     region: Property.StaticDropdown({
       displayName: 'Region',
       required: true,
@@ -91,7 +96,7 @@ export const awsBedrockAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       const client = new BedrockClient({
-        credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+        credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey, sessionToken: auth.sessionToken },
         region: auth.region,
       });
       await client.send(new ListFoundationModelsCommand({}));
@@ -154,6 +159,7 @@ export const awsBedrockCombinedAuth = [awsBedrockAuth, awsBedrockOidcAuth];
 export type BedrockAccessKeyAuthProps = {
   accessKeyId: string;
   secretAccessKey: string;
+  sessionToken?: string;
   region: string;
 };
 

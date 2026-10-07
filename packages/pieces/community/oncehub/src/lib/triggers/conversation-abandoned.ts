@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const conversationAbandoned = createTrigger({
   auth: oncehubAuth,
   name: 'conversationAbandoned',
+  classification: 'READ',
   displayName: 'Conversation Abandoned',
   description:
     'Triggered when website visitor stops interacting with a bot for more than 10 minutes.',

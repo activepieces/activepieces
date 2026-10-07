@@ -4,6 +4,7 @@ import { intercomClient, TriggerPayload } from '../common';
 
 export const conversationClosedTrigger = createTrigger({
 	name: 'conversationClosed',
+	classification: 'READ',
 	displayName: 'Conversation Closed',
 	description: 'Triggers when a conversation is closed.',
 	aiMetadata: {

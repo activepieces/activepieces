@@ -6,6 +6,7 @@ import { raindropCommons } from '../common';
 export const updateRaindropAction = createAction({
   auth: raindropAuth,
   name: 'update_raindrop',
+  classification: 'WRITE',
   displayName: 'Update Bookmark',
   description: 'Updates the details of an existing bookmark',
   audience: 'both',

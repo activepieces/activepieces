@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Boxes,
@@ -18,6 +18,8 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { healthQueries } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { DailyHealthStrip } from './daily-health-strip';
@@ -32,11 +34,15 @@ const PRODUCTION_SETUP_LINK =
 // it could not read its release from package.json. Not importable here (server-only package).
 const UNREADABLE_RELEASE_VERSION = '0.0.0';
 
+const CLOUD_HIDDEN_ROW_IDS = ['version', 'release-integrity'];
+
 type SystemHealthTabProps = {
   onSeeRuns: () => void;
 };
 
 export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
   const release = systemHealth?.release;
@@ -76,7 +82,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     );
   })();
 
-  const appRows: HealthRow[] = [
+  const allAppRows: HealthRow[] = [
     {
       id: 'version',
       title: t('Version'),
@@ -88,7 +94,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           <span>
             {t('Current')} {currentVersion || t('Unknown')}
           </span>
-          <span className="size-1 rounded-full bg-border" />
+          <span className="size-1 rounded-full bg-gray-6" />
           <span>
             {t('Latest')} {latestVersion || t('Unknown')}
           </span>
@@ -128,6 +134,9 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
       message: t('At least 1 CPU core is required.'),
     },
   ];
+  const appRows = isCloud
+    ? allAppRows.filter((row) => !CLOUD_HIDDEN_ROW_IDS.includes(row.id))
+    : allAppRows;
 
   const workersConnected = !isNil(systemHealth?.workerRam);
 
@@ -162,7 +171,12 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           {t(
             'In production setups, we recommend a ratio of about 1 app instance to 10 workers.',
           )}{' '}
-          <a href={PRODUCTION_SETUP_LINK} target="_blank" rel="noreferrer">
+          <a
+            {...adminControl(AdminControl.HEALTH_PRODUCTION_SETUP_LINK)}
+            href={PRODUCTION_SETUP_LINK}
+            target="_blank"
+            rel="noreferrer"
+          >
             {t('Learn more')}
           </a>
         </AlertDescription>
@@ -210,12 +224,12 @@ function HealthCard({
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center gap-3 border-b px-4 py-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11">
           {icon}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold leading-tight">{title}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-xs text-gray-11">{description}</p>
         </div>
       </div>
       <CardContent className="divide-y p-0">
@@ -235,10 +249,10 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md',
           status === 'failed'
-            ? 'bg-destructive-50 text-destructive-700'
+            ? 'bg-danger-3 text-danger-11'
             : status === 'passed'
-            ? 'bg-success-50 text-success-700'
-            : 'bg-muted text-muted-foreground',
+            ? 'bg-success-3 text-success-11'
+            : 'bg-gray-3 text-gray-11',
         )}
       >
         {row.icon}
@@ -248,16 +262,17 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
           <span className="text-sm font-medium">{row.title}</span>
           {row.link && (
             <a
+              {...adminControl(AdminControl.HEALTH_CHECK_DOCS_LINK)}
               href={row.link}
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-gray-11 hover:text-gray-12"
             >
               <ExternalLink className="size-3.5" />
             </a>
           )}
         </div>
-        <div className="text-xs text-muted-foreground">{row.message}</div>
+        <div className="text-xs text-gray-11">{row.message}</div>
       </div>
       <StatusPill status={status} />
     </div>
@@ -267,7 +282,7 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
 function StatusPill({ status }: { status: Status }) {
   if (status === 'loading') {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span className="flex items-center gap-1.5 text-xs text-gray-11">
         <LoadingSpinner className="size-3.5" />
         {t('Checking')}
       </span>
@@ -290,18 +305,18 @@ function StatusPill({ status }: { status: Status }) {
 const STATUS_CONFIG = {
   passed: {
     label: 'Passed',
-    text: 'text-success-700',
-    dot: 'bg-success-600',
+    text: 'text-success-11',
+    dot: 'bg-success-10',
   },
   failed: {
     label: 'Needs attention',
-    text: 'text-destructive-700',
-    dot: 'bg-destructive-600',
+    text: 'text-danger-11',
+    dot: 'bg-danger-10',
   },
   na: {
     label: 'Not applicable',
-    text: 'text-muted-foreground',
-    dot: 'bg-muted-foreground',
+    text: 'text-gray-11',
+    dot: 'bg-gray-9',
   },
 } as const;
 

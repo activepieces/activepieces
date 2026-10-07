@@ -11,14 +11,6 @@ export const concat = createAction({
   displayName: 'Concatenate',
   name: 'concat',
   classification: 'READ',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   props: {
     texts: Property.Array({
       displayName: 'Texts',

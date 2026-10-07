@@ -21,6 +21,7 @@ function calculateBillable(
 export default createAction({
   auth: clockodoAuth,
   name: 'list_entries',
+  classification: 'SEARCH',
   displayName: 'Get Entries',
   description: 'Fetches entries from clockodo',
   audience: 'both',

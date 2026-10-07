@@ -14,6 +14,7 @@ import {
 
 export const createOrUpdateContact = createAction({
   name: 'createOrUpdateContact',
+  classification: 'WRITE',
   displayName: 'Create or Update Contact',
   description: 'Creates a new or update an existing contact.',
   audience: 'both',

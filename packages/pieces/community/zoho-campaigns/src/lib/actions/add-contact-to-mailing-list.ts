@@ -5,6 +5,7 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 export const addContactToMailingList = createAction({
   auth: zohoCampaignsAuth,
   name: 'addContactToMailingList',
+  classification: 'WRITE',
   displayName: 'Add Contact to Mailing List',
   description: 'Add contacts to your mailing lists.',
   audience: 'both',

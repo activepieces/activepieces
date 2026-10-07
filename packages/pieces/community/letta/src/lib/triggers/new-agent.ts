@@ -58,6 +58,7 @@ const polling: Polling<
 export const newAgent = createTrigger({
   auth: lettaAuth,
   name: 'newAgent',
+  classification: 'READ',
   displayName: 'New Agent',
   description: 'Triggers when a new agent is created',
   aiMetadata: {

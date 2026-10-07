@@ -51,8 +51,7 @@ const markdownDescription = `
 2. Type in "/newbot"
 3. Choose a name for your bot
 4. Choose a username for your bot.
-5. Copy the token value from the Botfather and use it activepieces connection.
-6. Congratulations! You can now use your new Telegram connection in your flows.
+5. Copy the token BotFather sends and paste it here.
 `;
 
 export const telegramBotAuth = PieceAuth.SecretText({
@@ -64,7 +63,7 @@ export const telegramBotAuth = PieceAuth.SecretText({
 export const telegramBot = createPiece({
   displayName: 'Telegram Bot',
   description: 'Build chatbots for Telegram',
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: telegramBotAuth,

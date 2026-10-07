@@ -7,6 +7,7 @@ import { insightlyAuth, makeInsightlyRequest } from '../common/common';
 export const deleteRecord = createAction({
     auth: insightlyAuth,
     name: 'delete_record',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Record',
     description: 'Delete a record by ID from a specified Insightly object',
     audience: 'both',

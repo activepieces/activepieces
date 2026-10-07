@@ -18,6 +18,8 @@ vi.mock('../../../../src/app/helper/telemetry.utils', async (importOriginal) => 
             trackProject: vi.fn().mockResolvedValue(undefined),
             trackIdentity: vi.fn().mockResolvedValue(undefined),
             trackUser: vi.fn().mockResolvedValue(undefined),
+            aliasIdentity: vi.fn().mockResolvedValue(undefined),
+            identifyPlatformGroup: vi.fn().mockResolvedValue(undefined),
         }),
     }
 })

@@ -53,6 +53,17 @@ A **Subflow** is a flow invoked by another flow rather than by its own external 
 - **Batch** — the rows carried by one fan-out call: `{ batchIndex, headers, rows, extraData }`. *Avoid:* chunk, csv table, sub-table, shard.
 - Parent linkage is two headers (`x-parent-run-id`, `x-fail-parent-on-failure`); fan-out sets the latter false. Streaming bounds memory, not time — the step is still capped by `FLOW_TIMEOUT_SECONDS`.
 
+### Waitpoints
+A **waitpoint** is a row recording something a run waits on — `DELAY` / `WEBHOOK` / `BARRIER`. A run may hold several at once, and a barrier's row outlives its own delivery, so "the waitpoint a run is parked on" is never a safe singular. Reference lives in the public docs; what belongs here is the vocabulary, because the verbs are easy to swap.
+- **Release** — what happens to a **barrier**: close it, write its summary, delete its signals. `barrierService.release`. *Avoid:* "resume the barrier".
+- **Resume** — what happens to a **run**: enqueue the job that re-invokes the step. `resumeService.resume*`. A release ends by asking for a resume; the reverse never happens. *Avoid:* "release the run".
+- **Trusted resume** — `resumeTrusted` / `resumeTrustedWithoutLock`: resume skipping the barrier guard, for internal callers only. Every HTTP route goes through `resumeFromWaitpoint`, which refuses barriers always.
+- **Waitpoint key** — the path-qualified step identity the engine sends in `stepName`, e.g. `loop_1:3/approval`. It is only ever an identity key inside `waitpoint-service`. Gives each loop iteration its own row; without it a pause inside a loop fired on iteration 1 only.
+- **Consume** — what happens to a **waitpoint** once its resume has been enqueued: a barrier is tombstoned `CONSUMED` so the run stays provably barrier-owned until it ends, any other type is deleted. `waitpointService.consume`, the single owner of the rule. *Avoid:* "close the waitpoint".
+- **Signal** — one `waitpoint_signal` row per awaited thing on a barrier, created up front. Deleted on release, so a returning approver sees only "already responded".
+- Gotcha: a run can hold a COMPLETED leftover *and* an open PENDING pause at once, so any per-run waitpoint lookup must say which it wants — `findUndeliveredCompletedWaitpoint` declines only while a PENDING **barrier** is held, since delivering a resume never leaves a row at COMPLETED. An earlier form declined while *anything* was pending and hung every run holding a second waitpoint.
+- See [decision 000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md), [decision 000033](../decisions/000033-a-released-barrier-leaves-a-tombstone-until-the-run-ends.md) and the public [Waitpoints](https://www.activepieces.com/docs/install/architecture/waitpoints) page.
+
 ### Folders
 Lightweight per-project grouping for flows and tables. Name unique case-insensitively per project.
 - `folder` entity (displayName, projectId, displayOrder). List returns `numberOfFlows`/`numberOfTables` via correlated subqueries. Create is an upsert by name.
@@ -71,6 +82,7 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL
 - **Human Input** — forms, approvals, the resume confirmation page
 - **Subflows** — flow-calls-flow: Callable Flow, Call Flow, streaming fan-out
+- **Waitpoints** — how a paused run is parked; release vs resume, barriers, signals
 - **Folders** — flow organization; the uncategorized sentinel
 - **Templates** — OFFICIAL / CUSTOM / SHARED blueprints
 - **Variables** — project-scoped values referenced from steps

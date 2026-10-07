@@ -32,21 +32,74 @@ import {
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
-export default function Billing() {
+import { UsageTab } from './usage-tab';
+
+export function BillingPlanTab() {
   return (
     <BillingPageShell
-      lockTitle={t('Unlock Billing Page')}
+      lockTitle={t('Unlock Billing & Usage')}
       errorMessage={t('Failed to load billing information')}
     >
       {({ platform, info }) => (
-        <BillingPageDetails platform={platform} info={info} />
+        <div className="flex w-full flex-col gap-4 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl font-medium">
+                {t('Billing & subscription')}
+              </h1>
+              <div className="text-sm text-gray-11">
+                {t(
+                  'For questions about billing contact us at support@activepieces.com',
+                )}
+              </div>
+            </div>
+            <BillingRefreshButton />
+          </div>
+          <Separator />
+          <PlanTab platform={platform} info={info} />
+        </div>
       )}
     </BillingPageShell>
   );
 }
 
-function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
+export function BillingUsageTab() {
+  return (
+    <BillingPageShell
+      lockTitle={t('Unlock Billing & Usage')}
+      errorMessage={t('Failed to load billing information')}
+    >
+      {({ platform, info }) => <UsageTab platform={platform} info={info} />}
+    </BillingPageShell>
+  );
+}
+
+function BillingRefreshButton() {
+  const { mutate: refreshBilling, isPending: isRefreshing } =
+    billingMutations.useRefreshSubscription();
+
+  return (
+    <Button
+      {...adminControl(AdminControl.BILLING_REFRESH_RUN)}
+      variant="outline"
+      size="sm"
+      className="shrink-0"
+      loading={isRefreshing}
+      onClick={() =>
+        refreshBilling(undefined, {
+          onSuccess: () => toast.success(t('Billing information refreshed')),
+        })
+      }
+    >
+      <RefreshCw className="size-4 mr-2" />
+      {t('Refresh')}
+    </Button>
+  );
+}
+
+function PlanTab({ platform, info }: PlanTabProps) {
   const { openDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
@@ -56,8 +109,6 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const { cancelWithSeatCheck, deactivateUsersDialog } =
     useCancelSubscriptionGuard();
-  const { mutate: refreshBilling, isPending: isRefreshing } =
-    billingMutations.useRefreshSubscription();
 
   const isCloud = edition === ApEdition.CLOUD;
 
@@ -86,34 +137,6 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
 
   return (
     <div className="flex w-full flex-col gap-4 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-medium">{t('Billing & subscription')}</h1>
-          <div className="text-sm text-muted-foreground">
-            {t(
-              'For questions about billing contact us at support@activepieces.com',
-            )}
-          </div>
-        </div>
-        {!isCommunity && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            loading={isRefreshing}
-            onClick={() =>
-              refreshBilling(undefined, {
-                onSuccess: () =>
-                  toast.success(t('Billing information refreshed')),
-              })
-            }
-          >
-            <RefreshCw className="size-4 mr-2" />
-            {t('Refresh')}
-          </Button>
-        )}
-      </div>
-      <Separator />
       {info.billingUnavailable && (
         <Alert variant="warning">
           <AlertDescription>
@@ -137,7 +160,10 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
                     'Upgrade anytime to get more credits and unlock features.',
                   )}
                 </span>
-                <LinkButton onClick={openDialog}>
+                <LinkButton
+                  {...adminControl(AdminControl.BILLING_PLANS_OPEN)}
+                  onClick={openDialog}
+                >
                   {t('Explore plans')}
                 </LinkButton>
               </div>
@@ -203,6 +229,7 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
               <div className="flex flex-col items-center gap-3">
                 {hasBillingPortal && (
                   <Button
+                    {...adminControl(AdminControl.BILLING_STRIPE_PORTAL_LINK)}
                     variant="outline"
                     className="w-full"
                     loading={isOpeningPortal}
@@ -215,14 +242,18 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
                 {!isCompedLifetimePlan &&
                   (isNil(info.cancelAt) ? (
                     <Button
+                      {...adminControl(
+                        AdminControl.BILLING_CANCEL_SUBSCRIPTION_OPEN,
+                      )}
                       variant="link"
-                      className="text-destructive hover:text-destructive"
+                      className="text-danger-11 hover:text-danger-11"
                       onClick={() => setIsCancelOpen(true)}
                     >
                       {t('Cancel subscription')}
                     </Button>
                   ) : (
                     <Button
+                      {...adminControl(AdminControl.BILLING_KEEP_PLAN_OPEN)}
                       variant="default"
                       className="w-full"
                       onClick={() => setIsKeepPlanOpen(true)}
@@ -306,7 +337,7 @@ const BillingSection = ({
   <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_400px] md:gap-20 pr-4">
     <div className="flex flex-col gap-1">
       <h2 className="text-base font-semibold">{title}</h2>
-      <div className="text-sm text-muted-foreground">{description}</div>
+      <div className="text-sm text-gray-11">{description}</div>
     </div>
     <div className="flex flex-col gap-3">{children}</div>
   </section>
@@ -322,7 +353,7 @@ const SubscriptionScheduleNotice = ({
   }
   const date = dayjsCancelDate(info.cancelAt);
   return (
-    <span className="text-sm text-muted-foreground">
+    <span className="text-sm text-gray-11">
       {!isNil(info.scheduledPlanName)
         ? t('Switches to {plan} on {date}', {
             plan: info.scheduledPlanName,
@@ -337,24 +368,18 @@ function dayjsCancelDate(cancelAt: string): string {
   return dayjs(cancelAt).format('MMM D, YYYY');
 }
 
-const LinkButton = ({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) => (
+const LinkButton = ({ children, ...props }: React.ComponentProps<'button'>) => (
   <button
     type="button"
-    onClick={onClick}
-    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+    {...props}
+    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
   >
     {children}
     <ArrowUpRight className="size-3.5" />
   </button>
 );
 
-type BillingPageDetailsProps = {
+type PlanTabProps = {
   platform: ReturnType<typeof platformHooks.useCurrentPlatform>['platform'];
   info: PlatformBillingInformation;
 };

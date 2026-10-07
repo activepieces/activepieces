@@ -7,6 +7,7 @@ import { conversationIdDropdown, userIdDropdown } from '../common/props';
 export const sendReply = createAction({
   auth: helpScoutAuth,
   name: 'send_reply',
+  classification: 'WRITE',
   displayName: 'Send Reply',
   description: 'Sends a reply in an existing conversation.',
   audience: 'both',

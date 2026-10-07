@@ -5,6 +5,7 @@ import { invoiceninjaAuth } from '../..';
 export const existsTask = createAction({
   auth: invoiceninjaAuth,
   name: 'exists_task',
+  classification: 'READ',
   displayName: 'Check Task Existence',
   description: 'Verify if a Task Already Exists',
   audience: 'both',

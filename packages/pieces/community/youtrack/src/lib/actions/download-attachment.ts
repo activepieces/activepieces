@@ -7,6 +7,7 @@ import { downloadAttachmentActionOutputSchema } from '../output-schemas';
 export const downloadAttachmentAction = createAction({
   auth: youtrackAuth,
   name: 'download_attachment',
+  classification: 'READ',
   outputSchema: downloadAttachmentActionOutputSchema,
   displayName: 'Download Attachment',
   description: 'Downloads an attachment from an issue and returns it as a Base64-encoded string. Use this with the "Upload to Drive" or "Send Email" actions in your flow.',

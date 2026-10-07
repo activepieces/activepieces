@@ -1,5 +1,9 @@
+import { rm } from 'node:fs/promises'
+import { join } from 'node:path'
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { type ApLogger, wideEvent } from '@activepieces/server-utils'
+import { type ApLogger, apVersionUtil, wideEvent } from '@activepieces/server-utils'
+import { PrewarmScopeFileContent, WorkerToApiContract } from '@activepieces/shared'
+import { cacheUtils } from './cache/cache-paths'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
@@ -13,6 +17,7 @@ import {
     RuntimeExecutorInfo,
     SandboxSettings,
 } from './types'
+import { bundleHttp } from './utils/bundle-http'
 
 // One box per worker at the destination (concurrency 1), or N independent boxes in the transitional
 // compatibility mode that honors AP_WORKER_CONCURRENCY. Each box is its own manager, holding one
@@ -116,9 +121,15 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             }
             const startedAt = Date.now()
             const { error } = await tryCatch(async () => {
+                if (!isNil(flow)) {
+                    // The version JSON may have been updated in place (e.g. admin deno migration):
+                    // drop the local copies so the resolve below refetches fresh data.
+                    await evictFlowVersionCaches({ basePath, flowVersionId: flow.versionId })
+                }
                 const prewarmData = await apiClient.getPrewarmData({
                     workerGroupId: getSettings().WORKER_GROUP_ID,
                     projectWorker: getSettings().PROJECT_WORKER,
+                    workerVersion: apVersionUtil.getCurrentRelease(),
                     flow,
                 })
                 const { platformId, engineToken } = prewarmData
@@ -126,7 +137,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 // The targeted (flowPublished) prewarm still resolves worker-side, which also publishes
                 // the flow bundle.
                 const { pieces, codeSteps } = isNil(flow)
-                    ? { pieces: prewarmData.pieces, codeSteps: prewarmData.codes }
+                    ? await fetchScopeFile({ apiClient, scopeFileId: prewarmData.scopeFileId })
                     : await resolveFlowsForPrewarm({
                         resolver: createResolver({ apiClient, basePath, getSettings, log }),
                         flows: prewarmData.flows ?? [],
@@ -135,7 +146,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                         engineToken,
                         log,
                     })
-                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken })
+                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken, bestEffort: true })
                 log.info({ pieceCount: pieces.length, codeStepCount: codeSteps.length, durationMs: Date.now() - startedAt }, 'Prewarmed sandbox cache')
             })
             if (error) {
@@ -146,6 +157,27 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
     }
+}
+
+async function evictFlowVersionCaches({ basePath, flowVersionId }: { basePath: string, flowVersionId: string }): Promise<void> {
+    const paths = cacheUtils(basePath)
+    await Promise.all([
+        rm(join(paths.getGlobalCacheFlowsPath(), flowVersionId), { recursive: true, force: true }),
+        rm(join(paths.getGlobalCacheBundlesPath(), flowVersionId), { recursive: true, force: true }),
+    ])
+}
+
+async function fetchScopeFile({ apiClient, scopeFileId }: FetchScopeFileParams): Promise<ResolvedPrewarmInputs> {
+    if (isNil(scopeFileId)) {
+        return { pieces: [], codeSteps: [] }
+    }
+    const response = await apiClient.getPrewarmScopeFile({ fileId: scopeFileId })
+    if (isNil(response)) {
+        return { pieces: [], codeSteps: [] }
+    }
+    const data = response.kind === 'url' ? await bundleHttp.getBuffer(response.url) : response.data
+    const content = JSON.parse(data.toString('utf8')) as PrewarmScopeFileContent
+    return { pieces: content.pieces, codeSteps: content.codes }
 }
 
 async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ResolvedPrewarmInputs> {
@@ -170,6 +202,11 @@ function remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt }: { timeoutInS
         return timeoutInSeconds
     }
     return Math.min(timeoutInSeconds, Math.floor((expiresAt - Date.now()) / 1000))
+}
+
+type FetchScopeFileParams = {
+    apiClient: WorkerToApiContract
+    scopeFileId: string | undefined
 }
 
 type ResolveFlowsForPrewarmParams = {

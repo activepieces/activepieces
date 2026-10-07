@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const scheduledProcessTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'scheduled_process',
+  classification: 'READ',
   displayName: 'Scheduled Process',
   description: 'Triggers when scheduled payments are processed (daily on business days)',
   aiMetadata: {

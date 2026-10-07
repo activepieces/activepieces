@@ -21,13 +21,12 @@ export const airtableCreateBaseAction = createAction({
     workspaceId: airtableCommon.workspaceId,
     name: Property.ShortText({
       displayName: 'Base Name',
-      description: 'The name for the new base.',
       required: true,
     }),
     tables: Property.Json({
       displayName: 'Tables',
       description:
-        'Define the tables for the new base. Use the default value as a template. The first field for each table will be its primary field.',
+        'Tables to create. The first field of each table is its primary field.',
       required: true,
       defaultValue: [
         {

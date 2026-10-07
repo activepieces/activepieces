@@ -6,6 +6,7 @@ import { getAuthToken } from '../common/auth-helper';
 export const reconcileCredentialsBulk = createAction({
   auth: cyberarkAuth,
   name: 'reconcile_credentials_bulk',
+  classification: 'WRITE',
   displayName: 'Reconcile Credentials in Bulk',
   description:
     'Marks multiple accounts for automatic reconciliation by the CPM',

@@ -1,4 +1,4 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, MarkdownVariant, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/pieces-framework';
@@ -21,25 +21,19 @@ export const findRecords = createAction({
   auth: PieceAuth.None(),
   props: {
     table_id: tablesCommon.table_id,
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of records to return (default no limit).',
-      required: false,
-    }),
     filters: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Filters',
-      description: 'Filter conditions to apply',
+      description: 'All conditions must match. Empty returns every record.',
       required: false,
       refreshers: ['table_id'],
-      props: async (propsValue, context) => {
+      props: async (propsValue, context): Promise<DynamicPropsValue> => {
         const table_id = propsValue['table_id'];
         if (!table_id || typeof table_id !== 'string') {
           return {
-            filters: Property.Array({
-              displayName: 'Filters',
-              required: false,
-              properties: {},
+            markdown: Property.MarkDown({
+              value: 'Select a table to load its fields.',
+              variant: MarkdownVariant.INFO,
             }),
           };
         }
@@ -53,6 +47,7 @@ export const findRecords = createAction({
         return {
           filters: Property.Array({
             displayName: 'Filters',
+            description: 'All conditions must match. Empty returns every record.',
             required: false,
             properties: {
               field: Property.StaticDropdown({
@@ -71,11 +66,11 @@ export const findRecords = createAction({
                 options: {
                   options: [
                     { label: 'Equals', value: FilterOperator.EQ },
-                    { label: 'Not Equals', value: FilterOperator.NEQ },
-                    { label: 'Greater Than', value: FilterOperator.GT },
-                    { label: 'Greater Than or Equal', value: FilterOperator.GTE },
-                    { label: 'Less Than', value: FilterOperator.LT },
-                    { label: 'Less Than or Equal', value: FilterOperator.LTE },
+                    { label: 'Not equals', value: FilterOperator.NEQ },
+                    { label: 'Greater than', value: FilterOperator.GT },
+                    { label: 'Greater than or equal', value: FilterOperator.GTE },
+                    { label: 'Less than', value: FilterOperator.LT },
+                    { label: 'Less than or equal', value: FilterOperator.LTE },
                     { label: 'Contains', value: FilterOperator.CO },
                     { label: 'Exists', value: FilterOperator.EXISTS },
                     { label: 'Does not exist', value: FilterOperator.NOT_EXISTS },
@@ -84,12 +79,19 @@ export const findRecords = createAction({
               }),
               value: Property.ShortText({
                 displayName: 'Value',
+                description: 'Ignored for Exists and Does not exist.',
                 required: false,
               }),
             },
           }),
         };
       },
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum records to return. Empty returns all records.',
+      required: false,
+      advanced: true,
     }),
   },
   outputSchema: findRecordsActionOutputSchema,

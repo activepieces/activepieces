@@ -1,5 +1,5 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { appWebhookSetupInfo, singleSelectChannelInfo, slackChannel } from '../common/props';
+import { appWebhookSetupInfo, singleSelectChannelInfo, slackChannel, onlyBotChannels } from '../common/props';
 import { slackAuth } from '../auth';
 import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newMessageInChannelTriggerOutputSchema } from '../output-schemas';
@@ -19,10 +19,12 @@ export const newMessageInChannelTrigger = createTrigger({
 	props: {
 		webhookInfo: appWebhookSetupInfo,
 		info: singleSelectChannelInfo,
+		onlyBotChannels,
 		channel: slackChannel(true),
 		ignoreBots: Property.Checkbox({
-			displayName: 'Ignore Bot Messages ?',
-			required: true,
+			displayName: 'Ignore Bot Messages',
+			description: 'Skip messages posted by bots and apps.',
+			required: false,
 			defaultValue: false,
 		}),
 	},
