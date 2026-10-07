@@ -110,7 +110,7 @@ const SigningKeysList = ({
           <ItemActions>
             <DropdownMenu modal={true}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 p-0">
+                <Button variant="ghost" size="icon-sm">
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>

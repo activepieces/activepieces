@@ -25,8 +25,8 @@ export function MaskedInput({ className, ...props }: MaskedInputProps) {
       <Button
         type="button"
         variant="ghost"
-        size="sm"
-        className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
+        size="icon-xs"
+        className="absolute right-1 top-1/2 -translate-y-1/2"
         onClick={() => setIsVisible((visible) => !visible)}
         aria-label={isVisible ? t('Hide value') : t('Show value')}
       >

@@ -53,7 +53,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
       {!hideCopyButton && (
         <div className="absolute top-2 right-5 z-10">
           <Button
-            variant="transparent"
+            variant="ghost"
             size="sm"
             onClick={handleCopy}
             className="p-0 "

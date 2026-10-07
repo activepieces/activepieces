@@ -232,8 +232,7 @@ export default function AuditLogsPage() {
               <Button
                 {...adminControl(AdminControl.AUDIT_LOG_EVENT_OPEN)}
                 variant="ghost"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 onClick={() => {
                   setSelectedEvent(row.original);
                   setIsSheetOpen(true);
@@ -264,7 +263,7 @@ export default function AuditLogsPage() {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11 tracking-wide">
                 {t('Who & When')}
               </p>
               <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -302,7 +301,7 @@ export default function AuditLogsPage() {
               <>
                 <Separator />
                 <div className="px-6 py-5 flex flex-col gap-4">
-                  <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-gray-11 tracking-wide">
                     {t('Event Details')}
                   </p>
                   <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -320,7 +319,7 @@ export default function AuditLogsPage() {
             )}
             <Separator />
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11 tracking-wide">
                 {t('Full Payload')}
               </p>
               <SimpleJsonViewer data={selectedEvent?.data ?? {}} />

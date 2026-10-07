@@ -63,7 +63,7 @@ const ExploreTabContent = ({
 
             {category.metadata.map((pieceMetadata) => (
               <CardListItem
-                className="rounded-sm py-3"
+                className="rounded-md py-3"
                 key={pieceMetadata.displayName}
                 onClick={() => setSelectedPieceInExplore(pieceMetadata)}
               >

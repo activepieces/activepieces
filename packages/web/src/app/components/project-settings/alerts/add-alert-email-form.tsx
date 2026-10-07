@@ -45,7 +45,7 @@ export const AddAlertEmailForm = () => {
                   id="alert-email"
                   type="text"
                   placeholder="joe@doe.com"
-                  className="h-10 rounded-r-none"
+                  className="rounded-r-none"
                   disabled={writeAlertPermission === false}
                 />
                 <Tooltip>
@@ -54,7 +54,7 @@ export const AddAlertEmailForm = () => {
                       <Button
                         type="submit"
                         variant="default"
-                        className="h-10 rounded-l-none border-l-0 flex items-center gap-2"
+                        className="rounded-l-none border-l-0"
                         loading={isPending}
                         disabled={writeAlertPermission === false}
                       >

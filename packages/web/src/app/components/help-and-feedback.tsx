@@ -18,7 +18,7 @@ export const HelpAndFeedback = () => {
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm cursor-pointer">
+      <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-md cursor-pointer">
         <CircleHelp className="w-4 h-4 mr-2" />
         {t('Help & Feedback')}
       </DropdownMenuSubTrigger>

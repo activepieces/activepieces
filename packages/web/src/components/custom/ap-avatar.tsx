@@ -49,7 +49,7 @@ export const ApAvatar = ({
       {includeName && (
         <span
           className={cn('text-xs truncate', {
-            'text-xss opacity-75': size === 'xsmall',
+            'text-xs opacity-75': size === 'xsmall',
           })}
         >
           {`${user.firstName} ${user.lastName}`.trim()}

@@ -24,7 +24,7 @@ export function PiecesShowcase() {
     <div className="flex-1 border-t bg-gray-3/30 pb-9 pt-8">
       <PageBand className="flex flex-col gap-6 px-0 lg:px-0">
         <div className="flex flex-col gap-1.5 px-6 lg:px-14">
-          <h2 className="text-xl font-bold leading-7 tracking-tight">
+          <h2 className="text-xl font-semibold leading-7 tracking-tight">
             {t('Your AI gets all of this')}
           </h2>
           <p className="max-w-[560px] text-sm text-gray-11">
@@ -83,7 +83,7 @@ function TileRow({
           alt={tile.displayName}
           title={tile.displayName}
           border
-          className="size-16 rounded-lg p-4"
+          className="size-16 rounded-xl p-4"
         />
       ))}
     </div>
@@ -94,7 +94,7 @@ function TileRowSkeleton({ className = '' }: { className?: string }) {
   return (
     <div className={cn('flex gap-2.5', className)}>
       {Array.from({ length: SKELETON_TILE_COUNT }).map((_, index) => (
-        <Skeleton key={index} className="size-16 shrink-0 rounded-lg" />
+        <Skeleton key={index} className="size-16 shrink-0 rounded-xl" />
       ))}
     </div>
   );

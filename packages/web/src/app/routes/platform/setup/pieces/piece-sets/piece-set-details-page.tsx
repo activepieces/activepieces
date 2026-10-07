@@ -204,7 +204,7 @@ function AutoIncludePill({
   return (
     <label
       className={cn(
-        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-gray-1 px-3 text-sm font-medium transition-colors',
+        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-xl border bg-gray-1 px-3 text-sm font-medium transition-colors',
         checked && 'border-accent-7 bg-accent-3 text-accent-11',
         disabled && 'cursor-not-allowed opacity-60',
       )}
