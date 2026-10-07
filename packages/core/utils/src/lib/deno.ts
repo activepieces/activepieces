@@ -90,7 +90,7 @@ export const deno = {
      * evaluates scripts on demand, so repeated evaluations against the same data
      * serialize it once instead of once per run.
      */
-    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {} }: DenoSessionParams): Promise<DenoSession> {
+    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, commandTimeoutMs = DEFAULT_SESSION_COMMAND_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
         const marker = newResultMarker()
         const { child, denoPath, denoDir } = await spawnDeno({
             entry: { body: buildSessionProgram({ bootstrapBody, marker }) },
@@ -186,9 +186,23 @@ export const deno = {
                 return Promise.reject(stringifyError)
             }
             return new Promise((resolve, reject) => {
-                pending.set(id, { resolve, reject })
+                // A script that wedges the event loop or corrupts the reply channel would
+                // otherwise hold this promise — and the engine behind it — forever. Time it
+                // out and kill the child; the sandbox respawns a clean session on the next run.
+                const timer = setTimeout(() => {
+                    if (pending.delete(id)) {
+                        alive = false
+                        child.kill('SIGKILL')
+                        reject(sandboxError.build({ error: `Deno session command timed out after ${commandTimeoutMs}ms`, stdout: '', stderr: capturedStderr }))
+                    }
+                }, commandTimeoutMs)
+                pending.set(id, {
+                    resolve: (value) => { clearTimeout(timer); resolve(value) },
+                    reject: (error) => { clearTimeout(timer); reject(error) },
+                })
                 child.stdin.write(payload, (writeError) => {
                     if (writeError && pending.delete(id)) {
+                        clearTimeout(timer)
                         reject(sandboxError.build({ error: `Failed to write to deno session: ${writeError.message}`, stdout: '', stderr: capturedStderr }))
                     }
                 })
@@ -449,6 +463,7 @@ function extractResult(stdout: string, marker: string): { userOutput: string, re
 }
 
 const DEFAULT_MEMORY_LIMIT_MB = 128
+const DEFAULT_SESSION_COMMAND_TIMEOUT_MS = 30_000
 
 export enum DenoPermission {
     ALL = 'ALL',
@@ -485,6 +500,7 @@ type DenoSessionParams = {
     cwd?: string
     memoryLimitMb?: number
     env?: Record<string, string>
+    commandTimeoutMs?: number
 }
 
 type SessionSetGlobalParams = {

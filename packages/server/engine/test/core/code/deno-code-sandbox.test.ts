@@ -373,6 +373,20 @@ describe('denoCodeSandbox permission boundary', () => {
             await expect(session.run('1 + 1')).rejects.toThrow()
         })
     })
+
+    describe('deno.createSession timeout', () => {
+        it('times out and kills the child when a script wedges the event loop', async () => {
+            const { deno } = await import('@activepieces/core-utils')
+            const session = await deno.createSession({ bootstrapBody: '', permissions: [], commandTimeoutMs: 500 })
+            try {
+                await expectRejection(session.run({ script: '(() => { while (true) {} })()' }), /timed out/)
+                expect(session.isAlive()).toBe(false)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+    })
 })
 
 describe('denoCodeSandbox permission profiles', () => {

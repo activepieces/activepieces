@@ -107,8 +107,8 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             const syncGlobals = async ({ session, sentGlobals }: LiveScriptSession): Promise<void> => {
                 for (const [key, value] of Object.entries(context)) {
                     if (!sentGlobals.has(key) || sentGlobals.get(key) !== value) {
-                        sentGlobals.set(key, value)
                         await session.setGlobal({ key, value })
+                        sentGlobals.set(key, value)
                     }
                 }
             }
