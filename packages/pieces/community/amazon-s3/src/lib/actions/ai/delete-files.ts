@@ -32,7 +32,15 @@ export const amazonS3DeleteFiles = createAction({
 		const keys = context.propsValue.keys.filter(
 			(key): key is string => typeof key === 'string' && key !== '',
 		);
+		const invalid = context.propsValue.keys.length - keys.length;
 
+		if (invalid > 0) {
+			throw new Error(
+				`File Keys must be non-empty strings; ${invalid} entr${
+					invalid === 1 ? 'y is' : 'ies are'
+				} not. Nothing was deleted.`,
+			);
+		}
 		if (keys.length === 0) {
 			throw new Error('Provide at least one file key to delete.');
 		}

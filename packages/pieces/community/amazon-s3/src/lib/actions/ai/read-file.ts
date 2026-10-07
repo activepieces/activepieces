@@ -17,7 +17,7 @@ export const amazonS3ReadFileAi = createAction({
 	classification: 'READ',
 	aiMetadata: {
 		description:
-			'Downloads a file by key and returns it as a stored file for later steps. For text files (text/*, JSON, CSV, XML, YAML) up to 10 MB it also returns the text in "content", cut at 100,000 characters with "truncated" set; binary and larger files return content null. Pass a version id from List File Versions to read an older version.',
+			'Downloads a file by key and returns it as a stored file for later steps. For text files (text/*, JSON, CSV, XML, YAML) up to 10 MB it also returns the text in "content", decoded with the declared charset (UTF-8 when none) and cut at 100,000 characters with "truncated" set; binary files, larger files and unsupported charsets return content null. Pass a version id from List File Versions to read an older version.',
 		idempotent: true,
 	},
 	props: {
@@ -53,7 +53,10 @@ export const amazonS3ReadFileAi = createAction({
 		const inlineText = isText && size !== null && size <= MAX_INLINE_BYTES;
 
 		const { content, truncated, data } = inlineText
-			? readText({ bytes: await response.Body.transformToByteArray() })
+			? readText({
+					bytes: await response.Body.transformToByteArray(),
+					contentType: response.ContentType,
+			  })
 			: { content: null, truncated: isText, data: response.Body };
 
 		if (!(data instanceof Buffer) && !(data instanceof Readable)) {
@@ -75,14 +78,27 @@ export const amazonS3ReadFileAi = createAction({
 	},
 });
 
-function readText({ bytes }: { bytes: Uint8Array }) {
+function readText({ bytes, contentType }: { bytes: Uint8Array; contentType: string | undefined }) {
 	const data = Buffer.from(bytes);
-	const text = data.toString('utf8');
+	const decoder = textDecoder({ contentType });
+	if (!decoder) {
+		return { content: null, truncated: false, data };
+	}
+	const text = decoder.decode(data);
 	return {
 		content: text.slice(0, MAX_INLINE_CHARS),
 		truncated: text.length > MAX_INLINE_CHARS,
 		data,
 	};
+}
+
+function textDecoder({ contentType }: { contentType: string | undefined }): TextDecoder | null {
+	const charset = /charset=["']?([^;"'\s]+)/i.exec(contentType ?? '')?.[1] ?? 'utf-8';
+	try {
+		return new TextDecoder(charset);
+	} catch {
+		return null;
+	}
 }
 
 const MAX_INLINE_BYTES = 10 * 1024 * 1024;
