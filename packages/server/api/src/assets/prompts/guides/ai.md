@@ -4,6 +4,8 @@ Activepieces has first-class AI via the `ai` piece (`@activepieces/piece-ai`) an
 
 **Always use the native `@activepieces/piece-ai` piece for AI work — never a vendor-specific piece (the OpenAI piece, Anthropic piece, etc.) and never a raw model API call.** This holds even if the user names a model or provider ("use GPT-4o"): the native piece routes to that provider through the platform's central config, so you get the same model without a per-flow vendor connection. The native piece needs **no per-flow AI credential** — it draws on the providers the platform already has. So when you discover there is no OpenAI (or other vendor) credential, that is the *reason* to use the native piece, not a blocker: build with `@activepieces/piece-ai` and keep moving. Never insist on the OpenAI piece — or stall asking the user to connect one — after finding no credential.
 
+**Pick the smallest model that does the job.** The step runs on every flow run, so its model is the user's recurring cost: a fast or mini model for summaries, classification, extraction and short rewrites; a large or "pro" model only for hard reasoning or long documents, or when the user asks for it.
+
 ## The `ai` piece actions — and their output shapes
 
 Output shape decides how you reference the result. Get this wrong and `{{...}}` silently resolves to empty.

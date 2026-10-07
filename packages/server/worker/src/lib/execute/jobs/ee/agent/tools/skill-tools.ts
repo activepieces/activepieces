@@ -73,21 +73,24 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
 
     const loadSkillTool: ToolSet = firstSkill === undefined ? {} : {
         [LOAD_SKILL_NAME]: tool({
-            description: 'Load a skill before that kind of work (silent, internal). Returns its playbook and the input schema of every tool in it, which you then run with ap_lazy_tool.',
+            description: 'Load skills before that kind of work (silent, internal). Pass every skill the task needs in one call. Returns each playbook and the input schema of every tool in it, which you then run with ap_lazy_tool.',
             inputSchema: z.object({
-                skill: z.enum([firstSkill, ...otherSkills]).describe('Which skill to load'),
+                skills: z.array(z.enum([firstSkill, ...otherSkills])).min(1).describe('Every skill this task needs, loaded together'),
             }),
-            execute: async ({ skill: skillName }) => {
-                const skill = agentToolSkills.findSkill({ name: skillName })
-                if (skill === undefined) {
-                    return `No skill named "${skillName}".`
-                }
-                if (loadedSkills.has(skill.name)) {
-                    return `You already loaded "${skill.name}" earlier in this turn — re-read it from the conversation above instead of loading it again.`
-                }
-                loadedSkills.add(skill.name)
-                onSkillLoaded(skill)
-                return renderSkill({ skill, guide: skill.guideTopic === undefined ? undefined : guides[skill.guideTopic], registry, core, canAffordPaidTool })
+            execute: async ({ skills: skillNames }) => {
+                const playbooks = await Promise.all([...new Set(skillNames)].map(async (skillName) => {
+                    const skill = agentToolSkills.findSkill({ name: skillName })
+                    if (skill === undefined) {
+                        return `No skill named "${skillName}".`
+                    }
+                    if (loadedSkills.has(skill.name)) {
+                        return `You already loaded "${skill.name}" earlier in this turn — re-read it from the conversation above instead of loading it again.`
+                    }
+                    loadedSkills.add(skill.name)
+                    onSkillLoaded(skill)
+                    return renderSkill({ skill, guide: skill.guideTopic === undefined ? undefined : guides[skill.guideTopic], registry, core, canAffordPaidTool })
+                }))
+                return playbooks.join('\n\n')
             },
         }),
     }
