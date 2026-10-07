@@ -33,8 +33,8 @@
   "Europe (Zurich) [eu-central-2]": "Europe (Zurich) [eu-central-2]",
   "Middle East (UAE) [me-central-1]": "Moyen Orient (UAE) [me-central-1]",
   "Send Message": "Envoyer un message",
-  "Queue URL": "URL de la file d'attente",
+  "Queue URL": "Queue URL",
   "Message Body": "Corps du message",
-  "The URL of the SQS queue": "L'URL de la file d'attente SQS",
-  "The body of the message": "Le corps du message"
+  "The URL of the SQS queue": "The URL of the SQS queue",
+  "The body of the message": "The body of the message"
 }
