@@ -78,6 +78,16 @@ describe('a chat on a platform tier', () => {
         expect(pickedTier.json()).toMatchObject({ modelTierId: tier.id, modelName: null })
     })
 
+    it('clears the model when an update sends a null model name', async () => {
+        const { ctx } = await tierOnKey({ servesOwnProject: true })
+        const conversation = await createConversation({ ctx, body: { modelName: 'fast' } })
+
+        const cleared = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}`, { modelName: null })
+
+        expect(cleared.statusCode).toBe(StatusCodes.OK)
+        expect(cleared.json()).toMatchObject({ modelName: null, modelTierId: null })
+    })
+
     it('keeps the tier when the worker saves the turn with a model name', async () => {
         const { ctx, tier } = await tierOnKey({ servesOwnProject: true })
         const conversation = await createConversation({ ctx, body: { modelTierId: tier.id } })

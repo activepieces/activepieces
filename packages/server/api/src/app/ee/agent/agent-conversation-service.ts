@@ -64,7 +64,10 @@ async function modelChoiceFrom({ platformId, projectId, modelName, modelTierId, 
     if (!isNil(modelName)) {
         return { modelName, modelTierId: null }
     }
-    return modelTierId === null ? { modelTierId: null } : {}
+    return {
+        ...(modelName === null ? { modelName: null } : {}),
+        ...(modelTierId === null ? { modelTierId: null } : {}),
+    }
 }
 
 export const agentConversationService = (log: FastifyBaseLogger) => ({
