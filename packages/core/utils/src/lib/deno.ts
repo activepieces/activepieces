@@ -109,7 +109,7 @@ export const deno = {
         let capturedStderr = ''
 
         const settleResponse = (line: string): void => {
-            let message: (DenoResultMessage & { id: string }) | null = null
+            let message: SessionReply | null = null
             try {
                 message = JSON.parse(line.slice(marker.length))
             }
@@ -173,7 +173,7 @@ export const deno = {
             failAllPending(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: '', stderr: capturedStderr }))
         })
 
-        const send = (command: Record<string, unknown>): Promise<unknown> => {
+        const send = (command: SessionCommandBody): Promise<unknown> => {
             if (!alive) {
                 return Promise.reject(sandboxError.build({ error: 'Deno session is not running', stdout: '', stderr: capturedStderr }))
             }
@@ -331,26 +331,58 @@ catch (error) {
 `
 }
 
+/**
+ * The session child's program (ESM, so its own bindings are hidden from the
+ * scripts it evaluates in global scope).
+ * stdin:  {"kind":"run","script":"step_1.a + 1","id":"0"}
+ * stdout: MARKER{"id":"0","success":true,"result":42}
+ */
 function buildSessionProgram({ bootstrapBody, marker }: { bootstrapBody: string, marker: string }): string {
     return `
 ${sandboxError.payloadSource}
 ${bootstrapBody}
+${SESSION_REPLY_CHANNEL(marker)}
+${SESSION_REJECTION_TRACKING}
+${SESSION_SCRIPT_RUNNER}
+${SESSION_COMMAND_LOOP}
+`
+}
+
+/**
+ * MARKER{"id":"0","success":true,"result":42}  -> protocol reply
+ * hello from a script's console.log            -> forwarded as user output
+ * console.log is bound up front so a script overwriting it can't break this.
+ */
+const SESSION_REPLY_CHANNEL = (marker: string): string => `
 const print = console.log.bind(console);
-const emit = (payload) => {
+const reply = (payload) => {
     print(${JSON.stringify(marker)} + JSON.stringify(payload));
-};
-let currentReject = null;
+};`
+
+/**
+ * e.g. `Promise.reject('late')` inside a run fails that run only;
+ * the process stays alive (the one-shot runner exits instead).
+ */
+const SESSION_REJECTION_TRACKING = `
+let failCurrentRun = null;
 globalThis.addEventListener('unhandledrejection', (event) => {
     event.preventDefault();
-    if (currentReject) {
-        currentReject(event.reason);
+    if (failCurrentRun) {
+        failCurrentRun(event.reason);
     }
     else {
         console.error('Unhandled rejection in deno session:', event.reason);
     }
-});
+});`
+
+/**
+ * (0, eval)('(' + script + ')'): global scope, and the parens make
+ * {"where": "a"} an object literal, not a block. The setTimeout(0) lets a
+ * promise the script left behind reject before success is reported.
+ */
+const SESSION_SCRIPT_RUNNER = `
 const runScript = (script) => new Promise((resolve, reject) => {
-    currentReject = reject;
+    failCurrentRun = reject;
     Promise.resolve()
         .then(() => (0, eval)('(' + script + ')'))
         .then(async (value) => {
@@ -358,7 +390,15 @@ const runScript = (script) => new Promise((resolve, reject) => {
             resolve(value);
         })
         .catch(reject);
-});
+});`
+
+/**
+ * {"kind":"set","key":"step_1","value":{...}}  -> globalThis.step_1 = {...}
+ * {"kind":"run","script":"step_1.a"}           -> reply success/failure
+ * Runs are awaited one at a time, so failCurrentRun is the only run in flight.
+ * Line splitting is hand-rolled: --no-remote rules out std's TextLineStream.
+ */
+const SESSION_COMMAND_LOOP = `
 const decoder = new TextDecoder();
 let buffered = '';
 for await (const chunk of Deno.stdin.readable) {
@@ -380,23 +420,21 @@ for await (const chunk of Deno.stdin.readable) {
         }
         if (command.kind === 'set') {
             globalThis[command.key] = command.value;
-            emit({ id: command.id, success: true, result: null });
+            reply({ id: command.id, success: true, result: null });
             continue;
         }
         try {
             const result = await runScript(command.script);
-            emit({ id: command.id, success: true, result: result ?? null });
+            reply({ id: command.id, success: true, result: result ?? null });
         }
         catch (error) {
-            emit({ id: command.id, success: false, error: toErrorPayload(error) });
+            reply({ id: command.id, success: false, error: toErrorPayload(error) });
         }
         finally {
-            currentReject = null;
+            failCurrentRun = null;
         }
     }
-}
-`
-}
+}`
 
 function extractResult(stdout: string, marker: string): { userOutput: string, resultJson: string | null } {
     const idx = stdout.lastIndexOf(marker)
@@ -457,6 +495,14 @@ type SessionSetGlobalParams = {
 type SessionRunParams = {
     script: string
 }
+
+type SessionCommandBody =
+    | { kind: 'set', key: string, value: unknown }
+    | { kind: 'run', script: string }
+
+type SessionReply =
+    | { id: string, success: true, result: unknown }
+    | { id: string, success: false, error: SandboxErrorPayload }
 
 type PendingSessionCommand = {
     resolve(value: unknown): void
