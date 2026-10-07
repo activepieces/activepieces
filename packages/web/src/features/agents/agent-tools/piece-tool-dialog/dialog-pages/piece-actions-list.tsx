@@ -80,7 +80,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
             <div
               key={action.name}
               className={`
-                p-2 flex items-center gap-x-2 rounded-lg transition
+                p-2 flex items-center gap-x-2 rounded-xl transition
                 ${
                   isDisabled
                     ? 'opacity-50 cursor-not-allowed'

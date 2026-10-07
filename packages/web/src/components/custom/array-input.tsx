@@ -12,6 +12,7 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
+import { cn } from '@/lib/utils';
 
 type ArrayInputProps = {
   inputName: string;
@@ -128,7 +129,7 @@ const ArrayInput = React.memo(
                           updateFieldValue(index, e.target.value)
                         }
                         disabled={disabled}
-                        className="grow"
+                        className={cn('grow', thinInputs && 'h-7 px-2')}
                       />
                     )}
                   </div>
