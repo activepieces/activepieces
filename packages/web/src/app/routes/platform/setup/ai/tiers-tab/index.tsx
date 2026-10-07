@@ -58,9 +58,7 @@ export function TiersTab() {
   const [dialog, setDialog] = useState<TierDialogState>({ open: false });
   const [deleting, setDeleting] = useState<PlatformModelTier | null>(null);
   const [focusTarget, setFocusTarget] = useState<HTMLElement | null>(null);
-  const [previewProjectId, setPreviewProjectId] = useState<string | null>(
-    null,
-  );
+  const [previewProjectId, setPreviewProjectId] = useState<string | null>(null);
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const projectIds = useMemo(
     () => projects.map((project) => project.id),
@@ -141,15 +139,15 @@ export function TiersTab() {
               </Select>
             )}
             <Button
-            id={NEW_TIER_BUTTON_ID}
-            size="sm"
-            className="shrink-0"
-            onClick={(event) => openCreate({ trigger: event.currentTarget })}
-            {...adminControl(AdminControl.AI_TIER_OPEN)}
-          >
-            <Plus className="size-4" />
-            {t('New tier')}
-          </Button>
+              id={NEW_TIER_BUTTON_ID}
+              size="sm"
+              className="shrink-0"
+              onClick={(event) => openCreate({ trigger: event.currentTarget })}
+              {...adminControl(AdminControl.AI_TIER_OPEN)}
+            >
+              <Plus className="size-4" />
+              {t('New tier')}
+            </Button>
           </div>
         )}
       </div>

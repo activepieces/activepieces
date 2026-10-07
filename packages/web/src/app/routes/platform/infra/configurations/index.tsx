@@ -124,7 +124,6 @@ const toFormValues = (
   isProductTelemetryEnabled: configuration.isProductTelemetryEnabled,
   isInfraSetupTelemetryEnabled: configuration.isInfraSetupTelemetryEnabled,
   maxBarrierSignals: configuration.maxBarrierSignals,
-  aiSpecificModelsVisible: configuration.aiSpecificModelsVisible,
 });
 
 type ConfigurationsContentProps = {

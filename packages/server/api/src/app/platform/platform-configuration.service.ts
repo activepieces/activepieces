@@ -2,6 +2,7 @@ import { apId, chunk, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces
 import { ApEdition, maxBarrierSignalsBounds, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { platformModelTierService } from '../ai/platform-model-tier-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
 import { system } from '../helper/system/system'
@@ -97,10 +98,12 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
             ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
             ...spreadIfNotUndefined('isInfraSetupTelemetryEnabled', isInfraSetupTelemetryEnabled),
             ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
-            ...spreadIfNotUndefined('aiSpecificModelsVisible', aiSpecificModelsVisible),
         }
         if (!isEmpty(patch)) {
             await platformConfigurationRepo().update({ platformId }, patch)
+        }
+        if (!isNil(aiSpecificModelsVisible)) {
+            await platformModelTierService.setSpecificModelsVisible({ platformId, visible: aiSpecificModelsVisible })
         }
         return platformConfigurationRepo().findOneByOrFail({ platformId })
     },

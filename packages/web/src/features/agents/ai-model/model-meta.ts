@@ -333,7 +333,8 @@ function entryRunsIn({
   return (
     config !== undefined &&
     keyServesProject({ config, projectId }) &&
-    (config.modelScope !== 'selected' || config.modelIds.includes(entry.modelId))
+    (config.modelScope !== 'selected' ||
+      config.modelIds.includes(entry.modelId))
   );
 }
 

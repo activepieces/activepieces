@@ -141,6 +141,16 @@ export const platformModelTierService = {
         })
     },
 
+    async setSpecificModelsVisible({ platformId, visible }: { platformId: PlatformId, visible: boolean }): Promise<void> {
+        await transaction(async (manager) => {
+            await lockPlatform({ manager, platformId })
+            if (!visible && (await listLive({ platformId, manager })).length === 0) {
+                throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Add a tier before hiding specific models from builders' } })
+            }
+            await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: visible })
+        })
+    },
+
     async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
         await lockPlatform({ manager, platformId })
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })

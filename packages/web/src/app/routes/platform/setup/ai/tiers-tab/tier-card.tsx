@@ -476,7 +476,11 @@ function cardNotices({
       projectIds: [previewProjectId],
     });
     return here.unavailableCount === 1
-      ? [t("Not available in this project — its main model's key doesn't serve it")]
+      ? [
+          t(
+            "Not available in this project — its main model's key doesn't serve it",
+          ),
+        ]
       : noTools;
   }
   const reach = modelMeta.tierReach({ tier, configsById, projectIds });

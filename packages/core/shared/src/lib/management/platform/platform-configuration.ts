@@ -22,11 +22,12 @@ export const PlatformConfigurationSettings = PlatformConfiguration.pick({
     isProductTelemetryEnabled: true,
     isInfraSetupTelemetryEnabled: true,
     maxBarrierSignals: true,
-    aiSpecificModelsVisible: true,
 })
 export type PlatformConfigurationSettings = z.infer<typeof PlatformConfigurationSettings>
 
-export const UpdatePlatformConfigurationRequestBody = PlatformConfigurationSettings.partial()
+export const UpdatePlatformConfigurationRequestBody = PlatformConfigurationSettings.partial().extend({
+    aiSpecificModelsVisible: z.boolean().optional(),
+})
 export type UpdatePlatformConfigurationRequestBody = z.infer<typeof UpdatePlatformConfigurationRequestBody>
 
 export const maxBarrierSignalsBounds = {

@@ -279,6 +279,17 @@ describe('Platform model tiers API', () => {
     })
 
     describe('last tier and specific models', () => {
+        it('refuses to hide specific models once the last tier is gone, so the delete and the hide cannot race past each other', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
+            await ctx.delete(`${TIERS}/${tier.id}`)
+
+            const hide = await ctx.post(CONFIGURATIONS, { aiSpecificModelsVisible: false })
+
+            expect(hide.statusCode).toBe(StatusCodes.CONFLICT)
+            expect((await ctx.get(CONFIGURATIONS)).json()).toMatchObject({ aiSpecificModelsVisible: true })
+        })
+
         it('shows specific models again in the same step that deletes the last tier', async () => {
             const key = await seedKey({ testCtx: ctx })
             const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })

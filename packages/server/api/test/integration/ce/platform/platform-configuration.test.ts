@@ -1,8 +1,10 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { ApFlagId, DefaultProjectRole, maxBarrierSignalsBounds } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -158,6 +160,13 @@ describe('platform configuration', () => {
         })
 
         expect((await ctx.get('/v1/platform-configurations'))!.json().aiSpecificModelsVisible).toBe(true)
+
+        const refused = await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false })
+        expect(refused?.statusCode).toBe(StatusCodes.CONFLICT)
+
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const tier = await ctx.post('/v1/platform-model-tiers', { name: 'Expert', emoji: '🧠', description: null, entries: [{ configId: key.id, modelId: 'gpt-4o' }] })
+        expect(tier?.statusCode).toBe(StatusCodes.OK)
 
         const hidden = await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false })
         expect(hidden?.statusCode).toBe(StatusCodes.OK)
