@@ -58,6 +58,7 @@ export const ConfigureSamlDialog = ({
           {...adminControl(AdminControl.SSO_SAML_OPEN)}
           size="sm"
           variant="ghost"
+          className="font-medium text-accent-11"
           onClick={() => setOpen(true)}
         >
           {connected ? t('Edit') : t('Enable')}
@@ -308,7 +309,7 @@ const DomainStep = ({
               {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
               type="button"
               variant="ghost"
-              className="text-danger-11"
+              className="text-danger-11 font-medium"
               loading={disableAction.isDisabling}
               onClick={disableAction.onDisable}
             >
@@ -481,7 +482,7 @@ Activepieces
                 {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
                 type="button"
                 variant="ghost"
-                className="text-danger-11 mr-auto"
+                className="text-danger-11 font-medium mr-auto"
                 loading={disableAction.isDisabling}
                 onClick={disableAction.onDisable}
               >

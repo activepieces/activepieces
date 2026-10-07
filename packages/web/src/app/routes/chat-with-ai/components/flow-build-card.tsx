@@ -92,7 +92,7 @@ export function FlowBuildCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1.5 border border-gray-6 bg-gray-2 text-xs text-gray-12 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
+                className="gap-1.5 border border-gray-6 bg-gray-2 text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
                 onClick={() =>
                   onSendPrompt?.(
                     t('Publish and enable the automation so it runs live'),
@@ -127,7 +127,7 @@ function OpenInBuilderButton({
     <Button
       size="sm"
       variant="ghost"
-      className="gap-1.5 text-xs text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
+      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
       onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
     >
       <ExternalLink className="h-3.5 w-3.5" />

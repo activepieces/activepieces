@@ -56,7 +56,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleCopy}
-            className="p-0 "
+            className="p-0 text-accent-11 hover:bg-transparent"
           >
             {copied ? (
               <Check className="w-4 h-4 text-success-11" />

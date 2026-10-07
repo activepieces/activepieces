@@ -17,6 +17,7 @@ const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
         <Button
           variant="link"
           size="sm"
+          className="font-medium"
           onClick={props.onAnd}
           disabled={props.readonly}
         >
@@ -28,6 +29,7 @@ const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
         <Button
           variant="link"
           size="sm"
+          className="font-medium"
           onClick={props.onOr}
           disabled={props.readonly}
         >
