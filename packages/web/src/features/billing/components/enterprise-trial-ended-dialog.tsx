@@ -16,6 +16,7 @@ import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { EnterpriseTrialSeatDialog } from './enterprise-trial-seat-dialog';
 
 export function EnterpriseTrialEndedDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -31,36 +32,39 @@ export function EnterpriseTrialEndedDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && close()}>
-      <DialogContent className="max-w-md">
-        <div className="flex flex-col gap-4">
-          <span className="grid size-10 place-items-center rounded-lg bg-gray-3">
-            <CalendarX className="size-5 text-gray-11" />
-          </span>
-          <div className="flex flex-col gap-1">
-            <DialogTitle className="text-xl">
-              {t('Your Enterprise trial has ended')}
-            </DialogTitle>
-            <DialogDescription>
-              {t(
-                'Enterprise features are now switched off. Need more time? Talk to our team to get 14 more days, or upgrade to keep everything unlocked.',
-              )}
-            </DialogDescription>
+    <>
+      <Dialog open={open} onOpenChange={(next) => !next && close()}>
+        <DialogContent className="max-w-md">
+          <div className="flex flex-col gap-4">
+            <span className="grid size-10 place-items-center rounded-lg bg-gray-3">
+              <CalendarX className="size-5 text-gray-11" />
+            </span>
+            <div className="flex flex-col gap-1">
+              <DialogTitle className="text-xl">
+                {t('Your Enterprise trial has ended')}
+              </DialogTitle>
+              <DialogDescription>
+                {t(
+                  'Enterprise features are now switched off. Need more time? Talk to our team to get 14 more days, or upgrade to keep everything unlocked.',
+                )}
+              </DialogDescription>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  close();
+                  openManagePlanDialog();
+                }}
+              >
+                {t('Upgrade')}
+              </Button>
+              <EnterpriseTrialSalesLink surface="enterprise_trial_ended" />
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={() => {
-                close();
-                openManagePlanDialog();
-              }}
-            >
-              {t('Upgrade')}
-            </Button>
-            <EnterpriseTrialSalesLink surface="enterprise_trial_ended" />
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      {seen && <EnterpriseTrialSeatDialog />}
+    </>
   );
 }
 
