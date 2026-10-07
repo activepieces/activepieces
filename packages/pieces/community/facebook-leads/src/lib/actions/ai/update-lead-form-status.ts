@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { facebookLeadsAuth } from '../../auth';
 import { facebookLeadsAiProps } from '../../common/ai-props';
 import { facebookLeadsApi } from '../../common/api';
+import { facebookLeadsUpdateLeadFormStatusOutputSchema } from '../../output-schemas';
 
 import type { FacebookLeadsFormStatus } from '../../common/types';
 
 export const updateLeadFormStatusAction = createAction({
 	auth: facebookLeadsAuth,
 	name: 'facebook_leads_update_lead_form_status',
+	outputSchema: facebookLeadsUpdateLeadFormStatusOutputSchema,
 	displayName: 'Update Lead Form Status',
 	description: 'Archives or reactivates a lead form.',
 	audience: 'ai',

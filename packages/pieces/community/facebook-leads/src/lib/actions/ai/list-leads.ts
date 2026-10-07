@@ -4,6 +4,7 @@ import { facebookLeadsAuth } from '../../auth';
 import { facebookLeadsAiProps } from '../../common/ai-props';
 import { facebookLeadsApi } from '../../common/api';
 import { facebookLeadsUtils } from '../../common/utils';
+import { facebookLeadsListLeadsOutputSchema } from '../../output-schemas';
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
@@ -11,6 +12,7 @@ const MAX_LIMIT = 100;
 export const listLeadsAction = createAction({
 	auth: facebookLeadsAuth,
 	name: 'facebook_leads_list_leads',
+	outputSchema: facebookLeadsListLeadsOutputSchema,
 	displayName: 'List Leads',
 	description: 'Lists the leads submitted to a lead form.',
 	audience: 'ai',
@@ -88,4 +90,3 @@ function toUnixSeconds({ value }: { value: string }): number {
 	}
 	return Math.floor(time / 1000);
 }
-

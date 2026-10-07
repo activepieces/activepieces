@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { facebookLeadsAuth } from '../../auth';
 import { facebookLeadsApi } from '../../common/api';
+import { facebookLeadsListPagesOutputSchema } from '../../output-schemas';
 
 export const listPagesAction = createAction({
 	auth: facebookLeadsAuth,
 	name: 'facebook_leads_list_pages',
+	outputSchema: facebookLeadsListPagesOutputSchema,
 	displayName: 'List Pages',
 	description: 'Lists the Facebook Pages the connected user manages.',
 	audience: 'ai',

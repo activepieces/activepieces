@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { facebookLeadsAuth } from '../../auth';
 import { facebookLeadsAiProps } from '../../common/ai-props';
 import { facebookLeadsApi } from '../../common/api';
+import { facebookLeadsListLeadFormsOutputSchema } from '../../output-schemas';
 
 export const listLeadFormsAction = createAction({
 	auth: facebookLeadsAuth,
 	name: 'facebook_leads_list_lead_forms',
+	outputSchema: facebookLeadsListLeadFormsOutputSchema,
 	displayName: 'List Lead Forms',
 	description: 'Lists the lead forms of a Facebook Page.',
 	audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { facebookLeadsAuth } from '../../auth';
 import { facebookLeadsAiProps } from '../../common/ai-props';
 import { facebookLeadsApi } from '../../common/api';
+import { facebookLeadsCreateLeadFormOutputSchema } from '../../output-schemas';
 
 export const createLeadFormAction = createAction({
 	auth: facebookLeadsAuth,
 	name: 'facebook_leads_create_lead_form',
+	outputSchema: facebookLeadsCreateLeadFormOutputSchema,
 	displayName: 'Create Lead Form',
 	description: 'Creates a lead form on a Facebook Page.',
 	audience: 'ai',
@@ -41,8 +43,9 @@ export const createLeadFormAction = createAction({
 		}),
 		followUpActionUrl: Property.ShortText({
 			displayName: 'Follow-up URL',
-			description: 'Website the "thank you" screen links to after submission.',
-			required: false,
+			description:
+				'Website the "thank you" screen links to after submission. Required by Facebook.',
+			required: true,
 		}),
 		locale: Property.ShortText({
 			displayName: 'Locale',
@@ -77,7 +80,7 @@ export const createLeadFormAction = createAction({
 					url: privacyPolicyUrl,
 					link_text: privacyPolicyLinkText ?? 'Privacy Policy',
 				},
-				...(followUpActionUrl ? { follow_up_action_url: followUpActionUrl } : {}),
+				follow_up_action_url: followUpActionUrl,
 				...(locale ? { locale } : {}),
 			},
 		});

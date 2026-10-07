@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { facebookLeadsAuth } from '../../auth';
 import { facebookLeadsApi } from '../../common/api';
+import { facebookLeadsGetCurrentUserOutputSchema } from '../../output-schemas';
 
 export const getCurrentUserAction = createAction({
 	auth: facebookLeadsAuth,
 	name: 'facebook_leads_get_current_user',
+	outputSchema: facebookLeadsGetCurrentUserOutputSchema,
 	displayName: 'Get Current User',
 	description: 'Gets the Facebook user the connection belongs to.',
 	audience: 'ai',

@@ -4,12 +4,14 @@ import { facebookLeadsAuth } from '../auth';
 import { facebookLeadsApi } from '../common/api';
 import { facebookLeadsProps } from '../common/props';
 import { facebookLeadsUtils } from '../common/utils';
+import { facebookLeadsGetLeadOutputSchema } from '../output-schemas';
 
 import type { FacebookLeadsWebhookPayload } from '../common/types';
 
 export const newLeadTrigger = createTrigger({
 	auth: facebookLeadsAuth,
 	name: 'new_lead',
+	outputSchema: facebookLeadsGetLeadOutputSchema,
 	classification: 'READ',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',

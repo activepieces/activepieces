@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { facebookLeadsAuth } from '../../auth';
 import { facebookLeadsApi } from '../../common/api';
 import { facebookLeadsUtils } from '../../common/utils';
+import { facebookLeadsGetLeadOutputSchema } from '../../output-schemas';
 
 export const getLeadAction = createAction({
 	auth: facebookLeadsAuth,
 	name: 'facebook_leads_get_lead',
+	outputSchema: facebookLeadsGetLeadOutputSchema,
 	displayName: 'Get Lead',
 	description: 'Gets one lead by ID.',
 	audience: 'ai',
