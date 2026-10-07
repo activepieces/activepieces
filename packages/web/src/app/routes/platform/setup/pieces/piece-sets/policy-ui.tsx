@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { ReactNode, useState } from 'react';
 
+import { adminLayout } from '@/app/components/admin';
 import { LeaveWithoutSavingDialog } from '@/components/custom/leave-without-saving';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +40,7 @@ export function PolicyConfirmDialog({
 }: PolicyConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className={adminLayout.dialog.sm}>
         {open && (
           <PolicyConfirmBody
             title={title}
@@ -69,7 +70,9 @@ export function PolicySheet({
 }: PolicySheetProps) {
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onRequestClose()}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+      <SheetContent
+        className={cn(adminLayout.sheet.md, 'flex flex-col gap-0 p-0')}
+      >
         <SheetHeader className="border-b p-5 pr-12">
           <SheetTitle>{title}</SheetTitle>
           {description && <SheetDescription>{description}</SheetDescription>}

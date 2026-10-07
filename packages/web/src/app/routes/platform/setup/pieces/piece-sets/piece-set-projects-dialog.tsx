@@ -2,6 +2,7 @@ import { isNil, PieceSet, ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
+import { adminLayout } from '@/app/components/admin';
 import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
@@ -235,7 +236,7 @@ export const PieceSetProjectsDialog = ({
     usePieceSetProjects(pieceSet);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         {isError ? (
           <>
             <DialogHeader>
