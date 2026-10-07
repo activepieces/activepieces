@@ -73,7 +73,7 @@ function publishedTierModelId({ tierId, surface, log }: { tierId: string, surfac
 
 function resolveNamedModelId({ provider, modelName, surface, modelScope, modelIds, log }: { provider: AIProviderName, modelName: string, surface: ModelTierSurface, modelScope?: AiProviderModelScope, modelIds?: string[], log: FastifyBaseLogger }): string {
     if (provider !== AIProviderName.ACTIVEPIECES) {
-        if (modelScope === 'selected' && !isNil(modelIds) && isNil(findTier({ tierId: modelName, surface })) && !modelIds.includes(modelName)) {
+        if (modelScope === 'selected' && !isNil(modelIds) && !modelIds.includes(modelName)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },

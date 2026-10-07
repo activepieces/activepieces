@@ -152,6 +152,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const manualModelIds = manualModelIdsOf({ config: request.config })
         const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(manualModelIds)
         await transaction(async (manager) => {
+            await platformModelTierService.lockPlatform({ manager, platformId })
             await assertCapabilitiesKeepAllProjects({ manager, platformId, providerId, projectScope: request.projectScope })
             if (changesModelScope) {
                 await platformModelTierService.assertKeyScopeKeepsTiers({
@@ -291,7 +292,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
     async assertModelAllowed({ platformId, provider, scope, configId, modelId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string, modelId: string }): Promise<void> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
-        if (aiProvider.modelScope === 'selected' && !aiProvider.modelIds.includes(modelId)) {
+        this.assertKeyAllowsModel({ key: aiProvider, modelId })
+    },
+    assertKeyAllowsModel({ key, modelId }: { key: Pick<AIProviderSchema, 'modelScope' | 'modelIds'>, modelId: string }): void {
+        if (key.modelScope === 'selected' && !key.modelIds.includes(modelId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: `The model "${modelId}" isn't allowed for this AI provider key anymore. Pick another model for this step.` },

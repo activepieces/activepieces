@@ -178,6 +178,10 @@ export const platformModelTierService = {
         }))
     },
 
+    async lockPlatform({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
+        await lockPlatform({ manager, platformId })
+    },
+
     async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds, manualModelIds }: AssertKeyScopeParams): Promise<void> {
         await lockPlatform({ manager, platformId })
         const key = await aiProviderRepo(manager).findOneBy({ platformId, id: configId })

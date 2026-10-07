@@ -3,6 +3,7 @@ import { AIProviderModelType, DefaultProjectRole, PrincipalType, ProviderModelCo
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
+import { aiRpcHandlers } from '../../../../src/app/ai/ai-rpc-handlers'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockProject, mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -975,6 +976,15 @@ describe('key scope hardening', () => {
 
         expect(platformPick.configId).toBe(open.id)
         expect(projectPick.configId).toBe(limited.id)
+    })
+
+    it('refuses at run time a model the key stopped allowing after the step was queued', async () => {
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, modelScope: 'selected', modelIds: ['gpt-4o'] })
+        const resolve = (modelId?: string) => aiRpcHandlers(app!.log).resolveAiProvider({ projectId: ctx.project.id, platformId: ctx.platform.id, provider: AIProviderName.OPENAI, providerConfigId: key.id, ...(modelId ? { modelId } : {}) })
+
+        await expect(resolve('gpt-4o-mini')).rejects.toMatchObject({ error: { code: 'VALIDATION' } })
+        expect((await resolve('gpt-4o')).providerConfigId).toBe(key.id)
+        expect((await resolve()).providerConfigId).toBe(key.id)
     })
 
     it('refuses to limit the projects of a key a capability uses for every project', async () => {
