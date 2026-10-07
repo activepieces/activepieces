@@ -70,6 +70,19 @@ describe('new_blog_post', () => {
     expect((await newBlogPost.run(ctx)).map((post) => Reflect.get(Object(post), 'id'))).toEqual(['fresh']);
   });
 
+  test('enable accepts exactly 5,000 posts at the newest timestamp and refuses more', async () => {
+    const tied = (count: number) => Array.from({ length: count }, (_, i) => ({ id: `same${i}`, created: '2026-10-07T10:00:00+00:00' }));
+    let objects: Record<string, unknown>[] = [...tied(5000), { id: 'older', created: '2026-10-07T09:00:00+00:00' }];
+    site(() => objects);
+    const ctx = context({ collection: 'blog', include_drafts: true });
+    await newBlogPost.onEnable(ctx);
+    expect(await newBlogPost.run(ctx)).toEqual([]);
+    objects = tied(5000);
+    await expect(newBlogPost.onEnable(context({ collection: 'blog', include_drafts: true }))).resolves.toBeUndefined();
+    objects = tied(5001);
+    await expect(newBlogPost.onEnable(context({ collection: 'blog', include_drafts: true }))).rejects.toThrow('More than 5000 objects');
+  });
+
   test('a collection without a created field fails clearly', async () => {
     stubFetch((request) => (request.path.endsWith('/schema') ? { body: { data: { properties: { text: {} }, index: ['id', 'text'] } } } : { body: { data: [] } }));
     await expect(newBlogPost.onEnable(context({ collection: 'text' }))).rejects.toThrow('does not record a "created" date');

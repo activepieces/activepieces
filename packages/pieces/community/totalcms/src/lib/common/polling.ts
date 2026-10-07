@@ -101,6 +101,18 @@ async function collectNewestGroup({
       return collected;
     }
   }
+  const next = await totalcmsApi.queryObjects({
+    auth,
+    collection,
+    limit: 1,
+    offset: MAX_START_PAGES * PAGE_SIZE,
+    sort: `-${field}`,
+  });
+  const newestTs = collected.map((item) => timestampOf({ item, field })).find((ts) => !Number.isNaN(ts));
+  const groupContinues = next.objects.some((item) => timestampOf({ item, field }) === newestTs);
+  if (!groupContinues) {
+    return collected;
+  }
   throw new Error(
     `More than ${MAX_START_PAGES * PAGE_SIZE} objects in collection "${collection}" share the newest "${field}" date, so Activepieces cannot tell which ones already exist. Try again after newer objects are added.`,
   );
