@@ -1,5 +1,5 @@
 import { AgentPromptOverride, AgentRunSource } from '@activepieces/core-execution'
-import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
 import { MAX_AGENT_TEXT_LENGTH } from './agent'
@@ -205,6 +205,7 @@ export const AgentConversation = z.object({
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
+    modelTierId: Nullable(ApId),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
@@ -223,6 +224,7 @@ export type AgentRunListItem = z.infer<typeof AgentRunListItem>
 export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    modelTierId: z.optional(Nullable(ApId)),
     agentId: z.optional(z.string()),
     builder: z.optional(z.boolean()),
     projectId: z.optional(z.string()),
@@ -232,6 +234,7 @@ export type CreateAgentConversationRequest = z.infer<typeof CreateAgentConversat
 export const UpdateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    modelTierId: z.optional(Nullable(ApId)),
 })
 export type UpdateAgentConversationRequest = z.infer<typeof UpdateAgentConversationRequest>
 
