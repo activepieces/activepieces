@@ -118,6 +118,25 @@ describe('repairing a call in skills mode', () => {
 
         expect(search).toHaveBeenCalledWith({ query: 'more' }, expect.objectContaining({ toolCallId: 'direct-1' }))
     })
+
+    it('reminds the model to use ap_lazy_tool after rerouting a call it made by name', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'direct-1', toolName: 'ap_web_search', input: '{"query":"more"}' }] })
+
+        await runSkillsTurn({ model, search })
+
+        expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).toContain('next time call ap_lazy_tool with tool: \\"ap_web_search\\"')
+    })
+
+    it('adds no reminder when the model already called ap_lazy_tool', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = scriptedModel({ toolCalls: [{ id: 'lazy-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":"more"}}' }] })
+
+        await runSkillsTurn({ model, search })
+
+        expect(search).toHaveBeenCalledWith({ query: 'more' }, expect.objectContaining({ toolCallId: 'lazy-1' }))
+        expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).not.toContain('next time call ap_lazy_tool')
+    })
 })
 
 describe('the build phase in skills mode', () => {

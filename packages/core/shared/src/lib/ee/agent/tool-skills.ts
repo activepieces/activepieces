@@ -50,7 +50,7 @@ function renderToolCatalog({ tools }: { tools: { name: string, description?: str
 function renderSkillsNote({ surface }: { surface: SkillSurface }): string {
     const lines = [
         `\n\n${SKILLS_NOTE_HEADING}`,
-        `Only a few tools are attached to you directly. Every other tool named in these instructions or listed below is real and reachable: run it with \`${LAZY_TOOL_NAME}\` by passing its name as \`tool\` and its arguments as \`input\`, exactly as you would call it directly.`,
+        `Only a few tools are attached to you directly. Every other tool named in these instructions or listed below is real and reachable, but calling it by its own name fails: call \`${LAZY_TOOL_NAME}\` with its name as \`tool\` and its arguments as \`input\`, e.g. \`${LAZY_TOOL_NAME}({ "tool": "ap_validate_flow", "input": { "flowId": "..." } })\`.`,
         `Never guess a tool's arguments. Load the skill that covers the work with \`${LOAD_SKILL_NAME}\`, which returns the playbook and the input schema of every tool in it, or fetch one tool's schema with \`${GET_TOOL_SCHEMA_NAME}\`. A loaded skill stays in the conversation, so do not load it again.`,
         'If a call is rejected for its input, fix it from the schema in the error and retry once.',
     ]
