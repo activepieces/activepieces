@@ -10,12 +10,12 @@ export const linearRemovedIssue = createTrigger({
   name: 'removed_issue',
   classification: 'READ',
   displayName: 'Removed Issue',
-  description: 'Triggers when an existing Linear issue is removed',
+  description: 'Triggers when an issue in the selected team is deleted.',
   aiMetadata: {
     description: 'Fires when an existing issue is deleted from the selected Linear team. Represents the issue as it was at the time of removal.',
   },
   props: {
-    team_id: props.team_id()
+    team_id: props.team_id(true, 'The team to watch, public or private.')
   },
   sampleData: linearWebhookSamples.removedIssueSample,
   outputSchema: issueWebhookOutputSchema,

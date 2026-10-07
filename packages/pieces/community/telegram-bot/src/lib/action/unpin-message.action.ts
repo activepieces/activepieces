@@ -9,17 +9,15 @@ export const telegramUnpinMessageAction = createAction({
   name: 'unpin_message',
   classification: 'WRITE',
   displayName: 'Unpin Message',
-  description:
-    'Unpin a message in a chat. Leave Message Id empty to unpin the most recent pinned message.',
+  description: 'Unpin one message, or the most recent pinned message.',
   audience: 'human',
   aiMetadata: { description: 'Unpins a message in a chat; supply message_id to unpin a specific message, or leave it empty to unpin the most recent pinned message. The bot must be an administrator with pin rights. Idempotent: a message that is already unpinned stays unpinned.', idempotent: true },
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
     message_id: Property.Number({
-      displayName: 'Message Id',
-      description:
-        'Identifier of the pinned message to unpin. Leave empty to unpin the most recent pinned message.',
+      displayName: 'Message ID',
+      description: 'Empty unpins the most recent pinned message.',
       required: false,
     }),
   },

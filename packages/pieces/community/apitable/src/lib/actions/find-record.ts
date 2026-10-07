@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -13,7 +12,7 @@ export const findRecordAction = createAction({
   name: 'apitable_find_record',
   classification: 'SEARCH',
   displayName: 'Find Records',
-  description: 'Finds records in datasheet.',
+  description: 'Finds records in a datasheet.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -23,37 +22,43 @@ export const findRecordAction = createAction({
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,
+    filter: Property.LongText({
+      displayName: 'Filter Formula',
+      description: 'Only records where this formula is true are returned.',
+      placeholder: '{Status} = "Done"',
+      required: false,
+    }),
     recordIds: Property.Array({
       displayName: 'Record IDs',
-      description: 'The IDs of the records to find.',
+      description: 'Only return these records. Empty: search all.',
       required: false,
     }),
     fieldNames: Property.Array({
-      displayName: 'Field Names',
-      description:
-        'The returned record results are limited to the specified fields',
-      required: false,
-    }),
-    maxRecords: Property.Number({
-      displayName: 'Max Records',
-      description: 'How many records are returned in total',
+      displayName: 'Fields to Return',
+      description: 'Field names to include. Empty: every field.',
       required: false,
     }),
     pageSize: Property.Number({
       displayName: 'Page Size',
-      description: 'How many records are returned per page (max 1000)',
+      description: 'Records returned per page.',
       required: false,
+      defaultValue: 100,
+      display: 'stepper',
+      min: 1,
+      max: 1000,
+      step: 1,
+    }),
+    maxRecords: Property.Number({
+      displayName: 'Max Records',
+      description: 'Caps matching records before paging. Empty: no cap.',
+      required: false,
+      advanced: true,
     }),
     pageNum: Property.Number({
       displayName: 'Page Number',
-      description: 'Specifies the page number of the page',
+      description: 'Which page to return, starting at 1.',
       required: false,
-    }),
-    filter: Property.LongText({
-      displayName: 'Filter',
-      description:
-        'The filter to apply to the records (see https://help.aitable.ai/docs/guide/manual-formula-field-overview/)',
-      required: false,
+      advanced: true,
     }),
   },
   outputSchema: findRecordActionOutputSchema,

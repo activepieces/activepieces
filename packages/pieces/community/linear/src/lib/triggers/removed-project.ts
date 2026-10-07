@@ -9,7 +9,7 @@ export const linearRemovedProject = createTrigger({
   name: 'removed_project',
   classification: 'READ',
   displayName: 'Removed Project',
-  description: 'Triggers when an existing Linear project is removed. Only projects in public teams are covered.',
+  description: 'Triggers when a project in a public team is deleted.',
   aiMetadata: {
     description: 'Fires when an existing project is deleted anywhere in the Linear workspace. Represents the project as it was at the time of removal. Only public teams are covered: events in private teams do not fire it.',
   },

@@ -11,19 +11,19 @@ export const linearCreateProjectStatusUpdate = createAction({
   name: 'linear_create_project_status_update',
   classification: 'WRITE',
   displayName: 'Post Project Status Update',
-  description: 'Post a status update (with health) on a project, like the weekly update in the project page',
-  audience: 'both',
+  description: 'Post a status update, with an optional health rating, on a project.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Posts a status update on a Linear project: a markdown body plus an optional health of on track, at risk or off track, shown in the project Updates tab. This does not change the project itself; use Update Project to edit its name, dates or status. Not idempotent: each call posts a new update.',
     idempotent: false,
   },
   props: {
-    team_id: props.team_id(),
-    project_id: props.project_id(),
+    team_id: props.team_id(true, 'Needed to load the project list below.'),
+    project_id: { ...props.project_id(), description: 'The project to post the update on.' },
     body: Property.LongText({
       displayName: 'Update',
-      description: 'The update text. Markdown is supported.',
+      description: 'Markdown is supported.',
       required: true,
     }),
     health: props.project_health(false),

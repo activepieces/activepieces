@@ -1,6 +1,7 @@
 import chalk from 'chalk'
 import { Command } from 'commander'
 import { agentEvalRunner } from '../core/runner'
+import { evalExportCalibration } from './export-calibration'
 import { evalReview } from './review'
 import { evalRun } from './run'
 import { evalStore, RunResult } from './store'
@@ -40,6 +41,14 @@ program
         }
         const run = cached ?? await runFresh({ candidatePath: options.candidate })
         await reviewLoop({ run, candidatePath: options.candidate })
+    })
+
+program
+    .command('export-calibration <resultsJson>')
+    .description('Write unlabelled judge-calibration cases from a results JSON (e.g. a run downloaded from the CDN)')
+    .action((resultsJson: string) => {
+        const { written, skipped } = evalExportCalibration.exportCases({ resultsPath: resultsJson })
+        console.log(`  wrote ${written} case(s), skipped ${skipped} already present — set "humanLabel" to "pass" or "fail" in each`)
     })
 
 program.parseAsync(process.argv).catch((error) => {

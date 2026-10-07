@@ -3,26 +3,17 @@ import { makeClient } from './common';
 
 export const APITableAuth = PieceAuth.CustomAuth({
   required: true,
-  description: `
-    To obtain your AITable token, follow these steps:
-
-    1. Log in to your AITable account.
-    2. Visit https://apitable.com/workbench
-    3. Click on your profile picture (Bottom left).
-    4. Click on "My Settings".
-    5. Click on "Developer".
-    6. Click on "Generate new token".
-    7. Copy the token.
-    `,
+  description:
+    'To get your API token:\n1. Sign in to AITable.\n2. Click your avatar at the bottom left, then **My Settings**.\n3. Open **Developer** and click **Generate new token**.\n4. Copy the token and paste it below.',
   props: {
     token: PieceAuth.SecretText({
-      displayName: 'Token',
-      description: 'The token of the AITable account',
+      displayName: 'API Token',
+      description: 'Generate it in AITable under My Settings → Developer.',
       required: true,
     }),
     apiTableUrl: Property.ShortText({
-      displayName: 'Instance Url',
-      description: 'The url of the AITable instance.',
+      displayName: 'Instance URL',
+      description: 'Keep the default unless you self-host AITable.',
       required: true,
       defaultValue: 'https://aitable.ai',
     }),
