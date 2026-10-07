@@ -1,5 +1,6 @@
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 import { t } from 'i18next';
 import { AlertTriangle } from 'lucide-react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
@@ -106,7 +107,8 @@ const TestTriggerWebhookDialog = ({
     isSuccess: noSampleReceived,
   } = useMutation<unknown, Error, z.infer<typeof WebhookRequest>>({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
-      await api.any(`${webhookPrefixUrl}/${flowId}/test`, {
+      await axios({
+        url: `${webhookPrefixUrl}/${flowId}/test`,
         method: data.method,
         data: data.body,
         headers: data.headers,

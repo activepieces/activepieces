@@ -187,9 +187,6 @@ export const ProjectDashboardPageHeader = ({
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         initialTab={settingsInitialTab}
-        initialValues={{
-          projectName: project?.displayName,
-        }}
       />
     </>
   );
