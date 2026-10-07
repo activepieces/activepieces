@@ -149,17 +149,34 @@ const gatewayConfig: AIProviderWithoutSensitiveData = {
   statusUpdated: null,
 };
 
+const OTHER_TEXT_MODEL = {
+  modelId: 'anthropic/claude-sonnet-4',
+  modelName: 'Claude Sonnet 4',
+  modelType: AIProviderModelType.TEXT,
+};
+
+const narrowedConfig: AIProviderWithoutSensitiveData = {
+  ...gatewayConfig,
+  config: {
+    accountId: '1c441b119970086c90b78ad3be4a478f',
+    gatewayId: 'my-gateway',
+    models: [TEXT_MODEL, OTHER_TEXT_MODEL],
+  },
+  modelScope: 'selected',
+  modelIds: [TEXT_MODEL.modelId],
+};
+
 describe('ConfigDetail save (manual models)', () => {
   let container: HTMLDivElement;
   let root: Root;
   let onSave: ReturnType<typeof vi.fn>;
 
-  const render = () => {
+  const render = (config: AIProviderWithoutSensitiveData = gatewayConfig) => {
     onSave = vi.fn().mockResolvedValue(undefined);
     act(() => {
       root.render(
         <ConfigDetail
-          config={gatewayConfig}
+          config={config}
           info={{
             provider: AIProviderName.CLOUDFLARE_GATEWAY,
             name: 'Cloudflare AI Gateway',
@@ -189,33 +206,61 @@ describe('ConfigDetail save (manual models)', () => {
     });
   };
 
-  const flipTypeBadge = (modelId: string) => {
+  const clickChipButton = ({
+    modelId,
+    selector,
+  }: {
+    modelId: string;
+    selector: string;
+  }) => {
     const chip = Array.from(container.querySelectorAll('span')).find(
       (candidate) => candidate.textContent?.startsWith(modelId),
     );
-    const badge = chip?.querySelector<HTMLButtonElement>(
-      'button[title="Model Type"]',
-    );
-    expect(badge).toBeDefined();
+    const button = chip?.querySelector<HTMLButtonElement>(selector);
+    expect(button).toBeTruthy();
     act(() => {
-      badge?.click();
+      button?.click();
     });
   };
 
-  const typeModelId = (modelId: string) => {
-    const input = Array.from(container.querySelectorAll('input')).find(
-      (candidate) => candidate.placeholder === 'e.g. openai/gpt-4o',
-    );
+  const flipTypeBadge = (modelId: string) =>
+    clickChipButton({ modelId, selector: 'button[title="Model Type"]' });
+
+  const removeModel = (modelId: string) =>
+    clickChipButton({ modelId, selector: 'button:not([title])' });
+
+  const setInputValue = ({
+    matches,
+    value,
+  }: {
+    matches: (input: HTMLInputElement) => boolean;
+    value: string;
+  }) => {
+    const input = Array.from(container.querySelectorAll('input')).find(matches);
     expect(input).toBeDefined();
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(
         window.HTMLInputElement.prototype,
         'value',
       )?.set;
-      setter?.call(input, modelId);
+      setter?.call(input, value);
       input?.dispatchEvent(new Event('input', { bubbles: true }));
     });
   };
+
+  const typeModelId = (modelId: string) =>
+    setInputValue({
+      matches: (input) => input.placeholder === 'e.g. openai/gpt-4o',
+      value: modelId,
+    });
+
+  const renameTo = ({ from, to }: { from: string; to: string }) =>
+    setInputValue({ matches: (input) => input.value === from, value: to });
+
+  const hasSaveBar = () =>
+    Array.from(container.querySelectorAll('button')).some(
+      (candidate) => candidate.textContent?.trim() === 'Save',
+    );
 
   const savedRequest = (): UpdateAIProviderRequest => {
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -273,5 +318,156 @@ describe('ConfigDetail save (manual models)', () => {
       ],
     });
     expect(request.modelIds).toEqual([TEXT_MODEL.modelId, IMAGE_MODEL_ID]);
+  });
+
+  it('keeps a narrowed allow-list when an unrelated field is saved', () => {
+    render(narrowedConfig);
+    renameTo({ from: narrowedConfig.name, to: 'Renamed gateway key' });
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.displayName).toBe('Renamed gateway key');
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('drops a removed model from a narrowed allow-list', () => {
+    render(narrowedConfig);
+    removeModel(TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([]);
+  });
+
+  it('allows a model added to a narrowed allow-list', () => {
+    render(narrowedConfig);
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId, IMAGE_MODEL_ID]);
+  });
+
+  it('keeps a removed and re-added model allowed', () => {
+    render(narrowedConfig);
+    removeModel(TEXT_MODEL.modelId);
+    typeModelId(TEXT_MODEL.modelId);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('keeps a removed and re-added disallowed model disallowed', () => {
+    render(narrowedConfig);
+    removeModel(OTHER_TEXT_MODEL.modelId);
+    typeModelId(OTHER_TEXT_MODEL.modelId);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('clears unsaved changes once the saved key comes back', () => {
+    render(narrowedConfig);
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    render({
+      ...narrowedConfig,
+      config: {
+        accountId: '1c441b119970086c90b78ad3be4a478f',
+        gatewayId: 'my-gateway',
+        models: [
+          TEXT_MODEL,
+          OTHER_TEXT_MODEL,
+          {
+            modelId: IMAGE_MODEL_ID,
+            modelName: IMAGE_MODEL_ID,
+            modelType: AIProviderModelType.TEXT,
+          },
+        ],
+      },
+      modelIds: request.modelIds ?? [],
+    });
+
+    expect(hasSaveBar()).toBe(false);
+  });
+
+  it('mirrors the remaining catalog when a model is removed from an all-models key', () => {
+    render({ ...narrowedConfig, modelScope: 'all' });
+    removeModel(TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('all');
+    expect(request.modelIds).toEqual([OTHER_TEXT_MODEL.modelId]);
+  });
+
+  it('keeps a disallowed model disallowed when its type changes', () => {
+    render(narrowedConfig);
+    flipTypeBadge(OTHER_TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  const legacyVertexConfig: AIProviderWithoutSensitiveData = {
+    ...narrowedConfig,
+    provider: AIProviderName.VERTEX,
+    config: {
+      project: 'domain.com:legacy-project',
+      region: 'us-central1',
+      models: [TEXT_MODEL, OTHER_TEXT_MODEL],
+    },
+  };
+
+  it('sends the saved allow-list unchanged when the saved config does not parse', () => {
+    render(legacyVertexConfig);
+    renameTo({ from: narrowedConfig.name, to: 'Renamed vertex key' });
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('drops a removed model when the saved config does not parse', () => {
+    render(legacyVertexConfig);
+    removeModel(TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([]);
+  });
+
+  it('does not allow a model missing from the stored catalog when the saved config does not parse', () => {
+    render({ ...legacyVertexConfig, modelScope: 'all' });
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('all');
+    expect(request.modelIds).toEqual([
+      TEXT_MODEL.modelId,
+      OTHER_TEXT_MODEL.modelId,
+    ]);
   });
 });
