@@ -1,9 +1,10 @@
 import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, aiProviderUtils, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { EntityManager, FindOptionsWhere } from 'typeorm'
+import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
@@ -14,6 +15,7 @@ import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { platformService } from '../platform/platform.service'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviderHealth } from './ai-provider-health'
+import { AiToolConfigEntity } from './ai-tool-config-entity'
 import { platformModelTierService } from './platform-model-tier-service'
 import { aiProviders } from './providers'
 
@@ -48,7 +50,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
         const rows = await listVisibleRows({ platformId, log })
         const eligible = rows.filter((row) => rowAllowsScope({ row, scope: { type: 'project', projectId } }))
-        const ranked = rankRows(eligible)
+        const ranked = rankRows({ rows: eligible, scope: { type: 'project', projectId } })
         const chatRow = pickChatRow(ranked)
         return unique(ranked.map((row) => row.provider)).map((provider) => {
             const rows = ranked.filter((row) => row.provider === provider)
@@ -147,8 +149,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         }
 
-        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds)
+        const manualModelIds = manualModelIdsOf({ config: request.config })
+        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(manualModelIds)
         await transaction(async (manager) => {
+            await assertCapabilitiesKeepAllProjects({ manager, platformId, providerId, projectScope: request.projectScope })
             if (changesModelScope) {
                 await platformModelTierService.assertKeyScopeKeepsTiers({
                     manager,
@@ -156,6 +160,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     configId: providerId,
                     modelScope: request.modelScope,
                     modelIds: request.modelIds,
+                    manualModelIds,
                 })
             }
             if (request.enabledForChat === true) {
@@ -284,6 +289,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
     },
+    async assertModelAllowed({ platformId, provider, scope, configId, modelId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string, modelId: string }): Promise<void> {
+        const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
+        if (aiProvider.modelScope === 'selected' && !aiProvider.modelIds.includes(modelId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `The model "${modelId}" isn't allowed for this AI provider key anymore. Pick another model for this step.` },
+            })
+        }
+    },
     async getConfigOrThrow({ platformId, provider, scope, configId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string }): Promise<GetProviderConfigResponse> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
         const auth = await decryptRowAuth({ aiProvider, platformId, log })
@@ -303,6 +317,20 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
     return plan.embeddingEnabled
+}
+
+const ManualModelsConfig = z.object({ models: z.array(z.object({ modelId: z.string() })) })
+
+const CAPABILITY_LABELS: Record<AiToolCapability, string> = {
+    [AiToolCapability.WEB_SEARCH]: 'web search',
+    [AiToolCapability.WEB_SCRAPING]: 'web scraping',
+    [AiToolCapability.IMAGE_GENERATION]: 'image generation',
+}
+
+const PLATFORM_SCOPE_PREFERENCE: Record<AiProviderProjectScope, number> = {
+    all: 0,
+    except: 1,
+    selected: 2,
 }
 
 const PROJECT_SCOPE_SPECIFICITY: Record<AiProviderProjectScope, number> = {
@@ -325,9 +353,10 @@ function rowAllowsScope({ row, scope }: { row: AIProviderSchema, scope: Provider
     }
 }
 
-function rankRows(rows: AIProviderSchema[]): AIProviderSchema[] {
+function rankRows({ rows, scope }: { rows: AIProviderSchema[], scope: ProviderScope }): AIProviderSchema[] {
+    const order = scope.type === 'platform' ? PLATFORM_SCOPE_PREFERENCE : PROJECT_SCOPE_SPECIFICITY
     return [...rows].sort((a, b) => {
-        const specificityDelta = PROJECT_SCOPE_SPECIFICITY[a.projectScope] - PROJECT_SCOPE_SPECIFICITY[b.projectScope]
+        const specificityDelta = order[a.projectScope] - order[b.projectScope]
         if (specificityDelta !== 0) {
             return specificityDelta
         }
@@ -404,10 +433,34 @@ async function findRunKeyCandidates({ platformId, provider, configId, scope, log
     ), [])
 }
 
+function manualModelIdsOf({ config }: { config: unknown }): string[] | undefined {
+    const parsed = ManualModelsConfig.safeParse(config)
+    return parsed.success ? parsed.data.models.map((model) => model.modelId) : undefined
+}
+
+async function assertCapabilitiesKeepAllProjects({ manager, platformId, providerId, projectScope }: { manager: EntityManager, platformId: PlatformId, providerId: string, projectScope: AiProviderProjectScope | undefined }): Promise<void> {
+    if (isNil(projectScope) || projectScope === 'all') {
+        return
+    }
+    const toolConfigs = await manager.getRepository(AiToolConfigEntity).findBy({ platformId, provider: AiToolProvider.AI_PROVIDER })
+    const capabilities = toolConfigs
+        .filter((toolConfig) => {
+            const choice = AiProviderToolConfig.safeParse(toolConfig.config)
+            return choice.success && choice.data.aiProviderId === providerId
+        })
+        .map((toolConfig) => CAPABILITY_LABELS[toolConfig.capability])
+    if (capabilities.length > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `This key powers ${capabilities.join(', ')} for every project. Pick another key there before limiting which projects can use it.` },
+        })
+    }
+}
+
 async function findEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema | null> {
     const rows = await aiProviderRepo().findBy({ platformId, provider })
     const eligible = rows.filter((row) => rowAllowsScope({ row, scope }))
-    return rankRows(eligible)[0] ?? null
+    return rankRows({ rows: eligible, scope })[0] ?? null
 }
 
 async function resolveEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema> {

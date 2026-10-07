@@ -264,6 +264,14 @@ describe('resolveNamedModelId', () => {
         return error instanceof ActivepiecesError ? error.error : undefined
     }
 
+    it('refuses an own-key model the key no longer allows, and leaves stored tier ids to resolve as before', () => {
+        expect(named({ provider: AIProviderName.OPENAI, modelName: 'gpt-4o', modelScope: 'selected', modelIds: ['gpt-4o'] })).toBe('gpt-4o')
+        const { error } = tryCatchSync(() => named({ provider: AIProviderName.OPENAI, modelName: 'gpt-4o-mini', modelScope: 'selected', modelIds: ['gpt-4o'] }))
+        expect(error instanceof ActivepiecesError ? error.error.code : undefined).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        expect(named({ provider: AIProviderName.OPENAI, modelName: 'smart', modelScope: 'selected', modelIds: ['gpt-4o'] })).toBe('smart')
+        expect(named({ provider: AIProviderName.OPENAI, modelName: 'gpt-4o-mini' })).toBe('gpt-4o-mini')
+    })
+
     it('lets a managed run name any model on the managed allow-list', () => {
         for (const modelId of aiProviderUtils.managedChatModelIds()) {
             expect(named({ provider: AIProviderName.ACTIVEPIECES, modelName: modelId }), modelId).toBe(modelId)
