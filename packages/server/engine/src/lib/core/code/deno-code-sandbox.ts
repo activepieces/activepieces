@@ -84,24 +84,34 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
         async createScriptSession({ scriptContext, functions }) {
             const context: Record<string, unknown> = { ...scriptContext }
             const bootstrapBody = Object.entries(functions).map(([key, value]) => `globalThis[${JSON.stringify(key)}] = ${value.toString()};`).join('\n')
-            let livePromise: Promise<LiveScriptSession> | null = null
+            let current: LiveScriptSession | null = null
+            let spawnInFlight: Promise<LiveScriptSession> | null = null
             let disposed = false
 
+            // Single-flight respawn: concurrent runs that find the child dead share one new
+            // spawn instead of each starting (and leaking) their own. The liveness check and
+            // the decision to spawn are synchronous, so no caller can clobber another's child.
             const ensureLive = (): Promise<LiveScriptSession> => {
-                if (livePromise === null) {
-                    const attempt = deno.createSession({
+                if (current !== null && current.session.isAlive()) {
+                    return Promise.resolve(current)
+                }
+                if (spawnInFlight === null) {
+                    current = null
+                    spawnInFlight = deno.createSession({
                         bootstrapBody,
                         permissions: [],
                         cwd: tmpdir(),
-                    }).then((session) => ({ session, sentGlobals: new Map<string, SentGlobal>() }))
-                    attempt.catch(() => {
-                        if (livePromise === attempt) {
-                            livePromise = null
-                        }
-                    }).catch(() => undefined)
-                    livePromise = attempt
+                    }).then((session) => {
+                        const live = { session, sentGlobals: new Map<string, SentGlobal>() }
+                        current = live
+                        spawnInFlight = null
+                        return live
+                    }).catch((error) => {
+                        spawnInFlight = null
+                        throw error
+                    })
                 }
-                return livePromise
+                return spawnInFlight
             }
 
             const syncGlobals = async ({ session, sentGlobals }: LiveScriptSession): Promise<void> => {
@@ -126,11 +136,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                     if (disposed) {
                         throw new Error('Script session has been disposed')
                     }
-                    let live = await ensureLive()
-                    if (!live.session.isAlive()) {
-                        livePromise = null
-                        live = await ensureLive()
-                    }
+                    const live = await ensureLive()
                     await syncGlobals(live)
                     return live.session.run({ script })
                 },
@@ -142,8 +148,10 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 },
                 dispose: () => {
                     disposed = true
-                    livePromise?.then(({ session }) => session.dispose()).catch(() => undefined)
-                    livePromise = null
+                    current?.session.dispose()
+                    spawnInFlight?.then(({ session }) => session.dispose()).catch(() => undefined)
+                    current = null
+                    spawnInFlight = null
                 },
             }
         },

@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // Resolve the deno binary shipped by the `deno` npm devDependency so the test
 // does not depend on a system-wide install / PATH.
@@ -358,6 +358,34 @@ describe('denoCodeSandbox permission boundary', () => {
                 await expectRejection(session.run('Deno.exit(1)'), /exited|not running/)
 
                 expect(await session.run('double(step_1.out + base)')).toBe(90)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('respawns exactly one child when concurrent runs hit a dead session', async () => {
+            const { deno } = await import('@activepieces/core-utils')
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: { base: 1 },
+                functions: {},
+            })
+            try {
+                await expectRejection(session.run('Deno.exit(1)'), /exited|not running|no progress/)
+                const spawnSpy = vi.spyOn(deno, 'createSession')
+                try {
+                    const results = await Promise.all([
+                        session.run('base + 1'),
+                        session.run('base + 2'),
+                        session.run('base + 3'),
+                        session.run('base + 4'),
+                    ])
+                    expect(results).toEqual([2, 3, 4, 5])
+                    expect(spawnSpy).toHaveBeenCalledTimes(1)
+                }
+                finally {
+                    spawnSpy.mockRestore()
+                }
             }
             finally {
                 session.dispose()
