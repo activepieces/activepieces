@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronRight, Crown } from 'lucide-react';
+import { ChevronRight, Gem } from 'lucide-react';
 import React, { ComponentType, ReactNode, useRef, useState } from 'react';
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 
@@ -48,7 +48,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const showSubItems = hasSubItems && isExpanded && !isCollapsed;
   const isSubItemLocked = (subItem: SidebarSubItemType) =>
     Boolean(item.locked) || Boolean(subItem.locked);
-  const isCrowned = hasSubItems
+  const isPremium = hasSubItems
     ? subItems.every(isSubItemLocked)
     : Boolean(item.locked);
   const isRowHighlighted = hasSubItems
@@ -95,11 +95,11 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   };
 
   const plainIcon = item.icon && renderIcon({ Icon: item.icon, ref: iconRef });
-  const icon = isCrowned ? <CrownGlyph className="size-4" /> : plainIcon;
+  const icon = isPremium ? <PremiumGlyph className="size-4" /> : plainIcon;
   const lockedLabel = `${item.label}, ${t('Requires a plan upgrade')}`;
-  const collapsedName = isCrowned ? lockedLabel : item.label;
+  const collapsedName = isPremium ? lockedLabel : item.label;
 
-  const collapsedTooltip = isCrowned
+  const collapsedTooltip = isPremium
     ? {
         children: (
           <span className="flex flex-col">
@@ -133,7 +133,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       )}
     >
       <span className="truncate">{item.label}</span>
-      {isCrowned && (
+      {isPremium && (
         <span className="sr-only">{t('Requires a plan upgrade')}</span>
       )}
     </span>
@@ -167,7 +167,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           closeMobileSheet();
           item.onClick?.();
           if (
-            isCrowned &&
+            isPremium &&
             !isRouteActive({ pathname, to: item.to, end: true })
           ) {
             captureLockedClick({ path: item.to, tier: parentTier });
@@ -188,7 +188,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
   return (
     <SidebarMenuItem>
-      {isCrowned ? (
+      {isPremium ? (
         <LockedTooltip tier={parentTier} disabled={isCollapsed}>
           {button}
         </LockedTooltip>
@@ -233,8 +233,8 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                     >
                       <span className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
                         <span className="truncate">{subItem.label}</span>
-                        {shut && !isCrowned && (
-                          <CrownMark className="size-3.5" />
+                        {shut && !isPremium && (
+                          <PremiumMark className="size-3.5" />
                         )}
                       </span>
                     </Link>
@@ -242,7 +242,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                 );
                 return (
                   <SidebarMenuSubItem key={subItem.to}>
-                    {shut && !isCrowned ? (
+                    {shut && !isPremium ? (
                       <LockedTooltip tier={subItem.tier ?? item.tier}>
                         {subButton}
                       </LockedTooltip>
@@ -280,16 +280,16 @@ function LockedTooltip({ tier, disabled, children }: LockedTooltipProps) {
   );
 }
 
-function CrownGlyph({ className }: { className: string }) {
+function PremiumGlyph({ className }: { className: string }) {
   return (
-    <Crown aria-hidden className={cn('shrink-0 text-accent-10', className)} />
+    <Gem aria-hidden className={cn('shrink-0 text-accent-11', className)} />
   );
 }
 
-function CrownMark({ className }: { className: string }) {
+function PremiumMark({ className }: { className: string }) {
   return (
     <>
-      <CrownGlyph className={className} />
+      <PremiumGlyph className={className} />
       <span className="sr-only">{t('Requires a plan upgrade')}</span>
     </>
   );
