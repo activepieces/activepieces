@@ -137,7 +137,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         if (system.getEdition() !== ApEdition.CLOUD) {
             return null
         }
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
+        const platforms = await platformService(log).listPlatformsForIdentity({ identityId })
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? platforms.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
         const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
@@ -197,7 +197,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         return { response, signedUp: created }
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
+        const platforms = await platformService(log).listPlatformsForIdentity({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(platform)
 

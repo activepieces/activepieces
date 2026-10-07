@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, spreadIfNotUndefined, unique, UserId } from '@activepieces/core-utils'
 import { ColorName, Project, ProjectIcon, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -180,6 +180,28 @@ export const projectService = (log: FastifyBaseLogger) => ({
 
         return queryBuilder.getExists()
     },
+    async listUserIdsWithProjects({ platformId, userIds }: ListUserIdsWithProjectsParams): Promise<string[]> {
+        if (userIds.length === 0) {
+            return []
+        }
+        const [owners, members] = await Promise.all([
+            projectRepo()
+                .createQueryBuilder('project')
+                .select('project."ownerId"', 'userId')
+                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project.type = :personalType', { personalType: ProjectType.PERSONAL })
+                .andWhere('project."ownerId" IN (:...userIds)', { userIds })
+                .getRawMany<{ userId: string }>(),
+            projectRepo()
+                .createQueryBuilder('project')
+                .innerJoin('project_member', 'project_member', 'project_member."projectId" = project.id')
+                .select('project_member."userId"', 'userId')
+                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project_member."userId" IN (:...userIds)', { userIds })
+                .getRawMany<{ userId: string }>(),
+        ])
+        return unique([...owners, ...members].map((row) => row.userId))
+    },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
             id: projectId,
@@ -331,6 +353,11 @@ type CreateParams = {
 type GetByPlatformIdAndExternalIdParams = {
     platformId: string
     externalId: string
+}
+
+type ListUserIdsWithProjectsParams = {
+    platformId: string
+    userIds: UserId[]
 }
 
 type AddProjectToPlatformParams = {

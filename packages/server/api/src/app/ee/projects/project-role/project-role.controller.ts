@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
+import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectRoleService } from './project-role.service'
@@ -77,6 +78,7 @@ export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
                 projectRole,
             },
         })
+        await userInvitationsService(req.log).detachProjectRoleFromPlatformInvites({ projectRoleId: projectRole.id })
         return projectRoleService.delete({
             name: req.params.name,
             platformId: req.principal.platform.id,
