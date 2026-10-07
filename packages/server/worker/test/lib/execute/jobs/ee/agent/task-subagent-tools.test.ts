@@ -239,10 +239,8 @@ const beginTask = vi.fn()
 const finishTask = vi.fn()
 
 const BASE_PARAMS = {
-    model: 'test-model',
-    provider: AIProviderName.OPENAI,
+    models: [{ model: 'test-model', provider: AIProviderName.OPENAI, modelId: 'm', thinkingBudget: 0 }] as const,
     tier: { id: 'smart', thinkingBudget: 0, modelId: 'm' },
-    modelId: 'm',
     taskPrompt: 'TASK PROMPT',
     creditsLeftFor: () => undefined,
     beginTask,

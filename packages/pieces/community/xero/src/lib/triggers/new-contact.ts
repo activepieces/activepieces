@@ -1,13 +1,9 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { xeroAuth } from '../..';
-import { createHmac } from 'crypto';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
 import { props } from '../common/props';
+import { xeroSamples } from '../common/samples';
+import { xeroWebhook } from '../common/trigger-state';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroNewContact = createTrigger({
   auth: xeroAuth,
@@ -16,29 +12,12 @@ export const xeroNewContact = createTrigger({
   displayName: 'New Contact',
   description: 'Fires when a new contact is added to Xero (via Xero webhooks). Configure the webhook in Xero Developer portal to point to this URL.',
   aiMetadata: {
-    description: 'Fires when a new contact (customer or supplier) is created in the connected Xero organisation. Delivered through a Xero webhook on the CONTACT category filtered to CREATE events; the verified payload event optionally enriched with the full contact record (name, email, addresses, contact ID) fetched from Xero. Represents a brand-new contact, not an update to an existing one.',
+    description:
+      'Fires once per contact (customer or supplier) created in the connected Xero organisation, delivered by a Xero webhook (CONTACT category, CREATE events) that you set up on your own Xero app; deliveries are signature-checked and duplicates are dropped. Each item is the full contact, or the raw webhook event when Fetch Full Contact is off. Use New or Updated Contact to also fire on edits.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
-    webhookInstructions: Property.MarkDown({
-      value: `
-To use this trigger, manually configure a Xero webhook for your app:
-
-1. Go to Xero Developer > My Apps > [Your App] > Webhooks.
-2. Select the Contact category.
-3. Set the Delivery URL to:
-\n\n\`\`\`text
-{{webhookUrl}}
-\`\`\`
-4. Click Save, then click Validate "Intent to receive".
-5. Copy the Webhook Key from the Webhooks page and paste it into the Webhook Key field below.
-6. Optionally set Organization ID (Tenant ID) to only accept events from a specific org.
-
-Notes:
-- Keep this trigger enabled so the URL remains active.
-- We verify Xero's x-xero-signature header using your Webhook Key.
-      `,
-    }),
+    webhookInstructions: Property.MarkDown({ value: xeroWebhook.instructions({ category: 'Contact' }) }),
     tenant_id: props.tenant_id,
     webhook_key: Property.ShortText({
       displayName: 'Webhook Key',
@@ -47,91 +26,35 @@ Notes:
     }),
     fetch_full_contact: Property.Checkbox({
       displayName: 'Fetch Full Contact',
-      description: 'If enabled, fetches the full contact from Xero using the Resource URL.',
+      description: 'If enabled, fetches the full contact from Xero. If disabled, the output is the raw webhook event (resourceId, eventType, eventDateUtc).',
       required: false,
       defaultValue: true,
     }),
   },
-  sampleData: {
-    ContactID: '717f2bfc-c6d4-41fd-b238-3f2f0c0cf777',
-    Name: 'Sample Contact',
-    EmailAddress: 'sample@example.com',
+  outputSchema: xeroOutputSchemas.contact,
+  sampleData: xeroSamples.contact,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.HEADER_PRESENT,
+    paramName: xeroWebhook.handshakeConfiguration.paramName,
   },
-  async onEnable(context: any) {
-    // Nothing to register programmatically. User must configure webhook in Xero Developer portal.
+  async onHandshake(context) {
+    return xeroWebhook.handshake({ payload: context.payload, webhookKey: context.propsValue.webhook_key });
   },
-  async onDisable(context: any) {
-    // Nothing to clean up programmatically.
+  async onEnable() {
+    return;
   },
-  async run(context: any) {
-    const { webhook_key, tenant_id, fetch_full_contact } = context.propsValue as any;
-
-    const signatureHeader = context.payload.headers['x-xero-signature'] as string | undefined;
-    const rawBody = context.payload.rawBody as string | undefined;
-
-    if (!signatureHeader || !rawBody) {
-      return [];
-    }
-
-    // Verify HMAC-SHA256 signature (base64)
-    const computed = createHmac('sha256', webhook_key).update(rawBody).digest('base64');
-    if (computed !== signatureHeader) {
-      return [];
-    }
-
-    const body = context.payload.body as any;
-    const events: any[] = body?.events ?? [];
-    if (!Array.isArray(events) || events.length === 0) {
-      // Intent to receive or empty payload
-      return [];
-    }
-
-    // Filter to CONTACT CREATE events, optionally by tenant
-    const filtered = events.filter((e) => {
-      const isContact = e.eventCategory === 'CONTACT';
-      const isCreate = e.eventType === 'CREATE';
-      const tenantOk = tenant_id ? e.tenantId === tenant_id : true;
-      return isContact && isCreate && tenantOk;
+  async onDisable() {
+    return;
+  },
+  async run(context) {
+    return xeroWebhook.processDelivery({
+      payload: context.payload,
+      webhookKey: context.propsValue.webhook_key,
+      tenantId: context.propsValue.tenant_id,
+      accessToken: context.auth.access_token,
+      store: context.store,
+      resource: { category: 'CONTACT', path: 'Contacts', eventTypes: ['CREATE'] },
+      fetchFull: context.propsValue.fetch_full_contact !== false,
     });
-
-    if (filtered.length === 0) {
-      return [];
-    }
-
-    if (!fetch_full_contact) {
-      return filtered;
-    }
-
-    // Fetch full contact for each event (best-effort)
-    const results: any[] = [];
-    for (const ev of filtered) {
-      try {
-        const req: HttpRequest = {
-          method: HttpMethod.GET,
-          url: ev.resourceUrl,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: (context.auth as any).access_token,
-          },
-          headers: {
-            'Xero-Tenant-Id': ev.tenantId,
-            Accept: 'application/json',
-          },
-        };
-        const resp = await httpClient.sendRequest<any>(req);
-        if (resp.status === 200) {
-          const contact = resp.body?.Contacts?.[0] ?? resp.body;
-          results.push(contact);
-        } else {
-          results.push(ev);
-        }
-      } catch {
-        results.push(ev);
-      }
-    }
-
-    return results;
   },
 });
-
-

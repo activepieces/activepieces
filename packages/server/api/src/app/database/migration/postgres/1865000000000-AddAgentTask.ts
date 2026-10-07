@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddAgentTask1864000000000 implements Migration {
-    name = 'AddAgentTask1864000000000'
+export class AddAgentTask1865000000000 implements Migration {
+    name = 'AddAgentTask1865000000000'
     breaking = false
     release = '0.93.0'
 
