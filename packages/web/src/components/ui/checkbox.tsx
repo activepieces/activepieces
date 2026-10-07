@@ -8,14 +8,14 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const checkboxVariants = cva(
-  'peer size-4 shrink-0 rounded-sm border border-gray-8 shadow-xs transition-shadow outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:bg-gray-6/30 dark:aria-invalid:ring-danger-9/40',
+  'peer group/checkbox relative flex size-4 shrink-0 items-center justify-center rounded-sm border border-gray-8 shadow-xs transition-shadow outline-none focus-visible:border-gray-8 focus-visible:ring-3 focus-visible:ring-gray-8/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-3 aria-invalid:ring-danger-9/20 dark:bg-gray-6/30 dark:aria-invalid:ring-danger-9/40',
   {
     variants: {
       variant: {
         primary:
-          'data-[state=checked]:bg-accent-9 data-[state=checked]:text-on-accent dark:data-[state=checked]:bg-accent-9 data-[state=checked]:border-accent-9 data-[state=indeterminate]:bg-accent-9 data-[state=indeterminate]:text-on-accent data-[state=indeterminate]:border-accent-9',
+          'data-checked:border-accent-9 data-checked:bg-accent-9 data-checked:text-on-accent data-[state=indeterminate]:border-accent-9 data-[state=indeterminate]:bg-accent-9 data-[state=indeterminate]:text-on-accent aria-invalid:aria-checked:border-accent-9 dark:data-checked:bg-accent-9 dark:data-[state=indeterminate]:bg-accent-9',
         secondary:
-          'data-[state=checked]:bg-gray-12 data-[state=checked]:text-gray-1 data-[state=checked]:border-gray-12 data-[state=indeterminate]:bg-gray-12 data-[state=indeterminate]:text-gray-1 data-[state=indeterminate]:border-gray-12',
+          'data-checked:border-gray-12 data-checked:bg-gray-12 data-checked:text-gray-1 data-[state=indeterminate]:border-gray-12 data-[state=indeterminate]:bg-gray-12 data-[state=indeterminate]:text-gray-1 dark:data-checked:bg-gray-12 dark:data-[state=indeterminate]:bg-gray-12',
       },
     },
     defaultVariants: {
@@ -24,23 +24,19 @@ const checkboxVariants = cva(
   },
 );
 
-function Checkbox({ className, variant, checked, ...props }: CheckboxProps) {
+function Checkbox({ className, variant, ...props }: CheckboxProps) {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
-      checked={checked}
       className={cn(checkboxVariants({ variant }), className)}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none"
+        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
       >
-        {checked === 'indeterminate' ? (
-          <MinusIcon className="size-3.5 text-current" />
-        ) : (
-          <CheckIcon className="size-3.5 text-current" />
-        )}
+        <CheckIcon className="group-data-[state=indeterminate]/checkbox:hidden" />
+        <MinusIcon className="hidden group-data-[state=indeterminate]/checkbox:block" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

@@ -32,7 +32,13 @@ function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
-  return <tbody data-slot="table-body" className={cn(className)} {...props} />;
+  return (
+    <tbody
+      data-slot="table-body"
+      className={cn('[&_tr:last-child]:border-0', className)}
+      {...props}
+    />
+  );
 }
 
 function TableFooter({ className, ...props }: React.ComponentProps<'tfoot'>) {
@@ -53,7 +59,7 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
     <tr
       data-slot="table-row"
       className={cn(
-        'border-b transition-colors hover:bg-gray-3/50 data-[state=selected]:bg-gray-3',
+        'border-b transition-colors hover:bg-gray-3/50 has-aria-expanded:bg-gray-3/50 data-[state=selected]:bg-gray-3',
         className,
       )}
       {...props}
@@ -66,7 +72,7 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
     <th
       data-slot="table-head"
       className={cn(
-        'py-2.5 px-2 text-left align-middle text-xs font-medium text-gray-12 first:pl-8 last:pr-8 [&:has([role=checkbox])]:pl-4 [&:has([role=checkbox])]:pr-2',
+        'px-2 py-2.5 text-left align-middle text-xs font-medium whitespace-nowrap text-gray-12 first:pl-8 last:pr-8 [&:has([role=checkbox])]:pl-4 [&:has([role=checkbox])]:pr-2',
         className,
       )}
       {...props}

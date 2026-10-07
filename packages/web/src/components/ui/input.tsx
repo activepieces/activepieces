@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { SelectUtilButton } from '../custom/select-util-button';
 
 export const inputClass =
-  'flex h-9 w-full min-w-0 rounded-lg border border-gray-8 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-accent-9 selection:text-on-accent file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-gray-12 placeholder:text-gray-11 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-gray-6/30 focus-visible:border-gray-8 focus-visible:ring-[1px] focus-visible:ring-gray-8/50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40';
+  'flex h-9 w-full min-w-0 rounded-lg border border-gray-8 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-accent-9 selection:text-on-accent file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-gray-12 placeholder:text-gray-11 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-gray-6/30 focus-visible:border-gray-8 focus-visible:ring-3 focus-visible:ring-gray-8/50 aria-invalid:border-danger-9 aria-invalid:ring-3 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40';
 
 function Input({
   className,
@@ -66,8 +66,6 @@ function Input({
   );
 }
 
-// Helper functions
-
 function handleFileChange(
   event: React.ChangeEvent<HTMLInputElement>,
   setFileName: React.Dispatch<React.SetStateAction<string | null>>,
@@ -77,8 +75,6 @@ function handleFileChange(
   setFileName(file ? file.name : null);
   onChange?.(event);
 }
-
-// Type definitions
 
 type InputProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   size?: 'sm' | 'default';

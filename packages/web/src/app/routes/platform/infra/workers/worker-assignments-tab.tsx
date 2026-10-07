@@ -45,12 +45,8 @@ export function WorkerAssignmentsTab() {
 
       <Tabs defaultValue="by-project" className="w-full">
         <TabsList variant="default">
-          <TabsTrigger variant="default" value="by-project">
-            {t('By project')}
-          </TabsTrigger>
-          <TabsTrigger variant="default" value="by-group">
-            {t('By group')}
-          </TabsTrigger>
+          <TabsTrigger value="by-project">{t('By project')}</TabsTrigger>
+          <TabsTrigger value="by-group">{t('By group')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="by-project">

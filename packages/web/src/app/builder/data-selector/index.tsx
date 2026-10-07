@@ -399,12 +399,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           className="h-full flex flex-col gap-0"
         >
           <TabsList
-            variant="outline"
+            variant="line"
             className="px-3 shrink-0 gap-1 border-b border-gray-6 w-full justify-start"
           >
             <TabsTrigger
               value="data"
-              variant="outline"
               className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Database className="w-4 h-4" />
@@ -412,7 +411,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             </TabsTrigger>
             <TabsTrigger
               value="variables"
-              variant="outline"
               className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Variable className="w-4 h-4" />

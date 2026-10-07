@@ -668,17 +668,15 @@ const AgentConfigurePanel = forwardRef<
             </div>
           </div>
           <div className="flex h-[44px] shrink-0 items-stretch border-b border-gray-6 px-[18px]">
-            <TabsList variant="outline" className="h-full items-stretch gap-5">
+            <TabsList variant="line" className="h-full items-stretch gap-5">
               <TabsTrigger
                 value="behavior"
-                variant="outline"
                 className="h-full items-center text-sm"
               >
                 {t('Behavior')}
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                variant="outline"
                 className="h-full items-center text-sm"
               >
                 {t('Settings')}

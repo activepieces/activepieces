@@ -7,29 +7,30 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-gray-8 focus-visible:ring-3 focus-visible:ring-gray-8/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-3 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          'bg-accent-9 stroke-on-accent text-on-accent enabled:hover:bg-accent-9/90',
-        secondary:
-          'text-gray-12 bg-gray-3 enabled:hover:bg-gray-4 enabled:hover:text-gray-12',
-        destructive:
-          'bg-danger-9 text-on-danger enabled:hover:bg-danger-9/90 focus-visible:ring-danger-9/20 dark:focus-visible:ring-danger-9/40',
+          'bg-accent-9 stroke-on-accent text-on-accent hover:bg-accent-9/90',
         outline:
-          'border-gray-6 bg-gray-1 enabled:hover:bg-gray-4 enabled:hover:text-gray-12 border',
-        ghost: 'hover:bg-gray-4 hover:text-gray-12',
+          'border-gray-6 bg-gray-1 shadow-xs hover:bg-gray-4 hover:text-gray-12 aria-expanded:bg-gray-4 aria-expanded:text-gray-12',
+        secondary:
+          'bg-gray-3 text-gray-12 hover:bg-gray-4 aria-expanded:bg-gray-4 aria-expanded:text-gray-12',
+        ghost:
+          'hover:bg-gray-4 hover:text-gray-12 aria-expanded:bg-gray-4 aria-expanded:text-gray-12',
+        destructive:
+          'bg-danger-3 text-danger-11 hover:bg-danger-4 focus-visible:border-danger-8 focus-visible:ring-danger-9/20 dark:focus-visible:ring-danger-9/40',
         link: 'text-accent-11 underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-3 has-[>svg]:px-2.5',
-        sm: 'h-8 gap-1.5 px-2.5 has-[>svg]:px-2',
         xs: "h-7 gap-1 px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: 'h-8 gap-1.5 px-2.5 has-[>svg]:px-2',
         lg: 'h-10 px-4 has-[>svg]:px-3.5',
         icon: 'size-9',
-        'icon-sm': 'size-8',
         'icon-xs': "size-7 [&_svg:not([class*='size-'])]:size-3.5",
+        'icon-sm': 'size-8',
         'icon-lg': 'size-10',
       },
     },
@@ -90,7 +91,7 @@ function renderButtonContent(
       <LoadingSpinner
         className={cn('size-4', {
           'stroke-on-accent': variant === 'default',
-          'stroke-on-danger': variant === 'destructive',
+          'stroke-danger-11': variant === 'destructive',
           'stroke-gray-12': variant !== 'default' && variant !== 'destructive',
         })}
       />
@@ -99,17 +100,17 @@ function renderButtonContent(
 
   if (keyboardShortcut) {
     return (
-      <div className="flex justify-center items-center gap-2">
+      <span className="flex items-center justify-center gap-2">
         {children}
         <Shortcut
           shortcutKey={keyboardShortcut}
           withCtrl={true}
           className={cn({
             'text-on-accent/70': variant === 'default',
-            'text-on-danger/70': variant === 'destructive',
+            'text-danger-11/70': variant === 'destructive',
           })}
         />
-      </div>
+      </span>
     );
   }
 
@@ -143,6 +144,7 @@ function Button({
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
       onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
         if (loading) {

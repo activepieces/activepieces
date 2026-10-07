@@ -344,19 +344,11 @@ function RoleDialogBody({
           className="flex min-h-0 flex-1 flex-col gap-0"
         >
           <div className="flex shrink-0 items-center justify-between gap-4 border-b px-6">
-            <TabsList variant="outline" className="gap-6">
-              <TabsTrigger
-                variant="outline"
-                value="permissions"
-                className="px-0 py-3"
-              >
+            <TabsList variant="line" className="gap-6">
+              <TabsTrigger value="permissions" className="px-0 py-3">
                 {t('Permissions')}
               </TabsTrigger>
-              <TabsTrigger
-                variant="outline"
-                value="people"
-                className="gap-2 px-0 py-3"
-              >
+              <TabsTrigger value="people" className="gap-2 px-0 py-3">
                 {t('People')}
                 <span className="tabular-nums text-gray-11">
                   {projectRole?.userCount ?? 0}
