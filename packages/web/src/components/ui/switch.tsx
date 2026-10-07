@@ -9,6 +9,8 @@ function Switch({
   indeterminate = false,
   ...props
 }: SwitchProps) {
+  const controlledProps =
+    'checked' in props ? { checked: props.checked ?? false } : {};
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
@@ -21,6 +23,7 @@ function Switch({
         className,
       )}
       {...props}
+      {...controlledProps}
       data-indeterminate={indeterminate || undefined}
     >
       <SwitchPrimitive.Thumb

@@ -263,7 +263,7 @@ export default function AuditLogsPage() {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 tracking-wide">
+              <p className="text-xs font-semibold text-gray-11">
                 {t('Who & When')}
               </p>
               <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -301,7 +301,7 @@ export default function AuditLogsPage() {
               <>
                 <Separator />
                 <div className="px-6 py-5 flex flex-col gap-4">
-                  <p className="text-xs font-semibold text-gray-11 tracking-wide">
+                  <p className="text-xs font-semibold text-gray-11">
                     {t('Event Details')}
                   </p>
                   <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -319,7 +319,7 @@ export default function AuditLogsPage() {
             )}
             <Separator />
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 tracking-wide">
+              <p className="text-xs font-semibold text-gray-11">
                 {t('Full Payload')}
               </p>
               <SimpleJsonViewer data={selectedEvent?.data ?? {}} />

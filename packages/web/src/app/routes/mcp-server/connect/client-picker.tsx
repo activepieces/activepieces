@@ -118,9 +118,7 @@ function ClientGroupSection({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold tracking-wide">
-          {group.label}
-        </span>
+        <span className="text-xs font-semibold">{group.label}</span>
         {!isCatchAll && (
           <>
             <span className="text-xs font-semibold text-gray-11">

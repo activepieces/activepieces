@@ -88,7 +88,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           <TooltipTrigger>
             <Input
               ref={inputRef}
-              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-gray-1 border-solid text-center !text-xs transition-all duration-300 ${
+              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-gray-1 border-solid rounded-md text-center !text-xs transition-all duration-300 ${
                 isAnimating
                   ? 'border-2 border-accent-9'
                   : 'border border-gray-6'
@@ -227,8 +227,8 @@ const LoopIterationInputButton = ({
         e.stopPropagation();
         onChange((currentIndex + (isIncreasing ? 2 : 0)).toString());
       }}
-      className="hover:bg-gray-2"
-      size="icon-xs"
+      className="hover:bg-gray-2 size-6"
+      size="icon"
     >
       {isIncreasing ? (
         <ChevronUp className="w-2 h-2"></ChevronUp>

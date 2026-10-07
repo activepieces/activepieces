@@ -89,9 +89,7 @@ function ActionGroupColumn({
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center gap-2 px-2">
-        <span
-          className={cn('text-xs font-semibold tracking-wider ', tone.label)}
-        >
+        <span className={cn('text-xs font-semibold', tone.label)}>
           {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
         </span>
         <Badge variant={tone.count}>{group.actions.length}</Badge>

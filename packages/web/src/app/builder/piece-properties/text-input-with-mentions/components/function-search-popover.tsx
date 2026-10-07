@@ -187,7 +187,7 @@ export function FunctionSearchPopover({
         >
           {Object.entries(grouped).map(([category, fns]) => (
             <div key={category}>
-              <div className="px-3 py-1 text-xs font-semibold text-gray-11 tracking-wide sticky top-0 bg-panel">
+              <div className="px-3 py-1 text-xs font-semibold text-gray-11 sticky top-0 bg-panel">
                 {category}
               </div>
               {fns.map((fn) => {
