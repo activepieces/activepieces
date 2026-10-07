@@ -3,15 +3,15 @@ import { useMemo } from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { mcpClientCatalog } from '../mcp-client-catalog';
+import { CatalogClient, mcpClientCatalog } from '../mcp-client-catalog';
 import { useMcpNav } from '../mcp-nav';
 
 import { ClientInstructions } from './client-instructions';
 import { ClientPicker } from './client-picker';
-import { DevDirectionPicker, useDevDirection } from './dev-direction-picker';
-import { TakeHub } from './take-hub';
-import { TakeLogoFirst } from './take-logo-first';
-import { TakeTranscript } from './take-transcript';
+import { ConnectHome } from './connect-home';
+import { DesignGrouped, DesignWires, DesignWiresGrid } from './designs';
+import { DesignDirectory, DesignSplitTiles } from './designs-more';
+import { DevDesignSwitch, useDevDesign } from './dev-design-switch';
 import { useConnectHome } from './use-connect-home';
 
 export function ConnectTab({
@@ -46,8 +46,14 @@ export function ConnectTab({
     return <ClientPicker clients={clients} serverUrl={serverUrl} />;
   }
 
-  return (
-    <ConnectHomeView
+  return import.meta.env.DEV ? (
+    <DevDesigns
+      clients={clients}
+      serverUrl={serverUrl}
+      isReachableFromInternet={isReachableFromInternet}
+    />
+  ) : (
+    <ConnectHome
       clients={clients}
       serverUrl={serverUrl}
       isReachableFromInternet={isReachableFromInternet}
@@ -55,35 +61,38 @@ export function ConnectTab({
   );
 }
 
-function ConnectHomeView({
+function DevDesigns({
   clients,
   serverUrl,
   isReachableFromInternet,
 }: {
-  clients: ReturnType<typeof mcpClientCatalog.clients>;
+  clients: CatalogClient[];
   serverUrl: string;
   isReachableFromInternet: boolean;
 }) {
-  const dev = useDevDirection();
-  const home = useConnectHome({
-    clients,
-    forcedState: import.meta.env.DEV ? dev.settings.state : 'auto',
-  });
+  const dev = useDevDesign();
+  const home = useConnectHome({ clients });
   const props = { home, serverUrl, isReachableFromInternet };
-  const direction = import.meta.env.DEV ? dev.settings.direction : 'logos';
-
   return (
     <>
-      {home.isGrantsLoading ? null : direction === 'transcript' ? (
-        <TakeTranscript {...props} />
-      ) : direction === 'hub' ? (
-        <TakeHub {...props} />
+      {dev.design === 'a' ? (
+        <DesignGrouped {...props} />
+      ) : dev.design === 'b' ? (
+        <DesignWires {...props} />
+      ) : dev.design === 'c' ? (
+        <DesignWiresGrid {...props} />
+      ) : dev.design === 'd' ? (
+        <DesignDirectory {...props} />
+      ) : dev.design === 'e' ? (
+        <DesignSplitTiles {...props} />
       ) : (
-        <TakeLogoFirst {...props} />
+        <ConnectHome
+          clients={clients}
+          serverUrl={serverUrl}
+          isReachableFromInternet={isReachableFromInternet}
+        />
       )}
-      {import.meta.env.DEV && (
-        <DevDirectionPicker settings={dev.settings} onChange={dev.update} />
-      )}
+      <DevDesignSwitch design={dev.design} onChange={dev.setDesign} />
     </>
   );
 }

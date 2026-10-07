@@ -10,15 +10,13 @@ import { CatalogClient } from '../mcp-client-catalog';
 import { mcpGrantsQueries } from '../mcp-grants-hooks';
 
 export function useConnectHome({
-  clients,
-  forcedState,
+  clients: catalogClients,
 }: {
   clients: CatalogClient[];
-  forcedState: ConnectStateOverride;
 }) {
-  const ordered = useMemo(() => orderClients(clients), [clients]);
-  const [selectedKey, setSelectedKey] = useState<string>(
-    () => readStoredClient(ordered) ?? ordered[0]?.key ?? 'unknown',
+  const clients = useMemo(() => orderClients(catalogClients), [catalogClients]);
+  const [pickedKey, setPickedKey] = useState<string | null>(() =>
+    readStoredClient(clients),
   );
   const [watchUntil, setWatchUntil] = useState<number | null>(null);
   const isWatching = watchUntil !== null && Date.now() < watchUntil;
@@ -31,61 +29,44 @@ export function useConnectHome({
     refetchInterval: isWatching ? WATCH_INTERVAL_MS : false,
   });
   const { pieces } = piecesHooks.usePieces({ skipProjectFilter: true });
-  const branding = flagsHooks.useWebsiteBranding();
-  const websiteName = branding.websiteName;
+  const { websiteName } = flagsHooks.useWebsiteBranding();
 
-  const realGrants = grantsQuery.data?.data ?? [];
-  const grants = pickGrants({ realGrants, forcedState });
+  const grants = useMemo(
+    () => sortByLastUsed(grantsQuery.data?.data ?? []),
+    [grantsQuery.data],
+  );
+  const grantsByClient = groupByClient({ grants, clients });
+  const connected = clients.filter((client) => grantsByClient.has(client.key));
+  const available = clients.filter((client) => !grantsByClient.has(client.key));
+  const pickable = available.length > 0 ? available : clients;
   const selected =
-    ordered.find((client) => client.key === selectedKey) ?? ordered[0];
+    pickable.find((client) => client.key === pickedKey) ?? pickable[0];
   const pieceNames = (pieces ?? []).map((piece) => piece.displayName);
 
   return {
-    clients: ordered,
+    connected,
+    available,
     selected,
+    exampleClient:
+      connected.find((client) =>
+        grantsByClient.get(client.key)?.includes(grants[0]),
+      ) ?? selected,
+    grants,
+    latestGrant: grants[0] ?? null,
+    clients,
+    grantsByClient,
+    focus: clients.find((client) => client.key === pickedKey) ?? selected,
+    isConnected: connected.length > 0,
+    isLoading: grantsQuery.isLoading,
+    isWatching,
+    brandName: websiteName,
+    prompts: tryPrompts({ pieceNames, brandName: websiteName }),
     select: (key: string) => {
-      setSelectedKey(key);
+      setPickedKey(key);
       writeStoredClient(key);
     },
-    grants,
-    isGrantsLoading: grantsQuery.isLoading && forcedState === 'auto',
-    isGrantsError: grantsQuery.isError && forcedState === 'auto',
-    refetchGrants: grantsQuery.refetch,
-    isConnected: grants.length > 0,
-    latestGrant: latestGrant(grants),
-    connectedKeys: new Set<string>(grants.map((grant) => grant.clientKey)),
-    isWatching,
     startWatching: () => setWatchUntil(Date.now() + WATCH_DURATION_MS),
-    brandName: websiteName,
-    brandIconUrl: branding.logos.logoIconUrl,
-    pieceCount: pieces?.length ?? 0,
-    pieceLogos: (pieces ?? []).slice(0, MAX_LOGOS).map((piece) => ({
-      name: piece.displayName,
-      logoUrl: piece.logoUrl,
-    })),
-    prompts: tryPrompts({ pieceNames, brandName: websiteName }),
   };
-}
-
-function pickGrants({
-  realGrants,
-  forcedState,
-}: {
-  realGrants: McpOAuthGrant[];
-  forcedState: ConnectStateOverride;
-}): McpOAuthGrant[] {
-  if (forcedState === 'first') return [];
-  if (forcedState === 'connected' && realGrants.length === 0) {
-    return SAMPLE_GRANTS;
-  }
-  return realGrants;
-}
-
-function latestGrant(grants: McpOAuthGrant[]): McpOAuthGrant | null {
-  const used = grants
-    .filter((grant) => grant.lastUsedAt !== null)
-    .sort((a, b) => (b.lastUsedAt ?? '').localeCompare(a.lastUsedAt ?? ''));
-  return used[0] ?? grants[0] ?? null;
 }
 
 function orderClients(clients: CatalogClient[]): CatalogClient[] {
@@ -94,6 +75,26 @@ function orderClients(clients: CatalogClient[]): CatalogClient[] {
     return index === -1 ? CLIENT_ORDER.length : index;
   };
   return [...clients].sort((a, b) => rank(a) - rank(b));
+}
+
+function groupByClient({
+  grants,
+  clients,
+}: {
+  grants: McpOAuthGrant[];
+  clients: CatalogClient[];
+}): Map<string, McpOAuthGrant[]> {
+  const known = new Set(clients.map((client) => client.key));
+  return grants.reduce((groups, grant) => {
+    const key = known.has(grant.clientKey) ? grant.clientKey : 'unknown';
+    return new Map(groups).set(key, [...(groups.get(key) ?? []), grant]);
+  }, new Map<string, McpOAuthGrant[]>());
+}
+
+function sortByLastUsed(grants: McpOAuthGrant[]): McpOAuthGrant[] {
+  return [...grants].sort((a, b) =>
+    (b.lastUsedAt ?? b.created).localeCompare(a.lastUsedAt ?? a.created),
+  );
 }
 
 function tryPrompts({
@@ -131,8 +132,7 @@ function writeStoredClient(key: string) {
 }
 
 const STORAGE_KEY = 'mcp-connect-last-client';
-const MAX_GRANTS = 5;
-const MAX_LOGOS = 8;
+const MAX_GRANTS = 50;
 const WATCH_INTERVAL_MS = 4000;
 const WATCH_DURATION_MS = 10 * 60 * 1000;
 const CLIENT_ORDER = [
@@ -147,29 +147,5 @@ const CLIENT_ORDER = [
   'opencode',
   'unknown',
 ];
-const SAMPLE_GRANTS: McpOAuthGrant[] = [
-  {
-    id: 'sample-1',
-    clientKey: 'claude-code',
-    clientName: null,
-    projectId: null,
-    projectName: null,
-    member: null,
-    created: new Date(Date.now() - 3 * 86400000).toISOString(),
-    lastUsedAt: new Date(Date.now() - 12 * 60000).toISOString(),
-  },
-  {
-    id: 'sample-2',
-    clientKey: 'cursor',
-    clientName: null,
-    projectId: 'sample-project',
-    projectName: 'Marketing',
-    member: null,
-    created: new Date(Date.now() - 86400000).toISOString(),
-    lastUsedAt: null,
-  },
-];
-
-export type ConnectStateOverride = 'auto' | 'first' | 'connected';
 
 export type ConnectHome = ReturnType<typeof useConnectHome>;
