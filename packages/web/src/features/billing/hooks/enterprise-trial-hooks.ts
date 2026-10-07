@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { t } from 'i18next';
 import { useEffect, useReducer } from 'react';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -52,7 +53,7 @@ export const enterpriseTrialHooks = {
     const { embedState } = useEmbedding();
     const isPlatformAdmin = useIsPlatformAdmin();
     const basePlanName = toBasePlanName(platform.plan.plan);
-    useRerenderAt(
+    useTrialClock(
       status?.state === 'active'
         ? status.endsAt
         : platform.plan.enterpriseTrialEndsAt,
@@ -123,20 +124,47 @@ function useCanManageEnterpriseTrial(): boolean {
   );
 }
 
-function useRerenderAt(moment: string | Date | null | undefined): void {
-  const [, rerender] = useReducer((tick: number) => tick + 1, 0);
-  const at = isNil(moment) ? null : dayjs(moment).valueOf();
+function useTrialClock(endsAt: string | Date | null | undefined): void {
+  const queryClient = useQueryClient();
+  const [tick, rerender] = useReducer((count: number) => count + 1, 0);
+  const end = isNil(endsAt) ? null : dayjs(endsAt).valueOf();
   useEffect(() => {
-    if (isNil(at)) {
+    if (isNil(end)) {
       return;
     }
-    const delay = at - Date.now();
-    if (delay <= 0 || delay > MAX_TIMER_MS) {
+    const next = nextTrialBoundary({ end, now: Date.now() });
+    if (isNil(next)) {
       return;
     }
-    const timer = setTimeout(rerender, delay + END_GRACE_MS);
+    const timer = setTimeout(() => {
+      if (Date.now() >= end) {
+        queryClient
+          .invalidateQueries({ queryKey: ['platform'] })
+          .catch(() => undefined);
+      }
+      rerender();
+    }, next - Date.now() + BOUNDARY_GRACE_MS);
     return () => clearTimeout(timer);
-  }, [at]);
+  }, [end, tick, queryClient]);
+}
+
+function nextTrialBoundary({
+  end,
+  now,
+}: {
+  end: number;
+  now: number;
+}): number | null {
+  const candidates = [
+    end - LAST_DAY_HOURS * HOUR_MS,
+    end,
+    dayjs(now).add(1, 'day').startOf('day').valueOf(),
+  ].filter((moment) => moment > now && moment <= end + HOUR_MS);
+  if (candidates.length === 0) {
+    return null;
+  }
+  const next = Math.min(...candidates);
+  return next - now > MAX_TIMER_MS ? null : next;
 }
 
 function refetchAfterTrialEnds(
@@ -149,12 +177,12 @@ function refetchAfterTrialEnds(
   if (msUntilEnd <= 0) {
     return EXPIRED_POLL_MS;
   }
-  return Math.min(msUntilEnd + END_GRACE_MS, MAX_POLL_MS);
+  return Math.min(msUntilEnd + BOUNDARY_GRACE_MS, MAX_POLL_MS);
 }
 
 function toBasePlanName(plan: string | null | undefined): string {
   if (!billingUtils.isPaidPlan(plan)) {
-    return 'Free';
+    return t('Free');
   }
   return plan.charAt(0).toUpperCase() + plan.slice(1).replace(/_/g, ' ');
 }
@@ -170,17 +198,12 @@ function toActiveTrial({
 }): EnterpriseTrial {
   const end = dayjs(endsAt);
   const hoursLeft = Math.max(0, end.diff(dayjs(), 'hour'));
-  const daysLeft = Math.max(1, Math.ceil(hoursLeft / 24));
+  const endsTodayOrTomorrow = !end.isAfter(dayjs().add(1, 'day').endOf('day'));
   return {
     state: 'active',
     endsAt: end.toDate(),
-    hoursLeft,
-    daysLeft,
-    elapsedRatio: Math.min(
-      1,
-      Math.max(0, 1 - hoursLeft / (ENTERPRISE_TRIAL_DAYS * 24)),
-    ),
-    endingSoon: hoursLeft <= ENDING_SOON_HOURS,
+    daysLeft: Math.max(1, Math.ceil(hoursLeft / 24)),
+    endingSoon: endsTodayOrTomorrow,
     lastDay: hoursLeft <= LAST_DAY_HOURS,
     isPlatformAdmin,
     basePlanName,
@@ -190,9 +213,7 @@ function toActiveTrial({
 const NO_TRIAL: EnterpriseTrial = {
   state: 'none',
   endsAt: null,
-  hoursLeft: 0,
   daysLeft: 0,
-  elapsedRatio: 0,
   endingSoon: false,
   lastDay: false,
   isPlatformAdmin: false,
@@ -200,19 +221,17 @@ const NO_TRIAL: EnterpriseTrial = {
 };
 
 export const ENTERPRISE_TRIAL_DAYS = 7;
-const ENDING_SOON_HOURS = 48;
-const END_GRACE_MS = 5 * 1000;
+const LAST_DAY_HOURS = 36;
+const HOUR_MS = 60 * 60 * 1000;
+const BOUNDARY_GRACE_MS = 5 * 1000;
 const EXPIRED_POLL_MS = 60 * 1000;
 const MAX_POLL_MS = 60 * 60 * 1000;
 const MAX_TIMER_MS = 2 ** 31 - 1;
-const LAST_DAY_HOURS = 36;
 
 export type EnterpriseTrial = {
   state: EnterpriseTrialState | 'none';
   endsAt: Date | null;
-  hoursLeft: number;
   daysLeft: number;
-  elapsedRatio: number;
   endingSoon: boolean;
   lastDay: boolean;
   isPlatformAdmin: boolean;

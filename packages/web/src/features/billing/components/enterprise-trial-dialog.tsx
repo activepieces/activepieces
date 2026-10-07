@@ -51,7 +51,7 @@ export function EnterpriseTrialDialog() {
       <EnterpriseTrialEndedDialog />
       <Dialog open={open} onOpenChange={(next) => !next && close()}>
         <DialogContent
-          onOpenAutoFocus={(event) => event.preventDefault()}
+          onOpenAutoFocus={focusDialogItself}
           className={cn(
             isNil(result)
               ? 'max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-3xl sm:rounded-2xl'
@@ -109,12 +109,12 @@ function StartTrial({
       label: t('free, no card'),
     },
     { value: t('Unlimited'), label: t('users and team projects') },
-    {
-      value: isNil(creditsRemaining)
-        ? t('Unchanged')
-        : billingUtils.formatCredits(creditsRemaining),
-      label: t('credits, unchanged'),
-    },
+    isNil(creditsRemaining)
+      ? { value: t('Same credits'), label: t('as your current plan') }
+      : {
+          value: billingUtils.formatCredits(creditsRemaining),
+          label: t('credits, unchanged'),
+        },
   ];
   const timeline = [
     {
@@ -127,7 +127,7 @@ function StartTrial({
     },
     {
       title: endDate.format('MMM D'),
-      description: t('The trial ends and you are back on {plan}.', {
+      description: t('The trial ends and you are back on the {plan} plan.', {
         plan: trial.basePlanName,
       }),
     },
@@ -138,7 +138,9 @@ function StartTrial({
       <div className="flex flex-col p-6 sm:p-8">
         <div className="flex flex-col gap-2 pr-6">
           <DialogTitle className="text-lg font-semibold">
-            {t('Try Enterprise free for 7 days')}
+            {t('Try Enterprise free for {days} days', {
+              days: ENTERPRISE_TRIAL_DAYS,
+            })}
           </DialogTitle>
           <DialogDescription className="text-pretty">
             {t(
@@ -304,6 +306,13 @@ function TrialNotStarted({ onClose }: { onClose: () => void }) {
       </div>
     </div>
   );
+}
+
+function focusDialogItself(event: Event): void {
+  event.preventDefault();
+  if (event.currentTarget instanceof HTMLElement) {
+    event.currentTarget.focus();
+  }
 }
 
 function celebrate(): void {

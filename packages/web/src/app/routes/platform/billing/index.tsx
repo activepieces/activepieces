@@ -28,7 +28,6 @@ import {
   billingMutations,
   billingUtils,
   EnterpriseTrialBillingStatus,
-  enterpriseTrialHooks,
   useCancelSubscriptionGuard,
   useManagePlanDialogStore,
 } from '@/features/billing';
@@ -60,7 +59,6 @@ export function BillingPlanTab() {
             <BillingRefreshButton />
           </div>
           <Separator />
-          <EnterpriseTrialBillingStatus />
           <PlanTab platform={platform} info={info} />
         </div>
       )}
@@ -112,7 +110,6 @@ function PlanTab({ platform, info }: PlanTabProps) {
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const { cancelWithSeatCheck, deactivateUsersDialog } =
     useCancelSubscriptionGuard();
-  const trialEndsAt = enterpriseTrialHooks.useLiveTrialEndsAt();
 
   const isCloud = edition === ApEdition.CLOUD;
 
@@ -150,6 +147,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
           </AlertDescription>
         </Alert>
       )}
+      <EnterpriseTrialBillingStatus />
       <div className="flex flex-col gap-6">
         {!isCommunity && (
           <BillingSection
@@ -157,19 +155,12 @@ function PlanTab({ platform, info }: PlanTabProps) {
             description={
               <div className="flex flex-col gap-2">
                 <span>
-                  {isNil(trialEndsAt)
-                    ? `${t('Your current plan is {plan}.', {
-                        plan: info.autumnPlanName ?? t('Free'),
-                      })} ${t(
-                        'Upgrade anytime to get more credits and unlock features.',
-                      )}`
-                    : t(
-                        "You're on a free Enterprise trial until {date}, on top of your {plan} plan. The trial adds Enterprise features only; your credits still come from {plan} and don't change.",
-                        {
-                          date: dayjs(trialEndsAt).format('MMM D, YYYY'),
-                          plan: info.autumnPlanName ?? t('Free'),
-                        },
-                      )}
+                  {t('Your current plan is {plan}.', {
+                    plan: info.autumnPlanName ?? t('Free'),
+                  })}{' '}
+                  {t(
+                    'Upgrade anytime to get more credits and unlock features.',
+                  )}
                 </span>
                 <LinkButton
                   {...adminControl(AdminControl.BILLING_PLANS_OPEN)}

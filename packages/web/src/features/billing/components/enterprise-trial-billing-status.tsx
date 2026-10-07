@@ -5,7 +5,10 @@ import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import {
+  ENTERPRISE_TRIAL_DAYS,
+  enterpriseTrialHooks,
+} from '../hooks/enterprise-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { useEnterpriseTrialDialogStore } from '../stores/enterprise-trial-dialog-state';
 
@@ -20,7 +23,9 @@ export function EnterpriseTrialBillingStatus() {
     return (
       <StatusCallout
         tone="accent"
-        title={t('Try Enterprise free for 7 days')}
+        title={t('Try Enterprise free for {days} days', {
+          days: ENTERPRISE_TRIAL_DAYS,
+        })}
         description={t(
           'Every Enterprise feature plus unlimited users and team projects. No card needed, and your credits stay the same.',
         )}
@@ -40,7 +45,7 @@ export function EnterpriseTrialBillingStatus() {
           date: dayjs(trial.endsAt).format('MMM D, YYYY'),
         })}
         description={t(
-          'Enterprise features run next to your {plan} plan until then. Your plan, billing and credits are not affected.',
+          'Enterprise features are on until then, next to your {plan} plan. Your credits are not affected. To keep Enterprise features, talk to sales.',
           { plan: trial.basePlanName },
         )}
         action={
@@ -64,7 +69,7 @@ export function EnterpriseTrialBillingStatus() {
             : t('Your Enterprise trial was already used')
         }
         description={t(
-          'Enterprise features are switched off. Our team can extend the trial by 14 days or move you to Enterprise.',
+          'Enterprise features are switched off. Our team can extend it by 14 days.',
         )}
         action={
           <EnterpriseTrialSalesLink

@@ -26,7 +26,8 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
-  const trialEndsAt = enterpriseTrialHooks.useLiveTrialEndsAt();
+  const trial = enterpriseTrialHooks.useTrial();
+  const trialEndsAt = trial.state === 'active' ? trial.endsAt : null;
 
   if (!isNil(trialEndsAt) && !isPaid) {
     return (
@@ -43,26 +44,21 @@ export const CurrentSubscriptionCard = ({
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-2">
             <span className="text-2xl font-semibold">
-              {t('Enterprise Trial')}
+              {t('Enterprise trial')}
             </span>
             <Badge variant="outline" className="rounded-full">
               {t('{count, plural, =1 {1 day left} other {# days left}}', {
-                count: Math.max(
-                  1,
-                  Math.ceil(dayjs(trialEndsAt).diff(dayjs(), 'hour') / 24),
-                ),
+                count: trial.daysLeft,
               })}
             </Badge>
           </span>
           <span className="text-sm text-gray-11">
-            {t('Ends {date}, then you go back to the {plan}.', {
-              date: dayjs(trialEndsAt).format('MMM D, YYYY'),
-              plan: planTitle(info),
-            })}
-          </span>
-          <span className="text-sm text-gray-11">
             {t(
-              'To keep Enterprise features after that, talk to sales. Plus and Team plans add credits and seats but not Enterprise features.',
+              'Ends {date}, then you are back on the {plan} plan. Your credits are not affected. To keep Enterprise features, talk to sales.',
+              {
+                date: dayjs(trialEndsAt).format('MMM D, YYYY'),
+                plan: trial.basePlanName,
+              },
             )}
           </span>
         </div>

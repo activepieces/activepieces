@@ -1,8 +1,8 @@
-import { tryCatchSync } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,6 @@ import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 export function EnterpriseTrialEndedDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
   const trial = enterpriseTrialHooks.useTrial();
-  const navigate = useNavigate();
   const storageKey = `${SEEN_KEY_PREFIX}${platform.id}-${
     trial.endsAt?.toISOString() ?? 'unknown'
   }`;
@@ -42,7 +41,7 @@ export function EnterpriseTrialEndedDialog() {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
       <DialogContent
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        onOpenAutoFocus={focusDialogItself}
         className="gap-5 p-6 sm:max-w-md sm:rounded-2xl"
       >
         <div className="flex flex-col gap-2 pr-6">
@@ -50,10 +49,14 @@ export function EnterpriseTrialEndedDialog() {
             {t('Your Enterprise trial has ended')}
           </DialogTitle>
           <DialogDescription>
-            {t('It ended on {date}. You are back on the {plan} plan.', {
-              date: dayjs(trial.endsAt ?? undefined).format('MMM D'),
-              plan: trial.basePlanName,
-            })}
+            {isNil(trial.endsAt)
+              ? t('You are back on the {plan} plan.', {
+                  plan: trial.basePlanName,
+                })
+              : t('It ended on {date}. You are back on the {plan} plan.', {
+                  date: dayjs(trial.endsAt).format('MMM D'),
+                  plan: trial.basePlanName,
+                })}
           </DialogDescription>
         </div>
         <dl className="flex flex-col gap-2 rounded-xl border p-4 text-sm">
@@ -71,14 +74,10 @@ export function EnterpriseTrialEndedDialog() {
           {t('Need more time to evaluate? Our team can extend it by 14 days.')}
         </p>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => {
-              close();
-              navigate('/platform/billing');
-            }}
-          >
-            {t('Go to Billing')}
+          <Button variant="outline" asChild>
+            <Link to="/platform/billing" onClick={close}>
+              {t('Go to Billing')}
+            </Link>
           </Button>
           <EnterpriseTrialSalesLink
             surface="enterprise_trial_ended"
@@ -89,6 +88,13 @@ export function EnterpriseTrialEndedDialog() {
       </DialogContent>
     </Dialog>
   );
+}
+
+function focusDialogItself(event: Event): void {
+  event.preventDefault();
+  if (event.currentTarget instanceof HTMLElement) {
+    event.currentTarget.focus();
+  }
 }
 
 function readSeen(key: string): boolean {

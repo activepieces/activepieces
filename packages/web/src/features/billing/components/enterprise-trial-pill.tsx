@@ -2,7 +2,6 @@ import { isNil } from '@activepieces/core-utils';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Sparkles } from 'lucide-react';
-import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -43,76 +42,98 @@ export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
           trial.endingSoon ? 'text-warning-11' : 'text-accent-11',
         )}
       />
-      <span className="truncate">
-        {t('Enterprise trial · ends {when}', {
-          when: enterpriseTrialEndsWhen(trial, { withTime: false }),
-        })}
-      </span>
+      <span className="truncate">{trialLineText(trial)}</span>
     </span>
   );
   return (
-    <ExplainOnHover trial={trial}>
-      {trial.isPlatformAdmin ? (
-        <Link
-          to="/platform/billing"
-          aria-label={trialSummary(trial)}
-          className="min-w-0 self-start hover:underline"
-        >
-          {content}
-        </Link>
-      ) : (
-        <span aria-label={trialSummary(trial)} className="min-w-0 self-start">
-          {content}
-        </span>
-      )}
-    </ExplainOnHover>
-  );
-}
-
-export function enterpriseTrialEndsWhen(
-  trial: EnterpriseTrial,
-  { withTime = true }: { withTime?: boolean } = {},
-): string {
-  const end = dayjs(trial.endsAt);
-  const time = end.format('h:mm A');
-  if (end.isSame(dayjs(), 'day')) {
-    return withTime ? t('today at {time}', { time }) : t('today');
-  }
-  if (end.isSame(dayjs().add(1, 'day'), 'day')) {
-    return withTime ? t('tomorrow at {time}', { time }) : t('tomorrow');
-  }
-  return end.format('MMM D');
-}
-
-function ExplainOnHover({
-  trial,
-  children,
-}: {
-  trial: EnterpriseTrial;
-  children: ReactNode;
-}) {
-  return (
     <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipTrigger asChild>
+        {trial.isPlatformAdmin ? (
+          <Link
+            to="/platform/billing"
+            className="min-w-0 self-start hover:underline"
+          >
+            {content}
+          </Link>
+        ) : (
+          <span tabIndex={0} className="min-w-0 self-start">
+            {content}
+          </span>
+        )}
+      </TooltipTrigger>
       <TooltipContent side="right" className="max-w-64">
-        {trialDetails(trial)}
+        {trialDetailsText(trial)}
       </TooltipContent>
     </Tooltip>
   );
 }
 
-function trialSummary(trial: EnterpriseTrial): string {
-  return t('Enterprise trial, ends {when}', {
-    when: enterpriseTrialEndsWhen(trial),
+export function trialEndsText(trial: EnterpriseTrial): string {
+  const end = dayjs(trial.endsAt);
+  const time = end.format('h:mm A');
+  return pickByDay({
+    end,
+    today: () => t('Your Enterprise trial ends today at {time}.', { time }),
+    tomorrow: () =>
+      t('Your Enterprise trial ends tomorrow at {time}.', { time }),
+    later: () =>
+      t('Your Enterprise trial ends on {date}.', {
+        date: end.format('MMM D'),
+      }),
   });
 }
 
-function trialDetails(trial: EnterpriseTrial): string {
-  return t(
-    'Enterprise features are on until {when}. Then you are back on {plan}. Your credits are not affected.',
-    {
-      when: enterpriseTrialEndsWhen(trial),
-      plan: trial.basePlanName,
-    },
-  );
+function trialLineText(trial: EnterpriseTrial): string {
+  const end = dayjs(trial.endsAt);
+  return pickByDay({
+    end,
+    today: () => t('Enterprise trial · ends today'),
+    tomorrow: () => t('Enterprise trial · ends tomorrow'),
+    later: () =>
+      t('Enterprise trial · ends {date}', { date: end.format('MMM D') }),
+  });
+}
+
+function trialDetailsText(trial: EnterpriseTrial): string {
+  const end = dayjs(trial.endsAt);
+  const time = end.format('h:mm A');
+  const plan = trial.basePlanName;
+  return pickByDay({
+    end,
+    today: () =>
+      t(
+        'Enterprise features are on until today at {time}. Then you are back on the {plan} plan. Your credits are not affected.',
+        { time, plan },
+      ),
+    tomorrow: () =>
+      t(
+        'Enterprise features are on until tomorrow at {time}. Then you are back on the {plan} plan. Your credits are not affected.',
+        { time, plan },
+      ),
+    later: () =>
+      t(
+        'Enterprise features are on until {date}. Then you are back on the {plan} plan. Your credits are not affected.',
+        { date: end.format('MMM D'), plan },
+      ),
+  });
+}
+
+function pickByDay({
+  end,
+  today,
+  tomorrow,
+  later,
+}: {
+  end: dayjs.Dayjs;
+  today: () => string;
+  tomorrow: () => string;
+  later: () => string;
+}): string {
+  if (end.isSame(dayjs(), 'day')) {
+    return today();
+  }
+  if (end.isSame(dayjs().add(1, 'day'), 'day')) {
+    return tomorrow();
+  }
+  return later();
 }

@@ -5,7 +5,10 @@ import { cloneElement, isValidElement, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import {
+  ENTERPRISE_TRIAL_DAYS,
+  enterpriseTrialHooks,
+} from '../hooks/enterprise-trial-hooks';
 import { useEnterpriseTrialDialogStore } from '../stores/enterprise-trial-dialog-state';
 
 import { FeatureKey } from './request-trial';
@@ -36,7 +39,9 @@ export function EnterpriseTrialCta({
           onClick={open}
           className="font-medium text-accent-11 hover:underline"
         >
-          {t('start a free 7-day trial')}
+          {t('start a free {days}-day trial', {
+            days: ENTERPRISE_TRIAL_DAYS,
+          })}
         </button>
       </>
     );

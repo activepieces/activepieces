@@ -48,4 +48,3 @@ export {
   enterpriseTrialHooks,
   enterpriseTrialKey,
 } from './hooks/enterprise-trial-hooks';
-export { useEnterpriseTrialDesignStore } from './stores/enterprise-trial-design-state';

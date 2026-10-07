@@ -28,6 +28,7 @@ export function EnterpriseTrialSalesLink({
         }
       >
         {label ?? t('Talk to sales for 14 more days')}
+        <span className="sr-only"> {t('(opens in a new tab)')}</span>
       </a>
     </Button>
   );
