@@ -143,6 +143,10 @@ function AppHeader() {
           to="/"
           aria-label={collapsed ? t('Open sidebar') : undefined}
           onClick={(event) => {
+            if (event.detail > 1) {
+              event.preventDefault();
+              return;
+            }
             if (!collapsed) {
               closeMobileSheet();
               return;
@@ -264,7 +268,10 @@ function AppFooterExtras() {
     <>
       <div
         inert={state === 'collapsed' && !isMobile}
-        className={sidebarStyles.hideWhenCollapsed}
+        className={cn(
+          sidebarStyles.hideWhenCollapsed,
+          '[@media(max-height:600px)]:hidden',
+        )}
       >
         <div className="min-h-0 overflow-hidden">
           <div className="w-[calc(var(--sidebar-width)-1rem)]">

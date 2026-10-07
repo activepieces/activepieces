@@ -22,6 +22,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
@@ -252,7 +253,11 @@ function ProjectsGroup() {
                   }}
                 />
               )}
-              <ProjectSortMenu sort={sort} onChange={changeSort} />
+              <ProjectSortMenu
+                key={String(isCollapsed)}
+                sort={sort}
+                onChange={changeSort}
+              />
             </div>
           </div>
         </div>
@@ -288,7 +293,8 @@ function ProjectItem({
   onOpen: (params: { projectId: string; name: string }) => void;
 }) {
   const prefersReducedMotion = useReducedMotion();
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, state } = useSidebar();
+  const isCollapsed = state === 'collapsed' && !isMobile;
   const name = getProjectName(project);
   const isTeam = project.type === ProjectType.TEAM;
   const palette =
@@ -324,7 +330,13 @@ function ProjectItem({
               <Lock className="size-3! text-gray-11" />
             )}
           </span>
-          <span>{name}</span>
+          {isCollapsed ? (
+            <span>{name}</span>
+          ) : (
+            <TextWithTooltip tooltipMessage={name}>
+              <span>{name}</span>
+            </TextWithTooltip>
+          )}
         </motion.button>
       </SidebarMenuButton>
     </SidebarMenuItem>
