@@ -19,7 +19,7 @@ import { useMcpNav } from '../mcp-nav';
 import { PageBand } from '../page-band';
 
 import { useConnectHome } from './use-connect-home';
-import { WireHero } from './wire-hero';
+import { WireFrame } from './wire-frame';
 
 export function ConnectPage({
   clients,
@@ -41,20 +41,35 @@ export function ConnectPage({
   const rowProps = { home, isReachableFromInternet };
 
   return (
-    <PageBand className="flex flex-col items-center gap-12 py-12">
-      <WireHero brandName={home.brandName} />
-
-      <div className="grid w-full max-w-[1040px] grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <div className="flex flex-col gap-6">
-          <ClientGroupCard {...group('terminal')} {...rowProps} />
-          <ClientGroupCard {...group('editors')} {...rowProps} />
+    <PageBand className="py-12">
+      <WireFrame
+        header={
+          <header className="flex max-w-[520px] flex-col items-center gap-4 text-center">
+            <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+              {t('Do more with {brand}, everywhere you use AI.', {
+                brand: home.brandName,
+              })}
+            </h1>
+            <p className="text-base text-gray-11">
+              {t(
+                'Connect Claude, Cursor, ChatGPT or any MCP client. One-time OAuth sign-in, no API keys, revoke anytime.',
+              )}
+            </p>
+          </header>
+        }
+      >
+        <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-6">
+            <ClientGroupCard {...group('terminal')} {...rowProps} />
+            <ClientGroupCard {...group('editors')} {...rowProps} />
+          </div>
+          <div className="flex flex-col gap-6">
+            {home.grants.length > 0 && <ConnectedCard grants={home.grants} />}
+            <ServerUrlCard serverUrl={serverUrl} />
+            <ClientGroupCard {...group('chat')} {...rowProps} />
+          </div>
         </div>
-        <div className="flex flex-col gap-6">
-          {home.grants.length > 0 && <ConnectedCard grants={home.grants} />}
-          <ServerUrlCard serverUrl={serverUrl} />
-          <ClientGroupCard {...group('chat')} {...rowProps} />
-        </div>
-      </div>
+      </WireFrame>
     </PageBand>
   );
 }
