@@ -1,3 +1,4 @@
+import { PropertyType } from '@activepieces/pieces-framework';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { adjustNumberByIdAction } from '../src/lib/actions/ai/adjust-number-by-id';
 import { findObjectsByIdAction } from '../src/lib/actions/ai/find-objects-by-id';
@@ -47,7 +48,7 @@ describe('save_blog_post', () => {
     const seen = stubFetch((request) =>
       request.method === 'GET' ? { body: { data: { id: 'hello', title: 'Hello' } } } : { body: { data: { id: 'hello', title: 'Hello', summary: 'New' } } },
     );
-    const result = await saveBlogPostAction.run(context({ collection: 'blog', post_id: 'hello', summary: 'New', categories: [], tags: undefined }));
+    const result = await saveBlogPostAction.run(context({ collection: 'blog', post_id: 'hello', summary: 'New', categories: '', tags: undefined }));
     expect(seen.map((request) => request.method)).toEqual(['GET', 'PATCH']);
     expect(seen[1].json).toEqual({ summary: 'New' });
     expect(result).toMatchObject({ result: 'updated', collection: 'blog', id: 'hello' });
@@ -58,7 +59,7 @@ describe('save_blog_post', () => {
       request.method === 'GET' ? { status: 404, body: { error: { message: 'Not Found' } } } : { body: { data: { id: 'new-post', title: 'New' } } },
     );
     const result = await saveBlogPostAction.run(
-      context({ collection: 'blog', post_id: 'new-post', title: 'New', categories: ['News, Tech'], featured: 'yes', draft: 'draft' }),
+      context({ collection: 'blog', post_id: 'new-post', title: 'New', categories: 'News, Tech', featured: 'yes', draft: 'draft' }),
     );
     expect(seen[1].method).toBe('POST');
     expect(seen[1].path).toBe('/api/collections/blog');
@@ -83,6 +84,19 @@ describe('save_blog_post', () => {
     const seen = stubFetch(() => ({ body: { data: { id: 'my-title', title: 'My Title' } } }));
     await saveBlogPostAction.run(context({ collection: 'blog', title: 'My Title', categories: '["News","Tech"]', tags: 'a, b' }));
     expect(seen[0].json).toEqual({ draft: false, title: 'My Title', categories: ['News', 'Tech'], tags: ['a', 'b'] });
+  });
+
+  test('categories and tags are text inputs, so the engine accepts typed and mapped values', () => {
+    expect(saveBlogPostAction.props.categories.type).toBe(PropertyType.SHORT_TEXT);
+    expect(saveBlogPostAction.props.tags.type).toBe(PropertyType.SHORT_TEXT);
+  });
+
+  test('keeps commas inside list entries and splits only plain text', async () => {
+    const seen = stubFetch(() => ({ body: { data: { id: 'my-title', title: 'My Title' } } }));
+    await saveBlogPostAction.run(context({ collection: 'blog', title: 'My Title', categories: '["News, Events","Tech"]', tags: 'one,  two ,' }));
+    await saveBlogPostAction.run(context({ collection: 'blog', title: 'My Title', categories: ['News, Events'] }));
+    expect(seen[0].json).toEqual({ draft: false, title: 'My Title', categories: ['News, Events', 'Tech'], tags: ['one', 'two'] });
+    expect(seen[1].json).toEqual({ draft: false, title: 'My Title', categories: ['News, Events'] });
   });
 });
 

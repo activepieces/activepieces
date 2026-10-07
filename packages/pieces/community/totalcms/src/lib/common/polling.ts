@@ -3,6 +3,7 @@ import { totalcmsApi, totalcmsHelpers, TotalCmsConnection } from './client';
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 5;
+const MAX_START_PAGES = 50;
 const TEST_ITEMS = 5;
 const STORE_KEY = 'totalcms_checkpoint';
 
@@ -18,8 +19,8 @@ async function enable({ auth, store, collection, field, isRepublish }: PollParam
   if (isRepublish && (await readCheckpoint({ store })) !== null) {
     return;
   }
-  const page = await totalcmsApi.queryObjects({ auth, collection, limit: PAGE_SIZE, offset: 0, sort: `-${field}` });
-  await store.put(STORE_KEY, checkpointFrom({ objects: page.objects, field, previous: { ts: 0, ids: [] } }));
+  const newest = await collectNewestGroup({ auth, collection, field });
+  await store.put(STORE_KEY, checkpointFrom({ objects: newest, field, previous: { ts: 0, ids: [] } }));
 }
 
 async function disable({ store }: { store: Store }): Promise<void> {
@@ -73,6 +74,36 @@ async function collectSince({
     }
   }
   return pages.flat();
+}
+
+async function collectNewestGroup({
+  auth,
+  collection,
+  field,
+}: {
+  auth: TotalCmsConnection;
+  collection: string;
+  field: string;
+}): Promise<Record<string, unknown>[]> {
+  const collected: Record<string, unknown>[] = [];
+  for (let pageIndex = 0; pageIndex < MAX_START_PAGES; pageIndex++) {
+    const page = await totalcmsApi.queryObjects({
+      auth,
+      collection,
+      limit: PAGE_SIZE,
+      offset: pageIndex * PAGE_SIZE,
+      sort: `-${field}`,
+    });
+    collected.push(...page.objects);
+    const newest = collected.map((item) => timestampOf({ item, field })).find((ts) => !Number.isNaN(ts));
+    const reachedOlder = newest !== undefined && page.objects.some((item) => timestampOf({ item, field }) < newest);
+    if (reachedOlder || page.objects.length < PAGE_SIZE) {
+      return collected;
+    }
+  }
+  throw new Error(
+    `More than ${MAX_START_PAGES * PAGE_SIZE} objects in collection "${collection}" share the newest "${field}" date, so Activepieces cannot tell which ones already exist. Try again after newer objects are added.`,
+  );
 }
 
 function isNewer({ item, field, checkpoint }: { item: Record<string, unknown>; field: string; checkpoint: Checkpoint }): boolean {

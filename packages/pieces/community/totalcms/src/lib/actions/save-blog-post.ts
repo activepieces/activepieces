@@ -44,14 +44,16 @@ export const saveBlogPostAction = createAction({
       description: 'A link to related media, such as a video or podcast episode.',
       required: false,
     }),
-    categories: Property.Array({
+    categories: Property.ShortText({
       displayName: 'Categories',
-      description: 'Replaces the post categories. Leave empty to keep the current ones.',
+      description:
+        'Replaces the post categories. Separate them with commas, or map a list. Use a JSON list such as ["News, Events"] when a name contains a comma. Leave empty to keep the current ones.',
       required: false,
     }),
-    tags: Property.Array({
+    tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'Replaces the post tags. Leave empty to keep the current ones.',
+      description:
+        'Replaces the post tags. Separate them with commas, or map a list. Use a JSON list such as ["News, Events"] when a name contains a comma. Leave empty to keep the current ones.',
       required: false,
     }),
     draft: Property.StaticDropdown({
@@ -141,7 +143,7 @@ function toStringList({ value }: { value: unknown }): string[] {
     return [];
   }
   return list
-    .flatMap((item) => (typeof item === 'string' ? item.split(',') : typeof item === 'number' ? [String(item)] : []))
+    .flatMap((item) => (typeof item === 'string' ? [item] : typeof item === 'number' ? [String(item)] : []))
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 }
@@ -149,7 +151,7 @@ function toStringList({ value }: { value: unknown }): string[] {
 function listFromString({ text }: { text: string }): unknown[] {
   const trimmed = text.trim();
   const parsed = trimmed.startsWith('[') ? parseJsonArray({ text: trimmed }) : null;
-  return parsed ?? [trimmed];
+  return parsed ?? trimmed.split(',');
 }
 
 function parseJsonArray({ text }: { text: string }): unknown[] | null {
@@ -168,8 +170,8 @@ type BlogPostProps = {
   content?: string;
   extra?: string;
   media?: string;
-  categories?: unknown[];
-  tags?: unknown[];
+  categories?: string;
+  tags?: string;
   date?: string;
   draft?: string;
   featured?: string;

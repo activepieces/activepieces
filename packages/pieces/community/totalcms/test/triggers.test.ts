@@ -56,6 +56,20 @@ describe('new_blog_post', () => {
     expect(seen.filter((request) => request.path.endsWith('/query')).length).toBeGreaterThanOrEqual(3);
   });
 
+  test('enable records every existing post that shares the newest timestamp', async () => {
+    let objects: Record<string, unknown>[] = [
+      { id: 'older', created: '2026-10-07T09:00:00+00:00' },
+      ...Array.from({ length: 250 }, (_, i) => ({ id: `same${i}`, created: '2026-10-07T10:00:00+00:00' })),
+    ];
+    const seen = site(() => objects);
+    const ctx = context({ collection: 'blog', include_drafts: true });
+    await newBlogPost.onEnable(ctx);
+    expect(seen.filter((request) => request.path.endsWith('/query')).map((request) => request.query.get('offset'))).toEqual(['0', '100', '200']);
+    expect(await newBlogPost.run(ctx)).toEqual([]);
+    objects = [...objects, { id: 'fresh', created: '2026-10-07T10:00:00+00:00' }];
+    expect((await newBlogPost.run(ctx)).map((post) => Reflect.get(Object(post), 'id'))).toEqual(['fresh']);
+  });
+
   test('a collection without a created field fails clearly', async () => {
     stubFetch((request) => (request.path.endsWith('/schema') ? { body: { data: { properties: { text: {} }, index: ['id', 'text'] } } } : { body: { data: [] } }));
     await expect(newBlogPost.onEnable(context({ collection: 'text' }))).rejects.toThrow('does not record a "created" date');
