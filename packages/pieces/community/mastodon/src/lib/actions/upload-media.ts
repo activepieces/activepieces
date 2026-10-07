@@ -10,8 +10,9 @@ export const uploadMedia = createAction({
   name: 'upload_media',
   classification: 'WRITE',
   displayName: 'Upload Media',
-  description: 'Upload an image, video or audio file to attach to a status.',
-  audience: 'ai',
+  description:
+    'Upload an image, video or audio file, then map its Media ID into Media IDs of Post Status, Schedule Status or Edit Status to attach it.',
+  audience: 'both',
   aiMetadata: {
     description:
       'Uploads a media file and returns its ID to pass as Media IDs to Create Status, Schedule Status or Edit Status. Large video and audio are processed asynchronously: when processing is true the url is still null, so call Get Media until url is non-null before attaching it. Unattached uploads expire after a while. Each call uploads a new file.',
@@ -26,7 +27,7 @@ export const uploadMedia = createAction({
     }),
     description: Property.LongText({
       displayName: 'Alt Text',
-      description: 'Plain-text description of the media for accessibility (alt text).',
+      description: 'Describe the media for people using screen readers (alt text), for example "A cat asleep on a keyboard".',
       required: false,
     }),
     focus: Property.ShortText({

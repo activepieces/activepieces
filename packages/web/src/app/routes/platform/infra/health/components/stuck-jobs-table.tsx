@@ -42,8 +42,8 @@ export function StuckJobsTable({ stuckJobs, isLoading }: StuckJobsTableProps) {
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : jobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
-            <CircleCheck className="size-8 text-emerald-500" />
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-gray-11">
+            <CircleCheck className="size-8 text-success-11" />
             <p className="text-sm">{t('No stuck jobs')}</p>
           </div>
         ) : (
@@ -65,7 +65,7 @@ export function StuckJobsTable({ stuckJobs, isLoading }: StuckJobsTableProps) {
                   }
                 >
                   <TableCell className="font-medium">{job.flowName}</TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-gray-11">
                     {job.projectName}
                   </TableCell>
                   <TableCell>

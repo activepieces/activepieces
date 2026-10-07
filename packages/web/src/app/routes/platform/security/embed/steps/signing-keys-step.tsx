@@ -22,6 +22,7 @@ import {
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog, signingKeyApi } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { StepShell } from '../stepper';
@@ -43,7 +44,12 @@ export const SigningKeysStep = ({
       )}
       actions={
         <NewSigningKeyDialog onCreate={refetch}>
-          <Button size="sm">{t('New Signing Key')}</Button>
+          <Button
+            {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
+            size="sm"
+          >
+            {t('New Signing Key')}
+          </Button>
         </NewSigningKeyDialog>
       }
     >
@@ -71,7 +77,7 @@ const SigningKeysList = ({
 
   if (signingKeys.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+      <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
         <Key className="size-10" />
         <p className="text-sm">{t('No signing keys yet')}</p>
       </div>
@@ -98,9 +104,7 @@ const SigningKeysList = ({
               {' ' + t('Created')}{' '}
               {formatUtils.formatDateToAgo(new Date(signingKey.created))}
               <br />
-              <span className="text-xs text-muted-foreground">
-                kid: {signingKey.id}
-              </span>
+              <span className="text-xs text-gray-11">kid: {signingKey.id}</span>
             </ItemDescription>
           </ItemContent>
           <ItemActions>
@@ -123,12 +127,16 @@ const SigningKeysList = ({
                     refetch();
                   }}
                   onError={() => internalErrorToast()}
+                  controlId={AdminControl.EMBEDDING_SIGNING_KEY_DELETE_CONFIRM}
                 >
                   <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
+                    {...adminControl(
+                      AdminControl.EMBEDDING_SIGNING_KEY_DELETE_OPEN,
+                    )}
+                    className="text-danger-11 focus:text-danger-11"
                     onSelect={(e) => e.preventDefault()}
                   >
-                    <Trash className="size-4 mr-2 text-destructive" />
+                    <Trash className="size-4 mr-2 text-danger-11" />
                     {t('Delete Signing Key')}
                   </DropdownMenuItem>
                 </ConfirmationDeleteDialog>

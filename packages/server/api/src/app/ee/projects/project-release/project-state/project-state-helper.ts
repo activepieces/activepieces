@@ -123,7 +123,7 @@ type MergeDestinationAuthParams = {
     incomingVersion: FlowVersion
 }
 
-type RepublishFlowParams = {
+export type RepublishFlowParams = {
     flow: PopulatedFlow
     projectId: string
     status?: FlowStatus

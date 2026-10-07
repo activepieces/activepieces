@@ -8,6 +8,41 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
+
+Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
+
+Get File used to return a `file_url` that contained the bot token, which put the token in the run's step output. From 0.8.0 the output no longer has `file_url`. With **Download File** on, it still returns the content as `file_content_base64`.
+
+#### What you need to do
+
+If a flow branches on Get Chat or Get Chat Member returning `ok: false`, handle the failure with the step's error handling options instead. If a later step reads Get File's `file_url`, turn on **Download File** and use `file_content_base64`. Steps keep running on the version they were built with until you upgrade them.
+
+#### Xero connections request Xero's granular scopes
+
+Since 2 March 2026 Xero refuses the broad scopes `accounting.transactions`, `accounting.reports.read` and `accounting.journals.read` for newly created Xero apps, so connecting such an app failed with `invalid_scope`. From Xero 0.8.0, new connections request the granular scopes instead: `accounting.invoices`, `accounting.payments`, `accounting.banktransactions`, `accounting.manualjournals` and the per-report scopes (aged, balance sheet, bank summary, executive summary, profit and loss, tax and trial balance reports). Existing connections are unaffected: Xero keeps the permissions granted at sign-in, and token refresh sends no scope.
+
+New connections no longer have Xero's Receipts, Expense Claims or Journals permissions, because Xero does not grant `accounting.classicexpenses` or `accounting.journals.read` to new apps. On those connections, Upload Attachment with the Receipt resource type fails with a message saying so, and Custom API Call to `/Receipts`, `/ExpenseClaims` or `/Journals` returns 401 or 403.
+
+#### What you need to do
+
+Nothing for existing Xero connections. To connect a Xero app created on or after 2 March 2026, upgrade the Xero step to 0.8.0 or later before creating the connection; a connection created from a step still on an earlier version requests the old scopes. Keep a connection created before 0.8.0 if your flows attach files to Receipts or call the Receipts, Expense Claims or Journals endpoints.
+
+#### Helm chart 0.5.0 uses the cluster's default StorageClass again
+
+Chart 0.4.0 set the app's cache volume to the `local-path` StorageClass whenever `persistence.storageClassName` was unset, which only exists on k3s-style clusters, so new installs elsewhere stayed `Pending`. From 0.5.0 an unset value uses the cluster's default StorageClass again, as chart 0.3.x did. A StatefulSet's volume class cannot change after it is created, so `helm upgrade` keeps the class your release already uses.
+
+#### What you need to do
+
+If your release was created with chart 0.4.0, you never set `persistence.storageClassName`, and you deploy by rendering the chart without a cluster connection (Argo CD, `helm template | kubectl apply`), pin the class your StatefulSet was created with before upgrading, or every sync fails with `updates to statefulset spec ... are forbidden`:
+
+```yaml
+persistence:
+  storageClassName: "local-path"
+```
+
+Direct `helm upgrade` needs no change. A new install on a cluster with no default StorageClass (`kubectl get storageclass` shows none marked `(default)`) must set `persistence.storageClassName`, or the cache volume and the app pod stay `Pending`.
+
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 
 Read File used to send the connection's Zoho access token to whatever URL it was given, including hosts outside Zoho. From Zoho CRM 0.4.0 it only fetches `https` URLs on the connection's own Zoho API host under `/crm/` (for example `https://www.zohoapis.com/crm/bulk/v8/read/<job>/result`), or on that data centre's download hosts (for example `https://download-accl.zoho.com/v2/crm/...` for a data backup). Custom Zoho function URLs (`/crm/.../functions/...`) and URLs in another data centre are refused. Any other URL fails before a request is made. Redirects are followed only to those same hosts; a redirect anywhere else stops the download before that host is requested. The file is streamed, so the deployment's file size limit (`AP_MAX_FILE_SIZE_MB`) applies.
