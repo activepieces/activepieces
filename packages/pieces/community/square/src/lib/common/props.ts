@@ -5,7 +5,9 @@ import { squareClient, SquareAuth } from './client';
 import { squareShape } from './shape';
 
 const DROPDOWN_MAX = 1000;
-const LINE_ITEM_VARIATION_MAX = 500;
+const LINE_ITEM_ITEMS_MAX = 500;
+const CUSTOMER_MATCH_MAX = 100;
+const CUSTOMER_SCAN_MAX = 10000;
 
 function location({ required, displayName = 'Location', description }: { required: boolean; displayName?: string; description?: string }) {
   return Property.Dropdown({
@@ -37,7 +39,9 @@ function customer({ required, displayName = 'Customer', description }: { require
   return Property.Dropdown({
     auth: squareAuth,
     displayName,
-    description: description ?? 'Pick a customer. Type part of a name or email to search.',
+    description:
+      description ??
+      'Pick a customer. Type an email to search all customers, or part of a name to search the 10,000 newest. For an older customer, search by email or map the Customer ID.',
     required,
     refreshers: [],
     refreshOnSearch: true,
@@ -49,7 +53,7 @@ function customer({ required, displayName = 'Customer', description }: { require
         const term = (searchValue ?? '').trim().toLowerCase();
         const customers = term.includes('@')
           ? await searchCustomersByEmail({ auth, email: term })
-          : await listCustomers({ auth });
+          : await listCustomers({ auth, nameTerm: term.length > 0 ? term : undefined });
         const options = customers
           .filter((c) => term.length === 0 || customerLabel(c).toLowerCase().includes(term))
           .slice(0, DROPDOWN_MAX)
@@ -153,10 +157,17 @@ function lineItems({ displayName = 'Line Items', description }: { displayName?: 
       let options: DropdownOption<string>[] = [];
       if (auth) {
         try {
-          const items = await searchItems({ auth, text: undefined, productTypes: undefined, max: LINE_ITEM_VARIATION_MAX });
-          options = items.flatMap((i) =>
-            i.variations.map((v) => ({ label: `${i.name ?? i.id}${v.name && v.name !== 'Regular' ? ` - ${v.name}` : ''}${v.price ? ` (${v.price} ${v.currency ?? ''})` : ''}`.trim(), value: v.id ?? '' })),
-          );
+          const items = await searchItemObjects({ auth, text: undefined, productTypes: undefined, max: LINE_ITEM_ITEMS_MAX });
+          options = items
+            .flatMap((raw) => {
+              const name = squareShape.str({ value: squareShape.rec({ value: raw, key: 'item_data' }), key: 'name' }) ?? squareShape.str({ value: raw, key: 'id' });
+              return squareShape
+                .list({ value: squareShape.rec({ value: raw, key: 'item_data' }), key: 'variations' })
+                .map((variationRaw) => squareShape.variation(variationRaw))
+                .filter((v) => v.id !== null)
+                .map((v) => ({ label: `${name}${v.name && v.name !== 'Regular' ? ` - ${v.name}` : ''}${v.price ? ` (${v.price} ${v.currency ?? ''})` : ''}`.trim(), value: v.id ?? '' }));
+            })
+            .slice(0, DROPDOWN_MAX);
         } catch {
           options = [];
         }
@@ -253,8 +264,9 @@ function clearCustomerFields() {
   });
 }
 
-async function listCustomers({ auth }: { auth: SquareAuth }) {
+async function listCustomers({ auth, nameTerm }: { auth: SquareAuth; nameTerm?: string }) {
   const results: ReturnType<typeof squareShape.customer>[] = [];
+  let scanned = 0;
   let cursor: string | undefined;
   do {
     const body = await squareClient.request<unknown>({
@@ -264,9 +276,11 @@ async function listCustomers({ auth }: { auth: SquareAuth }) {
       query: { limit: 100, sort_field: 'CREATED_AT', sort_order: 'DESC', cursor },
       operation: 'list customers',
     });
-    results.push(...squareShape.list({ value: body, key: 'customers' }).map(squareShape.customer));
+    const page = squareShape.list({ value: body, key: 'customers' }).map(squareShape.customer);
+    scanned += page.length;
+    results.push(...(nameTerm ? page.filter((c) => customerLabel(c).toLowerCase().includes(nameTerm)) : page));
     cursor = squareShape.str({ value: body, key: 'cursor' }) ?? undefined;
-  } while (cursor && results.length < DROPDOWN_MAX);
+  } while (cursor && (nameTerm ? results.length < CUSTOMER_MATCH_MAX && scanned < CUSTOMER_SCAN_MAX : results.length < DROPDOWN_MAX));
   return results;
 }
 
@@ -281,8 +295,12 @@ async function searchCustomersByEmail({ auth, email }: { auth: SquareAuth; email
   return squareShape.list({ value: body, key: 'customers' }).map(squareShape.customer);
 }
 
-async function searchItems({ auth, text, productTypes, max }: { auth: SquareAuth; text: string | undefined; productTypes: string[] | undefined; max: number }) {
-  const results: ReturnType<typeof squareShape.catalogItem>[] = [];
+async function searchItems(params: { auth: SquareAuth; text: string | undefined; productTypes: string[] | undefined; max: number }) {
+  return (await searchItemObjects(params)).map(squareShape.catalogItem);
+}
+
+async function searchItemObjects({ auth, text, productTypes, max }: { auth: SquareAuth; text: string | undefined; productTypes: string[] | undefined; max: number }) {
+  const results: Record<string, unknown>[] = [];
   let cursor: string | undefined;
   const textFilter = text && text.trim().length > 0 ? text.trim() : undefined;
   do {
@@ -293,7 +311,7 @@ async function searchItems({ auth, text, productTypes, max }: { auth: SquareAuth
       body: { text_filter: textFilter, product_types: productTypes, limit: 100, cursor },
       operation: 'search catalog items',
     });
-    results.push(...squareShape.list({ value: body, key: 'items' }).map(squareShape.catalogItem));
+    results.push(...squareShape.list({ value: body, key: 'items' }));
     cursor = squareShape.str({ value: body, key: 'cursor' }) ?? undefined;
   } while (cursor && results.length < max);
   return results.slice(0, max);

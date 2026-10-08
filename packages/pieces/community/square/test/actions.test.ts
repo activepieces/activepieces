@@ -210,4 +210,25 @@ describe('dropdowns', () => {
     expect(result.options).toHaveLength(120);
     expect(result.options[119]).toMatchObject({ value: 'V119' });
   });
+
+  test('the order line item picker lists every variation of a large item', async () => {
+    const variations = Array.from({ length: 120 }, (_, i) => ({ id: `V${i}`, type: 'ITEM_VARIATION', item_variation_data: { item_id: 'I1', name: `Size ${i}` } }));
+    stubFetch(() => ({ body: { items: [{ id: 'I1', type: 'ITEM', item_data: { name: 'Shirt', variations } }] } }));
+    const props = await squareProps.lineItems().props({ auth: connection() }, {} as never);
+    const options = Reflect.get(Object(Reflect.get(Object(props['items']), 'properties'))['variation_id'], 'options').options;
+    expect(options).toHaveLength(120);
+    expect(options[119]).toMatchObject({ value: 'V119', label: 'Shirt - Size 119' });
+  });
+
+  test('the customer dropdown finds a name beyond the first 1,000 customers', async () => {
+    const page = (start: number) => Array.from({ length: 100 }, (_, i) => ({ id: `C${start + i}`, given_name: `Person ${start + i}` }));
+    const seen = stubFetch((request) => {
+      const index = Number(request.query.get('cursor') ?? '0');
+      const customers = index === 11 ? [...page(1100).slice(0, 99), { id: 'OLD', given_name: 'Grace', family_name: 'Hopper' }] : page(index * 100);
+      return { body: { customers, cursor: index < 11 ? String(index + 1) : undefined } };
+    });
+    const result = await squareProps.customer({ required: true }).options({ auth: connection() }, { searchValue: 'grace hop' });
+    expect(result.options).toEqual([{ label: 'Grace Hopper', value: 'OLD' }]);
+    expect(seen).toHaveLength(12);
+  });
 });
