@@ -67,7 +67,7 @@ async function pickModel({ body, platformId, projectId, log }: {
         if (body.action === AiStepAction.GENERATE_IMAGE) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Image steps pick a specific model, not a tier' } })
         }
-        return aiModelCandidates(log).firstCandidate({ platformId, tierId: body.modelTierId })
+        return aiModelCandidates(log).firstCandidate({ platformId, tierId: body.modelTierId, scope: { type: 'project', projectId } })
     }
     if (isNil(body.provider) || isNil(body.modelId)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Pick a tier or a provider and model' } })

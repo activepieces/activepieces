@@ -13,6 +13,7 @@ import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openroute
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { platformService } from '../platform/platform.service'
+import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviderHealth } from './ai-provider-health'
 import { AiToolConfigEntity } from './ai-tool-config-entity'
@@ -49,7 +50,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
         const rows = await listVisibleRows({ platformId, log })
-        const eligible = rows.filter((row) => rowAllowsScope({ row, scope: { type: 'project', projectId } }))
+        const eligible = rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope: { type: 'project', projectId } }))
         const ranked = rankRows({ rows: eligible, scope: { type: 'project', projectId } })
         const chatRow = pickChatRow(ranked)
         return unique(ranked.map((row) => row.provider)).map((provider) => {
@@ -189,12 +190,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const candidates = await findRunKeyCandidates({ platformId, provider, configId, scope: resolvedFor, log })
         return candidates.every((row) => target.type === 'platform'
             ? row.projectScope === 'all'
-            : rowAllowsScope({ row, scope: target }))
+            : aiKeyScope.rowAllowsScope({ row, scope: target }))
     },
 
     async exists({ platformId, provider, scope, configId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string }): Promise<boolean> {
         const rows = await aiProviderRepo().findBy({ platformId, provider })
-        return rows.some((row) => rowAllowsScope({ row, scope }) && (isNil(configId) || row.id === configId))
+        return rows.some((row) => aiKeyScope.rowAllowsScope({ row, scope }) && (isNil(configId) || row.id === configId))
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
@@ -343,20 +344,6 @@ const PROJECT_SCOPE_SPECIFICITY: Record<AiProviderProjectScope, number> = {
     all: 2,
 }
 
-function rowAllowsScope({ row, scope }: { row: AIProviderSchema, scope: ProviderScope }): boolean {
-    if (scope.type === 'platform') {
-        return true
-    }
-    switch (row.projectScope) {
-        case 'selected':
-            return row.projectIds.includes(scope.projectId)
-        case 'except':
-            return !row.projectIds.includes(scope.projectId)
-        default:
-            return true
-    }
-}
-
 function rankRows({ rows, scope }: { rows: AIProviderSchema[], scope: ProviderScope }): AIProviderSchema[] {
     const order = scope.type === 'platform' ? PLATFORM_SCOPE_PREFERENCE : PROJECT_SCOPE_SPECIFICITY
     return [...rows].sort((a, b) => {
@@ -473,7 +460,7 @@ async function assertCapabilitiesKeepKey({ manager, platformId, providerId, requ
 
 async function findEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema | null> {
     const rows = await aiProviderRepo().findBy({ platformId, provider })
-    const eligible = rows.filter((row) => rowAllowsScope({ row, scope }))
+    const eligible = rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope }))
     return rankRows({ rows: eligible, scope })[0] ?? null
 }
 
@@ -498,7 +485,7 @@ async function resolveRowForScope({ platformId, provider, scope, configId }: { p
         return resolveEligibleRow({ platformId, provider, scope })
     }
     const rows = await aiProviderRepo().findBy({ platformId, provider })
-    const row = rows.find((candidate) => candidate.id === configId && rowAllowsScope({ row: candidate, scope }))
+    const row = rows.find((candidate) => candidate.id === configId && aiKeyScope.rowAllowsScope({ row: candidate, scope }))
     if (isNil(row)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -584,7 +571,7 @@ async function findAvailableChatProviderRow({ platformId, scope, log }: { platfo
         { platformId, enabledForChat: true },
         { platformId, provider: AIProviderName.ACTIVEPIECES },
     ])
-    const rows = candidates.filter((row) => rowAllowsScope({ row, scope }))
+    const rows = candidates.filter((row) => aiKeyScope.rowAllowsScope({ row, scope }))
     const chatRow = pickChatRow(rows)
     if (chatRow?.provider !== AIProviderName.ACTIVEPIECES) {
         return chatRow
@@ -701,6 +688,4 @@ function getModelsCacheKey({ provider, auth, config }: { provider: AIProviderNam
     return `${provider}-${JSON.stringify(auth)}-${JSON.stringify(config)}`
 }
 
-export type ProviderScope =
-    | { type: 'project', projectId: string }
-    | { type: 'platform' }
+export type { ProviderScope }
