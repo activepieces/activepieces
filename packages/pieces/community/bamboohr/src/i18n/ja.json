@@ -3,7 +3,7 @@
   "API key": "API キー",
   "The subdomain used to access BambooHR. If you access BambooHR at https://mycompany.bamboohr.com, then the companyDomain is \"mycompany\"": "BambooHRにアクセスするために使用されるサブドメイン。https://mycompany.bamboohr.comでBambooHRにアクセスする場合、companyDomain は \"mycompany\" です。",
   "Follow [these instructions](https://documentation.bamboohr.com/docs/getting-started#authentication) to get your API key": "API キーを取得するには、[これらの手順](https://documentation.bamboohr.com/docs/getting-started#authentication) に従ってください",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Method": "方法",
   "Headers": "ヘッダー",
