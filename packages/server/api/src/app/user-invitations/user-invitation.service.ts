@@ -115,6 +115,14 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         status,
         entityManager,
     }: CreateInvitationRecordParams): Promise<UserInvitation> {
+        // Synkra: enforce seat limit only when this invite would add a NEW user
+        // to the platform (existing users joining another project don't consume a seat).
+        if (type === InvitationType.PLATFORM) {
+            const addsNewUser = await this.wouldAddNewUser({ email, platformId })
+            if (addsNewUser) {
+                await synkraEnforcement(log).checkSeatLimit(platformId)
+            }
+        }
         const id = apId()
         await repo(entityManager).upsert({
             id,

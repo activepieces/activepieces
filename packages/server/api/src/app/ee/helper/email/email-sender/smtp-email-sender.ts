@@ -8,6 +8,7 @@ import { defaultTheme } from '../../../../flags/theme'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
 import { platformService } from '../../../../platform/platform.service'
+import { synkraUsageService } from '../../../../synkra/billing/usage.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 
 export type SMTPEmailSender = EmailSender & {
@@ -62,6 +63,17 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                     html: emailBody,
                     ...(replyTo ? { replyTo } : {}),
                 })
+
+                // Synkra: meter the send for the platform owner (fire-and-forget)
+                void (async () => {
+                    try {
+                        const platform = await platformService(log).getOne(platformId)
+                        const ownerId = platform?.ownerId
+                        if (ownerId) {
+                            await synkraUsageService(log).increment(ownerId, 'emailsUsed', emails.length)
+                        }
+                    } catch { /* metering must never break sending */ }
+                })()
             }
             catch (e) {
                 log.error({

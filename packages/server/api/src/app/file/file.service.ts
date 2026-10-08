@@ -11,6 +11,8 @@ import { jwtUtils } from '../helper/jwt-utils'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { projectRepo } from '../project/project-repo'
+import { platformService } from '../platform/platform.service'
+import { synkraUsageService } from '../synkra/billing/usage.service'
 import { fileCompressor } from './file-compressor'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
@@ -35,6 +37,12 @@ const saveFileToDb = async (baseFile: BaseFile, data: Buffer | null) => {
 }
 export const fileService = (log: FastifyBaseLogger) => ({
     async save(params: SaveParams): Promise<File> {
+        const file = await this._saveInternal(params)
+        // Synkra: meter storage for the platform owner (fire-and-forget)
+        void meterStorage(log, params.platformId, file.size ?? 0)
+        return file
+    },
+    async _saveInternal(params: SaveParams): Promise<File> {
         const baseFile: BaseFile = {
             id: params.fileId ?? apId(),
             projectId: params.projectId,
@@ -429,4 +437,16 @@ type UploadPublicAssetParams = {
     allowedMimeTypes?: string[]
     maxFileSizeInBytes?: number
     metadata?: Record<string, string>
+}
+
+
+async function meterStorage(log: FastifyBaseLogger, platformId: string, bytes: number): Promise<void> {
+    if (!bytes || bytes <= 0) return
+    try {
+        const platform = await platformService(log).getOne(platformId)
+        const ownerId = platform?.ownerId
+        if (ownerId) {
+            await synkraUsageService(log).increment(ownerId, 'storageBytesUsed', bytes)
+        }
+    } catch { /* metering must never break uploads */ }
 }
