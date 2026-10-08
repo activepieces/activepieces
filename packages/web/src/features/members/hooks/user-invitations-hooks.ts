@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { InvitationType, UserInvitation } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
@@ -26,6 +27,27 @@ export const userInvitationsHooks = {
       isError: query.isError,
       refetch: query.refetch,
     };
+  },
+  useProjectPlatformInvitations: ({
+    projectId,
+  }: {
+    projectId: string | null;
+  }) => {
+    return useQuery<UserInvitation[]>({
+      queryFn: () => {
+        return userInvitationApi
+          .list({
+            type: InvitationType.PLATFORM,
+            projectId,
+            cursor: undefined,
+            limit: 100,
+          })
+          .then((res) => res.data);
+      },
+      queryKey: [userInvitationsQueryKey, 'platform', projectId],
+      enabled: !isNil(projectId),
+      staleTime: 0,
+    });
   },
 };
 

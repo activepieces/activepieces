@@ -32,6 +32,15 @@ export const MembersSettings = () => {
     isError: invitationsFailed,
     refetch: refetchInvitations,
   } = userInvitationsHooks.useInvitations();
+  const currentProjectId = authenticationSession.getProjectId();
+  const {
+    data: platformInvitations,
+    isLoading: platformInvitationsIsPending,
+    isError: platformInvitationsFailed,
+    refetch: refetchPlatformInvitations,
+  } = userInvitationsHooks.useProjectPlatformInvitations({
+    projectId: currentProjectId,
+  });
   const {
     data: platformUsersData,
     isLoading: platformUsersIsPending,
@@ -49,11 +58,10 @@ export const MembersSettings = () => {
   const refetch = useCallback(() => {
     refetchProjectMembers();
     refetchInvitations();
-  }, [refetchProjectMembers, refetchInvitations]);
+    refetchPlatformInvitations();
+  }, [refetchProjectMembers, refetchInvitations, refetchPlatformInvitations]);
 
   const combinedData: MemberRowData[] = useMemo(() => {
-    const currentProjectId = authenticationSession.getProjectId();
-
     const members: MemberRowData[] =
       projectMembers
         ?.filter((member) => member.user.status === UserStatus.ACTIVE)
@@ -70,6 +78,15 @@ export const MembersSettings = () => {
             invitation.projectId === currentProjectId &&
             invitation.type === InvitationType.PROJECT,
         )
+        .map((invitation) => ({
+          id: invitation.id,
+          type: 'invitation' as const,
+          data: invitation,
+        })) ?? [];
+
+    const pendingPlatformInvitations: MemberRowData[] =
+      platformInvitations
+        ?.filter((invitation) => invitation.projectId === currentProjectId)
         .map((invitation) => ({
           id: invitation.id,
           type: 'invitation' as const,
@@ -95,8 +112,19 @@ export const MembersSettings = () => {
           data: user,
         })) ?? [];
 
-    return [...members, ...platformAdminsAndOperators, ...pendingInvitations];
-  }, [projectMembers, invitations, platformUsersData]);
+    return [
+      ...members,
+      ...platformAdminsAndOperators,
+      ...pendingInvitations,
+      ...pendingPlatformInvitations,
+    ];
+  }, [
+    projectMembers,
+    invitations,
+    platformInvitations,
+    platformUsersData,
+    currentProjectId,
+  ]);
 
   const filteredData = useMemo(() => {
     if (!filterValue) {
@@ -157,10 +185,14 @@ export const MembersSettings = () => {
         isLoading={
           projectMembersIsPending ||
           invitationsIsPending ||
+          platformInvitationsIsPending ||
           platformUsersIsPending
         }
         isError={
-          projectMembersFailed || invitationsFailed || platformUsersFailed
+          projectMembersFailed ||
+          invitationsFailed ||
+          platformInvitationsFailed ||
+          platformUsersFailed
         }
         errorStateEntity={t('members')}
         onRetry={refetch}

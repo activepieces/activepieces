@@ -90,6 +90,19 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
         await repo(entityManager).update({ type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
     },
+    async removeProjectFromPlatformInvite({ id, platformId }: PlatformAndIdParams): Promise<UserInvitation> {
+        const invitation = await this.getOneOrThrow({ id, platformId })
+        if (invitation.type !== InvitationType.PLATFORM) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Only a platform invitation can have its project removed',
+                },
+            })
+        }
+        await repo().update({ id, platformId }, { projectId: null, projectRoleId: null })
+        return this.getOneOrThrow({ id, platformId })
+    },
     async detachProjectRoleFromPlatformInvites({ projectRoleId }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
         await repo().update({ type: InvitationType.PLATFORM, projectRoleId }, { projectId: null, projectRoleId: null })
     },
@@ -103,23 +116,33 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         status,
         entityManager,
     }: CreateInvitationRecordParams): Promise<UserInvitation> {
-        const id = apId()
-        await repo(entityManager).upsert({
-            id,
+        const normalizedEmail = email.toLowerCase().trim()
+        const record = {
             status,
             type,
-            email: email.toLowerCase().trim(),
+            email: normalizedEmail,
             platformId,
-            projectRoleId: projectRoleId ?? undefined,
-            platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
-            projectId: projectId ?? undefined,
-        }, ['email', 'platformId', 'projectId'])
-
-        return this.getOneOrThrow({
-            id,
-            platformId,
-            entityManager,
-        })
+            projectRoleId,
+            platformRole: type === InvitationType.PROJECT ? null : platformRole,
+            projectId,
+        }
+        switch (type) {
+            case InvitationType.PLATFORM: {
+                const id = await replacePlatformInvites({ email: normalizedEmail, platformId, projectId, entityManager })
+                await repo(entityManager).save({ id, ...record })
+                return this.getOneOrThrow({ id, platformId, entityManager })
+            }
+            case InvitationType.PROJECT: {
+                assertNotNullOrUndefined(projectId, 'projectId')
+                await repo(entityManager).update(
+                    { type: InvitationType.PLATFORM, email: normalizedEmail, platformId, projectId },
+                    { projectId: null, projectRoleId: null },
+                )
+                const id = apId()
+                await repo(entityManager).upsert({ id, ...record }, ['email', 'platformId', 'projectId'])
+                return this.getOneOrThrow({ id, platformId, entityManager })
+            }
+        }
     },
     async finalizeInvitation({
         userInvitation,
@@ -305,6 +328,20 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
 )`
 
 
+async function replacePlatformInvites({ email, platformId, projectId, entityManager }: ReplacePlatformInvitesParams): Promise<string> {
+    if (!isNil(projectId)) {
+        await repo(entityManager).delete({ type: InvitationType.PROJECT, email, platformId, projectId })
+    }
+    const [latest, ...duplicates] = await repo(entityManager).find({
+        where: { type: InvitationType.PLATFORM, email, platformId },
+        order: { created: 'DESC' },
+    })
+    if (duplicates.length > 0) {
+        await repo(entityManager).delete(duplicates.map((invitation) => invitation.id))
+    }
+    return latest?.id ?? apId()
+}
+
 async function addToInvitedProject({ invitation, userId, log, failsWithoutProjectRoles }: AddToInvitedProjectParams): Promise<void> {
     const { projectId, projectRoleId } = invitation
     assertNotNullOrUndefined(projectId, 'projectId')
@@ -359,6 +396,13 @@ const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyI
     })
     return userInvitation
 }
+type ReplacePlatformInvitesParams = {
+    email: string
+    platformId: string
+    projectId: string | null
+    entityManager?: EntityManager
+}
+
 type DetachProjectFromPlatformInvitesParams = {
     projectId: string
     entityManager: EntityManager

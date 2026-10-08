@@ -1,5 +1,7 @@
 import { ErrorCode, Permission } from '@activepieces/core-utils';
 import {
+  InvitationType,
+  PlatformRole,
   ProjectMemberWithUser,
   UserInvitation,
   UserWithMetaInformation,
@@ -16,6 +18,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
@@ -33,6 +36,7 @@ import {
 import { projectRoleQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -171,6 +175,8 @@ const ActionsCell = ({
 }) => {
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const isPlatformAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLastProjectOpen, setIsLastProjectOpen] = useState(false);
   const isLastProject =
@@ -188,16 +194,26 @@ const ActionsCell = ({
   const isPlatformAdminOrOperator =
     row.original.type === 'platform-admin-operator';
 
+  const isPlatformInvitation =
+    row.original.type === 'invitation' &&
+    row.original.data.type === InvitationType.PLATFORM;
+
   const deleteMember = async () => {
     if (row.original.type === 'member') {
       await projectMembersApi.delete(row.original.data.id);
+    } else if (isPlatformInvitation) {
+      await userInvitationApi.removeProject(row.original.data.id);
     } else {
       await userInvitationApi.delete(row.original.data.id);
     }
     refetch();
   };
 
-  if (isOwner || isPlatformAdminOrOperator) {
+  if (
+    isOwner ||
+    isPlatformAdminOrOperator ||
+    (isPlatformInvitation && !isPlatformAdmin)
+  ) {
     return null;
   }
 
@@ -227,12 +243,19 @@ const ActionsCell = ({
           internalErrorToast();
         }}
         title={
-          row.original.type === 'invitation'
+          isPlatformInvitation
+            ? t('Remove from this project?')
+            : row.original.type === 'invitation'
             ? t('Remove Invitation')
             : t('Remove Member')
         }
         message={
-          row.original.type === 'invitation'
+          isPlatformInvitation
+            ? t('removePlatformInviteFromProject', {
+                email: displayName,
+                projectName: project.displayName,
+              })
+            : row.original.type === 'invitation'
             ? t('This invitation will be revoked immediately.')
             : t('This member will lose access to the project immediately.')
         }
@@ -256,6 +279,21 @@ const ActionsCell = ({
     </PermissionNeededTooltip>
   );
 };
+
+const PlatformInviteBadge = () => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="outline" className="w-fit text-gray-11">
+          {t('Platform invite')}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        {t('Invited to the platform with this project.')}
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 export const membersTableColumns = ({
   refetch,
@@ -287,6 +325,9 @@ export const membersTableColumns = ({
               <TextWithTooltip tooltipMessage={email}>
                 <p className="text-sm text-warning-11">{email}</p>
               </TextWithTooltip>
+              {row.original.data.type === InvitationType.PLATFORM && (
+                <PlatformInviteBadge />
+              )}
             </div>
           </div>
         );
