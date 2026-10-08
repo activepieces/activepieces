@@ -54,6 +54,7 @@ export const runTriggerCommandAction = createAction({
             throw new Error('Enter the Trigger Name of the command.');
         }
         const waitMs = context.propsValue.waitForResults === true ? validateWait(context.propsValue.waitSeconds) * 1000 : 0;
+        const launchedAt = Date.now() - CLOCK_SKEW_MS;
         const response = await jumpcloudApi.send<unknown>({
             auth,
             method: HttpMethod.POST,
@@ -69,37 +70,65 @@ export const runTriggerCommandAction = createAction({
         if (context.propsValue.waitForResults !== true) {
             return { trigger_name: triggerName, command_ids: commandIds, waited: false, completed: false, results: [] };
         }
-        const results = await waitForResults({ auth, commandIds, deadline: Date.now() + waitMs });
-        const reported = new Set(results.map((result) => result['command_id']));
+        const targets = await Promise.all(commandIds.map(async (commandId) => ({ commandId, systemIds: await fetchTargetSystems({ auth, commandId, skip: 0 }) })));
+        const deadline = Date.now() + waitMs;
+        const results = await waitForResults({ auth, targets, launchedAt, deadline });
         return {
             trigger_name: triggerName,
             command_ids: commandIds,
             waited: true,
-            completed: commandIds.every((id) => reported.has(id)),
+            completed: allReported({ targets, results }),
             results,
         };
     },
 });
 
-async function waitForResults({ auth, commandIds, deadline }: { auth: ConnectionProps; commandIds: string[]; deadline: number }): Promise<FlatObject[]> {
-    const lists = await Promise.all(commandIds.map((commandId) => fetchResults({ auth, commandId })));
+async function waitForResults({ auth, targets, launchedAt, deadline }: WaitParams): Promise<FlatObject[]> {
+    const lists = await Promise.all(targets.map(({ commandId }) => fetchResults({ auth, commandId, launchedAt })));
     const results = lists.flat();
-    const done = commandIds.every((id) => results.some((result) => result['command_id'] === id));
-    if (done || Date.now() + COMMAND_POLL_SECONDS * 1000 > deadline) {
+    if (allReported({ targets, results }) || Date.now() + COMMAND_POLL_SECONDS * 1000 > deadline) {
         return results;
     }
     await sleep(COMMAND_POLL_SECONDS * 1000);
-    return waitForResults({ auth, commandIds, deadline });
+    return waitForResults({ auth, targets, launchedAt, deadline });
 }
 
-async function fetchResults({ auth, commandId }: { auth: ConnectionProps; commandId: string }): Promise<FlatObject[]> {
+function allReported({ targets, results }: { targets: CommandTargets[]; results: FlatObject[] }): boolean {
+    return targets.every(({ commandId, systemIds }) => {
+        const reported = new Set(results.filter((result) => result['command_id'] === commandId).map((result) => result['system_id']));
+        return systemIds.length === 0 ? reported.size > 0 : systemIds.every((systemId) => reported.has(systemId));
+    });
+}
+
+async function fetchTargetSystems({ auth, commandId, skip }: { auth: ConnectionProps; commandId: string; skip: number }): Promise<string[]> {
+    const body = await jumpcloudApi.send<unknown>({
+        auth,
+        method: HttpMethod.GET,
+        path: `/commands/${encodeURIComponent(commandId)}/systems`,
+        version: 'v2',
+        queryParams: { limit: String(TARGET_PAGE_SIZE), skip: String(skip) },
+    });
+    const page = Array.isArray(body) ? body.filter(jumpcloudApi.isRecord) : [];
+    const ids = page.flatMap((record) => (typeof record['id'] === 'string' && record['id'].length > 0 ? [record['id']] : []));
+    if (page.length < TARGET_PAGE_SIZE) {
+        return ids;
+    }
+    return [...ids, ...(await fetchTargetSystems({ auth, commandId, skip: skip + page.length }))];
+}
+
+async function fetchResults({ auth, commandId, launchedAt }: { auth: ConnectionProps; commandId: string; launchedAt: number }): Promise<FlatObject[]> {
     const body = await jumpcloudApi.send<unknown>({
         auth,
         method: HttpMethod.GET,
         path: `/commands/${encodeURIComponent(commandId)}/results`,
     });
     const records = Array.isArray(body) ? body.filter(jumpcloudApi.isRecord) : [];
-    return records.map((record) => jumpcloudOutput.flattenCommandResult({ commandId, record }));
+    return records
+        .filter((record) => {
+            const requested = typeof record['requestTime'] === 'string' ? Date.parse(record['requestTime']) : Number.NaN;
+            return Number.isFinite(requested) && requested >= launchedAt;
+        })
+        .map((record) => jumpcloudOutput.flattenCommandResult({ commandId, record }));
 }
 
 function readTriggered(body: unknown): string[] {
@@ -120,3 +149,18 @@ function validateWait(value: number | undefined): number {
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+const CLOCK_SKEW_MS = 10_000;
+const TARGET_PAGE_SIZE = 100;
+
+type CommandTargets = {
+    commandId: string;
+    systemIds: string[];
+};
+
+type WaitParams = {
+    auth: ConnectionProps;
+    targets: CommandTargets[];
+    launchedAt: number;
+    deadline: number;
+};

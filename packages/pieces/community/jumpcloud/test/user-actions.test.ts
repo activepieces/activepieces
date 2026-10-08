@@ -275,13 +275,13 @@ describe('Run Trigger Command', () => {
             if (request.method === HttpMethod.POST) {
                 return { status: 200, body: { triggered: ['c1'] } };
             }
+            if (request.url === `${V2}/commands/c1/systems`) {
+                return { status: 200, body: [{ id: 's1', type: 'system' }] };
+            }
             resultsCalls.count += 1;
             return resultsCalls.count < 2
                 ? { status: 200, body: [] }
-                : {
-                      status: 200,
-                      body: [{ name: 'Deploy', systemId: 's1', system: 'mac-01', response: { data: { exitCode: 0, output: 'done' }, error: '' } }],
-                  };
+                : { status: 200, body: [commandResult({ systemId: 's1', system: 'mac-01', requestTime: new Date().toISOString() })] };
         });
 
         const pending = runTriggerCommandAction.run(
@@ -299,11 +299,44 @@ describe('Run Trigger Command', () => {
         expectSchemaResolves({ schema: runCommandOutputSchema, output: result });
     });
 
-    it('stops waiting at the deadline', async () => {
+    it('keeps waiting until every device bound to the command reports', async () => {
         vi.useFakeTimers();
-        sendRequest.mockImplementation(async (request: Request) =>
-            request.method === HttpMethod.POST ? { status: 200, body: { triggered: ['c1'] } } : { status: 200, body: [] },
+        const resultsCalls = { count: 0 };
+        sendRequest.mockImplementation(async (request: Request) => {
+            if (request.method === HttpMethod.POST) {
+                return { status: 200, body: { triggered: ['c1'] } };
+            }
+            if (request.url === `${V2}/commands/c1/systems`) {
+                return { status: 200, body: [{ id: 's1', type: 'system' }, { id: 's2', type: 'system' }] };
+            }
+            resultsCalls.count += 1;
+            const now = new Date().toISOString();
+            const fast = commandResult({ systemId: 's1', system: 'mac-01', requestTime: now });
+            return { status: 200, body: resultsCalls.count < 3 ? [fast] : [fast, commandResult({ systemId: 's2', system: 'mac-02', requestTime: now })] };
+        });
+
+        const pending = runTriggerCommandAction.run(
+            context<typeof runTriggerCommandAction.props>({ ...base, triggerName: 'deploy', waitForResults: true, waitSeconds: 60 }),
         );
+        await vi.advanceTimersByTimeAsync(10000);
+        const result = await pending;
+
+        expect(resultsCalls.count).toBe(3);
+        expect(result).toMatchObject({ completed: true });
+        expect(result.results.map((entry) => entry['system_id'])).toEqual(['s1', 's2']);
+    });
+
+    it('ignores results from earlier runs of the command', async () => {
+        vi.useFakeTimers();
+        sendRequest.mockImplementation(async (request: Request) => {
+            if (request.method === HttpMethod.POST) {
+                return { status: 200, body: { triggered: ['c1'] } };
+            }
+            if (request.url === `${V2}/commands/c1/systems`) {
+                return { status: 200, body: [{ id: 's1', type: 'system' }] };
+            }
+            return { status: 200, body: [commandResult({ systemId: 's1', system: 'mac-01', requestTime: '2020-01-01T00:00:00.000Z' })] };
+        });
 
         const pending = runTriggerCommandAction.run(
             context<typeof runTriggerCommandAction.props>({ ...base, triggerName: 'deploy', waitForResults: true, waitSeconds: 10 }),
@@ -311,7 +344,24 @@ describe('Run Trigger Command', () => {
         await vi.advanceTimersByTimeAsync(20000);
 
         expect(await pending).toMatchObject({ waited: true, completed: false, results: [] });
-        expect(sendRequest.mock.calls.filter(([request]) => request.method === HttpMethod.GET)).toHaveLength(3);
+    });
+
+    it('stops waiting at the deadline', async () => {
+        vi.useFakeTimers();
+        sendRequest.mockImplementation(async (request: Request) => {
+            if (request.method === HttpMethod.POST) {
+                return { status: 200, body: { triggered: ['c1'] } };
+            }
+            return { status: 200, body: [] };
+        });
+
+        const pending = runTriggerCommandAction.run(
+            context<typeof runTriggerCommandAction.props>({ ...base, triggerName: 'deploy', waitForResults: true, waitSeconds: 10 }),
+        );
+        await vi.advanceTimersByTimeAsync(20000);
+
+        expect(await pending).toMatchObject({ waited: true, completed: false, results: [] });
+        expect(sendRequest.mock.calls.filter(([request]) => request.url === `${V1}/commands/c1/results`)).toHaveLength(3);
     });
 
     it.each([1, 301])('rejects a wait of %s seconds', async (waitSeconds) => {
@@ -356,6 +406,10 @@ function readList({ output, key }: { output: unknown; key: string }): unknown[] 
 
 function context<Props extends InputPropertyMap>(propsValue: StaticPropsValue<Props>) {
     return { ...createMockActionContext<Props>({ propsValue }), auth: CONNECTION };
+}
+
+function commandResult({ systemId, system, requestTime }: { systemId: string; system: string; requestTime: string }) {
+    return { name: 'Deploy', systemId, system, requestTime, response: { data: { exitCode: 0, output: 'done' }, error: '' } };
 }
 
 function lastRequest(): Request {

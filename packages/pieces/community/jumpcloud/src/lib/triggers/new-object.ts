@@ -57,8 +57,8 @@ export const newObjectTrigger = createTrigger({
         }
         await context.store.put(CHECKPOINT_KEY, await initialCheckpoint({ auth: context.auth.props, type }));
     },
-    async onDisable(context) {
-        await context.store.delete(CHECKPOINT_KEY);
+    async onDisable() {
+        return;
     },
     async run(context) {
         const type = jumpcloudObjects.parseType(context.propsValue.objectType);

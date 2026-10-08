@@ -11,6 +11,7 @@ export const jumpcloudObjects = {
     readId,
     listPage,
     searchPage,
+    searchPager,
     optionLabel,
     getRecord,
     listByIds,
@@ -72,6 +73,28 @@ async function listPage({ auth, type, page, filter, sort }: ListParams): Promise
 }
 
 async function searchPage({ auth, type, term, page }: SearchParams): Promise<ListPage> {
+    return searchPager({ auth, type, term })(page);
+}
+
+function searchPager({ auth, type, term }: Omit<SearchParams, 'page'>): (page: PageRequest) => Promise<ListPage> {
+    const search = OBJECT_TYPES[type].search;
+    if (search.kind !== 'local' || term.trim().length === 0) {
+        return (page) => remoteSearchPage({ auth, type, term, page });
+    }
+    const matches = localMatches({ auth, type, term: term.trim() });
+    return async (page) => {
+        const all = await matches;
+        return { items: all.slice(page.skip, page.skip + page.limit), totalCount: all.length };
+    };
+}
+
+async function localMatches({ auth, type, term }: Omit<SearchParams, 'page'>): Promise<ApiRecord[]> {
+    const all = await listAll({ auth, type, sort: OBJECT_TYPES[type].pickerSort });
+    const needle = term.toLowerCase();
+    return all.filter((record) => optionLabel({ type, record }).toLowerCase().includes(needle));
+}
+
+async function remoteSearchPage({ auth, type, term, page }: SearchParams): Promise<ListPage> {
     const trimmed = term.trim();
     if (trimmed.length === 0) {
         return listPage({ auth, type, page, sort: OBJECT_TYPES[type].pickerSort });
@@ -89,9 +112,7 @@ async function searchPage({ auth, type, term, page }: SearchParams): Promise<Lis
         case 'filter':
             return listPage({ auth, type, page, filter: `${search.field}:${search.operator}:${trimmed}` });
         case 'local': {
-            const all = await listAll({ auth, type, sort: OBJECT_TYPES[type].pickerSort });
-            const needle = trimmed.toLowerCase();
-            const matches = all.filter((record) => optionLabel({ type, record }).toLowerCase().includes(needle));
+            const matches = await localMatches({ auth, type, term: trimmed });
             return { items: matches.slice(page.skip, page.skip + page.limit), totalCount: matches.length };
         }
     }

@@ -141,11 +141,22 @@ describe('New Object trigger', () => {
         expect(first).toEqual(expect.objectContaining({ kind: 'created', type: 'user', boundaryIds: [] }));
         expect(sendRequest).not.toHaveBeenCalled();
 
-        await pollingTrigger().onEnable({ ...triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store }), isRepublish: true });
-        expect(store.data.get('checkpoint')).toBe(first);
-
         await pollingTrigger().onDisable(triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store }));
-        expect(store.data.has('checkpoint')).toBe(false);
+        expect(store.data.get('checkpoint')).toEqual(first);
+
+        await pollingTrigger().onEnable({ ...triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store }), isRepublish: true });
+        expect(store.data.get('checkpoint')).toEqual(first);
+    });
+
+    it('emits objects created between the last poll and a republish', async () => {
+        const store = memoryStore({ checkpoint: createdCheckpoint({ type: 'user', since: LAST_POLL }) });
+        const props = { propsValue: { objectType: 'user' }, store };
+
+        await pollingTrigger().onDisable(triggerContext<typeof newObjectTrigger.props>(props));
+        await pollingTrigger().onEnable({ ...triggerContext<typeof newObjectTrigger.props>(props), isRepublish: true });
+        sendRequest.mockResolvedValue({ status: 200, body: { totalCount: 1, results: [user('u9', LAST_POLL + 5000)] } });
+
+        expect(await pollingTrigger().run(triggerContext<typeof newObjectTrigger.props>(props))).toEqual([expect.objectContaining({ id: 'u9' })]);
     });
 
     it('returns up to five recent objects when testing', async () => {

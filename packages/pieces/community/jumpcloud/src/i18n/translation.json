@@ -29,7 +29,7 @@
   "Create a user, group or application. Devices join JumpCloud by installing the agent, so they cannot be created here.": "Create a user, group or application. Devices join JumpCloud by installing the agent, so they cannot be created here.",
   "Change fields on a user, device, group or application. Fields you leave empty keep their current value.": "Change fields on a user, device, group or application. Fields you leave empty keep their current value.",
   "Permanently delete a user, device, group or application.": "Permanently delete a user, device, group or application.",
-  "Get the full record of a user, device, group or application.": "Get the full record of a user, device, group or application.",
+  "Get a user, device, group or application, with its main fields and the full JumpCloud record.": "Get a user, device, group or application, with its main fields and the full JumpCloud record.",
   "List users, devices, groups or applications, one page at a time or all pages at once.": "List users, devices, groups or applications, one page at a time or all pages at once.",
   "Get many users, devices, groups or applications at once from a list of IDs.": "Get many users, devices, groups or applications at once from a list of IDs.",
   "Find users, devices, groups or applications by text or by a field value.": "Find users, devices, groups or applications by text or by a field value.",

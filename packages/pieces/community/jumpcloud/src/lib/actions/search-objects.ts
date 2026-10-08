@@ -82,7 +82,7 @@ function pageFetcher({ auth, type, searchText, filterField, filterOperator, filt
     if (text.length === 0) {
         throw new Error('Enter Search Text, or a Filter Field and Filter Value.');
     }
-    return (page) => jumpcloudObjects.searchPage({ auth, type, term: text, page });
+    return jumpcloudObjects.searchPager({ auth, type, term: text });
 }
 
 function resolveOperator({ operator, version }: { operator: string | undefined; version: ApiVersion }): string {

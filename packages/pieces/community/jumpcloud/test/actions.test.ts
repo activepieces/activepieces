@@ -75,6 +75,15 @@ describe('Get Object by ID', () => {
         expect(result).toMatchObject({ id: 'u1', username: 'jdoe', email: 'j@x.com' });
     });
 
+    it('returns the full JumpCloud record under raw', async () => {
+        const record = { _id: 'u1', username: 'jdoe', phoneNumbers: [{ type: 'work', number: '555-0100' }] };
+        respond({ 'GET /systemusers/u1': record });
+
+        const result = await getObjectAction.run(context<typeof getObjectAction.props>({ objectType: 'user', objectId: 'u1' }));
+
+        expect(result).toMatchObject({ id: 'u1', raw: record });
+    });
+
     it('explains a missing object', async () => {
         sendRequest.mockRejectedValue(new HttpError({}, { status: 404, responseBody: { message: 'Not Found' } }));
 
@@ -278,6 +287,22 @@ describe('Search Objects (Batch)', () => {
         );
 
         expect(result).toMatchObject({ items: [{ id: 'a3' }], total_count: 2, next_skip: null });
+    });
+
+    it('downloads the application list once when fetching every page of matches', async () => {
+        sendRequest.mockImplementation(async (request: { queryParams?: Record<string, string> }) => {
+            const skip = Number(request.queryParams?.['skip']);
+            const count = Math.max(0, Math.min(100, 250 - skip));
+            const results = Array.from({ length: count }, (_, index) => ({ _id: `a${skip + index}`, displayLabel: `Slack ${skip + index}` }));
+            return { status: 200, body: { totalCount: 250, results } };
+        });
+
+        const result = await searchObjectsAction.run(
+            context<typeof searchObjectsAction.props>({ ...base, objectType: 'application', searchText: 'slack', fetchAll: true, maxItems: 1000 }),
+        );
+
+        expect(result.items).toHaveLength(250);
+        expect(sendRequest).toHaveBeenCalledTimes(3);
     });
 
     it.each([
