@@ -50,6 +50,7 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
+import { DefaultProjectsNote } from './default-projects-note';
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
 const buildInvalidEmailsMessage = (emails: string[]): string => {
@@ -225,6 +226,16 @@ const InviteUserDialogInternal = ({
 
   const invitationType = form.getValues().type;
   const isPlatformInvite = invitationType === InvitationType.PLATFORM;
+  const selectedPlatformRole = form.watch('platformRole');
+  const enteredEmails = form.watch('emails');
+  const invitesSomeoneNew =
+    enteredEmails.length === 0 ||
+    enteredEmails.some(
+      (email) => !platformUserEmails.has(email.trim().toLowerCase()),
+    );
+  const joinsDefaultProjects =
+    invitationType === InvitationType.PROJECT ||
+    selectedPlatformRole === PlatformRole.MEMBER;
 
   const handleEmailsChange = useCallback(
     (emails: ReadonlyArray<string>) => {
@@ -336,7 +347,7 @@ const InviteUserDialogInternal = ({
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="flex flex-col gap-4"
+                  className="flex min-w-0 flex-col gap-4"
                 >
                   <FormField
                     control={form.control}
@@ -361,6 +372,17 @@ const InviteUserDialogInternal = ({
                   )}
                   {form.getValues().type === InvitationType.PROJECT && (
                     <ProjectRoleSelect form={form} />
+                  )}
+                  {joinsDefaultProjects && (
+                    <DefaultProjectsNote
+                      invitedProjectId={
+                        invitationType === InvitationType.PROJECT
+                          ? project.id
+                          : undefined
+                      }
+                      includesPersonalProject={isPlatformInvite}
+                      invitesSomeoneNew={invitesSomeoneNew}
+                    />
                   )}
 
                   {form?.formState?.errors?.root?.serverError && (
