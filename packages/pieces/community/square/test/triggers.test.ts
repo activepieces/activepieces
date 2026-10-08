@@ -84,16 +84,16 @@ describe('trigger runs', () => {
     expect(await t.run(runContext({ body: { ...squareSamples.new_customer, event_id: 'other' }, store }))).toHaveLength(1);
   });
 
-  test('a job retried after its claim expires emits the delivery again', async () => {
+  test('a delivery stays blocked for 15 minutes so a retried job cannot start a second run', async () => {
     const store = memoryStore();
     const t = trigger('new_customer');
     const start = Date.now();
     expect(await t.run(runContext({ body: squareSamples.new_customer, store }))).toHaveLength(1);
-    vi.spyOn(Date, 'now').mockReturnValue(start + 8 * 60 * 1000);
     try {
-      const retried = await t.run(runContext({ body: squareSamples.new_customer, store }));
-      expect(retried).toHaveLength(1);
-      expect(retried[0]).toMatchObject({ _dedupe_key: `square:${squareSamples.new_customer.event_id}` });
+      vi.spyOn(Date, 'now').mockReturnValue(start + 8 * 60 * 1000);
+      expect(await t.run(runContext({ body: squareSamples.new_customer, store }))).toHaveLength(0);
+      vi.spyOn(Date, 'now').mockReturnValue(start + 16 * 60 * 1000);
+      expect(await t.run(runContext({ body: squareSamples.new_customer, store }))).toHaveLength(1);
     } finally {
       vi.restoreAllMocks();
     }

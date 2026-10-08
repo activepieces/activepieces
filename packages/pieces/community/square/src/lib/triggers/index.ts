@@ -10,6 +10,7 @@ import { squareSamples } from './samples';
 
 const DEDUPE_KEY_PREFIX = 'square_seen_events_';
 const DEDUPE_SLOT_COUNT = 64;
+const DEDUPE_WINDOW_MS = 15 * 60 * 1000;
 const DEDUPE_CLAIM_TIMEOUT_MS = 2 * 60 * 1000;
 const DEDUPE_MAX_PER_SLOT = 100;
 
@@ -141,9 +142,10 @@ export const triggers = triggerData.map((trigger) =>
       }
       try {
         const events = await buildEvents({ trigger, body, auth: context.auth, includeFullOrder: context.propsValue['include_full_order'] === true });
+        await finishClaim({ store: context.store, claim, succeeded: true });
         return withDedupeKey({ events, eventId });
       } catch (error) {
-        await releaseClaim({ store: context.store, claim }).catch(() => undefined);
+        await finishClaim({ store: context.store, claim, succeeded: false }).catch(() => undefined);
         throw error;
       }
     },
@@ -176,11 +178,11 @@ async function claimEvent({ store, eventId }: { store: DedupeStore; eventId: str
   const key = slotKey({ eventId });
   const now = Date.now();
   const before = await readSlot({ store, key, now });
-  if (before.some((entry) => entry.id === eventId)) {
+  if (before.some((entry) => entry.id === eventId && blocks({ entry, now }))) {
     return 'duplicate';
   }
   const token = crypto.randomUUID();
-  const mine: SeenEvent = { id: eventId, at: now, token };
+  const mine: SeenEvent = { id: eventId, at: now, token, done: false };
   await store.put(key, [...before.filter((entry) => entry.id !== eventId).slice(-(DEDUPE_MAX_PER_SLOT - 1)), mine]);
   const after = await readSlot({ store, key, now });
   const winner = after.find((entry) => entry.id === eventId);
@@ -193,19 +195,19 @@ async function claimEvent({ store, eventId }: { store: DedupeStore; eventId: str
   return { key, eventId, token };
 }
 
-// A successful delivery keeps only its short claim, which absorbs concurrent copies.
-// It is never marked done: if the server does not accept the events, the job retries
-// minutes later and must emit them again. The platform dedupe key drops copies that
-// already started a run.
-async function releaseClaim({ store, claim }: { store: DedupeStore; claim: Claim }): Promise<void> {
+// A delivery is marked done for DEDUPE_WINDOW_MS before run() returns its events.
+// The piece cannot see whether the server then starts a run, so a retried job and a
+// late duplicate look the same. Square flows often move money, so this trigger
+// chooses at-most-once: a retry inside the window is dropped rather than risk a
+// second run. The platform _dedupe_key only covers 30 seconds.
+async function finishClaim({ store, claim, succeeded }: { store: DedupeStore; claim: Claim; succeeded: boolean }): Promise<void> {
   if (claim === null) {
     return;
   }
-  const entries = await readSlot({ store, key: claim.key, now: Date.now() });
-  await store.put(
-    claim.key,
-    entries.filter((entry) => entry.token !== claim.token),
-  );
+  const now = Date.now();
+  const entries = (await readSlot({ store, key: claim.key, now })).filter((entry) => entry.token !== claim.token);
+  const updated = succeeded ? [...entries.filter((entry) => entry.id !== claim.eventId).slice(-(DEDUPE_MAX_PER_SLOT - 1)), { id: claim.eventId, at: now, token: claim.token, done: true }] : entries;
+  await store.put(claim.key, updated);
 }
 
 async function readSlot({ store, key, now }: { store: DedupeStore; key: string; now: number }): Promise<SeenEvent[]> {
@@ -216,8 +218,13 @@ async function readSlot({ store, key, now }: { store: DedupeStore; key: string; 
       typeof entry['id'] === 'string' &&
       typeof entry['at'] === 'number' &&
       typeof entry['token'] === 'string' &&
-      now - entry['at'] < DEDUPE_CLAIM_TIMEOUT_MS,
+      typeof entry['done'] === 'boolean' &&
+      now - entry['at'] < DEDUPE_WINDOW_MS,
   );
+}
+
+function blocks({ entry, now }: { entry: SeenEvent; now: number }): boolean {
+  return entry.done || now - entry.at < DEDUPE_CLAIM_TIMEOUT_MS;
 }
 
 function slotKey({ eventId }: { eventId: string }): string {
@@ -275,7 +282,7 @@ type TriggerDefinition = {
   orderSummary: boolean;
 };
 
-type SeenEvent = { id: string; at: number; token: string };
+type SeenEvent = { id: string; at: number; token: string; done: boolean };
 
 type Claim = { key: string; eventId: string; token: string } | null;
 
