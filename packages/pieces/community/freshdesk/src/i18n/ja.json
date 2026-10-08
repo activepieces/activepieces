@@ -16,7 +16,7 @@
   "Get Ticket status from Freshdesk. Returns ticket_status, assigned_status, assigned_id": "Freshdeskからチケットのステータスを取得します。ticket_status, assigned_status, assigned_id を返します。",
   "Get contact details from Freshdesk for all (optional filtered) contacts.": "すべての連絡先についてFreshdeskから連絡先の詳細を取得します(オプション)。",
   "Get All Tickets by selected status from Freshdesk.": "Freshdeskから選択したステータスですべてのチケットを入手します。",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Contact ID number": "連絡先ID番号",
   "Ticket ID": "ケースID",
   "Optional Filter": "オプションフィルタ",

@@ -12,6 +12,7 @@ import { deleteFile } from './lib/actions/delete-file';
 import { listFiles } from './lib/actions/list-files';
 import { decryptPgpFile } from './lib/actions/decrypt-pgp-file';
 import { amazonS3CombinedAuth } from './lib/auth';
+import { amazonS3AiActions } from './lib/actions/ai';
 
 export const amazonS3 = createPiece({
   displayName: 'Amazon S3',
@@ -22,6 +23,6 @@ export const amazonS3 = createPiece({
   authors: ["Willianwg", "kishanprmr", "MoShizzle", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud", "Kevinyu-alan", "hugh-codes"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3CombinedAuth,
-  actions: [amazons3UploadFile, readFile, generateSignedUrl, generateSignedUploadUrl, moveFile, deleteFile, listFiles, decryptPgpFile],
+  actions: [amazons3UploadFile, readFile, generateSignedUrl, generateSignedUploadUrl, moveFile, deleteFile, listFiles, decryptPgpFile, ...amazonS3AiActions],
   triggers: [newFile],
 });
