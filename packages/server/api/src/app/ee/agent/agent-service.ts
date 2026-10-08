@@ -268,13 +268,13 @@ export const agentService = (log: FastifyBaseLogger) => ({
         await assertMayRemoveFromProject({ agent, projectId, userId, log })
         const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
         await assertMayWriteAgentsIn({ projectId: target.id, userId, log })
-        const [draft, published] = await Promise.all([
-            withKeyFor({ config: agent.draft, platformId, projectId: target.id, log }),
-            isNil(agent.published) ? null : withKeyFor({ config: agent.published, platformId, projectId: target.id, log }),
-        ])
         await transaction(async (entityManager) => {
             const repo = entityManager.getRepository(AgentEntity)
             const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            const [draft, published] = await Promise.all([
+                withKeyFor({ config: locked.draft, platformId, projectId: target.id, log }),
+                isNil(locked.published) ? null : withKeyFor({ config: locked.published, platformId, projectId: target.id, log }),
+            ])
             const sharedWithUserIds = await resolveShare({ visibility: locked.visibility, requested: undefined, stored: locked.sharedWithUserIds, projectId: target.id, log })
             const clash = await repo.findOneBy({ projectId: target.id, externalId: agent.externalId })
             if (!isNil(clash)) {
