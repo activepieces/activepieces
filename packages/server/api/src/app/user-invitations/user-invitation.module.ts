@@ -8,6 +8,7 @@ import { userIdentityService } from '../authentication/user-identity/user-identi
 import { transaction } from '../core/db/transaction'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { distributedLock } from '../database/redis-connections'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -50,18 +51,25 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             status,
         }
 
-        const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
-        const userInvitationRecord = wouldAddNewUser
-            ? await transaction(async (entityManager) => {
-                const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
-                    email,
-                    platformId,
-                    entityManager,
+        const userInvitationRecord = await distributedLock(request.log).runExclusive({
+            key: `user-invitation:${platformId}:${email.toLowerCase().trim()}`,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
+                if (!wouldAddNewUser) {
+                    return userInvitationsService(request.log).createInvitationRecord(invitationRecordParams)
+                }
+                return transaction(async (entityManager) => {
+                    const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
+                        email,
+                        platformId,
+                        entityManager,
+                    })
+                    await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
+                    return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
                 })
-                await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
-                return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
-            })
-            : await userInvitationsService(request.log).createInvitationRecord(invitationRecordParams)
+            },
+        })
 
         const invitation = await userInvitationsService(request.log).finalizeInvitation({
             userInvitation: userInvitationRecord,
@@ -87,10 +95,13 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         if (!isNil(request.query.projectId) && request.query.type === InvitationType.PROJECT) {
             await projectMustBeTeamType.call(app, request, reply)
         }
-        const projectId = await getProjectIdAndAssertPermission(app, request, reply, request.principal, request.query)
+        const projectId = await getProjectIdAndAssertPermission(app, request, reply, request.principal, {
+            ...request.query,
+            projectId: request.query.projectId === '' ? null : request.query.projectId,
+        })
         const invitations = await userInvitationsService(request.log).list({
             platformId: request.principal.platform.id,
-            projectId: request.query.type === InvitationType.PROJECT ? projectId : null,
+            projectId,
             type: request.query.type,
             status: request.query.status,
             cursor: request.query.cursor ?? null,
