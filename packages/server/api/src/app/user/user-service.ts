@@ -17,6 +17,7 @@ import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
 import { userHooks } from './user-hooks'
+import { userProjectHooks } from './user-project-hooks'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -76,7 +77,7 @@ export const userService = (log: FastifyBaseLogger) => ({
     async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
         await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
     },
-    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
+    async update({ id, status, platformId, platformRole, externalId, project }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
         assertNotNullOrUndefined(user.platformId, 'platformId')
 
@@ -110,11 +111,22 @@ export const userService = (log: FastifyBaseLogger) => ({
         })
 
         const isReactivation = user.status === UserStatus.INACTIVE && status === UserStatus.ACTIVE
-        if (isReactivation) {
-            const reactivatingPlatformId = user.platformId
+        if (isReactivation || !isNil(project)) {
+            const userPlatformId = user.platformId
             await transaction(async (entityManager) => {
-                await platformPlanService(log).checkUsersExceededLimit({ platformId: reactivatingPlatformId, entityManager })
+                if (isReactivation) {
+                    await platformPlanService(log).checkUsersExceededLimit({ platformId: userPlatformId, entityManager })
+                }
                 await applyUpdate(entityManager)
+                if (!isNil(project)) {
+                    await userProjectHooks.get(log).addToProject({
+                        userId: id,
+                        platformId: userPlatformId,
+                        projectId: project.projectId,
+                        projectRoleName: project.projectRoleName,
+                        entityManager,
+                    })
+                }
             })
         }
         else {
@@ -377,6 +389,12 @@ type UpdateParams = {
     platformId: PlatformId
     platformRole?: PlatformRole
     externalId?: string
+    project?: UpdateUserProject
+}
+
+type UpdateUserProject = {
+    projectId: string
+    projectRoleName: string
 }
 
 type CreateParams = {
