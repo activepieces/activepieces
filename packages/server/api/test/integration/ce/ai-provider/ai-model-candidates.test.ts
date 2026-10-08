@@ -43,16 +43,33 @@ beforeEach(async () => {
 })
 
 describe('tier candidates', () => {
-    it('lets a tier run a key that is scoped away from the project, while a specific pick of it still fails', async () => {
+    it('skips a fallback whose key is scoped away from the project', async () => {
+        const open = await seedKey({ testCtx: ctx })
         const scopedAway = await seedKey({ testCtx: ctx, projectScope: 'selected', projectIds: [] })
-        const tier = await createTier({ testCtx: ctx, name: 'Expert', entries: [{ configId: scopedAway.id, modelId: 'gpt-4o' }] })
+        const tier = await createTier({ testCtx: ctx, name: 'Expert', entries: [{ configId: open.id, modelId: 'main' }, { configId: scopedAway.id, modelId: 'fallback' }] })
 
         const { tierName, candidates } = await rpc().resolveAiModelCandidates({ projectId: ctx.project.id, platformId: ctx.platform.id, modelTierId: tier.id })
-        const specificPick = rpc().resolveAiProvider({ projectId: ctx.project.id, platformId: ctx.platform.id, provider: AIProviderName.CUSTOM, providerConfigId: scopedAway.id })
 
         expect(tierName).toBe('Expert')
-        expect(candidates).toEqual([expect.objectContaining({ providerConfigId: scopedAway.id, modelId: 'gpt-4o', provider: AIProviderName.CUSTOM, status: 'active' })])
-        await expect(specificPick).rejects.toThrow()
+        expect(candidates).toEqual([expect.objectContaining({ providerConfigId: open.id, modelId: 'main', provider: AIProviderName.CUSTOM, status: 'active' })])
+    })
+
+    it('makes a tier unavailable in a project its main model\'s key does not serve', async () => {
+        const scopedAway = await seedKey({ testCtx: ctx, projectScope: 'except', projectIds: [ctx.project.id] })
+        const open = await seedKey({ testCtx: ctx })
+        const tier = await createTier({ testCtx: ctx, entries: [{ configId: scopedAway.id, modelId: 'main' }, { configId: open.id, modelId: 'fallback' }] })
+
+        await expect(rpc().resolveAiModelCandidates({ projectId: ctx.project.id, platformId: ctx.platform.id, modelTierId: tier.id }))
+            .rejects.toMatchObject({ error: { code: 'VALIDATION', params: { message: TIER_NOT_AVAILABLE } } })
+    })
+
+    it('runs a tier whose keys are limited to this project', async () => {
+        const selected = await seedKey({ testCtx: ctx, projectScope: 'selected', projectIds: [ctx.project.id] })
+        const tier = await createTier({ testCtx: ctx, entries: [{ configId: selected.id, modelId: 'main' }] })
+
+        const { candidates } = await rpc().resolveAiModelCandidates({ projectId: ctx.project.id, platformId: ctx.platform.id, modelTierId: tier.id })
+
+        expect(candidates.map((candidate) => candidate.providerConfigId)).toEqual([selected.id])
     })
 
     it('tries healthy keys first and keeps the tier order inside each group', async () => {
@@ -133,6 +150,20 @@ describe('tier candidates', () => {
     })
 })
 
+describe('GET /v1/platform-model-tiers', () => {
+    it('lists only the tiers whose main model can run in the project', async () => {
+        const open = await seedKey({ testCtx: ctx })
+        const scopedAway = await seedKey({ testCtx: ctx, projectScope: 'selected', projectIds: [] })
+        await createTier({ testCtx: ctx, name: 'Everywhere', entries: [{ configId: open.id, modelId: 'main' }, { configId: scopedAway.id, modelId: 'fallback' }] })
+        await createTier({ testCtx: ctx, name: 'Elsewhere', entries: [{ configId: scopedAway.id, modelId: 'main' }] })
+
+        const response = await ctx.get(TIERS, { projectId: ctx.project.id })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().map((tier: { name: string }) => tier.name)).toEqual(['Everywhere'])
+    })
+})
+
 describe('reported key outcomes', () => {
     it('re-checks the key instead of trusting a reported success, so a forged report cannot mark a key healthy', async () => {
         const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.AZURE, config: { resourceName: `forged-${apId()}` } })
@@ -176,13 +207,23 @@ describe('reported key outcomes', () => {
 
 describe('POST /v1/ai/execute with a tier', () => {
     it('enqueues the tier and the first model the worker will try', async () => {
-        const key = await seedKey({ testCtx: ctx, projectScope: 'selected', projectIds: [] })
+        const key = await seedKey({ testCtx: ctx, projectScope: 'selected', projectIds: [ctx.project.id] })
         const tier = await createTier({ testCtx: ctx, entries: [{ configId: key.id, modelId: 'gpt-4o' }] })
 
         const response = await executeAiStep({ body: { action: AiStepAction.ASK_AI, modelTierId: tier.id } })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(enqueue.mock.calls[0][0]).toMatchObject({ modelTierId: tier.id, provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'gpt-4o' })
+    })
+
+    it('refuses a tier whose main model\'s key does not serve the project', async () => {
+        const key = await seedKey({ testCtx: ctx, projectScope: 'selected', projectIds: [] })
+        const tier = await createTier({ testCtx: ctx, entries: [{ configId: key.id, modelId: 'gpt-4o' }] })
+
+        const response = await executeAiStep({ body: { action: AiStepAction.ASK_AI, modelTierId: tier.id } })
+
+        expect(response.statusCode).not.toBe(StatusCodes.OK)
+        expect(enqueue).not.toHaveBeenCalled()
     })
 
     it('refuses a tier on an image step', async () => {
@@ -223,7 +264,7 @@ function rpc(): ReturnType<typeof aiRpcHandlers> {
     return aiRpcHandlers(app!.log)
 }
 
-async function seedKey({ testCtx, projectScope, projectIds }: { testCtx: TestContext, projectScope?: 'all' | 'selected', projectIds?: string[] }): Promise<{ id: string }> {
+async function seedKey({ testCtx, projectScope, projectIds }: { testCtx: TestContext, projectScope?: 'all' | 'selected' | 'except', projectIds?: string[] }): Promise<{ id: string }> {
     return mockAndSaveAIProvider({
         platformId: testCtx.platform.id,
         provider: AIProviderName.CUSTOM,
@@ -255,3 +296,4 @@ async function executeAiStep({ body }: { body: Record<string, unknown> }) {
 }
 
 const TIERS = '/v1/platform-model-tiers'
+const TIER_NOT_AVAILABLE = 'This tier isn\'t available in this project. Pick another model.'

@@ -4,23 +4,31 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { isUniqueViolation } from '../core/db/unique-violation'
+import { PlatformConfigurationEntity } from '../platform/platform-configuration.entity'
+import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { PlatformModelTierEntity, PlatformModelTierSchema } from './platform-model-tier-entity'
 
 const tierRepo = repoFactory<PlatformModelTierSchema>(PlatformModelTierEntity)
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
+const platformConfigurationRepo = repoFactory(PlatformConfigurationEntity)
 
 const MAX_LIVE_TIERS = 50
 const MAX_REPLACEMENT_HOPS = 3
 const TIER_REMOVED_MESSAGE = 'This tier was removed. Pick a new model for this step.'
+const TIER_NOT_AVAILABLE_MESSAGE = 'This tier isn\'t available in this project. Pick another model.'
+const PLATFORM_SCOPE: ProviderScope = { type: 'platform' }
 
 export const platformModelTierService = {
-    async listSummaries({ platformId }: { platformId: PlatformId }): Promise<PlatformModelTierSummary[]> {
+    async listSummaries({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<PlatformModelTierSummary[]> {
         const tiers = await listLive({ platformId })
         const mainConfigIds = unique(tiers.flatMap((tier) => tier.entries.slice(0, 1).map((entry) => entry.configId)))
         const keys = mainConfigIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(mainConfigIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
         const providerByConfigId = new Map(keys.map((key) => [key.id, key.provider]))
-        return tiers.map((tier) => toSummary({ tier, providerByConfigId }))
+        return tiers
+            .filter((tier) => mainRunsIn({ tier, keyById, scope }))
+            .map((tier) => toSummary({ tier, providerByConfigId }))
     },
 
     async list({ platformId }: { platformId: PlatformId }): Promise<PlatformModelTier[]> {
@@ -120,6 +128,7 @@ export const platformModelTierService = {
                 await assertLastTierCanGo({ manager, platformId })
                 await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
                 await tierRepo(manager).softDelete({ platformId, id })
+                await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
                 return
             }
             await getLiveOrThrow({ manager, platformId, id: replacedBy })
@@ -138,6 +147,13 @@ export const platformModelTierService = {
         })
     },
 
+    async assertSpecificModelsVisibilityAllowed({ manager, platformId, visible }: { manager: EntityManager, platformId: PlatformId, visible: boolean }): Promise<void> {
+        await lockPlatform({ manager, platformId })
+        if (!visible && (await listLive({ platformId, manager })).length === 0) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Add a tier before hiding specific models from builders' } })
+        }
+    },
+
     async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
         await lockPlatform({ manager, platformId })
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
@@ -146,20 +162,24 @@ export const platformModelTierService = {
         }
     },
 
-    async getFastForRun({ platformId }: { platformId: PlatformId }): Promise<TierForRun | null> {
+    async getFastForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
         const fastTier = await tierRepo().findOneBy({ platformId, isFast: true })
         if (isNil(fastTier)) {
             return null
         }
-        const { data } = await tryCatch(() => platformModelTierService.getForRun({ platformId, id: fastTier.id }))
+        const { data } = await tryCatch(() => platformModelTierService.getForRun({ platformId, id: fastTier.id, scope }))
         return data ?? null
     },
 
-    async getForRun({ platformId, id }: { platformId: PlatformId, id: string }): Promise<TierForRun> {
+    async getForRun({ platformId, id, scope }: { platformId: PlatformId, id: string, scope: ProviderScope }): Promise<TierForRun> {
         const tier = await followReplacements({ platformId, id })
         const configIds = unique(tier.entries.map((entry) => entry.configId))
         const keys = await aiProviderRepo().findBy({ platformId, id: In(configIds) })
-        const entries = runnableEntries({ tier, keyById: new Map(keys.map((key) => [key.id, key])) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
+        if (!mainRunsIn({ tier, keyById, scope })) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: TIER_NOT_AVAILABLE_MESSAGE } })
+        }
+        const entries = runnableEntries({ tier, keyById, scope })
         if (entries.length === 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `No model in tier "${tier.name}" can run` } })
         }
@@ -173,12 +193,16 @@ export const platformModelTierService = {
         const keys = configIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(configIds) })
         const keyById = new Map(keys.map((key) => [key.id, key]))
         return new Map([...liveByRequestedId].map(([requestedId, tier]) => {
-            const entries = isNil(tier) ? [] : runnableEntries({ tier, keyById })
+            const entries = isNil(tier) ? [] : runnableEntries({ tier, keyById, scope: PLATFORM_SCOPE })
             return [requestedId, isNil(tier) || entries.length === 0 ? null : { tier, entries }]
         }))
     },
 
-    async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds }: AssertKeyScopeParams): Promise<void> {
+    async lockPlatform({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
+        await lockPlatform({ manager, platformId })
+    },
+
+    async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds, config }: AssertKeyScopeParams): Promise<void> {
         await lockPlatform({ manager, platformId })
         const key = await aiProviderRepo(manager).findOneBy({ platformId, id: configId })
         if (isNil(key)) {
@@ -186,7 +210,8 @@ export const platformModelTierService = {
         }
         const nextScope = { modelScope: modelScope ?? key.modelScope, modelIds: modelIds ?? key.modelIds }
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
-        const broken = tiers.filter((tier) => tier.entries.some((entry) => entry.configId === configId && !scopeAllows({ ...nextScope, modelId: entry.modelId })))
+        const keyKeeps = (modelId: string): boolean => aiKeyScope.keyOffersModel({ key: { ...nextScope, config }, modelId })
+        const broken = tiers.filter((tier) => tier.entries.some((entry) => entry.configId === configId && !keyKeeps(entry.modelId)))
         if (broken.length > 0) {
             throw keyInUseError({ tierNames: broken.map((tier) => tier.name) })
         }
@@ -203,13 +228,22 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
     }
 }
 
-function runnableEntries({ tier, keyById }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema> }): TierForRun['entries'] {
+function mainRunsIn({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): boolean {
+    const main = tier.entries[0]
+    return !isNil(main) && entryRunsIn({ entry: main, key: keyById.get(main.configId), scope })
+}
+
+function entryRunsIn({ entry, key, scope }: { entry: PlatformModelTierEntry, key: AIProviderSchema | undefined, scope: ProviderScope }): boolean {
+    return !isNil(key)
+        && key.provider !== AIProviderName.ACTIVEPIECES
+        && aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })
+        && aiKeyScope.rowAllowsScope({ row: key, scope })
+}
+
+function runnableEntries({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
     const runnable = tier.entries.flatMap((entry) => {
         const key = keyById.get(entry.configId)
-        if (isNil(key) || key.provider === AIProviderName.ACTIVEPIECES || !scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
-            return []
-        }
-        return [{ modelId: entry.modelId, key }]
+        return isNil(key) || !entryRunsIn({ entry, key, scope }) ? [] : [{ modelId: entry.modelId, key }]
     })
     return [
         ...runnable.filter((entry) => entry.key.status === 'active'),
@@ -294,7 +328,7 @@ async function assertEntriesValid({ manager, platformId, entries }: { manager: E
         if (key.provider === AIProviderName.ACTIVEPIECES) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Tiers cannot use the Activepieces credits key' } })
         }
-        if (!scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
+        if (!aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Key "${key.displayName}" does not allow model ${entry.modelId}` } })
         }
     }
@@ -318,10 +352,6 @@ async function withNameConflictAsValidation<T>(operation: () => Promise<T>): Pro
         }
         throw error
     }
-}
-
-function scopeAllows({ modelScope, modelIds, modelId }: { modelScope: AiProviderModelScope, modelIds: string[], modelId: string }): boolean {
-    return modelScope !== 'selected' || modelIds.includes(modelId)
 }
 
 function keyInUseError({ tierNames }: { tierNames: string[] }): ActivepiecesError {
@@ -358,4 +388,5 @@ type AssertKeyScopeParams = {
     configId: string
     modelScope: AiProviderModelScope | undefined
     modelIds: string[] | undefined
+    config: unknown
 }
