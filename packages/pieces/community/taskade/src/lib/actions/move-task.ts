@@ -26,7 +26,7 @@ export const moveTaskAction = createAction({
 		position: Property.StaticDropdown({
 			displayName: 'Position',
 			required: true,
-			defaultValue: 'after',
+			defaultValue: 'afterend',
 			options: {
 				disabled: false,
 				options: [
