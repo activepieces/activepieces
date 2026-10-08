@@ -1,8 +1,8 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { imageRouterAuth } from "./lib/common/auth";
+import { imageRouterAuth } from "./lib/auth";
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { createImage } from "./lib/actions/create-image";
-import { imageToImage } from "./lib/actions/image-to-image";
+import { createImageAction } from "./lib/actions/create-image";
+import { imageToImageAction } from "./lib/actions/image-to-image";
 
 export const imageRouter = createPiece({
   displayName: "ImageRouter",
@@ -13,8 +13,8 @@ export const imageRouter = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/image-router.png",
   authors: ["onyedikachi-david"],
   actions: [
-    createImage,
-    imageToImage,
+    createImageAction,
+    imageToImageAction,
   ],
   triggers: [],
 });

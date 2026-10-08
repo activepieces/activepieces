@@ -1,21 +1,11 @@
 import { createAction, Property, ApFile } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
-import { imageRouterAuth } from '../common/auth';
-import { modelDropdown } from '../common/props';
-import { BASE_URL } from '../common/client';
-import FormData from 'form-data';
+import { imageRouterAuth } from '../auth';
+import { imageRouterApi } from '../common/api';
+import { imageRouterProps } from '../common/props';
 import { randomBytes } from 'node:crypto';
 import { kebabCase } from '@activepieces/pieces-framework';
 
-interface ImageItem {
-  image: ApFile;
-}
-
-interface MaskItem {
-  mask: ApFile;
-}
-
-export const imageToImage = createAction({
+export const imageToImageAction = createAction({
   audience: 'both',
   auth: imageRouterAuth,
   name: 'imageToImage',
@@ -29,7 +19,7 @@ export const imageToImage = createAction({
       description: 'Text prompt describing the image transformation',
       required: true,
     }),
-    model: modelDropdown,
+    model: imageRouterProps.model({ required: true }),
     images: Property.Array({
       displayName: 'Input Images',
       description: 'Input image(s) for editing (up to 16 images)',
@@ -91,8 +81,8 @@ export const imageToImage = createAction({
   async run(context) {
     const { prompt, model, images: inputImages, masks, quality, size, responseFormat } = context.propsValue;
 
-    const imageItems = (inputImages as ImageItem[]) ?? [];
-    const maskItems = (masks as MaskItem[]) ?? [];
+    const imageItems = inputImages ?? [];
+    const maskItems = masks ?? [];
 
     if (!imageItems || imageItems.length === 0) {
       throw new Error('At least one input image is required');
@@ -102,64 +92,20 @@ export const imageToImage = createAction({
       throw new Error('Maximum 16 images allowed');
     }
 
-    const formData = new FormData();
-
-    formData.append('prompt', prompt);
-    formData.append('model', model);
-
-    for (const imageItem of imageItems) {
-      if (imageItem.image) {
-        formData.append('image[]', Buffer.from(imageItem.image.data), imageItem.image.filename);
-      }
-    }
-
-    if (maskItems && maskItems.length > 0) {
-      for (const maskItem of maskItems) {
-        if (maskItem.mask) {
-          formData.append('mask[]', Buffer.from(maskItem.mask.data), maskItem.mask.filename);
-        }
-      }
-    }
-
-    if (quality && quality !== 'auto') {
-      formData.append('quality', quality);
-    }
-
-    if (size && size !== 'auto') {
-      formData.append('size', size);
-    }
-
-    if (responseFormat && responseFormat !== 'url') {
-      formData.append('response_format', responseFormat);
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${BASE_URL}/v1/openai/images/edits`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      headers: {
-        ...formData.getHeaders(),
-      },
-      body: formData,
+    const responseBody = await imageRouterApi.editImage({
+      auth: context.auth,
+      prompt,
+      model,
+      images: imageItems.flatMap((item) =>
+        typeof item === 'object' && item !== null && 'image' in item && isFile(item.image) ? [item.image] : [],
+      ),
+      masks: maskItems.flatMap((item) =>
+        typeof item === 'object' && item !== null && 'mask' in item && isFile(item.mask) ? [item.mask] : [],
+      ),
+      quality,
+      size,
+      responseFormat,
     });
-
-    if (response.status >= 400) {
-      const errorMessage = (response.body as any)?.error?.message || 
-                          (response.body as any)?.message || 
-                          `ImageRouter API error: ${response.status}`;
-      throw new Error(errorMessage);
-    }
-
-    const responseBody = response.body as {
-      data?: Array<{
-        url?: string;
-        b64_json?: string;
-        revised_prompt?: string;
-      }>;
-    };
 
     const generatedImages = responseBody.data || [];
 
@@ -168,7 +114,7 @@ export const imageToImage = createAction({
     }
 
     const savedImages = await Promise.all(
-      generatedImages.map(async (img: { url?: string; b64_json?: string; revised_prompt?: string }, index: number) => {
+      generatedImages.map(async (img, index) => {
         let imageBuffer: Buffer;
         let fileName: string;
 
@@ -176,12 +122,7 @@ export const imageToImage = createAction({
           imageBuffer = Buffer.from(img.b64_json, 'base64');
           fileName = `${randomBytes(8).toString('hex')}-${kebabCase(prompt).slice(0, 40)}-${index + 1}.png`;
         } else if (img.url) {
-          const downloadResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: img.url,
-            responseType: 'arraybuffer',
-          });
-          imageBuffer = Buffer.from(downloadResponse.body);
+          imageBuffer = await imageRouterApi.downloadFile({ url: img.url });
           const urlExtension = img.url.split('.').pop()?.split('?')[0] || 'png';
           fileName = `${randomBytes(8).toString('hex')}-${kebabCase(prompt).slice(0, 40)}-${index + 1}.${urlExtension}`;
         } else {
@@ -211,3 +152,6 @@ export const imageToImage = createAction({
   },
 });
 
+function isFile(value: unknown): value is ApFile {
+  return typeof value === 'object' && value !== null && 'filename' in value && 'data' in value;
+}
