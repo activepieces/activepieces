@@ -2,8 +2,9 @@ import { Store } from '@activepieces/pieces-framework';
 import { totalcmsApi, totalcmsHelpers, TotalCmsConnection } from './client';
 
 const PAGE_SIZE = 100;
-const MAX_PAGES = 5;
-const MAX_START_PAGES = 50;
+const MAX_PAGES = 50;
+const MAX_EVENTS = 200;
+const LOAD_CONCURRENCY = 10;
 const TEST_ITEMS = 5;
 const STORE_KEY = 'totalcms_checkpoint';
 
@@ -34,8 +35,9 @@ async function poll({ auth, store, collection, field }: PollParams): Promise<Rec
     return [];
   }
   const fresh = await collectSince({ auth, collection, field, checkpoint });
-  const objects = await loadFull({ auth, collection, items: [...fresh].reverse() });
-  await store.put(STORE_KEY, checkpointFrom({ objects: fresh, field, previous: checkpoint }));
+  const batch = [...fresh].reverse().slice(0, MAX_EVENTS);
+  const objects = await loadFull({ auth, collection, items: batch });
+  await store.put(STORE_KEY, checkpointFrom({ objects: batch, field, previous: checkpoint }));
   return objects;
 }
 
@@ -57,7 +59,7 @@ async function collectSince({
   field: string;
   checkpoint: Checkpoint;
 }): Promise<Record<string, unknown>[]> {
-  const pages: Record<string, unknown>[][] = [];
+  const fresh: Record<string, unknown>[] = [];
   for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex++) {
     const page = await totalcmsApi.queryObjects({
       auth,
@@ -66,14 +68,13 @@ async function collectSince({
       offset: pageIndex * PAGE_SIZE,
       sort: `-${field}`,
     });
-    const newer = page.objects.filter((item) => isNewer({ item, field, checkpoint }));
-    pages.push(newer);
+    fresh.push(...page.objects.filter((item) => isNewer({ item, field, checkpoint })));
     const reachedCheckpoint = page.objects.some((item) => timestampOf({ item, field }) < checkpoint.ts);
     if (reachedCheckpoint || page.objects.length < PAGE_SIZE) {
       break;
     }
   }
-  return pages.flat();
+  return fresh;
 }
 
 async function collectNewestGroup({
@@ -86,7 +87,7 @@ async function collectNewestGroup({
   field: string;
 }): Promise<Record<string, unknown>[]> {
   const collected: Record<string, unknown>[] = [];
-  for (let pageIndex = 0; pageIndex < MAX_START_PAGES; pageIndex++) {
+  for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex++) {
     const page = await totalcmsApi.queryObjects({
       auth,
       collection,
@@ -105,7 +106,7 @@ async function collectNewestGroup({
     auth,
     collection,
     limit: 1,
-    offset: MAX_START_PAGES * PAGE_SIZE,
+    offset: MAX_PAGES * PAGE_SIZE,
     sort: `-${field}`,
   });
   const newestTs = collected.map((item) => timestampOf({ item, field })).find((ts) => !Number.isNaN(ts));
@@ -114,7 +115,7 @@ async function collectNewestGroup({
     return collected;
   }
   throw new Error(
-    `More than ${MAX_START_PAGES * PAGE_SIZE} objects in collection "${collection}" share the newest "${field}" date, so Activepieces cannot tell which ones already exist. Try again after newer objects are added.`,
+    `More than ${MAX_PAGES * PAGE_SIZE} objects in collection "${collection}" share the newest "${field}" date, so Activepieces cannot tell which ones already exist. Try again after newer objects are added.`,
   );
 }
 
@@ -146,15 +147,14 @@ function timestampOf({ item, field }: { item: Record<string, unknown>; field: st
 }
 
 async function loadFull({ auth, collection, items }: { auth: TotalCmsConnection; collection: string; items: Record<string, unknown>[] }): Promise<Record<string, unknown>[]> {
+  const ids = items.map((item) => String(item['id'] ?? '')).filter((id) => id.length > 0);
   const loaded: Record<string, unknown>[] = [];
-  for (const item of items) {
-    const id = String(item['id'] ?? '');
-    if (!id) {
-      continue;
-    }
-    const full = await totalcmsApi.findObject({ auth, collection, id });
-    if (full) {
-      loaded.push({ collection, ...full });
+  for (let start = 0; start < ids.length; start += LOAD_CONCURRENCY) {
+    const chunk = await Promise.all(ids.slice(start, start + LOAD_CONCURRENCY).map((id) => totalcmsApi.findObject({ auth, collection, id })));
+    for (const full of chunk) {
+      if (full) {
+        loaded.push({ collection, ...full });
+      }
     }
   }
   return loaded;

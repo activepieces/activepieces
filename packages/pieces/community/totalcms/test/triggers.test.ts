@@ -83,6 +83,32 @@ describe('new_blog_post', () => {
     await expect(newBlogPost.onEnable(context({ collection: 'blog', include_drafts: true }))).rejects.toThrow('More than 5000 objects');
   });
 
+  test('finds a new post that sorts behind 500 already-seen posts with the same timestamp', async () => {
+    const tied = Array.from({ length: 500 }, (_, i) => ({ id: `same${i}`, created: '2026-10-07T10:00:00+00:00' }));
+    let objects: Record<string, unknown>[] = [...tied, { id: 'older', created: '2026-10-07T09:00:00+00:00' }];
+    site(() => objects);
+    const ctx = context({ collection: 'blog', include_drafts: true });
+    await newBlogPost.onEnable(ctx);
+    objects = [...tied, { id: 'late', created: '2026-10-07T10:00:00+00:00' }, { id: 'older', created: '2026-10-07T09:00:00+00:00' }];
+    expect((await newBlogPost.run(ctx)).map((post) => Reflect.get(Object(post), 'id'))).toEqual(['late']);
+    expect(await newBlogPost.run(ctx)).toEqual([]);
+  });
+
+  test('emits at most 200 posts per poll, oldest first, and the rest on the next poll', async () => {
+    let objects: Record<string, unknown>[] = [{ id: 'old', created: '2026-01-01T00:00:00.000Z' }];
+    site(() => objects);
+    const ctx = context({ collection: 'blog', include_drafts: true });
+    await newBlogPost.onEnable(ctx);
+    objects = [...objects, ...Array.from({ length: 250 }, (_, i) => ({ id: `p${i}`, created: new Date(Date.UTC(2026, 1, 1, 0, 0, i)).toISOString() }))];
+    const ids = async () => (await newBlogPost.run(ctx)).map((post) => Reflect.get(Object(post), 'id'));
+    const first = await ids();
+    expect(first).toHaveLength(200);
+    expect(first[0]).toBe('p0');
+    expect(first[199]).toBe('p199');
+    expect(await ids()).toEqual(Array.from({ length: 50 }, (_, i) => `p${200 + i}`));
+    expect(await ids()).toEqual([]);
+  });
+
   test('a collection without a created field fails clearly', async () => {
     stubFetch((request) => (request.path.endsWith('/schema') ? { body: { data: { properties: { text: {} }, index: ['id', 'text'] } } } : { body: { data: [] } }));
     await expect(newBlogPost.onEnable(context({ collection: 'text' }))).rejects.toThrow('does not record a "created" date');
