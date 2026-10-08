@@ -5,22 +5,22 @@ import { dripSamples } from '../common/samples';
 import { dripWebhook } from '../common/webhook';
 import { dripOutputSchemas } from '../output-schemas';
 
-const STORE_KEY = 'drip_new_subscriber_trigger';
-const EVENT = 'subscriber.created';
+const STORE_KEY = 'drip_subscriber_unsubscribed_trigger';
+const EVENT = 'subscriber.unsubscribed_all';
 
-export const dripNewSubscriberEvent = createTrigger({
+export const dripSubscriberUnsubscribedEvent = createTrigger({
   auth: dripAuth,
-  name: 'new_subscriber',
+  name: 'subscriber_unsubscribed',
   classification: 'READ',
-  displayName: 'New Subscriber',
-  description: 'Triggers when a subscriber is created in your Drip account.',
+  displayName: 'Subscriber Unsubscribed From All',
+  description: 'Triggers when a subscriber unsubscribes from all mailings.',
   aiMetadata: {
-    description: 'Fires when a new subscriber is created in the selected Drip account (Drip event subscriber.created), with the subscriber profile. Represents a contact being added to the list.',
+    description: 'Fires when a subscriber in the selected Drip account is unsubscribed from all mailings (Drip event subscriber.unsubscribed_all), with the subscriber profile. Represents a contact opting out.',
   },
   props: {
     account_id: dripCommon.account_id,
   },
-  sampleData: dripSamples.event({ name: EVENT }),
+  sampleData: dripSamples.event({ name: EVENT, properties: {} }),
   outputSchema: dripOutputSchemas.subscriberEvent,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
