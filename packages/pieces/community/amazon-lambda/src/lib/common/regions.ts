@@ -1,3 +1,10 @@
+export function lambdaEndpoint(region: string): { host: string; url: string } {
+  const host = region.startsWith('cn-')
+    ? `lambda.${region}.amazonaws.com.cn`
+    : `lambda.${region}.amazonaws.com`;
+  return { host, url: `https://${host}` };
+}
+
 // Same region list as the SES and SQS pieces, without their duplicate "Default" entry.
 export const AWS_REGIONS: { label: string; value: string }[] = [
   { label: 'US East (N. Virginia) [us-east-1]', value: 'us-east-1' },
@@ -30,10 +37,3 @@ export const AWS_REGIONS: { label: string; value: string }[] = [
   { label: 'China (Beijing) [cn-north-1]', value: 'cn-north-1' },
   { label: 'China (Ningxia) [cn-northwest-1]', value: 'cn-northwest-1' },
 ];
-
-export function lambdaEndpoint(region: string): { host: string; url: string } {
-  const host = region.startsWith('cn-')
-    ? `lambda.${region}.amazonaws.com.cn`
-    : `lambda.${region}.amazonaws.com`;
-  return { host, url: `https://${host}` };
-}

@@ -62,6 +62,12 @@ function regionProp() {
   });
 }
 
+const ROLE_ARN = /^arn:(?:aws|aws-us-gov|aws-cn):iam::\d{12}:role\/[\w+=,.@\-/]{1,512}$/;
+
+export function isOidcAuth(auth: LambdaAuthProps): auth is OidcAuthProps {
+  return 'roleArn' in auth;
+}
+
 export const awsLambdaAccessKeyAuth = PieceAuth.CustomAuth({
   displayName: 'AWS Lambda (Access Key)',
   description: accessKeyDescription,
@@ -98,8 +104,6 @@ export const awsLambdaAccessKeyAuth = PieceAuth.CustomAuth({
     }
   },
 });
-
-const ROLE_ARN = /^arn:(?:aws|aws-us-gov|aws-cn):iam::\d{12}:role\/[\w+=,.@\-/]{1,512}$/;
 
 export const awsLambdaOidcAuth = PieceAuth.OIDC({
   displayName: 'AWS Lambda (IAM Role / OIDC)',
@@ -142,7 +146,3 @@ export type OidcAuthProps = {
 };
 
 export type LambdaAuthProps = AccessKeyAuthProps | OidcAuthProps;
-
-export function isOidcAuth(auth: LambdaAuthProps): auth is OidcAuthProps {
-  return 'roleArn' in auth;
-}

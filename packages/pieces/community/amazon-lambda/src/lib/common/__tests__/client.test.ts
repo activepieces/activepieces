@@ -280,6 +280,35 @@ describe('customLambdaCall', () => {
       expect(sent['content-type']).toBe('application/json; charset=utf-8');
     });
 
+    it('given a GET with the default empty body, should send no body and no content-type', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
+
+      await customLambdaCall(accessKey, server, {
+        method: HttpMethod.GET,
+        path: '/2015-03-31/functions',
+        body: {},
+      });
+
+      const init = vi.mocked(fetch).mock.calls[0][1];
+      expect(init?.body).toBeUndefined();
+      expect(Object.keys(init?.headers ?? {})).not.toContain('content-type');
+    });
+
+    it('given a blank query value, should leave the key out', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
+
+      await customLambdaCall(accessKey, server, {
+        method: HttpMethod.GET,
+        path: '/2015-03-31/functions',
+        queryParams: { Marker: '', MaxItems: '5' },
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?MaxItems=5',
+        expect.anything(),
+      );
+    });
+
     it('given a space in the query, should send the same encoding that was signed', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 

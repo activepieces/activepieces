@@ -22,52 +22,9 @@ const DEFAULT_STS_DURATION_SECONDS = 3600;
 const CREDENTIALS_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
 const LIST_PAGE_SIZE = 50;
 const MAX_FUNCTIONS = 10_000;
+const BODY_METHODS = new Set<HttpMethod>([HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH]);
 
 const credentialsCache = new Map<string, { credentials: AwsCredentials; expiresAtMS: number }>();
-
-type AwsCredentials = {
-  accessKeyId: string;
-  secretAccessKey: string;
-  sessionToken?: string;
-};
-
-export type InvokeFunctionInput = {
-  functionName: string;
-  invocationType: 'RequestResponse' | 'Event';
-  qualifier?: string;
-  payload?: Record<string, unknown>;
-};
-
-export type InvokeFunctionResult = {
-  statusCode: number | null;
-  functionError: string | null;
-  executedVersion: string | null;
-  payload: unknown;
-};
-
-export type FunctionDetails = {
-  functionArn: string | null;
-  functionName: string | null;
-  runtime: string | null;
-  handler: string | null;
-  memorySize: number | null;
-  timeout: number | null;
-  environment: Record<string, string>;
-  role: string | null;
-  lastModified: string | null;
-  state: string | null;
-  version: string | null;
-  description: string | null;
-};
-
-export type CustomLambdaCallInput = {
-  method: HttpMethod;
-  path: string;
-  queryParams?: Record<string, unknown>;
-  headers?: Record<string, unknown>;
-  body?: Record<string, unknown>;
-  timeoutSeconds?: number;
-};
 
 export async function listFunctions(
   auth: LambdaAuthProps,
@@ -160,7 +117,7 @@ export async function customLambdaCall(
   const url = lambdaRequestUrl({ region: auth.region, path: input.path });
   appendQuery(url, input.queryParams);
 
-  const bodyString = input.body === undefined ? undefined : JSON.stringify(input.body);
+  const bodyString = input.body === undefined || !BODY_METHODS.has(input.method) ? undefined : JSON.stringify(input.body);
   const headers = userHeaders(input.headers);
   if (bodyString && !headers['content-type']) headers['content-type'] = 'application/json';
 
@@ -390,7 +347,7 @@ function normalizePath(path: string): string {
 function appendQuery(url: URL, queryParams: Record<string, unknown> | undefined): void {
   if (!queryParams) return;
   for (const [key, value] of Object.entries(queryParams)) {
-    if (value === undefined || value === null) continue;
+    if (value === undefined || value === null || value === '') continue;
     url.searchParams.append(key, String(value));
   }
 }
@@ -433,3 +390,47 @@ function clampTimeout(seconds: number | undefined): number {
   const value = seconds === undefined || Number.isNaN(seconds) ? 30 : seconds;
   return Math.min(Math.max(value, 1), 900) * 1000;
 }
+
+type AwsCredentials = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+};
+
+export type InvokeFunctionInput = {
+  functionName: string;
+  invocationType: 'RequestResponse' | 'Event';
+  qualifier?: string;
+  payload?: Record<string, unknown>;
+};
+
+export type InvokeFunctionResult = {
+  statusCode: number | null;
+  functionError: string | null;
+  executedVersion: string | null;
+  payload: unknown;
+};
+
+export type FunctionDetails = {
+  functionArn: string | null;
+  functionName: string | null;
+  runtime: string | null;
+  handler: string | null;
+  memorySize: number | null;
+  timeout: number | null;
+  environment: Record<string, string>;
+  role: string | null;
+  lastModified: string | null;
+  state: string | null;
+  version: string | null;
+  description: string | null;
+};
+
+export type CustomLambdaCallInput = {
+  method: HttpMethod;
+  path: string;
+  queryParams?: Record<string, unknown>;
+  headers?: Record<string, unknown>;
+  body?: Record<string, unknown>;
+  timeoutSeconds?: number;
+};
