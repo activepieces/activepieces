@@ -101,6 +101,16 @@ describe('Create Record (Agent)', () => {
 		expect(output).toMatchObject({ id: 'r1', fields: { Name: 'Jane', Age: 30 } });
 	});
 
+	it.each([
+		[{ Name: 'A', Status: 'Secret-Diagnosis' }, 'is not one of its options'],
+		[{ Name: 'A', Age: 'Secret-Diagnosis' }, 'must be a number'],
+	])('names the column but never echoes the value in a conversion error (%j)', async (fields, message) => {
+		sendRequest.mockResolvedValueOnce({ body: { data: TABLES } });
+		const error = await runAction({ action: createRecordAi, propsValue: { databaseId: 'db1', table: 'tbl1', fields } }).catch((e: unknown) => e);
+		expect(String(error)).toContain(message);
+		expect(String(error)).not.toContain('Secret-Diagnosis');
+	});
+
 	it('accepts a table ID', async () => {
 		sendRequest.mockResolvedValueOnce({ body: { data: TABLES } }).mockResolvedValueOnce(savedRecord({}));
 		await runAction({ action: createRecordAi, propsValue: { databaseId: 'db1', table: 'tbl1', fields: { Name: 'A' } } });
@@ -200,7 +210,7 @@ describe('Upsert Record (Agent)', () => {
 	it('refuses to guess when several records match', async () => {
 		mockSearch({ total: 3 });
 		await expect(runAction({ action: upsertRecordAi, propsValue: props })).rejects.toThrow(
-			'3 records match Email = "a@b.co", refusing to guess',
+			'3 records match the given Email, refusing to guess',
 		);
 		expect(calls()).toHaveLength(2);
 	});

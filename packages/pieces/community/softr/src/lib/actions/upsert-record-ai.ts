@@ -13,7 +13,7 @@ export const upsertRecordAi = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Finds the record whose key column equals the key value in Fields (matching ignores letter case). If none exists it creates one; if one exists it updates it; if several match it stops with an error and changes nothing. Use this to avoid duplicates, e.g. key on Email. Needs the database ID, the table name or ID, the key column, and Fields including the key value. Returns {action: "created" or "updated", record}. Safe to retry.',
+			'Finds the record whose key column equals the key value in Fields (matching ignores letter case). If none exists it creates one; if one exists it updates it; if several match it stops with an error and changes nothing. Use this to avoid duplicates, e.g. key on Email, but run upserts for the same key one at a time: Softr has no atomic create-if-absent, so two parallel calls with the same new key can both create a record. Needs the database ID, the table name or ID, the key column, and Fields including the key value. Returns {action: "created" or "updated", record}. Safe to retry.',
 		idempotent: true,
 	},
 	props: {

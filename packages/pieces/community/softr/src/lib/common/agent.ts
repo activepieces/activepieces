@@ -101,7 +101,7 @@ function toChoiceId({ field, value }: { field: TableField; value: unknown }): st
 		choices.find((choice) => choice.label.toLowerCase() === text.toLowerCase());
 	if (!match) {
 		const labels = choices.map((choice) => choice.label).join(', ');
-		throw new Error(`"${text}" is not an option of column "${field.name}". Options: ${labels}.`);
+		throw new Error(`A value given for column "${field.name}" is not one of its options. Options: ${labels}.`);
 	}
 	return match.id;
 }
@@ -177,7 +177,7 @@ async function upsertRecord({ apiKey, databaseId, table, keyField, fields }: Ups
 	const total = response.metadata?.total ?? matches.length;
 	if (total > 1 || matches.length > 1) {
 		throw new Error(
-			`${Math.max(total, matches.length)} records match ${key.name} = "${String(keyValue)}", refusing to guess. Use Update Record (Agent) with a record ID.`,
+			`${Math.max(total, matches.length)} records match the given ${key.name}, refusing to guess. Use Update Record (Agent) with a record ID.`,
 		);
 	}
 	const existing = matches[0];

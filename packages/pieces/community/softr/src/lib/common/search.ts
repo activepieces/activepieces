@@ -57,14 +57,14 @@ function coerceScalar({ field, value }: { field: TableField; value: unknown }): 
 	if (NUMERIC_TYPES.includes(field.type)) {
 		const parsed = Number(text);
 		if (text.length === 0 || Number.isNaN(parsed)) {
-			throw new Error(`Field "${field.name}" is a number field, so the value must be a number (got "${text}").`);
+			throw new Error(`Field "${field.name}" is a number field, so the value must be a number.`);
 		}
 		return parsed;
 	}
 	if (field.type === 'CHECKBOX') {
 		const lowered = text.toLowerCase();
 		if (lowered !== 'true' && lowered !== 'false') {
-			throw new Error(`Field "${field.name}" is a checkbox, so the value must be "true" or "false" (got "${text}").`);
+			throw new Error(`Field "${field.name}" is a checkbox, so the value must be "true" or "false".`);
 		}
 		return lowered === 'true';
 	}

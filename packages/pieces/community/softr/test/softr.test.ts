@@ -1,6 +1,6 @@
 import { HttpError } from '@activepieces/pieces-common';
 import { createMockPollingTriggerContext, InputPropertyMap } from '@activepieces/pieces-framework';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoftrAuth } from '../src/lib/common/auth';
 import { softrSearch } from '../src/lib/common/search';
 import { createAppUser } from '../src/lib/actions/create-app-user';
@@ -44,19 +44,40 @@ function httpError({ status, body, requestBody }: { status: number; body: unknow
 	return new HttpError(requestBody, { status, responseBody: body });
 }
 
+type FetchCall = { url: string; method: string; headers: Record<string, string>; body: unknown };
+
+function stubStudio(reply: (call: FetchCall) => { status: number; body: unknown }): FetchCall[] {
+	const calls: FetchCall[] = [];
+	vi.stubGlobal(
+		'fetch',
+		vi.fn(async (url: string, init: RequestInit) => {
+			const call: FetchCall = {
+				url,
+				method: String(init.method),
+				headers: Object(init.headers),
+				body: typeof init.body === 'string' ? JSON.parse(init.body) : undefined,
+			};
+			calls.push(call);
+			const { status, body } = reply(call);
+			return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status });
+		}),
+	);
+	return calls;
+}
+
 beforeEach(() => {
 	sendRequest.mockReset();
 });
 
+afterEach(() => {
+	vi.unstubAllGlobals();
+	vi.restoreAllMocks();
+});
+
 describe('error handling', () => {
-	it('never puts the request body (password) in the error and surfaces the Softr message', async () => {
-		sendRequest.mockRejectedValueOnce(
-			httpError({
-				status: 409,
-				body: { message: 'User already exists', code: 'CONFLICT' },
-				requestBody: { password: 'TopSecret-123' },
-			}),
-		);
+	it('never logs or returns the password when Create App User fails', async () => {
+		const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		stubStudio(() => ({ status: 409, body: { message: 'User already exists', code: 'CONFLICT' } }));
 		const result = runAction({
 			action: createAppUser,
 			propsValue: { email: 'a@b.co', full_name: 'A', password: 'TopSecret-123', domain: 'app.softr.app' },
@@ -66,6 +87,8 @@ describe('error handling', () => {
 		expect(JSON.stringify(error)).not.toContain('TopSecret');
 		expect(String(error)).not.toContain('TopSecret');
 		expect(error instanceof Error ? error.stack : '').not.toContain('TopSecret');
+		expect(JSON.stringify(logged.mock.calls)).not.toContain('TopSecret');
+		expect(sendRequest).not.toHaveBeenCalled();
 	});
 
 	it('validate() only reports invalid credentials on 401/403', async () => {
@@ -82,30 +105,29 @@ describe('error handling', () => {
 
 describe('app users', () => {
 	it('omits an empty password and strips the HTTP headers from the output', async () => {
-		sendRequest.mockResolvedValueOnce({ status: 200, headers: { 'set-cookie': 'x' }, body: { email: 'a@b.co' } });
+		const calls = stubStudio(() => ({ status: 200, body: { email: 'a@b.co' } }));
 		const output = await runAction({
 			action: createAppUser,
 			propsValue: { email: ' a@b.co ', full_name: 'A', domain: 'https://app.softr.app/' },
 		});
-		const request = sendRequest.mock.calls[0][0];
-		expect(request.url).toBe('https://studio-api.softr.io/v1/api/users');
-		expect(request.headers['Softr-Domain']).toBe('app.softr.app');
-		expect(request.body).toEqual({ email: 'a@b.co', full_name: 'A', generate_magic_link: false });
+		expect(calls[0].url).toBe('https://studio-api.softr.io/v1/api/users');
+		expect(calls[0].headers['Softr-Domain']).toBe('app.softr.app');
+		expect(calls[0].body).toEqual({ email: 'a@b.co', full_name: 'A', generate_magic_link: false });
 		expect(output).toEqual({ success: true, message: 'User created successfully', user: { status: 200, body: { email: 'a@b.co' } } });
 	});
 
 	it('returns the magic link when Softr answers with plain text', async () => {
-		sendRequest.mockResolvedValueOnce({ status: 200, body: 'https://app.softr.app/?magic=abc' });
+		const calls = stubStudio(() => ({ status: 200, body: 'https://app.softr.app/?magic=abc' }));
 		const output = await runAction({ action: generateMagicLink, propsValue: { email: 'a+b@c.co', domain: 'app.softr.app' } });
-		expect(sendRequest.mock.calls[0][0].url).toBe('https://studio-api.softr.io/v1/api/users/magic-link/generate/a%2Bb%40c.co');
+		expect(calls[0].url).toBe('https://studio-api.softr.io/v1/api/users/magic-link/generate/a%2Bb%40c.co');
 		expect(output).toEqual({ email: 'a+b@c.co', magicLink: 'https://app.softr.app/?magic=abc' });
 	});
 
 	it('activates and deactivates a user by encoded email', async () => {
-		sendRequest.mockResolvedValue({ status: 200, body: {} });
+		const calls = stubStudio(() => ({ status: 200, body: {} }));
 		const off = await runAction({ action: deactivateAppUser, propsValue: { email: ' a+b@c.co ', domain: 'app.softr.app' } });
 		const on = await runAction({ action: activateAppUser, propsValue: { email: 'a+b@c.co', domain: 'app.softr.app' } });
-		expect(sendRequest.mock.calls.map((c) => [c[0].method, c[0].url])).toEqual([
+		expect(calls.map((c) => [c.method, c.url])).toEqual([
 			['POST', 'https://studio-api.softr.io/v1/api/users/a%2Bb%40c.co/deactivate'],
 			['POST', 'https://studio-api.softr.io/v1/api/users/a%2Bb%40c.co/activate'],
 		]);

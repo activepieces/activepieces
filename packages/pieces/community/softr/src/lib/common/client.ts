@@ -4,6 +4,7 @@ import { SoftrRecord, SoftrSingleResponse, SoftrTable, TableField } from './type
 const BASE_URL = 'https://tables-api.softr.io/api/v1';
 const STUDIO_USERS_URL = 'https://studio-api.softr.io/v1/api/users';
 const MAX_ERROR_TEXT_LENGTH = 500;
+const STUDIO_TIMEOUT_MS = 60_000;
 
 class SoftrApiError extends Error {
 	readonly status: number;
@@ -35,21 +36,38 @@ async function request<T>({ apiKey, method, path, body, queryParams }: RequestPa
 	}
 }
 
+// App user requests carry emails and passwords. The shared httpClient logs the full
+// request body on any error response before throwing (see FetchHttpClient), and the
+// engine does not redact that line, so these calls use fetch directly.
 async function studioRequest({ apiKey, domain, method, path, body }: StudioRequestParams): Promise<{ status: number; body: unknown }> {
+	const response = await fetch(`${STUDIO_USERS_URL}${path}`, {
+		method,
+		headers: {
+			'Softr-Api-Key': apiKey,
+			'Softr-Domain': normalizeDomain(domain),
+			'Content-Type': 'application/json',
+			Accept: 'application/json, text/plain',
+		},
+		body: body === undefined ? undefined : JSON.stringify(body),
+		redirect: 'manual',
+		signal: AbortSignal.timeout(STUDIO_TIMEOUT_MS),
+	});
+	const responseBody = await readBody(response);
+	if (response.status < 200 || response.status >= 300) {
+		throw new SoftrApiError({ status: response.status, responseBody, message: describeFailure({ status: response.status, responseBody }) });
+	}
+	return { status: response.status, body: responseBody };
+}
+
+async function readBody(response: Response): Promise<unknown> {
+	const text = await response.text();
+	if (text.length === 0) {
+		return undefined;
+	}
 	try {
-		const response = await httpClient.sendRequest<unknown>({
-			method,
-			url: `${STUDIO_USERS_URL}${path}`,
-			headers: {
-				'Softr-Api-Key': apiKey,
-				'Softr-Domain': normalizeDomain(domain),
-				'Content-Type': 'application/json',
-			},
-			body,
-		});
-		return { status: response.status, body: response.body };
-	} catch (error) {
-		throw toSoftrError(error);
+		return JSON.parse(text);
+	} catch {
+		return text;
 	}
 }
 
