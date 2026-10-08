@@ -86,13 +86,6 @@ export const STATIC_PAGES: StaticPage[] = [
     requiresPlatformAdmin: true,
   },
   {
-    id: 'page-platform-ai-tiers',
-    label: 'Platform Admin — AI Tiers',
-    href: '/platform/ai/tiers',
-    icon: BotIcon,
-    requiresPlatformAdmin: true,
-  },
-  {
     id: 'page-platform-mcp',
     label: 'Platform Admin — MCP Tools',
     href: '/platform/mcp',
