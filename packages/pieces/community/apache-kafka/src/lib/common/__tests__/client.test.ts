@@ -239,6 +239,51 @@ describe('kafkaClient', () => {
     expect(kafkaMock.adminDisconnect).toHaveBeenCalled()
   })
 
+  it('returns only the committed batch when a message arrives while committing', async () => {
+    const late = {
+      topic: 'orders',
+      partition: 1,
+      message: {
+        key: null,
+        value: Buffer.from('late'),
+        offset: '9',
+        timestamp: '1710000000001',
+      },
+    }
+    let deliver: ((payload: typeof late) => Promise<void>) | undefined
+    kafkaMock.run.mockImplementationOnce(async (config) => {
+      deliver = config.eachMessage
+      await config.eachMessage({
+        topic: 'orders',
+        partition: 1,
+        message: {
+          key: Buffer.from('order-1'),
+          value: Buffer.from('hello'),
+          offset: '8',
+          timestamp: '1710000000000',
+        },
+      })
+    })
+    kafkaMock.commitOffsets.mockImplementationOnce(async () => {
+      await deliver?.(late)
+    })
+
+    const records = await kafkaClient.consume({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      maxMessages: 10,
+      pollTimeoutSeconds: 5,
+      fromBeginning: false,
+      commit: true,
+    })
+
+    expect(records.map((record) => record.offset)).toEqual(['8'])
+    expect(kafkaMock.commitOffsets).toHaveBeenCalledWith([
+      { topic: 'orders', partition: 1, offset: '9' },
+    ])
+  })
+
   it('returns a partial batch once messages stop arriving', async () => {
     const started = Date.now()
     const records = await kafkaClient.consume({

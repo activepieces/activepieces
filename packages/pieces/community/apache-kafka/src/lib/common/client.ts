@@ -129,11 +129,12 @@ async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSec
     await consumer.connect()
     await consumer.subscribe({ topic: topicName, fromBeginning })
     const records: KafkaRecord[] = []
+    let collecting = true
     let runError: unknown
     runResult = consumer.run({
       autoCommit: false,
       eachMessage: async ({ topic: messageTopic, partition, message }: EachMessagePayload) => {
-        if (records.length >= limit) {
+        if (!collecting || records.length >= limit) {
           return
         }
         records.push(kafkaRecords.toRecord({ topic: messageTopic, partition, message }))
@@ -154,13 +155,15 @@ async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSec
       }
       await delay(100)
     }
+    collecting = false
     if (runError !== undefined) {
       throw runError
     }
-    if (commit && records.length > 0) {
-      await consumer.commitOffsets(kafkaRecords.commitPlan({ topic: topicName, records }))
+    const batch = [...records]
+    if (commit && batch.length > 0) {
+      await consumer.commitOffsets(kafkaRecords.commitPlan({ topic: topicName, records: batch }))
     }
-    return records
+    return batch
   } catch (error) {
     throw new Error(kafkaConfig.describeError({ error, brokers: auth.brokers, topic: topicName }))
   } finally {
