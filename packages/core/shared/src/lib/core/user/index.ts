@@ -7,6 +7,8 @@ export const UpdateUserRequestBody = z.object({
     status: z.nativeEnum(UserStatus).optional(),
     platformRole: z.nativeEnum(PlatformRole).optional(),
     externalId: z.string().optional(),
+    projectId: z.string().optional(),
+    projectRole: z.string().optional(),
 })
 
 export type UpdateUserRequestBody = z.infer<typeof UpdateUserRequestBody>
