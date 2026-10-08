@@ -73,27 +73,6 @@ export function ProjectDashboardLayout({
       icon: ChartLineIcon,
       hasPermission: true,
     },
-    {
-      to: '/chat',
-      label: t('Chat'),
-      show: !isEmbedded,
-      icon: CompassIcon,
-      hasPermission: true,
-    },
-    {
-      to: '/agents',
-      label: t('Agents'),
-      show: !isEmbedded,
-      icon: BotIcon,
-      hasPermission: true,
-    },
-    {
-      to: '/mcp-server',
-      label: t('MCP'),
-      show: !isEmbedded,
-      icon: Unplug,
-      hasPermission: true,
-    },
   ];
 
   const hideHeader =

@@ -12,6 +12,7 @@ import { VariableIcon } from '@/components/icons/variable';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
+import { SynkraInfoTip } from '@/components/custom/synkra-info-tip';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { projectCollectionUtils } from '@/features/projects';
@@ -96,14 +97,14 @@ export const ProjectDashboardLayoutHeader = () => {
   const secondaryTabs: ProjectDashboardLayoutHeaderTab[] = [
     {
       to: authenticationSession.appendProjectRoutePrefix('/runs'),
-      label: t('Runs'),
+      label: t('History'),
       icon: HistoryIcon,
       hasPermission: checkAccess(Permission.READ_RUN),
       show: true,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/connections'),
-      label: t('Connections'),
+      label: t('Integrations'),
       icon: ConnectIcon,
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
       show: true,
@@ -114,26 +115,6 @@ export const ProjectDashboardLayoutHeader = () => {
       icon: VariableIcon,
       hasPermission: checkAccess(Permission.READ_VARIABLE),
       show: true,
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/releases'),
-      icon: BoxIcon,
-      label: t('Releases'),
-      hasPermission:
-        project.releasesEnabled &&
-        checkAccess(Permission.READ_PROJECT_RELEASE) &&
-        !isEmbedded,
-      show: project.releasesEnabled,
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/approvals'),
-      icon: ShieldIcon,
-      label: t('Pending approvals'),
-      hasPermission:
-        !isFetchingProjectRole &&
-        checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS),
-      show: !!platform.plan.environmentsEnabled && !!project.sensitive,
-      badgeCount: pendingCount,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/billing'),
