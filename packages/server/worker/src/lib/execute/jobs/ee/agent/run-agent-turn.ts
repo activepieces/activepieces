@@ -352,7 +352,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         totalInputTokens,
         totalOutputTokens,
         toolCalls,
-        answeredBy: current(),
+        answeredBy: lastStepUsedFast && !isNil(fast) ? fast : current(),
         allModelsFailed: !isNil(streamError) && runsATier && failedModelIds.size === unique(ranked.map((candidate) => candidate.modelId)).length,
     }
 }
