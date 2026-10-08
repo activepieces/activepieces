@@ -35,7 +35,15 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    > ### Open the activepieces repo
    > Run Claude Code inside your activepieces checkout, then run `/ai-task` again.
 
-4. **Production data** (triage and check only, optional). If the box MCP isn't connected, say it in one line under **Heads up** and continue with code evidence alone. Never stop for this.
+4. **Real data** (any moment that needs real numbers or a real row: triage, check, or sizing a bug). Production data comes from a **box**, which gives Claude two MCP servers: ClickHouse (logs, tools `clickhouse_*`) and the production Postgres replica (read only, tools `postgres-*_query`).
+   - **Tools present:** use them.
+   - **Tools missing:** don't stop, and don't build your own client. Show this card and carry on with code evidence:
+
+   > ### Need real data?
+   > Run `box new -n data` (first time: `npm i -g @abuaboud/box`, then `box login --server https://box.abuaboud.me`).
+   > It opens Claude with ClickHouse and the production replica attached. Run the same `/ai-task` there.
+
+   - **Rules for real data:** read only. Keep ClickHouse windows to 3 days or less. Copy only counts and ids into tickets, never customer content, emails or credentials.
 
 ## Help (no arguments, "help", or "?")
 
@@ -303,9 +311,9 @@ Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything g
    - **Weekly:** the 7 days that ended 7 days ago.
    - **Monthly:** the last full calendar month that is at least 7 days old.
    - **If the user names dates,** use those.
-2. **Numbers** (needs the box; without it, skip to 3 and say so under **Heads up**):
-   - `scripts/activation.sh <since> <until>` gives the funnel and what happened to chat-built flows. It reads the SQL from the brain page `flows-execution/chat-activation-metric.md`.
-   - `scripts/cost.sh 3` gives chat turns, failures, tokens and cache share per day and release. Never more than 3 days.
+2. **Numbers** (needs the box tools from requirement 4; without them, skip to 3 and show the "Need real data?" card):
+   - **Activation:** take the SQL block from the brain page `flows-execution/chat-activation-metric.md`. Replace its cohort line with your dates (`t0 >= '<since>' and t0 < least('<until>', now() - interval '7 days')`) and run it on the replica. For what happened to chat-built flows, run `sql/flow-breakdown.sql` the same way, after the definition's CTEs up to `chat_parts`.
+   - **Cost:** run `sql/cost-watch.sql` on ClickHouse (replace `__DAYS__`, 3 at most). It gives chat turns, failures, tokens and cache share per day and release.
    - **Alarm** if average input per turn is up more than 25%, or failed turns are above 5%. Name the release where it moved.
    - Compare against the last row in "How we measure".
 3. **Team** (Linear MCP, team AI and its active initiative only):
@@ -334,7 +342,7 @@ Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything g
 >
 > **Save to Linear?** y / pick / no
 
-**Data setup** (once): `npm i -g @abuaboud/box`, `box login --server https://box.abuaboud.me`, `box new -n chat-activation`. Boxes can be deleted; if the scripts say "not known to Box", run `box new` again.
+**Data setup:** see requirement 4. Boxes can be deleted; if a box tool says "not known to Box", run `box new -n data` again.
 
 ## Never
 

@@ -10,14 +10,6 @@
 /packages/server/worker/     @activepieces/platform
 /packages/core/execution/    @activepieces/platform
 
-# AI team owns chat, agents and MCP (the agent loop inside the worker too).
-/packages/server/api/src/app/ee/agent/                 @hazemadelkhalel @ziyadev
-/packages/server/api/src/app/mcp/                      @hazemadelkhalel @ziyadev
-/packages/server/api/src/assets/prompts/               @hazemadelkhalel @ziyadev
-/packages/server/worker/src/lib/execute/jobs/ee/agent/ @hazemadelkhalel @ziyadev
-/packages/web/src/features/chat/                       @hazemadelkhalel @ziyadev
-/packages/web/src/features/agents/                     @hazemadelkhalel @ziyadev
-
 # Unowned on purpose: no team is auto-requested and no code-owner approval is
 # required. One approving review from any write-access collaborator still is.
 # The leading slash is required — unanchored patterns would also match the
