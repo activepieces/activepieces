@@ -56,8 +56,9 @@ function AddDefaultProjectsContent({
   const [search, setSearch] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
+  const query = search.trim();
   const filteredProjects = teamProjects.filter((project) =>
-    project.displayName.toLowerCase().includes(search.toLowerCase()),
+    project.displayName.toLowerCase().includes(query.toLowerCase()),
   );
   const hasExistingDefaults = defaultProjectIds.length > 0;
 
@@ -114,8 +115,8 @@ function AddDefaultProjectsContent({
           <div>
             {filteredProjects.length === 0 && (
               <p className="py-8 text-center text-sm text-gray-11">
-                {search.trim().length > 0
-                  ? t('No projects match "{search}"', { search: search.trim() })
+                {query.length > 0
+                  ? t('No projects match "{search}"', { search: query })
                   : t('No team projects yet. Create one on the Projects page.')}
               </p>
             )}
