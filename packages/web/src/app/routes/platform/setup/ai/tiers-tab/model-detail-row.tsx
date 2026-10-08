@@ -3,16 +3,11 @@ import {
   AIProviderWithoutSensitiveData,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Brain, Wrench } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { ModelCapabilityIcons } from '@/features/agents/ai-model/model-capability-icons';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { cn } from '@/lib/utils';
 
@@ -25,11 +20,12 @@ export function ModelDetailRow({
   nameSuffix,
   trailing,
   loading = false,
+  nested = false,
 }: ModelDetailRowProps) {
   const metadata = model?.metadata;
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pr-1">
-      {config !== undefined && (
+      {config !== undefined && !nested && (
         <ProviderLogo
           info={modelMeta.providerInfoOf({ provider: config.provider })}
         />
@@ -41,7 +37,7 @@ export function ModelDetailRow({
           </TextWithTooltip>
           {nameSuffix}
         </div>
-        {config !== undefined && (
+        {config !== undefined && !nested && (
           <span className="truncate text-xs text-gray-11">{config.name}</span>
         )}
       </div>
@@ -51,15 +47,15 @@ export function ModelDetailRow({
           <Skeleton className="h-8 w-28" />
         </div>
       )}
-      {metadata !== undefined && (
+      {model !== undefined && (
         <div className="hidden items-center gap-4 md:flex">
           <Stat label={t('Context')} className="w-16">
-            {metadata.contextTokens === undefined
+            {metadata?.contextTokens === undefined
               ? EMPTY
               : modelMeta.formatContext({ tokens: metadata.contextTokens })}
           </Stat>
           <Stat label={t('Price per 1M')} className="w-28">
-            {metadata.inputCostPerMillionTokens === undefined ||
+            {metadata?.inputCostPerMillionTokens === undefined ||
             metadata.outputCostPerMillionTokens === undefined ? (
               EMPTY
             ) : (
@@ -74,7 +70,12 @@ export function ModelDetailRow({
               </>
             )}
           </Stat>
-          <Capabilities model={model} />
+          {config !== undefined && (
+            <ModelCapabilityIcons
+              provider={config.provider}
+              metadata={metadata}
+            />
+          )}
         </div>
       )}
       {trailing}
@@ -101,35 +102,6 @@ function Stat({
   );
 }
 
-function Capabilities({ model }: { model: AIProviderModel | undefined }) {
-  const metadata = model?.metadata;
-  const items = [
-    ...(metadata?.supportsToolCalling === true
-      ? [{ icon: Wrench, label: t('Supports tool calling') }]
-      : []),
-    ...(metadata?.supportsReasoning === true
-      ? [{ icon: Brain, label: t('Supports reasoning') }]
-      : []),
-  ];
-  return (
-    <span className="flex w-14 items-center gap-1">
-      {items.map(({ icon: Icon, label }) => (
-        <Tooltip key={label}>
-          <TooltipTrigger asChild>
-            <span
-              className="inline-flex size-6 items-center justify-center rounded-md bg-gray-3 text-gray-11"
-              aria-label={label}
-            >
-              <Icon className="size-3.5" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{label}</TooltipContent>
-        </Tooltip>
-      ))}
-    </span>
-  );
-}
-
 const EMPTY = '—';
 
 type ModelDetailRowProps = {
@@ -139,4 +111,5 @@ type ModelDetailRowProps = {
   nameSuffix?: ReactNode;
   trailing?: ReactNode;
   loading?: boolean;
+  nested?: boolean;
 };

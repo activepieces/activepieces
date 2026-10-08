@@ -221,11 +221,11 @@ function KeyGroup({
       onOpenChange={setOpen}
       className="border-b border-gray-6/60 last:border-b-0"
     >
-      <div className="flex items-center gap-2 pr-5">
+      <div className="flex items-center gap-2 pr-5 hover:bg-gray-2">
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="flex min-w-0 flex-1 items-center gap-3 px-5 py-3 text-left hover:bg-gray-2"
+            className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 text-left"
           >
             <ProviderLogo
               info={modelMeta.providerInfoOf({ provider: config.provider })}
@@ -258,7 +258,7 @@ function KeyGroup({
         {isError && retryButton}
       </div>
       <CollapsibleContent>
-        <div className="flex flex-col pb-2 pl-5 pr-4">
+        <div className="flex flex-col pb-2 pl-16 pr-4">
           {isLoading &&
             [0, 1, 2].map((row) => (
               <div key={row} className="flex items-center gap-3 py-2.5">
@@ -283,6 +283,7 @@ function KeyGroup({
               name={model.name}
               config={config}
               model={model}
+              nested
               trailing={
                 <Button
                   type="button"

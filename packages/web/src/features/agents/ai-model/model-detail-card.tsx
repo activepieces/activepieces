@@ -21,7 +21,7 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
       label: t('Web search'),
       value: AI_PROVIDER_CAPABILITIES[model.provider]?.webSearch !== undefined,
     },
-  ].filter((capability) => capability.value !== undefined);
+  ];
   const chain = [
     { name: model.name, keyName: detail.runsOn },
     ...detail.fallbacks,
@@ -29,7 +29,7 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 px-3">
         <div className="flex min-w-0 items-center gap-2.5">
           {detail.leading}
           <span className="truncate text-base font-semibold text-gray-12">
@@ -44,7 +44,7 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
         )}
       </div>
 
-      <dl className="flex flex-col gap-2.5 text-xs">
+      <dl className="flex flex-col gap-2.5 px-3 text-xs">
         {detail.title !== model.name && (
           <DetailRow label={t('Model')}>{model.name}</DetailRow>
         )}
@@ -91,7 +91,7 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
       </dl>
 
       {chain.length > 1 && (
-        <div className="flex flex-col gap-2.5 border-t pt-4">
+        <div className="flex flex-col gap-2.5 border-t px-3 pt-4">
           <span className="text-xs text-gray-11">
             {t('Tries in this order')}
           </span>
@@ -126,28 +126,26 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
         </div>
       )}
 
-      {capabilities.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 border-t pt-4">
-          {capabilities.map((capability) =>
-            capability.value === true ? (
-              <span
-                key={capability.label}
-                className="flex items-center gap-1 rounded-full bg-success-3 px-2 py-0.5 text-xs text-success-11"
-              >
-                <Check className="size-3 text-success-11" />
-                {capability.label}
-              </span>
-            ) : (
-              <span
-                key={capability.label}
-                className="rounded-full bg-gray-3 px-2 py-0.5 text-xs text-gray-10 line-through"
-              >
-                {capability.label}
-              </span>
-            ),
-          )}
-        </div>
-      )}
+      <div className="flex flex-wrap gap-1.5 border-t px-3 pt-4">
+        {capabilities.map((capability) =>
+          capability.value === true ? (
+            <span
+              key={capability.label}
+              className="flex items-center gap-1 rounded-full bg-success-3 px-2 py-0.5 text-xs text-success-11"
+            >
+              <Check className="size-3 text-success-11" />
+              {capability.label}
+            </span>
+          ) : (
+            <span
+              key={capability.label}
+              className="rounded-full bg-gray-3 px-2 py-0.5 text-xs text-gray-10 line-through"
+            >
+              {capability.label}
+            </span>
+          ),
+        )}
+      </div>
     </div>
   );
 }

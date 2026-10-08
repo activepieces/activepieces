@@ -1,7 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
-import { AIProviderModel } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Brain, Check, ChevronDown, ChevronRight, Wrench } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   ReactNode,
   useDeferredValue,
@@ -27,8 +26,6 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import { modelMeta } from './model-meta';
-
 export function ModelPickerPopover<T>({
   groups,
   notices,
@@ -38,6 +35,7 @@ export function ModelPickerPopover<T>({
   onOpenChange,
   align = 'end',
   anchorOnly = false,
+  matchTriggerWidth = false,
   detail,
   children,
 }: ModelPickerPopoverProps<T>) {
@@ -48,6 +46,7 @@ export function ModelPickerPopover<T>({
   const [activeItem, setActiveItem] = useState<ModelPickerItem<T> | null>(null);
   const [rowTop, setRowTop] = useState(0);
   const [detailTop, setDetailTop] = useState(0);
+  const [detailOnRight, setDetailOnRight] = useState(false);
   const movedByKeyboard = useRef(false);
   const frameRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -114,7 +113,8 @@ export function ModelPickerPopover<T>({
     if (isNil(frame) || isNil(card)) {
       return;
     }
-    const frameTop = frame.getBoundingClientRect().top;
+    const { top: frameTop, left: frameLeft } = frame.getBoundingClientRect();
+    setDetailOnRight(frameLeft < card.offsetWidth + VIEWPORT_MARGIN);
     const highest = VIEWPORT_MARGIN - frameTop;
     const lowest =
       window.innerHeight - VIEWPORT_MARGIN - frameTop - card.offsetHeight;
@@ -276,9 +276,9 @@ export function ModelPickerPopover<T>({
         align={align}
         className={cn(
           'relative p-0',
-          detail === undefined
-            ? 'w-[420px]'
-            : 'w-[var(--radix-popover-trigger-width)] min-w-80',
+          matchTriggerWidth
+            ? 'w-[var(--radix-popover-trigger-width)] min-w-80'
+            : 'w-[420px]',
         )}
       >
         <div
@@ -300,12 +300,15 @@ export function ModelPickerPopover<T>({
           {detail !== undefined && activeItem !== null && (
             <div
               ref={cardRef}
-              className="absolute right-full hidden pr-2 transition-[top] duration-150 sm:block"
+              className={cn(
+                'absolute hidden transition-[top] duration-150 sm:block',
+                detailOnRight ? 'left-full pl-2' : 'right-full pr-2',
+              )}
               style={{ top: detailTop }}
             >
               <div
                 data-testid="model-picker-detail"
-                className="w-[300px] rounded-lg border bg-panel p-5 text-gray-12 shadow-lg"
+                className="w-[300px] rounded-lg border bg-panel px-2 py-5 text-gray-12 shadow-lg"
               >
                 {detail(activeItem)}
               </div>
@@ -324,22 +327,6 @@ function PickerRow<T>({
   item: ModelPickerItem<T>;
   indented: boolean;
 }) {
-  const metadata = item.model?.metadata;
-  const meta = [
-    ...(metadata?.contextTokens === undefined
-      ? []
-      : [modelMeta.formatContext({ tokens: metadata.contextTokens })]),
-    ...(metadata?.inputCostPerMillionTokens === undefined ||
-    metadata.outputCostPerMillionTokens === undefined
-      ? []
-      : [
-          `${modelMeta.formatPrice({
-            perMillion: metadata.inputCostPerMillionTokens,
-          })} / ${modelMeta.formatPrice({
-            perMillion: metadata.outputCostPerMillionTokens,
-          })}`,
-        ]),
-  ];
   return (
     <span
       className={cn('flex w-full min-w-0 flex-col gap-0.5', indented && 'pl-7')}
@@ -362,27 +349,6 @@ function PickerRow<T>({
           <span className="truncate text-xs text-gray-11">{item.subtitle}</span>
         )}
         <span className="ml-auto flex shrink-0 items-center gap-2">
-          {meta.length > 0 && (
-            <span className="text-xs tabular-nums text-gray-11">
-              {meta.join(' · ')}
-            </span>
-          )}
-          {metadata?.supportsToolCalling === true && (
-            <Wrench
-              className="size-3.5 text-gray-10"
-              aria-label={t('Supports tool calling')}
-            >
-              <title>{t('Supports tool calling')}</title>
-            </Wrench>
-          )}
-          {metadata?.supportsReasoning === true && (
-            <Brain
-              className="size-3.5 text-gray-10"
-              aria-label={t('Supports reasoning')}
-            >
-              <title>{t('Supports reasoning')}</title>
-            </Brain>
-          )}
           {item.trailing !== undefined && (
             <span className="w-10 text-right text-xs tabular-nums text-gray-11">
               {item.trailing}
@@ -467,7 +433,6 @@ export type ModelPickerItem<T> = {
   trailing?: string;
   badges?: ReactNode;
   leading?: ReactNode;
-  model?: AIProviderModel;
   note?: string;
   disabled?: boolean;
   selected?: boolean;
@@ -498,6 +463,7 @@ type ModelPickerPopoverProps<T> = {
   onOpenChange: (open: boolean) => void;
   align?: 'start' | 'end';
   anchorOnly?: boolean;
+  matchTriggerWidth?: boolean;
   detail?: (item: ModelPickerItem<T>) => ReactNode;
   children: ReactNode;
 };

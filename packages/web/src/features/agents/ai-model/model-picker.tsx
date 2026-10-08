@@ -27,6 +27,7 @@ import { aiModelHooks } from './hooks';
 import { ModelDetail, ModelDetailCard } from './model-detail-card';
 import { modelMeta } from './model-meta';
 import { ModelPickerGroup, ModelPickerPopover } from './model-picker-popover';
+import { SectionHeading } from './section-heading';
 
 export function ModelPicker({
   projectId,
@@ -53,6 +54,7 @@ export function ModelPicker({
 
   return (
     <ModelPickerPopover
+      matchTriggerWidth
       groups={view?.groups ?? []}
       notices={
         isError ? (
@@ -155,6 +157,7 @@ export function modelPickerView({
           name: tier.label,
           description: creditDescriptionOf({ tierId: tier.id }),
           leading: <CreditTile tierId={tier.id} />,
+          trailing: contextOf({ model: tier.model }),
           searchText: `${tier.label} ${tier.model.modelId}`,
           selected: current.kind === 'credits' && current.id === tier.id,
         },
@@ -229,9 +232,9 @@ export function modelPickerView({
             id: 'credits',
             section: 'credits',
             sectionHeading: (
-              <SectionHeading dot="bg-accent-10" label={t('Credits')} />
+              <SectionHeading dot="bg-accent-10" label={t('Credits tiers')} />
             ),
-            heading: t('Credits'),
+            heading: t('Credits tiers'),
             items: creditItems.map(({ item }) => item),
           },
         ]),
@@ -383,15 +386,6 @@ function TriggerContent({ current }: { current: CurrentPick }) {
           </span>
         ))}
     </>
-  );
-}
-
-function SectionHeading({ dot, label }: { dot: string; label: string }) {
-  return (
-    <span className="flex items-center gap-2 text-xss font-semibold tracking-wider text-gray-11 uppercase">
-      <span className={cn('size-1.5 rounded-full', dot)} />
-      {label}
-    </span>
   );
 }
 
