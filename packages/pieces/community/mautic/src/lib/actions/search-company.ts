@@ -1,10 +1,11 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { mauticCommon, searchEntity } from '../common';
 import { mauticAuth } from '../auth';
+import { mauticApi } from '../common/api';
+import { mauticProps } from '../common/props';
 
-export const searchCompany = createAction({
+export const searchCompanyAction = createAction({
   auth: mauticAuth,
-  description: 'Search for a company in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
+  description: 'Search for a company in Mautic CRM',
   audience: 'both',
   aiMetadata: {
     description:
@@ -15,21 +16,10 @@ export const searchCompany = createAction({
   name: 'search_mautic_company',
   classification: 'SEARCH',
   props: {
-    fields: mauticCommon.companyFields,
+    fields: mauticProps.companyFields({ required: true }),
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth.props;
-    const url =
-      (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/companies';
-    const fields = context.propsValue.fields;
-    const keys = Object.keys(fields);
-    let searchParams = '?';
-    for (const key of keys) {
-      if (fields[key]) {
-        searchParams += `search=${key}:${fields[key]}&`;
-      }
-    }
-    const response = await searchEntity(url, searchParams, username, password);
-    return Object.values(response.body.companies)[0];
+    const response = await mauticApi.searchCompanies({ auth: context.auth, fields: context.propsValue.fields });
+    return Object.values(response.companies)[0];
   },
 });

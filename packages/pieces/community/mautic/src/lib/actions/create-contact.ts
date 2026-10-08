@@ -1,15 +1,11 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { mauticCommon } from '../common';
 import { mauticAuth } from '../auth';
+import { mauticApi } from '../common/api';
+import { mauticProps } from '../common/props';
 
-export const createContact = createAction({
+export const createContactAction = createAction({
   auth: mauticAuth,
-  description: 'Creates a new contact in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
+  description: 'Creates a new contact in Mautic CRM',
   audience: 'both',
   aiMetadata: {
     description:
@@ -20,22 +16,9 @@ export const createContact = createAction({
   name: 'create_mautic_contact',
   classification: 'WRITE',
   props: {
-    fields: mauticCommon.contactFields,
+    fields: mauticProps.contactFields({ required: true }),
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth.props;
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url:
-        (base_url.endsWith('/') ? base_url : base_url + '/') +
-        'api/contacts/new',
-      body: JSON.stringify(context.propsValue.fields),
-      headers: {
-        Authorization:
-          'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
-        'Content-Type': 'application/json',
-      },
-    };
-    return await httpClient.sendRequest(request);
+    return await mauticApi.createContact({ auth: context.auth, fields: context.propsValue.fields });
   },
 });

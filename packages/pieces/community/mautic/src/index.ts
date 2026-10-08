@@ -1,30 +1,17 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import {
-  createCompany,
-  createContact,
-  searchCompany,
-  searchContact,
-  updateCompany,
-  updateContact,
-} from './lib/actions';
-import { triggers } from './lib/triggers';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { createCompanyAction } from './lib/actions/create-company';
+import { createContactAction } from './lib/actions/create-contact';
+import { searchCompanyAction } from './lib/actions/search-company';
+import { searchContactAction } from './lib/actions/search-contact';
+import { updateCompanyAction } from './lib/actions/update-company';
+import { updateContactAction } from './lib/actions/update-contact';
 import { mauticAuth } from './lib/auth';
-
-const markdownDescription = `
-Follow these steps:
-
-1. **Enter the Base URL:** Open your Mautic instance and copy the URL from the address bar. If your dashboard link is "https://mautic.ddev.site/s/dashboard", set your base URL as "https://mautic.ddev.site/".
-
-2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.
-
-`;
+import { mauticClient } from './lib/common/client';
+import { contactChannelSubscriptionChangedTrigger } from './lib/triggers/contact-channel-subscription-changed';
+import { contactCompanyChangedTrigger } from './lib/triggers/contact-company-changed';
+import { contactUpdatedTrigger } from './lib/triggers/contact-updated';
+import { newContactTrigger } from './lib/triggers/new-contact';
 
 export const mautic = createPiece({
   displayName: 'Mautic',
@@ -36,21 +23,15 @@ export const mautic = createPiece({
   categories: [PieceCategory.MARKETING],
   auth: mauticAuth,
   actions: [
-    createContact,
-    searchContact,
-    updateContact,
-    createCompany,
-    searchCompany,
-    updateCompany,
+    createContactAction,
+    searchContactAction,
+    updateContactAction,
+    createCompanyAction,
+    searchCompanyAction,
+    updateCompanyAction,
     createCustomApiCallAction({
       auth: mauticAuth,
-      baseUrl: (auth) => {
-        if (!auth) {
-          return '';
-        }
-        const { base_url } = auth.props;
-        return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
-      },
+      baseUrl: (auth) => (auth ? mauticClient.baseUrl({ auth }) : ''),
       authMapping: async (auth) => {
         const { username, password } = auth.props;
         return {
@@ -62,5 +43,10 @@ export const mautic = createPiece({
       },
     }),
   ],
-  triggers,
+  triggers: [
+    contactUpdatedTrigger,
+    contactCompanyChangedTrigger,
+    contactChannelSubscriptionChangedTrigger,
+    newContactTrigger,
+  ],
 });

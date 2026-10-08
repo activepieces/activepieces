@@ -1,10 +1,11 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { mauticCommon, searchEntity } from '../common';
 import { mauticAuth } from '../auth';
+import { mauticApi } from '../common/api';
+import { mauticProps } from '../common/props';
 
-export const searchContact = createAction({
+export const searchContactAction = createAction({
   auth: mauticAuth,
-  description: 'Search for a contact in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
+  description: 'Search for a contact in Mautic CRM',
   audience: 'both',
   aiMetadata: {
     description:
@@ -15,23 +16,10 @@ export const searchContact = createAction({
   name: 'search_mautic_contact',
   classification: 'SEARCH',
   props: {
-    fields: mauticCommon.contactFields,
+    fields: mauticProps.contactFields({ required: true }),
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth.props;
-    const url =
-      (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/contacts';
-    const fields = context.propsValue.fields;
-    const keys = Object.keys(fields);
-    let count = 0;
-    let searchParams = '?';
-    for (const key of keys) {
-      if (fields[key]) {
-        searchParams += `where[${count}][col]=${key}&where[${count}][expr]=eq&where[${count}][val]=${fields[key]}&`;
-        ++count;
-      }
-    }
-    const response = await searchEntity(url, searchParams, username, password);
-    return Object.values(response.body.contacts)[0];
+    const response = await mauticApi.searchContacts({ auth: context.auth, fields: context.propsValue.fields });
+    return Object.values(response.contacts)[0];
   },
 });
