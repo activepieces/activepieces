@@ -1,13 +1,13 @@
 {
-  "AnyHook Websocket enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to websocket events": "AnyHook Websocket 允许您订阅和监听Websocket 事件，从AnyHook 代理服务器进行实时通信",
-  "AnyHook Server URL": "Anyhook 服务器 URL",
-  "The URL of your AnyHook server": "您的 AnyHook 服务器的 URL",
-  "New Websocket Subscription Event": "新 Websocket 订阅事件",
-  "Triggers on a new Websocket subscription event": "触发一个新的 Websocket 订阅活动",
+  "AnyHook Websocket enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to websocket events": "AnyHook Websocket enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to websocket events",
+  "AnyHook Server URL": "AnyHook Server URL",
+  "The URL of your AnyHook server": "The URL of your AnyHook server",
+  "New Websocket Subscription Event": "New Websocket Subscription Event",
+  "Triggers on a new Websocket subscription event": "Triggers on a new Websocket subscription event",
   "Endpoint URL": "Endpoint URL",
   "Headers": "信头",
-  "Subscription Message": "订阅消息",
-  "Websocket endpoint URL to connect to.": "要连接的 Websocket 端点URL。",
-  "Custom headers for the Websocket connection, such as authentication tokens.": "Websocket 连接的自定义头像，例如身份验证令牌。",
-  "The message to send to the Websocket server to subscribe to events.": "发送到Websocket 服务器以订阅事件的消息。"
+  "Subscription Message": "Subscription Message",
+  "Websocket endpoint URL to connect to.": "Websocket endpoint URL to connect to.",
+  "Custom headers for the Websocket connection, such as authentication tokens.": "Custom headers for the Websocket connection, such as authentication tokens.",
+  "The message to send to the Websocket server to subscribe to events.": "The message to send to the Websocket server to subscribe to events."
 }
