@@ -29,12 +29,14 @@ type AnimatedIconHandle = {
   stopAnimation: () => void;
 };
 
+type AnimatedTabExtras = { infoTerm?: string };
+
 const AnimatedTab = ({
   tab,
   isActive,
   onClick,
 }: {
-  tab: ProjectDashboardLayoutHeaderTab;
+  tab: ProjectDashboardLayoutHeaderTab & AnimatedTabExtras;
   isActive: boolean;
   onClick: () => void;
 }) => {
@@ -58,6 +60,11 @@ const AnimatedTab = ({
     >
       <IconComponent ref={iconRef} size={16} className="mr-2" />
       {tab.label}
+      {tab.infoTerm && (
+        <span className="ml-1" onClick={(e) => e.stopPropagation()}>
+          <SynkraInfoTip term={tab.infoTerm} />
+        </span>
+      )}
       {tab.beta && (
         <span className="ml-1.5 rounded-full bg-accent-3 px-1.5 py-0.5 text-[10px] font-medium leading-none text-accent-11">
           Beta
@@ -99,6 +106,7 @@ export const ProjectDashboardLayoutHeader = () => {
       to: authenticationSession.appendProjectRoutePrefix('/runs'),
       label: t('History'),
       icon: HistoryIcon,
+      infoTerm: 'history',
       hasPermission: checkAccess(Permission.READ_RUN),
       show: true,
     },
@@ -106,6 +114,7 @@ export const ProjectDashboardLayoutHeader = () => {
       to: authenticationSession.appendProjectRoutePrefix('/connections'),
       label: t('Integrations'),
       icon: ConnectIcon,
+      infoTerm: 'integration',
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
       show: true,
     },
@@ -113,6 +122,7 @@ export const ProjectDashboardLayoutHeader = () => {
       to: authenticationSession.appendProjectRoutePrefix('/variables'),
       label: t('Variables'),
       icon: VariableIcon,
+      infoTerm: 'variable',
       hasPermission: checkAccess(Permission.READ_VARIABLE),
       show: true,
     },

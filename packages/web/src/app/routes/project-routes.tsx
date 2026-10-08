@@ -13,6 +13,7 @@ import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
 import { AgentsFlagGuard } from '../guards/agents-flag-guard';
+import { SynkraHiddenV1Guard } from '../guards/synkra-hidden-v1-guard';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
@@ -101,7 +102,8 @@ const automationsPagePermissions = [
 ];
 
 const agentEditorElement = (
-  <AgentsFlagGuard>
+  <SynkraHiddenV1Guard>
+    <AgentsFlagGuard>
     <ProjectDashboardLayout>
       <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
         <PageTitle title="Agent">
@@ -332,7 +334,7 @@ export const projectRoutes = [
         <McpReachGuard>
           <PageTitle title="MCP Server">
             <SuspenseWrapper>
-              <McpServerPage />
+              <SynkraHiddenV1Guard><McpServerPage /></SynkraHiddenV1Guard>
             </SuspenseWrapper>
           </PageTitle>
         </McpReachGuard>
