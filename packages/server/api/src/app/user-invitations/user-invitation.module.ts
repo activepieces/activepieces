@@ -105,6 +105,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             invitationId: invitation.id,
             platformId: invitation.platformId,
         })
+        await landNextSignInOnInvitedPlatform({ email: invitation.email, platformId: invitation.platformId, log: request.log })
         await reply.status(StatusCodes.OK).send({ ...invitation, registered })
     })
 
@@ -144,6 +145,14 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     })
     return projectRole
 }
+async function landNextSignInOnInvitedPlatform({ email, platformId, log }: LandNextSignInOnInvitedPlatformParams): Promise<void> {
+    const identity = await userIdentityService(log).getIdentityByEmail(email)
+    if (isNil(identity)) {
+        return
+    }
+    await userIdentityService(log).updateLastLoggedInPlatformId({ id: identity.id, lastLoggedInPlatformId: platformId })
+}
+
 async function assertPlatformInviteProject({ app, request, reply, invitation, platformId }: AssertPlatformInviteProjectParams): Promise<void> {
     if (invitation.type !== InvitationType.PLATFORM || (isNil(invitation.projectId) && isNil(invitation.projectRole))) {
         return
@@ -291,6 +300,12 @@ const UpsertUserInvitationRequestParams = {
             [StatusCodes.CREATED]: UserInvitationWithLink,
         },
     },
+}
+
+type LandNextSignInOnInvitedPlatformParams = {
+    email: string
+    platformId: string
+    log: FastifyBaseLogger
 }
 
 type AssertPlatformInviteProjectParams = {
