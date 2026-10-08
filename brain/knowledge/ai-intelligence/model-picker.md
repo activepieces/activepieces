@@ -23,6 +23,7 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 5. The first key model.
 
 ## Gotchas
+- A stored model pick is matched by its `providerConfigId` only. The "any key of this provider with this model" fallback is for old agent rows saved without a key id (`''`). Otherwise a deleted key would look selected while the run still fails on it.
 - cmdk's `CommandItem` replaces any `onPointerMove` you pass it with its own hover-select. The picker reads hover on `CommandList` instead, from the closest `[cmdk-item]`'s `data-value`. Its `onValueChange` also fires when the list opens, because cmdk highlights the first row. So the detail card only follows `onValueChange` after an arrow key has been pressed.
 - The side card hides any row it has no data for. Catalog metadata comes from the CDN `model-catalog.json`, and its publish has failed before, so expect gaps.
 - A stored deleted tier shows its live replacement ("Moved"), because the runtime follows `replacedBy` too (`movedTiers` in the response).
