@@ -151,7 +151,7 @@ function AuditLogRetentionForm({
         </Alert>
       )}
       {!isNil(oldestEventCreated) && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {!paused &&
           auditLogRetentionUtils.isCleanupPending({
             oldestEventCreated,
