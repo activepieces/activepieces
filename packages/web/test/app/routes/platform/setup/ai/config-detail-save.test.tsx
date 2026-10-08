@@ -106,6 +106,14 @@ vi.mock('@/features/platform-admin', () => ({
   aiProviderKeys: { configModels: () => ['ai-provider', 'models'] },
 }));
 
+vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
+  platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
+}));
+
+vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
+  aiProviderQueries: { useAiProviderConfigs: () => ({ data: [] }) },
+}));
+
 vi.mock('@/lib/format-utils', () => ({
   formatUtils: { formatDateToAgo: () => 'just now' },
 }));
@@ -155,7 +163,7 @@ describe('ConfigDetail save (manual models)', () => {
   let onSave: ReturnType<typeof vi.fn>;
 
   const render = () => {
-    onSave = vi.fn().mockResolvedValue(undefined);
+    onSave = vi.fn().mockResolvedValue({ error: null });
     act(() => {
       root.render(
         <ConfigDetail
