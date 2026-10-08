@@ -94,10 +94,15 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
-        await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
-        await platformProjectService(req.log).markForDeletion({
-            id: req.params.id,
+        await platformService(req.log).runWithDefaultProjectsLock({
             platformId: req.principal.platform.id,
+            fn: async () => {
+                await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
+                await platformProjectService(req.log).markForDeletion({
+                    id: req.params.id,
+                    platformId: req.principal.platform.id,
+                })
+            },
         })
 
         return res.status(StatusCodes.NO_CONTENT).send()

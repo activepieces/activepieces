@@ -60,6 +60,7 @@ export const UpdatePlatformRequestBody = z.object({
     googleAuthEnabled: OptionalBooleanFromQuery,
     emailAuthEnabled: OptionalBooleanFromQuery,
     autoCreatePersonalProjects: OptionalBooleanFromQuery,
+    defaultProjectIds: OptionalArrayFromQuery(z.string()),
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
