@@ -62,3 +62,27 @@ export type MauticWebhookInformation = {
 		triggers: string[];
 	};
 };
+
+export type MauticRecord = Record<string, unknown>;
+
+export type MauticListQuery = {
+	search?: string;
+	start?: number;
+	limit?: number;
+	orderBy?: string;
+	orderByDir?: string;
+	publishedOnly?: boolean;
+	where?: unknown[];
+};
+
+export type MauticActivityQuery = {
+	search?: string;
+	includeEvents?: unknown[];
+	excludeEvents?: unknown[];
+	dateFrom?: string;
+	dateTo?: string;
+	orderBy?: string;
+	orderByDir?: string;
+	page?: number;
+	limit?: number;
+};

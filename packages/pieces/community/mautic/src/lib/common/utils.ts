@@ -1,8 +1,29 @@
+import type { MauticRecord } from './types';
+
 function contactSampleData({ eventType }: { eventType: string }): Record<string, unknown> {
 	return { [eventType]: [CONTACT_SAMPLE] };
 }
 
-export const mauticUtils = { contactSampleData };
+function toBatchRecords({ records }: { records: unknown[] }): MauticRecord[] {
+	if (records.length === 0) {
+		throw new Error('Records must contain at least one record.');
+	}
+	return records.map((record, index) => {
+		if (typeof record !== 'object' || record === null || Array.isArray(record)) {
+			throw new Error(`Records item ${index + 1} must be an object of field values.`);
+		}
+		return Object.fromEntries(Object.entries(record));
+	});
+}
+
+function toBatchIds({ ids }: { ids: unknown[] }): string[] {
+	if (ids.length === 0) {
+		throw new Error('Give at least one id.');
+	}
+	return ids.map(String);
+}
+
+export const mauticUtils = { contactSampleData, toBatchRecords, toBatchIds };
 
 const CONTACT_SAMPLE = {
 	contact: {

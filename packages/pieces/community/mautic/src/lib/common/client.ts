@@ -7,19 +7,37 @@ function baseUrl({ auth }: { auth: MauticAuthValue }): string {
 	return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
 }
 
-async function request<T>({ auth, method, path, body }: RequestParams): Promise<HttpResponse<T>> {
+async function request<T>({
+	auth,
+	method,
+	path,
+	body,
+	queryParams,
+	headers,
+	responseType,
+}: RequestParams): Promise<HttpResponse<T>> {
 	const { username, password } = auth.props;
 	return await httpClient.sendRequest<T>({
 		method,
 		url: `${baseUrl({ auth })}${path}`,
 		body,
+		queryParams,
+		responseType,
 		headers: {
 			Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
-			'Content-Type': 'application/json',
+			...(headers ?? { 'Content-Type': 'application/json' }),
 		},
 	});
 }
 
 export const mauticClient = { baseUrl, request };
 
-type RequestParams = { auth: MauticAuthValue; method: HttpMethod; path: string; body?: unknown };
+type RequestParams = {
+	auth: MauticAuthValue;
+	method: HttpMethod;
+	path: string;
+	body?: unknown;
+	queryParams?: Record<string, string>;
+	headers?: Record<string, string>;
+	responseType?: 'arraybuffer';
+};

@@ -1,4 +1,6 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
+
+import { mauticApi } from './common/api';
 
 const markdownDescription = `
 Follow these steps:
@@ -24,6 +26,18 @@ export const mauticAuth = PieceAuth.CustomAuth({
       displayName: 'Password',
       required: true,
     }),
+  },
+  validate: async ({ auth }) => {
+    const { error } = await tryCatch(() =>
+      mauticApi.getCurrentUser({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }),
+    );
+    if (error) {
+      return {
+        valid: false,
+        error: 'Could not sign in to Mautic. Check the base URL, username and password, and that Basic Authentication is enabled in API Settings.',
+      };
+    }
+    return { valid: true };
   },
   required: true,
 });

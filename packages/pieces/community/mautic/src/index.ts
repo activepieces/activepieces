@@ -6,6 +6,7 @@ import { searchCompanyAction } from './lib/actions/search-company';
 import { searchContactAction } from './lib/actions/search-contact';
 import { updateCompanyAction } from './lib/actions/update-company';
 import { updateContactAction } from './lib/actions/update-contact';
+import { mauticAiActions } from './lib/actions/ai';
 import { mauticAuth } from './lib/auth';
 import { mauticClient } from './lib/common/client';
 import { contactChannelSubscriptionChangedTrigger } from './lib/triggers/contact-channel-subscription-changed';
@@ -17,7 +18,7 @@ export const mautic = createPiece({
   displayName: 'Mautic',
   description: 'Open-source marketing automation software',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/mautic.png',
   authors: ["bibhuty-did-this","kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],
@@ -29,6 +30,7 @@ export const mautic = createPiece({
     createCompanyAction,
     searchCompanyAction,
     updateCompanyAction,
+    ...mauticAiActions,
     createCustomApiCallAction({
       auth: mauticAuth,
       baseUrl: (auth) => (auth ? mauticClient.baseUrl({ auth }) : ''),

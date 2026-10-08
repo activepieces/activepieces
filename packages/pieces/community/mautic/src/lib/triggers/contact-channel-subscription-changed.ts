@@ -4,6 +4,7 @@ import { mauticAuth } from '../auth';
 import { mauticApi } from '../common/api';
 import { mauticProps } from '../common/props';
 import { mauticUtils } from '../common/utils';
+import { mauticLeadChannelSubscriptionChangedTriggerOutputSchema } from '../output-schemas';
 
 import type { MauticWebhookInformation } from '../common/types';
 
@@ -13,6 +14,7 @@ const STORE_KEY = 'mautic_lead_channel_subscription_changed_trigger';
 export const contactChannelSubscriptionChangedTrigger = createTrigger({
 	auth: mauticAuth,
 	name: 'mautic_lead_channel_subscription_changed_trigger',
+	outputSchema: mauticLeadChannelSubscriptionChangedTriggerOutputSchema,
 	classification: 'READ',
 	displayName: 'Contact Channel Subscription Change',
 	description: "Triggers when a contact's channel subscription status changes.",

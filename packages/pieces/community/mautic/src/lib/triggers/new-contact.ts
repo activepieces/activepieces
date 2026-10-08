@@ -4,6 +4,7 @@ import { mauticAuth } from '../auth';
 import { mauticApi } from '../common/api';
 import { mauticProps } from '../common/props';
 import { mauticUtils } from '../common/utils';
+import { mauticLeadPostSaveNewTriggerOutputSchema } from '../output-schemas';
 
 import type { MauticWebhookInformation } from '../common/types';
 
@@ -13,6 +14,7 @@ const STORE_KEY = 'mautic_lead_post_save_new_trigger';
 export const newContactTrigger = createTrigger({
 	auth: mauticAuth,
 	name: 'mautic_lead_post_save_new_trigger',
+	outputSchema: mauticLeadPostSaveNewTriggerOutputSchema,
 	classification: 'READ',
 	displayName: 'New Contact',
 	description: 'Triggers when a new contact is created.',

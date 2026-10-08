@@ -1,0 +1,212 @@
+import { OutputSchema } from '@activepieces/pieces-framework';
+
+import {
+	campaignListsFields,
+	categoryFields,
+	dynamicContentUtmTagsFields,
+	emailFields,
+	filtersFiltersFields,
+} from '../../../output-schemas';
+
+export const mauticCreateEmailOutputSchema: OutputSchema = {
+	fields: [{ key: 'email', label: 'Email', children: emailFields }],
+};
+
+export const mauticDeleteEmailOutputSchema: OutputSchema = {
+	fields: [
+		{
+			key: 'email',
+			label: 'Email',
+			children: [
+				{ key: 'isPublished', label: 'Published', format: 'boolean' },
+				{ key: 'dateAdded', label: 'Date Added', format: 'datetime' },
+				{ key: 'dateModified', label: 'Date Modified', format: 'datetime' },
+				{ key: 'id', label: 'ID' },
+				{ key: 'name', label: 'Name' },
+				{ key: 'subject', label: 'Subject' },
+				{ key: 'language', label: 'Language' },
+				{ key: 'category', label: 'Category', children: categoryFields },
+				{ key: 'fromAddress', label: 'From Address', format: 'email' },
+				{ key: 'fromName', label: 'From Name' },
+				{ key: 'replyToAddress', label: 'Reply To Address', format: 'email' },
+				{ key: 'bccAddress', label: 'Bcc Address' },
+				{ key: 'useOwnerAsMailer', label: 'Use Owner As Mailer' },
+				{ key: 'utmTags', label: 'Utm Tags', children: dynamicContentUtmTagsFields },
+				{ key: 'preheaderText', label: 'Preheader Text' },
+				{ key: 'customHtml', label: 'Custom HTML' },
+				{ key: 'plainText', label: 'Plain Text' },
+				{ key: 'template', label: 'Template' },
+				{ key: 'emailType', label: 'Email Type' },
+				{ key: 'publishUp', label: 'Publish Up' },
+				{ key: 'publishDown', label: 'Publish Down' },
+				{ key: 'publicPreview', label: 'Public Preview', format: 'boolean' },
+				{ key: 'readCount', label: 'Read Count', format: 'number' },
+				{ key: 'sentCount', label: 'Sent Count', format: 'number' },
+				{ key: 'revision', label: 'Revision', format: 'number' },
+				{ key: 'assetAttachments', label: 'Asset Attachments' },
+				{ key: 'variantStartDate', label: 'Variant Start Date' },
+				{ key: 'variantSentCount', label: 'Variant Sent Count', format: 'number' },
+				{ key: 'variantReadCount', label: 'Variant Read Count', format: 'number' },
+				{ key: 'variantParent', label: 'Variant Parent' },
+				{ key: 'variantChildren', label: 'Variant Children' },
+				{ key: 'translationParent', label: 'Translation Parent' },
+				{
+					key: 'translationChildren',
+					label: 'Translation Children',
+					labelKey: 'name',
+					listItems: [
+						{ key: 'id', label: 'ID', format: 'number' },
+						{ key: 'name', label: 'Name' },
+						{ key: 'subject', label: 'Subject' },
+						{ key: 'language', label: 'Language' },
+						{ key: 'category', label: 'Category', children: categoryFields },
+						{ key: 'fromAddress', label: 'From Address', format: 'email' },
+						{ key: 'fromName', label: 'From Name' },
+						{ key: 'replyToAddress', label: 'Reply To Address', format: 'email' },
+						{ key: 'bccAddress', label: 'Bcc Address' },
+						{ key: 'useOwnerAsMailer', label: 'Use Owner As Mailer' },
+						{ key: 'utmTags', label: 'Utm Tags', children: dynamicContentUtmTagsFields },
+						{ key: 'preheaderText', label: 'Preheader Text' },
+						{ key: 'customHtml', label: 'Custom HTML' },
+						{ key: 'plainText', label: 'Plain Text' },
+						{ key: 'template', label: 'Template' },
+						{ key: 'emailType', label: 'Email Type' },
+						{ key: 'publishUp', label: 'Publish Up' },
+						{ key: 'publishDown', label: 'Publish Down' },
+						{ key: 'publicPreview', label: 'Public Preview', format: 'boolean' },
+						{ key: 'readCount', label: 'Read Count', format: 'number' },
+						{ key: 'sentCount', label: 'Sent Count', format: 'number' },
+						{ key: 'revision', label: 'Revision', format: 'number' },
+						{ key: 'assetAttachments', label: 'Asset Attachments' },
+						{ key: 'variantStartDate', label: 'Variant Start Date' },
+						{ key: 'variantSentCount', label: 'Variant Sent Count', format: 'number' },
+						{ key: 'variantReadCount', label: 'Variant Read Count', format: 'number' },
+						{ key: 'variantParent', label: 'Variant Parent' },
+						{ key: 'variantChildren', label: 'Variant Children' },
+						{ key: 'translationChildren', label: 'Translation Children' },
+						{ key: 'unsubscribeForm', label: 'Unsubscribe Form' },
+						{
+							key: 'dynamicContent',
+							label: 'Dynamic Content',
+							listItems: [
+								{ key: 'tokenName', label: 'Token Name' },
+								{ key: 'content', label: 'Content' },
+								{
+									key: 'filters',
+									label: 'Filters',
+									listItems: [
+										{ key: 'content', label: 'Content' },
+										{ key: 'filters', label: 'Filters' },
+									],
+								},
+							],
+						},
+						{ key: 'lists', label: 'Lists' },
+					],
+				},
+				{ key: 'unsubscribeForm', label: 'Unsubscribe Form' },
+				{
+					key: 'dynamicContent',
+					label: 'Dynamic Content',
+					listItems: [
+						{ key: 'tokenName', label: 'Token Name' },
+						{ key: 'content', label: 'Content' },
+						{
+							key: 'filters',
+							label: 'Filters',
+							listItems: [
+								{ key: 'content', label: 'Content' },
+								{ key: 'filters', label: 'Filters', listItems: filtersFiltersFields },
+							],
+						},
+					],
+				},
+				{ key: 'lists', label: 'Lists' },
+			],
+		},
+	],
+};
+
+export const mauticGetEmailOutputSchema: OutputSchema = {
+	fields: [
+		{
+			key: 'email',
+			label: 'Email',
+			children: [
+				{ key: 'isPublished', label: 'Published', format: 'boolean' },
+				{ key: 'dateAdded', label: 'Date Added', format: 'datetime' },
+				{ key: 'dateModified', label: 'Date Modified', format: 'datetime' },
+				{ key: 'id', label: 'ID', format: 'number' },
+				{ key: 'name', label: 'Name' },
+				{ key: 'subject', label: 'Subject' },
+				{ key: 'language', label: 'Language' },
+				{ key: 'category', label: 'Category', children: categoryFields },
+				{ key: 'fromAddress', label: 'From Address', format: 'email' },
+				{ key: 'fromName', label: 'From Name' },
+				{ key: 'replyToAddress', label: 'Reply To Address', format: 'email' },
+				{ key: 'bccAddress', label: 'Bcc Address' },
+				{ key: 'useOwnerAsMailer', label: 'Use Owner As Mailer' },
+				{ key: 'utmTags', label: 'Utm Tags', children: dynamicContentUtmTagsFields },
+				{ key: 'preheaderText', label: 'Preheader Text' },
+				{ key: 'customHtml', label: 'Custom HTML' },
+				{ key: 'plainText', label: 'Plain Text' },
+				{ key: 'template', label: 'Template' },
+				{ key: 'emailType', label: 'Email Type' },
+				{ key: 'publishUp', label: 'Publish Up' },
+				{ key: 'publishDown', label: 'Publish Down' },
+				{ key: 'publicPreview', label: 'Public Preview', format: 'boolean' },
+				{ key: 'readCount', label: 'Read Count', format: 'number' },
+				{ key: 'sentCount', label: 'Sent Count', format: 'number' },
+				{ key: 'revision', label: 'Revision', format: 'number' },
+				{ key: 'assetAttachments', label: 'Asset Attachments' },
+				{ key: 'variantStartDate', label: 'Variant Start Date' },
+				{ key: 'variantSentCount', label: 'Variant Sent Count', format: 'number' },
+				{ key: 'variantReadCount', label: 'Variant Read Count', format: 'number' },
+				{ key: 'variantParent', label: 'Variant Parent' },
+				{ key: 'variantChildren', label: 'Variant Children' },
+				{ key: 'translationParent', label: 'Translation Parent' },
+				{ key: 'translationChildren', label: 'Translation Children' },
+				{ key: 'unsubscribeForm', label: 'Unsubscribe Form' },
+				{
+					key: 'dynamicContent',
+					label: 'Dynamic Content',
+					listItems: [
+						{ key: 'tokenName', label: 'Token Name' },
+						{ key: 'content', label: 'Content' },
+						{
+							key: 'filters',
+							label: 'Filters',
+							listItems: [
+								{ key: 'content', label: 'Content' },
+								{ key: 'filters', label: 'Filters', listItems: filtersFiltersFields },
+							],
+						},
+					],
+				},
+				{ key: 'lists', label: 'Lists', labelKey: 'name', listItems: campaignListsFields },
+			],
+		},
+	],
+};
+
+export const mauticListEmailsOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'total', label: 'Total', format: 'number' },
+		{ key: 'emails', label: 'Emails', labelKey: 'name', listItems: emailFields },
+	],
+};
+
+export const mauticSendEmailToContactOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'success', label: 'Success', format: 'boolean' },
+		{ key: 'failed', label: 'Failed' },
+	],
+};
+
+export const mauticSendSegmentEmailOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'success', label: 'Success', format: 'number' },
+		{ key: 'sentCount', label: 'Sent Count', format: 'number' },
+		{ key: 'failedRecipients', label: 'Failed Recipients', format: 'number' },
+	],
+};

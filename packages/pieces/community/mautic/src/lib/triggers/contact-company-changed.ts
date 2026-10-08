@@ -4,6 +4,7 @@ import { mauticAuth } from '../auth';
 import { mauticApi } from '../common/api';
 import { mauticProps } from '../common/props';
 import { mauticUtils } from '../common/utils';
+import { mauticLeadCompanyChangeTriggerOutputSchema } from '../output-schemas';
 
 import type { MauticWebhookInformation } from '../common/types';
 
@@ -13,6 +14,7 @@ const STORE_KEY = 'mautic_lead_company_change_trigger';
 export const contactCompanyChangedTrigger = createTrigger({
 	auth: mauticAuth,
 	name: 'mautic_lead_company_change_trigger',
+	outputSchema: mauticLeadCompanyChangeTriggerOutputSchema,
 	classification: 'READ',
 	displayName: 'Contact Company Subscription Change',
 	description: 'Triggers when a commpany is added or removed to/from contact.',

@@ -4,6 +4,7 @@ import { mauticAuth } from '../auth';
 import { mauticApi } from '../common/api';
 import { mauticProps } from '../common/props';
 import { mauticUtils } from '../common/utils';
+import { mauticLeadPostSaveUpdateTriggerOutputSchema } from '../output-schemas';
 
 import type { MauticWebhookInformation } from '../common/types';
 
@@ -13,6 +14,7 @@ const STORE_KEY = 'mautic_lead_post_save_update_trigger';
 export const contactUpdatedTrigger = createTrigger({
 	auth: mauticAuth,
 	name: 'mautic_lead_post_save_update_trigger',
+	outputSchema: mauticLeadPostSaveUpdateTriggerOutputSchema,
 	classification: 'READ',
 	displayName: 'Contact Updated',
 	description: 'Triggers when a contact is updated.',
