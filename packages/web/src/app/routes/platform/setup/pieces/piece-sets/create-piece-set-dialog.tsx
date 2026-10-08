@@ -1,8 +1,6 @@
-import { CreatePieceSetRequestBody } from '@activepieces/shared';
+import { CreatePieceSetRequestBody, PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -11,57 +9,78 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import { pieceSetFormErrors } from './piece-set-form-errors';
+import { useShowEmbedKey } from './use-show-embed-key';
 
 const formSchema = CreatePieceSetRequestBody;
 
 type FormValues = z.infer<typeof formSchema>;
 
 type CreatePieceSetDialogProps = {
-  onCreated: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (pieceSet: PieceSet) => void;
 };
 
 const CreatePieceSetForm = ({
   onCreated,
   onOpenChange,
 }: {
-  onCreated: () => void;
+  onCreated: (pieceSet: PieceSet) => void;
   onOpenChange: (open: boolean) => void;
 }) => {
+  const showKey = useShowEmbedKey();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      key: '',
     },
     mode: 'onChange',
   });
 
-  const { mutate: createSet, isPending } =
-    pieceSetMutations.useCreatePieceSet();
+  const { mutate: createSet, isPending } = pieceSetMutations.useCreatePieceSet({
+    onError: (error) =>
+      pieceSetFormErrors.show({
+        form,
+        error,
+        keyField: showKey ? 'key' : undefined,
+        showKey,
+      }),
+  });
 
   const handleSubmit = (data: FormValues) => {
-    createSet(data, {
-      onSuccess: () => {
-        onOpenChange(false);
-        onCreated();
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
+    createSet(
+      { name: data.name, key: (showKey && data.key) || undefined },
+      {
+        onSuccess: (pieceSet) => {
+          onOpenChange(false);
+          onCreated(pieceSet);
+        },
       },
-    });
+    );
   };
 
   return (
@@ -77,12 +96,38 @@ const CreatePieceSetForm = ({
             <FormItem>
               <FormLabel>{t('Name')}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder={t('e.g. Engineering')} />
+                <Input {...field} autoFocus placeholder={t('e.g. Sales')} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        {showKey && (
+          <FormField
+            control={form.control}
+            name="key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Embed key (optional)')}</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder={t('e.g. sales')} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The embed SDK passes this key to put a project on this {term}. Leave it empty to make one from the name.',
+                    pieceSetTerms.get(),
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"
@@ -95,6 +140,7 @@ const CreatePieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_CREATE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isValid}
           >
             {t('Create')}
           </Button>
@@ -105,30 +151,26 @@ const CreatePieceSetForm = ({
 };
 
 export const CreatePieceSetDialog = ({
+  open,
+  onOpenChange,
   onCreated,
 }: CreatePieceSetDialogProps) => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.plan.managePiecesEnabled;
-  const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
-          disabled={!isEnabled}
-        >
-          <Plus />
-          {t('New Piece Set')}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
-          <DialogTitle>{t('Create Piece Set')}</DialogTitle>
+          <DialogTitle>{t('New {term}', pieceSetTerms.get())}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'A new {term} allows every piece. Narrow it down once it exists.',
+              pieceSetTerms.get(),
+            )}
+          </DialogDescription>
         </DialogHeader>
         <CreatePieceSetForm
           key={open ? 'open' : 'closed'}
           onCreated={onCreated}
-          onOpenChange={setOpen}
+          onOpenChange={onOpenChange}
         />
       </DialogContent>
     </Dialog>

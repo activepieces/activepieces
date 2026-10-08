@@ -2,6 +2,7 @@ import { DuplicatePieceSetRequestBody } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -22,8 +24,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import { pieceSetFormErrors } from './piece-set-form-errors';
+import { useShowEmbedKey } from './use-show-embed-key';
 
 type DuplicatePieceSetDialogProps = {
   open: boolean;
@@ -41,19 +46,37 @@ const DuplicatePieceSetForm = ({
   sourceId: string;
   sourceName: string;
 }) => {
+  const navigate = useNavigate();
+  const showKey = useShowEmbedKey();
   const form = useForm<z.infer<typeof DuplicatePieceSetRequestBody>>({
     resolver: zodResolver(DuplicatePieceSetRequestBody),
-    defaultValues: { name: `${sourceName} (Copy)` },
+    defaultValues: { name: t('{name} copy', { name: sourceName }) },
     mode: 'onChange',
   });
 
   const { mutate: duplicateSet, isPending } =
-    pieceSetMutations.useDuplicatePieceSet();
+    pieceSetMutations.useDuplicatePieceSet({
+      onError: (error) =>
+        pieceSetFormErrors.show({
+          form,
+          error,
+          showKey,
+        }),
+    });
 
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     duplicateSet(
       { id: sourceId, name: data.name },
-      { onSuccess: () => onOpenChange(false) },
+      {
+        onSuccess: (copy) => {
+          onOpenChange(false);
+          navigate(`/platform/pieces/piece-sets/${copy.id}`);
+        },
+      },
     );
   };
 
@@ -76,6 +99,11 @@ const DuplicatePieceSetForm = ({
             </FormItem>
           )}
         />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"
@@ -88,6 +116,7 @@ const DuplicatePieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isValid}
           >
             {t('Duplicate')}
           </Button>
@@ -107,7 +136,15 @@ export const DuplicatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
-          <DialogTitle>{t('Duplicate Piece Set')}</DialogTitle>
+          <DialogTitle>
+            {t('Duplicate {term}', pieceSetTerms.get())}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              'A new {term} starts with the same pieces and actions as {name}.',
+              { ...pieceSetTerms.get(), name: sourceName },
+            )}
+          </DialogDescription>
         </DialogHeader>
         <DuplicatePieceSetForm
           key={open ? 'open' : 'closed'}

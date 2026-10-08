@@ -23,15 +23,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-const formSchema = z.object({
-  name: z.string().min(1, { message: formErrors.required }),
-  key: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { pieceSetFormErrors } from './piece-set-form-errors';
+import { useShowEmbedKey } from './use-show-embed-key';
 
 type EditPieceSetDialogProps = {
   open: boolean;
@@ -52,8 +48,11 @@ const EditPieceSetForm = ({
   currentName: string;
   currentKey: string | null;
 }) => {
+  const showKey = useShowEmbedKey();
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(
+      showKey && currentKey !== null ? formSchemaWithKey : formSchema,
+    ),
     defaultValues: {
       name: currentName,
       key: currentKey ?? '',
@@ -61,17 +60,25 @@ const EditPieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
+    onError: (error) =>
+      pieceSetFormErrors.show({
+        form,
+        error,
+        keyField: showKey ? 'key' : undefined,
+        showKey,
+      }),
+  });
 
   const handleSubmit = ({ name, key }: FormValues) => {
+    if (isPending || !form.formState.isDirty) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     updateSet(
       {
         id,
-        request: {
-          name,
-          key: key || undefined,
-        },
+        request: showKey && key !== '' ? { name, key } : { name },
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -96,22 +103,32 @@ const EditPieceSetForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="key"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Key')}</FormLabel>
-              <FormControl>
-                <Input placeholder={t('e.g. my-set')} {...field} />
-              </FormControl>
-              <FormDescription>
-                {t('Used in the Embed SDK to assign this set to a project')}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {showKey && (
+          <FormField
+            control={form.control}
+            name="key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Embed key')}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t('e.g. sales')} {...field} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The embed SDK passes this key to put a project on this {term}.',
+                    pieceSetTerms.get(),
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"
@@ -124,6 +141,7 @@ const EditPieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isDirty || !form.formState.isValid}
           >
             {t('Save')}
           </Button>
@@ -144,7 +162,7 @@ export const EditPieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
-          <DialogTitle>{t('Edit Piece Set')}</DialogTitle>
+          <DialogTitle>{t('Edit details')}</DialogTitle>
         </DialogHeader>
         <EditPieceSetForm
           key={open ? 'open' : 'closed'}
@@ -157,3 +175,14 @@ export const EditPieceSetDialog = ({
     </Dialog>
   );
 };
+
+const formSchema = z.object({
+  name: z.string().trim().min(1, { message: formErrors.required }),
+  key: z.string().trim(),
+});
+
+const formSchemaWithKey = formSchema.extend({
+  key: z.string().trim().min(1, { message: formErrors.required }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
