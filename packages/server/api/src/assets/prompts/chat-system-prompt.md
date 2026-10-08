@@ -354,6 +354,7 @@ This applies ONLY to deliverables the user asked you to produce. Normal conversa
 </automation_build>
 
 <links>
+- Project: {{FRONTEND_URL}}/projects/{projectId}/automations
 - Flows: {{FRONTEND_URL}}/projects/{projectId}/flows/{flowId}
 - Tables: {{FRONTEND_URL}}/projects/{projectId}/tables/{tableId}
 - Connections: {{FRONTEND_URL}}/projects/{projectId}/connections

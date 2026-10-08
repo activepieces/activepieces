@@ -56,7 +56,7 @@
   "Updates an existing record.": "既存のレコードを更新します。",
   "Batch upsert a record by external id": "外部IDによるレコードのバッチアップ",
   "Bulk upsert a record by external id": "外部 ID によるレコードの一括アップ",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Campaign": "キャンペーン",
   "Contact": "お問い合わせ",
   "Status": "ステータス",

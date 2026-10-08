@@ -28,7 +28,7 @@ export const asanaCreateMembershipAction = createAction({
   props: {
     parent: Property.ShortText({
       displayName: 'Parent GID',
-      description: 'Gid of the project (or goal, portfolio, custom field or custom type) to share. Obtain a project gid from List Projects.',
+      description: 'Gid of the project (or goal, portfolio, custom field or custom type) to share. Obtain a project gid from List Projects, or a custom field gid from List Custom Fields.',
       required: true,
     }),
     member: Property.ShortText({
