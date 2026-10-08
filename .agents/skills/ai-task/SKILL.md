@@ -294,7 +294,7 @@ Run these checks and fix what you can, then show one short summary of what chang
 5. **Size:** if a reviewer can't read it in about 20 minutes, suggest how to split it before opening.
 6. **Lint:** run `npm run lint-dev` and report the result. Don't hide failures.
 7. **AI behavior check.** If the diff touches chat or agent prompts (`packages/server/api/src/assets/prompts/`), tool descriptions or the agent loop (`packages/server/worker/src/lib/execute/jobs/ee/agent/`), run `npm run agent-evals:ci`. It calls a model, so say so first. Report pass, or which fixtures regressed. Without a key in `.env.dev`, say it under **Heads up** and continue.
-8. **Ticket:** set it to In Review when the PR is open. If the work taught something the next engineer needs, add it as a bullet under `Gotchas` on that area's brain page, in this PR.
+8. **Ticket:** set it to In Review when the PR is open. If the work taught something the next engineer needs, add it as a bullet under `Gotchas` on that area's brain page, in this PR. Then ask once, in the same message as the other questions: "Anything decided in Discord or a DM for this ticket? Paste it and I'll save it to the ticket." If they paste something, save it the way Note does.
 9. **Project update:** if the PR finishes a milestone, offer a 3-line project update draft.
 10. **Ready-for-review gate.** A PR asks for review only when **both** are true. Until then, keep it a draft.
     - **Greptile 5/5.** Read Greptile's latest summary comment (`gh pr view <n> --comments`). Below 5/5: fix its findings, push, and wait for the new score. Reply to each comment you fix in one short line, and resolve it.
