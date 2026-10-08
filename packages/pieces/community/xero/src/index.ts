@@ -29,6 +29,39 @@ import { xeroFindPurchaseOrder } from './lib/actions/find-purchase-order';
 import { xeroGetInvoiceHistory } from './lib/actions/get-invoice-history';
 import { xeroCreateBankTransaction } from './lib/actions/create-bank-transaction';
 import { xeroFindOrCreateContact } from './lib/actions/find-or-create-contact';
+import { xeroListOrganisations } from './lib/actions/list-organisations';
+import { xeroGetOrganisation } from './lib/actions/get-organisation';
+import { xeroGetInvoice } from './lib/actions/get-invoice';
+import { xeroSearchInvoices } from './lib/actions/search-invoices';
+import { xeroDownloadInvoicePdf } from './lib/actions/download-invoice-pdf';
+import { xeroGetContact } from './lib/actions/get-contact';
+import { xeroArchiveContact } from './lib/actions/archive-contact';
+import { xeroUpsertItem } from './lib/actions/upsert-item';
+import { xeroSearchPayments } from './lib/actions/search-payments';
+import { xeroDeletePayment } from './lib/actions/delete-payment';
+import { xeroVoidInvoice } from './lib/actions/void-invoice';
+import { xeroSearchBankTransactions } from './lib/actions/search-bank-transactions';
+import { xeroCreateManualJournal } from './lib/actions/create-manual-journal';
+import { xeroListAccounts } from './lib/actions/list-accounts';
+import { xeroListTaxRates } from './lib/actions/list-tax-rates';
+import { xeroListTrackingCategories } from './lib/actions/list-tracking-categories';
+import { xeroGetProfitAndLoss } from './lib/actions/get-profit-and-loss';
+import { xeroGetBalanceSheet } from './lib/actions/get-balance-sheet';
+import { xeroGetBankSummary } from './lib/actions/get-bank-summary';
+import { xeroGetTrialBalance } from './lib/actions/get-trial-balance';
+import { xeroGetExecutiveSummary } from './lib/actions/get-executive-summary';
+import { xeroGetAgedReceivables } from './lib/actions/get-aged-receivables';
+import { xeroGetAgedPayables } from './lib/actions/get-aged-payables';
+import { xeroCreateInvoiceAi } from './lib/actions/ai/create-invoice';
+import { xeroUpdateInvoiceAi } from './lib/actions/ai/update-invoice';
+import { xeroEmailInvoiceAi } from './lib/actions/ai/email-invoice';
+import { xeroCreatePaymentAi } from './lib/actions/ai/create-payment';
+import { xeroCreateCreditNoteAi } from './lib/actions/ai/create-credit-note';
+import { xeroAllocateCreditNoteAi } from './lib/actions/ai/allocate-credit-note';
+import { xeroCreateQuoteAi } from './lib/actions/ai/create-quote';
+import { xeroCreatePurchaseOrderAi } from './lib/actions/ai/create-purchase-order';
+import { xeroCreateBankTransactionAi } from './lib/actions/ai/create-bank-transaction';
+import { xeroUploadAttachmentAi } from './lib/actions/ai/upload-attachment';
 import { xeroNewContact } from './lib/triggers/new-contact';
 import { xeroNewOrUpdatedContact } from './lib/triggers/new-or-updated-contact';
 import { xeroNewSalesInvoice } from './lib/triggers/new-sales-invoice';
@@ -43,6 +76,29 @@ import { xeroNewCreditNote } from './lib/triggers/new-credit-note';
 import { xeroNewProject } from './lib/triggers/new-project';
 import { xeroNewQuote } from './lib/triggers/new-quote';
 
+export const xeroScopes = [
+  'openid',
+  'profile',
+  'email',
+  'offline_access',
+  'accounting.contacts',
+  'accounting.invoices',
+  'accounting.payments',
+  'accounting.banktransactions',
+  'accounting.manualjournals',
+  'accounting.reports.aged.read',
+  'accounting.reports.balancesheet.read',
+  'accounting.reports.banksummary.read',
+  'accounting.reports.executivesummary.read',
+  'accounting.reports.profitandloss.read',
+  'accounting.reports.taxreports.read',
+  'accounting.reports.trialbalance.read',
+  'accounting.budgets.read',
+  'accounting.attachments',
+  'accounting.settings',
+  'projects',
+];
+
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
   1. Log in to Xero.
@@ -51,31 +107,20 @@ export const xeroAuth = PieceAuth.OAuth2({
   4. On the left, click on \`Configuration\`.
   5. Enter your \`redirect url\`.
   6. Copy the \`Client Id\` and \`Client Secret\`.
+
+  The connection requests Xero's granular scopes (for example \`accounting.invoices\` and \`accounting.payments\` instead of \`accounting.transactions\`), which apps created on or after 2 March 2026 require. Receipts, Expense Claims and Journals are not available on connections created with this version.
   `,
   authUrl: 'https://login.xero.com/identity/connect/authorize',
   tokenUrl: 'https://identity.xero.com/connect/token',
   required: true,
-  scope: [
-    'openid',
-    'profile',
-    'email',
-    'offline_access',
-    'accounting.contacts',
-    'accounting.transactions',
-    'accounting.reports.read',
-    'accounting.journals.read',
-    'accounting.budgets.read',
-    'accounting.attachments',
-    'accounting.settings',
-    'projects',
-  ],
+  scope: xeroScopes,
 });
 
 export const xero = createPiece({
   displayName: 'Xero',
   description: 'Beautiful accounting software',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
   authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'thejaachi'],
   categories: [PieceCategory.ACCOUNTING],
@@ -105,6 +150,39 @@ export const xero = createPiece({
     xeroGetInvoiceHistory,
     xeroCreateBankTransaction,
     xeroFindOrCreateContact,
+    xeroListOrganisations,
+    xeroGetOrganisation,
+    xeroGetInvoice,
+    xeroSearchInvoices,
+    xeroDownloadInvoicePdf,
+    xeroGetContact,
+    xeroArchiveContact,
+    xeroUpsertItem,
+    xeroSearchPayments,
+    xeroDeletePayment,
+    xeroVoidInvoice,
+    xeroSearchBankTransactions,
+    xeroCreateManualJournal,
+    xeroListAccounts,
+    xeroListTaxRates,
+    xeroListTrackingCategories,
+    xeroGetProfitAndLoss,
+    xeroGetBalanceSheet,
+    xeroGetBankSummary,
+    xeroGetTrialBalance,
+    xeroGetExecutiveSummary,
+    xeroGetAgedReceivables,
+    xeroGetAgedPayables,
+    xeroCreateInvoiceAi,
+    xeroUpdateInvoiceAi,
+    xeroEmailInvoiceAi,
+    xeroCreatePaymentAi,
+    xeroCreateCreditNoteAi,
+    xeroAllocateCreditNoteAi,
+    xeroCreateQuoteAi,
+    xeroCreatePurchaseOrderAi,
+    xeroCreateBankTransactionAi,
+    xeroUploadAttachmentAi,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.xero.com/api.xro/2.0',
       auth: xeroAuth,

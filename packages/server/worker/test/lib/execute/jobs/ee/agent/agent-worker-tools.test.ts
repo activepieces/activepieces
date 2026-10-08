@@ -1,4 +1,5 @@
 import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
+import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 
@@ -775,5 +776,12 @@ describe('an agent does not offer to connect an account its author already chose
         const { gatesOpened } = await showPicker({ toolName: 'ap_show_connection_picker' })
 
         expect(gatesOpened).toEqual(['ap_show_connection_picker'])
+    })
+
+    it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('%s rejects an empty piece, so no gate opens for a card that cannot render', async (toolName) => {
+        const { tools } = pickerTools({})
+        const result = await asSchema(tools[toolName].inputSchema).validate?.({ piece: '', displayName: 'Gmail' })
+
+        expect(result?.success).toBe(false)
     })
 })

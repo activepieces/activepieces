@@ -1,15 +1,11 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-  propsValidation,
-} from '@activepieces/pieces-common';
-import { heartbeatAuth } from '../..';
-import * as z from 'zod/mini'
+import { propsValidation } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import * as z from 'zod/mini';
+import { heartbeatAuth } from '../auth';
+import { heartbeatApi } from '../common/client';
+import { heartbeatProps } from '../common/props';
+import { heartbeatUsers } from '../common/users';
+import { heartbeatOutputSchemas } from '../common/output-schemas';
 
 export const heartBeatCreateUser = createAction({
   auth: heartbeatAuth,
@@ -17,8 +13,11 @@ export const heartBeatCreateUser = createAction({
   classification: 'WRITE',
   displayName: 'Create User',
   description: 'Create a new user in a Heartbeat community',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a member in a Heartbeat community via the Heartbeat API, assigning a role and optionally adding them to groups and setting profile fields (bio, social links, status). Use to onboard a new person; the email must be unique to the community. Not idempotent: each call creates a member (a duplicate email is rejected) and, if a bio is supplied with the introduction-thread option enabled, also posts an introduction thread.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description: 'Creates a member in a Heartbeat community, assigning a role and optionally groups and profile fields (bio, social links, status). Use to onboard a new person; the email must be unique to the community. Not idempotent: a second call with the same email is rejected, and with the introduction-thread option on and a bio set it also posts an introduction thread.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -30,105 +29,8 @@ export const heartBeatCreateUser = createAction({
       description: "The user's email. Must be unique to the community",
       required: true,
     }),
-    role_id: Property.Dropdown({
-      auth: heartbeatAuth,
-      displayName: 'Roles',
-      description: 'The role the user should have',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please select a connection',
-          };
-
-        const response = await httpClient.sendRequest<
-          {
-            id: string;
-            name: string;
-          }[]
-        >({
-          method: HttpMethod.GET,
-          url: `https://api.heartbeat.chat/v0/roles`,
-          headers: {
-            'content-type': 'application/json',
-          },
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.secret_text,
-          },
-          body: {},
-        });
-
-        if (response.status === 200) {
-          return {
-            options: response.body.map((role) => ({
-              label: role.name,
-              value: role.id,
-            })),
-            disabled: false,
-          };
-        }
-
-        return {
-          options: [],
-          disabled: true,
-          placeholder: 'Error loading roles.',
-        };
-      },
-    }),
-    group_ids: Property.MultiSelectDropdown({
-      displayName: 'Groups',
-      auth: heartbeatAuth,
-      description:
-        'A list of the ids of the groups that the user should belong to.',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Error loading groups',
-          };
-
-        const response = await httpClient.sendRequest<
-          {
-            id: string;
-            name: string;
-          }[]
-        >({
-          method: HttpMethod.GET,
-          url: `https://api.heartbeat.chat/v0/groups`,
-          headers: {
-            'content-type': 'application/json',
-          },
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.secret_text,
-          },
-          body: {},
-        });
-
-        if (response.status === 200) {
-          return {
-            options: response.body.map((group) => ({
-              label: group.name,
-              value: group.id,
-            })),
-            disabled: false,
-          };
-        }
-
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Error loading groups',
-        };
-      },
-    }),
+    role_id: heartbeatProps.roleDropdown,
+    group_ids: heartbeatProps.groupsDropdown,
     profile_picture: Property.ShortText({
       displayName: 'Profile Picture',
       description:
@@ -147,17 +49,22 @@ export const heartBeatCreateUser = createAction({
     }),
     linkedin: Property.LongText({
       displayName: 'LinkedIn',
-      description: "A link to the user's LinkedIn profile",
+      description: "A link to the user's LinkedIn profile (full URL including https://)",
       required: false,
     }),
     twitter: Property.LongText({
       displayName: 'Twitter',
-      description: "A link to the user's Twitter profile",
+      description: "A link to the user's Twitter profile (full URL including https://)",
       required: false,
     }),
     instagram: Property.LongText({
       displayName: 'Instagram',
-      description: "A link to the user's Instagram profile",
+      description: "A link to the user's Instagram profile (full URL including https://)",
+      required: false,
+    }),
+    website: Property.ShortText({
+      displayName: 'Website',
+      description: "A link to the user's website (full URL including https://)",
       required: false,
     }),
     create_introduction_thread: Property.Checkbox({
@@ -167,39 +74,31 @@ export const heartBeatCreateUser = createAction({
       required: false,
     }),
   },
+  outputSchema: heartbeatOutputSchemas.createdUser,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       email: z.string().check(z.email()),
       linkedin: z.optional(z.string().check(z.url())),
-      twitter: z.optional(z.string().check(z.url())), 
-      instagram: z.optional(z.string().check(z.url()))
+      twitter: z.optional(z.string().check(z.url())),
+      instagram: z.optional(z.string().check(z.url())),
+      website: z.optional(z.string().check(z.url())),
     });
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.PUT,
-      url: `https://api.heartbeat.chat/v0/users`,
-      headers: {
-        'content-type': 'application/json',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
+    return heartbeatUsers.createUser({
+      token: auth.secret_text,
       body: {
         name: propsValue.name,
-        email: propsValue.email,
-        roleID: propsValue.role_id,
-        groupIDs: propsValue.group_ids,
-        profilePicture: propsValue.profile_picture,
-        bio: propsValue.bio,
-        status: propsValue.status,
-        linkedin: propsValue.linkedin,
-        twitter: propsValue.twitter,
-        instagram: propsValue.instagram,
+        email: propsValue.email.trim(),
+        roleID: heartbeatApi.uuid({ value: propsValue.role_id, label: 'Role' }),
+        groupIDs: heartbeatApi.listOrUndefined(heartbeatApi.uuidList({ value: propsValue.group_ids, label: 'Groups' })),
+        profilePicture: heartbeatApi.optionalText(propsValue.profile_picture),
+        bio: heartbeatApi.optionalText(propsValue.bio),
+        status: heartbeatApi.optionalText(propsValue.status),
+        linkedin: heartbeatApi.optionalText(propsValue.linkedin),
+        twitter: heartbeatApi.optionalText(propsValue.twitter),
+        instagram: heartbeatApi.optionalText(propsValue.instagram),
+        website: heartbeatApi.optionalText(propsValue.website),
         createIntroductionThread: propsValue.create_introduction_thread,
       },
     });
-
-    return response.body;
   },
 });

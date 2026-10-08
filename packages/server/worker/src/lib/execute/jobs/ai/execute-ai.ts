@@ -100,6 +100,7 @@ async function resolveSpecificModel({ ctx, data }: { ctx: JobContext, data: Exec
         projectId: data.projectId,
         platformId: data.platformId,
         provider: data.provider,
+        modelId: data.modelId,
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
 }

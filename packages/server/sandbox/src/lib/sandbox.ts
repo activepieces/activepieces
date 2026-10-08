@@ -5,6 +5,7 @@ import { type ApLogger, apVersionUtil, wideEvent } from '@activepieces/server-ut
 import { PrewarmScopeFileContent, WorkerToApiContract } from '@activepieces/shared'
 import { cacheUtils } from './cache/cache-paths'
 import { localExecutionCache } from './cache/local-execution-cache'
+import { engineRpcHandlers } from './engine-rpc-handlers'
 import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
 import {
@@ -90,7 +91,10 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                         const runStartedAt = Date.now()
                         const runResult = await wideEvent.timed({
                             name: 'sandboxRun',
-                            fn: () => sandbox.execute(operationType, operation, { timeoutInSeconds: runTimeoutInSeconds }),
+                            fn: () => sandbox.execute(operationType, operation, {
+                                timeoutInSeconds: runTimeoutInSeconds,
+                                engineRpc: engineRpcHandlers({ log, basePath, getSettings, provision }),
+                            }),
                         })
                         runMs = Date.now() - runStartedAt
                         return runResult

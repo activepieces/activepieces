@@ -100,8 +100,7 @@ async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSe
         ? {}
         : { updateTaskStatus: tool({ description: 'report the result', inputSchema: z.object({ output: z.object({ summary: z.string() }) }), execute: async (input) => { completion(input); return SEARCH_RESULT } }) }
     return runAgentTurn({
-        model,
-        provider: AIProviderName.ANTHROPIC,
+        models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'research this' }],
         tools: {
@@ -111,12 +110,11 @@ async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSe
         },
         allToolNames: ['ap_web_search', 'ap_fetch_url', ...Object.keys(completionTools)],
         tier: TIER,
-        modelId: TIER.modelId,
         phaseState: { phase },
         abortSignal: new AbortController().signal,
         log: SILENT_LOG,
         ...spreadIfDefined('stepCeiling', stepCeiling ?? undefined),
-        ...(drainsStream ? { sinks: { drainStream: (result) => result.consumeStream() } } : {}),
+        ...(drainsStream ? { sinks: { drainStream: async (result) => { await result.consumeStream(); return undefined } } } : {}),
         creditsLeft,
     })
 }

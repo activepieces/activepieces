@@ -21,6 +21,7 @@ let app: FastifyInstance
 
 const SET_PROJECT_CONTEXT = 'ap_set_project_context'
 const PIECE_CATALOG_TOOL = 'ap_research_pieces'
+const RUN_ACTION = 'ap_run_action'
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -76,12 +77,24 @@ describe('a denied MCP call is refused before the platform is charged', () => {
         expect(answer).not.toContain('Out of credits')
     })
 
-    it('still refuses a member who does have reach on credits', async () => {
+    it('lets a member with reach use a free tool when credits run out', async () => {
         const ctx = await createTestContext(app)
         const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
         const mcpClient = await connectAs({ ctx: member })
 
         const answer = await call({ mcpClient, name: SET_PROJECT_CONTEXT })
+
+        expect(answer).toContain('Available projects')
+        expect(answer).not.toContain('Out of credits')
+    })
+
+    it('still refuses ap_run_action for a member with reach on credits', async () => {
+        const ctx = await createTestContext(app)
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const mcpClient = await connectAs({ ctx: member })
+        await mcpClientHelpers.callTool({ app, mcpClient, name: SET_PROJECT_CONTEXT, args: { projectId: ctx.project.id } })
+
+        const answer = await mcpClientHelpers.callTool({ app, mcpClient, name: RUN_ACTION, args: { pieceName: 'slack', actionName: 'send_channel_message' } })
 
         expect(answer).toContain('Out of credits')
     })

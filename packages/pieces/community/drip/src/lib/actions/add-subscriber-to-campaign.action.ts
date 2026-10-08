@@ -1,80 +1,37 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { dripCommon } from '../common';
+import { dripApi } from '../common/client';
 import { dripAuth } from '../auth';
+import { dripOutputSchemas } from '../output-schemas';
 
 export const dripAddSubscriberToCampaign = createAction({
   auth: dripAuth,
   name: 'add_subscriber_to_campaign',
   classification: 'WRITE',
   description: 'Add a subscriber to a campaign (Email series)',
-  audience: 'both',
-  aiMetadata: { description: 'Subscribes a contact (by email) to a Drip email-series campaign in the given account, optionally attaching tags and custom fields. Use to enroll someone into an automated email sequence. Requires an existing campaign id (selectable from the account). Not idempotent: each call re-subscribes and can re-trigger the series.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      "Subscribes a contact (by email) to a Drip Email Series Campaign picked from the account, optionally attaching tags and custom fields; this starts the sequence, and if the series has double opt-in on, Drip first emails a confirmation. Not idempotent: each call re-subscribes and can restart the series.",
+    idempotent: false,
+  },
   displayName: 'Add a subscriber to a campaign',
   props: {
     account_id: dripCommon.account_id,
-    campaign_id: Property.Dropdown({
-      displayName: 'Email Series Campaign',
-      auth: dripAuth,
-      refreshers: ['account_id'],
-      required: true,
-      options: async ({ auth, account_id }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please fill in API key first',
-          };
-        }
-        if (!account_id) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please select an account first',
-          };
-        }
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: `${dripCommon.baseUrl(account_id as string)}/campaigns`,
-          headers: {
-            Authorization: `Basic ${Buffer.from(auth .secret_text).toString(
-              'base64'
-            )}`,
-          },
-        };
-        const response = await httpClient.sendRequest<{
-          campaigns: { name: string; id: string }[];
-        }>(request);
-        const opts = response.body.campaigns.map((campaign) => {
-          return { value: campaign.id, label: campaign.name };
-        });
-        if (opts.length === 0) {
-          return {
-            disabled: false,
-            options: [],
-            placeholder: 'Please create an email series campaign',
-          };
-        }
-        return {
-          disabled: false,
-          options: opts,
-        };
-      },
-    }),
+    campaign_id: dripCommon.campaign_id({ required: true }),
     subscriber: dripCommon.subscriber,
     tags: dripCommon.tags,
     custom_fields: dripCommon.custom_fields,
   },
+  outputSchema: dripOutputSchemas.legacySubscribersResponse,
   async run({ auth, propsValue }) {
-    const request: HttpRequest = {
+    const campaignId = dripApi.seg({ value: propsValue.campaign_id, label: 'Email Series Campaign' });
+    return await dripApi.send<Record<string, unknown>>({
+      token: auth.secret_text,
       method: HttpMethod.POST,
-      url: `${dripCommon.baseUrl(propsValue.account_id)}/campaigns/${
-        propsValue.campaign_id
-      }/subscribers`,
+      path: `${dripApi.accountPath(propsValue.account_id)}/campaigns/${campaignId}/subscribers`,
+      operation: 'add subscriber to email series',
       body: {
         subscribers: [
           {
@@ -84,11 +41,6 @@ export const dripAddSubscriberToCampaign = createAction({
           },
         ],
       },
-      headers: {
-        Authorization: dripCommon.authorizationHeader(auth),
-      },
-      queryParams: {},
-    };
-    return await httpClient.sendRequest<Record<string, never>>(request);
+    });
   },
 });

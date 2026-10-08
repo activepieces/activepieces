@@ -5,6 +5,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
+import { newFileOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3CombinedAuth>, { folderPath?: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -27,6 +28,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Combined
 export const newFile = createTrigger({
   auth: amazonS3CombinedAuth,
   name: 'new_file',
+  outputSchema: newFileOutputSchema,
   classification: 'READ',
   displayName: 'New or Updated File',
   description: 'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.',

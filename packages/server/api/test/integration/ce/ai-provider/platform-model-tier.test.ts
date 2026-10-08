@@ -31,8 +31,8 @@ describe('Platform model tiers API', () => {
             const first = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Fast' }) })
             const second = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Expert' }) })
 
-            expect(first).toMatchObject({ isDefault: true, position: 0, emoji: '⚡' })
-            expect(second).toMatchObject({ isDefault: false, position: 1 })
+            expect(first).toMatchObject({ isDefault: true, isFast: true, position: 0, emoji: '⚡' })
+            expect(second).toMatchObject({ isDefault: false, isFast: false, position: 1 })
         })
 
         it('rejects bad entry counts and duplicate entries', async () => {
@@ -160,6 +160,19 @@ describe('Platform model tiers API', () => {
             expect(tiers.find((tier) => tier.id === second.id)).toMatchObject({ isDefault: true, name: 'B2' })
         })
 
+        it('moves the fast pointer on its own', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const first = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'A' }) })
+            const second = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'B' }) })
+
+            const response = await ctx.post(`${TIERS}/${second.id}`, { isFast: true })
+            const tiers = await listAdmin({ testCtx: ctx })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(tiers.find((tier) => tier.id === first.id)).toMatchObject({ isDefault: true, isFast: false })
+            expect(tiers.find((tier) => tier.id === second.id)).toMatchObject({ isDefault: false, isFast: true })
+        })
+
         it('reorders only with the exact live set', async () => {
             const key = await seedKey({ testCtx: ctx })
             const a = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'A' }) })
@@ -225,9 +238,9 @@ describe('Platform model tiers API', () => {
 
             expect(first.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(second.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect(oldA).toMatchObject({ replacedBy: c.id, isDefault: false })
+            expect(oldA).toMatchObject({ replacedBy: c.id, isDefault: false, isFast: false })
             expect(live.map((tier) => tier.id)).toEqual([c.id])
-            expect(live[0]).toMatchObject({ isDefault: true })
+            expect(live[0]).toMatchObject({ isDefault: true, isFast: true })
         })
 
         it('refuses a bad replacement', async () => {

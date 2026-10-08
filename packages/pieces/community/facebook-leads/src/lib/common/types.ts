@@ -1,11 +1,18 @@
-export interface FacebookPaginatedResponse<T> {
+import type { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+
+import type { facebookLeadsAuth } from '../auth';
+
+export type FacebookLeadsAuthValue = AppConnectionValueForAuthProperty<typeof facebookLeadsAuth>;
+
+export type FacebookLeadsPaginatedResponse<T> = {
 	data: T[];
 	paging?: {
+		cursors?: { before?: string; after?: string };
 		next?: string;
 	};
-}
+};
 
-export interface FacebookTriggerPayloadBody {
+export type FacebookLeadsWebhookPayload = {
 	entry: {
 		changes: {
 			value: {
@@ -14,31 +21,45 @@ export interface FacebookTriggerPayloadBody {
 			};
 		}[];
 	}[];
-}
+};
 
-export interface FacebookPage {
+export type FacebookLeadsPage = {
 	id: string;
 	name: string;
 	category: string;
 	category_list: string[];
 	access_token: string;
 	tasks: string[];
-}
+};
 
-export interface FacebookPageDropdown {
+export type FacebookLeadsPageDropdown = {
 	id: string;
 	accessToken: string;
-}
+};
 
-export interface FacebookForm {
+export type FacebookLeadsForm = {
 	id: string;
 	locale: string;
 	name: string;
 	status: string;
-}
+	created_time?: string;
+	leads_count?: number;
+	expired_leads_count?: number;
+	questions?: unknown[];
+	privacy_policy_url?: string;
+	follow_up_action_url?: string;
+	page?: { id: string; name: string };
+};
 
-export interface FacebookLead {
-	field_data: Array<{ name: string; values: any[] }>;
+export type FacebookLeadsFormStatus = 'ACTIVE' | 'ARCHIVED';
+
+export type FacebookLeadsUser = {
+	id: string;
+	name: string;
+};
+
+export type FacebookLeadsLead = {
+	field_data: Array<{ name: string; values: unknown[] }>;
 	created_time: string;
 	ad_id: string;
 	ad_name: string;
@@ -49,4 +70,4 @@ export interface FacebookLead {
 	form_id: string;
 	platform: string;
 	id: string;
-}
+};

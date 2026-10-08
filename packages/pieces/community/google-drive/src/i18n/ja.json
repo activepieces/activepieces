@@ -95,7 +95,7 @@
   "Edit the text of an existing reply on a Drive comment.": "Edit the text of an existing reply on a Drive comment.",
   "Permanently delete a reply on a Drive comment by ID.": "Permanently delete a reply on a Drive comment by ID.",
   "Get the authenticated Drive account, storage quota, and supported formats.": "Get the authenticated Drive account, storage quota, and supported formats.",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Folder name": "フォルダ名",
   "Parent Folder": "対象のフォルダ",
   "Include Team Drives": "共有ドライブを含める",

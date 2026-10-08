@@ -10,6 +10,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
+  LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
@@ -30,6 +31,7 @@ export function ProjectsUsageTable({
   }));
   const [searchParams] = useSearchParams();
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+  const limit = searchParams.get(LIMIT_QUERY_PARAM);
 
   const { data, isLoading, isError, refetch } = billingQueries.useProjectsUsage(
     platformId,
@@ -37,6 +39,7 @@ export function ProjectsUsageTable({
       startDate: range.from.toISOString(),
       endDate: range.to.toISOString(),
       cursor,
+      limit: limit ? parseInt(limit) : undefined,
     },
     enabled,
   );

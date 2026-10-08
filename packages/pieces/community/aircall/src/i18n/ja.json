@@ -9,7 +9,7 @@
   "Get Call": "通話を取得",
   "Tag a Call": "通話にタグを付ける",
   "Update Contact": "連絡先を更新",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Adds a comment (note) to a specific call.": "特定の呼び出しにコメント(ノート)を追加します。",
   "Creates a new contact.": "新しい連絡先を作成します。",
   "Finds specific call based on provided filter.": "提供されたフィルターに基づいて特定の呼び出しを検索します。",

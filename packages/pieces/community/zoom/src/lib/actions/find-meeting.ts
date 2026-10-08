@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { MeetingResponseBody } from '../common/models';
 import { zoomMeetingDropdown } from '../common/props';
+import { zoomMeetings } from '../common/meetings';
+import { getMeetingOutputSchema } from '../output-schemas';
 import { zoomAuth } from '../..';
 
 export const zoomFindMeeting = createAction({
@@ -14,8 +10,9 @@ export const zoomFindMeeting = createAction({
   classification: 'READ',
   displayName: 'Find Zoom Meeting',
   description: 'Retrieve the details of an existing meeting.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches the full details of an existing Zoom meeting by its meeting ID. Use to look up a meeting before acting on it; optionally target a specific occurrence of a recurring meeting or include all previous occurrences. Read-only and idempotent.', idempotent: true },
+  outputSchema: getMeetingOutputSchema,
   props: {
     meeting_id: zoomMeetingDropdown,
     occurrence_id: Property.ShortText({
@@ -33,28 +30,11 @@ export const zoomFindMeeting = createAction({
     }),
   },
   async run(context) {
-    const cleanMeetingId = context.propsValue.meeting_id;
-
-    const queryParams: Record<string, string> = {};
-
-    if (context.propsValue.occurrence_id) {
-      queryParams['occurrence_id'] = context.propsValue.occurrence_id;
-    }
-
-    if (context.propsValue.show_previous_occurrences) {
-      queryParams['show_previous_occurrences'] = 'true';
-    }
-
-    const result = await httpClient.sendRequest<MeetingResponseBody>({
-      method: HttpMethod.GET,
-      url: `https://api.zoom.us/v2/meetings/${cleanMeetingId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      queryParams,
+    return zoomMeetings.getMeeting({
+      accessToken: context.auth.access_token,
+      meetingId: context.propsValue.meeting_id,
+      occurrenceId: context.propsValue.occurrence_id,
+      showPreviousOccurrences: context.propsValue.show_previous_occurrences,
     });
-
-    return result.body;
   },
 });

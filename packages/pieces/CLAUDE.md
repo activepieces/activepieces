@@ -17,12 +17,12 @@ packages/pieces/community/{name}/
 ├── src/index.ts           # createPiece() definition
 ├── src/lib/auth.ts        # Authentication
 ├── src/lib/actions/       # One file per action
-├── src/lib/trigger/       # One file per trigger
+├── src/lib/triggers/      # One file per trigger
 ├── src/lib/common/        # API helpers
 └── src/i18n/translation.json
 ```
 
-For a complete example: see `packages/pieces/community/airtable/`.
+For a complete example: see `packages/pieces/community/gmail/`.
 
 ## Auth Patterns
 

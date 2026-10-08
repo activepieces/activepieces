@@ -1,11 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { MeetingMessageBody } from '../common/models';
 import { zoomMeetingDropdown } from '../common/props';
+import { zoomClient } from '../common/client';
+import { updateMeetingOutputSchema } from '../output-schemas';
 import { zoomAuth } from '../..';
 
 export const zoomUpdateMeeting = createAction({
@@ -14,8 +12,9 @@ export const zoomUpdateMeeting = createAction({
   classification: 'WRITE',
   displayName: 'Update Zoom Meeting',
   description: 'Update the details of an existing meeting.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Modifies an existing Zoom meeting identified by its meeting ID, applying only the fields you supply (topic, start time, duration, timezone, password, and audio/video/recording/waiting-room settings). Use to reschedule or reconfigure a meeting. Repeating the call with the same values produces the same end state, so it is idempotent.', idempotent: true },
+  outputSchema: updateMeetingOutputSchema,
   props: {
     meeting_id: zoomMeetingDropdown,
     topic: Property.ShortText({
@@ -103,7 +102,7 @@ export const zoomUpdateMeeting = createAction({
     }),
   },
   async run(context) {
-    const cleanMeetingId = context.propsValue.meeting_id;
+    const cleanMeetingId = zoomClient.normalizeMeetingId(context.propsValue.meeting_id);
 
     const body: Partial<MeetingMessageBody> = {};
 
@@ -118,7 +117,7 @@ export const zoomUpdateMeeting = createAction({
     if (context.propsValue.password)
       body.password = context.propsValue.password;
 
-    const settings: Partial<MeetingMessageBody['settings']> = {};
+    const settings: MeetingMessageBody['settings'] = {};
     let hasSettings = false;
 
     if (context.propsValue.auto_recording) {
@@ -151,19 +150,17 @@ export const zoomUpdateMeeting = createAction({
     }
 
     if (hasSettings) {
-      body.settings = settings as MeetingMessageBody['settings'];
+      body.settings = settings;
     }
 
-    await httpClient.sendRequest({
+    await zoomClient.request({
+      accessToken: context.auth.access_token,
       method: HttpMethod.PATCH,
-      url: `https://api.zoom.us/v2/meetings/${cleanMeetingId}`,
+      path: `/meetings/${cleanMeetingId}`,
       body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
+      scope: 'meeting:update:meeting',
     });
 
-    return { success: true, message: 'Meeting updated successfully' };
+    return { success: true, message: 'Meeting updated successfully', meeting_id: cleanMeetingId };
   },
 });

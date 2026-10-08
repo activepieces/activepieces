@@ -14,7 +14,7 @@
   "Run a Task using LeMUR": "LeMURを使用してタスクを実行",
   "Retrieve LeMUR response": "LeMUR応答を取得",
   "Purge LeMUR request data": "LeMURリクエストデータを削除",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Upload a media file to AssemblyAI's servers.": "AssemblyAIのサーバーにメディアファイルをアップロードします。",
   "Transcribe an audio or video file using AssemblyAI.": "AssemblyAI を使用してオーディオファイルまたはビデオファイルを転記します。",
   "Retrieves a transcript by its ID.": "IDからトランスクリプトを取得します。",

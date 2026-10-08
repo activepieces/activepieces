@@ -33,18 +33,5 @@
   "None": "无",
   "JSON": "JSON",
   "Form Data": "表单数据",
-  "Raw": "原始文件",
-  "Post to LinkedIn profiles and Company Pages": "在 LinkedIn 个人资料和公司主页上发帖",
-  "Sign in with the LinkedIn account that should publish the posts. To post on a Company Page, that account must be one of its admins.": "请使用要发布帖子的 LinkedIn 账号登录。要在公司主页上发帖，该账号必须是该主页的管理员之一。",
-  "Post on your personal LinkedIn profile": "在你的 LinkedIn 个人资料上发帖",
-  "Post on a LinkedIn Company Page you manage": "在你管理的 LinkedIn 公司主页上发帖",
-  "Link URL": "链接网址",
-  "Link Title": "链接标题",
-  "Link Description": "链接描述",
-  "Up to 3,000 characters of plain text; an @ does not tag anyone.": "最多 3,000 个字符的纯文本；@ 不会标记任何人。",
-  "Who can see the post.": "谁可以看到这条帖子。",
-  "With a Link URL, the image becomes the link's thumbnail.": "填写链接网址后，图片会成为链接的缩略图。",
-  "Title and description show only when a Link URL is set.": "只有填写了链接网址时，才会显示标题和描述。",
-  "Only pages where your account can post are listed.": "仅列出你的账号可以发帖的主页。",
-  "Posts to a Company Page are always public.": "发布到公司主页的帖子始终是公开的。"
+  "Raw": "原始文件"
 }

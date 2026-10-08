@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ApId, apId, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ApId, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { AiStepAction, AiStepFile, AiStepSchema, AiStepWebSearch, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, maxSocketHttpBufferSizeBytes, PrincipalType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -11,6 +11,7 @@ import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider
 import { aiExecution } from './ai-execution'
 import { aiModelCandidates } from './ai-model-candidates'
 import { aiModelResolution } from './ai-model-resolution'
+import { aiProviderService } from './ai-provider-service'
 
 export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     const bodyLimit = maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB))
@@ -29,7 +30,7 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
         const requestId = apId()
         const log = request.log.child({ flowRun: { id: body.flowRunId }, requestId })
         const execution = aiExecution(log)
-        const model = await pickModel({ body, platformId: platform.id, log })
+        const model = await pickModel({ body, platformId: platform.id, projectId, log })
         const answerInThisRequest = isNil(body.waitpointId)
         const timeoutMs = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000
         const answer = answerInThisRequest ? execution.waitForAnswer({ requestId, timeoutMs }) : undefined
@@ -56,16 +57,17 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-async function pickModel({ body, platformId, log }: {
+async function pickModel({ body, platformId, projectId, log }: {
     body: z.infer<typeof ExecuteAiRequest>
     platformId: string
+    projectId: string
     log: FastifyBaseLogger
 }): Promise<PickedModel> {
     if (!isNil(body.modelTierId)) {
         if (body.action === AiStepAction.GENERATE_IMAGE) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Image steps pick a specific model, not a tier' } })
         }
-        return aiModelCandidates(log).firstCandidate({ platformId, tierId: body.modelTierId })
+        return aiModelCandidates(log).firstCandidate({ platformId, tierId: body.modelTierId, scope: { type: 'project', projectId } })
     }
     if (isNil(body.provider) || isNil(body.modelId)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Pick a tier or a provider and model' } })
@@ -73,6 +75,15 @@ async function pickModel({ body, platformId, log }: {
     const modelId = body.action === AiStepAction.GENERATE_IMAGE
         ? body.modelId
         : aiModelResolution.resolveTierModelId({ provider: body.provider, modelId: body.modelId, log })
+    if (body.provider !== AIProviderName.ACTIVEPIECES) {
+        await aiProviderService(log).assertModelAllowed({
+            platformId,
+            provider: body.provider,
+            scope: { type: 'project', projectId },
+            modelId,
+            ...spreadIfDefined('configId', body.providerConfigId),
+        })
+    }
     return { provider: body.provider, providerConfigId: body.providerConfigId, modelId }
 }
 

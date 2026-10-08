@@ -25,7 +25,7 @@ function createRowHash(rowData: unknown[]): string {
 // Helper function to get all worksheet rows with error handling
 async function getWorksheetRows(auth: AppConnectionValueForAuthProperty<typeof excelAuth>, workbookId: string, worksheetId: string, drivePath: string): Promise<(string | number | boolean)[][]> {
     try {
-        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath);
+        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath, auth.props?.['cloud']);
     } catch (error) {
         throw new Error(`Failed to fetch worksheet rows: ${error}`);
     }

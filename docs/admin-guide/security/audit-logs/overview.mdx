@@ -23,6 +23,28 @@ Open **Platform Admin → Security → Audit Logs** to browse the full table. Fi
 
 To react to events in real time — get a Slack alert when a flow fails, forward audit logs to your SIEM, send a daily digest of new sign-ups — use [Event Streaming](/admin-guide/guides/event-streaming). It POSTs each event to a webhook URL of your choice, which you can point at an external system or at an internal handler flow that routes each event to the channel you care about.
 
+## Keep events for a set period
+
+Audit events are kept forever by default. To keep the table small, open **Platform Admin → Security → Audit Logs**, click the **Retention** button at the top right, and choose how long to keep events: 30 days, 90 days, 6 months, 1 year, or forever. The dialog also shows the date of your oldest event, so you can see when the cleanup has caught up.
+
+- Events older than that period are deleted every hour, oldest first, in small batches with a pause after each one, so your database keeps serving traffic while the cleanup runs.
+- Each hourly run deletes up to 1 million events. A large backlog takes several runs: 100 million expired events take about four days. While a platform is behind, the server logs a warning that names it.
+- Deletion is permanent. If you need a long-term copy, forward events to your own storage with [Event Streaming](/admin-guide/guides/event-streaming) before they expire.
+- The shortest period you can choose is 30 days.
+- Every change to the period is itself recorded as an [Audit log retention updated](/admin-guide/security/audit-logs/audit-log-retention-updated) event, with who made it and the old and new periods. Subscribe a webhook to it with Event Streaming to get a copy outside the platform at once.
+
+On a self-hosted instance, set [`AP_AUDIT_LOG_RETENTION_DAYS`](/install/reference/environment-variables#limits-&-retention) to cap the period for every platform, from 30 to 3650 days. The cap is a hard limit: a platform can only choose a shorter period. A platform that has not chosen a period uses the cap, so the first hourly cleanup after you set it deletes that platform's older events.
+
+To stop the cleanup for a while, for example during a database migration, set [`AP_AUDIT_LOG_RETENTION_PAUSED`](/install/reference/environment-variables#limits-&-retention) to `true` on every app server and restart them. Any app server can run the cleanup, so a server without the setting keeps deleting. While the cleanup is paused, the Retention dialog says so.
+
+<Note>
+Deleting events does not shrink the database files on disk. Postgres reuses the freed space for new events, so the `audit_event` table stops growing. To return the space to the operating system once, run `pg_repack` on the `audit_event` table (online, but it needs free disk about the size of the table and its indexes), or `VACUUM FULL audit_event` during a maintenance window (it locks the table while it runs). Backups and point-in-time recovery archives taken earlier keep the deleted events until they expire.
+</Note>
+
+<Note>
+The first time the cleanup has events to delete, it sets `autovacuum_vacuum_scale_factor = 0.02` on the `audit_event` table, so Postgres reclaims deleted rows sooner. If you already set a value on that table, the cleanup leaves it alone.
+</Note>
+
 ## Event catalog
 
 The full list of documented events. We add new ones as the platform grows; the source of truth for every event we emit is the [event schema in the codebase](https://github.com/activepieces/activepieces/blob/main/packages/core/shared/src/lib/ee/audit-events/index.ts).
@@ -56,6 +78,7 @@ The full list of documented events. We add new ones as the platform grows; the s
 
 ### Platform
 - [Signing key created](/admin-guide/security/audit-logs/signing-key-created)
+- [Audit log retention updated](/admin-guide/security/audit-logs/audit-log-retention-updated)
 
 ## See also
 

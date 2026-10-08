@@ -250,7 +250,7 @@ export async function executePieceActionRun({
                 type: 'text',
                 text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${actionRun.id}. It may have partially completed, so do not re-run it blindly — check the app for a write from this attempt first, or ask the user.`,
             }],
-            structuredContent: { errorSummary: 'The action timed out before it finished and may have partially completed.' },
+            structuredContent: { errorSummary: 'The action timed out before it finished and may have partially completed.', runId: actionRun.id },
             isError: true,
         }
     }
@@ -261,7 +261,7 @@ export async function executePieceActionRun({
                 type: 'text',
                 text: `❌ ${action.displayName} failed with INTERNAL_ERROR — the engine crashed while loading or executing the piece. Run ID: ${actionRun.id}.`,
             }],
-            structuredContent: { errorSummary: 'The step couldn’t start — something went wrong loading it.' },
+            structuredContent: { errorSummary: 'The step couldn\'t start — something went wrong loading it.', ...(actionRun.neverStarted ? {} : { runId: actionRun.id }) },
             isError: true,
         }
     }
@@ -487,7 +487,7 @@ export function formatPieceActionRunResult({ outcome, runId, displayName, action
     const summary = isNil(outcome.errorMessage) ? 'The step failed without an error message.' : summarizeActionError(outcome.errorMessage)
     return {
         content: [{ type: 'text', text: `❌ ${displayName} failed (run ${runId}): ${summary}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.` }],
-        structuredContent: { errorSummary: summary },
+        structuredContent: { errorSummary: summary, runId },
         isError: true,
     }
 }

@@ -2248,6 +2248,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "JuampiHernandez",
+      "name": "Juampi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/102912458?v=4",
+      "profile": "http://juampi.dev",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

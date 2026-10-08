@@ -1,4 +1,5 @@
 export { createSandboxRuntime } from './lib/sandbox'
+export { markDevPiecesRebuilt } from './lib/sandbox-manager'
 export { createResolver } from './lib/resolver'
 export { actionRunCache, ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS } from './lib/cache/action-run-cache'
 export { cacheUtils } from './lib/cache/cache-paths'

@@ -1,11 +1,17 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { facebookLeadsCommon } from '../common';
-import { facebookLeadsAuth } from '../auth';
-import { FacebookTriggerPayloadBody, FacebookPageDropdown } from '../common/types';
 
-export const newLead = createTrigger({
+import { facebookLeadsAuth } from '../auth';
+import { facebookLeadsApi } from '../common/api';
+import { facebookLeadsProps } from '../common/props';
+import { facebookLeadsUtils } from '../common/utils';
+import { facebookLeadsGetLeadOutputSchema } from '../output-schemas';
+
+import type { FacebookLeadsWebhookPayload } from '../common/types';
+
+export const newLeadTrigger = createTrigger({
 	auth: facebookLeadsAuth,
 	name: 'new_lead',
+	outputSchema: facebookLeadsGetLeadOutputSchema,
 	classification: 'READ',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
@@ -16,59 +22,74 @@ export const newLead = createTrigger({
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: {},
 	props: {
-		page: facebookLeadsCommon.page,
-		form: facebookLeadsCommon.form,
+		page: facebookLeadsProps.page({ required: true }),
+		form: facebookLeadsProps.form({ required: false }),
 	},
 
 	async onEnable(context) {
-		const page = context.propsValue['page'] as FacebookPageDropdown;
-		await facebookLeadsCommon.subscribePageToApp(page.id, page.accessToken);
+		const page = context.propsValue.page;
+		await facebookLeadsApi.subscribePageToApp({
+			pageId: page.id,
+			accessToken: page.accessToken,
+		});
 
 		context.app.createListeners({ events: ['lead'], identifierValue: page.id });
 	},
 
 	async onDisable() {
-		//
+		return;
 	},
 	async test(context) {
-		let form = context.propsValue.form as string;
-		const page = context.propsValue.page as FacebookPageDropdown;
-		if (form == undefined || form == '' || form == null) {
-			const forms = await facebookLeadsCommon.getPageForms(page.id, page.accessToken);
+		let form = selectedFormId({ form: context.propsValue.form });
+		const page = context.propsValue.page;
+		if (form === undefined) {
+			const forms = await facebookLeadsApi.getPageForms({
+				pageId: page.id,
+				accessToken: page.accessToken,
+			});
 
 			form = forms[0].id;
 		}
 
-		const response = await facebookLeadsCommon.loadSampleData(form, context.auth.access_token);
-		return response.data.map((lead) => facebookLeadsCommon.transformLeadData(lead));
+		const leads = await facebookLeadsApi.listFormLeads({
+			formId: form,
+			accessToken: context.auth.access_token,
+		});
+		return leads.map((lead) => facebookLeadsUtils.transformLeadData({ lead }));
 	},
 
-	//Return new lead
 	async run(context) {
-		let leadPings: any[] = [];
-		const leads: any[] = [];
-		const form = context.propsValue.form;
-		const payloadBody = context.payload.body as FacebookTriggerPayloadBody;
+		const form = selectedFormId({ form: context.propsValue.form });
+		const payloadBody = context.payload.body;
+		const entries = isWebhookPayload(payloadBody) ? payloadBody.entry : [];
 
-		if (form !== undefined && form !== '' && form !== null) {
-			for (const lead of payloadBody.entry) {
-				if (form == lead.changes[0].value.form_id) {
-					leadPings.push(lead);
-				}
-			}
-		} else {
-			leadPings = payloadBody.entry;
-		}
+		const leadPings =
+			form !== undefined
+				? entries.filter((lead) => form == lead.changes[0].value.form_id)
+				: entries;
 
+		const leads = [];
 		for (const lead of leadPings) {
-			const leadData = await facebookLeadsCommon.getLeadDetails(
-				lead.changes[0].value.leadgen_id,
-				context.auth.access_token,
-			);
-			const transformLead = facebookLeadsCommon.transformLeadData(leadData);
-			leads.push(transformLead);
+			const leadData = await facebookLeadsApi.getLead({
+				leadId: lead.changes[0].value.leadgen_id,
+				accessToken: context.auth.access_token,
+			});
+			leads.push(facebookLeadsUtils.transformLeadData({ lead: leadData }));
 		}
 
 		return leads;
 	},
 });
+
+function isWebhookPayload(body: unknown): body is FacebookLeadsWebhookPayload {
+	return typeof body === 'object' && body !== null && 'entry' in body && Array.isArray(body.entry);
+}
+
+function selectedFormId({ form }: { form: string | undefined }): string | undefined {
+	if (form === undefined || form === null || form === '' || form === ALL_FORMS) {
+		return undefined;
+	}
+	return form;
+}
+
+const ALL_FORMS = 'all';

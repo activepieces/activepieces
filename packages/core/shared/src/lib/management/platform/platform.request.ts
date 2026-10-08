@@ -66,6 +66,7 @@ export const UpdatePlatformRequestBody = z.object({
     pieceSelectorConfig: NullablePieceSelectorConfigFromMultipart.optional(),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
         .optional(),
+    auditLogRetentionDays: Nullable(z.number().int().positive()),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>

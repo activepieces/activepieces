@@ -38,7 +38,6 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
             ...groups.crossProject,
             ...groups.web,
             ...groups.thinking,
-            ...groups.phase,
             ...groups.buildPlan,
             ...groups.email,
             ...groups.agentSurface,
@@ -85,7 +84,6 @@ export type AgentToolGroups = {
     crossProject: ToolSet
     web: ToolSet
     thinking: ToolSet
-    phase: ToolSet
     buildPlan: ToolSet
     email: ToolSet
     agentSurface: ToolSet

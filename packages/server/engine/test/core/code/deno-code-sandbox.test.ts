@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // Resolve the deno binary shipped by the `deno` npm devDependency so the test
 // does not depend on a system-wide install / PATH.
@@ -325,6 +325,117 @@ describe('denoCodeSandbox permission boundary', () => {
                 expect(await session.run('Promise.resolve(base + step_1.out)')).toBe(45)
 
                 await expectRejection(session.run(`fetch('https://example.com')`), PERMISSION_DENIED)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('runs every script of a session in one Deno process', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: {},
+                functions: {},
+            })
+            try {
+                expect(await session.run('globalThis.__runs = (globalThis.__runs ?? 0) + 1')).toBe(1)
+                expect(await session.run('globalThis.__runs = (globalThis.__runs ?? 0) + 1')).toBe(2)
+                expect(await session.run('__runs')).toBe(2)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('respawns after the process dies and replays the globals', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: { base: 40 },
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                await session.setGlobal('step_1', { out: 5 })
+                expect(await session.run('step_1.out + base')).toBe(45)
+
+                await expectRejection(session.run('Deno.exit(1)'), /exited|not running/)
+
+                expect(await session.run('double(step_1.out + base)')).toBe(90)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('respawns exactly one child when concurrent runs hit a dead session', async () => {
+            const { deno } = await import('@activepieces/core-utils')
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: { base: 1 },
+                functions: {},
+            })
+            try {
+                await expectRejection(session.run('Deno.exit(1)'), /exited|not running|no progress/)
+                const spawnSpy = vi.spyOn(deno, 'createSession')
+                try {
+                    const results = await Promise.all([
+                        session.run('base + 1'),
+                        session.run('base + 2'),
+                        session.run('base + 3'),
+                        session.run('base + 4'),
+                    ])
+                    expect(results).toEqual([2, 3, 4, 5])
+                    expect(spawnSpy).toHaveBeenCalledTimes(1)
+                }
+                finally {
+                    spawnSpy.mockRestore()
+                }
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('rejects runs after dispose', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: {},
+                functions: {},
+            })
+            session.dispose()
+            await expect(session.run('1 + 1')).rejects.toThrow()
+        })
+    })
+
+    describe('deno.createSession idle watchdog', () => {
+        it('kills the child when a script wedges the event loop with no reply', async () => {
+            const { deno } = await import('@activepieces/core-utils')
+            const session = await deno.createSession({ bootstrapBody: '', permissions: [], idleTimeoutMs: 500 })
+            try {
+                await expectRejection(session.run({ script: '(() => { while (true) {} })()' }), /no progress/)
+                expect(session.isAlive()).toBe(false)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('does not trip when queued commands each make progress, even past the idle timeout total', async () => {
+            const { deno } = await import('@activepieces/core-utils')
+            // Four 300ms runs fired concurrently are serialized by the child (~1.2s total),
+            // but each reply resets the 700ms idle timer, so none of them is killed.
+            const session = await deno.createSession({ bootstrapBody: '', permissions: [], idleTimeoutMs: 700 })
+            try {
+                const runs = Array.from({ length: 4 }, (_, i) =>
+                    session.run({ script: `new Promise((r) => setTimeout(() => r(${i}), 300))` }))
+                expect(await Promise.all(runs)).toEqual([0, 1, 2, 3])
+                expect(session.isAlive()).toBe(true)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+
+        it('returns a large multibyte result intact across stdout chunk boundaries', async () => {
+            const session = await denoCodeSandbox.createScriptSession({ scriptContext: {}, functions: {} })
+            try {
+                const expected = '😀🌍'.repeat(50_000)
+                expect(await session.run(`'😀🌍'.repeat(50000)`)).toBe(expected)
             }
             finally {
                 session.dispose()

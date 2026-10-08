@@ -35,7 +35,7 @@
   "Gets one customer review of a location.": "Gets one customer review of a location.",
   "Creates or replaces the owner reply to a review.": "Creates or replaces the owner reply to a review.",
   "Deletes the owner reply to a review.": "Deletes the owner reply to a review.",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Account": "アカウント",
   "Location": "ロケーション",
   "Post Type": "Post Type",

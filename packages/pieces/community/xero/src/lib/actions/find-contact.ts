@@ -7,6 +7,8 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroInput } from '../common/client';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroFindContact = createAction({
   auth: xeroAuth,
@@ -20,6 +22,7 @@ export const xeroFindContact = createAction({
       'Read-only lookup of Xero contacts in a tenant; pick when you need to locate a contact or its ID before invoicing or other operations. Choose the search mode via Search By: exact Name or Account Number, or a broad Search Term for fuzzy matching across fields. Returns matching contacts without modifying anything; supply the tenant ID and use Summary Only / Page for large result sets.',
     idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.contactEnvelope,
   props: {
     tenant_id: props.tenant_id,
     search_by: Property.StaticDropdown({
@@ -76,10 +79,10 @@ export const xeroFindContact = createAction({
     if (search_by === 'SEARCH_TERM') {
       params.push(`SearchTerm=${encodeURIComponent(value)}`);
     } else if (search_by === 'NAME') {
-      const where = `Name="${value.replace(/"/g, '\\"')}"`;
+      const where = `Name=${xeroInput.whereString({ value })}`;
       params.push(`where=${encodeURIComponent(where)}`);
     } else if (search_by === 'ACCOUNT_NUMBER') {
-      const where = `AccountNumber="${value.replace(/"/g, '\\"')}"`;
+      const where = `AccountNumber=${xeroInput.whereString({ value })}`;
       params.push(`where=${encodeURIComponent(where)}`);
     }
 

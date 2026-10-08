@@ -149,5 +149,5 @@ if (devPieces) {
   }).join(' ');
 
   console.log(`Building dev pieces: ${devPieces}`);
-  execSync(`npx turbo run build ${pieceFilters}`, { stdio: 'inherit' });
+  execSync(`npx turbo run build ${pieceFilters} --force`, { stdio: 'inherit' });
 }

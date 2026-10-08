@@ -8,11 +8,11 @@ import { describe, expect, it } from 'vitest'
 // de-dup/modularization is tracked separately; this prevents regression in the meantime.)
 const PROMPT_PATH = path.resolve('packages/server/api/src/assets/prompts/chat-system-prompt.md')
 const CHARS_PER_TOKEN = 4
-// ~22.5k tokens today. Ceiling set just above to block bloat while leaving room for the planned
+// ~4.2k tokens today. Ceiling set just above to block bloat while leaving room for the planned
 // de-dup to bring it DOWN. Lower this number as de-dup lands — never raise it without a reason.
-const MAX_TOKENS = 25_000
+const MAX_TOKENS = 5_000
 
-const REQUIRED_SECTIONS = ['<identity>', '<persona>', '<product_model>', '<interpreting_intent>', '<operating_principles>', '<guardrails>', '<discovery>', '<guides>', '<decision_framework>']
+const REQUIRED_SECTIONS = ['<identity>', '<persona>', '<product_model>', '<interpreting_intent>', '<operating_principles>', '<guardrails>', '<decision_framework>']
 
 describe('chat system prompt guard (B4)', () => {
     const prompt = readFileSync(PROMPT_PATH, 'utf8')

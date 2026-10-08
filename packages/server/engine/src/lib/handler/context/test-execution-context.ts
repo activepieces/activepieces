@@ -1,6 +1,6 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { formatPieceError, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { AiRouterStepOutput, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, GenericStepOutput, LoopStepOutput, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { AiRouterStepOutput, FlowActionType, flowCanvasUtils, flowStructureUtil, FlowTriggerType, FlowVersion, GenericStepOutput, LoopStepOutput, RouterStepOutput, Step, StepOutputStatus } from '@activepieces/shared'
 import { createPropsResolver } from '../../variables/props-resolver'
 import { EngineConstants } from './engine-constants'
 import { FlowExecutorContext } from './flow-execution-context'
@@ -81,18 +81,28 @@ export const testExecutionContext = {
                 case FlowActionType.PIECE:
                 case FlowActionType.CODE:
                 case FlowTriggerType.EMPTY:
-                case FlowTriggerType.PIECE:
-                    flowExecutionContext = await flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
+                case FlowTriggerType.PIECE: {
+                    const stepOutput = GenericStepOutput.create({
                         input: {},
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
                         ...spreadIfDefined('output', sampleData?.[step.name]),
-                    }))
+                    })
+                    flowExecutionContext = await flowExecutionContext.upsertStep(step.name, isOnFailureBranchAncestor({ step, excludedStepName })
+                        ? stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(PLACEHOLDER_ERROR_MESSAGE)
+                        : stepOutput)
                     break
+                }
             }
         }
         return flowExecutionContext
     },
+}
+
+const PLACEHOLDER_ERROR_MESSAGE = JSON.stringify(formatPieceError('---runtime error message---'))
+
+function isOnFailureBranchAncestor({ step, excludedStepName }: { step: Step, excludedStepName: string | undefined }): boolean {
+    return !isNil(excludedStepName) && flowCanvasUtils.getStepBranchRelativeTo(step, excludedStepName) === 'on-failure'
 }
 
 

@@ -1,9 +1,9 @@
 {
   "Work management platform designed to help teams organize, track, and manage their work.": "チームが作業を整理、追跡、管理できるように設計された作業管理プラットフォームです。",
   "Create Task": "タスクを作成",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Create a new task": "新しいタスクを作成",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Workspace": "ワークスペース",
   "Project": "プロジェクト",
   "Task Name": "タスク名",

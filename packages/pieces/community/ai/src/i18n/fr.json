@@ -30,8 +30,8 @@
   "Data Definition": "Définition des données",
   "AI Model": "Modèle IA",
   "Agent Tools": "Outils de l'agent",
-  "Structured Output": "Sortie Structurée",
   "Max steps": "Étapes max",
+  "Structured Output": "Sortie Structurée",
   "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Contrôle la créativité de la réponse IA. Une valeur plus élevée rendra l'IA plus créative et une valeur plus faible la rendra plus déterministe.",
   "Whether to use web search to find information for the AI to use in its response.": "S'il faut utiliser la recherche sur le Web pour trouver des informations à utiliser dans sa réponse.",
   "Provide images for editing, variation, or merging. Support depends on the selected model.": "Fournir des images pour l'édition, la modification ou la fusion. Le support dépend du modèle sélectionné.",
@@ -41,7 +41,6 @@
   "For complex schema, you can use advanced mode.": "Pour le schéma complexe, vous pouvez utiliser le mode avancé.",
   "Describe what you want the assistant to do.": "Décrivez ce que vous voulez que l'assistant fasse.",
   "The number of iterations the agent can do": "Le nombre d'itérations que l'agent peut faire",
-  "Whether to use web search to find information for the AI to use.": "Si vous voulez utiliser la recherche web pour trouver des informations à utiliser pour l'IA .",
   "Simple": "Simple",
   "Advanced": "Avancé"
 }

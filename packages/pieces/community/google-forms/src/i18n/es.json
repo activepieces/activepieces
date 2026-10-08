@@ -45,19 +45,5 @@
   "Triggers when there is new response": "Dispara cuando hay nueva respuesta",
   "Form": "Forma",
   "Include Team Drive Forms": "Incluye Formularios de Unidad de Equipo",
-  "Determines if forms from Team Drives should be included in the results.": "Determina si los formularios de Team Drives deben ser incluidos en los resultados.",
-  "Response is Binary": "La respuesta es binaria",
-  "Return Error as Output": "Devolver error como salida",
-  "Timeout": "Tiempo de espera",
-  "Appended to the URL as ?key=value.": "Se añade a la URL como ?key=value.",
-  "On a failed request, output the error instead of failing the step.": "Si la solicitud falla, devuelve el error en lugar de hacer fallar el paso.",
-  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Segundos de espera para una respuesta. Vacío: hasta el límite del flujo (10 min).",
-  "Follow 3xx redirects instead of returning them as the response.": "Sigue las redirecciones 3xx en lugar de devolverlas como respuesta.",
-  "Triggers when someone submits or edits a response to the form.": "Se activa cuando alguien envía o edita una respuesta al formulario.",
-  "Include Shared Drives": "Incluir unidades compartidas",
-  "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.": "Revisa el formulario cada pocos minutos. Una respuesta inicia el flujo cuando se envía o se edita después de publicar el flujo.",
-  "The form to watch for new responses.": "El formulario en el que se vigilan las respuestas nuevas.",
-  "Also include forms stored in shared drives.": "Incluir también los formularios guardados en unidades compartidas.",
-  "Connect with a Google Cloud service account.\n\n**How to get the key:**\n1. Open the [Google Cloud console](https://console.cloud.google.com/iam-admin/serviceaccounts) → **IAM & Admin** → **Service Accounts**.\n2. Create a service account, or pick an existing one.\n3. Open **Keys** → **Add key** → **Create new key** → **JSON** and download the file.\n4. Share each form with the service account's email, or set up [domain-wide delegation](https://support.google.com/a/answer/162106) and fill in **User Email** below.": "Conéctate con una cuenta de servicio de Google Cloud.\n\n**Cómo obtener la clave:**\n1. Abre la [Google Cloud console](https://console.cloud.google.com/iam-admin/serviceaccounts) → **IAM & Admin** → **Service Accounts**.\n2. Crea una cuenta de servicio o elige una existente.\n3. Abre **Keys** → **Add key** → **Create new key** → **JSON** y descarga el archivo.\n4. Comparte cada formulario con el correo de la cuenta de servicio, o configura la [delegación de todo el dominio](https://support.google.com/a/answer/162106) y completa **User Email** abajo.",
-  "Paste the full contents of the downloaded key file.": "Pega todo el contenido del archivo de clave descargado."
+  "Determines if forms from Team Drives should be included in the results.": "Determina si los formularios de Team Drives deben ser incluidos en los resultados."
 }

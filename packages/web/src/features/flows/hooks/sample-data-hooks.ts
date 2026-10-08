@@ -80,6 +80,16 @@ export const sampleDataHooks = {
       queryKey: ['sampleDataInput', flowVersionId],
     });
   },
+  removeSampleData: ({
+    flowVersionId,
+    queryClient,
+  }: {
+    flowVersionId: string;
+    queryClient: QueryClient;
+  }) => {
+    queryClient.removeQueries({ queryKey: ['sampleData', flowVersionId] });
+    queryClient.removeQueries({ queryKey: ['sampleDataInput', flowVersionId] });
+  },
 };
 
 async function getSampleData(

@@ -16,14 +16,5 @@
   "Title": "Título",
   "Description": "Descripción",
   "A URL we can access for the photo": "Una URL a la que podemos acceder para la foto",
-  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "Una URL a la que podemos acceder para el vídeo (Limitado: 1GB o 20 minutos)",
-  "Photo URL": "URL de la foto",
-  "Video URL": "URL del vídeo",
-  "Pages you gave access to when connecting your account.": "Páginas a las que diste acceso al conectar tu cuenta.",
-  "Facebook adds a preview card for this link below the post.": "Facebook añade una tarjeta de vista previa de este enlace debajo de la publicación.",
-  "Public URL of the image, so Facebook can download it.": "URL pública de la imagen, para que Facebook pueda descargarla.",
-  "Post text shown with the photo.": "Texto de la publicación que se muestra con la foto.",
-  "Public URL of the video file, up to 1 GB or 20 minutes.": "URL pública del archivo de vídeo, hasta 1 GB o 20 minutos.",
-  "Name of the video, shown on the Page's Videos tab.": "Nombre del vídeo, que se muestra en la pestaña Vídeos de la página.",
-  "Post text shown with the video.": "Texto de la publicación que se muestra con el vídeo."
+  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "Una URL a la que podemos acceder para el vídeo (Limitado: 1GB o 20 minutos)"
 }

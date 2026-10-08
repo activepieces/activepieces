@@ -24,18 +24,5 @@
   "Custom Headers": "Cabeçalhos Personalizados",
   "Attachments": "Anexos",
   "plain text": "texto simples",
-  "html": "HTML",
-  "Require TLS": "Exigir TLS",
-  "465 encrypts from the start; other ports upgrade to STARTTLS if the server offers it.": "465 criptografa desde o início; as outras portas passam para STARTTLS se o servidor oferecer.",
-  "Fail instead of sending unencrypted if STARTTLS is unavailable.": "Falha em vez de enviar sem criptografia se o STARTTLS não estiver disponível.",
-  "Login name, usually your email address. Blank if no login is needed.": "Nome de login, geralmente seu e-mail. Em branco se não houver login.",
-  "Cc": "Cc",
-  "Bcc": "Cco",
-  "Must be an address your server lets you send from.": "Deve ser um endereço do qual seu servidor permite enviar.",
-  "Replies go to this address instead of the sender.": "As respostas vão para este endereço em vez do remetente.",
-  "How the text in Body is interpreted.": "Como o texto em Conteúdo é interpretado.",
-  "Name shown in the inbox instead of your address.": "Nome exibido na caixa de entrada em vez do seu endereço.",
-  "Extra headers added to the email, as name and value pairs.": "Cabeçalhos extras adicionados ao e-mail, como pares de nome e valor.",
-  "Plain Text": "Texto simples",
-  "HTML": "HTML"
+  "html": "HTML"
 }

@@ -10,7 +10,7 @@ import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { buttonVariants } from '@/components/ui/button';
-import { flowsApi, sampleDataHooks } from '@/features/flows';
+import { flowHooks, flowsApi, sampleDataHooks } from '@/features/flows';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -24,7 +24,10 @@ const FlowBuilderPage = () => {
     isLoading,
     isError,
   } = useQuery<PopulatedFlow, Error>({
-    queryKey: ['flow', flowId, versionId, authenticationSession.getProjectId()],
+    queryKey: [
+      ...flowHooks.createFlowQueryKeys({ flowId: flowId!, versionId }),
+      authenticationSession.getProjectId(),
+    ],
     queryFn: () => flowsApi.get(flowId!, versionId ? { versionId } : undefined),
     gcTime: 0,
     retry: false,

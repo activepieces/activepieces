@@ -117,7 +117,7 @@
   "List of BCC recipient handles.": "Liste des gestionnaires de destinataires BCC.",
   "The subject of the draft.": "Le sujet du projet.",
   "The body of the draft message.": "Le corps du message brouillon.",
-  "List of attachment URLs.": "Liste des URL des pièces jointes.",
+  "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.": "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.",
   "Mode of the draft reply": "Mode de la réponse du brouillon",
   "The ID of the signature to use for the draft reply (if applicable).": "L'ID de la signature à utiliser pour le brouillon de réponse (le cas échéant).",
   "Whether to append the default signature to the draft reply (if applicable).": "S'il faut ajouter la signature par défaut à la réponse brouillon (le cas échéant).",

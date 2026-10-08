@@ -328,6 +328,7 @@ export const ExecuteAgentRunJobData = z.object({
     provider: z.enum(AIProviderName).optional(),
     providerConfigId: z.string().optional(),
     modelName: z.string().nullable(),
+    modelTierId: z.string().optional(),
     files: z.array(z.object({
         name: z.string(),
         mimeType: z.string(),

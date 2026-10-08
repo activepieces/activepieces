@@ -1,107 +1,60 @@
 import {
+  AppConnectionValueForAuthProperty,
+  Property,
+  StaticPropsValue,
   TriggerStrategy,
   createTrigger,
-  PiecePropValueSchema,
-  Property,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
-import {
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
 import { props } from '../common/props';
+import { xeroPolling } from '../common/polling';
+import { xeroSamples } from '../common/samples';
+import { xeroTriggerState } from '../common/trigger-state';
+import { xeroOutputSchemas } from '../output-schemas';
 
-function parseXeroDateToEpoch(dateVal: unknown): number {
-  if (typeof dateVal === 'string') {
-    if (dateVal.includes('/Date(')) {
-      const match = /\/Date\((\d+)/.exec(dateVal);
-      if (match && match[1]) return Number(match[1]);
-    }
-    const t = Date.parse(dateVal);
-    if (!Number.isNaN(t)) return t;
-  }
-  if (typeof dateVal === 'number') return dateVal;
-  return Date.now();
-}
+const triggerProps = {
+  tenant_id: props.tenant_id,
+  payment_types: Property.StaticMultiSelectDropdown({
+    displayName: 'Payment Types',
+    required: false,
+    options: {
+      options: [
+        { label: 'ACCRECPAYMENT (Received on Sales Invoice)', value: 'ACCRECPAYMENT' },
+        { label: 'ACCPAYPAYMENT (Paid on Bill)', value: 'ACCPAYPAYMENT' },
+      ],
+    },
+    defaultValue: ['ACCRECPAYMENT'],
+  }),
+  statuses: Property.StaticMultiSelectDropdown({
+    displayName: 'Statuses',
+    required: false,
+    options: {
+      options: [
+        { label: 'AUTHORISED', value: 'AUTHORISED' },
+        { label: 'DELETED', value: 'DELETED' },
+      ],
+    },
+    defaultValue: ['AUTHORISED'],
+  }),
+  invoice_id: props.invoice_id(false),
+  reference: Property.ShortText({ displayName: 'Reference', required: false }),
+  date_from: Property.ShortText({ displayName: 'Date From (YYYY-MM-DD)', required: false }),
+  date_to: Property.ShortText({ displayName: 'Date To (YYYY-MM-DD)', required: false }),
+  page_size: Property.Number({ displayName: 'Page Size (1-1000)', required: false }),
+};
 
-const polling: Polling<
-AppConnectionValueForAuthProperty<typeof xeroAuth>,
-  Record<string, unknown>
-> = {
+type PaymentProps = StaticPropsValue<typeof triggerProps>;
+
+const polling: Polling<AppConnectionValueForAuthProperty<typeof xeroAuth>, PaymentProps> = {
   strategy: DedupeStrategy.TIMEBASED,
-  async items({ auth, lastFetchEpochMS, propsValue }) {
-    const { access_token } = auth;
-    const tenantId = propsValue?.['tenant_id'] as string;
-    const pageSize = (propsValue?.['page_size'] as number) || 200;
-    const paymentTypes = (propsValue?.['payment_types'] as string[]) || ['ACCRECPAYMENT'];
-    const statuses = (propsValue?.['statuses'] as string[]) || ['AUTHORISED'];
-    const invoiceId = propsValue?.['invoice_id'] as string | undefined;
-    const reference = propsValue?.['reference'] as string | undefined;
-    const dateFrom = propsValue?.['date_from'] as string | undefined;
-    const dateTo = propsValue?.['date_to'] as string | undefined;
-
-    const whereClauses: string[] = [];
-    if (paymentTypes.length === 1) whereClauses.push(`PaymentType=="${paymentTypes[0]}"`);
-    if (paymentTypes.length > 1)
-      whereClauses.push(`(${paymentTypes.map((t) => `PaymentType=="${t}"`).join(' OR ')})`);
-    if (statuses.length === 1) whereClauses.push(`Status=="${statuses[0]}"`);
-    if (statuses.length > 1) whereClauses.push(`(${statuses.map((s) => `Status=="${s}"`).join(' OR ')})`);
-    if (invoiceId) whereClauses.push(`Invoice.InvoiceID==guid("${invoiceId}")`);
-    if (reference) whereClauses.push(`Reference=="${reference.replace(/"/g, '\\"')}"`);
-    if (dateFrom) {
-      const [y, m, d] = dateFrom.split('-');
-      whereClauses.push(`Date>=DateTime(${y}, ${m}, ${d})`);
-    }
-    if (dateTo) {
-      const [y, m, d] = dateTo.split('-');
-      whereClauses.push(`Date<DateTime(${y}, ${m}, ${d})`);
-    }
-
-    const results: any[] = [];
-    const maxPages = 5;
-    for (let page = 1; page <= maxPages; page++) {
-      const queryParams: Record<string, string> = {
-        page: String(page),
-        pageSize: String(pageSize),
-        order: 'UpdatedDateUTC ASC',
-      };
-      if (whereClauses.length > 0) {
-        queryParams['where'] = whereClauses.join(' AND ');
-      }
-
-      const requestHeaders: Record<string, string> = {
-        Authorization: `Bearer ${access_token}`,
-        Accept: 'application/json',
-        'Xero-Tenant-Id': tenantId,
-      };
-      if (lastFetchEpochMS > 0) {
-        const ifModified = new Date(lastFetchEpochMS).toISOString().slice(0, 19);
-        requestHeaders['If-Modified-Since'] = ifModified;
-      }
-
-      const resp = await httpClient.sendRequest<Record<string, any>>({
-        method: HttpMethod.GET,
-        url: 'https://api.xero.com/api.xro/2.0/Payments',
-        headers: requestHeaders,
-        queryParams,
-      });
-
-      if (resp.status !== 200) break;
-
-      const items: any[] = resp.body?.Payments ?? [];
-      for (const p of items) {
-        const epoch = parseXeroDateToEpoch(p.UpdatedDateUTC || p.Date);
-        results.push({ epochMilliSeconds: epoch, data: p });
-      }
-
-      if (items.length < pageSize) break;
-    }
-
-    return results;
+  async items({ auth, propsValue, lastFetchEpochMS }) {
+    const records = await xeroPolling.fetchUpdated({
+      ...paymentRequest({ accessToken: auth.access_token, propsValue }),
+      lastFetchEpochMS,
+      pageSize: xeroPolling.pageSizeOf({ value: propsValue.page_size, fallback: 200, max: 1000 }),
+    });
+    return xeroPolling.toItems({ records });
   },
 };
 
@@ -112,86 +65,72 @@ export const xeroNewReconciledPayment = createTrigger({
   displayName: 'New Reconciled Payment',
   description: 'Fires when a payment is reconciled for the first time.',
   aiMetadata: {
-    description: 'Fires when a payment is reconciled in the connected Xero organisation for the first time, i.e. when its IsReconciled flag transitions from false to true. Polls the Xero Payments endpoint, tracks each payment\'s prior reconciliation state, and emits a payment only on that first false-to-true transition, optionally filtered by payment type (ACCRECPAYMENT / ACCPAYPAYMENT), status, invoice, reference, or date range. Each item is a full payment record. Distinct from New Payment, which fires when a payment is first recorded regardless of reconciliation.',
+    description:
+      'Fires once per payment when it is first seen as reconciled (IsReconciled false to true) after the trigger is enabled, optionally filtered by payment type, status, invoice, reference or date range. A payment that was already reconciled before enabling and is edited afterwards also fires once, because its earlier state is unknown. Each item is one full payment. Use New Payment to fire when a payment is recorded.',
   },
   props: {
-    tenant_id: props.tenant_id,
-    payment_types: Property.StaticMultiSelectDropdown({
-      displayName: 'Payment Types',
-      required: false,
-      options: {
-        options: [
-          { label: 'ACCRECPAYMENT (Received on Sales Invoice)', value: 'ACCRECPAYMENT' },
-          { label: 'ACCPAYPAYMENT (Paid on Bill)', value: 'ACCPAYPAYMENT' },
-        ],
-      },
-      defaultValue: ['ACCRECPAYMENT'],
-    }),
-    statuses: Property.StaticMultiSelectDropdown({
-      displayName: 'Statuses',
-      required: false,
-      options: { options: [
-        { label: 'AUTHORISED', value: 'AUTHORISED' },
-        { label: 'DELETED', value: 'DELETED' },
-      ]},
-      defaultValue: ['AUTHORISED'],
-    }),
-    invoice_id: props.invoice_id(false),
-    reference: Property.ShortText({ displayName: 'Reference', required: false }),
-    date_from: Property.ShortText({ displayName: 'Date From (YYYY-MM-DD)', required: false }),
-    date_to: Property.ShortText({ displayName: 'Date To (YYYY-MM-DD)', required: false }),
-    page_size: Property.Number({ displayName: 'Page Size (1-1000)', required: false }),
+    tenant_id: triggerProps.tenant_id,
+    payment_types: triggerProps.payment_types,
+    statuses: triggerProps.statuses,
+    invoice_id: triggerProps.invoice_id,
+    reference: triggerProps.reference,
+    date_from: triggerProps.date_from,
+    date_to: triggerProps.date_to,
+    page_size: triggerProps.page_size,
   },
   type: TriggerStrategy.POLLING,
-  async onEnable(context: any) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+  outputSchema: xeroOutputSchemas.payment,
+  sampleData: { ...xeroSamples.payment, IsReconciled: true },
+  async onEnable(context) {
+    await xeroPolling.keepStateOnRepublish({ store: context.store, isRepublish: context.isRepublish, propsValue: context.propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
-  async onDisable(context: any) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
   },
-  async test(context: any) {
-    return await pollingHelper.test(polling, context);
+  async test(context) {
+    const records = await xeroPolling.fetchRecent(paymentRequest({ accessToken: context.auth.access_token, propsValue: context.propsValue }));
+    return records.filter((record) => record['IsReconciled'] === true);
   },
-  async run(context: any) {
-    const items = (await pollingHelper.poll(polling, context)) as any[];
-    const tenantId = context.propsValue['tenant_id'];
-    const seenKey = `xero_payment_reconciled_seen_ids_${tenantId}`;
-    const seen: string[] = (await context.store.get(seenKey)) || [];
-
+  async run(context) {
+    const items = xeroPolling.records({ items: await pollingHelper.poll(polling, context) });
+    const tenantId = context.propsValue.tenant_id;
     const previousStateKey = `xero_payment_prev_reconciled_state_${tenantId}`;
-    const prevState: Record<string, boolean> = (await context.store.get(previousStateKey)) || {};
-
-    const results: any[] = [];
-    for (const p of items) {
-      const id = p?.PaymentID as string | undefined;
-      if (!id) continue;
-
-      const isRec = Boolean(p?.IsReconciled);
-      const wasRec = Boolean(prevState[id]);
-
-      // Fire only when first transitions to reconciled (false -> true)
-      if (isRec && !wasRec && !seen.includes(id)) {
-        results.push(p);
-        seen.push(id);
-      }
-
-      // Track current state for next poll
-      prevState[id] = isRec;
+    const previousState = xeroTriggerState.readMap({
+      value: await context.store.get<unknown>(previousStateKey),
+      isValue: (entry): entry is boolean => typeof entry === 'boolean',
+    });
+    const reconciledNow = items.filter((record) => {
+      const id = xeroPolling.idOf({ record, key: 'PaymentID' });
+      return id !== undefined && record['IsReconciled'] === true && previousState[id] !== true;
+    });
+    const nextState = new Map(Object.entries(previousState));
+    for (const record of items) {
+      const id = xeroPolling.idOf({ record, key: 'PaymentID' });
+      if (id === undefined) continue;
+      nextState.delete(id);
+      nextState.set(id, record['IsReconciled'] === true);
     }
-
-    await context.store.put(seenKey, seen);
-    await context.store.put(previousStateKey, prevState);
-    return results;
+    const emitted = await xeroTriggerState.emitFirstSeen({
+      store: context.store,
+      key: `xero_payment_reconciled_seen_ids_${tenantId}`,
+      items: reconciledNow,
+      idOf: (record) => xeroPolling.idOf({ record, key: 'PaymentID' }),
+    });
+    await context.store.put(previousStateKey, xeroTriggerState.boundMap({ map: Object.fromEntries(nextState) }));
+    return emitted;
   },
-  sampleData: undefined,
 });
 
-
+function paymentRequest({ accessToken, propsValue }: { accessToken: string; propsValue: PaymentProps }) {
+  return xeroPolling.paymentRequest({
+    accessToken,
+    tenantId: propsValue.tenant_id,
+    paymentTypes: propsValue.payment_types,
+    statuses: propsValue.statuses,
+    invoiceId: propsValue.invoice_id,
+    reference: propsValue.reference,
+    dateFrom: propsValue.date_from,
+    dateTo: propsValue.date_to,
+  });
+}

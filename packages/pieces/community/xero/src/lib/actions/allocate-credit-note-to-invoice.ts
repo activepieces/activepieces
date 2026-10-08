@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroAllocateCreditNoteToInvoice = createAction({
   auth: xeroAuth,
@@ -14,12 +15,13 @@ export const xeroAllocateCreditNoteToInvoice = createAction({
   classification: 'WRITE',
   displayName: 'Allocate Credit Note to Invoice',
   description: 'Allocates a credit note to a specific invoice.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Apply a specified amount of an existing credit note against a specific invoice in Xero, both referenced by ID. Pick this to offset an outstanding invoice with available credit. Not idempotent: each call records another allocation, so re-running over-allocates; resolve the credit-note and invoice IDs and the remaining credit first.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.allocationEnvelope,
   props: {
     tenant_id: props.tenant_id,
     credit_note_id: props.credit_note_id(true),
@@ -54,7 +56,7 @@ export const xeroAllocateCreditNoteToInvoice = createAction({
     };
 
     const request: HttpRequest = {
-      method: HttpMethod.POST,
+      method: HttpMethod.PUT,
       url,
       body,
       authentication: {

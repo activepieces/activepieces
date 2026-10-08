@@ -1,7 +1,7 @@
 {
   "Secure content management and collaboration": "セキュアなコンテンツ管理とコラボレーション",
   "Custom API Call": "カスタムAPI呼び出し",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",

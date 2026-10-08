@@ -2,14 +2,16 @@ import { Readable } from 'node:stream';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
+import { readFileOutputSchema } from '../output-schemas';
 
 export const readFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'read-file',
+  outputSchema: readFileOutputSchema,
   classification: 'READ',
   displayName: 'Read File',
   description: 'Read a file from S3 to use it in other steps',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Downloads a single object from the configured S3 bucket by its full key (path) and makes its contents available as a file for later steps. Use to fetch a known file when you have its exact key. Reading the same key repeatedly returns the same content with no side effect (idempotent).',
     idempotent: true,

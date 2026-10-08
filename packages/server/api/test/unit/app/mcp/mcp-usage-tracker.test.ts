@@ -1,8 +1,8 @@
 import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
-import { McpServerType, PopulatedMcpServer } from '@activepieces/shared'
+import { McpServerType, McpToolResult, PopulatedMcpServer } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { INTERNAL_CHAT_CLIENT_ID } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
-import { MCP_CALL_CREDITS, mcpUsageTracker } from '../../../../src/app/mcp/mcp-usage-tracker'
+import { MCP_CALL_CREDITS, McpCallBilling, mcpUsageTracker, withCallBilling } from '../../../../src/app/mcp/mcp-usage-tracker'
 
 const { mockTrackBillingAndSendTelemetry, mockGetOrCreateForPlatform, mockGetProject, mockAssertCredits } = vi.hoisted(() => ({
     mockTrackBillingAndSendTelemetry: vi.fn().mockResolvedValue(undefined),
@@ -113,13 +113,14 @@ describe('mcpUsageTracker.resolveCallBilling — charging', () => {
         expect(first[0].credits.idempotencyKey).not.toBe(second[0].credits.idempotencyKey)
     })
 
-    it('charges AppSumo credits alongside the platform balance on a credited plan', async () => {
+    it('leaves the AppSumo AI-credit meter alone on a credited plan, as a production run does', async () => {
         mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'appsumo_activepieces_tier1', licenseKey: null })
 
         await chargeOnce({ mcp: mcpServer({ platformId: 'platform-2', type: McpServerType.PLATFORM }), clientId: EXTERNAL_CLIENT_ID, projectId: null })
 
-        const { appSumo } = mockTrackBillingAndSendTelemetry.mock.calls[0][0]
-        expect(appSumo?.value).toBe(MCP_CALL_CREDITS)
+        const { appSumo, credits } = mockTrackBillingAndSendTelemetry.mock.calls[0][0]
+        expect(appSumo).toBeUndefined()
+        expect(credits.value).toBe(MCP_CALL_CREDITS)
     })
 
     it('lets the call through when billing fails, rather than failing the tool', async () => {
@@ -191,5 +192,73 @@ describe('mcpUsageTracker.resolveCallBilling — refusing a client with no credi
         await refusalFor({ mcp: mcpServer({ projectId: 'project-1' }), clientId: EXTERNAL_CLIENT_ID })
 
         expect(mockAssertCredits).toHaveBeenCalledWith(expect.objectContaining({ platformId: 'platform-1' }))
+    })
+})
+
+function fakeBilling({ refusal = null }: { refusal?: McpToolResult | null } = {}) {
+    const charge = vi.fn()
+    const refusalWhenOutOfCredits = vi.fn().mockResolvedValue(refusal)
+    const billing: McpCallBilling = { charge, refusalWhenOutOfCredits }
+    return { billing, charge, refusalWhenOutOfCredits }
+}
+
+function billedCall({ toolName, result, billing }: { toolName: string, result: McpToolResult, billing: McpCallBilling }) {
+    const execute = vi.fn().mockResolvedValue(result)
+    return { execute, call: withCallBilling({ execute, toolName, projectId: 'project-1', billing }) }
+}
+
+const RAN: McpToolResult = { content: [{ type: 'text', text: '✅ Send Message completed (run run-1).' }] }
+const FAILED_AT_VENDOR: McpToolResult = { content: [{ type: 'text', text: '❌ failed' }], structuredContent: { errorSummary: '401', runId: 'run-1' }, isError: true }
+const REFUSED_BEFORE_DISPATCH: McpToolResult = { content: [{ type: 'text', text: '❌ Piece not found' }], isError: true }
+
+describe('withCallBilling — which calls cost a credit', () => {
+    it('runs a free tool with no credit check and no charge, even when the platform is out of credits', async () => {
+        const { billing, charge, refusalWhenOutOfCredits } = fakeBilling({ refusal: REFUSED_BEFORE_DISPATCH })
+        const { execute, call } = billedCall({ toolName: 'ap_list_flows', result: RAN, billing })
+
+        await call({})
+
+        expect(execute).toHaveBeenCalled()
+        expect(refusalWhenOutOfCredits).not.toHaveBeenCalled()
+        expect(charge).not.toHaveBeenCalled()
+    })
+
+    it('charges ap_run_action once, after the action ran', async () => {
+        const { billing, charge } = fakeBilling()
+        const { call } = billedCall({ toolName: 'ap_run_action', result: RAN, billing })
+
+        await call({})
+
+        expect(charge).toHaveBeenCalledTimes(1)
+        expect(charge).toHaveBeenCalledWith({ toolName: 'ap_run_action', projectId: 'project-1' })
+    })
+
+    it('charges ap_run_action when the third-party call failed, because the run happened', async () => {
+        const { billing, charge } = fakeBilling()
+        const { call } = billedCall({ toolName: 'ap_run_action', result: FAILED_AT_VENDOR, billing })
+
+        await call({})
+
+        expect(charge).toHaveBeenCalledTimes(1)
+    })
+
+    it('charges nothing when ap_run_action refused before it ran anything', async () => {
+        const { billing, charge } = fakeBilling()
+        const { call } = billedCall({ toolName: 'ap_run_action', result: REFUSED_BEFORE_DISPATCH, billing })
+
+        await call({})
+
+        expect(charge).not.toHaveBeenCalled()
+    })
+
+    it('refuses ap_run_action without running it once the platform is out of credits', async () => {
+        const { billing, charge } = fakeBilling({ refusal: REFUSED_BEFORE_DISPATCH })
+        const { execute, call } = billedCall({ toolName: 'ap_run_action', result: RAN, billing })
+
+        const result = await call({})
+
+        expect(result).toBe(REFUSED_BEFORE_DISPATCH)
+        expect(execute).not.toHaveBeenCalled()
+        expect(charge).not.toHaveBeenCalled()
     })
 })

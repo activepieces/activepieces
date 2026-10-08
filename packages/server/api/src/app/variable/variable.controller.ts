@@ -162,8 +162,7 @@ const ListVariableOwnersRequest = {
         ),
     },
     schema: {
-        tags: ['variables'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        hide: true,
         querystring: z.object({ projectId: z.string() }),
         description: 'List users who own at least one variable in the project',
         response: {
@@ -185,8 +184,7 @@ const RevealVariableRequest = {
         ),
     },
     schema: {
-        tags: ['variables'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        hide: true,
         description: 'Reveal a variable plaintext value',
         params: z.object({ id: ApId }),
         response: {

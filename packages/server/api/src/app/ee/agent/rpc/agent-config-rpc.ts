@@ -1,12 +1,13 @@
-import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
-import { ModelMessage } from 'ai'
+import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { agentAiUtils, aiProviderSignal, aiUtils } from '@activepieces/server-utils'
+import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentCompaction } from '.././agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
+import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
 import { agentPrompt } from '.././prompt/agent-prompt'
@@ -86,7 +87,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // selection above, which narrows to what the owner can still see in chat.
         const runProjectId = isFlowStep ? conversation.projectId ?? null : selectedProjectId
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
-        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const surface = agentHelpers.surfaceOf({ source: requestedSource })
+        const modelTierId = tierIdForRun({ conversation, requestedTierId: input.modelTierId ?? null })
+        const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface, scope: runScope })
+        const providerConfig = isNil(tierRun)
+            ? await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+            : tierRun.candidates[0].config
 
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
             ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, conversationId, log })
@@ -94,7 +100,6 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
-        const surface = agentHelpers.surfaceOf({ source: requestedSource })
         const chosen = dryRun
             ? { search: null, image: null }
             : await chosenProviders.resolveForRun({ platformId, choices: providerChoices, surface, scope: runScope, log })
@@ -129,14 +134,23 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
             await agentHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
+        if (!dryRun && (conversation.modelTierId ?? null) !== modelTierId) {
+            await agentHelpers.conversationRepo().update(conversationId, { modelTierId })
+        }
 
         const selectedModel = modelName ?? conversation.modelName ?? null
         const namesItsOwnModel = surface === 'flow'
-        const tier = agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: modelName ?? null, selectedModel, surface })
-        const resolvedModelId = namesItsOwnModel && !isNil(modelName)
-            ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
-            : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
-        const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, surface, scope: runScope, fallbackModelId: resolvedModelId, log })
+        const tier = isNil(tierRun)
+            ? agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: modelName ?? null, selectedModel, surface })
+            : { ...agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: null, selectedModel: null, surface }), thinkingBudget: tierRun.candidates[0].thinkingBudget, modelId: tierRun.candidates[0].modelId }
+        const resolvedModelId = !isNil(tierRun)
+            ? tierRun.candidates[0].modelId
+            : namesItsOwnModel && !isNil(modelName)
+                ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
+                : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
+        const fastModelId = isNil(tierRun)
+            ? await agentHelpers.resolveFastModelId({ platformId, providerConfig, surface, scope: runScope, fallbackModelId: resolvedModelId, log })
+            : resolvedModelId
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -166,7 +180,6 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             templates: promptOverride,
         }) + agentSurfaceNotes.buildRunNotes({
             source: conversation.source,
-            ...spreadIfDefined('messageSource', input.messageSource),
             currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
             searchAvailable: webSearchAvailable,
             fetchAvailable,
@@ -189,7 +202,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             : agentPrompt.guides
 
         const previousMessages = conversation.messages as ModelMessage[]
-        const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
+        const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
+        const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
         const allMessages = [...previousMessages, newUserMessage]
         const llmHistory = agentAiUtils.collapseStaleToolOutputs({ messages: allMessages })
 
@@ -204,27 +218,35 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         })
         await agentApprovalGate.clearCancel({ conversationId })
 
-        const reservedOutputTokens = await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
+        const compactionModels = isNil(tierRun)
+            ? [{ config: providerConfig, modelId: resolvedModelId, thinkingBudget: tier.thinkingBudget }]
+            : tierRun.candidates
+        const everyModelOfTheTurn = isNil(tierRun) ? compactionModels : [...tierRun.candidates, ...(isNil(tierRun.fast) ? [] : [tierRun.fast])]
+        const contextProvider = smallestContextProvider({ configs: everyModelOfTheTurn.map((candidate) => candidate.config) })
+        const reservedOutputTokens = isNil(tierRun)
+            ? await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
+            : Math.max(...await Promise.all(everyModelOfTheTurn.map((candidate) => agentAiUtils.affordableOutputTokens({ provider: candidate.config.provider, modelIds: [candidate.modelId], thinkingBudget: candidate.thinkingBudget }))))
         const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
         const payloadReservedTokens = reservedTokens + agentAiUtils.estimateTokenCount({ messages: [], systemPromptLength: systemPromptText.length })
         const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length, reservedTokens })
+        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: contextProvider, messageCount: llmHistory.length, reservedTokens })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
-            const model = aiUtils.createModel({
-                credentials: providerConfig,
-                modelId: resolvedModelId,
-            })
-            compactionState = await agentCompaction.compactMessages({
-                messages: llmHistory,
-                existingSummary: compactionState.summary,
-                summarizedUpToIndex: compactionState.summarizedUpToIndex,
-                provider: providerConfig.provider,
-                reservedTokens: payloadReservedTokens,
-                model,
+            const previous = compactionState
+            compactionState = await onFirstModelThatAnswers({
+                models: compactionModels,
                 log,
+                run: (model) => agentCompaction.compactMessages({
+                    messages: llmHistory,
+                    existingSummary: previous.summary,
+                    summarizedUpToIndex: previous.summarizedUpToIndex,
+                    provider: contextProvider,
+                    reservedTokens: payloadReservedTokens,
+                    model,
+                    log,
+                }),
             })
             await agentHelpers.conversationRepo().update(conversationId, {
                 summary: compactionState.summary,
@@ -237,7 +259,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             messages: llmHistory,
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
-            provider: providerConfig.provider,
+            provider: contextProvider,
             reservedTokens: payloadReservedTokens,
         })
 
@@ -247,6 +269,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             model: { id: resolvedModelId },
             provider: providerConfig.provider,
             tier: { id: tier.id, surface },
+            ...spreadIfDefined('platformTier', tierRun?.tier),
             project: selectedProjectId ? { id: selectedProjectId } : undefined,
             webSearchAvailable,
         }, '[agentRpc#getAgentConfig] Chat config resolved')
@@ -276,9 +299,49 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             agentsAvailable,
             userEmail: runUserEmail,
             source: conversation.source,
+            ...tierFieldsOf({ tierRun }),
         }
     },
 
 })
+
+function withLeadingNote({ content, note }: { content: UserContent, note: string }): UserContent {
+    return [{ type: 'text', text: note }, ...(typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content)]
+}
+
+function tierIdForRun({ conversation, requestedTierId }: { conversation: AgentConversation, requestedTierId: string | null }): string | null {
+    const choiceLivesOnConversation = conversation.source === AgentRunSource.CHAT || conversation.source === AgentRunSource.AGENT_BUILDER
+    return choiceLivesOnConversation ? conversation.modelTierId ?? null : requestedTierId
+}
+
+function smallestContextProvider({ configs }: { configs: GetProviderConfigResponse[] }): AIProviderName {
+    return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
+}
+
+async function onFirstModelThatAnswers<T>({ models, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+    for (const [index, candidate] of models.entries()) {
+        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId })))
+        if (attempt.error === null) {
+            return attempt.data
+        }
+        const isLast = index === models.length - 1
+        if (isLast || !isFallbackWorthy(aiProviderSignal.fromError(attempt.error))) {
+            throw attempt.error
+        }
+        log.warn({ error: attempt.error, candidateIndex: index, model: { id: candidate.modelId } }, '[agentRpc#getAgentConfig] Compaction model failed, trying the next one in the tier')
+    }
+    throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'No model is left to compact this conversation' } })
+}
+
+function tierFieldsOf({ tierRun }: { tierRun: AgentTierRun | null }): Pick<AgentConfigResponse, 'platformTier' | 'candidates' | 'fastCandidate'> {
+    if (isNil(tierRun)) {
+        return {}
+    }
+    return {
+        platformTier: tierRun.tier,
+        candidates: tierRun.candidates.map(agentTierCandidates.toWorkerCandidate),
+        ...spreadIfDefined('fastCandidate', isNil(tierRun.fast) ? undefined : agentTierCandidates.toWorkerCandidate(tierRun.fast)),
+    }
+}
 
 const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000

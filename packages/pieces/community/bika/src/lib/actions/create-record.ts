@@ -1,9 +1,8 @@
-import {
-  DynamicPropsValue,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { BikaCommon, createNewFields, makeClient } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
 import { BikaAuth } from '../auth';
+import { bikaOperations } from '../common/operations';
+import { bikaProps } from '../common/props';
+import { bikaOutputSchemas } from '../output-schemas';
 
 export const createRecordAction = createAction({
   auth: BikaAuth,
@@ -11,52 +10,24 @@ export const createRecordAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in database.',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a new record in a Bika.ai database table, populating its fields. Requires a space and database (table) to target; field values must match the database schema (read-only field types like formulas and autonumber are ignored). Not idempotent: each call appends a new record.', idempotent: false },
-  props: {
-    space_id: BikaCommon.space_id,
-    database_id: BikaCommon.database_id,
-    fields: BikaCommon.fields,
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Creates one record in a Bika.ai database picked from dropdowns, with one input per writable field; files given for attachment fields are uploaded first. Read-only fields (formula, lookup, auto number, created/modified time and by) are not offered. Each call adds a new record, so a retry creates a duplicate.',
+    idempotent: false,
   },
+  props: {
+    space_id: bikaProps.space(),
+    database_id: bikaProps.database(),
+    fields: bikaProps.fields({ description: 'The values for the new record. Empty inputs are left blank.' }),
+  },
+  outputSchema: bikaOutputSchemas.humanCreatedRecord,
   async run(context) {
-    const auth = context.auth;
-    const databaseId = context.propsValue.database_id;
-    const spaceId = context.propsValue.space_id;
-    const dynamicFields: DynamicPropsValue = context.propsValue.fields;
-    const fields: {
-      [n: string]: any;
-    } = {};
-
-    const props = Object.entries(dynamicFields);
-    for (const [propertyKey, propertyValue] of props) {
-      if (propertyValue !== undefined && propertyValue !== '') {
-        fields[propertyKey] = propertyValue;
-      }
-    }
-
-    const newFields: Record<string, unknown> = await createNewFields(
-      auth,
-      spaceId,
-      databaseId,
-      fields
-    );
-
-    const client = makeClient(
-      context.auth.props,
-    );
-    const response: any = await client.createRecord(spaceId, databaseId , {
-      records: [
-        {
-          fields: {
-            ...newFields,
-          },
-        },
-      ],
+    return bikaOperations.humanCreate({
+      auth: context.auth,
+      spaceId: context.propsValue.space_id,
+      databaseId: context.propsValue.database_id,
+      fields: context.propsValue.fields,
     });
-
-    if (!response.success) {
-      throw new Error(JSON.stringify(response, undefined, 2));
-    }
-    return response;
   },
 });

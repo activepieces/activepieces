@@ -1,7 +1,7 @@
 {
   "To obtain an API key, navigate to the [API keys](https://alttextify.net/settings/apikeys) section within your account settings.": "API キーを取得するには、アカウント設定の [API keys](https://alttextify.net/settings/apikeys) セクションに移動します。",
   "Generate Image Alt Text": "代替画像を生成する",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Generates alt text for specified image.": "指定した画像の代替テキストを生成します。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Image File": "画像ファイル",

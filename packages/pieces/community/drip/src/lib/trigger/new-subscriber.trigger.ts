@@ -1,13 +1,13 @@
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { dripCommon } from '../common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { dripAuth } from '../auth';
+import { dripCommon } from '../common';
+import { dripSamples } from '../common/samples';
+import { dripWebhook } from '../common/webhook';
+import { dripOutputSchemas } from '../output-schemas';
 
-const triggerNameInStore = 'drip_new_subscriber_trigger';
+const STORE_KEY = 'drip_new_subscriber_trigger';
+const EVENT = 'subscriber.created';
+
 export const dripNewSubscriberEvent = createTrigger({
   auth: dripAuth,
   name: 'new_subscriber',
@@ -15,63 +15,28 @@ export const dripNewSubscriberEvent = createTrigger({
   displayName: 'New Subscriber',
   description: 'Triggers when a subscriber is created in your Drip account.',
   aiMetadata: {
-    description: 'Fires when a new subscriber is created in the selected Drip account, emitting the subscriber.created event. Represents a contact being added to the list.',
+    description: 'Fires when a new subscriber is created in the selected Drip account (Drip event subscriber.created), with the subscriber profile. Represents a contact being added to the list.',
   },
   props: {
     account_id: dripCommon.account_id,
   },
-  sampleData: {
-    event: 'subscriber.created',
-    data: {
-      account_id: '9999999',
-      subscriber: {},
-    },
-    occurred_at: '2013-06-21T10:31:58Z',
-  },
+  sampleData: dripSamples.event({ name: EVENT }),
+  outputSchema: dripOutputSchemas.subscriberEvent,
   type: TriggerStrategy.WEBHOOK,
-  async onEnable({ auth, propsValue, webhookUrl, store }) {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${dripCommon.baseUrl(propsValue.account_id)}/webhooks`,
-      body: {
-        webhooks: [{ post_url: webhookUrl, events: ['subscriber.created'] }],
-      },
-      headers: {
-        Authorization: dripCommon.authorizationHeader(auth),
-      },
-      queryParams: {},
-    };
-    const { body } = await httpClient.sendRequest<{
-      webhooks: { id: string }[];
-    }>(request);
-    await store.put<DripWebhookInformation>(triggerNameInStore, {
-      webhookId: body.webhooks[0].id,
-      userId: propsValue.account_id,
+  async onEnable(context) {
+    await dripWebhook.enable({
+      token: context.auth.secret_text,
+      accountId: context.propsValue.account_id,
+      webhookUrl: context.webhookUrl,
+      store: context.store,
+      storeKey: STORE_KEY,
+      event: EVENT,
     });
   },
   async onDisable(context) {
-    const response = await context.store?.get<DripWebhookInformation>(
-      triggerNameInStore
-    );
-    if (response !== null && response !== undefined) {
-      const request: HttpRequest = {
-        method: HttpMethod.DELETE,
-        url: `${dripCommon.baseUrl(response.userId)}/webhooks/${
-          response.webhookId
-        }`,
-        headers: {
-          Authorization: dripCommon.authorizationHeader(context.auth),
-        },
-      };
-      await httpClient.sendRequest(request);
-    }
+    await dripWebhook.disable({ token: context.auth.secret_text, store: context.store, storeKey: STORE_KEY });
   },
   async run(context) {
-    return [context.payload.body];
+    return dripWebhook.handle({ token: context.auth.secret_text, store: context.store, storeKey: STORE_KEY, event: EVENT, payload: context.payload });
   },
 });
-
-interface DripWebhookInformation {
-  webhookId: string;
-  userId: string;
-}

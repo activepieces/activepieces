@@ -1,5 +1,5 @@
 import { AgentRunSource, Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
-import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
+import { BaseModelSchema, DateOrString, isNil, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
 import { UserWithMetaInformation } from '../../core/user/user'
@@ -12,6 +12,7 @@ export const ListAuditEventsRequest = z.object({
     userId: z.string().optional(),
     createdBefore: z.string().optional(),
     createdAfter: z.string().optional(),
+    order: z.enum(['ASC', 'DESC']).optional(),
 })
 
 export type ListAuditEventsRequest = z.infer<typeof ListAuditEventsRequest>
@@ -50,6 +51,7 @@ export enum ApplicationEventName {
     USER_PASSWORD_RESET = 'user.password.reset',
     USER_EMAIL_VERIFIED = 'user.email.verified',
     SIGNING_KEY_CREATED = 'signing.key.created',
+    AUDIT_LOG_RETENTION_UPDATED = 'audit.log.retention.updated',
     PROJECT_ROLE_CREATED = 'project.role.created',
     PROJECT_ROLE_DELETED = 'project.role.deleted',
     PROJECT_ROLE_UPDATED = 'project.role.updated',
@@ -518,6 +520,18 @@ export const SigningKeyEvent = z.object({
 
 export type SigningKeyEvent = z.infer<typeof SigningKeyEvent>
 
+export const AuditLogRetentionUpdatedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED),
+    data: z.object({
+        previousRetentionDays: z.number().nullable(),
+        retentionDays: z.number().nullable(),
+        instanceLimitDays: z.number().nullable(),
+    }),
+})
+
+export type AuditLogRetentionUpdatedEvent = z.infer<typeof AuditLogRetentionUpdatedEvent>
+
 export const ProjectRoleEvent = z.object({
     ...BaseAuditEventProps,
     action: z.union([
@@ -634,6 +648,7 @@ export const ApplicationEvent = z.union([
     FolderEvent,
     SignUpEvent,
     SigningKeyEvent,
+    AuditLogRetentionUpdatedEvent,
     ProjectRoleEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
@@ -719,6 +734,12 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `User ${event.userEmail} signed up using email from ${event.data.source}`
         case ApplicationEventName.SIGNING_KEY_CREATED:
             return `${event.data.signingKey.displayName} is created`
+        case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+            const { previousRetentionDays, retentionDays, instanceLimitDays } = event.data
+            const previous = describeAuditLogRetention({ days: previousRetentionDays, instanceLimitDays })
+            const next = describeAuditLogRetention({ days: retentionDays, instanceLimitDays })
+            return `Audit log retention changed from ${previous} to ${next}`
+        }
         case ApplicationEventName.PROJECT_ROLE_CREATED:
             return `${event.data.projectRole.name} is created`
         case ApplicationEventName.PROJECT_ROLE_UPDATED:
@@ -830,6 +851,27 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated sample data info for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
     }
 }
+
+function describeAuditLogRetention({ days, instanceLimitDays }: { days: number | null, instanceLimitDays: number | null }): string {
+    if (!isNil(days)) {
+        return describeAuditLogRetentionPeriod(days)
+    }
+    return isNil(instanceLimitDays) ? 'forever' : `the instance limit (${describeAuditLogRetentionPeriod(instanceLimitDays)})`
+}
+
+function describeAuditLogRetentionPeriod(days: number): string {
+    if (days === 180) {
+        return '6 months'
+    }
+    if (days === 365) {
+        return '1 year'
+    }
+    return days === 1 ? '1 day' : `${days} days`
+}
+
+export const AUDIT_LOG_RETENTION_MIN_DAYS = 30
+export const AUDIT_LOG_RETENTION_MAX_DAYS = 3650
+export const AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS = 2
 
 export type AgentActionRef = z.infer<typeof AgentActionEventData>['action']
 

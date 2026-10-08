@@ -50,6 +50,10 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             type: String,
             nullable: true,
         },
+        modelTierId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         status: {
             type: String,
             nullable: false,

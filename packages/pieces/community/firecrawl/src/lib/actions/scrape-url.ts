@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { downloadAndSaveScreenshot, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { downloadAndSaveScreenshot, FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { scrapeUrlActionOutputSchema } from '../output-schemas';
 
 export const scrapeUrl = createAction({
@@ -68,6 +68,7 @@ export const scrapeUrl = createAction({
       url: propsValue.url,
       formats: formatsArray,
       timeout: propsValue.timeout,
+      origin: FIRECRAWL_ORIGIN,
     };
     if (propsValue.onlyMainContent !== undefined) {
       body['onlyMainContent'] = propsValue.onlyMainContent;
