@@ -410,14 +410,6 @@ async function assertAuditLogRetentionDaysAllowed({ log, platform, auditLogReten
         return
     }
     const maxDays = auditLogRetentionCeiling.get() ?? AUDIT_LOG_RETENTION_MAX_DAYS
-    if (maxDays < AUDIT_LOG_RETENTION_MIN_DAYS) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `The instance keeps audit logs for at most ${maxDays} days (AP_AUDIT_LOG_RETENTION_DAYS), so auditLogRetentionDays can only be null`,
-            },
-        })
-    }
     if (auditLogRetentionDays < AUDIT_LOG_RETENTION_MIN_DAYS || auditLogRetentionDays > maxDays) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,

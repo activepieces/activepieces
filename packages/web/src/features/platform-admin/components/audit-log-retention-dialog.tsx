@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Clock, TriangleAlert } from 'lucide-react';
+import { CirclePause, Clock, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -39,6 +39,9 @@ export function AuditLogRetentionButton() {
     ApFlagId.AUDIT_LOG_RETENTION_DAYS,
   );
   const ceiling = ceilingFlag ?? null;
+  const { data: pausedFlag } = flagsHooks.useFlag<boolean>(
+    ApFlagId.AUDIT_LOG_RETENTION_PAUSED,
+  );
   const savedDays = platform.auditLogRetentionDays ?? null;
   const currentDays = auditLogRetentionUtils.effectiveDays({
     days: savedDays,
@@ -59,6 +62,7 @@ export function AuditLogRetentionButton() {
           platformId={platform.id}
           savedDays={savedDays}
           ceiling={ceiling}
+          paused={pausedFlag === true}
           refetchPlatform={refetch}
           onClose={() => setOpen(false)}
         />
@@ -71,6 +75,7 @@ function AuditLogRetentionForm({
   platformId,
   savedDays,
   ceiling,
+  paused,
   refetchPlatform,
   onClose,
 }: AuditLogRetentionFormProps) {
@@ -92,7 +97,6 @@ function AuditLogRetentionForm({
     next: nextDays,
     current: currentDays,
   });
-  const canChoose = options.length > 1;
   const now = new Date();
   const { data: oldestEventCreated } = auditLogQueries.useOldestEventCreated();
 
@@ -121,33 +125,35 @@ function AuditLogRetentionForm({
           {t('Events older than the retention period are deleted every hour.')}
         </DialogDescription>
       </DialogHeader>
-      {canChoose ? (
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{t('Keep events for')}</span>
-          <Select value={selectedValue} onValueChange={setSelectedValue}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((days) => (
-                <SelectItem
-                  key={toOptionValue(days)}
-                  value={toOptionValue(days)}
-                >
-                  {formatOption({ days, ceiling })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : (
-        <p className="text-sm">
-          {t('Instance limit: {period}', { period: formatPeriod(ceiling) })}
-        </p>
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-medium">{t('Keep events for')}</span>
+        <Select value={selectedValue} onValueChange={setSelectedValue}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((days) => (
+              <SelectItem key={toOptionValue(days)} value={toOptionValue(days)}>
+                {formatOption({ days, ceiling })}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {paused && (
+        <Alert>
+          <CirclePause className="size-4" />
+          <AlertDescription>
+            {t(
+              'Cleanup is paused on this instance. No events are deleted until it resumes.',
+            )}
+          </AlertDescription>
+        </Alert>
       )}
       {!isNil(oldestEventCreated) && (
         <p className="text-sm text-muted-foreground">
-          {auditLogRetentionUtils.isCleanupPending({
+          {!paused &&
+          auditLogRetentionUtils.isCleanupPending({
             oldestEventCreated,
             days: currentDays,
             now,
@@ -185,17 +191,15 @@ function AuditLogRetentionForm({
         <Button type="button" variant="outline" onClick={onClose}>
           {t('Cancel')}
         </Button>
-        {canChoose && (
-          <Button
-            type="button"
-            variant={deletesEvents ? 'destructive' : 'default'}
-            disabled={selectedValue === initialValue || isPending}
-            loading={isPending}
-            onClick={() => mutate()}
-          >
-            {t('Save')}
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant={deletesEvents ? 'destructive' : 'default'}
+          disabled={selectedValue === initialValue || isPending}
+          loading={isPending}
+          onClick={() => mutate()}
+        >
+          {t('Save')}
+        </Button>
       </DialogFooter>
     </>
   );
@@ -243,6 +247,7 @@ type AuditLogRetentionFormProps = {
   platformId: string;
   savedDays: number | null;
   ceiling: number | null;
+  paused: boolean;
   refetchPlatform: () => Promise<void>;
   onClose: () => void;
 };

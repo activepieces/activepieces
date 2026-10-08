@@ -26,12 +26,6 @@ describe('auditLogRetentionUtils.buildOptions', () => {
       auditLogRetentionUtils.buildOptions({ savedDays: 200, ceiling: 100 }),
     ).toEqual([30, 90, null]);
   });
-
-  it('leaves only the instance option when the ceiling is under the minimum', () => {
-    expect(
-      auditLogRetentionUtils.buildOptions({ savedDays: null, ceiling: 7 }),
-    ).toEqual([null]);
-  });
 });
 
 describe('auditLogRetentionUtils.initialSelection', () => {

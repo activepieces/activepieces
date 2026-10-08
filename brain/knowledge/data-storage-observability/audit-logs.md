@@ -16,10 +16,10 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - `GET /v1/audit-events` (platformAdminOnly) returns `SeekPage<ApplicationEvent>` sorted by `created` desc, or asc with `order=ASC` (the retention dialog reads the oldest event with `order=ASC&limit=1`). Filters: `action[]`, `projectId[]`, `userId`, `createdBefore/After`, cursor/limit.
 
 ### Retention
-- **Retention ceiling**: `AP_AUDIT_LOG_RETENTION_DAYS`, the instance maximum; empty keeps events forever. Read it only through `auditLogRetentionCeiling` (digits only, 1–3650, anything else is null = keep forever).
+- **Retention ceiling**: `AP_AUDIT_LOG_RETENTION_DAYS`, the instance maximum; empty keeps events forever. Read it only through `auditLogRetentionCeiling` (digits only, 30–3650, anything else is null = keep forever). Its floor matches the platform minimum, so every ceiling leaves an admin at least one period to pick.
 - **Platform retention**: nullable `platform.auditLogRetentionDays`, set by a platform admin from the Audit Logs page (at least 30, at most the ceiling or 3650). The effective value is `LEAST(platform, ceiling)`; NULL with NULL skips the platform.
 - `SystemJobName.AUDIT_LOG_RETENTION` runs hourly at `:15`, EE/Cloud only. One probe query lists platforms with expired rows in random order. The run then goes round those platforms, at most 100k rows per platform per round, until none has expired rows or the run reaches 1M rows or 10 minutes, so a single-platform install gets the whole budget. Each batch deletes 5000 rows oldest first with `FOR UPDATE SKIP LOCKED`, then pauses for as long as it took.
-- **Pause flag**: `AP_AUDIT_LOG_RETENTION_PAUSED=true` skips the job and keeps every retention value. The ceiling cannot pause anything, because `LEAST` only shortens.
+- **Pause flag**: `AP_AUDIT_LOG_RETENTION_PAUSED=true` skips the job and keeps every retention value. The ceiling cannot pause anything, because `LEAST` only shortens. The flag `AUDIT_LOG_RETENTION_PAUSED` carries it to the Retention dialog, which says the cleanup is paused.
 - **Run summary**: `stoppedBy` is `done` only when no platform has expired rows left, and `failed` when every platform still left failed this run. A platform still more than `AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS` behind its period goes into one warn line per run (worst 10).
 
 ### Gotchas
@@ -41,6 +41,7 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - Every event is saved for every platform, whatever `plan.auditLogEnabled` says. The flag gates the read endpoint and the retention setting, not capture, so only the instance ceiling cleans a platform without the feature.
 - The retention job reads `platform_plan.auditLogEnabled` itself, with a `LEFT JOIN`, in the probe and in every batch. A saved period counts only while the plan has audit logs, because the API refuses every retention change (clearing included) on a plan without them, so a downgraded admin could not stop it. A platform with no plan row falls back to the ceiling. On Cloud the plan row only refreshes from Autumn when something reads the plan, so a churned platform nobody opens can keep `auditLogEnabled = true` and its saved period keeps running.
 - A `DELETE` does not shrink the table file; Postgres reuses the space. A one-time shrink needs `pg_repack` or `VACUUM FULL`.
+- `AP_AUDIT_LOG_RETENTION_PAUSED` is read by the app server that picks up the hourly job, and every app server runs the system-job worker. A pause set on only some servers does not stop the cleanup.
 - The piece-upgrade revert (`POST /v1/admin/flows/revert-upgrade`) reads `flow.pieces.upgraded` rows, so it can only revert upgrades still inside the platform's retention period.
 
 ### Key files

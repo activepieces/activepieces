@@ -130,6 +130,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.AUDIT_LOG_RETENTION_PAUSED,
+                value: system.getBoolean(AppSystemProp.AUDIT_LOG_RETENTION_PAUSED) === true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(AppSystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,

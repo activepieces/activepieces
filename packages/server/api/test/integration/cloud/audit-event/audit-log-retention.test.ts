@@ -131,8 +131,8 @@ describe('auditLogRetention.sweep', () => {
         expect(await remainingIds([fresh, expired])).toStrictEqual([fresh])
     })
 
-    it('ignores a malformed ceiling instead of deleting everything', async () => {
-        process.env.AP_AUDIT_LOG_RETENTION_DAYS = '0'
+    it.each(['0', '7'])('ignores the malformed or too short ceiling %j instead of deleting everything', async (ceiling) => {
+        process.env.AP_AUDIT_LOG_RETENTION_DAYS = ceiling
         const ctx = await createPlatform({ auditLogRetentionDays: null })
         const ids = await saveEvents({ platformId: ctx.platform.id, ages: [1, 100] })
 
@@ -322,15 +322,13 @@ describe('Update platform audit log retention', () => {
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
     })
 
-    it('accepts only null when the instance ceiling is under the minimum', async () => {
+    it('accepts the minimum when the instance ceiling is under it, because that ceiling is ignored', async () => {
         process.env.AP_AUDIT_LOG_RETENTION_DAYS = '7'
         const ctx = await createPlatform({ auditLogRetentionDays: null })
 
-        const rejected = await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: 30 })
-        const accepted = await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: null })
+        const response = await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: 30 })
 
-        expect(rejected.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(accepted.statusCode).toBe(StatusCodes.OK)
+        expect(response.statusCode).toBe(StatusCodes.OK)
     })
 
     it('refuses the change when the plan has no audit logs', async () => {
@@ -351,5 +349,15 @@ describe('Update platform audit log retention', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.json()[ApFlagId.AUDIT_LOG_RETENTION_DAYS]).toBe(365)
+    })
+
+    it('exposes the paused cleanup as a flag', async () => {
+        process.env.AP_AUDIT_LOG_RETENTION_PAUSED = 'true'
+        const ctx = await createPlatform({ auditLogRetentionDays: null })
+
+        const response = await ctx.get('/v1/flags')
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()[ApFlagId.AUDIT_LOG_RETENTION_PAUSED]).toBe(true)
     })
 })

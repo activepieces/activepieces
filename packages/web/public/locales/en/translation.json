@@ -3327,7 +3327,7 @@
   "Audit log retention": "Audit log retention",
   "Events older than the retention period are deleted every hour.": "Events older than the retention period are deleted every hour.",
   "Keep events for": "Keep events for",
-  "Instance limit: {period}": "Instance limit: {period}",
+  "Cleanup is paused on this instance. No events are deleted until it resumes.": "Cleanup is paused on this instance. No events are deleted until it resumes.",
   "Events older than {period}, created before {date}, will be permanently deleted. This cannot be undone.": "Events older than {period}, created before {date}, will be permanently deleted. This cannot be undone.",
   "Oldest event: {date}": "Oldest event: {date}",
   "Oldest event: {date}. Older events are still being deleted, in batches every hour.": "Oldest event: {date}. Older events are still being deleted, in batches every hour.",

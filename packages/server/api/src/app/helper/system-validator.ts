@@ -1,6 +1,6 @@
 import { inspect } from 'util'
 import { isNil, tryCatchSync } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AUDIT_LOG_RETENTION_MAX_DAYS, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -36,7 +36,7 @@ function positiveIntegerValidator(value: string | undefined) {
 }
 
 function auditLogRetentionDaysValidator(value: string | undefined) {
-    return isNil(auditLogRetentionCeiling.parse(value)) ? `Value must be a whole number of days from 1 to ${AUDIT_LOG_RETENTION_MAX_DAYS}` : true
+    return isNil(auditLogRetentionCeiling.parse(value)) ? `Value must be a whole number of days from ${AUDIT_LOG_RETENTION_MIN_DAYS} to ${AUDIT_LOG_RETENTION_MAX_DAYS}` : true
 }
 
 function positiveFiniteNumberValidator(value: string | undefined) {
