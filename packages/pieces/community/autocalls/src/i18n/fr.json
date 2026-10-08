@@ -11,7 +11,7 @@
   "Start or stop an outbound campaign from our platform.": "Démarrez ou arrêtez une campagne sortante depuis notre plateforme.",
   "Call a customer by it's phone number using an assistant from our platform.": "Appelez un client par son numéro de téléphone à l'aide d'un assistant de notre plateforme.",
   "Delete a lead from a campaign.": "Supprimer un prospect d'une campagne.",
-  "Campaign": "Campagne",
+  "Campaign": "Campagnes",
   "Customer phone number": "Numéro de téléphone du client",
   "Variables": "Variables",
   "Allow duplicates": "Autoriser les doublons",
