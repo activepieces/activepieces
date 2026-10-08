@@ -1,7 +1,7 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, aiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
-import { LanguageModel, ModelMessage } from 'ai'
+import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentCompaction } from '.././agent-compaction'
@@ -90,7 +90,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
         const surface = agentHelpers.surfaceOf({ source: requestedSource })
         const modelTierId = tierIdForRun({ conversation, requestedTierId: input.modelTierId ?? null })
-        const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface })
+        const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface, scope: runScope })
         const providerConfig = isNil(tierRun)
             ? await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
             : tierRun.candidates[0].config
@@ -114,7 +114,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
         const imageModelId = !generatesImagesOnProvider
             ? undefined
-            : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, grantedByTier: !isNil(tierRun), log })
+            : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
 
         const lock = await agentHelpers.acquireStreamingLock({ conversationId, ...spreadIfDefined('runId', input.runId) })
         if (lock === 'superseded') {
@@ -180,7 +180,6 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
         const runNotesFor = ({ forTask }: { forTask: boolean }): string => agentSurfaceNotes.buildRunNotes({
             source: conversation.source,
-            ...spreadIfDefined('messageSource', forTask ? undefined : input.messageSource),
             currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
             searchAvailable: webSearchAvailable,
             fetchAvailable,
@@ -214,7 +213,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             : agentPrompt.guides
 
         const previousMessages = conversation.messages as ModelMessage[]
-        const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
+        const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
+        const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
         const allMessages = [...previousMessages, newUserMessage]
         const llmHistory = agentAiUtils.collapseStaleToolOutputs({ messages: allMessages })
 
@@ -316,6 +316,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function withLeadingNote({ content, note }: { content: UserContent, note: string }): UserContent {
+    return [{ type: 'text', text: note }, ...(typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content)]
+}
 
 function tierIdForRun({ conversation, requestedTierId }: { conversation: AgentConversation, requestedTierId: string | null }): string | null {
     const choiceLivesOnConversation = conversation.source === AgentRunSource.CHAT || conversation.source === AgentRunSource.AGENT_BUILDER

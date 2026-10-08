@@ -3,7 +3,6 @@ import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, F
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
-import { createPhaseTools } from './session-tools'
 import { taskContext } from './task-context'
 import { AgentEventEmitter } from './tool-primitives'
 
@@ -53,9 +52,6 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
     const phaseState: { phase: AgentPhase } = { phase: 'build' }
     const taskTools = {
         ...workerTools,
-        ...createPhaseTools({ onPhaseChange: (phase) => {
-            phaseState.phase = phase
-        } }),
         ...taskGuideTool({ guides, mainGuideTool: workerTools[GUIDE_TOOL_NAME] }),
         ...finishTool(finish),
     }

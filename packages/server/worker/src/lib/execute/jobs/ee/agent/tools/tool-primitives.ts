@@ -1,7 +1,7 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, SubagentProgressEvent, ToolProgressEvent } from '@activepieces/shared'
-import { ToolExecutionOptions, ToolSet } from 'ai'
+import { JSONSchema7, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
 export const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
@@ -17,9 +17,9 @@ export const questionTitleSchema = z.string().optional().describe('Optional shor
 export const questionTextSchema = z.string().describe('The question text')
 
 export const cardTitleFields = {
-    title: z.string().optional().describe('Short 2-4 word fallback label for the tool card, e.g. "Search emails".'),
-    activeTitle: z.string().optional().describe('Label shown WHILE this runs. Present continuous (-ing). Make it fun, casual, and centered on the value to the user, while still naming the real action or asset. E.g. "Hunting through Stripe payment docs", "Designing your Instagram post", "Digging through your Gmail".'),
-    doneTitle: z.string().optional().describe('The SAME label once it finishes. Past tense (-ed), consistent with activeTitle. E.g. "Found the Stripe payment docs", "Designed your Instagram post", "Dug through your Gmail".'),
+    title: z.string().optional().describe('2-4 word label.'),
+    activeTitle: z.string().optional().describe('Label while running, -ing form.'),
+    doneTitle: z.string().optional().describe('Same label, past tense.'),
 }
 export const richOptionSchema = z.object({
     label: z.string().describe('The choice label'),
@@ -76,6 +76,11 @@ function buildOversizeEnvelope({ result, text }: { result: unknown, text: string
         content: [{ type: 'text', text }],
         ...spreadIfDefined('_meta', meta),
     }
+}
+
+export function plainJsonSchema<T = JSONSchema7>(schema: JSONSchema7): T {
+    const plain: T = JSON.parse(JSON.stringify(schema))
+    return plain
 }
 
 export function normalizePieceName(piece: string): string {

@@ -4,9 +4,11 @@ import { defineConfig } from 'vitest/config'
 const repoRoot = path.resolve(__dirname, '../../../..')
 
 export default defineConfig({
+  root: __dirname,
   test: {
     globals: true,
     environment: 'node',
+    include: ['test/**/*.test.ts'],
   },
   resolve: {
     alias: {

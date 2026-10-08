@@ -35,7 +35,7 @@ describe('createTaskSubagentTools', () => {
         const result = await tasks['ap_run_task'].execute?.({ title: 'Build Save order', brief: 'Build the Save order flow' }, EXECUTION_OPTIONS)
 
         const params = runAgentTurn.mock.calls[0][0]
-        expect(Object.keys(params.tools).sort()).toEqual(['ap_build_flow', 'ap_execute_action', 'ap_set_phase', 'ap_web_search', TASK_COMPLETION_TOOL_NAME].sort())
+        expect(Object.keys(params.tools).sort()).toEqual(['ap_build_flow', 'ap_execute_action', 'ap_web_search', TASK_COMPLETION_TOOL_NAME].sort())
         expect(params.allToolNames).toContain(TASK_COMPLETION_TOOL_NAME)
         expect(params.systemPrompt).toBe('TASK PROMPT')
         expect(params.phaseState).toEqual({ phase: 'build' })
@@ -61,27 +61,6 @@ describe('createTaskSubagentTools', () => {
         expect(emitSubagentProgress.mock.calls.map(([event]) => event.data.statusLine)).toContain('Checking the Gmail connection')
         expect(result).toMatchObject({ status: 'blocked', needs: 'A Gmail connection' })
         expect(finishTask).toHaveBeenCalledWith(expect.objectContaining({ status: 'BLOCKED' }))
-    })
-
-    it('switches its own phase, never the main chat\'s', async () => {
-        const mainPhase = { phase: 'build' }
-        const mainSetPhase = tool({ description: 'main', inputSchema: z.object({ phase: z.string() }), execute: async ({ phase }) => {
-            mainPhase.phase = phase
-            return 'ok'
-        } })
-        let taskPhase: string | undefined
-        runAgentTurn.mockImplementation(async (params: { tools: ToolSet, phaseState: { phase: string } }) => {
-            await params.tools['ap_set_phase'].execute?.({ phase: 'discovery' }, EXECUTION_OPTIONS)
-            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Built.', artifacts: [] }, EXECUTION_OPTIONS)
-            taskPhase = params.phaseState.phase
-            return turnResult()
-        })
-        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: { ...toolSet(['ap_build_flow']), ap_set_phase: mainSetPhase } })
-
-        await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
-
-        expect(taskPhase).toBe('discovery')
-        expect(mainPhase.phase).toBe('build')
     })
 
     it('keeps the card details out of what the main model reads', async () => {

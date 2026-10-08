@@ -5,14 +5,16 @@ import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
+import { uploadFileOutputSchema } from '../output-schemas';
 
 export const amazons3UploadFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'upload-file',
+  outputSchema: uploadFileOutputSchema,
   classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload an File to S3',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Uploads a file to the configured S3 bucket, optionally setting a destination filename, content type, and canned ACL (e.g. private vs. public-read). Use to store new content in S3. Not idempotent: when no filename is given a unique timestamp-based key is generated, so each call writes a new object.',
     idempotent: false,

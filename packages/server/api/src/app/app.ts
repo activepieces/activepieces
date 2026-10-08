@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { aiCostReporter, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -553,6 +553,7 @@ function registerOpenApiSchemas() {
     globalRegistry.add(UserPasswordResetEvent, { id: ApplicationEventName.USER_PASSWORD_RESET })
     globalRegistry.add(UserEmailVerifiedEvent, { id: ApplicationEventName.USER_EMAIL_VERIFIED })
     globalRegistry.add(SigningKeyEvent, { id: ApplicationEventName.SIGNING_KEY_CREATED })
+    globalRegistry.add(AuditLogRetentionUpdatedEvent, { id: ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED })
     globalRegistry.add(ProjectRoleEvent, { id: ApplicationEventName.PROJECT_ROLE_CREATED })
     globalRegistry.add(ProjectReleaseEvent, { id: ApplicationEventName.PROJECT_RELEASE_CREATED })
     globalRegistry.add(Template, { id: 'template' })
