@@ -63,7 +63,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
 }
 
 export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onStepModel }: RunAgentTurnParams): Promise<AgentTurnResult> {
-    const drainStream = sinks?.drainStream ?? (async () => undefined)
+    const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     let creditsExhausted = false
@@ -174,18 +174,19 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 ...stepContext,
             }
         },
-        repairToolCall: async ({ toolCall, error }) => {
+        repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
             }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
+            const schema = await inputSchema({ toolName: toolCall.toolName })
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
                     model: current().model,
                     abortSignal,
                     telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
-                    prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
+                    prompt: `Fix this invalid input for the tool "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nThe input must match this JSON schema:\n${JSON.stringify(schema)}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
                 return jsonInputFrom(text)
             })

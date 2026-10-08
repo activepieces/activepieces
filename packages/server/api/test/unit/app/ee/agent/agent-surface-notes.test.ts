@@ -195,18 +195,12 @@ describe('who the agent is told it is talking to', () => {
         expect(identityNoteFor({ source: AgentRunSource.AGENT, userIdentity: IDENTITY })).not.toContain('Who you\'re talking to')
     })
 
-    it('puts the person above the first-message note that points back at them', () => {
-        const notes = agentSurfaceNotes.buildRunNotes({
-            source: AgentRunSource.CHAT,
-            messageSource: 'onboarding',
-            currentDate: 'Tuesday, August 18, 2026',
-            ...EVERYTHING_AVAILABLE,
-            userEmail: IDENTITY.email,
-            userIdentity: IDENTITY,
-            connections: null,
-            memory: { instructions: null, memories: [] },
-        })
+})
 
-        expect(notes.indexOf('Who you\'re talking to')).toBeLessThan(notes.indexOf('FIRST message ever'))
+describe('the onboarding note', () => {
+    it('goes with the first onboarding chat message, not into the system prompt', () => {
+        expect(agentSurfaceNotes.onboardingNote({ source: AgentRunSource.CHAT, messageSource: 'onboarding' })).toContain('FIRST message ever')
+        expect(agentSurfaceNotes.onboardingNote({ source: AgentRunSource.CHAT })).toBeNull()
+        expect(agentSurfaceNotes.onboardingNote({ source: AgentRunSource.AGENT, messageSource: 'onboarding' })).toBeNull()
     })
 })

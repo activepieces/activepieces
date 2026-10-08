@@ -100,6 +100,8 @@ Entry point: `runAgent`, the createAction in the `ai` piece registered in `packa
 
 Paths verified 2026-07-17. An earlier version pointed at `packages/core/shared/src/lib/automation/agents/`; those types now live in `packages/core/piece-types/src/lib/agents.ts` and `packages/core/execution/src/lib/agents/`.
 
+- **A note that applies to one message goes in that user message, not the system prompt.** The onboarding first-message note used to sit in the system prompt, so it vanished on message two and invalidated the whole prompt cache. `agentSurfaceNotes.onboardingNote` now rides on the first user message instead.
+
 ### Knowledge base gotchas
 
 - **An upload is embedded when it arrives, or refused.** `knowledgeBaseService.uploadFile` chunks and embeds the file in memory before writing anything, then saves the blob and writes the file record and its chunks in one transaction (the blob is deleted if that fails). It refuses with `KNOWLEDGE_BASE_NEEDS_AI_PROVIDER` when the project has no chat provider and `KNOWLEDGE_BASE_FILE_HAS_NO_TEXT` when nothing searchable comes out; the upload dialog maps both to translated messages. Embeddings bill like any other managed-provider call. Files uploaded before this fix are indexed on the agent's first search of them (`embedMissingChunks`, run only from the agent's knowledge-base tool, never from the read-only `/search` route). If that fails, the agent says the file could not be indexed, and uploading it again shows why.

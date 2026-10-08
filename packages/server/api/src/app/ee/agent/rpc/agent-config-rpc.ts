@@ -1,7 +1,7 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, aiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
-import { LanguageModel, ModelMessage } from 'ai'
+import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentCompaction } from '.././agent-compaction'
@@ -180,7 +180,6 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             templates: promptOverride,
         }) + agentSurfaceNotes.buildRunNotes({
             source: conversation.source,
-            ...spreadIfDefined('messageSource', input.messageSource),
             currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
             searchAvailable: webSearchAvailable,
             fetchAvailable,
@@ -203,7 +202,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             : agentPrompt.guides
 
         const previousMessages = conversation.messages as ModelMessage[]
-        const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
+        const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
+        const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
         const allMessages = [...previousMessages, newUserMessage]
         const llmHistory = agentAiUtils.collapseStaleToolOutputs({ messages: allMessages })
 
@@ -304,6 +304,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function withLeadingNote({ content, note }: { content: UserContent, note: string }): UserContent {
+    return [{ type: 'text', text: note }, ...(typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content)]
+}
 
 function tierIdForRun({ conversation, requestedTierId }: { conversation: AgentConversation, requestedTierId: string | null }): string | null {
     const choiceLivesOnConversation = conversation.source === AgentRunSource.CHAT || conversation.source === AgentRunSource.AGENT_BUILDER
