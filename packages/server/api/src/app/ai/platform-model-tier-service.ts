@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique } from '@activepieces/core-utils'
 import { AiProviderModelScope, CreatePlatformModelTierRequest, PlatformModelTier, PlatformModelTierEntry, PlatformModelTierSummary, UpdatePlatformModelTierRequest } from '@activepieces/shared'
-import { EntityManager, In, IsNull, Not } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { isUniqueViolation } from '../core/db/unique-violation'
@@ -15,7 +15,6 @@ const platformConfigurationRepo = repoFactory(PlatformConfigurationEntity)
 
 const MAX_LIVE_TIERS = 50
 const MAX_REPLACEMENT_HOPS = 3
-const MAX_MOVED_TIERS = 200
 const TIER_REMOVED_MESSAGE = 'This tier was removed. Pick a new model for this step.'
 const TIER_NOT_AVAILABLE_MESSAGE = 'This tier isn\'t available in this project. Pick another model.'
 const PLATFORM_SCOPE: ProviderScope = { type: 'platform' }
@@ -46,15 +45,12 @@ export const platformModelTierService = {
             .map((tier) => ({ tier, entries: entriesThatRun({ tier, keyById, scope }) }))
     },
 
-    async movedTiers({ platformId }: { platformId: PlatformId }): Promise<Record<string, string>> {
-        const moved = await tierRepo().find({
-            where: { platformId, deleted: Not(IsNull()), replacedBy: Not(IsNull()) },
-            withDeleted: true,
-            order: { deleted: 'DESC' },
-            take: MAX_MOVED_TIERS,
-        })
-        const liveByMovedId = await followReplacementsInBulk({ platformId, ids: moved.map((tier) => tier.id) })
-        return Object.fromEntries([...liveByMovedId].flatMap(([movedId, live]) => isNil(live) ? [] : [[movedId, live.id]]))
+    async movedTiers({ platformId, tierId }: { platformId: PlatformId, tierId: string | undefined }): Promise<Record<string, string>> {
+        if (isNil(tierId)) {
+            return {}
+        }
+        const live = (await followReplacementsInBulk({ platformId, ids: [tierId] })).get(tierId)
+        return isNil(live) || live.id === tierId ? {} : { [tierId]: live.id }
     },
 
     async create({ platformId, request }: { platformId: PlatformId, request: CreatePlatformModelTierRequest }): Promise<PlatformModelTier> {

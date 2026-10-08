@@ -9,11 +9,11 @@ import { aiProviderService, ProjectKeyModels } from './ai-provider-service'
 import { platformModelTierService, TierForRun } from './platform-model-tier-service'
 
 export const aiModelOptionsService = (log: FastifyBaseLogger) => ({
-    async list({ platformId, projectId, surface }: { platformId: PlatformId, projectId: string, surface: ModelOptionsSurface }): Promise<ModelOptions> {
+    async list({ platformId, projectId, surface, tierId }: { platformId: PlatformId, projectId: string, surface: ModelOptionsSurface, tierId?: string }): Promise<ModelOptions> {
         const [keys, tiersForRun, movedTiers, configuration, catalog] = await Promise.all([
             aiProviderService(log).listKeysForProject({ platformId, projectId }),
             platformModelTierService.listForPicker({ platformId, scope: { type: 'project', projectId } }),
-            platformModelTierService.movedTiers({ platformId }),
+            platformModelTierService.movedTiers({ platformId, tierId }),
             platformConfigurationService(log).getOrCreateForPlatform({ platformId }),
             modelCatalog.load(),
         ])
@@ -117,7 +117,7 @@ function toKeyOption({ key, surface, lookup, callsTools }: { key: ProjectKeyMode
 
 function chatModels({ row, textModels, lookup, callsTools }: { row: AIProviderSchema, textModels: AIProviderModel[], lookup: Lookup, callsTools: CallsTools }): AIProviderModel[] {
     const curated = aiProviderUtils.getCuratedChatModels({ provider: row.provider })
-    if (isNil(curated)) {
+    if (isNil(curated) || !isNil(aiKeyScope.manualModelIdsOf({ config: row.config }))) {
         return textModels.filter((model) => callsTools({ provider: row.provider, modelId: model.id }))
     }
     return curated

@@ -85,9 +85,22 @@ describe('GET /v1/ai-providers/model-options', () => {
         const replacement = await createTier({ name: 'New', entries: [{ configId: key.id, modelId: 'b' }] })
         await ctx.delete(`${TIERS}/${old.id}`, { replacedBy: replacement.id })
 
-        const options = await listOptions({ surface: 'flow' })
+        expect((await listOptions({ surface: 'flow', tierId: old.id })).movedTiers).toEqual({ [old.id]: replacement.id })
+        expect((await listOptions({ surface: 'flow', tierId: replacement.id })).movedTiers).toEqual({})
+        expect((await listOptions({ surface: 'flow' })).movedTiers).toEqual({})
+    })
 
-        expect(options.movedTiers).toEqual({ [old.id]: replacement.id })
+    it('offers chat only the typed-in models of a key with a manual model list', async () => {
+        await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.VERTEX,
+            displayName: 'Vertex',
+            config: { project: 'acme', region: 'us-central1', models: [{ modelId: 'gemini-2.5-flash', modelName: 'Gemini 2.5 Flash', modelType: AIProviderModelType.TEXT }] },
+        })
+
+        const options = await listOptions({ surface: 'chat' })
+
+        expect(options.keys.flatMap((key) => key.models.map((model) => model.id))).toEqual(['gemini-2.5-flash'])
     })
 
     it('defaults to the Default tier, else credits, else the first option', async () => {
@@ -120,8 +133,8 @@ describe('GET /v1/ai-providers/model-options', () => {
     })
 })
 
-async function listOptions({ surface }: { surface: 'flow' | 'agent' | 'chat' }): Promise<ModelOptions> {
-    const response = await ctx.get('/v1/ai-providers/model-options', { projectId: ctx.project.id, surface })
+async function listOptions({ surface, tierId }: { surface: 'flow' | 'agent' | 'chat', tierId?: string }): Promise<ModelOptions> {
+    const response = await ctx.get('/v1/ai-providers/model-options', { projectId: ctx.project.id, surface, ...(tierId ? { tierId } : {}) })
     expect(response.statusCode).toBe(StatusCodes.OK)
     return response.json()
 }

@@ -41,6 +41,7 @@ export function ModelPicker({
   const { data, isLoading, isError, refetch } = aiModelHooks.useModelOptions({
     projectId,
     surface,
+    tierId: value?.type === 'tier' ? value.tierId : undefined,
   });
   const view = useMemo(
     () =>

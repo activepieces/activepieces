@@ -38,13 +38,16 @@ export const aiProviderApi = {
   listModelOptions({
     projectId,
     surface,
+    tierId,
   }: {
     projectId: string;
     surface: ModelOptionsSurface;
+    tierId?: string;
   }) {
     return api.get<ModelOptions>('/v1/ai-providers/model-options', {
       projectId,
       surface,
+      ...(tierId === undefined ? {} : { tierId }),
     });
   },
   listModelTiers() {

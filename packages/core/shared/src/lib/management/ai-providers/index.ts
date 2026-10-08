@@ -397,6 +397,7 @@ export const ModelOptions = z.object({
 export const ListModelOptionsRequest = z.object({
     projectId: z.string(),
     surface: ModelOptionsSurface,
+    tierId: z.string().optional(),
 })
 
 export type ModelOptionsSurface = z.infer<typeof ModelOptionsSurface>

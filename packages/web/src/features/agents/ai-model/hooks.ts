@@ -5,7 +5,7 @@ import {
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
   ModelOptionsSurface,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import {
@@ -70,13 +70,17 @@ export const aiModelHooks = {
   useModelOptions: ({
     projectId,
     surface,
+    tierId,
   }: {
     projectId: string;
     surface: ModelOptionsSurface;
+    tierId?: string;
   }) =>
     useQuery({
-      queryKey: ['ai-model-options', projectId, surface],
-      queryFn: () => aiProviderApi.listModelOptions({ projectId, surface }),
+      queryKey: ['ai-model-options', projectId, surface, tierId],
+      queryFn: () =>
+        aiProviderApi.listModelOptions({ projectId, surface, tierId }),
+      placeholderData: keepPreviousData,
     }),
 
   useGetModelsForProvider: (provider?: AIProviderName, configId?: string) => {

@@ -34,6 +34,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
             projectId: request.projectId,
             surface: request.query.surface,
+            tierId: request.query.tierId,
         })
     })
     app.get('/:provider/models', ListModels, async (request) => {
@@ -128,6 +129,7 @@ const ListModelOptions = {
         querystring: z.object({
             projectId: z.string().optional(),
             surface: ModelOptionsSurface,
+            tierId: z.string().optional(),
         }),
         response: {
             [StatusCodes.OK]: ModelOptions,
