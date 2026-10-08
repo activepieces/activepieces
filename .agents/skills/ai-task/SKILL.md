@@ -145,7 +145,14 @@ For support, admins and anyone outside the team, and for members reporting on so
 3. **Fill the form's fields** from what they gave you, then **grill** for the rest: light for non-members, full for members.
    - **Bug:** what happens, steps, what should happen, where (Cloud, Self-hosted, Embed or MCP client), customer (attach it, see Customers below), and a link.
    - **Feature:** goal, and who asked.
-4. **Never guess a priority for a non-member.** Leave it for triage, unless they say data loss, a security issue or a billing problem; then mark it Urgent and say why.
+4. **Urgent only for these** (the same list as "Start here"), for members and non-members alike:
+   - a customer's live automations are broken with no workaround;
+   - data loss or wrong data;
+   - a security issue;
+   - billing charging wrongly;
+   - many customers hit at once.
+
+   If it's one of them, mark it Urgent and say which. Otherwise never guess a priority for a non-member: leave it empty for triage. If someone only said "urgent" in a chat or DM, the ticket is what makes it real.
 5. **Security:** if it looks like a security issue, don't write the details in the ticket. Create it with a neutral title and tell them to send the details privately to the AI team lead.
 6. **Show it before creating:**
 
