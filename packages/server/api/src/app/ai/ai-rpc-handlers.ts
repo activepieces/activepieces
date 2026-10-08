@@ -22,6 +22,9 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
             scope: { type: 'project', projectId: input.projectId },
             ...spreadIfDefined('configId', input.providerConfigId),
         })
+        if (!isNil(input.modelId)) {
+            aiProviderService(log).assertKeyAllowsModel({ key: config, modelId: input.modelId })
+        }
         return {
             ...config,
             providerConfigId: config.configId,

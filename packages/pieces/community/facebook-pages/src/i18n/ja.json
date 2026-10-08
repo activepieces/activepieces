@@ -16,14 +16,5 @@
   "Title": "タイトル",
   "Description": "Description",
   "A URL we can access for the photo": "写真にアクセスできるURL",
-  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "動画にアクセスできるURL（上限：1GBまたは20分）",
-  "Photo URL": "写真のURL",
-  "Video URL": "ビデオのURL",
-  "Pages you gave access to when connecting your account.": "アカウントの接続時にアクセスを許可したページ。",
-  "Facebook adds a preview card for this link below the post.": "Facebook は投稿の下にこのリンクのプレビューカードを表示します。",
-  "Public URL of the image, so Facebook can download it.": "Facebook がダウンロードできる、画像の公開URL。",
-  "Post text shown with the photo.": "写真と一緒に表示される投稿テキスト。",
-  "Public URL of the video file, up to 1 GB or 20 minutes.": "ビデオファイルの公開URL（最大 1 GB または 20 分）。",
-  "Name of the video, shown on the Page's Videos tab.": "ビデオの名前。ページの「動画」タブに表示されます。",
-  "Post text shown with the video.": "ビデオと一緒に表示される投稿テキスト。"
+  "A URL we can access for the video (Limit: 1GB or 20 minutes)": "動画にアクセスできるURL（上限：1GBまたは20分）"
 }

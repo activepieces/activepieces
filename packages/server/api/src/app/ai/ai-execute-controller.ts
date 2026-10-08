@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ApId, apId, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ApId, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { AiStepAction, AiStepFile, AiStepSchema, AiStepWebSearch, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, maxSocketHttpBufferSizeBytes, PrincipalType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -11,6 +11,7 @@ import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider
 import { aiExecution } from './ai-execution'
 import { aiModelCandidates } from './ai-model-candidates'
 import { aiModelResolution } from './ai-model-resolution'
+import { aiProviderService } from './ai-provider-service'
 
 export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     const bodyLimit = maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB))
@@ -74,6 +75,15 @@ async function pickModel({ body, platformId, projectId, log }: {
     const modelId = body.action === AiStepAction.GENERATE_IMAGE
         ? body.modelId
         : aiModelResolution.resolveTierModelId({ provider: body.provider, modelId: body.modelId, log })
+    if (body.provider !== AIProviderName.ACTIVEPIECES) {
+        await aiProviderService(log).assertModelAllowed({
+            platformId,
+            provider: body.provider,
+            scope: { type: 'project', projectId },
+            modelId,
+            ...spreadIfDefined('configId', body.providerConfigId),
+        })
+    }
     return { provider: body.provider, providerConfigId: body.providerConfigId, modelId }
 }
 

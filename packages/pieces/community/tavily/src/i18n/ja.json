@@ -6,7 +6,7 @@
   "Custom API Call": "カスタムAPI呼び出し",
   "Search for data based on a query.": "クエリに基づいてデータを検索します。",
   "Retrieve raw web content from specified URLs.": "指定された URL から生のウェブコンテンツを取得します。",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Search Query": "検索クエリ",
   "Search Depth": "深さを検索",
   "Topic": "トピック",
