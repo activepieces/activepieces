@@ -98,6 +98,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             platformId: req.principal.platform.id,
             fn: async () => {
                 await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
+                await assertProjectIsNotADefaultProject({ principal: req.principal, projectId: req.params.id, log: req.log })
                 await platformProjectService(req.log).markForDeletion({
                     id: req.params.id,
                     platformId: req.principal.platform.id,
@@ -148,6 +149,22 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             },
         })
     }
+}
+
+async function assertProjectIsNotADefaultProject({ principal, projectId, log }: AssertProjectIsNotADefaultProjectParams): Promise<void> {
+    if (principal.type !== PrincipalType.USER) {
+        return
+    }
+    const platform = await platformService(log).getOneWithPlanOrThrow(principal.platform.id)
+    if (!platform.plan.projectRolesEnabled || !platform.defaultProjectIds.includes(projectId)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: 'Remove this project from default projects before deleting it',
+        },
+    })
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
@@ -265,4 +282,10 @@ const DeleteProjectRequest = {
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
+}
+
+type AssertProjectIsNotADefaultProjectParams = {
+    principal: Principal & { platform: { id: string } }
+    projectId: string
+    log: FastifyBaseLogger
 }
