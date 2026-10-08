@@ -305,9 +305,26 @@ function flagValue(value: string | undefined | null): boolean | undefined {
   return undefined;
 }
 
+function tagListValue({
+  tags,
+  clearTags,
+}: {
+  tags: string[] | undefined;
+  clearTags: boolean | undefined;
+}): string[] | undefined {
+  if (clearTags) {
+    if (tags && tags.length > 0) {
+      throw new Error('Set Tags or Clear Tags, not both.');
+    }
+    return [];
+  }
+  return tags && tags.length > 0 ? tags : undefined;
+}
+
 export const togglCommon = {
   updateFlag,
   flagValue,
+  tagListValue,
   organization_id: Property.Dropdown({
     auth: togglTrackAuth,
     displayName: 'Organization',
@@ -389,12 +406,12 @@ export const togglCommon = {
     displayName: 'Task',
     description: 'The task to select.',
     required: false,
-    refreshers: ['workspace_id', 'optional_project_id'],
-    options: async ({ auth, workspace_id, optional_project_id }) =>
+    refreshers: ['workspace_id', 'project_id'],
+    options: async ({ auth, workspace_id, project_id }) =>
       loadOptions({
         auth,
         missing:
-          workspace_id && optional_project_id
+          workspace_id && project_id
             ? null
             : 'Select a workspace and project first',
         errorLabel: 'tasks',
@@ -406,7 +423,7 @@ export const togglCommon = {
               label: 'Workspace',
             }),
             projectId: togglApi.requireId({
-              value: optional_project_id,
+              value: project_id,
               label: 'Project',
             }),
           }),

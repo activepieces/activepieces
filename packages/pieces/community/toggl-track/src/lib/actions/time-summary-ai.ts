@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { togglTrackAuth } from '../auth';
 import { SummaryEntry, togglAgent } from '../common/agent';
-import { togglApi } from '../common/client';
+import { togglApi, TwoOrganizationUser } from '../common/client';
 import { togglModels, TwoProject, TwoTimeEntry } from '../common/models';
 import { togglOutputSchemas } from '../output-schemas';
 
@@ -60,6 +60,7 @@ export const timeSummaryAi = createAction({
     const { workspaceId, projectId } = await togglAgent.resolveTarget({
       auth,
       projectReference: context.propsValue.project,
+      includeArchived: true,
     });
 
     const entries = togglApi.isTwo(auth)
@@ -166,8 +167,11 @@ async function twoEntries({
       path: togglApi.twoWorkspacePath({ auth, workspaceId, path: '/projects' }),
     }),
     groupBy === 'user'
-      ? togglApi.twoOrganizationUsers({ auth, perPage: 100 })
-      : Promise.resolve([]),
+      ? togglApi.listTwoPages<TwoOrganizationUser>({
+          auth,
+          path: `/organizations/${togglApi.twoOrganizationId(auth)}/users`,
+        })
+      : Promise.resolve<TwoOrganizationUser[]>([]),
   ]);
   const projectById = new Map(projects.map((project) => [project.id, project]));
   const userById = new Map(

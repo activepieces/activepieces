@@ -47,10 +47,9 @@ export const logTimeAi = createAction({
       throw new Error('Description is required.');
     }
     const start = togglAgent.parseStart({ value: context.propsValue.start });
-    const minutes = togglAgent.parseDurationMinutes({
-      value: context.propsValue.duration_minutes,
+    const seconds = togglAgent.durationSeconds({
+      minutes: context.propsValue.duration_minutes,
     });
-    const seconds = minutes * 60;
     const { workspaceId, projectId } = await togglAgent.resolveTarget({
       auth,
       projectReference: context.propsValue.project,

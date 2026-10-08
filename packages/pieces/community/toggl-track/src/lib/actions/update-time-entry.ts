@@ -18,7 +18,7 @@ export const updateTimeEntry = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Updates one time entry by ID; omitted fields keep their value, Tags replaces the whole list, and a new stop time wins over duration. Returns the updated entry. Safe to retry.',
+      'Updates one time entry by ID; omitted fields keep their value, Tags replaces the whole list, Clear Tags removes every tag, and a new stop time wins over duration. Returns the updated entry. Safe to retry.',
     idempotent: true,
   },
   props: {
@@ -58,6 +58,12 @@ export const updateTimeEntry = createAction({
     project_id: togglCommon.optional_project_id,
     task_id: togglCommon.optional_task_id,
     tags: togglCommon.tags,
+    clear_tags: Property.Checkbox({
+      displayName: 'Clear Tags',
+      description: 'Remove every tag from the time entry.',
+      required: false,
+      defaultValue: false,
+    }),
     billable: togglCommon.updateFlag({
       displayName: 'Billable',
       description: 'Whether the time entry is billable.',
@@ -65,8 +71,15 @@ export const updateTimeEntry = createAction({
   },
   outputSchema: togglOutputSchemas.timeEntry,
   async run(context) {
-    const { description, clear_description, start, stop, duration, tags } =
-      context.propsValue;
+    const {
+      description,
+      clear_description,
+      start,
+      stop,
+      duration,
+      tags,
+      clear_tags,
+    } = context.propsValue;
     const auth = context.auth;
     const workspaceId = togglApi.requireId({
       value: context.propsValue.workspace_id,
@@ -100,7 +113,7 @@ export const updateTimeEntry = createAction({
       );
     }
     const newDescription = clear_description ? '' : description || undefined;
-    const tagList = tags && tags.length > 0 ? tags : undefined;
+    const tagList = togglCommon.tagListValue({ tags, clearTags: clear_tags });
 
     return togglApi.withNotFound({
       label: `Time entry ${timeEntryId}`,

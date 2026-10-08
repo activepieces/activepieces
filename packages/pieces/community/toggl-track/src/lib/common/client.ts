@@ -274,8 +274,11 @@ async function resolveTwoTagIds({
   workspaceId: number;
   names: string[] | undefined;
 }): Promise<number[] | undefined> {
-  if (isNil(names) || names.length === 0) {
+  if (isNil(names)) {
     return undefined;
+  }
+  if (names.length === 0) {
+    return [];
   }
   const existing = await listTwoPages<TwoTag>({
     auth,

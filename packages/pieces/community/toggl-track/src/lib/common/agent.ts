@@ -2,9 +2,13 @@ import { isNil } from '@activepieces/pieces-framework';
 import { TogglAuthValue, togglApi } from './client';
 import { TwoProject } from './models';
 
-async function listCandidateProjects(
-  auth: TogglAuthValue
-): Promise<AgentProject[]> {
+async function listCandidateProjects({
+  auth,
+  includeArchived,
+}: {
+  auth: TogglAuthValue;
+  includeArchived: boolean;
+}): Promise<AgentProject[]> {
   if (togglApi.isTwo(auth)) {
     const workspaces = await togglApi.twoWorkspaces(auth);
     const perWorkspace = await Promise.all(
@@ -16,7 +20,7 @@ async function listCandidateProjects(
             workspaceId: workspace.id,
             path: '/projects',
           }),
-          queryParams: { archived: 'false' },
+          queryParams: includeArchived ? {} : { archived: 'false' },
         });
         return projects.map((project) => ({
           id: project.id,
@@ -32,6 +36,7 @@ async function listCandidateProjects(
     auth,
     method: togglApi.HttpMethod.GET,
     path: '/me/projects',
+    ...(includeArchived ? { queryParams: { include_archived: 'true' } } : {}),
   });
   return (projects ?? []).map((project) => ({
     id: project.id,
@@ -98,9 +103,11 @@ async function defaultWorkspaceId(auth: TogglAuthValue): Promise<number> {
 async function resolveTarget({
   auth,
   projectReference,
+  includeArchived = false,
 }: {
   auth: TogglAuthValue;
   projectReference: string | undefined;
+  includeArchived?: boolean;
 }): Promise<{ workspaceId: number; projectId: number | undefined }> {
   const reference = projectReference?.trim();
   if (!reference) {
@@ -109,7 +116,7 @@ async function resolveTarget({
       projectId: undefined,
     };
   }
-  const projects = await listCandidateProjects(auth);
+  const projects = await listCandidateProjects({ auth, includeArchived });
   const project = pickProject({ projects, reference });
   return { workspaceId: project.workspaceId, projectId: project.id };
 }
@@ -122,16 +129,20 @@ function parseStart({ value }: { value: string }): string {
   return togglApi.toIsoDateTime({ value: trimmed, label: 'Start' });
 }
 
-function parseDurationMinutes({ value }: { value: unknown }): number {
-  const minutes = typeof value === 'string' ? Number(value) : value;
+function durationSeconds({ minutes }: { minutes: unknown }): number {
+  const parsed = typeof minutes === 'string' ? Number(minutes) : minutes;
   if (
-    typeof minutes !== 'number' ||
-    !Number.isFinite(minutes) ||
-    minutes <= 0
+    typeof parsed !== 'number' ||
+    !Number.isFinite(parsed) ||
+    parsed <= 0
   ) {
     throw new Error('Duration must be a positive number of minutes.');
   }
-  return Math.round(minutes);
+  const seconds = Math.round(parsed * 60);
+  if (seconds <= 0) {
+    throw new Error('Duration must be a positive number of minutes.');
+  }
+  return seconds;
 }
 
 function summarize({
@@ -208,7 +219,7 @@ export const togglAgent = {
   defaultWorkspaceId,
   resolveTarget,
   parseStart,
-  parseDurationMinutes,
+  durationSeconds,
   parseGroupBy,
   summarize,
   toHours,
