@@ -49,9 +49,10 @@ export const updateUserOnSystemAction = createAction({
             targetType: 'system',
             targetId: context.propsValue.systemId,
         });
+        const bound = bindIfNeeded === true ? await jumpcloudAssociations.exists({ auth: context.auth.props, ends }) : true;
         await jumpcloudAssociations.change({
             auth: context.auth.props,
-            op: bindIfNeeded === true ? 'add' : 'update',
+            op: bound ? 'update' : 'add',
             ends,
             attributes: { sudo: { enabled, withoutPassword } },
         });

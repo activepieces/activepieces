@@ -214,7 +214,37 @@ describe('Update User on System', () => {
             }),
         );
 
+        expect(sendRequest.mock.calls[0][0]).toMatchObject({
+            method: HttpMethod.GET,
+            url: `${V2}/users/u1/associations`,
+            queryParams: { targets: 'system', limit: '100', skip: '0' },
+        });
         expect(lastRequest().body).toMatchObject({ op: 'add', attributes: { sudo: { enabled: false, withoutPassword: false } } });
+    });
+
+    it('updates an existing binding when asked to bind if needed', async () => {
+        const otherSystems = Array.from({ length: 100 }, (_, index) => ({ to: { id: `other${index}`, type: 'system' } }));
+        sendRequest.mockImplementation(async (request: Request) => {
+            if (request.method !== HttpMethod.GET) {
+                return { status: 204, body: '' };
+            }
+            return request.queryParams?.['skip'] === '0'
+                ? { status: 200, body: otherSystems }
+                : { status: 200, body: [{ to: { id: 's1', type: 'system' } }] };
+        });
+
+        await updateUserOnSystemAction.run(
+            context<typeof updateUserOnSystemAction.props>({
+                userId: 'u1',
+                systemId: 's1',
+                sudoEnabled: true,
+                sudoWithoutPassword: false,
+                bindIfNeeded: true,
+            }),
+        );
+
+        expect(sendRequest).toHaveBeenCalledTimes(3);
+        expect(lastRequest().body).toMatchObject({ op: 'update', type: 'system', id: 's1' });
     });
 });
 
@@ -292,6 +322,7 @@ describe('Run Trigger Command', () => {
                 context<typeof runTriggerCommandAction.props>({ ...base, triggerName: 'deploy', waitForResults: true, waitSeconds }),
             ),
         ).rejects.toThrow('Max Wait must be from 5 to 300 seconds.');
+        expect(sendRequest).not.toHaveBeenCalled();
     });
 
     it('surfaces API errors', async () => {

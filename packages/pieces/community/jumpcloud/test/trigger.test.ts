@@ -53,7 +53,7 @@ describe('New Object trigger', () => {
         expect(newObjectTrigger.aiMetadata?.description?.length ?? 0).toBeGreaterThan(40);
     });
 
-    it('emits only users created since the last poll, newest first', async () => {
+    it('emits only users created since the checkpoint, newest first', async () => {
         sendRequest.mockResolvedValue({
             status: 200,
             body: {
@@ -61,7 +61,7 @@ describe('New Object trigger', () => {
                 results: [user('u3', LAST_POLL + 2000), user('u2', LAST_POLL + 1000), user('u1', LAST_POLL - 1000)],
             },
         });
-        const store = memoryStore({ lastPoll: LAST_POLL });
+        const store = memoryStore({ checkpoint: createdCheckpoint({ type: 'user', since: LAST_POLL }) });
 
         const result = await pollingTrigger().run(triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store }));
 
@@ -71,51 +71,81 @@ describe('New Object trigger', () => {
             expect.objectContaining({ object_type: 'user', id: 'u3' }),
             expect.objectContaining({ object_type: 'user', id: 'u2' }),
         ]);
-        expect(store.data.get('lastPoll')).toBe(LAST_POLL + 2000);
+        expect(store.data.get('checkpoint')).toEqual(createdCheckpoint({ type: 'user', since: LAST_POLL + 2000, boundaryIds: ['u3'] }));
     });
 
-    it('keeps paging while every object on the page is new', async () => {
+    it('pages through every new object without a cap', async () => {
+        const total = 1250;
         sendRequest.mockImplementation(async (request: Request) => {
             const skip = Number(request.queryParams?.['skip']);
-            const page = Array.from({ length: skip === 0 ? 100 : 1 }, (_, index) => user(`u${skip + index}`, LAST_POLL + 100000 - skip - index));
-            return { status: 200, body: { totalCount: 101, results: page } };
-        });
-
-        const result = await pollingTrigger().run(triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'system' }, store: memoryStore({ lastPoll: LAST_POLL }) }));
-
-        expect(sendRequest.mock.calls.map(([request]) => request.queryParams?.['skip'])).toEqual(['0', '100']);
-        expect(result).toHaveLength(101);
-    });
-
-    it('detects new groups from the time inside their ID', async () => {
-        const seconds = Math.floor(LAST_POLL / 1000);
-        sendRequest.mockResolvedValue({
-            status: 200,
-            body: [
-                { id: objectId(seconds - 60), name: 'Old' },
-                { id: objectId(seconds + 60), name: 'New' },
-                { id: 'not-an-object-id', name: 'Unknown' },
-            ],
+            const count = Math.max(0, Math.min(100, total + 1 - skip));
+            const page = Array.from({ length: count }, (_, index) => {
+                const position = skip + index;
+                return position === total ? user('old', LAST_POLL - 1000) : user(`u${position}`, LAST_POLL + 100000 - position);
+            });
+            return { status: 200, body: { totalCount: total + 1, results: page } };
         });
 
         const result = await pollingTrigger().run(
-            triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user_group' }, store: memoryStore({ lastPoll: LAST_POLL }) }),
+            triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'system' }, store: memoryStore({ checkpoint: createdCheckpoint({ type: 'system', since: LAST_POLL }) }) }),
         );
 
+        expect(sendRequest).toHaveBeenCalledTimes(13);
+        expect(result).toHaveLength(total);
+    });
+
+    it('emits an object created in the same millisecond as the checkpoint once', async () => {
+        sendRequest.mockResolvedValue({ status: 200, body: { totalCount: 2, results: [user('u2', LAST_POLL), user('u1', LAST_POLL)] } });
+        const store = memoryStore({ checkpoint: createdCheckpoint({ type: 'user', since: LAST_POLL, boundaryIds: ['u1'] }) });
+        const context = triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store });
+
+        expect(await pollingTrigger().run(context)).toEqual([expect.objectContaining({ id: 'u2' })]);
+        expect(store.data.get('checkpoint')).toEqual(createdCheckpoint({ type: 'user', since: LAST_POLL, boundaryIds: ['u1', 'u2'] }));
+        expect(await pollingTrigger().run(context)).toEqual([]);
+    });
+
+    it('detects new groups by ID, including several created in the same second', async () => {
+        const seconds = Math.floor(LAST_POLL / 1000);
+        const groups = [
+            { id: objectId(seconds), name: 'Old' },
+            { id: `${objectId(seconds).slice(0, 23)}1`, name: 'Same second' },
+            { id: objectId(seconds - 60), name: 'Older' },
+        ];
+        sendRequest.mockResolvedValue({ status: 200, body: groups });
+        const store = memoryStore({ checkpoint: { kind: 'ids', type: 'user_group', ids: [groups[0].id] } });
+
+        const result = await pollingTrigger().run(triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user_group' }, store }));
+
         expect(sendRequest.mock.calls[0][0]).toMatchObject({ url: `${V2}/usergroups`, queryParams: { sort: 'name' } });
-        expect(result).toEqual([expect.objectContaining({ object_type: 'user_group', name: 'New' })]);
+        expect(result).toEqual([
+            expect.objectContaining({ object_type: 'user_group', name: 'Same second' }),
+            expect.objectContaining({ object_type: 'user_group', name: 'Older' }),
+        ]);
+        expect(store.data.get('checkpoint')).toEqual({ kind: 'ids', type: 'user_group', ids: groups.map((group) => group.id) });
+    });
+
+    it('snapshots existing groups when enabled and emits nothing', async () => {
+        sendRequest.mockResolvedValue({ status: 200, body: [{ id: 'g1', name: 'Existing' }] });
+        const store = memoryStore();
+
+        await pollingTrigger().onEnable(triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'system_group' }, store }));
+
+        expect(store.data.get('checkpoint')).toEqual({ kind: 'ids', type: 'system_group', ids: ['g1'] });
     });
 
     it('starts from now when enabled and keeps the checkpoint on republish', async () => {
         const store = memoryStore();
         await pollingTrigger().onEnable(triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store }));
-        const firstPoll = store.data.get('lastPoll');
+        const first = store.data.get('checkpoint');
 
-        expect(typeof firstPoll).toBe('number');
+        expect(first).toEqual(expect.objectContaining({ kind: 'created', type: 'user', boundaryIds: [] }));
         expect(sendRequest).not.toHaveBeenCalled();
 
         await pollingTrigger().onEnable({ ...triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store }), isRepublish: true });
-        expect(store.data.get('lastPoll')).toBe(firstPoll);
+        expect(store.data.get('checkpoint')).toBe(first);
+
+        await pollingTrigger().onDisable(triggerContext<typeof newObjectTrigger.props>({ propsValue: { objectType: 'user' }, store }));
+        expect(store.data.has('checkpoint')).toBe(false);
     });
 
     it('returns up to five recent objects when testing', async () => {
@@ -148,6 +178,10 @@ function pollingTrigger() {
 
 function user(id: string, epochMs: number) {
     return { _id: id, username: id, created: new Date(epochMs).toISOString() };
+}
+
+function createdCheckpoint({ type, since, boundaryIds = [] }: { type: string; since: number; boundaryIds?: string[] }) {
+    return { kind: 'created', type, since, boundaryIds };
 }
 
 function objectId(seconds: number): string {

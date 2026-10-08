@@ -1,9 +1,9 @@
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { AppConnectionValueForAuthProperty, createTrigger, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Store, TriggerStrategy } from '@activepieces/pieces-framework';
 import { jumpcloudAuth } from '../auth';
 import { jumpcloudObjects } from '../common/objects';
 import { jumpcloudOutput } from '../common/output';
 import { jumpcloudProps } from '../common/props';
+import { ApiRecord, ConnectionProps, ObjectTypeKey } from '../common/types';
 
 export const newObjectTrigger = createTrigger({
     auth: jumpcloudAuth,
@@ -43,16 +43,32 @@ export const newObjectTrigger = createTrigger({
     },
     type: TriggerStrategy.POLLING,
     async test(context) {
-        return pollingHelper.test(polling(), context);
+        const type = jumpcloudObjects.parseType(context.propsValue.objectType);
+        const records = jumpcloudObjects.sortsByCreated(type)
+            ? await jumpcloudObjects.listCreatedSince({ auth: context.auth.props, type, since: 0, maxItems: TEST_ITEMS })
+            : await jumpcloudObjects.listAll({ auth: context.auth.props, type });
+        return toOutputs({ type, records }).slice(0, TEST_ITEMS);
     },
     async onEnable(context) {
-        await pollingHelper.onEnable(polling(), context);
+        const type = jumpcloudObjects.parseType(context.propsValue.objectType);
+        const existing = await context.store.get<Checkpoint>(CHECKPOINT_KEY);
+        if (context.isRepublish === true && existing !== null && existing.type === type) {
+            return;
+        }
+        await context.store.put(CHECKPOINT_KEY, await initialCheckpoint({ auth: context.auth.props, type }));
     },
     async onDisable(context) {
-        await pollingHelper.onDisable(polling(), context);
+        await context.store.delete(CHECKPOINT_KEY);
     },
     async run(context) {
-        return pollingHelper.poll(polling(), context);
+        const type = jumpcloudObjects.parseType(context.propsValue.objectType);
+        const auth = context.auth.props;
+        const checkpoint = await context.store.get<Checkpoint>(CHECKPOINT_KEY);
+        if (checkpoint === null || checkpoint.type !== type) {
+            await context.store.put(CHECKPOINT_KEY, await initialCheckpoint({ auth, type }));
+            return [];
+        }
+        return poll({ auth, type, checkpoint, store: context.store });
     },
 });
 
@@ -62,30 +78,69 @@ function newObjectProps() {
     };
 }
 
-function polling(): Polling<AppConnectionValueForAuthProperty<typeof jumpcloudAuth>, StaticPropsValue<NewObjectProps>> {
-    return {
-        strategy: DedupeStrategy.TIMEBASED,
-        items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-            const type = jumpcloudObjects.parseType(propsValue.objectType);
-            const records = await jumpcloudObjects.listNewest({
-                auth: auth.props,
-                type,
-                since: lastFetchEpochMS,
-                maxItems: lastFetchEpochMS === 0 ? TEST_ITEMS : MAX_ITEMS_PER_POLL,
-            });
-            return records
-                .flatMap((record) => {
-                    const epochMilliSeconds = jumpcloudObjects.createdAt({ type, record });
-                    return epochMilliSeconds === null
-                        ? []
-                        : [{ epochMilliSeconds, data: { object_type: type, ...jumpcloudOutput.flatten({ type, record }) } }];
-                })
-                .sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
-        },
-    };
+async function initialCheckpoint({ auth, type }: { auth: ConnectionProps; type: ObjectTypeKey }): Promise<Checkpoint> {
+    if (jumpcloudObjects.sortsByCreated(type)) {
+        return { kind: 'created', type, since: Date.now(), boundaryIds: [] };
+    }
+    const records = await jumpcloudObjects.listAll({ auth, type });
+    return { kind: 'ids', type, ids: readIds({ type, records }) };
 }
 
-const TEST_ITEMS = 100;
-const MAX_ITEMS_PER_POLL = 1000;
+async function poll({ auth, type, checkpoint, store }: PollParams): Promise<OutputItem[]> {
+    if (checkpoint.kind === 'ids') {
+        const records = await jumpcloudObjects.listAll({ auth, type });
+        const known = new Set(checkpoint.ids);
+        const created = records.filter((record) => {
+            const id = jumpcloudObjects.readId({ type, record });
+            return id !== null && !known.has(id);
+        });
+        await store.put(CHECKPOINT_KEY, { kind: 'ids', type, ids: readIds({ type, records }) });
+        return toOutputs({ type, records: created });
+    }
+    const records = await jumpcloudObjects.listCreatedSince({ auth, type, since: checkpoint.since });
+    const boundary = new Set(checkpoint.boundaryIds);
+    const created = records.filter((record) => {
+        const id = jumpcloudObjects.readId({ type, record });
+        const at = jumpcloudObjects.createdAt({ type, record });
+        return id !== null && at !== null && (at > checkpoint.since || (at === checkpoint.since && !boundary.has(id)));
+    });
+    await store.put(CHECKPOINT_KEY, advance({ type, checkpoint, created }));
+    return toOutputs({ type, records: created });
+}
 
-type NewObjectProps = ReturnType<typeof newObjectProps>;
+function advance({ type, checkpoint, created }: { type: ObjectTypeKey; checkpoint: CreatedCheckpoint; created: ApiRecord[] }): CreatedCheckpoint {
+    const since = created.reduce((latest, record) => Math.max(latest, jumpcloudObjects.createdAt({ type, record }) ?? latest), checkpoint.since);
+    const atSince = readIds({ type, records: created.filter((record) => jumpcloudObjects.createdAt({ type, record }) === since) });
+    const boundaryIds = since === checkpoint.since ? [...new Set([...checkpoint.boundaryIds, ...atSince])] : atSince;
+    return { kind: 'created', type, since, boundaryIds };
+}
+
+function toOutputs({ type, records }: { type: ObjectTypeKey; records: ApiRecord[] }): OutputItem[] {
+    return records
+        .map((record) => ({ at: jumpcloudObjects.createdAt({ type, record }) ?? 0, data: { object_type: type, ...jumpcloudOutput.flatten({ type, record }) } }))
+        .sort((a, b) => b.at - a.at)
+        .map((item) => item.data);
+}
+
+function readIds({ type, records }: { type: ObjectTypeKey; records: ApiRecord[] }): string[] {
+    return records.flatMap((record) => {
+        const id = jumpcloudObjects.readId({ type, record });
+        return id === null ? [] : [id];
+    });
+}
+
+const CHECKPOINT_KEY = 'checkpoint';
+const TEST_ITEMS = 5;
+
+type CreatedCheckpoint = { kind: 'created'; type: ObjectTypeKey; since: number; boundaryIds: string[] };
+
+type Checkpoint = CreatedCheckpoint | { kind: 'ids'; type: ObjectTypeKey; ids: string[] };
+
+type OutputItem = { object_type: ObjectTypeKey } & ReturnType<typeof jumpcloudOutput.flatten>;
+
+type PollParams = {
+    auth: ConnectionProps;
+    type: ObjectTypeKey;
+    checkpoint: Checkpoint;
+    store: Store;
+};

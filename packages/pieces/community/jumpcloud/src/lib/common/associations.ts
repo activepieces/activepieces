@@ -6,6 +6,7 @@ import { ApiRecord, ConnectionProps, ObjectTypeKey } from './types';
 export const jumpcloudAssociations = {
     route,
     change,
+    exists,
     parseEnds,
     toOutput,
 };
@@ -63,6 +64,30 @@ async function change({ auth, op, ends, attributes }: ChangeParams): Promise<voi
     });
 }
 
+async function exists({ auth, ends }: { auth: ConnectionProps; ends: AssociationEnds }): Promise<boolean> {
+    const target = route(ends);
+    return findTarget({ auth, target, skip: 0 });
+}
+
+async function findTarget({ auth, target, skip }: { auth: ConnectionProps; target: AssociationRoute; skip: number }): Promise<boolean> {
+    const body = await jumpcloudApi.send<unknown>({
+        auth,
+        method: HttpMethod.GET,
+        path: target.path,
+        version: 'v2',
+        queryParams: { targets: target.type, limit: String(ASSOCIATION_PAGE_SIZE), skip: String(skip) },
+    });
+    const page = Array.isArray(body) ? body.filter(jumpcloudApi.isRecord) : [];
+    const found = page.some((connection) => {
+        const to = connection['to'];
+        return jumpcloudApi.isRecord(to) && to['id'] === target.id;
+    });
+    if (found || page.length < ASSOCIATION_PAGE_SIZE) {
+        return found;
+    }
+    return findTarget({ auth, target, skip: skip + page.length });
+}
+
 function membershipPartners(type: ObjectTypeKey): ObjectTypeKey[] {
     return MEMBERSHIPS.flatMap((pair) => (pair.group === type ? [pair.member] : pair.member === type ? [pair.group] : []));
 }
@@ -82,6 +107,8 @@ const ASSOCIATION_TARGETS: Record<ObjectTypeKey, ObjectTypeKey[]> = {
     system_group: ['user', 'user_group'],
     application: ['user', 'user_group'],
 };
+
+const ASSOCIATION_PAGE_SIZE = 100;
 
 const MEMBERSHIPS: { group: ObjectTypeKey; member: ObjectTypeKey }[] = [
     { group: 'user_group', member: 'user' },

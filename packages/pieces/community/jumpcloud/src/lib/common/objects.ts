@@ -15,7 +15,9 @@ export const jumpcloudObjects = {
     getRecord,
     listByIds,
     createdAt,
-    listNewest,
+    sortsByCreated,
+    listAll,
+    listCreatedSince,
 };
 
 function config(type: ObjectTypeKey): ObjectTypeConfig {
@@ -87,13 +89,9 @@ async function searchPage({ auth, type, term, page }: SearchParams): Promise<Lis
         case 'filter':
             return listPage({ auth, type, page, filter: `${search.field}:${search.operator}:${trimmed}` });
         case 'local': {
-            const all = await jumpcloudApi.collectPages({
-                fetchPage: (request) => listPage({ auth, type, page: request, sort: OBJECT_TYPES[type].pickerSort }),
-                fetchAll: true,
-                maxItems: LOCAL_SEARCH_MAX_ITEMS,
-            });
+            const all = await listAll({ auth, type, sort: OBJECT_TYPES[type].pickerSort });
             const needle = trimmed.toLowerCase();
-            const matches = all.items.filter((record) => optionLabel({ type, record }).toLowerCase().includes(needle));
+            const matches = all.filter((record) => optionLabel({ type, record }).toLowerCase().includes(needle));
             return { items: matches.slice(page.skip, page.skip + page.limit), totalCount: matches.length };
         }
     }
@@ -155,28 +153,35 @@ function createdAt({ type, record }: { type: ObjectTypeKey; record: ApiRecord })
     return id !== null && OBJECT_ID_PATTERN.test(id) ? parseInt(id.slice(0, 8), 16) * 1000 : null;
 }
 
-async function listNewest({ auth, type, since, maxItems }: NewestParams): Promise<ApiRecord[]> {
-    if (OBJECT_TYPES[type].sortsByCreated) {
-        return collectNewest({ auth, type, since, maxItems, skip: 0, collected: [] });
-    }
-    const all = await jumpcloudApi.collectPages({
-        fetchPage: (page) => listPage({ auth, type, page }),
-        fetchAll: true,
-        maxItems,
-    });
-    return all.items;
+function sortsByCreated(type: ObjectTypeKey): boolean {
+    return OBJECT_TYPES[type].sortsByCreated;
 }
 
-async function collectNewest({ auth, type, since, maxItems, skip, collected }: NewestParams & { skip: number; collected: ApiRecord[] }): Promise<ApiRecord[]> {
-    const limit = Math.min(MAX_PAGE_SIZE, maxItems - collected.length);
-    const page = await listPage({ auth, type, page: { limit, skip }, sort: '-created' });
+async function listAll({ auth, type, sort }: { auth: ConnectionProps; type: ObjectTypeKey; sort?: string }): Promise<ApiRecord[]> {
+    return collectUntil({ auth, type, sort: sort ?? OBJECT_TYPES[type].defaultSort, skip: 0, collected: [], done: () => false });
+}
+
+async function listCreatedSince({ auth, type, since, maxItems }: CreatedSinceParams): Promise<ApiRecord[]> {
+    return collectUntil({
+        auth,
+        type,
+        sort: '-created',
+        skip: 0,
+        collected: [],
+        done: (page, collected) => {
+            const oldest = page.length === 0 ? null : createdAt({ type, record: page[page.length - 1] });
+            return (oldest !== null && oldest < since) || (maxItems !== undefined && collected.length >= maxItems);
+        },
+    });
+}
+
+async function collectUntil({ auth, type, sort, skip, collected, done }: CollectUntilParams): Promise<ApiRecord[]> {
+    const page = await listPage({ auth, type, page: { limit: MAX_PAGE_SIZE, skip }, sort });
     const items = [...collected, ...page.items];
-    const oldest = page.items.length === 0 ? null : createdAt({ type, record: page.items[page.items.length - 1] });
-    const reachedOld = oldest !== null && oldest <= since;
-    if (page.items.length < limit || reachedOld || items.length >= maxItems) {
+    if (page.items.length < MAX_PAGE_SIZE || done(page.items, items)) {
         return items;
     }
-    return collectNewest({ auth, type, since, maxItems, skip: skip + page.items.length, collected: items });
+    return collectUntil({ auth, type, sort, skip: skip + page.items.length, collected: items, done });
 }
 
 function optionLabel({ type, record }: { type: ObjectTypeKey; record: ApiRecord }): string {
@@ -272,7 +277,6 @@ const OBJECT_TYPES: Record<ObjectTypeKey, ObjectTypeConfig & { pickerSort: strin
     },
 };
 
-const LOCAL_SEARCH_MAX_ITEMS = 1000;
 const PARALLEL_FETCHES = 10;
 const OBJECT_ID_PATTERN = /^[0-9a-f]{24}$/i;
 
@@ -286,11 +290,20 @@ type ListParams = {
     sort?: string;
 };
 
-type NewestParams = {
+type CreatedSinceParams = {
     auth: ConnectionProps;
     type: ObjectTypeKey;
     since: number;
-    maxItems: number;
+    maxItems?: number;
+};
+
+type CollectUntilParams = {
+    auth: ConnectionProps;
+    type: ObjectTypeKey;
+    sort: string;
+    skip: number;
+    collected: ApiRecord[];
+    done: (page: ApiRecord[], collected: ApiRecord[]) => boolean;
 };
 
 type SearchParams = {

@@ -53,6 +53,7 @@ export const runTriggerCommandAction = createAction({
         if (triggerName.length === 0) {
             throw new Error('Enter the Trigger Name of the command.');
         }
+        const waitMs = context.propsValue.waitForResults === true ? validateWait(context.propsValue.waitSeconds) * 1000 : 0;
         const response = await jumpcloudApi.send<unknown>({
             auth,
             method: HttpMethod.POST,
@@ -68,7 +69,6 @@ export const runTriggerCommandAction = createAction({
         if (context.propsValue.waitForResults !== true) {
             return { trigger_name: triggerName, command_ids: commandIds, waited: false, completed: false, results: [] };
         }
-        const waitMs = validateWait(context.propsValue.waitSeconds) * 1000;
         const results = await waitForResults({ auth, commandIds, deadline: Date.now() + waitMs });
         const reported = new Set(results.map((result) => result['command_id']));
         return {

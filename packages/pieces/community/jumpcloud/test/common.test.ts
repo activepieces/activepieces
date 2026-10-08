@@ -231,6 +231,22 @@ describe('objects', () => {
         expect(sendRequest.mock.calls[0][0].queryParams).toEqual({ limit: '100', skip: '0', sort: 'displayLabel' });
     });
 
+    it('searches every application page, not only the first thousand', async () => {
+        sendRequest.mockImplementation(async (request: { queryParams?: Record<string, string> }) => {
+            const skip = Number(request.queryParams?.['skip']);
+            const count = Math.max(0, Math.min(100, 1201 - skip));
+            const results = Array.from({ length: count }, (_, index) => {
+                const position = skip + index;
+                return position === 1200 ? { _id: 'late', displayLabel: 'Slack' } : { _id: `a${position}`, displayLabel: `App ${position}` };
+            });
+            return { status: 200, body: { totalCount: 1201, results } };
+        });
+
+        const page = await jumpcloudObjects.searchPage({ auth: AUTH, type: 'application', term: 'slack', page: { limit: 50, skip: 0 } });
+
+        expect(page).toEqual({ items: [{ _id: 'late', displayLabel: 'Slack' }], totalCount: 1 });
+    });
+
     it('lists by picker sort when the search term is empty', async () => {
         sendRequest.mockResolvedValue({ status: 200, body: { totalCount: 0, results: [] } });
 
