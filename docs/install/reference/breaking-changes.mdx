@@ -14,7 +14,7 @@ Square 1.0.0 removes the **New Invoice** and **New Appointment** triggers. It al
 
 #### What you need to do
 
-Flows keep running on the Square version they were built with. If a flow starts with New Invoice or New Appointment, keep its Square trigger on its current version. To move it to 1.0.0, replace the trigger with the **Webhook** piece, subscribed in the Square Developer Console to `invoice.created` or `booking.created`, and read the full record with **Custom API Call** (`GET /v2/invoices/{id}` or `GET /v2/bookings/{id}`). Existing Square connections keep working; reconnect Square to use the new actions that need payment, inventory or team permissions.
+Flows keep running on the Square version they were built with. If a flow starts with New Invoice or New Appointment, keep its Square trigger on its current version. To move it to 1.0.0, replace the trigger with the **Webhook** piece, subscribed in the Square Developer Console to `invoice.created` or `booking.created`. The webhook already carries the invoice or booking. To read the full record with **Custom API Call** (`GET /v2/invoices/{id}` or `GET /v2/bookings/{id}`), use a Square connection created before 1.0.0, because connections created or reconnected on 1.0.0 no longer have the invoice and appointment read permissions. Existing Square connections keep working. Reconnect Square only for the new actions that need payment, inventory or team permissions, and keep a separate older connection for invoice or booking reads.
 
 #### Total CMS 1.0.0 supports Total CMS 3 only
 
