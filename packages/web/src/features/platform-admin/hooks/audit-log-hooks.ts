@@ -10,6 +10,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { auditEventsApi } from '../api/audit-events-api';
 
 export const auditLogKeys = {
+  root: ['audit-logs'] as const,
   all: (searchParams: string) => ['audit-logs', searchParams] as const,
   oldest: ['audit-logs', 'oldest'] as const,
 };

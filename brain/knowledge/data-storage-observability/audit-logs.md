@@ -7,7 +7,7 @@ icon: 📜
 Records security-relevant actions for compliance and forensics, persisted to the `audit_event` table and queryable by platform admins. Enterprise/Cloud only, gated by `platform.plan.auditLogEnabled`.
 
 ### Entities & services
-- **ApplicationEvent**: discriminated union of all auditable types; **ApplicationEventName** is a 40-value enum (`flow.created`, `flow.published`, `user.signed.in`, `variable.value.revealed`, etc.).
+- **ApplicationEvent**: discriminated union of all auditable types; **ApplicationEventName** is a 41-value enum (`flow.created`, `flow.published`, `user.signed.in`, `variable.value.revealed`, etc.).
 - `audit_event` entity: `action`, `userEmail`, `userId`, `projectId` (nullable), `data` (jsonb), `ip`. Composite indices on `(platformId, projectId, userId, action)` and narrower.
 - `audit-event-service.ts`: `setup()` and `list()`.
 
@@ -21,6 +21,7 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - `SystemJobName.AUDIT_LOG_RETENTION` runs hourly at `:15`, EE/Cloud only. One probe query lists platforms with expired rows in random order. The run then goes round those platforms, at most 100k rows per platform per round, until none has expired rows or the run reaches 1M rows or 10 minutes, so a single-platform install gets the whole budget. Each batch deletes 5000 rows oldest first with `FOR UPDATE SKIP LOCKED`, then pauses for as long as it took.
 - **Pause flag**: `AP_AUDIT_LOG_RETENTION_PAUSED=true` skips the job and keeps every retention value. The ceiling cannot pause anything, because `LEAST` only shortens. The flag `AUDIT_LOG_RETENTION_PAUSED` carries it to the Retention dialog, which says the cleanup is paused.
 - **Run summary**: `stoppedBy` is `done` only when no platform has expired rows left, and `failed` when every platform still left failed this run. A platform still more than `AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS` behind its period goes into one warn line per run (worst 10).
+- **Retention change event**: `audit.log.retention.updated`, sent by `platformSideEffects` from `platformService.update` only when the value changes. `previousRetentionDays` and `retentionDays` are the platform values (null = use the instance limit); `instanceLimitDays` is the ceiling at that moment, so a reader can tell "forever" from "instance limit".
 
 ### Gotchas
 - Event capture is decoupled via the event bus — new auditable actions just emit onto `applicationEvents`.
@@ -35,6 +36,7 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - Each retention batch carries a keyset cursor `(created, id)` from the last row it deleted. Without it every batch re-walks the dead index entries that earlier batches left at the old end of the index until vacuum runs, which grows with the square of the rows deleted per run. The cursor is a `to_char(..., 'US')` ISO string so it keeps microseconds, and the `id` part matters: events take `created` from JS `new Date()`, so many share a millisecond.
 - Each retention batch re-reads the platform's period with `SELECT ... FOR SHARE` on the platform row. The probe's value can be minutes old by the last batch, and an admin who lengthens or clears the period must not lose rows after the save returned. The share lock makes that save wait for one batch at most.
 - The job sets `autovacuum_vacuum_scale_factor = 0.02` on `audit_event` the first time it has rows to delete, and only when the table has no value, so an operator's setting wins. It is not a migration: `ALTER TABLE ... SET` waits behind a running anti-wraparound vacuum, and migrations run before the healthcheck. Its `lock_timeout` is 100 ms, under the default 1 s `deadlock_timeout`, so it gives up before Postgres would cancel a running autovacuum to let it in.
+- `platformService.update` reads the previous `auditLogRetentionDays` with `SELECT ... FOR UPDATE` inside the save transaction, and writes that locked value back when the request does not set the field. Otherwise two admins saving at once both report the same "before" in `audit.log.retention.updated`, and a save of any other field writes back a stale retention value. Every other platform field is still last-write-wins: the save writes the row as it was read at the start of the request. PGlite runs one connection, so the API tests cannot reproduce either race.
 - Tests that need a race during a sweep (a period changed mid-run, a batch that fails) install a `BEFORE DELETE` trigger on `audit_event`; PGlite runs PL/pgSQL.
 - Count deleted rows inside the statement, as `WITH deleted AS (DELETE ... RETURNING ...) SELECT count(*) OVER () ...`, not with `affected`. TypeORM fills `affected` from `rowCount`, which a PGlite result does not have. A top-level `SELECT` returns rows the same way on both drivers, where a bare `DELETE` through `em.query` does not.
 - Flow-run STARTED/FINISHED events, test runs included, carry the whole `FlowRun` and are most of the rows. Retention bounds the table; it does not lower the write rate.
@@ -43,12 +45,14 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - A `DELETE` does not shrink the table file; Postgres reuses the space. A one-time shrink needs `pg_repack` or `VACUUM FULL`.
 - `AP_AUDIT_LOG_RETENTION_PAUSED` is read by the app server that picks up the hourly job, and every app server runs the system-job worker. A pause set on only some servers does not stop the cleanup.
 - The piece-upgrade revert (`POST /v1/admin/flows/revert-upgrade`) reads `flow.pieces.upgraded` rows, so it can only revert upgrades still inside the platform's retention period.
+- A new event's docs page renders from `openapi-schema`, which resolves against `docs/openapi.json`. Nothing regenerates that file; commit its entries by hand. `z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input' | 'output' })` plus `$id: '#/components/schemas/<name>[Input]'` reproduces the existing entries exactly. The four `flow.approval.*` pages point at schemas that are not in the file.
 
 ### Key files
 Entry point: `auditLogService`, wired up in `auditEventModule` which calls `.setup()` and mounts the controller at `/v1/audit-events`. Retention: `auditLogRetention` (the job) and `auditLogRetentionCeiling` (the only reader of the env ceiling).
 
 - `packages/server/api/src/app/ee/audit-logs/` — module, service, TypeORM entity, and the retention job
 - `packages/server/api/src/app/helper/retention/` — the retention ceiling reader (CE, shared with the platform service and flags)
+- `packages/server/api/src/app/platform/` — `platformSideEffects`, which sends the retention change event
 - `packages/core/shared/src/lib/ee/audit-events/` — event types, the `ApplicationEvent` union, `summarizeApplicationEvent()`, and `buildMockEvent()`
 - `packages/web/src/features/platform-admin/api/audit-events-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/audit-log-hooks.ts` — React Query hooks
@@ -57,4 +61,4 @@ Entry point: `auditLogService`, wired up in `auditEventModule` which calls `.set
 - `packages/server/api/test/integration/cloud/audit-event/` — integration tests
 - `docs/admin-guide/security/audit-logs/` — one user-facing doc page per event type
 
-Paths verified 2026-09-30.
+Paths verified 2026-10-01.

@@ -1,4 +1,4 @@
-import { ApFlagId } from '@activepieces/shared'
+import { ApFlagId, ApplicationEvent, ApplicationEventName, EventDestinationScope, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -6,8 +6,11 @@ import { In } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { auditLogRepo } from '../../../../src/app/ee/audit-logs/audit-event-service'
 import { auditLogRetention } from '../../../../src/app/ee/audit-logs/audit-log-retention'
+import * as applicationEventsModule from '../../../../src/app/helper/application-events'
+import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
+import { actionsEmitted } from '../../../helpers/application-events'
 import { db } from '../../../helpers/db'
-import { createAuditEvent } from '../../../helpers/mocks'
+import { createAuditEvent, createMockEventDestination } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -50,6 +53,18 @@ const remainingIds = async (ids: string[]): Promise<string[]> => {
     const rows = await auditLogRepo().findBy({ id: In(ids) })
     return rows.map((row) => row.id).sort()
 }
+
+const savedRetentionEvents = async ({ platformId, expectedCount }: { platformId: string, expectedCount: number }): Promise<ApplicationEvent[]> => {
+    const find = async (): Promise<ApplicationEvent[]> => {
+        const events = await auditLogRepo().find({ where: { platformId }, order: { created: 'ASC' } })
+        return events.filter((event) => event.action === ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED)
+    }
+    await vi.waitUntil(async () => (await find()).length >= expectedCount, { timeout: 5000, interval: 50 })
+    return find()
+}
+
+const originalApplicationEvents = applicationEventsModule.applicationEvents
+const originalJobQueue = jobQueueModule.jobQueue
 
 const createPlatform = async ({ auditLogRetentionDays, auditLogEnabled = true }: { auditLogRetentionDays: number | null, auditLogEnabled?: boolean }) => {
     return createTestContext(app!, {
@@ -359,5 +374,89 @@ describe('Update platform audit log retention', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.json()[ApFlagId.AUDIT_LOG_RETENTION_PAUSED]).toBe(true)
+    })
+})
+
+describe('Audit log retention change event', () => {
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('records who changed the retention, with the previous and new values and the instance limit', async () => {
+        process.env.AP_AUDIT_LOG_RETENTION_DAYS = '365'
+        const ctx = await createPlatform({ auditLogRetentionDays: null })
+
+        await ctx.inject({
+            method: 'POST',
+            url: `/api/v1/platforms/${ctx.platform.id}`,
+            body: { auditLogRetentionDays: 90 },
+            headers: { 'x-real-ip': '203.0.113.7' },
+        })
+        const [event] = await savedRetentionEvents({ platformId: ctx.platform.id, expectedCount: 1 })
+
+        expect(event.userId).toBe(ctx.user.id)
+        expect(event.userEmail).toBe(ctx.userIdentity.email)
+        expect(event.ip).toBe('203.0.113.7')
+        expect(event.projectId).toBeNull()
+        expect(event.data).toEqual(expect.objectContaining({ previousRetentionDays: null, retentionDays: 90, instanceLimitDays: 365 }))
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: null })
+        const events = await savedRetentionEvents({ platformId: ctx.platform.id, expectedCount: 2 })
+
+        expect(events.map((saved) => saved.data)).toEqual(expect.arrayContaining([
+            expect.objectContaining({ previousRetentionDays: 90, retentionDays: null, instanceLimitDays: 365 }),
+        ]))
+    })
+
+    it('sends nothing when the value does not change or the change is refused', async () => {
+        const sendUserEventSpy = vi.fn()
+        vi.spyOn(applicationEventsModule, 'applicationEvents').mockImplementation((log) => ({
+            ...originalApplicationEvents(log),
+            sendUserEvent: sendUserEventSpy,
+        }))
+        const ctx = await createPlatform({ auditLogRetentionDays: 90 })
+
+        const sameValue = await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: 90 })
+        const otherField = await ctx.post(`/v1/platforms/${ctx.platform.id}`, { name: 'Renamed platform' })
+        const refused = await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: 29 })
+
+        expect([sameValue.statusCode, otherField.statusCode, refused.statusCode]).toEqual([StatusCodes.OK, StatusCodes.OK, StatusCodes.CONFLICT])
+        expect(actionsEmitted(sendUserEventSpy)).toEqual([])
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: 30 })
+
+        expect(actionsEmitted(sendUserEventSpy)).toEqual([ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED])
+    })
+
+    it('delivers the change to an event destination that subscribes to it', async () => {
+        const addSpy = vi.fn()
+        vi.spyOn(jobQueueModule, 'jobQueue').mockImplementation((log) => ({
+            ...originalJobQueue(log),
+            add: addSpy,
+        }))
+        const ctx = await createTestContext(app!, {
+            platform: { auditLogRetentionDays: null },
+            plan: { auditLogEnabled: true, eventStreamingEnabled: true },
+        })
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED],
+            scope: EventDestinationScope.PLATFORM,
+        })
+        await db.save('event_destination', destination)
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { auditLogRetentionDays: 30 })
+
+        await vi.waitFor(() => expect(addSpy).toHaveBeenCalledTimes(1), { timeout: 5000 })
+        expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                jobType: WorkerJobType.EVENT_DESTINATION,
+                webhookUrl: destination.url,
+                payload: expect.objectContaining({
+                    action: ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED,
+                    data: expect.objectContaining({ previousRetentionDays: null, retentionDays: 30 }),
+                }),
+            }),
+        }))
     })
 })

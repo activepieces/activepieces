@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CirclePause, Clock, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -29,7 +29,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
-import { auditLogQueries } from '../hooks/audit-log-hooks';
+import { auditLogKeys, auditLogQueries } from '../hooks/audit-log-hooks';
 import { auditLogRetentionUtils } from '../lib/audit-log-retention-utils';
 
 export function AuditLogRetentionButton() {
@@ -53,7 +53,9 @@ export function AuditLogRetentionButton() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Clock className="size-4" />
-          {t('Retention: {period}', { period: formatPeriod(currentDays) })}
+          {t('Retention: {period}', {
+            period: auditLogRetentionUtils.formatPeriod(currentDays),
+          })}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -99,6 +101,7 @@ function AuditLogRetentionForm({
   });
   const now = new Date();
   const { data: oldestEventCreated } = auditLogQueries.useOldestEventCreated();
+  const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -106,10 +109,18 @@ function AuditLogRetentionForm({
         { auditLogRetentionDays: selectedDays },
         platformId,
       );
-      await refetchPlatform();
+      await Promise.all([
+        refetchPlatform(),
+        queryClient.invalidateQueries({ queryKey: auditLogKeys.root }),
+      ]);
     },
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      setTimeout(() => {
+        queryClient
+          .invalidateQueries({ queryKey: auditLogKeys.root })
+          .catch(() => undefined);
+      }, RETENTION_EVENT_REFRESH_DELAY_MS);
       onClose();
     },
     onError: () => {
@@ -134,7 +145,7 @@ function AuditLogRetentionForm({
           <SelectContent>
             {options.map((days) => (
               <SelectItem key={toOptionValue(days)} value={toOptionValue(days)}>
-                {formatOption({ days, ceiling })}
+                {auditLogRetentionUtils.formatChoice({ days, ceiling })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -178,7 +189,7 @@ function AuditLogRetentionForm({
             {t(
               'Events older than {period}, created before {date}, will be permanently deleted. This cannot be undone.',
               {
-                period: formatPeriod(nextDays),
+                period: auditLogRetentionUtils.formatPeriod(nextDays),
                 date: formatUtils.formatDateOnly(
                   auditLogRetentionUtils.cutoffDate({ days: nextDays, now }),
                 ),
@@ -213,35 +224,8 @@ function fromOptionValue(value: string): number | null {
   return value === INSTANCE_OPTION_VALUE ? null : Number(value);
 }
 
-function formatOption({
-  days,
-  ceiling,
-}: {
-  days: number | null;
-  ceiling: number | null;
-}): string {
-  if (!isNil(days)) {
-    return formatPeriod(days);
-  }
-  return isNil(ceiling)
-    ? t('Forever')
-    : t('Instance limit ({period})', { period: formatPeriod(ceiling) });
-}
-
-function formatPeriod(days: number | null): string {
-  if (isNil(days)) {
-    return t('Forever');
-  }
-  if (days === 180) {
-    return t('6 months');
-  }
-  if (days === 365) {
-    return t('1 year');
-  }
-  return t('retentionPeriodDays', { days });
-}
-
 const INSTANCE_OPTION_VALUE = 'instance';
+const RETENTION_EVENT_REFRESH_DELAY_MS = 1000;
 
 type AuditLogRetentionFormProps = {
   platformId: string;

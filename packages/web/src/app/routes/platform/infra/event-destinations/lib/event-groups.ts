@@ -84,6 +84,7 @@ function buildEventGroups(): EventGroup[] {
         ApplicationEventName.USER_PASSWORD_RESET,
         ApplicationEventName.USER_EMAIL_VERIFIED,
         ApplicationEventName.SIGNING_KEY_CREATED,
+        ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED,
       ],
     },
     {

@@ -3335,5 +3335,6 @@
   "Instance limit ({period})": "Instance limit ({period})",
   "6 months": "6 months",
   "1 year": "1 year",
-  "retentionPeriodDays": "{days, plural, =1 {1 day} other {# days}}"
+  "retentionPeriodDays": "{days, plural, =1 {1 day} other {# days}}",
+  "Audit log retention updated": "Audit log retention updated"
 }
