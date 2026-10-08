@@ -25,7 +25,7 @@ A **Project** is the workspace within a platform where flows, connections, table
 - `projectHooks.postCreate` is where EE creates the associated `ProjectPlan`, sets piece filters, and auto-subscribes an alert receiver (owner email for personal, `context.alertReceiverEmail` for team).
 - Soft-deleted projects stay in DB; a background job hard-deletes them.
 - Deleting a project removes it from `defaultProjectIds` in the same transaction as the soft delete.
-- Default projects never block anything: the list can be emptied and any default deleted, whatever the personal projects setting. Updates and deletes run under `platformService.runWithDefaultProjectsLock`, and a platform update only writes `defaultProjectIds` when the request includes it, so a concurrent delete can't be undone by a stale save.
+- The default projects list can be emptied whatever the personal projects setting, but a default project can't be deleted from the app while it is a default: remove it on Roles & Access first (see decision 000048). API-key deletes, SCIM group deletes, and plans without project roles still delete it and drop it from the list. Updates and deletes run under `platformService.runWithDefaultProjectsLock`, and a platform update only writes `defaultProjectIds` when the request includes it, so a concurrent delete can't be undone by a stale save.
 
 ### Key files
 Entry point: `projectService`, a log-taking factory in `project-service.ts` that every project read and write routes through.

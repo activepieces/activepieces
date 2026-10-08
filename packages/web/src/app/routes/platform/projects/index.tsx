@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
@@ -52,6 +52,13 @@ export default function ProjectsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
+  const defaultProjectIds = useMemo(
+    () =>
+      new Set(
+        platform.plan.projectRolesEnabled ? platform.defaultProjectIds : [],
+      ),
+    [platform.plan.projectRolesEnabled, platform.defaultProjectIds],
+  );
 
   useEffect(() => {
     if (!searchParams.has('type')) {
@@ -256,55 +263,94 @@ export default function ProjectsPage() {
           _: RowDataWithActions<ProjectWithLimits>[],
           resetSelection: () => void,
         ) => {
-          const canDeleteAny = selectedRows.some(
-            (row) => row.id !== currentProject?.id,
+          const deletableProjects = selectedRows.filter(
+            (row) =>
+              row.id !== currentProject?.id && !defaultProjectIds.has(row.id),
           );
+          const selectedDefaultProjects = selectedRows.filter((row) =>
+            defaultProjectIds.has(row.id),
+          );
+          const onlyDefaultProjectsBlockDelete =
+            deletableProjects.length === 0 &&
+            selectedDefaultProjects.length > 0;
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Projects')}
-                message={t(
-                  'The selected projects and all their data will be permanently deleted.',
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <ConfirmationDeleteDialog
+                      title={t('Delete Projects')}
+                      message={
+                        <>
+                          {t(
+                            'The selected projects and all their data will be permanently deleted.',
+                          )}
+                          {selectedDefaultProjects.length > 0 && (
+                            <span className="block pt-2">
+                              {t('skippedDefaultProjects', {
+                                count: selectedDefaultProjects.length,
+                                names: selectedDefaultProjects
+                                  .map((row) => row.displayName)
+                                  .join(', '),
+                              })}{' '}
+                              <Link
+                                to="/platform/users/roles"
+                                className="whitespace-nowrap font-medium text-accent-11 hover:underline"
+                              >
+                                {t('Go to Roles & Access')}
+                              </Link>
+                            </span>
+                          )}
+                        </>
+                      }
+                      entityName={t('Projects')}
+                      buttonText={t('deleteProjectsCount', {
+                        count: deletableProjects.length,
+                      })}
+                      controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
+                      mutationFn={async () => {
+                        projectCollectionUtils.delete(
+                          deletableProjects.map((row) => row.id),
+                        );
+                        resetSelection();
+                        setSelectedRows([]);
+                      }}
+                      onError={(error) => {
+                        toast.error(t('Error'), {
+                          description: errorToastMessage(error),
+                          duration: 3000,
+                        });
+                      }}
+                    >
+                      {selectedRows.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-danger-11 hover:text-danger-11"
+                          disabled={deletableProjects.length === 0}
+                          {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
+                        >
+                          <Trash className="mr-1 w-4" />
+                          {`${t('Delete')} (${selectedRows.length})`}
+                        </Button>
+                      )}
+                    </ConfirmationDeleteDialog>
+                  </span>
+                </TooltipTrigger>
+                {onlyDefaultProjectsBlockDelete && (
+                  <TooltipContent>
+                    {t(
+                      "Default projects can't be deleted. Remove them from default projects first.",
+                    )}
+                  </TooltipContent>
                 )}
-                entityName={t('Projects')}
-                buttonText={t('Delete')}
-                controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
-                mutationFn={async () => {
-                  const deletableProjects = selectedRows.filter(
-                    (row) => row.id !== currentProject?.id,
-                  );
-                  projectCollectionUtils.delete(
-                    deletableProjects.map((row) => row.id),
-                  );
-                  resetSelection();
-                  setSelectedRows([]);
-                }}
-                onError={(error) => {
-                  toast.error(t('Error'), {
-                    description: errorToastMessage(error),
-                    duration: 3000,
-                  });
-                }}
-              >
-                {selectedRows.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-danger-11 hover:text-danger-11"
-                    disabled={!canDeleteAny}
-                    {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
-                  >
-                    <Trash className="mr-1 w-4" />
-                    {`${t('Delete')} (${selectedRows.length})`}
-                  </Button>
-                )}
-              </ConfirmationDeleteDialog>
+              </Tooltip>
             </div>
           );
         },
       },
     ],
-    [selectedRows, currentProject],
+    [selectedRows, currentProject, defaultProjectIds],
   );
 
   const toolbarButtons = useMemo(
