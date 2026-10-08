@@ -251,7 +251,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
 ## Triage: a bug, a support question or an old ticket
 
 1. **Read it**, plus any linked runs, flows or conversations.
-2. **Verify against main** (`git show origin/main:...`). If the box MCP is connected, also check production:
+2. **Verify against main:** run `git fetch origin main` first, then read with `git show origin/main:...`. If the box MCP is connected, also check production:
    - ClickHouse `default.otel_logs` for errors, with windows of 3 days or less;
    - the Postgres replica for the row in question, read only.
    - If the box isn't connected, say so and go on with code evidence alone.
@@ -300,7 +300,8 @@ Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything g
    - **Monthly:** the last full calendar month that is at least 7 days old.
    - **If the user names dates,** use those.
 2. **Numbers** (needs the box tools from requirement 4; without them, skip to 3 and show the "Need real data?" card):
-   - **Activation:** take the SQL block from the brain page `flows-execution/chat-activation-metric.md`. Replace its cohort line with your dates (`t0 >= '<since>' and t0 < least('<until>', now() - interval '7 days')`) and run it on the replica. For what happened to chat-built flows, run `sql/flow-breakdown.sql` the same way, after the definition's CTEs up to `chat_parts`.
+   - **Activation:** take the SQL block from the brain page `flows-execution/chat-activation-metric.md`. Replace its cohort line with your dates (`t0 >= '<since>' and t0 < least('<until>', now() - interval '7 days')`) and run it on the replica. If it hits the replica's statement timeout, run it in the stages the brain page describes (the cohort and S2 counts, then the chat-built flow ids, then flow runs in batches of about 50 ids, then agents) and add the stages up. For what happened to chat-built flows, run `sql/flow-breakdown.sql` the same way, after the definition's CTEs up to `chat_parts`.
+   - **Cost alarm reads `avg_input`,** which only averages turns that logged tokens. If `turns_without_tokens` jumps, say so too: failed turns don't log tokens.
    - **Cost:** run `sql/cost-watch.sql` on ClickHouse (replace `__DAYS__`, 3 at most). It gives chat turns, failures, tokens and cache share per day and release.
    - **Alarm** if average input per turn is up more than 25%, or failed turns are above 5%. Name the release where it moved.
    - Compare against the last row in "How we measure".
