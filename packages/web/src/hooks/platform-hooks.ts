@@ -56,7 +56,10 @@ export const platformHooks = {
   useNewMemberSettings: () => {
     const { platform } = platformHooks.useCurrentPlatform();
     return {
-      personalProjectsActive: platform.autoCreatePersonalProjects,
+      personalProjectsActive: newMemberSettingsUtils.personalProjectsActive({
+        autoCreatePersonalProjects: platform.autoCreatePersonalProjects,
+        projectRolesEnabled: platform.plan.projectRolesEnabled,
+      }),
       activeDefaultProjectIds: newMemberSettingsUtils.activeDefaultProjectIds({
         defaultProjectIds: platform.defaultProjectIds,
         projectRolesEnabled: platform.plan.projectRolesEnabled,
