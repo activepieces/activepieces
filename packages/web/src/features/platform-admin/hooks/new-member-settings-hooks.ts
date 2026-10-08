@@ -1,8 +1,10 @@
 import { UpdatePlatformRequestBody } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { platformApi } from '@/api/platforms-api';
 import { platformHooks } from '@/hooks/platform-hooks';
+
+import { personalProjectsApi } from '../api/personal-projects-api';
 
 export const newMemberSettingsMutations = {
   useUpdateNewMemberSettings: () => {
@@ -17,7 +19,31 @@ export const newMemberSettingsMutations = {
       onError: () => undefined,
     });
   },
+  useCreateMissingPersonalProjects: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: () => personalProjectsApi.createMissing(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: PERSONAL_PROJECTS_SUMMARY_QUERY_KEY,
+        });
+      },
+      onError: () => undefined,
+    });
+  },
 };
+
+export const newMemberSettingsQueries = {
+  usePersonalProjectsSummary: ({ enabled }: { enabled: boolean }) => {
+    return useQuery({
+      queryKey: PERSONAL_PROJECTS_SUMMARY_QUERY_KEY,
+      queryFn: () => personalProjectsApi.summary(),
+      enabled,
+    });
+  },
+};
+
+const PERSONAL_PROJECTS_SUMMARY_QUERY_KEY = ['personal-projects-summary'];
 
 type NewMemberSettingsRequest = Pick<
   UpdatePlatformRequestBody,

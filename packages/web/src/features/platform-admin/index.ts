@@ -27,7 +27,10 @@ export {
 } from './hooks/signing-key-hooks';
 export { auditLogQueries, auditLogKeys } from './hooks/audit-log-hooks';
 export { ssoMutations } from './hooks/sso-hooks';
-export { newMemberSettingsMutations } from './hooks/new-member-settings-hooks';
+export {
+  newMemberSettingsMutations,
+  newMemberSettingsQueries,
+} from './hooks/new-member-settings-hooks';
 export {
   projectRoleQueries,
   projectRoleMutations,

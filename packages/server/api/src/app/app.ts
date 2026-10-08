@@ -65,6 +65,8 @@ import { platformTeardownJobs } from './ee/platform/platform-teardown-jobs'
 import { eventDestinationEntitlementHooks } from './ee/platform-webhooks/event-destination-entitlement-hooks'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
+import { personalProjectsModule } from './ee/projects/personal-projects/personal-projects.module'
+import { personalProjectsService } from './ee/projects/personal-projects/personal-projects.service'
 import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -291,6 +293,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS, (data) => personalProjectsService(app.log).createMissingHandler(data))
 
     systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
@@ -370,6 +373,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
@@ -413,6 +417,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)

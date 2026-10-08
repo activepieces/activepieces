@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 function personalProjectsActive({ autoCreatePersonalProjects, projectRolesEnabled }: PersonalProjectsActiveParams): boolean {
     return autoCreatePersonalProjects || !projectRolesEnabled
 }
@@ -20,3 +22,9 @@ type ActiveDefaultProjectIdsParams = {
     defaultProjectIds: string[]
     projectRolesEnabled: boolean
 }
+
+export const PersonalProjectsSummary = z.object({
+    personalProjectCount: z.number(),
+    membersWithoutPersonalProject: z.number(),
+})
+export type PersonalProjectsSummary = z.infer<typeof PersonalProjectsSummary>
