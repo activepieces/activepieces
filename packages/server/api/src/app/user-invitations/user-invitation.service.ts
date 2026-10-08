@@ -67,14 +67,14 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
+                    if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
+                        await addToInvitedProject({ invitation, userId: user.id, log, failsWithoutProjectRoles: false })
+                    }
                     await userService(log).update({
                         id: user.id,
                         platformId: invitation.platformId,
                         platformRole: invitation.platformRole,
                     })
-                    if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
-                        await addToInvitedProject({ invitation, userId: user.id, log, failsWithoutProjectRoles: false })
-                    }
                     break
                 }
                 case InvitationType.PROJECT: {
