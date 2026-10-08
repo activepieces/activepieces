@@ -1,5 +1,6 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
+import { CreditCard } from 'lucide-react';
 import { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -133,6 +134,13 @@ export const ProjectDashboardLayoutHeader = () => {
         checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS),
       show: !!platform.plan.environmentsEnabled && !!project.sensitive,
       badgeCount: pendingCount,
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/billing'),
+      label: t('Billing'),
+      icon: CreditCard,
+      hasPermission: true,
+      show: true,
     },
   ];
 
