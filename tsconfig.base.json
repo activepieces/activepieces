@@ -1298,6 +1298,9 @@
       "@activepieces/piece-sofya": [
         "packages/pieces/community/sofya/src/index.ts"
       ],
+      "@activepieces/piece-songup-ai": [
+        "packages/pieces/community/songup-ai/src/index.ts"
+      ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"
       ],
