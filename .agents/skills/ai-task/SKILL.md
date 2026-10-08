@@ -251,7 +251,8 @@ The cards below are examples of that voice, not forms to fill in word for word.
    - one "AI area" label;
    - a priority;
    - **a size (XS to XL)** if it has none, with your guess, since "Start here" asks every ticket to be sized;
-   - **template shape:** if the description doesn't follow the template (old or moved tickets), offer the rewritten Goal / Done when (or the bug steps) and save it as part of the same OK. Keep the original text below it.
+   - **template shape:** if the description doesn't follow the template (old or moved tickets), offer the rewritten Goal / Done when (or the bug steps) and save it as part of the same OK. Keep the original text below it;
+   - **the branch** from step 7, created from `origin/main`.
 
    Warn, don't block, if the user already has more than the in-progress limit from "Start here".
 4. **Read before planning:** the brain page for the area, and the files the ticket names.
@@ -260,7 +261,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
    - **Feature:** restate "done when" as something checkable. Name the edition paths to test (CE, EE, Cloud). Flag anything that needs setup on self-hosted, since the default must be zero setup.
    - **Spike:** the question, the time box, and where the answer gets written (`brain/knowledge/decisions/` if it's a hard-to-reverse call).
 6. **How to run it.** If the task needs the app running, add one **Run:** line. Chat and agents need Postgres and Redis (not the PGLite dev DB) plus a model key in `.env.dev`. The fastest path is a dev box: `box new -n <ticket-id>`. For model tiers, point to `brain/knowledge/ai-intelligence/testing-model-tiers-locally.md`.
-7. **Branch:** use the ticket's branch name (`feature/ai-<n>`) or the user's own. Create it from `origin/main` only if the user wants that. Never switch branches with local changes they haven't committed.
+7. **Branch from the ticket.** Read the ticket's `gitBranchName` from Linear (for example `feature/ai-6`); never guess it. Include it in step 3's one OK, then run `git fetch origin main` and `git switch -c <gitBranchName> origin/main`. A branch named after the ticket is what makes Linear link the branch and PR on its own and move the ticket when the PR opens and merges. If the branch already exists, switch to it. If the user has uncommitted changes, don't switch: say so and offer a worktree (`git worktree add ../<gitBranchName> -b <gitBranchName> origin/main`). If they insist on their own branch name, it must still contain the ticket ID (`ai-6`), or the link breaks.
 
 ## Triage: a bug, a support question or an old ticket
 
