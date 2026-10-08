@@ -90,32 +90,53 @@ describe('Default projects', () => {
         expect(response?.json().defaultProjectIds).toStrictEqual([])
     })
 
-    it('drops a deleted project from the list', async () => {
+    it('refuses to delete a default project from the app', async () => {
         const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
-        const deletedProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
-        await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { defaultProjectIds: [mockProject.id, deletedProject.id] })
-        const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id], autoCreatePersonalProjects: true })
 
-        const response = await app?.inject({
-            method: 'DELETE',
-            url: `/api/v1/projects/${deletedProject.id}`,
-            headers: { authorization: `Bearer ${token}` },
-        })
+        const response = await deleteProject({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: mockProject.id })
 
-        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-        const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: mockPlatform.id })
-        expect(platform.defaultProjectIds).toStrictEqual([mockProject.id])
+        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(await isLive({ projectId: mockProject.id })).toBe(true)
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([mockProject.id])
     })
 
-    it('deletes the last default project, even while personal projects are off', async () => {
+    it('deletes it from the app once it is no longer a default project', async () => {
         const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
-        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id], autoCreatePersonalProjects: false })
+        const otherDefault = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [otherDefault.id], autoCreatePersonalProjects: true })
 
         const response = await deleteProject({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: mockProject.id })
 
         expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-        const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: mockPlatform.id })
-        expect(platform.defaultProjectIds).toStrictEqual([])
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([otherDefault.id])
+    })
+
+    it('still deletes a default project with an API key, and drops it from the list', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        const deletedProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id, deletedProject.id], autoCreatePersonalProjects: false })
+        const apiKey = createMockApiKey({ platformId: mockPlatform.id })
+        await databaseConnection().getRepository('api_key').save(apiKey)
+
+        const response = await app?.inject({
+            method: 'DELETE',
+            url: `/api/v1/projects/${deletedProject.id}`,
+            headers: { authorization: `Bearer ${apiKey.value}` },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([mockProject.id])
+    })
+
+    it('still deletes a default project from the app on a plan without project roles, and drops it from the list', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: false })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id], autoCreatePersonalProjects: true })
+
+        const response = await deleteProject({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: mockProject.id })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([])
     })
 
     it('drops a project from the list when SCIM deletes its group', async () => {
@@ -172,4 +193,14 @@ async function deleteProject({ platformId, userId, projectId }: { platformId: st
         url: `/api/v1/projects/${projectId}`,
         headers: { authorization: `Bearer ${token}` },
     })
+}
+
+async function defaultProjectIdsOf({ platformId }: { platformId: string }) {
+    const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: platformId })
+    return platform.defaultProjectIds
+}
+
+async function isLive({ projectId }: { projectId: string }) {
+    const project = await databaseConnection().getRepository('project').findOneBy({ id: projectId })
+    return project !== null && project.deleted === null
 }
