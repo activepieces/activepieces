@@ -7,41 +7,36 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-normal whitespace-nowrap transition-all outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-normal whitespace-nowrap transition-all outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
           'bg-accent-9 stroke-on-accent text-on-accent enabled:hover:bg-accent-9/90',
-        basic:
-          'text-accent-11 font-medium underline-offset-4 enabled:hover:bg-gray-4',
         secondary:
           'text-gray-12 bg-gray-3 enabled:hover:bg-gray-4 enabled:hover:text-gray-12',
         destructive:
           'bg-danger-9 text-on-danger enabled:hover:bg-danger-9/90 focus-visible:ring-danger-9/20 dark:focus-visible:ring-danger-9/40',
         outline:
           'border-gray-6 bg-gray-1 enabled:hover:bg-gray-4 enabled:hover:text-gray-12 border',
-        accent: 'bg-gray-4 text-gray-12 enabled:hover:bg-gray-5',
         ghost: 'hover:bg-gray-4 hover:text-gray-12',
         link: 'text-accent-11 underline-offset-4 hover:underline',
-        transparent: 'text-accent-11 enabled:hover:bg-transparent',
       },
       size: {
         default: 'h-9 px-3 py-2 has-[>svg]:px-2.5',
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: 'h-8 gap-1.5 rounded-md px-2.5 has-[>svg]:px-2',
-        lg: 'h-10 rounded-md px-5 has-[>svg]:px-4',
-        xl: 'h-11 rounded-md px-8 has-[>svg]:px-6',
+        sm: 'h-8 gap-1.5 px-2.5 has-[>svg]:px-2',
+        xs: "h-7 gap-1 px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: 'h-10 px-4 has-[>svg]:px-3.5',
         icon: 'size-9',
-        'icon-xs': "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         'icon-sm': 'size-8',
+        'icon-xs': "size-7 [&_svg:not([class*='size-'])]:size-3.5",
         'icon-lg': 'size-10',
       },
     },
     compoundVariants: [
       {
         variant: 'link',
-        class: 'px-0',
+        class: 'px-0 has-[>svg]:px-0',
       },
     ],
     defaultVariants: {
@@ -93,7 +88,7 @@ function renderButtonContent(
   if (loading) {
     return (
       <LoadingSpinner
-        className={cn('size-5', {
+        className={cn('size-4', {
           'stroke-on-accent': variant === 'default',
           'stroke-on-danger': variant === 'destructive',
           'stroke-gray-12': variant !== 'default' && variant !== 'destructive',

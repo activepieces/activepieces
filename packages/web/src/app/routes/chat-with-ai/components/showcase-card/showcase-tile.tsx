@@ -49,7 +49,7 @@ export function ShowcaseTile({
         <span
           className={cn(
             'shrink-0 animate-pulse bg-gray-3',
-            isList ? 'size-8 rounded-md' : 'size-10 rounded-lg',
+            isList ? 'size-8 rounded-md' : 'size-10 rounded-xl',
           )}
         />
       ) : (
@@ -65,7 +65,7 @@ export function ShowcaseTile({
             className={cn(
               'truncate text-gray-12',
               isList
-                ? 'font-serif text-lg font-bold leading-snug'
+                ? 'font-serif text-lg font-semibold leading-snug'
                 : 'text-sm font-medium',
             )}
           >

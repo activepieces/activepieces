@@ -29,7 +29,7 @@ export function ModeRadioCards<TValue extends string>({
           <label
             key={option.value}
             className={cn(
-              'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 transition-colors',
+              'flex cursor-pointer flex-col gap-1.5 rounded-xl border p-3 transition-colors',
               option.value === value
                 ? 'border-accent-9 bg-accent-3'
                 : 'hover:bg-gray-3/50',

@@ -196,7 +196,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
                         !included && 'opacity-50',
                       )}
                     >
-                      <Badge variant="accent">
+                      <Badge variant="secondary">
                         {curated
                           ? t('{count} of {total} included', {
                               count: selectedCount,

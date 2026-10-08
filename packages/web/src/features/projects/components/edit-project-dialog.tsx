@@ -166,7 +166,6 @@ const EditProjectForm = ({
                 {...field}
                 id="displayName"
                 placeholder={t('Project Name')}
-                className="rounded-sm"
               />
               <FormMessage />
             </FormItem>
@@ -187,7 +186,6 @@ const EditProjectForm = ({
                     {...field}
                     id="externalId"
                     placeholder={t('org-3412321')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>

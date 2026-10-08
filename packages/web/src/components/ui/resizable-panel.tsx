@@ -42,7 +42,7 @@ function ResizableHandle({
       {...props}
     >
       {withHandle && (
-        <div className="z-10 flex h-4 w-3 items-center justify-center rounded-xs border bg-gray-6">
+        <div className="z-10 flex h-4 w-3 items-center justify-center rounded-md border bg-gray-6">
           <GripVerticalIcon className="size-2.5 hover:fill-accent-11" />
         </div>
       )}

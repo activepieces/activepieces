@@ -134,10 +134,7 @@ export function ApTableHeader({
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="size-6 flex items-center justify-center"
-                  >
+                  <Button variant="ghost" size="icon-xs">
                     <ChevronDown className="h-4 w-4 text-gray-11" />
                   </Button>
                 </DropdownMenuTrigger>

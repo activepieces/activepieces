@@ -20,7 +20,7 @@ export function AnsweredQuestionsCard({ pairs }: AnsweredQuestionsCardProps) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-gray-3 rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">
@@ -59,7 +59,7 @@ export function ChatCard({ children, className }: ChatCardProps) {
   return (
     <motion.div
       className={cn(
-        'rounded-2xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors',
+        'rounded-xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors',
         className,
       )}
       initial={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -84,8 +84,8 @@ export function ChatCardHeader({
         <div className="flex flex-1 min-w-0 items-center gap-1">
           <Button
             variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0 text-gray-11"
+            size="icon-xs"
+            className="text-gray-11"
             onClick={onBack}
             aria-label={t('Back')}
           >
@@ -102,8 +102,8 @@ export function ChatCardHeader({
         {onClose && (
           <Button
             variant="ghost"
-            size="icon"
-            className="ms-1 h-7 w-7"
+            size="icon-xs"
+            className="ms-1"
             onClick={onClose}
             aria-label={t('Close')}
           >
@@ -243,8 +243,7 @@ export function ChatAnswerInputRow({
       <Button
         type="button"
         variant={active ? 'default' : 'outline'}
-        size={active ? 'icon' : 'sm'}
-        className={cn('h-7 shrink-0', active ? 'w-7' : 'px-2.5 text-sm')}
+        size={active ? 'icon-xs' : 'xs'}
         onClick={() => (active ? onSubmit() : onSkip())}
         aria-label={active ? t('Send') : t('Skip')}
       >

@@ -112,7 +112,7 @@ const PiecesSettings = () => {
           button={
             <RequestTrial
               featureKey="ENTERPRISE_PIECES"
-              buttonVariant="basic"
+              buttonVariant="ghost"
             />
           }
         />

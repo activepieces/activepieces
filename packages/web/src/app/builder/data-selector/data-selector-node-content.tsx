@@ -163,8 +163,8 @@ const DataSelectorNodeContent = ({
 
         {showInsertButton && (
           <Button
-            variant="basic"
-            size="sm"
+            variant="ghost"
+            size="xs"
             tabIndex={-1}
             onClick={(e) => {
               e.stopPropagation();
@@ -173,7 +173,7 @@ const DataSelectorNodeContent = ({
               }
             }}
             className={cn(
-              'h-6 px-2 text-xs text-accent-11 shrink-0 opacity-0 transition-opacity',
+              'font-medium text-accent-11 opacity-0 transition-opacity',
               'group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >

@@ -328,9 +328,7 @@ function ProviderGroup({
         </Button>
       </div>
       <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
-          {t('Keys')}
-        </p>
+        <p className="text-xs font-medium text-gray-11">{t('Keys')}</p>
       </div>
       <div>
         {configs.map((config) => (
@@ -399,7 +397,7 @@ function ConfigRow({
             {config.name}
           </p>
           {config.enabledForChat && (
-            <span className="shrink-0 rounded-full bg-accent-3 px-2 py-px text-[11px] font-medium text-accent-11">
+            <span className="shrink-0 rounded-full bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
               {t('Chat')}
             </span>
           )}
@@ -439,8 +437,8 @@ function ConfigRow({
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
-              className="px-2 text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100"
+              size="icon-sm"
+              className="text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100"
               onClick={() => setDeleteOpen(true)}
               {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
             >
@@ -611,7 +609,7 @@ function EmptyProviders({
         ))}
       </div>
       <div className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
+        <p className="text-xs font-medium text-gray-11">
           {t('Or choose another provider')}
         </p>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -695,7 +693,7 @@ function ProvidersSkeleton() {
           )}
         >
           <div className="flex items-center gap-3 px-5 py-4">
-            <Skeleton className="size-8 shrink-0 rounded-lg" />
+            <Skeleton className="size-8 shrink-0 rounded-xl" />
             <div className="flex flex-1 flex-col gap-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-20" />

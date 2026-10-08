@@ -111,7 +111,7 @@ const ConfigurationsSkeleton = () => {
             <Skeleton className="h-5 w-24" />
             <Skeleton className="h-4 w-full" />
           </div>
-          <Skeleton className="h-[4.5rem] w-full rounded-lg" />
+          <Skeleton className="h-[4.5rem] w-full rounded-xl" />
         </div>
       </CenteredPage>
     </div>

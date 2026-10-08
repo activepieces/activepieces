@@ -34,15 +34,16 @@ const CarouselContentWithButtons = ({
         paddingRight: canScrollNext ? '3rem' : '0',
       }}
     >
-      <CarouselContent className={cn('-ml-2 gap-1', className)}>
+      <CarouselContent className={cn('gap-3', className)}>
         {categories.map((category) => {
           const isSelected = selectedCategory === category;
           return (
-            <CarouselItem key={category} className="basis-auto pl-2">
+            <CarouselItem key={category} className="basis-auto">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => onCategorySelect(category)}
-                className={`px-4 py-1.5 h-auto whitespace-nowrap transition-colors ${
+                className={`whitespace-nowrap transition-colors ${
                   isSelected
                     ? 'bg-gray-12 text-gray-1 border-gray-12 hover:!bg-gray-12 hover:!text-gray-1'
                     : 'bg-transparent hover:!bg-gray-4 hover:!text-gray-12 border-none'

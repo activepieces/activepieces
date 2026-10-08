@@ -133,8 +133,7 @@ export default function ImpactPage() {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
+                      size="icon-xs"
                       onClick={() =>
                         refreshAnalytics(undefined, {
                           onSuccess: () =>
@@ -158,7 +157,7 @@ export default function ImpactPage() {
                 value={selectedTimePeriod}
                 onValueChange={handleTimePeriodChange}
               >
-                <SelectTrigger className="w-auto gap-2 h-8">
+                <SelectTrigger size="sm" className="w-auto">
                   <Calendar className="h-4 w-4" />
                   <SelectValue />
                 </SelectTrigger>

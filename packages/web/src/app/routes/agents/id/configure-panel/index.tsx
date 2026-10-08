@@ -105,7 +105,7 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
   return (
     <FormItem className="flex flex-col gap-2">
       <PanelSectionLabel label={t('Project')} />
-      <div className="flex items-center justify-between gap-3 rounded-[10px] border border-gray-6 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-6 px-3 py-2.5">
         <ApProjectDisplay
           title={getProjectName(home)}
           icon={home.icon}
@@ -236,7 +236,7 @@ const ConfigureBehaviorTab = ({
                 placeholder={t(
                   'Reply to refund requests. Check the order in Stripe first, and escalate anything over $200.',
                 )}
-                className="rounded-[10px] px-3 py-3 text-sm leading-relaxed"
+                className="px-3 py-3 text-sm leading-relaxed"
               />
             </FormControl>
             <FormMessage />
@@ -246,7 +246,7 @@ const ConfigureBehaviorTab = ({
       <FormItem className="flex flex-col gap-2">
         <PanelSectionLabel label={t('Model')} />
         {needsModel && (
-          <p className="text-[13px] leading-4 text-danger-11">
+          <p className="text-sm leading-4 text-danger-11">
             {t('Pick a model so this agent can answer.')}
           </p>
         )}
@@ -378,7 +378,7 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Shape')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-gray-6 p-3">
+          <div className="grid grid-cols-6 gap-2.5 rounded-lg border border-gray-6 p-3">
             {Object.values(AgentIcon).map((iconName) => (
               <button
                 key={iconName}
@@ -386,7 +386,7 @@ const ConfigureSettingsTab = ({
                 aria-label={iconName}
                 onClick={() => field.onChange(iconName)}
                 className={cn(
-                  'flex items-center justify-center rounded-[10px] p-[3px]',
+                  'flex items-center justify-center rounded-lg p-[3px]',
                   field.value === iconName && 'ring-2 ring-gray-12',
                 )}
               >
@@ -408,7 +408,7 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Color')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-gray-6 p-3">
+          <div className="grid grid-cols-6 gap-2.5 rounded-lg border border-gray-6 p-3">
             {PICKABLE_COLOR_NAMES.map((colorName) => (
               <button
                 key={colorName}
@@ -625,7 +625,7 @@ const AgentConfigurePanel = forwardRef<
         >
           <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 px-[18px]">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+              <span className="truncate text-base font-semibold leading-5 tracking-tight">
                 {t('Configure')}
               </span>
               {unsavedTyping && (
@@ -641,7 +641,6 @@ const AgentConfigurePanel = forwardRef<
                   type="button"
                   variant="outline"
                   onClick={takeTheirVersion}
-                  className="h-[34px] shrink-0 rounded-lg px-4"
                 >
                   {t('Changed in chat — reload')}
                 </Button>
@@ -650,7 +649,7 @@ const AgentConfigurePanel = forwardRef<
                   <Button
                     type="submit"
                     loading={updateAgent.isPending}
-                    className="h-[34px] shrink-0 rounded-lg px-4 animate-in fade-in duration-200"
+                    className="animate-in fade-in duration-200"
                   >
                     {t('Publish')}
                   </Button>
@@ -659,10 +658,10 @@ const AgentConfigurePanel = forwardRef<
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
+                size="icon-xs"
                 aria-label={t('Close')}
                 onClick={requestExit}
-                className="size-7 shrink-0 text-gray-11"
+                className="text-gray-11"
               >
                 <X size={16} />
               </Button>

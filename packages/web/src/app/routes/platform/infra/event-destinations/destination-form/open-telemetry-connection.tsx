@@ -129,7 +129,7 @@ export const OpenTelemetryConnection = ({
                 <Label htmlFor="otlp-protobuf" className="font-normal">
                   {t('Protobuf')}
                 </Label>
-                <Badge className="rounded-md">{t('Recommended')}</Badge>
+                <Badge>{t('Recommended')}</Badge>
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem

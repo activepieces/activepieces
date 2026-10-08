@@ -38,8 +38,8 @@ export function ChatCreditsAlert({
       {!isError && (
         <Button
           variant="ghost"
-          size="sm"
-          className="text-warning-11 hover:text-warning-11 shrink-0 h-6 w-6 p-0"
+          size="icon-xs"
+          className="text-warning-11 hover:text-warning-11"
           onClick={onDismiss}
         >
           <X className="h-3 w-3" />

@@ -29,10 +29,10 @@ export const CurrentSubscriptionCard = ({
         style={{ backgroundImage: `url(${nonFreePlanBg})` }}
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="text-2xl font-bold text-gray-12">
+          <span className="text-2xl font-semibold text-gray-12">
             {planTitle(info)}
           </span>
-          <Badge className="rounded-full border-0 bg-panel px-3 py-1 text-accent-11 shadow-edge">
+          <Badge className="border-0 bg-panel text-accent-11 shadow-edge">
             {isYearly ? t('Yearly') : t('Monthly')}
           </Badge>
         </div>

@@ -46,7 +46,7 @@ export const AutomationsSelectionBar = ({
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="flex items-center gap-3 bg-gray-1 border rounded-lg shadow-lg p-2">
+          <div className="flex items-center gap-3 bg-gray-1 border rounded-xl shadow-lg p-2">
             {!embedState.hideFolders && (
               <Button
                 variant="ghost"
@@ -105,12 +105,7 @@ export const AutomationsSelectionBar = ({
             <span className="text-sm text-gray-11">
               {t('{count} selected', { count: selectedCount })}
             </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={onClearSelection}
-            >
+            <Button variant="ghost" size="icon-sm" onClick={onClearSelection}>
               <X className="h-4 w-4" />
             </Button>
           </div>

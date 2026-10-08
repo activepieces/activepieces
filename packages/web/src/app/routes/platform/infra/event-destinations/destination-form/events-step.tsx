@@ -115,7 +115,7 @@ export const EventsStep = ({
               </Button>
             </div>
 
-            <div className="grid min-h-[340px] grid-cols-[240px_minmax(0,1fr)] overflow-hidden rounded-lg border">
+            <div className="grid min-h-[340px] grid-cols-[240px_minmax(0,1fr)] overflow-hidden rounded-xl border">
               <nav className="flex flex-col gap-0.5 border-r bg-gray-3 p-1.5">
                 {visibleGroups.map((group) => {
                   const isActive = group.key === activeGroup?.key;

@@ -27,7 +27,7 @@ export function StatusProgressBar({ days, className }: StatusProgressBarProps) {
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  'w-3 h-6 rounded-sm cursor-pointer transition-colors',
+                  'w-3 h-6 rounded-md cursor-pointer transition-colors',
                   'hover:scale-110 hover:shadow-xs',
                   {
                     'bg-success-9 hover:bg-success-9/80':

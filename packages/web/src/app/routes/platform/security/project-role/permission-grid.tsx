@@ -34,7 +34,7 @@ export function PermissionGrid({
       <ColumnHeader className={headerClassName} />
       {columnGroups.map((group) => (
         <div key={group.key} className="flex flex-col">
-          <p className="flex items-center gap-2 pt-3 pb-1 text-xss font-medium uppercase tracking-wider text-gray-11">
+          <p className="flex items-center gap-2 pt-3 pb-1 text-xs font-medium text-gray-11">
             <span className="size-1.5 shrink-0" />
             {group.label}
           </p>
@@ -98,10 +98,10 @@ function ColumnHeader({ className }: { className?: string }) {
     >
       <span className="size-1.5 shrink-0" />
       <span className="flex-1" />
-      <span className="w-12 shrink-0 text-center text-xss font-medium uppercase tracking-wider text-gray-11">
+      <span className="w-12 shrink-0 text-center text-xs font-medium text-gray-11">
         {t('View')}
       </span>
-      <span className="w-12 shrink-0 text-center text-xss font-medium uppercase tracking-wider text-gray-11">
+      <span className="w-12 shrink-0 text-center text-xs font-medium text-gray-11">
         {t('Edit')}
       </span>
     </div>
