@@ -1,7 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import {
+  createAction,
+  isNil,
+  Property,
+} from '@activepieces/pieces-framework';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglModels, TwoTimeEntry } from '../common/models';
+import { togglTimeEntries } from '../common/time-entries';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const createTimeEntry = createAction({
   auth: togglTrackAuth,
@@ -10,7 +17,11 @@ export const createTimeEntry = createAction({
   displayName: 'Create Time Entry',
   description: 'Create a new time entry in a workspace.',
   audience: 'both',
-  aiMetadata: { description: 'Creates a time entry in a Toggl Track workspace with a start time and duration in seconds; can record a completed entry (positive duration or explicit stop) or start a running timer (pass a negative duration such as -1). Optionally links project, task, tags, and billable flag. Use to log work after the fact or begin tracking. Not idempotent: each call creates a new entry.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Creates a time entry with a start time and a duration in seconds (a negative duration with no stop starts a running timer). Agents: prefer Log Time (Agent). Returns the created entry. A retry creates a duplicate.',
+    idempotent: false,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     description: Property.LongText({
@@ -50,45 +61,97 @@ export const createTimeEntry = createAction({
       required: false,
     }),
   },
+  outputSchema: togglOutputSchemas.timeEntry,
   async run(context) {
-    const {
-      workspace_id,
-      description,
-      start,
-      duration,
-      stop,
-      project_id,
-      task_id,
-      tags,
-      billable,
-      user_id,
-    } = context.propsValue;
-    const apiToken = context.auth;
+    const { description, start, duration, stop, tags, billable } =
+      context.propsValue;
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
+    });
+    const projectId = togglApi.optionalId({
+      value: context.propsValue.project_id,
+      label: 'Project',
+    });
+    const taskId = togglApi.optionalId({
+      value: context.propsValue.task_id,
+      label: 'Task',
+    });
+    const userId = togglApi.optionalId({
+      value: context.propsValue.user_id,
+      label: 'Creator User ID',
+    });
+    const startIso = togglApi.toIsoDateTime({ value: start, label: 'Start Time' });
+    const stopIso = stop
+      ? togglApi.toIsoDateTime({ value: stop, label: 'Stop Time' })
+      : undefined;
+    if (stopIso && new Date(stopIso).getTime() < new Date(startIso).getTime()) {
+      throw new Error('Stop Time must be after Start Time.');
+    }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/time_entries`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
+    if (togglApi.isTwo(auth)) {
+      if (duration < 0 && !stopIso) {
+        return togglTimeEntries.twoStart({
+          auth,
+          workspaceId,
+          start: startIso,
+          description,
+          projectId,
+          taskId,
+          tags,
+          billable,
+        });
+      }
+      const seconds = stopIso
+        ? Math.round(
+            (new Date(stopIso).getTime() - new Date(startIso).getTime()) / 1000
+          )
+        : Math.round(duration);
+      const tagIds = await togglApi.resolveTwoTagIds({
+        auth,
+        workspaceId,
+        names: tags,
+      });
+      const created = await togglApi.request<TwoTimeEntry>({
+        auth,
+        method: togglApi.HttpMethod.POST,
+        path: togglApi.twoWorkspacePath({
+          auth,
+          workspaceId,
+          path: isNil(taskId) ? '/time-entries' : `/tasks/${taskId}/time-entries`,
+        }),
+        body: {
+          type: 'activity',
+          start: startIso,
+          duration: seconds,
+          ...(description ? { description } : {}),
+          ...(isNil(projectId) ? {} : { project_id: projectId }),
+          ...(isNil(tagIds) ? {} : { tag_ids: tagIds }),
+          ...(isNil(billable) ? {} : { billable }),
+          ...(isNil(userId) ? {} : { user_id: userId }),
+        },
+      });
+      return togglModels.timeEntry({ item: created, running: false });
+    }
+
+    return togglApi.request<Record<string, unknown>>({
+      auth,
+      method: togglApi.HttpMethod.POST,
+      path: `/workspaces/${workspaceId}/time_entries`,
       body: {
-        workspace_id: Number(workspace_id),
+        workspace_id: workspaceId,
         description,
-        start: new Date(start).toISOString(),
+        start: startIso,
         duration,
         created_with: 'Activepieces',
         billable,
-        ...(stop && { stop: new Date(stop).toISOString() }),
-        ...(project_id && { project_id }),
-        ...(task_id && { task_id }),
-        ...(tags && { tags }),
-        ...(user_id && { user_id }),
+        ...(stopIso ? { stop: stopIso } : {}),
+        ...(projectId ? { project_id: projectId } : {}),
+        ...(taskId ? { task_id: taskId } : {}),
+        ...(tags ? { tags } : {}),
+        ...(userId ? { user_id: userId } : {}),
       },
     });
-
-    return response.body;
   },
 });

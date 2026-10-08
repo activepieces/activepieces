@@ -4,7 +4,8 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { togglTrackAuth } from '../auth';
+import { togglApi } from '../common/client';
 import { togglCommon } from '../common';
 import {
   generateTogglWebhookInstructions,
@@ -19,7 +20,7 @@ export const newTimeEntry = createTrigger({
   description:
     'Fires when a new time entry is added (with optional project/task filter).',
   aiMetadata: {
-    description: 'Fires when a new time entry is created in the configured Toggl Track workspace, delivering the entry (start/stop, duration, description, tags, project/task, billable). Can be narrowed to a specific project and/or task via the optional filters. Delivered via a Toggl webhook the user must set up manually.',
+    description: 'Fires when a time entry is created in the workspace, delivering the entry; optional filters narrow it to one project or task. Needs a webhook created manually in Toggl. Classic only.',
   },
   props: {
     workspace_id: togglCommon.workspace_id,
@@ -61,11 +62,13 @@ export const newTimeEntry = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    // Manual setup - no programmatic registration needed
+    if (togglApi.isTwo(context.auth)) {
+      throw togglApi.classicOnlyError(WEBHOOK_TRIGGER_NAME);
+    }
   },
 
-  async onDisable(context) {
-    // Manual setup - users manage webhooks in Toggl Track UI
+  async onDisable() {
+    return;
   },
 
   async run(context) {
@@ -109,3 +112,5 @@ export const newTimeEntry = createTrigger({
     return [payload];
   },
 });
+
+const WEBHOOK_TRIGGER_NAME = 'The New Time Entry trigger';
