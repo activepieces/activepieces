@@ -135,12 +135,12 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             return paginationHelper.createPage<ProjectMemberWithUser>(members, cursor)
         }
         const memberUserIds = members
-            .filter((member) => member.user.platformRole === PlatformRole.MEMBER)
+            .filter(isGuardedMember)
             .map((member) => member.userId)
         const projectCounts = await countProjectsOfUsers({ userIds: memberUserIds, platformId })
         const enrichedData = members.map((member) => ({
             ...member,
-            isLastProject: member.user.platformRole === PlatformRole.MEMBER && (projectCounts.get(member.userId) ?? 0) <= 1,
+            isLastProject: isGuardedMember(member) && (projectCounts.get(member.userId) ?? 0) <= 1,
         }))
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
@@ -307,6 +307,10 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
 })
+
+function isGuardedMember(member: ProjectMemberWithUser): boolean {
+    return member.user.platformRole === PlatformRole.MEMBER && member.user.status === UserStatus.ACTIVE
+}
 
 async function assertMemberKeepsAProject({ member, log }: AssertMemberKeepsAProjectParams): Promise<void> {
     const user = await userService(log).getOneOrFail({ id: member.userId })
