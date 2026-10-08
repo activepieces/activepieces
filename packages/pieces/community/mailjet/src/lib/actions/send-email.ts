@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { mailjetAuth } from '../auth';
+import { mailjetApi } from '../common/api';
 
-export const sendEmail = createAction({
+export const sendEmailAction = createAction({
   auth: mailjetAuth,
   name: 'send_email',
   classification: 'WRITE',
@@ -50,42 +50,16 @@ export const sendEmail = createAction({
       required: false
     })
   },
-  async run(configValue) {
-    const { propsValue, auth } = configValue;
-
-    const message = {
-      From: {
-        Email: propsValue.fromEmail,
-        Name: propsValue.fromName || propsValue.fromEmail
-      },
-      To: propsValue.toEmails.map(to => ({
-        Email: to,
-        Name: to
-      })),
-      Subject: propsValue.subject,
-      TextPart: propsValue.textPart,
-      TemplateID: propsValue.templateId,
-      TemplateLanguage: !!propsValue.templateId,
-      Variables: propsValue.templateVariables
-    };
-    const request: HttpRequest<string> = {
-      method: HttpMethod.POST,
-      url: `https://api.mailjet.com/v3.1/send`,
-      body: JSON.stringify({ messages: [message] }),
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.username,
-        password: auth.password
-      },
-      queryParams: {}
-    };
-
-    const response = await httpClient.sendRequest(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Failed to communicate with Mailjet`);
-    } else {
-      return response.body.Messages[0];
-    }
+  async run({ propsValue, auth }) {
+    return await mailjetApi.sendEmail({
+      auth,
+      fromEmail: propsValue.fromEmail,
+      fromName: propsValue.fromName,
+      toEmails: propsValue.toEmails,
+      subject: propsValue.subject,
+      textPart: propsValue.textPart,
+      templateId: propsValue.templateId,
+      templateVariables: propsValue.templateVariables,
+    });
   }
 });

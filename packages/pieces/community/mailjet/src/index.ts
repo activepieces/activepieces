@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { sendEmail } from './lib/actions/send-email';
+import { sendEmailAction } from './lib/actions/send-email';
 import { mailjetAuth } from './lib/auth';
 
 export const mailjet = createPiece({
@@ -11,6 +11,6 @@ export const mailjet = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mailjet.svg',
   categories: [PieceCategory.COMMUNICATION],
   authors: ['christian-schab'],
-  actions: [sendEmail],
+  actions: [sendEmailAction],
   triggers: []
 });
