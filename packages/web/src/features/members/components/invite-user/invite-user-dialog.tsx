@@ -227,6 +227,12 @@ const InviteUserDialogInternal = ({
   const invitationType = form.getValues().type;
   const isPlatformInvite = invitationType === InvitationType.PLATFORM;
   const selectedPlatformRole = form.watch('platformRole');
+  const enteredEmails = form.watch('emails');
+  const invitesSomeoneNew =
+    enteredEmails.length === 0 ||
+    enteredEmails.some(
+      (email) => !platformUserEmails.has(email.trim().toLowerCase()),
+    );
   const joinsDefaultProjects =
     invitationType === InvitationType.PROJECT ||
     selectedPlatformRole === PlatformRole.MEMBER;
@@ -375,6 +381,7 @@ const InviteUserDialogInternal = ({
                           : undefined
                       }
                       includesPersonalProject={isPlatformInvite}
+                      invitesSomeoneNew={invitesSomeoneNew}
                     />
                   )}
 
