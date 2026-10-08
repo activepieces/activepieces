@@ -1,6 +1,7 @@
 import { ErrorCode, Permission } from '@activepieces/core-utils';
 import {
   InvitationType,
+  PlatformRole,
   ProjectMemberWithUser,
   UserInvitation,
   UserWithMetaInformation,
@@ -35,6 +36,7 @@ import {
 import { projectRoleQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -173,6 +175,8 @@ const ActionsCell = ({
 }) => {
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const isPlatformAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLastProjectOpen, setIsLastProjectOpen] = useState(false);
   const isLastProject =
@@ -197,13 +201,19 @@ const ActionsCell = ({
   const deleteMember = async () => {
     if (row.original.type === 'member') {
       await projectMembersApi.delete(row.original.data.id);
+    } else if (isPlatformInvitation) {
+      await userInvitationApi.removeProject(row.original.data.id);
     } else {
       await userInvitationApi.delete(row.original.data.id);
     }
     refetch();
   };
 
-  if (isOwner || isPlatformAdminOrOperator || isPlatformInvitation) {
+  if (
+    isOwner ||
+    isPlatformAdminOrOperator ||
+    (isPlatformInvitation && !isPlatformAdmin)
+  ) {
     return null;
   }
 
@@ -233,12 +243,19 @@ const ActionsCell = ({
           internalErrorToast();
         }}
         title={
-          row.original.type === 'invitation'
+          isPlatformInvitation
+            ? t('Remove from this project?')
+            : row.original.type === 'invitation'
             ? t('Remove Invitation')
             : t('Remove Member')
         }
         message={
-          row.original.type === 'invitation'
+          isPlatformInvitation
+            ? t('removePlatformInviteFromProject', {
+                email: displayName,
+                projectName: project.displayName,
+              })
+            : row.original.type === 'invitation'
             ? t('This invitation will be revoked immediately.')
             : t('This member will lose access to the project immediately.')
         }
@@ -272,9 +289,7 @@ const PlatformInviteBadge = () => (
         </Badge>
       </TooltipTrigger>
       <TooltipContent>
-        {t(
-          'Invited to the platform with this project. Manage it in Users → Members.',
-        )}
+        {t('Invited to the platform with this project.')}
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>
