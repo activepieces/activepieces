@@ -11,6 +11,7 @@ import type {
 	RobollyRender,
 	RobollyRendersPage,
 	RobollyTemplate,
+	RobollyTemplateFields,
 	RobollyTemplatesResponse,
 } from './types';
 
@@ -48,43 +49,50 @@ async function listAcceptedModifications({
 	return response.acceptedModifications;
 }
 
-async function listGalleryTemplates({ auth }: { auth: RobollyAuthValue }): Promise<unknown> {
+async function listGalleryTemplates({
+	auth,
+	cursor,
+}: {
+	auth: RobollyAuthValue;
+	cursor: string | undefined;
+}): Promise<unknown> {
 	return await robollyClient.request<unknown>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/v1/templates-gallery',
+		query: toQuery({ values: { paginationCursorNext: cursor } }),
 	});
 }
 
 async function createTemplate({
 	auth,
-	template,
+	fields,
 }: {
 	auth: RobollyAuthValue;
-	template: Record<string, unknown>;
+	fields: RobollyTemplateFields & { name: string };
 }): Promise<unknown> {
 	return await robollyClient.request<unknown>({
 		auth,
 		method: HttpMethod.POST,
 		path: '/v1/templates',
-		body: template,
+		body: definedOnly({ values: fields }),
 	});
 }
 
 async function updateTemplate({
 	auth,
 	templateId,
-	changes,
+	fields,
 }: {
 	auth: RobollyAuthValue;
 	templateId: string;
-	changes: Record<string, unknown>;
-}): Promise<unknown> {
-	return await robollyClient.request<unknown>({
+	fields: RobollyTemplateFields;
+}): Promise<void> {
+	await robollyClient.request<unknown>({
 		auth,
 		method: HttpMethod.PATCH,
 		path: `/v1/templates/${templateId}`,
-		body: changes,
+		body: definedOnly({ values: fields }),
 	});
 }
 
@@ -134,26 +142,6 @@ async function renderTemplateLink({
 	});
 }
 
-async function renderMultiPagePdf({
-	auth,
-	multipdfId,
-	pages,
-}: {
-	auth: RobollyAuthValue;
-	multipdfId: string;
-	pages: Record<string, unknown>[];
-}): Promise<unknown> {
-	const pageQuery = pages.flatMap((page, index) =>
-		Object.entries(toQuery({ values: page })).map(([key, value]) => [`t[${index}][${key}]`, value]),
-	);
-	return await robollyClient.request<unknown>({
-		auth,
-		method: HttpMethod.GET,
-		path: '/v1/pdf/render/',
-		query: { multipdfId, ...Object.fromEntries(pageQuery), json: '1' },
-	});
-}
-
 function createHiddenRenderLink({
 	auth,
 	templateId,
@@ -165,45 +153,16 @@ function createHiddenRenderLink({
 	format: string;
 	modifications: Record<string, unknown> | undefined;
 }): { url: string } {
-	const modificationQuery = new URLSearchParams(
-		toQuery({ values: modifications ?? {} }),
-	).toString();
-	const sig = createHmac('sha256', auth.secret_text)
-		.update(`${templateId}:${format}:${modificationQuery}`)
-		.digest('hex');
-	const query = new URLSearchParams({
+	const unsignedQuery = new URLSearchParams({
 		template: templateId,
 		...toQuery({ values: modifications ?? {} }),
-		sig,
 	}).toString();
+	const sig = createHmac('sha256', auth.secret_text)
+		.update(`${templateId}:${format}:${unsignedQuery}`)
+		.digest('hex');
+	const query = `${unsignedQuery}&sig=${sig}`;
 	const encoded = Buffer.from(query, 'utf8').toString('base64url');
 	return { url: `${robollyClient.baseUrl()}/rd/${encoded}.${format}` };
-}
-
-async function renderVideo({
-	auth,
-	timeline,
-	audio,
-	fps,
-	movieId,
-}: {
-	auth: RobollyAuthValue;
-	timeline: unknown;
-	audio: unknown;
-	fps: number | undefined;
-	movieId: string | undefined;
-}): Promise<unknown> {
-	return await robollyClient.request<unknown>({
-		auth,
-		method: HttpMethod.POST,
-		path: '/v1/video/render',
-		body: {
-			timeline,
-			...(audio !== undefined ? { audio } : {}),
-			...(fps !== undefined ? { fps } : {}),
-			...(movieId !== undefined ? { movieId } : {}),
-		},
-	});
 }
 
 async function listRenders({
@@ -252,6 +211,10 @@ async function getRender({
 	return render;
 }
 
+function definedOnly({ values }: { values: Record<string, unknown> }): Record<string, unknown> {
+	return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined));
+}
+
 function toQuery({ values }: { values: Record<string, unknown> }): QueryParams {
 	return Object.fromEntries(
 		Object.entries(values)
@@ -269,9 +232,7 @@ export const robollyApi = {
 	updateTemplate,
 	renderTemplate,
 	renderTemplateLink,
-	renderMultiPagePdf,
 	createHiddenRenderLink,
-	renderVideo,
 	listRenders,
 	getRender,
 };

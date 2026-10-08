@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { robollyAuth } from '../auth';
 import { robollyApi } from '../common/api';
 import { robollyProps } from '../common/props';
+import { generateImageOutputSchema } from '../output-schemas';
 
 const formatOptions = [
 	{ label: 'JPG', value: 'jpg' },
@@ -20,6 +21,7 @@ export const generateImageAction = createAction({
 	},
 	displayName: 'Generate Image',
 	name: 'generate_image',
+	outputSchema: generateImageOutputSchema,
 	classification: 'READ',
 	auth: robollyAuth,
 	props: {

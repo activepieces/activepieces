@@ -23,3 +23,12 @@ export type RobollyRendersPage = {
 	data?: RobollyRender[];
 	value?: RobollyRender[];
 };
+export type RobollyTemplateFields = {
+	name?: string;
+	artboardWidth?: number;
+	artboardHeight?: number;
+	backgroundColor?: string;
+	path?: string;
+	renderFileName?: string;
+	disallowNotSigned?: boolean;
+};

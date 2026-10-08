@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { robollyAuth } from '../../auth';
 import { robollyAiProps } from '../../common/ai-props';
 import { robollyApi } from '../../common/api';
+import { robollyRenderTemplateOutputSchema } from '../../output-schemas';
 
 const formatOptions = [
 	{ label: 'JPG', value: 'jpg' },
@@ -14,6 +15,7 @@ const formatOptions = [
 export const renderTemplateAction = createAction({
 	auth: robollyAuth,
 	name: 'robolly_render_template',
+	outputSchema: robollyRenderTemplateOutputSchema,
 	displayName: 'Render Template',
 	description: 'Renders a template as an image, PDF or MP4 and returns the file URL.',
 	audience: 'ai',

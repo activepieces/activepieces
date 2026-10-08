@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { robollyAuth } from '../../auth';
 import { robollyAiProps } from '../../common/ai-props';
 import { robollyApi } from '../../common/api';
+import { robollyCreateHiddenRenderLinkOutputSchema } from '../../output-schemas';
 
 const formatOptions = [
 	{ label: 'JPG', value: 'jpg' },
@@ -13,6 +14,7 @@ const formatOptions = [
 export const createHiddenRenderLinkAction = createAction({
 	auth: robollyAuth,
 	name: 'robolly_create_hidden_render_link',
+	outputSchema: robollyCreateHiddenRenderLinkOutputSchema,
 	displayName: 'Create Hidden Render Link',
 	description: 'Builds a signed render link that looks like a static file URL.',
 	audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { robollyAuth } from '../../auth';
 import { robollyAiProps } from '../../common/ai-props';
 import { robollyApi } from '../../common/api';
+import { robollyListRendersOutputSchema } from '../../output-schemas';
 
 export const listRendersAction = createAction({
 	auth: robollyAuth,
 	name: 'robolly_list_renders',
+	outputSchema: robollyListRendersOutputSchema,
 	displayName: 'List Renders',
 	description: 'Lists past renders, newest first, 30 per page.',
 	audience: 'ai',
@@ -23,7 +25,7 @@ export const listRendersAction = createAction({
 		}),
 		movieId: Property.ShortText({
 			displayName: 'Movie ID',
-			description: 'Only renders with this movie ID, as set in Render Video.',
+			description: 'Only renders with this movie ID.',
 			required: false,
 		}),
 		cacheHash: Property.ShortText({

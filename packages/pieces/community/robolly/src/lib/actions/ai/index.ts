@@ -5,9 +5,7 @@ import { listGalleryTemplatesAction } from './list-gallery-templates';
 import { listRendersAction } from './list-renders';
 import { listTemplateElementsAction } from './list-template-elements';
 import { listTemplatesAction } from './list-templates';
-import { renderMultiPagePdfAction } from './render-multi-page-pdf';
 import { renderTemplateAction } from './render-template';
-import { renderVideoAction } from './render-video';
 import { updateTemplateAction } from './update-template';
 
 export const robollyAiActions = [
@@ -17,9 +15,7 @@ export const robollyAiActions = [
 	createTemplateAction,
 	updateTemplateAction,
 	renderTemplateAction,
-	renderMultiPagePdfAction,
 	createHiddenRenderLinkAction,
-	renderVideoAction,
 	getRenderAction,
 	listRendersAction,
 ];
