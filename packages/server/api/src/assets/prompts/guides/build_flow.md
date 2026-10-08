@@ -37,7 +37,7 @@ Map generic words straight to these; registry search often misses them.
 - `ap_build_flow` does not validate: run `ap_validate_step_config` on the trigger and every step, fix with `ap_update_step`/`ap_update_trigger`, then `ap_validate_flow`. Validate again after every later mutation.
 
 ## Field values and wiring
-- Use dropdown `value` (the ID), never `label`. Multi-select takes an array of IDs. Resolve parents before children, and dependent chains (spreadsheet → sheet → column) with ONE `ap_resolve_property_chain` call, never one call per field.
+- Use dropdown `value` (the ID), never `label`. Multi-select takes an array of IDs. Resolve parents before children, and dependent chains (spreadsheet → sheet → column) with `ap_resolve_property_chain`: it stops at the first field without a `selectedValue`, so after each pick call it again with every known value as `selectedValue`, never one field at a time.
 - Spreadsheet columns are letters (A, B, … AA), never header names.
 - Pass the connection's raw `externalId` as `auth` on every build call. Reference outputs as `{{step_1['output'].field}}` (a failed step's error: `{{step_1['error'].message}}`); use the output paths `ap_get_piece_props` lists.
 - Map only the fields a step needs, never a whole upstream object; large values go by URL/reference.
