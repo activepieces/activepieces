@@ -286,6 +286,12 @@ Run these checks and fix what you can, then show one short summary of what chang
 7. **AI behavior check.** If the diff touches chat or agent prompts (`packages/server/api/src/assets/prompts/`), tool descriptions or the agent loop (`packages/server/worker/src/lib/execute/jobs/ee/agent/`), run `npm run agent-evals:ci`. It calls a model, so say so first. Report pass, or which fixtures regressed. Without a key in `.env.dev`, say it under **Heads up** and continue.
 8. **Ticket:** set it to In Review when the PR is open. If the work taught something the next engineer needs, add it as a bullet under `Gotchas` on that area's brain page, in this PR.
 9. **Project update:** if the PR finishes a milestone, offer a 3-line project update draft.
+10. **Ready-for-review gate.** A PR asks for review only when **both** are true. Until then, keep it a draft.
+    - **Greptile 5/5.** Read Greptile's latest summary comment (`gh pr view <n> --comments`). Below 5/5: fix its findings, push, and wait for the new score. Reply to each comment you fix in one short line, and resolve it.
+    - **CI all green** (`gh pr checks <n>`). For a failing check, read the log, fix the cause, and push. Never rerun a `pull_request` check to pick up a description edit (see the repo's CLAUDE.md); edit the description and let the new run replace it.
+    - **When both pass:** mark it ready (`gh pr ready <n>`) and ask a reviewer from CODEOWNERS.
+
+    Ship card line: `✓ Greptile 5/5 · ✓ CI green`, or the blocker, for example `✗ Greptile 3/5: 2 findings`.
 
 Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything goes out under the user's name.
 
