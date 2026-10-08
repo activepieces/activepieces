@@ -1,17 +1,5 @@
 import { logLevel, type KafkaConfig, type SASLOptions } from 'kafkajs'
 
-export const kafkaConfig = {
-  parseBrokers,
-  requirementError,
-  build,
-  describeError,
-  readTopic,
-  readConsumerGroup,
-  readMaxMessages,
-  readPollTimeoutMs,
-  readStartFrom,
-}
-
 function parseBrokers(brokers: string): string[] {
   const parsed = brokers
     .split(',')
@@ -217,6 +205,18 @@ function isSecurityProtocol(value: string): value is SecurityProtocol {
 
 function isSaslMechanism(value: string): value is SaslMechanism {
   return value === 'plain' || value === 'scram-sha-256' || value === 'scram-sha-512'
+}
+
+export const kafkaConfig = {
+  parseBrokers,
+  requirementError,
+  build,
+  describeError,
+  readTopic,
+  readConsumerGroup,
+  readMaxMessages,
+  readPollTimeoutMs,
+  readStartFrom,
 }
 
 export type KafkaAuthInput = {

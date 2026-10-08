@@ -2,13 +2,6 @@ import { Kafka, Partitioners, type EachMessagePayload } from 'kafkajs'
 import { kafkaConfig, type KafkaAuthInput } from './config'
 import { kafkaRecords, type KafkaRecord } from './records'
 
-export const kafkaClient = {
-  validate,
-  publishMessages,
-  pinStartOffsets,
-  consume,
-}
-
 async function validate(auth: KafkaAuthInput): Promise<{ valid: true } | { valid: false, error: string }> {
   const requirement = kafkaConfig.requirementError(auth)
   if (requirement !== undefined) {
@@ -124,14 +117,12 @@ async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSec
     rebalanceTimeout: 15_000,
     heartbeatInterval: 3_000,
   })
-  let runResult: Promise<void> = Promise.resolve()
   try {
     await consumer.connect()
     await consumer.subscribe({ topic: topicName, fromBeginning })
     const records: KafkaRecord[] = []
     let collecting = true
-    let runError: unknown
-    runResult = consumer.run({
+    await consumer.run({
       autoCommit: false,
       eachMessage: async ({ topic: messageTopic, partition, message }: EachMessagePayload) => {
         if (!collecting || records.length >= limit) {
@@ -139,13 +130,11 @@ async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSec
         }
         records.push(kafkaRecords.toRecord({ topic: messageTopic, partition, message }))
       },
-    }).catch((error: unknown) => {
-      runError = error
     })
     const deadline = Date.now() + pollTimeoutMs
     let lastCount = 0
     let quietSince = Date.now()
-    while (records.length < limit && runError === undefined && Date.now() < deadline) {
+    while (records.length < limit && Date.now() < deadline) {
       if (records.length > 0 && records.length === lastCount && Date.now() - quietSince >= 500) {
         break
       }
@@ -156,9 +145,6 @@ async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSec
       await delay(100)
     }
     collecting = false
-    if (runError !== undefined) {
-      throw runError
-    }
     const batch = [...records]
     if (commit && batch.length > 0) {
       await consumer.commitOffsets(kafkaRecords.commitPlan({ topic: topicName, records: batch }))
@@ -168,7 +154,6 @@ async function consume({ auth, topic, consumerGroup, maxMessages, pollTimeoutSec
     throw new Error(kafkaConfig.describeError({ error, brokers: auth.brokers, topic: topicName }))
   } finally {
     await consumer.stop().catch(() => undefined)
-    await runResult.catch(() => undefined)
     await consumer.disconnect().catch(() => undefined)
   }
 }
@@ -177,6 +162,13 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
+}
+
+export const kafkaClient = {
+  validate,
+  publishMessages,
+  pinStartOffsets,
+  consume,
 }
 
 export type PublishResult = {

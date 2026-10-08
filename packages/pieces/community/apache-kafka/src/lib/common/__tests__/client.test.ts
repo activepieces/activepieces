@@ -284,6 +284,46 @@ describe('kafkaClient', () => {
     ])
   })
 
+  it('waits for the consumer to join the group before timing the poll', async () => {
+    kafkaMock.run.mockImplementationOnce(async (config) => {
+      await new Promise((resolve) => setTimeout(resolve, 1_500))
+      setTimeout(() => {
+        config.eachMessage({
+          topic: 'orders',
+          partition: 0,
+          message: { key: null, value: Buffer.from('after join'), offset: '3', timestamp: '1710000000000' },
+        }).catch(() => undefined)
+      }, 50)
+    })
+
+    const records = await kafkaClient.consume({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      maxMessages: 10,
+      pollTimeoutSeconds: 1,
+      fromBeginning: false,
+      commit: false,
+    })
+
+    expect(records.map((record) => record.payload)).toEqual(['after join'])
+  })
+
+  it('reports a consumer that fails to start', async () => {
+    kafkaMock.run.mockRejectedValueOnce(new Error('Group coordinator not available'))
+
+    await expect(kafkaClient.consume({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      maxMessages: 10,
+      pollTimeoutSeconds: 1,
+      fromBeginning: false,
+      commit: false,
+    })).rejects.toThrow()
+    expect(kafkaMock.consumerDisconnect).toHaveBeenCalled()
+  })
+
   it('returns a partial batch once messages stop arriving', async () => {
     const started = Date.now()
     const records = await kafkaClient.consume({

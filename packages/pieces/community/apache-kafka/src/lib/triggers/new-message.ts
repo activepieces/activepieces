@@ -5,6 +5,28 @@ import { kafkaConfig } from '../common/config'
 import { kafkaRecords } from '../common/records'
 import { kafkaTriggerProps } from './props'
 
+async function readMessages({ auth, topic, consumerGroup, maxMessages, pollTimeoutSeconds, startFrom, commit, batch }: {
+  auth: Parameters<typeof kafkaClient.consume>[0]['auth']
+  topic: string
+  consumerGroup: string
+  maxMessages: number
+  pollTimeoutSeconds: number
+  startFrom: string
+  commit: boolean
+  batch: boolean
+}) {
+  const records = await kafkaClient.consume({
+    auth,
+    topic,
+    consumerGroup,
+    maxMessages,
+    pollTimeoutSeconds,
+    fromBeginning: kafkaConfig.readStartFrom(startFrom),
+    commit,
+  })
+  return kafkaRecords.toTriggerOutput({ records, topic: kafkaConfig.readTopic(topic), batch })
+}
+
 export const newMessage = createTrigger({
   auth: kafkaAuth,
   name: 'new_message',
@@ -61,25 +83,3 @@ export const newMessage = createTrigger({
     })
   },
 })
-
-async function readMessages({ auth, topic, consumerGroup, maxMessages, pollTimeoutSeconds, startFrom, commit, batch }: {
-  auth: Parameters<typeof kafkaClient.consume>[0]['auth']
-  topic: string
-  consumerGroup: string
-  maxMessages: number
-  pollTimeoutSeconds: number
-  startFrom: string
-  commit: boolean
-  batch: boolean
-}) {
-  const records = await kafkaClient.consume({
-    auth,
-    topic,
-    consumerGroup,
-    maxMessages,
-    pollTimeoutSeconds,
-    fromBeginning: kafkaConfig.readStartFrom(startFrom),
-    commit,
-  })
-  return kafkaRecords.toTriggerOutput({ records, topic: kafkaConfig.readTopic(topic), batch })
-}

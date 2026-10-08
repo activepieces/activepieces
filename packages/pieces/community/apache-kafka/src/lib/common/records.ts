@@ -1,15 +1,5 @@
 import { type Message } from 'kafkajs'
 
-export const kafkaRecords = {
-  toRecord,
-  commitPlan,
-  startOffsetPlan,
-  readOutboundMessage,
-  readOutboundMessages,
-  toKafkaMessage,
-  toTriggerOutput,
-}
-
 function toRecord({ topic, partition, message }: {
   topic: string
   partition: number
@@ -179,6 +169,16 @@ function readField(record: object, key: string): unknown {
 
 function messageLabel(index: number): string {
   return `Message ${index + 1}`
+}
+
+export const kafkaRecords = {
+  toRecord,
+  commitPlan,
+  startOffsetPlan,
+  readOutboundMessage,
+  readOutboundMessages,
+  toKafkaMessage,
+  toTriggerOutput,
 }
 
 export type KafkaRecord = {
