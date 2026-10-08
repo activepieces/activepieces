@@ -157,6 +157,21 @@ describe('A platform invite outlives its project', () => {
 })
 
 describe('Platform users list says who has a project', () => {
+    it('ignores a membership in a soft-deleted project', async () => {
+        const { mockPlatform, mockOwner, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const deleted = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
+        await databaseConnection().getRepository('project').save(deleted)
+        const { mockUser: member } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER } })
+        const editorRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.EDITOR })
+        await databaseConnection().getRepository('project_member').save(createMockProjectMember({ platformId: mockPlatform.id, projectId: deleted.id, userId: member.id, projectRoleId: editorRole.id }))
+        await databaseConnection().getRepository('project').softDelete({ id: deleted.id })
+
+        const response = await app?.inject({ method: 'GET', url: '/api/v1/users', headers: { authorization: `Bearer ${ownerToken}` }, query: { limit: '100' } })
+
+        const hasProjectsById = Object.fromEntries(response?.json().data.map((user: { id: string, hasProjects: boolean }) => [user.id, user.hasProjects]))
+        expect(hasProjectsById[member.id]).toBe(false)
+    })
+
     it('marks members with and without a project', async () => {
         const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
         const { mockUser: withProject } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER } })
