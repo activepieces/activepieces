@@ -5,7 +5,7 @@ description: The AI team's one command for doing a task the team way, from ticke
 
 # AI task
 
-One command, five moments: **start**, **triage**, **ship**, **check** (AI team members) and **report** (anyone). Work out which one from what the user typed. If it's unclear, ask once.
+One command, six moments: **start**, **triage**, **ship**, **check**, **note** (AI team members) and **report** (anyone). Work out which one from what the user typed. If it's unclear, ask once.
 
 Whenever a ticket is being created or is too thin to solve, run a **grill** (below) inside that moment.
 
@@ -55,6 +55,7 @@ Run the requirement checks first, then show the card that fits.
 > - `/ai-task triage ENG-456` when a bug lands
 > - `/ai-task ship` before you open a PR
 > - `/ai-task check` for the Thursday check-up
+> - `/ai-task note AI-123 <text>` to save a decision on a ticket
 > - `/ai-task report X` to file a bug for someone else
 >
 > I never post anything under your name without asking first.
@@ -121,6 +122,19 @@ If they seem new, end with: "Want to try it on the ticket you're working on?" (m
 7. Open questions
 
 Show the ticket card before creating or updating it.
+
+## Note: save a decision on its ticket
+
+`/ai-task note AI-123 <text>`. For decisions made in a DM, a call or anywhere a bot can't see.
+
+1. Rewrite the text as a short decision in the team's words: what was decided, and why in one line. Keep names only if they matter.
+2. Show it, then add it as a comment on the ticket after one OK.
+3. If it changes the ticket's "Done when", scope or acceptance criteria, offer to update the description too.
+
+> **Here's the note for AI-123:**
+> Decided: old flows keep running, and the builder shows "replace this step". New saves are blocked.
+>
+> **Add it to the ticket?**
 
 ## Report: anyone, member or not
 
