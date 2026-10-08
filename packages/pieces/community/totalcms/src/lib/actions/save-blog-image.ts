@@ -1,134 +1,42 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import * as z from 'zod/mini'
-import { propsValidation } from '@activepieces/pieces-common';
-import { saveBlogImage } from '../api';
+import { createAction } from '@activepieces/pieces-framework';
 import { cmsAuth } from '../auth';
+import { totalcmsProps } from '../common/props';
+import { totalcmsShape } from '../common/shape';
+import { totalcmsUpload } from '../common/upload';
+import { totalcmsOutputSchemas } from '../output-schemas';
 
 export const saveBlogImageAction = createAction({
   name: 'save_blog_image',
   classification: 'WRITE',
   auth: cmsAuth,
-  displayName: 'Save Blog Post Image',
-  description: 'Save image to Total CMS blog post',
-  audience: 'both',
-  aiMetadata: { description: "Sets the featured/main image of a specific blog post in Total CMS, identified by the blog CMS ID (slug) and post permalink, with alt text and thumbnail sizing/crop options. Use to attach or replace a post's primary image. Idempotent: the post holds one such image, so repeating with the same input replaces it rather than accumulating.", idempotent: true },
-  props: {
-    slug: Property.ShortText({
-      displayName: 'CMS ID',
-      description: 'The CMS ID of the content to save',
-      required: true,
-    }),
-    permalink: Property.ShortText({
-      displayName: 'Permalink',
-      description: 'The permalink of the blog post to save',
-      required: true,
-    }),
-    image: Property.File({
-      displayName: 'Image',
-      description: 'The image to save',
-      required: true,
-    }),
-    alt: Property.ShortText({
-      displayName: 'Alt Text',
-      description: 'The alt text for the image',
-      required: true,
-    }),
-    quality: Property.Number({
-      displayName: 'Thumbnail Quality',
-      description: 'The quality of the thumbnail',
-      required: true,
-      defaultValue: 85,
-    }),
-    scaleTh: Property.Number({
-      displayName: 'Thumbnail Scale',
-      description: 'The scale of the thumbnail',
-      required: true,
-      defaultValue: 400,
-    }),
-    scaleSq: Property.Number({
-      displayName: 'Thumbnail Square Scale',
-      description: 'The scale of the square thumbnail',
-      required: true,
-      defaultValue: 400,
-    }),
-    resize: Property.StaticDropdown({
-      displayName: 'Thumbnail Resize Method',
-      description: 'The method to use when resizing the thumbnail',
-      required: true,
-      defaultValue: 'auto',
-      options: {
-        options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Landscape', value: 'landscape' },
-          { label: 'Portrait', value: 'portrait' },
-        ],
-      },
-    }),
-    lcrop: Property.StaticDropdown({
-      displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
-      required: true,
-      defaultValue: 'center',
-      options: {
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
-      },
-    }),
-    pcrop: Property.StaticDropdown({
-      displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
-      required: true,
-      defaultValue: 'middle',
-      options: {
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Middle', value: 'middle' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
-      },
-    }),
-    altMeta: Property.Checkbox({
-      displayName: 'Pull Alt Text from Meta Data',
-      description:
-        'Pull the alt text from the meta data of the image. If set, place placeholder text in the alt text field above.',
-      required: true,
-    }),
+  displayName: 'Set Blog Post Image',
+  description: 'Uploads the main image of a blog post, replacing the current one.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Uploads the main image (file or public URL) of an existing Total CMS blog post, replacing the current image. Optional alt text is saved with it. Running it again with the same image leaves the same result.',
+    idempotent: true,
   },
+  props: {
+    collection: totalcmsProps.collection({ displayName: 'Blog', description: 'The blog collection.', schemas: ['blog'] }),
+    object_id: totalcmsProps.object({ displayName: 'Post', description: 'The blog post to update.' }),
+    ...totalcmsUpload.fileProps({ fileLabel: 'Image' }),
+    alt: totalcmsUpload.altProp(),
+  },
+  outputSchema: totalcmsOutputSchemas.blogPostUpload,
   async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      quality: z.number().check(z.minimum(1), z.maximum(100)),
-      scaleTh: z.number().check(z.minimum(1)),
-      scaleSq: z.number().check(z.minimum(1)),
+    const collection = totalcmsShape.requireId({ value: context.propsValue.collection, label: 'Collection' });
+    const id = totalcmsShape.requireId({ value: context.propsValue.object_id, label: 'Post' });
+    const result = await totalcmsUpload.save({
+      auth: context.auth,
+      collection,
+      id,
+      property: 'image',
+      file: context.propsValue.file,
+      fileUrl: context.propsValue.file_url,
+      alt: context.propsValue.alt ?? undefined,
+      multiple: false,
     });
-
-    const slug = context.propsValue.slug;
-    const image = {
-      filename: context.propsValue.image.filename,
-      base64: context.propsValue.image.base64,
-    };
-    return await saveBlogImage(context.auth, slug, image, {
-      permalink: context.propsValue.permalink,
-      thumbs: 1,
-      optimize: 1,
-      alttype: context.propsValue.altMeta ? 'meta' : 'user',
-      alt: context.propsValue.alt,
-      quality: context.propsValue.quality,
-      scale_th: context.propsValue.scaleTh,
-      scale_sq: context.propsValue.scaleSq,
-      resize: context.propsValue.resize,
-      lcrop: context.propsValue.lcrop,
-      pcrop: context.propsValue.pcrop,
-      // Cannot add support for ext option with how this API is built.
-      // it would break the saving of the blog post since it would try
-      // to save the blog post JSON file with the extension of the ext option
-    });
+    return { ...totalcmsShape.typed({ collection, object: result.object }), preview_url: result.preview_url, warning: result.warning };
   },
 });
