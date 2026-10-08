@@ -1,4 +1,4 @@
-import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
 import { ApEdition, ListUsersRequestBody, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateUserRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -31,6 +31,7 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
             platformRole: req.body.platformRole,
             status: req.body.status,
             externalId: req.body.externalId,
+            project: projectToJoin({ projectId: req.body.projectId, projectRole: req.body.projectRole }),
         })
     })
 
@@ -74,6 +75,21 @@ const ListUsersRequest = {
     },
 }
 
+function projectToJoin({ projectId, projectRole }: ProjectToJoinParams): { projectId: string, projectRoleName: string } | undefined {
+    if (isNil(projectId) && isNil(projectRole)) {
+        return undefined
+    }
+    if (isNil(projectId) || isNil(projectRole)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'projectId and projectRole must be sent together',
+            },
+        })
+    }
+    return { projectId, projectRoleName: projectRole }
+}
+
 const UpdateUserRequest = {
     schema: {
         params: z.object({
@@ -107,4 +123,9 @@ const DeleteUserRequest = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
+}
+
+type ProjectToJoinParams = {
+    projectId?: string
+    projectRole?: string
 }

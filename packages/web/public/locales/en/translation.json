@@ -26,6 +26,7 @@
   "invalidDomain": "Enter a domain like acme.com",
   "duplicateDomain": "This domain is already on the list",
   "Support": "Support",
+  "Couldn't change the role. Try again.": "Couldn't change the role. Try again.",
   "Members need a project. {name} isn't in one yet.": "Members need a project. {name} isn't in one yet.",
   "All new members join this project as Editors.": "All new members join this project as Editors.",
   "Create custom roles, set default projects for new members, and choose whether they get a personal project.": "Create custom roles, set default projects for new members, and choose whether they get a personal project.",
