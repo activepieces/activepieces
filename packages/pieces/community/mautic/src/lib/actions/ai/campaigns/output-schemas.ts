@@ -15,51 +15,7 @@ export const mauticAdjustContactPointsOutputSchema: OutputSchema = {
 
 export const mauticBatchRescheduleContactCampaignEventsOutputSchema: OutputSchema = {
 	fields: [
-		{
-			key: 'events',
-			label: 'Events',
-			children: [
-				{
-					key: '3',
-					label: '3',
-					children: [
-						{ key: 'id', label: 'ID', format: 'number' },
-						{ key: 'name', label: 'Name' },
-						{ key: 'description', label: 'Description' },
-						{ key: 'type', label: 'Type' },
-						{ key: 'eventType', label: 'Event Type' },
-						{ key: 'channel', label: 'Channel' },
-						{ key: 'channelId', label: 'Channel ID' },
-						{ key: 'order', label: 'Order', format: 'number' },
-						{ key: 'triggerDate', label: 'Trigger Date' },
-						{ key: 'triggerInterval', label: 'Trigger Interval', format: 'number' },
-						{ key: 'triggerIntervalUnit', label: 'Trigger Interval Unit' },
-						{ key: 'triggerHour', label: 'Trigger Hour' },
-						{ key: 'triggerRestrictedStartHour', label: 'Trigger Restricted Start Hour' },
-						{ key: 'triggerRestrictedStopHour', label: 'Trigger Restricted Stop Hour' },
-						{ key: 'triggerRestrictedDaysOfWeek', label: 'Trigger Restricted Days Of Week' },
-						{ key: 'triggerMode', label: 'Trigger Mode' },
-						{ key: 'decisionPath', label: 'Decision Path' },
-						{ key: 'parent', label: 'Parent' },
-						{
-							key: 'contactLog',
-							label: 'Contact Log',
-							listItems: [
-								{ key: 'ipAddress', label: 'IP Address' },
-								{ key: 'dateTriggered', label: 'Date Triggered' },
-								{ key: 'isScheduled', label: 'Is Scheduled', format: 'boolean' },
-								{ key: 'triggerDate', label: 'Trigger Date', format: 'datetime' },
-								{ key: 'metadata', label: 'Metadata' },
-								{ key: 'nonActionPathTaken', label: 'Non Action Path Taken', format: 'boolean' },
-								{ key: 'channel', label: 'Channel' },
-								{ key: 'channelId', label: 'Channel ID' },
-								{ key: 'rotation', label: 'Rotation', format: 'number' },
-							],
-						},
-					],
-				},
-			],
-		},
+		{ key: 'events', label: 'Events', dynamicKey: true, labelKey: 'name' },
 		{
 			key: 'errors',
 			label: 'Errors',

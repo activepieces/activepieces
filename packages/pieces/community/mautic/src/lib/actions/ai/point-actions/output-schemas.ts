@@ -59,20 +59,7 @@ export const mauticGetPointActionOutputSchema: OutputSchema = {
 };
 
 export const mauticListPointActionTypesOutputSchema: OutputSchema = {
-	fields: [
-		{
-			key: 'pointActionTypes',
-			label: 'Point Action Types',
-			children: [
-				{ key: 'asset.download', label: 'Asset Download', value: "['asset.download']" },
-				{ key: 'email.send', label: 'Email Send', value: "['email.send']" },
-				{ key: 'email.open', label: 'Email Open', value: "['email.open']" },
-				{ key: 'form.submit', label: 'Form Submit', value: "['form.submit']" },
-				{ key: 'page.hit', label: 'Page Hit', value: "['page.hit']" },
-				{ key: 'url.hit', label: 'URL Hit', value: "['url.hit']" },
-			],
-		},
-	],
+	fields: [{ key: 'pointActionTypes', label: 'Point Action Types', dynamicKey: true }],
 };
 
 export const mauticListPointActionsOutputSchema: OutputSchema = {

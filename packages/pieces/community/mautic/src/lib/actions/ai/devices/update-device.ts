@@ -1,6 +1,6 @@
 import { Property, createAction, spreadIfDefined } from '@activepieces/pieces-framework';
 
-import { mauticUpdateDeviceOutputSchema } from './output-schemas';
+import { mauticGetDeviceOutputSchema } from './output-schemas';
 import { mauticAuth } from '../../../auth';
 import { mauticAiProps } from '../../../common/ai-props';
 import { mauticApi } from '../../../common/api';
@@ -8,7 +8,7 @@ import { mauticApi } from '../../../common/api';
 export const mauticUpdateDeviceAction = createAction({
 	auth: mauticAuth,
 	name: 'mautic_update_device',
-	outputSchema: mauticUpdateDeviceOutputSchema,
+	outputSchema: mauticGetDeviceOutputSchema,
 	displayName: 'Update Device',
 	description: 'Updates fields of a Mautic device.',
 	audience: 'ai',

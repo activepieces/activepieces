@@ -1,4 +1,4 @@
-import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
+import { AppConnectionType, isNil, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
 
 import { mauticApi } from './common/api';
 
@@ -28,10 +28,10 @@ export const mauticAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const { error } = await tryCatch(() =>
+    const { data, error } = await tryCatch(() =>
       mauticApi.getCurrentUser({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }),
     );
-    if (error) {
+    if (error || isNil(data?.['username'])) {
       return {
         valid: false,
         error: 'Could not sign in to Mautic. Check the base URL, username and password, and that Basic Authentication is enabled in API Settings.',

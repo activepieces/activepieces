@@ -15,7 +15,7 @@ export const mauticCreateSmsAction = createAction({
 	classification: 'WRITE',
 	aiMetadata: {
 		description:
-			'Creates a text message template. Name and Message are required. Send it with Send Text Message to Contact.',
+			'Creates a text message template. Name and Message are required. Mautic sends it from campaigns.',
 		idempotent: false,
 	},
 	props: {

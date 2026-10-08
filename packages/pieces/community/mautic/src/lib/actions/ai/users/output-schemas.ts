@@ -3,10 +3,7 @@ import { OutputSchema } from '@activepieces/pieces-framework';
 import { role2Fields, roleFields, userRole2Fields, userRoleFields } from '../../../output-schemas';
 
 export const mauticCheckUserPermissionsOutputSchema: OutputSchema = {
-	fields: [
-		{ key: 'lead:leads:viewown', label: 'Lead Leads Viewown', format: 'boolean' },
-		{ key: 'email:emails:create', label: 'Email Emails Create', format: 'boolean' },
-	],
+	fields: [{ key: 'permissions', label: 'Permissions', value: '', dynamicKey: true }],
 };
 
 export const mauticCreateRoleOutputSchema: OutputSchema = {

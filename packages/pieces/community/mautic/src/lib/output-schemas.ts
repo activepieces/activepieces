@@ -336,6 +336,19 @@ export const deviceLeadFields: OutputSchema['fields'] = [
 	{ key: 'frequencyRules', label: 'Frequency Rules' },
 ];
 
+export const deviceFields: OutputSchema['fields'] = [
+	{ format: 'number', key: 'id', label: 'ID' },
+	{ children: deviceLeadFields, key: 'lead', label: 'Lead' },
+	{ key: 'clientInfo', label: 'Client Info' },
+	{ key: 'device', label: 'Device' },
+	{ key: 'deviceBrand', label: 'Device Brand' },
+	{ key: 'deviceModel', label: 'Device Model' },
+	{ key: 'deviceOsName', label: 'Device Os Name' },
+	{ key: 'deviceOsShortName', label: 'Device Os Short Name' },
+	{ key: 'deviceOsVersion', label: 'Device Os Version' },
+	{ key: 'deviceOsPlatform', label: 'Device Os Platform' },
+];
+
 export const dynamicContentFiltersFields: OutputSchema['fields'] = [
 	{ key: 'glue', label: 'Glue' },
 	{ key: 'field', label: 'Field' },
@@ -1029,7 +1042,7 @@ export const mauticLeadChannelSubscriptionChangedTriggerOutputSchema: OutputSche
 						{ key: 'id', label: 'ID', format: 'number' },
 						{ key: 'points', label: 'Points', format: 'number' },
 						{ key: 'color', label: 'Color' },
-						{ key: 'fields', label: 'Fields', children: [] },
+						{ key: 'fields', label: 'Fields' },
 						{ key: 'lastActive', label: 'Last Active' },
 						{ key: 'owner', label: 'Owner' },
 						{ key: 'ipAddresses', label: 'IP Addresses' },
@@ -1095,7 +1108,7 @@ export const mauticLeadCompanyChangeTriggerOutputSchema: OutputSchema = {
 						{ key: 'zipcode', label: 'Zip Code' },
 						{ key: 'timezone', label: 'Timezone' },
 						{ key: 'country', label: 'Country' },
-						{ key: 'fields', label: 'Fields', children: [] },
+						{ key: 'fields', label: 'Fields' },
 						{ key: 'lastActive', label: 'Last Active' },
 						{ key: 'owner', label: 'Owner' },
 						{ key: 'ipAddresses', label: 'IP Addresses' },
@@ -1159,7 +1172,7 @@ export const mauticLeadPostSaveNewTriggerOutputSchema: OutputSchema = {
 						{ key: 'id', label: 'ID', format: 'number' },
 						{ key: 'points', label: 'Points', format: 'number' },
 						{ key: 'color', label: 'Color' },
-						{ key: 'fields', label: 'Fields', children: [] },
+						{ key: 'fields', label: 'Fields' },
 						{ key: 'lastActive', label: 'Last Active' },
 						{ key: 'owner', label: 'Owner' },
 						{ key: 'ipAddresses', label: 'IP Addresses' },
@@ -1195,7 +1208,7 @@ export const mauticLeadPostSaveUpdateTriggerOutputSchema: OutputSchema = {
 						{ key: 'id', label: 'ID', format: 'number' },
 						{ key: 'points', label: 'Points', format: 'number' },
 						{ key: 'color', label: 'Color' },
-						{ key: 'fields', label: 'Fields', children: [] },
+						{ key: 'fields', label: 'Fields' },
 						{ key: 'lastActive', label: 'Last Active' },
 						{ key: 'owner', label: 'Owner', children: contactOwner2Fields },
 						{ key: 'ipAddresses', label: 'IP Addresses' },

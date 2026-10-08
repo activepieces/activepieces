@@ -3,28 +3,7 @@ import { OutputSchema } from '@activepieces/pieces-framework';
 import { noteFields, noteLeadFields } from '../../../output-schemas';
 
 export const mauticCreateNoteOutputSchema: OutputSchema = {
-	fields: [
-		{
-			key: 'note',
-			label: 'Note',
-			children: [
-				{ key: 'id', label: 'ID', format: 'number' },
-				{ key: 'text', label: 'Text' },
-				{ key: 'type', label: 'Type' },
-				{ key: 'dateTime', label: 'Date Time', format: 'datetime' },
-				{
-					key: 'lead',
-					label: 'Lead',
-					children: [
-						{ key: 'id', label: 'ID', format: 'number' },
-						{ key: 'points', label: 'Points', format: 'number' },
-						{ key: 'color', label: 'Color' },
-						{ key: 'fields', label: 'Fields', children: [] },
-					],
-				},
-			],
-		},
-	],
+	fields: [{ key: 'note', label: 'Note', children: noteFields }],
 };
 
 export const mauticDeleteNoteOutputSchema: OutputSchema = {
@@ -41,10 +20,6 @@ export const mauticDeleteNoteOutputSchema: OutputSchema = {
 			],
 		},
 	],
-};
-
-export const mauticGetNoteOutputSchema: OutputSchema = {
-	fields: [{ key: 'note', label: 'Note', children: noteFields }],
 };
 
 export const mauticListNotesOutputSchema: OutputSchema = {

@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 
-import { mauticGetNoteOutputSchema } from './output-schemas';
+import { mauticCreateNoteOutputSchema } from './output-schemas';
 import { mauticAuth } from '../../../auth';
 import { mauticAiProps } from '../../../common/ai-props';
 import { mauticApi } from '../../../common/api';
@@ -8,7 +8,7 @@ import { mauticApi } from '../../../common/api';
 export const mauticGetNoteAction = createAction({
 	auth: mauticAuth,
 	name: 'mautic_get_note',
-	outputSchema: mauticGetNoteOutputSchema,
+	outputSchema: mauticCreateNoteOutputSchema,
 	displayName: 'Get Note',
 	description: 'Gets one Mautic note by id.',
 	audience: 'ai',

@@ -104,24 +104,7 @@ export const mauticDeletePointTriggerOutputSchema: OutputSchema = {
 };
 
 export const mauticListPointTriggerEventTypesOutputSchema: OutputSchema = {
-	fields: [
-		{
-			key: 'eventTypes',
-			label: 'Event Types',
-			children: [
-				{
-					key: 'campaign.changecampaign',
-					label: 'Campaign Changecampaign',
-					value: "['campaign.changecampaign']",
-				},
-				{ key: 'lead.changelists', label: 'Lead Changelists', value: "['lead.changelists']" },
-				{ key: 'lead.changetags', label: 'Lead Changetags', value: "['lead.changetags']" },
-				{ key: 'plugin.leadpush', label: 'Plugin Leadpush', value: "['plugin.leadpush']" },
-				{ key: 'email.send', label: 'Email Send', value: "['email.send']" },
-				{ key: 'email.send_to_user', label: 'Email Send To User', value: "['email.send_to_user']" },
-			],
-		},
-	],
+	fields: [{ key: 'eventTypes', label: 'Event Types', dynamicKey: true }],
 };
 
 export const mauticListPointTriggersOutputSchema: OutputSchema = {

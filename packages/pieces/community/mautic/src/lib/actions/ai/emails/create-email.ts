@@ -15,7 +15,7 @@ export const mauticCreateEmailAction = createAction({
 	classification: 'WRITE',
 	aiMetadata: {
 		description:
-			'Creates an email. Name and Subject are required; set Email Type to "list" with Segment Ids for a segment email. Send it with Send Email to Contact or Send Segment Email.',
+			'Creates an email. Name and Subject are required; set Email Type to "list" with Segment Ids for a segment email. Mautic sends it from campaigns, or as a segment email from the Mautic app.',
 		idempotent: false,
 	},
 	props: {
