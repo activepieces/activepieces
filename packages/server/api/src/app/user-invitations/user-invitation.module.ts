@@ -120,6 +120,15 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         await reply.status(StatusCodes.OK).send({ ...invitation, registered })
     })
 
+    app.post('/:id/remove-project', RemoveProjectFromInvitationRequestParams, async (request, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        const invitation = await userInvitationsService(request.log).removeProjectFromPlatformInvite({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+        })
+        await reply.status(StatusCodes.OK).send(invitation)
+    })
+
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
         const invitation = await userInvitationsService(request.log).getOneOrThrow({
             id: request.params.id,
@@ -292,6 +301,23 @@ const DeleteInvitationRequestParams = {
         }),
         response: {
             [StatusCodes.NO_CONTENT]: z.never(),
+        },
+    },
+}
+
+const RemoveProjectFromInvitationRequestParams = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['user-invitations'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Take the project off a platform invitation. The person still joins the platform when they accept.',
+        params: z.object({
+            id: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: UserInvitation,
         },
     },
 }

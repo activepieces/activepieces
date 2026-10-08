@@ -90,6 +90,19 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
         await repo(entityManager).update({ type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
     },
+    async removeProjectFromPlatformInvite({ id, platformId }: PlatformAndIdParams): Promise<UserInvitation> {
+        const invitation = await this.getOneOrThrow({ id, platformId })
+        if (invitation.type !== InvitationType.PLATFORM) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Only a platform invitation can have its project removed',
+                },
+            })
+        }
+        await repo().update({ id, platformId }, { projectId: null, projectRoleId: null })
+        return this.getOneOrThrow({ id, platformId })
+    },
     async detachProjectRoleFromPlatformInvites({ projectRoleId }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
         await repo().update({ type: InvitationType.PLATFORM, projectRoleId }, { projectId: null, projectRoleId: null })
     },

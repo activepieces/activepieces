@@ -1,10 +1,11 @@
+import { ErrorCode } from '@activepieces/core-utils'
 import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockProject, createMockUserInvitation, mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockProject, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -142,6 +143,64 @@ describe('A platform invite and a project invite for the same project', () => {
     })
 })
 
+describe('Removing a platform invite from a project', () => {
+    it('takes the project off the invite and keeps the invite', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.id).toBe(invitation.id)
+        expect(after.platformRole).toBe(PlatformRole.MEMBER)
+        expect(after.projectId).toBeNull()
+        expect(after.projectRoleId).toBeNull()
+    })
+
+    it('is refused to a member who is not a platform admin', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+        const { mockUser } = await mockBasicUser({ user: { platformId, platformRole: PlatformRole.MEMBER } })
+        const memberToken = await generateMockToken({ id: mockUser.id, type: PrincipalType.USER, platform: { id: platformId } })
+
+        const response = await removeProject({ token: memberToken, invitationId: invitation.id })
+
+        expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBe(projectId)
+    })
+
+    it('refuses a project invite', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await inviteProject({ token: ownerToken, email, projectId, projectRole: DefaultProjectRole.VIEWER })
+        const [invitation] = await invitesOf({ email, platformId })
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id })
+
+        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+    })
+
+    it('does not find another platform\'s invite', async () => {
+        const first = await setupPlatform()
+        const second = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: second.ownerToken, email, platformRole: PlatformRole.MEMBER, projectId: second.projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId: second.platformId })
+
+        const response = await removeProject({ token: first.ownerToken, invitationId: invitation.id })
+
+        expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        const [after] = await platformInvitesOf({ email, platformId: second.platformId })
+        expect(after.projectId).toBe(second.projectId)
+    })
+})
+
 describe('Listing the platform invites that name a project', () => {
     it('returns only the platform invites for that project', async () => {
         const { platformId, projectId, ownerToken } = await setupPlatform()
@@ -233,4 +292,12 @@ async function roleNameOf({ projectRoleId }: { projectRoleId: string }) {
 async function ownerOf({ platformId }: { platformId: string }) {
     const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: platformId })
     return platform.ownerId
+}
+
+async function removeProject({ token, invitationId }: { token: string, invitationId: string }) {
+    return app?.inject({
+        method: 'POST',
+        url: `/api/v1/user-invitations/${invitationId}/remove-project`,
+        headers: { authorization: `Bearer ${token}` },
+    })
 }
