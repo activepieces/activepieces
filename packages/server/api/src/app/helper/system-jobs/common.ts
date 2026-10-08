@@ -10,6 +10,7 @@ export enum SystemJobName {
     RUN_TELEMETRY = 'run-telemetry',
     DELETE_FLOW = 'delete-flow',
     HARD_DELETE_PROJECT = 'hard-delete-project',
+    CREATE_MISSING_PERSONAL_PROJECTS = 'create-missing-personal-projects',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
     BILLING_USAGE_REPORT = 'billing-usage-report',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
@@ -29,6 +30,10 @@ type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
     platformId: PlatformId
     preDeletedFlowIds: FlowId[]
+}
+
+type CreateMissingPersonalProjectsSystemJobData = {
+    platformId: PlatformId
 }
 
 type HardDeletePlatformSystemJobData = {
@@ -54,6 +59,7 @@ type SystemJobDataMap = {
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
+    [SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS]: CreateMissingPersonalProjectsSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
     [SystemJobName.BILLING_USAGE_REPORT]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
