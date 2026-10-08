@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import OpenAI from 'openai';
 import { localaiAuth } from '../auth';
 import { localaiCommon } from '../common';
 
@@ -76,7 +77,7 @@ export const askLocalAI = createAction({
   },
 });
 
-function parseRoles(value: unknown): RoleMessage[] {
+function parseRoles(value: unknown): ChatMessage[] {
   if (value === undefined || value === null || value === '') {
     return [];
   }
@@ -85,30 +86,99 @@ function parseRoles(value: unknown): RoleMessage[] {
       'Roles must be an array of { "role": "system" | "user" | "assistant", "content": "..." }.'
     );
   }
-  return value.map((item: unknown) => {
-    if (
-      typeof item !== 'object' ||
-      item === null ||
-      !('role' in item) ||
-      !isRole(item.role)
-    ) {
-      throw new Error(
-        'The only available roles are: [system, user, assistant]'
-      );
-    }
-    const content = 'content' in item ? item.content : '';
-    return {
-      role: item.role,
-      content: typeof content === 'string' ? content : JSON.stringify(content),
-    };
-  });
+  return value.map((item: unknown) => toMessage(item));
 }
 
-function isRole(role: unknown): role is RoleMessage['role'] {
+function toMessage(item: unknown): ChatMessage {
+  if (
+    typeof item !== 'object' ||
+    item === null ||
+    !('role' in item) ||
+    !isRole(item.role)
+  ) {
+    throw new Error('The only available roles are: [system, user, assistant]');
+  }
+  const content = 'content' in item ? item.content : '';
+  if (typeof content === 'string') {
+    return { role: item.role, content };
+  }
+  if (!Array.isArray(content)) {
+    throw new Error(
+      'Each role content must be text or an array of content parts.'
+    );
+  }
+  if (item.role === 'user') {
+    return { role: 'user', content: content.map(toUserPart) };
+  }
+  return { role: item.role, content: content.map(toTextPart) };
+}
+
+function toUserPart(part: unknown): ChatCompletionContentPart {
+  if (isImagePart(part)) {
+    return {
+      type: 'image_url',
+      image_url: {
+        url: part.image_url.url,
+        ...(part.image_url.detail ? { detail: part.image_url.detail } : {}),
+      },
+    };
+  }
+  return toTextPart(part);
+}
+
+function toTextPart(part: unknown): ChatCompletionContentPartText {
+  if (
+    typeof part === 'object' &&
+    part !== null &&
+    'type' in part &&
+    part.type === 'text' &&
+    'text' in part &&
+    typeof part.text === 'string'
+  ) {
+    return { type: 'text', text: part.text };
+  }
+  throw new Error(
+    'Content parts must be { "type": "text", "text": "..." }, or { "type": "image_url", "image_url": { "url": "..." } } in user messages.'
+  );
+}
+
+function isImagePart(part: unknown): part is ImagePart {
+  if (
+    typeof part !== 'object' ||
+    part === null ||
+    !('type' in part) ||
+    part.type !== 'image_url' ||
+    !('image_url' in part)
+  ) {
+    return false;
+  }
+  const image = part.image_url;
+  if (
+    typeof image !== 'object' ||
+    image === null ||
+    !('url' in image) ||
+    typeof image.url !== 'string'
+  ) {
+    return false;
+  }
+  return (
+    !('detail' in image) ||
+    image.detail === undefined ||
+    image.detail === 'auto' ||
+    image.detail === 'low' ||
+    image.detail === 'high'
+  );
+}
+
+function isRole(role: unknown): role is 'system' | 'user' | 'assistant' {
   return role === 'system' || role === 'user' || role === 'assistant';
 }
 
-type RoleMessage = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+type ChatCompletionContentPart = OpenAI.Chat.Completions.ChatCompletionContentPart;
+type ChatCompletionContentPartText =
+  OpenAI.Chat.Completions.ChatCompletionContentPartText;
+type ImagePart = {
+  type: 'image_url';
+  image_url: { url: string; detail?: 'auto' | 'low' | 'high' };
 };
