@@ -1,4 +1,5 @@
 export { aiProviderApi } from './api/ai-provider-api';
+export { platformModelTierApi } from './api/platform-model-tier-api';
 export { aiToolConfigApi } from './api/ai-tool-config-api';
 export { analyticsApi } from './api/analytics-api';
 export { apiKeyApi } from './api/api-key-api';
@@ -40,6 +41,11 @@ export {
   aiProviderKeys,
   hasAnyAuthFieldFilled,
 } from './hooks/ai-provider-hooks';
+export {
+  platformModelTierQueries,
+  platformModelTierMutations,
+  platformModelTierKeys,
+} from './hooks/platform-model-tier-hooks';
 export {
   aiToolConfigQueries,
   aiToolConfigMutations,
