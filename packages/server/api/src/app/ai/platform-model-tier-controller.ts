@@ -11,7 +11,7 @@ import { platformModelTierService } from './platform-model-tier-service'
 
 export const platformModelTierController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListPlatformModelTiers, async (request) => {
-        return platformModelTierService.listSummaries({ platformId: request.principal.platform.id })
+        return platformModelTierService.listSummaries({ platformId: request.principal.platform.id, scope: { type: 'project', projectId: request.projectId } })
     })
     app.get('/admin', ListPlatformModelTiersForAdmin, async (request) => {
         return platformModelTierService.list({ platformId: request.principal.platform.id })

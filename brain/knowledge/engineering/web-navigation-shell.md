@@ -58,6 +58,11 @@ route gets. `PlatformLayout` mounts the platform sidebar with no rail beside it.
   redirect passes `replace` to `<Navigate>`, but the one on `/platform` in `platform-routes.tsx` does not,
   so the browser Back button re-enters the redirect instead of leaving the admin. A one-word fix.
 
+- **`/projects/{projectId}` does not open that project.** The bare route renders `DefaultRoute`, which ignores
+  the id in the URL and sends you to the session project's default page, and that is chat whenever chat is
+  enabled. Link to a project with `/projects/{projectId}/automations`. Every built-in role has `READ_FLOW`,
+  so only a custom role with no flow, table or folder read lands on `/404` there.
+
 - **Admin sections are routes, not tabs.** Pieces, Workers, Health, AI Center and MCP Server used to switch
   sections with in-page tabs; each section is now a sidebar sub-item with its own path, and
   `LegacyTabRedirect` rewrites an old `?tab=` link to that path (MCP's tabs never had one). A new section gets a route and a
