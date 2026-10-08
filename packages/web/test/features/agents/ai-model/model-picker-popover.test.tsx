@@ -215,6 +215,27 @@ describe('ModelPickerPopover', () => {
     expect(detail()).toBeUndefined();
   });
 
+  it('clears the detail card when a row is picked', () => {
+    mountKeys();
+    const row = Array.from(rows()).find((candidate) =>
+      candidate.textContent?.includes('gamma model 1'),
+    );
+    act(() => {
+      row?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true }));
+    });
+    expect(
+      document.querySelector('[data-testid="model-picker-detail"]'),
+    ).not.toBeNull();
+
+    act(() => {
+      row?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(
+      document.querySelector('[data-testid="model-picker-detail"]'),
+    ).toBeNull();
+  });
+
   it('filters with its own matcher and drops empty groups', async () => {
     mount();
     typeSearch('alpha');

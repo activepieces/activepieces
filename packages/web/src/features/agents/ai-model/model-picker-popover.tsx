@@ -121,9 +121,22 @@ export function ModelPickerPopover<T>({
     setDetailTop(Math.max(highest, Math.min(rowTop, lowest)));
   }, [rowTop, activeItem]);
 
+  const changeOpen = (next: boolean) => {
+    if (!next) {
+      cancelClose();
+      setSearch('');
+      setExpanded([]);
+      setToggled({});
+      setHighlighted('');
+      setActiveItem(null);
+      movedByKeyboard.current = false;
+    }
+    onOpenChange(next);
+  };
+
   const pick = (item: ModelPickerItem<T>) => {
     onPick(item.value);
-    onOpenChange(false);
+    changeOpen(false);
   };
 
   const renderItems = (group: ModelPickerGroup<T>) => {
@@ -253,20 +266,7 @@ export function ModelPickerPopover<T>({
   );
 
   return (
-    <Popover
-      modal
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) {
-          setSearch('');
-          setExpanded([]);
-          setToggled({});
-          setHighlighted('');
-          setActiveItem(null);
-        }
-        onOpenChange(next);
-      }}
-    >
+    <Popover modal open={open} onOpenChange={changeOpen}>
       {anchorOnly ? (
         <PopoverAnchor asChild>{children}</PopoverAnchor>
       ) : (

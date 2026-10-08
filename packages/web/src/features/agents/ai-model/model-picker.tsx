@@ -314,11 +314,13 @@ function resolveCurrent({
         candidate.providerConfigId === shown.providerConfigId &&
         candidate.models.some((model) => model.id === shown.modelId),
     ) ??
-    options.keys.find(
-      (candidate) =>
-        candidate.provider === shown.provider &&
-        candidate.models.some((model) => model.id === shown.modelId),
-    );
+    (shown.providerConfigId === ''
+      ? options.keys.find(
+          (candidate) =>
+            candidate.provider === shown.provider &&
+            candidate.models.some((model) => model.id === shown.modelId),
+        )
+      : undefined);
   const model = key?.models.find((candidate) => candidate.id === shown.modelId);
   if (isNil(key) || isNil(model)) {
     return options.specificModelsHidden

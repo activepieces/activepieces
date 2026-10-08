@@ -149,6 +149,20 @@ describe('modelPickerView', () => {
     });
   });
 
+  it('shows a pick on a key that is gone as unavailable, even when another key has the model', () => {
+    const { current } = modelPickerView({
+      options,
+      shown: {
+        type: 'model',
+        provider: AIProviderName.OPENAI,
+        providerConfigId: 'deleted-key',
+        modelId: 'gpt-6',
+      },
+    });
+
+    expect(current).toMatchObject({ kind: 'unavailable', label: 'gpt-6' });
+  });
+
   it('picks a credits tier with the managed key and keeps details for every row', () => {
     const { groups, detailById, current } = modelPickerView({
       options,
