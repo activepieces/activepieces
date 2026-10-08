@@ -1,10 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { SoftrAuth } from '../common/auth';
-import { makeRequest, transformRecordFields } from '../common/client';
 import { databaseIdDropdown, tableFields, tableIdDropdown } from '../common/props';
-import { isNil } from '@activepieces/pieces-framework';
-import { TableField } from '../common/types';
+import { softrRecords } from '../common/records';
+import { softrOutputSchemas } from '../output-schemas';
 
 export const createDatabaseRecord = createAction({
 	auth: SoftrAuth,
@@ -13,42 +11,23 @@ export const createDatabaseRecord = createAction({
 	displayName: 'Create Database Record',
 	description: 'Creates a new record.',
 	audience: 'both',
-	aiMetadata: { description: 'Creates a new record in a chosen table of a Softr database, populating the supplied field values (empty values are dropped). Use to add a row when no matching record needs to be located first. Not idempotent — each call appends a new record.', idempotent: false },
+	aiMetadata: {
+		description:
+			'Adds one new record to a Softr table using the table field form. Agents: prefer Create Record (Agent), which takes column names as JSON. Empty values are skipped. Each call adds a new record, so a retry makes a duplicate.',
+		idempotent: false,
+	},
 	props: {
 		databaseId: databaseIdDropdown,
 		tableId: tableIdDropdown,
 		fields: tableFields,
 	},
+	outputSchema: softrOutputSchemas.record,
 	async run({ auth, propsValue }) {
-		const { databaseId, tableId } = propsValue;
-
-		const fields = propsValue.fields ?? {};
-
-		const formattedFields: Record<string, any> = {};
-
-		for (const [key, value] of Object.entries(fields)) {
-			if (isNil(value) || value === '') continue;
-			if (Array.isArray(value) && value.length === 0) continue;
-			formattedFields[key] = value;
-		}
-
-		const response = await makeRequest<{
-			data: { id: string; createdAt: string; updatedAt: string; fields: Record<string, any> };
-		}>(auth, HttpMethod.POST, `/databases/${databaseId}/tables/${tableId}/records`, {
-			fields: formattedFields,
+		return softrRecords.writeRecord({
+			apiKey: auth.secret_text,
+			databaseId: propsValue.databaseId,
+			tableId: propsValue.tableId,
+			fields: propsValue.fields,
 		});
-
-		const tableReponse = await makeRequest<{
-			data: {
-				fields: TableField[];
-			};
-		}>(auth, HttpMethod.GET, `/databases/${databaseId}/tables/${tableId}`);
-
-		const transformedFields = transformRecordFields(tableReponse.data.fields, response.data.fields);
-
-		return {
-			...response.data,
-			fields: transformedFields,
-		};
 	},
 });
