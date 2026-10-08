@@ -105,23 +105,33 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         status,
         entityManager,
     }: CreateInvitationRecordParams): Promise<UserInvitation> {
-        const id = apId()
-        await repo(entityManager).upsert({
-            id,
+        const normalizedEmail = email.toLowerCase().trim()
+        const record = {
             status,
             type,
-            email: email.toLowerCase().trim(),
+            email: normalizedEmail,
             platformId,
-            projectRoleId: projectRoleId ?? undefined,
-            platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
-            projectId: projectId ?? undefined,
-        }, ['email', 'platformId', 'projectId'])
-
-        return this.getOneOrThrow({
-            id,
-            platformId,
-            entityManager,
-        })
+            projectRoleId,
+            platformRole: type === InvitationType.PROJECT ? null : platformRole,
+            projectId,
+        }
+        switch (type) {
+            case InvitationType.PLATFORM: {
+                const id = await replacePlatformInvites({ email: normalizedEmail, platformId, projectId, entityManager })
+                await repo(entityManager).save({ id, ...record })
+                return this.getOneOrThrow({ id, platformId, entityManager })
+            }
+            case InvitationType.PROJECT: {
+                assertNotNullOrUndefined(projectId, 'projectId')
+                await repo(entityManager).update(
+                    { type: InvitationType.PLATFORM, email: normalizedEmail, platformId, projectId },
+                    { projectId: null, projectRoleId: null },
+                )
+                const id = apId()
+                await repo(entityManager).upsert({ id, ...record }, ['email', 'platformId', 'projectId'])
+                return this.getOneOrThrow({ id, platformId, entityManager })
+            }
+        }
     },
     async finalizeInvitation({
         userInvitation,
@@ -307,6 +317,20 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
 )`
 
 
+async function replacePlatformInvites({ email, platformId, projectId, entityManager }: ReplacePlatformInvitesParams): Promise<string> {
+    if (!isNil(projectId)) {
+        await repo(entityManager).delete({ type: InvitationType.PROJECT, email, platformId, projectId })
+    }
+    const [latest, ...duplicates] = await repo(entityManager).find({
+        where: { type: InvitationType.PLATFORM, email, platformId },
+        order: { created: 'DESC' },
+    })
+    if (duplicates.length > 0) {
+        await repo(entityManager).delete(duplicates.map((invitation) => invitation.id))
+    }
+    return latest?.id ?? apId()
+}
+
 async function loadProvisioningContext({ invitations, log }: LoadProvisioningContextParams): Promise<ProvisioningContext> {
     const withProject = invitations.filter((invitation) => !isNil(invitation.projectId) && !isNil(invitation.projectRoleId))
     const projectRoleIds = unique(withProject.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id)))
@@ -378,6 +402,13 @@ const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyI
     })
     return userInvitation
 }
+type ReplacePlatformInvitesParams = {
+    email: string
+    platformId: string
+    projectId: string | null
+    entityManager?: EntityManager
+}
+
 type DetachProjectFromPlatformInvitesParams = {
     projectId: string
     entityManager: EntityManager
