@@ -6,6 +6,7 @@ import { containerProp } from '../common';
 export const listBlobs = createAction({
   auth: azureBlobStorageAuth,
   name: 'listBlobs',
+  classification: 'SEARCH',
   displayName: 'List Blobs',
   description: 'List Blobs in the specified Azure Blob Storage container',
   audience: 'both',

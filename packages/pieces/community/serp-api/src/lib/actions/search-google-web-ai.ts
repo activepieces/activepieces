@@ -7,6 +7,7 @@ import { searchGoogleWebAiOutputSchema } from '../output-schemas';
 export const searchGoogleWebAi = createAction({
   auth: serpApiAuth,
   name: 'search_google_web_ai',
+  classification: 'SEARCH',
   displayName: 'Google Search (Agent)',
   description: 'Run a Google web search and return organic results for a query.',
   audience: 'ai',

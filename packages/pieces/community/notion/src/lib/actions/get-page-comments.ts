@@ -7,9 +7,9 @@ import { getPageCommentsActionOutputSchema } from '../output-schemas';
 export const getPageComments = createAction({
   auth: notionAuth,
   name: 'get_page_comments',
+  classification: 'READ',
   displayName: 'Get Page Comments',
-  description:
-    'Retrieve all comments from a Notion page, organized by discussion threads. Perfect for tracking feedback, managing reviews, or monitoring page discussions.',
+  description: 'Get all comments on a page, grouped by thread.',
   audience: 'human',
   aiMetadata: {
     description:

@@ -6,6 +6,7 @@ import FormData from 'form-data';
 
 export const urlToPdfAction = createAction({
   name: 'url_to_pdf',
+  classification: 'READ',
   displayName: 'Convert URL to PDF',
   description: 'Convert a web page URL to PDF document',
   audience: 'both',

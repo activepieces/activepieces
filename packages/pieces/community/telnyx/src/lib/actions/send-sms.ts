@@ -6,6 +6,7 @@ import { telnyxRequest } from '../common/client';
 export const sendSmsAction = createAction({
   auth: telnyxAuth,
   name: 'send_sms',
+  classification: 'WRITE',
   displayName: 'Send SMS',
   description: 'Send an SMS message using the Telnyx Messages API.',
   audience: 'both',

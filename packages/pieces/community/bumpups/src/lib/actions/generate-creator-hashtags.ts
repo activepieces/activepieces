@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const generateCreatorHashtags = createAction({
   auth: BumpupsAuth,
   name: 'generateCreatorHashtags',
+  classification: 'READ',
   displayName: 'Generate Creator Hashtags',
   description:
     'Generates relevant hashtags for a YouTube video based on its content.',

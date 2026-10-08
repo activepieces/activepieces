@@ -7,6 +7,7 @@ import { folderOutputSchema } from '../../output-schemas';
 export const clickupGetFolder = createAction({
   auth: clickupAuth,
   name: 'clickup_get_folder',
+  classification: 'READ',
   description: 'Get a single ClickUp folder by its ID',
   audience: 'ai',
   aiMetadata: {

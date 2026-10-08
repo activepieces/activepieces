@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -99,7 +100,8 @@ export const CanvasContextMenuContent = ({
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === FlowActionType.ROUTER &&
+    !isNil(firstSelectedStep) &&
+    flowStructureUtil.isBranchedAction(firstSelectedStep) &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsCofBranchChild =
@@ -411,8 +413,8 @@ export const CanvasContextMenuContent = ({
               }}
             >
               <ShortcutWrapper shortcut={CanvasShortcuts['Delete']}>
-                <Trash className="w-4 stroke-destructive h-4"></Trash>{' '}
-                <div className="text-destructive">{t('Delete')}</div>
+                <Trash className="w-4 stroke-danger-11 h-4"></Trash>{' '}
+                <div className="text-danger-11">{t('Delete')}</div>
               </ShortcutWrapper>
             </ContextMenuItem>
           </>

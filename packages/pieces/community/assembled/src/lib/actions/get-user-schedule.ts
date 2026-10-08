@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const getUserSchedule = createAction({
   auth: assembledAuth,
   name: 'get_user_schedule',
+  classification: 'READ',
   displayName: 'Get User Schedule',
   description: 'Retrieves user\'s schedule for specified period.',
   props: {

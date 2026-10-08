@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'set_volume',
+  classification: 'WRITE',
   displayName: 'Set Volume',
   auth: spotifyCommon.authentication,
   description: 'Sets the volume of the player',

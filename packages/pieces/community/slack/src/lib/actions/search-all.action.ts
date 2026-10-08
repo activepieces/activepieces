@@ -7,6 +7,7 @@ import { searchAllActionOutputSchema } from '../output-schemas';
 export const slackSearchAllAction = createAction({
   auth: slackAuth,
   name: 'slack_search_all',
+  classification: 'SEARCH',
   displayName: 'Search All',
   description: 'Search the workspace for both messages and files.',
   audience: 'ai',

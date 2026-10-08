@@ -72,6 +72,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, Rec
 export const newMemberAdded = createTrigger({
 	auth: circleAuth,
 	name: 'new_member_added',
+	classification: 'READ',
 	displayName: 'New Member Added',
 	description: 'Triggers when a new member is added to the community.',
 	aiMetadata: {

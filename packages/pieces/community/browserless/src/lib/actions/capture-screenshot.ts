@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browserlessAuth } from '../common/auth';
-import { browserlessCommon, convertBinaryToBase64, isBinaryResponse } from '../common/client';
+import { browserlessApi } from '../common/client';
+import { browserlessBody } from '../common/props';
+import { browserlessOutputSchemas } from '../output-schemas';
 
 export const captureScreenshot = createAction({
     name: 'capture_screenshot',
+    classification: 'READ',
     displayName: 'Capture Screenshot',
     description: 'Take a screenshot of a web page',
-    audience: 'both',
-    aiMetadata: { description: 'Renders a web page in a headless browser and returns a PNG or JPEG screenshot of it. Use to capture the visual state of a public URL; the page URL is required, and options like full-page capture, viewport size, clipping region, and waiting for a CSS selector control what is rendered. Not idempotent: each call runs a fresh headless-browser render, so the returned image reflects the live page at the moment of the call.', idempotent: false },
+    audience: 'human',
+    aiMetadata: { description: 'Renders a web page in a headless browser and returns a PNG, JPEG or WebP screenshot as a file. Use to capture the visual state of a public URL; for page text use Get Page Content or Smart Scrape instead. The page URL is required, and options like full-page capture, viewport size, clipping region, and waiting for a CSS selector control what is rendered. Each call renders the live page again and stores a new file (about 1 Browserless unit per 30 s).', idempotent: false },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({
@@ -24,13 +27,14 @@ export const captureScreenshot = createAction({
             options: {
                 options: [
                     { label: 'PNG', value: 'png' },
-                    { label: 'JPEG', value: 'jpeg' }
+                    { label: 'JPEG', value: 'jpeg' },
+                    { label: 'WebP', value: 'webp' },
                 ]
             }
         }),
         quality: Property.Number({
             displayName: 'Quality',
-            description: 'Image quality (0-100, only for JPEG)',
+            description: 'Image quality (0-100, only for JPEG and WebP)',
             required: false,
         }),
         fullPage: Property.Checkbox({
@@ -86,91 +90,75 @@ export const captureScreenshot = createAction({
             required: false,
         }),
     },
+    outputSchema: browserlessOutputSchemas.captureScreenshot,
     async run(context) {
-        const requestBody: any = {
-            url: context.propsValue.url,
+        const props = context.propsValue;
+        const imageType = props.imageType || 'png';
+        const clip = [props.clipX, props.clipY, props.clipWidth, props.clipHeight];
+        const clipGiven = clip.filter((value) => value !== undefined && value !== null).length;
+        if (clipGiven > 0 && clipGiven < 4) {
+            throw new Error('To clip the screenshot, fill in all four of Clip X, Clip Y, Clip Width and Clip Height.');
+        }
+        const width = browserlessBody.optionalNumber({ value: props.width, label: 'Viewport Width', min: 1 });
+        const height = browserlessBody.optionalNumber({ value: props.height, label: 'Viewport Height', min: 1 });
+        if ((width === undefined) !== (height === undefined)) {
+            throw new Error('Set both Viewport Width and Viewport Height, or leave both empty.');
+        }
+        const quality = browserlessBody.optionalNumber({ value: props.quality, label: 'Quality', min: 0, max: 100 });
+        const delay = browserlessBody.optionalNumber({ value: props.delay, label: 'Delay', min: 0 });
+
+        const requestBody = {
+            url: props.url,
             options: {
-                type: context.propsValue.imageType || 'png',
-                fullPage: context.propsValue.fullPage || false,
-            }
+                type: imageType,
+                fullPage: props.fullPage === true,
+                ...(quality !== undefined && imageType !== 'png' ? { quality } : {}),
+                ...(props.omitBackground === true ? { omitBackground: true } : {}),
+                ...(clipGiven === 4
+                    ? {
+                          clip: {
+                              x: Number(props.clipX),
+                              y: Number(props.clipY),
+                              width: Number(props.clipWidth),
+                              height: Number(props.clipHeight),
+                          },
+                      }
+                    : {}),
+            },
+            ...(width !== undefined && height !== undefined ? { viewport: { width, height } } : {}),
+            ...(browserlessBody.nonEmpty(props.waitForSelector) ? { waitForSelector: { selector: props.waitForSelector.trim() } } : {}),
+            ...(delay !== undefined ? { waitForTimeout: delay } : {}),
         };
 
-        if (context.propsValue.quality && context.propsValue.imageType === 'jpeg') {
-            requestBody.options.quality = context.propsValue.quality;
-        }
-
-        if (context.propsValue.width && context.propsValue.height) {
-            requestBody.viewport = {
-                width: context.propsValue.width,
-                height: context.propsValue.height,
-            };
-        }
-
-        if (context.propsValue.waitForSelector) {
-            requestBody.waitForSelector = {
-                selector: context.propsValue.waitForSelector,
-            };
-        }
-
-        if (context.propsValue.delay) {
-            requestBody.waitForTimeout = context.propsValue.delay;
-        }
-
-        if (context.propsValue.omitBackground) {
-            requestBody.options.omitBackground = context.propsValue.omitBackground;
-        }
-
-        if (context.propsValue.clipX !== undefined && 
-            context.propsValue.clipY !== undefined && 
-            context.propsValue.clipWidth !== undefined && 
-            context.propsValue.clipHeight !== undefined) {
-            requestBody.options.clip = {
-                x: context.propsValue.clipX,
-                y: context.propsValue.clipY,
-                width: context.propsValue.clipWidth,
-                height: context.propsValue.clipHeight,
-            };
-        }
-
-        const response = await browserlessCommon.apiCall({
+        const response = await browserlessApi.request({
             auth: context.auth.props,
             method: HttpMethod.POST,
-            resourceUri: '/screenshot',
+            path: '/screenshot',
             body: requestBody,
+            responseType: 'arraybuffer',
+            operation: 'Capture Screenshot',
         });
 
-        const imageType = context.propsValue.imageType || 'png';
-        const fileName = `screenshot.${imageType}`;
-        
-        let fileData: Buffer;
-        
-        if (response.body instanceof ArrayBuffer) {
-            fileData = Buffer.from(response.body);
-        } else if (Buffer.isBuffer(response.body)) {
-            fileData = response.body;
-        } else if (typeof response.body === 'string') {
-            fileData = Buffer.from(response.body, 'latin1');
-        } else {
-            fileData = Buffer.from(String(response.body), 'latin1');
-        }
-
-        const file = await context.files.write({
-            data: fileData,
-            fileName: fileName,
-        });
+        const fileData = browserlessApi.toBuffer(response.body);
+        const fileName = `screenshot.${imageType === 'jpeg' ? 'jpg' : imageType}`;
+        const file = await context.files.write({ data: fileData, fileName });
+        const site = browserlessApi.siteResponse(response.headers);
 
         return {
             success: true,
-            file: file,
-            screenshotBase64: convertBinaryToBase64(fileData),
+            file,
+            screenshotBase64: fileData.toString('base64'),
             metadata: {
-                url: context.propsValue.url,
+                url: props.url,
                 type: imageType,
-                fullPage: context.propsValue.fullPage || false,
+                fullPage: props.fullPage === true,
                 timestamp: new Date().toISOString(),
-                contentType: response.headers?.['content-type'] || `image/${imageType}`,
-                fileName: fileName,
-            }
+                contentType: browserlessApi.headerValue({ headers: response.headers, name: 'content-type' }) ?? `image/${imageType}`,
+                fileName,
+                sizeBytes: fileData.length,
+                siteStatusCode: site.site_status_code,
+                finalUrl: site.final_url,
+            },
         };
     },
 });

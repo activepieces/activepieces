@@ -1,11 +1,6 @@
+import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ArrowUpRight,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Settings,
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -18,8 +13,15 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePersonalization } from '@/features/chat/lib/use-personalization';
+import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
+import {
+  ResolvedUseCase,
+  UseCaseCard,
+} from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -36,11 +38,16 @@ export function EmptyState({
 }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const firstName = currentUser?.firstName ?? '';
+  const personalization = usePersonalization({ enabled: !incognito });
+  const cards = useMemo(
+    () => resolveCards({ researched: personalization.useCases }),
+    [personalization.useCases],
+  );
 
   if (incognito) {
     return (
-      <div className="flex min-h-full flex-col justify-center pt-8 pb-6">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+      <div className="flex min-h-full flex-col justify-center px-3 pt-8 pb-6 sm:px-6">
+        <div className="max-w-3xl mx-auto w-full">
           <Greeting firstName={firstName} incognito />
         </div>
       </div>
@@ -48,8 +55,8 @@ export function EmptyState({
   }
 
   return (
-    <div className="flex min-h-full flex-col pt-12 sm:pt-16 pb-6">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+    <div className="flex min-h-full flex-col px-3 pt-12 pb-6 sm:px-6 sm:pt-16">
+      <div className="max-w-3xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
           <div className="min-w-0 sm:flex-1 sm:max-w-md">
             <Greeting firstName={firstName} incognito={false} />
@@ -59,7 +66,7 @@ export function EmptyState({
           </div>
         </div>
         <CollapseOnInput collapsed={hasInput}>
-          <ExampleCards onSuggestionClick={onSuggestionClick} />
+          <ExampleCards cards={cards} onSuggestionClick={onSuggestionClick} />
         </CollapseOnInput>
       </div>
     </div>
@@ -76,11 +83,11 @@ function CollapseOnInput({
   return (
     <div
       className={cn(
-        'grid transition-all duration-300 ease-out',
+        'grid transition-all duration-300',
         collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
       )}
     >
-      <div className="overflow-hidden">{children}</div>
+      <div className="min-h-0 overflow-y-clip">{children}</div>
     </div>
   );
 }
@@ -90,20 +97,20 @@ export function SetupRequiredState() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-muted">
-        <Settings className="h-8 w-8 text-muted-foreground" />
+      <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gray-3">
+        <Settings className="h-8 w-8 text-gray-11" />
       </div>
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">
           {t('Set up an AI provider to get started')}
         </h2>
-        <p className="text-muted-foreground text-sm max-w-md">
+        <p className="text-gray-11 text-sm max-w-md">
           {t(
             'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
           )}
         </p>
       </div>
-      <Button onClick={() => navigate('/platform/setup/ai')} className="gap-2">
+      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
         <Settings className="h-4 w-4" />
         {t('Go to AI Settings')}
       </Button>
@@ -146,7 +153,7 @@ function Greeting({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-4xl sm:text-5xl font-bold leading-[1.1] text-balance font-sentient">
+      <h1 className="text-4xl sm:text-5xl font-bold leading-[1.1] text-balance font-serif">
         {incognito
           ? t('Private Chat')
           : firstName
@@ -154,7 +161,7 @@ function Greeting({
           : t(headline.plain)}
       </h1>
       {!incognito && (
-        <p className="text-base text-muted-foreground max-w-xl">
+        <p className="text-base text-gray-11 max-w-xl">
           {t(
             "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
           )}
@@ -219,10 +226,10 @@ const AppMarquee = memo(function AppMarquee() {
             paused={!!reducedMotion}
           />
         ))}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-linear-to-b from-background to-background/0" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-linear-to-t from-background to-background/0" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-linear-to-b from-gray-1 to-gray-1/0" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-linear-to-t from-gray-1 to-gray-1/0" />
       </div>
-      <span className="text-xs font-medium text-muted-foreground">
+      <span className="text-xs font-medium text-gray-11">
         {t('{count}+ apps', { count: moreCount })}
       </span>
     </div>
@@ -265,24 +272,22 @@ const MarqueeColumn = memo(function MarqueeColumn({
       }
     >
       {strip.map((app, i) => (
-        <div
+        <LogoPlate
           key={`${app.name}-${i}`}
-          className="size-14 shrink-0 overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/50 mb-3"
-        >
-          <img
-            src={app.logoUrl}
-            alt={app.displayName}
-            className="w-full h-full rounded-2xl object-contain p-2.5"
-          />
-        </div>
+          src={app.logoUrl}
+          alt={app.displayName}
+          className="mb-3 size-14 rounded-2xl p-2.5 shadow-sm ring-1 ring-gray-6/50"
+        />
       ))}
     </div>
   );
 });
 
 function ExampleCards({
+  cards,
   onSuggestionClick,
 }: {
+  cards: ResolvedUseCase[];
   onSuggestionClick: (text: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -291,35 +296,33 @@ function ExampleCards({
   const handleToggle = () => setExpanded((value) => !value);
 
   return (
-    <div className="mt-16">
+    <div className={cn('mt-16', expanded && 'pb-16')}>
       {expanded ? (
         <motion.div
-          className="grid grid-cols-1 gap-4 sm:grid-cols-6"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
-          {ALL_EXAMPLE_CARDS.map((card, i) => (
-            <ExampleCard
-              key={card.title}
+          {cards.map((card) => (
+            <UseCaseCard
+              key={card.key}
               card={card}
               delay={0}
-              animateIn={false}
-              onSuggestionClick={onSuggestionClick}
-              largeText={i < 2}
-              className={i < 2 ? 'sm:col-span-3' : 'sm:col-span-2'}
+              onSelect={onSuggestionClick}
+              className="h-full w-full"
             />
           ))}
         </motion.div>
       ) : (
         <CardCarousel>
-          {EXAMPLE_CARDS.map((card, i) => (
-            <ExampleCard
-              key={card.title}
+          {cards.slice(0, COLLAPSED_CARD_COUNT).map((card, i) => (
+            <UseCaseCard
+              key={card.key}
               card={card}
               delay={0.15 + i * 0.08}
-              onSuggestionClick={onSuggestionClick}
-              large
+              onSelect={onSuggestionClick}
+              className="min-w-[150px] flex-1 basis-0"
             />
           ))}
         </CardCarousel>
@@ -329,7 +332,7 @@ function ExampleCards({
         <button
           type="button"
           onClick={handleToggle}
-          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12 cursor-pointer"
         >
           {expanded ? t('Show less') : t('More and bigger')}
           <ChevronDown
@@ -408,14 +411,14 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-background to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-300',
           edges.atStart ? 'opacity-0' : 'opacity-100',
         )}
       />
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-background to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-300',
           edges.atEnd ? 'opacity-0' : 'opacity-100',
         )}
       />
@@ -428,7 +431,7 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         ref={scrollerRef}
         onScroll={updateEdges}
-        className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-0.5 flex snap-x gap-4 overflow-x-auto scroll-smooth px-0.5 pt-0.5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
@@ -467,83 +470,12 @@ function CarouselArrow({
       aria-label={direction === 'left' ? t('Scroll left') : t('Scroll right')}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-md backdrop-blur transition-colors hover:bg-background',
+        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-6 bg-gray-1/90 text-gray-12 shadow-md backdrop-blur transition-colors hover:bg-gray-1',
         direction === 'left' ? 'left-2' : 'right-2',
       )}
     >
       <Icon className="size-5" />
     </button>
-  );
-}
-
-function ExampleCard({
-  card,
-  delay,
-  onSuggestionClick,
-  large = false,
-  largeText = false,
-  animateIn = true,
-  className,
-}: {
-  card: ExampleCardData;
-  delay: number;
-  onSuggestionClick: (text: string) => void;
-  large?: boolean;
-  largeText?: boolean;
-  animateIn?: boolean;
-  className?: string;
-}) {
-  const emphasized = large || largeText;
-  const [imgError, setImgError] = useState(false);
-  const src = `/chat-suggestions/cards/${card.id}.webp`;
-
-  return (
-    <motion.button
-      type="button"
-      className={cn(
-        'group relative flex aspect-video cursor-pointer overflow-hidden rounded-xl text-left ring-1 ring-border/60',
-        large
-          ? 'w-[78vw] max-w-[360px] shrink-0 snap-start sm:w-[360px]'
-          : 'w-full',
-        imgError && 'bg-neutral-900',
-        className,
-      )}
-      onClick={() => onSuggestionClick(card.prompt)}
-      initial={animateIn ? { opacity: 0, y: 8 } : false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay }}
-    >
-      {!imgError && (
-        <img
-          src={src}
-          alt=""
-          aria-hidden
-          loading="lazy"
-          onError={() => setImgError(true)}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-        />
-      )}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"
-      />
-      <div
-        className={cn(
-          'relative z-10 flex h-full w-full items-end justify-start',
-          emphasized ? 'p-5' : 'p-4',
-        )}
-      >
-        <h3
-          className={cn(
-            'font-bold leading-tight text-white [text-shadow:_0_1px_12px_rgb(0_0_0_/_60%)]',
-            emphasized ? 'text-2xl sm:text-3xl' : 'text-lg',
-          )}
-        >
-          {t(card.title)}
-        </h3>
-      </div>
-      <ArrowUpRight className="absolute right-3 top-3 z-10 size-4 text-white/0 transition-colors duration-300 group-hover:text-white/90" />
-    </motion.button>
   );
 }
 
@@ -579,83 +511,37 @@ const FEATURED_APP_NAMES = [
   '@activepieces/piece-openai',
 ];
 
-const EXAMPLE_CARDS: ExampleCardData[] = [
-  {
-    id: 'fill-pipeline',
-    title: 'Fill my pipeline',
-    prompt: 'Fill my pipeline',
-  },
-  { id: 'close-deals', title: 'Close my deals', prompt: 'Close my deals' },
-  {
-    id: 'take-from-rivals',
-    title: 'Take customers from my rivals',
-    prompt: 'Take customers from my rivals',
-  },
-  { id: 'clone-me', title: 'Clone me', prompt: 'Clone me' },
-];
-
-const MORE_EXAMPLE_CARDS: ExampleCardData[] = [
-  { id: 'chase-leads', title: 'Chase my leads', prompt: 'Chase my leads' },
-  {
-    id: 'get-invoices-paid',
-    title: 'Get my invoices paid',
-    prompt: 'Get my invoices paid',
-  },
-  {
-    id: 'chase-late-payers',
-    title: 'Chase down my late payers',
-    prompt: 'Chase down my late payers',
-  },
-  {
-    id: 'grow-following',
-    title: 'Grow my following',
-    prompt: 'Grow my following',
-  },
-  { id: 'run-socials', title: 'Run my socials', prompt: 'Run my socials' },
-  { id: 'write-posts', title: 'Write my posts', prompt: 'Write my posts' },
-  {
-    id: 'win-back-customers',
-    title: 'Win back my customers',
-    prompt: 'Win back my customers',
-  },
-  {
-    id: 'answer-customers',
-    title: 'Answer my customers',
-    prompt: 'Answer my customers',
-  },
-  {
-    id: 'onboard-signups',
-    title: 'Onboard my new signups',
-    prompt: 'Onboard my new signups',
-  },
-  {
-    id: 'prep-meetings',
-    title: 'Prep me for meetings',
-    prompt: 'Prep me for meetings',
-  },
-  { id: 'run-my-day', title: 'Run my day', prompt: 'Run my day' },
-  { id: 'do-my-hiring', title: 'Do my hiring', prompt: 'Do my hiring' },
-  { id: 'squash-bugs', title: 'Squash my bugs', prompt: 'Squash my bugs' },
-];
-
-const ALL_EXAMPLE_CARDS: ExampleCardData[] = [
-  ...EXAMPLE_CARDS,
-  ...MORE_EXAMPLE_CARDS,
-];
-
 type ResolvedApp = {
   name: string;
   displayName: string;
   logoUrl: string;
 };
 
-type ExampleCardData = {
-  id: string;
-  title: string;
-  prompt: string;
-};
-
 type GreetingHeadline = {
   withName: string;
   plain: string;
 };
+
+function resolveCards({
+  researched,
+}: {
+  researched: PersonalizationUseCase[] | null;
+}): ResolvedUseCase[] {
+  if (researched && researched.length > 0) {
+    return researched.map((card) => ({
+      key: card.id,
+      imageId: card.imageId,
+      title: card.title,
+      prompt: card.prompt,
+      ...(card.kind ? { kind: card.kind } : {}),
+    }));
+  }
+  return DEFAULT_USE_CASES.map((card) => ({
+    key: card.id,
+    imageId: card.id,
+    title: card.title,
+    prompt: card.prompt,
+  }));
+}
+
+const COLLAPSED_CARD_COUNT = 4;

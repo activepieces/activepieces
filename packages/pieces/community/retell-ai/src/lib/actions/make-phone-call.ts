@@ -7,6 +7,7 @@ import { agentIdDropdown } from '../common/props';
 export const makePhoneCall = createAction({
   auth: retellAiAuth,
   name: 'make_phone_call',
+  classification: 'WRITE',
   displayName: 'Make Phone Call',
   description: 'Initiate a new outbound phone call using Retell AI agents.',
   audience: 'both',

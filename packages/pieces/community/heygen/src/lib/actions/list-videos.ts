@@ -6,6 +6,7 @@ import { heygenAuth } from '../common/auth';
 export const listVideosAction = createAction({
   auth: heygenAuth,
   name: 'list_videos',
+  classification: 'SEARCH',
   displayName: 'List Videos',
   description: 'Retrieve a list of all generated videos.',
   audience: 'both',

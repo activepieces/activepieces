@@ -6,6 +6,7 @@ import { WebhookInformation } from '../common/types';
 export const newDocumentExportFailed = createTrigger({
   auth: parseurAuth,
   name: 'newDocumentExportFailed',
+  classification: 'READ',
   displayName: 'New Document Export Failed',
   description:
     'Fires when an automated export endpoint (webhook / integration) fails for a processed document.',

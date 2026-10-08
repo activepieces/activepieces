@@ -7,10 +7,12 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateProject = createAction({
   auth: xeroAuth,
   name: 'xero_create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Creates a new project for a contact.',
   audience: 'both',
@@ -19,6 +21,7 @@ export const xeroCreateProject = createAction({
       'Create a new Xero Projects project for a contact, with a name and optional deadline (UTC ISO-8601) and estimate amount. Pick this for time/cost tracking on the Xero Projects product, distinct from accounting invoices. Not idempotent: each call creates another project.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.project,
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(true),

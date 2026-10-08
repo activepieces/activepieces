@@ -5,6 +5,7 @@ import { runwareAuth, runwareCommon } from '../common';
 export const imageBackgroundRemoval = createAction({
   auth: runwareAuth,
   name: 'imageBackgroundRemoval',
+  classification: 'READ',
   displayName: 'Image Background Removal',
   description: 'Request image background removal.',
   audience: 'both',

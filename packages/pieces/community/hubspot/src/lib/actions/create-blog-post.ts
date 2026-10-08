@@ -1,31 +1,39 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blogAuthorDropdown, blogUrlDropdown } from '../common/props';
+import { createBlogPostOutputSchema } from '../output-schemas';
 
 export const createBlogPostAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-blog-post',
-	displayName: 'Create COS Blog Post',
-	description: 'Creates a blog post in you Hubspot COS blog.',
+	classification: 'WRITE',
+	displayName: 'Create Blog Post',
+	description: 'Creates a draft or published post on a HubSpot blog.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a post in a HubSpot CMS (COS) blog with title, slug, body, and featured image, then optionally publish it immediately when Status is set to publish rather than draft. Each call creates a new post, so it is not idempotent.', idempotent: false },
+	outputSchema: createBlogPostOutputSchema,
 	props: {
 		contentGroupId: blogUrlDropdown,
 		authorId: blogAuthorDropdown,
 		status: Property.StaticDropdown({
-			displayName: 'Publish This Post?',
+			displayName: 'Status',
 			required: true,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
 					{
-						label: 'Leave As Draft',
+						label: 'Draft',
 						value: 'DRAFT',
+						description: 'Kept unpublished',
+						icon: 'file',
 					},
 					{
-						label: 'Publish Immediately',
+						label: 'Publish',
 						value: 'PUBLISHED',
+						description: 'Live once created',
+						icon: 'send',
 					},
 				],
 			},
@@ -33,14 +41,15 @@ export const createBlogPostAction = createAction({
 		slug: Property.ShortText({
 			displayName: 'Slug',
 			required: true,
-			description: 'The slug of the blog post. This is the URL of the post on your COS blog.',
+			description: 'The last part of the post\'s URL.',
+			placeholder: 'my-first-post',
 		}),
 		title: Property.ShortText({
-			displayName: 'Blog Post Title',
+			displayName: 'Title',
 			required: true,
 		}),
 		body: Property.LongText({
-			displayName: 'Blog Post Content',
+			displayName: 'Content',
 			required: true,
 		}),
 		meta: Property.LongText({
@@ -49,6 +58,7 @@ export const createBlogPostAction = createAction({
 		}),
 		imageUrl: Property.ShortText({
 			displayName: 'Featured Image URL',
+			placeholder: 'https://example.com/cover.png',
 			required: true,
 		}),
 	},
@@ -59,7 +69,7 @@ export const createBlogPostAction = createAction({
 		const createdPost = await httpClient.sendRequest<Record<string, any>>({
 			method: HttpMethod.POST,
 			url: 'https://api.hubapi.com/content/api/v2/blog-posts',
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 			body: {
 				blog_author_id: authorId,
 				content_group_id: contentGroupId,
@@ -77,7 +87,7 @@ export const createBlogPostAction = createAction({
 			await httpClient.sendRequest({
 				method: HttpMethod.POST,
 				url: `https://api.hubapi.com/content/api/v2/blog-posts/${createdPost.body['id']}/publish-action`,
-				authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+				authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 				body: {
 					action: 'schedule-publish',
 				},
@@ -87,7 +97,7 @@ export const createBlogPostAction = createAction({
 		const postDetails = await httpClient.sendRequest({
 			method: HttpMethod.GET,
 			url: `https://api.hubapi.com/content/api/v2/blog-posts/${createdPost.body['id']}`,
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 		});
 
         return postDetails.body

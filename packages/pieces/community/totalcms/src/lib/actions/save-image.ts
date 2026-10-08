@@ -1,136 +1,42 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { saveImage } from '../api';
+import { createAction } from '@activepieces/pieces-framework';
 import { cmsAuth } from '../auth';
-import * as z from 'zod/mini'
-import { propsValidation } from '@activepieces/pieces-common';
+import { totalcmsProps } from '../common/props';
+import { totalcmsShape } from '../common/shape';
+import { totalcmsUpload } from '../common/upload';
+import { totalcmsOutputSchemas } from '../output-schemas';
 
 export const saveImageAction = createAction({
   name: 'save_image',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Image',
-  description: 'Save image to Total CMS',
+  description: 'Uploads an image to an image object, replacing the current image.',
   audience: 'both',
-  aiMetadata: { description: 'Sets a single image-type CMS field in Total CMS, identified by its CMS ID (slug), with alt text, output extension (jpg/png), and thumbnail sizing/crop options. Use to set or replace the image stored at a given CMS ID. Idempotent: the field holds one image keyed on the slug, so repeating with the same input replaces it.', idempotent: true },
-  props: {
-    slug: Property.ShortText({
-      displayName: 'CMS ID',
-      description: 'The CMS ID of the content to save',
-      required: true,
-    }),
-    image: Property.File({
-      displayName: 'Image',
-      description: 'The image to save',
-      required: true,
-    }),
-    alt: Property.ShortText({
-      displayName: 'Alt Text',
-      description: 'The alt text for the image',
-      required: true,
-    }),
-    ext: Property.StaticDropdown({
-      displayName: 'Extension',
-      description: 'The extension of the image',
-      required: true,
-      defaultValue: 'jpg',
-      options: {
-        options: [
-          { label: 'jpg', value: 'jpg' },
-          { label: 'png', value: 'png' },
-        ],
-      },
-    }),
-    quality: Property.Number({
-      displayName: 'Thumbnail Quality',
-      description: 'The quality of the thumbnail',
-      required: true,
-      defaultValue: 85,
-    }),
-    scaleTh: Property.Number({
-      displayName: 'Thumbnail Scale',
-      description: 'The scale of the thumbnail',
-      required: true,
-      defaultValue: 400,
-    }),
-    scaleSq: Property.Number({
-      displayName: 'Thumbnail Square Scale',
-      description: 'The scale of the square thumbnail',
-      required: true,
-      defaultValue: 400,
-    }),
-    resize: Property.StaticDropdown({
-      displayName: 'Thumbnail Resize Method',
-      description: 'The method to use when resizing the thumbnail',
-      required: true,
-      defaultValue: 'auto',
-      options: {
-        options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Landscape', value: 'landscape' },
-          { label: 'Portrait', value: 'portrait' },
-        ],
-      },
-    }),
-    lcrop: Property.StaticDropdown({
-      displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
-      required: true,
-      defaultValue: 'center',
-      options: {
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
-      },
-    }),
-    pcrop: Property.StaticDropdown({
-      displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
-      required: true,
-      defaultValue: 'middle',
-      options: {
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Middle', value: 'middle' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
-      },
-    }),
-    altMeta: Property.Checkbox({
-      displayName: 'Pull Alt Text from Meta Data',
-      description:
-        'Pull the alt text from the meta data of the image. If set, place placeholder text in the alt text field above.',
-      required: true,
-    }),
+  aiMetadata: {
+    description:
+      'Uploads an image (file or public URL) to a Total CMS image object, replacing its current image and creating the object if the ID is new. Optional alt text is saved with it. Running it again with the same image leaves the same result.',
+    idempotent: true,
   },
+  props: {
+    collection: totalcmsProps.collectionForSchema({ schema: 'image', label: 'Image' }),
+    object_id: totalcmsProps.objectIdText({ description: 'The ID of the image object. A new ID creates the object.' }),
+    ...totalcmsUpload.fileProps({ fileLabel: 'Image' }),
+    alt: totalcmsUpload.altProp(),
+  },
+  outputSchema: totalcmsOutputSchemas.image,
   async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      quality: z.number().check(z.minimum(1), z.maximum(100)),
-      scaleTh: z.number().check(z.minimum(1)),
-      scaleSq: z.number().check(z.minimum(1)),
+    const collection = totalcmsShape.requireId({ value: context.propsValue.collection, label: 'Collection ID' });
+    const id = totalcmsShape.requireId({ value: context.propsValue.object_id, label: 'Object ID' });
+    const result = await totalcmsUpload.save({
+      auth: context.auth,
+      collection,
+      id,
+      property: 'image',
+      file: context.propsValue.file,
+      fileUrl: context.propsValue.file_url,
+      alt: context.propsValue.alt ?? undefined,
+      multiple: false,
     });
-    const slug = context.propsValue.slug;
-    const image = {
-      filename: context.propsValue.image.filename,
-      base64: context.propsValue.image.base64,
-    };
-    return await saveImage(context.auth, slug, image, {
-      thumbs: 1,
-      optimize: 1,
-      alttype: context.propsValue.altMeta ? 'meta' : 'user',
-      alt: context.propsValue.alt,
-      ext: context.propsValue.ext,
-      quality: context.propsValue.quality,
-      scale_th: context.propsValue.scaleTh,
-      scale_sq: context.propsValue.scaleSq,
-      resize: context.propsValue.resize,
-      lcrop: context.propsValue.lcrop,
-      pcrop: context.propsValue.pcrop,
-    });
+    return { ...totalcmsShape.typed({ collection, object: result.object }), preview_url: result.preview_url, warning: result.warning };
   },
 });

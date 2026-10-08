@@ -20,7 +20,7 @@ export const apRenameFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             flowId: z.string().describe('The id of the flow to rename'),
             displayName: z.string().describe('The new display name for the flow'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, displayName } = renameFlowInput.parse(args)
 

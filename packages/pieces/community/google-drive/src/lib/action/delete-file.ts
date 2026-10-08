@@ -6,15 +6,17 @@ import { drive as googleDrive } from '@googleapis/drive';
 export const googleDriveDeleteFile = createAction({
   auth: googleDriveAuth,
   name: 'delete_gdrive_file',
-  description: 'Delete permanently a file from your Google Drive',
+  classification: 'DESTRUCTIVE',
+  description: 'Permanently delete a file, skipping the bin.',
   audience: 'human',
   aiMetadata: { description: 'Permanently deletes a file from Google Drive by its ID, bypassing the trash and making it unrecoverable. Use only when permanent removal is intended; prefer Trash file for reversible deletion. Requires the file ID. Not idempotent: a repeat call fails because the file no longer exists.', idempotent: false },
-  displayName: 'Delete file',
+  displayName: 'Delete File',
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
-      description: 'The ID of the file to delete',
+      description: 'The ID of the file to delete. This cannot be undone.',
       required: true,
+      placeholder: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
     }),
     include_team_drives: common.properties.include_team_drives,
   },

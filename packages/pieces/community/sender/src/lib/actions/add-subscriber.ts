@@ -7,6 +7,7 @@ import { group } from 'console';
 export const addUpdateSubscriberAction = createAction({
   auth: senderAuth,
   name: 'add_update_subscriber',
+  classification: 'WRITE',
   displayName: 'Add / Update Subscriber',
   description: 'Add a new subscriber or update existing subscriber\'s data',
   audience: 'both',

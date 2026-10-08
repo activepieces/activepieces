@@ -5,6 +5,7 @@ import { createClient, Base44Error, type Base44Client } from '@base44/sdk';
 export const findEntity = createAction({
   auth: base44Auth,
   name: 'find_entity',
+  classification: 'SEARCH',
   displayName: 'Find Entity Record',
   description: 'Find a matching entity record in your Base44 app',
   audience: 'both',

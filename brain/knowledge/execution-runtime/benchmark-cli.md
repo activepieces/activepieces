@@ -4,7 +4,7 @@ icon: ⏱️
 
 # Benchmark CLI
 
-`activepieces benchmark` load-tests a deployment's sync-webhook path and attributes *where* latency goes, so a self-hosted setup can be compared apples-to-apples against Activepieces' published reference numbers. Available in CE, EE, Cloud.
+`npx @activepieces/cli benchmark` load-tests a deployment's sync-webhook path and attributes *where* latency goes, so a self-hosted setup can be compared apples-to-apples against Activepieces' published reference numbers. Available in CE, EE, Cloud.
 
 ### How it works
 - Builds a `webhook → data-mapper → return-response` flow. Instead of a raw `--concurrency`, it **auto-discovers the deployment shape** (`GET /v1/worker-machines`) and drives load = the effective **execution slot** count, so a healthy deploy queues ~zero by construction. Any queue-wait it reports is a real finding (usually driven concurrency > slots).
@@ -22,6 +22,7 @@ icon: ⏱️
 - **App Instance Registry** (`app-machine-cache.ts`): apps have no inbound healthcheck, so each self-registers into a Redis hash `appMachines` on its `systemSnapshot` tick; `list()` drops rows untouched >120s. Kept separate from `workerMachines` so an app is never counted as an execution slot. Write gated off on Cloud.
 
 ### Gotchas
+- **CLI identity — no `ap`, no `activepieces` package.** Applies to every CLI command, not just benchmark. Published as `@activepieces/cli` on npm (`activepieces` returns 404); bin is `pieces-cli`. All user docs should invoke it as `npx @activepieces/cli <command>`. `docs/admin-guide/guides/project-replace-cli.mdx` was shipped with `npm install -g activepieces` + `ap project replace`, both fictional; this brain page had the same slip in its opening line.
 - Auth is **platform API key only** (`AP_API_KEY`/`--api-key` + `--project-id`) — email/password login was removed; SERVICE principal gets the full diagnostic bundle.
 - The infra round-trip block is **self-hosted only** — `/v1/health/diagnostics` returns `FEATURE_DISABLED` on `AP_EDITION=cloud` (a Cloud admin is a tenant, not the infra operator); the CLI degrades gracefully.
 

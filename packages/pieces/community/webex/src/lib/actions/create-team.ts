@@ -6,6 +6,7 @@ import { webexAuth } from '../common/auth';
 export const createTeam = createAction({
   auth: webexAuth,
   name: 'createTeam',
+  classification: 'WRITE',
   displayName: 'Create Team',
   description:
     'Create a new Webex team. The authenticated user is automatically added as a member.',

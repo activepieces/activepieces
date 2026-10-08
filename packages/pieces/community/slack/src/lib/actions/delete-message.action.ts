@@ -7,6 +7,7 @@ import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 export const slackDeleteMessageAiAction = createAction({
   auth: slackAuth,
   name: 'slack_delete_message',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Message',
   description: 'Delete a message from a Slack channel by its timestamp.',
   audience: 'ai',

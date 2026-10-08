@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { disputeOutputSchema } from '../output-schemas';
 export const stripeUpdateDispute = createAction({
   name: 'update_dispute',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Update Dispute (Agent)',
   description: 'Submit or update evidence on a dispute.',

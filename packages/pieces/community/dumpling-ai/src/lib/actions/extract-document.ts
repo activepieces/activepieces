@@ -4,6 +4,7 @@ import { dumplingAuth } from '../auth';
 
 export const extractDocument = createAction({
 	name: 'extract_document',
+	classification: 'READ',
 	auth: dumplingAuth,
 	displayName: 'Extract Document Data',
 	description: 'Extract structured data from documents using vision-capable AI.',

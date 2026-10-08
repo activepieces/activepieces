@@ -6,6 +6,7 @@ import { containerProp } from '../common';
 export const findBlobs = createAction({
   auth: azureBlobStorageAuth,
   name: 'findBlobs',
+  classification: 'SEARCH',
   displayName: 'Find Blobs',
   description: 'Finds Blobs based on their tags',
   audience: 'both',

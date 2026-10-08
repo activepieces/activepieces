@@ -8,6 +8,7 @@ import { removeTagFromIssueActionOutputSchema } from '../output-schemas';
 export const removeTagFromIssueAction = createAction({
   auth: youtrackAuth,
   name: 'remove_tag_from_issue',
+  classification: 'WRITE',
   outputSchema: removeTagFromIssueActionOutputSchema,
   displayName: 'Remove Tag from Issue',
   description: 'Removes a tag from an issue.',

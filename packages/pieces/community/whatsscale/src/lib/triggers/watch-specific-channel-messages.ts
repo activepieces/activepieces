@@ -3,16 +3,19 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../auth';
 import { whatsscaleClient } from '../common/client';
 import { whatsscaleProps } from '../common/props';
+import { channelMessageOutputSchema } from '../output-schemas';
 
 export const watchSpecificChannelMessagesTrigger = createTrigger({
   auth: whatsscaleAuth,
   name: 'watch_specific_channel_messages',
+  classification: 'READ',
   displayName: 'Watch Specific Channel Messages',
   description: 'Triggers when a new message is posted to a specific WhatsApp Channel.',
   aiMetadata: {
     description:
       'Fires when a new message is posted to one chosen WhatsApp Channel (selected by channel ID) on the connected session. Each event represents a single channel post and includes the channel ID, message body, and media details. Use to monitor a specific channel rather than every channel the session follows.',
   },
+  outputSchema: channelMessageOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   props: {
     session: whatsscaleProps.session,

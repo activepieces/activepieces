@@ -6,6 +6,7 @@ import { createRowActionOutputSchema } from '../output-schemas';
 
 export const createRow = createAction({
     name: 'create_row',
+    classification: 'WRITE',
     displayName: 'Create Row',
     description: 'Create a new row in a table',
     audience: 'both',
@@ -16,7 +17,7 @@ export const createRow = createAction({
         row_data: supabaseCommon.table_columns,
         return_row: Property.Checkbox({
             displayName: 'Return Created Row',
-            description: 'Whether to return the created row',
+            description: 'When off, the step outputs nothing.',
             required: false,
             defaultValue: true,
         }),

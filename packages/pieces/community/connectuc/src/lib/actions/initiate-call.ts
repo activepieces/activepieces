@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const initiateCallAction = createAction({
     auth: connectucAuth,
     name: 'initiate-call',
+    classification: 'WRITE',
     displayName: 'Initiate Call',
     description: 'Initiate an outbound call from a ConnectUC extension',
     audience: 'both',

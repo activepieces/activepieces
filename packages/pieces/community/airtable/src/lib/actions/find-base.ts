@@ -7,6 +7,7 @@ import { findBaseActionOutputSchema } from '../output-schemas';
 export const airtableFindBaseAction = createAction({
   auth: airtableAuth,
   name: 'airtable_find_base',
+  classification: 'SEARCH',
   displayName: 'Find Base',
   description: 'Find a base by its name or a keyword.',
   audience: 'human',
@@ -18,8 +19,9 @@ export const airtableFindBaseAction = createAction({
   },
   props: {
     baseName: Property.ShortText({
-      displayName: 'Base Name or Keyword',
-      description: 'The name or keyword to search for within your base names.',
+      displayName: 'Base Name',
+      description: 'Bases whose name contains this text are returned.',
+      placeholder: 'e.g. CRM',
       required: true,
     }),
   },

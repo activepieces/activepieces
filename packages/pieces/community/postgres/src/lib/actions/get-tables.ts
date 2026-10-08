@@ -6,6 +6,7 @@ import { getTablesOutputSchema } from '../output-schemas';
 export const getTables = createAction({
   auth: postgresAuth,
   name: 'get-tables',
+  classification: 'SEARCH',
   displayName: 'Get Tables',
   description: 'Returns the tables in the database',
   audience: 'both',

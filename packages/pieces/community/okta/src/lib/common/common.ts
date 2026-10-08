@@ -25,8 +25,8 @@ export async function makeOktaRequest(
   method: HttpMethod = HttpMethod.GET,
   body?: any
 ) {
-  const apiToken = auth.apiToken;
-  let domain = auth.domain;
+  const apiToken = auth.props.apiToken;
+  let domain = auth.props.domain;
   
   if (!domain) {
     throw new Error('Okta domain is required');

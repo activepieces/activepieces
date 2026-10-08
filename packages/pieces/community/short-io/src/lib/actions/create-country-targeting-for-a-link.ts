@@ -7,6 +7,7 @@ import { domainIdDropdown, linkIdDropdown } from '../common/props';
 export const createCountryTargetingRuleAction = createAction({
   auth: shortIoAuth,
   name: 'create-country-targeting-rule',
+  classification: 'WRITE',
   displayName: 'Create Country Targeting Rule',
   description: 'Set geographic targeting rules for a link with specific destination per country.',
   audience: 'both',

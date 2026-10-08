@@ -9,6 +9,7 @@ import { StreakBox } from '../common/types';
 export const updateBoxAction = createAction({
   auth: streakAuth,
   name: 'update_box',
+  classification: 'WRITE',
   displayName: 'Update Box',
   description:
     'Update the name, notes, stage, assignees, or custom fields on an existing box.',

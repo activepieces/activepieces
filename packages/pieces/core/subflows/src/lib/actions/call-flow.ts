@@ -10,6 +10,7 @@ import { CallableFlowResponse, dispatchToSubflow, findEnabledSubflowOrThrow, fin
 export const callFlow = createAction({
   audience: 'both',
   name: 'callFlow',
+  classification: 'WRITE',
   displayName: 'Call Flow',
   description: 'Call a flow that has "Callable Flow" trigger',
   aiMetadata: { description: 'Dispatches a run of another flow in this project that starts with a "Callable Flow" trigger, passing a payload entered as key-value pairs or raw JSON, and can optionally wait for that subflow to send back a "Return Response". Pick it to reuse a flow as a subroutine; prefer Stream CSV to Subflows for large CSV input. The target flow must be published and enabled, and when Wait for Response is on, a subflow failure also fails this run; not idempotent, since every call starts a new subflow run.', idempotent: false },

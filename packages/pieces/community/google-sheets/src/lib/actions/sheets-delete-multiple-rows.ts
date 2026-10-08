@@ -6,6 +6,7 @@ import { sheetsDeleteMultipleRowsActionOutputSchema } from '../output-schemas';
 export const sheetsDeleteMultipleRows = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_delete_multiple_rows',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Multiple Rows',
 	description: 'Delete a contiguous range of rows, or a list of specific row numbers.',
 	audience: 'ai',

@@ -7,6 +7,7 @@ import { searchGoogleLensOutputSchema } from '../output-schemas';
 export const searchGoogleLens = createAction({
   auth: serpApiAuth,
   name: 'search_google_lens',
+  classification: 'SEARCH',
   displayName: 'Search Google Lens',
   description: 'Run a reverse-image (visual) search on Google Lens for an image URL.',
   audience: 'ai',

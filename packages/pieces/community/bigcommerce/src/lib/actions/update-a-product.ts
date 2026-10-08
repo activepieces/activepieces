@@ -5,6 +5,7 @@ import { bigCommerceApiService } from '../common/requests';
 export const updateAProduct = createAction({
   auth: bigcommerceAuth,
   name: 'updateAProduct',
+  classification: 'WRITE',
   displayName: 'Update a Product',
   description: 'Updates an existing Product',
   audience: 'both',

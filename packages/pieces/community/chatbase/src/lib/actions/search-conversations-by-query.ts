@@ -7,6 +7,7 @@ import { chatbotIdDropdown } from '../common/props';
 export const searchConversationsAction = createAction({
 	auth: chatbaseAuth,
 	name: 'search_conversations',
+	classification: 'SEARCH',
 	displayName: 'Search Conversations by Query',
 	description: 'Searches for conversations from a specific chatbot.',
 	audience: 'both',

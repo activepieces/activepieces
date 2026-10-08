@@ -17,7 +17,7 @@ export const apInsertRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         permission: Permission.WRITE_TABLE,
         description: 'Insert one or more records into a table. Max 50 records per call.',
         inputSchema: insertRecordsInput.shape,
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId, records } = insertRecordsInput.parse(args)

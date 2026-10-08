@@ -52,7 +52,7 @@
 .pp-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 40px; border: 1px solid var(--pp-border); border-radius: 6px; padding: 6px 8px; }
 .pp-chips .pp-ph { color: var(--pp-faint); font-size: 14px; }
 
-.pp-code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.6; background: var(--pp-soft); border: 1px solid var(--pp-border); border-radius: 6px; padding: 10px 12px; color: #3f3f46; white-space: pre; overflow-x: auto; }
+.pp-code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12.5px; line-height: 1.6; background: var(--pp-soft); border: 1px solid var(--pp-border); border-radius: 6px; padding: 10px 12px; color: #3f3f46; white-space: pre; overflow-x: auto; }
 .pp-key { color: hsl(257 74% 45%); }
 .pp-str { color: hsl(160 84% 30%); }
 
@@ -86,7 +86,7 @@
 .pp-cards { display: flex; gap: 8px; flex-wrap: wrap; }
 .pp-rcard { flex: 1 1 0; min-width: 120px; display: flex; align-items: center; gap: 10px; border: 1px solid var(--pp-border); border-radius: 8px; padding: 11px 12px; }
 .pp-rcard.pp-sel { border-color: var(--pp-primary); background: hsl(257 74% 57% / 0.05); }
-.pp-rcard .pp-ic { width: 28px; height: 28px; border-radius: 6px; background: var(--pp-soft); display: flex; align-items: center; justify-content: center; color: #52525b; flex: none; font-family: ui-monospace, monospace; font-size: 12px; }
+.pp-rcard .pp-ic { width: 28px; height: 28px; border-radius: 6px; background: var(--pp-soft); display: flex; align-items: center; justify-content: center; color: #52525b; flex: none; font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; }
 .pp-rcard.pp-sel .pp-ic { background: var(--pp-primary-wash); color: var(--pp-primary); }
 .pp-rcard .pp-t { font-size: 13.5px; font-weight: 600; }
 .pp-rcard .pp-d { font-size: 11.5px; color: var(--pp-muted); }

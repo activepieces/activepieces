@@ -7,6 +7,7 @@ const CACHE_KEY = 'lemlist_new_activity_trigger_key';
 export const newActivity = createTrigger({
   auth: lemlistAuth,
   name: 'newActivity',
+  classification: 'READ',
   displayName: 'New Activity',
   description: 'Triggers for each new activity.',
   aiMetadata: {

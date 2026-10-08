@@ -5,6 +5,7 @@ import { getKeyValueStoreActionOutputSchema } from '../output-schemas';
 
 export const apifyGetKeyValueStore = createAction({
   name: 'apify_get_key_value_store',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Key-Value Store',
   description: 'Retrieves metadata for an Apify key-value store by store ID.',

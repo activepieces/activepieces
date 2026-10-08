@@ -8,6 +8,7 @@ import { repositoryBodyOutputSchema } from '../../output-schemas';
 export const githubCreateRepositoryAction = createAction({
   auth: githubAuth,
   name: 'create_repository',
+  classification: 'WRITE',
   displayName: 'Create Repository (Agent)',
   description: 'Creates a new repository for the authenticated user.',
   audience: 'ai',

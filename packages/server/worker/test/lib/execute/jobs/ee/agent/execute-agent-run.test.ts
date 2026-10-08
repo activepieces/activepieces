@@ -81,6 +81,17 @@ describe('stepResultFrom', () => {
     })
 })
 
+describe('stepResultFrom — a turn that produced output must not fail the flow step', () => {
+    const at = '2026-08-05T00:00:00.000Z'
+
+    it('leaves the fatal signal unset even when it reports an incomplete reason', () => {
+        const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [], timestamp: at, failure: 'The response reached the output limit before the agent finished' })
+
+        expect(result.status).toBe('FAILED')
+        expect(result.failure).toBeUndefined()
+    })
+})
+
 describe('stepResultFrom — a failed tool call must not read as success', () => {
     const at = '2026-08-05T00:00:00.000Z'
     const failedCall = {
@@ -170,7 +181,7 @@ describe('UNATTENDED_WEB_TOOLS — the unattended set is listed, not subtracted'
     })
 
     it('excludes every tool that asks the user something', () => {
-        for (const chatTool of ['ap_show_connection_picker', 'ap_show_quick_replies', 'ap_discover_action_auth', 'ap_load_guide', 'ap_execute_action', 'ap_run_code', 'ap_explore_data', 'ap_list_across_projects']) {
+        for (const chatTool of ['ap_show_connection_picker', 'ap_show_quick_replies', 'ap_discover_action_auth', 'ap_execute_action', 'ap_run_code', 'ap_explore_data', 'ap_list_across_projects']) {
             expect(UNATTENDED_WEB_TOOLS).not.toContain(chatTool)
         }
     })

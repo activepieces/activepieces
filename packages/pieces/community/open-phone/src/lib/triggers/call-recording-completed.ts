@@ -11,6 +11,7 @@ import { phoneNumberDropdown } from '../common/props';
 export const callRecordingCompleted = createTrigger({
   auth: openPhoneAuth,
   name: 'call_recording_completed',
+  classification: 'READ',
   displayName: 'Call Recording Completed',
   description:
     'Fires when a call recording finishes. Useful for post-transcription or archival workflows.',

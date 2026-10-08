@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, User, UserIdentity, UserWithMetaInformation, WorkerJobType } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
@@ -19,7 +19,7 @@ import {
     pieceMetadataService,
 } from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
-import { userService } from '../../user/user-service'
+import { mapToUserWithMetaInformation, userService } from '../../user/user-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import {
     AppConnectionEntity,
@@ -234,6 +234,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
         return this.removeSensitiveData(connection)
+    },
+
+    async listConnectedPieces({ projectId, platformId, limit }: { projectId: ProjectId, platformId: PlatformId, limit: number }): Promise<{ pieceName: string, externalId: string }[]> {
+        return appConnectionsRepo().createQueryBuilder('connection')
+            .select('connection.pieceName', 'pieceName')
+            .addSelect('connection.externalId', 'externalId')
+            .distinctOn(['connection.pieceName'])
+            .where('connection.platformId = :platformId', { platformId })
+            .andWhere(':projectId = ANY(connection.projectIds)', { projectId })
+            .andWhere('connection.status = :status', { status: AppConnectionStatus.ACTIVE })
+            .orderBy('connection.pieceName', 'ASC')
+            .addOrderBy('connection.created', 'ASC')
+            .limit(limit)
+            .getRawMany()
     },
 
     async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
@@ -920,29 +934,6 @@ async function fetchFlowIdsForConnections(
     })
 
     return flowIdsByExternalId
-}
-
-function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
-    if (isNil(owner)) {
-        return null
-    }
-    const identity = owner.identity
-    if (isNil(identity)) {
-        return null
-    }
-
-    return {
-        id: owner.id,
-        email: identity.email,
-        firstName: identity.firstName,
-        lastName: identity.lastName,
-        platformId: owner.platformId,
-        platformRole: owner.platformRole,
-        status: owner.status,
-        externalId: owner.externalId,
-        created: owner.created,
-        updated: owner.updated,
-    }
 }
 
 function validatePieceVersion(pieceVersion: string): void {

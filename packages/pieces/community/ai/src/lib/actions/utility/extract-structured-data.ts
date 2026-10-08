@@ -1,52 +1,51 @@
-import { ApFile, createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { createAIModel } from '../../common/ai-sdk';
-import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
-import mime from 'mime-types';
+import { AiStepAction, ApFile, createAction, PieceAuth, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import Ajv from 'ajv';
-import { aiProps } from '../../common/props';
-import { AIProviderName } from '@activepieces/pieces-framework';
+import mime from 'mime-types';
+import { runOnWorker, uploadAiFiles } from '../../common/ai-step';
+import { aiProps, aiProviderSelection } from '../../common/props';
 
 export const extractStructuredData = createAction({
   audience: 'both',
 	name: 'extractStructuredData',
+	classification: 'READ',
 	displayName: 'Extract Structured Data',
-	description: 'Accurately Pull names, amounts, and other structured data from emails, invoices, and scanned documents.',
+	description: 'Pull names, amounts and other fields from text, images or PDFs.',
 	aiMetadata: { description: 'Pulls typed fields out of unstructured input (text, images or PDFs) against a schema supplied either in simple mode, a list of field definitions, or advanced mode, a raw JSON Schema. Pick it when you need specific named values from documents such as invoices, receipts or emails; use classifyText for a single label, summarizeText for prose condensation, or askAi for open-ended analysis. At least one of Text or Files is required or the step throws; read-only and idempotent.', idempotent: true },
 	props: {
 		provider: aiProps({ modelType: 'text' }).provider,
 		model: aiProps({ modelType: 'text' }).model,
 		text: Property.LongText({
 			displayName: 'Text',
-			description: 'Text to extract structured data from.',
+			description: 'Text to extract from. Fill this, Files, or both.',
 			required: false,
 		}),
 		files: Property.Array({
 			displayName: 'Files',
+			description: 'Images or PDFs to extract from.',
 			required: false,
 			properties: {
 				file: Property.File({
 					displayName: 'Image/PDF',
-					description: 'Image or PDF to extract structured data from.',
 					required: false,
 				}),
 			},
 		}),
 		prompt: Property.LongText({
-			displayName: 'Guide Prompt',
-			description: 'Prompt to guide the AI.',
+			displayName: 'Prompt',
+			description: 'Extra guidance for the AI, like a date format to use.',
 			defaultValue: 'Extract the following data from the provided data.',
 			required: false,
 		}),
 		mode: Property.StaticDropdown<'simple' | 'advanced'>({
 			displayName: 'Data Schema Type',
-			description: 'For complex schema, you can use advanced mode.',
 			required: true,
 			defaultValue: 'simple',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Simple', value: 'simple' },
-					{ label: 'Advanced', value: 'advanced' },
+					{ label: 'Simple', value: 'simple', description: 'List fields', icon: 'sliders' },
+					{ label: 'Advanced', value: 'advanced', description: 'JSON Schema', icon: 'code' },
 				],
 			},
 		}),
@@ -61,8 +60,7 @@ export const extractStructuredData = createAction({
 					return {
 						fields: Property.Json({
 							displayName: 'JSON Schema',
-							description:
-								'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
+							description: 'JSON Schema for the output. See json-schema.org to learn more.',
 							required: true,
 							defaultValue: {
 								type: 'object',
@@ -81,24 +79,24 @@ export const extractStructuredData = createAction({
 				}
 				return {
 					fields: Property.Array({
-						displayName: 'Data Definition',
+						displayName: 'Fields',
 						required: true,
 						properties: {
 							name: Property.ShortText({
 								displayName: 'Name',
-								description:
-									'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+								description: 'Short, unique name for this value in the output.',
+								placeholder: 'e.g. invoice_total',
 								required: true,
 							}),
 							description: Property.LongText({
 								displayName: 'Description',
-								description:
-									'Brief description of the data, this hints for the AI on what to look for',
+								description: 'Tells the AI what to look for.',
+								placeholder: 'e.g. Total due, including tax',
 								required: false,
 							}),
 							type: Property.StaticDropdown({
 								displayName: 'Data Type',
-								description: 'Type of parameter.',
+								description: 'Data type of the extracted value.',
 								required: true,
 								defaultValue: 'string',
 								options: {
@@ -111,7 +109,8 @@ export const extractStructuredData = createAction({
 								},
 							}),
 							isRequired: Property.Checkbox({
-								displayName: 'Fail if Not present?',
+								displayName: 'Required',
+								description: 'Asks the AI to always fill this field. The step does not check it.',
 								required: true,
 								defaultValue: false,
 							}),
@@ -122,169 +121,63 @@ export const extractStructuredData = createAction({
 		}),
 		maxOutputTokens: Property.Number({
 			displayName: 'Max Tokens',
+			description: 'Longest reply allowed, in tokens. Raise it if a long reply fails or stops short.',
 			required: false,
 			defaultValue: 2000,
+			advanced: true,
 		}),
 	},
 	async run(context) {
-		const provider = context.propsValue.provider;
-		const modelId = context.propsValue.model;
-		const text = context.propsValue.text;
-		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
-		const prompt = context.propsValue.prompt;
-		const schema = context.propsValue.schema;
-		const maxOutputTokens = context.propsValue.maxOutputTokens;
+		const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
+		const attachments = ((context.propsValue.files as { file?: ApFile }[] | undefined) ?? []).map((row) => row?.file);
 
-		if (!text && !files.length) {
+		if (!context.propsValue.text && attachments.length === 0) {
 			throw new Error('Please provide text or image/PDF to extract data from.');
 		}
 
-		const model = await createAIModel({
-			provider: provider as AIProviderName,
-			modelId,
-			engineToken: context.server.token,
-			apiUrl: context.server.apiUrl,
-			projectId: context.project.id,
-			flowId: context.flows.current.id,
-			runId: context.run.id,
-		});
-
-		let schemaDefinition: any;
-		// Track sanitized-to-original name mapping to restore output keys.
-		const sanitizedNameMap: Record<string, string> = {};
-
 		if (context.propsValue.mode === 'advanced') {
-			const ajv = new Ajv();
-			const isValidSchema = ajv.validateSchema(schema['fields']);
-
-			if (!isValidSchema) {
-				throw new Error(
-					JSON.stringify({
-						message: 'Invalid JSON schema',
-						errors: ajv.errors,
-					}),
-				);
-			}
-
-			schemaDefinition = jsonSchema(schema['fields'] as any);
-		} else {
-			const fields = schema['fields'] as Array<{
-				name: string;
-				description?: string;
-				type: string;
-				isRequired: boolean;
-			}>;
-
-			const properties: Record<string, any> = {};
-			const required: string[] = [];
-
-			fields.forEach((field) => {
-				const sanitizedFieldName = field.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-				sanitizedNameMap[sanitizedFieldName] = field.name;
-
-				properties[sanitizedFieldName] = {
-					type: field.type,
-					description: field.description,
-				};
-
-				if (field.isRequired) {
-					required.push(sanitizedFieldName);
-				}
-			});
-
-			const jsonSchemaObject = {
-				type: 'object' as const,
-				properties,
-				required,
-			};
-
-			schemaDefinition = jsonSchema(jsonSchemaObject);
+			assertValidJsonSchema(context.propsValue.schema['fields']);
 		}
 
-		const extractionTool = tool({
-			description: 'Extract structured data from the provided content',
-			inputSchema: schemaDefinition,
-			execute: async (data) => {
-				return data;
-			},
+		const result = await runOnWorker({
+			context,
+			buildRequest: async () => ({
+				action: AiStepAction.EXTRACT_STRUCTURED_DATA,
+				provider,
+				...spreadIfDefined('providerConfigId', configId),
+				modelId: context.propsValue.model,
+				...spreadIfDefined('text', context.propsValue.text),
+				...spreadIfDefined('prompt', context.propsValue.prompt),
+				files: await uploadAiFiles({ context, files: attachments, mimeTypeOf: documentMimeType }),
+				schema: { mode: context.propsValue.mode ?? 'simple', fields: context.propsValue.schema['fields'] },
+				...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
+			}),
 		});
 
-		const messages: Array<ModelMessage> = [];
-
-		const contentParts: UserModelMessage['content'] = [];
-
-		let textContent = prompt || 'Extract the following data from the provided data.';
-		if (text) {
-			textContent += `\n\nText to analyze:\n${text}`;
+		if (result.status === 'paused') {
+			return {};
 		}
 
-		contentParts.push({
-			type: 'text',
-			text: textContent,
-		});
-
-		if (files.length > 0) {
-			for (const fileWrapper of files) {
-				const file = fileWrapper.file;
-				if (!file) {
-					continue;
-				}
-				const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
-
-				if (fileType && fileType.startsWith('image') && file.base64) {
-					contentParts.push({
-						type: 'image',
-						image: `data:${fileType};base64,${file.base64}`,
-					});
-				} else if (fileType && fileType.startsWith('application/pdf') && file.base64) {
-					contentParts.push({
-						type: 'file',
-						data: `data:${fileType};base64,${file.base64}`,
-						mediaType: fileType,
-						filename: file.filename,
-					});
-				}
-			}
-		}
-
-		messages.push({
-			role: 'user',
-			content: contentParts,
-		});
-
-		try {
-			const result = await generateText({
-				model,
-				maxOutputTokens,
-				tools: {
-					extractData: extractionTool,
-				},
-				toolChoice: 'required',
-				messages,
-			});
-
-			const toolCalls = result.toolCalls;
-			if (!toolCalls || toolCalls.length === 0) {
-				throw new Error('No structured data could be extracted from the input.');
-			}
-
-			const extractedData = toolCalls[0].input;
-
-			if (Object.keys(sanitizedNameMap).length > 0 && extractedData && typeof extractedData === 'object') {
-				const restoredData: Record<string, unknown> = {};
-				for (const [key, value] of Object.entries(extractedData)) {
-					const originalName = sanitizedNameMap[key] ?? key;
-					restoredData[originalName] = value;
-				}
-				return restoredData;
-			}
-
-			return extractedData;
-
-		} catch (error) {
-			throw new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`);
-		}
+		return result.output.answer;
 	},
 });
 
+function assertValidJsonSchema(fields: unknown): void {
+	const ajv = new Ajv();
+	if (!ajv.validateSchema(fields as Parameters<Ajv['validateSchema']>[0])) {
+		throw new Error(
+			JSON.stringify({
+				message: 'Invalid JSON schema',
+				errors: ajv.errors,
+			}),
+		);
+	}
+}
 
+function documentMimeType(file: ApFile): string | undefined {
+	if (!file.extension) {
+		return 'image/jpeg';
+	}
+	const detected = mime.lookup(file.extension);
+	return detected === false ? undefined : detected;
+}

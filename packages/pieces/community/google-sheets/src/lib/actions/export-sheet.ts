@@ -11,6 +11,7 @@ import { exportSheetActionOutputSchema } from '../output-schemas';
 
 export const exportSheetAction = createAction({
   name: 'export_sheet',
+  classification: 'READ',
   displayName: 'Export Worksheet',
   description: 'Download a worksheet as a CSV or TSV file.',
   audience: 'human',

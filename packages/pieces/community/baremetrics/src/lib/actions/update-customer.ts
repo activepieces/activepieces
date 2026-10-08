@@ -8,6 +8,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const updateCustomer = createAction({
   name: 'update_customer',
+  classification: 'WRITE',
   displayName: 'Update Customer',
   description: 'Updates the basic information stored on a customer',
   audience: 'both',

@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionPaymentSuccessTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_payment_success',
+  classification: 'READ',
   displayName: 'Subscription Payment Success',
   description: 'Triggers when a subscription payment is successful',
   aiMetadata: {

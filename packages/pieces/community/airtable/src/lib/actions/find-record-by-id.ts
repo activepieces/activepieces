@@ -6,6 +6,7 @@ import { findRecordByIdActionOutputSchema } from '../output-schemas';
 export const airtableGetRecordByIdAction = createAction({
   auth: airtableAuth,
   name: 'airtable_get_record_by_id',
+  classification: 'READ',
   displayName: 'Get Record by ID',
   description: 'Retrieve a single record from a table by its unique ID.',
   audience: 'human',

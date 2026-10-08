@@ -72,6 +72,7 @@ const polling: Polling<
 export const newProductTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_product',
+  classification: 'READ',
   displayName: 'New Product',
   description: 'Triggers when a new product is created',
   aiMetadata: {

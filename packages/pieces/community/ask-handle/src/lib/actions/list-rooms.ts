@@ -6,6 +6,7 @@ import { askHandleApiCall } from '../common/client';
 export const listRooms = createAction({
   auth: askHandleAuth,
   name: 'list_rooms',
+  classification: 'SEARCH',
   displayName: 'List Rooms',
   description: 'Get a list of all rooms',
   audience: 'both',

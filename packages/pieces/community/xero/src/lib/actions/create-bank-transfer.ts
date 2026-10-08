@@ -7,10 +7,12 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateBankTransfer = createAction({
   auth: xeroAuth,
   name: 'xero_create_bank_transfer',
+  classification: 'WRITE',
   displayName: 'Create Bank Transfer',
   description: 'Transfers money between two bank accounts in Xero.',
   audience: 'both',
@@ -19,10 +21,11 @@ export const xeroCreateBankTransfer = createAction({
       'Record a transfer of money between two of the organization\'s own Xero bank accounts (the two account currencies must match). Pick this for internal account-to-account movements, not for paying invoices (use Create Payment). Not idempotent: each call records another transfer, so re-running duplicates it.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.bankTransferEnvelope,
   props: {
     tenant_id: props.tenant_id,
-    from_bank_account_id: props.bank_account_id(true),
-    to_bank_account_id: props.bank_account_id(true),
+    from_bank_account_id: props.bank_account_id(true, { displayName: 'From Bank Account', description: 'The bank account the money leaves.' }),
+    to_bank_account_id: props.bank_account_id(true, { displayName: 'To Bank Account', description: 'The bank account the money arrives in.' }),
     amount: Property.Number({
       displayName: 'Amount',
       description: 'Amount to transfer. Currencies must match between accounts.',

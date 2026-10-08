@@ -6,6 +6,7 @@ import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 export const requestLocation = createAction({
   auth: kapsoAuth,
   name: 'request_user_location',
+  classification: 'WRITE',
   displayName: 'Request User Location',
   description: 'Send a location request message to a WhatsApp user.',
   audience: 'both',

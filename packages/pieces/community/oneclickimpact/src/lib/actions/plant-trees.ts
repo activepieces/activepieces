@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const plantTrees = createAction({
   auth: oneclickimpactAuth,
   name: 'plantTrees',
+  classification: 'WRITE',
   displayName: 'Plant Trees',
   description: 'Plant trees for yourself or on behalf of the customer',
   audience: 'both',

@@ -10,6 +10,7 @@ import { discordRoleActionOutputSchema } from '../output-schemas';
 export const discordUpdateRole = createAction({
   auth: discordAuth,
   name: 'discord_update_role',
+  classification: 'WRITE',
   displayName: 'Update Role',
   description: "Update a role's name, color, hoist, or mentionable settings.",
   audience: 'ai',

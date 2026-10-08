@@ -9,6 +9,7 @@ import {
 export const organizationSearch = createAction({
   auth: apolloAuth,
   name: 'organizationSearch',
+  classification: 'SEARCH',
   displayName: 'Organization Search',
   description:
     'Search for companies in the Apollo database with various filters',

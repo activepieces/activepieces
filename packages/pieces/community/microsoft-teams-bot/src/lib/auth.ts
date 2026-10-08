@@ -2,9 +2,9 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createGraphClient, getAppOnlyToken, GRAPH_DEFAULT_SCOPE, withGraphRetry } from './common/graph';
 
 const authDesc = `
-Register a **single-tenant** Azure Bot in your own Microsoft tenant, then paste its credentials below. Microsoft deprecated multi-tenant bots, so the bot must live in the **same tenant** you use Microsoft Teams from — sign in to the [Azure Portal](https://portal.azure.com) with an admin of that tenant.
+Register a **single-tenant** Azure Bot in your own Microsoft tenant, then paste its credentials below. Microsoft deprecated multi-tenant bots, so the bot must live in the **same tenant** you use Microsoft Teams from. Sign in to the [Azure Portal](https://portal.azure.com) with an admin of that tenant.
 
-📖 **[Full step-by-step guide (bot setup + packaging the Teams app)](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/microsoft-teams-bot/teams-app/README.md)** — the steps below are the short version.
+📖 **[Full step-by-step guide (bot setup + packaging the Teams app)](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/microsoft-teams-bot/teams-app/README.md)**: the steps below are the short version.
 
 **1. Create the Azure Bot**
 - Create an **Azure Bot** resource → **Pricing tier: Free (F0)** → **Type of App: Single Tenant** → **Create new Microsoft App ID**. This creates the App Registration.
@@ -16,10 +16,10 @@ Register a **single-tenant** Azure Bot in your own Microsoft tenant, then paste 
 On the Bot resource → **Configuration** → **Messaging endpoint**, paste:
 
 \`\`\`text
-{{frontendUrl}}/api/v1/teams-bot/webhook
+{{frontendUrl}}/api/v1/app-events/microsoft-teams-bot
 \`\`\`
 
-This is how the bot learns where to post — the app **must** be installed for sending to work.
+Azure requires a messaging endpoint. The app **must** be installed in the team for sending to work.
 
 **4. Create a secret**
 - App Registration → **Certificates & secrets** → **New client secret** → copy the **Value** (not the Secret ID).
@@ -28,12 +28,12 @@ This is how the bot learns where to post — the app **must** be installed for s
 - App Registration → **API permissions** → **Add → Microsoft Graph → Application permissions** → add \`Team.ReadBasic.All\` and \`Channel.ReadBasic.All\` → **Grant admin consent** (both must show green).
 
 **6. Install the bot in your team**
-- Package your Teams app (\`manifest.json\` \`botId\` = this App ID) and add it to the team/channel you want to post to. On install, the bot registers itself so Activepieces can message that channel.
+- Package your Teams app (\`manifest.json\` \`botId\` = this App ID) and add it to the team/channel you want to post to. Sending fails until the bot is a member of the team.
 
 Then fill in:
-- **Bot App ID** — the Application (client) ID
-- **Bot App Secret** — the client secret **Value**
-- **Tenant ID** — your Directory (tenant) ID`;
+- **Bot App ID**: the Application (client) ID
+- **Bot App Secret**: the client secret **Value**
+- **Tenant ID**: your Directory (tenant) ID`;
 
 export const microsoftTeamsBotAuth = PieceAuth.CustomAuth({
   description: authDesc,
@@ -49,6 +49,8 @@ export const microsoftTeamsBotAuth = PieceAuth.CustomAuth({
     }),
     tenantId: Property.ShortText({
       displayName: 'Tenant ID',
+      description:
+        'Your Directory (tenant) ID. Must be the same tenant you use Microsoft Teams from. The bot is single-tenant and cannot post into another tenant.',
       required: true,
     }),
   },

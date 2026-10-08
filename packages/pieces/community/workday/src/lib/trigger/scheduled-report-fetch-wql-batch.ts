@@ -66,6 +66,7 @@ const polling: Polling<
 export const scheduledReportFetchWqlBatch = createTrigger({
 	auth: workdayAuth,
 	name: 'scheduled_report_fetch_wql_batch',
+	classification: 'READ',
 	displayName: 'Scheduled Report Fetch using WQL (Batch)',
 	description:
 		'Polls a WQL query on a schedule and returns matching rows as a batch.',

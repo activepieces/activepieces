@@ -81,6 +81,7 @@ const identifyChurnFactors = (request: any): string[] => {
 export const mailChimpUnsubscriberTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'unsubscribe',
+  classification: 'READ',
   displayName: 'Member Unsubscribed from Audience',
   description: 'Fires when a subscriber unsubscribes from your Mailchimp audience. This trigger captures unsubscribe events, opt-outs, and audience churn with comprehensive subscriber information for retention analysis.',
   aiMetadata: {

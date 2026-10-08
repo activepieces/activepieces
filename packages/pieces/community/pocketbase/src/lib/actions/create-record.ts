@@ -5,6 +5,7 @@ import { pocketbaseAuthenticate, normalizeHost } from '../common/client';
 
 export const createRecord = createAction({
   name: 'createRecord',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in a collection',
   audience: 'both',

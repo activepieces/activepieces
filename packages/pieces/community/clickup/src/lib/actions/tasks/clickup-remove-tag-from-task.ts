@@ -11,6 +11,7 @@ import { clickupAuth } from '../../auth';
 export const clickupRemoveTagFromTaskAi = createAction({
   auth: clickupAuth,
   name: 'clickup_remove_tag_from_task',
+  classification: 'WRITE',
   description: 'Remove a tag from a task',
   audience: 'ai',
   aiMetadata: {

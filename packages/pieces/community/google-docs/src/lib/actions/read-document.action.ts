@@ -1,13 +1,15 @@
 import { googleDocsAuth, createGoogleClient } from '../auth';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs } from '@googleapis/docs';
+import { documentIdProp } from '../common/props';
 import { readDocumentActionOutputSchema } from '../output-schemas';
 
 export const readDocument = createAction({
   displayName: 'Read Document',
   auth: googleDocsAuth,
   name: 'read_document',
-  description: 'Read a document from Google Docs',
+  classification: 'READ',
+  description: 'Read a document from Google Docs.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -15,11 +17,7 @@ export const readDocument = createAction({
     idempotent: true,
   },
   props: {
-    documentId: Property.ShortText({
-      displayName: 'Document ID',
-      description: 'The ID of the document to read',
-      required: true,
-    }),
+    documentId: documentIdProp(),
   },
   outputSchema: readDocumentActionOutputSchema,
   async run(context) {

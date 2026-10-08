@@ -8,6 +8,7 @@ import { languagesOutputSchema } from '../../output-schemas';
 export const githubListLanguagesAction = createAction({
   auth: githubAuth,
   name: 'list_languages',
+  classification: 'READ',
   displayName: 'List Languages (Agent)',
   description: 'Returns the language byte-count map for a repository.',
   audience: 'ai',

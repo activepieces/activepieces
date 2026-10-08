@@ -5,6 +5,7 @@ import { runwareAuth, runwareCommon } from '../common';
 export const generateImagesFromText = createAction({
   auth: runwareAuth,
   name: 'generateImagesFromText',
+  classification: 'READ',
   displayName: 'Generate Images from Text',
   description: 'Produce images from a text description.',
   audience: 'both',

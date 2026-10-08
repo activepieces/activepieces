@@ -24,6 +24,7 @@ interface QueryResultsResponse {
 export const getRowsForJobAction = createAction({
   auth: bigQueryAuth,
   name: 'get_rows_for_job',
+  classification: 'READ',
   displayName: 'Get Rows for Job Completed',
   description:
     'Retrieves the result rows from a completed BigQuery query job by Job ID. Use this after a "Query Job Completed" trigger to fetch the full result set.',

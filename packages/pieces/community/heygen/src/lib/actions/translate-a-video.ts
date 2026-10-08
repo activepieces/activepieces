@@ -7,6 +7,7 @@ import { brandVoiceDropdown, supportedLanguagesDropdown } from '../common/props'
 export const translateVideoAction = createAction({
 	auth: heygenAuth,
 	name: 'translate_video',
+	classification: 'WRITE',
 	displayName: 'Translate Video',
 	description: 'Translate a video into 175+ languages with natural voice and lip-sync.',
 	audience: 'both',

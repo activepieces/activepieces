@@ -8,6 +8,7 @@ import { resolveSecretsManagerClient } from '../common/client';
 export const findSecret = createAction({
   auth: awsSecretsManagerCombinedAuth,
   name: 'findSecret',
+  classification: 'SEARCH',
   displayName: 'Find Secret',
   description: 'Finds an existing secret using filters.',
   audience: 'both',

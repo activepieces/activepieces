@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getDraftInvoiceByCustomerName = createAction({
   auth: bokioAuth,
   name: 'getDraftInvoiceByCustomerName',
+  classification: 'SEARCH',
   displayName: 'Get Draft Invoice by Customer Name',
   description: 'Get all draft invoices for a customer by customer name',
   audience: 'both',

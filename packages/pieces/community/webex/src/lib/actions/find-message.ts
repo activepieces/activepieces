@@ -6,6 +6,7 @@ import { webexAuth } from '../common/auth';
 export const findMessage = createAction({
   auth: webexAuth,
   name: 'findMessage',
+  classification: 'READ',
   displayName: 'Find Message',
   description: 'Retrieve details for a specific message by message ID',
   audience: 'both',

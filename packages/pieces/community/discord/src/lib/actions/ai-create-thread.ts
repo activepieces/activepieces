@@ -10,6 +10,7 @@ import { discordCreateThreadActionOutputSchema } from '../output-schemas';
 export const discordCreateThread = createAction({
   auth: discordAuth,
   name: 'discord_create_thread',
+  classification: 'WRITE',
   displayName: 'Create Thread',
   description: 'Create a standalone thread (or forum post) in a channel.',
   audience: 'ai',

@@ -6,6 +6,7 @@ import { createRecordAiActionOutputSchema } from '../output-schemas';
 export const airtableCreateRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'create_record_ai',
+  classification: 'WRITE',
   displayName: 'Create Record (Agent)',
   description: 'Adds a record to an Airtable table.',
   audience: 'ai',

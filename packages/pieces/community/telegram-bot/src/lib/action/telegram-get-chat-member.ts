@@ -7,6 +7,7 @@ import { telegramGetChatMemberActionOutputSchema } from '../output-schemas';
 export const telegramGetChatMember = createAction({
   auth: telegramBotAuth,
   name: 'telegram_get_chat_member',
+  classification: 'READ',
   displayName: 'Get Chat Member',
   description: 'Get membership info for a user in a Telegram chat.',
   audience: 'ai',

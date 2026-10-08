@@ -8,6 +8,7 @@ import { labelBodyOutputSchema } from '../../output-schemas';
 export const githubUpdateLabelAction = createAction({
   auth: githubAuth,
   name: 'update_label',
+  classification: 'WRITE',
   displayName: 'Update Label (Agent)',
   description: 'Renames or recolors an existing repository label.',
   audience: 'ai',

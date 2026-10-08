@@ -7,6 +7,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const createChannelAction = createAction({
   auth: slackAuth,
   name: 'slack-create-channel',
+  classification: 'WRITE',
   displayName: 'Create Channel',
   description: 'Creates a new channel.',
   audience: 'human',
@@ -15,10 +16,13 @@ export const createChannelAction = createAction({
   props: {
     channelName: Property.ShortText({
       displayName: 'Channel Name',
+      description: 'Lowercase letters, numbers, dashes and underscores only.',
+      placeholder: 'project-updates',
       required: true,
     }),
     isPrivate: Property.Checkbox({
-      displayName: 'Is Private?',
+      displayName: 'Private Channel',
+      description: 'Only invited members can see and join it.',
       required: false,
       defaultValue: false,
     }),

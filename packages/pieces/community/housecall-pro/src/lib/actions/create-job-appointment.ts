@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createJobAppointment = createAction({
   auth: housecallProAuth,
   name: "create_job_appointment",
+  classification: 'WRITE',
   displayName: "Create appointment",
   description: "Add an appointment to a job",
   audience: 'both',

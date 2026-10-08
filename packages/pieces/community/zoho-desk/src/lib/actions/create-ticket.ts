@@ -7,6 +7,7 @@ import { departmentId, organizationId } from '../common/props';
 export const createTicketAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'create_ticket',
+	classification: 'WRITE',
 	displayName: 'Create Ticket',
 	description: 'Creates a new ticket.',
 	audience: 'both',

@@ -5,6 +5,7 @@ import { gitlabCommon, makeClient } from '../common';
 export const createIssueAction = createAction({
   auth: gitlabAuth,
   name: 'create_issue',
+  classification: 'WRITE',
   description: 'Create a project issue',
   audience: 'both',
   aiMetadata: { description: 'Creates a new issue in a GitLab project, identified by its numeric project ID, with a title and optional description. Use to open a bug report, feature request, or task. Not idempotent: each call creates a separate issue even with identical inputs.', idempotent: false },

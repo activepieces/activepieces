@@ -77,6 +77,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        autoCreatePersonalProjects: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         federatedAuthProviders: {
             type: 'jsonb',
             select: false,
@@ -88,6 +93,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         },
         pieceSelectorConfig: {
             type: 'jsonb',
+            nullable: true,
+        },
+        auditLogRetentionDays: {
+            type: Number,
             nullable: true,
         },
     },

@@ -1,5 +1,4 @@
 import {
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 	createTrigger,
@@ -9,7 +8,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import dayjs from 'dayjs';
 
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 
 import {
 	getDefaultPropertiesForObject,
@@ -22,6 +21,8 @@ import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
+import { crmObjectOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
@@ -29,11 +30,10 @@ type Props = {
 	stageId?: string;
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultDealProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);
@@ -97,6 +97,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const dealStageUpdatedTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'deal-stage-updated',
+	classification: 'READ',
 	displayName: 'Updated Deal Stage',
 	description: 'Triggers when a deal enters a specified stage.',
 	aiMetadata: {
@@ -116,18 +117,18 @@ export const dealStageUpdatedTrigger = createTrigger({
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-																
-							dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id, hs_v2_date_entered_current_stage
-									
-							**Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id, hs_v2_date_entered_current_stage.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.DEAL,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

@@ -12,6 +12,7 @@ import { removeMemberFromCardActionOutputSchema } from '../../output-schemas';
 export const removeMemberFromCard = createAction({
   auth: trelloAuth,
   name: 'remove_member_from_card',
+  classification: 'WRITE',
   displayName: 'Remove Member From Card (Agent)',
   description: 'Unassign a member from a Trello card.',
   audience: 'ai',

@@ -15,7 +15,7 @@ afterAll(async () => {
 })
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
-        it('Adds new user with onboarding token', async () => {
+        it('Adds new user with a platform of their own', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 
@@ -39,9 +39,9 @@ describe('Authentication API', () => {
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
-            expect(responseBody?.platformId).toBeNull()
+            expect(responseBody?.platformId).not.toBeNull()
             expect(responseBody?.externalId).toBeNull()
-            expect(responseBody?.projectId).toBeNull()
+            expect(responseBody?.projectId).not.toBeNull()
             expect(responseBody?.token).toBeDefined()
         })
     })

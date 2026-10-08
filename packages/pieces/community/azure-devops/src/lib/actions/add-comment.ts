@@ -6,6 +6,7 @@ import { azureDevOpsCommon, IdentityRef } from '../common';
 export const addCommentAction = createAction({
   auth: azureDevOpsAuth,
   name: 'add_comment',
+  classification: 'WRITE',
   displayName: 'Add Comment',
   description: 'Adds a comment to an existing work item in Azure DevOps',
   audience: 'both',

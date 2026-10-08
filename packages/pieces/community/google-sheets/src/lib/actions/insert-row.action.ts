@@ -23,6 +23,7 @@ import { insertRowActionOutputSchema } from '../output-schemas';
 export const insertRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'insert_row',
+	classification: 'WRITE',
 	description: 'Add a new row of data to a specific spreadsheet.',
 	audience: 'human',
 	aiMetadata: {
@@ -37,8 +38,9 @@ export const insertRowAction = createAction({
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered strings and have no effect',
+				'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
+			advanced: true,
 		}),
 		values: rowValuesProp(),
 	},

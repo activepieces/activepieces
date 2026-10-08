@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const createPage = createAction({
 	auth: oneNoteAuth,
 	name: 'create_page',
+	classification: 'WRITE',
 	displayName: 'Create Page',
 	description: 'Creates a page in section.',
 	audience: 'both',

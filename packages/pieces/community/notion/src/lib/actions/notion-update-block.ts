@@ -35,6 +35,7 @@ function toRichText(content: string): Array<{ text: { content: string } }> {
 export const notionUpdateBlock = createAction({
   auth: notionAuth,
   name: 'notion_update_block',
+  classification: 'WRITE',
   displayName: 'Update Block Text',
   description: 'Replaces the text content of a single existing block by id.',
   audience: 'ai',

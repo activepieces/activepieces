@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const updatedTicketTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'updated-ticket',
+	classification: 'READ',
 	displayName: 'Updated Ticket',
 	description: 'Triggers when a ticket is updated (state or attributes change).',
 	aiMetadata: {

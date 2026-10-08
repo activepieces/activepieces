@@ -6,6 +6,7 @@ import { sheetsGetSpreadsheetActionOutputSchema } from '../output-schemas';
 export const sheetsGetSpreadsheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_get_spreadsheet',
+	classification: 'READ',
 	displayName: 'Get Spreadsheet Info',
 	description: 'Fetch a spreadsheet\'s title and the list of its worksheets (tabs).',
 	audience: 'ai',

@@ -7,6 +7,7 @@ import { issueBodyOutputSchema } from '../../output-schemas';
 export const githubCreateIssueAiAction = createAction({
   auth: githubAuth,
   name: 'create_issue_ai',
+  classification: 'WRITE',
   displayName: 'Create Issue (Agent)',
   description: 'Opens a new issue in a GitHub repository.',
   audience: 'ai',

@@ -6,6 +6,7 @@ import { createTableActionOutputSchema } from '../output-schemas';
 export const createTable = createAction({
   audience: 'both',
   name: 'tables-create-table',
+  classification: 'WRITE',
   displayName: 'Create Table',
   description: 'Create a new table, optionally with fields.',
   aiMetadata: { description: 'Creates a new Activepieces Table in the current project, optionally defining its columns up front - each field takes a name plus a type of text, number, date, date & time, or single select, with single-select choices supplied as one comma-separated string. Date and date & time both hold an ISO-8601 UTC timestamp; date & time additionally shows the time of day. Pick this when a flow needs somewhere to store data that does not exist yet. Only those five column types are supported; not idempotent, since each call creates another table and repeating it with the same name yields duplicates.', idempotent: false },
@@ -14,6 +15,7 @@ export const createTable = createAction({
     name: Property.ShortText({
       displayName: 'Table Name',
       required: true,
+      placeholder: 'Customers',
     }),
     fields: Property.Array({
       displayName: 'Fields',
@@ -23,6 +25,7 @@ export const createTable = createAction({
         name: Property.ShortText({
           displayName: 'Field Name',
           required: true,
+          placeholder: 'Email',
         }),
         type: Property.StaticDropdown({
           displayName: 'Type',
@@ -40,8 +43,9 @@ export const createTable = createAction({
         }),
         options: Property.ShortText({
           displayName: 'Options',
-          description: 'Comma-separated options, used only when Type is Single Select.',
+          description: 'Only used when Type is Single Select.',
           required: false,
+          placeholder: 'Low, Medium, High',
         }),
       },
     }),

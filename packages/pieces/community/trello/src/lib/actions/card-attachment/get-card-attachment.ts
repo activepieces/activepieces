@@ -11,6 +11,7 @@ import { getCardAttachmentActionOutputSchema } from '../../output-schemas';
 export const getCardAttachment = createAction({
   auth: trelloAuth,
   name: 'get_card_attachment',
+  classification: 'READ',
   displayName: 'Get Card Attachment',
   description: 'Gets a specific attachment on a card.',
   audience: 'both',

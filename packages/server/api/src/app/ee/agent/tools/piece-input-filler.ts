@@ -115,6 +115,7 @@ function modelCompleter(model: LanguageModel): CompleteObject {
         const { output } = await generateText({
             model,
             prompt,
+            temperature: 0,
             output: Output.object({ schema: zodSchema(schema) }),
         }).catch(recoverFencedJson)
 

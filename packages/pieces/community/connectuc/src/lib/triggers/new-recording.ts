@@ -6,6 +6,7 @@ import { domainProp, usersProp } from '../common/props';
 export const newRecording = createTrigger({
     auth: connectucAuth,
     name: 'newRecording',
+    classification: 'READ',
     displayName: 'New Recording',
     description: 'Triggers when a new call recording is available',
     aiMetadata: {

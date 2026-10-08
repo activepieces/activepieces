@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument, rgb, StandardFonts, PDFFont, degrees } from 'pdf-lib';
 import { getTargetPages, mapVisualToIntrinsic } from '../common';
+import { addTextToPdfActionOutputSchema } from '../output-schemas';
 
 const fontOptions = Object.entries(StandardFonts).map(([key, value]) => {
   const formattedLabel = key.replace(/([A-Z])/g, ' $1').trim();
@@ -10,17 +11,20 @@ const fontOptions = Object.entries(StandardFonts).map(([key, value]) => {
 export const addTextToPdf = createAction({
   audience: 'both',
   name: 'addTextToPdf',
+  classification: 'READ',
   displayName: 'Add Text to PDF',
-  description: 'Stamps one or more text strings at exact pixel distances from the top-left corner.',
+  description: 'Stamp one or more text strings onto pages of an existing PDF.',
   aiMetadata: { description: 'Stamps one or more text strings onto an existing PDF at exact point offsets from the top-left corner, each item targeting either a single page or every page. Use it for headers, dates or reference numbers — prefer Add Image to PDF for signatures and logos, and Text to PDF to build a document from scratch. Only the 14 standard PDF fonts are available and the call fails if any text would run off a page edge; the input file is never modified and repeating the call produces the same stamped content, so idempotent.', idempotent: true },
+  outputSchema: addTextToPdfActionOutputSchema,
   props: {
     file: Property.File({
       displayName: 'PDF File or URL',
+      placeholder: 'https://example.com/document.pdf',
       required: true,
     }),
     textItems: Property.Array({
-      displayName: 'Text Items to Insert',
-      description: 'Add each piece of text you want to stamp.',
+      displayName: 'Text to Stamp',
+      description: 'One item per text block. Each can target one page or all pages.',
       required: true,
       properties: {
         text: Property.LongText({
@@ -28,30 +32,30 @@ export const addTextToPdf = createAction({
           required: true,
         }),
         applyToAllPages: Property.Checkbox({
-          displayName: 'Apply to all pages?',
-          description: 'If checked, this text is stamped on every page.',
+          displayName: 'Apply to All Pages',
+          description: 'Stamp this item on every page and ignore Page Number.',
           required: false,
           defaultValue: false,
         }),
         pageNumber: Property.Number({
           displayName: 'Page Number',
-          description: 'Which page to stamp? (Leave blank or ignore if applying to all pages)',
+          description: 'Pages start at 1. Ignored when Apply to All Pages is on.',
           required: false,
           defaultValue: 1,
         }),
         distanceFromLeft: Property.Number({
-          displayName: 'Distance from Left Edge (in pixels)',
-          description: '0 is the far left edge of the page. Standard A4 width is about 595 pts.',
+          displayName: 'Distance from Left',
+          description: 'In points from the left edge. An A4 page is 595 points wide.',
           required: true,
         }),
         distanceFromTop: Property.Number({
-          displayName: 'Distance from Top Edge (in pixels)',
-          description: '0 is the very top edge of the page. Standard A4 height is about 842 pts.',
+          displayName: 'Distance from Top',
+          description: 'In points from the top edge. An A4 page is 842 points tall.',
           required: true,
         }),
         font: Property.StaticDropdown({
           displayName: 'Font',
-          description: 'Select the exact font variant for this text item.',
+          description: 'One of the 14 standard PDF fonts.',
           required: true,
           defaultValue: StandardFonts.Helvetica,
           options: {
@@ -60,25 +64,18 @@ export const addTextToPdf = createAction({
         }),
         fontSize: Property.Number({
           displayName: 'Font Size',
+          description: 'In points.',
           required: true,
           defaultValue: 11,
         }),
         lineSpacing: Property.Number({
           displayName: 'Line Spacing',
-          description: 'The vertical spacing multiplier between lines. (Examples: 1.0 = Single, 1.15 = Standard, 2.0 = Double)',
+          description: 'Multiplier between lines: 1 single, 1.15 standard, 2 double.',
           required: false,
           defaultValue: 1.15,
         }),
       },
     }),
-  },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
   },
   async run(context) {
     try {

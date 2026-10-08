@@ -12,6 +12,7 @@ import { googleTasksCompleteTaskOutputSchema } from '../output-schemas';
 export const googleTasksCompleteTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'complete_task',
+  classification: 'WRITE',
   displayName: 'Mark Task Complete',
   description: 'Mark an existing task as completed.',
   audience: 'ai',

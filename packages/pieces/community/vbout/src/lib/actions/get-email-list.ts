@@ -5,6 +5,7 @@ import { makeClient, vboutCommon } from '../common';
 export const getEmailListAction = createAction({
   auth: vboutAuth,
   name: 'vbout_get_email_list',
+  classification: 'READ',
   displayName: 'Get List Details with Custom Fields',
   description: 'Retrieves specific list details with custom fields.',
   audience: 'both',

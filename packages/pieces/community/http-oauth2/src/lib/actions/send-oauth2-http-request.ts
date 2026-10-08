@@ -1,4 +1,5 @@
 import {
+  acceptsRequestBody,
   AuthenticationType,
   httpClient,
   HttpHeaders,
@@ -23,6 +24,7 @@ export const httpOauth2RequestAction = createAction({
   audience: 'both',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
+  classification: 'WRITE',
   displayName: 'Send an OAuth2 Request',
   description:
     'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
@@ -53,39 +55,38 @@ export const httpOauth2RequestAction = createAction({
       displayName: 'Query Parameters',
       required: false,
     }),
-    body_type: Property.StaticDropdown({
+    body_type: Property.Dropdown({
       displayName: 'Body Type',
       required: false,
       defaultValue: 'none',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'None',
-            value: 'none',
-          },
-          {
-            label: 'Form Data',
-            value: 'form_data',
-          },
-          {
-            label: 'JSON',
-            value: 'json',
-          },
-          {
-            label: 'Raw',
-            value: 'raw',
-          },
-        ],
+      auth: httpOauth2Auth,
+      refreshers: ['method'],
+      options: async ({ method }) => {
+        if (!acceptsRequestBody(method as HttpMethod)) {
+          return {
+            disabled: true,
+            placeholder: 'Not available for GET requests',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: [
+            { label: 'None', value: 'none' },
+            { label: 'Form Data', value: 'form_data' },
+            { label: 'JSON', value: 'json' },
+            { label: 'Raw', value: 'raw' },
+          ],
+        };
       },
     }),
     body: Property.DynamicProperties({
       displayName: 'Body',
       auth: httpOauth2Auth,
-      refreshers: ['body_type'],
+      refreshers: ['body_type', 'method'],
       required: false,
-      props: async ({ body_type }) => {
-        if (!body_type) return {};
+      props: async ({ body_type, method }) => {
+        if (!body_type || !acceptsRequestBody(method as HttpMethod)) return {};
 
         const bodyTypeInput = body_type as unknown as string;
 

@@ -15,6 +15,7 @@ import { sheetsUpdateRowActionOutputSchema } from '../output-schemas';
 export const sheetsUpdateRow = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_update_row',
+	classification: 'WRITE',
 	displayName: 'Update Row',
 	description: 'Update the data in an existing row, identified by its row number.',
 	audience: 'ai',

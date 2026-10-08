@@ -6,6 +6,7 @@ import { driveListPermissionsOutputSchema } from '../output-schemas';
 export const driveListPermissions = createAction({
   auth: googleDriveAuth,
   name: 'drive_list_permissions',
+  classification: 'SEARCH',
   displayName: 'List Permissions',
   description: 'List every permission on a Drive file or folder.',
   audience: 'ai',

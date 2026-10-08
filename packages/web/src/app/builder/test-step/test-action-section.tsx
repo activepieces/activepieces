@@ -115,14 +115,14 @@ const TestStepSectionImplementation = React.memo(
               <StepDataPanelViewToggle />
             </div>
             <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-              <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
+              <div className="flex items-center justify-center size-12 rounded-full bg-accent-3 text-accent-11">
                 <FlaskConical className="size-6" />
               </div>
               <div className="flex flex-col gap-1.5 max-w-[280px]">
-                <span className="text-sm font-medium text-foreground">
+                <span className="text-sm font-medium text-gray-12">
                   {t('No sample data yet')}
                 </span>
-                <span className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-xs text-gray-11 leading-relaxed">
                   {t(
                     'Run this step to capture sample data. You can then use the result in following steps.',
                   )}
@@ -134,7 +134,7 @@ const TestStepSectionImplementation = React.memo(
                   onClick={onTestButtonClick}
                   loading={isTesting || isSaving}
                   disabled={!currentStep.valid || isLoadingDynamicProperties}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="bg-accent-9 text-on-accent hover:bg-accent-9/90"
                 >
                   <Play className="size-3.5 fill-current" />
                   {t('Test Step')}

@@ -1,45 +1,40 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleSearchConsoleAuth } from '../auth';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
 import { commonProps } from '../common';
+import { gscInputs } from '../common/inputs';
+import { gscOps } from '../common/operations';
+import { gscOutputSchemas } from '../output-schemas';
 
 export const urlInspection = createAction({
   auth: googleSearchConsoleAuth,
   name: 'urlInspection',
+  classification: 'READ',
   displayName: 'URL Inspection',
-  description:
-    "Use the URL Inspection action to check the status and presence of a specific page within Google's index.",
-  audience: 'both',
-  aiMetadata: { description: "Inspect a single URL with the Google Search Console URL Inspection API to report its index status, coverage, mobile usability, and rich-result details for a verified site. Choose this to diagnose why a specific page is or isn't indexed. Requires a verified siteUrl and the exact URL to inspect (must belong to that property); read-only and idempotent.", idempotent: true },
+  description: "Use the URL Inspection action to check the status and presence of a specific page within Google's index.",
+  audience: 'human',
+  aiMetadata: {
+    description:
+      "Reports Google's index status of one URL in a property picked from a list. Agents use Inspect URL (by Site URL). Read-only and safe to retry; limited to 2,000 inspections per property per day.",
+    idempotent: true,
+  },
   props: {
     siteUrl: commonProps.siteUrl,
     url: Property.ShortText({
       displayName: 'URL to Inspect',
+      description: 'The full URL of the page. It must belong to the selected property.',
       required: true,
     }),
+    languageCode: Property.ShortText({
+      displayName: 'Language Code',
+      description: 'Optional language for the issue messages, as a BCP-47 code such as "en-US" or "de". Defaults to English.',
+      required: false,
+    }),
   },
+  outputSchema: gscOutputSchemas.urlInspection,
   async run(context) {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      headers: { 'Content-Type': 'application/json' },
-      body: {
-        inspectionUrl: context.propsValue.url,
-        siteUrl: context.propsValue.siteUrl,
-      },
-    };
-
-    const response = await httpClient.sendRequest(request);
-
-    return response.body;
+    const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });
+    const inspectionUrl = gscInputs.urlInProperty({ value: context.propsValue.url, label: 'URL to Inspect', site: siteUrl });
+    const languageCode = gscInputs.languageCode({ value: context.propsValue.languageCode });
+    return gscOps.inspectUrl({ auth: context.auth, siteUrl, inspectionUrl, languageCode });
   },
 });

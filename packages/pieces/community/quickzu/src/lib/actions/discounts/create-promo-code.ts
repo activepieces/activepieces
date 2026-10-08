@@ -15,6 +15,7 @@ import { ProductDiscountInput } from '../../common/types';
 export const createPromoCodeAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_create_promo_code',
+  classification: 'WRITE',
   displayName: 'Create Promo/Coupon Code',
   description: 'Creates a new promo code for category or product level.',
   audience: 'both',

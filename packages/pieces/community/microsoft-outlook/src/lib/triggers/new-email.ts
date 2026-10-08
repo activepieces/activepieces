@@ -10,6 +10,7 @@ import { Message } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
+import { newEmailTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlookAuth>, {
 	sender?: string;
@@ -84,21 +85,26 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlook
 export const newEmailTrigger = createTrigger({
 	auth: microsoftOutlookAuth,
 	name: 'newEmail',
+	classification: 'READ',
 	displayName: 'New Email',
-	description: 'Triggers when a new email is received in the inbox.',
+	description: 'Triggers when a new email arrives in your Inbox.',
 	aiMetadata: {
 		description: 'Fires when a new message arrives in the mailbox Inbox, optionally narrowed to a specific sender and/or recipient address. Each fire represents one newly received email.',
 	},
+	outputSchema: newEmailTriggerOutputSchema,
 	props: {
 		sender: Property.ShortText({
-			displayName: 'From (Sender Email)',
-			description: 'Filter emails from a specific sender (optional). Leave empty to for all senders.',
+			displayName: 'From',
+			description: 'Only emails sent from this address.',
+			placeholder: 'sender@example.com',
 			required: false,
 		}),
 		recipient: Property.ShortText({
-			displayName: 'To (Recipient Email)',
-			description: 'Filter emails to a specific recipient (optional). Leave empty to for all recipients.',
+			displayName: 'To',
+			description: 'Only emails sent to this address.',
+			placeholder: 'you@example.com',
 			required: false,
+			advanced: true,
 		}),
 	},
 	sampleData: {},

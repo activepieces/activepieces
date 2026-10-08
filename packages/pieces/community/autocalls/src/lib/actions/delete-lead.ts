@@ -6,6 +6,7 @@ import { baseApiUrl } from '../..';
 export const deleteLead = createAction({
   auth:autocallsAuth,
   name: 'deleteLead',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Lead',
   description: "Delete a lead from a campaign.",
   audience: 'both',

@@ -15,10 +15,11 @@ interface FileObject {
 
 export const sendMessageWithBot = createAction({
   name: 'sendMessageWithBot',
+  classification: 'WRITE',
   auth:discordAuth,
   displayName: 'Send Message with Bot',
   description:
-    'Send messages via bot to any channel or thread you want, with an optional file attachment.',
+    'Post a message and optional files to a channel or thread as the bot.',
   audience: 'human',
   aiMetadata: { description: 'Posts a new message (optionally with file attachments) to a Discord channel or thread using a bot token. Use when an agent needs to send bot-authored content to a known channel ID. Requires the bot to have access to that channel; each call posts a separate message, so it is not idempotent.', idempotent: false },
   outputSchema: discordMessageOutputSchema,
@@ -26,15 +27,15 @@ export const sendMessageWithBot = createAction({
     channel_id: discordCommon.channel,
     message: Property.LongText({
       displayName: 'Message',
-      description: 'Message content to send.',
+      description: 'Text of the message. Leave empty to send only files.',
       required: false,
     }),
     files: Property.Array({
       displayName: 'Attachments',
+      description: 'Files uploaded with the message.',
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'Optional file to send with the message.',
           required: false,
         }),
       },
@@ -48,7 +49,9 @@ export const sendMessageWithBot = createAction({
     const files = configValue.propsValue.files as FileObject[] ?? [];
   
     const formData = new FormData();
-    formData.append('content', message);
+    if (typeof message === 'string' && message.length > 0) {
+      formData.append('content', message);
+    }
   
     if (files && files.length > 0) {
       files.forEach((fileObj, index) => {
@@ -62,7 +65,6 @@ export const sendMessageWithBot = createAction({
       url: `https://discord.com/api/v10/channels/${channelId}/messages`,
       headers: {
         authorization: `Bot ${configValue.auth.secret_text}`,
-        'Content-Type': 'multipart/form-data',
       },
       body: formData,
     };

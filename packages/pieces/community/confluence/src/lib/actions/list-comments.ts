@@ -7,6 +7,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const listCommentsAction = createAction({
 	auth: confluenceAuth,
 	name: 'list-comments',
+	classification: 'SEARCH',
 	displayName: 'List Comments',
 	description: 'Lists footer and/or inline comments on a page.',
 	audience: 'both',

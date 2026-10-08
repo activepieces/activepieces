@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -8,32 +8,34 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createProductAction = createAction({
     auth: hubspotAuth,
     name: 'create-product',
+    classification: 'WRITE',
     displayName: 'Create Product',
-    description: 'Creates a product in Hubspot.',
+    description: 'Creates a product in HubSpot.',
     audience: 'both',
     aiMetadata: {
         description:
             'Create a new product record in the HubSpot product library from the supplied properties (such as name, price, and description). Use when adding a catalog item; each call always creates a separate product, so repeated calls produce duplicates rather than updating an existing one.',
         idempotent: false,
     },
+    outputSchema: crmObjectOutputSchema,
     props: {
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT,[]),
         markdown: Property.MarkDown({
             variant: MarkdownVariant.INFO,
-            value: `### Properties to retrieve:
-                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                                            
-                    **Specify here a list of additional properties to retrieve**`,
+            value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more under **Advanced**.`,
         }),
         additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
             objectType: OBJECT_TYPE.PRODUCT,
-            displayName: 'Additional properties to retrieve',
+            displayName: 'Additional Properties to Retrieve',
             required: false,
+            advanced: true,
         }),
     },
     async run(context) {
@@ -48,7 +50,7 @@ export const createProductAction = createAction({
             productProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         const createdProduct = await client.crm.products.basicApi.create({
             properties: productProperties,

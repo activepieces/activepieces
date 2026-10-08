@@ -65,6 +65,7 @@ const polling: Polling<
 export const taskCreated = createTrigger({
   auth: motionAuth,
   name: 'task-created',
+  classification: 'READ',
   displayName: 'Task Created',
   description: 'Triggers when a new task is created.',
   aiMetadata: {

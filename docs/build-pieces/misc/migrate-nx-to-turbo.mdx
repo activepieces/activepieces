@@ -23,9 +23,9 @@ The Activepieces monorepo replaced [Nx](https://nx.dev) with [Turbo](https://tur
 
 ### Files affected per piece
 
-- **`project.json`** — Deleted (no longer needed)
-- **`package.json`** — Added `build` and `lint` scripts, added `main` and `types` fields, added workspace dependencies
-- **`tsconfig.lib.json`** — Updated `outDir`, added `rootDir`, `baseUrl`, `paths`
+- **`project.json`**: Deleted (no longer needed)
+- **`package.json`**: Added `build` and `lint` scripts, added `main` and `types` fields, added workspace dependencies
+- **`tsconfig.lib.json`**: Updated `outDir`, added `rootDir`, `baseUrl`, `paths`
 
 ## Automatic Migration
 
@@ -49,10 +49,10 @@ npx ts-node tools/scripts/migrate-custom-piece-to-turbo.ts packages/pieces/custo
 
 For each piece, the script:
 
-1. **Updates `package.json`** — adds `build` and `lint` scripts, sets `main` and `types` entry points, ensures `@activepieces/pieces-framework`, `@activepieces/shared`, and `tslib` are listed as dependencies
-2. **Updates `tsconfig.lib.json`** — sets `outDir` to `./dist`, adds `rootDir`, `baseUrl`, `paths`, and `declaration` settings
-3. **Creates `tsconfig.json`** if missing — extends the root `tsconfig.base.json`
-4. **Deletes `project.json`** — removes Nx configuration
+1. **Updates `package.json`**: adds `build` and `lint` scripts, sets `main` and `types` entry points, ensures `@activepieces/pieces-framework`, `@activepieces/shared`, and `tslib` are listed as dependencies
+2. **Updates `tsconfig.lib.json`**: sets `outDir` to `./dist`, adds `rootDir`, `baseUrl`, `paths`, and `declaration` settings
+3. **Creates `tsconfig.json`** if missing, extending the root `tsconfig.base.json`
+4. **Deletes `project.json`**, removing the Nx configuration
 
 ## Verify the Migration
 

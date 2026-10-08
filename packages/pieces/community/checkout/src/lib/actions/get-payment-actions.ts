@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getPaymentActionsAction = createAction({
   name: 'get_payment_actions',
+  classification: 'READ',
   auth: checkoutComAuth,
   displayName: 'Get Payment Actions',
   description: 'Build full transaction lifecycles for audit logs.',

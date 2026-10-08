@@ -6,6 +6,7 @@ import { togglCommon } from '../common';
 export const createTask = createAction({
   auth: togglTrackAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Create a new task under a project.',
   audience: 'both',

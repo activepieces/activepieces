@@ -13,6 +13,7 @@ const sampleData = {
 export const newTeamCustomEmojiTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-team-custom-emoji',
+	classification: 'READ',
 	displayName: 'New Team Custom Emoji',
 	description: 'Triggers when a custom emoji has been added to a team.',
 	aiMetadata: {
@@ -52,8 +53,7 @@ export const newTeamCustomEmojiTrigger = createTrigger({
 	run: async (context) => {
 		const payloadBody = context.payload.body as PayloadBody;
 
-		// check if it's emoji message
-		if (payloadBody.event.type !== 'emoji_changed' && payloadBody.event.subtype !== 'add') {
+		if (payloadBody.event.type !== 'emoji_changed' || payloadBody.event.subtype !== 'add') {
 			return [];
 		}
 

@@ -6,6 +6,7 @@ import { campaignMonitorAuth } from '../auth';
 export const newClientTrigger = createTrigger({
   auth: campaignMonitorAuth,
   name: 'new_client',
+  classification: 'READ',
   displayName: 'New Client',
   description: 'Triggered when a new client is added to Campaign Monitor.',
   aiMetadata: {

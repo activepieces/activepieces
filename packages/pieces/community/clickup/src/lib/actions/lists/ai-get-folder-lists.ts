@@ -7,6 +7,7 @@ import { getListsOutputSchema } from '../../output-schemas';
 export const clickupGetFolderLists = createAction({
   auth: clickupAuth,
   name: 'clickup_get_folder_lists',
+  classification: 'SEARCH',
   description: 'List all lists inside a ClickUp folder',
   audience: 'ai',
   aiMetadata: {

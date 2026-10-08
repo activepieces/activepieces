@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { mapWebsiteActionOutputSchema } from '../output-schemas';
 
 export const map = createAction({
     auth: firecrawlAuth,
     name: 'map',
+    classification: 'SEARCH',
     displayName: 'Map Websites',
     description: 'Input a website and get all the urls on the website.' ,
     audience: 'human',
@@ -39,6 +40,7 @@ export const map = createAction({
         sitemap: 'include',
         includeSubdomains: propsValue.subdomain,
         limit: propsValue.limit,
+        origin: FIRECRAWL_ORIGIN,
       };
       
       const response = await httpClient.sendRequest({

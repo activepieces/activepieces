@@ -6,6 +6,7 @@ import { callGraphApi, groupDropdown } from '../common';
 export const deleteGroupAction = createAction({
     auth: azureAdAuth,
     name: 'delete_group',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Group',
     description: 'Deletes an Azure AD group by ID.',
     audience: 'both',

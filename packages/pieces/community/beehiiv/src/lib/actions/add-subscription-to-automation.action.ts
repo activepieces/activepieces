@@ -7,6 +7,7 @@ import { beehiivApiCall } from '../common/client';
 export const addSubscriptionToAutomationAction = createAction({
 	auth: beehiivAuth,
 	name: 'add_subscription_to_automation',
+	classification: 'WRITE',
 	displayName: 'Add Subscription to Automation',
 	description: 'Adds an existing subscription to a specific automation flow.',
 	audience: 'both',

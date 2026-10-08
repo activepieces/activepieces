@@ -35,7 +35,8 @@ const polling: Polling<
         workbookId,
         worksheetId,
         auth.access_token,
-        drivePath
+        drivePath,
+        auth.props?.['cloud']
       )) ?? [];
 
     const currentValues = fetchedValues.map((row: any[], rowIndex: number) => {
@@ -67,6 +68,7 @@ const polling: Polling<
 export const readNewRows = createTrigger({
   auth: excelAuth,
   name: 'new_row',
+  classification: 'READ',
   displayName: 'New Row',
   description:
     'Trigger when a new row is added, and it can include existing rows as well.',

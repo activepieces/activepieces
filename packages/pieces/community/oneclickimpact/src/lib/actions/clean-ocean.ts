@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const cleanOcean = createAction({
   auth: oneclickimpactAuth,
   name: 'cleanOcean',
+  classification: 'WRITE',
   displayName: 'Clean ocean',
   description: 'Clean  ocean waste yourself or on behalf of the customer',
   audience: 'both',

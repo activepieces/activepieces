@@ -5,6 +5,7 @@ import { PlacidClient } from '../common/client';
 export const getImage = createAction({
 	auth: placidAuth,
 	name: 'get_image',
+	classification: 'READ',
 	displayName: 'Get Image',
 	description: 'Retrieves a generated image by its ID.',
 	audience: 'both',

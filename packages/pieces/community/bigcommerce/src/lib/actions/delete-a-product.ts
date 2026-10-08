@@ -5,6 +5,7 @@ import { bigCommerceApiService } from '../common/requests';
 export const deleteAProduct = createAction({
   auth: bigcommerceAuth,
   name: 'deleteAProduct',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete a Product',
   description: 'Deletes an existing Product',
   audience: 'both',

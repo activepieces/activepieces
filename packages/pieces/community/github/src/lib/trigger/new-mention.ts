@@ -35,6 +35,7 @@ function containsMention(comment: string, username: string): boolean {
 export const newMentionTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_mention',
+  classification: 'READ',
   displayName: 'New Mention',
   description: 'Triggers when you are mentioned in a comment.',
   aiMetadata: {

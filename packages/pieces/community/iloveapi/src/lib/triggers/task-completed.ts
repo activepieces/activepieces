@@ -11,6 +11,7 @@ import { taskCompletedSample } from './sample-payloads';
 export const taskCompletedTrigger = createTrigger({
   auth: iloveapiAuth,
   name: 'task_completed',
+  classification: 'READ',
   displayName: 'Task Completed',
   description:
     'Fires when a processing task finishes successfully. Optionally filter by tool.',

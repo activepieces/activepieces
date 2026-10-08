@@ -5,6 +5,7 @@ import { smartsheetCommon, updateRowInSmartsheet } from '../common';
 export const updateRow = createAction({
 	auth: smartsheetAuth,
 	name: 'update_row',
+	classification: 'WRITE',
 	displayName: 'Update Row',
 	description: 'Updates an existing row.',
 	audience: 'both',

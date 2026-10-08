@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowRefundOrder = createAction({
 	auth: webflowAuth,
 	name: 'refund_order',
+	classification: 'DESTRUCTIVE',
 	description: 'Refund order',
 	displayName: 'Refund an order',
 	audience: 'both',

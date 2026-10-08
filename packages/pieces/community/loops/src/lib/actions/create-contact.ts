@@ -15,6 +15,7 @@ const RESERVED_FIELDS = new Set([
 
 export const createContact = createAction({
   name: 'create_contact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description:
     'Creates a new contact in Loops. Returns an error if a contact with the given email already exists.',

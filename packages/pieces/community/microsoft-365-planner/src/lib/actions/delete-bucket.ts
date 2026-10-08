@@ -5,6 +5,7 @@ import { BucketDropdown, PlanDropdown } from '../common/properties';
 export const deleteBucket = createAction({
   auth: microsoft365PlannerAuth,
   name: 'deleteBucket',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Bucket',
   description: 'Delete an existing bucket.',
   audience: 'both',

@@ -3,7 +3,6 @@ import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { convertAttachment, parseStream } from '../common/data';
 import { GmailProps } from '../common/props';
-import { GmailLabel } from '../common/models';
 import { gmailSearchMailActionOutputSchema } from '../output-schemas';
 
 export const gmailSearchMailAction = createAction({
@@ -12,56 +11,109 @@ export const gmailSearchMailAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Email',
   description:
-    'Find emails using advanced search criteria. If no filters are provided, the latest emails are returned.',
+    'Search your mailbox; with no filters it returns the latest emails.',
   audience: 'human',
   aiMetadata: {
     description:
       'Searches the mailbox for emails matching combinable filters (sender, recipient, subject, body text, label, category, date range, attachment presence/name) and returns the matched messages with parsed contents. Use this to locate messages or discover their IDs before reading or replying; with no filters it returns the most recent emails. Bound results with Max Results (1-500, default 10). Idempotent: a read-only search that does not modify the mailbox.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'people',
+      display: 'builder',
+      label: 'People',
+      icon: 'users',
+      props: ['from', 'to'],
+    },
+    {
+      key: 'content',
+      display: 'builder',
+      label: 'Content',
+      icon: 'type',
+      props: ['subject', 'content'],
+    },
+    {
+      key: 'attachments',
+      display: 'builder',
+      label: 'Attachments',
+      icon: 'paperclip',
+      props: ['has_attachment', 'attachment_name'],
+    },
+    {
+      key: 'mailbox',
+      display: 'builder',
+      label: 'Mailbox',
+      icon: 'inbox',
+      props: ['label', 'category', 'include_spam_trash'],
+    },
+    {
+      key: 'date',
+      display: 'builder',
+      label: 'Date',
+      icon: 'calendar',
+      props: ['after_date', 'before_date'],
+    },
+    {
+      key: 'footer',
+      display: 'footer',
+      icon: 'sliders',
+      props: ['max_results'],
+    },
+  ],
   props: {
-    from: GmailProps.from,
-    to: GmailProps.to,
-    subject: GmailProps.subject,
+    from: { ...GmailProps.from, icon: 'user' },
+    to: { ...GmailProps.to, icon: 'send' },
+    subject: { ...GmailProps.subject, icon: 'type' },
     content: Property.ShortText({
-      displayName: 'Email Content',
-      description: 'Search for specific text within email body',
+      displayName: 'Body',
+      description: 'Only emails with this text in the body.',
+      placeholder: 'order confirmed',
+      icon: 'text',
       required: false,
     }),
     has_attachment: Property.Checkbox({
       displayName: 'Has Attachment',
-      description: 'Only find emails with attachments',
+      description: 'Only emails with at least one attachment.',
+      icon: 'paperclip',
       required: false,
       defaultValue: false,
     }),
     attachment_name: Property.ShortText({
       displayName: 'Attachment Name',
-      description: 'Search for emails with specific attachment filename',
+      description: 'Only emails with an attachment of this file name.',
+      placeholder: 'invoice.pdf',
+      icon: 'file',
       required: false,
     }),
-    label: GmailProps.label({ required: false }),
-    category: GmailProps.category,
+    label: GmailProps.label({ required: false, icon: 'tag' }),
+    category: { ...GmailProps.category, icon: 'inbox' },
     after_date: Property.DateTime({
-      displayName: 'After Date',
-      description: 'Find emails sent after this date',
+      displayName: 'After',
+      description: 'Only emails received after this date.',
+      icon: 'calendar',
       required: false,
     }),
     before_date: Property.DateTime({
-      displayName: 'Before Date',
-      description: 'Find emails sent before this date',
+      displayName: 'Before',
+      description: 'Only emails received before this date.',
+      icon: 'calendar',
       required: false,
     }),
-
     include_spam_trash: Property.Checkbox({
-      displayName: 'Include Spam & Trash',
-      description:
-        'Include emails from Spam and Trash folders in search results',
+      displayName: 'Spam and Trash',
+      description: 'Also search the Spam and Trash folders.',
+      icon: 'trash',
       required: false,
       defaultValue: false,
     }),
     max_results: Property.Number({
       displayName: 'Max Results',
-      description: 'Maximum number of emails to return (1-500)',
+      description: 'Newest first, up to 500.',
+      display: 'stepper',
+      min: 1,
+      max: 500,
+      step: 1,
       required: false,
       defaultValue: 10,
     }),
@@ -97,7 +149,7 @@ export const gmailSearchMailAction = createAction({
     }
 
     if (context.propsValue.label) {
-      const label = context.propsValue.label as GmailLabel;
+      const label = context.propsValue.label;
       queryParts.push(`label:${label.name}`);
     }
     if (context.propsValue.category?.trim()) {

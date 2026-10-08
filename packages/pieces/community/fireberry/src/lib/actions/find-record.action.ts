@@ -45,6 +45,7 @@ const fieldsToReturn = Property.DynamicProperties({
 
 export const findRecordAction = createAction({
   name: 'find_record',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Search for records in Fireberry.',
   audience: 'both',

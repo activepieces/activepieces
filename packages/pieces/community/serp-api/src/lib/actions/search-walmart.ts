@@ -7,6 +7,7 @@ import { searchWalmartOutputSchema } from '../output-schemas';
 export const searchWalmart = createAction({
   auth: serpApiAuth,
   name: 'search_walmart',
+  classification: 'SEARCH',
   displayName: 'Search Walmart',
   description: 'Find products on Walmart for a query.',
   audience: 'ai',

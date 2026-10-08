@@ -7,6 +7,7 @@ import { agentId } from '../common/props';
 export const makePhoneCall = createAction({
   auth: bolnaaiAuth,
   name: 'makePhoneCall',
+  classification: 'WRITE',
   displayName: 'Make Phone Call',
   description:
     'Initiate an outbound phone call from a Bolna Voice AI agent to a recipient.',

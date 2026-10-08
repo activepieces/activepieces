@@ -11,6 +11,7 @@ import { driveReplaceFileContentOutputSchema } from '../output-schemas';
 export const driveReplaceFileContent = createAction({
   auth: googleDriveAuth,
   name: 'drive_replace_file_content',
+  classification: 'WRITE',
   displayName: 'Replace File Content',
   description: "Replace an existing Drive file's bytes, keeping its ID and name.",
   audience: 'ai',

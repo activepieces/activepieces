@@ -6,6 +6,7 @@ import { driveMoveFileOutputSchema } from '../output-schemas';
 export const driveMoveFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_move_file',
+  classification: 'WRITE',
   displayName: 'Move File',
   description: 'Move a Drive file from its current folder(s) to a target folder.',
   audience: 'ai',

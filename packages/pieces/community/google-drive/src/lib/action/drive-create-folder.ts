@@ -6,6 +6,7 @@ import { driveCreateFolderOutputSchema } from '../output-schemas';
 export const driveCreateFolder = createAction({
   auth: googleDriveAuth,
   name: 'drive_create_folder',
+  classification: 'WRITE',
   displayName: 'Create Folder',
   description: 'Create a new empty folder in your Google Drive',
   audience: 'ai',

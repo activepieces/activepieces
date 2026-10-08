@@ -7,6 +7,7 @@ import { sheetsClearValuesActionOutputSchema } from '../output-schemas';
 export const sheetsClearValues = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_clear_values',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Clear Cell Range',
 	description: 'Clear the contents of one or more rows without removing the rows themselves.',
 	audience: 'ai',

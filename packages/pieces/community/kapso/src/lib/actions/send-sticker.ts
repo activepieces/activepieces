@@ -6,6 +6,7 @@ import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 export const sendSticker = createAction({
   auth: kapsoAuth,
   name: 'send_sticker',
+  classification: 'WRITE',
   displayName: 'Send Sticker',
   description: 'Send a sticker message via WhatsApp.',
   audience: 'both',

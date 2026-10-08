@@ -150,6 +150,7 @@ const polling: Polling<
 export const queryJobCompletedTrigger = createTrigger({
   auth: bigQueryAuth,
   name: 'query_job_completed',
+  classification: 'READ',
   displayName: 'Query Job Completed (With Row Data)',
   description:
     'Triggers when a BigQuery query job finishes successfully. Each flow run receives the job metadata and the result rows from that query.',

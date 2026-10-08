@@ -221,6 +221,7 @@ const sampleData = {
 export const orderCreatedTrigger = createTrigger({
   auth: quickzuAuth,
   name: 'quickzu_order_created_trigger',
+  classification: 'READ',
   displayName: 'Order Created/Updated',
   description:
     'Triggers when a new order is created or a order status is changed in store.',

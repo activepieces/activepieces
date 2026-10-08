@@ -10,6 +10,7 @@ import { updateRowActionOutputSchema } from '../output-schemas';
 export const updateRowAction = createAction({
   auth: googleSheetsAuth,
   name: 'update_row',
+  classification: 'WRITE',
   description: 'Update the data in an existing row.',
   audience: 'human',
   aiMetadata: {

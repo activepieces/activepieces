@@ -5,6 +5,7 @@ import { bigCommerceApiService } from '../common/requests';
 export const listCategories = createAction({
   auth: bigcommerceAuth,
   name: 'listCategories',
+  classification: 'SEARCH',
   displayName: 'List Categories',
   description: 'Lists all categories',
   audience: 'both',

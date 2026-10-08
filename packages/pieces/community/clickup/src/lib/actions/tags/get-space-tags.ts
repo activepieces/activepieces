@@ -7,6 +7,7 @@ import { spaceTagsOutputSchema } from '../../output-schemas';
 export const clickupGetSpaceTags = createAction({
   auth: clickupAuth,
   name: 'clickup_get_space_tags',
+  classification: 'SEARCH',
   description: 'List all tags defined in a ClickUp space',
   audience: 'ai',
   aiMetadata: {

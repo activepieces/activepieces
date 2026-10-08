@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forJsonOutputFormat, polling, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { forJsonOutputFormat, polling, FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { extractDataActionOutputSchema } from '../output-schemas';
 
 export const extract = createAction({
   auth: firecrawlAuth,
   name: 'extract',
+  classification: 'READ',
   displayName: 'Extract Structured Data',
   description: 'Extract structured data from multiple URLs using AI.',
   audience: 'human',
@@ -145,6 +146,7 @@ export const extract = createAction({
       urls: urlsArray,
       prompt: jsonFormat.prompt,
       schema: jsonFormat.schema,
+      origin: FIRECRAWL_ORIGIN,
     };
 
     if (propsValue.enableWebSearch) {

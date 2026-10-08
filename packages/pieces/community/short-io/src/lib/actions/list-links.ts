@@ -7,6 +7,7 @@ import { domainIdDropdown, folderIdDropdown } from '../common/props';
 export const listLinksAction = createAction({
   auth: shortIoAuth,
   name: 'list-short-links',
+  classification: 'SEARCH',
   displayName: 'List Links',
   description:
     'Retrieve all links on a domain, with pagination and date-range filters.',

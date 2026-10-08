@@ -10,6 +10,7 @@ import {
 export const sendTemplate = createAction({
   auth: kapsoAuth,
   name: 'send_template_message',
+  classification: 'WRITE',
   displayName: 'Send Template Message',
   description: 'Send a pre-approved WhatsApp template message.',
   audience: 'both',

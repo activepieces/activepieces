@@ -7,6 +7,7 @@ import { Lead } from '../common/types';
 export const exportLeadsAction = createAction({
   auth: whatConvertsAuth,
   name: 'export_leads',
+  classification: 'SEARCH',
   displayName: 'Export Leads',
   description:
     'Retrieves all leads from an account, handling pagination automatically.',

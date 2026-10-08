@@ -31,6 +31,7 @@ type TranscribeContext = ActionContext<
 >;
 export const transcribe = createAction({
   name: 'transcribe',
+  classification: 'WRITE',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Transcribe',

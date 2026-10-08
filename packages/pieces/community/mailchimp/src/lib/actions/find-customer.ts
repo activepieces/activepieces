@@ -8,6 +8,7 @@ import { MailchimpClient } from '../common/types';
 export const findCustomer = createAction({
   auth: mailchimpAuth,
   name: 'find_customer',
+  classification: 'SEARCH',
   displayName: 'Find Customer',
   description: 'Find a customer by email address in a store',
   audience: 'both',

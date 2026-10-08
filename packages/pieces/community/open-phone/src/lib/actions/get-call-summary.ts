@@ -11,6 +11,7 @@ import {
 export const getCallSummary = createAction({
   auth: openPhoneAuth,
   name: 'get_call_summary',
+  classification: 'READ',
   displayName: 'Get Call Summary',
   description:
     'Retrieve an AI-generated summary of a specific call by ID. Call summaries are only available on OpenPhone Business plan.',

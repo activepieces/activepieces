@@ -7,6 +7,7 @@ import { telegramGetChatAdministratorsActionOutputSchema } from '../output-schem
 export const telegramGetChatAdministrators = createAction({
   auth: telegramBotAuth,
   name: 'telegram_get_chat_administrators',
+  classification: 'SEARCH',
   displayName: 'Get Chat Administrators',
   description: 'List the administrators of a Telegram chat.',
   audience: 'ai',

@@ -39,17 +39,24 @@ const polling: Polling<
 export const newFile = createTrigger({
   auth: googleDriveAuth,
   name: 'new_file',
+  classification: 'READ',
   displayName: 'New File',
-  description: 'Trigger when a new file is uploaded.',
+  description:
+    'Triggers when a new file is added to Drive or the chosen folder.',
   aiMetadata: {
     description: 'Fires when a new file appears in Google Drive, optionally scoped to a specific parent folder. Each event represents one newly created file and its metadata, with optional inclusion of the file content.',
   },
   props: {
-    parentFolder: common.properties.parentFolder,
+    parentFolder: common.parentFolderDropdown({
+      displayName: 'Folder',
+      description:
+        'Leave empty to watch all of My Drive. Type to search by folder name.',
+    }),
     include_team_drives: common.properties.include_team_drives,
     include_file_content: Property.Checkbox({
       displayName: 'Include File Content',
-      description: 'Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files.',
+      description:
+        'Also download each file. Slower, and very large files may fail.',
       required: false,
       defaultValue: false
     }),
@@ -96,7 +103,10 @@ export const newFile = createTrigger({
     mimeType: 'image/png',
     id: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
     name: 'google-drive.png',
-    link: 'https://cdn.activepieces.com/pieces/google-drive.png'
+    webViewLink:
+      'https://drive.google.com/file/d/1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5/view?usp=drivesdk',
+    createdTime: '2026-08-20T09:12:44.000Z',
+    modifiedTime: '2026-08-20T09:12:44.000Z',
   },
 });
 

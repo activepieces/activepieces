@@ -7,6 +7,7 @@ import { googleTrendsSearchOutputSchema } from '../output-schemas';
 export const googleTrendsSearch = createAction({
   auth: serpApiAuth,
   name: 'google_trends_search',
+  classification: 'SEARCH',
   displayName: 'Google Trends Search',
   description: 'Discover trending keywords over time to inform content strategy and market research with geographic insights.',
   audience: 'human',

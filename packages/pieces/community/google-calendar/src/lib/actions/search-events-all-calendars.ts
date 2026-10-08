@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 export const searchEventsAllCalendars = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_search_events_all_calendars',
+  classification: 'SEARCH',
   displayName: 'Search Events Across Calendars',
   description:
     'Searches every calendar the account can access for events matching a keyword within a required time window.',

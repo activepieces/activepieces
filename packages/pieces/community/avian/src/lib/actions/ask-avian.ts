@@ -8,6 +8,7 @@ import { propsValidation, httpClient, HttpMethod, AuthenticationType } from '@ac
 export const askAvian = createAction({
   auth: avianAuth,
   name: 'ask_avian',
+  classification: 'READ',
   displayName: 'Ask Avian',
   description: 'Ask Avian anything you want!',
   audience: 'both',

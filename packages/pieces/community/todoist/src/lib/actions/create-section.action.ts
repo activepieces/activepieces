@@ -7,6 +7,7 @@ import { createSectionActionOutputSchema } from '../output-schemas';
 export const todoistCreateSectionAction = createAction({
   auth: todoistAuth,
   name: 'todoist_create_section',
+  classification: 'WRITE',
   displayName: 'Create Section',
   description: 'Create a new section within a Todoist project.',
   audience: 'ai',

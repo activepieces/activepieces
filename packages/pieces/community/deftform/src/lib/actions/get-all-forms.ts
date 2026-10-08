@@ -6,6 +6,7 @@ import { deftformApiCall } from '../common';
 export const getAllForms = createAction({
     auth: deftformAuth,
     name: 'get_all_forms',
+    classification: 'SEARCH',
     displayName: 'Get All Forms and Fields',
     description: 'Lists all forms in your workspace, including their fields.',
     audience: 'both',

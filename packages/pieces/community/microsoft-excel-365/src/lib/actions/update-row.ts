@@ -7,6 +7,7 @@ import { excelCommon, objectToArray } from '../common/common';
 export const updateRowAction = createAction({
 	auth: excelAuth,
 	name: 'update_row',
+	classification: 'WRITE',
 	description: 'Update a row in a worksheet',
 	audience: 'both',
 	aiMetadata: { description: 'Overwrite the cells of a specific worksheet row, identified by its row number, with the provided values starting at column A. Use to edit an existing row in place; to add a new row use the append actions, or Delete Row to remove one. Idempotent for a given row number and values — re-running writes the same cells. Values can be keyed by header when the first row holds headers.', idempotent: true },

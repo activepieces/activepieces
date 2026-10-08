@@ -6,6 +6,7 @@ import { chargebeeRequest, cleanObject } from '../common/client';
 
 export const cancelSubscription = createAction({
   name: 'cancel_subscription',
+  classification: 'DESTRUCTIVE',
   auth: chargebeeAuth,
   displayName: 'Cancel Subscription',
   description:

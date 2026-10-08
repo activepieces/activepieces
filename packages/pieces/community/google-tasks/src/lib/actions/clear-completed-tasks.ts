@@ -12,6 +12,7 @@ import { googleTasksClearCompletedTasksOutputSchema } from '../output-schemas';
 export const googleTasksClearCompletedTasksAction = createAction({
   auth: googleTasksAuth,
   name: 'clear_completed_tasks',
+  classification: 'DESTRUCTIVE',
   displayName: 'Clear Completed Tasks',
   description: 'Hide all completed tasks in a task list.',
   audience: 'ai',

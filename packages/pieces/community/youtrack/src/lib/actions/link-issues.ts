@@ -7,6 +7,7 @@ import { linkIssuesActionOutputSchema } from '../output-schemas';
 export const linkIssuesAction = createAction({
   auth: youtrackAuth,
   name: 'link_issues',
+  classification: 'WRITE',
   outputSchema: linkIssuesActionOutputSchema,
   displayName: 'Link Issues',
   description: 'Creates a relationship between two issues (e.g. "relates to", "depends on", "is duplicated by").',

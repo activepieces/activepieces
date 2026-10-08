@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const githubCreateDiscussionCommentAction = createAction({
   auth: githubAuth,
   name: 'github_create_discussion_comment',
+  classification: 'WRITE',
   displayName: 'Create Discussion Comment',
   description: 'Creates a comment on a discussion in a GitHub repository',
   audience: 'both',

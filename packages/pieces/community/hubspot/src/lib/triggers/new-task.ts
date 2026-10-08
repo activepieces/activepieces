@@ -1,8 +1,8 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
@@ -10,16 +10,17 @@ import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from 
 
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultTaskProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TASK);
@@ -74,8 +75,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newTaskTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-task',
+	classification: 'READ',
 	displayName: 'New Task',
-	description: 'Trigger when a new task is added.',
+	description: 'Triggers when a new task is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new task is created in the HubSpot CRM. Each event represents one task record (call, to-do, or email follow-up) with its properties such as subject, type, priority, owner, due timestamp, and associated contacts/companies/deals. Polls for tasks by creation date.',
@@ -83,18 +85,17 @@ export const newTaskTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-					hs_task_subject, hs_task_type, hs_task_priority, hubspot_owner_id, hs_timestamp, hs_queue_membership_ids, hs_lastmodifieddate,hs_createdate
+			value: `Returned by default: hs_task_body, hubspot_owner_id, hs_task_subject, hs_task_status, hs_task_priority, hs_task_type, hs_created_by, hs_repeat_status, hs_task_completion_date, hs_task_is_completed, hs_timestamp, hs_queue_membership_ids, hs_lastmodifieddate, hs_createdate.
 
-                    **Specify here a list of additional properties to retrieve**`,
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.TASK,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

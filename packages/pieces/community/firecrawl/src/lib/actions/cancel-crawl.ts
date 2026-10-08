@@ -7,6 +7,7 @@ import { cancelCrawlActionOutputSchema } from '../output-schemas';
 export const cancelCrawl = createAction({
   auth: firecrawlAuth,
   name: 'cancel_crawl',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Crawl',
   description: 'Cancel an in-flight crawl job by its ID.',
   audience: 'ai',

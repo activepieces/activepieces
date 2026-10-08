@@ -6,6 +6,7 @@ import { Filter } from '../common/types';
 export const findOpportunityAction = createAction({
   auth: capsuleCrmAuth,
   name: 'find_opportunity',
+  classification: 'SEARCH',
   displayName: 'Find Opportunity',
   description: 'Find an Opportunity by search criteria.',
   audience: 'both',

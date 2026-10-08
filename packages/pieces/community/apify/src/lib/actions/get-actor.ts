@@ -5,6 +5,7 @@ import { getActorActionOutputSchema } from '../output-schemas';
 
 export const apifyGetActor = createAction({
   name: 'apify_get_actor',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Actor',
   description: 'Retrieves metadata for a single Apify Actor by ID.',

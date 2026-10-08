@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -9,9 +9,10 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { cn } from '@/lib/utils';
 
 import {
-  ConnectionPickerData,
+  isConnectionPickerData,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
@@ -36,7 +37,9 @@ export function ChatBottomBar({
   lastMessageId,
   placeholder,
   banner,
+  recede,
 }: ChatBottomBarProps) {
+  const [composerEngaged, setComposerEngaged] = useState(false);
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -115,16 +118,27 @@ export function ChatBottomBar({
     dismissActiveCard?.();
   };
 
+  const minimal = recede === true && !activeCard && !composerEngaged;
+
   return (
     <div className="flex flex-col gap-2">
       {activeCard}
-      <div className="overflow-hidden rounded-2xl border border-foreground/20 transition-colors hover:border-foreground/40 focus-within:border-foreground/40">
+      <div
+        className={cn(
+          'overflow-hidden rounded-2xl border transition-colors',
+          minimal
+            ? 'border-transparent bg-transparent hover:bg-gray-3/30'
+            : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
+        )}
+      >
         {banner}
         <ChatInput
           isStreaming={activeCard ? false : isStreaming}
           onSend={handleSend}
           onStop={onStop}
           onInputChange={onInputChange}
+          minimalUntilFocus={recede === true && !activeCard}
+          onFocusChange={setComposerEngaged}
           placeholder={
             activeCard
               ? t('Or reply in your own words')
@@ -176,9 +190,10 @@ function BlockingDisplayCard({
       );
     case 'ap_show_connection_required':
     case 'ap_show_connection_picker':
+      if (!isConnectionPickerData(data)) return null;
       return (
         <ConnectionPickerCard
-          picker={data as unknown as ConnectionPickerData}
+          picker={data}
           onResolve={(payload) => approveGate(toolCallId, payload)}
           onDismiss={() => rejectGate(toolCallId)}
         />
@@ -216,4 +231,5 @@ type ChatBottomBarProps = {
   lastMessageId: string | undefined;
   placeholder?: string;
   banner?: ReactNode;
+  recede?: boolean;
 };

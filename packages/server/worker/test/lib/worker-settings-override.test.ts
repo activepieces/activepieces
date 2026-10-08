@@ -2,6 +2,7 @@ import { createServer } from 'node:http'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { Server as IOServer } from 'socket.io'
 import {
+    ApEdition,
     createRpcServer,
     ExecutionMode,
     NetworkMode,
@@ -93,7 +94,10 @@ describe('worker settings override', () => {
     let port: number
 
     beforeEach(async () => {
-        httpServer = createServer()
+        httpServer = createServer((_req, res) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end('{}')
+        })
         ioServer = new IOServer(httpServer, { transports: ['websocket'], path: '/api/socket.io' })
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
@@ -113,6 +117,7 @@ describe('worker settings override', () => {
         delete process.env.AP_EXECUTION_MODE
         delete process.env.AP_WORKER_GROUP_ID
         delete process.env.AP_REUSE_SANDBOX
+        delete process.env.AP_SANDBOX_MEMORY_LIMIT
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
         })
@@ -187,6 +192,32 @@ describe('worker settings override', () => {
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_ONLY)
     }, 10_000)
 
+    it('local AP_SANDBOX_MEMORY_LIMIT overrides server-provided limit', async () => {
+        process.env.AP_SANDBOX_MEMORY_LIMIT = '2097152'
+        const serverSettings = buildWorkerSettingsResponse({ SANDBOX_MEMORY_LIMIT: '1048576' })
+        await connectAndWaitForSettings(serverSettings)
+
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.SANDBOX_MEMORY_LIMIT).toBe('2097152')
+    }, 10_000)
+
+    it('no local AP_SANDBOX_MEMORY_LIMIT keeps server-provided limit', async () => {
+        const serverSettings = buildWorkerSettingsResponse({ SANDBOX_MEMORY_LIMIT: '524288' })
+        await connectAndWaitForSettings(serverSettings)
+
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.SANDBOX_MEMORY_LIMIT).toBe('524288')
+    }, 10_000)
+
+    it.each(['invalid', '2097152KB', '0', '-1'])('invalid local AP_SANDBOX_MEMORY_LIMIT %s throws', async (value) => {
+        process.env.AP_SANDBOX_MEMORY_LIMIT = value
+        const serverSettings = buildWorkerSettingsResponse()
+
+        const err = await connectAndExpectCrash(serverSettings)
+        expect(err.message).toMatch(/AP_SANDBOX_MEMORY_LIMIT must be a positive integer/)
+        expect(mockWorkerSettingsSet).not.toHaveBeenCalled()
+    }, 10_000)
+
     it('worker group + SANDBOX_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
@@ -211,22 +242,47 @@ describe('worker settings override', () => {
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_AND_PROCESS)
     }, 10_000)
 
-    it('worker group + SANDBOX_CODE_ONLY throws error', async () => {
+    it('worker group + UNSANDBOXED passes validation on non-cloud editions', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
-        process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_CODE_ONLY
-        const serverSettings = buildWorkerSettingsResponse()
+        process.env.AP_EXECUTION_MODE = ExecutionMode.UNSANDBOXED
+        process.env.AP_REUSE_SANDBOX = 'false'
+        const serverSettings = buildWorkerSettingsResponse({ EDITION: ApEdition.ENTERPRISE })
+        await connectAndWaitForSettings(serverSettings)
+
+        expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.EXECUTION_MODE).toBe(ExecutionMode.UNSANDBOXED)
+    }, 10_000)
+
+    it('worker group + UNSANDBOXED throws on cloud edition', async () => {
+        process.env.AP_WORKER_GROUP_ID = 'group-1'
+        process.env.AP_EXECUTION_MODE = ExecutionMode.UNSANDBOXED
+        process.env.AP_REUSE_SANDBOX = 'false'
+        const serverSettings = buildWorkerSettingsResponse({ EDITION: ApEdition.CLOUD })
 
         const err = await connectAndExpectCrash(serverSettings)
         expect(err.message).toMatch(/Worker group "group-1" requires AP_EXECUTION_MODE/)
     }, 10_000)
 
-    it('worker group + UNSANDBOXED throws error', async () => {
+    it('worker group + SANDBOX_PROCESS passes validation on cloud edition', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
-        process.env.AP_EXECUTION_MODE = ExecutionMode.UNSANDBOXED
+        process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
+        process.env.AP_REUSE_SANDBOX = 'false'
+        const serverSettings = buildWorkerSettingsResponse({ EDITION: ApEdition.CLOUD })
+        await connectAndWaitForSettings(serverSettings)
+
+        expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_PROCESS)
+    }, 10_000)
+
+    it('worker group without AP_REUSE_SANDBOX throws error', async () => {
+        process.env.AP_WORKER_GROUP_ID = 'group-1'
+        process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
         const serverSettings = buildWorkerSettingsResponse()
 
         const err = await connectAndExpectCrash(serverSettings)
-        expect(err.message).toMatch(/Worker group "group-1" requires AP_EXECUTION_MODE/)
+        expect(err.message).toMatch(/Worker group "group-1" requires AP_REUSE_SANDBOX/)
     }, 10_000)
 
     it('worker group + no local override, server sends SANDBOX_PROCESS → passes', async () => {

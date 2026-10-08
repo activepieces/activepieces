@@ -18,6 +18,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 const LicenseKeySchema = z.object({
   tempLicenseKey: z.string({ message: t('License key is invalid') }),
@@ -47,7 +48,7 @@ export const ActivateLicenseDialog = ({
   });
 
   const { mutate: activateLicenseKey, isPending } =
-    platformHooks.useUpdateLisenceKey(queryClinet);
+    platformHooks.useUpdateLisenceKey({ queryClient: queryClinet });
 
   const handleSubmit = (data: LicenseKeySchema) => {
     form.clearErrors();
@@ -120,6 +121,7 @@ export const ActivateLicenseDialog = ({
             </Button>
           </DialogClose>
           <Button
+            {...adminControl(AdminControl.BILLING_LICENSE_KEY_SUBMIT)}
             onClick={form.handleSubmit(handleSubmit)}
             disabled={isPending || !form.watch('tempLicenseKey')?.trim()}
             className="min-w-20"

@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const timeOffStatusChanged = createTrigger({
   auth: assembledAuth,
   name: 'OOO_status_changed',
+  classification: 'READ',
   displayName: 'OOO Status Changed',
   description: 'Triggers on approval/rejection of OOO.',
   aiMetadata: {

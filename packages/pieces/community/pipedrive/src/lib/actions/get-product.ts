@@ -7,10 +7,13 @@ import {
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField } from '../common/types';
+import { getProductActionOutputSchema } from '../output-schemas';
 
 export const getProductAction = createAction({
 	auth: pipedriveAuth,
 	name: 'get-product',
+	outputSchema: getProductActionOutputSchema,
+	classification: 'READ',
 	displayName: 'Retrieve a Product',
 	description: 'Finds a product by ID.',
 	audience: 'both',

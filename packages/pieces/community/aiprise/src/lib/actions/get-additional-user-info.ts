@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getAdditionalUserInfoAction = createAction({
   auth: aipriseAuth,
   name: 'get_additional_user_info',
+  classification: 'READ',
   displayName: "Get Person's Additional Info",
   description:
     "Fetches supplementary information collected from the person during a verification — anything beyond the primary identity fields, such as follow-up answers, extra documents, or custom form data.",

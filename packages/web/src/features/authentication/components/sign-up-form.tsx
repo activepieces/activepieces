@@ -40,7 +40,11 @@ import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
+import {
+  FROM_QUERY_PARAM,
+  pendingRedirect,
+  useRedirectAfterLogin,
+} from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
 import { captchaUtils } from '../utils/captcha-utils';
@@ -98,19 +102,23 @@ const SignUpForm = ({
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
   const { capture } = useTelemetry();
+  const askToCheckEmail = () => {
+    pendingRedirect.remember(searchParams.get(FROM_QUERY_PARAM));
+    setShowCheckYourEmailNote(true);
+  };
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
 
-        if (isNil(data.projectId)) {
+        if (isNil(data.platformId)) {
           navigate('/create-platform');
           return;
         }
         redirectAfterLogin();
       } else {
-        setShowCheckYourEmailNote(true);
+        askToCheckEmail();
       }
     },
     onError: (error) => {
@@ -139,7 +147,7 @@ const SignUpForm = ({
         }
         switch (errorCode) {
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
-            setShowCheckYourEmailNote(true);
+            askToCheckEmail();
             break;
           }
           case ErrorCode.INVITATION_ONLY_SIGN_UP: {
@@ -197,13 +205,17 @@ const SignUpForm = ({
     });
     capture({
       name: TelemetryEventName.SIGN_UP_SUBMITTED,
-      payload: { method: 'email', ...acquisitionUtils.getAcquisitionParams() },
+      payload: {
+        method: 'password',
+        ...acquisitionUtils.getAcquisitionParams(),
+      },
     });
     mutate({
       ...data,
       email: data.email.trim().toLowerCase(),
       trackEvents: true,
       captchaToken,
+      attribution: acquisitionUtils.getAcquisitionParams(),
     });
   };
 
@@ -320,7 +332,7 @@ const SignUpForm = ({
                           size="icon"
                           tabIndex={-1}
                           onClick={() => setShowPassword((v) => !v)}
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                          className="h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
                         >
                           {showPassword ? (
                             <EyeOff className="w-4 h-4" />
@@ -339,7 +351,7 @@ const SignUpForm = ({
                     className="w-auto shadow-none"
                   >
                     <div className="absolute -left-[4.5px] top-1/2 -translate-y-1/2">
-                      <div className="w-2.5 h-2.5 rotate-45 bg-popover border-l border-b border-border" />
+                      <div className="w-2.5 h-2.5 rotate-45 bg-panel border-l border-b border-gray-6" />
                     </div>
                     <PopoverHeader className="mb-2">
                       <PopoverTitle className="text-xs">

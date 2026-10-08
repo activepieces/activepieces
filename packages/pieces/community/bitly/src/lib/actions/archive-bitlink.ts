@@ -7,6 +7,7 @@ import { bitlinkDropdown, groupGuid } from '../common/props';
 export const archiveBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'archive_bitlink',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Bitlink',
   description: 'Archive a Bitlink to stop redirects.',
   audience: 'both',

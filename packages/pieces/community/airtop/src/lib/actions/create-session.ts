@@ -12,6 +12,7 @@ import * as z from 'zod/mini'
 
 export const createSessionAction = createAction({
 	name: 'create-session',
+	classification: 'WRITE',
 	auth: airtopAuth,
 	displayName: 'Create Session',
 	description: 'Starts a new browser session in Airtop.',

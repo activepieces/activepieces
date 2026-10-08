@@ -4,6 +4,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const verifyEmail = createAction({
   auth: millionVerifierAuth,
   name: 'verifyEmail',
+  classification: 'READ',
   displayName: 'Verify Email',
   description: 'Verify email address using Million Verifier API',
   audience: 'both',

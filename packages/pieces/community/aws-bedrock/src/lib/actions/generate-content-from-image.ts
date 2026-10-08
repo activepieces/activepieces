@@ -18,6 +18,7 @@ export const generateContentFromImage = createAction({
   audience: 'human',
   auth: awsBedrockCombinedAuth,
   name: 'generate_content_from_image',
+  classification: 'READ',
   displayName: 'Generate Content from Image',
   description: 'Ask a Bedrock model a question about an image.',
   props: {

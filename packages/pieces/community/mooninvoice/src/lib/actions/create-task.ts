@@ -94,12 +94,12 @@ export const createTask = createAction({
       context.auth.props.secret_text
     );
 
-    const response = await makeRequest(
+    const response = await makeRequest({
       accessToken,
-      HttpMethod.POST,
-      '/add_task',
-      body
-    );
+      method: HttpMethod.POST,
+      path: '/add_task',
+      body,
+    });
 
     return response;
   },

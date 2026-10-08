@@ -6,6 +6,7 @@ import { mailchimpAuth } from '../..';
 export const removeSubscriberFromTag = createAction({
   auth: mailchimpAuth,
   name: 'remove_subscriber_from_tag',
+  classification: 'WRITE',
   displayName: 'Remove Subscriber from Tag',
   description: 'Remove a subscriber from a specific tag in your Mailchimp audience.',
   audience: 'both',

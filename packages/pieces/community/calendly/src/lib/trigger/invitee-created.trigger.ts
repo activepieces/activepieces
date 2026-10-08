@@ -7,12 +7,14 @@ import {
 } from '@activepieces/pieces-common';
 import { calendlyCommon, CalendlyWebhookInformation } from '../common';
 import { calendlyAuth } from '../auth';
+import { inviteeTriggerOutputSchema } from '../output-schemas';
 
 const triggerNameInStore = 'calendly_invitee_created_trigger';
 
 export const calendlyInviteeCreated = createTrigger({
   auth: calendlyAuth,
   name: 'invitee_created',
+  classification: 'READ',
   displayName: 'Event Scheduled',
   description: 'Triggers when a new Calendly event is scheduled',
   aiMetadata: {
@@ -49,6 +51,7 @@ export const calendlyInviteeCreated = createTrigger({
       uri: 'https://api.calendly.com/scheduled_events/AAAAAAAAAAAaA/invitees/AAAAAAAAAAAA',
     },
   },
+  outputSchema: inviteeTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const calendlyUser = await calendlyCommon.getUser(context.auth.secret_text);

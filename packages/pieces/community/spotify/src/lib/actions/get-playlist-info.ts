@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'get_playlist_info',
+  classification: 'READ',
   displayName: 'Get Playlist Info',
   description: 'Retrieves details of a playlist',
   audience: 'both',

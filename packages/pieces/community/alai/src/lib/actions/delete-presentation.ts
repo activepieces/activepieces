@@ -5,6 +5,7 @@ import { alaiAuth } from '../common/auth';
 export const deletePresentation = createAction({
   auth: alaiAuth,
   name: 'deletePresentation',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Presentation',
   description: 'Delete a presentation by its ID.',
   audience: 'both',

@@ -7,6 +7,7 @@ import { createDocumentFromMarkdownActionOutputSchema } from '../output-schemas'
 export const createDocumentFromMarkdown = createAction({
   auth: googleDocsAuth,
   name: 'create_document_from_markdown',
+  classification: 'WRITE',
   displayName: 'Create Document from Markdown',
   description: 'Create a Google Docs document from Markdown content',
   audience: 'ai',

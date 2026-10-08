@@ -6,6 +6,7 @@ import { telnyxRequest } from '../common/client';
 export const makeCallAction = createAction({
   auth: telnyxAuth,
   name: 'make_call',
+  classification: 'WRITE',
   displayName: 'Make Call',
   description: 'Initiate an outbound call using the Telnyx Call Control API.',
   audience: 'both',

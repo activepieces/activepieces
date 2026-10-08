@@ -10,14 +10,7 @@ export const concat = createAction({
   },
   displayName: 'Concatenate',
   name: 'concat',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
+  classification: 'READ',
   props: {
     texts: Property.Array({
       displayName: 'Texts',

@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -25,34 +24,23 @@ import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
+import { projectSettingsFormDefaults } from './form-defaults';
 import { GeneralSettings, FormValues } from './general';
-import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
 
-type TabId =
-  | 'general'
-  | 'members'
-  | 'alerts'
-  | 'pieces'
-  | 'environment'
-  | 'mcp';
+type TabId = 'general' | 'members' | 'alerts' | 'pieces' | 'environment';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
   onClose: () => void;
   initialTab?: TabId;
-  initialValues?: {
-    projectName?: string;
-    externalId?: string;
-  };
 }
 
 export function ProjectSettingsDialog({
   open,
   onClose,
   initialTab = 'general',
-  initialValues,
 }: ProjectSettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
@@ -67,13 +55,7 @@ export function ProjectSettingsDialog({
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
   const form = useForm<FormValues>({
-    defaultValues: {
-      projectName: initialValues?.projectName,
-      icon: project.icon,
-      externalId: initialValues?.externalId,
-      maxConcurrentJobs: project.maxConcurrentJobs,
-      activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
-    },
+    defaultValues: projectSettingsFormDefaults(project),
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
@@ -86,6 +68,7 @@ export function ProjectSettingsDialog({
       externalId: values.externalId,
       icon: values.icon,
       maxConcurrentJobs: values.maxConcurrentJobs,
+      sensitive: values.sensitive,
       plan: activeFlowsLimitChanged
         ? { ...project.plan, activeFlowsLimit: values.activeFlowsLimit ?? null }
         : undefined,
@@ -103,13 +86,8 @@ export function ProjectSettingsDialog({
 
   useEffect(() => {
     const dialogJustOpened = open && !previousOpenRef.current;
-    if (dialogJustOpened && !isNil(project)) {
-      form.reset({
-        ...initialValues,
-        icon: project.icon,
-        maxConcurrentJobs: project.maxConcurrentJobs,
-        activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
-      });
+    if (dialogJustOpened) {
+      form.reset(projectSettingsFormDefaults(project));
       setActiveTab(initialTab);
     }
     previousOpenRef.current = open;
@@ -142,12 +120,6 @@ export function ProjectSettingsDialog({
       disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
     {
-      id: 'mcp' as TabId,
-      label: t('MCP Server'),
-      icon: <McpSvg className="w-4 h-4" />,
-      disabled: false,
-    },
-    {
       id: 'pieces' as TabId,
       label: t('Pieces'),
       icon: <Puzzle className="w-4 h-4" />,
@@ -173,8 +145,6 @@ export function ProjectSettingsDialog({
         return <PiecesSettings />;
       case 'environment':
         return <EnvironmentSettings />;
-      case 'mcp':
-        return <McpServerSettings />;
       default:
         return null;
     }
@@ -188,7 +158,7 @@ export function ProjectSettingsDialog({
           {tabs.find((tab) => tab.id === activeTab)?.label}
         </span>
         {hasUnsavedChanges && (
-          <Badge variant="ghost" className="text-muted-foreground">
+          <Badge variant="ghost" className="text-gray-11">
             {t('Unsaved changes')}
           </Badge>
         )}
@@ -199,7 +169,7 @@ export function ProjectSettingsDialog({
     if (activeTab !== 'general') return null;
 
     return (
-      <div className="border-t bg-background rounded-br-md">
+      <div className="border-t bg-gray-1 rounded-br-md">
         <div className="flex items-center justify-end gap-3 px-6 py-4">
           <Button variant="outline" size="sm" onClick={onClose}>
             {t('Close')}
@@ -223,7 +193,7 @@ export function ProjectSettingsDialog({
       <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-sm flex flex-col p-0">
         <div className="flex h-[700px]">
           <div className="w-[238px]">
-            <nav className="bg-sidebar space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
+            <nav className="space-y-1 bg-gray-3 rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
                 title={form.watch('projectName') ?? project.displayName}
                 icon={form.watch('icon') ?? project.icon}
@@ -237,9 +207,9 @@ export function ProjectSettingsDialog({
                   <div
                     key={tab.id}
                     className={cn(
-                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-sidebar-accent',
+                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
                       {
-                        'bg-sidebar-accent': activeTab === tab.id,
+                        'bg-gray-4': activeTab === tab.id,
                       },
                     )}
                     onClick={() => setActiveTab(tab.id)}

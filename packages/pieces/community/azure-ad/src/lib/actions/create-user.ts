@@ -6,6 +6,7 @@ import { callGraphApi, flattenUser } from '../common';
 export const createUserAction = createAction({
     auth: azureAdAuth,
     name: 'create_user',
+    classification: 'WRITE',
     displayName: 'Create User',
     description: 'Creates a new user in Microsoft Entra ID.',
     audience: 'both',

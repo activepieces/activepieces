@@ -7,6 +7,7 @@ import { createGraphClient } from '../common/graph';
 export const findChannelAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_find_channel',
+	classification: 'SEARCH',
 	displayName: 'Find Channel',
 	description: 'Finds channels by name.',
 	audience: 'both',

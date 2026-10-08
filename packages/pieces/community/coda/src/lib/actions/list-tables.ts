@@ -2,13 +2,15 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { codaAuth } from '../auth';
 import { CodaTableReference, codaClient } from '../common/types';
 import { docIdDropdown } from '../common/props';
+import { listTablesActionOutputSchema } from '../output-schemas';
 
 export const listTablesAction = createAction({
 	auth: codaAuth,
 	name: 'list-tables',
+	classification: 'SEARCH',
 	displayName: 'List Table(s)',
 	description: 'List tables in a selected document.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'List the tables in a Coda doc, up to a caller-specified maximum, returning each table reference. Use to discover available tables and their IDs before reading or writing rows. Read-only and idempotent.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
@@ -18,15 +20,19 @@ export const listTablesAction = createAction({
 			required: true,
 		}),
 	},
+	outputSchema: listTablesActionOutputSchema,
 	async run(context) {
 		const { docId, max } = context.propsValue;
+		if (!Number.isInteger(max) || max < 1) {
+			throw new Error('Max Tables must be a whole number of 1 or more.');
+		}
 		const client = codaClient(context.auth);
 
 		const allTables: CodaTableReference[] = [];
 		let nextPageToken: string | undefined = undefined;
 
 		do {
-			const response = await client.listTables(docId as string, {
+			const response = await client.listTables(docId, {
 				limit: 100,
 				sortBy: 'name',
 				tableTypes: 'table',

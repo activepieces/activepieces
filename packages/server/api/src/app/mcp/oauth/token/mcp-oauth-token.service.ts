@@ -1,17 +1,28 @@
 import { randomBytes } from 'crypto'
-import { apId, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { McpOAuthToken } from '@activepieces/shared'
+import { McpOAuthClientKey, McpOAuthGrant, McpOAuthToken } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
+import { buildPaginator } from '../../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { mcpListingUtils } from '../../mcp-listing-utils'
+import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
+import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
+import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
+import { mcpOAuthRevocationList } from './mcp-oauth-revocation-list'
+import { MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_REFRESH_TOKEN_TTL_MS } from './mcp-oauth-token-lifetimes'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 
 const repo = repoFactory(McpOAuthTokenEntity)
+const clientRepo = repoFactory(McpOAuthClientEntity)
 
-const ACCESS_TOKEN_TTL_15_MINUTES_SECONDS = 15 * 60
-const REFRESH_TOKEN_TTL_30_DAYS_MS = 30 * 24 * 60 * 60 * 1000
-const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
+const DEFAULT_GRANT_PAGE_SIZE = 20
+const TOKEN_ALIAS = 'mcp_oauth_token'
+const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'
 
 function generateRefreshToken(): string {
     return randomBytes(48).toString('base64url')
@@ -29,11 +40,13 @@ async function issueAccessToken(params: IssueAccessTokenParams): Promise<string>
             projectId: params.projectId,
             platformId: params.platformId,
             clientId: params.clientId,
+            ...spreadIfDefined('grantId', params.grantId ?? undefined),
+            clientKey: params.clientKey,
             scopes: params.scopes,
             type: 'mcp_oauth',
         },
         key,
-        expiresInSeconds: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
+        expiresInSeconds: MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS,
         audience: JwtAudience.MCP_OAUTH_ACCESS,
     })
 }
@@ -47,17 +60,20 @@ export const mcpOAuthTokenService = {
 
         const rawRefreshToken = generateRefreshToken()
         const hashedRefreshToken = hashRefreshToken(rawRefreshToken)
+        const clientKey = mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris })
 
         const tokenRecord: McpOAuthToken = {
             id: apId(),
             refreshToken: hashedRefreshToken,
             clientId: params.clientId,
+            clientKey,
             userId: params.userId,
             projectId: params.projectId,
             platformId: params.platformId,
             scopes: params.scopes,
-            expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_30_DAYS_MS).toISOString(),
+            expiresAt: new Date(Date.now() + MCP_OAUTH_REFRESH_TOKEN_TTL_MS).toISOString(),
             revoked: false,
+            lastUsedAt: null,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
         }
@@ -68,13 +84,15 @@ export const mcpOAuthTokenService = {
             projectId: params.projectId,
             platformId: params.platformId,
             clientId: params.clientId,
+            grantId: tokenRecord.id,
+            clientKey,
             scopes: params.scopes,
         })
 
         return {
             access_token: accessToken,
             token_type: 'Bearer',
-            expires_in: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
+            expires_in: MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS,
             refresh_token: rawRefreshToken,
         }
     },
@@ -89,20 +107,48 @@ export const mcpOAuthTokenService = {
             throw new OAuthTokenError('invalid_grant', 'Client mismatch')
         }
 
+        const clientKey = record.clientKey ?? mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris })
+        await repo().update({ id: record.id }, {
+            lastUsedAt: new Date().toISOString(),
+            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? clientKey : undefined),
+        })
+
         const accessToken = await issueAccessToken({
             userId: record.userId,
             projectId: record.projectId,
             platformId: record.platformId,
             clientId: record.clientId,
+            grantId: record.id,
+            clientKey,
             scopes: record.scopes ?? [],
         })
 
         return {
             access_token: accessToken,
             token_type: 'Bearer',
-            expires_in: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
+            expires_in: MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS,
             refresh_token: params.refreshToken,
         }
+    },
+
+    async authenticate({ token, log }: AuthenticateParams): Promise<AuthenticateResult> {
+        const { data: payload, error } = await tryCatch(() => mcpOAuthTokenService.verifyAccessToken(token))
+        if (error || isNil(payload)) {
+            log.debug({ error }, 'MCP OAuth token verification failed')
+            return { status: 'invalid' }
+        }
+        const { grantId } = payload
+        if (!isNil(grantId)) {
+            const { data: revoked, error: revocationError } = await tryCatch(() => mcpOAuthRevocationList.isRevoked({ grantId }))
+            if (revocationError) {
+                log.error({ error: revocationError }, 'Could not read the MCP OAuth revocation list')
+                return { status: 'unavailable' }
+            }
+            if (revoked) {
+                return { status: 'invalid' }
+            }
+        }
+        return { status: 'ok', payload }
     },
 
     async verifyAccessToken(token: string): Promise<McpOAuthAccessTokenPayload> {
@@ -119,12 +165,92 @@ export const mcpOAuthTokenService = {
     },
 
     async revokeRefreshToken({ refreshToken, clientId }: RevokeRefreshTokenParams): Promise<void> {
-        await repo().update({ refreshToken: hashRefreshToken(refreshToken), clientId }, { revoked: true })
+        const record = await repo().findOneBy({ refreshToken: hashRefreshToken(refreshToken), clientId })
+        if (isNil(record)) {
+            return
+        }
+        await repo().update({ id: record.id }, { revoked: true })
+        await mcpOAuthRevocationList.revoke({ grantIds: [record.id] })
+    },
+
+    async listGrants({ platformId, userId, projectIds, memberIds, clientKeys, cursor, limit }: ListGrantsParams): Promise<SeekPage<McpOAuthGrant>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
+        const paginator = buildPaginator({
+            entity: McpOAuthTokenEntity,
+            query: {
+                limit: limit ?? DEFAULT_GRANT_PAGE_SIZE,
+                order: 'DESC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+        const queryBuilder = repo().createQueryBuilder(TOKEN_ALIAS)
+        applyGrantScope(queryBuilder, { platformId, userId })
+        if (!isNil(clientKeys)) {
+            queryBuilder.andWhere(`COALESCE(${TOKEN_ALIAS}."clientKey", :unknownClientKey) IN (:...clientKeys)`, { clientKeys, unknownClientKey: UNKNOWN_CLIENT_KEY })
+        }
+        if (!isNil(memberIds)) {
+            queryBuilder.andWhere(`${TOKEN_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
+        }
+        mcpListingUtils.applyProjectFilter({ queryBuilder, alias: TOKEN_ALIAS, projectIds })
+
+        const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
+
+        const [clientNames, members, projectNames] = await Promise.all([
+            findClientNames({ clientIds: data.filter((token) => isNil(token.clientKey) || token.clientKey === UNKNOWN_CLIENT_KEY).map((token) => token.clientId) }),
+            mcpListingUtils.findMembers({ userIds: data.map((token) => token.userId), platformId }),
+            mcpListingUtils.findProjectNames({ projectIds: data.map((token) => token.projectId), platformId }),
+        ])
+
+        const rows = data.map((token) => ({
+            id: token.id,
+            clientKey: token.clientKey ?? UNKNOWN_CLIENT_KEY,
+            clientName: clientNames.get(token.clientId) ?? null,
+            projectId: token.projectId,
+            projectName: isNil(token.projectId) ? null : projectNames.get(token.projectId) ?? null,
+            member: members.get(token.userId) ?? null,
+            created: token.created,
+            lastUsedAt: token.lastUsedAt,
+        }))
+
+        return paginationHelper.createPage<McpOAuthGrant>(rows, nextCursor)
+    },
+
+    async revokeGrants({ ids, userId, platformId }: RevokeGrantsParams): Promise<void> {
+        const matched = await repo().findBy({ platformId, id: In(ids), ...spreadIfDefined('userId', userId ?? undefined) })
+        if (matched.length !== unique(ids).length) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: 'One or more grants do not exist or are not yours to revoke' },
+            })
+        }
+        const grantIds = matched.map((token) => token.id)
+        await repo().update({ id: In(grantIds) }, { revoked: true })
+        await mcpOAuthRevocationList.revoke({ grantIds })
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
-        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, scopes: ['mcp'] })
+        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: DEFAULT_MCP_OAUTH_SCOPES })
     },
+}
+
+function applyGrantScope<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, { platformId, userId }: GrantScope): void {
+    queryBuilder
+        .where(`${TOKEN_ALIAS}."platformId" = :platformId`, { platformId })
+        .andWhere(`${TOKEN_ALIAS}.revoked = false`)
+        .andWhere(`${TOKEN_ALIAS}."expiresAt" > :now`, { now: new Date().toISOString() })
+    if (!isNil(userId)) {
+        queryBuilder.andWhere(`${TOKEN_ALIAS}."userId" = :userId`, { userId })
+    }
+}
+
+async function findClientNames({ clientIds }: FindClientNamesParams): Promise<Map<string, string | null>> {
+    const distinct = unique(clientIds)
+    if (distinct.length === 0) {
+        return new Map()
+    }
+    const clients = await clientRepo().findBy({ clientId: In(distinct) })
+    return new Map(clients.map((client) => [client.clientId, client.clientName]))
 }
 
 export class OAuthTokenError extends Error {
@@ -141,10 +267,13 @@ type IssueAccessTokenParams = {
     projectId: string | null
     platformId: string
     clientId: string
+    grantId: string | null
+    clientKey: McpOAuthClientKey | null
     scopes: string[]
 }
 
 type ExchangeCodeParams = {
+    redirectUris: string[]
     codeVerifier: string
     codeChallenge: string
     codeChallengeMethod: string
@@ -160,7 +289,29 @@ type RevokeRefreshTokenParams = {
     clientId: string
 }
 
+type FindClientNamesParams = {
+    clientIds: string[]
+}
+
+type GrantScope = {
+    platformId: string
+    userId: string | null
+}
+
+type ListGrantsParams = GrantScope & {
+    projectIds?: string[]
+    memberIds?: string[]
+    clientKeys?: McpOAuthClientKey[]
+    cursor?: string
+    limit?: number
+}
+
+type RevokeGrantsParams = GrantScope & {
+    ids: string[]
+}
+
 type RefreshParams = {
+    redirectUris: string[]
     refreshToken: string
     clientId: string
 }
@@ -172,11 +323,25 @@ type TokenResponse = {
     refresh_token?: string
 }
 
+type AuthenticateParams = {
+    token: string
+    log: FastifyBaseLogger
+}
+
+type AuthenticateResult =
+    | { status: 'ok', payload: McpOAuthAccessTokenPayload }
+    | { status: 'invalid' }
+    | { status: 'unavailable' }
+
+export const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
+
 export type McpOAuthAccessTokenPayload = {
     sub: string
     projectId: string | null
     platformId: string
     clientId: string
+    grantId?: string
+    clientKey: McpOAuthClientKey | null
     scopes: string[]
     type: 'mcp_oauth'
     iat: number

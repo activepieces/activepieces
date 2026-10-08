@@ -6,6 +6,7 @@ import {
 
 export const everyXMinutesTrigger = createTrigger({
   name: 'every_x_minutes',
+  classification: 'READ',
   displayName: 'Every X Minutes',
   description: 'Triggers the current flow every X minutes',
   aiMetadata: {

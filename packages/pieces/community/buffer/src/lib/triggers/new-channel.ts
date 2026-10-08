@@ -33,6 +33,7 @@ const polling: Polling<
 export const newChannel = createTrigger({
   auth: bufferAuth,
   name: 'new_channel',
+  classification: 'READ',
   displayName: 'New Channel',
   description: 'Triggers when a new channel is connected to your Buffer organization.',
   aiMetadata: {

@@ -47,6 +47,7 @@ const polling: Polling<PiecePropValueSchema<any>, { type?: string; per_page?: nu
 export const getAssistants = createTrigger({
     auth: famulorAuth,
     name: 'getAssistants',
+    classification: 'READ',
     displayName: 'New or Updated Assistant',
     description: 'Triggers when AI assistants are created or updated in your Famulor account.',
     aiMetadata: {

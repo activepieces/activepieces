@@ -10,6 +10,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordAddThreadMember = createAction({
   auth: discordAuth,
   name: 'discord_add_thread_member',
+  classification: 'WRITE',
   displayName: 'Add Thread Member',
   description: 'Add a user to a thread.',
   audience: 'ai',

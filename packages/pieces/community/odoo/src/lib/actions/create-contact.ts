@@ -1,13 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
 import { odooAuth } from '../auth';
+import { odooRpc } from '../common/client';
 
 export default createAction({
     name: 'create_contact', // Must be a unique across the piece, this shouldn't be changed.
+    classification: 'WRITE',
     auth: odooAuth,
     displayName: 'Create contact',
     description: 'Create/Update contact on Odoo',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Upserts an individual contact (res.partner) in Odoo by name: it searches for a non-company partner with the same name, updating it if found or creating one otherwise. Use to add or refresh a person contact with phone, email, company name, and job title. Not idempotent in effect — the first call may create a record and matching is by exact name.', idempotent: false },
     props: {
         // Properties to ask from the user, in this ask we will take number of
@@ -40,7 +42,7 @@ export default createAction({
     async run(context) {
         const odoo = new Odoo({
             url: context.auth.props.base_url,
-            port: 443,
+            port: odooRpc.resolvePort(context.auth.props.port),
             db: context.auth.props.database,
             username: context.auth.props.username,
             password: context.auth.props.api_key,
@@ -50,8 +52,8 @@ export default createAction({
             await odoo.connect();
             const c = await odoo.saveContact({
                 name: context.propsValue['name'],
-                phone: context.propsValue['name'],
-                email: context.propsValue['name'],
+                phone: context.propsValue['phone'],
+                email: context.propsValue['email'],
                 company: context.propsValue['company'],
                 title: context.propsValue['title']
             });

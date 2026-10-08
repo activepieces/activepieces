@@ -37,8 +37,11 @@ export const filesService = {
 
 export function fileTooLargeError(maxBytes: number): ActivepiecesError {
     return new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: `File exceeds the maximum allowed size of ${maxBytes} bytes` },
+        code: ErrorCode.FILE_TOO_LARGE,
+        params: {
+            message: `File exceeds the maximum allowed size of ${maxBytes} bytes`,
+            maxBytes,
+        },
     })
 }
 
@@ -60,6 +63,7 @@ export const fileTransportHeaders = {
     READ_URL: 'x-ap-file-read-url',
     TYPE: 'x-ap-file-type',
     NAME: 'x-ap-file-name',
+    ENCODED_NAME: 'x-ap-file-name-encoded',
 } as const
 
 export const ENGINE_WRITABLE_FILE_TYPES: ReadonlySet<FileType> = new Set([

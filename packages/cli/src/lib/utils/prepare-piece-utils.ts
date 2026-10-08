@@ -39,21 +39,22 @@ async function preparePieceDistForPublish(piecePath: string): Promise<void> {
     copyPackageJson(paths)
     copyI18nAssets(paths)
 
-    const { bundleBytes, rawBytes, external } = await bundlePieceUtils.bundlePiece({ ...paths, repoRoot })
+    const { bundleBytes, rawBytes, external, extraBundleFiles } = await bundlePieceUtils.bundlePiece({ ...paths, repoRoot })
 
-    rewriteManifestForBundle({ distPath, external, repoRoot })
+    rewriteManifestForBundle({ distPath, external, repoRoot, extraBundleFiles })
     pruneDistToPublishedFiles({ distPath })
 
     const ratio = rawBytes > 0 ? (rawBytes / bundleBytes).toFixed(1) : '—'
     const extNote = external.length ? ` external=[${external.join(', ')}]` : ''
-    console.info(`[preparePiece] bundled ${piecePath} → ${(bundleBytes / 1024).toFixed(0)} KB (${ratio}x smaller than ${(rawBytes / 1024).toFixed(0)} KB raw inputs)${extNote}`)
+    const forkNote = extraBundleFiles.length ? ` forked=[${extraBundleFiles.join(', ')}]` : ''
+    console.info(`[preparePiece] bundled ${piecePath} → ${(bundleBytes / 1024).toFixed(0)} KB (${ratio}x smaller than ${(rawBytes / 1024).toFixed(0)} KB raw inputs)${extNote}${forkNote}`)
 }
 
 // The published artifact inlines @activepieces/* workspace code AND third-party deps into the
 // self-contained bundle by default. Only deps that cannot be safely inlined (native addons,
 // dynamic require) stay external and are kept here so the runtime installer resolves them.
 // A piece can force a dep external via bundleDeps in its package.json (escape hatch).
-function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: string, external: string[], repoRoot: string }): void {
+function rewriteManifestForBundle({ distPath, external, repoRoot, extraBundleFiles = [] }: { distPath: string, external: string[], repoRoot: string, extraBundleFiles?: string[] }): void {
     const distPackageJsonPath = join(distPath, 'package.json')
     const json = JSON.parse(readFileSync(distPackageJsonPath, 'utf-8'))
 
@@ -79,7 +80,8 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
     delete json.scripts
     delete json.types
     delete json.bundleDeps
-    json.files = [bundlePieceUtils.BUNDLE_FILENAME, 'package.json', 'src/i18n']
+    delete json.bundleForkedEntries
+    json.files = [bundlePieceUtils.BUNDLE_FILENAME, ...extraBundleFiles, 'package.json', 'src/i18n']
 
     writeFileSync(distPackageJsonPath, JSON.stringify(json, null, 2) + '\n')
 }

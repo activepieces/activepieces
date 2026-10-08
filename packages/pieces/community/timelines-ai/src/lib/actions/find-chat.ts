@@ -5,6 +5,7 @@ import { whatsappAccountDropdown } from '../common/properties';
 export const findChat = createAction({
   auth: timelinesAiAuth,
   name: 'findChat',
+  classification: 'SEARCH',
   displayName: 'Find Chat',
   description:
     'Look up a chat by parameters such as chat_id, phone, name, etc.',

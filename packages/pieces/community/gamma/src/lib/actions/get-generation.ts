@@ -7,6 +7,7 @@ export const getGeneration = createAction({
 
   auth: gammaAuth,
   name: 'getGeneration',
+  classification: 'READ',
   displayName: 'Get Generation',
   description: 'Given a Generation ID, fetch the status, outputs, metadata, etc.',
   audience: 'both',

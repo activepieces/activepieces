@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { taxRateOutputSchema } from '../output-schemas';
 export const stripeCreateTaxRate = createAction({
   name: 'create_tax_rate',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Tax Rate (Agent)',
   description: 'Create a manual tax rate.',

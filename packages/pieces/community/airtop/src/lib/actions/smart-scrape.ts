@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const smartScrapeAction = createAction({
 	name: 'smart-scrape',
+	classification: 'READ',
 	auth: airtopAuth,
 	displayName: 'Smart Scrape',
 	description: 'Scrape a page and return the data as Markdown.',

@@ -100,3 +100,22 @@ describe('agentToolClassification.requiresActionPreview — taint (untrusted con
         expect(agentToolClassification.requiresActionPreview({ actionName: 'send_channel_message', tainted: true })).toBe(true)
     })
 })
+
+describe('agentToolClassification.requiresActionPreview: an action whose name proves nothing', () => {
+    const UNMATCHED_WRITES = ['refund_payment', 'capture_payment_intent', 'cancel_subscription', 'add_row_to_sheet', 'upload_file', 'deactivate_user', 'archive_email', 'run_workflow']
+
+    it.each(UNMATCHED_WRITES)('asks before %s, which carries no write verb in its name', (actionName) => {
+        expect(agentToolClassification.requiresActionPreview({ actionName })).toBe(true)
+    })
+
+    it('asks before a custom api call that is not a provably safe method', () => {
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method: 'DELETE' } })).toBe(true)
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: {} })).toBe(true)
+    })
+
+    it('still lets a read through, so the asking stays worth reading', () => {
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'gmail_search_mail' })).toBe(false)
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'get_row' })).toBe(false)
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method: 'GET' } })).toBe(false)
+    })
+})

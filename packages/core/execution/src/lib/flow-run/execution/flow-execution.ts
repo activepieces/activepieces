@@ -19,6 +19,7 @@ export enum FlowRunStatus {
 export enum PauseType {
     DELAY = 'DELAY',
     WEBHOOK = 'WEBHOOK',
+    BARRIER = 'BARRIER',
 }
 
 export const DelayPauseMetadata = z.object({

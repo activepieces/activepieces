@@ -13,6 +13,7 @@ import { _fetch } from '../../common/request';
 export const sendText = createAction({
     auth: contiguityAuth,
     name: 'send_text',
+    classification: 'WRITE',
     displayName: 'Send SMS/MMS',
     description: 'Send a text message',
     audience: 'both',

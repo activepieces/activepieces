@@ -5,6 +5,7 @@ import { getAsset } from '../common';
 export const getAssetAction = createAction({
   auth: shopifyAuth,
   name: 'get_asset',
+  classification: 'READ',
   displayName: 'Get Asset',
   description: `Get a theme's asset.`,
   audience: 'both',

@@ -10,6 +10,7 @@ import { callableFlowKey, CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL } 
 
 export const callableFlow = createTrigger({
   name: 'callableFlow',
+  classification: 'READ',
   displayName: 'Callable Flow',
   description: 'Waiting to be triggered from another flow',
   aiMetadata: {

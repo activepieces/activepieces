@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const pageNumbersPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'page_numbers_pdf',
+  classification: 'READ',
   displayName: 'Add Page Numbers to PDF',
   description: 'Stamp page numbers onto a PDF, with control over position and styling.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const generateNewsKnowledgeGraph = createAction({
   auth: asknewsAuth,
   name: 'generateNewsKnowledgeGraph',
+  classification: 'SEARCH',
   displayName: 'Generate News Knowledge Graph',
   description: 'Build a custom mega-news-knowledge graph with fully disambiguated entities and relationships',
   audience: 'both',

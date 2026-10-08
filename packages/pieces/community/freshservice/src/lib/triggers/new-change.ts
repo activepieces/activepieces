@@ -42,6 +42,7 @@ const polling: Polling<
 export const newChange = createTrigger({
   auth: freshserviceAuth,
   name: 'new_change',
+  classification: 'READ',
   displayName: 'New Change',
   description: 'Triggers when a new change request is created in Freshservice.',
   aiMetadata: {

@@ -29,6 +29,7 @@ const WORKFLOW_DISPATCH_NOTE = `**Requirements**
 export const githubTriggerWorkflowDispatchAction = createAction({
   auth: githubAuth,
   name: 'trigger_workflow_dispatch',
+  classification: 'WRITE',
   displayName: 'Trigger Workflow Dispatch',
   description:
     'Manually triggers a GitHub Actions workflow run via the workflow_dispatch event.',

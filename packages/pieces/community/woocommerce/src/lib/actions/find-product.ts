@@ -7,18 +7,21 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { findProductOutputSchema } from '../output-schemas';
 
 export const wooFindProduct = createAction({
   name: 'Find Product',
+  classification: 'READ',
   displayName: 'Find Product',
   description: 'Find a Product',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves a single product from a WooCommerce store by its numeric product ID. Use when an agent already has a product ID and needs the full product record (price, stock, status, etc.). Read-only and idempotent. Requires the exact product ID.',
     idempotent: true,
   },
   auth: wooAuth,
+  outputSchema: findProductOutputSchema,
   props: {
     id: Property.ShortText({
       displayName: 'Product ID',

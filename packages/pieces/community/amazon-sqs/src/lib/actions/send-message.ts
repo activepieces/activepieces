@@ -4,6 +4,7 @@ import { SQS } from '@aws-sdk/client-sqs';
 
 export const sendMessage = createAction({
   name: 'sendMessage',
+  classification: 'WRITE',
   displayName: 'Send Message',
   auth: amazonSqsAuth,
   description: '',

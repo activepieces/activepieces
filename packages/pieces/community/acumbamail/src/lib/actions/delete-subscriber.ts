@@ -10,6 +10,7 @@ import {
 export const removeSubscribeAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_remove_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove Subscriber',
   description:
     'Removes a subscriber from a list',

@@ -1,9 +1,13 @@
 import {
+  ApEdition,
+  ApFlagId,
   CreateAiToolConfigRequest,
   UpdateAiToolConfigRequest,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { aiToolConfigApi } from '../api/ai-tool-config-api';
 
@@ -12,23 +16,25 @@ export const aiToolConfigKeys = {
 };
 
 export const aiToolConfigQueries = {
-  useAiToolConfigs: () =>
-    useQuery({
+  useAiToolConfigs: () => {
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+    return useQuery({
       queryKey: aiToolConfigKeys.all,
       queryFn: () => aiToolConfigApi.list(),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
-    }),
+      enabled: edition !== ApEdition.COMMUNITY,
+    });
+  },
 };
 
 export const aiToolConfigMutations = {
-  useUpsertAiToolConfig: ({ onSuccess, onError }: UpsertOptions) =>
+  useUpsertAiToolConfig: ({ onSuccess, onError }: MutationOptions) =>
     useMutation({
       mutationFn: (request: CreateAiToolConfigRequest) =>
         aiToolConfigApi.upsert(request),
       onSuccess,
       onError,
     }),
-  useUpdateAiToolConfig: ({ onSuccess }: { onSuccess: () => void }) =>
+  useUpdateAiToolConfig: ({ onSuccess, onError }: MutationOptions) =>
     useMutation({
       mutationFn: ({
         id,
@@ -38,6 +44,7 @@ export const aiToolConfigMutations = {
         request: UpdateAiToolConfigRequest;
       }) => aiToolConfigApi.update(id, request),
       onSuccess,
+      onError,
     }),
   useDeleteAiToolConfig: ({ onSuccess }: { onSuccess: () => void }) =>
     useMutation({
@@ -46,7 +53,7 @@ export const aiToolConfigMutations = {
     }),
 };
 
-type UpsertOptions = {
+type MutationOptions = {
   onSuccess: () => void;
   onError: (
     error: AxiosError<{ message?: string; params?: { message: string } }>,

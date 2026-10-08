@@ -7,6 +7,7 @@ import { issueCommentBodyOutputSchema } from '../../output-schemas';
 export const githubCreateIssueCommentAiAction = createAction({
   auth: githubAuth,
   name: 'create_issue_comment_ai',
+  classification: 'WRITE',
   displayName: 'Create Issue Comment (Agent)',
   description: 'Posts a comment on an issue or pull request.',
   audience: 'ai',

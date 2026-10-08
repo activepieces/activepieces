@@ -26,8 +26,8 @@ Platform admins configure LLM backends for AI pieces; auto-provisions an "Active
 
 Platform-level AI assistant that manages projects via natural language, streaming over WebSocket and using the project's MCP server as its tool surface.
 
-- **Execution model (key gotcha)**: the LLM loop runs in the **worker**, not the API. Controller enqueues `EXECUTE_CHAT_AGENT` → worker `run-chat-turn.ts` runs `streamText()` → chunks stream back via RPC → `CHAT_MESSAGE_CHUNK` websocket (filtered by `runId`). `chat-service.ts` only does conversation CRUD.
-- **Entities**: `ChatConversation` (per platform+user, optional project scope, messages as JSONB `ModelMessage[]`, compaction summary). `chat_rollout_user` tracks the cloud beta cohort (capped at 200 distinct users who sent a message).
+- **Execution model (key gotcha)**: the LLM loop runs in the **worker**, not the API. Controller enqueues `WorkerJobType.EXECUTE_AGENT_RUN` → worker `execute-agent-run.ts` → `run-agent-turn.ts` runs `streamText()` → chunks stream back via RPC → `CHAT_MESSAGE_CHUNK` websocket (filtered by `runId`). `agent-conversation-service.ts` only does conversation CRUD.
+- **Entities**: `AgentConversation` (table `agent_conversation`, per platform+user, optional project scope, messages as JSONB `ModelMessage[]`, compaction summary). `chat_rollout_user` tracks the cloud beta cohort (capped at 200 distinct users who sent a message).
 - **Integration/gotchas**: EE/Cloud only (needs `chatEnabled`, or cloud rollout/grandfather); refuses PGLite dev DB — needs Postgres + Redis. Two-phase (discovery/build) tool gating; Redis pub/sub approval gates for display cards + write-action previews; MCP tools no longer gated (just timeout-wrapped). Server-managed connections — LLM never sees credential externalIds. Web search rides the configured LLM credential (no second BYOK).
 
 ### Knowledge Base

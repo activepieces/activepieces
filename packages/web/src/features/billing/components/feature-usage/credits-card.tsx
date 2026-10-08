@@ -12,7 +12,6 @@ const CARD_DATE_FORMAT = 'D MMM YYYY, h:mm A';
 
 export const CreditsCard = ({ info }: CreditsCardProps) => {
   const { plan, usage } = info;
-  const isPaid = billingUtils.isPaidPlan(plan.plan);
   const remaining = usage.creditsRemaining;
   const isUnlimited = isNil(remaining);
   const total = plan.includedCredits;
@@ -21,29 +20,29 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
     used,
     total: isUnlimited ? null : total,
   });
-  const footer = resolveFooter({ info, isPaid });
+  const footer = resolveFooter(info);
   const switchesToPlanName =
     info.scheduledPlanName ??
     (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
 
   return (
-    <div className="flex flex-col rounded-xl border">
+    <div className="flex flex-col rounded-xl border bg-panel">
       <div className="flex flex-col gap-3 p-5">
-        <span className="text-muted-foreground text-sm">
+        <span className="text-gray-11 text-sm">
           {isUnlimited ? t('Credits used') : t('Included in plan')}
         </span>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold text-foreground">
+            <span className="text-3xl font-bold text-gray-12">
               {(isUnlimited ? used : total).toLocaleString()}
             </span>
-            <span className="text-muted-foreground">{t('credits')}</span>
+            <span className="text-gray-11">{t('credits')}</span>
           </div>
         </div>
         {!isUnlimited && (
           <>
             <Progress value={percentUsed} usage />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-gray-11">
               {t('{amount} remaining', {
                 amount: Math.round(remaining).toLocaleString(),
               })}
@@ -52,14 +51,12 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
         )}
       </div>
       {!isNil(footer) && (
-        <div className="flex flex-col gap-1 border-t p-4 text-sm text-muted-foreground">
+        <div className="flex flex-col gap-1 border-t p-4 text-sm text-gray-11">
           <div className="flex items-center gap-2">
             <Clock className="size-4 shrink-0" />
             <span>
               {footer.label}{' '}
-              <span className="font-semibold text-foreground">
-                {footer.value}
-              </span>
+              <span className="font-semibold text-gray-12">{footer.value}</span>
             </span>
           </div>
           {!isNil(info.trialEndsAt) && !isNil(switchesToPlanName) && (
@@ -75,13 +72,9 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
   );
 };
 
-function resolveFooter({
-  info,
-  isPaid,
-}: {
-  info: PlatformBillingInformation;
-  isPaid: boolean;
-}): CreditsResetLine | null {
+function resolveFooter(
+  info: PlatformBillingInformation,
+): CreditsResetLine | null {
   if (!isNil(info.trialEndsAt)) {
     return {
       label: t('Trial ends'),
@@ -92,7 +85,6 @@ function resolveFooter({
     creditsNextResetAt: info.usage.creditsNextResetAt,
     creditsResetInterval: info.creditsResetInterval,
     nextBillingDate: info.nextBillingDate,
-    isPaid,
     dateFormat: CARD_DATE_FORMAT,
   });
 }

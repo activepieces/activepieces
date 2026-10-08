@@ -5,6 +5,7 @@ import { PlacidClient } from '../common/client';
 export const getVideo = createAction({
 	auth: placidAuth,
 	name: 'get_video',
+	classification: 'READ',
 	displayName: 'Get Video',
 	description: 'Retrieves the generated video by its ID.',
 	audience: 'both',

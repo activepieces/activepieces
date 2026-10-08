@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { subscriptionListOutputSchema } from '../output-schemas';
 export const stripeListSubscriptions = createAction({
   name: 'list_subscriptions',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Subscriptions (Agent)',
   description: 'List Stripe subscriptions.',

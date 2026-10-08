@@ -11,6 +11,7 @@ interface FileItem {
 export const generateImage = createAction({
   auth: vertexAiAuth,
   name: 'generate_image',
+  classification: 'READ',
   displayName: 'Generate Image',
   description:
     'Generate an image from a text prompt using Google Imagen models on Vertex AI.',

@@ -59,12 +59,14 @@ export const UpdatePlatformRequestBody = z.object({
     cloudAuthEnabled: OptionalBooleanFromQuery,
     googleAuthEnabled: OptionalBooleanFromQuery,
     emailAuthEnabled: OptionalBooleanFromQuery,
+    autoCreatePersonalProjects: OptionalBooleanFromQuery,
     allowedAuthDomains: OptionalArrayFromQuery(z.string()),
     enforceAllowedAuthDomains: OptionalBooleanFromQuery,
     pinnedPieces: OptionalArrayFromQuery(z.string()),
     pieceSelectorConfig: NullablePieceSelectorConfigFromMultipart.optional(),
     allowedEmbedOrigins: z.array(allowedEmbedOriginSchema)
         .optional(),
+    auditLogRetentionDays: Nullable(z.number().int().positive()),
 })
 
 export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>

@@ -133,26 +133,31 @@ export type PlatformPlanWithOnlyLimits = PlatformPlanLimits
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
-const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
+export const ThemeHexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor')
 
 export const PlatformThemeColors = z.object({
-    avatar: hexColor.optional(),
-    'blue-link': hexColor.optional(),
-    danger: hexColor.optional(),
-    selection: hexColor.optional(),
+    avatar: ThemeHexColor.optional(),
+    'blue-link': ThemeHexColor.optional(),
+    danger: ThemeHexColor.optional(),
+    selection: ThemeHexColor.optional(),
     primary: z.object({
-        dark: hexColor.optional(),
-        light: hexColor.optional(),
-        medium: hexColor.optional(),
+        dark: ThemeHexColor.optional(),
+        light: ThemeHexColor.optional(),
+        medium: ThemeHexColor.optional(),
     }).optional(),
     warn: z.object({
-        default: hexColor.optional(),
-        light: hexColor.optional(),
-        dark: hexColor.optional(),
+        default: ThemeHexColor.optional(),
+        light: ThemeHexColor.optional(),
+        dark: ThemeHexColor.optional(),
     }).optional(),
     success: z.object({
-        default: hexColor.optional(),
-        light: hexColor.optional(),
+        default: ThemeHexColor.optional(),
+        light: ThemeHexColor.optional(),
+    }).optional(),
+    status: z.object({
+        danger: ThemeHexColor.optional(),
+        warning: ThemeHexColor.optional(),
+        success: ThemeHexColor.optional(),
     }).optional(),
 })
 export type PlatformThemeColors = z.infer<typeof PlatformThemeColors>
@@ -204,8 +209,10 @@ export const Platform = z.object({
     ssoDomainVerification: Nullable(SsoDomainVerification),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
+    autoCreatePersonalProjects: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    auditLogRetentionDays: Nullable(z.number().int()),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
@@ -233,8 +240,10 @@ export const PlatformWithoutSensitiveData = z.object({
     ssoDomain: Nullable(z.string()),
     ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
+    autoCreatePersonalProjects: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    auditLogRetentionDays: Nullable(z.number().int()),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 

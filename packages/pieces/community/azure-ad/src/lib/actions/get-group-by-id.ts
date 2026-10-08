@@ -6,6 +6,7 @@ import { callGraphApi, flattenGroup, groupDropdown } from '../common';
 export const getGroupByIdAction = createAction({
     auth: azureAdAuth,
     name: 'get_group_by_id',
+    classification: 'READ',
     displayName: 'Get Group by ID',
     description: 'Retrieves an Azure AD group by its object ID.',
     audience: 'both',

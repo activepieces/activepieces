@@ -6,6 +6,7 @@ import { API_URL } from '../common';
 export const findClientAction = createAction({
 	auth: acuitySchedulingAuth,
 	name: 'find_client',
+	classification: 'SEARCH',
 	displayName: 'Find Client',
 	description: 'Finds client based on seach term.',
 	audience: 'both',

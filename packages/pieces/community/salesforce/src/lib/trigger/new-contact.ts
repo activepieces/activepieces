@@ -14,15 +14,18 @@ import { querySalesforceApi } from '../common';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
+import { newContactTriggerOutputSchema } from '../output-schemas';
 
 export const newContact = createTrigger({
     auth: salesforceAuth,
     name: 'new_contact',
+    classification: 'READ',
     displayName: 'New Contact',
     description: 'Fires when a new Contact record is created in Salesforce.',
     aiMetadata: {
         description: 'Fires once for each new Contact record created in Salesforce, emitting all fields of the created Contact. Detected by polling for records whose CreatedDate is later than the last poll. Does not fire on updates to existing Contacts.',
     },
+    outputSchema: newContactTriggerOutputSchema,
     props: {},
     sampleData: {
         "Id": "0037Q000005x4aXUAQ",

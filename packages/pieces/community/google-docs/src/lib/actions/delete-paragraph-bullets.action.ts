@@ -7,6 +7,7 @@ import { deleteParagraphBulletsActionOutputSchema } from '../output-schemas';
 export const deleteParagraphBullets = createAction({
   auth: googleDocsAuth,
   name: 'delete_paragraph_bullets',
+  classification: 'WRITE',
   displayName: 'Delete Paragraph Bullets',
   description: 'Remove bullet list formatting from paragraphs in a range of a Google Docs document',
   audience: 'ai',

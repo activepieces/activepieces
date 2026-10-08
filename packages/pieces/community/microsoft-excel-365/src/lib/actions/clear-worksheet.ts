@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const clearWorksheetAction = createAction({
   auth: excelAuth,
   name: 'clear_worksheet',
+  classification: 'DESTRUCTIVE',
   description: 'Clear a worksheet',
   audience: 'both',
   aiMetadata: { description: 'Clear cell contents from a worksheet — either a specific A1-notation range (e.g. A2:B2) or, when no range is given, the entire used range. Removes values only (not formatting) and does not delete rows or shift cells. Idempotent — re-running over the same area has no further effect.', idempotent: true },

@@ -10,6 +10,7 @@ const BASE_URL = 'https://dashboard.askhandle.com/api/v1';
 export const newRoomTrigger = createTrigger({
   auth: askHandleAuth,
   name: 'new_room',
+  classification: 'READ',
   displayName: 'New Room',
   description: 'Triggers when a new room is created',
   aiMetadata: {

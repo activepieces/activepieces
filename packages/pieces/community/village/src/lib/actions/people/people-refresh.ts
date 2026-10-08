@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const peopleRefresh = createAction({
   auth: villageAuth,
   name: 'people_refresh',
+  classification: 'WRITE',
   displayName: 'Refresh People',
   description:
     'Refresh or import people data from LinkedIn URLs. In realtime mode, returns enriched person data immediately (or times out after 25 seconds and converts to async). In async mode, returns job IDs for later status checking.',

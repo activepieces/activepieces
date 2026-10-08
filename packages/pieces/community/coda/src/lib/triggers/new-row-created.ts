@@ -8,6 +8,10 @@ import { codaAuth } from '../auth';
 import { CodaRow, codaClient } from '../common/types';
 import dayjs from 'dayjs';
 import { docIdDropdown, tableIdDropdown } from '../common/props';
+import { newRowCreatedTriggerOutputSchema } from '../output-schemas';
+
+const PAGE_SIZE = 500;
+const TEST_SAMPLE_SIZE = 5;
 
 type Props = {
 	tableId: string;
@@ -21,27 +25,31 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof codaAuth>, Props
 		const isTest = lastFetchEpochMS === 0;
 		const client = codaClient(auth);
 
-		const rows: CodaRow[] = [];
+		let rows: CodaRow[] = [];
 		let nextPageToken: string | undefined = undefined;
 
-		// We will sort by createdAt to process in order. The API default is ascending.
 		do {
 			const response = await client.listRows(docId, tableId, {
-				sortBy: 'createdAt', // Default is ascending
+				sortBy: 'createdAt',
 				valueFormat: 'simpleWithArrays',
 				useColumnNames: true,
-				limit: isTest ? 5 : 100,
+				limit: PAGE_SIZE,
 				pageToken: nextPageToken,
 			});
-
-			if (response.items) {
-				for (const row of response.items) {
-					rows.push(row);
-				}
+			const fresh = (response.items ?? []).filter((row) => dayjs(row.createdAt).valueOf() > lastFetchEpochMS);
+			if (isTest) {
+				rows = [...rows, ...fresh].slice(-TEST_SAMPLE_SIZE);
+			} else {
+				rows.push(...fresh);
 			}
-			if (isTest) break;
 			nextPageToken = response.nextPageToken;
 		} while (nextPageToken);
+
+		if (isTest) {
+			return [...rows]
+				.reverse()
+				.map((row) => ({ epochMilliSeconds: dayjs(row.createdAt).valueOf(), data: row }));
+		}
 
 		return rows.map((row) => {
 			return {
@@ -55,6 +63,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof codaAuth>, Props
 export const newRowCreatedTrigger = createTrigger({
 	auth: codaAuth,
 	name: 'new-row-created',
+	classification: 'READ',
 	displayName: 'New Row Created',
 	description: 'Triggers when a new row is added to the selected table.',
 	aiMetadata: {
@@ -64,20 +73,13 @@ export const newRowCreatedTrigger = createTrigger({
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,
 	},
+	outputSchema: newRowCreatedTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

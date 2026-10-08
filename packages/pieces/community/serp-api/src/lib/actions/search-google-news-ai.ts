@@ -7,6 +7,7 @@ import { searchGoogleNewsAiOutputSchema } from '../output-schemas';
 export const searchGoogleNewsAi = createAction({
   auth: serpApiAuth,
   name: 'search_google_news_ai',
+  classification: 'SEARCH',
   displayName: 'Google News Search (Agent)',
   description: 'Search Google News for recent articles matching a query.',
   audience: 'ai',

@@ -9,6 +9,7 @@ import { elementTypeProperty } from '../common';
 
 export const createRecord = createAction({
   name: 'create_record',
+  classification: 'WRITE',
   auth: vtigerAuth,
   displayName: 'Create Record',
   description: 'Create a Record',

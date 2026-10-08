@@ -18,7 +18,7 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {
             const { flowId } = lockAndPublishInput.parse(args)
 
@@ -31,7 +31,8 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
             }
 
             const allSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
-            const invalidSteps = allSteps.filter(s => !s.valid && !(s as { skip?: boolean }).skip)
+            const skippedStepNames = flowStructureUtil.getSkippedStepNames({ trigger: flow.version.trigger })
+            const invalidSteps = allSteps.filter(s => !s.valid && !skippedStepNames.has(s.name))
             if (invalidSteps.length > 0) {
                 const stepList = invalidSteps.map(s => `"${s.name}" (${s.displayName})`).join(', ')
                 return {

@@ -11,6 +11,7 @@ type DeactivateSubprojectResponse = {
 export const deactivateSubprojectAction = createAction({
   auth: beeboleAuth,
   name: 'deactivate_subproject',
+  classification: 'DESTRUCTIVE',
   displayName: 'Deactivate Subproject',
   description: 'Marks a subproject as inactive in Beebole. Inactive subprojects are hidden from new time entries.',
   audience: 'both',

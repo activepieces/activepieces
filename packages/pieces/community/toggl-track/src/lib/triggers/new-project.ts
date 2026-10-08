@@ -14,6 +14,7 @@ import {
 export const newProject = createTrigger({
   auth: togglTrackAuth,
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Fires when a new project is added.',
   aiMetadata: {

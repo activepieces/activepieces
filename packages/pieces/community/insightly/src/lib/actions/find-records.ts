@@ -18,6 +18,7 @@ import {
 export const findRecords = createAction({
     auth: insightlyAuth,
     name: 'find_records',
+    classification: 'SEARCH',
     displayName: 'Find Records',
     description: 'Find records in a specified Insightly object',
     audience: 'both',

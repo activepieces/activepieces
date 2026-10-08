@@ -1,18 +1,24 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import { EntityManager } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { distributedLock } from '../database/redis-connections'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
+import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
+import { platformSideEffects } from './platform-side-effects'
 import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
@@ -55,6 +61,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
+            autoCreatePersonalProjects: true,
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             federatedAuthProviders: { saml: null },
@@ -71,7 +78,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: savedPlatform.id,
         })
 
-        await platformPlanService(log).onPlatformCreated(savedPlatform.id)
+        const platformPlan = await platformPlanService(log).onPlatformCreated(savedPlatform.id)
+        const { error: telemetryError } = await tryCatch(() => telemetry(log).identifyPlatformGroup({
+            platformId: savedPlatform.id,
+            properties: { name: savedPlatform.name, plan: platformPlan.plan ?? null, createdAt: savedPlatform.created },
+        }))
+        if (!isNil(telemetryError)) {
+            log.warn({ error: telemetryError, platform: { id: savedPlatform.id } }, 'Failed to identify the platform group')
+        }
 
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
@@ -111,7 +125,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 if (invalidatePreviousTokens) {
                     await rotateTokenVersion(identityId)
                 }
-                await reportSignup({ identityId, user: owner, projectId: personalProject.id, log })
+                await reportSignup({ identityId, user: owner, platformId: platform.id, projectId: personalProject.id, log })
                 const response = await authenticationUtils(log).getProjectAndToken({
                     userId: owner.id,
                     platformId: platform.id,
@@ -158,6 +172,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const platform = params.federatedAuthProviders !== undefined
             ? await this.getOneWithFederatedAuthOrThrow(params.id)
             : await this.getOneOrThrow(params.id)
+        await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
         const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
@@ -176,6 +191,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
+            ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
@@ -197,7 +213,24 @@ export const platformService = (log: FastifyBaseLogger) => ({
             invalidateSamlClientCache(params.id)
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
-        const saved = await platformRepo().save(updatedPlatform)
+        const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
+            const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
+            const savedPlatform = await platformRepo(entityManager).save({
+                ...updatedPlatform,
+                auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedRetentionDays : params.auditLogRetentionDays,
+            })
+            return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
+        })
+        if (params.auditLogRetentionDays !== undefined && params.auditLogRetentionDays !== previousRetentionDays) {
+            platformSideEffects(log).onAuditLogRetentionUpdated({
+                platformId: params.id,
+                userId: params.userId,
+                ip: params.ip,
+                previousRetentionDays,
+                retentionDays: params.auditLogRetentionDays,
+                instanceLimitDays: auditLogRetentionCeiling.get(),
+            })
+        }
         return stripFederatedAuth(saved)
     },
     async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
@@ -268,6 +301,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function lockAuditLogRetentionDays({ entityManager, platformId }: { entityManager: EntityManager, platformId: PlatformId }): Promise<number | null> {
+    const locked = await platformRepo(entityManager).findOneOrFail({
+        where: { id: platformId },
+        select: { id: true, auditLogRetentionDays: true },
+        lock: { mode: 'pessimistic_write' },
+    })
+    return locked.auditLogRetentionDays ?? null
+}
+
 function findProvisionedOwner(users: User[]): PlatformOwner | undefined {
     return users.find((user): user is PlatformOwner => !isNil(user.platformId))
 }
@@ -298,17 +340,18 @@ async function linkOwnerToPlatform({ ownerId, platformId, identityId, name, inva
         log,
     })
     if (!isNil(response.projectId)) {
-        await reportSignup({ identityId, user: owner, projectId: response.projectId, log })
+        rejectedPromiseHandler(reportSignup({ identityId, user: owner, platformId, projectId: response.projectId, log }), log)
     }
     return { response, provisioned: true }
 }
 
-async function reportSignup({ identityId, user, projectId, log }: ReportSignupParams): Promise<void> {
+async function reportSignup({ identityId, user, platformId, projectId, log }: ReportSignupParams): Promise<void> {
     await authenticationUtils(log).sendTelemetry({
         identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
         user,
         projectId,
     })
+    rejectedPromiseHandler(telemetry(log).aliasIdentity({ identityId, userId: user.id, platformId }), log)
 }
 
 function isSameTokenVersion(current: string | undefined, caller: string | undefined): boolean {
@@ -374,6 +417,33 @@ async function getBillingEnforced(log: FastifyBaseLogger, platformId: PlatformId
     return data ?? undefined
 }
 
+async function assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays }: AssertAuditLogRetentionDaysAllowedParams): Promise<void> {
+    if (auditLogRetentionDays === undefined) {
+        return
+    }
+    const plan = await getPlan(log, platform)
+    if (!plan.auditLogEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Audit logs are not enabled for this platform',
+            },
+        })
+    }
+    if (isNil(auditLogRetentionDays)) {
+        return
+    }
+    const maxDays = auditLogRetentionCeiling.get() ?? AUDIT_LOG_RETENTION_MAX_DAYS
+    if (auditLogRetentionDays < AUDIT_LOG_RETENTION_MIN_DAYS || auditLogRetentionDays > maxDays) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `auditLogRetentionDays must be between ${AUDIT_LOG_RETENTION_MIN_DAYS} and ${maxDays}`,
+            },
+        })
+    }
+}
+
 async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
@@ -404,6 +474,12 @@ type AddParams = {
 
 type NewPlatform = Omit<Platform, 'created' | 'updated'>
 
+type AssertAuditLogRetentionDaysAllowedParams = {
+    log: FastifyBaseLogger
+    platform: PlatformWithoutFederatedAuth
+    auditLogRetentionDays: number | null | undefined
+}
+
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     plan?: Partial<PlatformPlanLimits>
@@ -412,6 +488,8 @@ type UpdateParams = UpdatePlatformRequestBody & {
     favIconUrl?: string
     ssoDomain?: string | null
     ssoDomainVerification?: SsoDomainVerification | null
+    userId?: UserId
+    ip?: string
 }
 
 type CreatePlatformWithProjectResult = {
@@ -458,6 +536,7 @@ type FinishExistingPlatformParams = {
 type ReportSignupParams = {
     identityId: string
     user: User
+    platformId: string
     projectId: string
     log: FastifyBaseLogger
 }

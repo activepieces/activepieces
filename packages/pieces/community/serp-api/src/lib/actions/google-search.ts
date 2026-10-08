@@ -11,6 +11,7 @@ import { googleSearchOutputSchema } from '../output-schemas';
 export const googleSearch = createAction({
   auth: serpApiAuth,
   name: 'google_search',
+  classification: 'SEARCH',
   displayName: 'Google Search',
   description: 'Retrieves organic search results for specific keywords with advanced filtering options for SEO monitoring and competitor analysis.',
   audience: 'human',

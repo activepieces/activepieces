@@ -11,6 +11,7 @@ import { insightlyAuth, makeInsightlyRequest } from '../common/common';
 export const deletedRecord = createTrigger({
     auth: insightlyAuth,
     name: 'deleted_record',
+    classification: 'READ',
     displayName: 'Deleted Record',
     description: 'Fires when a record is deleted from Insightly',
     aiMetadata: {

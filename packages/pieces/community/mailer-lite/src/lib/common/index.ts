@@ -1,6 +1,6 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import MailerLite from '@mailerlite/mailerlite-nodejs';
-import { mailerLiteAuth } from '../..';
+import { mailerLiteAuth } from '../auth';
 
 export const mailerLiteCommon = {
 	subscriberFields: Property.DynamicProperties({

@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const getWorkbooksAction = createAction({
   auth: excelAuth,
   name: 'get_workbooks',
+  classification: 'SEARCH',
   description: 'Retrieve a list of workbooks',
   audience: 'both',
   aiMetadata: { description: 'List .xlsx workbooks in a OneDrive or SharePoint drive, returning id, name, and webUrl for each. Use to browse or enumerate available spreadsheets; to find one specific file by exact name use Find Workbook. Read-only and idempotent; an optional limit caps results, otherwise all matches are returned.', idempotent: true },

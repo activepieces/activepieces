@@ -1,23 +1,35 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleSearchConsoleAuth } from '../auth';
-import { createAuthClient } from '../../';
 import { commonProps } from '../common';
+import { gscInputs } from '../common/inputs';
+import { gscOps } from '../common/operations';
+import { gscOutputSchemas } from '../output-schemas';
 
 export const listSitemaps = createAction({
   auth: googleSearchConsoleAuth,
   name: 'list_sitemaps',
+  classification: 'SEARCH',
   displayName: 'List Sitemaps',
   description: 'List all your sitemaps for a given site',
-  audience: 'both',
-  aiMetadata: { description: 'List the sitemaps submitted to Google Search Console for a verified site, including their last-download and processing status. Choose this to audit which sitemaps exist before submitting or to check sitemap health. Requires a verified siteUrl; read-only and idempotent.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Lists the sitemaps submitted for a property picked from a list, with their processing status. Agents use List Sitemaps (by Site URL). Read-only and safe to retry.',
+    idempotent: true,
+  },
   props: {
     siteUrl: commonProps.siteUrl,
+    sitemapIndex: Property.ShortText({
+      displayName: 'Sitemap Index URL',
+      description: 'Optional. The full URL of a sitemap index to list only the sitemaps inside it.',
+      required: false,
+    }),
   },
+  outputSchema: gscOutputSchemas.listSitemaps,
   async run(context) {
-    const webmasters = createAuthClient(context.auth.access_token);
-    const res = await webmasters.sitemaps.list({
-      siteUrl: context.propsValue.siteUrl,
-    });
-    return res.data;
+    const siteUrl = gscInputs.siteUrl({ value: context.propsValue.siteUrl });
+    const sitemapIndex = context.propsValue.sitemapIndex ? gscInputs.absoluteUrl({ value: context.propsValue.sitemapIndex, label: 'Sitemap Index URL' }) : undefined;
+    const sitemap = await gscOps.listSitemaps({ auth: context.auth, siteUrl, sitemapIndex });
+    return { sitemap, count: sitemap.length };
   },
 });

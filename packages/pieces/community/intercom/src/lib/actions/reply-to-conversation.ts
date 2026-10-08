@@ -6,6 +6,7 @@ import { conversationIdProp } from '../common/props';
 export const replyToConversation = createAction({
 	auth: intercomAuth,
 	name: 'replyToConversation',
+	classification: 'WRITE',
 	displayName: 'Reply to conversation',
 	description: 'Reply (as an admin) to a conversation with a contact',
 	audience: 'both',
