@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -74,7 +75,7 @@ export function AiCapabilityDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <CapabilityForm
           key={open ? 'open' : 'closed'}
           capabilityInfo={capabilityInfo}

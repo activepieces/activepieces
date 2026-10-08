@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -71,7 +72,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className={adminLayout.dialog.md}>
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}

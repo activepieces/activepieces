@@ -1,30 +1,31 @@
 import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { SettingsPanel } from '@/app/components/admin';
 import { cn } from '@/lib/utils';
 
 export const StepShell = ({
   title,
   description,
   actions,
+  flush,
   children,
 }: {
   title: string;
   description: string;
   actions?: ReactNode;
+  flush?: boolean;
   children: ReactNode;
 }) => {
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-medium">{title}</h2>
-          <p className="text-sm text-gray-11">{description}</p>
-        </div>
-        {actions && <div className="shrink-0">{actions}</div>}
-      </div>
+    <SettingsPanel
+      title={title}
+      description={description}
+      action={actions}
+      flush={flush}
+    >
       {children}
-    </div>
+    </SettingsPanel>
   );
 };
 
@@ -90,8 +91,7 @@ export const Stepper = ({
                 isLocked && 'text-gray-11 cursor-not-allowed opacity-60',
               )}
             >
-              <span className="mr-1">{index + 1}.</span>
-              {step.title}
+              {`${index + 1}. ${step.title}`}
             </button>
           </li>
         );

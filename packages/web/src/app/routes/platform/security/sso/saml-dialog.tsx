@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { adminLayout } from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -64,7 +65,7 @@ export const ConfigureSamlDialog = ({
           {connected ? t('Edit') : t('Enable')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         {open && (
           <SamlWizard
             key={open ? 'open' : 'closed'}
@@ -337,7 +338,7 @@ const DomainStep = ({
         </DialogFooter>
       </form>
       <Dialog open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
-        <DialogContent>
+        <DialogContent className={adminLayout.dialog.md}>
           <DialogHeader>
             <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
           </DialogHeader>
@@ -415,7 +416,7 @@ const SamlStep = ({
             markdown={t(
               `
 **Setup Instructions**:
-Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)
+Please check the following documentation: [SAML SSO](https://www.activepieces.com/docs/admin-guide/guides/sso)
 
 **Single sign-on URL**:
 \`\`\`text

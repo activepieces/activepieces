@@ -100,6 +100,8 @@ interface DataTableProps<
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
   bordered?: boolean;
+  frameClassName?: string;
+  toolbarClassName?: string;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -142,6 +144,8 @@ export function DataTable<
   clientPagination = false,
   clientFiltering = false,
   bordered = false,
+  frameClassName,
+  toolbarClassName,
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
@@ -360,7 +364,9 @@ export function DataTable<
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
+        <DataTableToolbar
+          className={toolbarClassName ?? (bordered ? 'px-0' : undefined)}
+        >
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {filters &&
@@ -396,7 +402,10 @@ export function DataTable<
             'flex-1 min-h-0 overflow-auto': virtualizeRows,
           },
           bordered &&
-            'rounded-xl border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+            cn(
+              'rounded-xl border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+              frameClassName,
+            ),
         )}
       >
         <Table
@@ -746,3 +755,5 @@ export function DataTable<
 
 const STICKY_HEADER_CLASS_NAME =
   'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--gray-3)_70%,var(--gray-1))] shadow-[inset_0_1px_0_var(--gray-6),inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';
+
+export type { DataTableProps };

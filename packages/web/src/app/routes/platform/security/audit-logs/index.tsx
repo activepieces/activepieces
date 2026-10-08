@@ -29,8 +29,14 @@ import {
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+  adminLayout,
+} from '@/app/components/admin';
+import { DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -48,6 +54,7 @@ import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { sampleData } from '../../sample-data';
 
@@ -117,12 +124,13 @@ export default function AuditLogsPage() {
   const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
-        description={t('Track activities done within your platform')}
+    <AdminPage>
+      <AdminPageHeader
         title={t('Audit Logs')}
+        description={t('Track activities done within your platform')}
+        resources={adminPageResources.auditLogs}
       />
-      <DataTable
+      <AdminDataTable
         emptyStateTextTitle={t('No audit logs found')}
         emptyStateTextDescription={t(
           'Come back later when you have some activity to audit',
@@ -250,7 +258,7 @@ export default function AuditLogsPage() {
         onRetry={refetch}
       />
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
+        <SheetContent className={cn(adminLayout.sheet.md, 'flex flex-col p-0')}>
           <SheetHeader className="px-6 py-4 border-b shrink-0">
             <SheetTitle className="text-base">
               {formatUtils.convertEnumToHumanReadable(
@@ -327,7 +335,7 @@ export default function AuditLogsPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </AdminPage>
   );
 }
 

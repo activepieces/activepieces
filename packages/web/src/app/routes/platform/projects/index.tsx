@@ -8,23 +8,18 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import {
-  DataTable,
-  RowDataWithActions,
-  BulkAction,
-} from '@/components/custom/data-table';
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+} from '@/app/components/admin';
+import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -307,17 +302,6 @@ export default function ProjectsPage() {
     [selectedRows, currentProject],
   );
 
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateProjectButton
-        key="new-project"
-        variant="full"
-        projects={allProjects}
-      />,
-    ],
-    [allProjects],
-  );
-
   const errorToastMessage = (error: unknown): string | undefined => {
     if (validationUtils.isValidationError(error)) {
       console.error(t('Validation error'), error);
@@ -361,37 +345,34 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Projects')}
         description={t('Manage your automation projects')}
-      />
-      <div className="px-6 pt-4">
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <UserCircle />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
-            <ItemDescription>
-              {t(
-                'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
-              )}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Switch
-              checked={platform.autoCreatePersonalProjects}
-              onCheckedChange={(checked) =>
-                toggleAutoCreatePersonalProjects(checked)
-              }
-              disabled={isAutoCreatePersonalProjectsPending}
-              {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
-            />
-          </ItemActions>
-        </Item>
-      </div>
-      <DataTable
+        resources={adminPageResources.projects}
+      >
+        <CreateProjectButton variant="full" projects={allProjects} />
+      </AdminPageHeader>
+      <SettingsPanel flush>
+        <SettingsRow
+          icon={<UserCircle />}
+          title={t('Automatic personal project creation')}
+          description={t(
+            'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
+          )}
+        >
+          <Switch
+            aria-label={t('Automatic personal project creation')}
+            checked={platform.autoCreatePersonalProjects}
+            onCheckedChange={(checked) =>
+              toggleAutoCreatePersonalProjects(checked)
+            }
+            disabled={isAutoCreatePersonalProjectsPending}
+            {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
+          />
+        </SettingsRow>
+      </SettingsPanel>
+      <AdminDataTable
         emptyStateTextTitle={t('No projects found')}
         emptyStateTextDescription={t(
           'Start by creating projects to manage your automation teams',
@@ -433,7 +414,6 @@ export default function ProjectsPage() {
         errorStateEntity={t('projects')}
         clientPagination={true}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
         actions={actions}
       />
       <EditProjectDialog
@@ -450,6 +430,6 @@ export default function ProjectsPage() {
         }
         projectId={editDialogProjectId}
       />
-    </div>
+    </AdminPage>
   );
 }

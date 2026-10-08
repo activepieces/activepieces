@@ -13,7 +13,8 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { AdminDataTable } from '@/app/components/admin';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
 import { Badge } from '@/components/ui/badge';
@@ -273,7 +274,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
 
   return (
     <>
-      <DataTable
+      <AdminDataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(
           'Start by installing pieces that you want to use in your automations',

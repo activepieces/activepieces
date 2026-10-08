@@ -1,19 +1,25 @@
 import { TriggerStatusReport } from '@activepieces/shared';
+import { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
-  CheckCircle,
-  XCircle,
   AlertCircle,
+  CheckCircle,
   Puzzle,
   Hash,
   BarChart3,
   Clock,
   Calendar,
+  XCircle,
 } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Tooltip,
@@ -22,7 +28,6 @@ import {
 } from '@/components/ui/tooltip';
 import { triggerRunHooks } from '@/features/flows';
 import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
-import { cn } from '@/lib/utils';
 
 import { StatusProgressBar, type DayStatus } from './status-progress-bar';
 
@@ -122,26 +127,13 @@ export default function TriggerHealthPage() {
   const getStatusIcon = (statusType: string) => {
     switch (statusType) {
       case STATUS.SUCCESS:
-        return <CheckCircle size={16} className="text-success-11" />;
+        return <CheckCircle className="size-4 text-success-11" />;
       case STATUS.WARNING:
-        return <AlertCircle size={16} className="text-warning-11" />;
+        return <AlertCircle className="size-4 text-warning-11" />;
       case STATUS.FAULT:
-        return <XCircle size={16} className="text-danger-11" />;
+        return <XCircle className="size-4 text-danger-11" />;
       default:
-        return <AlertCircle size={16} className="text-gray-9" />;
-    }
-  };
-
-  const getStatusColor = (statusType: string) => {
-    switch (statusType) {
-      case STATUS.SUCCESS:
-        return 'text-success-11';
-      case STATUS.WARNING:
-        return 'text-warning-11';
-      case STATUS.FAULT:
-        return 'text-danger-11';
-      default:
-        return 'text-gray-11';
+        return <AlertCircle className="size-4 text-gray-11" />;
     }
   };
 
@@ -149,14 +141,14 @@ export default function TriggerHealthPage() {
     return STATUS_TOOLTIPS[statusType] || 'Unknown status';
   };
 
-  const columns = [
+  const columns: ColumnDef<RowDataWithActions<TriggerHealthRow>>[] = [
     {
       accessorKey: 'pieceDisplayName',
       size: 220,
-      header: ({ column }: any) => (
+      header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Piece" icon={Puzzle} />
       ),
-      cell: ({ row }: any) => {
+      cell: ({ row }) => {
         const status = row.original.status;
         return (
           <div className="flex items-center gap-2">
@@ -165,28 +157,21 @@ export default function TriggerHealthPage() {
               showTooltip={false}
               size="md"
             />
-            <div className="flex flex-col">
-              <div className="font-medium flex items-center gap-2">
-                <PieceDisplayName pieceName={row.original.id} />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span
-                      className={cn(
-                        'flex items-center ml-2',
-                        getStatusColor(status.type),
-                      )}
-                      tabIndex={0}
-                      aria-label={getStatusTooltip(status.type)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {getStatusIcon(status.type)}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {getStatusTooltip(status.type)}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+            <div className="flex items-center gap-2 font-medium">
+              <PieceDisplayName pieceName={row.original.id} />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    role="img"
+                    className="flex items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8"
+                    tabIndex={0}
+                    aria-label={getStatusTooltip(status.type)}
+                  >
+                    {getStatusIcon(status.type)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{getStatusTooltip(status.type)}</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         );
@@ -195,70 +180,69 @@ export default function TriggerHealthPage() {
     {
       accessorKey: 'runs',
       size: 160,
-      header: ({ column }: any) => (
+      header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title="Total Runs (14D)"
           icon={Hash}
         />
       ),
-      cell: ({ row }: any) => (
+      cell: ({ row }) => (
         <div className="font-medium">{row.original.runs.toLocaleString()}</div>
       ),
     },
     {
       accessorKey: 'lastResults',
       size: 190,
-      header: ({ column }: any) => (
+      header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title="Last Results"
           icon={BarChart3}
         />
       ),
-      cell: ({ row }: any) => (
-        <StatusProgressBar days={row.original.lastResults} />
-      ),
+      cell: ({ row }) => <StatusProgressBar days={row.original.lastResults} />,
     },
     {
       accessorKey: 'last24Hours',
       size: 70,
-      header: ({ column }: any) => (
+      header: ({ column }) => (
         <DataTableColumnHeader column={column} title="24H" icon={Clock} />
       ),
-      cell: ({ row }: any) => (
-        <div className={cn('font-medium')}>{row.original.last24Hours}%</div>
+      cell: ({ row }) => (
+        <div className="font-medium">{row.original.last24Hours}%</div>
       ),
     },
     {
       accessorKey: 'last7Days',
       size: 65,
-      header: ({ column }: any) => (
+      header: ({ column }) => (
         <DataTableColumnHeader column={column} title="7D" icon={Calendar} />
       ),
-      cell: ({ row }: any) => (
-        <div className={cn('font-medium')}>{row.original.last7Days}%</div>
+      cell: ({ row }) => (
+        <div className="font-medium">{row.original.last7Days}%</div>
       ),
     },
     {
       accessorKey: 'last14Days',
       size: 65,
-      header: ({ column }: any) => (
+      header: ({ column }) => (
         <DataTableColumnHeader column={column} title="14D" icon={Calendar} />
       ),
-      cell: ({ row }: any) => (
-        <div className={cn('font-medium')}>{row.original.last14Days}%</div>
+      cell: ({ row }) => (
+        <div className="font-medium">{row.original.last14Days}%</div>
       ),
     },
   ];
 
   return (
-    <div className="flex flex-col w-full gap-4">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Trigger Health Status')}
         description={t('Monitor the health and performance of your triggers')}
+        resources={adminPageResources.triggers}
       />
-      <DataTable
+      <AdminDataTable
         emptyStateTextTitle={t('No trigger data available')}
         emptyStateTextDescription={t(
           'Trigger health information will appear here',
@@ -272,6 +256,6 @@ export default function TriggerHealthPage() {
         errorStateEntity={t('trigger status')}
         onRetry={refetch}
       />
-    </div>
+    </AdminPage>
   );
 }

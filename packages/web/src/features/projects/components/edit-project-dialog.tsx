@@ -68,7 +68,7 @@ export function EditProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full">
+      <DialogContent className="max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           {' '}
           <DialogTitle>

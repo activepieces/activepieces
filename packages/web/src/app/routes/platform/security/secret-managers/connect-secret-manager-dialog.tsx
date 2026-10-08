@@ -12,6 +12,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { adminLayout } from '@/app/components/admin';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +26,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -59,7 +59,7 @@ const AddEditSecretManagerConnectionDialog = ({
         </TooltipTrigger>
         <TooltipContent>{t('Edit')}</TooltipContent>
       </Tooltip>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>
             {connection
@@ -128,134 +128,130 @@ const AddEditSecretManagerForm = ({
         className="grid space-y-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
-        <ScrollArea className="max-h-[500px]">
-          <div className="grid space-y-3">
-            {!isEdit && (
-              <FormField
-                name="providerId"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <Label htmlFor="provider-select" showRequiredIndicator>
-                      {t('Provider')}
-                    </Label>
-                    <Select
-                      value={field.value ?? ''}
-                      onValueChange={(val) => {
-                        const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
-                          (p) => p.id === val,
+        <div className="grid space-y-3">
+          {!isEdit && (
+            <FormField
+              name="providerId"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <Label htmlFor="provider-select" showRequiredIndicator>
+                    {t('Provider')}
+                  </Label>
+                  <Select
+                    value={field.value ?? ''}
+                    onValueChange={(val) => {
+                      const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
+                        (p) => p.id === val,
+                      );
+                      field.onChange(val);
+                      if (provider) {
+                        form.setValue(
+                          'config',
+                          secretManagersUtils.getEmptySecretManagerConfig(
+                            provider.id,
+                          ),
                         );
-                        field.onChange(val);
-                        if (provider) {
-                          form.setValue(
-                            'config',
-                            secretManagersUtils.getEmptySecretManagerConfig(
-                              provider.id,
-                            ),
-                          );
-                        }
-                      }}
-                    >
-                      <SelectTrigger id="provider-select">
-                        <SelectValue placeholder={t('Select a provider')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            <div className="flex items-center gap-2">
-                              <LogoPlate
-                                src={provider.logo}
-                                alt={provider.name}
-                                size="xxs"
-                              />
-                              <span>{provider.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              name="name"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <Label htmlFor="connection-name" showRequiredIndicator>
-                    {t('Name')}
-                  </Label>
-                  <Input
-                    {...field}
-                    id="connection-name"
-                    placeholder={t('e.g. Production HashiCorp')}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="scope"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <Label htmlFor="connection-scope" showRequiredIndicator>
-                    {t('Scope')}
-                  </Label>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="connection-scope">
-                      <SelectValue placeholder={t('Select scope')} />
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="provider-select">
+                      <SelectValue placeholder={t('Select a provider')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={SecretManagerConnectionScope.PLATFORM}>
-                        {t('Platform')}
-                      </SelectItem>
-                      <SelectItem value={SecretManagerConnectionScope.PROJECT}>
-                        {t('Project')}
-                      </SelectItem>
+                      {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          <div className="flex items-center gap-2">
+                            <LogoPlate
+                              src={provider.logo}
+                              alt={provider.name}
+                              size="xxs"
+                            />
+                            <span>{provider.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          )}
 
-            {watchedScope === SecretManagerConnectionScope.PROJECT && (
-              <ProjectSelector control={form.control} name="projectIds" />
+          <FormField
+            name="name"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <Label htmlFor="connection-name" showRequiredIndicator>
+                  {t('Name')}
+                </Label>
+                <Input
+                  {...field}
+                  id="connection-name"
+                  placeholder={t('e.g. Production HashiCorp')}
+                />
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
-            {selectedProvider &&
-              Object.entries(selectedProvider.fields).map(
-                ([fieldId, field]) => (
-                  <FormField
-                    key={fieldId}
-                    name={`config.${fieldId}`}
-                    render={({ field: formField }) => (
-                      <FormItem className="space-y-2">
-                        <Label
-                          htmlFor={fieldId}
-                          showRequiredIndicator={!field.optional}
-                        >
-                          {field.displayName}
-                        </Label>
-                        <div className="flex gap-2 items-center justify-center">
-                          <Input
-                            {...formField}
-                            id={fieldId}
-                            placeholder={field.placeholder}
-                            type={field.type}
-                            value={formField.value}
-                          />
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ),
-              )}
-          </div>
-        </ScrollArea>
+          <FormField
+            name="scope"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <Label htmlFor="connection-scope" showRequiredIndicator>
+                  {t('Scope')}
+                </Label>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="connection-scope">
+                    <SelectValue placeholder={t('Select scope')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SecretManagerConnectionScope.PLATFORM}>
+                      {t('Platform')}
+                    </SelectItem>
+                    <SelectItem value={SecretManagerConnectionScope.PROJECT}>
+                      {t('Project')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {watchedScope === SecretManagerConnectionScope.PROJECT && (
+            <ProjectSelector control={form.control} name="projectIds" />
+          )}
+
+          {selectedProvider &&
+            Object.entries(selectedProvider.fields).map(([fieldId, field]) => (
+              <FormField
+                key={fieldId}
+                name={`config.${fieldId}`}
+                render={({ field: formField }) => (
+                  <FormItem className="space-y-2">
+                    <Label
+                      htmlFor={fieldId}
+                      showRequiredIndicator={!field.optional}
+                    >
+                      {field.displayName}
+                    </Label>
+                    <div className="flex gap-2 items-center justify-center">
+                      <Input
+                        {...formField}
+                        id={fieldId}
+                        placeholder={field.placeholder}
+                        type={field.type}
+                        value={formField.value}
+                      />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+        </div>
         {form.formState.errors.root?.serverError && (
           <FormMessage>
             {form.formState.errors.root.serverError.message}

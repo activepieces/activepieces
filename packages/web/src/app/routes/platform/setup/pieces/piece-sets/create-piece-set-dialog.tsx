@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -116,11 +117,11 @@ export const CreatePieceSetDialog = ({
           {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
           disabled={!isEnabled}
         >
-          <Plus className="size-4 mr-1" />
+          <Plus />
           {t('New Piece Set')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Create Piece Set')}</DialogTitle>
         </DialogHeader>

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 
 import { platformUserApi } from '@/api/platform-user-api';
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -69,7 +70,7 @@ export const UpdateUserDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
           <DialogTitle>{t('Update User Role')}</DialogTitle>
         </DialogHeader>

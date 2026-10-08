@@ -1,7 +1,11 @@
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
-import { CenteredPage } from '@/app/components/centered-page';
+import {
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -13,39 +17,37 @@ import { platformMcpHooks } from './platform-mcp-hooks';
 export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   return (
-    <CenteredPage
-      widthClassName={section === 'activity' ? 'max-w-[1198px]' : undefined}
-      showHeaderSeparator={false}
-      title={section === 'access' ? t('MCP Tools') : t('MCP Activity')}
-      description={
-        section === 'access' ? (
-          <>
-            {t(
-              "Choose which tools MCP clients can use in every project and in AI Chat. Clients act with the signed-in user's permissions.",
-            )}
-            {platform.plan.projectRolesEnabled && (
-              <>
-                {' '}
-                <Link
-                  to="/platform/users/roles"
-                  className="text-accent-11 underline underline-offset-4"
-                >
-                  {t('Manage roles')}
-                </Link>
-              </>
-            )}
-          </>
-        ) : (
-          t(
-            'Piece actions run by MCP clients, like Claude and Cursor. Other tool calls are not logged.',
+    <AdminPage width={section === 'activity' ? 'full' : 'content'}>
+      <AdminPageHeader
+        title={section === 'access' ? t('MCP Tools') : t('MCP Activity')}
+        resources={adminPageResources.mcp}
+        description={
+          section === 'access' ? (
+            <>
+              {t(
+                "Choose which tools MCP clients can use in every project and in AI Chat. Clients act with the signed-in user's permissions.",
+              )}
+              {platform.plan.projectRolesEnabled && (
+                <>
+                  {' '}
+                  <Link
+                    to="/platform/users/roles"
+                    className="text-accent-11 underline underline-offset-4"
+                  >
+                    {t('Manage roles')}
+                  </Link>
+                </>
+              )}
+            </>
+          ) : (
+            t(
+              'Piece actions run by MCP clients, like Claude and Cursor. Other tool calls are not logged.',
+            )
           )
-        )
-      }
-    >
-      <div className="pb-6">
-        {section === 'access' ? <AccessContent /> : <ActivityContent />}
-      </div>
-    </CenteredPage>
+        }
+      />
+      {section === 'access' ? <AccessContent /> : <ActivityContent />}
+    </AdminPage>
   );
 }
 
@@ -85,12 +87,14 @@ function AccessContent() {
 
 function ActivityContent() {
   return (
-    <ActivityFeed
-      emptyStateTitle={t('No activity yet')}
-      emptyStateDescription={t(
-        'When an MCP client runs a piece action, it appears here.',
-      )}
-    />
+    <div className="flex flex-col">
+      <ActivityFeed
+        emptyStateTitle={t('No activity yet')}
+        emptyStateDescription={t(
+          'When an MCP client runs a piece action, it appears here.',
+        )}
+      />
+    </div>
   );
 }
 

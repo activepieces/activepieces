@@ -20,26 +20,21 @@ interface StatusProgressBarProps {
 export function StatusProgressBar({ days, className }: StatusProgressBarProps) {
   return (
     <div className={cn('flex gap-1', className)}>
-      {[...days].reverse().map((day, index) => {
+      {[...days].reverse().map((day) => {
         const totalRuns = day.success + day.failure;
         return (
-          <Tooltip key={index}>
+          <Tooltip key={day.date}>
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  'w-3 h-6 rounded-md cursor-pointer transition-colors',
-                  'hover:scale-110 hover:shadow-xs',
-                  {
-                    'bg-success-9 hover:bg-success-9/80':
-                      day.status === 'success',
-                    'bg-danger-9 hover:bg-danger-9/80': day.status === 'fault',
-                    'bg-warning-9 hover:bg-warning-9/80':
-                      day.status === 'warning',
-                  },
+                  'h-6 w-3 rounded-sm transition-opacity hover:opacity-80',
+                  day.status === 'success' && 'bg-success-10',
+                  day.status === 'fault' && 'bg-danger-10',
+                  day.status === 'warning' && 'bg-warning-10',
                 )}
               />
             </TooltipTrigger>
-            <TooltipContent side="top" align="center" className="text-xs">
+            <TooltipContent side="top" align="center">
               <div>
                 On {day.date}, there were {totalRuns} total runs: {day.success}{' '}
                 succeeded and {day.failure} failed.
