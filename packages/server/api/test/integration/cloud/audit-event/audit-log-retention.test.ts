@@ -434,7 +434,10 @@ describe('Audit log retention change event', () => {
             ...originalJobQueue(log),
             add: addSpy,
         }))
-        const ctx = await createPlatform({ auditLogRetentionDays: null })
+        const ctx = await createTestContext(app!, {
+            platform: { auditLogRetentionDays: null },
+            plan: { auditLogEnabled: true, eventStreamingEnabled: true },
+        })
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED],
