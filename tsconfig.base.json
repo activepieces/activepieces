@@ -518,6 +518,9 @@
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
       ],
+      "@activepieces/piece-formgong": [
+        "packages/pieces/community/formgong/src/index.ts"
+      ],
       "@activepieces/piece-formio": [
         "packages/pieces/community/formio/src/index.ts"
       ],
