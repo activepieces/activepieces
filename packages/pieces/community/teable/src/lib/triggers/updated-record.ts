@@ -144,7 +144,7 @@ export const updatedRecordTrigger = createTrigger({
     'Triggers when a record is created or modified. The table must have a "Last modified time" field.',
   aiMetadata: {
     description:
-      'Fires when a record in the selected Teable table is created or modified. The table must contain a field of type "Last modified time"; enabling the trigger fails with instructions when it is missing. A record modified again later fires again. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical "Last modified time" value can records beyond that bound be skipped.',
+      'Fires when a record in the selected Teable table is created or modified. The table must contain a field of type "Last modified time"; enabling the trigger fails with instructions when it is missing. A record modified again later fires again. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical "Last modified time" value can records beyond that bound be skipped. Delivery is at-least-once: after a platform error during a poll, the next poll may deliver some records again rather than lose them.',
   },
   props: {
     base_id: TeableCommon.base_id,

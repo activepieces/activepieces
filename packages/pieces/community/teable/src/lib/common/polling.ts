@@ -22,20 +22,55 @@ async function findAnchorIndex({
   return low;
 }
 
+async function findResumeStart({
+  rowCount,
+  fetchPage,
+  epochOf,
+  resumeFrom,
+}: FindResumeStartParams): Promise<number> {
+  const groupStart = await findAnchorIndex({
+    rowCount,
+    fetchPage,
+    epochOf,
+    anchorEpoch: resumeFrom.epoch,
+  });
+  let low = groupStart;
+  let high = groupStart + resumeFrom.ids.size;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    const page = await fetchPage({ skip: middle, take: 1 });
+    const record = page[0];
+    const beyondEmittedPrefix =
+      record === undefined ||
+      epochOf(record) > resumeFrom.epoch ||
+      (epochOf(record) === resumeFrom.epoch && !resumeFrom.ids.has(record.id));
+    if (beyondEmittedPrefix) {
+      high = middle;
+    } else {
+      low = middle + 1;
+    }
+  }
+  return low;
+}
+
 async function scanFreshRecords({
   rowCount,
   fetchPage,
   epochOf,
   lastFetchEpochMS,
-  skipAtEpoch,
+  resumeFrom,
 }: ScanFreshRecordsParams): Promise<{ records: TeableRecord[]; caughtUp: boolean }> {
   const collected = new Map<string, TeableRecord>();
-  let anchorEpoch = lastFetchEpochMS;
-  let seenAtAnchor = new Set<string>();
+  let anchorEpoch = resumeFrom !== undefined ? resumeFrom.epoch : lastFetchEpochMS;
+  let seenAtAnchor = resumeFrom !== undefined ? new Set(resumeFrom.ids) : new Set<string>();
   let nextSkip: number | undefined = undefined;
   let expectedFirstId: string | undefined = undefined;
   let caughtUp = false;
   let iterations = 0;
+  if (resumeFrom !== undefined) {
+    const resumeStart = await findResumeStart({ rowCount, fetchPage, epochOf, resumeFrom });
+    nextSkip = Math.max(0, resumeStart - 1);
+  }
   while (collected.size < MAX_RECORDS_PER_POLL && iterations < MAX_SCAN_ITERATIONS) {
     iterations += 1;
     if (nextSkip === undefined) {
@@ -60,12 +95,7 @@ async function scanFreshRecords({
     }
     for (const record of page) {
       const epoch = epochOf(record);
-      const alreadyEmitted = epoch === skipAtEpoch?.epoch && skipAtEpoch.ids.has(record.id);
-      if (
-        epoch > lastFetchEpochMS &&
-        !alreadyEmitted &&
-        !(epoch === anchorEpoch && seenAtAnchor.has(record.id))
-      ) {
+      if (epoch > lastFetchEpochMS && !(epoch === anchorEpoch && seenAtAnchor.has(record.id))) {
         collected.set(record.id, record);
       }
     }
@@ -92,6 +122,37 @@ async function scanFreshRecords({
   return { records: [...collected.values()], caughtUp };
 }
 
+async function resolveFrontier({
+  store,
+  storeKey,
+  lastFetchEpochMS,
+}: {
+  store: Store;
+  storeKey: string;
+  lastFetchEpochMS: number;
+}): Promise<FrontierState | undefined> {
+  const stored = await store.get<FrontierState>(storeKey);
+  if (stored === null || stored === undefined) {
+    return undefined;
+  }
+  let resolved: FrontierState = stored;
+  if (stored.pending !== undefined) {
+    const committed = stored.pending.expectedLastPoll === lastFetchEpochMS;
+    resolved = {
+      epoch: stored.epoch,
+      ids: committed ? [...new Set([...stored.ids, ...stored.pending.ids])] : stored.ids,
+    };
+  }
+  if (resolved.epoch <= lastFetchEpochMS) {
+    await store.delete(storeKey);
+    return undefined;
+  }
+  if (stored.pending !== undefined) {
+    await store.put(storeKey, resolved);
+  }
+  return resolved;
+}
+
 async function pollFreshItems({
   store,
   storeKey,
@@ -100,23 +161,17 @@ async function pollFreshItems({
   epochOf,
   lastFetchEpochMS,
 }: PollFreshItemsParams): Promise<{ epochMilliSeconds: number; data: TeableRecord }[]> {
-  const frontier = await store.get<FrontierState>(storeKey);
-  const activeFrontier =
-    frontier !== null && frontier !== undefined && frontier.epoch > lastFetchEpochMS
-      ? frontier
-      : undefined;
+  const frontier = await resolveFrontier({ store, storeKey, lastFetchEpochMS });
   const { records, caughtUp } = await scanFreshRecords({
     rowCount,
     fetchPage,
     epochOf,
     lastFetchEpochMS,
-    skipAtEpoch:
-      activeFrontier !== undefined
-        ? { epoch: activeFrontier.epoch, ids: new Set(activeFrontier.ids) }
-        : undefined,
+    resumeFrom:
+      frontier !== undefined ? { epoch: frontier.epoch, ids: new Set(frontier.ids) } : undefined,
   });
   if (caughtUp) {
-    if (frontier !== null && frontier !== undefined) {
+    if (frontier !== undefined) {
       await store.delete(storeKey);
     }
     return records.map((record) => ({ epochMilliSeconds: epochOf(record), data: record }));
@@ -130,18 +185,20 @@ async function pollFreshItems({
     return fullyFetched.map((record) => ({ epochMilliSeconds: epochOf(record), data: record }));
   }
   const resumeEpoch = lastFetchEpochMS + 1;
-  const previousIds =
-    activeFrontier !== undefined && activeFrontier.epoch === boundaryEpoch
-      ? activeFrontier.ids
-      : [];
-  const combinedIds = [...new Set([...previousIds, ...records.map((record) => record.id)])];
-  if (resumeEpoch >= boundaryEpoch || combinedIds.length > MAX_TRACKED_TIE_IDS) {
-    if (frontier !== null && frontier !== undefined) {
+  const confirmedIds =
+    frontier !== undefined && frontier.epoch === boundaryEpoch ? frontier.ids : [];
+  const pendingIds = records.map((record) => record.id);
+  if (resumeEpoch >= boundaryEpoch || confirmedIds.length + pendingIds.length > MAX_TRACKED_TIE_IDS) {
+    if (frontier !== undefined) {
       await store.delete(storeKey);
     }
     return records.map((record) => ({ epochMilliSeconds: epochOf(record), data: record }));
   }
-  await store.put(storeKey, { epoch: boundaryEpoch, ids: combinedIds });
+  await store.put(storeKey, {
+    epoch: boundaryEpoch,
+    ids: confirmedIds,
+    pending: { expectedLastPoll: resumeEpoch, ids: pendingIds },
+  });
   return records.map((record) => ({ epochMilliSeconds: resumeEpoch, data: record }));
 }
 
@@ -164,12 +221,21 @@ type FindAnchorIndexParams = {
   anchorEpoch: number;
 };
 
+type FindResumeStartParams = {
+  rowCount: number;
+  fetchPage: FetchPage;
+  epochOf: (record: TeableRecord) => number;
+  resumeFrom: ResumeFrom;
+};
+
+type ResumeFrom = { epoch: number; ids: Set<string> };
+
 type ScanFreshRecordsParams = {
   rowCount: number;
   fetchPage: FetchPage;
   epochOf: (record: TeableRecord) => number;
   lastFetchEpochMS: number;
-  skipAtEpoch?: { epoch: number; ids: Set<string> };
+  resumeFrom?: ResumeFrom;
 };
 
 type PollFreshItemsParams = {
@@ -184,4 +250,8 @@ type PollFreshItemsParams = {
 export type FrontierState = {
   epoch: number;
   ids: string[];
+  pending?: {
+    expectedLastPoll: number;
+    ids: string[];
+  };
 };

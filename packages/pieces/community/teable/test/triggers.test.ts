@@ -83,6 +83,37 @@ function mockListRecords(
 
 type DeliveredRecord = { id: string };
 
+type FrontierSnapshot = {
+	epoch: number;
+	ids: string[];
+	pending?: { expectedLastPoll: number; ids: string[] };
+};
+
+function failingPutStore({
+	inner,
+	failures,
+}: {
+	inner: Store;
+	failures: Map<string, 'reject' | 'write-then-reject'>;
+}): Store {
+	return {
+		put: async (key, value) => {
+			const mode = failures.get(key);
+			if (mode !== undefined) {
+				failures.delete(key);
+				if (mode === 'reject') {
+					throw new Error(`simulated put failure for ${key}`);
+				}
+				await inner.put(key, value);
+				throw new Error(`simulated crash after writing ${key}`);
+			}
+			return inner.put(key, value);
+		},
+		get: (key) => inner.get(key),
+		delete: (key) => inner.delete(key),
+	};
+}
+
 async function runPoll(trigger: {
 	run(context: ReturnType<typeof pollContext>): Promise<unknown[]>;
 }, store: Store): Promise<DeliveredRecord[]> {
@@ -128,17 +159,16 @@ describe('same-timestamp group larger than the poll cap', () => {
 		const store = memoryStore({ lastPoll: BASE_EPOCH });
 
 		const poll1 = await runPoll(newRecordTrigger, store);
-		const frontier1 = await store.get<{ epoch: number; ids: string[] }>(
-			'teable_new_record_frontier'
-		);
+		const frontier1 = await store.get<FrontierSnapshot>('teable_new_record_frontier');
 		expect(frontier1?.epoch).toBe(TIE_EPOCH);
-		expect(frontier1?.ids).toHaveLength(poll1.length);
+		expect(frontier1?.ids).toHaveLength(0);
+		expect(frontier1?.pending?.ids).toHaveLength(poll1.length);
+		expect(frontier1?.pending?.expectedLastPoll).toBe(BASE_EPOCH + 1);
 
 		const poll2 = await runPoll(newRecordTrigger, store);
-		const frontier2 = await store.get<{ epoch: number; ids: string[] }>(
-			'teable_new_record_frontier'
-		);
-		expect(frontier2?.ids).toHaveLength(poll1.length + poll2.length);
+		const frontier2 = await store.get<FrontierSnapshot>('teable_new_record_frontier');
+		expect(frontier2?.ids).toHaveLength(poll1.length);
+		expect(frontier2?.pending?.ids).toHaveLength(poll2.length);
 
 		const poll3 = await runPoll(newRecordTrigger, store);
 		expect(await store.get('teable_new_record_frontier')).toBeNull();
@@ -183,6 +213,94 @@ describe('same-timestamp group larger than the poll cap', () => {
 		expect(ids.length).toBe(12600);
 		expect(new Set(ids).size).toBe(12600);
 		expect(await runPoll(updatedRecordTrigger, store)).toEqual([]);
+	});
+});
+
+describe('at-least-once delivery', () => {
+	const TIE_EPOCH = BASE_EPOCH + 10_000;
+
+	it('re-emits the chunk when the checkpoint write fails, then confirms it', async () => {
+		const records = makeTieRecords({ count: 7000, epoch: TIE_EPOCH });
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		mockListRecords(records);
+		const inner = memoryStore({ lastPoll: BASE_EPOCH });
+		const failures = new Map<string, 'reject' | 'write-then-reject'>([['lastPoll', 'reject']]);
+		const store = failingPutStore({ inner, failures });
+
+		await expect(runPoll(newRecordTrigger, store)).rejects.toThrow(/simulated put failure/);
+		expect(await inner.get('lastPoll')).toBe(BASE_EPOCH);
+		const afterFailure = await inner.get<FrontierSnapshot>('teable_new_record_frontier');
+		const markedIds = afterFailure?.pending?.ids ?? [];
+		expect(markedIds.length).toBeGreaterThan(0);
+
+		const poll2 = await runPoll(newRecordTrigger, store);
+		expect(new Set(poll2.map((record) => record.id))).toEqual(new Set(markedIds));
+
+		const poll3 = await runPoll(newRecordTrigger, store);
+		expect(await inner.get('teable_new_record_frontier')).toBeNull();
+		const ids = [...poll2, ...poll3].map((record) => record.id);
+		expect(ids.length).toBe(7000);
+		expect(new Set(ids).size).toBe(7000);
+		expect(await runPoll(newRecordTrigger, store)).toEqual([]);
+	});
+
+	it('re-emits the chunk after a crash right after the pending write', async () => {
+		const records = makeTieRecords({ count: 7000, epoch: TIE_EPOCH });
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		mockListRecords(records);
+		const inner = memoryStore({ lastPoll: BASE_EPOCH });
+		const failures = new Map<string, 'reject' | 'write-then-reject'>([
+			['teable_new_record_frontier', 'write-then-reject'],
+		]);
+		const store = failingPutStore({ inner, failures });
+
+		await expect(runPoll(newRecordTrigger, store)).rejects.toThrow(/simulated crash/);
+		expect(await inner.get('lastPoll')).toBe(BASE_EPOCH);
+		const afterCrash = await inner.get<FrontierSnapshot>('teable_new_record_frontier');
+		const markedIds = afterCrash?.pending?.ids ?? [];
+		expect(markedIds.length).toBeGreaterThan(0);
+
+		const poll2 = await runPoll(newRecordTrigger, store);
+		expect(new Set(poll2.map((record) => record.id))).toEqual(new Set(markedIds));
+
+		const poll3 = await runPoll(newRecordTrigger, store);
+		const ids = [...poll2, ...poll3].map((record) => record.id);
+		expect(ids.length).toBe(7000);
+		expect(new Set(ids).size).toBe(7000);
+		expect(await runPoll(newRecordTrigger, store)).toEqual([]);
+	});
+});
+
+describe('tie-group forward progress', () => {
+	it('delivers a 22,000-record tie group completely within a constant per-poll budget', async () => {
+		const records = makeTieRecords({ count: 22000, epoch: BASE_EPOCH + 10_000 });
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		let listCalls = 0;
+		mockListRecords(records, () => {
+			listCalls += 1;
+		});
+		const store = memoryStore({ lastPoll: BASE_EPOCH });
+
+		const polls: DeliveredRecord[][] = [];
+		const budgets: number[] = [];
+		for (let round = 0; round < 8; round += 1) {
+			listCalls = 0;
+			const poll = await runPoll(newRecordTrigger, store);
+			budgets.push(listCalls);
+			if (poll.length === 0) {
+				break;
+			}
+			polls.push(poll);
+		}
+
+		for (const budget of budgets) {
+			expect(budget).toBeLessThanOrEqual(60);
+		}
+		const ids = polls.flat().map((record) => record.id);
+		expect(ids.length).toBe(22000);
+		expect(new Set(ids).size).toBe(22000);
+		expect(polls.length).toBeLessThanOrEqual(5);
+		expect(await store.get('teable_new_record_frontier')).toBeNull();
 	});
 });
 

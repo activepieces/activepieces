@@ -73,7 +73,7 @@ export const newRecordTrigger = createTrigger({
   description: 'Triggers when a new record is created in a table.',
   aiMetadata: {
     description:
-      'Fires when a new record is created in the selected Teable table. Polls on a schedule and emits each new record once, with its field values, ID, and creation time. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical creation timestamp can records beyond that bound be skipped.',
+      'Fires when a new record is created in the selected Teable table. Polls on a schedule and emits each new record once, with its field values, ID, and creation time. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical creation timestamp can records beyond that bound be skipped. Delivery is at-least-once: after a platform error during a poll, the next poll may deliver some records again rather than lose them.',
   },
   props: {
     base_id: TeableCommon.base_id,
