@@ -10,10 +10,10 @@ export const updateDatabaseRecord = createAction({
 	classification: 'WRITE',
 	displayName: 'Update Database Record',
 	description: 'Updates an existing database record.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
-			'Changes some fields of one existing Softr record by its record ID, using the table field form. Agents: prefer Update Record (Agent), which takes column names as JSON. Only the given fields change; empty values are skipped, so it cannot clear a field. Safe to retry.',
+			'Changes some fields of one existing Softr record by its record ID, using the table field form. Only the given fields change; empty values are skipped, so it cannot clear a field. Safe to retry.',
 		idempotent: true,
 	},
 	props: {

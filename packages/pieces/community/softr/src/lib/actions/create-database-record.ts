@@ -10,10 +10,10 @@ export const createDatabaseRecord = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Database Record',
 	description: 'Creates a new record.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
-			'Adds one new record to a Softr table using the table field form. Agents: prefer Create Record (Agent), which takes column names as JSON. Empty values are skipped. Each call adds a new record, so a retry makes a duplicate.',
+			'Adds one new record to a Softr table using the table field form. Empty values are skipped. Each call adds a new record, so a retry makes a duplicate.',
 		idempotent: false,
 	},
 	props: {
