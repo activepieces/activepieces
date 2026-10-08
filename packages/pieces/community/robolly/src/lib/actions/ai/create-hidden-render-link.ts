@@ -5,6 +5,8 @@ import { robollyAiProps } from '../../common/ai-props';
 import { robollyApi } from '../../common/api';
 import { robollyCreateHiddenRenderLinkOutputSchema } from '../../output-schemas';
 
+const RESERVED_KEYS = ['template', 'sig'];
+
 const formatOptions = [
 	{ label: 'JPG', value: 'jpg' },
 	{ label: 'PNG', value: 'png' },
@@ -36,6 +38,16 @@ export const createHiddenRenderLinkAction = createAction({
 		modifications: robollyAiProps.modifications({ required: false }),
 	},
 	async run({ auth, propsValue }) {
+		const reservedKeys = Object.keys(propsValue.modifications ?? {}).filter((key) =>
+			RESERVED_KEYS.includes(key),
+		);
+		if (reservedKeys.length > 0) {
+			throw new Error(
+				`"Modifications" can't include ${reservedKeys
+					.map((key) => `"${key}"`)
+					.join(' or ')}: the link sets the template from "Template ID" and signs itself.`,
+			);
+		}
 		return robollyApi.createHiddenRenderLink({
 			auth,
 			templateId: propsValue.templateId,
