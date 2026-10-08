@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-employment-hero-payroll",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run",
+    "test:types": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "tslib": "2.6.2",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "vitest": "3.2.6"
+  }
+}

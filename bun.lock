@@ -2972,6 +2972,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/employment-hero-payroll": {
+      "name": "@activepieces/piece-employment-hero-payroll",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "tslib": "2.6.2",
+        "zod": "4.3.6",
+      },
+      "devDependencies": {
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/enrichlayer": {
       "name": "@activepieces/piece-enrichlayer",
       "version": "0.1.0",
@@ -11681,6 +11694,8 @@
     "@activepieces/piece-emailit": ["@activepieces/piece-emailit@workspace:packages/pieces/community/emailit"],
 
     "@activepieces/piece-emailoctopus": ["@activepieces/piece-emailoctopus@workspace:packages/pieces/community/emailoctopus"],
+
+    "@activepieces/piece-employment-hero-payroll": ["@activepieces/piece-employment-hero-payroll@workspace:packages/pieces/community/employment-hero-payroll"],
 
     "@activepieces/piece-enrichlayer": ["@activepieces/piece-enrichlayer@workspace:packages/pieces/community/enrichlayer"],
 

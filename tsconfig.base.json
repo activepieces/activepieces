@@ -457,6 +457,7 @@
       "@activepieces/piece-emailoctopus": [
         "packages/pieces/community/emailoctopus/src/index.ts"
       ],
+      "@activepieces/piece-employment-hero-payroll": ["packages/pieces/community/employment-hero-payroll/src/index.ts"],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
