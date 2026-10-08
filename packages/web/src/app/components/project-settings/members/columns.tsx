@@ -1,5 +1,6 @@
 import { ErrorCode, Permission } from '@activepieces/core-utils';
 import {
+  InvitationType,
   ProjectMemberWithUser,
   UserInvitation,
   UserWithMetaInformation,
@@ -16,6 +17,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
@@ -188,6 +190,10 @@ const ActionsCell = ({
   const isPlatformAdminOrOperator =
     row.original.type === 'platform-admin-operator';
 
+  const isPlatformInvitation =
+    row.original.type === 'invitation' &&
+    row.original.data.type === InvitationType.PLATFORM;
+
   const deleteMember = async () => {
     if (row.original.type === 'member') {
       await projectMembersApi.delete(row.original.data.id);
@@ -197,7 +203,7 @@ const ActionsCell = ({
     refetch();
   };
 
-  if (isOwner || isPlatformAdminOrOperator) {
+  if (isOwner || isPlatformAdminOrOperator || isPlatformInvitation) {
     return null;
   }
 
@@ -257,6 +263,23 @@ const ActionsCell = ({
   );
 };
 
+const PlatformInviteBadge = () => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="outline" className="w-fit text-gray-11">
+          {t('Platform invite')}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        {t(
+          'Invited to the platform with this project. Manage it in Users → Members.',
+        )}
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
 export const membersTableColumns = ({
   refetch,
 }: MembersTableColumnsProps): (ColumnDef<RowDataWithActions<MemberRowData>> & {
@@ -287,6 +310,9 @@ export const membersTableColumns = ({
               <TextWithTooltip tooltipMessage={email}>
                 <p className="text-sm text-warning-11">{email}</p>
               </TextWithTooltip>
+              {row.original.data.type === InvitationType.PLATFORM && (
+                <PlatformInviteBadge />
+              )}
             </div>
           </div>
         );
