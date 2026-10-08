@@ -268,6 +268,10 @@ export const agentService = (log: FastifyBaseLogger) => ({
         await assertMayRemoveFromProject({ agent, projectId, userId, log })
         const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
         await assertMayWriteAgentsIn({ projectId: target.id, userId, log })
+        const [draft, published] = await Promise.all([
+            withKeyFor({ config: agent.draft, platformId, projectId: target.id, log }),
+            isNil(agent.published) ? null : withKeyFor({ config: agent.published, platformId, projectId: target.id, log }),
+        ])
         await transaction(async (entityManager) => {
             const repo = entityManager.getRepository(AgentEntity)
             const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
@@ -292,6 +296,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             if (movedRows.length === 0) {
                 throw refuseBecauseFlowsUseIt({ agent, flowsInUse: await agentService(log).publishedFlowsUsing({ agent, projectId, userId }) })
             }
+            await repo.save({ id, draft, published })
             await entityManager.getRepository(AgentConversationEntity).update(
                 { agentId: id, source: AgentRunSource.AGENT },
                 { projectId: target.id },
@@ -445,14 +450,14 @@ async function withDefaultModel({ draft, platformId, projectId, log }: {
     if (isNil(chatKey)) {
         return draft
     }
-    const { provider, configId } = chatKey
+    const { provider, id: providerConfigId } = chatKey
     const modelName = provider === AIProviderName.ACTIVEPIECES
         ? agentHelpers.resolveTier({ tierId: null, surface: 'flow' }).id
-        : agentHelpers.defaultModelIdForProvider({ provider, surface: 'flow' })
+        : agentHelpers.defaultModelIdForProvider({ provider, surface: 'flow', config: chatKey.config, modelScope: chatKey.modelScope, modelIds: chatKey.modelIds })
     if (isNil(modelName)) {
-        return { ...draft, provider, providerConfigId: configId }
+        return { ...draft, provider, providerConfigId }
     }
-    return { ...draft, provider, providerConfigId: configId, modelName }
+    return { ...draft, provider, providerConfigId, modelName }
 }
 
 async function withPinnedKey({ draft, platformId, projectId, log }: {
@@ -466,6 +471,19 @@ async function withPinnedKey({ draft, platformId, projectId, log }: {
     }
     const configId = await aiProviderService(log).findRunKeyId({ platformId, provider: draft.provider, scope: { type: 'project', projectId } })
     return isNil(configId) ? draft : { ...draft, providerConfigId: configId }
+}
+
+async function withKeyFor({ config, platformId, projectId, log }: {
+    config: AgentConfig
+    platformId: PlatformId
+    projectId: ProjectId
+    log: FastifyBaseLogger
+}): Promise<AgentConfig> {
+    if (isNil(config.provider) || isNil(config.providerConfigId)) {
+        return config
+    }
+    const providerConfigId = await aiProviderService(log).findRunKeyId({ platformId, provider: config.provider, scope: { type: 'project', projectId }, preferredConfigId: config.providerConfigId })
+    return { ...config, providerConfigId }
 }
 
 async function resolveShare({ visibility, requested, stored, projectId, log }: ResolveShareParams): Promise<UserId[]> {

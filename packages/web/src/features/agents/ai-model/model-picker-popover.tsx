@@ -46,7 +46,7 @@ export function ModelPickerPopover<T>({
   const [activeItem, setActiveItem] = useState<ModelPickerItem<T> | null>(null);
   const [rowTop, setRowTop] = useState(0);
   const [detailTop, setDetailTop] = useState(0);
-  const [detailOnRight, setDetailOnRight] = useState(false);
+  const [detailSide, setDetailSide] = useState<DetailSide>('left');
   const movedByKeyboard = useRef(false);
   const frameRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -113,8 +113,19 @@ export function ModelPickerPopover<T>({
     if (isNil(frame) || isNil(card)) {
       return;
     }
-    const { top: frameTop, left: frameLeft } = frame.getBoundingClientRect();
-    setDetailOnRight(frameLeft < card.offsetWidth + VIEWPORT_MARGIN);
+    const {
+      top: frameTop,
+      left: frameLeft,
+      right: frameRight,
+    } = frame.getBoundingClientRect();
+    const needed = card.offsetWidth + VIEWPORT_MARGIN;
+    setDetailSide(
+      frameLeft >= needed
+        ? 'left'
+        : window.innerWidth - frameRight >= needed
+        ? 'right'
+        : 'none',
+    );
     const highest = VIEWPORT_MARGIN - frameTop;
     const lowest =
       window.innerHeight - VIEWPORT_MARGIN - frameTop - card.offsetHeight;
@@ -302,7 +313,8 @@ export function ModelPickerPopover<T>({
               ref={cardRef}
               className={cn(
                 'absolute hidden transition-[top] duration-150 sm:block',
-                detailOnRight ? 'left-full pl-2' : 'right-full pr-2',
+                detailSide === 'right' ? 'left-full pl-2' : 'right-full pr-2',
+                detailSide === 'none' && 'invisible',
               )}
               style={{ top: detailTop }}
             >
@@ -422,6 +434,8 @@ function itemValue<T>({
 const GROUP_CAP = 30;
 const DETAIL_CLOSE_DELAY_MS = 150;
 const VIEWPORT_MARGIN = 12;
+
+type DetailSide = 'left' | 'right' | 'none';
 
 export type ModelPickerItem<T> = {
   id: string;

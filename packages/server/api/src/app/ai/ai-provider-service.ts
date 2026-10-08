@@ -192,14 +192,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return chatProvider?.provider ?? null
     },
 
-    async getChatKey({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<{ provider: AIProviderName, configId: string } | null> {
-        const chatProvider = await findAvailableChatProviderRow({ platformId, scope, log })
-        return isNil(chatProvider) ? null : { provider: chatProvider.provider, configId: chatProvider.id }
+    async getChatKey({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<AIProviderSchema | null> {
+        return findAvailableChatProviderRow({ platformId, scope, log })
     },
 
-    async findRunKeyId({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<string | null> {
-        const row = await findEligibleRow({ platformId, provider, scope })
-        return row?.id ?? null
+    async findRunKeyId({ platformId, provider, scope, preferredConfigId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, preferredConfigId?: string }): Promise<string | null> {
+        const rows = await aiProviderRepo().findBy({ platformId, provider })
+        const eligible = rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope }))
+        const preferred = eligible.find((row) => row.id === preferredConfigId)
+        return (preferred ?? rankRows({ rows: eligible, scope })[0])?.id ?? null
     },
 
     async getChatProvider({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
