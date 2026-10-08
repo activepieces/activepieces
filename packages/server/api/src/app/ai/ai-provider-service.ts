@@ -4,7 +4,6 @@ import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAut
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { EntityManager, FindOptionsWhere } from 'typeorm'
-import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
@@ -150,8 +149,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         }
 
-        const manualModelIds = manualModelIdsOf({ config: request.config })
-        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(manualModelIds)
+        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(aiKeyScope.manualModelIdsOf({ config: request.config }))
         await transaction(async (manager) => {
             await platformModelTierService.lockPlatform({ manager, platformId })
             await assertCapabilitiesKeepKey({ manager, platformId, providerId, request })
@@ -162,7 +160,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     configId: providerId,
                     modelScope: request.modelScope,
                     modelIds: request.modelIds,
-                    manualModelIds,
+                    config: request.config,
                 })
             }
             if (request.enabledForChat === true) {
@@ -296,7 +294,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         this.assertKeyAllowsModel({ key: aiProvider, modelId })
     },
     assertKeyAllowsModel({ key, modelId }: { key: Pick<AIProviderSchema, 'modelScope' | 'modelIds'>, modelId: string }): void {
-        if (key.modelScope === 'selected' && !key.modelIds.includes(modelId)) {
+        if (!aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId })) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: `The model "${modelId}" isn't allowed for this AI provider key anymore. Pick another model for this step.` },
@@ -324,7 +322,6 @@ async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformI
     return plan.embeddingEnabled
 }
 
-const ManualModelsConfig = z.object({ models: z.array(z.object({ modelId: z.string() })) })
 
 const CAPABILITY_LABELS: Record<AiToolCapability, string> = {
     [AiToolCapability.WEB_SEARCH]: 'web search',
@@ -424,13 +421,8 @@ async function findRunKeyCandidates({ platformId, provider, configId, scope, log
     ), [])
 }
 
-function manualModelIdsOf({ config }: { config: unknown }): string[] | undefined {
-    const parsed = ManualModelsConfig.safeParse(config)
-    return parsed.success ? parsed.data.models.map((model) => model.modelId) : undefined
-}
-
 async function assertCapabilitiesKeepKey({ manager, platformId, providerId, request }: { manager: EntityManager, platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest }): Promise<void> {
-    const changesScope = !isNil(request.projectScope) || !isNil(request.modelScope) || !isNil(request.modelIds)
+    const changesScope = !isNil(request.projectScope) || !isNil(request.modelScope) || !isNil(request.modelIds) || !isNil(request.config)
     if (!changesScope) {
         return
     }
@@ -439,6 +431,7 @@ async function assertCapabilitiesKeepKey({ manager, platformId, providerId, requ
         projectScope: request.projectScope ?? key.projectScope,
         modelScope: request.modelScope ?? key.modelScope,
         modelIds: request.modelIds ?? key.modelIds,
+        config: request.config,
     }
     const toolConfigs = await manager.getRepository(AiToolConfigEntity).findBy({ platformId, provider: AiToolProvider.AI_PROVIDER })
     const broken = toolConfigs.flatMap((toolConfig) => {
@@ -447,7 +440,7 @@ async function assertCapabilitiesKeepKey({ manager, platformId, providerId, requ
             return []
         }
         const losesProjects = next.projectScope !== 'all'
-        const losesModel = !isNil(choice.data.modelId) && next.modelScope === 'selected' && !next.modelIds.includes(choice.data.modelId)
+        const losesModel = !isNil(choice.data.modelId) && !aiKeyScope.keyOffersModel({ key: next, modelId: choice.data.modelId })
         return losesProjects || losesModel ? [CAPABILITY_LABELS[toolConfig.capability]] : []
     })
     if (broken.length > 0) {

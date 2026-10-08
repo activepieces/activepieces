@@ -1031,6 +1031,33 @@ describe('key scope hardening', () => {
         expect(keeping.statusCode).toBe(StatusCodes.OK)
     })
 
+    it('refuses to drop a typed-in model that a capability uses, even when the key allows all models', async () => {
+        const models = [
+            { modelId: 'chat-model', modelName: 'Chat', modelType: AIProviderModelType.TEXT },
+            { modelId: 'image-model', modelName: 'Image', modelType: AIProviderModelType.IMAGE },
+        ]
+        const config = { baseUrl: 'https://api.example.com/v1', apiKeyHeader: 'Authorization', models }
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.CUSTOM, config })
+        await db.save('ai_tool_config', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            platformId: ctx.platform.id,
+            capability: 'IMAGE_GENERATION',
+            provider: 'ai_provider',
+            config: { aiProviderId: key.id, modelId: 'image-model' },
+            auth: { iv: 'unused', data: 'unused' },
+            enabled: true,
+        })
+
+        const dropping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, config: { ...config, models: [models[0]] } })
+        const keeping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, config: { ...config, models: [...models, { modelId: 'new-model', modelName: 'New', modelType: AIProviderModelType.TEXT }] } })
+
+        expect(dropping.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(dropping.body).toContain('image generation')
+        expect(keeping.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('refuses to drop a typed-in model that a tier uses, even when the key allows all models', async () => {
         const models = [
             { modelId: 'kept-model', modelName: 'Kept', modelType: AIProviderModelType.TEXT },

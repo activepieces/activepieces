@@ -192,7 +192,7 @@ export const platformModelTierService = {
         await lockPlatform({ manager, platformId })
     },
 
-    async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds, manualModelIds }: AssertKeyScopeParams): Promise<void> {
+    async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds, config }: AssertKeyScopeParams): Promise<void> {
         await lockPlatform({ manager, platformId })
         const key = await aiProviderRepo(manager).findOneBy({ platformId, id: configId })
         if (isNil(key)) {
@@ -200,7 +200,7 @@ export const platformModelTierService = {
         }
         const nextScope = { modelScope: modelScope ?? key.modelScope, modelIds: modelIds ?? key.modelIds }
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
-        const keyKeeps = (modelId: string): boolean => aiKeyScope.scopeAllows({ ...nextScope, modelId }) && (isNil(manualModelIds) || manualModelIds.includes(modelId))
+        const keyKeeps = (modelId: string): boolean => aiKeyScope.keyOffersModel({ key: { ...nextScope, config }, modelId })
         const broken = tiers.filter((tier) => tier.entries.some((entry) => entry.configId === configId && !keyKeeps(entry.modelId)))
         if (broken.length > 0) {
             throw keyInUseError({ tierNames: broken.map((tier) => tier.name) })
@@ -378,5 +378,5 @@ type AssertKeyScopeParams = {
     configId: string
     modelScope: AiProviderModelScope | undefined
     modelIds: string[] | undefined
-    manualModelIds: string[] | undefined
+    config: unknown
 }
