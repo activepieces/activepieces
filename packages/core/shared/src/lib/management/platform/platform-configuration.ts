@@ -14,6 +14,7 @@ export const PlatformConfiguration = z.object({
         .int({ error: (issue) => isNil(issue.input) ? formErrors.required : formErrors.wholeNumber })
         .min(MIN_BARRIER_SIGNALS, formErrors.atLeastOne)
         .max(MAX_BARRIER_SIGNALS, formErrors.atMostTenThousand),
+    aiSpecificModelsVisible: z.boolean(),
 })
 export type PlatformConfiguration = z.infer<typeof PlatformConfiguration>
 
@@ -24,7 +25,9 @@ export const PlatformConfigurationSettings = PlatformConfiguration.pick({
 })
 export type PlatformConfigurationSettings = z.infer<typeof PlatformConfigurationSettings>
 
-export const UpdatePlatformConfigurationRequestBody = PlatformConfigurationSettings.partial()
+export const UpdatePlatformConfigurationRequestBody = PlatformConfigurationSettings.partial().extend({
+    aiSpecificModelsVisible: z.boolean().optional(),
+})
 export type UpdatePlatformConfigurationRequestBody = z.infer<typeof UpdatePlatformConfigurationRequestBody>
 
 export const maxBarrierSignalsBounds = {

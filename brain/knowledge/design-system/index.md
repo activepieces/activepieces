@@ -34,7 +34,11 @@ rather than "what does this mean?" — projects, avatars, chart series. Not a sc
 themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders one.
 
 ## Gotchas
+- **A Radix `Popover` opened from inside a `Dialog` must be `modal`, or the mouse wheel does nothing in it.** The dialog's scroll lock treats the portaled popover as "outside" and cancels wheel events there; `<Popover modal>` installs its own lock that allows scrolling inside the content. `SearchableSelect` and `ModelPickerPopover` do this; a non-modal popover looks fine until it is used in a dialog.
+- **`CommandList` (`components/ui/command.tsx`) defaults to `overflow-y-hidden`, so a cmdk list silently cannot scroll.** Every caller must add `overflow-y-auto` (or nest a `ScrollArea`); passing only a `max-h-*` looks fine with few rows and clips the rest. Bit the tiers model picker (2026-10-05).
+- **`border-dashed` on anything under ~16px renders as a broken squiggle, not a dashed circle.** Browsers cannot fit whole dashes around an 8px `rounded-full`, so a tiny dashed dot reads as a glitch. Use a solid border in a lighter step (`border-gray-7`) for a "placeholder" dot and keep dashed borders for boxes.
 
+- **`ConfirmationDeleteDialog` renders `message` inside `DialogDescription`, a `<p>`.** A select or any other form control placed in the message is invalid nesting and becomes the dialog's `aria-describedby`. A delete flow that needs an input (the tier delete's "Move them to" select) builds its own `Dialog` and keeps only the confirm button's `adminControl` id.
 - `styles.css` points the `--shadow-*` theme keys that change per theme at a plain custom property
   (`--shadow-edge: var(--edge)`). Tailwind copies a `--shadow-*` value into the utility literally, so a dark override of
   the theme key itself never lands; the indirection is what lets shadows change per theme.

@@ -102,7 +102,11 @@ const PlatformConnectionsPage = React.lazy(
 
 const HEALTH_TAB_PATHS = { system: '', runs: 'runs', queue: 'queue' };
 const WORKERS_TAB_PATHS = { health: '', 'worker-groups': 'groups' };
-const AI_TAB_PATHS = { providers: '', capabilities: 'capabilities' };
+const AI_TAB_PATHS = {
+  providers: '',
+  capabilities: 'capabilities',
+  tiers: 'tiers',
+};
 const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'piece-sets' };
 
 export const platformRoutes = [
@@ -177,6 +181,22 @@ export const platformRoutes = [
             <PlanFeatureSample feature="aiProviders">
               <SuspenseWrapper>
                 <AIProvidersPage section="capabilities" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/tiers',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Tiers">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="tiers" />
               </SuspenseWrapper>
             </PlanFeatureSample>
           </LegacyTabRedirect>

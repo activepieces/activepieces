@@ -1,8 +1,10 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { ApFlagId, DefaultProjectRole, maxBarrierSignalsBounds } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -149,6 +151,48 @@ describe('platform configuration', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.json()).not.toHaveProperty('TELEMETRY_ENABLED')
         expect(ApFlagId).not.toHaveProperty('TELEMETRY_ENABLED')
+    })
+
+    it('shows specific AI models to builders until an admin hides them, and lets any member read the switch', async () => {
+        const ctx = await createTestContext(app!)
+        const memberCtx = await createMemberContext(app!, ctx, {
+            projectRole: DefaultProjectRole.EDITOR,
+        })
+
+        expect((await ctx.get('/v1/platform-configurations'))!.json().aiSpecificModelsVisible).toBe(true)
+
+        const refused = await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false })
+        expect(refused?.statusCode).toBe(StatusCodes.CONFLICT)
+
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const tier = await ctx.post('/v1/platform-model-tiers', { name: 'Expert', emoji: '🧠', description: null, entries: [{ configId: key.id, modelId: 'gpt-4o' }] })
+        expect(tier?.statusCode).toBe(StatusCodes.OK)
+
+        const hidden = await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false })
+        expect(hidden?.statusCode).toBe(StatusCodes.OK)
+        expect(hidden!.json().aiSpecificModelsVisible).toBe(false)
+        expect(hidden!.json().isInfraSetupTelemetryEnabled).toBe(true)
+
+        const memberRead = await memberCtx.get('/v1/platform-configurations')
+        expect(memberRead?.statusCode).toBe(StatusCodes.OK)
+        expect(memberRead!.json().aiSpecificModelsVisible).toBe(false)
+
+        const memberWrite = await memberCtx.post('/v1/platform-configurations', { aiSpecificModelsVisible: true })
+        expect(memberWrite?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await ctx.get('/v1/platform-configurations'))!.json().aiSpecificModelsVisible).toBe(false)
+    })
+
+    it('changes nothing when hiding specific models is refused alongside another setting', async () => {
+        const ctx = await createTestContext(app!)
+        const before = (await ctx.get('/v1/platform-configurations'))!.json().maxBarrierSignals
+        expect(before).not.toBe(maxBarrierSignalsBounds.min)
+
+        const refused = await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false, maxBarrierSignals: maxBarrierSignalsBounds.min })
+
+        expect(refused?.statusCode).toBe(StatusCodes.CONFLICT)
+        const after = (await ctx.get('/v1/platform-configurations'))!.json()
+        expect(after.maxBarrierSignals).toBe(before)
+        expect(after.aiSpecificModelsVisible).toBe(true)
     })
 
     it('lets any platform member read the configuration, but only an admin write it', async () => {
