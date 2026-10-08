@@ -63,9 +63,10 @@ List the jobs in the request first: intake, processing, storage, reporting, appr
 - Work shared by several entry points (a webhook and a form, two schedules) goes in ONE Callable subflow that each entry flow calls. Never copy the same steps into two flows.
 
 How to build one:
+0. **Tasks, in waves:** with two or more flows, give each flow its own `ap_run_task` ("build and validate the Save order flow in folder X") and start every task of a wave in the same step. Wave 1 is every flow that needs nothing else built first (a shared subflow, a digest that only reads a table); wave 2 is every flow that calls something from wave 1, given the ids wave 1 returned. One flow per task. A single-flow solution you build yourself. You keep the folder, the tables (create them before wave 1), the folder check, testing and turning it on.
 1. **Folder:** `ap_create_folder` with a name for the whole solution; pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
 2. **Names:** each flow named for its one job in plain words ("Save order", never "Flow 2").
-3. **Order:** tables, then subflows, then the flows that call them; each needs an id the previous one returned.
+3. **Order:** tables, then the waves above; a flow that calls a subflow needs the id its wave returned.
 4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow` with `exampleData.sampleData` listing every input, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read inputs as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (empty at run time). Add `returnResponse` only if a caller needs data back.
 5. **Caller:** a `callFlow` step with `flowId` = the subflow's **externalId** (from `ap_build_flow`, not its flow id), `mode: "simple"`, every sample-data key in `flowProps.payload` as an object, and `waitForResponse` only when the subflow returns a response.
 6. **Tables steps:** `table_id` is the table's **externalId**; form `values` are keyed by field externalId.

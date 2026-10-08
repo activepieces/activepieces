@@ -20,6 +20,7 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
 import { smtpEmailSender } from '../../helper/email/email-sender/smtp-email-sender'
+import { agentTaskService } from '../agent-task-service'
 
 import { chosenProviders } from './chosen-providers'
 import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-shared'
@@ -159,35 +160,36 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // that is right there. Best-effort: a lookup failure must not block the turn.
         // Chat picks a connection mid-run; a configured surface had one pinned when it was set up,
         // so handing it the inventory only teaches it to renegotiate what it cannot change.
-        const inventoryResult = (!dryRun && carriesChatContext && !isNil(selectedProjectId))
-            ? await tryCatch(() => appConnectionService(log).list({
-                projectId: selectedProjectId,
-                platformId,
-                pieceName: undefined,
-                displayName: undefined,
-                status: undefined,
-                cursorRequest: null,
-                scope: undefined,
-                externalIds: undefined,
-                limit: CONNECTION_INVENTORY_LIMIT,
-            }))
-            : null
+        const tasksAvailable = !dryRun && carriesChatContext
+        const [inventoryResult, conversationTasks] = await Promise.all([
+            (!dryRun && carriesChatContext && !isNil(selectedProjectId))
+                ? tryCatch(() => appConnectionService(log).list({
+                    projectId: selectedProjectId,
+                    platformId,
+                    pieceName: undefined,
+                    displayName: undefined,
+                    status: undefined,
+                    cursorRequest: null,
+                    scope: undefined,
+                    externalIds: undefined,
+                    limit: CONNECTION_INVENTORY_LIMIT,
+                }))
+                : null,
+            tasksAvailable ? agentTaskService.list({ platformId, conversationId }) : [],
+        ])
         const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
-        const systemPromptText = agentPrompt.buildSystemPrompt({
-            projects: scopedProjects,
-            currentProjectId: selectedProjectId,
-            frontendUrl,
-            templates: promptOverride,
-        }) + agentSurfaceNotes.buildRunNotes({
+        const runNotesFor = ({ forTask }: { forTask: boolean }): string => agentSurfaceNotes.buildRunNotes({
             source: conversation.source,
             currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
-            imageEditAvailable: !isNil(imageModelId),
+            imageAvailable: !forTask && actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
+            imageEditAvailable: !forTask && !isNil(imageModelId),
             emailAvailable: emailEnabled,
-            agentsAvailable,
+            agentsAvailable: !forTask && agentsAvailable,
+            tasksAvailable: !forTask && tasksAvailable,
+            tasks: conversationTasks,
             userEmail: runUserEmail,
             userIdentity,
             connections: inventoryResult && !inventoryResult.error
@@ -195,6 +197,15 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 : null,
             memory: runMemory,
         })
+        const systemPromptText = agentPrompt.buildSystemPrompt({
+            projects: scopedProjects,
+            currentProjectId: selectedProjectId,
+            frontendUrl,
+            templates: promptOverride,
+        }) + runNotesFor({ forTask: false })
+        const taskSystemPrompt = tasksAvailable
+            ? agentPrompt.buildTaskSystemPrompt({ projects: scopedProjects, currentProjectId: selectedProjectId, frontendUrl }) + runNotesFor({ forTask: true })
+            : undefined
         // Merge over defaults, not replace: an override carries only the changed guide topics
         // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
         const guides = promptOverride?.guides
@@ -294,6 +305,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 : null,
             projects: scopedProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
             guides,
+            ...spreadIfDefined('taskSystemPrompt', taskSystemPrompt),
             aiTools,
             emailEnabled,
             agentsAvailable,

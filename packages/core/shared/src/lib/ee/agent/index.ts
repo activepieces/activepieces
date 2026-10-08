@@ -247,6 +247,33 @@ export const UserMemory = z.object({
 })
 export type UserMemory = z.infer<typeof UserMemory>
 
+export enum SubagentTaskStatus {
+    RUNNING = 'RUNNING',
+    DONE = 'DONE',
+    BLOCKED = 'BLOCKED',
+    FAILED = 'FAILED',
+}
+
+export const SubagentTaskArtifact = z.object({
+    type: z.string(),
+    id: z.string(),
+    name: z.string(),
+})
+export type SubagentTaskArtifact = z.infer<typeof SubagentTaskArtifact>
+
+export const SubagentTask = z.object({
+    ...BaseModelSchema,
+    platformId: z.string(),
+    projectId: Nullable(z.string()),
+    conversationId: z.string(),
+    title: z.string(),
+    status: z.enum(SubagentTaskStatus),
+    messages: z.array(z.record(z.string(), z.unknown())).default([]),
+    summary: Nullable(z.string()),
+    artifacts: z.array(SubagentTaskArtifact).default([]),
+})
+export type SubagentTask = z.infer<typeof SubagentTask>
+
 export const GetAgentMemoryResponse = z.object({
     instructions: z.string().nullable(),
     memories: z.array(z.string()),

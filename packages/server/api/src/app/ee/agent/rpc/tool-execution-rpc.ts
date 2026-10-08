@@ -194,7 +194,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             return { result: decision }
         }
         if (input.toolName === '__store_pending_gate') {
-            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
+            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput, taskTitle } = input.toolInput
             if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
                 await agentApprovalGate.storePendingGate({
                     conversationId: convId,
@@ -204,6 +204,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                         displayName: typeof displayName === 'string' ? displayName : gateTool,
                         toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
                         ...(typeof gateRunId === 'string' ? { runId: gateRunId } : {}),
+                        ...(typeof taskTitle === 'string' ? { taskTitle } : {}),
                     },
                 })
             }

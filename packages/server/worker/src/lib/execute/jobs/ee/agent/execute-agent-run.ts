@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -8,7 +8,11 @@ import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
+import { creditLedger } from './credit-ledger'
+import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
+import { taskContext } from './tools/task-context'
+import { createTaskSubagentTools } from './tools/task-subagent-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -16,6 +20,7 @@ const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const APPROVAL_BLOCK_MS = 50_000
 const DISPLAY_TOOL_TIMEOUT_MS = 5 * 60 * 1_000
 const HEARTBEAT_INTERVAL_MS = 15_000
+const MAIN_RUN_CREDIT_KEY = 'main'
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
 // A turn quiet this long with NO tool call and NO reasoning block in flight is REPORTED as idle —
@@ -242,6 +247,11 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 },
             })
 
+            const creditsLeftFor = creditLedger.create({
+                creditsLeft: (pendingCredits) => ctx.apiClient.agentCreditsLeft({ platformId, conversationId, pendingCredits }),
+                messageCredits: chatBilling.creditsForTurn({ provider, toolCalls: [] }).messageCredits,
+            })
+
             const thinkingStartTime = Date.now()
 
             const autoTitlePromise = generateTitleIfFirstTurn({
@@ -253,14 +263,21 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const mergedTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
+                    const baseTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
+                    const taskTools = createTaskSubagentTools({
+                        tools: baseTools, guides: config.guides, models: turnModels, tier: config.tier,
+                        taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
+                        beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
+                        finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
+                    })
+                    const mergedTools = { ...baseTools, ...taskTools }
                     const allToolNames = Object.keys(mergedTools)
                     log.info({ toolCount: allToolNames.length, mcpToolCount: Object.keys(mcpToolSet).length, phase: phaseState.phase }, '[executeAgentRun] Tool set assembled')
                     log.debug({ toolNames: allToolNames }, '[executeAgentRun] Tool set details')
 
                     return runAgentTurn({
                         ...spreadIfDefined('stepCeiling', data.maxSteps),
-                        creditsLeft: (pendingCredits) => ctx.apiClient.agentCreditsLeft({ platformId, conversationId, pendingCredits }),
+                        creditsLeft: creditsLeftFor(MAIN_RUN_CREDIT_KEY),
                         models: turnModels,
                         fastModel: firstStepUsesFastModel({ source, dryRun, runsASavedAgent: !isNil(data.promptOverride) }) ? fastTurnModel : undefined,
                         onStepModel: (stepModel) => {
@@ -622,6 +639,8 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     captureStructured: (output: Record<string, unknown>) => void
     source: AgentRunSource
 }): ToolSet {
+    const declines = declinedActions.create({ eventEmitter })
+    const toolEventEmitter = declines.eventEmitter
     const brokenConnectors = new Set<string>()
 
     const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
@@ -645,6 +664,9 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
         if (dryRun || discoveryOnly) {
             return { outcome: 'approved' }
+        }
+        if (declines.isDeclined(gateId)) {
+            return { outcome: 'declined' }
         }
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
@@ -673,6 +695,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             }
             if (response.result !== 'pending') {
                 const decision = response.result as { approved: boolean, payload?: Record<string, unknown> }
+                declines.recordDecision({ gateId, approved: decision.approved })
                 return { outcome: decision.approved ? 'approved' : 'declined', payload: decision.payload }
             }
         }
@@ -708,7 +731,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     }) => {
         await tryCatch(() => ctx.apiClient.executeAgentTool({
             toolName: '__store_pending_gate',
-            toolInput: { conversationId, runId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
+            toolInput: { conversationId, runId, gateId, toolName: gateTool, displayName, toolInput: gateInput, ...spreadIfDefined('taskTitle', taskContext.currentTitle()) },
             platformId, userId, source, conversationId,
         }))
     }
@@ -750,13 +773,13 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
-        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({
-        eventEmitter,
+        eventEmitter: toolEventEmitter,
         getProjectId: () => projectState.projectId,
     })
     const timedMcpTools = agentMcpClient.withToolTimeouts({
@@ -773,20 +796,20 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         },
     })
     const mcpTools = agentWorkerTools.wrapTestFlowGate({
-        mcpTools: agentWorkerTools.wrapDeleteGate({ mcpTools: timedMcpTools, waitForApproval, storePendingGate, eventEmitter }),
+        mcpTools: agentWorkerTools.wrapDeleteGate({ mcpTools: timedMcpTools, waitForApproval, storePendingGate, eventEmitter: toolEventEmitter }),
         checkFlowWrites: async (flowId) => {
             const response = await ctx.apiClient.executeAgentTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, source, conversationId })
             return response.result
         },
         waitForApproval,
         storePendingGate,
-        eventEmitter,
+        eventEmitter: toolEventEmitter,
         log,
     })
     const emailTools = emailEnabled && !dryRun && !discoveryOnly
         ? agentWorkerTools.createEmailTools({
             sendEmail: ({ to, subject, body, gateId }) => ctx.apiClient.sendAgentEmail({ conversationId, runId, platformId, userId, to, subject, body, gateId }),
-            eventEmitter,
+            eventEmitter: toolEventEmitter,
             userEmail,
             waitForApproval,
             onGateOpened: storePendingGate,
@@ -799,7 +822,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
         runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, ...runKey(), ...spreadIfDefined('flowRunId', flowRunId) }),
         taintState,
-        eventEmitter,
+        eventEmitter: toolEventEmitter,
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({

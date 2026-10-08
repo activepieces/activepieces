@@ -42,6 +42,11 @@ export function ActionPreviewCard({
           : preview.actionDisplayName
       }
     >
+      {preview.taskTitle && (
+        <p className="truncate pb-2 text-xs text-gray-11">
+          {t('Asked by {taskTitle}', { taskTitle: preview.taskTitle })}
+        </p>
+      )}
       {preview.pieceName && (
         <div className="flex items-center gap-2 pb-3">
           <PieceIconWithPieceName

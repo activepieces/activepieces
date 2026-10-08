@@ -185,4 +185,5 @@ export type PendingGate = {
   toolName: string;
   displayName: string;
   toolInput: Record<string, unknown>;
+  taskTitle?: string;
 };

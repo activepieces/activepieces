@@ -89,6 +89,8 @@ export type WorkerToApiContract = {
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
     saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void>
+    beginAgentTask(input: BeginAgentTaskRequest): Promise<BeginAgentTaskResponse>
+    finishAgentTask(input: FinishAgentTaskRequest): Promise<void>
     saveAgentFile(input: SaveAgentFileRequest): Promise<SaveAgentFileResponse>
     readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse>
     updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
@@ -174,6 +176,7 @@ export type AgentConfigResponse = {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
+    taskSystemPrompt?: string
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
     agentsAvailable: boolean
@@ -197,6 +200,30 @@ export type SaveAgentMessagesRequest = {
     modelName?: string
     answeredBy?: AgentTurnModel
     failure?: { message: string, userMessage?: string }
+}
+
+export type BeginAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    title: string
+    taskId?: string
+}
+
+export type BeginAgentTaskResponse = {
+    taskId: string
+    claimId: string
+    messages: unknown[]
+}
+
+export type FinishAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    taskId: string
+    claimId: string
+    status: 'DONE' | 'BLOCKED' | 'FAILED'
+    messages: unknown[]
+    summary: string | null
+    artifacts: { type: string, id: string, name: string }[]
 }
 
 export type AgentTurnModel = {

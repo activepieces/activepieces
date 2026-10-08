@@ -190,6 +190,17 @@ export function buildMessageBlocks({
         }
         continue;
       }
+      if (toolName === 'ap_run_task') {
+        endSegment();
+        const task = { toolCallId: chatPartUtils.getToolCallId(p), part: p };
+        const previous = result[result.length - 1];
+        if (previous?.kind === 'tasks') {
+          previous.tasks.push(task);
+        } else {
+          result.push({ kind: 'tasks', tasks: [task] });
+        }
+        continue;
+      }
       if (toolName === 'ap_remember') {
         const memory = (
           p.input as { memory?: string } | undefined
@@ -376,6 +387,10 @@ export type MessageBlock =
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'memory-saved'; memory: string }
   | { kind: 'batch-progress'; data: BatchProgressData }
+  | {
+      kind: 'tasks';
+      tasks: { toolCallId: string; part: AnyToolPart }[];
+    }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }
   | {

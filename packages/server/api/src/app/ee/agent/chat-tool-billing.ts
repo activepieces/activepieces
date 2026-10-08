@@ -1,4 +1,4 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { AgentConversation, AgentTurnModel, chatBilling, ChatToolCall, isAppSumoCreditedPlan, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
@@ -14,9 +14,16 @@ function latestTurnToolCalls({ messages }: { messages: PersistedAgentMessage[] }
     const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
     return turn.flatMap((message) => message.parts.flatMap((part) =>
         part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.COMPLETED
-            ? [{ toolName: part.toolName, output: part.output }]
+            ? [{ toolName: part.toolName, output: part.output }, ...(part.toolName === TASK_TOOL_NAME ? taskToolCalls(part.output) : [])]
             : [],
     ))
+}
+
+function taskToolCalls(output: unknown): ChatToolCall[] {
+    if (!isObject(output) || !Array.isArray(output['billedToolCalls'])) {
+        return []
+    }
+    return output['billedToolCalls'].flatMap((call) => isObject(call) && typeof call['toolName'] === 'string' ? [{ toolName: call['toolName'], output: call['output'] }] : [])
 }
 
 function countBillableToolCallsInLatestTurn({ messages }: { messages: PersistedAgentMessage[] }): number {
@@ -98,3 +105,5 @@ type ChargeForLatestTurnParams = {
     answeredBy?: AgentTurnModel
     log: FastifyBaseLogger
 }
+
+const TASK_TOOL_NAME = 'ap_run_task'
