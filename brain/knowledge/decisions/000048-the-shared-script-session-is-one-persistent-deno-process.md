@@ -28,6 +28,8 @@ The sandbox interface (`run` / `setGlobal` / `dispose`) is unchanged, so callers
 
 **Globals are sent once under concurrency via an in-flight promise.** `sentGlobals` holds, per key, the value sent **and the promise of that send**, so concurrent `syncGlobals` callers await the one transfer instead of each re-serializing the step output. A new value (different reference) supersedes it with a fresh send; a failed send is dropped so the next run retries rather than treating a never-arrived global as present. Record-after-await alone is wrong — it lets every concurrent caller re-send.
 
+**A long-lived child needs pipe hardening the one-shot path didn't.** `child.stdin` must have its own `'error'` listener: an unhandled `'error'` on the stdin pipe (an EPIPE when the child dies mid-write) is an uncaught exception that crashes the whole engine, not just the run — the `child.on('error')` listener does not catch pipe errors. `stdout`/`stderr` get `setEncoding('utf8')` so a multibyte character split across chunk boundaries is decoded whole instead of becoming `�` in the returned result (the per-chunk `toString()` in the one-shot path has the same latent bug, harmless there because it writes once). And `spawnDeno` removes its temp `DENO_DIR` if writing `main.mjs` fails, since no child was created to trigger the close-time cleanup.
+
 ## Key files
 
 - `packages/core/utils/src/lib/deno.ts` — `deno.createSession` (the process + protocol), `buildSessionProgram` (the child program)

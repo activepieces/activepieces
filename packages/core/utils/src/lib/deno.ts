@@ -190,8 +190,6 @@ export const deno = {
             failAllPending(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: '', stderr: capturedStderr }))
         })
 
-        // An unhandled 'error' on the stdin pipe (e.g. EPIPE when the child dies mid-write)
-        // is an uncaught exception that would crash the engine. Fail the session instead.
         child.stdin.on('error', (error) => {
             child.kill('SIGKILL')
             failAllPending(sandboxError.build({ error: `Deno session stdin error: ${error.message}`, stdout: '', stderr: capturedStderr }))
