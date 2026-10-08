@@ -42,6 +42,14 @@ const ViewRelease = lazyWithRetry(
   () => import('./project-release/view-release'),
   'view-release',
 );
+const BillingManagePage = lazyWithRetry(
+  () => import('./billing').then((m) => ({ default: m.BillingManagePage })),
+  'billing-manage',
+);
+const BillingCheckoutPage = lazyWithRetry(
+  () => import('./billing/checkout').then((m) => ({ default: m.BillingCheckoutPage })),
+  'billing-checkout',
+);
 const RunsPage = lazyWithRetry(
   () => import('./runs').then((m) => ({ default: m.RunsPage })),
   'runs',
@@ -107,6 +115,30 @@ const agentEditorElement = (
 );
 
 export const projectRoutes = [
+  ...ProjectRouterWrapper({
+    path: '/billing',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Billing">
+          <SuspenseWrapper>
+            <BillingManagePage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/billing/checkout',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Checkout">
+          <SuspenseWrapper>
+            <BillingCheckoutPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleAgent,
     element: agentEditorElement,
