@@ -187,7 +187,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             imageAvailable: !forTask && actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
             imageEditAvailable: !forTask && !isNil(imageModelId),
             emailAvailable: emailEnabled,
-            agentsAvailable,
+            agentsAvailable: !forTask && agentsAvailable,
             tasksAvailable: !forTask && tasksAvailable,
             tasks: conversationTasks,
             userEmail: runUserEmail,

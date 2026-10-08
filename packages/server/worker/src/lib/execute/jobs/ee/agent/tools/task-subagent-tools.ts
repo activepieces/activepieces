@@ -1,5 +1,5 @@
 import { isNil, isObject, omit, tryCatch } from '@activepieces/core-utils'
-import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SubagentActivity, SubagentTaskArtifact, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SkillSurface, SubagentActivity, SubagentTaskArtifact, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
@@ -52,7 +52,6 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
     const phaseState: { phase: AgentPhase } = { phase: 'build' }
     const taskTools = {
         ...workerTools,
-        ...taskGuideTool({ guides, mainGuideTool: workerTools[GUIDE_TOOL_NAME] }),
         ...finishTool(finish),
     }
     const turnParams: RunAgentTurnParams = {
@@ -67,6 +66,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
         log,
         creditsLeft: creditsLeftFor(progressId),
         stopWhen: [isLoopFinished(), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
+        skills: { surface: TASK_SKILL_SURFACE, guides },
         sinks: {
             drainStream: async (result) => {
                 await result.consumeStream()
@@ -77,7 +77,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
     }
     const workTurn = await workUntilSettled({ title, turnParams, finished: () => !isNil(finish.result) })
     const turn = isNil(finish.result) && endedCleanly({ turn: workTurn, abortSignal })
-        ? await continueTurn({ title, turnParams, previous: workTurn, request: REPORT_REQUEST, overrides: { tools: finishTool(finish), allToolNames: [TASK_COMPLETION_TOOL_NAME], stepCeiling: 1 } })
+        ? await continueTurn({ title, turnParams, previous: workTurn, request: REPORT_REQUEST, overrides: { tools: finishTool(finish), allToolNames: [TASK_COMPLETION_TOOL_NAME], stepCeiling: 1, skills: undefined } })
         : workTurn
     const result = finish.result ?? fallbackResult(turn)
     const activity = finalActivity({ title, turn, result, startedAt })
@@ -192,30 +192,6 @@ function outOfBudget(turn: AgentTurnResult): boolean {
     return turn.creditsExhausted || turn.budgetExceeded
 }
 
-function taskGuideTool({ guides, mainGuideTool }: { guides: Record<string, string>, mainGuideTool: ToolSet[string] | undefined }): ToolSet {
-    if (isNil(mainGuideTool)) {
-        return {}
-    }
-    const loaded = new Set<string>()
-    return {
-        [GUIDE_TOOL_NAME]: tool({
-            description: mainGuideTool.description,
-            inputSchema: z.object({ topic: z.string().describe('Which guide to load') }),
-            execute: async ({ topic }) => {
-                const guide = guides[topic]
-                if (isNil(guide)) {
-                    return `No guide found for "${topic}".`
-                }
-                if (loaded.has(topic)) {
-                    return `You already loaded the "${topic}" guide earlier in this task. Re-read it above instead of reloading.`
-                }
-                loaded.add(topic)
-                return guide
-            },
-        }),
-    }
-}
-
 function finishTool(finish: { result?: TaskResult }): ToolSet {
     return {
         [TASK_COMPLETION_TOOL_NAME]: tool({
@@ -320,7 +296,7 @@ const STATUS_BY_RESULT: Record<TaskResult['status'], FinishAgentTaskRequest['sta
 }
 
 const TASK_TOOL_NAME = 'ap_run_task'
-const GUIDE_TOOL_NAME = 'ap_load_guide'
+const TASK_SKILL_SURFACE: SkillSurface = 'CHAT'
 const REPORT_REQUEST = `You stopped without reporting. Call ${TASK_COMPLETION_TOOL_NAME} now with your result.`
 const CONTINUE_REQUEST = 'You were cut off. Continue from where you stopped.'
 const MAX_CONTINUATIONS = 2

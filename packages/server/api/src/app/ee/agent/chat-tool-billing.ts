@@ -14,7 +14,7 @@ function latestTurnToolCalls({ messages }: { messages: PersistedAgentMessage[] }
     const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
     return turn.flatMap((message) => message.parts.flatMap((part) =>
         part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.COMPLETED
-            ? [{ toolName: part.toolName, output: part.output }, ...taskToolCalls(part.output)]
+            ? [{ toolName: part.toolName, output: part.output }, ...(part.toolName === TASK_TOOL_NAME ? taskToolCalls(part.output) : [])]
             : [],
     ))
 }
@@ -105,3 +105,5 @@ type ChargeForLatestTurnParams = {
     answeredBy?: AgentTurnModel
     log: FastifyBaseLogger
 }
+
+const TASK_TOOL_NAME = 'ap_run_task'

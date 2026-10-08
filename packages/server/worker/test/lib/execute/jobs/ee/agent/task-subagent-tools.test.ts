@@ -191,21 +191,21 @@ describe('createTaskSubagentTools', () => {
         expect(result).toMatchObject({ status: 'done', summary: 'Saved on retry.' })
     })
 
-    it('gives every task its own guides, so a guide the main chat loaded still reaches the task', async () => {
-        const guideResults: unknown[] = []
-        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
-            guideResults.push(await params.tools['ap_load_guide'].execute?.({ topic: 'build_flow' }, EXECUTION_OPTIONS))
-            guideResults.push(await params.tools['ap_load_guide'].execute?.({ topic: 'build_flow' }, EXECUTION_OPTIONS))
-            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
-            return turnResult()
-        })
-        const mainGuide = tool({ description: 'Load a guide', inputSchema: z.object({ topic: z.string() }), execute: async () => 'You already loaded the "build_flow" guide earlier in this turn' })
-        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: { ...toolSet(['ap_build_flow']), ap_load_guide: mainGuide } })
+    it('loads its guides as skills, the way the main chat does, and drops them for the report-only turn', async () => {
+        runAgentTurn
+            .mockResolvedValueOnce(turnResult())
+            .mockImplementationOnce(async (params: { tools: ToolSet }) => {
+                await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+                return turnResult()
+            })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })
 
         await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
 
-        expect(guideResults[0]).toBe('BUILD FLOW GUIDE')
-        expect(guideResults[1]).toEqual(expect.stringContaining('earlier in this task'))
+        const [workTurn, reportTurn] = runAgentTurn.mock.calls.map(([params]) => params)
+        expect(workTurn.skills).toEqual({ surface: 'CHAT', guides: BASE_PARAMS.guides })
+        expect(reportTurn.skills).toBeUndefined()
+        expect(reportTurn.allToolNames).toEqual([TASK_COMPLETION_TOOL_NAME])
     })
 
     it('never gives a task the tools that create, change or publish saved agents', async () => {

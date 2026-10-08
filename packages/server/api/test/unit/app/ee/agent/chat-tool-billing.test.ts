@@ -80,6 +80,20 @@ describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
         expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
     })
 
+    it('never bills inner calls reported by a tool that is not a task', () => {
+        const connectedPart: PersistedAgentPart = {
+            type: PersistedAgentPartType.TOOL_CALL,
+            toolCallId: 'mcp-1',
+            toolName: 'mcp__attio__list_records',
+            input: {},
+            status: PersistedToolCallStatus.COMPLETED,
+            output: { billedToolCalls: [{ toolName: 'ap_execute_action', output: {} }, { toolName: 'ap_web_search', output: {} }] },
+        }
+        const messages = [user('list them'), assistant([connectedPart])]
+
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
     it('bills nothing when every billable call errored', () => {
         const messages = [
             user('do it'),
