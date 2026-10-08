@@ -1,6 +1,5 @@
 import {
   createPiece,
-  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 
@@ -16,7 +15,7 @@ export const bubble = createPiece({
   displayName: 'Bubble',
   description: 'No-code platform for web and mobile apps',
 
-  auth: PieceAuth.None(),
+  auth: bubbleAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bubble.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
