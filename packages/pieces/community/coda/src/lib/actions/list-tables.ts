@@ -10,7 +10,7 @@ export const listTablesAction = createAction({
 	classification: 'SEARCH',
 	displayName: 'List Table(s)',
 	description: 'List tables in a selected document.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'List the tables in a Coda doc, up to a caller-specified maximum, returning each table reference. Use to discover available tables and their IDs before reading or writing rows. Read-only and idempotent.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
@@ -23,13 +23,16 @@ export const listTablesAction = createAction({
 	outputSchema: listTablesActionOutputSchema,
 	async run(context) {
 		const { docId, max } = context.propsValue;
+		if (!Number.isInteger(max) || max < 1) {
+			throw new Error('Max Tables must be a whole number of 1 or more.');
+		}
 		const client = codaClient(context.auth);
 
 		const allTables: CodaTableReference[] = [];
 		let nextPageToken: string | undefined = undefined;
 
 		do {
-			const response = await client.listTables(docId as string, {
+			const response = await client.listTables(docId, {
 				limit: 100,
 				sortBy: 'name',
 				tableTypes: 'table',

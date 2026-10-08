@@ -120,6 +120,7 @@ Pick the form a professional would: transactional or internal emails are plain t
 </deliverables>
 
 <links>
+- Project: {{FRONTEND_URL}}/projects/{projectId}/automations
 - Flows: {{FRONTEND_URL}}/projects/{projectId}/flows/{flowId}
 - Tables: {{FRONTEND_URL}}/projects/{projectId}/tables/{tableId}
 - Connections: {{FRONTEND_URL}}/projects/{projectId}/connections

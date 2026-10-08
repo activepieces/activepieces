@@ -13,14 +13,12 @@ describe('a turn in skills mode', () => {
         const model = wrappedSearchThenAnswer()
 
         const turn = await runAgentTurn({
-            model,
-            provider: AIProviderName.ANTHROPIC,
+            models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
             systemPrompt: 'You are a test agent.',
             messages: [{ role: 'user', content: 'research this' }],
             tools: { ...fillerTools(), ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }) },
             allToolNames: [...Object.keys(fillerTools()), 'ap_web_search'],
             tier: TIER,
-            modelId: TIER.modelId,
             phaseState: { phase: 'discovery' },
             abortSignal: new AbortController().signal,
             log: SILENT_LOG,
@@ -106,7 +104,7 @@ describe('repairing a call in skills mode', () => {
         await runSkillsTurn({ model, search })
 
         expect(model.doGenerateCalls.length).toBe(1)
-        expect(model.doGenerateCalls[0]?.responseFormat).toEqual(expect.objectContaining({ type: 'json' }))
+        expect(model.doGenerateCalls[0]?.responseFormat).toBeUndefined()
         expect(search).toHaveBeenCalledWith({ query: '42' }, expect.objectContaining({ toolCallId: 'direct-1' }))
     })
 
@@ -144,14 +142,12 @@ describe('the build phase in skills mode', () => {
         const model = scriptedModel({ toolCalls: [toolCall] })
         const phaseState: { phase: 'discovery' | 'build' } = { phase: 'discovery' }
         await runAgentTurn({
-            model,
-            provider: AIProviderName.ANTHROPIC,
+            models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
             systemPrompt: 'You are a test agent.',
             messages: [{ role: 'user', content: 'build it' }],
             tools: fillerTools(),
             allToolNames: Object.keys(fillerTools()),
             tier: TIER,
-            modelId: TIER.modelId,
             phaseState,
             abortSignal: new AbortController().signal,
             log: SILENT_LOG,
@@ -182,8 +178,7 @@ describe('the build phase in skills mode', () => {
 
 async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, search: () => Promise<typeof SEARCH_RESULT> }): Promise<void> {
     await runAgentTurn({
-        model,
-        provider: AIProviderName.ANTHROPIC,
+        models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'research this' }],
         tools: {
@@ -193,7 +188,6 @@ async function runSkillsTurn({ model, search }: { model: MockLanguageModelV3, se
         },
         allToolNames: [...Object.keys(fillerTools()), 'ap_web_search', 'ap_research_pieces'],
         tier: TIER,
-        modelId: TIER.modelId,
         phaseState: { phase: 'discovery' },
         abortSignal: new AbortController().signal,
         log: SILENT_LOG,
