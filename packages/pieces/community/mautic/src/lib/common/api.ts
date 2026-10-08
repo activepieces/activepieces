@@ -637,107 +637,6 @@ async function batchRescheduleContactCampaignEvents({
 	return response.body;
 }
 
-async function exportCampaign({
-	auth,
-	id,
-}: {
-	auth: MauticAuthValue;
-	id: string;
-}): Promise<MauticRecord> {
-	const response = await mauticClient.request<unknown>({
-		auth,
-		method: HttpMethod.GET,
-		path: `campaigns/export/${id}`,
-	});
-	return { export: response.body };
-}
-
-async function importCampaign({
-	auth,
-	data,
-}: {
-	auth: MauticAuthValue;
-	data: MauticRecord[];
-}): Promise<MauticRecord> {
-	const response = await mauticClient.request<unknown>({
-		auth,
-		method: HttpMethod.POST,
-		path: 'campaigns/import',
-		body: data,
-	});
-	return { messages: response.body };
-}
-
-async function sendEmailToContact({
-	auth,
-	id,
-	contactId,
-	body,
-}: {
-	auth: MauticAuthValue;
-	id: string;
-	contactId: string;
-	body: MauticRecord;
-}): Promise<MauticRecord> {
-	const response = await mauticClient.request<MauticRecord>({
-		auth,
-		method: HttpMethod.POST,
-		path: `emails/${id}/contact/${contactId}/send`,
-		body,
-	});
-	return response.body;
-}
-
-async function sendSegmentEmail({
-	auth,
-	id,
-	body,
-}: {
-	auth: MauticAuthValue;
-	id: string;
-	body: MauticRecord;
-}): Promise<MauticRecord> {
-	const response = await mauticClient.request<MauticRecord>({
-		auth,
-		method: HttpMethod.POST,
-		path: `emails/${id}/send`,
-		body,
-	});
-	return response.body;
-}
-
-async function recordEmailReply({
-	auth,
-	trackingHash,
-}: {
-	auth: MauticAuthValue;
-	trackingHash: string;
-}): Promise<MauticRecord> {
-	const response = await mauticClient.request<MauticRecord>({
-		auth,
-		method: HttpMethod.POST,
-		path: `emails/reply/${trackingHash}`,
-	});
-	return response.body;
-}
-
-async function sendSmsToContact({
-	auth,
-	id,
-	contactId,
-}: {
-	auth: MauticAuthValue;
-	id: string;
-	contactId: string;
-}): Promise<MauticRecord> {
-	const response = await mauticClient.request<MauticRecord>({
-		auth,
-		method: HttpMethod.GET,
-		path: `smses/${id}/contact/${contactId}/send`,
-	});
-	return response.body;
-}
-
 async function listFormSubmissions({
 	auth,
 	formId,
@@ -1132,12 +1031,6 @@ export const mauticApi = {
 	listContactCampaignEvents,
 	rescheduleContactCampaignEvent,
 	batchRescheduleContactCampaignEvents,
-	exportCampaign,
-	importCampaign,
-	sendEmailToContact,
-	sendSegmentEmail,
-	recordEmailReply,
-	sendSmsToContact,
 	listFormSubmissions,
 	getFormSubmission,
 	deleteFormItems,

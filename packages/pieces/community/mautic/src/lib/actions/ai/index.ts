@@ -8,10 +8,8 @@ import { mauticBatchRescheduleContactCampaignEventsAction } from './campaigns/ba
 import { mauticCloneCampaignAction } from './campaigns/clone-campaign';
 import { mauticCreateCampaignAction } from './campaigns/create-campaign';
 import { mauticDeleteCampaignAction } from './campaigns/delete-campaign';
-import { mauticExportCampaignAction } from './campaigns/export-campaign';
 import { mauticGetCampaignAction } from './campaigns/get-campaign';
 import { mauticGetCampaignEventAction } from './campaigns/get-campaign-event';
-import { mauticImportCampaignAction } from './campaigns/import-campaign';
 import { mauticListCampaignContactEventsAction } from './campaigns/list-campaign-contact-events';
 import { mauticListCampaignContactsAction } from './campaigns/list-campaign-contacts';
 import { mauticListCampaignEventsAction } from './campaigns/list-campaign-events';
@@ -75,9 +73,6 @@ import { mauticCreateEmailAction } from './emails/create-email';
 import { mauticDeleteEmailAction } from './emails/delete-email';
 import { mauticGetEmailAction } from './emails/get-email';
 import { mauticListEmailsAction } from './emails/list-emails';
-import { mauticRecordEmailReplyAction } from './emails/record-email-reply';
-import { mauticSendEmailToContactAction } from './emails/send-email-to-contact';
-import { mauticSendSegmentEmailAction } from './emails/send-segment-email';
 import { mauticUpdateEmailAction } from './emails/update-email';
 import { mauticCreateFieldAction } from './fields/create-field';
 import { mauticDeleteFieldAction } from './fields/delete-field';
@@ -133,11 +128,6 @@ import { mauticDeletePointGroupAction } from './point-groups/delete-point-group'
 import { mauticGetPointGroupAction } from './point-groups/get-point-group';
 import { mauticListPointGroupsAction } from './point-groups/list-point-groups';
 import { mauticUpdatePointGroupAction } from './point-groups/update-point-group';
-import { mauticCreatePointInsightAction } from './point-insights/create-point-insight';
-import { mauticDeletePointInsightAction } from './point-insights/delete-point-insight';
-import { mauticGetPointInsightAction } from './point-insights/get-point-insight';
-import { mauticListPointInsightsAction } from './point-insights/list-point-insights';
-import { mauticUpdatePointInsightAction } from './point-insights/update-point-insight';
 import { mauticCreatePointTriggerAction } from './point-triggers/create-point-trigger';
 import { mauticDeletePointTriggerAction } from './point-triggers/delete-point-trigger';
 import { mauticDeletePointTriggerEventsAction } from './point-triggers/delete-point-trigger-events';
@@ -182,7 +172,6 @@ import { mauticCreateSmsAction } from './text-messages/create-sms';
 import { mauticDeleteSmsAction } from './text-messages/delete-sms';
 import { mauticGetSmsAction } from './text-messages/get-sms';
 import { mauticListSmsesAction } from './text-messages/list-smses';
-import { mauticSendSmsToContactAction } from './text-messages/send-sms-to-contact';
 import { mauticUpdateSmsAction } from './text-messages/update-sms';
 import { mauticCreateTweetAction } from './tweets/create-tweet';
 import { mauticDeleteTweetAction } from './tweets/delete-tweet';
@@ -263,22 +252,16 @@ export const mauticAiActions = [
 	mauticListCampaignContactEventsAction,
 	mauticRescheduleContactCampaignEventAction,
 	mauticBatchRescheduleContactCampaignEventsAction,
-	mauticExportCampaignAction,
-	mauticImportCampaignAction,
 	mauticListEmailsAction,
 	mauticGetEmailAction,
 	mauticCreateEmailAction,
 	mauticUpdateEmailAction,
 	mauticDeleteEmailAction,
-	mauticSendEmailToContactAction,
-	mauticSendSegmentEmailAction,
-	mauticRecordEmailReplyAction,
 	mauticListSmsesAction,
 	mauticGetSmsAction,
 	mauticCreateSmsAction,
 	mauticUpdateSmsAction,
 	mauticDeleteSmsAction,
-	mauticSendSmsToContactAction,
 	mauticListNotesAction,
 	mauticGetNoteAction,
 	mauticCreateNoteAction,
@@ -396,11 +379,6 @@ export const mauticAiActions = [
 	mauticDeletePointTriggerAction,
 	mauticListPointTriggerEventTypesAction,
 	mauticDeletePointTriggerEventsAction,
-	mauticListPointInsightsAction,
-	mauticGetPointInsightAction,
-	mauticCreatePointInsightAction,
-	mauticUpdatePointInsightAction,
-	mauticDeletePointInsightAction,
 	mauticListFilesAction,
 	mauticUploadFileAction,
 	mauticDeleteFileAction,

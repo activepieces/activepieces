@@ -195,18 +195,3 @@ export const mauticListEmailsOutputSchema: OutputSchema = {
 		{ key: 'emails', label: 'Emails', labelKey: 'name', listItems: emailFields },
 	],
 };
-
-export const mauticSendEmailToContactOutputSchema: OutputSchema = {
-	fields: [
-		{ key: 'success', label: 'Success', format: 'boolean' },
-		{ key: 'failed', label: 'Failed' },
-	],
-};
-
-export const mauticSendSegmentEmailOutputSchema: OutputSchema = {
-	fields: [
-		{ key: 'success', label: 'Success', format: 'number' },
-		{ key: 'sentCount', label: 'Sent Count', format: 'number' },
-		{ key: 'failedRecipients', label: 'Failed Recipients', format: 'number' },
-	],
-};
