@@ -158,7 +158,7 @@ describe('the build phase in skills mode', () => {
     }
 
     it('turns thinking on once the flow building skill is loaded', async () => {
-        const result = await phaseAfter({ toolCall: { id: 'load-1', toolName: 'ap_load_skill', input: '{"skill":"flow_building"}' } })
+        const result = await phaseAfter({ toolCall: { id: 'load-1', toolName: 'ap_load_skill', input: '{"skills":["flow_building"]}' } })
         expect(result.phase).toBe('build')
         expect(result.secondStepThinking).toMatchObject({ type: 'enabled' })
     })

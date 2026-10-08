@@ -1,208 +1,82 @@
 # Guide: Build an automation
 
-Load this right before you build, after discovery is done and the needed connections are selected.
+## The build path
+1. **Discover** with the `discovery` skill: infer the business logic (categories, routing, thresholds, destinations, wording) from their company, their real data (`ap_explore_data`) and market practice. Don't ask the user for it; every assumption becomes an editable line in the closing brief. If the flow is recurring and reads persistent data, decide now how run N+1 avoids reprocessing run N.
+2. **Research:** `ap_research_pieces({pieceNames, forIntent})` for the apps (missing app → `http_fallback` skill), pick from `recommendedActions`, then ONE `ap_get_piece_props({pieceName, actionName, auth})` per action. It resolves dropdowns and returns `requiredInputs` plus a ready `exampleInput`. Fire independent calls together in one step.
+3. **Handoff:** one-line recap, make sure each app has a connection the user picked (`ap_show_connection_picker`), choose sensible defaults, and only ask (`ap_show_questions`) about a single make-or-break choice you truly can't infer.
+4. **Build** (below), **validate**, **test**, **reflect**, then share the link and ask "Turn it on?".
 
-Open with ONE thinking-status that frames the whole build in a warm sentence — e.g. "I'll wire up the trigger, connect the apps, and double-check it satisfies your goal before handing it over." Then move into the build: brief real-text check-ins between phases are welcome to keep the user in the loop (see `<operating_principles>`), but lean on the build card for the detailed play-by-play rather than narrating every step.
+Most flows are 2–5 linear steps. Add routers, loops or stored state only when the goal needs them (`control_flow`, `state` skills). Reprocessing safety on a recurring flow is never optional: load `build_flow_advanced` for dedup patterns, formulas and runtime limits. Existing flows (inspect, rename, pause, delete) are in `flow_management`.
 
-## Publish a live build plan (the build card)
-The moment you commit to building — right after loading this skill — call `ap_set_build_plan` with `phase: 'detecting'`, a short `flowName`, a bold `tagline`, a business-relevant `iconName`, and the full list of steps you intend to build, each `status: 'pending'`. This puts a single contained build card in the chat that celebrates getting the task off the user's plate, so you do NOT need prose progress — the card IS the progress.
+## The build card
+Right after loading this skill, for a brand-new recurring automation only (never for one-time tasks, lookups or small edits), call `ap_set_build_plan` (silent, no thinking status) with `phase: 'detecting'`, a short `flowName`, a bold `tagline` about the exact busywork it kills (about 7 words, no period, e.g. "No more chasing invoices by hand"), a fitting `iconName` (`mail`, `dollar-sign`, `users`, `calendar`, `bot`, `bar-chart`, `package`, `message-square`…) and every step as `pending`. The card is the progress, so don't narrate each step in text.
+- Keep the same `tagline`, `iconName` and step `id`s on every update so the card updates in place.
+- Send each update alongside the next step's real tool calls; a step that only updates the card costs a full round trip. Batch only states you already know: a step's `done`/`failed` and `phase: 'done'`/`'failed'` go out after the result that decides them has come back, never in the same step as the call that produces it (the final `done` can ride with your closing step).
+- Set `flowId` as soon as the build returns it. One-shot builds: flip steps to `done`/`failed` as you validate them (`phase: 'building'`). Incremental builds: `in_progress` before adding a step, `done` after it validates.
+- `phase: 'testing'` while testing, `phase: 'done'` with the `flowId` when verified (reveals Open / Test / Run), `phase: 'failed'` on a genuine give-up.
 
-The `tagline` is the hero of the card: a big, bold, fun marketing line about the *specific* busywork this automation kills — casual and celebratory, ~7 words max, no period, written for THIS user's task (not generic). Think "Say goodbye to copy-pasting leads", "No more chasing invoices by hand", "Never sort support emails again". Reuse the **same** tagline on every later `ap_set_build_plan` call so the card doesn't reset.
+Open the build with ONE thinking status that frames the whole job; a short text line between phases is fine.
 
-The `iconName` is the doodle shown beside the tagline — pick the one icon that best fits the business case so the card feels made for this task: e.g. `mail` for email triage, `dollar-sign`/`credit-card` for invoices or payments, `users` for CRM/leads, `calendar`/`calendar-clock` for scheduling, `bot` for AI work, `bar-chart`/`pie-chart` for reporting, `truck`/`package` for orders/logistics, `message-square` for chat. Reuse the **same** `iconName` across updates.
+## Prefer built-in pieces (no connection)
+Map generic words straight to these; registry search often misses them.
 
-Then keep that one card updated as you work (reuse the same step `id`s so it updates in place, never resets):
-- Set `flowId` the instant `ap_create_flow` or `ap_build_flow` returns it.
-- **One-shot (`ap_build_flow`):** publish the full plan first (all `pending`); after the build returns, as you run the mandatory per-step `ap_validate_step_config` pass, call `ap_set_build_plan` flipping each step to `done` (or `failed`) so the checklist animates step-by-step even though construction was one call. Use `phase: 'building'`.
-- **Incremental (`ap_create_flow` + `ap_add_step`):** set a step to `in_progress` right before you add it and `done` after it validates.
-- While running test cases, use `phase: 'testing'`.
-- When the automation is built and verified, call `ap_set_build_plan` with `phase: 'done'` and the `flowId` — this reveals the Open / Test / Run actions on the card. On a genuine give-up, use `phase: 'failed'`.
+| User says | Piece |
+|---|---|
+| "a form" | `@activepieces/piece-forms` (Human Input) |
+| "every day/hour" | `@activepieces/piece-schedule` |
+| "fetch a URL / call an API" | `@activepieces/piece-http` (`http_fallback` skill) |
+| "webhook" | `@activepieces/piece-webhook` |
+| "save/track data here" | `@activepieces/piece-tables` (`tables` skill) |
+| "remember/count/dedup" | `@activepieces/piece-store` (`state` skill) |
+| "ask AI/classify/extract" | `@activepieces/piece-ai`, never a vendor AI piece (`ai` skill) |
+| "human sign-off" / "wait" / "split work" | `piece-approval` / `piece-delay` / `piece-subflows` |
 
-`ap_set_build_plan` is silent and internal (no thinking-status). Keep "one emoji per message max" — the celebration is the card, not text.
+## Order of work
+- **Simple or looped flows:** `ap_build_flow` (for steps inside a loop set `parentStepName` to the loop and `stepLocationRelativeToParent: 'INSIDE_LOOP'`).
+- **Branches or many steps:** `ap_create_flow` → `ap_update_trigger` → `ap_add_step` per action.
+- `ap_build_flow` does not validate: run `ap_validate_step_config` on the trigger and every step, fix with `ap_update_step`/`ap_update_trigger`, then `ap_validate_flow`. Validate again after every later mutation.
 
-## Assume and personalize the business logic — don't ask for it
-You are the domain expert: invent the business logic the user would otherwise be quizzed on — the **categories** to classify into, the **routing** (who/what gets each case), **thresholds**, **destinations**, **message wording**, **which fields matter** — and build with it. Don't ask the user to supply these. Ground each assumption in context so it fits *this* user, not a generic template:
-- **Their company** — infer from the email domain / brand / connected apps (and look it up if web access is on). A SaaS, a law firm, and a store need different categories and routing.
-- **Their real data** — `ap_explore_data` the inbox/sheet/channel/table to read the actual categories, people, columns, and shapes, and build around what you find.
-- **Their existing setup** — reuse the channels, tables, teammates, and conventions already present (`ap_list_across_projects`).
-- **Market practice** — fall back to well-known best practice for the domain (e.g. standard support-triage buckets) when context is thin.
-Every assumption you make becomes an editable line in the closing brief (below) — that's where the user changes it, not up front.
+## Field values and wiring
+- Use dropdown `value` (the ID), never `label`. Multi-select takes an array of IDs. Resolve parents before children, and dependent chains (spreadsheet → sheet → column) with `ap_resolve_property_chain`: it stops at the first field without a `selectedValue`, so after each pick call it again with every known value as `selectedValue`, never one field at a time.
+- Spreadsheet columns are letters (A, B, … AA), never header names.
+- Pass the connection's raw `externalId` as `auth` on every build call. Reference outputs as `{{step_1['output'].field}}` (a failed step's error: `{{step_1['error'].message}}`); use the output paths `ap_get_piece_props` lists.
+- Map only the fields a step needs, never a whole upstream object; large values go by URL/reference.
+- When you change a step's data source, re-resolve its fields and re-map every downstream reference.
+- Never guess property names; if a step is rejected with "Unknown properties", call `ap_get_piece_props` and retry. `custom_api_call` takes a relative URL.
+- Fill every column when writing to a sheet or table; prefer batch actions over per-row calls.
 
-## Most automations are simple — don't over-build
-The majority are 2–5 linear steps: a schedule or form/webhook trigger and a couple of actions. Reach for routing/conditions, loops, or stored state ONLY when the goal genuinely needs them — adding them "to be safe" makes a flow harder to run and debug. Match the shape to the real requirement, nothing more. (Routing & loops: `ap_load_skill('control_flow')`; remembering data across runs: `ap_load_skill('state')`.)
+## Test until it actually works
+Valid is not working: a step can succeed with empty or wrong data.
+1. Run 1–3 realistic cases (a typical one plus an edge case, real data from `ap_explore_data` when possible) with `ap_test_flow` and `triggerTestData`; `ap_test_step` for one suspect step. Tests run real actions, so use safe data.
+2. Check the output, not the status (`ap_get_run`): every `{{…}}` resolved to real data and the result matches the goal. Fix and re-run until every case passes.
+3. Recurring flow over persistent data: run it twice on the same state. Run 2 must not redo run 1's work; identical output is the reprocessing bug.
+4. Mock trigger data proves the steps, not the live trigger. Say so, and ask the user to confirm with one real event.
+After 2 failed fixes on the same step, step back and try one structurally different approach; if that fails, say what's blocking and ask.
 
-**Exception — reprocessing safety is never "over-building".** The rule above does NOT license skipping an anti-reprocessing mechanism on a recurring flow that reads persistent data. That mechanism is required correctness (see the next section), not a "to be safe" extra — leaving it out is a silent bug, not a simpler flow.
+## Reflect, show, brief
+Before sharing, re-read the request: right trigger, every constraint present as a real step or filter, real field IDs, output where they wanted it, and (if recurring) an actual anti-reprocessing step. Fix gaps first.
+Then show each tested case as one line, `input → what the flow produced`, share the link, and close with the brief: the assumptions you made (each editable) and the obvious next improvements, with quick-reply chips for the top one or two.
 
-## A use case with several jobs is a solution: small flows in one folder
-Before you build, list the jobs in the request: intake, enrichment or processing, storage, reporting, approval, alerting. One job is one flow, as above. Two or more jobs, or a job several flows need, is a **solution**: build a folder of small flows, each doing one job, joined by subflows and Tables. Don't wait for the user to ask; most people don't know subflows exist. One big flow does every job in one place, so one failure breaks all of them and nobody can tell which part failed.
-
-Example: "when an order comes in by webhook, save it, and send me a daily summary" is three jobs:
-- **Receive orders** (webhook → Call Flow)
-- **Save order** (Callable Flow → Tables create)
-- **Daily order summary** (schedule → Tables find → message)
-
-All three go in an `Order intake` folder with an `Orders` table.
-
-**Shared work goes in one subflow.** When several entry points feed the same processing (a webhook and a form, two schedules, two apps), put that processing in ONE Callable subflow. Each entry flow then only receives its input and calls the subflow. Never copy the same steps into two flows: every later fix would have to be made twice. For example, "leads come from a webhook and a form; score each with AI and save it" is **Score and save lead** (Callable Flow → AI → Tables create), called by **Receive webhook lead** and **Receive form lead**.
+## Several jobs: a solution of small flows in one folder
+List the jobs in the request first: intake, processing, storage, reporting, approval, alerting. One job is one flow. Two or more jobs, or a job several flows need, is a **solution**: a folder of small flows, one job each, joined by subflows and Tables. Do this without being asked; one big flow breaks everywhere at once and hides which part failed.
+- Example: "when an order comes in by webhook, save it, and send me a daily summary" is **Receive orders** (webhook → Call Flow), **Save order** (Callable Flow → Tables create) and **Daily order summary** (schedule → Tables find → message), in an `Order intake` folder with an `Orders` table.
+- Work shared by several entry points (a webhook and a form, two schedules) goes in ONE Callable subflow that each entry flow calls. Never copy the same steps into two flows.
 
 How to build one:
-1. **Folder:** `ap_create_folder` with a name for the whole solution. Pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
-2. **Names:** name each flow for its one job, in plain words ("Save order", not "Flow 2" or "Order flow helper").
-3. **Order:** tables first, then subflows, then the flows that call them. Each step needs an id the previous one returned.
-4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow`, with `exampleData.sampleData` listing every input it takes, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read each input as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (that is empty at run time). Add a `returnResponse` step only if a caller needs data back.
-5. **Caller:** a `callFlow` step with `flowId` set to the subflow's **externalId** (the one `ap_build_flow` returned, not its flow id). Use `mode: "simple"` and send every key of the subflow's sample data in `flowProps.payload` as an object. Set `waitForResponse` only when the subflow has a Return Response step.
-6. **Tables steps:** `table_id` is the table's **externalId**. Form `values` are keyed by field externalId.
-7. **Check the whole solution:** after every flow passes its own checks, call `ap_validate_flow({folderName})`. Fix each issue it lists and run it again until it returns ✅. Use it as well to check whether an existing solution fits together, instead of inspecting flows by hand.
-8. **Build card:** one card for the whole solution. `flowName` is the solution name, there is one step per flow and table, and `flowId` is the entry flow.
+1. **Folder:** `ap_create_folder` with a name for the whole solution; pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
+2. **Names:** each flow named for its one job in plain words ("Save order", never "Flow 2").
+3. **Order:** tables, then subflows, then the flows that call them; each needs an id the previous one returned.
+4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow` with `exampleData.sampleData` listing every input, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read inputs as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (empty at run time). Add `returnResponse` only if a caller needs data back.
+5. **Caller:** a `callFlow` step with `flowId` = the subflow's **externalId** (from `ap_build_flow`, not its flow id), `mode: "simple"`, every sample-data key in `flowProps.payload` as an object, and `waitForResponse` only when the subflow returns a response.
+6. **Tables steps:** `table_id` is the table's **externalId**; form `values` are keyed by field externalId.
+7. **Check the whole solution:** once every flow passes its own checks, run `ap_validate_flow({folderName})` and fix what it lists until it returns ✅. Use it too to check an existing solution.
+8. **Build card:** one for the whole solution: `flowName` is the solution name, one step per flow and table, `flowId` the entry flow.
 
-Testing: a Call Flow only reaches a subflow that is published and turned on, so a caller's test run fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow`, using mock trigger data shaped the way a caller delivers it: `{"data": <its sample data>}`. Test the caller's steps before the Call Flow.
+Testing: a Call Flow only reaches a published subflow, so a caller's test fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow` and trigger data shaped `{"data": <its sample data>}`, and test the caller's steps before the Call Flow.
+Turning it on: one "Turn it on?" card for the whole solution; on yes, publish the subflows first and their callers last.
 
-Turning it on: one "Turn it on?" card for the whole solution. On yes, publish the subflows first and the flows that call them last.
+## Turn it on?
+Chat never publishes on its own. End every validated flow with one quick-reply card, "Turn it on?" ("Turn it on" / "Not yet"). Only a yes calls `ap_lock_and_publish({flowId})`. Never call a flow live, running or active unless publish succeeded; until then it's "a draft, not running yet". For other flows, report the status the tools show.
 
-## Recurring flows must not reprocess
-**Before you build, answer one question: does this run more than once, and does it read data that persists between runs?** If a scheduled/recurring flow reads a source that keeps its data (a sheet, a Table, an inbox, any record set), that source holds the SAME rows again on the next run. A flow shaped `read-all → act → done` will redo run N's work on run N+1 — re-sending, re-paying, re-notifying. This is the #1 silent logic bug: it validates fine, a single test run looks perfect, and the damage only appears on the second run.
-
-Worked failure: "summarize each employee's hours from my sheet and tell me what to pay them", on a weekly schedule. `read sheet → summarize → email` is correct for ONE week — but nothing marks anyone paid, so every week it re-pays everyone for hours already paid. Correct flow for the wrong problem. The fix below (Activepieces Tables ledger): read the sheet → drop rows whose key is already in a `Paid Log` table → pay only the new ones → record their keys in `Paid Log`.
-
-If the flow is recurring AND reads persistent data, commit to exactly ONE of these (each maps to a primitive the platform already has — don't hand-roll):
-- **A "new item" trigger that dedups for you** — prefer this when the source HAS such a trigger. Use its *New Record / New Row / New Email* trigger (Tables **New Record** is a real webhook; app polling triggers dedup via `lastPoll`/`lastItem`) instead of a schedule + a stateless "get all rows" read. The trigger fires once per new item and never re-sees old ones. (`ap_load_skill('tables')` / the app's triggers.)
-- **An Activepieces Tables ledger (dedup against a table you own)** — the default when the source is external or read-only (a Google Sheet, an inbox) and you should NOT mutate it, or when there's no new-item trigger. Create an AP Table (e.g. `Paid Log`, `Processed Orders`) that records the keys you've already handled. Each run: (1) read the source; (2) build a **stable dedup key** per item (e.g. `worker + shift date`, `order_id`, `message_id`); (3) `find-records` the ledger and keep only items whose key is NOT already there; (4) act on just those new items; (5) `create-records` their keys into the ledger so the next run skips them. This syncs "what's been done" into Activepieces and makes the flow idempotent without touching the user's source. `ap_load_skill('tables')`.
-- **A processed-flag filter + write-back** — when you DO own the source: read only unprocessed rows (`find-records`/"get rows" filtered on e.g. `status = pending` or `paid = false`), then after acting flip that field with `update-record`/update-row. Without the write-back the filter is meaningless.
-- **Delete or archive after processing** — remove/move the row once handled so the next read can't see it.
-- **A stored high-water mark** — persist the last-processed id/timestamp in **Store** (`ap_load_skill('state')`) and filter the read to items newer than it.
-
-Also reason through the rest of the cleanup surface, not just the happy path: a **stable dedup key** (so the same real-world item isn't counted as new after an edit), **partial-run recovery** (only mark an item done AFTER its action succeeds, so a mid-run crash reprocesses just the unfinished ones — put the mark/record step immediately after the action), and **ledger growth** (a dedup table grows forever — prune or archive old keys on a retention window if volume is high). Match the depth to the real volume; don't build a retention job for a table that gains 5 rows a week.
-
-Skipping this on a recurring-over-persistent-data flow is not allowed. If you genuinely can't determine a safe mechanism, that's one of the rare cases to ask the user via `ap_show_questions`.
-
-## Prefer the built-in pieces (no connection needed)
-Activepieces ships pieces that need no external app or connection; registry search often misses them (the form piece is literally named **Human Input**). For a generic ask, map the user's words → piece directly instead of asking them to name a third-party tool:
-
-| User says | Piece | What it is |
-|---|---|---|
-| "a form" | `@activepieces/piece-forms` (**Human Input**) | hosted web form trigger w/ shareable link |
-| "every day/hour", "cron" | `@activepieces/piece-schedule` | schedule triggers |
-| "webhook", "receive events" | `@activepieces/piece-webhook` | inbound webhook trigger |
-| "save/track data here" | `@activepieces/piece-tables` | built-in database — `ap_load_skill('tables')` |
-| "remember/count/dedup" | `@activepieces/piece-store` | key-value store — `ap_load_skill('state')` |
-| "ask AI/classify/extract" | `@activepieces/piece-ai` | native AI — use this, never the OpenAI/vendor piece — `ap_load_skill('ai')` |
-| "human sign-off" | `@activepieces/piece-approval` | pause for approve/reject |
-| "wait/pause" | `@activepieces/piece-delay` | delay step |
-| "split big work" | `@activepieces/piece-subflows` | call another flow |
-
-## CODE is the last resort — use inline expressions & conditions first
-Dropping a **CODE step** into a flow to filter, reshape, calculate, or format data is almost always the wrong first move — it's slower to build, opaque to a non-coder, and harder to debug. Walk this ladder and stop at the first rung that fits; only the last rung is code:
-1. **A native piece action** — anything that talks to an app or is a normal automation step.
-2. **A router condition** (`ROUTER`; `ap_load_skill('control_flow')`) — to *route/branch* on a value, using the structured `BranchOperator`s.
-3. **An inline formula expression** — to *derive, filter, format, or calculate* a value right inside a step's input. No extra step, runs instantly, and covers the large majority of "I'll just write a quick CODE step to massage this" cases.
-4. **A CODE step** — ONLY when none of the above fit: genuinely procedural multi-step logic, parsing the functions can't express, or a real npm library is needed.
-
-### Writing an inline formula expression
-Put it directly in a step's input value, wrapped EXACTLY like this (the wrapper is what makes it evaluate as a formula instead of a literal string):
-`ap-formula-v1::{ <expression> }::ap-formula-v1`
-Inside: call functions with `;`-separated args, double-quote string literals, and reference earlier steps with the normal `{{step['output'].field}}` syntax. Real examples:
-- Keep only open tickets → `ap-formula-v1::{filter_list({{trigger['output'].tickets}};"status";"open")}::ap-formula-v1`
-- Count rows → `ap-formula-v1::{count({{step_1['output'].rows}})}::ap-formula-v1`
-- Every email on one line → `ap-formula-v1::{join_list(pluck({{step_1['output'].users}};"email");", ")}::ap-formula-v1`
-- Sum a column → `ap-formula-v1::{sum({{step_1['output'].orders}};"amount")}::ap-formula-v1`
-- Label by threshold → `ap-formula-v1::{if({{step_1['output'].amount}} > 1000;"High value";"Standard")}::ap-formula-v1`
-- Format money / clean text → `ap-formula-v1::{format_currency({{step_1['output'].total}};"$")}::ap-formula-v1`, `ap-formula-v1::{titlecase({{trigger['output'].name}})}::ap-formula-v1`
-
-**Where formulas go:** use them in **free-text / value** inputs (a Store value, a message or email body, a field you type into). Do NOT put a formula in a **dropdown, connection, or option-picker** field — those need a resolved option id/value, and a formula string will fail validation.
-
-### The function vocabulary (~100 built-ins; args separated by `;`; for numeric comparisons use `>` `<` `>=` `<=`, and the `is_equal` function for equality — not a bare `=`)
-- **List** (reshape/filter — these replace most CODE steps): `filter_list(list;field;value)` · `sort_list(list;field;order)` · `pluck(list;field)` · `join_list(list;sep)` · `count(list)` · `sum(list;field)` · `average(list;field)` · `min_in_list`/`max_in_list(list;field)` · `deduplicate(list;field)` · `first_item`/`last_item(list)` · `item_at(list;i)` · `contains_item(list;value)` · `flatten(list)` · `reverse_list(list)` · `split_text_to_list(text;sep)`
-- **Logic**: `if(cond;then;else)` · `switch(value;k1;r1;…)` · `coalesce(a;b;…)` · `if_empty`/`if_null(value;fallback)` · `is_empty`/`is_not_empty(value)` · `is_equal(a;b)` · `and`/`or(a;b)` · `not(x)`
-- **Text**: `combine` · `uppercase`/`lowercase`/`titlecase` · `trim` · `replace(text;find;with)` · `split(text;sep;i)` · `contains(text;value)` · `starts_with`/`ends_with` · `extract_email`/`extract_url` · `truncate(text;n)` · `slug` · `length`
-- **Number**: `add`/`subtract`/`multiply`/`divide` · `round(n;decimals)` · `round_up`/`round_down` · `min`/`max` · `percentage(v;total)` · `format_number(n;decimals)` · `format_currency(n;symbol)` · `to_number` · `absolute` · `modulo`
-- **Date**: `format_date(date;fmt)` · `format_time` · `relative_time` · `add_days`/`subtract_days(date;n)` · `add_hours`/`add_minutes` · `days_between`/`hours_between` · `is_before`/`is_after`/`is_same_day` · `now()` · `today()` · `to_date(text)` · `start_of_day`/`end_of_day` · `start_of_month`/`end_of_month` · `get_year`/`get_month`/`get_day`/`get_day_of_week`
-
-Validate a formula input with `ap_validate_step_config` like any step, and confirm the resolved value with `ap_test_step`/`ap_test_flow` — a wrong field name resolves to empty, exactly like a `{{...}}` reference does.
-
-## Hard limits to design around
-| Limit | Value | If exceeded |
-|---|---|---|
-| Flow runtime | **600 s** active (Wait/Delay/Approval pauses don't count) | run times out |
-| Run log | ~25 MB (step inputs+outputs) | run truncates/fails |
-| Memory | ~1 GB | run crashes |
-| Webhook payload | 5 MB | rejected |
-| Store value | 512 KB/key | use Tables instead |
-
-A loop over thousands of items will blow 600 s — chunk it or split into sub-flows (`ap_load_skill('error_handling')`). Don't capture full payloads across many iterations (25 MB log). Hold large files by URL/reference, never inline base64.
-
-## Map only the fields a step needs — don't over-pull
-Wire the **specific fields** a step consumes, never an entire upstream output. A trigger or read step can emit a huge object (a full email with every header plus the raw body, an entire row set, a large API response); feeding that whole blob into an AI step or an email body bloats the model input and the run log and gets **truncated** — leaving the next step with unprocessable or cut-off data. Reference the exact fields instead (e.g. `{{trigger['output'].subject}}`, `{{trigger['output'].body_plain}}`, a single column — not the whole row). When you genuinely need to hand a large value downstream, pass it by URL/reference, never inline.
-
-## Order of work (lean on the build card; keep any interim text brief)
-- **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
-- **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
-- **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → test for real with cases (below) → reflect → `ap_manage_notes`.
-- Share the flow link, then finish per "Turn it on?" below. Never auto-publish, and never leave a validated flow ending on "open it to review".
-
-## Turn it on? — the one way every built flow ends
-Chat NEVER publishes on its own. A flow only runs once published, so once it validates (and passes its test, when a test ran), end with exactly one `ap_show_quick_replies` (or `ap_show_questions`) card: "Turn it on?" with chips like "Turn it on" / "Not yet". Only a yes publishes: call `ap_lock_and_publish({flowId})` right away, then say it is live. "Not yet" leaves it a draft.
-**Never say a flow you just built is live, running, active or turned on unless `ap_lock_and_publish` succeeded for it.** If publish returned an error, say so and fix it. Until then call it "a draft, not running yet". For a flow you did not just build, report the status the tools show (`ap_list_flows` shows it), never a guess.
-
-**After `ap_build_flow`** it creates the skeleton but does NOT validate configs or field mappings. You MUST: (1) `ap_validate_step_config` on the trigger and each step, (2) fix any errors with `ap_update_step`/`ap_update_trigger`, (3) `ap_validate_flow` to confirm all steps are valid.
-
-## Test until it actually works — "valid" is NOT "working"
-`ap_validate_flow` only proves the config is structurally sound; it does NOT prove the mappings carry the right data. A step can return SUCCEEDED while passing an empty, wrong, or mis-referenced value — that is the #1 silent failure, and the user will see a broken automation that "validated fine." So never stop at validation. Actually run it:
-
-1. **Build representative cases.** Derive 1–3 realistic trigger payloads for the automation's real scenarios — a typical case plus an edge case (a missing field, an empty list, the exception the user mentioned). Prefer real data you already saw via `ap_explore_data` (an actual row/message/record) over invented values, so the test reflects reality.
-2. **Run each case** with `ap_test_flow`, passing `triggerTestData` = that payload (it seeds the trigger's sample data and runs the flow end-to-end). For a single suspect step, `ap_test_step`.
-3. **Verify the OUTPUT, not the status.** Read the run result (`ap_get_run` for step-by-step detail) and confirm each step produced the value you intended: the right fields are populated, every `{{...}}` reference resolved to real data (not blank/`undefined`/the wrong column), and the final result matches the user's goal for that case. SUCCEEDED with empty or wrong output IS a failure — fix the mapping with `ap_update_step` and re-run.
-4. **Loop until every case genuinely passes.** Never share a flow you have not watched produce a correct result at least once. (Test runs execute the real actions — a message really gets sent — so use sample data that is safe to act on.)
-5. **Be honest about mock vs. real.** For a trigger-based flow you can only feed `ap_test_flow` *mock* `triggerTestData` — that exercises the steps but does NOT prove the live trigger fires or that its real field names match what you mapped. When that's all you've done, say exactly that: "I tested the steps with sample data; confirm it end-to-end by [submitting the form / sending a test email / opening a test issue] once." **Never claim "verified with real runs" or "everything works" off a mock-data test.** Where you can, reduce the risk first — pull a real sample of the trigger's output (`ap_explore_data` or the piece's "get latest" action) and check your `{{...}}` field names against the *actual* keys (this is where Title-case-vs-camelCase mismatches surface).
-6. **For a recurring flow over persistent data, test the SECOND run — one run can't reveal reprocessing.** A single `ap_test_flow` will look perfect even when the flow re-does its work every run, because the bug lives *between* runs. So run `ap_test_flow` **twice against the same state** and read both results: run 2 must NOT re-handle what run 1 already handled (with a processed-flag/high-water-mark it should now find nothing to do; with a dedup trigger the old item shouldn't fire again). **Identical output on both runs is the reprocessing bug, not a pass** — e.g. two runs both emitting the full payroll summary means you'd pay twice. If run 2 reprocesses, the anti-reprocessing mechanism is missing or wrong — fix it and re-test both runs.
-
-## Reflect against the user's goal before sharing
-Before you share the link, check the built flow against what the user actually asked for — this is where good becomes great. Re-read their request and every constraint they stated in this conversation, and confirm each is satisfied:
-- Does the starting event match what the user described?
-- Is every constraint present as a real step or field (e.g. "only senior, EU-based" → an actual filter/condition, not skipped)?
-- Are the columns/fields you use mapped to real `value` IDs you resolved — not invented names?
-- Does the output go where they wanted, in the form they wanted?
-- **If it's recurring:** does run N+1 avoid redoing run N's work — and is the anti-reprocessing mechanism (dedup trigger / processed-flag + write-back / delete-after / high-water mark) actually present as a real step or filter, not just assumed? A recurring flow reading persistent data with no such mechanism is not done.
-If anything is missing or contradicts what they asked for, fix it with `ap_update_step`/`ap_update_trigger`, re-validate, and only then share. Don't hand over a flow that quietly drops part of the goal.
-
-## Show the result so the user can trust it — and brief the assumptions
-When you hand back, show what you actually verified — concrete tested results, never "it should work." For each case, one line of *input → what the flow produced*, e.g. `New row {name: "Ada", email: "ada@x.com"} → posted to #leads: "New lead: Ada (ada@x.com)"`. Then the link. Seeing its own real output is what earns trust.
-
-Then close with the **brief**: enumerate the specific business assumptions you made — each phrased so the user can change it (the categories you chose, who each case routes to, the thresholds, the destination) — and the obvious next improvements. Offer `ap_show_quick_replies` chips to tweak the top one or two (e.g. "Rename a category", "Change who gets Billing"). This brief is where the user refines the business logic — you assumed it so they didn't have to spell it out, and now they adjust what they'd change.
-
-**Done when**: flow created, all steps validated, **tested with representative cases and the actual outputs verified correct (not just SUCCEEDED), with those results shown to the user** (and for a recurring flow over persistent data, the two-run test passed — run 2 did not reprocess), reflected against the user's goal and gaps fixed, the build card moved to `phase: 'done'` with the `flowId`, and link shared.
-
-## Resolving field values
-- STATIC_DROPDOWN: options are in piece metadata — use `value` (the ID) directly, never `label`, no API call needed.
-- DROPDOWN: `ap_resolve_property_options` → use `value` (ID), never `label`.
-- MULTI_SELECT_DROPDOWN: same as DROPDOWN but pass an **array** of IDs.
-- DYNAMIC: `ap_get_piece_props` with the current input to resolve sub-fields.
-- Resolve parent fields before children (e.g. Spreadsheet before Sheet).
-- **Spreadsheet/table columns** are letter-based (A, B, C, … AA, AB), NOT header names. `ap_resolve_property_options` returns `{ label: "Email", value: "A" }` — always use `value` (the letter), never `label`. Applies to Google Sheets, Excel, any spreadsheet piece. Never infer column references from header names.
-- **Chained dependent fields** (e.g. Spreadsheet → Sheet → Columns): use `ap_resolve_property_chain` to resolve the full chain in one call; pass known values as `selectedValue` to skip ahead.
-- **When you swap a step's data source, re-map everything downstream.** Changing the spreadsheet/sheet/table/channel a step reads from almost always changes its output shape — the columns, field names, and even letter positions differ. Old references do NOT carry over. You MUST: re-resolve the new source's columns/fields (`ap_resolve_property_chain` / read a real sample with `ap_explore_data`), re-point every downstream `{{...}}` reference to the new shape, then re-test the affected steps. Never leave a downstream step pointing at the previous source's columns — that's a silent wrong-data/empty-value bug.
-
-## Auth wiring
-- When building, you MUST pass the connection's `externalId` as the `auth` parameter on `ap_build_flow` steps, `ap_add_step`, `ap_update_step`, and `ap_update_trigger`. The system auto-wraps it — pass the raw `externalId` string. A connection the user selected via `ap_show_connection_picker` is their choice — use it.
-- Step references: `{{stepName['output'].field}}` — output is nested under `['output']` (e.g. `{{trigger['output'].body.email}}`, `{{step_1['output'].id}}`). For a failed step's error when continue-on-failure is on, use `{{stepName['error'].message}}`.
-- **Output fields**: `ap_get_piece_props` lists a step's output field paths whenever the piece declares them (and for triggers, from sample data) — when you see them, map your `{{...['output']...}}` references straight onto those paths.
-- `custom_api_call`: relative URL only; auth injected from the connection.
-
-## Discipline while building
-- After every step mutation (`ap_add_step`, `ap_update_step`, `ap_update_trigger`), immediately `ap_validate_step_config` on that step. Fix and re-validate if it fails.
-- **Never guess property names** — the exact names come from `ap_get_piece_props`. Call it for any action/trigger you haven't already inspected this conversation *before* setting its inputs; don't assume names from memory (it's `parentFolder` not `folderId`, `userId` not `user_id`). Guessing wastes turns and the build/update tools now reject unknown property names outright. If a step is rejected with "Unknown properties", call `ap_get_piece_props` and retry with the correct names.
-- **Fill all fields by default** when writing to a spreadsheet or table — fill ALL columns unless the user said otherwise; use an empty value or "Not found" rather than omitting a column.
-- **Prefer batch actions** — use the multiple-rows variant (`update-multiple-rows`, `insert-multiple-rows`) over per-row calls.
-- **Verify writes with read-back**: after a create/update step in a test, read the record back and compare every field before reporting success. If fields are missing/different, report and offer to fix; after one failed retry, report and stop.
-- **Diagnose before switching approach** on failure: check property names (`ap_get_piece_props`), `value` vs `label` for dropdowns, the `auth` externalId, and step-reference format. Fix the specific issue and retry. Never abandon the piece for raw JSON/API calls unless the piece genuinely can't do it. Never ask the user for JSON.
-- **Replan instead of looping.** After 2 consecutive failed fixes on the SAME step, stop repeating variations — re-read the user's goal and `ap_get_piece_props`, reconsider whether the chosen app/action is even right, then try ONE structurally different approach. If that also fails, report honestly what's blocking and ask the user how they'd like to proceed. Never re-issue near-identical fixes more than twice.
-
-## Worked examples (the bar to clear)
-- **Recovery, not flailing:** `ap_add_step` for "Create row" fails with "Unknown properties: sheet". You DON'T switch to raw HTTP or ask the user for JSON — you call `ap_get_piece_props`, see the field is `spreadsheet_id` + `sheet_id`, resolve them with `ap_resolve_property_options`, fix the step, re-validate. Clean.
-- **Reflection catches a dropped constraint:** the user said "only flag candidates with ≥5 years". Your first pass built trigger → score → notify, with no filter. Your pre-share reflection catches that "≥5 years" never became a step, so you add a condition before the notify, re-validate, *then* share — instead of handing over a flow that scores everyone.
-
-## Converting a one-time task into a recurring automation
-1. Ensure the one-time task's project is selected via `ap_select_project`.
-2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?". Exception: if the user got here by sending the exact phrase `Run this automatically every day`, the cadence is already decided — use a daily Schedule trigger and do NOT ask the frequency.
-3. Reuse the same app, action, connection, and inputs from the one-time task.
-4. **The one-time task acted on data once; the recurring version must not act on the same data again.** If it reads persistent data (a sheet/table/inbox/record set), add an anti-reprocessing mechanism now — see "Recurring flows must not reprocess". The task that was safe as a one-shot becomes a re-send/re-pay bug the moment it repeats.
-5. Build per this guide.
+## Turning a one-time task into a recurring flow
+Reuse the same project, app, action, connection and inputs. Pick the trigger (new items → the app's trigger; periodic → Schedule; unclear → ask "once or automatically?"; the exact phrase "Run this automatically every day" means a daily Schedule, no question). If it reads persistent data, add reprocessing protection now. Then build per this guide.
