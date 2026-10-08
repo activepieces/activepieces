@@ -14,7 +14,7 @@ export const upsertRecordAi = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Finds the record whose key field exactly equals the key value in Fields (the Teable "is" filter on that field). If none exists it creates one; if one exists it updates it; if several match it stops with an error and changes nothing. Use this to avoid duplicates, e.g. key on Email. Needs the base ID, the table name or ID, the key field, and Fields including the key value. Returns {action: "created" or "updated", record}. Safe to retry.',
+      'Finds the record whose key field exactly equals the key value in Fields (the Teable "is" filter on that field). If none exists it creates one; if one exists it updates it, where a null value clears that field; if several match it stops with an error and changes nothing. Use this to avoid duplicates, e.g. key on Email, but run upserts for the same key one at a time: Teable has no atomic create-if-absent, so two parallel calls with the same new key can both create a record; when the action detects that after creating, it returns a warning. Needs the base ID, the table name or ID, the key field, and Fields including the key value. Returns {action: "created" or "updated", record, warning?}. Safe to retry.',
     idempotent: true,
   },
   props: {

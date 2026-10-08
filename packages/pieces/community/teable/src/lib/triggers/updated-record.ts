@@ -8,16 +8,32 @@ import { TeableAuth, TeableAuthValue } from '../auth';
 import { TeableCommon } from '../common';
 import { teableClient, TeableField, TeableRecord } from '../common/client';
 import { TeableFieldType } from '../common/constants';
+import { teablePolling } from '../common/polling';
 import { teableOutputSchemas } from '../output-schemas';
 
 const PAGE_SIZE = 500;
 const TEST_SAMPLE_SIZE = 5;
-const MAX_BACKFILL = 5000;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function modifiedEpoch(record: TeableRecord): number {
   const timestamp = record.lastModifiedTime ?? record.createdTime;
   return timestamp !== undefined ? new Date(timestamp).getTime() : 0;
+}
+
+function fieldModifiedEpoch({
+  record,
+  fieldName,
+}: {
+  record: TeableRecord;
+  fieldName: string;
+}): number {
+  const value = record.fields?.[fieldName];
+  if (typeof value === 'string' || typeof value === 'number') {
+    const epoch = new Date(value).getTime();
+    if (!Number.isNaN(epoch)) {
+      return epoch;
+    }
+  }
+  return modifiedEpoch(record);
 }
 
 async function requireLastModifiedField({
@@ -63,74 +79,89 @@ async function fetchPreciseRecords({
   return records;
 }
 
-async function fetchCandidateIds({
+async function fetchSampleRecords({
   auth,
   tableId,
-  orderBy,
-  cutoffEpochMS,
+  fieldId,
 }: {
   auth: TeableAuthValue;
   tableId: string;
-  orderBy: string;
-  cutoffEpochMS: number;
-}): Promise<string[]> {
-  const candidateIds: string[] = [];
-  let skip = 0;
-  while (skip < MAX_BACKFILL) {
-    const page = await teableClient.listRecords({
-      auth,
-      tableId,
-      query: { take: PAGE_SIZE, skip, orderBy },
-    });
-    const recent = page.records.filter((record) => modifiedEpoch(record) >= cutoffEpochMS);
-    candidateIds.push(...recent.map((record) => record.id));
-    if (page.records.length < PAGE_SIZE || recent.length < page.records.length) {
-      break;
-    }
-    skip += PAGE_SIZE;
-  }
-  return candidateIds;
+  fieldId: string;
+}): Promise<TeableRecord[]> {
+  const orderBy = JSON.stringify([{ fieldId, order: 'desc' }]);
+  const sample = await teableClient.listRecords({
+    auth,
+    tableId,
+    query: { take: TEST_SAMPLE_SIZE, orderBy },
+  });
+  return fetchPreciseRecords({
+    auth,
+    tableId,
+    recordIds: sample.records.map((record) => record.id),
+  });
 }
 
-async function fetchRecentlyModified({
+async function fetchModifiedSince({
   auth,
   tableId,
+  fieldId,
+  epochOf,
   lastFetchEpochMS,
 }: {
   auth: TeableAuthValue;
   tableId: string;
+  fieldId: string;
+  epochOf: (record: TeableRecord) => number;
   lastFetchEpochMS: number;
 }): Promise<TeableRecord[]> {
-  const lastModifiedField = await requireLastModifiedField({ auth, tableId });
-  const orderBy = JSON.stringify([{ fieldId: lastModifiedField.id, order: 'desc' }]);
-  if (lastFetchEpochMS === 0) {
-    const sample = await teableClient.listRecords({
-      auth,
-      tableId,
-      query: { take: TEST_SAMPLE_SIZE, orderBy },
-    });
-    return fetchPreciseRecords({
-      auth,
-      tableId,
-      recordIds: sample.records.map((record) => record.id),
-    });
-  }
-  const cutoffEpochMS = lastFetchEpochMS - 2 * DAY_MS;
-  const candidateIds = await fetchCandidateIds({ auth, tableId, orderBy, cutoffEpochMS });
-  const precise = await fetchPreciseRecords({ auth, tableId, recordIds: candidateIds });
-  return precise.filter((record) => modifiedEpoch(record) > lastFetchEpochMS);
+  const orderBy = JSON.stringify([{ fieldId, order: 'asc' }]);
+  const rowCount = await teableClient.getRowCount({ auth, tableId });
+  const startIndex = await teablePolling.findFirstFreshIndex({
+    rowCount,
+    probe: async (skip) => {
+      const page = await teableClient.listRecords({
+        auth,
+        tableId,
+        query: { take: 1, skip, orderBy },
+      });
+      return page.records[0];
+    },
+    isFresh: (record) => epochOf(record) > lastFetchEpochMS,
+  });
+  return teablePolling.collectFreshRecords({
+    listPage: async ({ skip, take }) => {
+      const page = await teableClient.listRecords({
+        auth,
+        tableId,
+        query: { take, skip, orderBy },
+      });
+      return page.records;
+    },
+    startIndex,
+    epochOf,
+    lastFetchEpochMS,
+  });
 }
 
 const polling: Polling<TeableTriggerAuth, Props> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const records = await fetchRecentlyModified({
-      auth,
-      tableId: propsValue.table_id,
-      lastFetchEpochMS,
-    });
+    const tableId = propsValue.table_id;
+    const lastModifiedField = await requireLastModifiedField({ auth, tableId });
+    const epochOf = (record: TeableRecord) =>
+      fieldModifiedEpoch({ record, fieldName: lastModifiedField.name });
+    const records =
+      lastFetchEpochMS === 0
+        ? await fetchSampleRecords({ auth, tableId, fieldId: lastModifiedField.id })
+        : await fetchModifiedSince({
+            auth,
+            tableId,
+            fieldId: lastModifiedField.id,
+            epochOf,
+            lastFetchEpochMS,
+          });
     return records
-      .map((record) => ({ epochMilliSeconds: modifiedEpoch(record), data: record }))
+      .map((record) => ({ epochMilliSeconds: epochOf(record), data: record }))
       .sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
   },
 };

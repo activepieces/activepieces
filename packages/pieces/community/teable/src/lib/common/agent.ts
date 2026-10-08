@@ -164,6 +164,29 @@ function buildIsFilter({ fieldId, value }: { fieldId: string; value: unknown }):
   });
 }
 
+async function findKeyMatches({
+  auth,
+  table,
+  key,
+  keyValue,
+}: {
+  auth: TeableAuthValue;
+  table: TeableTable;
+  key: TeableField;
+  keyValue: unknown;
+}): Promise<TeableRecord[]> {
+  const matches = await teableClient.listRecords({
+    auth,
+    tableId: table.id,
+    query: {
+      take: 2,
+      fieldKeyType: 'id',
+      filter: buildIsFilter({ fieldId: key.id, value: keyValue }),
+    },
+  });
+  return matches.records;
+}
+
 async function upsertRecord({
   auth,
   table,
@@ -176,51 +199,52 @@ async function upsertRecord({
   fields: TeableField[];
   keyColumn: string;
   input: Record<string, unknown>;
-}): Promise<{ action: 'created' | 'updated'; record: TeableRecord }> {
+}): Promise<{ action: 'created' | 'updated'; record: TeableRecord; warning?: string }> {
   const key = findColumn({ fields, reference: keyColumn });
-  const values = buildRecordFields({ fields, input, allowClear: false });
-  const keyValue = values[key.id];
+  const updateValues = buildRecordFields({ fields, input, allowClear: true });
+  const keyValue = updateValues[key.id];
   if (keyValue === undefined || keyValue === null) {
     throw new Error(`Fields must include a value for the key column "${key.name}".`);
   }
   if (typeof keyValue === 'object') {
     throw new Error(`The key column "${key.name}" must hold a single text or number value.`);
   }
-  const matches = await teableClient.listRecords({
-    auth,
-    tableId: table.id,
-    query: {
-      take: 2,
-      fieldKeyType: 'id',
-      filter: buildIsFilter({ fieldId: key.id, value: keyValue }),
-    },
-  });
-  if (matches.records.length > 1) {
+  const matches = await findKeyMatches({ auth, table, key, keyValue });
+  if (matches.length > 1) {
     throw new Error(
       `More than one record matches ${key.name} = "${String(
         keyValue
       )}", refusing to guess. Use Update Record (Agent) with a record ID.`
     );
   }
-  const existing = matches.records[0];
+  const existing = matches[0];
   if (existing === undefined) {
+    const createValues = buildRecordFields({ fields, input, allowClear: false });
     const created = await teableClient.createRecords({
       auth,
       tableId: table.id,
-      records: [{ fields: values }],
+      records: [{ fields: createValues }],
       fieldKeyType: 'id',
       typecast: true,
     });
+    const recheck = await findKeyMatches({ auth, table, key, keyValue });
+    const warning =
+      recheck.length > 1
+        ? `More than one record now matches ${key.name} = "${String(
+            keyValue
+          )}": a parallel upsert likely created a duplicate, since Teable has no atomic create-if-absent. Run same-key upserts one at a time and remove the extra record.`
+        : undefined;
     return {
       action: 'created',
       record: mapFieldIdsToNames({ fields, record: created.records[0] }),
+      ...(warning !== undefined ? { warning } : {}),
     };
   }
   const updated = await teableClient.updateRecord({
     auth,
     tableId: table.id,
     recordId: existing.id,
-    fields: values,
+    fields: updateValues,
     fieldKeyType: 'id',
     typecast: true,
   });

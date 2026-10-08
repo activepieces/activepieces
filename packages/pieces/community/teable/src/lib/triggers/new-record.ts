@@ -7,11 +7,10 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { TeableAuth, TeableAuthValue } from '../auth';
 import { TeableCommon } from '../common';
 import { teableClient, TeableRecord } from '../common/client';
+import { teablePolling } from '../common/polling';
 import { teableOutputSchemas } from '../output-schemas';
 
-const PAGE_SIZE = 500;
 const TEST_SAMPLE_SIZE = 5;
-const MAX_BACKFILL = 5000;
 
 function createdEpoch(record: TeableRecord): number {
   return record.createdTime !== undefined ? new Date(record.createdTime).getTime() : 0;
@@ -46,31 +45,31 @@ async function fetchRecordsNewerThan({
   lastFetchEpochMS: number;
 }): Promise<TeableRecord[]> {
   const rowCount = await teableClient.getRowCount({ auth, tableId });
-  const collected = new Map<string, TeableRecord>();
-  let end = rowCount;
-  let fetched = 0;
-  while (end > 0 && fetched < MAX_BACKFILL) {
-    const start = Math.max(0, end - PAGE_SIZE);
-    const page = await teableClient.listRecords({
-      auth,
-      tableId,
-      query: { take: end - start, skip: start },
-    });
-    fetched += page.records.length;
-    let sawOlder = page.records.length === 0;
-    for (const record of page.records) {
-      if (createdEpoch(record) > lastFetchEpochMS) {
-        collected.set(record.id, record);
-      } else {
-        sawOlder = true;
-      }
-    }
-    if (sawOlder || start === 0) {
-      break;
-    }
-    end = start;
-  }
-  return [...collected.values()];
+  const startIndex = await teablePolling.findFirstFreshIndex({
+    rowCount,
+    probe: async (skip) => {
+      const page = await teableClient.listRecords({
+        auth,
+        tableId,
+        query: { take: 1, skip },
+      });
+      return page.records[0];
+    },
+    isFresh: (record) => createdEpoch(record) > lastFetchEpochMS,
+  });
+  return teablePolling.collectFreshRecords({
+    listPage: async ({ skip, take }) => {
+      const page = await teableClient.listRecords({
+        auth,
+        tableId,
+        query: { take, skip },
+      });
+      return page.records;
+    },
+    startIndex,
+    epochOf: createdEpoch,
+    lastFetchEpochMS,
+  });
 }
 
 const polling: Polling<TeableTriggerAuth, Props> = {

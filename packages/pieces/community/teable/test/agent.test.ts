@@ -162,8 +162,11 @@ describe('upsert_record_ai branches', () => {
 		sendRequest.mockResolvedValueOnce({ body: { records } });
 	}
 
-	it('creates when no record matches', async () => {
+	it('creates when no record matches and rechecks the key afterwards', async () => {
 		mockUpsertLookup([]);
+		sendRequest.mockResolvedValueOnce({
+			body: { records: [{ id: 'recNew', fields: { fldEmail: 'a@b.c' } }] },
+		});
 		sendRequest.mockResolvedValueOnce({
 			body: { records: [{ id: 'recNew', fields: { fldEmail: 'a@b.c' } }] },
 		});
@@ -177,10 +180,65 @@ describe('upsert_record_ai branches', () => {
 			},
 		});
 		expect(output).toMatchObject({ action: 'created', record: { id: 'recNew' } });
+		expect(output).not.toHaveProperty('warning');
 		expect(calls()[3].method).toBe('POST');
 		const lookupUrl = calls()[2].url;
 		expect(lookupUrl).toContain('take=2');
 		expect(lookupUrl).toContain(encodeURIComponent('"fieldId":"fldEmail"'));
+		expect(calls()[4].url).toContain(encodeURIComponent('"fieldId":"fldEmail"'));
+	});
+
+	it('drops null values on the create branch', async () => {
+		mockUpsertLookup([]);
+		sendRequest.mockResolvedValueOnce({
+			body: { records: [{ id: 'recNew', fields: { fldEmail: 'a@b.c' } }] },
+		});
+		sendRequest.mockResolvedValueOnce({
+			body: { records: [{ id: 'recNew', fields: { fldEmail: 'a@b.c' } }] },
+		});
+		await runAction({
+			action: upsertRecordAi,
+			propsValue: {
+				baseId: 'bse1',
+				table: 'Contacts',
+				keyColumn: 'Email',
+				fields: { Email: 'a@b.c', Name: null },
+			},
+		});
+		expect(calls()[3].body).toMatchObject({
+			records: [{ fields: { fldEmail: 'a@b.c' } }],
+		});
+		const createFields = (calls()[3].body as { records: { fields: object }[] }).records[0]
+			.fields;
+		expect(createFields).not.toHaveProperty('fldName');
+	});
+
+	it('warns when a parallel upsert double-created the key', async () => {
+		mockUpsertLookup([]);
+		sendRequest.mockResolvedValueOnce({
+			body: { records: [{ id: 'recNew', fields: { fldEmail: 'a@b.c' } }] },
+		});
+		sendRequest.mockResolvedValueOnce({
+			body: {
+				records: [
+					{ id: 'recNew', fields: {} },
+					{ id: 'recOther', fields: {} },
+				],
+			},
+		});
+		const output = await runAction({
+			action: upsertRecordAi,
+			propsValue: {
+				baseId: 'bse1',
+				table: 'Contacts',
+				keyColumn: 'Email',
+				fields: { Email: 'a@b.c' },
+			},
+		});
+		expect(output).toMatchObject({
+			action: 'created',
+			warning: expect.stringMatching(/More than one record now matches Email/),
+		});
 	});
 
 	it('updates when exactly one record matches', async () => {
@@ -198,6 +256,46 @@ describe('upsert_record_ai branches', () => {
 		expect(output).toMatchObject({ action: 'updated', record: { id: 'rec1' } });
 		expect(calls()[3].method).toBe('PATCH');
 		expect(calls()[3].url).toContain('/record/rec1');
+	});
+
+	it('clears null values on the update branch', async () => {
+		mockUpsertLookup([{ id: 'rec1', fields: {} }]);
+		sendRequest.mockResolvedValueOnce({
+			body: { id: 'rec1', fields: { fldEmail: 'a@b.c', fldName: null } },
+		});
+		await runAction({
+			action: upsertRecordAi,
+			propsValue: {
+				baseId: 'bse1',
+				table: 'Contacts',
+				keyColumn: 'Email',
+				fields: { Email: 'a@b.c', Name: null },
+			},
+		});
+		expect(calls()[3]).toMatchObject({
+			method: 'PATCH',
+			body: {
+				record: { fields: { fldEmail: 'a@b.c', fldName: null } },
+				fieldKeyType: 'id',
+				typecast: true,
+			},
+		});
+	});
+
+	it('refuses a null key value', async () => {
+		sendRequest.mockResolvedValueOnce({ body: TABLES });
+		sendRequest.mockResolvedValueOnce({ body: FIELDS });
+		await expect(
+			runAction({
+				action: upsertRecordAi,
+				propsValue: {
+					baseId: 'bse1',
+					table: 'Contacts',
+					keyColumn: 'Email',
+					fields: { Email: null, Name: 'Jane' },
+				},
+			})
+		).rejects.toThrow(/Fields must include a value for the key column "Email"/);
 	});
 
 	it('refuses when several records match', async () => {

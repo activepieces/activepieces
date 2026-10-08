@@ -233,6 +233,7 @@ const upsertRecord: OutputSchema = {
   fields: [
     { key: 'action', label: 'Action' },
     { key: 'record', label: 'Record', children: recordCoreFields },
+    { key: 'warning', label: 'Warning' },
   ],
 };
 
