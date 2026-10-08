@@ -48,8 +48,7 @@ async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_
     })
 
     await runAgentTurn({
-        model,
-        provider: AIProviderName.ANTHROPIC,
+        models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'search the web' }],
         tools: {
@@ -64,7 +63,6 @@ async function turnWhereTheModelRepairsWith({ repairText, toolInput = MALFORMED_
         } as never,
         allToolNames: ['ap_web_search'],
         tier: TIER,
-        modelId: TIER.modelId,
         phaseState: { phase: 'discovery' },
         abortSignal: new AbortController().signal,
         log: silentLog,

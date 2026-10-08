@@ -73,6 +73,12 @@ function publishedTierModelId({ tierId, surface, log }: { tierId: string, surfac
 
 function resolveNamedModelId({ provider, modelName, surface, modelScope, modelIds, log }: { provider: AIProviderName, modelName: string, surface: ModelTierSurface, modelScope?: AiProviderModelScope, modelIds?: string[], log: FastifyBaseLogger }): string {
     if (provider !== AIProviderName.ACTIVEPIECES) {
+        if (modelScope === 'selected' && !isNil(modelIds) && !modelIds.includes(modelName)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+            }, `the model "${modelName}" is not allowed for this AI provider key anymore`)
+        }
         return modelName
     }
     const requested = isTierId({ modelName }) ? publishedTierModelId({ tierId: modelName, surface, log }) : modelName
