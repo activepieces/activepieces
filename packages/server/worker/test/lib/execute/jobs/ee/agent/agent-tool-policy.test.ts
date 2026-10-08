@@ -13,7 +13,6 @@ const GROUPS: AgentToolGroups = {
     crossProject: toolSet('ap_discover_action_auth', 'ap_revalidate_connection', 'ap_execute_action'),
     web: toolSet('ap_fetch_url', 'ap_web_search', 'ap_scrape_url', 'ap_generate_image'),
     thinking: toolSet('ap_update_thinking_status'),
-    phase: toolSet('ap_set_phase'),
     buildPlan: toolSet('ap_set_build_plan'),
     email: toolSet('ap_send_email'),
     agentSurface: toolSet('ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool'),
@@ -86,7 +85,6 @@ describe('what the agent builder may reach', () => {
         expect(names).not.toContain('ap_create_flow')
         expect(names).not.toContain('ap_test_flow')
         expect(names).not.toContain('ap_set_build_plan')
-        expect(names).not.toContain('ap_set_phase')
         expect(names).not.toContain('ap_select_project')
         expect(names).not.toContain('ap_deselect_project')
         expect(names).not.toContain('ap_execute_action')
@@ -140,7 +138,6 @@ describe('what an agent conversation may reach', () => {
         expect(names).not.toContain('ap_create_flow')
         expect(names).not.toContain('ap_test_flow')
         expect(names).not.toContain('ap_set_build_plan')
-        expect(names).not.toContain('ap_set_phase')
         expect(names).not.toContain('ap_select_project')
         expect(names).not.toContain('ap_deselect_project')
         expect(names).not.toContain('ap_send_email')

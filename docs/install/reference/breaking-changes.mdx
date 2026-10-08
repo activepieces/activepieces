@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### AI steps and agents stop running a model their key no longer allows
+
+An AI provider key can limit which models it offers. Until now, a flow AI step or a flow-step agent that already named a model kept running it after an admin removed that model from the key's list. From this release the step fails with "The model … isn't allowed for this AI provider key anymore". This is checked when the step is queued and again when it runs.
+
+Two key edits are now refused instead of silently breaking things: limiting the projects of a key that web search, web scraping or image generation uses for every project, and removing a typed-in model (Vertex, OpenAI-compatible, Cloudflare) that a platform tier uses. Platform-wide AI work, such as tool-search embeddings, now prefers a key that serves every project over one limited to a few.
+
+#### What you need to do
+
+If a flow step or agent fails with that message, pick a model the key allows, or add the model back to the key's list in AI Center. To limit a capability key's projects, choose a different key for that capability first.
+
 #### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
 
 Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
