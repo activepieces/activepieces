@@ -1,15 +1,19 @@
+import { randomBytes } from 'node:crypto';
+
 import { createAction, Property, ApFile } from '@activepieces/pieces-framework';
+import { kebabCase } from '@activepieces/pieces-framework';
+
 import { imageRouterAuth } from '../auth';
 import { imageRouterApi } from '../common/api';
 import { imageRouterProps } from '../common/props';
-import { randomBytes } from 'node:crypto';
-import { kebabCase } from '@activepieces/pieces-framework';
+import { createImageOutputSchema } from '../output-schemas';
 
 export const imageToImageAction = createAction({
-  audience: 'both',
+  audience: 'human',
   auth: imageRouterAuth,
   name: 'imageToImage',
-  classification: 'READ',
+  outputSchema: createImageOutputSchema,
+  classification: 'WRITE',
   displayName: 'Image to Image',
   description: 'Generate or edit images using input image(s) with optional mask',
   aiMetadata: { description: 'Edits or transforms one to sixteen supplied image files against a text prompt via ImageRouter\'s image-edit endpoint, either rewriting the whole picture or, when mask files are attached, confining the changes to the masked areas (some models require a mask). Choose this whenever a source image must be sent - inpainting, style transfer, background swaps, multi-image composition; use Create Image when generating from a prompt with no input image. At least one image file is required and the selected model must support editing. Not idempotent: each call renders new output images.', idempotent: false },

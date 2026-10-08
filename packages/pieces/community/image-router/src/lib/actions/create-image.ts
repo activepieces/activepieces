@@ -1,15 +1,19 @@
+import { randomBytes } from 'node:crypto';
+
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { kebabCase } from '@activepieces/pieces-framework';
+
 import { imageRouterAuth } from '../auth';
 import { imageRouterApi } from '../common/api';
 import { imageRouterProps } from '../common/props';
-import { randomBytes } from 'node:crypto';
-import { kebabCase } from '@activepieces/pieces-framework';
+import { createImageOutputSchema } from '../output-schemas';
 
 export const createImageAction = createAction({
-  audience: 'both',
+  audience: 'human',
   auth: imageRouterAuth,
   name: 'createImage',
-  classification: 'READ',
+  outputSchema: createImageOutputSchema,
+  classification: 'WRITE',
   displayName: 'Create Image',
   description: 'Generate an image from a text prompt using any available model',
   aiMetadata: { description: 'Generates brand-new images from a text prompt alone, routing the request through ImageRouter to whichever hosted image model is named in the required Model input, then downloading each result and saving it as a flow file. Pick this when there is no source picture to work from; use Image to Image instead to edit, mask, or transform images you already have. Quality and size are advisory and are ignored by models that do not support them. Not idempotent: each call runs a fresh generation and returns different images.', idempotent: false },
