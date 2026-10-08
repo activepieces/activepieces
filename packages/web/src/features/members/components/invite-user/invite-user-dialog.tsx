@@ -126,6 +126,7 @@ const InviteUserDialogInternal = ({
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
+  const { activeDefaultProjectIds } = platformHooks.useNewMemberSettings();
   const { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog } =
     useSeatLimitGuard();
   const { data: isSmtpConfigured } = flagsHooks.useFlag<boolean>(
@@ -227,7 +228,7 @@ const InviteUserDialogInternal = ({
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
-      projectId: undefined,
+      projectId: activeDefaultProjectIds[0],
     },
   });
 
