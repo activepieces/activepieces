@@ -3439,5 +3439,19 @@
   "Save anyway": "Save anyway",
   "tierLosesProjects": "{count, plural, =1 {{tier} won't be available in 1 project} other {{tier} won't be available in # projects}}",
   "tierFallbackSkippedInMoreProjects": "{count, plural, =1 {A fallback in {tier} will be skipped in 1 more project} other {A fallback in {tier} will be skipped in # more projects}}",
-  "Could not reorder tiers": "Could not reorder tiers"
+  "Could not reorder tiers": "Could not reorder tiers",
+  "Retention: {period}": "Retention: {period}",
+  "Audit log retention": "Audit log retention",
+  "Events older than the retention period are deleted every hour.": "Events older than the retention period are deleted every hour.",
+  "Keep events for": "Keep events for",
+  "Cleanup is paused on this instance. No events are deleted until it resumes.": "Cleanup is paused on this instance. No events are deleted until it resumes.",
+  "Events older than {period}, created before {date}, will be permanently deleted. This cannot be undone.": "Events older than {period}, created before {date}, will be permanently deleted. This cannot be undone.",
+  "Oldest event: {date}": "Oldest event: {date}",
+  "Oldest event: {date}. Older events are still being deleted, in batches every hour.": "Oldest event: {date}. Older events are still being deleted, in batches every hour.",
+  "Forever": "Forever",
+  "Instance limit ({period})": "Instance limit ({period})",
+  "6 months": "6 months",
+  "1 year": "1 year",
+  "retentionPeriodDays": "{days, plural, =1 {1 day} other {# days}}",
+  "Audit log retention updated": "Audit log retention updated"
 }
