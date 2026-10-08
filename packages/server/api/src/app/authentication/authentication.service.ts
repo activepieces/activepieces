@@ -1,4 +1,4 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, partition } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -137,11 +137,11 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         if (system.getEdition() !== ApEdition.CLOUD) {
             return null
         }
-        const platforms = await platformService(log).listPlatformsForIdentity({ identityId })
+        const memberships = await platformService(log).listPlatformMembershipsForIdentity({ identityId })
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? platforms.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
-        const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
-        return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
+        const [withProjects, withoutProjects] = partition(memberships, (membership) => membership.hasProjects)
+        return pickSignInPlatform({ memberships: withProjects, lastLoggedInPlatformId: identity.lastLoggedInPlatformId })
+            ?? pickSignInPlatform({ memberships: withoutProjects, lastLoggedInPlatformId: identity.lastLoggedInPlatformId })
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResult> {
         const platformId = isNil(params.predefinedPlatformId) ? await selectCloudSignInPlatformIdByEmail({ email: params.email, log }) : params.predefinedPlatformId
@@ -263,6 +263,13 @@ async function sendVerificationOrAutoVerify(userIdentity: UserIdentity, log: Fas
     }
 }
 
+function pickSignInPlatform({ memberships, lastLoggedInPlatformId }: PickSignInPlatformParams): string | null {
+    const platforms = memberships.map((membership) => membership.platform)
+    const lastUsed = isNil(lastLoggedInPlatformId) ? undefined : platforms.find((platform) => platform.id === lastLoggedInPlatformId)
+    const licensed = platforms.find((platform) => !isNil(platform.plan.licenseKey))
+    return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
+}
+
 async function selectCloudSignInPlatformIdByEmail({ email, log }: SelectCloudSignInPlatformIdByEmailParams): Promise<string | null> {
     const identity = await userIdentityService(log).getIdentityByEmail(email)
     if (isNil(identity)) {
@@ -272,6 +279,11 @@ async function selectCloudSignInPlatformIdByEmail({ email, log }: SelectCloudSig
 }
 
 
+
+type PickSignInPlatformParams = {
+    memberships: { platform: PlatformWithoutSensitiveData, hasProjects: boolean }[]
+    lastLoggedInPlatformId: string | null | undefined
+}
 
 type SelectCloudSignInPlatformIdParams = {
     identityId: string

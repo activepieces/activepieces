@@ -23,6 +23,10 @@ export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = (log: FastifyBaseLogger) => ({
     async listPlatformsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+        const memberships = await this.listPlatformMembershipsForIdentity(params)
+        return memberships.map((membership) => membership.platform)
+    },
+    async listPlatformMembershipsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformMembershipWithPlatform[]> {
         const users = await userService(log).getByIdentityId({ identityId: params.identityId })
         const memberships = await Promise.all(users.map(async (user): Promise<PlatformMembership | null> => {
             if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
@@ -39,7 +43,10 @@ export const platformService = (log: FastifyBaseLogger) => ({
             memberships.filter((membership): membership is PlatformMembership => !isNil(membership)),
             (membership) => membership.hasProjects,
         )
-        return Promise.all([...withProjects, ...withoutProjects].map((membership) => this.getOneWithPlanOrThrow(membership.platformId)))
+        return Promise.all([...withProjects, ...withoutProjects].map(async (membership) => ({
+            platform: await this.getOneWithPlanOrThrow(membership.platformId),
+            hasProjects: membership.hasProjects,
+        })))
     },
     async create(params: AddParams): Promise<PlatformWithoutFederatedAuth> {
         const {
@@ -472,6 +479,11 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 
 type PlatformMembership = {
     platformId: PlatformId
+    hasProjects: boolean
+}
+
+type PlatformMembershipWithPlatform = {
+    platform: PlatformWithoutSensitiveData
     hasProjects: boolean
 }
 
