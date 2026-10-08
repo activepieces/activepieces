@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateBankTransaction = createAction({
   auth: xeroAuth,
@@ -14,12 +15,13 @@ export const xeroCreateBankTransaction = createAction({
   classification: 'WRITE',
   displayName: 'Create Bank Transaction',
   description: 'Creates a new Spend/Receive Money bank transaction.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Record a Spend Money (SPEND) or Receive Money (RECEIVE) bank transaction against one of the organization\'s bank accounts, attributed to a contact with at least one line item (Description, UnitAmount, AccountCode). Pick this for direct money in/out of a bank account, not for paying an invoice (use Create Payment) or moving money between own accounts (use Create Bank Transfer). Not idempotent: each call records another transaction.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.bankTransactionEnvelope,
   props: {
     tenant_id: props.tenant_id,
     type: Property.StaticDropdown({

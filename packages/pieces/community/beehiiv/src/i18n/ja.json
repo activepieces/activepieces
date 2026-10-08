@@ -7,7 +7,7 @@
   "Add Subscription to Automation": "自動化にサブスクリプションを追加",
   "List Automations": "リストの自動化",
   "List Posts": "投稿一覧",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Creates a new subscription.": "新しいサブスクリプションを作成します。",
   "Update an existing subscription.": "既存の契約を更新します。",
   "Permanently deletes a subscription from a Beehiiv publication.": "Beehiv の出版物から購読を完全に削除します。",
