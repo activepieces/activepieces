@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-instagram-business",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

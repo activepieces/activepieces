@@ -4,7 +4,6 @@ import { ActivepiecesError, AIProviderName, apId, ApId, connectionTemplate, Curs
 import { Agent, AgentConfig, AgentFlowTool, AgentKnowledgeBaseTool, AgentListSort, AgentMoveLoss, AgentMoveLossKind, AgentMovePreview, AgentRunSource, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm'
-import { platformModelTierService } from '../../ai/platform-model-tier-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -22,6 +21,7 @@ import { projectMemberService } from '../projects/project-members/project-member
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
+import { agentModelTier } from './agent-model-tier'
 
 const DEFAULT_PAGE_SIZE = 20
 const MAX_NAMED_FLOWS_IN_USE = 3
@@ -36,7 +36,7 @@ const AGENT_MOVED_AWAY = 'That agent has just been moved somewhere else. Reload 
 export const agentService = (log: FastifyBaseLogger) => ({
     async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
-        const draft = await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId }), platformId, projectId, log })
+        const draft = await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log })
         return agentRepo().save({
             id: apId(),
             projectId,
@@ -120,7 +120,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             projectId,
             log,
         })
-        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(await withTierOrModel({ draft: request.draft, platformId }))
+        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(await withTierOrModel({ draft: request.draft, platformId, projectId, log }))
         await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
         const goingLive = goLive && agentUtils.isPublishable(draft)
         const published = goingLive ? draft : agent.published
@@ -423,11 +423,11 @@ async function isProjectAdministrator({ projectId, userId, log }: { projectId: P
     return role?.name === DefaultProjectRole.ADMIN
 }
 
-async function withTierOrModel({ draft, platformId }: { draft: AgentConfig, platformId: PlatformId }): Promise<AgentConfig> {
+async function withTierOrModel({ draft, platformId, projectId, log }: { draft: AgentConfig, platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<AgentConfig> {
     if (isNil(draft.modelTierId)) {
         return draft
     }
-    await platformModelTierService.getForRun({ platformId, id: draft.modelTierId })
+    await agentModelTier(log).assertUsable({ platformId, tierId: draft.modelTierId, scope: { type: 'project', projectId } })
     return { ...draft, provider: null, providerConfigId: null, modelName: null }
 }
 
