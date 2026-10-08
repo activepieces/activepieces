@@ -231,4 +231,18 @@ describe('dropdowns', () => {
     expect(result.options).toEqual([{ label: 'Grace Hopper', value: 'OLD' }]);
     expect(seen).toHaveLength(12);
   });
+
+  test('the customer name search stops after its time budget and says how far it got', async () => {
+    let now = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    stubFetch((request) => {
+      now += 5_000;
+      const index = Number(request.query.get('cursor') ?? '0');
+      return { body: { customers: [{ id: `C${index}`, given_name: `Person ${index}` }], cursor: String(index + 1) } };
+    });
+    const result = await squareProps.customer({ required: true }).options({ auth: connection() }, { searchValue: 'grace' });
+    expect(result.options).toEqual([]);
+    expect(result.placeholder).toBe('No match in the 4 newest customers searched. Search by email or map the Customer ID.');
+    vi.restoreAllMocks();
+  });
 });

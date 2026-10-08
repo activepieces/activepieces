@@ -8,6 +8,7 @@ const DROPDOWN_MAX = 1000;
 const LINE_ITEM_ITEMS_MAX = 500;
 const CUSTOMER_MATCH_MAX = 100;
 const CUSTOMER_SCAN_MAX = 10000;
+const CUSTOMER_SEARCH_BUDGET_MS = 20_000;
 
 function location({ required, displayName = 'Location', description }: { required: boolean; displayName?: string; description?: string }) {
   return Property.Dropdown({
@@ -41,7 +42,7 @@ function customer({ required, displayName = 'Customer', description }: { require
     displayName,
     description:
       description ??
-      'Pick a customer. Type an email to search all customers, or part of a name to search the 10,000 newest. For an older customer, search by email or map the Customer ID.',
+      'Pick a customer. Type an email to search all customers, or part of a name to search up to the 10,000 newest (the search stops after 20 seconds). For an older customer, search by email or map the Customer ID.',
     required,
     refreshers: [],
     refreshOnSearch: true,
@@ -51,14 +52,17 @@ function customer({ required, displayName = 'Customer', description }: { require
       }
       try {
         const term = (searchValue ?? '').trim().toLowerCase();
-        const customers = term.includes('@')
-          ? await searchCustomersByEmail({ auth, email: term })
+        const found = term.includes('@')
+          ? { customers: await searchCustomersByEmail({ auth, email: term }), scanned: 0, complete: true }
           : await listCustomers({ auth, nameTerm: term.length > 0 ? term : undefined });
-        const options = customers
+        const options = found.customers
           .filter((c) => term.length === 0 || customerLabel(c).toLowerCase().includes(term))
           .slice(0, DROPDOWN_MAX)
           .map((c) => ({ label: customerLabel(c), value: c.id ?? '' }));
         if (options.length === 0) {
+          if (term && !found.complete) {
+            return { disabled: false, placeholder: `No match in the ${found.scanned} newest customers searched. Search by email or map the Customer ID.`, options: [] };
+          }
           return { disabled: false, placeholder: term ? 'No customer matches this search.' : 'No customers found. New customers can take a few seconds to appear.', options: [] };
         }
         return { disabled: false, options };
@@ -266,6 +270,7 @@ function clearCustomerFields() {
 
 async function listCustomers({ auth, nameTerm }: { auth: SquareAuth; nameTerm?: string }) {
   const results: ReturnType<typeof squareShape.customer>[] = [];
+  const deadline = Date.now() + CUSTOMER_SEARCH_BUDGET_MS;
   let scanned = 0;
   let cursor: string | undefined;
   do {
@@ -280,8 +285,8 @@ async function listCustomers({ auth, nameTerm }: { auth: SquareAuth; nameTerm?: 
     scanned += page.length;
     results.push(...(nameTerm ? page.filter((c) => customerLabel(c).toLowerCase().includes(nameTerm)) : page));
     cursor = squareShape.str({ value: body, key: 'cursor' }) ?? undefined;
-  } while (cursor && (nameTerm ? results.length < CUSTOMER_MATCH_MAX && scanned < CUSTOMER_SCAN_MAX : results.length < DROPDOWN_MAX));
-  return results;
+  } while (cursor && Date.now() < deadline && (nameTerm ? results.length < CUSTOMER_MATCH_MAX && scanned < CUSTOMER_SCAN_MAX : results.length < DROPDOWN_MAX));
+  return { customers: results, scanned, complete: cursor === undefined };
 }
 
 async function searchCustomersByEmail({ auth, email }: { auth: SquareAuth; email: string }) {
