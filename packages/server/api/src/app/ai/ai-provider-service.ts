@@ -192,6 +192,16 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return chatProvider?.provider ?? null
     },
 
+    async getChatKey({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<{ provider: AIProviderName, configId: string } | null> {
+        const chatProvider = await findAvailableChatProviderRow({ platformId, scope, log })
+        return isNil(chatProvider) ? null : { provider: chatProvider.provider, configId: chatProvider.id }
+    },
+
+    async findRunKeyId({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<string | null> {
+        const row = await findEligibleRow({ platformId, provider, scope })
+        return row?.id ?? null
+    },
+
     async getChatProvider({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
         const chatProvider = await findAvailableChatProviderRow({ platformId, scope, log })
         if (isNil(chatProvider)) {

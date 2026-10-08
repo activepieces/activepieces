@@ -97,6 +97,29 @@ describe('agent crud', () => {
         expect(agent.draft.modelName).toBe('anthropic/claude-haiku-4.5')
     })
 
+    it('pins the default model to the chat key, so a key added later does not take the agent over', async () => {
+        const ctx = await context()
+        const chatKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+
+        const agent = await createAgent(ctx)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, displayName: 'Second key' })
+        const reread = await ctx.get(`/v1/agents/${agent.id}`, { projectId: ctx.project.id })
+
+        expect(agent.draft.providerConfigId).toBe(chatKey.id)
+        expect(reread.json().draft.providerConfigId).toBe(chatKey.id)
+    })
+
+    it('pins a saved model that names no key to the key a run would use today', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+
+        const response = await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agent.draft, provider: AIProviderName.OPENAI, modelName: 'gpt-5.5', providerConfigId: null } })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().draft.providerConfigId).toBe(key.id)
+    })
+
     it('leaves the model empty where the platform has no chat provider', async () => {
         const ctx = await context()
 

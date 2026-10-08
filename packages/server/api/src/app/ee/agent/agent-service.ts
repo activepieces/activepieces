@@ -4,6 +4,7 @@ import { ActivepiecesError, AIProviderName, apId, ApId, connectionTemplate, Curs
 import { Agent, AgentConfig, AgentFlowTool, AgentKnowledgeBaseTool, AgentListSort, AgentMoveLoss, AgentMoveLossKind, AgentMovePreview, AgentRunSource, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm'
+import { aiProviderService } from '../../ai/ai-provider-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -36,7 +37,7 @@ const AGENT_MOVED_AWAY = 'That agent has just been moved somewhere else. Reload 
 export const agentService = (log: FastifyBaseLogger) => ({
     async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
-        const draft = await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log })
+        const draft = await withPinnedKey({ draft: await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }), platformId, projectId, log })
         return agentRepo().save({
             id: apId(),
             projectId,
@@ -120,7 +121,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             projectId,
             log,
         })
-        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(await withTierOrModel({ draft: request.draft, platformId, projectId, log }))
+        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(await withPinnedKey({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }))
         await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
         const goingLive = goLive && agentUtils.isPublishable(draft)
         const published = goingLive ? draft : agent.published
@@ -440,17 +441,31 @@ async function withDefaultModel({ draft, platformId, projectId, log }: {
     if (!isNil(draft.modelName) || !isNil(draft.modelTierId)) {
         return draft
     }
-    const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
-    if (isNil(provider)) {
+    const chatKey = await aiProviderService(log).getChatKey({ platformId, scope: { type: 'project', projectId } })
+    if (isNil(chatKey)) {
         return draft
     }
+    const { provider, configId } = chatKey
     const modelName = provider === AIProviderName.ACTIVEPIECES
         ? agentHelpers.resolveTier({ tierId: null, surface: 'flow' }).id
         : agentHelpers.defaultModelIdForProvider({ provider, surface: 'flow' })
     if (isNil(modelName)) {
-        return { ...draft, provider }
+        return { ...draft, provider, providerConfigId: configId }
     }
-    return { ...draft, provider, modelName }
+    return { ...draft, provider, providerConfigId: configId, modelName }
+}
+
+async function withPinnedKey({ draft, platformId, projectId, log }: {
+    draft: AgentConfig
+    platformId: PlatformId
+    projectId: ProjectId
+    log: FastifyBaseLogger
+}): Promise<AgentConfig> {
+    if (isNil(draft.provider) || !isNil(draft.providerConfigId) || !isNil(draft.modelTierId)) {
+        return draft
+    }
+    const configId = await aiProviderService(log).findRunKeyId({ platformId, provider: draft.provider, scope: { type: 'project', projectId } })
+    return isNil(configId) ? draft : { ...draft, providerConfigId: configId }
 }
 
 async function resolveShare({ visibility, requested, stored, projectId, log }: ResolveShareParams): Promise<UserId[]> {
