@@ -272,8 +272,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
             const repo = entityManager.getRepository(AgentEntity)
             const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
             const [draft, published] = await Promise.all([
-                withKeyFor({ config: locked.draft, platformId, projectId: target.id, log }),
-                isNil(locked.published) ? null : withKeyFor({ config: locked.published, platformId, projectId: target.id, log }),
+                withKeyFor({ config: locked.draft, platformId, projectId: target.id, entityManager, log }),
+                isNil(locked.published) ? null : withKeyFor({ config: locked.published, platformId, projectId: target.id, entityManager, log }),
             ])
             const sharedWithUserIds = await resolveShare({ visibility: locked.visibility, requested: undefined, stored: locked.sharedWithUserIds, projectId: target.id, log })
             const clash = await repo.findOneBy({ projectId: target.id, externalId: agent.externalId })
@@ -473,16 +473,17 @@ async function withPinnedKey({ draft, platformId, projectId, log }: {
     return isNil(configId) ? draft : { ...draft, providerConfigId: configId }
 }
 
-async function withKeyFor({ config, platformId, projectId, log }: {
+async function withKeyFor({ config, platformId, projectId, entityManager, log }: {
     config: AgentConfig
     platformId: PlatformId
     projectId: ProjectId
+    entityManager: EntityManager
     log: FastifyBaseLogger
 }): Promise<AgentConfig> {
     if (isNil(config.provider) || isNil(config.providerConfigId)) {
         return config
     }
-    const providerConfigId = await aiProviderService(log).findRunKeyId({ platformId, provider: config.provider, scope: { type: 'project', projectId }, preferredConfigId: config.providerConfigId })
+    const providerConfigId = await aiProviderService(log).findRunKeyId({ platformId, provider: config.provider, scope: { type: 'project', projectId }, preferredConfigId: config.providerConfigId, entityManager })
     return { ...config, providerConfigId }
 }
 

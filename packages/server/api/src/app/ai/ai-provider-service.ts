@@ -196,8 +196,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return findAvailableChatProviderRow({ platformId, scope, log })
     },
 
-    async findRunKeyId({ platformId, provider, scope, preferredConfigId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, preferredConfigId?: string }): Promise<string | null> {
-        const rows = await aiProviderRepo().findBy({ platformId, provider })
+    async findRunKeyId({ platformId, provider, scope, preferredConfigId, entityManager }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, preferredConfigId?: string, entityManager?: EntityManager }): Promise<string | null> {
+        const rows = await aiProviderRepo(entityManager).findBy({ platformId, provider })
         const eligible = rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope }))
         const preferred = eligible.find((row) => row.id === preferredConfigId)
         return (preferred ?? rankRows({ rows: eligible, scope })[0])?.id ?? null
