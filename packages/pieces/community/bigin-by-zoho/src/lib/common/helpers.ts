@@ -38,9 +38,10 @@ export function formatDateOnly(input: string | Date): string {
 export function getZohoBiginAccountAuthorizationUrl(
   region: (typeof DATA_CENTER_REGIONS)[number]['REGION']
 ) {
-  if (region === 'CN') {
-    return 'https://accounts.zoho.com.cn';
-  }
-
-  return 'https://accounts.zoho.com';
+  // Each data center signs in on its own accounts host: an account in the EU
+  // data center does not exist on accounts.zoho.com.
+  return (
+    DATA_CENTER_REGIONS.find((r) => r.REGION === region)?.ACCOUNTS_DOMAIN ??
+    'https://accounts.zoho.com'
+  );
 }
