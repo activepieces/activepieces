@@ -3452,7 +3452,7 @@
   "Your keys": "Your keys",
   "Your tiers": "Your tiers",
   "{size} tokens": "{size} tokens",
-  "If it fails, tries": "If it fails, tries",
+  "Tries in this order": "Tries in this order",
   "No models available — ask your platform admin to add a provider.": "No models available — ask your platform admin to add a provider.",
   "{input} in · {output} out": "{input} in · {output} out"
 }

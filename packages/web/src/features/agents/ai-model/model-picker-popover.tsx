@@ -276,7 +276,9 @@ export function ModelPickerPopover<T>({
         align={align}
         className={cn(
           'relative p-0',
-          detail === undefined ? 'w-[420px]' : 'w-[400px]',
+          detail === undefined
+            ? 'w-[420px]'
+            : 'w-[var(--radix-popover-trigger-width)] min-w-80',
         )}
       >
         <div
@@ -298,7 +300,7 @@ export function ModelPickerPopover<T>({
           {detail !== undefined && activeItem !== null && (
             <div
               ref={cardRef}
-              className="absolute right-full hidden pr-2 transition-[top] duration-150 ease-out sm:block"
+              className="absolute right-full hidden pr-2 transition-[top] duration-150 sm:block"
               style={{ top: detailTop }}
             >
               <div

@@ -4,6 +4,8 @@ import i18next, { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { modelMeta } from './model-meta';
 
 export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
@@ -20,6 +22,10 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
       value: AI_PROVIDER_CAPABILITIES[model.provider]?.webSearch !== undefined,
     },
   ].filter((capability) => capability.value !== undefined);
+  const chain = [
+    { name: model.name, keyName: detail.runsOn },
+    ...detail.fallbacks,
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -38,11 +44,13 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
         )}
       </div>
 
-      <dl className="flex flex-col gap-2.5 text-sm">
+      <dl className="flex flex-col gap-2.5 text-xs">
         {detail.title !== model.name && (
           <DetailRow label={t('Model')}>{model.name}</DetailRow>
         )}
-        <DetailRow label={t('Runs on')}>{detail.runsOn}</DetailRow>
+        {chain.length === 1 && (
+          <DetailRow label={t('Runs on')}>{detail.runsOn}</DetailRow>
+        )}
         {metadata?.contextTokens !== undefined && (
           <DetailRow label={t('Context')}>
             {t('{size} tokens', {
@@ -82,25 +90,35 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
         )}
       </dl>
 
-      {detail.fallbacks.length > 0 && (
-        <div className="flex flex-col gap-2 border-t pt-4">
-          <span className="text-xs font-medium text-gray-11">
-            {t('If it fails, tries')}
+      {chain.length > 1 && (
+        <div className="flex flex-col gap-2.5 border-t pt-4">
+          <span className="text-xs text-gray-11">
+            {t('Tries in this order')}
           </span>
-          <ol className="flex flex-col gap-1.5">
-            {detail.fallbacks.map((fallback, index) => (
+          <ol className="relative flex flex-col gap-2.5">
+            <span className="absolute top-1.5 bottom-1.5 left-[4.5px] w-px bg-gray-7" />
+            {chain.map((step, index) => (
               <li
-                key={`${fallback.keyName}:${fallback.name}`}
-                className="flex min-w-0 items-center gap-2 text-sm"
+                key={`${step.keyName}:${step.name}`}
+                className="relative flex min-w-0 items-center gap-2.5 text-xs"
               >
-                <span className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-gray-3 text-xss tabular-nums text-gray-11">
-                  {index + 1}
+                <span
+                  className={cn(
+                    'size-2.5 shrink-0 rounded-full ring-2 ring-panel',
+                    index === 0 ? 'bg-accent-10' : 'bg-gray-8',
+                  )}
+                />
+                <span
+                  className={cn(
+                    'truncate',
+                    index === 0 ? 'font-medium text-gray-12' : 'text-gray-11',
+                  )}
+                  title={step.name}
+                >
+                  {step.name}
                 </span>
-                <span className="truncate text-gray-12" title={fallback.name}>
-                  {fallback.name}
-                </span>
-                <span className="ml-auto shrink-0 truncate text-xs text-gray-10">
-                  {fallback.keyName}
+                <span className="ml-auto shrink-0 truncate text-gray-10">
+                  {step.keyName}
                 </span>
               </li>
             ))}
@@ -144,7 +162,9 @@ function DetailRow({
   return (
     <div className="flex min-w-0 items-baseline justify-between gap-4">
       <dt className="shrink-0 text-xs text-gray-11">{label}</dt>
-      <dd className="min-w-0 truncate text-right text-gray-12">{children}</dd>
+      <dd className="min-w-0 truncate text-right font-medium text-gray-12">
+        {children}
+      </dd>
     </div>
   );
 }
