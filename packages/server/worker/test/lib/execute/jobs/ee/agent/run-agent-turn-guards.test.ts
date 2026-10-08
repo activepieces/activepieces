@@ -42,9 +42,12 @@ describe('looksEmptyResultText', () => {
 })
 
 describe('firstStepUsesFastModel', () => {
-    it('buys time to first token on the surfaces someone is watching', () => {
-        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(true)
+    it('buys time to first token for a saved agent someone is watching', () => {
         expect(firstStepUsesFastModel({ source: AgentRunSource.AGENT, runsASavedAgent: false })).toBe(true)
+    })
+
+    it('writes chat replies with the main model, which follows the writing rules the fast one ignores', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(false)
     })
 
     it('leaves a step that runs a saved agent on the model that agent names', () => {
