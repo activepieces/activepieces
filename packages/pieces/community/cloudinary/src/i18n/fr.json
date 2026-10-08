@@ -1,7 +1,7 @@
 {
   "Cloudinary is a cloud-based image and video management platform that allows you to upload, store, manage, and deliver your media assets. It provides a range of features for image and video optimization, transformation, and delivery.": "Cloudinary est une plateforme de gestion d'images et de vidéos basée sur le nuage qui vous permet de télécharger, de stocker, de gérer et de livrer vos ressources multimédias. Il fournit une gamme de fonctionnalités pour l'optimisation des images et des vidéos, la transformation et la livraison.",
   "API Key": "Clé API",
-  "API Secret": "Secret API",
+  "API Secret": "Secret de l'API",
   "Cloud Name": "Nom du Cloud",
   "Your Cloudinary API Key. Found in Console Settings → API Keys page.": "Votre clé Cloudinary API. Trouvé dans les Paramètres de la console → Clés de l'API.",
   "Your Cloudinary API Secret. Found in Console Settings → API Keys page. Keep this secure and never share publicly.": "Votre Secret Cloudinary API. Trouvé dans Paramètres de la console → Page des clés API. Gardez cette sécurité et ne partagez jamais publiquement.",
@@ -17,7 +17,7 @@
   "Generate a comprehensive report of account usage and quotas including storage, bandwidth, transformations, requests, and add-on usage.": "Générer un rapport complet de l'utilisation du compte et des quotas incluant le stockage, la bande passante, les transformations, les requêtes et l'utilisation des modules complémentaires.",
   "Retrieve details of an asset using its unique public ID.": "Récupérer les détails d'une ressource à l'aide de son identifiant public unique.",
   "Apply transformations (resize, crop, watermark, etc.) to an asset and generate a new URL.": "Appliquer les transformations (redimensionnement, recadrage, filigrane, etc.) à une ressource et générer une nouvelle URL.",
-  "File": "Fichier",
+  "File": "Ficher",
   "Public ID": "Identifiant public",
   "Folder": "Dossier",
   "Tags": "Tags",
@@ -130,5 +130,5 @@
   "Optional: Watch only assets in this specific folder. Leave empty to watch all assets.": "Optionnel: Regardez uniquement les actifs dans ce dossier spécifique. Laissez vide pour regarder tous les actifs.",
   "Image": "Image",
   "Video": "Vidéo",
-  "Raw": "Raw"
+  "Raw": "Brute"
 }
