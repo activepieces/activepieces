@@ -144,8 +144,11 @@ export const deno = {
             capturedStderr = ''
         }
 
-        child.stdout.on('data', (data: Buffer) => {
-            stdoutBuffer += data.toString()
+        child.stdout.setEncoding('utf8')
+        child.stderr.setEncoding('utf8')
+
+        child.stdout.on('data', (chunk: string) => {
+            stdoutBuffer += chunk
             let newline = stdoutBuffer.indexOf('\n')
             while (newline !== -1) {
                 const line = stdoutBuffer.slice(0, newline)
@@ -160,10 +163,9 @@ export const deno = {
             }
         })
 
-        child.stderr.on('data', (data: Buffer) => {
-            const text = data.toString()
-            capturedStderr += text
-            console.error(text.trimEnd())
+        child.stderr.on('data', (chunk: string) => {
+            capturedStderr += chunk
+            console.error(chunk.trimEnd())
         })
 
         const failAllPending = (error: Error): void => {
@@ -186,6 +188,13 @@ export const deno = {
         child.on('error', (error) => {
             void removeDenoDir(denoDir)
             failAllPending(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: '', stderr: capturedStderr }))
+        })
+
+        // An unhandled 'error' on the stdin pipe (e.g. EPIPE when the child dies mid-write)
+        // is an uncaught exception that would crash the engine. Fail the session instead.
+        child.stdin.on('error', (error) => {
+            child.kill('SIGKILL')
+            failAllPending(sandboxError.build({ error: `Deno session stdin error: ${error.message}`, stdout: '', stderr: capturedStderr }))
         })
 
         const send = (command: SessionCommandBody): Promise<unknown> => {
@@ -264,7 +273,13 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
     }
     else {
         entryArg = `${denoDir}/main.mjs`
-        await fs.writeFile(entryArg, entry.body)
+        try {
+            await fs.writeFile(entryArg, entry.body)
+        }
+        catch (error) {
+            await removeDenoDir(denoDir)
+            throw error
+        }
     }
     const child = childProcess.spawn(denoPath, [
         'run',

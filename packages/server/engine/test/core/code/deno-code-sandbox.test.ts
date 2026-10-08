@@ -430,6 +430,17 @@ describe('denoCodeSandbox permission boundary', () => {
                 session.dispose()
             }
         })
+
+        it('returns a large multibyte result intact across stdout chunk boundaries', async () => {
+            const session = await denoCodeSandbox.createScriptSession({ scriptContext: {}, functions: {} })
+            try {
+                const expected = '😀🌍'.repeat(50_000)
+                expect(await session.run(`'😀🌍'.repeat(50000)`)).toBe(expected)
+            }
+            finally {
+                session.dispose()
+            }
+        })
     })
 })
 
