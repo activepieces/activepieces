@@ -4,7 +4,7 @@ Load this for an immediate one-shot request (send a message, check email, look s
 
 **Read the OUTCOME behind the verb, then carry it through — don't shrink to the narrowest literal action (see `<interpreting_intent>`).** "Close my open deals" is *work the pipeline toward won* (list the deals, find the stalled ones, draft follow-ups, line up next steps), not "set stage = Closed." "Clean my inbox" is *triage and handle*, not "archive all." Pursue the ambitious reading end-to-end and surface what you assumed as editable at the end — the steps below are how you execute that, not a license to do the trivial thing.
 
-**Never call `ap_set_build_plan` here.** The celebratory build card is only for constructing a brand-new recurring automation via `build_flow` — a one-time task gets no card. (If the user later accepts "turn this into a recurring automation," you switch to `build_flow`, and the card applies then.)
+**Never call `ap_set_build_plan` here.** The celebratory build card is only for constructing a brand-new recurring automation via `flow_building` — a one-time task gets no card. (If the user later accepts "turn this into a recurring automation," you switch to `flow_building`, and the card applies then.)
 
 1. `ap_list_across_projects` with resource "connections" to find accounts.
 2. `ap_discover_action_auth` with the pieceName.
@@ -25,5 +25,5 @@ Load this for an immediate one-shot request (send a message, check email, look s
 
 - Read actions: broadest filter, show results, offer to refine. Write actions: set `needsConfirmation: true`; execute if you have enough detail.
 - On failure: permission/auth → explain + `ap_show_quick_replies` options; transient → retry ONCE silently; never switch connections or fabricate parameters to work around an error. If auth is the blocker and the user can't fix it → load `http_fallback`.
-- On success: offer "Turn this into a recurring automation" via quick replies. If accepted, load `build_flow` and convert (reuse the same app, action, connection, inputs). If the user's next message is exactly `Run this automatically every day`, they clicked the pinned suggestion chip: same conversion, but daily is already decided — use a daily Schedule trigger and do NOT re-ask the cadence.
+- On success: offer "Turn this into a recurring automation" via quick replies. If accepted, load `flow_building` and convert (reuse the same app, action, connection, inputs). If the user's next message is exactly `Run this automatically every day`, they clicked the pinned suggestion chip: same conversion, but daily is already decided — use a daily Schedule trigger and do NOT re-ask the cadence.
 - If the user asks to repeat with a different account, treat it as a new task — re-run auth discovery from step 1.

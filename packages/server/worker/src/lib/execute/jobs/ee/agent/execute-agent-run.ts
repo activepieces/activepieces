@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, AiProviderCredentials, apErrorOf, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -226,9 +226,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const allTools = buildToolSet({
                 runKey,
                 knowledgeBaseKey: isNil(config.platformTier) ? { provider, providerConfigId: config.providerConfigId } : {},
-                ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
+                ctx, eventEmitter, log, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, ...spreadIfDefined('flowRunId', flowRunId), platformId, userId, userEmail: config.userEmail,
-                guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
+                dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 agentsAvailable: config.agentsAvailable,
                 abortSignal: abortController.signal,
@@ -283,6 +283,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         allToolNames,
                         tier: config.tier,
                         phaseState,
+                        ...spreadIfDefined('skills', skillsFor({ source, guides: config.guides })),
                         abortSignal: abortController.signal,
                         log,
                         sinks: {
@@ -550,6 +551,11 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
 }
 
 
+function skillsFor({ source, guides }: { source: AgentRunSource, guides: Record<string, string> }): { surface: SkillSurface, guides: Record<string, string> } | undefined {
+    const surface = agentToolSkills.surfaceFor({ source })
+    return isNil(surface) ? undefined : { surface, guides }
+}
+
 function isPieceTool(tool: AgentTool): tool is AgentPieceTool {
     return tool.type === AgentToolType.PIECE
 }
@@ -587,13 +593,12 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, rea
     }
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, runKey, knowledgeBaseKey, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, runKey, knowledgeBaseKey, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     runKey: () => RunKey
     knowledgeBaseKey: { provider?: AIProviderName, providerConfigId?: string }
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
-    phaseState: { phase: AgentPhase }
     taintState: TaintState
     mcpToolSet: Record<string, unknown>
     webTools: ToolSet
@@ -605,7 +610,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     platformId: string
     userId: string
     userEmail: string
-    guides: Record<string, string>
     dryRun: boolean
     discoveryOnly: boolean
     emailEnabled: boolean
@@ -746,14 +750,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
         ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
-    const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
-        phaseState.phase = phase
-    } })
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({
         eventEmitter,
         getProjectId: () => projectState.projectId,
@@ -824,7 +825,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             crossProject: crossProjectTools,
             web: webTools,
             thinking: thinkingTools,
-            phase: phaseTools,
             buildPlan: buildPlanTools,
             email: emailTools,
             agentSurface: agentSurfaceTools,
@@ -891,6 +891,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
         }, STREAM_IDLE_REPORT_MS)
     }
 
+    const heldLazyToolStarts = new Map<string, Record<string, unknown>>()
     const reader = uiStream.getReader()
     const abortRace = waitForAbort(abortSignal).then(() => 'aborted' as const)
     armIdleReporter()
@@ -901,6 +902,13 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             const { done, value: chunk } = next
             if (done) break
             armIdleReporter()
+            const unwrapped = agentWorkerTools.unwrapLazyToolChunk({ chunk, heldStarts: heldLazyToolStarts })
+            if (unwrapped.hold) {
+                heldLazyToolStarts.set(unwrapped.hold.callId, unwrapped.hold.chunk)
+            }
+            if (unwrapped.release) {
+                heldLazyToolStarts.delete(unwrapped.release)
+            }
             const chunkType = isObject(chunk) && typeof chunk['type'] === 'string' ? chunk['type'] : undefined
             if (chunkType === 'tool-input-available') {
                 pendingToolCalls++
@@ -918,7 +926,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             if (holdErrorChunks && chunkType === 'error') {
                 continue
             }
-            chunkBuffer.push(chunk)
+            chunkBuffer.push(...unwrapped.emit)
             if (chunkBuffer.length >= BATCH_SIZE) {
                 if (flushTimer) {
                     clearTimeout(flushTimer)

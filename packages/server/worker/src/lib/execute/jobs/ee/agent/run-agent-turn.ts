@@ -1,7 +1,8 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
-import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, PersistedAgentPart, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
+import { buildSkillSurface } from './tools/skill-tools'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
@@ -62,7 +63,7 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onStepModel }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -87,7 +88,21 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         ...(isNil(stepCeiling) ? [] : [isStepCount(stepCeiling)]),
         creditsRanOut,
     ]
-    const guardedTools = wrapToolsWithFailureGuard({ tools, log })
+    const reroutedCallIds = new Set<string>()
+    const skillSurface = isNil(skills) ? null : buildSkillSurface({
+        tools,
+        surface: skills.surface,
+        guides: skills.guides,
+        onSkillLoaded: (skill) => {
+            if (skill.entersBuildPhase) {
+                phaseState.phase = 'build'
+            }
+        },
+        canAffordPaidTool: () => paidToolsAffordable,
+        wasRerouted: (toolCallId) => reroutedCallIds.has(toolCallId),
+    })
+    const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
+    const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
     const maxTurnTokens = runawayTokenCeiling(models[0].provider)
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
@@ -122,7 +137,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         maxRetries: runsATier && hasNextModel() ? SDK_RETRIES_BEFORE_FALLBACK : SDK_RETRIES,
         maxOutputTokens: current().budget.maxOutputTokens,
         abortSignal,
-        instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider: current().provider }),
+        instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt: turnSystemPrompt, provider: current().provider }),
         messages: agentAiUtils.stripThinkingBlocks(attemptMessages, current().provider),
         tools: guardedTools,
         stopWhen: loopStopCondition,
@@ -132,7 +147,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         // thinking budget back into the disabled first step.
         prepareStep: ({ steps, messages: currentMessages }) => {
             const lastStep = steps[steps.length - 1]
-            const widened = lastStep?.toolCalls?.some((c) => agentToolPhases.isBuildOnlyTool(c.toolName))
+            const widened = lastStep?.toolCalls?.some((c) => agentToolPhases.isBuildOnlyTool(agentToolSkills.effectiveToolCall({ toolName: c.toolName, input: c.input }).toolName))
             if (widened) {
                 phaseState.phase = 'build'
             }
@@ -156,9 +171,10 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             const stepModel = isFirstStep && !isNil(fast) ? fast : current()
             const usesFastModel = stepModel !== current()
             const stepBudget = stepModel.budget
-            const phaseTools = agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }).filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name))
+            const visibleTools = skillSurface?.coreToolNames ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
+            const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
-            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider: stepModel.provider })
+            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
             const stepContext = isLastAllowedStep
                 ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
                 : boundedContext
@@ -176,7 +192,15 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         },
         repairToolCall: async ({ toolCall, error, inputSchema }) => {
             if (NoSuchToolError.isInstance(error)) {
+                if (!isNil(skillSurface) && toolCall.toolName in skillSurface.tools && isParsableJson(toolCall.input)) {
+                    log.info({ toolName: toolCall.toolName }, 'Rerouting a deferred tool called by name through ap_lazy_tool')
+                    reroutedCallIds.add(toolCall.toolCallId)
+                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: JSON.parse(toolCall.input) }) }
+                }
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
+                return null
+            }
+            if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
                 return null
             }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
@@ -197,10 +221,11 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             return { ...toolCall, input: repaired }
         },
         onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
+            const effectiveCall = agentToolSkills.effectiveToolCall({ toolName: toolCall.toolName, input: toolCall.input })
             toolCalls.push({
-                toolName: toolCall.toolName,
+                toolName: effectiveCall.toolName,
                 toolCallId: toolCall.toolCallId,
-                input: toolCall.input,
+                input: effectiveCall.input,
                 order: toolCallOrder++,
                 phase: phaseState.phase,
             })
@@ -509,8 +534,13 @@ export function looksEmptyResultText(text: string): boolean {
     return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
 }
 
-function completedToolCalls(steps: ReadonlyArray<{ toolResults: ReadonlyArray<{ toolName: string, output: unknown }> }>): ChatToolCall[] {
-    return steps.flatMap((step) => step.toolResults.map((result) => ({ toolName: result.toolName, output: result.output })))
+
+function isParsableJson(text: string): boolean {
+    return tryCatchSync((): unknown => JSON.parse(text)).error === null
+}
+
+function completedToolCalls(steps: ReadonlyArray<{ toolResults: ReadonlyArray<{ toolName: string, input: unknown, output: unknown }> }>): ChatToolCall[] {
+    return steps.flatMap((step) => step.toolResults.map((result) => ({ toolName: agentToolSkills.effectiveToolCall({ toolName: result.toolName, input: result.input }).toolName, output: result.output })))
 }
 
 function runawayTokenCeiling(provider: AIProviderName): number {
@@ -626,6 +656,7 @@ export type RunAgentTurnParams = {
     creditsLeft?: (pendingCredits: number) => Promise<number | null>
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
+    skills?: { surface: SkillSurface, guides: Record<string, string> }
 }
 
 export type AgentTurnResult = {

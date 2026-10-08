@@ -33,13 +33,13 @@ The router only works if the AI output is pinned to the exact values the branche
 
 ## Score-gate with human escalation
 
-For "AI decides, a human only handles the hard ones": AI emits a confidence score → router: high → auto-proceed, low → auto-reject, middle → human approval (see `ap_load_guide('error_handling')`). This collapses human review down to the borderline cases instead of everything.
+For "AI decides, a human only handles the hard ones": AI emits a confidence score → router: high → auto-proceed, low → auto-reject, middle → human approval (see `ap_load_skill('error_handling')`). This collapses human review down to the borderline cases instead of everything.
 
 ## AI step vs CODE step — you decide, never ask
 
 This is your call, not the user's — never surface it as a question. The rule:
 - **Language, drafting, summarizing, classifying, extracting, judgment** → use the native AI piece (`@activepieces/piece-ai`). When a task could plausibly go either way (e.g. "draft a reply", "summarize these", "categorize this"), **default to the AI piece** — don't quietly build a CODE step that hard-codes rules for something that's really a language/judgment task.
-- **Deterministic comparisons, arithmetic, reshaping/formatting data** → use a router condition or an **inline formula expression** (`filter_list`, `if`, `round`, `format_currency`, … — see the expression ladder in `build_flow`). Reach for a `CODE` step only when the logic is genuinely beyond those functions. They run instantly, free, and exactly.
+- **Deterministic comparisons, arithmetic, reshaping/formatting data** → use a router condition or an **inline formula expression** (`filter_list`, `if`, `round`, `format_currency`, … — see the expression ladder in `flow_building`). Reach for a `CODE` step only when the logic is genuinely beyond those functions. They run instantly, free, and exactly.
 
 Don't use `askAi` as a comparison or arithmetic engine (e.g. "did the price change?", "is this number bigger?"). A router condition or an inline formula expression does it deterministically, instantly, and free. Use AI for language, extraction, and judgment — not exact comparisons or math.
 

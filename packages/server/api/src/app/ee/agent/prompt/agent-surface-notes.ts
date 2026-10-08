@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, agentToolSkills, SKILLS_NOTE_HEADING } from '@activepieces/shared'
 import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
 function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
@@ -19,6 +19,7 @@ function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, s
 }): string {
     const isChat = source === AgentRunSource.CHAT
     const readsTheWeb = source !== AgentRunSource.AGENT_BUILDER
+    const skillSurface = agentToolSkills.surfaceFor({ source })
     return (isChat && !isNil(userIdentity) ? agentUserIdentity.buildNote(userIdentity) : '')
         + buildCapabilitiesNote({
             currentDate,
@@ -35,6 +36,7 @@ function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, s
         + (isChat ? buildMemoryNote(memory) : '')
         + (source === AgentRunSource.AGENT ? RECONNECT_NOTE : '')
         + ((source === AgentRunSource.AGENT || isChat) && agentsAvailable ? SELF_EDIT_NOTE : '')
+        + (isNil(skillSurface) ? '' : agentToolSkills.renderSkillsNote({ surface: skillSurface }))
 }
 
 const SELF_EDIT_NOTE = [
@@ -207,6 +209,7 @@ const RUN_NOTE_HEADINGS: readonly string[] = [
     headingOf(ONBOARDING_FIRST_MESSAGE_NOTE),
     headingOf(RECONNECT_NOTE),
     headingOf(SELF_EDIT_NOTE),
+    SKILLS_NOTE_HEADING,
 ]
 
 const RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY = 2
