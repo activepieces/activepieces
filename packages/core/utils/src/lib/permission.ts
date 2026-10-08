@@ -41,6 +41,13 @@ export enum PlatformUsageMetric {
     CREDITS = 'credits',
     ACTIVE_FLOWS = 'active-flows',
     USERS = 'users',
+    PROJECTS = 'projects',
+    STORAGE = 'storage',
+    EMAILS = 'emails',
+    AI_OPS = 'ai-ops',
+    SMS = 'sms',
+    WHATSAPP = 'whatsapp',
+    VOICE_MINUTES = 'voice-minutes',
 }
 
 export const SAFE_STRING_PATTERN = '^[^./]+$'

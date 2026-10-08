@@ -2,7 +2,7 @@ import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces
 import { FlowStatus, PlatformId, ProjectType, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
-import { projectRepo } from '../../project/project.repo'
+import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { getPlanLimits } from '@activepieces/shared'
 import { synkraSubscriptionService } from './subscription.service'
@@ -60,7 +60,7 @@ export const synkraEnforcement = (log: FastifyBaseLogger) => ({
       throw new ActivepiecesError({
         code: ErrorCode.QUOTA_EXCEEDED,
         params: {
-          metric: PlatformUsageMetric.PROJECTS,
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
           message: `Your ${plan.name} plan allows ${plan.workspaces} workspace${plan.workspaces === 1 ? '' : 's'}. You currently have ${projectCount}.`,
           usage: projectCount,
           limit: plan.workspaces,
@@ -116,7 +116,7 @@ export const synkraEnforcement = (log: FastifyBaseLogger) => ({
       throw new ActivepiecesError({
         code: ErrorCode.QUOTA_EXCEEDED,
         params: {
-          metric: PlatformUsageMetric.PROJECTS,
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
           message: `Your ${plan.name} plan allows ${plan.storageGb} GB of storage. You're using ${(used / 1024 / 1024 / 1024).toFixed(2)} GB.`,
           usage: used,
           limit: limitBytes,
