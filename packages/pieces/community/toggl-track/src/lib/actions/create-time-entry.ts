@@ -16,10 +16,10 @@ export const createTimeEntry = createAction({
   classification: 'WRITE',
   displayName: 'Create Time Entry',
   description: 'Create a new time entry in a workspace.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Creates a time entry with a start time and a duration in seconds (a negative duration with no stop starts a running timer). Agents: prefer Log Time (Agent). Returns the created entry. A retry creates a duplicate.',
+      'Creates a time entry with a start time and a duration in seconds (a negative duration with no stop starts a running timer). Returns the created entry. A retry creates a duplicate.',
     idempotent: false,
   },
   props: {

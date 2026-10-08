@@ -11,10 +11,10 @@ export const startTimeEntry = createAction({
   classification: 'WRITE',
   displayName: 'Start Time Entry',
   description: 'Start a new time entry (live timer).',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Starts a running timer now, optionally linked to a project, task, and tags. Agents: prefer Start Timer (Agent). Returns the running entry; end it with Stop Time Entry. A retry starts another timer (on Toggl 2.0 it also stops the previous one).',
+      'Starts a running timer now, optionally linked to a project, task, and tags. Returns the running entry; end it with Stop Time Entry. A retry starts another timer (on Toggl 2.0 it also stops the previous one).',
     idempotent: false,
   },
   props: {
