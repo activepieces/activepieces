@@ -8,11 +8,11 @@ export const shopifyAiRemoveTags = createAction({
   name: 'remove_tags',
   classification: 'WRITE',
   displayName: 'Remove Tags',
-  description: 'Remove tags from an order, draft order, customer or product.',
+  description: 'Remove tags from an order, draft order, customer, product or blog article.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Removes one or more tags from an order, draft order, customer or product and keeps the others; prefer this over sending a full tag list to an update action. Removing a tag that is not present changes nothing, so repeating is safe. Returns the resulting tag list.',
+      'Removes one or more tags from an order, draft order, customer, product or blog article and keeps the others; prefer this over sending a full tag list to an update action. Removing a tag that is not present changes nothing, so repeating is safe. Returns the resulting tag list. Blog articles need the write_content access scope.',
     idempotent: true,
   },
   outputSchema: removeTagsOutputSchema,
@@ -27,6 +27,7 @@ export const shopifyAiRemoveTags = createAction({
           { label: 'Draft order', value: 'DraftOrder' },
           { label: 'Customer', value: 'Customer' },
           { label: 'Product', value: 'Product' },
+          { label: 'Blog article', value: 'Article' },
         ],
       },
     }),
@@ -64,7 +65,7 @@ export const shopifyAiRemoveTags = createAction({
 });
 
 const TAGGED_NODE_FRAGMENTS =
-  '... on Order { tags } ... on DraftOrder { tags } ... on Customer { tags } ... on Product { tags }';
+  '... on Order { tags } ... on DraftOrder { tags } ... on Customer { tags } ... on Product { tags } ... on Article { tags }';
 
 type TaggedNode = {
   id: string;

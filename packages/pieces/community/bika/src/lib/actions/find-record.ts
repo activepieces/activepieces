@@ -1,10 +1,8 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { BikaCommon, makeClient } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
 import { BikaAuth } from '../auth';
+import { bikaOperations } from '../common/operations';
+import { bikaProps } from '../common/props';
+import { bikaOutputSchemas } from '../output-schemas';
 
 export const findRecordAction = createAction({
   auth: BikaAuth,
@@ -12,34 +10,24 @@ export const findRecordAction = createAction({
   classification: 'READ',
   displayName: 'Get Record',
   description: 'Retrieves a record in database by ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Retrieves a single record from a Bika.ai database by its record ID. Use when you already know the exact record ID; to search by field values or fetch multiple rows use Find Records instead. Read-only and idempotent.', idempotent: true },
-  props: {
-    space_id: BikaCommon.space_id,
-    database_id: BikaCommon.database_id,
-      recordId: Property.ShortText({
-      displayName: 'Record ID',
-      required: true,
-    }),
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Gets one Bika.ai record by its record ID from a database picked from dropdowns. Use Find Records to search by field values instead. Read-only.',
+    idempotent: true,
   },
+  props: {
+    space_id: bikaProps.space(),
+    database_id: bikaProps.database(),
+    recordId: bikaProps.recordId({ description: 'The ID of the record to get (starts with "rec").' }),
+  },
+  outputSchema: bikaOutputSchemas.humanRecord,
   async run(context) {
-    const databaseId = context.propsValue.database_id;
-    const spaceId = context.propsValue.space_id;
-    const recordId = context.propsValue.recordId;
-
-    const client = makeClient(
-      context.auth.props,
-    );
-
-    const response: any = await client.findRecord(
-      spaceId,
-      databaseId,
-      recordId,
-    );
-
-    if (!response.success) {
-      throw new Error(JSON.stringify(response, undefined, 2));
-    }
-    return response;
+    return bikaOperations.humanGet({
+      auth: context.auth,
+      spaceId: context.propsValue.space_id,
+      databaseId: context.propsValue.database_id,
+      recordId: context.propsValue.recordId,
+    });
   },
 });
