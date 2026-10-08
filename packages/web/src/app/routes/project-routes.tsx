@@ -113,7 +113,8 @@ const agentEditorElement = (
         </PageTitle>
       </RoutePermissionGuard>
     </ProjectDashboardLayout>
-  </AgentsFlagGuard>
+    </AgentsFlagGuard>
+  </SynkraHiddenV1Guard>
 );
 
 export const projectRoutes = [
