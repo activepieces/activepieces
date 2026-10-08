@@ -216,6 +216,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
         ssoDomainVerification: platform?.ssoDomainVerification ?? null,
+        auditLogRetentionDays: platform?.auditLogRetentionDays ?? null,
     }
 }
 

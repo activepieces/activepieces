@@ -45,19 +45,5 @@
   "Triggers when there is new response": "Triggers when there is new response",
   "Form": "Form",
   "Include Team Drive Forms": "Include Team Drive Forms",
-  "Determines if forms from Team Drives should be included in the results.": "Determines if forms from Team Drives should be included in the results.",
-  "Response is Binary": "响应为二进制",
-  "Return Error as Output": "将错误作为输出返回",
-  "Timeout": "超时",
-  "Appended to the URL as ?key=value.": "以 ?key=value 的形式附加到 URL。",
-  "On a failed request, output the error instead of failing the step.": "请求失败时，输出错误而不是让步骤失败。",
-  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "等待响应的秒数。留空：最多到流程上限（10 分钟）。",
-  "Follow 3xx redirects instead of returning them as the response.": "跟随 3xx 重定向，而不是将其作为响应返回。",
-  "Triggers when someone submits or edits a response to the form.": "当有人提交或编辑表单回复时触发。",
-  "Include Shared Drives": "包含共享云端硬盘",
-  "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.": "每隔几分钟检查一次表单。在流程发布后提交或编辑的回复会启动流程。",
-  "The form to watch for new responses.": "要监视新回复的表单。",
-  "Also include forms stored in shared drives.": "同时包含存储在共享云端硬盘中的表单。",
-  "Connect with a Google Cloud service account.\n\n**How to get the key:**\n1. Open the [Google Cloud console](https://console.cloud.google.com/iam-admin/serviceaccounts) → **IAM & Admin** → **Service Accounts**.\n2. Create a service account, or pick an existing one.\n3. Open **Keys** → **Add key** → **Create new key** → **JSON** and download the file.\n4. Share each form with the service account's email, or set up [domain-wide delegation](https://support.google.com/a/answer/162106) and fill in **User Email** below.": "使用 Google Cloud 服务账号连接。\n\n**如何获取密钥:**\n1. 打开 [Google Cloud console](https://console.cloud.google.com/iam-admin/serviceaccounts) → **IAM & Admin** → **Service Accounts**。\n2. 创建服务账号，或选择现有的服务账号。\n3. 打开 **Keys** → **Add key** → **Create new key** → **JSON** 并下载文件。\n4. 将每个表单共享给服务账号的邮箱，或设置[全网域委派](https://support.google.com/a/answer/162106)并在下方填写 **User Email**。",
-  "Paste the full contents of the downloaded key file.": "粘贴下载的密钥文件的全部内容。"
+  "Determines if forms from Team Drives should be included in the results.": "Determines if forms from Team Drives should be included in the results."
 }

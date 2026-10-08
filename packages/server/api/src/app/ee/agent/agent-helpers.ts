@@ -132,7 +132,7 @@ async function resolveChatProvider({ platformId, scope, log }: { platformId: str
 
 async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
     if (!isNil(modelTierId)) {
-        await aiModelCandidates(log).firstCandidate({ platformId, tierId: modelTierId })
+        await aiModelCandidates(log).firstCandidate({ platformId, tierId: modelTierId, scope })
         return
     }
     if (isNil(provider)) {
@@ -183,16 +183,14 @@ async function resolveModelId({ platformId, providerConfig, selectedModel, surfa
     return picked.id
 }
 
-async function resolveImageModelId({ platformId, providerConfig, scope, grantedByTier = false, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, grantedByTier?: boolean, log: FastifyBaseLogger }): Promise<string | undefined> {
+async function resolveImageModelId({ platformId, providerConfig, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string | undefined> {
     const { provider, configId } = providerConfig
     const preferred = AI_PROVIDER_CAPABILITIES[provider].defaultImageModel
     if (isNil(preferred) || provider === AIProviderName.ACTIVEPIECES) {
         return preferred
     }
     const listed = await Promise.race([
-        tryCatch(() => grantedByTier
-            ? aiProviderService(log).listModelsForConfig({ platformId, configId })
-            : aiProviderService(log).listModels({ platformId, provider, scope, configId })),
+        tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId })),
         delay(IMAGE_MODEL_LOOKUP_TIMEOUT_MS, null),
     ])
     if (isNil(listed) || isNil(listed.data)) {

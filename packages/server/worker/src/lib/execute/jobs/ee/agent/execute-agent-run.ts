@@ -689,7 +689,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             const { error } = await tryCatch(() => ctx.apiClient.updateProjectContext({ conversationId, runId, projectId, provider: runKey().provider, providerConfigId: runKey().providerConfigId }))
             if (!isNil(error)) {
                 log.warn({ error, conversation: { id: conversationId }, project: projectId ? { id: projectId } : undefined }, '[executeAgentRun] Refused a project switch')
-                return { success: false, error: 'Could not switch to that project on this chat — the AI provider key this chat runs on is not available there. Start a new chat in that project instead.' }
+                return { success: false, error: 'Could not switch to that project on this chat — the model this chat runs on is not available there. Start a new chat in that project instead.' }
             }
             projectState.projectId = projectId
             return { success: true }
