@@ -12,7 +12,7 @@ export const listTables = createAction({
 	classification: 'SEARCH',
 	displayName: 'List Tables',
 	description: 'Lists the tables in a Softr database, including their fields.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Lists the tables in a Softr database with their IDs, names and columns. Agents: Get Database Schema (Agent) returns the same in a simpler shape, with select options. Read-only.',
