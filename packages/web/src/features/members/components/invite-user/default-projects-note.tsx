@@ -9,12 +9,14 @@ import { userHooks } from '@/hooks/user-hooks';
 export function DefaultProjectsNote({
   invitedProjectId,
   includesPersonalProject,
+  invitesSomeoneNew,
 }: DefaultProjectsNoteProps) {
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const { activeDefaultProjectIds, personalProjectsActive } =
     platformHooks.useNewMemberSettings();
 
   const joinsDefaultProjects =
+    invitesSomeoneNew &&
     platformRole === PlatformRole.ADMIN &&
     activeDefaultProjectIds.some(
       (projectId) => isNil(invitedProjectId) || projectId !== invitedProjectId,
@@ -56,4 +58,5 @@ const ROLES_AND_ACCESS_PATH = '/platform/users/roles';
 type DefaultProjectsNoteProps = {
   invitedProjectId?: string;
   includesPersonalProject: boolean;
+  invitesSomeoneNew: boolean;
 };
