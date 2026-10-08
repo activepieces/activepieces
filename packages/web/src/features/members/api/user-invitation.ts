@@ -15,6 +15,11 @@ export const userInvitationApi = {
   list: (request: ListUserInvitationsRequest) => {
     return api.get<SeekPage<UserInvitation>>('/v1/user-invitations', request);
   },
+  removeProject(id: string) {
+    return api.post<UserInvitation>(
+      `/v1/user-invitations/${id}/remove-project`,
+    );
+  },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/user-invitations/${id}`);
   },
