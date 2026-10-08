@@ -7,6 +7,7 @@ import { userRepo } from '../../user/user-service'
 import { getPlanLimits } from '@activepieces/shared'
 import { synkraSubscriptionService } from './subscription.service'
 import { platformService } from '../../platform/platform.service'
+import { synkraUsageService, MeterField } from './usage.service'
 
 /**
  * Synkra tier enforcement.
@@ -91,6 +92,39 @@ export const synkraEnforcement = (log: FastifyBaseLogger) => ({
       })
     }
   },
+  async checkEmailLimit(userId: string, n = 1): Promise<void> {
+    await assertMeterBelowLimit(userId, 'emailsUsed', 'emails', n, log)
+  },
+  async checkAiOpsLimit(userId: string, n = 1): Promise<void> {
+    await assertMeterBelowLimit(userId, 'aiOpsUsed', 'aiOps', n, log)
+  },
+  async checkSmsLimit(userId: string, n = 1): Promise<void> {
+    await assertMeterBelowLimit(userId, 'smsUsed', 'sms', n, log)
+  },
+  async checkWhatsappLimit(userId: string, n = 1): Promise<void> {
+    await assertMeterBelowLimit(userId, 'whatsappUsed', 'whatsapp', n, log)
+  },
+  async checkVoiceLimit(userId: string, minutes = 1): Promise<void> {
+    await assertMeterBelowLimit(userId, 'voiceMinutesUsed', 'voiceMinutes', minutes, log)
+  },
+  async checkStorageLimit(userId: string, addBytes: number): Promise<void> {
+    const sub = await synkraSubscriptionService(log).getOrCreateForUser(userId)
+    const plan = getPlanLimits(sub.tier)
+    const used = Number(sub.storageBytesUsed ?? 0)
+    const limitBytes = plan.storageGb * 1024 * 1024 * 1024
+    if (used + addBytes > limitBytes) {
+      throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+          metric: PlatformUsageMetric.PROJECTS,
+          message: `Your ${plan.name} plan allows ${plan.storageGb} GB of storage. You're using ${(used / 1024 / 1024 / 1024).toFixed(2)} GB.`,
+          usage: used,
+          limit: limitBytes,
+        },
+      })
+    }
+  },
+
 })
 
 async function resolvePlatformOwner(platformId: PlatformId, log: FastifyBaseLogger): Promise<string | null> {
@@ -110,5 +144,32 @@ async function resolvePlatformOwnerFromProject(projectId: string, log: FastifyBa
     return await resolvePlatformOwner(project.platformId as PlatformId, log)
   } catch {
     return null
+  }
+}
+
+
+async function assertMeterBelowLimit(
+  userId: string,
+  field: MeterField,
+  planKey: 'emails' | 'aiOps' | 'sms' | 'whatsapp' | 'voiceMinutes',
+  delta: number,
+  log: FastifyBaseLogger,
+): Promise<void> {
+  const svc = synkraUsageService(log)
+  const sub = await synkraSubscriptionService(log).getOrCreateForUser(userId)
+  const plan = getPlanLimits(sub.tier)
+  const limit = plan[planKey]
+  const usage = await svc.getUsage(userId)
+  const used = usage[field]
+  if (limit > 0 && used + delta > limit) {
+    throw new ActivepiecesError({
+      code: ErrorCode.QUOTA_EXCEEDED,
+      params: {
+        metric: PlatformUsageMetric.ACTIVE_FLOWS,
+        message: `Your ${plan.name} plan allows ${limit} ${planKey} per month. You've used ${used}.`,
+        usage: used,
+        limit,
+      },
+    })
   }
 }

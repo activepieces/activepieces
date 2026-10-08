@@ -17,6 +17,14 @@ export interface SynkraSubscription {
   studentVerified: boolean;
   communityVerified: boolean;
   metadata: Record<string, unknown>;
+  aiOpsUsed: number;
+  smsUsed: number;
+  whatsappUsed: number;
+  voiceMinutesUsed: number;
+  emailsUsed: number;
+  storageBytesUsed: string;
+  usagePeriodStart: Date | null;
+  usagePeriodEnd: Date | null;
 }
 
 export const SynkraSubscriptionEntity = new EntitySchema<SynkraSubscription>({
@@ -35,6 +43,14 @@ export const SynkraSubscriptionEntity = new EntitySchema<SynkraSubscription>({
     studentVerified: { type: Boolean, default: false },
     communityVerified: { type: Boolean, default: false },
     metadata: { type: 'jsonb', default: {} },
+    aiOpsUsed: { type: 'int', default: 0 },
+    smsUsed: { type: 'int', default: 0 },
+    whatsappUsed: { type: 'int', default: 0 },
+    voiceMinutesUsed: { type: 'int', default: 0 },
+    emailsUsed: { type: 'int', default: 0 },
+    storageBytesUsed: { type: 'bigint', default: 0 },
+    usagePeriodStart: { type: 'timestamptz', nullable: true },
+    usagePeriodEnd: { type: 'timestamptz', nullable: true },
   },
   indices: [
     { name: 'idx_synkra_sub_user', columns: ['userId'], unique: true },
