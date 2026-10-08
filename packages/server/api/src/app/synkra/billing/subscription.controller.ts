@@ -54,7 +54,7 @@ export const synkraSubscriptionController: FastifyPluginAsyncZod = async (app) =
       };
     },
   );
-};
+
   app.get(
     '/usage',
     {
@@ -86,3 +86,4 @@ export const synkraSubscriptionController: FastifyPluginAsyncZod = async (app) =
       return synkraUsageService(request.log).getUsage(principal.id);
     },
   );
+};

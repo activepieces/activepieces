@@ -66,6 +66,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
 
                 // Synkra: meter the send for the platform owner (fire-and-forget)
                 void (async () => {
+                    if (!platformId) return
                     try {
                         const platform = await platformService(log).getOne(platformId)
                         const ownerId = platform?.ownerId

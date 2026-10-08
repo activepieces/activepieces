@@ -440,8 +440,8 @@ type UploadPublicAssetParams = {
 }
 
 
-async function meterStorage(log: FastifyBaseLogger, platformId: string, bytes: number): Promise<void> {
-    if (!bytes || bytes <= 0) return
+async function meterStorage(log: FastifyBaseLogger, platformId: string | undefined, bytes: number): Promise<void> {
+    if (!platformId || !bytes || bytes <= 0) return
     try {
         const platform = await platformService(log).getOne(platformId)
         const ownerId = platform?.ownerId
