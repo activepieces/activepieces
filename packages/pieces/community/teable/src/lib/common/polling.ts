@@ -1,3 +1,4 @@
+import { Store } from '@activepieces/pieces-framework';
 import { TeableRecord } from './client';
 
 async function findAnchorIndex({
@@ -26,7 +27,8 @@ async function scanFreshRecords({
   fetchPage,
   epochOf,
   lastFetchEpochMS,
-}: ScanFreshRecordsParams): Promise<TeableRecord[]> {
+  skipAtEpoch,
+}: ScanFreshRecordsParams): Promise<{ records: TeableRecord[]; caughtUp: boolean }> {
   const collected = new Map<string, TeableRecord>();
   let anchorEpoch = lastFetchEpochMS;
   let seenAtAnchor = new Set<string>();
@@ -57,9 +59,12 @@ async function scanFreshRecords({
       continue;
     }
     for (const record of page) {
+      const epoch = epochOf(record);
+      const alreadyEmitted = epoch === skipAtEpoch?.epoch && skipAtEpoch.ids.has(record.id);
       if (
-        epochOf(record) > lastFetchEpochMS &&
-        !(epochOf(record) === anchorEpoch && seenAtAnchor.has(record.id))
+        epoch > lastFetchEpochMS &&
+        !alreadyEmitted &&
+        !(epoch === anchorEpoch && seenAtAnchor.has(record.id))
       ) {
         collected.set(record.id, record);
       }
@@ -84,33 +89,71 @@ async function scanFreshRecords({
     expectedFirstId = last.id;
     nextSkip += page.length - 1;
   }
-  const fresh = [...collected.values()];
-  if (caughtUp) {
-    return fresh;
-  }
-  return dropIncompleteNewest({ records: fresh, epochOf });
+  return { records: [...collected.values()], caughtUp };
 }
 
-function dropIncompleteNewest({
-  records,
+async function pollFreshItems({
+  store,
+  storeKey,
+  rowCount,
+  fetchPage,
   epochOf,
-}: {
-  records: TeableRecord[];
-  epochOf: (record: TeableRecord) => number;
-}): TeableRecord[] {
-  const newestEpoch = records.reduce((acc, record) => Math.max(acc, epochOf(record)), 0);
-  const fullyFetched = records.filter((record) => epochOf(record) < newestEpoch);
-  return fullyFetched.length > 0 ? fullyFetched : records;
+  lastFetchEpochMS,
+}: PollFreshItemsParams): Promise<{ epochMilliSeconds: number; data: TeableRecord }[]> {
+  const frontier = await store.get<FrontierState>(storeKey);
+  const activeFrontier =
+    frontier !== null && frontier !== undefined && frontier.epoch > lastFetchEpochMS
+      ? frontier
+      : undefined;
+  const { records, caughtUp } = await scanFreshRecords({
+    rowCount,
+    fetchPage,
+    epochOf,
+    lastFetchEpochMS,
+    skipAtEpoch:
+      activeFrontier !== undefined
+        ? { epoch: activeFrontier.epoch, ids: new Set(activeFrontier.ids) }
+        : undefined,
+  });
+  if (caughtUp) {
+    if (frontier !== null && frontier !== undefined) {
+      await store.delete(storeKey);
+    }
+    return records.map((record) => ({ epochMilliSeconds: epochOf(record), data: record }));
+  }
+  if (records.length === 0) {
+    return [];
+  }
+  const boundaryEpoch = records.reduce((acc, record) => Math.max(acc, epochOf(record)), 0);
+  const fullyFetched = records.filter((record) => epochOf(record) < boundaryEpoch);
+  if (fullyFetched.length > 0) {
+    return fullyFetched.map((record) => ({ epochMilliSeconds: epochOf(record), data: record }));
+  }
+  const resumeEpoch = lastFetchEpochMS + 1;
+  const previousIds =
+    activeFrontier !== undefined && activeFrontier.epoch === boundaryEpoch
+      ? activeFrontier.ids
+      : [];
+  const combinedIds = [...new Set([...previousIds, ...records.map((record) => record.id)])];
+  if (resumeEpoch >= boundaryEpoch || combinedIds.length > MAX_TRACKED_TIE_IDS) {
+    if (frontier !== null && frontier !== undefined) {
+      await store.delete(storeKey);
+    }
+    return records.map((record) => ({ epochMilliSeconds: epochOf(record), data: record }));
+  }
+  await store.put(storeKey, { epoch: boundaryEpoch, ids: combinedIds });
+  return records.map((record) => ({ epochMilliSeconds: resumeEpoch, data: record }));
 }
 
 export const teablePolling = {
   scanFreshRecords,
-  dropIncompleteNewest,
+  pollFreshItems,
 };
 
 export const TRIGGER_PAGE_SIZE = 500;
 export const MAX_RECORDS_PER_POLL = 5000;
 export const MAX_SCAN_ITERATIONS = 40;
+export const MAX_TRACKED_TIE_IDS = 25000;
 
 type FetchPage = (params: { skip: number; take: number }) => Promise<TeableRecord[]>;
 
@@ -126,4 +169,19 @@ type ScanFreshRecordsParams = {
   fetchPage: FetchPage;
   epochOf: (record: TeableRecord) => number;
   lastFetchEpochMS: number;
+  skipAtEpoch?: { epoch: number; ids: Set<string> };
+};
+
+type PollFreshItemsParams = {
+  store: Store;
+  storeKey: string;
+  rowCount: number;
+  fetchPage: FetchPage;
+  epochOf: (record: TeableRecord) => number;
+  lastFetchEpochMS: number;
+};
+
+export type FrontierState = {
+  epoch: number;
+  ids: string[];
 };

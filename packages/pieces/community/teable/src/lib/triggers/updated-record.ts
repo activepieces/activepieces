@@ -101,56 +101,37 @@ async function fetchSampleRecords({
   });
 }
 
-async function fetchModifiedSince({
-  auth,
-  tableId,
-  fieldId,
-  epochOf,
-  lastFetchEpochMS,
-}: {
-  auth: TeableAuthValue;
-  tableId: string;
-  fieldId: string;
-  epochOf: (record: TeableRecord) => number;
-  lastFetchEpochMS: number;
-}): Promise<TeableRecord[]> {
-  const orderBy = JSON.stringify([{ fieldId, order: 'asc' }]);
-  const rowCount = await teableClient.getRowCount({ auth, tableId });
-  return teablePolling.scanFreshRecords({
-    rowCount,
-    fetchPage: async ({ skip, take }) => {
-      const page = await teableClient.listRecords({
-        auth,
-        tableId,
-        query: { take, skip, orderBy },
-      });
-      return page.records;
-    },
-    epochOf,
-    lastFetchEpochMS,
-  });
-}
-
 const polling: Polling<TeableTriggerAuth, Props> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  items: async ({ auth, store, propsValue, lastFetchEpochMS }) => {
     const tableId = propsValue.table_id;
     const lastModifiedField = await requireLastModifiedField({ auth, tableId });
     const epochOf = (record: TeableRecord) =>
       fieldModifiedEpoch({ record, fieldName: lastModifiedField.name });
-    const records =
-      lastFetchEpochMS === 0
-        ? await fetchSampleRecords({ auth, tableId, fieldId: lastModifiedField.id })
-        : await fetchModifiedSince({
-            auth,
-            tableId,
-            fieldId: lastModifiedField.id,
-            epochOf,
-            lastFetchEpochMS,
-          });
-    return records
-      .map((record) => ({ epochMilliSeconds: epochOf(record), data: record }))
-      .sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
+    if (lastFetchEpochMS === 0) {
+      const sample = await fetchSampleRecords({ auth, tableId, fieldId: lastModifiedField.id });
+      return sample
+        .map((record) => ({ epochMilliSeconds: epochOf(record), data: record }))
+        .sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
+    }
+    const orderBy = JSON.stringify([{ fieldId: lastModifiedField.id, order: 'asc' }]);
+    const rowCount = await teableClient.getRowCount({ auth, tableId });
+    const items = await teablePolling.pollFreshItems({
+      store,
+      storeKey: 'teable_updated_record_frontier',
+      rowCount,
+      fetchPage: async ({ skip, take }) => {
+        const page = await teableClient.listRecords({
+          auth,
+          tableId,
+          query: { take, skip, orderBy },
+        });
+        return page.records;
+      },
+      epochOf,
+      lastFetchEpochMS,
+    });
+    return items.sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
   },
 };
 
@@ -163,7 +144,7 @@ export const updatedRecordTrigger = createTrigger({
     'Triggers when a record is created or modified. The table must have a "Last modified time" field.',
   aiMetadata: {
     description:
-      'Fires when a record in the selected Teable table is created or modified. The table must contain a field of type "Last modified time"; enabling the trigger fails with instructions when it is missing. A record modified again later fires again.',
+      'Fires when a record in the selected Teable table is created or modified. The table must contain a field of type "Last modified time"; enabling the trigger fails with instructions when it is missing. A record modified again later fires again. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical "Last modified time" value can records beyond that bound be skipped.',
   },
   props: {
     base_id: TeableCommon.base_id,

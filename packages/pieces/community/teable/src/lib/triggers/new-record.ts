@@ -35,42 +35,33 @@ async function fetchTailRecords({
   return page.records;
 }
 
-async function fetchRecordsNewerThan({
-  auth,
-  tableId,
-  lastFetchEpochMS,
-}: {
-  auth: TeableAuthValue;
-  tableId: string;
-  lastFetchEpochMS: number;
-}): Promise<TeableRecord[]> {
-  const rowCount = await teableClient.getRowCount({ auth, tableId });
-  return teablePolling.scanFreshRecords({
-    rowCount,
-    fetchPage: async ({ skip, take }) => {
-      const page = await teableClient.listRecords({
-        auth,
-        tableId,
-        query: { take, skip },
-      });
-      return page.records;
-    },
-    epochOf: createdEpoch,
-    lastFetchEpochMS,
-  });
-}
-
 const polling: Polling<TeableTriggerAuth, Props> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  items: async ({ auth, store, propsValue, lastFetchEpochMS }) => {
     const tableId = propsValue.table_id;
-    const records =
-      lastFetchEpochMS === 0
-        ? await fetchTailRecords({ auth, tableId, count: TEST_SAMPLE_SIZE })
-        : await fetchRecordsNewerThan({ auth, tableId, lastFetchEpochMS });
-    return records
-      .map((record) => ({ epochMilliSeconds: createdEpoch(record), data: record }))
-      .sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
+    if (lastFetchEpochMS === 0) {
+      const sample = await fetchTailRecords({ auth, tableId, count: TEST_SAMPLE_SIZE });
+      return sample
+        .map((record) => ({ epochMilliSeconds: createdEpoch(record), data: record }))
+        .sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
+    }
+    const rowCount = await teableClient.getRowCount({ auth, tableId });
+    const items = await teablePolling.pollFreshItems({
+      store,
+      storeKey: 'teable_new_record_frontier',
+      rowCount,
+      fetchPage: async ({ skip, take }) => {
+        const page = await teableClient.listRecords({
+          auth,
+          tableId,
+          query: { take, skip },
+        });
+        return page.records;
+      },
+      epochOf: createdEpoch,
+      lastFetchEpochMS,
+    });
+    return items.sort((a, b) => b.epochMilliSeconds - a.epochMilliSeconds);
   },
 };
 
@@ -82,7 +73,7 @@ export const newRecordTrigger = createTrigger({
   description: 'Triggers when a new record is created in a table.',
   aiMetadata: {
     description:
-      'Fires when a new record is created in the selected Teable table. Polls on a schedule and emits each new record once, with its field values, ID, and creation time.',
+      'Fires when a new record is created in the selected Teable table. Polls on a schedule and emits each new record once, with its field values, ID, and creation time. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical creation timestamp can records beyond that bound be skipped.',
   },
   props: {
     base_id: TeableCommon.base_id,

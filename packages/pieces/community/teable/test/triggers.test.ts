@@ -5,7 +5,6 @@ import {
 	Store,
 } from '@activepieces/pieces-framework';
 import { teableClient, TeableRecord } from '../src/lib/common/client';
-import { teablePolling } from '../src/lib/common/polling';
 import { newRecordTrigger } from '../src/lib/triggers/new-record';
 import { updatedRecordTrigger } from '../src/lib/triggers/updated-record';
 import { PAT_AUTH } from './helpers';
@@ -99,22 +98,91 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('dropIncompleteNewest', () => {
-	const epochOf = (record: TeableRecord) => Date.parse(record.lastModifiedTime ?? '');
+function makeTieRecords({
+	count,
+	epoch,
+	startIndex = 0,
+}: {
+	count: number;
+	epoch: number;
+	startIndex?: number;
+}): TeableRecord[] {
+	return Array.from({ length: count }, (_, offset) => {
+		const index = startIndex + offset;
+		return {
+			id: `rec${index}`,
+			fields: { LastModified: iso(epoch) },
+			createdTime: iso(epoch),
+			lastModifiedTime: iso(epoch),
+		};
+	});
+}
 
-	it('drops only the records at the newest timestamp', () => {
-		const records = makeRecords(3);
-		const trimmed = teablePolling.dropIncompleteNewest({ records, epochOf });
-		expect(trimmed.map((record) => record.id)).toEqual(['rec0', 'rec1']);
+describe('same-timestamp group larger than the poll cap', () => {
+	const TIE_EPOCH = BASE_EPOCH + 10_000;
+
+	it('new record trigger resumes inside the group across polls and loses nothing', async () => {
+		const records = makeTieRecords({ count: 12500, epoch: TIE_EPOCH });
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		mockListRecords(records);
+		const store = memoryStore({ lastPoll: BASE_EPOCH });
+
+		const poll1 = await runPoll(newRecordTrigger, store);
+		const frontier1 = await store.get<{ epoch: number; ids: string[] }>(
+			'teable_new_record_frontier'
+		);
+		expect(frontier1?.epoch).toBe(TIE_EPOCH);
+		expect(frontier1?.ids).toHaveLength(poll1.length);
+
+		const poll2 = await runPoll(newRecordTrigger, store);
+		const frontier2 = await store.get<{ epoch: number; ids: string[] }>(
+			'teable_new_record_frontier'
+		);
+		expect(frontier2?.ids).toHaveLength(poll1.length + poll2.length);
+
+		const poll3 = await runPoll(newRecordTrigger, store);
+		expect(await store.get('teable_new_record_frontier')).toBeNull();
+
+		const ids = [...poll1, ...poll2, ...poll3].map((record) => record.id);
+		expect(ids.length).toBe(12500);
+		expect(new Set(ids).size).toBe(12500);
+		expect(await runPoll(newRecordTrigger, store)).toEqual([]);
 	});
 
-	it('keeps everything when all records share one timestamp', () => {
-		const records = makeRecords(3).map((record) => ({
-			...record,
-			lastModifiedTime: iso(BASE_EPOCH),
-		}));
-		const trimmed = teablePolling.dropIncompleteNewest({ records, epochOf });
-		expect(trimmed).toHaveLength(3);
+	it('updated record trigger fires newer records only after the group completes', async () => {
+		const group = makeTieRecords({ count: 12500, epoch: TIE_EPOCH });
+		const newer = Array.from({ length: 100 }, (_, offset) => {
+			const epoch = TIE_EPOCH + (offset + 1) * 1000;
+			return {
+				id: `newer${offset}`,
+				fields: { LastModified: iso(epoch) },
+				createdTime: iso(epoch),
+				lastModifiedTime: iso(epoch),
+			};
+		});
+		const records = [...group, ...newer];
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
+			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+		]);
+		mockListRecords(records);
+		const store = memoryStore({ lastPoll: BASE_EPOCH });
+
+		const poll1 = await runPoll(updatedRecordTrigger, store);
+		const poll2 = await runPoll(updatedRecordTrigger, store);
+		expect([...poll1, ...poll2].some((record) => record.id.startsWith('newer'))).toBe(false);
+		expect(
+			(await store.get<{ epoch: number }>('teable_updated_record_frontier'))?.epoch
+		).toBe(TIE_EPOCH);
+
+		const poll3 = await runPoll(updatedRecordTrigger, store);
+		expect(poll3.filter((record) => record.id.startsWith('newer'))).toHaveLength(100);
+		expect(await store.get('teable_updated_record_frontier')).toBeNull();
+
+		const ids = [...poll1, ...poll2, ...poll3].map((record) => record.id);
+		expect(ids.length).toBe(12600);
+		expect(new Set(ids).size).toBe(12600);
+		expect(await runPoll(updatedRecordTrigger, store)).toEqual([]);
 	});
 });
 
