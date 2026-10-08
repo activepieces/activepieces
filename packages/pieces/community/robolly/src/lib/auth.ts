@@ -1,19 +1,30 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth, tryCatch } from '@activepieces/pieces-framework';
+
+import { robollyApi } from './common/api';
 
 const markdownDescription = `
-Follow these instructions to get your API Key:
-1. Visit the following website: https://robolly.com/dashboard/account/
-2. Once on the website, locate and copy your API Key.
-Please, take into consideration: We don't test your API Key validity in order to save you some generations, so make sure this is the correct one.
+To get your API key:
+1. Log in to [Robolly](https://robolly.com/dashboard/).
+2. Open your project and go to **API**.
+3. Copy the API key and paste it here.
 `;
 
 export const robollyAuth = PieceAuth.SecretText({
 	description: markdownDescription,
 	displayName: 'API Key',
 	required: true,
-	validate: async () => {
-		return {
-			valid: true,
-		};
+	validate: async ({ auth }) => {
+		const { error } = await tryCatch(() =>
+			robollyApi.listTemplates({
+				auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
+			}),
+		);
+		if (error) {
+			return {
+				valid: false,
+				error: 'Invalid API key. Copy it again from your Robolly project → API.',
+			};
+		}
+		return { valid: true };
 	},
 });

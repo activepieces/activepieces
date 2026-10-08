@@ -8,3 +8,18 @@ export type RobollyTemplatesResponse = { templates: RobollyTemplate[] };
 export type RobollyAcceptedModificationsResponse = {
 	acceptedModifications: RobollyAcceptedModification[];
 };
+export type RobollyRender = {
+	id: string;
+	status?: string;
+	templateId?: string;
+	file?: string;
+	preview?: string;
+	createdAt?: string;
+};
+export type RobollyRendersPage = {
+	hasMore?: boolean;
+	paginationCursorNext?: string | null;
+	paginationCursorPrevious?: string | null;
+	data?: RobollyRender[];
+	value?: RobollyRender[];
+};
