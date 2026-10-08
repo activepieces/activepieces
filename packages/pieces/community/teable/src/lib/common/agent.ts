@@ -187,6 +187,32 @@ async function findKeyMatches({
   return matches.records;
 }
 
+async function duplicateKeyWarning({
+  auth,
+  table,
+  key,
+  keyValue,
+}: {
+  auth: TeableAuthValue;
+  table: TeableTable;
+  key: TeableField;
+  keyValue: unknown;
+}): Promise<string | undefined> {
+  try {
+    const recheck = await findKeyMatches({ auth, table, key, keyValue });
+    if (recheck.length > 1) {
+      return `More than one record now matches ${key.name} = "${String(
+        keyValue
+      )}": a parallel upsert likely created a duplicate, since Teable has no atomic create-if-absent. Run same-key upserts one at a time and remove the extra record.`;
+    }
+    return undefined;
+  } catch {
+    return `The record was created, but the duplicate check could not run. Verify that no parallel upsert created a second record with ${key.name} = "${String(
+      keyValue
+    )}".`;
+  }
+}
+
 async function upsertRecord({
   auth,
   table,
@@ -227,13 +253,7 @@ async function upsertRecord({
       fieldKeyType: 'id',
       typecast: true,
     });
-    const recheck = await findKeyMatches({ auth, table, key, keyValue });
-    const warning =
-      recheck.length > 1
-        ? `More than one record now matches ${key.name} = "${String(
-            keyValue
-          )}": a parallel upsert likely created a duplicate, since Teable has no atomic create-if-absent. Run same-key upserts one at a time and remove the extra record.`
-        : undefined;
+    const warning = await duplicateKeyWarning({ auth, table, key, keyValue });
     return {
       action: 'created',
       record: mapFieldIdsToNames({ fields, record: created.records[0] }),

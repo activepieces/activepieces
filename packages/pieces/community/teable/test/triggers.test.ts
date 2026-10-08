@@ -52,10 +52,14 @@ function pollContext({ store }: { store: Store }) {
 	return { ...base, auth: PAT_AUTH, store };
 }
 
-function mockListRecords(records: TeableRecord[]) {
+function mockListRecords(
+	records: TeableRecord[],
+	beforeCall?: (query: Record<string, unknown> | undefined) => void
+) {
 	return vi
 		.spyOn(teableClient, 'listRecords')
 		.mockImplementation(async ({ query }) => {
+			beforeCall?.(query);
 			let rows = [...records];
 			const orderBy = query?.['orderBy'];
 			if (typeof orderBy === 'string') {
@@ -127,10 +131,30 @@ describe('new record trigger overflow', () => {
 			await runPoll(newRecordTrigger, store),
 		];
 
-		expect(polls.map((poll) => poll.length)).toEqual([4999, 4999, 2002]);
+		expect(polls.flat().length).toBe(12000);
 		const ids = polls.flat().map((record) => record.id);
 		expect(new Set(ids).size).toBe(12000);
 		expect(await runPoll(newRecordTrigger, store)).toEqual([]);
+	});
+
+	it('does not lose records when rows are deleted mid-scan', async () => {
+		const records = makeRecords(1500);
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		let pageFetches = 0;
+		mockListRecords(records, (query) => {
+			if (query?.['take'] === 500) {
+				pageFetches += 1;
+				if (pageFetches === 2) {
+					records.splice(5, 3);
+				}
+			}
+		});
+		const store = memoryStore({ lastPoll: BASE_EPOCH - 1 });
+
+		const delivered = await runPoll(newRecordTrigger, store);
+		const rest = await runPoll(newRecordTrigger, store);
+		const ids = new Set([...delivered, ...rest].map((record) => record.id));
+		expect(ids.size).toBe(1500);
 	});
 });
 
@@ -150,10 +174,40 @@ describe('updated record trigger overflow', () => {
 			await runPoll(updatedRecordTrigger, store),
 		];
 
-		expect(polls.map((poll) => poll.length)).toEqual([4999, 4999, 2002]);
+		expect(polls.flat().length).toBe(12000);
 		const ids = polls.flat().map((record) => record.id);
 		expect(new Set(ids).size).toBe(12000);
 		expect(await runPoll(updatedRecordTrigger, store)).toEqual([]);
+	});
+
+	it('does not lose records when rows are edited mid-scan', async () => {
+		const records = makeRecords(2000);
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
+			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+		]);
+		let pageFetches = 0;
+		mockListRecords(records, (query) => {
+			if (query?.['take'] === 500) {
+				pageFetches += 1;
+				if (pageFetches === 2) {
+					for (const index of [10, 11, 12]) {
+						const bumped = iso(BASE_EPOCH + 5_000_000 + index * 1000);
+						records[index] = {
+							...records[index],
+							fields: { LastModified: bumped },
+							lastModifiedTime: bumped,
+						};
+					}
+				}
+			}
+		});
+		const store = memoryStore({ lastPoll: BASE_EPOCH - 1 });
+
+		const delivered = await runPoll(updatedRecordTrigger, store);
+		const rest = await runPoll(updatedRecordTrigger, store);
+		const ids = new Set([...delivered, ...rest].map((record) => record.id));
+		expect(ids.size).toBe(2000);
 	});
 
 	it('delivers a small batch in one poll once caught up', async () => {

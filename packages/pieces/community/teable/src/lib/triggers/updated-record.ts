@@ -116,20 +116,9 @@ async function fetchModifiedSince({
 }): Promise<TeableRecord[]> {
   const orderBy = JSON.stringify([{ fieldId, order: 'asc' }]);
   const rowCount = await teableClient.getRowCount({ auth, tableId });
-  const startIndex = await teablePolling.findFirstFreshIndex({
+  return teablePolling.scanFreshRecords({
     rowCount,
-    probe: async (skip) => {
-      const page = await teableClient.listRecords({
-        auth,
-        tableId,
-        query: { take: 1, skip, orderBy },
-      });
-      return page.records[0];
-    },
-    isFresh: (record) => epochOf(record) > lastFetchEpochMS,
-  });
-  return teablePolling.collectFreshRecords({
-    listPage: async ({ skip, take }) => {
+    fetchPage: async ({ skip, take }) => {
       const page = await teableClient.listRecords({
         auth,
         tableId,
@@ -137,7 +126,6 @@ async function fetchModifiedSince({
       });
       return page.records;
     },
-    startIndex,
     epochOf,
     lastFetchEpochMS,
   });

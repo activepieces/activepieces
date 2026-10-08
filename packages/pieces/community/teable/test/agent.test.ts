@@ -213,6 +213,28 @@ describe('upsert_record_ai branches', () => {
 		expect(createFields).not.toHaveProperty('fldName');
 	});
 
+	it('still returns the created record when the duplicate recheck fails', async () => {
+		mockUpsertLookup([]);
+		sendRequest.mockResolvedValueOnce({
+			body: { records: [{ id: 'recNew', fields: { fldEmail: 'a@b.c' } }] },
+		});
+		sendRequest.mockRejectedValueOnce(new Error('429 Too Many Requests'));
+		const output = await runAction({
+			action: upsertRecordAi,
+			propsValue: {
+				baseId: 'bse1',
+				table: 'Contacts',
+				keyColumn: 'Email',
+				fields: { Email: 'a@b.c' },
+			},
+		});
+		expect(output).toMatchObject({
+			action: 'created',
+			record: { id: 'recNew' },
+			warning: expect.stringMatching(/duplicate check could not run/),
+		});
+	});
+
 	it('warns when a parallel upsert double-created the key', async () => {
 		mockUpsertLookup([]);
 		sendRequest.mockResolvedValueOnce({

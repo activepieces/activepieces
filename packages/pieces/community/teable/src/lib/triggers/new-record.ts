@@ -45,20 +45,9 @@ async function fetchRecordsNewerThan({
   lastFetchEpochMS: number;
 }): Promise<TeableRecord[]> {
   const rowCount = await teableClient.getRowCount({ auth, tableId });
-  const startIndex = await teablePolling.findFirstFreshIndex({
+  return teablePolling.scanFreshRecords({
     rowCount,
-    probe: async (skip) => {
-      const page = await teableClient.listRecords({
-        auth,
-        tableId,
-        query: { take: 1, skip },
-      });
-      return page.records[0];
-    },
-    isFresh: (record) => createdEpoch(record) > lastFetchEpochMS,
-  });
-  return teablePolling.collectFreshRecords({
-    listPage: async ({ skip, take }) => {
+    fetchPage: async ({ skip, take }) => {
       const page = await teableClient.listRecords({
         auth,
         tableId,
@@ -66,7 +55,6 @@ async function fetchRecordsNewerThan({
       });
       return page.records;
     },
-    startIndex,
     epochOf: createdEpoch,
     lastFetchEpochMS,
   });
