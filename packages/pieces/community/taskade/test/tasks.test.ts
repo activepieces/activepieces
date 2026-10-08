@@ -230,6 +230,8 @@ describe('set_task_date', () => {
 		[{}, 'Start Date is required'],
 		[{ startDate: '20-10-2026' }, 'YYYY-MM-DD'],
 		[{ startDate: '2026-13-01' }, 'YYYY-MM-DD'],
+		[{ startDate: '2026-02-30' }, 'real date'],
+		[{ startDate: '2026-10-20', endDate: '2026-04-31' }, 'real date'],
 		[{ startDate: '2026-10-20', startTime: '9am' }, 'HH:MM'],
 		[{ startDate: '2026-10-20', endTime: '10:00' }, 'End Time needs End Date'],
 		[{ startDate: '2026-10-20', endDate: '2026-10-19' }, 'on or after'],

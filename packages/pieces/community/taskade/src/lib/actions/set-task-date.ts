@@ -106,7 +106,7 @@ function buildDate({ date, time, timezone, label }: { date: unknown; time: unkno
 		}
 		return undefined;
 	}
-	if (!DATE_PATTERN.test(dateText) || Number.isNaN(Date.parse(`${dateText}T00:00:00Z`))) {
+	if (!isRealDate(dateText)) {
 		throw new Error(`${label} Date "${dateText}" must be a real date in YYYY-MM-DD format.`);
 	}
 	if (timeText && !TIME_PATTERN.test(timeText)) {
@@ -117,6 +117,14 @@ function buildDate({ date, time, timezone, label }: { date: unknown; time: unkno
 		...(timeText ? { time: timeText } : {}),
 		...(timezone ? { timezone } : {}),
 	};
+}
+
+function isRealDate(text: string): boolean {
+	if (!DATE_PATTERN.test(text)) {
+		return false;
+	}
+	const parsed = new Date(`${text}T00:00:00Z`);
+	return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === text;
 }
 
 function toSeconds(time: string): number {
