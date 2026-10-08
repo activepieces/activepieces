@@ -143,7 +143,7 @@ For support, admins and anyone outside the team, and for members reporting on so
 1. **Find duplicates first.** Search team AI's open issues for the same problem. If one exists, offer to add the new details as a comment on it instead.
 2. **Pick the form:** Bug report if something is broken, Feature if it's a request.
 3. **Fill the form's fields** from what they gave you, then **grill** for the rest: light for non-members, full for members.
-   - **Bug:** what happens, steps, what should happen, where (Cloud, Self-hosted, Embed or MCP client), customer, and a link.
+   - **Bug:** what happens, steps, what should happen, where (Cloud, Self-hosted, Embed or MCP client), customer (attach it, see Customers below), and a link.
    - **Feature:** goal, and who asked.
 4. **Never guess a priority for a non-member.** Leave it for triage, unless they say data loss, a security issue or a billing problem; then mark it Urgent and say why.
 5. **Security:** if it looks like a security issue, don't write the details in the ticket. Create it with a neutral title and tell them to send the details privately to the AI team lead.
@@ -156,6 +156,12 @@ For support, admins and anyone outside the team, and for members reporting on so
    > **Should I create it?**
 
 7. **Create it** in team AI with status **Triage** and no assignee, then reply with the link and one line: "Filed. The AI team will take a look."
+
+## Customers: attach them, don't just name them
+
+Whenever a ticket names a customer (Report, a plain request in Start, or a Triage that finds one), attach a Linear **customer request** to it with `save_customer_need`, in the same OK as creating or updating the ticket. Find the customer first with `list_customers` (by name or email domain); create it with `save_customer` only if none matches. Put one plain line in the request body (what they asked for), never their message, emails or credentials.
+
+This is what tells the team a customer is waiting: when the ticket is Done, support is pinged to tell them. A customer written only in the description is invisible to that.
 
 Do the paperwork yourself. Ask only for facts you can't find in the ticket, the code, the logs or the conversation. In a grill, ask one at a time. Everywhere else, ask for all of them in one message.
 
