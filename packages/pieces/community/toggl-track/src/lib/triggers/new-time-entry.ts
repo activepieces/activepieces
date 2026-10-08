@@ -25,7 +25,7 @@ export const newTimeEntry = createTrigger({
   props: {
     workspace_id: togglCommon.workspace_id,
     optional_project_id: togglCommon.optional_project_id,
-    task_id: togglCommon.optional_task_id,
+    task_id: togglCommon.taskDropdown({ projectField: 'optional_project_id' }),
     setupInstructions: Property.MarkDown({
       value: generateTogglWebhookInstructions(
         TOGGL_WEBHOOK_EVENTS.TIME_ENTRY_CREATED,

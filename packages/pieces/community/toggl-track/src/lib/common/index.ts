@@ -401,17 +401,25 @@ export const togglCommon = {
           }),
       }),
   }),
-  optional_task_id: Property.Dropdown({
+  optional_task_id: taskDropdown({ projectField: 'project_id' }),
+  taskDropdown,
+};
+
+function taskDropdown({ projectField }: { projectField: string }) {
+  return Property.Dropdown({
     auth: togglTrackAuth,
     displayName: 'Task',
     description: 'The task to select.',
     required: false,
-    refreshers: ['workspace_id', 'project_id'],
-    options: async ({ auth, workspace_id, project_id }) =>
-      loadOptions({
+    refreshers: ['workspace_id', projectField],
+    options: async (context) => {
+      const auth = context.auth;
+      const workspaceValue = context['workspace_id'];
+      const projectValue = context[projectField];
+      return loadOptions({
         auth,
         missing:
-          workspace_id && project_id
+          workspaceValue && projectValue
             ? null
             : 'Select a workspace and project first',
         errorLabel: 'tasks',
@@ -419,17 +427,18 @@ export const togglCommon = {
           listTasks({
             auth: connection,
             workspaceId: togglApi.requireId({
-              value: workspace_id,
+              value: workspaceValue,
               label: 'Workspace',
             }),
             projectId: togglApi.requireId({
-              value: project_id,
+              value: projectValue,
               label: 'Project',
             }),
           }),
-      }),
-  }),
-};
+      });
+    },
+  });
+}
 
 type Named = { id: number; name: string };
 

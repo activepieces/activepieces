@@ -5,6 +5,7 @@ import { togglCommon } from '../src/lib/common';
 import { createTimeEntry } from '../src/lib/actions/create-time-entry';
 import { startTimeEntry } from '../src/lib/actions/start-time-entry';
 import { updateTimeEntry } from '../src/lib/actions/update-time-entry';
+import { newTimeEntry } from '../src/lib/triggers/new-time-entry';
 
 const projects: AgentProject[] = [
   { id: 1, name: 'Website', workspaceId: 10, clientName: 'Acme' },
@@ -105,6 +106,7 @@ describe('task dropdown refreshers', () => {
     ['create_time_entry', createTimeEntry],
     ['start_time_entry', startTimeEntry],
     ['update_time_entry', updateTimeEntry],
+    ['new_time_entry trigger', newTimeEntry],
   ])('%s refreshers only name props that exist on the action', (_name, action) => {
     const propNames = Object.keys(action.props);
     for (const prop of Object.values(action.props)) {
