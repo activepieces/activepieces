@@ -18,6 +18,14 @@ describe('gscClient.request', () => {
     expect(seen[0].headers.get('accept')).toBe('application/json');
   });
 
+  test('sends every request through an agent that checks HTTPS certificates', async () => {
+    stubFetch(() => ({ body: {} }));
+    await gscClient.request({ auth, method: HttpMethod.GET, path: ['webmasters', 'v3', 'sites'], operation: 'x' });
+    const init = vi.mocked(fetch).mock.calls[0][1];
+    const dispatcher = Reflect.get(Object(init), 'dispatcher');
+    expect(dispatcher?.constructor?.name).toBe('Agent');
+  });
+
   test('maps a 403 permission error to a site URL hint and keeps Google text', async () => {
     const message = "User does not have sufficient permission for site 'https://example.com/'. See also: https://support.google.com/webmasters/answer/2451999.";
     stubFetch(() => ({ status: 403, body: googleError({ code: 403, message }) }));

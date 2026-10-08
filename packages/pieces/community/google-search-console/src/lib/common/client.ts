@@ -4,6 +4,16 @@ const BASE_URL = 'https://searchconsole.googleapis.com';
 const REQUEST_TIMEOUT_MS = 60_000;
 const MAX_ERROR_TEXT = 500;
 
+// The shared HTTP client turns off certificate checks for the whole process
+// (NODE_TLS_REJECT_UNAUTHORIZED=0). An explicit rejectUnauthorized wins over that,
+// so the OAuth token only goes to a server with a valid certificate.
+let verifiedTlsAgent: Promise<unknown> | undefined;
+
+function verifiedTls(): Promise<unknown> {
+  verifiedTlsAgent ??= import('undici').then(({ Agent }) => new Agent({ connect: { rejectUnauthorized: true } }));
+  return verifiedTlsAgent;
+}
+
 export class GscApiError extends Error {
   readonly status: number;
   readonly reason: string | undefined;
@@ -35,6 +45,7 @@ async function request<T>({
 }): Promise<GscResponse<T>> {
   const url = `${BASE_URL}/${path.join('/')}`;
   try {
+    const dispatcher = await verifiedTls();
     const response = await httpClient.sendRequest<T>({
       method,
       url,
@@ -47,7 +58,7 @@ async function request<T>({
       body,
       timeout: REQUEST_TIMEOUT_MS,
       followRedirects: false,
-    });
+    }, { dispatcher });
     if (response.status >= 300) {
       throw new GscApiError({ operation, status: response.status, responseBody: 'Google answered with an unexpected redirect.' });
     }
