@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   PlatformRole,
   UpdateUserRequestBody,
@@ -6,8 +7,10 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Info } from 'lucide-react';
 import { useState } from 'react';
-import { Resolver, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { platformUserApi } from '@/api/platform-user-api';
 import { Button } from '@/components/ui/button';
@@ -23,42 +26,81 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members';
+import { InvitedProjectSelect } from '@/features/members/components/invite-user/invited-project-select';
+import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const UpdateUserDialog = ({
   children,
   onUpdate,
   userId,
+  firstName,
   role,
   externalId,
-}: {
-  children: React.ReactNode;
-  onUpdate: (role: PlatformRole) => void;
-  userId: string;
-  role: PlatformRole;
-  externalId?: string;
-}) => {
+  hasProjects,
+}: UpdateUserDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<{ role: PlatformRole; externalId?: string }>({
+  const { platform } = platformHooks.useCurrentPlatform();
+  const form = useForm<UpdateUserFormValues>({
     defaultValues: {
       role,
       externalId,
+      projectId: undefined,
+      projectRole: undefined,
     },
-    resolver: zodResolver(UpdateUserRequestBody) as unknown as Resolver<{
-      role: PlatformRole;
-      externalId?: string;
-    }>,
+    resolver: zodResolver(UpdateUserFormValues),
   });
-  const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
-    {
-      mutationKey: ['update-user'],
-      mutationFn: (request) => platformUserApi.update(userId, request),
-      onSuccess: (user) => {
-        onUpdate(user.platformRole);
-        setOpen(false);
-      },
+  const selectedRole = form.watch('role');
+  const needsAProject =
+    role !== PlatformRole.MEMBER &&
+    selectedRole === PlatformRole.MEMBER &&
+    !hasProjects &&
+    platform.plan.projectRolesEnabled;
+
+  const { mutate, isPending } = useMutation<User, Error, UpdateUserFormValues>({
+    mutationKey: ['update-user'],
+    mutationFn: (values) => {
+      const request: UpdateUserRequestBody = {
+        platformRole: values.role,
+        externalId: values.externalId,
+        ...(needsAProject
+          ? { projectId: values.projectId, projectRole: values.projectRole }
+          : {}),
+      };
+      return platformUserApi.update(userId, request);
     },
-  );
+    onSuccess: (user) => {
+      onUpdate(user.platformRole);
+      setOpen(false);
+    },
+    onError: () => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: t("Couldn't change the role. Try again."),
+      });
+    },
+  });
+
+  const save = () => {
+    form.clearErrors('root.serverError');
+    const values = form.getValues();
+    if (needsAProject && isNil(values.projectId)) {
+      form.setError('projectId', {
+        type: 'required',
+        message: t('Please select a project'),
+      });
+      return;
+    }
+    if (needsAProject && isNil(values.projectRole)) {
+      form.setError('projectRole', {
+        type: 'required',
+        message: t('Please select a project role'),
+      });
+      return;
+    }
+    mutate(values);
+  };
 
   return (
     <Dialog
@@ -89,6 +131,31 @@ export const UpdateUserDialog = ({
                 </FormItem>
               )}
             />
+            {needsAProject && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem className="grid space-y-2">
+                      <Label>{t('Project')}</Label>
+                      <InvitedProjectSelect
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <ProjectRoleSelect form={form} />
+                <p className="flex items-start gap-1.5 text-xs text-gray-11">
+                  <Info className="mt-px size-3.5 shrink-0" />
+                  {t("Members need a project. {name} isn't in one yet.", {
+                    name: firstName,
+                  })}
+                </p>
+              </>
+            )}
             <FormField
               name="externalId"
               render={({ field }) => (
@@ -128,10 +195,7 @@ export const UpdateUserDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              mutate({
-                platformRole: form.getValues().role,
-                externalId: form.getValues().externalId,
-              });
+              save();
             }}
           >
             {t('Save')}
@@ -140,4 +204,23 @@ export const UpdateUserDialog = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+const UpdateUserFormValues = z.object({
+  role: z.enum(PlatformRole),
+  externalId: z.string().optional(),
+  projectId: z.string().optional(),
+  projectRole: z.string().optional(),
+});
+
+type UpdateUserFormValues = z.infer<typeof UpdateUserFormValues>;
+
+type UpdateUserDialogProps = {
+  children: React.ReactNode;
+  onUpdate: (role: PlatformRole) => void;
+  userId: string;
+  firstName: string;
+  role: PlatformRole;
+  externalId?: string;
+  hasProjects: boolean;
 };

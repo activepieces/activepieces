@@ -208,6 +208,25 @@ describe('User API', () => {
         })
     })
 
+    describe('Update user endpoint with a project', () => {
+        it('refuses a project on Community, and keeps the old role', async () => {
+            const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({ project: { type: ProjectType.TEAM } })
+            const { mockUser: operator } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.OPERATOR } })
+            const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/users/${operator.id}`,
+                headers: { authorization: `Bearer ${token}` },
+                body: { platformRole: PlatformRole.MEMBER, projectId: mockProject.id, projectRole: 'Editor' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+            const user = await databaseConnection().getRepository('user').findOneByOrFail({ id: operator.id })
+            expect(user.platformRole).toBe(PlatformRole.OPERATOR)
+        })
+    })
+
     describe('Delete user endpoint', () => {
         it('Removes a user', async () => {
             // arrange
