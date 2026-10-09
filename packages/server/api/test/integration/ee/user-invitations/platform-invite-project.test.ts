@@ -154,6 +154,18 @@ describe('A platform invite outlives its project', () => {
         expect(invitation.projectId).toBeNull()
         expect(invitation.projectRoleId).toBeNull()
     })
+
+    it('keeps the project on the invite when someone tries to delete a built-in role', async () => {
+        const { mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const response = await invite({ token: ownerToken, email: faker.internet.email(), projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR })
+
+        await app?.inject({ method: 'DELETE', url: `/api/v1/project-roles/${encodeURIComponent(DefaultProjectRole.EDITOR)}`, headers: { authorization: `Bearer ${ownerToken}` } })
+
+        const invitation = await databaseConnection().getRepository('user_invitation').findOneByOrFail({ id: response?.json().id })
+        expect(invitation.projectId).toBe(mockProject.id)
+        expect(invitation.projectRoleId).not.toBeNull()
+        expect(await databaseConnection().getRepository('project_role').existsBy({ name: DefaultProjectRole.EDITOR })).toBe(true)
+    })
 })
 
 describe('Platform users list says who has a project', () => {

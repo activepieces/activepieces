@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, ApId, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { CreateProjectRoleRequestBody } from '@activepieces/shared'
-import { Brackets, Equal } from 'typeorm'
+import { Brackets, EntityManager, Equal } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
@@ -110,8 +110,8 @@ export const projectRoleService = {
         return projectRoleRepo().findOneByOrFail({ id: params.id, platformId: params.platformId })
     },
 
-    async delete({ name, platformId }: DeleteParams): Promise<void> {
-        await projectRoleRepo().delete({ name, platformId })
+    async delete({ name, platformId, entityManager }: DeleteParams): Promise<void> {
+        await projectRoleRepo(entityManager).delete({ name, platformId })
     },
 }
 
@@ -148,6 +148,7 @@ type ListParams = {
 type DeleteParams = {
     name: ApId
     platformId: PlatformId
+    entityManager?: EntityManager
 }
 
 type GetOneByNameParams = {
