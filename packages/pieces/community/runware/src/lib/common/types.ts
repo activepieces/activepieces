@@ -9,3 +9,9 @@ export type {
   IOutputFormat,
   IVideoOutputFormat,
 } from '@runware/sdk-js';
+
+export type RunwareTask = Record<string, unknown>;
+
+export type RunwareTaskResponse = {
+  data?: Record<string, unknown>[];
+};
