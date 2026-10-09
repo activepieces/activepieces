@@ -2,6 +2,7 @@ import { createContext, useState, useCallback } from 'react';
 
 type TimeSavedOverride = {
   value: number | null;
+  updatedAt: number;
 };
 
 type RefreshAnalyticsContextType = {
@@ -9,7 +10,7 @@ type RefreshAnalyticsContextType = {
   setIsRefreshing: (isRefreshing: boolean) => void;
   timeSavedPerRunOverrides: Record<string, TimeSavedOverride>;
   setTimeSavedPerRunOverride: (flowId: string, value: number | null) => void;
-  clearTimeSavedPerRunOverrides: () => void;
+  clearTimeSavedPerRunOverrides: (params: { setBefore: number }) => void;
 };
 
 export const RefreshAnalyticsContext =
@@ -35,15 +36,24 @@ export const RefreshAnalyticsProvider = ({
     (flowId: string, value: number | null) => {
       setTimeSavedPerRunOverrides((prev) => ({
         ...prev,
-        [flowId]: { value },
+        [flowId]: { value, updatedAt: Date.now() },
       }));
     },
     [],
   );
 
-  const clearTimeSavedPerRunOverrides = useCallback(() => {
-    setTimeSavedPerRunOverrides({});
-  }, []);
+  const clearTimeSavedPerRunOverrides = useCallback(
+    ({ setBefore }: { setBefore: number }) => {
+      setTimeSavedPerRunOverrides((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).filter(
+            ([, override]) => override.updatedAt >= setBefore,
+          ),
+        ),
+      );
+    },
+    [],
+  );
 
   return (
     <RefreshAnalyticsContext.Provider
