@@ -53,18 +53,7 @@ function yesNo<R extends boolean>({
 	displayName,
 	description,
 }: PropParams<R> & { displayName: string }) {
-	return Property.StaticDropdown<boolean, R>({
-		displayName,
-		description,
-		required,
-		options: {
-			disabled: false,
-			options: [
-				{ label: 'Yes', value: true },
-				{ label: 'No', value: false },
-			],
-		},
-	});
+	return Property.Checkbox({ displayName, description, required });
 }
 
 export const flowiseAiProps = { chatflowId, chatId, storeId, loaderId, startDate, endDate, yesNo };

@@ -1,3 +1,4 @@
+import { HttpError } from '@activepieces/pieces-common';
 import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
 
 import { flowiseApi } from './common/api';
@@ -18,9 +19,14 @@ export const flowiseAuth = PieceAuth.CustomAuth({
 	},
 	required: true,
 	validate: async ({ auth }) => {
-		const { error } = await tryCatch(() =>
+		const { data, error } = await tryCatch(() =>
 			flowiseApi.listChatflows({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }),
 		);
-		return error ? { valid: false, error: 'Invalid Base URL or API Key' } : { valid: true };
+		if (error instanceof HttpError && error.response.status === 403) {
+			return { valid: true };
+		}
+		return Array.isArray(data)
+			? { valid: true }
+			: { valid: false, error: 'Invalid Base URL or API Key' };
 	},
 });

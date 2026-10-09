@@ -3,12 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { flowiseAuth } from '../../auth';
 import { flowiseAiProps } from '../../common/ai-props';
 import { flowiseApi } from '../../common/api';
-import { flowiseDocumentStoreOutputSchema } from '../../output-schemas';
+import { flowiseUpdateDocumentStoreOutputSchema } from '../../output-schemas';
 
 export const deleteDocumentLoaderAction = createAction({
 	auth: flowiseAuth,
 	name: 'flowise_delete_document_loader',
-	outputSchema: flowiseDocumentStoreOutputSchema,
+	outputSchema: flowiseUpdateDocumentStoreOutputSchema,
 	displayName: 'Delete Document Loader',
 	description: 'Permanently deletes a document loader and its chunks.',
 	audience: 'ai',
