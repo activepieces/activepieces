@@ -14,7 +14,7 @@ export const getAccountAction = createAction({
 	classification: 'READ',
 	aiMetadata: {
 		description:
-			'Returns the Runware organization name and UUID, the current credit balance, the team with roles, every API key with its UUID and request count, and rolling usage totals (today, last 7 and 30 days, lifetime). Use it to check the balance before paid generations. Takes no inputs.',
+			'Returns the Runware organization name and UUID, the current credit balance, the team with roles, the name, masked key and request count of each API key (key UUIDs are not returned), and rolling usage totals (today, last 7 and 30 days, lifetime). Use it to check the balance before paid generations. Takes no inputs.',
 		idempotent: true,
 	},
 	props: {},

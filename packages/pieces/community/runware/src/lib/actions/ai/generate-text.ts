@@ -23,6 +23,22 @@ export const generateTextAction = createAction({
 			description:
 				'Conversation as [{"role": "user", "content": "Hi"}]; roles are "user" and "assistant".',
 			required: true,
+			properties: {
+				role: Property.StaticDropdown({
+					displayName: 'Role',
+					required: true,
+					options: {
+						options: [
+							{ label: 'User', value: 'user' },
+							{ label: 'Assistant', value: 'assistant' },
+						],
+					},
+				}),
+				content: Property.LongText({
+					displayName: 'Content',
+					required: true,
+				}),
+			},
 		}),
 		settings: runwareAiProps.settings({
 			required: false,
