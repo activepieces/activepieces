@@ -5,11 +5,12 @@ import { scrapegraphaiClient } from './lib/common/client';
 import { smartScraperAction } from './lib/actions/smart-scraper';
 import { localScraperAction } from './lib/actions/local-scraper';
 import { markdownifyAction } from './lib/actions/convert-to-markdown';
+import { scrapegraphaiAiActions } from './lib/actions/ai';
 
 export const scrapegraphai = createPiece({
   displayName: 'ScrapeGraphAI',
   description: 'AI-powered web scraping and content extraction.',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/scrapegraphai.jpg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["OsamaHaikal"],
@@ -18,6 +19,7 @@ export const scrapegraphai = createPiece({
     smartScraperAction,
     localScraperAction,
     markdownifyAction,
+    ...scrapegraphaiAiActions,
     createCustomApiCallAction({
       baseUrl: () => scrapegraphaiClient.baseUrl(),
       auth: scrapegraphaiAuth,

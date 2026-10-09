@@ -1,0 +1,22 @@
+import { createAction } from '@activepieces/pieces-framework';
+
+import { scrapegraphaiAuth } from '../../auth';
+import { scrapegraphaiApi } from '../../common/api';
+
+export const getCreditsAction = createAction({
+	auth: scrapegraphaiAuth,
+	name: 'scrapegrapghai_get_credits',
+	displayName: 'Get Credits',
+	description: 'Gets the remaining credit balance, plan and job quotas.',
+	audience: 'ai',
+	classification: 'READ',
+	aiMetadata: {
+		description:
+			'Returns remaining and used credits, the plan name, and crawl and monitor job slots used vs the plan limit. Free to call; use it before a large batch. Takes no inputs.',
+		idempotent: true,
+	},
+	props: {},
+	async run({ auth }) {
+		return await scrapegraphaiApi.getCredits({ auth });
+	},
+});
