@@ -38,10 +38,7 @@ import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => (
         <div className="flex w-full flex-col gap-4 p-6">
           <div className="flex items-start justify-between gap-4">
@@ -67,10 +64,7 @@ export function BillingPlanTab() {
 
 export function BillingUsageTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
     </BillingPageShell>
   );
