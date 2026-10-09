@@ -35,14 +35,11 @@ export const userInvitationsHooks = {
   }) => {
     return useQuery<UserInvitation[]>({
       queryFn: () => {
-        return userInvitationApi
-          .list({
-            type: InvitationType.PLATFORM,
-            projectId,
-            cursor: undefined,
-            limit: 100,
-          })
-          .then((res) => res.data);
+        return userInvitationApi.listAll({
+          type: InvitationType.PLATFORM,
+          projectId,
+          limit: 100,
+        });
       },
       queryKey: [userInvitationsQueryKey, 'platform', projectId],
       enabled: !isNil(projectId),

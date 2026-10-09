@@ -84,9 +84,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     break
                 }
             }
-            await repo().delete({
-                id: invitation.id,
-            })
+            await deleteIfUnchanged({ invitation })
         }
     },
     async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
@@ -131,9 +129,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }
         switch (type) {
             case InvitationType.PLATFORM: {
-                const id = await replacePlatformInvites({ email: normalizedEmail, platformId, entityManager })
-                await repo(entityManager).save({ id, ...record })
-                return this.getOneOrThrow({ id, platformId, entityManager })
+                const replaced = await replacePlatformInvites({ email: normalizedEmail, platformId, entityManager })
+                await repo(entityManager).save({
+                    id: replaced.id,
+                    ...record,
+                    status: replaced.wasAccepted ? InvitationStatus.ACCEPTED : status,
+                })
+                return this.getOneOrThrow({ id: replaced.id, platformId, entityManager })
             }
             case InvitationType.PROJECT: {
                 const id = apId()
@@ -347,15 +349,29 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
 )`
 
 
-async function replacePlatformInvites({ email, platformId, entityManager }: ReplacePlatformInvitesParams): Promise<string> {
-    const [latest, ...duplicates] = await repo(entityManager).find({
+async function replacePlatformInvites({ email, platformId, entityManager }: ReplacePlatformInvitesParams): Promise<ReplacedPlatformInvite> {
+    const invitations = await repo(entityManager).find({
         where: { type: InvitationType.PLATFORM, email, platformId },
         order: { created: 'DESC' },
     })
+    const [latest, ...duplicates] = invitations
     if (duplicates.length > 0) {
         await repo(entityManager).delete(duplicates.map((invitation) => invitation.id))
     }
-    return latest?.id ?? apId()
+    return {
+        id: latest?.id ?? apId(),
+        wasAccepted: invitations.some((invitation) => invitation.status === InvitationStatus.ACCEPTED),
+    }
+}
+
+async function deleteIfUnchanged({ invitation }: { invitation: UserInvitation }): Promise<void> {
+    await repo().delete({
+        id: invitation.id,
+        status: invitation.status,
+        platformRole: isNil(invitation.platformRole) ? IsNull() : invitation.platformRole,
+        projectId: isNil(invitation.projectId) ? IsNull() : invitation.projectId,
+        projectRoleId: isNil(invitation.projectRoleId) ? IsNull() : invitation.projectRoleId,
+    })
 }
 
 async function loadProvisioningContext({ invitations, log }: LoadProvisioningContextParams): Promise<ProvisioningContext> {
@@ -456,6 +472,11 @@ const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyI
     })
     return userInvitation
 }
+type ReplacedPlatformInvite = {
+    id: string
+    wasAccepted: boolean
+}
+
 type ReplacePlatformInvitesParams = {
     email: string
     platformId: string

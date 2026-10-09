@@ -112,6 +112,37 @@ describe('Inviting the same email to the platform again', () => {
     })
 })
 
+describe('Re-inviting someone who already accepted', () => {
+    it('keeps the invite accepted and updates its role', async () => {
+        const { platformId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.OPERATOR })
+        await databaseConnection().getRepository('user_invitation').update({ email, platformId }, { status: InvitationStatus.ACCEPTED })
+
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.ADMIN })
+
+        const invitations = await platformInvitesOf({ email, platformId })
+        expect(invitations).toHaveLength(1)
+        expect(invitations[0].status).toBe(InvitationStatus.ACCEPTED)
+        expect(invitations[0].platformRole).toBe(PlatformRole.ADMIN)
+    })
+
+    it('keeps an accepted project invite, and the platform invite does not take that project', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await inviteProject({ token: ownerToken, email, projectId, projectRole: DefaultProjectRole.VIEWER })
+        await databaseConnection().getRepository('user_invitation').update({ email, platformId, type: InvitationType.PROJECT }, { status: InvitationStatus.ACCEPTED })
+
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+
+        const invitations = await invitesOf({ email, platformId })
+        const projectInvite = invitations.find((invitation) => invitation.type === InvitationType.PROJECT)
+        const platformInvite = invitations.find((invitation) => invitation.type === InvitationType.PLATFORM)
+        expect(projectInvite?.status).toBe(InvitationStatus.ACCEPTED)
+        expect(platformInvite?.projectId).toBeNull()
+    })
+})
+
 describe('A platform invite and a project invite for the same project', () => {
     it('a platform invite naming the project replaces the pending project invite', async () => {
         const { platformId, projectId, ownerToken } = await setupPlatform()
