@@ -2,9 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { flowiseAuth } from '../auth';
 import { flowiseApi } from '../common/api';
+import { makePredictionOutputSchema } from '../output-schemas';
 
 export const makePredictionAction = createAction({
 	name: 'make_prediction',
+	outputSchema: makePredictionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Make Prediction',
 	description: 'Run Flowise Predict',

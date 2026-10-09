@@ -10,6 +10,7 @@ async function request<T>({
 	auth,
 	method,
 	path,
+	query,
 	body,
 	headers,
 }: RequestParams & { auth: FlowiseAuthValue }): Promise<T> {
@@ -20,9 +21,20 @@ async function request<T>({
 			...headers,
 			Authorization: `Bearer ${auth.props.access_token}`,
 		},
+		queryParams: query ? definedQuery({ query }) : undefined,
 		body,
 	});
 	return response.body;
+}
+
+function definedQuery({
+	query,
+}: {
+	query: Record<string, string | undefined>;
+}): Record<string, string> {
+	return Object.fromEntries(
+		Object.entries(query).filter((entry): entry is [string, string] => entry[1] !== undefined),
+	);
 }
 
 export const flowiseClient = { baseUrl, request };
@@ -30,6 +42,7 @@ export const flowiseClient = { baseUrl, request };
 type RequestParams = {
 	method: HttpMethod;
 	path: string;
+	query?: Record<string, string | undefined>;
 	body?: unknown;
 	headers?: HttpHeaders;
 };

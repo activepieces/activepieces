@@ -1,4 +1,6 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
+
+import { flowiseApi } from './common/api';
 
 export const flowiseAuth = PieceAuth.CustomAuth({
 	description: 'Enter your Flowise URL and API Key',
@@ -15,4 +17,10 @@ export const flowiseAuth = PieceAuth.CustomAuth({
 		}),
 	},
 	required: true,
+	validate: async ({ auth }) => {
+		const { error } = await tryCatch(() =>
+			flowiseApi.listChatflows({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }),
+		);
+		return error ? { valid: false, error: 'Invalid Base URL or API Key' } : { valid: true };
+	},
 });
