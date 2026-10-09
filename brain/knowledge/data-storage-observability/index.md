@@ -80,7 +80,7 @@ Gotchas:
 
 ### Flow Failure Alerts (EE)
 
-Email on flow-run failure. First failure per flowVersion per 24h window sends; rest suppressed via Redis counter `flow_fail_count:<flowVersionId>` (1-day TTL). Personal projects: single owner-only receiver toggle; team projects: any number of receivers. Platform admins can bulk sub/unsub across projects (max 5 concurrent). Receivers stored/compared lowercase. Edition check (`paidEditions`) in service, no plan flag. No Issues feature — email links straight to the run page. EE/Cloud only.
+Email on flow-run failure. First failure per flowVersion per 24h window sends; rest suppressed via Redis claim key `flow_failure_alert:<flowVersionId>` (SET NX, fixed 1-day TTL). Personal projects: single owner-only receiver toggle; team projects: any number of receivers. Platform admins can bulk sub/unsub across projects (max 5 concurrent). Receivers stored/compared lowercase. Edition check (`paidEditions`) in service, no plan flag. No Issues feature — email links straight to the run page. EE/Cloud only.
 
 ### Event Destinations (EE)
 
