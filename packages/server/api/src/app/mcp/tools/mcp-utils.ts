@@ -1,4 +1,4 @@
-import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { extractMustacheTokens, isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
@@ -657,6 +657,8 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 
 const RESOLVE_TIMEOUT_MS = 30_000
 
+const CONTAINER_PROP_TYPES = new Set<PropertyType>([PropertyType.ARRAY, PropertyType.OBJECT, PropertyType.JSON])
+
 const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder once with ap_create_folder, then pass the same folderName to each of them.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
@@ -743,7 +745,47 @@ async function resolveDynamicPropertySettings({ pieceName, pieceVersion, compone
         const settings: PropertySettings = result?.status === 'dynamic' ? { type, schema: result.props } : { type }
         return [name, settings] as const
     }))
-    return { ...current, ...Object.fromEntries(refreshed) }
+    return syncContainerExecutionTypes({ props: component.props, input, propertySettings: { ...current, ...Object.fromEntries(refreshed) } })
+}
+
+function syncContainerExecutionTypes({ props, input, propertySettings }: {
+    props: PiecePropertyMap
+    input: Record<string, unknown>
+    propertySettings: Record<string, PropertySettings>
+}): Record<string, PropertySettings> {
+    const updates = Object.entries(props).flatMap(([name, prop]): [string, PropertySettings][] => {
+        const type = containerExecutionType({ prop, value: input[name] })
+        if (isNil(type) || (propertySettings[name]?.type ?? PropertyExecutionType.MANUAL) === type) {
+            return []
+        }
+        return [[name, { ...propertySettings[name], type }]]
+    })
+    return { ...propertySettings, ...Object.fromEntries(updates) }
+}
+
+function containerExecutionType({ prop, value }: { prop: PiecePropertyMap[string], value: unknown }): PropertyExecutionType | undefined {
+    if (!CONTAINER_PROP_TYPES.has(prop.type) || isStructuredArray(prop)) {
+        return undefined
+    }
+    if (isWholeReference(value)) {
+        return PropertyExecutionType.DYNAMIC
+    }
+    if (Array.isArray(value) || isObject(value)) {
+        return PropertyExecutionType.MANUAL
+    }
+    return undefined
+}
+
+function isWholeReference(value: unknown): boolean {
+    if (typeof value !== 'string') {
+        return false
+    }
+    const tokens = extractMustacheTokens(value)
+    return tokens.length === 1 && tokens[0].token === value.trim()
+}
+
+function isStructuredArray(prop: PiecePropertyMap[string]): boolean {
+    return prop.type === PropertyType.ARRAY && isObject(prop.properties) && Object.keys(prop.properties).length > 0
 }
 
 // Classify an action by how many records it returns, from its name. This is the signal the agent
@@ -880,6 +922,7 @@ export const mcpUtils = {
     extractOptionsArray,
     executePropertyResolution,
     resolveDynamicPropertySettings,
+    syncContainerExecutionTypes,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,

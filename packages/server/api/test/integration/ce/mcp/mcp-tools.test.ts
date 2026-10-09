@@ -328,6 +328,50 @@ describe('MCP Tools integration', () => {
         expect(text(structure)).toContain('Renamed Flow')
     })
 
+    it('ap_add_step and ap_update_step mark a list or JSON field holding one whole reference as dynamic, and a real value back as manual', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-test-containers',
+            displayName: 'Test Containers',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                locate: {
+                    name: 'locate',
+                    displayName: 'Locate',
+                    description: 'Locates assets',
+                    requireAuth: false,
+                    props: {
+                        assetIds: { type: 'ARRAY', displayName: 'Asset Ids', required: true },
+                        body: { type: 'JSON', displayName: 'Body', required: false },
+                    },
+                },
+            },
+            triggers: {},
+        }))
+        const flowId = await createFlowAndGetId(mcp, 'Whole reference flow')
+
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PIECE,
+            displayName: 'Locate',
+            pieceName: '@activepieces/piece-test-containers',
+            actionName: 'locate',
+            input: { assetIds: '{{trigger.body.assetIds}}', body: '{{trigger.body}}' },
+        })
+        const added = flowStructureUtil.getStep('step_1', (await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })).version.trigger)
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { assetIds: ['a', 'b'] } })
+        const updated = flowStructureUtil.getStep('step_1', (await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })).version.trigger)
+
+        expect(added?.settings.propertySettings).toMatchObject({ assetIds: { type: 'DYNAMIC' }, body: { type: 'DYNAMIC' } })
+        expect(updated?.settings.propertySettings).toMatchObject({ assetIds: { type: 'MANUAL' }, body: { type: 'DYNAMIC' } })
+    })
+
     it('8. ap_delete_step — removes a step from a flow', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
