@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ArraySubProps } from '@activepieces/pieces-framework';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { flowCanvasHooks } from '../flow-canvas/hooks';
 
 import { GenericPropertiesForm } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { textMentionUtils } from './text-input-with-mentions/text-input-utils';
 
 type BaseArrayPropertyProps = {
   inputName: string;
@@ -28,7 +29,6 @@ type ArrayPiecePropertyInInlineItemModeProps = BaseArrayPropertyProps &
 
 const ArrayPiecePropertyInInlineItemMode = React.memo(
   (props: ArrayPiecePropertyInInlineItemModeProps) => {
-    const containerRef = useRef<HTMLDivElement>(null);
     const [
       isFocusInsideListMapperModeInput,
       setIsFocusInsideListMapperModeInput,
@@ -38,13 +38,14 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
     ]);
     const { inputName, disabled } = props;
     flowCanvasHooks.useIsFocusInsideListMapperModeInput({
-      containerRef,
       setIsFocusInsideListMapperModeInput,
       isFocusInsideListMapperModeInput,
     });
     useFixInlineArrayPropertyValue(inputName, props);
     return (
-      <div className="w-full" ref={containerRef}>
+      <div
+        className={cn('w-full', textMentionUtils.listMapperModeInputCssClass)}
+      >
         {props.arrayProperties ? (
           <div
             className={cn(

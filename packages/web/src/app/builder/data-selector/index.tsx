@@ -68,24 +68,43 @@ function buildAdvancedStructure(
   isFocusInsideListMapperModeInput: boolean,
   targetStepName: string,
 ): DataSelectorTreeNode[] {
-  return steps.map((step) => {
-    try {
-      return dataSelectorUtils.traverseStep(
-        step,
-        sampleData,
-        isFocusInsideListMapperModeInput,
-        targetStepName,
-      );
-    } catch {
-      return {
-        key: `error-${step.name}`,
-        data: {
-          type: 'chunk' as const,
-          displayName: `Error loading ${step.name}`,
-        },
-      };
-    }
-  });
+  return steps.map((step) =>
+    traverseStepOrErrorNode({
+      step,
+      sampleData,
+      zipArraysOfProperties: isFocusInsideListMapperModeInput,
+      targetStepName,
+    }),
+  );
+}
+
+function traverseStepOrErrorNode({
+  step,
+  sampleData,
+  zipArraysOfProperties,
+  targetStepName,
+}: {
+  step: StepInfo;
+  sampleData: Record<string, unknown>;
+  zipArraysOfProperties: boolean;
+  targetStepName: string;
+}): DataSelectorTreeNode {
+  try {
+    return dataSelectorUtils.traverseStep(
+      step,
+      sampleData,
+      zipArraysOfProperties,
+      targetStepName,
+    );
+  } catch {
+    return {
+      key: `error-${step.name}`,
+      data: {
+        type: 'chunk' as const,
+        displayName: `Error loading ${step.name}`,
+      },
+    };
+  }
 }
 
 type DataSelectorProps = {
@@ -209,6 +228,20 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         const stepData = sampleData[step.name];
 
         if (
+          dataSelectorUtils.shouldShowStepAsFlatList({
+            isFocusInsideListMapperModeInput,
+            stepOutput: stepData,
+          })
+        ) {
+          return traverseStepOrErrorNode({
+            step,
+            sampleData,
+            zipArraysOfProperties: true,
+            targetStepName: selectedStepName,
+          });
+        }
+
+        if (
           typeof stepData === 'string' ||
           typeof stepData === 'number' ||
           typeof stepData === 'boolean'
@@ -276,22 +309,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             sampleData: stepData,
           });
         }
-        try {
-          return dataSelectorUtils.traverseStep(
-            step,
-            sampleData,
-            isFocusInsideListMapperModeInput,
-            selectedStepName,
-          );
-        } catch {
-          return {
-            key: `error-${step.name}`,
-            data: {
-              type: 'chunk' as const,
-              displayName: `Error loading ${step.name}`,
-            },
-          };
-        }
+        return traverseStepOrErrorNode({
+          step,
+          sampleData,
+          zipArraysOfProperties: false,
+          targetStepName: selectedStepName,
+        });
       }),
     [
       steps,

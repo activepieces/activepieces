@@ -133,11 +133,9 @@ export const useSwitchToDraft = () => {
 };
 
 const useIsFocusInsideListMapperModeInput = ({
-  containerRef,
   setIsFocusInsideListMapperModeInput,
   isFocusInsideListMapperModeInput,
 }: {
-  containerRef: React.RefObject<HTMLDivElement | null>;
   setIsFocusInsideListMapperModeInput: (
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
@@ -146,15 +144,11 @@ const useIsFocusInsideListMapperModeInput = ({
   useEffect(() => {
     const focusInListener = () => {
       const focusedElement = document.activeElement;
-      const isFocusedInside = !!containerRef.current?.contains(focusedElement);
       const isFocusedInsideDataSelector =
-        !isNil(document.activeElement) &&
-        document.activeElement instanceof HTMLElement &&
-        textMentionUtils.isDataSelectorOrChildOfDataSelector(
-          document.activeElement,
-        );
+        focusedElement instanceof HTMLElement &&
+        textMentionUtils.isDataSelectorOrChildOfDataSelector(focusedElement);
       setIsFocusInsideListMapperModeInput(
-        isFocusedInside ||
+        isActiveElementInsideListMapperModeInput() ||
           (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
       );
     };
@@ -163,6 +157,13 @@ const useIsFocusInsideListMapperModeInput = ({
       document.removeEventListener('focusin', focusInListener);
     };
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
+  useEffect(
+    () => () =>
+      setIsFocusInsideListMapperModeInput(
+        isActiveElementInsideListMapperModeInput(),
+      ),
+    [setIsFocusInsideListMapperModeInput],
+  );
 };
 export const useFocusOnStep = () => {
   const [currentRun, selectStep, userManuallySelectedStepDuringRun] =
@@ -225,6 +226,14 @@ export const useResizeCanvas = (
     };
   }, [setViewport, getViewport]);
 };
+
+function isActiveElementInsideListMapperModeInput(): boolean {
+  const focusedElement = document.activeElement;
+  return (
+    focusedElement instanceof HTMLElement &&
+    textMentionUtils.isInsideListMapperModeInput(focusedElement)
+  );
+}
 
 export const flowCanvasHooks = {
   useSetSocketListener,
