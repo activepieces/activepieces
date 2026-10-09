@@ -9,8 +9,9 @@ export const lookupAccount = createAction({
   name: 'lookup_account',
   classification: 'READ',
   displayName: 'Lookup Account',
-  description: 'Find an account by its handle (username or user@domain).',
-  audience: 'ai',
+  description:
+    'Find an account by its handle (username or user@domain) to get its Account ID for Follow Account and other steps.',
+  audience: 'both',
   aiMetadata: {
     description:
       'Resolves a handle such as Gargron or Gargron@mastodon.social to the account profile and local ID, without a fuzzy search. Only finds accounts already known to this server; for a remote user@domain that 404s, use Search with resolve=true (type accounts). Read-only and safe to retry.',

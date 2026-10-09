@@ -1,7 +1,6 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
@@ -111,7 +110,7 @@ export const twilioNewTranscription = createTrigger({
       "recording_sid": "REaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "sid": "TRaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "status": "completed",
-      "transcription_text": null,
+      "transcription_text": "Hi, this is Sam. Please call me back about my order.",
       "type": "fast",
       "uri": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Transcriptions/TRaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json"
     },

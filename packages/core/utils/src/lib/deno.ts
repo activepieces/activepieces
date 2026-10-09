@@ -85,6 +85,155 @@ export const deno = {
         })
     },
 
+    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, idleTimeoutMs = DEFAULT_SESSION_IDLE_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
+        const marker = newResultMarker()
+        const { child, denoPath, denoDir } = await spawnDeno({
+            entry: { body: buildSessionProgram({ bootstrapBody, marker }) },
+            permissions,
+            cwd,
+            memoryLimitMb,
+            allowReadPaths: [],
+            resolveNodeModules: false,
+            env,
+        })
+
+        const pending = new Map<string, PendingSessionCommand>()
+        let nextCommandId = 0
+        let alive = true
+        let stdoutBuffer = ''
+        let capturedStderr = ''
+        let idleTimer: ReturnType<typeof setTimeout> | null = null
+
+        const refreshWatchdog = (): void => {
+            if (idleTimer !== null) {
+                clearTimeout(idleTimer)
+                idleTimer = null
+            }
+            if (!alive || pending.size === 0) {
+                return
+            }
+            idleTimer = setTimeout(() => {
+                child.kill('SIGKILL')
+                failAllPending(sandboxError.build({ error: `Deno session made no progress for ${idleTimeoutMs}ms`, stdout: '', stderr: capturedStderr }))
+            }, idleTimeoutMs)
+        }
+
+        const settleResponse = (line: string): void => {
+            let message: SessionReply | null = null
+            try {
+                message = JSON.parse(line.slice(marker.length))
+            }
+            catch {
+                return
+            }
+            if (message === null) {
+                return
+            }
+            const command = pending.get(message.id)
+            if (command === undefined) {
+                return
+            }
+            pending.delete(message.id)
+            refreshWatchdog()
+            if (message.success) {
+                command.resolve(message.result)
+            }
+            else {
+                command.reject(sandboxError.build({ error: message.error, stdout: '', stderr: capturedStderr }))
+            }
+            capturedStderr = ''
+        }
+
+        child.stdout.setEncoding('utf8')
+        child.stderr.setEncoding('utf8')
+
+        child.stdout.on('data', (chunk: string) => {
+            stdoutBuffer += chunk
+            let newline = stdoutBuffer.indexOf('\n')
+            while (newline !== -1) {
+                const line = stdoutBuffer.slice(0, newline)
+                stdoutBuffer = stdoutBuffer.slice(newline + 1)
+                if (line.startsWith(marker)) {
+                    settleResponse(line)
+                }
+                else if (line.trim()) {
+                    console.log(line)
+                }
+                newline = stdoutBuffer.indexOf('\n')
+            }
+        })
+
+        child.stderr.on('data', (chunk: string) => {
+            capturedStderr += chunk
+            console.error(chunk.trimEnd())
+        })
+
+        const failAllPending = (error: Error): void => {
+            alive = false
+            if (idleTimer !== null) {
+                clearTimeout(idleTimer)
+                idleTimer = null
+            }
+            for (const command of pending.values()) {
+                command.reject(error)
+            }
+            pending.clear()
+        }
+
+        child.on('close', (code, signal) => {
+            void removeDenoDir(denoDir)
+            failAllPending(sandboxError.build({ error: `Deno session exited with code ${code} and signal ${signal}`, stdout: '', stderr: capturedStderr }))
+        })
+
+        child.on('error', (error) => {
+            void removeDenoDir(denoDir)
+            failAllPending(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: '', stderr: capturedStderr }))
+        })
+
+        child.stdin.on('error', (error) => {
+            child.kill('SIGKILL')
+            failAllPending(sandboxError.build({ error: `Deno session stdin error: ${error.message}`, stdout: '', stderr: capturedStderr }))
+        })
+
+        const send = (command: SessionCommandBody): Promise<unknown> => {
+            if (!alive) {
+                return Promise.reject(sandboxError.build({ error: 'Deno session is not running', stdout: '', stderr: capturedStderr }))
+            }
+            const id = String(nextCommandId++)
+            let payload: string
+            try {
+                payload = `${JSON.stringify({ ...command, id })}\n`
+            }
+            catch (stringifyError) {
+                return Promise.reject(stringifyError)
+            }
+            return new Promise((resolve, reject) => {
+                pending.set(id, { resolve, reject })
+                refreshWatchdog()
+                child.stdin.write(payload, (writeError) => {
+                    if (writeError && pending.delete(id)) {
+                        refreshWatchdog()
+                        reject(sandboxError.build({ error: `Failed to write to deno session: ${writeError.message}`, stdout: '', stderr: capturedStderr }))
+                    }
+                })
+            })
+        }
+
+        return {
+            setGlobal: async ({ key, value }: SessionSetGlobalParams): Promise<void> => {
+                await send({ kind: 'set', key, value })
+            },
+            run: ({ script }: SessionRunParams): Promise<unknown> => {
+                return send({ kind: 'run', script })
+            },
+            isAlive: (): boolean => alive,
+            dispose: (): void => {
+                alive = false
+                child.kill('SIGKILL')
+            },
+        }
+    },
+
 }
 
 // Loaded lazily so this module stays importable from browser bundles — the
@@ -116,6 +265,20 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
     const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
     const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
+    let entryArg: string
+    if (typeof entry === 'string') {
+        entryArg = entry
+    }
+    else {
+        entryArg = `${denoDir}/main.mjs`
+        try {
+            await fs.writeFile(entryArg, entry.body)
+        }
+        catch (error) {
+            await removeDenoDir(denoDir)
+            throw error
+        }
+    }
     const child = childProcess.spawn(denoPath, [
         'run',
         '--quiet',
@@ -127,7 +290,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         `--v8-flags=--max-old-space-size=${memoryLimitMb}`,
         ...toPermissionFlags({ permissions, tmpDir: os.tmpdir() }),
         ...permissions.includes(DenoPermission.ALL) ? [] : allowReadPaths.map((path) => `--allow-read=${path}`),
-        entry,
+        entryArg,
     ], {
         cwd,
         env: {
@@ -198,6 +361,111 @@ catch (error) {
 `
 }
 
+/**
+ * The session child's program (ESM, so its own bindings are hidden from the
+ * scripts it evaluates in global scope).
+ * stdin:  {"kind":"run","script":"step_1.a + 1","id":"0"}
+ * stdout: MARKER{"id":"0","success":true,"result":42}
+ */
+function buildSessionProgram({ bootstrapBody, marker }: { bootstrapBody: string, marker: string }): string {
+    return `
+${sandboxError.payloadSource}
+${bootstrapBody}
+${SESSION_REPLY_CHANNEL(marker)}
+${SESSION_REJECTION_TRACKING}
+${SESSION_SCRIPT_RUNNER}
+${SESSION_COMMAND_LOOP}
+`
+}
+
+/**
+ * MARKER{"id":"0","success":true,"result":42}  -> protocol reply
+ * hello from a script's console.log            -> forwarded as user output
+ * console.log is bound up front so a script overwriting it can't break this.
+ */
+const SESSION_REPLY_CHANNEL = (marker: string): string => `
+const print = console.log.bind(console);
+const reply = (payload) => {
+    print(${JSON.stringify(marker)} + JSON.stringify(payload));
+};`
+
+/**
+ * e.g. `Promise.reject('late')` inside a run fails that run only;
+ * the process stays alive (the one-shot runner exits instead).
+ */
+const SESSION_REJECTION_TRACKING = `
+let failCurrentRun = null;
+globalThis.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    if (failCurrentRun) {
+        failCurrentRun(event.reason);
+    }
+    else {
+        console.error('Unhandled rejection in deno session:', event.reason);
+    }
+});`
+
+/**
+ * (0, eval)('(' + script + ')'): global scope, and the parens make
+ * {"where": "a"} an object literal, not a block. The setTimeout(0) lets a
+ * promise the script left behind reject before success is reported.
+ */
+const SESSION_SCRIPT_RUNNER = `
+const runScript = (script) => new Promise((resolve, reject) => {
+    failCurrentRun = reject;
+    Promise.resolve()
+        .then(() => (0, eval)('(' + script + ')'))
+        .then(async (value) => {
+            await new Promise((tick) => setTimeout(tick, 0));
+            resolve(value);
+        })
+        .catch(reject);
+});`
+
+/**
+ * {"kind":"set","key":"step_1","value":{...}}  -> globalThis.step_1 = {...}
+ * {"kind":"run","script":"step_1.a"}           -> reply success/failure
+ * Runs are awaited one at a time, so failCurrentRun is the only run in flight.
+ * Line splitting is hand-rolled: --no-remote rules out std's TextLineStream.
+ */
+const SESSION_COMMAND_LOOP = `
+const decoder = new TextDecoder();
+let buffered = '';
+for await (const chunk of Deno.stdin.readable) {
+    buffered += decoder.decode(chunk, { stream: true });
+    let newline = buffered.indexOf('\\n');
+    while (newline !== -1) {
+        const line = buffered.slice(0, newline);
+        buffered = buffered.slice(newline + 1);
+        newline = buffered.indexOf('\\n');
+        if (line.trim() === '') {
+            continue;
+        }
+        let command;
+        try {
+            command = JSON.parse(line);
+        }
+        catch {
+            continue;
+        }
+        if (command.kind === 'set') {
+            globalThis[command.key] = command.value;
+            reply({ id: command.id, success: true, result: null });
+            continue;
+        }
+        try {
+            const result = await runScript(command.script);
+            reply({ id: command.id, success: true, result: result ?? null });
+        }
+        catch (error) {
+            reply({ id: command.id, success: false, error: toErrorPayload(error) });
+        }
+        finally {
+            failCurrentRun = null;
+        }
+    }
+}`
+
 function extractResult(stdout: string, marker: string): { userOutput: string, resultJson: string | null } {
     const idx = stdout.lastIndexOf(marker)
     if (idx === -1) {
@@ -211,6 +479,7 @@ function extractResult(stdout: string, marker: string): { userOutput: string, re
 }
 
 const DEFAULT_MEMORY_LIMIT_MB = 128
+const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 30_000
 
 export enum DenoPermission {
     ALL = 'ALL',
@@ -234,8 +503,46 @@ type DenoProgramParams = {
     timeoutMs?: number
 }
 
+export type DenoSession = {
+    setGlobal(params: SessionSetGlobalParams): Promise<void>
+    run(params: SessionRunParams): Promise<unknown>
+    isAlive(): boolean
+    dispose(): void
+}
+
+type DenoSessionParams = {
+    bootstrapBody: string
+    permissions: DenoPermission[]
+    cwd?: string
+    memoryLimitMb?: number
+    env?: Record<string, string>
+    idleTimeoutMs?: number
+}
+
+type SessionSetGlobalParams = {
+    key: string
+    value: unknown
+}
+
+type SessionRunParams = {
+    script: string
+}
+
+type SessionCommandBody =
+    | { kind: 'set', key: string, value: unknown }
+    | { kind: 'run', script: string }
+
+type SessionReply =
+    | { id: string, success: true, result: unknown }
+    | { id: string, success: false, error: SandboxErrorPayload }
+
+type PendingSessionCommand = {
+    resolve(value: unknown): void
+    reject(error: Error): void
+}
+
 type SpawnDenoParams = {
-    entry: string
+    entry: string | { body: string }
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb: number

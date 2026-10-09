@@ -35,7 +35,8 @@ const polling: Polling<
         workbookId,
         worksheetId,
         auth.access_token,
-        drivePath
+        drivePath,
+        auth.props?.['cloud']
       )) ?? [];
 
     const currentValues = fetchedValues.map((row: any[], rowIndex: number) => {

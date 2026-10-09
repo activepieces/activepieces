@@ -1,4 +1,4 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { todoistCreateTaskAction } from './lib/actions/create-task-action';
@@ -54,6 +54,19 @@ export const todoistAuth = PieceAuth.OAuth2({
 	authUrl: 'https://todoist.com/oauth/authorize',
 	tokenUrl: 'https://todoist.com/oauth/access_token',
 	scope: ['data:read_write'],
+	getConnectionIdentifier: async ({ auth }) => {
+		try {
+			const response = await httpClient.sendRequest<TodoistUser>({
+				method: HttpMethod.GET,
+				url: 'https://api.todoist.com/api/v1/user',
+				headers: { Authorization: `Bearer ${auth.access_token}` },
+				timeout: 5000,
+			});
+			return response.body?.email || response.body?.full_name || undefined;
+		} catch {
+			return undefined;
+		}
+	},
 });
 
 export const todoist = createPiece({
@@ -121,3 +134,5 @@ export const todoist = createPiece({
 	],
 	triggers: [todoistTaskCompletedTrigger],
 });
+
+type TodoistUser = { email?: string; full_name?: string };

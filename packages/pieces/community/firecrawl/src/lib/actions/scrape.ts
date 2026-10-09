@@ -1,7 +1,7 @@
 import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, saveFirecrawlFile, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, saveFirecrawlFile, forJsonOutputFormat, FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { scrapeActionOutputSchema } from '../output-schemas';
 
 function forDefaultScreenshot(): any {
@@ -248,6 +248,7 @@ export const scrape = createAction({
     const shouldStoreInCache = propsValue.storeInCache ?? false;
     const body: Record<string, any> = {
       url: propsValue.url,
+      origin: FIRECRAWL_ORIGIN,
       timeout: propsValue.timeout,
       storeInCache: shouldStoreInCache,
     };

@@ -536,7 +536,7 @@ Every property accepts a few optional hints that fine-tune how it renders. They 
 | --- | --- | --- |
 | `placeholder` | text inputs | Grey hint text shown inside an empty field (e.g. `you@example.com`). |
 | `width: 'half'` | any prop inside a group | Renders two fields side-by-side instead of full-width. |
-| `icon` | any prop | A named icon shown beside the field in the filter builder. |
+| `icon` | any prop, `section` and `builder` groups | A named icon shown beside the field in the filter builder, or in the header of a section card. One of `text`, `code`, `markdown`, `reply`, `reply-all`, `users`, `user`, `send`, `type`, `file`, `paperclip`, `location`, `tag`, `inbox`, `calendar`, `trash`, `filter`, `sliders`, `blank`; any other name renders nothing. |
 | `advanced: true` | any prop | Moves the field into the collapsible *Advanced* section. Props render in the main form by default. |
 
 Every property renders in the main form by default, required or not. Set `advanced: true` on a secondary option to tuck it into the collapsible **Advanced** section; `advanced: false` is the default and has no effect. Avoid the flag on required props: the section starts collapsed, so a mandatory field hidden there only surfaces as a validation error.

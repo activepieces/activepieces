@@ -145,3 +145,5 @@ export async function polling(
   // exit loop time out
   throw new Error(`${actionType.charAt(0).toUpperCase()}. job timed out after ${timeoutSeconds} second(s)`);
 }
+
+export const FIRECRAWL_ORIGIN = 'activepieces';
