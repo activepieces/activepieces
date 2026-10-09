@@ -380,6 +380,9 @@
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/core/data-summarizer/src/index.ts"
       ],
+      "@activepieces/piece-datacircle": [
+        "packages/pieces/community/datacircle/src/index.ts"
+      ],
       "@activepieces/piece-datadog": [
         "packages/pieces/community/datadog/src/index.ts"
       ],

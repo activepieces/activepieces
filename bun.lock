@@ -2450,6 +2450,17 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/datacircle": {
+      "name": "@activepieces/piece-datacircle",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/datadog": {
       "name": "@activepieces/piece-datadog",
       "version": "0.2.2",
@@ -11617,6 +11628,8 @@
     "@activepieces/piece-data-mapper": ["@activepieces/piece-data-mapper@workspace:packages/pieces/core/data-mapper"],
 
     "@activepieces/piece-data-summarizer": ["@activepieces/piece-data-summarizer@workspace:packages/pieces/core/data-summarizer"],
+
+    "@activepieces/piece-datacircle": ["@activepieces/piece-datacircle@workspace:packages/pieces/community/datacircle"],
 
     "@activepieces/piece-datadog": ["@activepieces/piece-datadog@workspace:packages/pieces/community/datadog"],
 
