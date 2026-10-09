@@ -28,21 +28,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
     async listPlatformMembershipsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformMembershipWithPlatform[]> {
         const users = await userService(log).getByIdentityId({ identityId: params.identityId })
-        const memberships = await Promise.all(users.map(async (user): Promise<PlatformMembership | null> => {
-            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
-                return null
-            }
-            const hasProjects = await projectService(log).userHasProjects({
-                platformId: user.platformId,
-                userId: user.id,
-                isPrivileged: userService(log).isUserPrivileged(user),
-            })
-            return { platformId: user.platformId, hasProjects }
+        const activeUsers = users.flatMap((user) => isNil(user.platformId) || user.status === UserStatus.INACTIVE
+            ? []
+            : [{ userId: user.id, platformId: user.platformId, isPrivileged: userService(log).isUserPrivileged(user) }])
+        const platformIdsWithProjects = new Set(await projectService(log).listPlatformIdsWhereUsersHaveProjects({ users: activeUsers }))
+        const memberships: PlatformMembership[] = activeUsers.map((user) => ({
+            platformId: user.platformId,
+            hasProjects: platformIdsWithProjects.has(user.platformId),
         }))
-        const [withProjects, withoutProjects] = partition(
-            memberships.filter((membership): membership is PlatformMembership => !isNil(membership)),
-            (membership) => membership.hasProjects,
-        )
+        const [withProjects, withoutProjects] = partition(memberships, (membership) => membership.hasProjects)
         return Promise.all([...withProjects, ...withoutProjects].map(async (membership) => ({
             platform: await this.getOneWithPlanOrThrow(membership.platformId),
             hasProjects: membership.hasProjects,

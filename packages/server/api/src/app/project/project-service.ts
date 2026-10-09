@@ -202,6 +202,27 @@ export const projectService = (log: FastifyBaseLogger) => ({
         ])
         return unique([...owners, ...members].map((row) => row.userId))
     },
+    async listPlatformIdsWhereUsersHaveProjects({ users }: ListPlatformIdsWhereUsersHaveProjectsParams): Promise<string[]> {
+        const privilegedPlatformIds = users.filter((user) => user.isPrivileged).map((user) => user.platformId)
+        const memberUserIds = users.filter((user) => !user.isPrivileged).map((user) => user.userId)
+        if (privilegedPlatformIds.length === 0 && memberUserIds.length === 0) {
+            return []
+        }
+        const rows = await projectRepo()
+            .createQueryBuilder('project')
+            .select('DISTINCT project."platformId"', 'platformId')
+            .where(new Brackets((qb) => {
+                if (privilegedPlatformIds.length > 0) {
+                    qb.orWhere('project."platformId" IN (:...privilegedPlatformIds)', { privilegedPlatformIds })
+                }
+                if (memberUserIds.length > 0) {
+                    qb.orWhere('(project."ownerId" IN (:...memberUserIds) AND project.type = :personalType)', { memberUserIds, personalType: ProjectType.PERSONAL })
+                    qb.orWhere('project.id IN (SELECT "projectId" FROM project_member WHERE "userId" IN (:...memberUserIds))', { memberUserIds })
+                }
+            }))
+            .getRawMany<{ platformId: string }>()
+        return rows.map((row) => row.platformId)
+    },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
             id: projectId,
@@ -353,6 +374,14 @@ type CreateParams = {
 type GetByPlatformIdAndExternalIdParams = {
     platformId: string
     externalId: string
+}
+
+type ListPlatformIdsWhereUsersHaveProjectsParams = {
+    users: {
+        userId: string
+        platformId: string
+        isPrivileged: boolean
+    }[]
 }
 
 type ListUserIdsWithProjectsParams = {
