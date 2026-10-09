@@ -3,6 +3,7 @@ import {
   Field,
   PopulatedRecord,
   Table,
+  tryCatch,
   UpdateTableRequest,
 } from '@activepieces/shared';
 
@@ -19,6 +20,7 @@ export const createServerState = (
   _fields: Field[],
   _records: PopulatedRecord[],
   updateSavingStatus: (isSaving: boolean) => void,
+  onSaveError: () => void,
 ) => {
   const queue = new PromiseQueue();
 
@@ -29,8 +31,14 @@ export const createServerState = (
   function addPromiseToQueue(promise: () => Promise<void>) {
     queue.add(async () => {
       updateSavingStatus(true);
-      await promise();
-      updateSavingStatus(queue.size() === 1);
+      const { error } = await tryCatch(promise);
+      if (error) {
+        queue.halt();
+        updateSavingStatus(false);
+        onSaveError();
+        return;
+      }
+      updateSavingStatus(queue.size() > 0);
     });
   }
   return {

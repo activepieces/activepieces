@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { Field, Table, PopulatedRecord, tryCatch } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
@@ -15,7 +15,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
-import { buttonVariants } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   TableState,
   ApTableStore,
@@ -46,9 +47,13 @@ export const TableStateProviderWithTable = ({
   const tableStoreRef = useRef<ApTableStore>(
     createApTableStore(table, fields, records),
   );
+  const hasSaveError = useStore(
+    tableStoreRef.current,
+    (state) => state.hasSaveError,
+  );
   return (
     <TableContext.Provider value={tableStoreRef.current}>
-      {children}
+      {hasSaveError ? <TableSaveError /> : children}
     </TableContext.Provider>
   );
 };
@@ -61,11 +66,7 @@ export function ApTableStateProvider({
   const tableId = useParams().tableId;
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
-  const {
-    data: table,
-    isLoading: isTableLoading,
-    error: tableError,
-  } = useQuery({
+  const { data: table, isLoading: isTableLoading } = useQuery({
     queryKey: ['table', tableId],
     queryFn: () => {
       return tablesApi.getById(tableId!);
@@ -76,11 +77,7 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
-  const {
-    data: fields,
-    isLoading: isFieldsLoading,
-    error: fieldsError,
-  } = useQuery({
+  const { data: fields, isLoading: isFieldsLoading } = useQuery({
     queryKey: ['fields', tableId],
     queryFn: () =>
       fieldsApi.list({
@@ -92,11 +89,7 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
-  const {
-    data: records,
-    isLoading: isRecordsLoading,
-    error: recordsError,
-  } = useQuery({
+  const { data: records, isLoading: isRecordsLoading } = useQuery({
     queryKey: ['records', tableId],
     queryFn: () =>
       recordsApi.list({
@@ -115,9 +108,18 @@ export function ApTableStateProvider({
   // inside an iframe)
   const refreshTableState = useCallback(async () => {
     await Promise.all([
-      queryClient.refetchQueries({ queryKey: ['table', tableId] }),
-      queryClient.refetchQueries({ queryKey: ['fields', tableId] }),
-      queryClient.refetchQueries({ queryKey: ['records', tableId] }),
+      queryClient.refetchQueries(
+        { queryKey: ['table', tableId] },
+        { throwOnError: true },
+      ),
+      queryClient.refetchQueries(
+        { queryKey: ['fields', tableId] },
+        { throwOnError: true },
+      ),
+      queryClient.refetchQueries(
+        { queryKey: ['records', tableId] },
+        { throwOnError: true },
+      ),
     ]);
     setRefreshKey((key) => key + 1);
   }, [queryClient, tableId]);
@@ -126,14 +128,7 @@ export function ApTableStateProvider({
     return <RouteLoadingBar />;
   }
 
-  if (
-    tableError ||
-    fieldsError ||
-    recordsError ||
-    isNil(table) ||
-    isNil(fields) ||
-    isNil(records)
-  ) {
+  if (isNil(table) || isNil(fields) || isNil(records)) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
         <div className="rounded-full bg-gray-3 p-4">
@@ -155,6 +150,9 @@ export function ApTableStateProvider({
         >
           {t('Go to Tables')}
         </Link>
+        <Button variant="outline" onClick={() => tryCatch(refreshTableState)}>
+          {t('Try again')}
+        </Button>
       </div>
     );
   }
@@ -172,6 +170,33 @@ export function ApTableStateProvider({
         </TableStateProviderWithTable>
       </TableLockProvider>
     </TableRefreshContext.Provider>
+  );
+}
+
+function TableSaveError() {
+  const refreshTableState = useRefreshTableState();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await tryCatch(refreshTableState);
+    setIsRefreshing(false);
+  };
+
+  return (
+    <div className="space-y-4 p-4">
+      <Alert variant="warning">
+        <AlertTitle>{t('Table changes could not be saved')}</AlertTitle>
+        <AlertDescription>
+          {t(
+            'Pending changes were stopped to protect your data. Reload the table to continue. Unsaved changes will be discarded.',
+          )}
+        </AlertDescription>
+      </Alert>
+      <Button variant="outline" loading={isRefreshing} onClick={handleRefresh}>
+        {t('Reload table')}
+      </Button>
+    </div>
   );
 }
 

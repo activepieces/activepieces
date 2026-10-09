@@ -3453,5 +3453,8 @@
   "6 months": "6 months",
   "1 year": "1 year",
   "retentionPeriodDays": "{days, plural, =1 {1 day} other {# days}}",
-  "Audit log retention updated": "Audit log retention updated"
+  "Audit log retention updated": "Audit log retention updated",
+  "Table changes could not be saved": "Table changes could not be saved",
+  "Pending changes were stopped to protect your data. Reload the table to continue. Unsaved changes will be discarded.": "Pending changes were stopped to protect your data. Reload the table to continue. Unsaved changes will be discarded.",
+  "Reload table": "Reload table"
 }

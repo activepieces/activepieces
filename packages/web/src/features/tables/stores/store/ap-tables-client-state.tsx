@@ -55,6 +55,7 @@ const mapRecorddToClientRecordsData = (
 
 export type TableState = {
   isSaving: boolean;
+  hasSaveError: boolean;
   selectedRecords: ReadonlySet<string>;
   fields: ClientField[];
   records: ClientRecordData[];
@@ -100,6 +101,7 @@ export const createApTableStore = (
       fields,
       records,
       (isSaving: boolean) => set({ isSaving }),
+      () => set({ hasSaveError: true }),
     );
     const selectedCell =
       records.length > 0
@@ -111,6 +113,7 @@ export const createApTableStore = (
 
     return {
       isSaving: false,
+      hasSaveError: false,
       selectedRecords: new Set(),
       table,
       setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
