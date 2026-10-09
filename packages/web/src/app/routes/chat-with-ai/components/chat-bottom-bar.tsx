@@ -20,6 +20,7 @@ import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
 import { ChatModelSelector } from './chat-model-selector';
+import { AiCreditsPill } from '@/features/synkra-billing/components/ai-credits-pill';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
@@ -146,10 +147,13 @@ export function ChatBottomBar({
           }
           rightActions={
             hideModelSelector === true ? null : (
-              <ChatModelSelector
+              <div className="flex items-center gap-2">
+                <AiCreditsPill />
+                <ChatModelSelector
                 selectedModel={selectedModel}
                 onModelChange={onModelChange}
               />
+              </div>
             )
           }
         />

@@ -5,6 +5,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { synkraAiGuard } from '../../synkra/ai/synkra-ai-guard'
 import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -88,6 +89,10 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
     })
 
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
+        // --- Synkra AI credits guard ---
+        if (request.principal.type === 'USER') {
+            await synkraAiGuard(request.log).assertAvailable(request.principal.id)
+        }
         const { content, runId: clientRunId, files } = request.body
         const conversationId = request.params.id
         const userId = request.principal.id

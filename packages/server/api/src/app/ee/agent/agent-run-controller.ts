@@ -15,6 +15,7 @@ import { projectService } from '../../project/project-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { synkraAiGuard } from '../../synkra/ai/synkra-ai-guard'
 import { agentHelpers } from './agent-helpers'
 import { agentService } from './agent-service'
 
@@ -29,6 +30,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 params: { message: 'Only a running flow can start an agent run' },
             })
         }
+        // --- Synkra AI credits guard ---
+        await synkraAiGuard(request.log).assertAvailableForPlatform(request.principal.platform.id)
         const { projectId, platform } = request.principal
         const { allowed, count } = await agentHelpers.incrementAndCheckLimit({ key: `flow-agent-runs:${projectId}`, limit: RUNS_PER_MINUTE, ttlSeconds: 60 })
         if (!allowed) {

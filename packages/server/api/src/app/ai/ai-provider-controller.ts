@@ -2,6 +2,7 @@ import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
 import { modelTierCatalog } from '@activepieces/server-utils'
 import { AIProviderModel, CreateAIProviderRequest, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { synkraByokGuard } from '../synkra/ai/synkra-byok-guard'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
@@ -38,6 +39,14 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     })
     app.post('/', CreateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
+    // --- Synkra BYOK guard ---
+    const body = request.body as { provider?: string } | undefined
+    if (body?.provider && request.principal.type === 'USER') {
+      await synkraByokGuard(request.log).assertByokAllowed({
+        platformId: (request.principal as unknown as { platform: { id: string } }).platform.id,
+        providerName: body.provider,
+      })
+    }
         return aiProviderService(app.log).create(platformId, request.body)
     })
     app.post('/:id/recheck', RecheckAIProvider, async (request) => {

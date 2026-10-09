@@ -46,3 +46,19 @@ export const synkraSubscriptionApi = {
     return api.post<CheckoutResponse>('/v1/synkra/subscription/checkout', params);
   },
 };
+
+
+export type SynkraAiBalance = {
+  tier: string;
+  used: number;
+  limit: number;
+  remaining: number;
+  percentUsed: number;
+  exhausted: boolean;
+};
+
+export const synkraAiApi = {
+  getBalance() {
+    return api.get<SynkraAiBalance>('/v1/synkra/ai/balance');
+  },
+};
