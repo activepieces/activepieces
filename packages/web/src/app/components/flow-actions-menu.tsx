@@ -21,7 +21,6 @@ import {
   User,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -62,8 +61,12 @@ type FlowActionMenuProps = {
   onDelete: () => void;
   onOwnerChange?: () => void;
 } & (
-  | { insideBuilder: true; onVersionsListClick: () => void }
-  | { insideBuilder: false; onVersionsListClick: null }
+  | {
+      insideBuilder: true;
+      onVersionsListClick: () => void;
+      viewingRun: boolean;
+    }
+  | { insideBuilder: false; onVersionsListClick: null; viewingRun: null }
 );
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -78,8 +81,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onOwnerChange,
   onVersionsListClick,
   insideBuilder,
+  viewingRun,
 }) => {
-  const isRunsPage = useLocation().pathname.includes('/runs');
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
@@ -301,7 +304,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </PermissionNeededTooltip>
           )}
 
-          {insideBuilder && !isRunsPage && (
+          {insideBuilder && !viewingRun && (
             <DropdownMenuItem onClick={onVersionsListClick}>
               <div className="flex cursor-pointer  flex-row gap-2 items-center">
                 <GalleryVerticalEnd className="h-4 w-4" />
