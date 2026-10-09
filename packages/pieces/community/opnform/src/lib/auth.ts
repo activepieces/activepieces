@@ -3,7 +3,7 @@ import { opnformApi } from './common/api';
 
 export const opnformAuth = PieceAuth.CustomAuth({
     description:
-        'Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)',
+        'Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)\n\nGrant the abilities the steps you use need: workspaces-read/write, workspace-users-read/write, forms-read/write and manage-integrations.',
     required: true,
     props: {
         baseApiUrl: Property.ShortText({

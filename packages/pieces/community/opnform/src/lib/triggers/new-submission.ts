@@ -3,10 +3,12 @@ import { opnformAuth } from '../auth';
 import { opnformApi } from '../common/api';
 import { opnformProps } from '../common/props';
 import type { OpnformAuthValue } from '../common/types';
+import { newSubmissionOutputSchema } from '../output-schemas';
 
 export const newSubmissionTrigger = createTrigger({
     auth: opnformAuth,
     name: 'new_submission',
+    outputSchema: newSubmissionOutputSchema,
     classification: 'READ',
     displayName: 'New Submission',
     description: 'Triggers when Opnform receives a new submission.',
