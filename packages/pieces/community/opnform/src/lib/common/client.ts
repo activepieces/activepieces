@@ -12,7 +12,14 @@ function baseUrl({ auth }: { auth?: OpnformAuthValue }): string {
 	return auth?.props.baseApiUrl || API_URL_DEFAULT;
 }
 
-async function request<T>({ auth, method, path, query, body, headers }: RequestParams): Promise<T> {
+async function request<T>({
+	auth,
+	method,
+	path,
+	query,
+	body,
+	headers,
+}: RequestParams & { auth: OpnformAuthValue }): Promise<T> {
 	const response = await httpClient.sendRequest<T>({
 		method,
 		url: `${baseUrl({ auth })}${path}`,
@@ -32,7 +39,6 @@ export const opnformClient = { baseUrl, request };
 const API_URL_DEFAULT = 'https://api.opnform.com';
 
 type RequestParams = {
-	auth: OpnformAuthValue;
 	method: HttpMethod;
 	path: string;
 	query?: QueryParams;
