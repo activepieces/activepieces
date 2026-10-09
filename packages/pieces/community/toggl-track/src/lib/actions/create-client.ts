@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglModels, TwoClient } from '../common/models';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const createClient = createAction({
   auth: togglTrackAuth,
@@ -10,7 +12,11 @@ export const createClient = createAction({
   displayName: 'Create Client',
   description: 'Create a new client in a workspace.',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new client record in a Toggl Track workspace, given a workspace ID and client name (optional external reference and notes). Use when an agent needs to register a billable/organizational client before associating projects with it. Not idempotent: each call creates a new client even if the name already exists.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Creates a client in a workspace. Needs the workspace and a name; notes and external reference are saved on Classic only. Returns the new client. A retry creates a duplicate.',
+    idempotent: false,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     name: Property.ShortText({
@@ -21,36 +27,43 @@ export const createClient = createAction({
     external_reference: Property.ShortText({
       displayName: 'External Reference',
       description:
-        'External reference to link this client with external systems.',
+        'External system reference. Toggl Track (Classic) only.',
       required: false,
     }),
     notes: Property.LongText({
       displayName: 'Notes',
-      description: 'Notes for the client.',
+      description: 'Notes for the client. Toggl Track (Classic) only.',
       required: false,
     }),
   },
+  outputSchema: togglOutputSchemas.client,
   async run(context) {
-    const { workspace_id, name, external_reference, notes } =
-      context.propsValue;
-    const apiToken = context.auth;
+    const { name, external_reference, notes } = context.propsValue;
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
+    });
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/clients`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
+    if (togglApi.isTwo(auth)) {
+      const created = await togglApi.request<TwoClient>({
+        auth,
+        method: togglApi.HttpMethod.POST,
+        path: `/workspaces/${workspaceId}/clients`,
+        body: { name },
+      });
+      return togglModels.client(created);
+    }
+
+    return togglApi.request<Record<string, unknown>>({
+      auth,
+      method: togglApi.HttpMethod.POST,
+      path: `/workspaces/${workspaceId}/clients`,
       body: {
         name,
         external_reference,
         notes,
       },
     });
-
-    return response.body;
   },
 });

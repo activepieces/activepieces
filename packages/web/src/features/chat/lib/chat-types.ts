@@ -42,6 +42,8 @@ const HIDDEN_TOOL_NAMES = new Set([
   'ap_deselect_project',
   'ap_load_guide',
   'ap_set_phase',
+  'ap_load_skill',
+  'ap_get_tool_schema',
 ]);
 
 const DISPLAY_TOOL_NAMES = new Set([

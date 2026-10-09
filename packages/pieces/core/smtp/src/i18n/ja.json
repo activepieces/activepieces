@@ -14,7 +14,7 @@
   "Send an email using a custom SMTP server.": "カスタムSMTPサーバーを使用してメールを送信します。",
   "From Email": "差出人メールアドレス",
   "Sender Name": "送信者名",
-  "To": "終了日",
+  "To": "宛先（TO）",
   "CC": "CC",
   "Reply To": "返信先",
   "BCC": "BCC",
@@ -24,18 +24,5 @@
   "Custom Headers": "カスタムヘッダー",
   "Attachments": "添付ファイル",
   "plain text": "プレーンテキスト",
-  "html": "html",
-  "Require TLS": "TLS を必須にする",
-  "465 encrypts from the start; other ports upgrade to STARTTLS if the server offers it.": "465 は最初から暗号化します。他のポートはサーバーが対応していれば STARTTLS に切り替えます。",
-  "Fail instead of sending unencrypted if STARTTLS is unavailable.": "STARTTLS が使えない場合は、暗号化せずに送信せず失敗します。",
-  "Login name, usually your email address. Blank if no login is needed.": "ログイン名。通常はメールアドレスです。ログイン不要なら空欄にします。",
-  "Cc": "Cc",
-  "Bcc": "Bcc",
-  "Must be an address your server lets you send from.": "サーバーで送信が許可されているアドレスである必要があります。",
-  "Replies go to this address instead of the sender.": "返信は送信者ではなくこのアドレスに届きます。",
-  "How the text in Body is interpreted.": "本文のテキストの解釈方法。",
-  "Name shown in the inbox instead of your address.": "受信トレイでアドレスの代わりに表示される名前。",
-  "Extra headers added to the email, as name and value pairs.": "メールに追加するヘッダー（名前と値のペア）。",
-  "Plain Text": "プレーンテキスト",
-  "HTML": "HTML"
+  "html": "html"
 }

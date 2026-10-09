@@ -3,7 +3,7 @@ import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { deno, DenoPermission } from '@activepieces/core-utils'
+import { deno, DenoPermission, DenoSession } from '@activepieces/core-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from './code-sandbox-common'
 
@@ -83,13 +83,62 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
 
         async createScriptSession({ scriptContext, functions }) {
             const context: Record<string, unknown> = { ...scriptContext }
+            const bootstrapBody = Object.entries(functions).map(([key, value]) => `globalThis[${JSON.stringify(key)}] = ${value.toString()};`).join('\n')
+            let current: LiveScriptSession | null = null
+            let spawnInFlight: Promise<LiveScriptSession> | null = null
             let disposed = false
+
+            // Single-flight respawn: concurrent runs that find the child dead share one new
+            // spawn instead of each starting (and leaking) their own. The liveness check and
+            // the decision to spawn are synchronous, so no caller can clobber another's child.
+            const ensureLive = (): Promise<LiveScriptSession> => {
+                if (current !== null && current.session.isAlive()) {
+                    return Promise.resolve(current)
+                }
+                if (spawnInFlight === null) {
+                    current = null
+                    spawnInFlight = deno.createSession({
+                        bootstrapBody,
+                        permissions: [],
+                        cwd: tmpdir(),
+                    }).then((session) => {
+                        const live = { session, sentGlobals: new Map<string, SentGlobal>() }
+                        current = live
+                        spawnInFlight = null
+                        return live
+                    }).catch((error) => {
+                        spawnInFlight = null
+                        throw error
+                    })
+                }
+                return spawnInFlight
+            }
+
+            const syncGlobals = async ({ session, sentGlobals }: LiveScriptSession): Promise<void> => {
+                await Promise.all(Object.entries(context).map(([key, value]) => {
+                    const alreadySent = sentGlobals.get(key)
+                    if (alreadySent !== undefined && alreadySent.value === value) {
+                        return alreadySent.send
+                    }
+                    const send = session.setGlobal({ key, value })
+                    sentGlobals.set(key, { value, send })
+                    send.catch(() => {
+                        if (sentGlobals.get(key)?.send === send) {
+                            sentGlobals.delete(key)
+                        }
+                    })
+                    return send
+                }))
+            }
+
             return {
                 run: async (script: string) => {
                     if (disposed) {
                         throw new Error('Script session has been disposed')
                     }
-                    return sandbox.runScript({ script, scriptContext: context, functions })
+                    const live = await ensureLive()
+                    await syncGlobals(live)
+                    return live.session.run({ script })
                 },
                 setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
                     if (noOverwrite && (key in context || key in functions)) {
@@ -99,6 +148,10 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 },
                 dispose: () => {
                     disposed = true
+                    current?.session.dispose()
+                    spawnInFlight?.then(({ session }) => session.dispose()).catch(() => undefined)
+                    current = null
+                    spawnInFlight = null
                 },
             }
         },
@@ -124,4 +177,14 @@ function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, strin
         }
     }
     return env
+}
+
+type SentGlobal = {
+    value: unknown
+    send: Promise<void>
+}
+
+type LiveScriptSession = {
+    session: DenoSession
+    sentGlobals: Map<string, SentGlobal>
 }
