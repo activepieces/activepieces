@@ -4,7 +4,7 @@ import { generateImagesFromExistingImage } from './lib/actions/generate-images-f
 import { generateImagesFromText } from './lib/actions/generate-images-from-text';
 import { generateVideoFromText } from './lib/actions/generate-video-from-text';
 import { imageBackgroundRemoval } from './lib/actions/image-background-removal';
-import { runwareAuth } from './lib/common';
+import { runwareAuth } from './lib/auth';
 
 export const runware = createPiece({
   displayName: 'Runware',
