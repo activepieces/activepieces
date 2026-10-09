@@ -7,7 +7,7 @@ export const localScraperAction = createAction({
   classification: 'READ',
   displayName: 'Local Scraper',
   description: 'Extract content from HTML content using AI by providing a natural language prompt.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Uses AI to extract information described in a natural-language prompt from raw HTML you supply directly (max 2MB); optionally pass an output schema to shape the result into structured fields. Choose this when you already have the page HTML in hand and do not want the service to fetch a URL — for a live URL use Smart Scraper instead. Read-only and safe to retry.', idempotent: true },
   auth: scrapegraphaiAuth,
   props: {
@@ -28,11 +28,11 @@ export const localScraperAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return await scrapegraphaiApi.localScraper({
+    return await scrapegraphaiApi.extract({
       auth,
-      websiteHtml: propsValue.website_html,
-      userPrompt: propsValue.user_prompt,
-      outputSchema: propsValue.output_schema,
+      html: propsValue.website_html,
+      prompt: propsValue.user_prompt,
+      schema: propsValue.output_schema,
     });
   },
 }); 

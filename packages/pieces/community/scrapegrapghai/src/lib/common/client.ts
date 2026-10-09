@@ -1,15 +1,16 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
 
 import type { ScrapegraphaiAuthValue } from './types';
 
 function baseUrl(): string {
-	return 'https://api.scrapegraphai.com/v1';
+	return 'https://v2-api.scrapegraphai.com/api';
 }
 
 async function request<T>({
 	auth,
 	method,
 	path,
+	query,
 	body,
 }: RequestParams & { auth: ScrapegraphaiAuthValue }): Promise<T> {
 	const response = await httpClient.sendRequest<T>({
@@ -19,6 +20,7 @@ async function request<T>({
 			'Content-Type': 'application/json',
 			'SGAI-APIKEY': auth.secret_text,
 		},
+		queryParams: query,
 		body,
 	});
 	return response.body;
@@ -26,4 +28,4 @@ async function request<T>({
 
 export const scrapegraphaiClient = { baseUrl, request };
 
-type RequestParams = { method: HttpMethod; path: string; body?: unknown };
+type RequestParams = { method: HttpMethod; path: string; query?: QueryParams; body?: unknown };

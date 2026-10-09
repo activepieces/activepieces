@@ -15,10 +15,8 @@ export const scrapegraphaiAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     const { error } = await tryCatch(() =>
-      scrapegraphaiApi.smartScraper({
+      scrapegraphaiApi.validateApiKey({
         auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
-        websiteUrl: 'https://www.example.com',
-        userPrompt: 'test',
       }),
     );
     return error ? { valid: false, error: 'Invalid API Key' } : { valid: true };

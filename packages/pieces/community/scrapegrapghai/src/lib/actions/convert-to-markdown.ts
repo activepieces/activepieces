@@ -8,7 +8,7 @@ export const markdownifyAction = createAction({
 	classification: 'READ',
 	displayName: 'Convert to Markdown',
 	description: 'Convert any webpage into clean, readable Markdown format.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Fetches a webpage by URL and returns its content as clean, readable Markdown. Choose this when you need the whole page as text for an LLM or document rather than a targeted extraction — use Smart Scraper instead when you want specific fields described by a prompt. Requires a public URL; read-only and safe to retry.',
@@ -23,9 +23,10 @@ export const markdownifyAction = createAction({
 		}),
 	},
 	async run({ auth, propsValue }) {
-		return await scrapegraphaiApi.markdownify({
+		return await scrapegraphaiApi.scrape({
 			auth,
-			websiteUrl: propsValue.website_url,
+			url: propsValue.website_url,
+			formats: [{ type: 'markdown' }],
 		});
 	},
 });
