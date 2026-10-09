@@ -229,6 +229,15 @@ describe('Required actions', () => {
             expect(listed?.config.requiredActions).toEqual(emptyRule)
         })
 
+        it('returns the Default Set with an empty rule', async () => {
+            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
+            const defaultSet = (await ctx.get(`/v1/piece-sets/projects/${ctx.project.id}`)).json<PieceSet>()
+            await db.save('piece_set', { ...defaultSet, config: omit(defaultSet.config, ['requiredActions']) })
+            const response = await ctx.get(`/v1/piece-sets/projects/${ctx.project.id}`)
+            expect(response.json<PieceSet>().isDefault).toBe(true)
+            expect(response.json<PieceSet>().config.requiredActions).toEqual({ mode: RequiredActionsMode.ANY, actions: {} })
+        })
+
         it('saves a rule', async () => {
             const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
             await saveCrmPiece()
