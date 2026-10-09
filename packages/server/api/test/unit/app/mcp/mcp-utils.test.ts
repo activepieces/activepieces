@@ -555,10 +555,37 @@ describe('mcpUtils.syncContainerExecutionTypes', () => {
         })
     })
 
-    it('leaves a list of fields alone, where dynamic means inline item mode', () => {
+    it('leaves a list of fields alone, including one with an empty field list, where dynamic means inline item mode', () => {
         const settings = mcpUtils.syncContainerExecutionTypes({
-            props,
-            input: { rows: '{{step_1.rows}}' },
+            props: { ...props, emptyRows: { type: PropertyType.ARRAY, displayName: 'Empty Rows', required: false, properties: {} } },
+            input: { rows: '{{step_1.rows}}', emptyRows: '{{step_1.rows}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+
+    it('marks a list field inside a dynamic field, keyed by its own name as the builder reads it', () => {
+        const rowDataSchema = {
+            tags: { type: PropertyType.ARRAY, displayName: 'Tags', required: false },
+            meta: { type: PropertyType.JSON, displayName: 'Meta', required: false },
+            name: { type: PropertyType.SHORT_TEXT, displayName: 'Name', required: false },
+        }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}', meta: { a: 1 }, name: '{{trigger.body.name}}' } },
+            propertySettings: { row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema }, meta: { type: PropertyExecutionType.DYNAMIC } },
+        })
+        expect(settings).toEqual({
+            row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema },
+            tags: { type: PropertyExecutionType.DYNAMIC },
+            meta: { type: PropertyExecutionType.MANUAL },
+        })
+    })
+
+    it('skips a dynamic field whose schema has not been resolved', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}' } },
             propertySettings: {},
         })
         expect(settings).toEqual({})
