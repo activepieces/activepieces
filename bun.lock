@@ -3800,6 +3800,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/google-ads": {
+      "name": "@activepieces/piece-google-ads",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/google-bigquery": {
       "name": "@activepieces/piece-google-bigquery",
       "version": "0.1.1",
@@ -11819,6 +11831,7 @@
 
     "@activepieces/piece-goodmem": ["@activepieces/piece-goodmem@workspace:packages/pieces/community/goodmem"],
 
+    "@activepieces/piece-google-ads": ["@activepieces/piece-google-ads@workspace:packages/pieces/community/google-ads"],
     "@activepieces/piece-google-bigquery": ["@activepieces/piece-google-bigquery@workspace:packages/pieces/community/google-bigquery"],
 
     "@activepieces/piece-google-calendar": ["@activepieces/piece-google-calendar@workspace:packages/pieces/community/google-calendar"],
