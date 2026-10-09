@@ -157,7 +157,7 @@ async function validateAction({ settings, platformId, log }: ValidateActionParam
         return { valid: false }
     }
 
-    const piece = await pieceMetadataService(log).getOrThrow({
+    const piece = await pieceMetadataService(log).get({
         platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,
@@ -187,7 +187,7 @@ async function validateTrigger({ settings, platformId, log }: ValidateTriggerPar
         return { valid: false }
     }
 
-    const piece = await pieceMetadataService(log).getOrThrow({
+    const piece = await pieceMetadataService(log).get({
         platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,

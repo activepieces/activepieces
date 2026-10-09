@@ -48,8 +48,8 @@ function toRequiredActionGroup({
 }): RequiredActionGroup {
   const actions = actionNames.map((actionName) => ({
     name: actionName,
-    displayName: piece?.actions[actionName]?.displayName ?? actionName,
-    notInLatestPieceVersion: !isPieceLoading && !piece?.actions[actionName],
+    displayName: piece?.actions?.[actionName]?.displayName ?? actionName,
+    notInLatestPieceVersion: !isPieceLoading && !piece?.actions?.[actionName],
   }));
   return {
     pieceName,
