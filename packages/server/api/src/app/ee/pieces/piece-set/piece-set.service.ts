@@ -66,14 +66,14 @@ type AssignProjectsParams = {
 export const pieceSetService = (log: FastifyBaseLogger) => ({
     async getOrCreateDefaultPieceSet(platformId: string): Promise<PieceSet> {
         const existing = await pieceSetRepo().findOneBy({ platformId, isDefault: true })
-        if (!isNil(existing)) return existing
+        if (!isNil(existing)) return withRequiredActionsDefault(existing)
 
         return distributedLock(log).runExclusive({
             key: `piece_set_default_${platformId}`,
             timeoutInSeconds: 60,
             fn: async () => {
                 const existing = await pieceSetRepo().findOneBy({ platformId, isDefault: true })
-                if (!isNil(existing)) return existing
+                if (!isNil(existing)) return withRequiredActionsDefault(existing)
 
                 await pieceSetRepo().save(pieceSetConfigUtil.buildDefaultSet(platformId))
                 return pieceSetRepo().findOneByOrFail({ platformId, isDefault: true })
@@ -85,7 +85,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         const project = await projectRepo().findOneBy({ id: projectId, platformId })
         const pieceSetId = project?.pieceSetId ?? null
         const assigned = isNil(pieceSetId) ? null : await pieceSetRepo().findOneBy({ id: pieceSetId, platformId })
-        return isNil(assigned) ? this.getOrCreateDefaultPieceSet(platformId) : assigned
+        return isNil(assigned) ? this.getOrCreateDefaultPieceSet(platformId) : withRequiredActionsDefault(assigned)
     },
 
     async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
@@ -103,7 +103,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(
             pieceSetRepo().createQueryBuilder('piece_set').where({ platformId }),
         )
-        return paginationHelper.createPage<PieceSet>(data, newCursor)
+        return paginationHelper.createPage<PieceSet>(data.map(withRequiredActionsDefault), newCursor)
     },
 
     async getOne({ id, platformId }: GetOneParams): Promise<PieceSet> {
@@ -114,7 +114,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 params: { entityType: 'PieceSet', entityId: id },
             })
         }
-        return set
+        return withRequiredActionsDefault(set)
     },
 
     async create({ platformId, name, key, isDefault = false, generatedForProjectId = null, config }: CreateParams): Promise<PieceSet> {
@@ -231,6 +231,13 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         )
     },
 })
+
+function withRequiredActionsDefault(set: PieceSet): PieceSet {
+    if (!isNil(set.config.requiredActions)) {
+        return set
+    }
+    return { ...set, config: { ...set.config, requiredActions: pieceSetConfigUtil.emptyConfig().requiredActions } }
+}
 
 function resolveKey({ key, name }: { key?: string | null, name: string }): string {
     if (!isNil(key) && key.trim().length > 0) {

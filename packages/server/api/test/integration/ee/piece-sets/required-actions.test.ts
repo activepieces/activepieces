@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, omit, SeekPage } from '@activepieces/core-utils'
 import { DefaultProjectRole, ErrorCode, FlowActionType, FlowAction, FlowOperationType, FlowStatus, FlowTriggerType, FlowVersionState, PackageType, PieceSelectionMode, PieceSet, PieceType, RequiredActionsMode } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
@@ -39,6 +39,13 @@ async function createSetWithRule({ ctx, actions, mode = RequiredActionsMode.ANY 
     await ctx.post(`/v1/piece-sets/${set.id}`, { requiredActions: { mode, actions } })
     await ctx.post(`/v1/piece-sets/${set.id}/projects`, { projectIds: [ctx.project.id] })
     return set
+}
+
+async function saveSetWithoutRequiredActions(ctx: TestContext): Promise<string> {
+    const { id } = await createSetWithRule({ ctx, actions: {} })
+    const set = (await ctx.get(`/v1/piece-sets/${id}`)).json<PieceSet>()
+    await db.save('piece_set', { ...set, config: omit(set.config, ['requiredActions']) })
+    return id
 }
 
 function crmStep({ name, actionName, skip }: { name: string, actionName: string, skip?: boolean }): FlowAction {
@@ -200,6 +207,34 @@ describe('Required actions', () => {
             const flowId = await saveDraftFlow({ ctx })
             const response = await ctx.post(`/v1/flows/${flowId}`, { type: FlowOperationType.LOCK_AND_PUBLISH, request: {} })
             expect(response.json().code).not.toBe(ErrorCode.REQUIRED_ACTIONS_MISSING)
+        })
+    })
+
+    describe('Set saved without requiredActions', () => {
+        it('does not fail publish with a server error', async () => {
+            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
+            await saveSetWithoutRequiredActions(ctx)
+            const flowId = await saveDraftFlow({ ctx })
+            const response = await ctx.post(`/v1/flows/${flowId}`, { type: FlowOperationType.LOCK_AND_PUBLISH, request: {} })
+            expect(response.statusCode).not.toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+        })
+
+        it('returns the set with an empty rule', async () => {
+            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
+            const id = await saveSetWithoutRequiredActions(ctx)
+            const emptyRule = { mode: RequiredActionsMode.ANY, actions: {} }
+            expect((await ctx.get(`/v1/piece-sets/${id}`)).json<PieceSet>().config.requiredActions).toEqual(emptyRule)
+            expect((await ctx.get(`/v1/piece-sets/projects/${ctx.project.id}`)).json<PieceSet>().config.requiredActions).toEqual(emptyRule)
+            const listed = (await ctx.get('/v1/piece-sets?limit=100')).json<SeekPage<PieceSet>>().data.find((set) => set.id === id)
+            expect(listed?.config.requiredActions).toEqual(emptyRule)
+        })
+
+        it('saves a rule', async () => {
+            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
+            await saveCrmPiece()
+            const id = await saveSetWithoutRequiredActions(ctx)
+            const response = await ctx.post(`/v1/piece-sets/${id}`, { requiredActions: { actions: { [CRM]: ['create_deal'] } } })
+            expect(response.json<PieceSet>().config.requiredActions).toEqual({ mode: RequiredActionsMode.ANY, actions: { [CRM]: ['create_deal'] } })
         })
     })
 
