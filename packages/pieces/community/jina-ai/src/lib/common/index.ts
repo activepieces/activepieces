@@ -10,6 +10,22 @@ export const JinaAICommon = {
   classifierUrl: 'https://api.jina.ai/v1/classify',
   classifierTrainUrl: 'https://api.jina.ai/v1/train',
 
+  toStringList({ values, label }: { values: unknown; label: string }): string[] {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+    return values.map((value, index) => {
+      if (typeof value !== 'string' || value.trim().length === 0) {
+        throw new Error(`${label} ${index + 1} must be a non-empty text.`);
+      }
+      return value;
+    });
+  },
+
+  apiUrl({ path }: { path: string }): string {
+    return `${JinaAICommon.baseUrl}${path}`;
+  },
+
   async makeRequest({
     url,
     method,

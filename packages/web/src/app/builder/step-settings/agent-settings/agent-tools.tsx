@@ -8,6 +8,7 @@ import type {
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
@@ -134,30 +135,31 @@ export const AgentTools = ({
             <AddRow label={t('Add tool')} disabled={disabled} />
           </AddToolDropdown>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-panel px-4 py-8 text-center">
             <div className="flex items-center">
               {icons.slice(0, 4).map((icon, index) => (
-                <div
+                <span
                   key={icon}
-                  className="relative flex size-9 items-center justify-center rounded-full border bg-background"
+                  className="relative"
                   style={{ marginLeft: index === 0 ? 0 : -10 }}
                 >
-                  <img
+                  <LogoPlate
                     src={icon}
-                    alt={icon}
-                    className="size-4 object-contain"
+                    alt=""
+                    border
+                    className="size-9 rounded-full p-2.5"
                   />
-                </div>
+                </span>
               ))}
               <div
-                className="relative flex size-9 items-center justify-center rounded-full border text-[10px] bg-background text-foreground font-medium"
+                className="relative flex size-9 items-center justify-center rounded-full border text-[10px] bg-gray-1 text-gray-12 font-medium"
                 style={{ marginLeft: -10 }}
               >
                 <span>+500</span>
               </div>
             </div>
 
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="text-sm font-medium text-gray-11">
               {t('Connect apps, flows, MCPs and more.')}
             </p>
 

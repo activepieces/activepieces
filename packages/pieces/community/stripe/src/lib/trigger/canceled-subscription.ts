@@ -23,7 +23,7 @@ export const stripeCanceledSubscription = createTrigger({
   name: 'canceled_subscription',
   classification: 'READ',
   displayName: 'Canceled Subscription',
-  description: 'Fires when a subscription is canceled.',
+  description: 'Fires when a subscription ends.',
   aiMetadata: {
     description:
       'Fires when a subscription is canceled in Stripe (the customer.subscription.deleted event), emitting the canceled subscription including any cancellation details. An optional customer ID filter narrows firing to one customer. Use to react to churn, such as revoking access or sending a win-back flow.',
@@ -31,8 +31,8 @@ export const stripeCanceledSubscription = createTrigger({
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',
-      description:
-        'Only trigger for subscriptions belonging to this customer ID (e.g., `cus_...`).',
+      description: 'Only subscriptions for this customer. Empty: all.',
+      placeholder: 'cus_...',
       required: false,
     }),
   },

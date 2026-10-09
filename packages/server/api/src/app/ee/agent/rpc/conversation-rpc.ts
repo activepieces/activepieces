@@ -3,6 +3,7 @@ import { AgentConversationStatus, AgentCreditsLeftRequest, AgentRunSource, FileC
 import { FastifyBaseLogger } from 'fastify'
 import { readConversationFile } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
+import { agentModelTier } from '.././agent-model-tier'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
 import { chatToolBilling } from '.././chat-tool-billing'
 import { fileService } from '../../../file/file.service'
@@ -75,7 +76,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             updates.messages = input.messages
             updates.uiMessages = sanitizeObjectForPostgresql(input.uiMessages)
             if (input.title) updates.title = input.title
-            if (input.modelName) updates.modelName = input.modelName
+            if (input.modelName && isNil(stored?.modelTierId)) updates.modelName = input.modelName
         }
         const failureAppend = isNil(input.failure) ? null : failureAppendFor({ stored: stored?.uiMessages ?? [], failure: input.failure })
         if (!isNil(failureAppend)) {
@@ -118,7 +119,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
-                rejectedPromiseHandler(chatToolBilling.chargeForLatestTurn({ conversation, runId: input.runId, log }), log)
+                rejectedPromiseHandler(chatToolBilling.chargeForLatestTurn({ conversation, runId: input.runId, log, ...spreadIfDefined('answeredBy', input.answeredBy) }), log)
             }
         }
     },
@@ -162,7 +163,15 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
                 params: { message: 'A flow-step agent run cannot move to another project' },
             })
         }
-        if (!isNil(conversation)) {
+        if (!isNil(conversation) && !isNil(conversation.modelTierId)) {
+            await agentModelTier(log).assertProjectSwitchKeepsTier({
+                platformId: conversation.platformId,
+                tierId: conversation.modelTierId,
+                fromProjectId: conversation.projectId ?? null,
+                toProjectId: input.projectId,
+            })
+        }
+        if (!isNil(conversation) && isNil(conversation.modelTierId)) {
             await agentHelpers.assertProjectSwitchKeepsKey({
                 platformId: conversation.platformId,
                 fromProjectId: conversation.projectId ?? null,

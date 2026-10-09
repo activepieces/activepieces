@@ -33,7 +33,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
+import {
+  KeyScopeImpact,
+  modelMeta,
+} from '@/features/agents/ai-model/model-meta';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
+import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -61,7 +68,7 @@ export function ConfigDetail({
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
-  onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
+  onSave: (request: UpdateAIProviderRequest) => Promise<{ error: unknown }>;
   onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
@@ -70,6 +77,9 @@ export function ConfigDetail({
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [scopeImpact, setScopeImpact] = useState<KeyScopeImpact[]>([]);
+  const { data: tiers } = platformModelTierQueries.useAdminList();
+  const { data: allConfigs } = aiProviderQueries.useAiProviderConfigs();
   const leavingOnPurpose = useRef(false);
   const saveInFlight = useRef(false);
 
@@ -119,7 +129,30 @@ export function ConfigDetail({
       ? projects.length - draft.projectIds.length
       : draft.projectIds.length;
 
-  const save = async () => {
+  const requestSave = () => {
+    if (nameMissing || saveInFlight.current) {
+      return;
+    }
+    const impact = modelMeta.keyScopeImpact({
+      tiers: tiers ?? [],
+      configsById: new Map(
+        (allConfigs ?? []).map((other) => [other.id, other]),
+      ),
+      config: {
+        ...config,
+        projectScope: draft.projectScope,
+        projectIds: draft.projectIds,
+      },
+      projectIds: projects.map((project) => project.id),
+    });
+    if (impact.length > 0) {
+      setScopeImpact(impact);
+      return;
+    }
+    return save();
+  };
+
+  const save = async (): Promise<boolean> => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
@@ -127,11 +160,11 @@ export function ConfigDetail({
       ? manualConfigParse.data
       : undefined;
     if (nameMissing || saveInFlight.current) {
-      return;
+      return false;
     }
     saveInFlight.current = true;
     try {
-      await onSave({
+      const { error } = await onSave({
         displayName: draft.name.trim(),
         modelScope: draft.modelScope,
         modelIds: manualModels
@@ -145,6 +178,7 @@ export function ConfigDetail({
             }
           : {}),
       });
+      return error === null || error === undefined;
     } finally {
       saveInFlight.current = false;
     }
@@ -156,7 +190,7 @@ export function ConfigDetail({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex w-fit items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <ChevronLeft className="size-4" />
           {t('Providers')}
@@ -167,7 +201,7 @@ export function ConfigDetail({
             <h1 className="truncate text-lg font-semibold leading-none tracking-tight">
               {draft.name}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-11">
               <span>{info.name}</span>
               <KeyStatusBadge status={config.status} />
             </div>
@@ -180,7 +214,7 @@ export function ConfigDetail({
           title={t('General')}
           description={t('How this key is labelled and authorised.')}
         />
-        <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border/60">
+        <div className="flex flex-col divide-y divide-gray-6/60 rounded-xl border border-gray-6/60">
           <div className="flex flex-col gap-1.5 p-4">
             <Label htmlFor="config-name">{t('Name')}</Label>
             <Input
@@ -193,42 +227,43 @@ export function ConfigDetail({
               aria-invalid={nameMissing}
             />
             {nameMissing && (
-              <p className="text-sm text-destructive">
-                {t(formErrors.required)}
-              </p>
+              <p className="text-sm text-danger-11">{t(formErrors.required)}</p>
             )}
           </div>
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-                <KeyRound className="size-4 text-muted-foreground" />
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
+                <KeyRound className="size-4 text-gray-11" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium leading-none">
                   {t('Credentials')}
                 </p>
-                <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+                <p className="mt-1 truncate font-mono text-xs text-gray-11">
                   {t('Stored securely')}
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={onReplaceCredentials}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReplaceCredentials}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN)}
+            >
               {t('Replace')}
             </Button>
           </div>
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-                <Activity className="size-4 text-muted-foreground" />
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
+                <Activity className="size-4 text-gray-11" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium leading-none">
                   {t('Status')}
                 </p>
                 {statusDetail && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {statusDetail}
-                  </p>
+                  <p className="mt-1 text-xs text-gray-11">{statusDetail}</p>
                 )}
               </div>
             </div>
@@ -237,6 +272,7 @@ export function ConfigDetail({
               size="sm"
               loading={isRechecking}
               onClick={onRecheck}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_RECHECK_RUN)}
             >
               {t('Recheck')}
             </Button>
@@ -339,20 +375,21 @@ export function ConfigDetail({
           title={t('Danger zone')}
           description={t('Irreversible actions for this key.')}
         />
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 p-4">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-danger-6 p-4">
           <div className="min-w-0">
             <p className="text-sm font-medium leading-none">
               {t('Delete this key')}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-gray-11">
               {t('Steps and agents using it will stop working.')}
             </p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="shrink-0 gap-2 border-danger-7 text-danger-11 enabled:hover:bg-danger-3 enabled:hover:text-danger-11"
             onClick={() => setDeleteOpen(true)}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
           >
             <Trash2 className="size-4" />
             {t('Delete')}
@@ -365,6 +402,7 @@ export function ConfigDetail({
           message={t('Steps and agents using this key will stop working.')}
           entityName={config.name}
           showToast={true}
+          controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
           mutationFn={async () => {
             await onDelete();
             leavingOnPurpose.current = true;
@@ -375,7 +413,7 @@ export function ConfigDetail({
 
       {dirty && (
         <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
-          <div className="flex animate-in items-center gap-3 rounded-xl border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
+          <div className="flex animate-in items-center gap-3 rounded-xl border bg-gray-1/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
             <span className="text-sm">{t('You have unsaved changes')}</span>
             <Button
               variant="outline"
@@ -389,14 +427,43 @@ export function ConfigDetail({
               loading={isSaving}
               disabled={nameMissing || isSaving}
               keyboardShortcut="S"
-              onKeyboardShortcut={save}
-              onClick={save}
+              onKeyboardShortcut={requestSave}
+              onClick={requestSave}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT)}
             >
               {t('Save')}
             </Button>
           </div>
         </div>
       )}
+
+      <ConfirmationDeleteDialog
+        open={scopeImpact.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setScopeImpact([]);
+          }
+        }}
+        title={t('Change which projects can use {name}?', {
+          name: config.name,
+        })}
+        message={
+          <ul className="flex list-disc flex-col gap-1 pl-5">
+            {scopeImpact.map((impact) => (
+              <li key={impact.tierName}>{scopeImpactText(impact)}</li>
+            ))}
+          </ul>
+        }
+        entityName={config.name}
+        isDanger={false}
+        buttonText={t('Save anyway')}
+        showToast={false}
+        mutationFn={async () => {
+          if (!(await save())) {
+            throw new Error('Saving the key failed');
+          }
+        }}
+      />
 
       <LeaveWithoutSavingDialog
         open={leaveBlocker.state === 'blocked'}
@@ -405,6 +472,19 @@ export function ConfigDetail({
       />
     </div>
   );
+}
+
+function scopeImpactText(impact: KeyScopeImpact): string {
+  if (impact.lostProjects > 0) {
+    return t('tierLosesProjects', {
+      tier: impact.tierName,
+      count: impact.lostProjects,
+    });
+  }
+  return t('tierFallbackSkippedInMoreProjects', {
+    tier: impact.tierName,
+    count: impact.skippedProjects,
+  });
 }
 
 function ScopeTabs({

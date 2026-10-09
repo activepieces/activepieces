@@ -1,6 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { systemeIoCommon } from './client';
 import { systemeIoAuth } from './auth';
+import { contactDropdownOptions, contactLabel } from './dropdowns';
 
 export const systemeIoProps = {
   contactDropdown: Property.Dropdown({
@@ -175,10 +176,11 @@ export const systemeIoProps = {
   contactIdDropdown: Property.Dropdown({
     auth: systemeIoAuth,
     displayName: 'Contact ID',
-    description: 'Select a contact by ID',
+    description: 'Select a contact. Type a name (searches the newest 100), a full email address or a contact id.',
     required: true,
     refreshers: [],
-    options: async ({ auth }) => {
+    refreshOnSearch: true,
+    options: async ({ auth }, ctx) => {
       if (!auth) {
         return {
           disabled: true,
@@ -186,46 +188,11 @@ export const systemeIoProps = {
           options: [],
         };
       }
-
-      try {
-        const response = await systemeIoCommon.getContacts({
-          auth: auth.secret_text,
-          limit: 100,
-        });
-
-        let contacts: any[] = [];
-        if (Array.isArray(response)) {
-          contacts = response;
-        } else if (response && typeof response === 'object' && response !== null) {
-          const responseAny = response as any;
-          if (responseAny.items && Array.isArray(responseAny.items)) {
-            contacts = responseAny.items;
-          }
-        }
-
-        if (contacts.length > 0) {
-          return {
-            disabled: false,
-            options: contacts.map((contact: any) => ({
-              label: `ID: ${contact.id} - ${contact.first_name || ''} ${contact.last_name || ''} (${contact.email})`.trim(),
-              value: contact.id,
-            })),
-          };
-        }
-
-        return {
-          disabled: true,
-          placeholder: 'No contacts found',
-          options: [],
-        };
-      } catch (error) {
-        console.error('Error fetching contacts:', error);
-        return {
-          disabled: true,
-          placeholder: 'Error loading contacts',
-          options: [],
-        };
-      }
+      return contactDropdownOptions({
+        apiKey: auth.secret_text,
+        searchValue: ctx?.searchValue,
+        label: (contact) => `ID: ${contact.id} - ${contactLabel(contact)}`,
+      });
     },
   }),
 

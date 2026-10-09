@@ -19,21 +19,24 @@ export const updateTicketAction = createAction({
     props: {
         ticketId: Property.ShortText({
             displayName: 'Ticket ID',
-            description: 'The ID of the ticket to update.',
+            description: 'Map it from an earlier step like Find Ticket.',
             required: true,
         }),
         ticketName: Property.ShortText({
             displayName: 'Ticket Name',
+            description: 'Leave empty to keep the current name.',
             required: false,
         }),
         pipelineId: pipelineDropdown({
             objectType: OBJECT_TYPE.TICKET,
             displayName: 'Ticket Pipeline',
+            description: 'Leave empty to keep the current pipeline.',
             required: false,
         }),
         pipelineStageId: pipelineStageDropdown({
             objectType: OBJECT_TYPE.TICKET,
-            displayName: 'Ticket Pipeline Stage',
+            displayName: 'Ticket Stage',
+            description: 'Leave empty to keep the current stage.',
             required: false,
         }),
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.TICKET, [
@@ -43,16 +46,15 @@ export const updateTicketAction = createAction({
         ]),
         markdown: Property.MarkDown({
             variant: MarkdownVariant.INFO,
-            value: `### Properties to retrieve:
-            
-            subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-            
-            **Specify here a list of additional properties to retrieve**`,
+            value: `Returned by default: subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
         }),
         additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
             objectType: OBJECT_TYPE.TICKET,
-            displayName: 'Additional properties to retrieve',
+            displayName: 'Additional Properties to Retrieve',
             required: false,
+            advanced: true,
         }),
     },
     async run(context) {

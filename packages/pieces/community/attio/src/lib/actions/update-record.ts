@@ -3,13 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';
+import { createRecordOutputSchema } from '../output-schemas';
 
 export const updateRecordAction = createAction({
 	name: 'update_record',
+	outputSchema: createRecordOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Update an existing record with new attribute values.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Updates an existing record in a given Attio object type by record ID, overwriting the supplied attribute values (multiselect values are appended). Choose this when you already know the record ID and want to change its fields. Idempotent — re-applying the same values leaves the record in the same state.', idempotent: true },
 	auth: attioAuth,
 	props: {

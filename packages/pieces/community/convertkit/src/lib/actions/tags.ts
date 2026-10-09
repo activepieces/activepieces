@@ -1,10 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { convertkitAuth } from '../..';
+import { HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { convertkitAuth } from '../auth';
+import { kitHttp } from '../common/http';
 import {
   tag,
   tagsRequired,
@@ -22,19 +19,29 @@ import {
 } from '../common/subscribers';
 import { Tag } from '../common/types';
 import { allFields } from '../common/custom-fields';
-import { TAGS_API_ENDPOINT } from '../common/constants';
+import {
+  SUBSCRIBERS_API_ENDPOINT,
+  TAGS_API_ENDPOINT,
+} from '../common/constants';
 import { buildQueryParams, fetchTags } from '../common/service';
+import {
+  kitSubscriptionListOutputSchema,
+  kitSubscriptionOutputSchema,
+  kitTagListOutputSchema,
+  kitTagOutputSchema,
+} from '../output-schemas';
 
 export const listTags = createAction({
   auth: convertkitAuth,
   name: 'tags_list_tags',
   classification: 'SEARCH',
+  outputSchema: kitTagListOutputSchema,
   displayName: 'List Tags',
   description: 'Returns a list of all tags',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Lists every tag in the account with its ID and name. Use it to find a tag ID before tagging or untagging subscribers, or before listing a tag\'s subscriptions. Takes no inputs; read-only and idempotent.',
+      "Lists every tag in the account with its ID and name. Use it to find a tag ID before tagging or untagging subscribers, or before listing a tag's subscriptions. Takes no inputs; read-only and idempotent.",
     idempotent: true,
   },
   props: {},
@@ -47,9 +54,10 @@ export const createTag = createAction({
   auth: convertkitAuth,
   name: 'tags_create_tag',
   classification: 'WRITE',
+  outputSchema: kitTagOutputSchema,
   displayName: 'Create Tag',
   description: 'Create a tag',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new tag with the given name. Not idempotent — calling it again can create a duplicate, so check List Tags for an existing tag first.',
@@ -72,7 +80,7 @@ export const createTag = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{ tag: Tag }>(request);
+    const response = await kitHttp.sendRequest<Tag>(request);
 
     if (response.status !== 201) {
       throw new Error(`Error creating tag: ${response.status}`);
@@ -89,9 +97,10 @@ export const tagSubscriber = createAction({
   auth: convertkitAuth,
   name: 'tags_tag_subscriber',
   classification: 'WRITE',
+  outputSchema: kitSubscriptionOutputSchema,
   displayName: 'Tag Subscriber',
   description: 'Tag a subscriber',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Applies one or more existing tags to a subscriber by email address (subscribing the email to the first tag and attaching the rest), optionally setting first name and custom fields; at least one tag is required. Effectively idempotent — re-applying the same tags converges to the same state.',
@@ -127,7 +136,7 @@ export const tagSubscriber = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await kitHttp.sendRequest<{
       subscription: Tag;
     }>(request);
 
@@ -143,9 +152,10 @@ export const removeTagFromSubscriberByEmail = createAction({
   auth: convertkitAuth,
   name: 'tags_remove_tag_from_subscriber_by_email',
   classification: 'WRITE',
+  outputSchema: kitTagOutputSchema,
   displayName: 'Remove Tag From Subscriber By Email',
   description: 'Remove a tag from a subscriber by email',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Removes a single tag from a subscriber identified by email address. Use the By Id variant when the numeric subscriber ID is already known. Treated as non-idempotent — a retry may error once the tag is already removed, though the end state is the same.',
@@ -170,7 +180,7 @@ export const removeTagFromSubscriberByEmail = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request);
+    const response = await kitHttp.sendRequest<{ subscriber: Tag }>(request);
 
     if (response.status !== 200) {
       throw new Error(`Error removing tag from subscriber: ${response.status}`);
@@ -184,9 +194,10 @@ export const removeTagFromSubscriberById = createAction({
   auth: convertkitAuth,
   name: 'tags_remove_tag_from_subscriber_by_id',
   classification: 'WRITE',
+  outputSchema: kitTagOutputSchema,
   displayName: 'Remove Tag From Subscriber By Id',
   description: 'Remove a tag from a subscriber by id',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Removes a single tag from a subscriber identified by numeric subscriber ID. Use the By Email variant when only an address is known. Treated as non-idempotent — a retry may error once the tag is already removed.',
@@ -198,20 +209,15 @@ export const removeTagFromSubscriberById = createAction({
   },
   async run(context) {
     const { subscriberId, tagId } = context.propsValue;
-    const url = `${TAGS_API_ENDPOINT}/${tagId}/unsubscribe`;
-
-    const body = {
-      id: subscriberId,
-      api_secret: context.auth.secret_text,
-    };
+    const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}/tags/${tagId}`;
 
     const request: HttpRequest = {
       url,
-      method: HttpMethod.POST,
-      body,
+      method: HttpMethod.DELETE,
+      queryParams: buildQueryParams(context.auth.secret_text),
     };
 
-    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request);
+    const response = await kitHttp.sendRequest<{ subscriber: Tag }>(request);
 
     if (response.status !== 200) {
       throw new Error(`Error removing tag from subscriber: ${response.status}`);
@@ -225,9 +231,10 @@ export const listSubscriptionsToATag = createAction({
   auth: convertkitAuth,
   name: 'tags_list_subscriptions_to_tag',
   classification: 'SEARCH',
+  outputSchema: kitSubscriptionListOutputSchema,
   displayName: 'List Subscriptions To Tag',
   description: 'List all subscriptions to a tag',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists the subscribers subscribed to a specific tag, with paging, sort order, and subscriber-state filtering. Use List Tags first to find the tag ID. Read-only and idempotent.',
@@ -253,7 +260,7 @@ export const listSubscriptionsToATag = createAction({
       }),
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await kitHttp.sendRequest<{
       subscriptions: Tag[];
     }>(request);
 

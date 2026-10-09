@@ -51,6 +51,7 @@ export type ApErrorParams =
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | AgentRunSupersededErrorParams
+    | RequiredActionsMissingErrorParams
     | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
@@ -77,6 +78,7 @@ export type ApErrorParams =
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
     | InvalidCustomDomainErrorParams
+    | EventDestinationUrlChangeRequiresHeadersParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
     | ErrorUpdatingSubscriptionParams
@@ -97,6 +99,7 @@ export type ApErrorParams =
     | ExecutionStateMissingParams
     | GenericErrorParams
     | SandboxCapacityExceededParams
+    | EventDestinationFormatNotSupportedByWebhookParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -333,6 +336,17 @@ ErrorCode.AGENT_RUN_SUPERSEDED,
 }
 >
 
+export type RequiredActionsMissingErrorParams = BaseErrorParams<
+ErrorCode.REQUIRED_ACTIONS_MISSING,
+{
+    message: string
+    mode: 'any' | 'all'
+    requiredActions: Record<string, string[]>
+    missingActions: Record<string, string[]>
+    skippedActions: Record<string, string[]>
+}
+>
+
 export type FileTooLargeErrorParams = BaseErrorParams<
 ErrorCode.FILE_TOO_LARGE,
 {
@@ -470,6 +484,10 @@ export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_E
     externalId: string
 }>
 
+export type EventDestinationUrlChangeRequiresHeadersParams = BaseErrorParams<ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS, {
+    headerNames: string[]
+}>
+
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
 }>
@@ -540,6 +558,10 @@ export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
 
 export type SandboxCapacityExceededParams = BaseErrorParams<ErrorCode.SANDBOX_CAPACITY_EXCEEDED, Record<string, never>>
 
+export type EventDestinationFormatNotSupportedByWebhookParams = BaseErrorParams<ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK, {
+    format: string
+}>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -601,12 +623,14 @@ export enum ErrorCode {
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
     AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    REQUIRED_ACTIONS_MISSING = 'REQUIRED_ACTIONS_MISSING',
     FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
+    EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS = 'EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
@@ -621,4 +645,5 @@ export enum ErrorCode {
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
     GENERIC_ERROR = 'GENERIC_ERROR',
+    EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK = 'EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK',
 }

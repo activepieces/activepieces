@@ -64,27 +64,27 @@ function AdvancedSection({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="border-t border-border pt-4"
+      className="border-t border-gray-6 pt-4"
     >
       <CollapsibleTrigger
         className={cn(
           'group flex items-center gap-2 w-full text-left',
           'rounded-md focus-visible:outline-none focus-visible:ring-2',
-          'focus-visible:ring-primary/35 focus-visible:ring-offset-2',
+          'focus-visible:ring-accent-8/50 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-1',
         )}
       >
-        <SlidersHorizontal className="size-4 text-muted-foreground" />
-        <span className="text-[13px] font-semibold tracking-[-0.005em] text-muted-foreground">
+        <SlidersHorizontal className="size-4 text-gray-11" />
+        <span className="text-[13px] font-semibold tracking-[-0.005em] text-gray-11">
           {t('Advanced')}
         </span>
-        <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+        <span className="ml-auto text-xs text-gray-11 tabular-nums">
           {open
             ? t('Hide')
             : t('{count, plural, =1 {1 option} other {# options}}', { count })}
         </span>
         <ChevronDown
           className={cn(
-            'h-4 w-4 text-muted-foreground transition-transform duration-200',
+            'h-4 w-4 text-gray-11 transition-transform duration-200',
             !open && '-rotate-90',
           )}
         />

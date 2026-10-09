@@ -199,7 +199,7 @@ function AppConnectionsPage() {
                   <span className="min-w-0">{row.original.displayName}</span>
                 </TextWithTooltip>
                 {accountIdentifier && (
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-xs text-gray-11">
                     {accountIdentifier}
                   </span>
                 )}
@@ -375,7 +375,7 @@ function AppConnectionsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />

@@ -8,7 +8,7 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { publishHooksFactory } from '../../flows/flow/flow-publish-hooks'
-import { flowService } from '../../flows/flow/flow.service'
+import { flowService, getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { PublishedFlowsUsingAgent, publishedFlowsUsingAgent, publishedFlowVersionsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -21,6 +21,7 @@ import { projectMemberService } from '../projects/project-members/project-member
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
+import { agentModelTier } from './agent-model-tier'
 
 const DEFAULT_PAGE_SIZE = 20
 const MAX_NAMED_FLOWS_IN_USE = 3
@@ -35,7 +36,7 @@ const AGENT_MOVED_AWAY = 'That agent has just been moved somewhere else. Reload 
 export const agentService = (log: FastifyBaseLogger) => ({
     async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
-        const draft = await withDefaultModel({ draft: request.draft, platformId, projectId, log })
+        const draft = await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log })
         return agentRepo().save({
             id: apId(),
             projectId,
@@ -43,6 +44,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             externalId: apId(),
             displayName: request.displayName,
             description: request.description ?? null,
+            folderId: await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log }),
             icon: request.icon,
             color: request.color,
             visibility,
@@ -118,7 +120,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
             projectId,
             log,
         })
-        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
+        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(await withTierOrModel({ draft: request.draft, platformId, projectId, log }))
+        await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
         const goingLive = goLive && agentUtils.isPublishable(draft)
         const published = goingLive ? draft : agent.published
         if (goingLive) {
@@ -227,11 +230,10 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async publishedFlowsUsing({ agent, projectId, userId }: { agent: Agent, projectId: ProjectId, userId: UserId }): Promise<PublishedFlowsUsingAgent> {
+    async publishedFlowsUsing({ agent, projectId, userId, nameLimit = MAX_NAMED_FLOWS_IN_USE }: { agent: Agent, projectId: ProjectId, userId: UserId, nameLimit?: number }): Promise<PublishedFlowsUsingAgent> {
         const checker = await resolvePermissionChecker({ userId, projectId, log })
         const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
-        const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
-        return { total: usage.total, names: usage.names }
+        return publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? nameLimit : 0 })
     },
 
     async movePreview({ id, projectId, userId, targetProjectId, platformId }: MoveParams & { id: string }): Promise<AgentMovePreview> {
@@ -239,7 +241,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         await assertMayDestroy({ agent, projectId, userId, log })
         const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
         const [flowsInUse, mayCreateAgentsThere] = await Promise.all([
-            this.publishedFlowsUsing({ agent, projectId, userId }),
+            this.publishedFlowsUsing({ agent, projectId, userId, nameLimit: AGENT_USAGE_LIST_LIMIT }),
             mayWriteAgentsIn({ projectId: target.id, userId, log }),
         ])
         if (!mayCreateAgentsThere) {
@@ -279,7 +281,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
             const moved = await repo.createQueryBuilder()
                 .update()
-                .set({ projectId: target.id, sharedWithUserIds })
+                .set({ projectId: target.id, sharedWithUserIds, folderId: null })
                 .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
                 .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
                 .setParameters(blocking.getParameters())
@@ -301,14 +303,17 @@ export const agentService = (log: FastifyBaseLogger) => ({
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayRemoveFromProject({ agent, projectId, userId, log })
         const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
-        const deleted = await agentRepo()
-            .createQueryBuilder()
-            .delete()
-            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
-            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
-            .setParameters(blocking.getParameters())
-            .returning('id')
-            .execute()
+        const deleted = await transaction(async (entityManager) => {
+            await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            return entityManager.getRepository(AgentEntity)
+                .createQueryBuilder()
+                .delete()
+                .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+                .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+                .setParameters(blocking.getParameters())
+                .returning('id')
+                .execute()
+        })
 
         const deletedRows: unknown[] = deleted.raw ?? []
         if (deletedRows.length === 0) {
@@ -374,13 +379,13 @@ function refuseBecauseFlowsUseIt({ agent, flowsInUse }: {
     })
 }
 
-function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
+function describeFlowsInUse({ total, flows }: PublishedFlowsUsingAgent): string {
     const counted = total === 1 ? '1 published flow' : `${total} published flows`
-    if (names.length === 0) {
+    if (flows.length === 0) {
         return `This agent is running in ${counted}. Remove it from them first.`
     }
-    const listed = names.join(', ')
-    const tail = total > names.length ? `, and ${total - names.length} more` : ''
+    const listed = flows.map((flow) => flow.displayName).join(', ')
+    const tail = total > flows.length ? `, and ${total - flows.length} more` : ''
     return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
 }
 
@@ -418,13 +423,21 @@ async function isProjectAdministrator({ projectId, userId, log }: { projectId: P
     return role?.name === DefaultProjectRole.ADMIN
 }
 
+async function withTierOrModel({ draft, platformId, projectId, log }: { draft: AgentConfig, platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<AgentConfig> {
+    if (isNil(draft.modelTierId)) {
+        return draft
+    }
+    await agentModelTier(log).assertUsable({ platformId, tierId: draft.modelTierId, scope: { type: 'project', projectId } })
+    return { ...draft, provider: null, providerConfigId: null, modelName: null }
+}
+
 async function withDefaultModel({ draft, platformId, projectId, log }: {
     draft: AgentConfig
     platformId: PlatformId
     projectId: ProjectId
     log: FastifyBaseLogger
 }): Promise<AgentConfig> {
-    if (!isNil(draft.modelName)) {
+    if (!isNil(draft.modelName) || !isNil(draft.modelTierId)) {
         return draft
     }
     const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
@@ -637,6 +650,7 @@ function toSummary(agent: Agent, project?: Project): AgentSummary {
         projectIsPrivate: project?.type === ProjectType.PERSONAL,
         toolCount: agent.draft.tools.length,
         toolPieceNames: agent.draft.tools.flatMap((tool) => tool.type === AgentToolType.PIECE ? [tool.pieceMetadata.pieceName] : []),
+        toolTypes: agent.draft.tools.map((tool) => tool.type),
     }
 }
 
@@ -752,3 +766,5 @@ type AssertShareParams = {
     userId: UserId
     log: FastifyBaseLogger
 }
+
+export const AGENT_USAGE_LIST_LIMIT = 100
