@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Moon, Sun, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useTheme } from '@/components/providers/theme-provider';
 import { cn } from '@/lib/utils';
 
 import { AccountSettingsDialog } from '../account-settings';
@@ -34,6 +35,7 @@ export function SidebarUser() {
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { state } = useSidebar();
+  const { resolvedTheme, setPreference } = useTheme();
   const isCollapsed = state === 'collapsed';
   if (!user || embedState.isEmbedded) {
     return null;
@@ -108,6 +110,19 @@ export function SidebarUser() {
               </DropdownMenuItem>
 
               <HelpAndFeedback />
+              <DropdownMenuItem
+                onClick={() =>
+                  setPreference(resolvedTheme === 'dark' ? 'light' : 'dark')
+                }
+                className="cursor-pointer"
+              >
+                {resolvedTheme === 'dark' ? (
+                  <Sun className="w-4 h-4 mr-2" />
+                ) : (
+                  <Moon className="w-4 h-4 mr-2" />
+                )}
+                {resolvedTheme === 'dark' ? t('Light mode') : t('Dark mode')}
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
