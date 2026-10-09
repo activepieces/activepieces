@@ -264,7 +264,16 @@ export const takeScreenshotAction = createAction({
 			body['configuration'] = config;
 		}
 
-		const response = await airtopApiCall({
+				// Validate sessionId and windowId to prevent SSRF (CWE-918).
+		const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+		if (!UUID_PATTERN.test(sessionId)) {
+			throw new Error('Invalid sessionId: expected a UUID');
+		}
+		if (!UUID_PATTERN.test(windowId)) {
+			throw new Error('Invalid windowId: expected a UUID');
+		}
+
+const response = await airtopApiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/screenshot`,

@@ -252,6 +252,17 @@ export const clickAction = createAction({
 			body['configuration'] = config;
 		}
 
+		// Validate sessionId and windowId to prevent SSRF (CWE-918).
+		// These values are used in URL path segments; an attacker could
+		// inject path-traversal characters to hit arbitrary endpoints.
+		const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+		if (!UUID_PATTERN.test(sessionId)) {
+			throw new Error('Invalid sessionId: expected a UUID');
+		}
+		if (!UUID_PATTERN.test(windowId)) {
+			throw new Error('Invalid windowId: expected a UUID');
+		}
+
 		const response = await airtopApiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
