@@ -13,7 +13,7 @@ export const airtableUpdateTableAction = createAction({
   auth: airtableAuth,
   name: 'update_table',
   classification: 'WRITE',
-  displayName: 'Update Table (Agent)',
+  displayName: 'Update Table',
   description: 'Rename or re-describe a table.',
   audience: 'ai',
   outputSchema: updateTableActionOutputSchema,
@@ -26,13 +26,13 @@ export const airtableUpdateTableAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     name: Property.ShortText({
@@ -82,7 +82,7 @@ export const airtableUpdateTableAction = createAction({
       }
       if (status === 404) {
         throw new Error(
-          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases (Agent) and Get Base Schema (Agent).`
+          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases and Get Base Schema.`
         );
       }
       if (status === 422) {

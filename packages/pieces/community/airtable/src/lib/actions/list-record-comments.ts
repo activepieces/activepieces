@@ -14,7 +14,7 @@ export const airtableListRecordCommentsAction = createAction({
   auth: airtableAuth,
   name: 'list_record_comments',
   classification: 'SEARCH',
-  displayName: 'List Record Comments (Agent)',
+  displayName: 'List Record Comments',
   description: "Read a record's comment thread.",
   audience: 'ai',
   outputSchema: listRecordCommentsActionOutputSchema,
@@ -27,13 +27,13 @@ export const airtableListRecordCommentsAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     record_id: Property.ShortText({
@@ -98,7 +98,7 @@ export const airtableListRecordCommentsAction = createAction({
       }
       if (status === 404) {
         throw new Error(
-          `Base "${base_id}", table "${table_id_or_name}", or record "${record_id}" was not found. Verify the IDs with List Bases (Agent) and Get Base Schema (Agent).`
+          `Base "${base_id}", table "${table_id_or_name}", or record "${record_id}" was not found. Verify the IDs with List Bases and Get Base Schema.`
         );
       }
       if (status === 429) {

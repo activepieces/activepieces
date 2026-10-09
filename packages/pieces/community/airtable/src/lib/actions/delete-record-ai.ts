@@ -7,32 +7,32 @@ export const airtableDeleteRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'delete_record_ai',
   classification: 'DESTRUCTIVE',
-  displayName: 'Delete Record (Agent)',
+  displayName: 'Delete Record',
   description: 'Delete a single Airtable record by its ID.',
   audience: 'ai',
   outputSchema: deleteRecordAiActionOutputSchema,
   aiMetadata: {
     description:
-      'Permanently deletes a single record from a table by its record ID. Use to remove one row when you have its ID; to delete several at once use Delete Records Batch (Agent). Effectively idempotent: once the record is gone the end state is unchanged (a repeat call errors on the missing ID).',
+      'Permanently deletes a single record from a table by its record ID. Use to remove one row when you have its ID; to delete several at once use Delete Records Batch. Effectively idempotent: once the record is gone the end state is unchanged (a repeat call errors on the missing ID).',
     idempotent: true,
   },
   props: {
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     record_id: Property.ShortText({
       displayName: 'Record ID',
       description:
-        'The record ID (e.g. "recXXXXXXXXXXXXXX") to delete. Resolve it with Search Records (Agent) or List Records (Agent).',
+        'The record ID (e.g. "recXXXXXXXXXXXXXX") to delete. Resolve it with Search Records or List Records.',
       required: true,
     }),
   },

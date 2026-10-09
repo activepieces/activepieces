@@ -247,8 +247,6 @@ export const createRecordActionOutputSchema: OutputSchema = { fields: airtableRe
 
 export const updateRecordActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
 
-export const cleanRecordActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
-
 export const findRecordByIdActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
 
 export const uploadFileToColumnActionOutputSchema: OutputSchema = { fields: airtableRecordFields };
