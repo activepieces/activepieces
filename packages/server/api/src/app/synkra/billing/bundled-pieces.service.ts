@@ -31,6 +31,16 @@ const BUNDLED_PIECES: BundledPieceSpec[] = [
     version: '0.1.0',
     file: 'synkra-piece-payfast-0.1.0.tgz',
   },
+  {
+    name: '@synkra/piece-yoco',
+    version: '0.1.0',
+    file: 'synkra-piece-yoco-0.1.0.tgz',
+  },
+  {
+    name: '@synkra/piece-ikhokha',
+    version: '0.1.0',
+    file: 'synkra-piece-ikhokha-0.1.0.tgz',
+  },
 ];
 
 /**
