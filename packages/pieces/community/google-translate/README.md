@@ -19,7 +19,7 @@ Usage is billed per character on that Google Cloud project.
 | Action | Description |
 | --- | --- |
 | Translate Text | Translate text into a target language. The source language is detected automatically unless set. Supports plain text and HTML. |
-| Detect Language | Return the most likely language of a text, with a confidence between 0 and 1. |
+| Detect Language | Return the most likely language of a text (code and English name), with a confidence between 0 and 1. |
 | List Supported Languages | List the languages the API supports, with names in a chosen display language. |
 | Custom API call | Send a request to `https://translation.googleapis.com` with the connection's token. |
 

@@ -1,9 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 
-const googleTranslateScopes = [
-  'https://www.googleapis.com/auth/cloud-translation',
-  'email',
-];
+const googleTranslateScopes = ['https://www.googleapis.com/auth/cloud-translation', 'email'];
 
 const connectionInstructions = `
 Connect with an OAuth client from **your own** Google Cloud project:
@@ -16,9 +13,9 @@ Connect with an OAuth client from **your own** Google Cloud project:
 `.trim();
 
 export const googleTranslateAuth = PieceAuth.OAuth2({
-  description: connectionInstructions,
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: googleTranslateScopes,
+	description: connectionInstructions,
+	authUrl: 'https://accounts.google.com/o/oauth2/auth',
+	tokenUrl: 'https://oauth2.googleapis.com/token',
+	required: true,
+	scope: googleTranslateScopes,
 });
