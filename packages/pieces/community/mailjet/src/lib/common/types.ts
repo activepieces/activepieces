@@ -23,3 +23,11 @@ export type MailjetMessageResult = {
 };
 
 export type MailjetSendResponse = { Messages: MailjetMessageResult[] };
+
+export type MailjetRecord = Record<string, unknown>;
+
+export type MailjetQuery = Record<string, string | number | boolean | undefined>;
+
+export type MailjetDeleteResult = { deleted: true };
+
+export type MailjetFile = { filename: string; data: Buffer };

@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mailjetAuth } from '../auth';
 import { mailjetApi } from '../common/api';
+import { sendEmailOutputSchema } from '../output-schemas';
 
 export const sendEmailAction = createAction({
   auth: mailjetAuth,
   name: 'send_email',
+  outputSchema: sendEmailOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send a text, HTML or template email through Mailjet',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Sends an email to one or more recipients via the Mailjet transactional send API. Supply the body inline as plain text and/or HTML, or set a Mailjet template ID to render a predefined template with optional variables. Use when delivering a notification, alert, or transactional message; the sender address must be a verified Mailjet sender. Not idempotent — each call dispatches a new email.', idempotent: false },
   props: {
     fromEmail: Property.ShortText({
