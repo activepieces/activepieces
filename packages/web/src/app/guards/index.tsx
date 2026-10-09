@@ -20,7 +20,6 @@ import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
 import { AgentsFlagGuard } from './agents-flag-guard';
-import { SynkraHiddenV1Guard } from './synkra-hidden-v1-guard';
 import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
@@ -35,17 +34,15 @@ const ChatWithAIPage = lazyWithRetry(
 
 function chatElement() {
   return (
-    <SynkraHiddenV1Guard>
-      <AllowOnlyLoggedInUserOnlyGuard>
-        <ProjectDashboardLayout>
-          <PageTitle title="Chat">
-            <Suspense fallback={<RouteLoadingBar />}>
-              <ChatWithAIPage />
-            </Suspense>
-          </PageTitle>
-        </ProjectDashboardLayout>
-      </AllowOnlyLoggedInUserOnlyGuard>
-    </SynkraHiddenV1Guard>
+    <AllowOnlyLoggedInUserOnlyGuard>
+      <ProjectDashboardLayout>
+        <PageTitle title="Chat">
+          <Suspense fallback={<RouteLoadingBar />}>
+            <ChatWithAIPage />
+          </Suspense>
+        </PageTitle>
+      </ProjectDashboardLayout>
+    </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
 

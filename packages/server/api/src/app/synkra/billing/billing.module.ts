@@ -7,6 +7,7 @@ import { synkraBundledPiecesService } from './bundled-pieces.service';
 import { synkraRenewalsService } from './renewals.service';
 import { synkraHealthController } from '../health/health.controller';
 import { synkraPreflightController } from '../preflight/preflight.controller';
+import { synkraAiBalanceController } from '../ai/ai-balance.controller';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -39,4 +40,5 @@ export const synkraBillingModule: FastifyPluginAsyncZod = async (app) => {
   await app.register(paystackWebhookController, { prefix: '/v1/synkra/paystack' });
   await app.register(synkraHealthController, { prefix: '/v1/synkra/health' });
   await app.register(synkraPreflightController, { prefix: '/v1/synkra/preflight' });
+  await app.register(synkraAiBalanceController, { prefix: '/v1/synkra/ai' });
 };

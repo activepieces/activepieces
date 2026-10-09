@@ -174,7 +174,7 @@ export function BillingManagePage() {
               </div>
             </div>
             <UsageBar label={t('Emails')} used={usage.emailsUsed} limit={limits.emails ?? 0} />
-            <UsageBar label={t('AI operations')} used={usage.aiOpsUsed} limit={limits.aiOps ?? 0} />
+            <UsageBar label={t('AI credits')} used={usage.aiOpsUsed} limit={limits.aiOps ?? 0} />
             <UsageBar label={t('SMS')} used={usage.smsUsed} limit={limits.sms ?? 0} />
             <UsageBar label={t('WhatsApp')} used={usage.whatsappUsed} limit={limits.whatsapp ?? 0} />
             <UsageBar label={t('Voice')} used={usage.voiceMinutesUsed} limit={limits.voiceMinutes ?? 0} unit="min" />

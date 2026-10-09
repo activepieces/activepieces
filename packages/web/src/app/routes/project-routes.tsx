@@ -102,8 +102,7 @@ const automationsPagePermissions = [
 ];
 
 const agentEditorElement = (
-  <SynkraHiddenV1Guard>
-    <AgentsFlagGuard>
+  <AgentsFlagGuard>
     <ProjectDashboardLayout>
       <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
         <PageTitle title="Agent">
@@ -113,8 +112,7 @@ const agentEditorElement = (
         </PageTitle>
       </RoutePermissionGuard>
     </ProjectDashboardLayout>
-    </AgentsFlagGuard>
-  </SynkraHiddenV1Guard>
+  </AgentsFlagGuard>
 );
 
 export const projectRoutes = [

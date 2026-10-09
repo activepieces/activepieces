@@ -6,11 +6,19 @@ import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
 import { chargeFor, CostBasis, costBasisOf } from './ai-credits'
 import { aiUsageHooks } from './ai-usage-hooks'
+import { synkraAiMeter } from '../synkra/ai/synkra-ai-meter'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
         const toolCalls = input.toolCalls ?? 0
         const credits = chargeFor({ usage: input.usage, toolCalls })
+        // --- Synkra credit metering ---
+        void synkraAiMeter(log).record({
+          platformId: input.billing.platformId,
+          inputTokens: input.inputTokens,
+          outputTokens: input.outputTokens,
+          source: input.billing.source ?? 'chat',
+        })
         const costBasis = costBasisOf(input.usage)
         const platformId = input.billing.platformId
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
