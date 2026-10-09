@@ -41,14 +41,11 @@ export const platformUserHooks = {
   usePlatformInvitations: () => {
     return useQuery({
       queryFn: () => {
-        return userInvitationApi
-          .list({
-            type: InvitationType.PLATFORM,
-            cursor: undefined,
-            limit: 100,
-            projectId: null,
-          })
-          .then((res) => res.data);
+        return userInvitationApi.listAll({
+          type: InvitationType.PLATFORM,
+          limit: 100,
+          projectId: null,
+        });
       },
       queryKey: platformUserKeys.invitations,
       staleTime: 0,

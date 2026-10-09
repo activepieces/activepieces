@@ -318,7 +318,10 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    if (!ensureSeatsAvailable(emailsToInvite.length)) {
+    const newEmailsCount = emailsToInvite.filter(
+      (email) => !existingEmails.has(email.trim().toLowerCase()),
+    ).length;
+    if (newEmailsCount > 0 && !ensureSeatsAvailable(newEmailsCount)) {
       return;
     }
 
