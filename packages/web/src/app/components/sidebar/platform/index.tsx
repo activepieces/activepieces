@@ -114,13 +114,6 @@ export function PlatformSidebar() {
           ],
         },
         {
-          to: '/platform/templates',
-          label: t('Templates'),
-          icon: LayoutGridIcon,
-          locked: false,
-          tier: PLATFORM_FEATURES.templates.tier,
-        },
-        {
           to: '/platform/ai',
           label: t('AI Center'),
           icon: SparklesIcon,
