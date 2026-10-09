@@ -24,7 +24,7 @@ const manageListContactFields: OutputSchema['fields'] = [
 	{ key: 'Email', label: 'Email', format: 'email' },
 	{ key: 'Action', label: 'Action' },
 	{ key: 'Name', label: 'Name' },
-	{ key: 'Properties', label: 'Properties', children: [{ key: 'p3city', label: 'P3city' }] },
+	{ key: 'Properties', label: 'Properties', dynamicKey: true },
 ];
 
 const verifyListJobFields: OutputSchema['fields'] = [
