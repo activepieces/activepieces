@@ -1,8 +1,10 @@
-import { opnformCommon, workspaceIdProp, formIdProp } from '../common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { opnformAuth } from '../auth';
+import { opnformApi } from '../common/api';
+import { opnformProps } from '../common/props';
+import type { OpnformAuthValue } from '../common/types';
 
-export const opnformNewSubmission = createTrigger({
+export const newSubmissionTrigger = createTrigger({
     auth: opnformAuth,
     name: 'new_submission',
     classification: 'READ',
@@ -12,8 +14,8 @@ export const opnformNewSubmission = createTrigger({
         description: 'Fires whenever the specified OpnForm form receives a new submission (someone fills out and submits the form). The event payload contains the form title, slug, and the submitted answers keyed by field id, each with its value and field name. Use it to react to incoming form responses such as contact requests, signups, or survey answers.',
     },
     props: {
-        workspaceId: workspaceIdProp,
-        formId: formIdProp,
+        workspaceId: opnformProps.workspaceId({ required: true }),
+        formId: opnformProps.formId({ required: true }),
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData: {
@@ -41,16 +43,16 @@ export const opnformNewSubmission = createTrigger({
             context.project.id
         }/flows/${context.flows.current.id}`;
 
-        const integrationId = await opnformCommon.createOrUpdateIntegration(
-            context.auth,
+        const integrationId = await createOrUpdateIntegration({
+            auth: context.auth,
             formId,
             webhookUrl,
             flowUrl,
-        );
+        });
 
         if (integrationId) {
             await context.store?.put<WebhookInformation>('_new_submission_trigger', {
-                integrationId: integrationId as number,
+                integrationId,
             });
         } else {
             throw new Error('Failed to create integration');
@@ -63,7 +65,11 @@ export const opnformNewSubmission = createTrigger({
             if (!formId) {
                 throw new Error('Form is required');
             }
-            await opnformCommon.deleteIntegration(context.auth, formId, response.integrationId);
+            await opnformApi.deleteIntegration({
+                auth: context.auth,
+                formId,
+                integrationId: response.integrationId,
+            });
         }
     },
     async run(context) {
@@ -71,6 +77,34 @@ export const opnformNewSubmission = createTrigger({
     },
 });
 
-interface WebhookInformation {
-    integrationId: number;
+async function createOrUpdateIntegration({
+    auth,
+    formId,
+    webhookUrl,
+    flowUrl,
+}: {
+    auth: OpnformAuthValue;
+    formId: string;
+    webhookUrl: string;
+    flowUrl: string;
+}): Promise<number | null> {
+    const integrations = await opnformApi.listIntegrations({ auth, formId });
+    const existingIntegration = integrations.find(
+        (integration) =>
+            integration.integration_id === 'activepieces' &&
+            integration.data?.provider_url === flowUrl,
+    );
+
+    if (existingIntegration) {
+        if (existingIntegration.data?.webhook_url === webhookUrl) {
+            return existingIntegration.id;
+        }
+        await opnformApi.deleteIntegration({ auth, formId, integrationId: existingIntegration.id });
+    }
+
+    return await opnformApi.createIntegration({ auth, formId, webhookUrl, flowUrl });
 }
+
+type WebhookInformation = {
+    integrationId: number;
+};

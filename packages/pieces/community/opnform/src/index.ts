@@ -1,9 +1,8 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { opnformNewSubmission } from './lib/triggers/new-submission';
-import { API_URL_DEFAULT } from './lib/common';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { opnformAuth } from './lib/auth';
+import { opnformClient } from './lib/common/client';
+import { newSubmissionTrigger } from './lib/triggers/new-submission';
 
 export const opnform = createPiece({
     displayName: 'Opnform',
@@ -16,9 +15,7 @@ export const opnform = createPiece({
     actions: [
         createCustomApiCallAction({
             auth: opnformAuth,
-            baseUrl: (auth) => {
-                return auth?.props.baseApiUrl || API_URL_DEFAULT;
-            },
+            baseUrl: (auth) => opnformClient.baseUrl({ auth }),
             authMapping: async (auth) => {
                 return {
                     Authorization: `Bearer ${auth.props.apiKey}`,
@@ -26,5 +23,5 @@ export const opnform = createPiece({
             },
         }),
     ],
-    triggers: [opnformNewSubmission],
+    triggers: [newSubmissionTrigger],
 });
