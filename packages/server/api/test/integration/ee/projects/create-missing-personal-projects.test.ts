@@ -1,4 +1,3 @@
-import { ErrorCode } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType, ProjectType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -73,12 +72,33 @@ describe('Creating personal projects for existing members', () => {
         expect(response?.statusCode).toBe(StatusCodes.ACCEPTED)
     })
 
-    it('is refused while personal projects are off', async () => {
-        const { ownerToken } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: false })
+    it('turns personal projects on when they are off', async () => {
+        const { platformId, ownerToken } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: false })
 
         const response = await createMissing({ token: ownerToken })
 
-        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(response?.statusCode).toBe(StatusCodes.ACCEPTED)
+        const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: platformId })
+        expect(platform.autoCreatePersonalProjects).toBe(true)
+    })
+
+    it('creates nothing when personal projects were turned off before the job ran', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: false })
+        const member = await saveUser({ platformId })
+
+        await personalProjectsService(mockLog).createMissingHandler({ platformId })
+
+        expect(await personalProjectCountOf({ ownerId: member.id })).toBe(0)
+    })
+
+    it('works through more members than one batch', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        const members = await Promise.all(Array.from({ length: 55 }, () => saveUser({ platformId })))
+
+        await personalProjectsService(mockLog).createMissingHandler({ platformId })
+
+        const counts = await Promise.all(members.map((member) => personalProjectCountOf({ ownerId: member.id })))
+        expect(counts.every((count) => count === 1)).toBe(true)
     })
 
     it('is refused on a plan without project roles', async () => {
