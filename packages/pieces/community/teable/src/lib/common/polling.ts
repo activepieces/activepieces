@@ -22,6 +22,9 @@ async function findAnchorIndex({
   return low;
 }
 
+// Teable sorts every list without a viewId by the requested field, then by the
+// immutable __auto_number, so rows sharing a timestamp keep a fixed order between
+// polls and the resume point is the first row after (frontier epoch, max delivered autoNumber).
 async function findResumeStart({
   rowCount,
   fetchPage,
@@ -34,8 +37,9 @@ async function findResumeStart({
     epochOf,
     anchorEpoch: resumeFrom.epoch,
   });
+  const maxAutoNumber = resumeFrom.autoNumber;
   let low = groupStart;
-  let high = groupStart + resumeFrom.ids.size;
+  let high = maxAutoNumber !== undefined ? rowCount : groupStart + resumeFrom.ids.size;
   while (low < high) {
     const middle = Math.floor((low + high) / 2);
     const page = await fetchPage({ skip: middle, take: 1 });
@@ -43,7 +47,10 @@ async function findResumeStart({
     const beyondEmittedPrefix =
       record === undefined ||
       epochOf(record) > resumeFrom.epoch ||
-      (epochOf(record) === resumeFrom.epoch && !resumeFrom.ids.has(record.id));
+      (epochOf(record) === resumeFrom.epoch &&
+        (maxAutoNumber !== undefined && record.autoNumber !== undefined
+          ? record.autoNumber > maxAutoNumber
+          : !resumeFrom.ids.has(record.id)));
     if (beyondEmittedPrefix) {
       high = middle;
     } else {
@@ -141,6 +148,9 @@ async function resolveFrontier({
     resolved = {
       epoch: stored.epoch,
       ids: committed ? [...new Set([...stored.ids, ...stored.pending.ids])] : stored.ids,
+      autoNumber: committed
+        ? maxDefined(stored.autoNumber, stored.pending.autoNumber)
+        : stored.autoNumber,
     };
   }
   if (resolved.epoch <= lastFetchEpochMS) {
@@ -168,7 +178,9 @@ async function pollFreshItems({
     epochOf,
     lastFetchEpochMS,
     resumeFrom:
-      frontier !== undefined ? { epoch: frontier.epoch, ids: new Set(frontier.ids) } : undefined,
+      frontier !== undefined
+        ? { epoch: frontier.epoch, ids: new Set(frontier.ids), autoNumber: frontier.autoNumber }
+        : undefined,
   });
   if (caughtUp) {
     if (frontier !== undefined) {
@@ -185,9 +197,10 @@ async function pollFreshItems({
     return fullyFetched.map((record) => ({ epochMilliSeconds: epochOf(record), data: record }));
   }
   const resumeEpoch = lastFetchEpochMS + 1;
-  const confirmedIds =
-    frontier !== undefined && frontier.epoch === boundaryEpoch ? frontier.ids : [];
+  const sameFrontier = frontier !== undefined && frontier.epoch === boundaryEpoch;
+  const confirmedIds = sameFrontier ? frontier.ids : [];
   const pendingIds = records.map((record) => record.id);
+  const pendingAutoNumber = maxAutoNumberOf(records);
   if (resumeEpoch >= boundaryEpoch || confirmedIds.length + pendingIds.length > MAX_TRACKED_TIE_IDS) {
     if (frontier !== undefined) {
       await store.delete(storeKey);
@@ -197,9 +210,31 @@ async function pollFreshItems({
   await store.put(storeKey, {
     epoch: boundaryEpoch,
     ids: confirmedIds,
-    pending: { expectedLastPoll: resumeEpoch, ids: pendingIds },
+    autoNumber: sameFrontier ? frontier.autoNumber : undefined,
+    pending: { expectedLastPoll: resumeEpoch, ids: pendingIds, autoNumber: pendingAutoNumber },
   });
   return records.map((record) => ({ epochMilliSeconds: resumeEpoch, data: record }));
+}
+
+function maxDefined(a: number | undefined, b: number | undefined): number | undefined {
+  if (a === undefined) {
+    return b;
+  }
+  if (b === undefined) {
+    return a;
+  }
+  return Math.max(a, b);
+}
+
+function maxAutoNumberOf(records: TeableRecord[]): number | undefined {
+  let max: number | undefined = undefined;
+  for (const record of records) {
+    if (record.autoNumber === undefined) {
+      return undefined;
+    }
+    max = maxDefined(max, record.autoNumber);
+  }
+  return max;
 }
 
 export const teablePolling = {
@@ -228,7 +263,7 @@ type FindResumeStartParams = {
   resumeFrom: ResumeFrom;
 };
 
-type ResumeFrom = { epoch: number; ids: Set<string> };
+type ResumeFrom = { epoch: number; ids: Set<string>; autoNumber?: number };
 
 type ScanFreshRecordsParams = {
   rowCount: number;
@@ -250,8 +285,10 @@ type PollFreshItemsParams = {
 export type FrontierState = {
   epoch: number;
   ids: string[];
+  autoNumber?: number;
   pending?: {
     expectedLastPoll: number;
     ids: string[];
+    autoNumber?: number;
   };
 };

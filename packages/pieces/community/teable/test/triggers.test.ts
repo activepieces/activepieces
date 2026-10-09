@@ -23,6 +23,7 @@ function makeRecords(count: number): TeableRecord[] {
 			fields: { LastModified: iso(epoch) },
 			createdTime: iso(epoch),
 			lastModifiedTime: iso(epoch),
+			autoNumber: index + 1,
 		};
 	});
 }
@@ -52,14 +53,15 @@ function pollContext({ store }: { store: Store }) {
 }
 
 function mockListRecords(
-	records: TeableRecord[],
+	records: TeableRecord[] | (() => TeableRecord[]),
 	beforeCall?: (query: Record<string, unknown> | undefined) => void
 ) {
 	return vi
 		.spyOn(teableClient, 'listRecords')
 		.mockImplementation(async ({ query }) => {
 			beforeCall?.(query);
-			let rows = [...records];
+			const stored = typeof records === 'function' ? records() : records;
+			let rows = [...stored].sort((a, b) => (a.autoNumber ?? 0) - (b.autoNumber ?? 0));
 			const orderBy = query?.['orderBy'];
 			if (typeof orderBy === 'string') {
 				const [{ order }] = JSON.parse(orderBy) as { order: 'asc' | 'desc' }[];
@@ -86,7 +88,8 @@ type DeliveredRecord = { id: string };
 type FrontierSnapshot = {
 	epoch: number;
 	ids: string[];
-	pending?: { expectedLastPoll: number; ids: string[] };
+	autoNumber?: number;
+	pending?: { expectedLastPoll: number; ids: string[]; autoNumber?: number };
 };
 
 function failingPutStore({
@@ -145,6 +148,7 @@ function makeTieRecords({
 			fields: { LastModified: iso(epoch) },
 			createdTime: iso(epoch),
 			lastModifiedTime: iso(epoch),
+			autoNumber: index + 1,
 		};
 	});
 }
@@ -213,6 +217,60 @@ describe('same-timestamp group larger than the poll cap', () => {
 		expect(ids.length).toBe(12600);
 		expect(new Set(ids).size).toBe(12600);
 		expect(await runPoll(updatedRecordTrigger, store)).toEqual([]);
+	});
+});
+
+function shuffled<T>(items: T[], seed: number): T[] {
+	const result = [...items];
+	let state = seed;
+	for (let index = result.length - 1; index > 0; index -= 1) {
+		state = (state * 1103515245 + 12345) % 2147483648;
+		const swap = state % (index + 1);
+		[result[index], result[swap]] = [result[swap], result[index]];
+	}
+	return result;
+}
+
+describe('tie order between polls', () => {
+	it('loses nothing when tied rows come back from storage in a different order each poll', async () => {
+		const tied = makeTieRecords({ count: 12000, epoch: BASE_EPOCH + 10_000 });
+		const newer = makeTieRecords({ count: 50, epoch: BASE_EPOCH + 20_000, startIndex: 12000 });
+		let storage = [...tied, ...newer];
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(storage.length);
+		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
+			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+		]);
+		const queries: (Record<string, unknown> | undefined)[] = [];
+		mockListRecords(
+			() => storage,
+			(query) => queries.push(query)
+		);
+
+		for (const [trigger, storeKey] of [
+			[newRecordTrigger, 'teable_new_record_frontier'],
+			[updatedRecordTrigger, 'teable_updated_record_frontier'],
+		] as const) {
+			const store = memoryStore({ lastPoll: BASE_EPOCH });
+			const polls: DeliveredRecord[][] = [];
+			for (let round = 0; round < 8; round += 1) {
+				storage = shuffled(storage, round + 1);
+				const poll = await runPoll(trigger, store);
+				if (poll.length === 0) {
+					break;
+				}
+				polls.push(poll);
+				const frontier = await store.get<FrontierSnapshot>(storeKey);
+				if (frontier !== null) {
+					expect(frontier.pending?.autoNumber).toBe(
+						Math.max(...poll.map((record) => Number(record.id.slice(3)) + 1))
+					);
+				}
+			}
+			const ids = polls.flat().map((record) => record.id);
+			expect(ids.length).toBe(12050);
+			expect(new Set(ids).size).toBe(12050);
+		}
+		expect(queries.every((query) => query?.['viewId'] === undefined)).toBe(true);
 	});
 });
 
