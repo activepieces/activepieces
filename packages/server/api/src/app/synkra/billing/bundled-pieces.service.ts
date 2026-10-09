@@ -41,6 +41,26 @@ const BUNDLED_PIECES: BundledPieceSpec[] = [
     version: '0.1.0',
     file: 'synkra-piece-ikhokha-0.1.0.tgz',
   },
+  {
+    name: '@synkra/piece-courier-guy',
+    version: '0.1.0',
+    file: 'synkra-piece-courier-guy-0.1.0.tgz',
+  },
+  {
+    name: '@synkra/piece-bob-go',
+    version: '0.1.0',
+    file: 'synkra-piece-bob-go-0.1.0.tgz',
+  },
+  {
+    name: '@synkra/piece-uber-direct',
+    version: '0.1.0',
+    file: 'synkra-piece-uber-direct-0.1.0.tgz',
+  },
+  {
+    name: '@synkra/piece-pargo',
+    version: '0.1.0',
+    file: 'synkra-piece-pargo-0.1.0.tgz',
+  },
 ];
 
 /**
