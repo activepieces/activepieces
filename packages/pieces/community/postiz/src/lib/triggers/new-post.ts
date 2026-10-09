@@ -134,7 +134,9 @@ Postiz only delivers to public HTTPS URLs, so this trigger needs an Activepieces
       context.store.put(WEBHOOK_ID_STORE_KEY, webhookId)
     );
     if (error) {
-      await tryCatch(() => deleteWebhook({ auth: context.auth, webhookId }));
+      if (webhookId !== knownWebhookId) {
+        await tryCatch(() => deleteWebhook({ auth: context.auth, webhookId }));
+      }
       throw error;
     }
   },
