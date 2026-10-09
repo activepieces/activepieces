@@ -1,4 +1,4 @@
-import { PassThrough, Readable } from 'node:stream';
+import { addAbortSignal, PassThrough, Readable } from 'node:stream';
 import { tryCatchSync } from '@activepieces/core-utils';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
@@ -47,11 +47,16 @@ export class FetchHttpClient extends BaseHttpClient {
       : { body: undefined, extraHeaders: {}, isStream: false };
     const finalHeaders = normalizeHeaders({ ...headers, ...extraHeaders });
 
-    const response = await sendWithRetries(async () => {
+    const { response, clearRequestTimeout, signal } = await sendWithRetries({ send: async () => {
       const controller = new AbortController();
       const timeoutId = request.timeout && request.timeout > 0
         ? setTimeout(() => controller.abort(), request.timeout)
         : undefined;
+      const clearRequestTimeout = () => {
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+        }
+      };
       try {
         const init: FetchInit = {
           method: request.method.toString(),
@@ -67,29 +72,41 @@ export class FetchHttpClient extends BaseHttpClient {
         if (options?.dispatcher !== undefined) {
           init.dispatcher = options.dispatcher;
         }
-        return await fetch(finalUrl, init);
-      } finally {
-        if (timeoutId !== undefined) {
-          clearTimeout(timeoutId);
-        }
+        return { response: await fetch(finalUrl, init), clearRequestTimeout, signal: controller.signal };
+      } catch (error) {
+        clearRequestTimeout();
+        throw error;
       }
-    }, isStream ? 0 : retries);
+    }, retries: isStream ? 0 : retries });
 
-    const successCeiling = followRedirects ? 300 : 400;
-    if (response.status < 200 || response.status >= successCeiling) {
-      // A stream response can't carry an error message usefully; read the error body as text.
-      const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
-      const httpError = new HttpError(request.body, { status: response.status, responseBody: errorBody });
-      console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
-      throw httpError;
+    let streamOwnsTimeout = false;
+    try {
+      const successCeiling = followRedirects ? 300 : 400;
+      if (response.status < 200 || response.status >= successCeiling) {
+        const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
+        const httpError = new HttpError(request.body, { status: response.status, responseBody: errorBody });
+        console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
+        throw httpError;
+      }
+
+      const responseBody = await parseResponseBody(response, responseType);
+      if (responseBody instanceof Readable && response.body !== null) {
+        responseBody.once('end', clearRequestTimeout);
+        responseBody.once('error', clearRequestTimeout);
+        responseBody.once('close', clearRequestTimeout);
+        addAbortSignal(signal, responseBody);
+        streamOwnsTimeout = true;
+      }
+      return {
+        status: response.status,
+        headers: toHttpHeaders(response.headers),
+        body: responseBody as ResponseBody,
+      };
+    } finally {
+      if (!streamOwnsTimeout) {
+        clearRequestTimeout();
+      }
     }
-
-    const responseBody = await parseResponseBody(response, responseType);
-    return {
-      status: response.status,
-      headers: toHttpHeaders(response.headers),
-      body: responseBody as ResponseBody,
-    };
   }
 }
 
@@ -165,16 +182,21 @@ async function parseResponseBody(response: Response, responseType: ResponseType)
   }
 }
 
-async function sendWithRetries(fn: () => Promise<Response>, retries: number): Promise<Response> {
+async function sendWithRetries({ send, retries }: { send: () => Promise<FetchAttempt>; retries: number }): Promise<FetchAttempt> {
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const response = await fn();
-      if (response.status >= 500 && attempt < retries) {
+      const result = await send();
+      if (result.response.status >= 500 && attempt < retries) {
+        try {
+          await result.response.body?.cancel();
+        } finally {
+          result.clearRequestTimeout();
+        }
         await backoff(attempt);
         continue;
       }
-      return response;
+      return result;
     } catch (error) {
       lastError = error;
       if (attempt < retries) {
@@ -248,6 +270,12 @@ const MAX_BUFFERED_FORM_DATA_BYTES = 100 * 1024 * 1024;
 type ResponseType = NonNullable<HttpRequest['responseType']>;
 
 type FetchInit = RequestInit & { duplex?: 'half', dispatcher?: unknown };
+
+type FetchAttempt = {
+  response: Response;
+  clearRequestTimeout: () => void;
+  signal: AbortSignal;
+};
 
 export type SendRequestOptions = {
   dispatcher?: unknown;
