@@ -7,9 +7,12 @@ import {
 import { AppConnectionType } from '@activepieces/pieces-framework';
 import { JWT, OAuth2Client } from 'google-auth-library';
 
+// Synkra Flow: drive.readonly is restricted (CASA). drive.file is not.
+// Added forms.body so forms can be created/edited too.
 export const googleFormsScopes = [
+  'https://www.googleapis.com/auth/forms.body',
   'https://www.googleapis.com/auth/forms.responses.readonly',
-  'https://www.googleapis.com/auth/drive.readonly',
+  'https://www.googleapis.com/auth/drive.file',
   'email',
 ];
 

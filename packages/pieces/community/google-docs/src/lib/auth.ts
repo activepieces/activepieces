@@ -4,8 +4,7 @@ import { JWT, OAuth2Client } from 'google-auth-library';
 
 export const googleDocsScopes = [
 	'https://www.googleapis.com/auth/documents',
-	'https://www.googleapis.com/auth/drive.readonly',
-	'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/drive.file',
 	'email',
 ];
 

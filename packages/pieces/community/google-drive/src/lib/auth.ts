@@ -2,7 +2,8 @@ import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activep
 import { AppConnectionType } from '@activepieces/pieces-framework';
 import { JWT, OAuth2Client } from 'google-auth-library';
 
-export const googleDriveScopes = ['https://www.googleapis.com/auth/drive', 'email'];
+// Synkra Flow: drive.file only (non-restricted). Full drive scope requires CASA.
+export const googleDriveScopes = ['https://www.googleapis.com/auth/drive.file', 'email'];
 
 export const googleDriveAuth = [PieceAuth.OAuth2({
   description: '',

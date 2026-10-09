@@ -338,8 +338,7 @@ export function areSheetIdsValid(spreadsheetId: string | null | undefined, sheet
 
 export const googleSheetsScopes = [
 	'https://www.googleapis.com/auth/spreadsheets',
-	'https://www.googleapis.com/auth/drive.readonly',
-	'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/drive.file',
 	'email',
   ]
 

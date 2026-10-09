@@ -24,6 +24,14 @@ const PROVIDERS: ProviderSpec[] = [
   { label: 'Zoho Books',  pieceName: '@activepieces/piece-zoho-books',  envPrefix: 'OAUTH_ZOHO_BOOKS' },
   { label: 'Pipedrive',   pieceName: '@activepieces/piece-pipedrive',   envPrefix: 'OAUTH_PIPEDRIVE' },
   { label: 'ClickUp',     pieceName: '@activepieces/piece-clickup',     envPrefix: 'OAUTH_CLICKUP' },
+
+  // Google — one OAuth client covers all 6 pieces (only non-restricted scopes)
+  { label: 'Gmail',            pieceName: '@activepieces/piece-gmail',            envPrefix: 'OAUTH_GOOGLE' },
+  { label: 'Google Drive',     pieceName: '@activepieces/piece-google-drive',     envPrefix: 'OAUTH_GOOGLE' },
+  { label: 'Google Sheets',    pieceName: '@activepieces/piece-google-sheets',    envPrefix: 'OAUTH_GOOGLE' },
+  { label: 'Google Docs',      pieceName: '@activepieces/piece-google-docs',      envPrefix: 'OAUTH_GOOGLE' },
+  { label: 'Google Calendar',  pieceName: '@activepieces/piece-google-calendar',  envPrefix: 'OAUTH_GOOGLE' },
+  { label: 'Google Forms',     pieceName: '@activepieces/piece-google-forms',     envPrefix: 'OAUTH_GOOGLE' },
 ];
 
 function readEnv(name: string): string | null {

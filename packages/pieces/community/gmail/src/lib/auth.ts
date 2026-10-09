@@ -8,11 +8,10 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { oauth2 as googleOauth2 } from '@googleapis/oauth2';
 import { JWT, OAuth2Client } from 'google-auth-library';
 
+// Synkra Flow: only non-restricted scopes.
+// gmail.readonly / gmail.modify / gmail.compose require CASA (paid audit) — removed.
 const gmailServiceAccountScopes = [
   'https://www.googleapis.com/auth/gmail.send',
-  'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/gmail.compose',
-  'https://www.googleapis.com/auth/gmail.modify',
 ];
 
 export const gmailScopes = [...gmailServiceAccountScopes, 'email'];
