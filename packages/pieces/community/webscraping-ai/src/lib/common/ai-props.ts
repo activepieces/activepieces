@@ -24,6 +24,7 @@ function scrapePage() {
 			description:
 				'Render the page in a headless browser. Defaults to true; set false for static pages to save credits.',
 			required: false,
+			defaultValue: true,
 		}),
 		jsTimeout: Property.Number({
 			displayName: 'JavaScript Timeout',
