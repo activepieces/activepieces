@@ -1,6 +1,6 @@
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 import { t } from 'i18next';
-import { BookOpen, CircleHelp, History } from 'lucide-react';
+import { BookMarked, BookOpen, CircleHelp, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -23,6 +23,17 @@ export const HelpAndFeedback = () => {
         {t('Help & Feedback')}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-[220px]">
+        <DropdownMenuItem asChild>
+          <Link
+            to="/glossary"
+            className="flex justify-between w-full"
+          >
+            <div className="flex items-center gap-2">
+              <BookMarked className="size-4" />
+              <span>{t('Glossary')}</span>
+            </div>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link
             to="https://activepieces.com/docs"

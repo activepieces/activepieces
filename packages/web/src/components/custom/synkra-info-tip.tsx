@@ -1,5 +1,6 @@
 import { HelpCircle } from 'lucide-react';
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   Tooltip,
   TooltipContent,
@@ -36,9 +37,15 @@ export function SynkraInfoTip({ term, className }: SynkraInfoTipProps) {
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <div className="font-medium">{entry.term}</div>
           <div className="text-xs leading-relaxed">{entry.short}</div>
+          <Link
+            to="/glossary"
+            className="text-[11px] text-primary hover:underline"
+          >
+            See full glossary
+          </Link>
         </div>
       </TooltipContent>
     </Tooltip>
