@@ -153,3 +153,54 @@ Everything Synkra-specific lives under:
 
 If you need to find where something Synkra-specific lives, search for "synkra"
 across those folders first.
+
+---
+
+## Addendum: 9 October 2026 (evening)
+
+### Billing stack (all live)
+
+Backend files under `packages/server/api/src/app/synkra/billing/`:
+- `subscription.entity.ts` — DB row shape
+- `subscription.service.ts` — read + write + scheduling (`scheduleCancel`,
+  `scheduleDowngrade`, `reactivate`, `findDueRenewals`, `findDueReminders`)
+- `subscription.controller.ts` — GET `/v1/synkra/subscription`, GET `/usage`,
+  POST `/cancel`, POST `/reactivate`, POST `/downgrade`
+- `checkout.service.ts` + `checkout.controller.ts` — POST `/v1/synkra/subscription/checkout`
+- `paystack-client.ts` — Paystack API wrapper
+- `paystack-webhook.controller.ts` — POST `/v1/synkra/paystack/webhook`
+- `billing-email.service.ts` — 8 transactional templates
+- `resend-sender.ts` — HTTP email via Resend (preferred)
+- `renewals.service.ts` — hourly job (reminders, renewals, downgrades, cancels)
+- `boot-seed.service.ts` — config sanity check on boot
+- `bundled-pieces.service.ts` — installs our custom pieces on every boot
+- `billing.module.ts` — registers everything
+
+### Health + preflight
+
+- `GET /api/v1/synkra/health` — always 200, no auth
+- `GET /api/v1/synkra/preflight` — owner-only env-var checklist
+- Frontend page: `/platform/preflight` (sidebar → Platform → Preflight)
+
+### Email path
+
+1. If `RESEND_API_KEY` is set → send via `https://api.resend.com/emails`
+2. Else if `AP_SMTP_HOST` is set → send via nodemailer SMTP
+3. Else → log to server, no send
+
+### Payments path
+
+1. Upgrade → POST `/v1/synkra/subscription/checkout` → Paystack authorize URL
+2. User completes on Paystack → webhook fires `charge.success`
+3. Backend calls `updateTier` with new tier + period end
+4. If no Paystack keys → checkout throws, frontend shows "coming soon" banner
+
+### Renewals
+
+Hourly interval started on boot (`billing.module.ts`):
+- 3 days before `currentPeriodEnd` → reminder email (once per period)
+- On `currentPeriodEnd` → apply scheduled cancel/downgrade, or renew + extend
+  by 30 days + send success email
+
+Retries: Paystack handles them. Webhook `invoice.payment_failed` will be wired
+in a future batch to send failure emails + eventually restrict.

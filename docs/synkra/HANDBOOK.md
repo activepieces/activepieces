@@ -56,3 +56,46 @@ These keep the codebase sane. Follow them.
 
 Activepieces is licensed under the MIT License. Our fork keeps that license.
 See `LICENSE` at the repo root.
+
+---
+
+## Update: 9 October 2026 — end of day
+
+### Shipped today
+
+- Dark mode toggle in user dropdown (System / Light / Dark)
+- OAUTH.md and PIECES.md written
+- Health endpoint `/api/v1/synkra/health`
+- Preflight page `/platform/preflight` (owner only)
+- Billing: cancel, downgrade, reactivate + renewals hourly job
+- Billing: 8 transactional emails
+- Resend HTTP sender (preferred over SMTP)
+- "Payments coming soon" banner when Paystack keys are unset
+- Templates hidden from platform nav
+- Postgres → S3 backup script (parked — see BACKUP-TODO.md)
+
+### Live URLs
+
+| URL | Purpose |
+|-----|---------|
+| https://flow.synkra.co.za | Main app |
+| /billing | Plan + usage + manage |
+| /billing/checkout | Pick a plan |
+| /platform/preflight | Env-var checklist (owner) |
+| /glossary | Synkra terms |
+| /api/v1/synkra/health | Health check (public) |
+
+### Env vars to set for V1
+
+SYNKRA_PAYSTACK_SECRET_KEY=sk_live_xxx
+SYNKRA_PAYSTACK_WEBHOOK_SECRET=whsec_xxx
+SYNKRA_PAYSTACK_PLAN_STARTER=PLN_xxx
+SYNKRA_PAYSTACK_PLAN_BUSINESS=PLN_xxx
+SYNKRA_PAYSTACK_PLAN_PRO=PLN_xxx
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL=noreply@synkra.co.za
+RESEND_FROM_NAME=Synkra Flow
+
+text
+
+Visit `/platform/preflight` after setting them to confirm all green.
