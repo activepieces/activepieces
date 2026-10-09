@@ -207,9 +207,9 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
       <Info />
       <AlertDescription className="min-w-60 flex-1">
         {isPlatformAdmin
-          ? t("This project's pieces are controlled by a Piece Set.")
+          ? t("This project's integrations are controlled by an Integration Set.")
           : t(
-              "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
+              "This project's integrations are controlled by an Integration Set. Contact a platform admin to change it.",
             )}
       </AlertDescription>
       {isPlatformAdmin && (

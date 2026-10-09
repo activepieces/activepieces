@@ -37,7 +37,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
           </>
         ) : (
           t(
-            'Piece actions run by MCP clients, like Claude and Cursor. Other tool calls are not logged.',
+            'Integration actions run by MCP clients, like Claude and Cursor. Other tool calls are not logged.',
           )
         )
       }

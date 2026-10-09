@@ -154,7 +154,7 @@ export default function TriggerHealthPage() {
       accessorKey: 'pieceDisplayName',
       size: 220,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Piece" icon={Puzzle} />
+        <DataTableColumnHeader column={column} title="Integration" icon={Puzzle} />
       ),
       cell: ({ row }: any) => {
         const status = row.original.status;

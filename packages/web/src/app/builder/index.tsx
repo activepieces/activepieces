@@ -176,7 +176,7 @@ const BuilderPage = () => {
 
             <ShowPoweredBy
               position="absolute"
-              show={platform?.plan.showPoweredBy}
+              show={false}
             />
             <DataSelector
               parentHeight={middlePanelSize.height}

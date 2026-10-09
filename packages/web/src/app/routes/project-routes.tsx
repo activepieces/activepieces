@@ -118,6 +118,16 @@ const agentEditorElement = (
 );
 
 export const projectRoutes = [
+  // Old URL redirect: /connections -> /integrations (backward compat)
+  {
+    path: '/connections',
+    element: <Navigate to="/integrations" replace />,
+  },
+  {
+    path: '/connections/:connectionId',
+    element: <Navigate to="/integrations" replace />,
+  },
+
   ...ProjectRouterWrapper({
     path: '/billing',
     element: (

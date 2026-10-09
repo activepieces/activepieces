@@ -80,7 +80,7 @@ export function ToolsTab({
         </h2>
         <p className="text-sm text-gray-11">
           {t(
-            'Built-in tools are switched on and off here. Pieces are controlled in piece sets.',
+            'Built-in tools are switched on and off here. Integrations are controlled in integration sets.',
           )}
         </p>
       </div>

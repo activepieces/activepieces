@@ -130,7 +130,7 @@ export const PLATFORM_FEATURES = {
   },
   pieces: {
     featureKey: 'PIECES',
-    title: 'Unlock Piece Management',
+    title: 'Unlock Integration Management',
     description:
       'Curate which pieces your users see, hide the rest, and add your own private pieces.',
     tier: 'enterprise',

@@ -63,7 +63,7 @@ export const platformPiecesMutations = {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Pieces synced'), {
           description: t(
-            'Pieces have been synced from the activepieces cloud.',
+            'Integrations have been synced from the Synkra Flow cloud.',
           ),
         });
       },

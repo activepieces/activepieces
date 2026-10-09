@@ -213,12 +213,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/pieces',
+    path: '/platform/integrations',
     element: (
       <PlatformLayout>
-        <PageTitle title="Pieces">
+        <PageTitle title="Integrations">
           <LegacyTabRedirect
-            basePath="/platform/pieces"
+            basePath="/platform/integrations"
             tabPaths={PIECES_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -230,12 +230,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/pieces/piece-sets',
+    path: '/platform/integrations/integration-sets',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Sets">
+        <PageTitle title="Integration Sets">
           <LegacyTabRedirect
-            basePath="/platform/pieces"
+            basePath="/platform/integrations"
             tabPaths={PIECES_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -247,10 +247,10 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/pieces/piece-sets/:id',
+    path: '/platform/integrations/integration-sets/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Set">
+        <PageTitle title="Integration Set">
           <SuspenseWrapper>
             <PieceSetDetailsPage />
           </SuspenseWrapper>

@@ -244,7 +244,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
           'Embed Activepieces (flows/chat/connections/tables..etc) directly inside your own product.',
       },
       {
-        label: 'Piece management',
+        label: 'Integration management',
         tooltip: 'Control which pieces are available across your platform.',
       },
       {

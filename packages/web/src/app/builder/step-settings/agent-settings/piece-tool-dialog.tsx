@@ -118,10 +118,10 @@ export function AgentPieceDialog({
         tool.toolName === editingPieceTool.toolName ? newTool : tool,
       );
       onToolsUpdate(updatedTools);
-      toast('Piece tool updated');
+      toast('Integration tool updated');
     } else {
       onToolsUpdate([...tools, newTool]);
-      toast('Piece tool added');
+      toast('Integration tool added');
     }
 
     closePieceDialog();

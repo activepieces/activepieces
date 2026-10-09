@@ -122,7 +122,7 @@ const PiecesSettings = () => {
           <Info className="size-4" />
           <AlertDescription className="flex items-center gap-2">
             {t(
-              "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
+              "This project's integrations are controlled by an Integration Set. Contact a platform admin to change it.",
             )}
             {!isNil(pieceSet) && (
               <Badge variant="outline" className="ml-1 font-medium">

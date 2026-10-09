@@ -65,6 +65,7 @@ import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.enti
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
+import { SynkraSubscriptionEntity } from '../synkra/billing/subscription.entity'
 import { VariableEntity } from '../variable/variable.entity'
 import { WaitpointEntity } from '../waitpoints/waitpoint-entity'
 import { WaitpointSignalEntity } from '../waitpoints/waitpoint-signal-entity'
@@ -95,6 +96,7 @@ function getEntities(): EntitySchema<unknown>[] {
         SecretManagerEntity,
         AlertEntity,
         UserInvitationEntity,
+        SynkraSubscriptionEntity,
         AIProviderEntity,
         AiToolConfigEntity,
         PlatformModelTierEntity,

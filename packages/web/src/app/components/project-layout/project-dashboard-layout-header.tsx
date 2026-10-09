@@ -111,7 +111,7 @@ export const ProjectDashboardLayoutHeader = () => {
       show: true,
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/connections'),
+      to: authenticationSession.appendProjectRoutePrefix('/integrations'),
       label: t('Integrations'),
       icon: ConnectIcon,
       infoTerm: 'integration',

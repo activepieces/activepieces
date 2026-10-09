@@ -100,14 +100,14 @@ export function PlatformSidebar() {
       label: t('Catalogue'),
       items: [
         {
-          to: '/platform/pieces',
+          to: '/platform/integrations',
           label: t('Pieces'),
           icon: PuzzleIcon,
           subItems: [
-            { to: '/platform/pieces', label: t('Pieces'), end: true },
+            { to: '/platform/integrations', label: t('Pieces'), end: true },
             {
-              to: '/platform/pieces/piece-sets',
-              label: t('Piece Sets'),
+              to: '/platform/integrations/integration-sets',
+              label: t('Integration Sets'),
               locked: false,
               tier: PLATFORM_FEATURES.pieces.tier,
             },

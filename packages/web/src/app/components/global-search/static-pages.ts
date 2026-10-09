@@ -115,14 +115,14 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-pieces',
-    label: 'Platform Admin — Pieces',
+    label: 'Platform Admin — Integrations',
     href: '/platform/pieces',
     icon: PuzzleIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-piece-sets',
-    label: 'Platform Admin — Piece Sets',
+    label: 'Platform Admin — Integration Sets',
     href: '/platform/pieces/piece-sets',
     icon: PuzzleIcon,
     requiresPlatformAdmin: true,
