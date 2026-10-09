@@ -1,5 +1,5 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType, PieceAuth, tryCatch } from '@activepieces/pieces-framework';
+import { scrapegraphaiApi } from './common/api';
 
 const markdownDescription = `
 Follow these steps to obtain your ScrapeGraphAI API Key:
@@ -14,27 +14,13 @@ export const scrapegraphaiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
   validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: 'https://api.scrapegraphai.com/v1/smartscraper',
-        headers: {
-          'Content-Type': 'application/json',
-          'SGAI-APIKEY': auth,
-        },
-        body: {
-          user_prompt: 'test',
-          website_url: 'https://www.example.com',
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API Key',
-      };
-    }
+    const { error } = await tryCatch(() =>
+      scrapegraphaiApi.smartScraper({
+        auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
+        websiteUrl: 'https://www.example.com',
+        userPrompt: 'test',
+      }),
+    );
+    return error ? { valid: false, error: 'Invalid API Key' } : { valid: true };
   },
 });

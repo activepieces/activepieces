@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { scrapegraphaiAuth } from '../auth';
+import { scrapegraphaiApi } from '../common/api';
 
-export const smartScraper = createAction({
+export const smartScraperAction = createAction({
   name: 'smart_scraper',
   classification: 'READ',
   displayName: 'Smart Scraper',
@@ -28,20 +28,11 @@ export const smartScraper = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.scrapegraphai.com/v1/smartscraper',
-      headers: {
-        'Content-Type': 'application/json',
-        'SGAI-APIKEY': auth.secret_text,
-      },
-      body: {
-        website_url: propsValue.website_url,
-        user_prompt: propsValue.user_prompt,
-        output_schema: propsValue.output_schema,
-      },
+    return await scrapegraphaiApi.smartScraper({
+      auth,
+      websiteUrl: propsValue.website_url,
+      userPrompt: propsValue.user_prompt,
+      outputSchema: propsValue.output_schema,
     });
-
-    return response.body;
   },
 }); 
