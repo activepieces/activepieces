@@ -15,7 +15,7 @@ export const opnformListWorkspaceInvitesAction = createAction({
 	classification: 'SEARCH',
 	aiMetadata: {
 		description:
-			'Lists the invites of a workspace with their id, email, role, status and expiry. Use it to find the Invite ID for Resend Workspace Invite and Cancel Workspace Invite. Requires workspace admin.',
+			'Lists the invites of a workspace with their id, email, role, status and expiry. Requires workspace admin.',
 		idempotent: true,
 	},
 	props: {

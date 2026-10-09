@@ -15,7 +15,7 @@ export const opnformListWorkspaceUsersAction = createAction({
 	classification: 'SEARCH',
 	aiMetadata: {
 		description:
-			'Lists every member of a workspace with their user id, name, email and role. Use it to find the User ID for Remove Workspace User and Update Workspace User Role.',
+			'Lists every member of a workspace with their user id, name, email and role. Use it to find the User ID for Update Workspace User Role.',
 		idempotent: true,
 	},
 	props: {
