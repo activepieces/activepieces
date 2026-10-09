@@ -8,6 +8,7 @@ import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,7 +51,7 @@ export default function ImpactPage() {
   const activeTab = (searchParams.get('tab') as TabValue) || 'analytics';
 
   const { data: projects } = projectCollectionUtils.useAll();
-  const { data, isLoading, isError } =
+  const { data, isLoading, isError, refetch } =
     platformAnalyticsHooks.useAnalyticsTimeBased(
       selectedTimePeriod,
       selectedProjectId,
@@ -211,12 +212,19 @@ export default function ImpactPage() {
           </TabsList>
 
           <TabsContent value="analytics">
-            <div
-              className={cn('flex flex-col gap-6', DASHBOARD_CONTENT_PADDING_X)}
-            >
-              <Summary report={report ?? undefined} />
-              <Trends report={report ?? undefined} />
-            </div>
+            {isError && !report ? (
+              <DataFetchErrorState entity={t('analytics')} onRetry={refetch} />
+            ) : (
+              <div
+                className={cn(
+                  'flex flex-col gap-6',
+                  DASHBOARD_CONTENT_PADDING_X,
+                )}
+              >
+                <Summary report={report} />
+                <Trends report={report} />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="details">
@@ -224,6 +232,7 @@ export default function ImpactPage() {
               report={report}
               isLoading={isLoading}
               isError={isError}
+              onRetry={refetch}
               projects={projects}
             />
           </TabsContent>
