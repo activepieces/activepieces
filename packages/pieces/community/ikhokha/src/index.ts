@@ -11,7 +11,7 @@ export const ikhokha = createPiece({
     'South African card and mobile payments. Create payment links, look up payments, issue refunds, and react to incoming payments.',
   minimumSupportedRelease: '0.92.0',
   logoUrl:
-    'https://res.cloudinary.com/dewvhnks3/image/upload/v1791629000/ikhokha-logo_synkra.png',
+    'https://res.cloudinary.com/dewvhnks3/image/upload/v1791576727/unnamed_kjxcga.png',
   categories: [PieceCategory.PAYMENT_PROCESSING, PieceCategory.COMMERCE],
   auth: ikhokhaAuth,
   authors: ['synkra'],

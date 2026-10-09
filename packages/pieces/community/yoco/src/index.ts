@@ -11,7 +11,7 @@ export const yoco = createPiece({
     'South African card payments. Create checkout sessions, look up payments, issue refunds, and react to successful payments.',
   minimumSupportedRelease: '0.92.0',
   logoUrl:
-    'https://res.cloudinary.com/dewvhnks3/image/upload/v1791628900/yoco-logo_synkra.png',
+    'https://res.cloudinary.com/dewvhnks3/image/upload/v1791576726/images_5_gcxgkm.png',
   categories: [PieceCategory.PAYMENT_PROCESSING, PieceCategory.COMMERCE],
   auth: yocoAuth,
   authors: ['synkra'],

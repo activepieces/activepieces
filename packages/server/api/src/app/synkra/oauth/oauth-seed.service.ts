@@ -32,6 +32,12 @@ const PROVIDERS: ProviderSpec[] = [
   { label: 'Google Docs',      pieceName: '@activepieces/piece-google-docs',      envPrefix: 'OAUTH_GOOGLE' },
   { label: 'Google Calendar',  pieceName: '@activepieces/piece-google-calendar',  envPrefix: 'OAUTH_GOOGLE' },
   { label: 'Google Forms',     pieceName: '@activepieces/piece-google-forms',     envPrefix: 'OAUTH_GOOGLE' },
+
+  // Second batch
+  { label: 'GitHub',          pieceName: '@activepieces/piece-github',          envPrefix: 'OAUTH_GITHUB' },
+  { label: 'GitLab',          pieceName: '@activepieces/piece-gitlab',          envPrefix: 'OAUTH_GITLAB' },
+  { label: 'Mailchimp',       pieceName: '@activepieces/piece-mailchimp',       envPrefix: 'OAUTH_MAILCHIMP' },
+  { label: 'Square',          pieceName: '@activepieces/piece-square',          envPrefix: 'OAUTH_SQUARE' },
 ];
 
 function readEnv(name: string): string | null {

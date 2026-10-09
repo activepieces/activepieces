@@ -11,7 +11,7 @@ export const payfast = createPiece({
     'South African payment gateway. Create payment links, process refunds, and react to completed payments in real time.',
   minimumSupportedRelease: '0.92.0',
   logoUrl:
-    'https://res.cloudinary.com/dewvhnks3/image/upload/v1791628800/payfast-logo_synkra.png',
+    'https://res.cloudinary.com/dewvhnks3/image/upload/v1791576727/images_4_gpqzzm.png',
   categories: [PieceCategory.PAYMENT_PROCESSING, PieceCategory.COMMERCE],
   auth: payfastAuth,
   authors: ['synkra'],
