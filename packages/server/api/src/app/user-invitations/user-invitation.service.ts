@@ -1,14 +1,14 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { InvitationStatus, InvitationType, PlatformRole, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
-import { projectRoleService } from '../ee/projects/project-role/project-role.service'
+import { projectRoleRepo, projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { domainHelper } from '../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -16,12 +16,13 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
-import { projectService } from '../project/project-service'
+import { ProjectEntity } from '../project/project-entity'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 export const userInvitationRepo = repoFactory(UserInvitationEntity)
 const repo = userInvitationRepo
+const projectRepo = repoFactory(ProjectEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
@@ -58,6 +59,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         if (isNil(identity)) return
 
         log.info({ count: invitations.length }, '[provisionUserInvitation] list invitations')
+        const context = await loadProvisioningContext({ invitations, log })
         for (const invitation of invitations) {
             log.info({ invitation }, '[provisionUserInvitation] provision')
             const { user } = await userService(log).getOrCreateWithProject({
@@ -68,7 +70,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
                     if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
-                        await addToInvitedProject({ invitation, userId: user.id, log, failsWithoutProjectRoles: false })
+                        await addToInvitedProject({ invitation, userId: user.id, log, context, failsWithoutProjectRoles: false })
                     }
                     await userService(log).update({
                         id: user.id,
@@ -78,7 +80,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     break
                 }
                 case InvitationType.PROJECT: {
-                    await addToInvitedProject({ invitation, userId: user.id, log, failsWithoutProjectRoles: true })
+                    await addToInvitedProject({ invitation, userId: user.id, log, context, failsWithoutProjectRoles: true })
                     break
                 }
             }
@@ -305,29 +307,46 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
 )`
 
 
-async function addToInvitedProject({ invitation, userId, log, failsWithoutProjectRoles }: AddToInvitedProjectParams): Promise<void> {
+async function loadProvisioningContext({ invitations, log }: LoadProvisioningContextParams): Promise<ProvisioningContext> {
+    const withProject = invitations.filter((invitation) => !isNil(invitation.projectId) && !isNil(invitation.projectRoleId))
+    const projectRoleIds = unique(withProject.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id)))
+    const projectIds = unique(withProject.map((invitation) => invitation.projectId).filter((id): id is string => !isNil(id)))
+    const platformIds = unique(withProject.map((invitation) => invitation.platformId))
+    const [projectRoles, liveProjects, platforms] = await Promise.all([
+        projectRoleIds.length === 0 ? [] : projectRoleRepo().findBy({ id: In(projectRoleIds) }),
+        projectIds.length === 0 ? [] : projectRepo().findBy({ id: In(projectIds) }),
+        Promise.all(platformIds.map((platformId) => platformService(log).getOneWithPlanOrThrow(platformId))),
+    ])
+    return {
+        projectRoleNameById: new Map(projectRoles.map((projectRole) => [projectRole.id, projectRole.name])),
+        liveProjectIds: new Set(liveProjects.map((project) => project.id)),
+        projectRolesEnabledByPlatformId: new Map(platforms.map((platform) => [platform.id, platform.plan.projectRolesEnabled])),
+    }
+}
+
+async function addToInvitedProject({ invitation, userId, log, context, failsWithoutProjectRoles }: AddToInvitedProjectParams): Promise<void> {
     const { projectId, projectRoleId } = invitation
     assertNotNullOrUndefined(projectId, 'projectId')
     assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
-    const platform = await platformService(log).getOneWithPlanOrThrow(invitation.platformId)
-    if (!platform.plan.projectRolesEnabled && !failsWithoutProjectRoles) {
+    const projectRolesEnabled = context.projectRolesEnabledByPlatformId.get(invitation.platformId) === true
+    if (!projectRolesEnabled && !failsWithoutProjectRoles) {
         return
     }
-    assertEqual(platform.plan.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
-    const projectRole = await projectRoleService.getOneOrThrowById({
-        id: projectRoleId,
-    })
-    const projectIsLive = await projectService(log).exists({
-        projectId,
-        isSoftDeleted: false,
-    })
-    if (!projectIsLive) {
+    assertEqual(projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
+    const projectRoleName = context.projectRoleNameById.get(projectRoleId)
+    if (isNil(projectRoleName)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'project_role', entityId: projectRoleId },
+        })
+    }
+    if (!context.liveProjectIds.has(projectId)) {
         return
     }
     await projectMemberService(log).upsert({
         projectId,
         userId,
-        projectRoleName: projectRole.name,
+        projectRoleName,
     })
 }
 
@@ -369,10 +388,22 @@ type DetachProjectRoleFromPlatformInvitesParams = {
     entityManager: EntityManager
 }
 
+type LoadProvisioningContextParams = {
+    invitations: UserInvitation[]
+    log: FastifyBaseLogger
+}
+
+type ProvisioningContext = {
+    projectRoleNameById: Map<string, string>
+    liveProjectIds: Set<string>
+    projectRolesEnabledByPlatformId: Map<string, boolean>
+}
+
 type AddToInvitedProjectParams = {
     invitation: UserInvitation
     userId: string
     log: FastifyBaseLogger
+    context: ProvisioningContext
     failsWithoutProjectRoles: boolean
 }
 
