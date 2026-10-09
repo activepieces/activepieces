@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { ProjectAvatar } from './project-avatar';
@@ -108,7 +109,7 @@ function AssignProjectsContent({
         <DialogDescription>
           {t("These projects will run on this group's dedicated queue.")}
         </DialogDescription>
-        <div className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-sm font-medium text-primary w-fit">
+        <div className="inline-flex items-center gap-1.5 rounded-md bg-accent-3 px-2 py-1 text-sm font-medium text-accent-11 w-fit">
           <Layers className="size-3.5 shrink-0" />
           {groupLabel.replaceAll('_', ' ')}
         </div>
@@ -116,7 +117,7 @@ function AssignProjectsContent({
 
       <div className="flex flex-col gap-3">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11" />
           <Input
             className="pl-8"
             placeholder={t('Search projects')}
@@ -128,7 +129,7 @@ function AssignProjectsContent({
         <ScrollArea className="h-64 rounded-md border">
           <div className="p-1">
             {filteredProjects.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">
+              <p className="py-8 text-center text-sm text-gray-11">
                 {t('No projects')}
               </p>
             )}
@@ -141,7 +142,7 @@ function AssignProjectsContent({
                 <button
                   key={project.id}
                   type="button"
-                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-accent cursor-pointer"
+                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-4 cursor-pointer"
                   onClick={() => toggleProject(project.id)}
                 >
                   <Checkbox
@@ -157,8 +158,8 @@ function AssignProjectsContent({
                       </span>
                     </TextWithTooltip>
                     <span
-                      className={cn('text-xs text-muted-foreground truncate', {
-                        'text-primary': isCurrentGroup,
+                      className={cn('text-xs text-gray-11 truncate', {
+                        'text-accent-11': isCurrentGroup,
                       })}
                     >
                       {subtitle}
@@ -172,7 +173,7 @@ function AssignProjectsContent({
       </div>
 
       <DialogFooter className="sm:justify-between">
-        <span className="text-sm text-muted-foreground self-center">
+        <span className="text-sm text-gray-11 self-center">
           {checkedIds.size}{' '}
           {checkedIds.size === 1 ? t('Project') : t('Projects')}
         </span>
@@ -184,7 +185,11 @@ function AssignProjectsContent({
           >
             {t('Cancel')}
           </Button>
-          <Button type="button" onClick={handleSave}>
+          <Button
+            {...adminControl(AdminControl.WORKERS_ASSIGN_SUBMIT)}
+            type="button"
+            onClick={handleSave}
+          >
             {t('Save')}
           </Button>
         </div>

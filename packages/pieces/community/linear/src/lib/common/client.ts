@@ -91,6 +91,9 @@ export class LinearClientWrapper {
   async rawRequest(query: string, variables?: Record<string, unknown>) {
     return this.client.client.rawRequest(query, variables);
   }
+  async typedRequest<Data>(query: string, variables?: Record<string, unknown>) {
+    return this.client.client.rawRequest<Data, Record<string, unknown>>(query, variables);
+  }
 }
 
 export function makeClient(auth: AppConnectionValueForAuthProperty<typeof linearAuth>): LinearClientWrapper {

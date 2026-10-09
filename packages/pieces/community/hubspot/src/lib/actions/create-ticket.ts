@@ -19,7 +19,7 @@ export const createTicketAction = createAction({
 	props: {
 		ticketName: Property.ShortText({
 			displayName: 'Ticket Name',
-			description: 'The name of the ticket to create.',
+			description: 'Shown as the ticket\'s subject in HubSpot.',
 			required: true,
 		}),
 		pipelineId: pipelineDropdown({
@@ -29,7 +29,7 @@ export const createTicketAction = createAction({
 		}),
 		pipelineStageId: pipelineStageDropdown({
 			objectType: OBJECT_TYPE.TICKET,
-			displayName: 'Ticket Pipeline Stage',
+			displayName: 'Ticket Stage',
 			required: true,
 		}),
 		objectProperties : standardObjectDynamicProperties(OBJECT_TYPE.TICKET, [
@@ -39,16 +39,15 @@ export const createTicketAction = createAction({
 		]),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-            
-            subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-            
-            **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.TICKET,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

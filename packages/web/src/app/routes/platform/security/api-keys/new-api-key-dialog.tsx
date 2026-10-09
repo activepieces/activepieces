@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { apiKeyApi } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type NewApiKeyDialogProps = {
   children: React.ReactNode;
@@ -83,7 +84,7 @@ export const NewApiKeyDialog = ({
           <>
             <div className="p-4">
               <div className="flex flex-col items-start gap-2">
-                <span className="text-md">
+                <span>
                   {t(
                     'Please save this secret key somewhere safe and accessible. For security reasons,',
                   )}{' '}
@@ -97,6 +98,7 @@ export const NewApiKeyDialog = ({
                   useInput={true}
                   textToCopy={apiKey.value}
                   fileName={`${apiKey.displayName}`}
+                  controlId={AdminControl.API_KEYS_API_KEY_COPY}
                 />
               </div>
             </div>
@@ -144,7 +146,11 @@ export const NewApiKeyDialog = ({
                 >
                   {t('Cancel')}
                 </Button>
-                <Button disabled={isPending} loading={isPending}>
+                <Button
+                  disabled={isPending}
+                  loading={isPending}
+                  {...adminControl(AdminControl.API_KEYS_API_KEY_SUBMIT)}
+                >
                   {t('Create')}
                 </Button>
               </DialogFooter>

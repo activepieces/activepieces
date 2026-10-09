@@ -1,6 +1,7 @@
 import { AIProviderName, chunk, isNil, tryCatch } from '@activepieces/core-utils'
 import { AgentConversation, AgentRunSource, ApEdition, PersistedAgentMessage, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { FirstCandidate } from '../../ai/ai-model-candidates'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
@@ -9,11 +10,10 @@ import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 import { agentHelpers } from './agent-helpers'
-import { chatRolloutService } from './chat-rollout-service'
+import { agentModelTier, agentTierCandidates } from './agent-model-tier'
 import { agentHistory } from './history/agent-history'
 
 const CONSOLE_TELEMETRY_URL = 'https://console.activepieces.com/api/chat-analytics/external/sync'
-const CONSOLE_ROLLOUT_FUNNEL_URL = 'https://console.activepieces.com/api/chat-analytics/external/rollout-funnel'
 const BATCH_SIZE = 50
 const REQUEST_TIMEOUT_MS = 30000
 
@@ -22,11 +22,6 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
         conversation: AgentConversation
     }): void {
         rejectedPromiseHandler(syncConversations({ conversations: [conversation], log }), log)
-    },
-    // Pushes the authoritative rollout funnel snapshot (landed/chatted/cap/closed) to console over
-    // the same shared-secret channel as conversation sync. Fire-and-forget; cloud-only.
-    sendRolloutFunnelUpdate(): void {
-        rejectedPromiseHandler(pushRolloutFunnel({ log }), log)
     },
 })
 
@@ -56,13 +51,13 @@ async function syncConversations({ conversations, log }: {
 
     const platformIds = [...new Set(conversations.map((c) => c.platformId))]
     const licenseKeyByPlatform = await resolveLicenseKeysByPlatform({ platformIds })
-    const { userCache, platformCache, providerCache } = await resolveLookups({ conversations, log })
+    const { userCache, platformCache, providerCache, tierCache } = await resolveLookups({ conversations, log })
 
     let pushed = 0
     let skipped = 0
     let failed = 0
     for (const batch of chunk(conversations, BATCH_SIZE)) {
-        const result = await pushBatch({ conversations: batch, licenseKeyByPlatform, log, userCache, platformCache, providerCache })
+        const result = await pushBatch({ conversations: batch, licenseKeyByPlatform, log, userCache, platformCache, providerCache, tierCache })
         pushed += result.pushed
         skipped += result.skipped
         if (!result.success) {
@@ -71,38 +66,6 @@ async function syncConversations({ conversations, log }: {
     }
 
     return { pushed, skipped, failed }
-}
-
-async function pushRolloutFunnel({ log }: {
-    log: FastifyBaseLogger
-}): Promise<void> {
-    if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
-        return
-    }
-    const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
-    if (isNil(secret)) {
-        return
-    }
-
-    const snapshot = await chatRolloutService.getFunnelSnapshot()
-
-    const result = await tryCatch(() => fetch(CONSOLE_ROLLOUT_FUNNEL_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${secret}`,
-        },
-        body: JSON.stringify(snapshot),
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    }))
-
-    if (result.error) {
-        log.error({ error: result.error }, 'Failed to push chat rollout funnel')
-        return
-    }
-    if (!result.data.ok) {
-        log.error({ status: result.data.status }, 'Failed to push chat rollout funnel: non-2xx response')
-    }
 }
 
 async function resolveLicenseKeysByPlatform({ platformIds }: {
@@ -139,29 +102,32 @@ async function resolveLookups({ conversations, log }: {
     const uniquePlatformIds = [...new Set(conversations.map((c) => c.platformId))]
     const uniqueScopes = [...new Map(conversations.map((c) => [chatProviderCacheKey(c), c])).values()]
 
-    const [userEntries, platformNameEntries, providerEntries] = await Promise.all([
+    const [userEntries, platformNameEntries, providerEntries, tierCache] = await Promise.all([
         Promise.all(uniqueUserIds.map(async (userId): Promise<[string, string | null]> => [userId, await resolveUserEmail({ userId, log })])),
         Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, string | null]> => [platformId, await resolvePlatformName({ platformId, log })])),
         Promise.all(uniqueScopes.map(async (conversation): Promise<[string, AIProviderName | null]> => [
             chatProviderCacheKey(conversation),
             await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log }),
         ])),
+        agentModelTier(log).mainModelsOf({ conversations }),
     ])
 
     return {
         userCache: new Map(userEntries),
         platformCache: new Map(platformNameEntries),
         providerCache: new Map(providerEntries),
+        tierCache,
     }
 }
 
-async function pushBatch({ conversations, licenseKeyByPlatform, log, userCache, platformCache, providerCache }: {
+async function pushBatch({ conversations, licenseKeyByPlatform, log, userCache, platformCache, providerCache, tierCache }: {
     conversations: AgentConversation[]
     licenseKeyByPlatform: Map<string, string>
     log: FastifyBaseLogger
     userCache?: Map<string, string | null>
     platformCache?: Map<string, string | null>
     providerCache?: Map<string, AIProviderName | null>
+    tierCache?: Map<string, FirstCandidate | null>
 }): Promise<{ pushed: number, skipped: number, success: boolean }> {
     const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
     if (isNil(secret)) {
@@ -171,7 +137,7 @@ async function pushBatch({ conversations, licenseKeyByPlatform, log, userCache, 
     const payloads: Record<string, unknown>[] = []
     for (const conversation of conversations) {
         const licenseKey = licenseKeyByPlatform.get(conversation.platformId) ?? null
-        const payloadResult = await tryCatch(() => toSyncPayload({ conversation, licenseKey, log, userCache, platformCache, providerCache }))
+        const payloadResult = await tryCatch(() => toSyncPayload({ conversation, licenseKey, log, userCache, platformCache, providerCache, tierCache }))
         if (payloadResult.error) {
             log.error({ conversation: { id: conversation.id }, error: String(payloadResult.error) }, 'Failed to build sync payload for conversation, skipping')
             continue
@@ -207,17 +173,20 @@ async function pushBatch({ conversations, licenseKeyByPlatform, log, userCache, 
     return { pushed: payloads.length, skipped, success: true }
 }
 
-async function toSyncPayload({ conversation, licenseKey, log, userCache, platformCache, providerCache }: {
+async function toSyncPayload({ conversation, licenseKey, log, userCache, platformCache, providerCache, tierCache }: {
     conversation: AgentConversation
     licenseKey: string | null
     log: FastifyBaseLogger
     userCache?: Map<string, string | null>
     platformCache?: Map<string, string | null>
     providerCache?: Map<string, AIProviderName | null>
+    tierCache?: Map<string, FirstCandidate | null>
 }): Promise<Record<string, unknown>> {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
-    const provider = providerCache?.get(chatProviderCacheKey(conversation)) ?? await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log })
+    const tierKey = agentTierCandidates.tierCacheKey({ platformId: conversation.platformId, tierId: conversation.modelTierId ?? '' })
+    const tierModel = tierCache?.has(tierKey) ? tierCache.get(tierKey) ?? null : await agentModelTier(log).mainModelOf({ conversation })
+    const provider = tierModel?.provider ?? providerCache?.get(chatProviderCacheKey(conversation)) ?? await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log })
 
     const messages = agentHistory.resolveMessages({ conversation, log })
 
@@ -229,7 +198,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
         userId: conversation.userId,
         userEmail,
         title: conversation.title,
-        modelName: agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface: 'chat' }),
+        modelName: tierModel?.modelId ?? agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface: 'chat' }),
         provider,
         messages,
         messageCount: messages.length,
@@ -284,4 +253,5 @@ type ConversationLookups = {
     userCache: Map<string, string | null>
     platformCache: Map<string, string | null>
     providerCache: Map<string, AIProviderName | null>
+    tierCache: Map<string, FirstCandidate | null>
 }

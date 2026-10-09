@@ -107,7 +107,7 @@ describe('resolveModelIdForProvider', () => {
 
     it('falls back to the first curated model when the tier has no provider equivalent', () => {
         expect(resolve({ provider: AIProviderName.OPENAI, selectedModel: 'smart' })).toBe('gpt-5.5')
-        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'smart' })).toBe('gemini-2.5-pro')
+        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'smart' })).toBe('gemini-3.7-flash')
     })
 
     it('gives each tier the native model it declares, rather than one derived from its id', () => {
@@ -123,7 +123,7 @@ describe('resolveModelIdForProvider', () => {
 
     it('has no native model for a tier the release never shipped, so a curated provider takes its first model', () => {
         expect(agentModelResolution.nativeModelIdFor({ tier: publishedTierReaders.chat.resolveTier({ tierId: 'turbo' }) })).toBeNull()
-        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'turbo', surface: 'chat' })).toBe('gemini-2.5-pro')
+        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'turbo', surface: 'chat' })).toBe('gemini-3.7-flash')
     })
 
     it('never sends another provider stale selection through', () => {
@@ -263,6 +263,17 @@ describe('resolveNamedModelId', () => {
         const { error } = tryCatchSync(() => named({ provider: AIProviderName.ACTIVEPIECES, modelName, ...(surface ? { surface } : {}), ...scope }))
         return error instanceof ActivepiecesError ? error.error : undefined
     }
+
+    it('refuses an own-key model the key no longer allows, even when its name looks like a tier id', () => {
+        const refusal = (modelName: string) => {
+            const { error } = tryCatchSync(() => named({ provider: AIProviderName.OPENAI, modelName, modelScope: 'selected', modelIds: ['gpt-4o'] }))
+            return error instanceof ActivepiecesError ? error.error.code : undefined
+        }
+        expect(named({ provider: AIProviderName.OPENAI, modelName: 'gpt-4o', modelScope: 'selected', modelIds: ['gpt-4o'] })).toBe('gpt-4o')
+        expect(refusal('gpt-4o-mini')).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        expect(refusal('smart')).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        expect(named({ provider: AIProviderName.OPENAI, modelName: 'gpt-4o-mini' })).toBe('gpt-4o-mini')
+    })
 
     it('lets a managed run name any model on the managed allow-list', () => {
         for (const modelId of aiProviderUtils.managedChatModelIds()) {

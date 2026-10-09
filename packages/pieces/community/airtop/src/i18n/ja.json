@@ -11,7 +11,7 @@
   "Type": "タイプ",
   "Upload File to Sessions": "セッションにファイルをアップロード",
   "Hover on an Element": "エレメントの上にカーソルを置く",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Starts a new browser session in Airtop.": "Airtopで新しいブラウザセッションを開始します。",
   "Ends an existing browser session in Airtop.": "Airtopで既存のブラウザセッションを終了します。",
   "Opens a new window within a session, optionally navigating to a URL.": "セッション内で新しいウィンドウを開き、必要に応じてURLに移動します。",

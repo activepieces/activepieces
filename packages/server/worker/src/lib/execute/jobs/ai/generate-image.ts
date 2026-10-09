@@ -24,7 +24,7 @@ export async function generateImageStep({ ctx, data, resolved, flowStep, billing
     return url
 }
 
-export async function getGeneratedImage({ credentials, modelId, prompt, advancedOptions, inputImages, flowStep, billing, turnAlreadyCharged = false, aspectRatio, abortSignal }: {
+export async function getGeneratedImage({ credentials, modelId, prompt, advancedOptions, inputImages, flowStep, billing, turnAlreadyCharged = false, aspectRatio, abortSignal, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     prompt: string
@@ -35,8 +35,9 @@ export async function getGeneratedImage({ credentials, modelId, prompt, advanced
     turnAlreadyCharged?: boolean
     aspectRatio?: `${number}:${number}`
     abortSignal?: AbortSignal
+    adminChosenImageModelId?: string
 }): Promise<GeneratedImage> {
-    const model = createImageCapableModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged })
+    const model = createImageCapableModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged, adminChosenImageModelId })
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider: credentials.provider, model: modelId })
     const resolvedProvider = effectiveProvider ?? credentials.provider
     const hasInputImages = inputImages.length > 0
@@ -71,21 +72,22 @@ export function imageBytesOf(image: GeneratedImage): Buffer {
     return !isNil(image.base64) && image.base64.length > 0 ? Buffer.from(image.base64, 'base64') : Buffer.from(image.uint8Array)
 }
 
-function createImageCapableModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged }: {
+function createImageCapableModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     flowStep?: FlowStepMetadata
     billing: ActivepiecesAiBilling
     turnAlreadyCharged: boolean
+    adminChosenImageModelId?: string
 }): ImageCapableModel {
     if (!AI_PROVIDER_CAPABILITIES[credentials.provider].supportsImageGeneration) {
         throw new Error(`Provider ${credentials.provider} does not support image models`)
     }
-    const imageModel = aiUtils.createModelForImages({ credentials, modelId, flowStep })
+    const imageModel = aiUtils.createModelForImages({ credentials, modelId, flowStep, ...spreadIfDefined('adminChosenImageModelId', adminChosenImageModelId) })
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
-    return { kind: 'language', model: aiUtils.createModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged }) }
+    return { kind: 'language', model: aiUtils.createModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged, imageGeneration: true, ...spreadIfDefined('adminChosenImageModelId', adminChosenImageModelId) }) }
 }
 
 async function generateImageUsingGenerateText({ model, prompt, inputImages, aspectRatio, abortSignal }: {

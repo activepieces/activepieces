@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { fetchSequences } from '../../common/service';
-import { convertkitAuth } from '../../..';
+import { convertkitAuth } from '../../auth';
 
 export const sequenceId = Property.ShortText({
   displayName: 'Sequence ID',

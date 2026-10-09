@@ -1,10 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { convertkitAuth } from '../..';
+import { HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { convertkitAuth } from '../auth';
+import { kitHttp } from '../common/http';
 import {
   broadcastId,
   broadcastPageNumber,
@@ -22,14 +19,21 @@ import {
 import { Broadcast } from '../common/types';
 import { BROADCASTS_API_ENDPOINT } from '../common/constants';
 import { buildQueryParams, fetchBroadcasts } from '../common/service';
+import {
+  kitBroadcastListOutputSchema,
+  kitBroadcastOutputSchema,
+  kitBroadcastStatsOutputSchema,
+  kitRequestStatusOutputSchema,
+} from '../output-schemas';
 
 export const listBroadcasts = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_list_broadcasts',
   classification: 'SEARCH',
+  outputSchema: kitBroadcastListOutputSchema,
   displayName: 'List Broadcasts',
   description: 'List all broadcasts',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves a page of broadcasts (one-off emails) in the ConvertKit account, 50 per page. Use it to find a broadcast ID before getting, updating, or deleting one. Read-only and idempotent; pass a page number to fetch beyond the first 50.',
@@ -48,9 +52,10 @@ export const createBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_create_broadcast',
   classification: 'WRITE',
+  outputSchema: kitBroadcastOutputSchema,
   displayName: 'Create Broadcast',
   description: 'Create a new broadcast',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new email broadcast (one-off email), optionally scheduled via the send-at field; without it the broadcast is saved unsent. Not idempotent — every call creates another broadcast, so do not retry blindly.',
@@ -105,7 +110,7 @@ export const createBroadcast = createAction({
         'Content-Type': 'application/json',
       },
     };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+    const response = await kitHttp.sendRequest<{ broadcast: Broadcast }>(
       request
     );
     if (response.status !== 201) {
@@ -119,9 +124,10 @@ export const getBroadcastById = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_get_broadcast',
   classification: 'READ',
+  outputSchema: kitBroadcastOutputSchema,
   displayName: 'Get Broadcast',
   description: 'Get a broadcast',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches a single broadcast by its ID, returning its content and settings. Use when the broadcast ID is already known (e.g. from List Broadcasts); for delivery metrics use Broadcast Stats instead. Read-only and idempotent.',
@@ -139,7 +145,7 @@ export const getBroadcastById = createAction({
       queryParams: buildQueryParams(context.auth.secret_text),
       method: HttpMethod.GET,
     };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+    const response = await kitHttp.sendRequest<{ broadcast: Broadcast }>(
       request
     );
     if (response.status !== 200) {
@@ -153,9 +159,10 @@ export const updateBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_update_broadcast',
   classification: 'WRITE',
+  outputSchema: kitBroadcastOutputSchema,
   displayName: 'Update Broadcast',
   description: 'Update a broadcast',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates the content, subject, scheduling, or other fields of an existing broadcast by broadcast ID. Idempotent — repeating the same update leaves the broadcast in the same state. Requires a valid broadcast ID from List Broadcasts.',
@@ -214,7 +221,7 @@ export const updateBroadcast = createAction({
         'Content-Type': 'application/json',
       },
     };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+    const response = await kitHttp.sendRequest<{ broadcast: Broadcast }>(
       request
     );
     if (response.status !== 200) {
@@ -228,9 +235,10 @@ export const broadcastStats = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_broadcast_stats',
   classification: 'READ',
+  outputSchema: kitBroadcastStatsOutputSchema,
   displayName: 'Broadcast Stats',
   description: 'Get broadcast stats',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves delivery and engagement statistics (recipients, opens, clicks, unsubscribes) for one broadcast by ID. Pick this over Get Broadcast when performance metrics are needed rather than content. Read-only and idempotent.',
@@ -248,7 +256,7 @@ export const broadcastStats = createAction({
       queryParams: buildQueryParams(context.auth.secret_text),
       method: HttpMethod.GET,
     };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+    const response = await kitHttp.sendRequest<{ broadcast: Broadcast }>(
       request
     );
     if (response.status !== 200) {
@@ -262,9 +270,10 @@ export const deleteBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_delete_broadcast',
   classification: 'DESTRUCTIVE',
+  outputSchema: kitRequestStatusOutputSchema,
   displayName: 'Delete Broadcast',
   description: 'Delete a broadcast',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Permanently deletes a broadcast by ID. Destructive and not retry-safe — a repeat call fails once the broadcast is gone, so confirm the ID via List Broadcasts first.',
@@ -286,7 +295,7 @@ export const deleteBroadcast = createAction({
       body,
       method: HttpMethod.DELETE,
     };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+    const response = await kitHttp.sendRequest<{ broadcast: Broadcast }>(
       request
     );
     if (response.status !== 204) {
