@@ -1,7 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { webscrapingAiAuth, webscrapingAiCommon } from '../common';
+import { webscrapingAiAuth } from '../auth';
+import { webscrapingAiApi } from '../common/api';
 
-export const getAccountInformation = createAction({
+export const getAccountInformationAction = createAction({
   auth: webscrapingAiAuth,
   name: 'getAccountInformation',
   classification: 'READ',
@@ -14,7 +15,7 @@ export const getAccountInformation = createAction({
     idempotent: true,
   },
   props: {},
-  async run({ auth: apiKey }) {
-    return await webscrapingAiCommon.getAccountInformation({ apiKey:apiKey.secret_text });
+  async run({ auth }) {
+    return await webscrapingAiApi.getAccount({ auth });
   },
 });
