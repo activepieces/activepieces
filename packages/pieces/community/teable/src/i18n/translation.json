@@ -144,5 +144,5 @@
   "New Record": "New Record",
   "Updated Record": "Updated Record",
   "Triggers when a new record is created in a table.": "Triggers when a new record is created in a table.",
-  "Triggers when a record is created or modified. The table must have a \"Last modified time\" field.": "Triggers when a record is created or modified. The table must have a \"Last modified time\" field."
+  "Triggers when a record is created or modified. The table must have a \"Last modified time\" field that shows the time.": "Triggers when a record is created or modified. The table must have a \"Last modified time\" field that shows the time."
 }

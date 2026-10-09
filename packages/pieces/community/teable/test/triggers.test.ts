@@ -11,6 +11,13 @@ import { PAT_AUTH } from './helpers';
 
 const BASE_EPOCH = Date.parse('2026-10-01T00:00:00.000Z');
 
+const LAST_MODIFIED_FIELD = {
+	id: 'fldLM',
+	name: 'LastModified',
+	type: 'lastModifiedTime',
+	options: { formatting: { date: 'YYYY-MM-DD', time: 'HH:mm', timeZone: 'UTC' } },
+};
+
 function iso(epoch: number): string {
 	return new Date(epoch).toISOString();
 }
@@ -197,7 +204,7 @@ describe('same-timestamp group larger than the poll cap', () => {
 		const records = [...group, ...newer];
 		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
 		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
-			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+			LAST_MODIFIED_FIELD,
 		]);
 		mockListRecords(records);
 		const store = memoryStore({ lastPoll: BASE_EPOCH });
@@ -238,7 +245,7 @@ describe('tie order between polls', () => {
 		let storage = [...tied, ...newer];
 		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(storage.length);
 		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
-			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+			LAST_MODIFIED_FIELD,
 		]);
 		const queries: (Record<string, unknown> | undefined)[] = [];
 		mockListRecords(
@@ -407,7 +414,7 @@ describe('updated record trigger overflow', () => {
 		const records = makeRecords(12000);
 		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
 		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
-			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+			LAST_MODIFIED_FIELD,
 		]);
 		mockListRecords(records);
 		const store = memoryStore({ lastPoll: BASE_EPOCH - 1 });
@@ -428,7 +435,7 @@ describe('updated record trigger overflow', () => {
 		const records = makeRecords(2000);
 		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
 		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
-			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+			LAST_MODIFIED_FIELD,
 		]);
 		let pageFetches = 0;
 		mockListRecords(records, (query) => {
@@ -458,7 +465,7 @@ describe('updated record trigger overflow', () => {
 		const records = makeRecords(120);
 		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
 		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
-			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+			LAST_MODIFIED_FIELD,
 		]);
 		mockListRecords(records);
 		const store = memoryStore({ lastPoll: BASE_EPOCH + 99 * 1000 });
@@ -466,5 +473,48 @@ describe('updated record trigger overflow', () => {
 		const delivered = await runPoll(updatedRecordTrigger, store);
 		expect(delivered).toHaveLength(20);
 		expect(await runPoll(updatedRecordTrigger, store)).toEqual([]);
+	});
+});
+
+describe('updated record trigger field requirements', () => {
+	const DATE_ONLY_FIELD = {
+		id: 'fldDay',
+		name: 'Modified day',
+		type: 'lastModifiedTime',
+		options: { formatting: { date: 'M/D/YYYY', time: 'None', timeZone: 'UTC' } },
+	};
+
+	it('refuses a field that hides the time of day, on enable and on poll', async () => {
+		vi.spyOn(teableClient, 'listFields').mockResolvedValue([DATE_ONLY_FIELD]);
+		const listRecords = mockListRecords(makeRecords(10));
+		const store = memoryStore({ lastPoll: BASE_EPOCH });
+
+		await expect(updatedRecordTrigger.onEnable(pollContext({ store }))).rejects.toThrow(
+			/"Modified day" hides the time of day/
+		);
+		await expect(runPoll(updatedRecordTrigger, store)).rejects.toThrow(/24 hour or 12 hour/);
+		expect(listRecords).not.toHaveBeenCalled();
+	});
+
+	it('treats a field without formatting as date-only, like Teable does', async () => {
+		vi.spyOn(teableClient, 'listFields').mockResolvedValue([
+			{ id: 'fldLM', name: 'LastModified', type: 'lastModifiedTime' },
+		]);
+		const store = memoryStore({ lastPoll: BASE_EPOCH });
+
+		await expect(runPoll(updatedRecordTrigger, store)).rejects.toThrow(/hides the time of day/);
+	});
+
+	it('sorts by the field that shows the time when the table has several', async () => {
+		const records = makeRecords(30);
+		vi.spyOn(teableClient, 'getRowCount').mockResolvedValue(records.length);
+		vi.spyOn(teableClient, 'listFields').mockResolvedValue([DATE_ONLY_FIELD, LAST_MODIFIED_FIELD]);
+		const orderBys = new Set<unknown>();
+		mockListRecords(records, (query) => orderBys.add(query?.['orderBy']));
+		const store = memoryStore({ lastPoll: BASE_EPOCH + 9 * 1000 });
+
+		const delivered = await runPoll(updatedRecordTrigger, store);
+		expect(delivered).toHaveLength(20);
+		expect([...orderBys]).toEqual([JSON.stringify([{ fieldId: 'fldLM', order: 'asc' }])]);
 	});
 });

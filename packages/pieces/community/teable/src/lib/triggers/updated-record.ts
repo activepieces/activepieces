@@ -13,6 +13,7 @@ import { teableOutputSchemas } from '../output-schemas';
 
 const PAGE_SIZE = 500;
 const TEST_SAMPLE_SIZE = 5;
+const TIME_FORMATTING_NONE = 'None';
 
 function modifiedEpoch(record: TeableRecord): number {
   const timestamp = record.lastModifiedTime ?? record.createdTime;
@@ -44,15 +45,31 @@ async function requireLastModifiedField({
   tableId: string;
 }): Promise<TeableField> {
   const fields = await teableClient.listFields({ auth, tableId });
-  const lastModifiedField = fields.find(
+  const lastModifiedFields = fields.filter(
     (field) => field.type === TeableFieldType.LAST_MODIFIED_TIME
   );
-  if (lastModifiedField === undefined) {
+  if (lastModifiedFields.length === 0) {
     throw new Error(
-      'This table has no "Last modified time" field, so updates cannot be detected. In Teable, add a field of type "Last modified time" to the table, then enable this trigger again.'
+      'This table has no "Last modified time" field, so updates cannot be detected. In Teable, add a field of type "Last modified time" to the table, set its time format to 24 hour or 12 hour, then enable this trigger again.'
     );
   }
-  return lastModifiedField;
+  const preciseField = lastModifiedFields.find(showsTimeOfDay);
+  if (preciseField === undefined) {
+    throw new Error(
+      `The "Last modified time" field "${lastModifiedFields[0].name}" hides the time of day, so Teable sorts it by date only and changes made on the same day cannot be told apart. In Teable, edit that field and set its time format to 24 hour or 12 hour, then enable this trigger again.`
+    );
+  }
+  return preciseField;
+}
+
+// Teable sorts a date field by its formatted date string when the time format is
+// None (its default), and by the exact timestamp only when the time is shown.
+function showsTimeOfDay(field: TeableField): boolean {
+  const formatting = field.options?.['formatting'];
+  if (typeof formatting !== 'object' || formatting === null || !('time' in formatting)) {
+    return false;
+  }
+  return typeof formatting.time === 'string' && formatting.time !== TIME_FORMATTING_NONE;
 }
 
 async function fetchPreciseRecords({
@@ -141,10 +158,10 @@ export const updatedRecordTrigger = createTrigger({
   classification: 'READ',
   displayName: 'Updated Record',
   description:
-    'Triggers when a record is created or modified. The table must have a "Last modified time" field.',
+    'Triggers when a record is created or modified. The table must have a "Last modified time" field that shows the time.',
   aiMetadata: {
     description:
-      'Fires when a record in the selected Teable table is created or modified. The table must contain a field of type "Last modified time"; enabling the trigger fails with instructions when it is missing. A record modified again later fires again. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical "Last modified time" value can records beyond that bound be skipped. Delivery is at-least-once: after a platform error during a poll, the next poll may deliver some records again rather than lose them.',
+      'Fires when a record in the selected Teable table is created or modified. The table must contain a field of type "Last modified time" whose time format is 24 hour or 12 hour (with no time shown, which is the Teable default, it sorts by date only); enabling the trigger, or a later poll, fails with instructions when no such field exists. A record modified again later fires again. Large backlogs are delivered across successive polls without loss; only in the extreme case of more than 25,000 records sharing one identical "Last modified time" value can records beyond that bound be skipped. Delivery is at-least-once: after a platform error during a poll, the next poll may deliver some records again rather than lose them.',
   },
   props: {
     base_id: TeableCommon.base_id,
