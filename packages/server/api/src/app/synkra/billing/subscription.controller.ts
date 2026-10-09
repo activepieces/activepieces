@@ -2,6 +2,8 @@ import { ALL_PRINCIPAL_TYPES, PrincipalType, getPlanLimits } from '@activepieces
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { securityAccess } from '../../core/security/authorization/fastify-security';
+import { system } from '../../helper/system/system';
+import { AppSystemProp } from '../../helper/system/system-props';
 import { synkraSubscriptionService } from './subscription.service';
 import { synkraUsageService } from './usage.service';
 
@@ -26,6 +28,7 @@ export const synkraSubscriptionController: FastifyPluginAsyncZod = async (app) =
                 toTier: z.string().optional(),
               })
               .nullable(),
+            paystackConfigured: z.boolean(),
             limits: z.record(z.string(), z.unknown()),
           }),
         },
@@ -43,6 +46,7 @@ export const synkraSubscriptionController: FastifyPluginAsyncZod = async (app) =
           currentPeriodEnd: null,
           cancelAtPeriodEnd: false,
           scheduledChange: null,
+          paystackConfigured: !!system.get(AppSystemProp.SYNKRA_PAYSTACK_SECRET_KEY),
           limits: getPlanLimits('free') as unknown as Record<string, unknown>,
         };
       }
@@ -61,6 +65,7 @@ export const synkraSubscriptionController: FastifyPluginAsyncZod = async (app) =
         currentPeriodEnd: sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toISOString() : null,
         cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
         scheduledChange: sc ? { kind: sc.kind, toTier: sc.toTier } : null,
+        paystackConfigured: !!system.get(AppSystemProp.SYNKRA_PAYSTACK_SECRET_KEY),
         limits: limits as unknown as Record<string, unknown>,
       };
     },

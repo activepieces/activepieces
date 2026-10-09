@@ -96,6 +96,14 @@ export function BillingManagePage() {
   return (
     <PageTitle title={t('Billing & Usage')}>
       <div className="mx-auto w-full max-w-4xl p-6 flex flex-col gap-6">
+        {!sub.paystackConfigured && (
+          <div className="rounded-lg border border-yellow-6 bg-yellow-2 p-4 text-sm">
+            <div className="font-medium text-yellow-11">{t('Payments coming soon')}</div>
+            <div className="text-yellow-11 mt-1">
+              {t('Upgrades are not yet live. Contact hello@synkra.co.za to be notified when they open.')}
+            </div>
+          </div>
+        )}
         {sub.scheduledChange && (
           <div className="rounded-lg border bg-yellow-2 p-4 flex items-start gap-3">
             <RefreshCw className="h-4 w-4 mt-0.5" />

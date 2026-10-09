@@ -2,6 +2,7 @@ import { FastifyBaseLogger } from 'fastify';
 import nodemailer, { Transporter } from 'nodemailer';
 import { system } from '../../helper/system/system';
 import { AppSystemProp } from '../../helper/system/system-props';
+import { resendSender } from './resend-sender';
 
 type Tier = 'free' | 'starter' | 'business' | 'pro';
 
@@ -39,8 +40,13 @@ function shell(title: string, body: string, cta?: { label: string; url: string }
 }
 
 function send(log: FastifyBaseLogger, to: string, subject: string, html: string): void {
+  const resend = resendSender(log);
+  if (resend.isConfigured()) {
+    void resend.send({ to, subject, html });
+    return;
+  }
   const t = getTransport(log);
-  if (!t) { log.info({ to, subject }, 'billing email logged (SMTP not configured)'); return; }
+  if (!t) { log.info({ to, subject }, 'billing email logged (no Resend, no SMTP)'); return; }
   t.sendMail({ from: { name: 'Synkra Flow', address: 'noreply@synkra.co.za' }, to, subject, html })
     .catch((err) => log.error({ err, to, subject }, 'billing email failed'));
 }

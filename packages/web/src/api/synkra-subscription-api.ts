@@ -11,6 +11,7 @@ export type SynkraSubscription = {
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   scheduledChange: { kind: 'downgrade' | 'cancel'; toTier?: string } | null;
+  paystackConfigured: boolean;
   limits: Record<string, unknown>;
 };
 
