@@ -43,7 +43,7 @@ export const apMoveFlowToFolderTool = ({ mcp, userId }: McpToolContext, log: Fas
                 const operation: FlowOperationRequest = { type: FlowOperationType.CHANGE_FOLDER, request: { folderId: target.folderId } }
                 await flowService(log).update({ id: flow.id, projectId: mcp.projectId, userId, previousFlow: flow, platformId, operation })
                 return {
-                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" moved ${isNil(target.folderId) ? 'out of its folder' : `to folder "${target.folderName}"`}${target.created ? ' (new folder)' : ''}.` }],
+                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" moved ${isNil(target.folderId) ? 'out of its folder' : `to folder "${target.folderName}"`}.` }],
                     structuredContent: { flowId: flow.id, ...target, moved: true },
                 }
             }
@@ -55,20 +55,17 @@ export const apMoveFlowToFolderTool = ({ mcp, userId }: McpToolContext, log: Fas
 }
 
 async function getOrCreateFolder({ projectId, folderName, log }: { projectId: string, folderName: string, log: FastifyBaseLogger }): Promise<MoveTarget> {
-    const folders = flowFolderService(log)
-    const existing = await folders.getOneByDisplayNameCaseInsensitive({ projectId, displayName: folderName })
-    const folder = existing ?? await folders.upsert({ projectId, request: { projectId, displayName: folderName } })
-    return { folderId: folder.id, folderName: folder.displayName, created: isNil(existing) }
+    const folder = await flowFolderService(log).upsert({ projectId, request: { projectId, displayName: folderName } })
+    return { folderId: folder.id, folderName: folder.displayName }
 }
 
 function describeTarget(target: MoveTarget): string {
     return isNil(target.folderId) ? 'in no folder' : `in folder "${target.folderName}"`
 }
 
-const UNCATEGORIZED: MoveTarget = { folderId: null, folderName: null, created: false }
+const UNCATEGORIZED: MoveTarget = { folderId: null, folderName: null }
 
 type MoveTarget = {
     folderId: string | null
     folderName: string | null
-    created: boolean
 }

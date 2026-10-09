@@ -2777,7 +2777,7 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Folder flow')
         const otherFlowId = await createFlowAndGetId(mcp, 'Folder flow 2')
-        const moveSchema = z.object({ folderId: z.string().nullable(), folderName: z.string().nullable(), created: z.boolean(), moved: z.boolean() })
+        const moveSchema = z.object({ folderId: z.string().nullable(), folderName: z.string().nullable(), moved: z.boolean() })
 
         const created = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, folderName: 'Order intake' })
         const reused = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: otherFlowId, folderName: 'order INTAKE' })
@@ -2788,15 +2788,31 @@ describe('MCP Tools integration', () => {
         const createdContent = structured({ result: created, schema: moveSchema })
         const otherFlow = await flowService(mockLog).getOneOrThrow({ id: otherFlowId, projectId: ctx.project.id })
         const flow = await flowService(mockLog).getOneOrThrow({ id: flowId, projectId: ctx.project.id })
-        expect(createdContent).toMatchObject({ folderName: 'Order intake', created: true, moved: true })
-        expect(text(created)).toContain('(new folder)')
-        expect(structured({ result: reused, schema: moveSchema })).toMatchObject({ folderId: createdContent.folderId, folderName: 'Order intake', created: false })
+        expect(createdContent).toMatchObject({ folderName: 'Order intake', moved: true })
+        expect(text(created)).toContain('to folder "Order intake"')
+        expect(structured({ result: reused, schema: moveSchema })).toMatchObject({ folderId: createdContent.folderId, folderName: 'Order intake' })
         expect(otherFlow.folderId).toBe(createdContent.folderId)
         expect(structured({ result: again, schema: moveSchema }).moved).toBe(false)
         expect(text(listed)).toContain('Order intake')
         expect(text(listed)).toContain('2 flows')
         expect(text(out)).toContain('out of its folder')
         expect(flow.folderId).toBeNull()
+    })
+
+    it('ap_move_flow_to_folder called concurrently into a new name in different casing files both flows into one folder', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowIds = await Promise.all([createFlowAndGetId(mcp, 'Parallel move 1'), createFlowAndGetId(mcp, 'Parallel move 2')])
+
+        const results = await Promise.all([
+            apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: flowIds[0], folderName: 'Parallel move' }),
+            apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: flowIds[1], folderName: 'PARALLEL move' }),
+        ])
+
+        const folderIds = results.map((result) => structured({ result, schema: z.object({ folderId: z.string() }) }).folderId)
+        const flows = await Promise.all(flowIds.map((id) => flowService(mockLog).getOneOrThrow({ id, projectId: ctx.project.id })))
+        expect(new Set(folderIds).size).toBe(1)
+        expect(flows.map((flow) => flow.folderId)).toEqual([folderIds[0], folderIds[0]])
     })
 
     it('ap_move_flow_to_folder needs exactly one target and only moves flows in its own project', async () => {
