@@ -39,6 +39,7 @@ export const newMemberSettingsQueries = {
       queryKey: PERSONAL_PROJECTS_SUMMARY_QUERY_KEY,
       queryFn: () => personalProjectsApi.summary(),
       enabled,
+      staleTime: 0,
     });
   },
 };

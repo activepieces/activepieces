@@ -26,7 +26,8 @@ import {
 } from './personal-projects-dialogs';
 
 export function PersonalProjectsSection() {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform, refetch: refetchPlatform } =
+    platformHooks.useCurrentPlatform();
   const [openDialog, setOpenDialog] = useState<'turn-on' | 'turn-off' | null>(
     null,
   );
@@ -38,9 +39,14 @@ export function PersonalProjectsSection() {
     newMemberSettingsMutations.useUpdateNewMemberSettings();
   const { mutateAsync: createMissing, isPending: isCreatingMissing } =
     newMemberSettingsMutations.useCreateMissingPersonalProjects();
-  const { data: summary } = newMemberSettingsQueries.usePersonalProjectsSummary(
-    { enabled: !gate.locked },
-  );
+  const {
+    data: summary,
+    isFetching: isSummaryFetching,
+    isError: isSummaryError,
+    refetch: refetchSummary,
+  } = newMemberSettingsQueries.usePersonalProjectsSummary({
+    enabled: !gate.locked,
+  });
   const isPending = isUpdating || isCreatingMissing;
 
   const isEnabled = gate.locked || platform.autoCreatePersonalProjects;
@@ -50,6 +56,7 @@ export function PersonalProjectsSection() {
       gate.open();
       return;
     }
+    refetchSummary();
     setOpenDialog(checked ? 'turn-on' : 'turn-off');
   };
 
@@ -59,10 +66,12 @@ export function PersonalProjectsSection() {
     createForExistingMembers: boolean;
   }) => {
     const { error } = await tryCatch(async () => {
-      await updateSettings({ autoCreatePersonalProjects: true });
       if (createForExistingMembers) {
         await createMissing();
+        await refetchPlatform();
+        return;
       }
+      await updateSettings({ autoCreatePersonalProjects: true });
     });
     setOpenDialog(null);
     if (error) {
@@ -115,8 +124,9 @@ export function PersonalProjectsSection() {
         open={openDialog === 'turn-on'}
         onOpenChange={(open) => setOpenDialog(open ? 'turn-on' : null)}
         membersWithoutPersonalProject={
-          summary?.membersWithoutPersonalProject ?? 0
+          isSummaryError ? null : summary?.membersWithoutPersonalProject ?? null
         }
+        isCountLoading={isSummaryFetching}
         isPending={isPending}
         onConfirm={turnOn}
       />

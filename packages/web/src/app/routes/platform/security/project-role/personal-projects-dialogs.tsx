@@ -19,11 +19,16 @@ export function TurnOnPersonalProjectsDialog({
   open,
   onOpenChange,
   membersWithoutPersonalProject,
+  isCountLoading,
   isPending,
   onConfirm,
 }: TurnOnPersonalProjectsDialogProps) {
   const [scope, setScope] = useState<TurnOnScope>('new-members');
-  const offersExistingMembers = membersWithoutPersonalProject > 0;
+  const isCountKnown = membersWithoutPersonalProject !== null;
+  const offersExistingMembers =
+    !isCountLoading &&
+    (membersWithoutPersonalProject === null ||
+      membersWithoutPersonalProject > 0);
   const createsForExistingMembers =
     offersExistingMembers && scope === 'existing-members';
 
@@ -62,12 +67,20 @@ export function TurnOnPersonalProjectsDialog({
             <TurnOnOption
               value="existing-members"
               selected={scope === 'existing-members'}
-              title={t('createForExistingMembers', {
-                count: membersWithoutPersonalProject,
-              })}
-              warning={t('createsPersonalProjectsNow', {
-                count: membersWithoutPersonalProject,
-              })}
+              title={
+                isCountKnown
+                  ? t('createForExistingMembers', {
+                      count: membersWithoutPersonalProject,
+                    })
+                  : t('Also create for existing members without one')
+              }
+              warning={
+                isCountKnown
+                  ? t('createsPersonalProjectsNow', {
+                      count: membersWithoutPersonalProject,
+                    })
+                  : t('Creates a personal project for each of them now.')
+              }
             />
           </RadioGroup>
         )}
@@ -81,13 +94,16 @@ export function TurnOnPersonalProjectsDialog({
           </Button>
           <Button
             loading={isPending}
+            disabled={isCountLoading}
             onClick={() =>
               onConfirm({ createForExistingMembers: createsForExistingMembers })
             }
           >
-            {createsForExistingMembers
+            {!createsForExistingMembers
+              ? t('Turn on')
+              : isCountKnown
               ? t('turnOnAndCreate', { count: membersWithoutPersonalProject })
-              : t('Turn on')}
+              : t('Turn on and create')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -177,7 +193,8 @@ type TurnOnOptionProps = {
 type TurnOnPersonalProjectsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  membersWithoutPersonalProject: number;
+  membersWithoutPersonalProject: number | null;
+  isCountLoading: boolean;
   isPending: boolean;
   onConfirm: (params: { createForExistingMembers: boolean }) => void;
 };
