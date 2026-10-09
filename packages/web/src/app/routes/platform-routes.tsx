@@ -300,15 +300,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/billing',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <SuspenseWrapper>
-            <SettingsBilling />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/billing" replace />,
   },
   {
     path: '/platform/usage',
@@ -324,23 +316,11 @@ export const platformRoutes = [
   },
   {
     path: '/platform/billing/success',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Success />
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/billing" replace />,
   },
   {
     path: '/platform/billing/error',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Error />
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/billing" replace />,
   },
   {
     path: '/platform/api-keys',

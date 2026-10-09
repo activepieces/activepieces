@@ -3,6 +3,10 @@ import React, { Suspense } from 'react';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+const GlossaryPage = lazyWithRetry(
+  () => import('./glossary').then((m) => ({ default: m.GlossaryPage })),
+  'glossary',
+);
 
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
@@ -34,6 +38,16 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export const publicRoutes = [
+  {
+    path: '/glossary',
+    element: (
+      <PageTitle title="Glossary">
+        <Suspense fallback={<RouteLoadingBar />}>
+          <GlossaryPage />
+        </Suspense>
+      </PageTitle>
+    ),
+  },
   {
     path: '/embed',
     element: <EmbedPage></EmbedPage>,

@@ -3,6 +3,7 @@ import { Goal } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { cn } from '@/lib/utils';
+import { SynkraInfoTip } from '@/components/custom/synkra-info-tip';
 
 const TriggerWidget = ({ isSelected }: { isSelected: boolean }) => {
   const canvasOrientation = useBuilderStateContext(
@@ -35,7 +36,7 @@ const TriggerWidget = ({ isSelected }: { isSelected: boolean }) => {
         },
       )}
     >
-      <Goal className="w-[10px] h-[10px]"></Goal> {t('Trigger')}
+      <Goal className="w-[10px] h-[10px]"></Goal> {t('Trigger')} <SynkraInfoTip term="trigger" />
     </div>
   );
 };
