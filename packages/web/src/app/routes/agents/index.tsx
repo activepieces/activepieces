@@ -370,6 +370,7 @@ const AgentsPageContent = () => {
 
       {showsAgentList({
         listLoading: isLoading,
+        listFailed: isError,
         hasList: data !== undefined,
         firstRun,
       }) && (
