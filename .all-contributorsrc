@@ -2257,6 +2257,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "james-novino",
+      "name": "James Novino",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10082447?v=4",
+      "profile": "https://github.com/james-novino",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
