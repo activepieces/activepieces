@@ -64,8 +64,9 @@ RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bulls
     echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
 
 # ca-certificates: TLS for piece downloads. procps: `ps`, which tree-kill spawns to reap the engine.
+# tini: PID 1 that reaps orphaned grandchildren, which node as PID 1 leaves as zombies.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates procps && \
+    apt-get install -y --no-install-recommends ca-certificates procps tini && \
     rm -rf /var/lib/apt/lists/*
 
 # esbuild (JS API) compiles CODE steps; at /node_modules so --external:esbuild worker.js resolves it, like isolated-vm.
@@ -91,4 +92,4 @@ COPY --from=build /usr/src/app/dist/packages/engine ./dist/packages/engine
 COPY --from=build /usr/src/app/package.json ./package.json
 
 LABEL service=activepieces-worker
-ENTRYPOINT ["node", "worker.js"]
+ENTRYPOINT ["/usr/bin/tini", "--", "node", "worker.js"]
