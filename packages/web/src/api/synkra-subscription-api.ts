@@ -10,6 +10,7 @@ export type SynkraSubscription = {
   communityVerified: boolean;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  scheduledChange: { kind: 'downgrade' | 'cancel'; toTier?: string } | null;
   limits: Record<string, unknown>;
 };
 

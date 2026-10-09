@@ -23,7 +23,7 @@ export RCLONE_CONFIG_ZY_ENDPOINT="$S3_ENDPOINT"
 export RCLONE_CONFIG_ZY_REGION=us-east-1
 export RCLONE_CONFIG_ZY_FORCE_PATH_STYLE=true
 # Force single-part upload — Z1 does not accept multipart without Content-Length
-S3_ARGS="--s3-upload-cutoff 100G --s3-chunk-size 100M --s3-disable-checksum --no-check-certificate"
+S3_ARGS="--s3-upload-cutoff 5G --s3-chunk-size 100M --s3-disable-checksum --no-check-certificate"
 
 TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
 WORKDIR=/tmp/synkra-backups

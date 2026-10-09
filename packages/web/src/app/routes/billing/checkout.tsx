@@ -46,7 +46,14 @@ export function BillingCheckoutPage() {
         onSuccess: (data) => {
           window.location.href = data.authorizationUrl;
         },
-        onError: () => toast.error(t('Could not start checkout. Please try again.')),
+        onError: (err: Error) => {
+          const msg = err?.message || '';
+          if (/paystack|not configured|checkout disabled|secret_key/i.test(msg)) {
+            toast.error(t('Payments are not yet enabled. Contact hello@synkra.co.za.'));
+          } else {
+            toast.error(t('Could not start checkout. Please try again.'));
+          }
+        },
       },
     );
   };
