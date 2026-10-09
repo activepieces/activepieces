@@ -14,7 +14,10 @@ const DISPOSABLE_DOMAIN_CACHE_KEY = 'zerobounce:disposable-domains:v1'
 const DISPOSABLE_DOMAIN_CACHE_SIZE = 500
 
 const REFUSED_STATUSES = new Set(['spamtrap', 'abuse'])
-const REFUSED_DO_NOT_MAIL_SUB_STATUSES = new Set(['disposable', 'toxic', 'possible_trap', 'global_suppression'])
+const REFUSED_SUB_STATUSES = new Map<string, Set<string>>([
+    ['do_not_mail', new Set(['disposable', 'toxic', 'possible_trap', 'global_suppression'])],
+    ['invalid', new Set(['no_dns_entries', 'does_not_accept_mail', 'unroutable_ip_address'])],
+])
 
 function apiKey(): string | undefined {
     const raw = system.get(AppSystemProp.ZEROBOUNCE_API_KEY)?.trim()
@@ -35,7 +38,7 @@ function refusedBy(verdict: ValidateResponse): boolean {
     if (REFUSED_STATUSES.has(status)) {
         return true
     }
-    return status === 'do_not_mail' && REFUSED_DO_NOT_MAIL_SUB_STATUSES.has(verdict.sub_status?.toLowerCase() ?? '')
+    return REFUSED_SUB_STATUSES.get(status)?.has(verdict.sub_status?.toLowerCase() ?? '') ?? false
 }
 
 function isDisposableVerdict(verdict: ValidateResponse): boolean {
