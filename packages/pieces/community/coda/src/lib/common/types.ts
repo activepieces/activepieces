@@ -1,31 +1,28 @@
-import { HttpMethod, httpClient, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
+import { HttpMethod } from "@activepieces/pieces-common";
 import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
 import { codaAuth } from '../auth';
+import { CODA_BASE_URL, CodaQueryValue, codaApi } from './client';
 
-export const CODA_BASE_URL = "https://coda.io/apis/v1";
+export { CODA_BASE_URL };
 
-// --- Common Reference Types ---
 export interface CodaObjectReference {
     id: string;
     type: string;
     href: string;
-    name?: string; // Common but not always present in all reference types
+    name?: string;
 }
 
 export interface CodaPageReference extends CodaObjectReference {
-    type: 'page'; // More specific type if known
-    // Add other page-specific reference fields if needed
+    type: 'page';
 }
 
 export interface CodaColumnReference extends CodaObjectReference {
-    type: 'column'; // More specific type if known
-    // Add other column-specific reference fields if needed
+    type: 'column';
 }
 
-// --- Table Related Interfaces ---
 export interface CodaTableReference extends CodaObjectReference {
-    type: 'table' | 'view'; // More specific, can be table or view reference
-    name: string; // Name is required for table reference as per GetTable response
+    type: 'table' | 'view';
+    name: string;
 }
 
 export interface CodaListTablesResponse {
@@ -36,33 +33,25 @@ export interface CodaListTablesResponse {
 }
 
 export interface CodaSort {
-    column: CodaColumnReference | string; // API might return ID or full reference
+    column: CodaColumnReference | string;
     direction: 'ascending' | 'descending';
 }
 
-// Interface for the format of a column
 export interface CodaColumnFormat {
-    type: string; // e.g., "text", "number", "date", "person", "lookup", "checkbox", "currency", "percent", "slider", "scale", "selectList", "multiSelectList", "button"
-    // Other format-specific properties can be added here if needed for dynamic prop generation
-    // For example, for selectList:
-    // options?: { name: string, id?: string }[];
-    // For lookup:
-    // table?: CodaTableReference;
+    type: string;
     isArray?:boolean
 }
 
-// Interface for a single column in the getTableDetails response
 export interface CodaTableColumn {
-    id: string; // Column ID, e.g., "c-123abcDEF"
+    id: string;
     type: "column";
     href: string;
-    name: string; // User-visible name of the column
+    name: string;
     format: CodaColumnFormat;
-    display?: boolean; // As per docs, optional
-    calculated?: boolean; // Whether this is a calculated column
-    formula?: string; // The formula if it's a calculated column
-    defaultValue?: string; // As per docs, it's a formula string
-    // Add other relevant column properties if necessary
+    display?: boolean;
+    calculated?: boolean;
+    formula?: string;
+    defaultValue?: string;
 }
 
 export interface CodaListColumnsResponse {
@@ -74,24 +63,22 @@ export interface CodaListColumnsResponse {
 
 export interface CodaGetTableDetailsResponse {
     id: string;
-    type: "table"; // This specific endpoint returns "table"
+    type: "table";
     tableType: "table" | "view";
     href: string;
     name: string;
     parent: CodaPageReference;
     browserLink: string;
-    displayColumn: CodaColumnReference; // This is a reference, not the full column object
+    displayColumn: CodaColumnReference;
     rowCount: number;
     sorts: CodaSort[];
-    layout: string; // Enum of layout types, string for simplicity
-    createdAt: string; // date-time
-    updatedAt: string; // date-time
-    parentTable?: CodaTableReference; // Optional, for views
-    filter?: any; // object, structure can be complex
+    layout: string;
+    createdAt: string;
+    updatedAt: string;
+    parentTable?: CodaTableReference;
+    filter?: unknown;
 }
 
-
-// --- Row Related Interfaces ---
 export interface CodaRow {
     id: string;
     type: "row";
@@ -101,7 +88,7 @@ export interface CodaRow {
     browserLink: string;
     createdAt: string;
     updatedAt: string;
-    values: Record<string, any>;
+    values: Record<string, unknown>;
     parentTable?: CodaTableReference;
 }
 
@@ -117,10 +104,9 @@ export interface CodaListRowsResponse {
     nextSyncToken?: string;
 }
 
-// For creating/updating rows
 export interface CodaCellEdit {
-    column: string; // Column ID or Name
-    value: any;
+    column: string;
+    value: unknown;
 }
 export interface CodaRowEdit {
     cells: CodaCellEdit[];
@@ -128,25 +114,23 @@ export interface CodaRowEdit {
 
 export interface CodaMutateRowsPayload {
     rows: CodaRowEdit[];
-    keyColumns?: string[]; // Column IDs or Names for upsert
+    keyColumns?: string[];
 }
 
 export interface CodaMutateRowsResponse {
     requestId: string;
     addedRowIds?: string[];
-    updatedRowIds?: string[]; // API docs for POST say addedRowIds, but PUT might have updatedRowIds. Let's be broad.
 }
 
-export interface CodaUpdateRowPayload { // Used for PUT (update single row)
+export interface CodaUpdateRowPayload {
     row: CodaRowEdit;
 }
 
 export interface CodaUpdateRowResponse {
     requestId: string;
-    id: string; // ID of the updated row
+    id: string;
 }
 
-// --- Document Related Interfaces ---
 export interface CodaDocIcon {
     name: string;
     type: string;
@@ -172,7 +156,7 @@ export interface CodaDocPublished {
     discoverable: boolean;
     earnCredit: boolean;
     mode: "view" | "play" | "edit";
-    categories: { name: string }[]; // Simplified, assuming only name is needed for now
+    categories: { name: string }[];
     description?: string;
     imageLink?: string;
 }
@@ -182,14 +166,14 @@ export interface CodaDoc {
     href: string;
     browserLink: string;
     name: string;
-    owner: string; // email
+    owner: string;
     ownerName: string;
-    createdAt: string; // date-time
-    updatedAt: string; // date-time
-    workspaceId: string; // Deprecated but present
-    folderId: string; // Deprecated but present
-    workspace: CodaObjectReference; // WorkspaceReference
-    folder: CodaObjectReference; // FolderReference
+    createdAt: string;
+    updatedAt: string;
+    workspaceId: string;
+    folderId: string;
+    workspace: CodaObjectReference;
+    folder: CodaObjectReference;
     icon?: CodaDocIcon;
     docSize?: CodaDocSize;
     sourceDoc?: CodaDocSourceDocReference;
@@ -203,7 +187,6 @@ export interface CodaListDocsResponse {
     nextPageLink?: string;
 }
 
-// --- API Client ---
 export interface CodaAPIClient {
     listTables: (docId: string, params?: { limit?: number; sortBy?: string; tableTypes?: string, pageToken?: string }) => Promise<CodaListTablesResponse>;
     getTableDetails: (docId: string, tableIdOrName: string, params?: { useUpdatedTableLayouts?: boolean }) => Promise<CodaGetTableDetailsResponse>;
@@ -235,132 +218,68 @@ export interface CodaAPIClient {
     }) => Promise<CodaListDocsResponse>;
 }
 
-export const codaClient = ({secret_text}: AppConnectionValueForAuthProperty<typeof codaAuth>): CodaAPIClient => {
-    const makeRequest = async <T>(request: Omit<HttpRequest, 'authentication'> & { body?: any }): Promise<T> => {
-        const response = await httpClient.sendRequest<T>({
-            ...request,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: secret_text,
-            }
-        });
-        return response.body;
-    }
+export const codaClient = ({ secret_text }: AppConnectionValueForAuthProperty<typeof codaAuth>): CodaAPIClient => {
+    const call = <T>({ method, path, operation, query, body }: { method: HttpMethod; path: string; operation: string; query?: Record<string, CodaQueryValue>; body?: unknown }): Promise<T> =>
+        codaApi.request<T>({ token: secret_text, method, path, operation, query, body });
 
     return {
-        listTables: async (docId, params) => {
-            const queryParams: Record<string, string | number | boolean> = {};
-            if (params?.limit) queryParams['limit'] = params.limit.toString();
-            if (params?.sortBy) queryParams['sortBy'] = params.sortBy;
-            if (params?.tableTypes) queryParams['tableTypes'] = params.tableTypes;
-            if (params?.pageToken) queryParams['pageToken'] = params.pageToken;
-
-            return makeRequest<CodaListTablesResponse>({
+        listTables: (docId, params) =>
+            call<CodaListTablesResponse>({
                 method: HttpMethod.GET,
-                url: `${CODA_BASE_URL}/docs/${docId}/tables`,
-                queryParams: Object.fromEntries(Object.entries(queryParams).map(([k, v]) => [k, String(v)])),
-            });
-        },
-        getTableDetails: async (docId, tableIdOrName, params) => {
-            const queryParams: Record<string, string | boolean> = {};
-            if (params?.useUpdatedTableLayouts !== undefined) queryParams['useUpdatedTableLayouts'] = params.useUpdatedTableLayouts;
-
-            return makeRequest<CodaGetTableDetailsResponse>({
+                path: `${codaApi.docPath(docId)}/tables`,
+                operation: 'list tables',
+                query: { ...params },
+            }),
+        getTableDetails: (docId, tableIdOrName, params) =>
+            call<CodaGetTableDetailsResponse>({
                 method: HttpMethod.GET,
-                url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}`,
-                queryParams: Object.fromEntries(Object.entries(queryParams).map(([k, v]) => [k, String(v)])),
-            });
-        },
-        listColumns: async (docId, tableIdOrName, params) => {
-            const queryParams: Record<string, string | number | boolean> = {};
-            if (params?.limit) queryParams['limit'] = params.limit;
-            if (params?.pageToken) queryParams['pageToken'] = params.pageToken;
-            if (params?.visibleOnly !== undefined) queryParams['visibleOnly'] = params.visibleOnly;
-
-            return makeRequest<CodaListColumnsResponse>({
+                path: codaApi.tablePath({ docId, tableIdOrName }),
+                operation: 'get table',
+                query: { ...params },
+            }),
+        listColumns: (docId, tableIdOrName, params) =>
+            call<CodaListColumnsResponse>({
                 method: HttpMethod.GET,
-                url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}/columns`,
-                queryParams: Object.fromEntries(Object.entries(queryParams).map(([k,v])=>[k,String(v)])),
-            });
-        },
-        getRow: async (docId, tableIdOrName, rowIdOrName, params) => {
-            const queryParams: Record<string, string | boolean> = {};
-            if (params?.useColumnNames !== undefined) queryParams['useColumnNames'] = params.useColumnNames;
-            if (params?.valueFormat) queryParams['valueFormat'] = params.valueFormat;
-
-            return makeRequest<CodaGetRowResponse>({
+                path: `${codaApi.tablePath({ docId, tableIdOrName })}/columns`,
+                operation: 'list columns',
+                query: { ...params },
+            }),
+        getRow: (docId, tableIdOrName, rowIdOrName, params) =>
+            call<CodaGetRowResponse>({
                 method: HttpMethod.GET,
-                url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}/rows/${encodeURIComponent(rowIdOrName)}`,
-                queryParams: Object.fromEntries(Object.entries(queryParams).map(([k, v]) => [k, String(v)])),
-            });
-        },
-        listRows: async (docId, tableIdOrName, params) => {
-            const queryParams: Record<string, string | number | boolean> = {};
-            if (params?.query) queryParams['query'] = params.query;
-            if (params?.sortBy) queryParams['sortBy'] = params.sortBy;
-            if (params?.useColumnNames !== undefined) queryParams['useColumnNames'] = params.useColumnNames;
-            if (params?.valueFormat) queryParams['valueFormat'] = params.valueFormat;
-            if (params?.visibleOnly !== undefined) queryParams['visibleOnly'] = params.visibleOnly;
-            if (params?.limit) queryParams['limit'] = params.limit;
-            if (params?.pageToken) queryParams['pageToken'] = params.pageToken;
-            if (params?.syncToken) queryParams['syncToken'] = params.syncToken;
-
-            return makeRequest<CodaListRowsResponse>({
+                path: `${codaApi.tablePath({ docId, tableIdOrName })}/rows/${codaApi.pathSegment({ value: rowIdOrName, label: 'Row ID or name' })}`,
+                operation: 'get row',
+                query: { ...params },
+            }),
+        listRows: (docId, tableIdOrName, params) =>
+            call<CodaListRowsResponse>({
                 method: HttpMethod.GET,
-                url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}/rows`,
-                queryParams: Object.fromEntries(
-                    Object.entries(queryParams).map(([key, value]) => [key, String(value)])
-                ),
-            });
-        },
-        mutateRows: async (docId, tableIdOrName, payload, params) => {
-            const queryParams: Record<string, string | boolean> = {};
-            if (params?.disableParsing !== undefined) queryParams['disableParsing'] = params.disableParsing;
-
-            return makeRequest<CodaMutateRowsResponse>({
+                path: `${codaApi.tablePath({ docId, tableIdOrName })}/rows`,
+                operation: 'list rows',
+                query: { ...params },
+            }),
+        mutateRows: (docId, tableIdOrName, payload, params) =>
+            call<CodaMutateRowsResponse>({
                 method: HttpMethod.POST,
-                url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}/rows`,
+                path: `${codaApi.tablePath({ docId, tableIdOrName })}/rows`,
+                operation: 'add or update rows',
+                query: { ...params },
                 body: payload,
-                queryParams: Object.fromEntries(Object.entries(queryParams).map(([k, v]) => [k, String(v)])),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-        },
-        updateRow: async (docId, tableIdOrName, rowIdOrName, payload, params) => {
-            const queryParams: Record<string, string | boolean> = {};
-            if (params?.disableParsing !== undefined) queryParams['disableParsing'] = params.disableParsing;
-
-            return makeRequest<CodaUpdateRowResponse>({
+            }),
+        updateRow: (docId, tableIdOrName, rowIdOrName, payload, params) =>
+            call<CodaUpdateRowResponse>({
                 method: HttpMethod.PUT,
-                url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}/rows/${encodeURIComponent(rowIdOrName)}`,
+                path: `${codaApi.tablePath({ docId, tableIdOrName })}/rows/${codaApi.pathSegment({ value: rowIdOrName, label: 'Row ID or name' })}`,
+                operation: 'update row',
+                query: { ...params },
                 body: payload,
-                queryParams: Object.fromEntries(Object.entries(queryParams).map(([k, v]) => [k, String(v)])),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-        },
-        listDocs: async (params) => {
-            const queryParams: Record<string, string | number | boolean> = {};
-            if (params?.isOwner !== undefined) queryParams['isOwner'] = params.isOwner;
-            if (params?.isPublished !== undefined) queryParams['isPublished'] = params.isPublished;
-            if (params?.query) queryParams['query'] = params.query;
-            if (params?.sourceDoc) queryParams['sourceDoc'] = params.sourceDoc;
-            if (params?.isStarred !== undefined) queryParams['isStarred'] = params.isStarred;
-            if (params?.inGallery !== undefined) queryParams['inGallery'] = params.inGallery;
-            if (params?.workspaceId) queryParams['workspaceId'] = params.workspaceId;
-            if (params?.folderId) queryParams['folderId'] = params.folderId;
-            if (params?.limit) queryParams['limit'] = params.limit;
-            if (params?.pageToken) queryParams['pageToken'] = params.pageToken;
-
-            return makeRequest<CodaListDocsResponse>({
+            }),
+        listDocs: (params) =>
+            call<CodaListDocsResponse>({
                 method: HttpMethod.GET,
-                url: `${CODA_BASE_URL}/docs`,
-                queryParams: Object.fromEntries(
-                    Object.entries(queryParams).map(([key, value]) => [key, String(value)])
-                ),
-            });
-        }
+                path: '/docs',
+                operation: 'list docs',
+                query: { ...params },
+            }),
     };
 };

@@ -7,13 +7,13 @@ Promotion to production stays a **manual PR** — this tool only tells you wheth
 ## Run it
 
 ```bash
-npm run chat-evals          # interactive reviewer (uses cached results if present)
-npm run chat-evals:ci       # non-interactive vitest gate (for scripts/CI)
+npm run agent-evals          # interactive reviewer (uses cached results if present)
+npm run agent-evals:ci       # non-interactive vitest gate (for scripts/CI)
 ```
 
 Both load your key from `.env.dev` (`AP_OPENROUTER_PROVISION_KEY` or `OPENROUTER_API_KEY`). A provisioning key is fine — the runner mints a short-lived inference key and deletes it after.
 
-The everyday loop is: **edit the prompt → `npm run chat-evals -- --fresh` → review → Proceed / Stop.**
+The everyday loop is: **edit the prompt → `npm run agent-evals -- --fresh` → review → Proceed / Stop.**
 
 ## Baseline vs candidate
 
@@ -23,7 +23,7 @@ Every run compares two prompts per fixture:
 
 A clean working tree means baseline == candidate (it runs once and says "no prompt changes").
 
-## Flags (`npm run chat-evals -- <flag>`)
+## Flags (`npm run agent-evals -- <flag>`)
 
 | Flag | Use it when |
 |---|---|
@@ -31,7 +31,7 @@ A clean working tree means baseline == candidate (it runs once and says "no prom
 | `--fresh` | You edited the prompt and want fresh results. |
 | `--candidate <path>` | A/B an explicit prompt file instead of your working tree. |
 
-For a non-interactive pass/fail gate (scripts/CI), use `npm run chat-evals:ci`.
+For a non-interactive pass/fail gate (scripts/CI), use `npm run agent-evals:ci`.
 
 ## In the reviewer
 

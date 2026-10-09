@@ -5,6 +5,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { CapabilitiesTab } from './capabilities-tab';
 import { ProvidersTab } from './providers-tab';
+import { TiersTab } from './tiers-tab';
 
 export default function AIProvidersPage({ section }: AIProvidersPageProps) {
   return <AICenter section={section} />;
@@ -24,6 +25,8 @@ function AICenter({ section }: { section: AISection }) {
           <div className="flex flex-1 flex-col">
             <ProvidersTab />
           </div>
+        ) : section === 'tiers' ? (
+          <TiersTab />
         ) : (
           <CapabilitiesTab />
         )}
@@ -32,7 +35,7 @@ function AICenter({ section }: { section: AISection }) {
   );
 }
 
-type AISection = 'providers' | 'capabilities';
+type AISection = 'providers' | 'capabilities' | 'tiers';
 
 type AIProvidersPageProps = {
   section: AISection;
