@@ -96,6 +96,7 @@ const PlatformTemplatesPage = React.lazy(() =>
   })),
 );
 const UsersPage = React.lazy(() => import('./platform/users'));
+const PreflightPage = React.lazy(() => import('./platform/preflight'));
 const PlatformConnectionsPage = React.lazy(
   () => import('./platform/connections'),
 );
@@ -293,6 +294,18 @@ export const platformRoutes = [
         <PageTitle title="General">
           <SuspenseWrapper>
             <GeneralPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/preflight',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Preflight">
+          <SuspenseWrapper>
+            <PreflightPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
