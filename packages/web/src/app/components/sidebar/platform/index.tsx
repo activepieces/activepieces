@@ -94,6 +94,11 @@ export function PlatformSidebar() {
             },
           ],
         },
+        {
+          to: '/platform/preflight',
+          label: t('Preflight'),
+          icon: FileHeartIcon,
+        },
       ],
     },
     {
