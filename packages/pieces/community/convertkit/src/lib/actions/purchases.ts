@@ -1,10 +1,11 @@
 import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { convertkitAuth } from '../auth';
+import { kitHttp } from '../common/http';
 import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { convertkitAuth } from '../..';
+  kitPurchaseListOutputSchema,
+  kitPurchaseOutputSchema,
+} from '../output-schemas';
 import {
   purchaseId,
   purchasesPageNumber,
@@ -34,9 +35,10 @@ export const listPurchases = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases',
   classification: 'SEARCH',
+  outputSchema: kitPurchaseListOutputSchema,
   displayName: 'List Purchases',
   description: 'Returns a list of all purchases',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves a paginated list of all purchase records in the account; pass a page number to go beyond the first page. For purchases scoped to one subscriber, product, form, or sequence, prefer the dedicated filtered list actions. Read-only and idempotent.',
@@ -55,9 +57,10 @@ export const getPurchaseById = createAction({
   auth: convertkitAuth,
   name: 'purchases_get_purchase_by_id',
   classification: 'READ',
+  outputSchema: kitPurchaseOutputSchema,
   displayName: 'Get Purchase By Id',
   description: 'Returns data for a single purchase',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches one purchase record by its ConvertKit purchase ID (not the external transaction ID). Use List Purchases first if only the transaction details are known. Read-only and idempotent.',
@@ -76,9 +79,7 @@ export const getPurchaseById = createAction({
       queryParams: buildQueryParams(context.auth.secret_text),
     };
 
-    const response = await httpClient.sendRequest<{
-      purchase: Purchase;
-    }>(request);
+    const response = await kitHttp.sendRequest<Purchase>(request);
 
     if (response.status !== 200) {
       throw new Error(`Error fetching purchase: ${response.status}`);
@@ -99,6 +100,7 @@ export const createSinglePurchase = createAction({
   auth: convertkitAuth,
   name: 'purchases_create_purchase',
   classification: 'WRITE',
+  outputSchema: kitPurchaseOutputSchema,
   displayName: 'Create Purchase',
   description: 'Creates a new purchase',
   audience: 'both',
@@ -162,9 +164,7 @@ export const createSinglePurchase = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{
-      purchase: Purchase;
-    }>(request);
+    const response = await kitHttp.sendRequest<Purchase>(request);
 
     if (response.status !== 201) {
       throw new Error(`Error creating purchase: ${response.status}`);
@@ -178,6 +178,7 @@ export const createPurchases = createAction({
   auth: convertkitAuth,
   name: 'purchases_create_multiple_purchases',
   classification: 'WRITE',
+  outputSchema: kitPurchaseOutputSchema,
   displayName: 'Create Multiple Purchases',
   description: 'Creates multiple purchases',
   audience: 'both',
@@ -241,9 +242,7 @@ export const createPurchases = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{
-      purchase: Purchase;
-    }>(request);
+    const response = await kitHttp.sendRequest<Purchase>(request);
 
     if (response.status !== 201) {
       throw new Error(`Error creating purchase: ${response.status}`);
@@ -283,7 +282,7 @@ export const listPurchasesForSubscriber = createAction({
       }),
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await kitHttp.sendRequest<{
       purchases: Purchase[];
     }>(request);
 

@@ -1,12 +1,10 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, ListAgentRunsRequest, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { securityHelper } from '../../helper/security-helper'
 import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -15,8 +13,6 @@ import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
 import { agentService } from './agent-service'
-import { chatAnalyticsTelemetry } from './chat-analytics-sync'
-import { chatRolloutService } from './chat-rollout-service'
 import { agentPrompt } from './prompt/agent-prompt'
 import { updateConversationForRun } from './rpc/rpc-shared'
 import { findConnectionsForPiece } from './tools/agent-tools'
@@ -44,37 +40,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             limit: request.query.limit ?? 20,
             ...spreadIfDefined('agentId', request.query.agentId),
         })
-    })
-
-    app.get('/conversations/runs', ListAgentRunsRoute, async (request) => {
-        const readerId = await securityHelper.getUserIdFromRequest(request)
-        assertNotNullOrUndefined(readerId, 'userId')
-        await agentService(request.log).getOneOrThrow({
-            id: request.query.agentId,
-            projectId: request.projectId,
-            userId: readerId,
-        })
-        return agentConversationService(request.log).listAgentRuns({
-            projectId: request.projectId,
-            agentId: request.query.agentId,
-            cursor: request.query.cursor,
-            limit: request.query.limit ?? 20,
-        })
-    })
-
-    app.get('/conversations/runs/:id', GetAgentRunRoute, async (request) => {
-        const readerId = await securityHelper.getUserIdFromRequest(request)
-        assertNotNullOrUndefined(readerId, 'userId')
-        const run = await agentConversationService(request.log).getAgentRunOrThrow({
-            id: request.params.id,
-            projectId: request.projectId,
-        })
-        await agentService(request.log).getOneOrThrow({
-            id: run.agentId,
-            projectId: request.projectId,
-            userId: readerId,
-        })
-        return run
     })
 
     app.get('/conversations/:id', GetConversationRoute, async (request) => {
@@ -122,17 +87,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
-    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
-        // Cloud rollout: record that this user opened the chat page, then refresh the console
-        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
-        await chatRolloutService.recordLanding({
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
-        })
-        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
-        return reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const { content, runId: clientRunId, files } = request.body
         const conversationId = request.params.id
@@ -150,11 +104,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
 
         await assertAgentMessageRateLimitNotExceeded({ platformId, userId, log })
 
-        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
-        await chatRolloutService.recordChatted({ userId, platformId })
-        // Refresh the console rollout funnel snapshot (chatted count just changed).
-        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
-
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
@@ -165,7 +114,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const isBuilder = conversation.source === AgentRunSource.AGENT_BUILDER
         // resolveRunProvider and the assertion below both fall through to the platform's chat
         // provider when no provider is named. An agent answers on its own model or it does not run.
-        if (!isNil(agent) && !isBuilder && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
+        const runsOnAgentModel = !isNil(agentConfig) && !isBuilder
+        const runTierId = runsOnAgentModel ? agentConfig.modelTierId ?? null : conversation.modelTierId ?? null
+        if (runsOnAgentModel && isNil(runTierId) && (isNil(agentConfig.provider) || isNil(agentConfig.modelName))) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Pick a model for this agent before talking to it' },
@@ -184,6 +135,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             platformId,
             log,
             scope: runScope,
+            modelTierId: runTierId,
             ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
             ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
         })
@@ -454,40 +406,7 @@ const ListConversationsRoute = {
     },
 }
 
-const ListAgentRunsRoute = {
-    config: {
-        security: securityAccess.project(
-            CHAT_PRINCIPALS,
-            Permission.READ_AGENT,
-            { type: ProjectResourceType.QUERY },
-        ),
-    },
-    schema: {
-        tags: ['agents'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List the unattended runs a flow step made with this agent',
-        querystring: ListAgentRunsRequest,
-    },
-}
-
 const CONVERSATION_PARAMS = z.object({ id: z.string() })
-
-const GetAgentRunRoute = {
-    config: {
-        security: securityAccess.project(
-            CHAT_PRINCIPALS,
-            Permission.READ_AGENT,
-            { type: ProjectResourceType.QUERY },
-        ),
-    },
-    schema: {
-        tags: ['agents'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Read one unattended run a flow step made, without being able to continue it',
-        params: CONVERSATION_PARAMS,
-        querystring: z.object({ projectId: z.string() }),
-    },
-}
 
 const GetConversationRoute = {
     config: {
@@ -555,16 +474,6 @@ const SendMessageRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
         body: SendAgentMessageRequest,
-    },
-}
-
-const FunnelLandingRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['agent'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 

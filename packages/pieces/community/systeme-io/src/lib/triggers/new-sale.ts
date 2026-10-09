@@ -1,7 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { systemeIoAuth } from '../common/auth';
-import { systemeIoCommon } from '../common/client';
-import { randomBytes } from 'crypto';
+import { systemeWebhook } from '../common/webhook';
+import { saleSample } from '../common/samples';
+import { saleTriggerOutputSchema } from '../output-schemas';
 
 export const newSale = createTrigger({
     auth: systemeIoAuth,
@@ -10,79 +11,29 @@ export const newSale = createTrigger({
     displayName: 'New Sale',
     description: 'Fires when a new purchase is made within a funnel',
     aiMetadata: {
-      description: 'Fires when a new sale (purchase) is completed within a Systeme.io funnel, delivering the sale record including amount, product, funnel, contact, and payment details. Use to react to new orders or revenue events.',
+      description: 'Fires when a new sale (purchase) is completed within a Systeme.io funnel, delivering the customer (email, contact id, form fields), order, order item resources, price plan, funnel step and any coupon. Use to react to new orders or revenue events; use Sale Canceled for refunds and subscription cancellations.',
     },
     props: {},
-    sampleData: {
-        sale: {
-            id: 67890,
-            amount: 99.99,
-            currency: "USD",
-            status: "completed",
-            createdAt: "2024-01-01T00:00:00+00:00",
-            updatedAt: "2024-01-01T00:00:00+00:00",
-            product: {
-                id: 123,
-                name: "Premium Course",
-                type: "digital_product"
-            },
-            funnel: {
-                id: 456,
-                name: "Sales Funnel",
-                step: "checkout"
-            },
-            contact: {
-                id: 12345,
-                email: "customer@example.com",
-                firstName: "John",
-                lastName: "Doe"
-            },
-            payment: {
-                method: "stripe",
-                transactionId: "txn_1234567890",
-                gateway: "stripe"
-            },
-            affiliate: {
-                id: null,
-                commission: null
-            }
-        }
-    },
+    sampleData: saleSample,
+    outputSchema: saleTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-        const secret = randomBytes(32).toString('hex');
-        const response = await systemeIoCommon.createWebhook({
-            eventType: 'SALE_NEW',
+        await systemeWebhook.enable({
+            auth: context.auth,
             webhookUrl: context.webhookUrl,
-            auth: context.auth.secret_text,
-            secret: secret,
+            store: context.store,
+            event: 'SALE_NEW',
+            prefix: 'new_sale',
         });
-        
-        await context.store.put('new_sale_webhook_id', response.id);
-        await context.store.put('new_sale_webhook_secret', secret);
     },
     async onDisable(context) {
-        const webhookId = await context.store.get<string>('new_sale_webhook_id');
-        if (webhookId) {
-            await systemeIoCommon.deleteWebhook({
-                webhookId,
-                auth: context.auth.secret_text,
-            });
-            await context.store.put('new_sale_webhook_id', null);
-            await context.store.put('new_sale_webhook_secret', null);
-        }
+        await systemeWebhook.disable({ auth: context.auth, store: context.store, prefix: 'new_sale' });
     },
     async run(context) {
-        const webhookSecret = await context.store.get<string>('new_sale_webhook_secret');
-        const webhookSignatureHeader = context.payload.headers['x-webhook-signature'];
-        const rawBody = context.payload.rawBody;
-
-        if (!systemeIoCommon.verifyWebhookSignature(webhookSecret || undefined, webhookSignatureHeader, rawBody)) {
-            console.warn('Systeme.io webhook signature verification failed');
+        if (!(await systemeWebhook.accept({ store: context.store, payload: context.payload, prefix: 'new_sale' }))) {
             return [];
         }
 
-        const payload = context.payload.body as any;
-        return [payload.sale || payload];
+        return [systemeWebhook.unwrap({ body: context.payload.body, key: 'sale' })];
     }
 });

@@ -5,7 +5,7 @@
   "Get Call Details": "通話の詳細を取得",
   "Schedule Call Agent": "通話エージェントをスケジュールする",
   "Get Call Transcript": "通話のトランスクリプトを取得",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "get the lists of agents with Gmail": "Gmail のエージェントリストを取得する",
   "Create a phone call to customer from Agent": "エージェントからお客様に電話をかけます",
   "Fetch Call details by Call ID": "通話IDで通話の詳細を取得",

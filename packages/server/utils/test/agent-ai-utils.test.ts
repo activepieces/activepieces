@@ -130,20 +130,13 @@ describe('collectStepMessages', () => {
         content: [{ type: 'text', text: 'That table does not exist yet — want me to create it?' }],
     }
 
-    it('returns the last step (which on this provider is cumulative — holds every earlier step)', () => {
-        // The provider's `response.messages` is cumulative: each step already contains every prior
-        // step's assistant/tool messages, so the LAST step holds the full set. Flat-mapping would
-        // re-emit the earlier steps in a 4,3,2,1 staircase (the bug this guards against).
+    it('joins every step, since each step holds only its own messages', () => {
         const steps = [
             { response: { messages: [listCall, listResult] } },
-            { response: { messages: [listCall, listResult, finalText] } },
+            { response: { messages: [finalText] } },
         ]
-        const result = agentAiUtils.collectStepMessages(steps)
-        expect(result).toEqual([listCall, listResult, finalText])
-        // The regression this guards: the tool call + its result must survive (the last step carries them).
-        expect(result).toContainEqual(listResult)
-        // And no duplication from flat-mapping the staircase.
-        expect(result.filter((m) => m === listCall).length).toBe(1)
+
+        expect(agentAiUtils.collectStepMessages(steps)).toEqual([listCall, listResult, finalText])
     })
 
     it('returns an empty array when there are no steps', () => {
@@ -171,6 +164,28 @@ describe('buildStepParts — tool call status', () => {
             ['refused', PersistedToolCallStatus.ERROR],
             ['unanswered', PersistedToolCallStatus.ERROR],
         ])
+    })
+})
+
+describe('buildStepParts — ap_lazy_tool', () => {
+    it('persists a wrapped call under the inner tool name and input', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'w1', toolName: 'ap_lazy_tool', input: { tool: 'ap_add_step', input: { stepName: 'step_1' } } },
+            { type: 'tool-result', toolCallId: 'w1', toolName: 'ap_lazy_tool', output: { type: 'json', value: { ok: true } } },
+        ]
+
+        const [part] = agentAiUtils.buildStepParts({ content })
+
+        expect(part).toMatchObject({ type: PersistedAgentPartType.TOOL_CALL, toolName: 'ap_add_step', input: { stepName: 'step_1' } })
+    })
+
+    it('turns a thinking-status call into a status part, not a tool card', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 's1', toolName: 'ap_update_thinking_status', input: { status: 'I will wire up Slack' } },
+            { type: 'tool-result', toolCallId: 's1', toolName: 'ap_update_thinking_status', output: { type: 'json', value: { success: true } } },
+        ]
+
+        expect(agentAiUtils.buildStepParts({ content })).toEqual([{ type: PersistedAgentPartType.THINKING_STATUS, text: 'I will wire up Slack' }])
     })
 })
 
@@ -335,6 +350,31 @@ describe('collapseStaleToolOutputs', () => {
         expect(outputAt(0)).toContain(big) // schema preserved despite being the stalest
         expect(outputAt(0)).not.toContain('omitted to save context')
         expect(outputAt(1)).toContain('omitted to save context') // ordinary stale result still collapses
+    })
+
+    it('pins skill loads and wrapped ap_get_piece_props results like direct schema calls', () => {
+        const big = 'z'.repeat(2000)
+        const skillAndWrappedSchema: ModelMessage[] = [
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'tool-call', toolCallId: 'skill', toolName: 'ap_load_skill', input: { skill: 'flow_building' } },
+                    { type: 'tool-call', toolCallId: 'wrapped', toolName: 'ap_lazy_tool', input: { tool: 'ap_get_piece_props', input: {} } },
+                ],
+            },
+            {
+                role: 'tool',
+                content: [
+                    { type: 'tool-result', toolCallId: 'skill', toolName: 'ap_load_skill', output: { type: 'text', value: big } },
+                    { type: 'tool-result', toolCallId: 'wrapped', toolName: 'ap_lazy_tool', output: { type: 'text', value: big } },
+                ],
+            },
+        ]
+        const messages: ModelMessage[] = [...skillAndWrappedSchema, ...Array.from({ length: 9 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = agentAiUtils.collapseStaleToolOutputs({ messages })
+
+        expect(JSON.stringify(out[1])).not.toContain('omitted to save context')
+        expect(JSON.stringify(out[2])).toContain('omitted to save context')
     })
 
     it('pinned schema results do not consume a keep-recent slot', () => {

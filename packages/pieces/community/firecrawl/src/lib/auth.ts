@@ -5,9 +5,8 @@ import { FIRECRAWL_API_BASE_URL } from './common/common';
 const markdownDescription = `
 Follow these steps to obtain your Firecrawl API Key:
 
-1. Visit [Firecrawl](https://firecrawl.dev) and create an account.
-2. Log in and navigate to your dashboard.
-3. Locate and copy your API key from the API settings section.
+1. Sign in or create an account at [Firecrawl](https://www.firecrawl.dev/app/api-keys?utm_source=activepieces&utm_medium=integration).
+2. Copy your API key from the API Keys page.
 `;
 
 export const firecrawlAuth = PieceAuth.SecretText({

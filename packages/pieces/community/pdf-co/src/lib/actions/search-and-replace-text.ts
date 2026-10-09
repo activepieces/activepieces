@@ -1,23 +1,10 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, HttpError } from '@activepieces/pieces-common';
-import { PdfCoSuccessResponse, PdfCoErrorResponse } from '../common/types';
 import { pdfCoAuth } from '../auth';
-import { BASE_URL, commonProps } from '../common/props';
-
-interface PdfCoSearchAndReplaceRequestBody {
-	url: string;
-	searchStrings: string[];
-	replaceStrings: string[];
-	async: boolean;
-	caseSensitive?: boolean;
-	regex?: boolean;
-	pages?: string;
-	name?: string;
-	expiration?: number;
-	httpusername?: string;
-	httppassword?: string;
-	password?: string;
-}
+import { pdfCoClient } from '../common/client';
+import { pdfCoJobs } from '../common/jobs';
+import { commonProps, PDF_CO_DEFAULTS, pdfCoProps } from '../common/props';
+import { pdfCoOutputSchemas } from '../output-schemas';
 
 export const searchAndReplaceText = createAction({
 	name: 'search_and_replace_text',
@@ -27,10 +14,11 @@ export const searchAndReplaceText = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Finds occurrences of given text in a source PDF (referenced by URL) and replaces them with new text, with optional case-sensitive matching or regular-expression patterns instead of literal search. Use when an agent needs to edit textual content in an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+			'Finds occurrences of given texts in a source PDF (referenced by URL) and replaces each with the replacement at the same position in the list, with optional case-sensitive matching or regular-expression patterns; both lists must have the same length and page indexes start at 0. Use when an agent needs to edit textual content in an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
 		idempotent: false,
 	},
 	auth: pdfCoAuth,
+	outputSchema: pdfCoOutputSchemas.rawResult,
 	props: {
 		url: Property.ShortText({
 			displayName: 'PDF URL',
@@ -39,10 +27,12 @@ export const searchAndReplaceText = createAction({
 		}),
 		searchStrings: Property.Array({
 			displayName: 'Text to Locate',
+			description: 'Texts to find. Each one is replaced by the Replacement Text in the same position.',
 			required: true,
 		}),
 		replaceStrings: Property.Array({
 			displayName: 'Replacement Text',
+			description: 'One replacement per Text to Locate, in the same order.',
 			required: true,
 		}),
 		caseSensitive: Property.Checkbox({
@@ -59,81 +49,65 @@ export const searchAndReplaceText = createAction({
 		}),
 		pages: Property.ShortText({
 			displayName: 'Pages',
-			description:
-				'Comma-separated page numbers or ranges (e.g., "0,2,5-10"). Leave empty for all pages.',
+			description: 'Comma-separated page indexes or ranges (first page is 0), e.g. "0,2,5-10". Leave empty for all pages.',
 			required: false,
 		}),
 		...commonProps,
+		replacementLimit: Property.Number({
+			displayName: 'Max Replacements per Text',
+			description: 'Maximum replacements for each text. Leave empty or 0 to replace every match.',
+			required: false,
+		}),
+		saveOutputFile: pdfCoProps.saveOutputFile({ defaultValue: PDF_CO_DEFAULTS.saveOutputFileOnExistingActions }),
 	},
-	async run(context) {
-		const { auth, propsValue } = context;
-		const {
-			url,
-			searchStrings,
-			replaceStrings,
-			caseSensitive,
-			regex,
-			pages,
-			fileName,
-			httpPassword,
-			httpUsername,
-			pdfPassword,
-			expiration,
-		} = propsValue;
-
-		const requestBody: PdfCoSearchAndReplaceRequestBody = {
-			url: url,
-			searchStrings: searchStrings as string[],
-			replaceStrings: replaceStrings as string[],
-			async: false,
-			caseSensitive: caseSensitive,
-			regex,
-			pages,
-			name: fileName,
-			expiration,
-			httppassword: httpPassword,
-			httpusername: httpUsername,
-			password: pdfPassword,
-		};
-
-		try {
-			const response = await httpClient.sendRequest<PdfCoSuccessResponse | PdfCoErrorResponse>({
-				method: HttpMethod.POST,
-				url: `${BASE_URL}/pdf/edit/replace-text`,
-				headers: {
-					'x-api-key': auth.secret_text,
-					'Content-Type': 'application/json',
-				},
-				body: requestBody,
-			});
-
-			if (response.body.error) {
-				const errorBody = response.body as PdfCoErrorResponse;
-				let errorMessage = `PDF.co API Error: Status ${errorBody.status}.`;
-				if (errorBody.message) {
-					errorMessage += ` Message: ${errorBody.message}.`;
-				} else {
-					errorMessage += ` An unspecified error occurred.`;
-				}
-				errorMessage += ` Check input parameters, API key, and PDF.co dashboard for more details. Raw response: ${JSON.stringify(
-					errorBody,
-				)}`;
-				throw new Error(errorMessage);
-			}
-
-			return response.body;
-		} catch (error) {
-			if (error instanceof HttpError) {
-				const responseBody = error.response?.body as PdfCoErrorResponse | undefined;
-				let detailedMessage = `HTTP Error calling PDF.co API: ${error.message}.`;
-				if (responseBody && responseBody.message) {
-					detailedMessage += ` Server message: ${responseBody.message}.`;
-				} else if (responseBody) {
-					detailedMessage += ` Server response: ${JSON.stringify(responseBody)}.`;
-				}
-				throw new Error(detailedMessage);
-			}
-			throw error;
+	async run({ auth, propsValue, files }) {
+		const searchStrings = toStringList(propsValue.searchStrings);
+		const replaceStrings = toStringList(propsValue.replaceStrings);
+		if (searchStrings.length === 0) {
+			throw new Error('Add at least one Text to Locate.');
 		}
+		if (searchStrings.some((item) => item === '')) {
+			throw new Error('Text to Locate cannot contain empty entries.');
+		}
+		if (searchStrings.length !== replaceStrings.length) {
+			throw new Error(
+				`Text to Locate has ${searchStrings.length} entries but Replacement Text has ${replaceStrings.length}. Give one replacement per text, in the same order.`,
+			);
+		}
+		const limit = propsValue.replacementLimit;
+		if (limit !== undefined && limit !== null && (!Number.isInteger(Number(limit)) || Number(limit) < 0)) {
+			throw new Error('Max Replacements per Text must be a whole number of 0 or more.');
+		}
+		const body = pdfCoClient.readRecord(
+			await pdfCoClient.request<unknown>({
+				apiKey: pdfCoClient.apiKeyOf(auth),
+				method: HttpMethod.POST,
+				path: '/v1/pdf/edit/replace-text',
+				body: {
+					url: propsValue.url,
+					searchStrings,
+					replaceStrings,
+					async: false,
+					caseSensitive: propsValue.caseSensitive,
+					regex: propsValue.regex,
+					pages: propsValue.pages,
+					name: propsValue.fileName,
+					expiration: propsValue.expiration,
+					httppassword: propsValue.httpPassword,
+					httpusername: propsValue.httpUsername,
+					password: propsValue.pdfPassword,
+					...(limit === undefined || limit === null ? {} : { replacementLimit: Number(limit) }),
+				},
+			}),
+		);
+		const saved = await pdfCoJobs.optionalSave({ files, url: body['url'], enabled: propsValue.saveOutputFile, fileName: propsValue.fileName });
+		return { ...body, ...saved };
 	},
 });
+
+function toStringList(value: unknown): string[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	return value.map((item) => (item === undefined || item === null ? '' : String(item)));
+}
