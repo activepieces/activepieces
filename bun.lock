@@ -6266,6 +6266,17 @@
         "vitest": "3.2.6",
       },
     },
+    "packages/pieces/community/mqtt": {
+      "name": "@activepieces/piece-mqtt",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-framework": "workspace:*",
+        "mqtt": "5.15.1",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/muna-ai": {
       "name": "@activepieces/piece-muna-ai",
       "version": "0.1.0",
@@ -12194,6 +12205,8 @@
     "@activepieces/piece-moveo-ai": ["@activepieces/piece-moveo-ai@workspace:packages/pieces/community/moveo-ai"],
 
     "@activepieces/piece-moxie-crm": ["@activepieces/piece-moxie-crm@workspace:packages/pieces/community/moxie-crm"],
+
+    "@activepieces/piece-mqtt": ["@activepieces/piece-mqtt@workspace:packages/pieces/community/mqtt"],
 
     "@activepieces/piece-muna-ai": ["@activepieces/piece-muna-ai@workspace:packages/pieces/community/muna-ai"],
 
