@@ -4481,6 +4481,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/ikhokha": {
+      "name": "@synkra/piece-ikhokha",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/iloveapi": {
       "name": "@activepieces/piece-iloveapi",
       "version": "0.0.6",
@@ -6854,6 +6867,19 @@
       },
       "devDependencies": {
         "@types/crypto-js": "4.2.2",
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/payfast": {
+      "name": "@synkra/piece-payfast",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
         "tslib": "2.6.2",
       },
     },
@@ -10116,6 +10142,19 @@
       "devDependencies": {
         "tslib": "2.6.2",
         "vitest": "3.2.6",
+      },
+    },
+    "packages/pieces/community/yoco": {
+      "name": "@synkra/piece-yoco",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/youcanbookme": {
@@ -14367,7 +14406,13 @@
 
     "@supabase/supabase-js": ["@supabase/supabase-js@2.49.9", "", { "dependencies": { "@supabase/auth-js": "2.69.1", "@supabase/functions-js": "2.4.4", "@supabase/node-fetch": "2.6.15", "@supabase/postgrest-js": "1.19.4", "@supabase/realtime-js": "2.11.9", "@supabase/storage-js": "2.7.1" } }, "sha512-lB2A2X8k1aWAqvlpO4uZOdfvSuZ2s0fCMwJ1Vq6tjWsi3F+au5lMbVVn92G0pG8gfmis33d64Plkm6eSDs6jRA=="],
 
+    "@synkra/piece-ikhokha": ["@synkra/piece-ikhokha@workspace:packages/pieces/community/ikhokha"],
+
+    "@synkra/piece-payfast": ["@synkra/piece-payfast@workspace:packages/pieces/community/payfast"],
+
     "@synkra/piece-synkra-chat": ["@synkra/piece-synkra-chat@workspace:packages/pieces/community/synkra-chat"],
+
+    "@synkra/piece-yoco": ["@synkra/piece-yoco@workspace:packages/pieces/community/yoco"],
 
     "@tabby_ai/hijri-converter": ["@tabby_ai/hijri-converter@1.0.5", "", {}, "sha512-r5bClKrcIusDoo049dSL8CawnHR6mRdDwhlQuIgZRNty68q0x8k3Lf1BtPAMxRf/GgnHBnIO4ujd3+GQdLWzxQ=="],
 
