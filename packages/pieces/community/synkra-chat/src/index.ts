@@ -24,7 +24,7 @@ export const synkraChat = createPiece({
   description:
     'Connect Synkra Chat to your automations. Send messages, create contacts, route conversations, and react to events in real time.',
   minimumSupportedRelease: '0.92.0',
-  logoUrl: 'https://flow.synkra.co.za/logo-192.png',
+  logoUrl: 'https://res.cloudinary.com/dewvhnks3/image/upload/v1791186604/Synkra_Logo_512_x_512_px__20261005_094749_0000_ruot1s.png',
   categories: [PieceCategory.COMMUNICATION, PieceCategory.CUSTOMER_SUPPORT],
   auth: synkraChatAuth,
   authors: ['synkra'],
