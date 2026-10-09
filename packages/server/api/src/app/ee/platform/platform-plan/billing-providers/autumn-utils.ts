@@ -236,8 +236,8 @@ export const autumnUtils = {
         const appSumoBalance = customer.balances[ConsumableFeatureId.APP_SUMO_AI_CREDITS]
         await Promise.all([
             distributedStore.put(getBillingEnforcedKey(platformId), autumnUtils.billingEnforcedFromGrantedFeatureIds(grantedFeatureIds), BILLING_ENFORCED_TTL_SECONDS),
-            isNil(creditsBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.AP_CREDITS, balance: creditsBalance }),
-            isNil(appSumoBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS, balance: appSumoBalance }),
+            isNil(creditsBalance) ? distributedStore.delete(balanceCacheKey({ platformId, featureId: ConsumableFeatureId.AP_CREDITS })) : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.AP_CREDITS, balance: creditsBalance }),
+            isNil(appSumoBalance) ? distributedStore.delete(balanceCacheKey({ platformId, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS })) : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS, balance: appSumoBalance }),
         ])
         return {
             credits: isNil(creditsBalance) ? null : autumnUtils.toBalanceCache(creditsBalance),
