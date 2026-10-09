@@ -20,6 +20,11 @@ const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'List all flows in the current project',
       },
       {
+        name: 'ap_list_folders',
+        description:
+          'List the folders in the current project with their flow and table counts',
+      },
+      {
         name: 'ap_flow_structure',
         description:
           'Get the structure of a flow: step tree, configuration status, and valid insert locations',
@@ -126,6 +131,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_rename_flow',
         description: 'Rename an existing flow',
+      },
+      {
+        name: 'ap_move_flow_to_folder',
+        description: 'Move a flow into a folder, creating the folder if needed',
       },
       {
         name: 'ap_change_flow_status',

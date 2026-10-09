@@ -22,11 +22,13 @@ import { apInsertRecordsTool } from './ap-insert-records'
 import { apListAiModelsTool } from './ap-list-ai-models'
 import { apListConnectionsTool } from './ap-list-connections'
 import { apListFlowsTool } from './ap-list-flows'
+import { apListFoldersTool } from './ap-list-folders'
 import { apListRunsTool } from './ap-list-runs'
 import { apListTablesTool } from './ap-list-tables'
 import { apLockAndPublishTool } from './ap-lock-and-publish'
 import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
+import { apMoveFlowToFolderTool } from './ap-move-flow-to-folder'
 import { apReadStepCodeTool } from './ap-read-step-code'
 import { apReadStepSettingsTool } from './ap-read-step-settings'
 import { apRenameFlowTool } from './ap-rename-flow'
@@ -67,6 +69,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_connections',
     'ap_list_ai_models',
     'ap_list_tables',
+    'ap_list_folders',
     'ap_find_records',
     'ap_list_runs',
     'ap_get_run',
@@ -89,6 +92,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES = [
     'ap_create_folder',
     'ap_duplicate_flow',
     'ap_rename_flow',
+    'ap_move_flow_to_folder',
     'ap_update_trigger',
     'ap_add_step',
     'ap_update_step',
@@ -118,7 +122,9 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apCreateFolderTool(mcp, log),
     apDuplicateFlowTool({ mcp, userId }, log),
     apRenameFlowTool({ mcp, userId }, log),
+    apMoveFlowToFolderTool({ mcp, userId }, log),
     apListFlowsTool(mcp, log),
+    apListFoldersTool(mcp, log),
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
     apReadStepSettingsTool(mcp, log),

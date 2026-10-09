@@ -30,6 +30,8 @@ import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-bran
 import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
+import { apListFoldersTool } from '../../../../src/app/mcp/tools/ap-list-folders'
+import { apMoveFlowToFolderTool } from '../../../../src/app/mcp/tools/ap-move-flow-to-folder'
 import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-step-settings'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
@@ -2768,6 +2770,61 @@ describe('MCP Tools integration', () => {
 
         const folderIds = results.map((result) => structured({ result, schema: z.object({ folderId: z.string() }) }).folderId)
         expect(new Set(folderIds).size).toBe(1)
+    })
+
+    it('ap_move_flow_to_folder creates a folder by name, reuses it in any case, and takes the flow back out', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Folder flow')
+        const otherFlowId = await createFlowAndGetId(mcp, 'Folder flow 2')
+        const moveSchema = z.object({ folderId: z.string().nullable(), folderName: z.string().nullable(), created: z.boolean(), moved: z.boolean() })
+
+        const created = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, folderName: 'Order intake' })
+        const reused = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: otherFlowId, folderName: 'order INTAKE' })
+        const again = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, folderName: 'Order intake' })
+        const listed = await apListFoldersTool(mcp, mockLog).execute({})
+        const out = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, uncategorized: true })
+
+        const createdContent = structured({ result: created, schema: moveSchema })
+        const otherFlow = await flowService(mockLog).getOneOrThrow({ id: otherFlowId, projectId: ctx.project.id })
+        const flow = await flowService(mockLog).getOneOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(createdContent).toMatchObject({ folderName: 'Order intake', created: true, moved: true })
+        expect(text(created)).toContain('(new folder)')
+        expect(structured({ result: reused, schema: moveSchema })).toMatchObject({ folderId: createdContent.folderId, folderName: 'Order intake', created: false })
+        expect(otherFlow.folderId).toBe(createdContent.folderId)
+        expect(structured({ result: again, schema: moveSchema }).moved).toBe(false)
+        expect(text(listed)).toContain('Order intake')
+        expect(text(listed)).toContain('2 flows')
+        expect(text(out)).toContain('out of its folder')
+        expect(flow.folderId).toBeNull()
+    })
+
+    it('ap_move_flow_to_folder needs exactly one target and only moves flows in its own project', async () => {
+        const ctx = await createTestContext(app)
+        const other = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Guarded flow')
+        const foreignFlowId = await createFlowAndGetId(makeMcp(other.project.id), 'Other project flow')
+
+        const none = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId })
+        const both = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, folderName: 'A', uncategorized: true })
+        const foreign = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: foreignFlowId, folderName: 'Mine' })
+
+        const foreignFlow = await flowService(mockLog).getOneOrThrow({ id: foreignFlowId, projectId: other.project.id })
+        expect(text(none)).toContain('exactly one')
+        expect(text(both)).toContain('exactly one')
+        expect(text(foreign)).toContain('Flow not found')
+        expect(foreignFlow.folderId).toBeNull()
+    })
+
+    it('ap_list_folders returns every folder past the first page', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        await Promise.all(Array.from({ length: 105 }, (_, i) => flowFolderService(mockLog).upsert({ projectId: ctx.project.id, request: { projectId: ctx.project.id, displayName: `Folder ${i}` } })))
+
+        const listed = await apListFoldersTool(mcp, mockLog).execute({})
+
+        expect(structured({ result: listed, schema: z.object({ count: z.number() }) }).count).toBe(105)
     })
 
     it('ap_create_flow without a folder leaves the flow unfiled', async () => {
