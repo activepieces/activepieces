@@ -398,6 +398,43 @@ describe('AI provider key status', () => {
             expect((await statusOf(key.id)).status).toBe('active')
         })
 
+        it('demotes a healthy key the provider now rejects when nothing changed during the recheck', async () => {
+            const key = await azureKey('revoked-since')
+            await db.update('ai_provider', key.id, { status: 'active' })
+
+            mockSendRequest.mockRejectedValue(httpFailure(401, { error: { message: 'Access denied due to invalid subscription key' } }))
+            const response = await ctx.post(`/v1/ai-providers/${key.id}/recheck`, {})
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().status).toBe('rejected')
+            expect((await statusOf(key.id)).status).toBe('rejected')
+        })
+
+        it('does not let a slow recheck of a revoked key overwrite the key rotated in meanwhile', async () => {
+            const key = await azureKey('rotated-mid-recheck')
+            await db.update('ai_provider', key.id, { status: 'rejected', statusReason: 'HTTP 401: old failure' })
+
+            let rotationStatus: number | undefined
+            mockSendRequest.mockImplementationOnce(async () => {
+                const rotated = await ctx.post(`/v1/ai-providers/${key.id}`, {
+                    displayName: 'Azure rotated-mid-recheck',
+                    auth: { apiKey: 'rotated' },
+                })
+                rotationStatus = rotated?.statusCode
+                throw httpFailure(401, { error: { message: 'Access denied due to invalid subscription key' } })
+            })
+            mockSendRequest.mockResolvedValue({ body: { data: [] } })
+
+            const response = await ctx.post(`/v1/ai-providers/${key.id}/recheck`, {})
+
+            expect(rotationStatus).toBe(StatusCodes.OK)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().status).toBe('active')
+            const row = await statusOf(key.id)
+            expect(row.status).toBe('active')
+            expect(row.statusReason).toBeNull()
+        })
+
         it('will not claim the managed key is healthy, because it checks nothing', async () => {
             const managed = await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
