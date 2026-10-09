@@ -1283,6 +1283,19 @@
         "vitest": "3.2.6",
       },
     },
+    "packages/pieces/community/bob-go": {
+      "name": "@synkra/piece-bob-go",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/bocha-search": {
       "name": "@activepieces/piece-bocha-search",
       "version": "0.1.1",
@@ -2339,6 +2352,19 @@
       "devDependencies": {
         "tslib": "2.6.2",
         "vitest": "3.2.6",
+      },
+    },
+    "packages/pieces/community/courier-guy": {
+      "name": "@synkra/piece-courier-guy",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
       },
     },
     "packages/pieces/community/crisp": {
@@ -6815,6 +6841,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/pargo": {
+      "name": "@synkra/piece-pargo",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/parser-expert": {
       "name": "@activepieces/piece-parser-expert",
       "version": "0.1.7",
@@ -9435,6 +9474,19 @@
     "packages/pieces/community/typefully": {
       "name": "@activepieces/piece-typefully",
       "version": "0.3.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
+    "packages/pieces/community/uber-direct": {
+      "name": "@synkra/piece-uber-direct",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -14406,11 +14458,19 @@
 
     "@supabase/supabase-js": ["@supabase/supabase-js@2.49.9", "", { "dependencies": { "@supabase/auth-js": "2.69.1", "@supabase/functions-js": "2.4.4", "@supabase/node-fetch": "2.6.15", "@supabase/postgrest-js": "1.19.4", "@supabase/realtime-js": "2.11.9", "@supabase/storage-js": "2.7.1" } }, "sha512-lB2A2X8k1aWAqvlpO4uZOdfvSuZ2s0fCMwJ1Vq6tjWsi3F+au5lMbVVn92G0pG8gfmis33d64Plkm6eSDs6jRA=="],
 
+    "@synkra/piece-bob-go": ["@synkra/piece-bob-go@workspace:packages/pieces/community/bob-go"],
+
+    "@synkra/piece-courier-guy": ["@synkra/piece-courier-guy@workspace:packages/pieces/community/courier-guy"],
+
     "@synkra/piece-ikhokha": ["@synkra/piece-ikhokha@workspace:packages/pieces/community/ikhokha"],
+
+    "@synkra/piece-pargo": ["@synkra/piece-pargo@workspace:packages/pieces/community/pargo"],
 
     "@synkra/piece-payfast": ["@synkra/piece-payfast@workspace:packages/pieces/community/payfast"],
 
     "@synkra/piece-synkra-chat": ["@synkra/piece-synkra-chat@workspace:packages/pieces/community/synkra-chat"],
+
+    "@synkra/piece-uber-direct": ["@synkra/piece-uber-direct@workspace:packages/pieces/community/uber-direct"],
 
     "@synkra/piece-yoco": ["@synkra/piece-yoco@workspace:packages/pieces/community/yoco"],
 
