@@ -1,15 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browserlessAuth } from '../common/auth';
-import { browserlessCommon } from '../common/client';
+import { browserlessApi } from '../common/client';
+import { browserlessBody } from '../common/props';
+import { browserlessLighthouse } from '../common/lighthouse';
+import { browserlessValues } from '../common/values';
+import { browserlessOutputSchemas } from '../output-schemas';
 
 export const getWebsitePerformance = createAction({
     name: 'get_website_performance',
     classification: 'READ',
     displayName: 'Get Website Performance',
     description: 'Analyze website performance metrics using Lighthouse',
-    audience: 'both',
-    aiMetadata: { description: 'Runs a Lighthouse audit on a public URL in a headless browser and returns performance, accessibility, best-practices, SEO, and PWA scores plus key metrics. Use to measure a page\'s quality; the URL is required, and you can scope the audit to specific categories and simulate a desktop or mobile device with network throttling. Read-only analysis: re-running with the same input re-audits the page without side effects (scores may vary slightly run to run).', idempotent: true },
+    audience: 'human',
+    aiMetadata: { description: 'Runs a Lighthouse audit on a public URL in a headless browser and returns performance, accessibility, best-practices and SEO scores (0-100) plus Core Web Vitals. Use to measure a page\'s quality; the URL is required, and you can scope the audit to specific categories and simulate a desktop or mobile device with network throttling. Read-only analysis: re-running with the same input re-audits the page without side effects (scores may vary slightly run to run).', idempotent: true },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({
@@ -19,7 +23,7 @@ export const getWebsitePerformance = createAction({
         }),
         categories: Property.Array({
             displayName: 'Performance Categories',
-            description: 'Select which performance categories to analyze (performance, accessibility, best-practices, seo, pwa)',
+            description: 'Categories to audit (Lighthouse 12+ has no PWA category).',
             required: false,
             properties: {
                 category: Property.StaticDropdown({
@@ -82,18 +86,18 @@ export const getWebsitePerformance = createAction({
         }),
         timeout: Property.Number({
             displayName: 'Timeout (ms)',
-            description: 'Maximum time to wait for the analysis to complete',
+            description: 'Max page load wait in ms during the audit (under 480000).',
             required: false,
             defaultValue: 60000,
         }),
         waitForSelector: Property.ShortText({
             displayName: 'Wait for Selector',
-            description: 'CSS selector to wait for before running performance analysis',
+            description: 'Not supported by Lighthouse audits; this setting is ignored.',
             required: false,
         }),
         emulateMediaType: Property.StaticDropdown({
             displayName: 'Emulate Media Type',
-            description: 'Emulate CSS media type',
+            description: 'Not supported by Lighthouse audits; this setting is ignored.',
             required: false,
             options: {
                 options: [
@@ -143,180 +147,68 @@ export const getWebsitePerformance = createAction({
             required: false,
             defaultValue: false,
         }),
+        includeFullReport: Property.Checkbox({
+            displayName: 'Include Full Report',
+            description: 'Also return the full Lighthouse report (often several MB).',
+            required: false,
+            defaultValue: true,
+        }),
     },
+    outputSchema: browserlessOutputSchemas.getWebsitePerformance,
     async run(context) {
-        const requestBody: any = {
-            url: context.propsValue.url,
-        };
-
-        const lighthouseConfig: any = {
-            extends: 'lighthouse:default',
-            settings: {}
-        };
-
-        if (context.propsValue.categories && context.propsValue.categories.length > 0) {
-            lighthouseConfig.settings.onlyCategories = context.propsValue.categories.map((cat: any) => cat.category);
-        }
-
-        if (context.propsValue.locale) {
-            lighthouseConfig.settings.locale = context.propsValue.locale;
-        }
-
-        if (context.propsValue.device) {
-            lighthouseConfig.settings.formFactor = context.propsValue.device;
-        }
-
-        if (context.propsValue.throttling && context.propsValue.throttling !== 'none') {
-            lighthouseConfig.settings.throttling = { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 };
-
-            switch (context.propsValue.throttling) {
-                case 'mobileSlow4G':
-                    lighthouseConfig.settings.throttling = { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 };
-                    break;
-                case 'mobileRegular4G':
-                    lighthouseConfig.settings.throttling = { rttMs: 100, throughputKbps: 2048, cpuSlowdownMultiplier: 3 };
-                    break;
-                case 'mobileFast4G':
-                    lighthouseConfig.settings.throttling = { rttMs: 50, throughputKbps: 4096, cpuSlowdownMultiplier: 2 };
-                    break;
-            }
-        }
-
-        if (context.propsValue.userAgent) {
-            lighthouseConfig.settings.userAgent = context.propsValue.userAgent;
-        }
-
-        if (context.propsValue.timeout) {
-            lighthouseConfig.settings.timeout = context.propsValue.timeout;
-        }
-
-        if (context.propsValue.waitForSelector) {
-            lighthouseConfig.settings.waitForSelector = context.propsValue.waitForSelector;
-        }
-
-        if (context.propsValue.emulateMediaType) {
-            lighthouseConfig.settings.emulatedFormFactor = context.propsValue.emulateMediaType;
-        }
-
-        if (context.propsValue.onlyCategories && !lighthouseConfig.settings.onlyCategories) {
-            lighthouseConfig.settings.onlyCategories = ['performance', 'accessibility', 'best-practices', 'seo', 'pwa'];
-        }
-
-        requestBody.config = lighthouseConfig;
-
-        if (context.propsValue.budgets && context.propsValue.budgets.length > 0) {
-            requestBody.budgets = context.propsValue.budgets.map((budget: any) => ({
-                resourceType: budget.resourceType,
-                budget: budget.budget * 1024
-            }));
-        }
-
-        let resourceUri = '/performance';
-        const queryParams: string[] = [];
-
-        if (context.propsValue.stealth) {
-            queryParams.push('stealth=true');
-        }
-
-        if (context.propsValue.blockAds) {
-            queryParams.push('blockAds=true');
-        }
-
-        if (queryParams.length > 0) {
-            resourceUri += `?${queryParams.join('&')}`;
-        }
-
-        const response = await browserlessCommon.apiCall({
-            auth: context.auth.props,
-            method: HttpMethod.POST,
-            resourceUri,
-            body: requestBody,
+        const props = context.propsValue;
+        const device = props.device === 'mobile' ? 'mobile' : 'desktop';
+        const timeout = browserlessBody.optionalNumber({ value: props.timeout, label: 'Timeout', min: 1 });
+        const selectedCategories = (props.categories ?? [])
+            .map(browserlessValues.record)
+            .map((entry) => entry['category'])
+            .filter((category): category is string => typeof category === 'string' && category !== '');
+        const onlyCategories =
+            selectedCategories.length > 0 ? Array.from(new Set(selectedCategories)) : props.onlyCategories === true ? browserlessLighthouse.DEFAULT_CATEGORIES : undefined;
+        const settings = browserlessLighthouse.buildSettings({
+            device,
+            onlyCategories,
+            throttling: props.throttling,
+            locale: props.locale,
+            userAgent: props.userAgent,
+            timeout,
         });
 
-        const performanceData = response.body;
-        
-        const summary: any = {
-            url: context.propsValue.url,
-            formFactor: context.propsValue.device || 'desktop',
-            timestamp: new Date().toISOString(),
-        };
+        const budgets = (props.budgets ?? [])
+            .map(browserlessValues.record)
+            .filter((budget) => browserlessBody.nonEmpty(String(budget['resourceType'] ?? '')))
+            .map((budget) => ({
+                resourceType: String(budget['resourceType']),
+                budget: (browserlessBody.optionalNumber({ value: budget['budget'], label: 'Budget Size', min: 0 }) ?? 0) * 1024,
+            }));
 
-        if (performanceData.lhr && performanceData.lhr.categories) {
-            const categories = performanceData.lhr.categories;
-            summary.scores = {
-                performance: categories.performance?.score ? Math.round(categories.performance.score * 100) : null,
-                accessibility: categories.accessibility?.score ? Math.round(categories.accessibility.score * 100) : null,
-                bestPractices: categories['best-practices']?.score ? Math.round(categories['best-practices'].score * 100) : null,
-                seo: categories.seo?.score ? Math.round(categories.seo.score * 100) : null,
-                pwa: categories.pwa?.score ? Math.round(categories.pwa.score * 100) : null,
-            };
-        }
+        const response = await browserlessApi.request<unknown>({
+            auth: context.auth.props,
+            method: HttpMethod.POST,
+            path: '/performance',
+            body: {
+                url: props.url,
+                config: { extends: 'lighthouse:default', settings },
+                ...(budgets.length > 0 ? { budgets } : {}),
+            },
+            query: {
+                stealth: props.stealth === true ? true : undefined,
+                blockAds: props.blockAds === true ? true : undefined,
+            },
+            timeoutMs: timeout === undefined ? undefined : timeout + 60_000,
+            operation: 'Get Website Performance',
+        });
 
-        if (performanceData.lhr && performanceData.lhr.audits) {
-            const audits = performanceData.lhr.audits;
-            summary.metrics = {
-                firstContentfulPaint: {
-                    value: audits['first-contentful-paint']?.displayValue || null,
-                    score: audits['first-contentful-paint']?.score ? Math.round(audits['first-contentful-paint'].score * 100) : null
-                },
-                largestContentfulPaint: {
-                    value: audits['largest-contentful-paint']?.displayValue || null,
-                    score: audits['largest-contentful-paint']?.score ? Math.round(audits['largest-contentful-paint'].score * 100) : null
-                },
-                firstMeaningfulPaint: {
-                    value: audits['first-meaningful-paint']?.displayValue || null,
-                    score: audits['first-meaningful-paint']?.score ? Math.round(audits['first-meaningful-paint'].score * 100) : null
-                },
-                speedIndex: {
-                    value: audits['speed-index']?.displayValue || null,
-                    score: audits['speed-index']?.score ? Math.round(audits['speed-index'].score * 100) : null
-                },
-                timeToInteractive: {
-                    value: audits['interactive']?.displayValue || null,
-                    score: audits['interactive']?.score ? Math.round(audits['interactive'].score * 100) : null
-                },
-                totalBlockingTime: {
-                    value: audits['total-blocking-time']?.displayValue || null,
-                    score: audits['total-blocking-time']?.score ? Math.round(audits['total-blocking-time'].score * 100) : null
-                },
-                cumulativeLayoutShift: {
-                    value: audits['cumulative-layout-shift']?.displayValue || null,
-                    score: audits['cumulative-layout-shift']?.score ? Math.round(audits['cumulative-layout-shift'].score * 100) : null
-                },
-            };
-
-            summary.opportunities = [];
-            if (audits['unused-css-rules']?.details?.items?.length > 0) {
-                summary.opportunities.push({
-                    type: 'unused-css',
-                    title: 'Remove unused CSS',
-                    potentialSavings: audits['unused-css-rules'].displayValue || 'Unknown'
-                });
-            }
-            if (audits['unused-javascript']?.details?.items?.length > 0) {
-                summary.opportunities.push({
-                    type: 'unused-javascript',
-                    title: 'Remove unused JavaScript',
-                    potentialSavings: audits['unused-javascript'].displayValue || 'Unknown'
-                });
-            }
-            if (audits['render-blocking-resources']?.details?.items?.length > 0) {
-                summary.opportunities.push({
-                    type: 'render-blocking',
-                    title: 'Eliminate render-blocking resources',
-                    potentialSavings: audits['render-blocking-resources'].displayValue || 'Unknown'
-                });
-            }
-        }
-
+        const report = browserlessLighthouse.summarize({ body: response.body, url: props.url, device });
         return {
             success: true,
-            summary,
-            fullReport: performanceData,
+            summary: report.summary,
+            ...(props.includeFullReport === false ? {} : { fullReport: response.body }),
             metadata: {
-                analysisTime: response.headers?.['x-response-time'] || 'unknown',
-                lighthouseVersion: performanceData.lhr?.lighthouseVersion || 'unknown',
-            }
+                analysisTime: browserlessApi.headerValue({ headers: response.headers, name: 'x-response-time' }) ?? 'unknown',
+                lighthouseVersion: report.lighthouseVersion,
+            },
         };
     },
 });
+

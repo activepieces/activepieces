@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { mailjetAuth } from '../auth';
+import { mailjetApi } from '../common/api';
+import { sendEmailOutputSchema } from '../output-schemas';
 
-export const sendEmail = createAction({
+export const sendEmailAction = createAction({
   auth: mailjetAuth,
   name: 'send_email',
+  outputSchema: sendEmailOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send a text, HTML or template email through Mailjet',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Sends an email to one or more recipients via the Mailjet transactional send API. Supply the body inline as plain text and/or HTML, or set a Mailjet template ID to render a predefined template with optional variables. Use when delivering a notification, alert, or transactional message; the sender address must be a verified Mailjet sender. Not idempotent — each call dispatches a new email.', idempotent: false },
   props: {
     fromEmail: Property.ShortText({
@@ -50,42 +52,16 @@ export const sendEmail = createAction({
       required: false
     })
   },
-  async run(configValue) {
-    const { propsValue, auth } = configValue;
-
-    const message = {
-      From: {
-        Email: propsValue.fromEmail,
-        Name: propsValue.fromName || propsValue.fromEmail
-      },
-      To: propsValue.toEmails.map(to => ({
-        Email: to,
-        Name: to
-      })),
-      Subject: propsValue.subject,
-      TextPart: propsValue.textPart,
-      TemplateID: propsValue.templateId,
-      TemplateLanguage: !!propsValue.templateId,
-      Variables: propsValue.templateVariables
-    };
-    const request: HttpRequest<string> = {
-      method: HttpMethod.POST,
-      url: `https://api.mailjet.com/v3.1/send`,
-      body: JSON.stringify({ messages: [message] }),
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.username,
-        password: auth.password
-      },
-      queryParams: {}
-    };
-
-    const response = await httpClient.sendRequest(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Failed to communicate with Mailjet`);
-    } else {
-      return response.body.Messages[0];
-    }
+  async run({ propsValue, auth }) {
+    return await mailjetApi.sendEmail({
+      auth,
+      fromEmail: propsValue.fromEmail,
+      fromName: propsValue.fromName,
+      toEmails: propsValue.toEmails,
+      subject: propsValue.subject,
+      textPart: propsValue.textPart,
+      templateId: propsValue.templateId,
+      templateVariables: propsValue.templateVariables,
+    });
   }
 });

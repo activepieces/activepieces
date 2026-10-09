@@ -29,7 +29,7 @@
   "Batch Delete Rows": "行の一括削除",
   "Aggregate Field": "集計フィールド",
   "Upload File": "ファイルをアップロード",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Creates a new row in a table.": "テーブルに新しい行を作成します。",
   "Gets a single row by its ID from a table.": "テーブルから ID によって 1 行を取得します。",
   "Lists rows from a table with optional search, sorting, and filtering.": "オプションの検索、並べ替え、およびフィルタリングを含むテーブルの行を一覧表示します。",

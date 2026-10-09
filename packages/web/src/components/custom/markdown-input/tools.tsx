@@ -81,10 +81,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
   }, [isStrikeActive, isBoldActive, isItalicActive, isUnderlineActive]);
   const containerRef = useRef<HTMLDivElement>(null);
   return (
-    <div
-      ref={containerRef}
-      className="flex items-center gap-0.5 text-foreground"
-    >
+    <div ref={containerRef} className="flex items-center gap-0.5 text-gray-12">
       <ImageTool editor={editor} containerRef={containerRef} />
       <ToolWrapper tooltip={t('Strike')}>
         <Button
