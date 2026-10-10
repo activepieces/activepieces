@@ -20,6 +20,7 @@ export const apiKeyController: FastifyPluginAsyncZod = async (app) => {
         const newApiKey = await apiKeyService.add({
             platformId,
             displayName: req.body.displayName,
+            log: req.log,
         })
 
         return res.status(StatusCodes.CREATED).send(newApiKey)

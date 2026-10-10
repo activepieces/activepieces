@@ -125,6 +125,112 @@ export const synkraEnforcement = (log: FastifyBaseLogger) => ({
     }
   },
 
+  async checkApiKeyLimit(platformId: string): Promise<void> {
+    const ownerUserId = await resolvePlatformOwner(platformId, log)
+    if (!ownerUserId) return
+    const sub = await synkraSubscriptionService(log).getOrCreateForUser(ownerUserId)
+    const plan = getPlanLimits(sub.tier)
+    const limit = plan.apiKeysLimit
+    if (limit <= 0) {
+      throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+          message: `API keys are not available on your ${plan.name} plan. Upgrade to Business or higher.`,
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
+          usage: 0,
+          limit: 0,
+        },
+      })
+    }
+    const { apiKeyService } = await import('../../ee/api-keys/api-key-service')
+    const existing = await apiKeyService.list({ platformId })
+    if (existing.data.length >= limit) {
+      throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+          message: `Your ${plan.name} plan allows ${limit} API key${limit === 1 ? '' : 's'}. You already have ${existing.data.length}.`,
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
+          usage: existing.data.length,
+          limit,
+        },
+      })
+    }
+  },
+
+  async checkCustomRoleLimit(platformId: string): Promise<void> {
+    const ownerUserId = await resolvePlatformOwner(platformId, log)
+    if (!ownerUserId) return
+    const sub = await synkraSubscriptionService(log).getOrCreateForUser(ownerUserId)
+    const plan = getPlanLimits(sub.tier)
+    const limit = plan.customRolesLimit
+    if (limit <= 0) {
+      throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+          message: `Custom roles are not available on your ${plan.name} plan. Upgrade to Business or higher.`,
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
+          usage: 0,
+          limit: 0,
+        },
+      })
+    }
+  },
+
+  async checkSsoEnabled(platformId: string): Promise<void> {
+    const ownerUserId = await resolvePlatformOwner(platformId, log)
+    if (!ownerUserId) return
+    const sub = await synkraSubscriptionService(log).getOrCreateForUser(ownerUserId)
+    const plan = getPlanLimits(sub.tier)
+    if (!plan.sso) {
+      throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+          message: `SSO is not available on your ${plan.name} plan. Upgrade to Business or higher.`,
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
+          usage: 0,
+          limit: 0,
+        },
+      })
+    }
+  },
+
+  async checkAuditLogEnabled(platformId: string): Promise<void> {
+    const ownerUserId = await resolvePlatformOwner(platformId, log)
+    if (!ownerUserId) return
+    const sub = await synkraSubscriptionService(log).getOrCreateForUser(ownerUserId)
+    const plan = getPlanLimits(sub.tier)
+    if (!plan.auditLogs) {
+      throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+          message: `Audit logs are not available on your ${plan.name} plan. Upgrade to Business or higher.`,
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
+          usage: 0,
+          limit: 0,
+        },
+      })
+    }
+  },
+
+  async checkWhiteLabelEnabled(platformId: string): Promise<void> {
+    const ownerUserId = await resolvePlatformOwner(platformId, log)
+    if (!ownerUserId) return
+    const sub = await synkraSubscriptionService(log).getOrCreateForUser(ownerUserId)
+    const plan = getPlanLimits(sub.tier)
+    const meta = (sub.metadata ?? {}) as Record<string, unknown>
+    const isAgency = meta['agencyProgramme'] === true
+    if (!isAgency && !plan.whiteLabel) {
+      throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+          message: 'White label is available on the Agency Programme only.',
+          metric: PlatformUsageMetric.ACTIVE_FLOWS,
+          usage: 0,
+          limit: 0,
+        },
+      })
+    }
+  },
 })
 
 async function resolvePlatformOwner(platformId: PlatformId, log: FastifyBaseLogger): Promise<string | null> {

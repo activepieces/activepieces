@@ -8,6 +8,7 @@ import { applicationEvents } from '../../../helper/application-events'
 import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectRoleService } from './project-role.service'
+import { synkraEnforcement } from '../../../synkra/billing/enforcement'
 
 const DEFAULT_LIMIT_SIZE = 10
 
@@ -36,6 +37,7 @@ export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/', CreateProjectRoleRequest, async (req, reply) => {
         await platformMustHaveFeatureEnabled((platform) => platform.plan.customRolesEnabled).call(app, req, reply)
+        await synkraEnforcement(req.log).checkCustomRoleLimit(req.principal.platform.id)
         const projectRole = await projectRoleService.create(req.principal.platform.id, req.body)
 
         applicationEvents(req.log).sendUserEvent(req, {

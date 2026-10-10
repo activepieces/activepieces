@@ -6,6 +6,7 @@ import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { auditLogService } from './audit-event-service'
+import { synkraEnforcement } from '../../synkra/billing/enforcement'
 import { auditLogRetention } from './audit-log-retention'
 
 export const auditEventModule: FastifyPluginAsyncZod = async (app) => {
@@ -31,6 +32,7 @@ export const auditEventModule: FastifyPluginAsyncZod = async (app) => {
 const auditEventController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', ListAuditEventsRequestEndpoint, async (request) => {
+        await synkraEnforcement(request.log).checkAuditLogEnabled(request.principal.platform.id)
         return auditLogService(request.log).list({
             platformId: request.principal.platform.id,
             cursorRequest: request.query.cursor ?? null,

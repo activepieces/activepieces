@@ -1,6 +1,7 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import { ApplicationEventName, PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { synkraEnforcement } from '../../../synkra/billing/enforcement'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
@@ -64,6 +65,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/sso-domain', UpdateSsoDomainRequest, async (req) => {
+        await synkraEnforcement(req.log).checkSsoEnabled(req.principal.platform.id)
         return authnSsoSamlService(req.log).updateSsoDomain({
             platformId: req.principal.platform.id,
             ssoDomain: req.body.ssoDomain,

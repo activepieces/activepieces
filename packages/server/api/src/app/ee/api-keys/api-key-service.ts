@@ -3,6 +3,8 @@ import { cryptoUtils } from '@activepieces/server-utils'
 import { ApiKey, ApiKeyResponseWithValue } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ApiKeyEntity } from './api-key-entity'
+import { synkraEnforcement } from '../../synkra/billing/enforcement'
+import { FastifyBaseLogger } from 'fastify'
 
 const API_KEY_TOKEN_LENGTH = 64
 const repo = repoFactory<ApiKey>(ApiKeyEntity)
@@ -11,7 +13,9 @@ export const apiKeyService = {
     async add({
         platformId,
         displayName,
-    }: AddParams): Promise<ApiKeyResponseWithValue> {
+        log,
+    }: AddParams & { log: FastifyBaseLogger }): Promise<ApiKeyResponseWithValue> {
+        await synkraEnforcement(log).checkApiKeyLimit(platformId)
         const generatedApiKey = generateApiKey()
         const savedApiKey = await repo().save({
             id: apId(),
