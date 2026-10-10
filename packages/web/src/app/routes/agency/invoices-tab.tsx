@@ -33,6 +33,18 @@ export function InvoicesTab() {
     .filter((i) => i.status === 'pending' || i.status === 'overdue')
     .reduce((sum, i) => sum + i.amountZar, 0);
 
+  const handleDownloadPdf = (invoiceId: string, invoiceNumber: string) => {
+    const url = `/api/v1/synkra/agency/invoices/${invoiceId}/pdf`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noreferrer';
+    a.download = `${invoiceNumber}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   if (isLoading) {
     return (
       <div className="text-sm text-gray-11 py-8 text-center">
@@ -179,10 +191,9 @@ export function InvoicesTab() {
               <DialogFooter>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    // Placeholder for PDF download once PDF generator ships
-                    alert('PDF download coming soon');
-                  }}
+                  onClick={() =>
+                    handleDownloadPdf(selected.id, selected.invoiceNumber)
+                  }
                 >
                   <Download className="h-4 w-4 mr-1" />
                   {t('Download PDF')}

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { securityAccess } from '../../core/security/authorization/fastify-security';
 import { synkraAgencyService } from './agency.service';
 import { synkraAgencyInvoiceService } from './invoice.service';
+import { synkraAgencyInvoicePdfService } from './invoice-pdf.service';
 
 const lineItemSchema = z.object({
   description: z.string(),
@@ -85,6 +86,35 @@ export const synkraAgencyInvoiceController: FastifyPluginAsyncZod = async (app) 
         throw new Error('Invoice not found');
       }
       return invoice;
+    },
+  );
+
+  app.get(
+    '/invoices/:id/pdf',
+    {
+      config: { security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES) },
+      schema: { params: z.object({ id: z.string() }) },
+    },
+    async (request, reply) => {
+      const principal = request.principal;
+      if (principal.type !== PrincipalType.USER) throw new Error('Must be signed in.');
+
+      const agency = await synkraAgencyService(request.log).getForUser(principal.id);
+      if (!agency) throw new Error('No agency');
+
+      const invoice = await synkraAgencyInvoiceService(request.log).getById(request.params.id);
+      if (!invoice || invoice.agencyId !== agency.id) {
+        throw new Error('Invoice not found');
+      }
+
+      const pdf = await synkraAgencyInvoicePdfService(request.log).generate(invoice);
+      return reply
+        .header('Content-Type', 'application/pdf')
+        .header(
+          'Content-Disposition',
+          `inline; filename="${invoice.invoiceNumber}.pdf"`,
+        )
+        .send(pdf);
     },
   );
 
