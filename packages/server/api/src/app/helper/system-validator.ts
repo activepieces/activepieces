@@ -129,6 +129,7 @@ const systemPropValidators: {
     [AppSystemProp.TURNSTILE_SECRET_KEY]: stringValidator,
     [AppSystemProp.TURNSTILE_SITE_KEY]: stringValidator,
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
+    [AppSystemProp.AI_DEVTOOLS_ENABLED]: booleanValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.OTEL_QUEUE_METRICS_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
