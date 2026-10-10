@@ -262,7 +262,8 @@
                            "install/options/aws",
                            "install/options/gcp",
                            "install/options/railway",
-                           "install/options/elestio"
+                          "install/options/elestio",
+                          "untitled-page"
                         ]
                      }
                   ]
