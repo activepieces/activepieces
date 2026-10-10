@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { CreateProjectReleaseRequestBody, ProjectReleaseType } from '@activepieces/shared'
+import { CreateProjectReleaseRequestBody, DefaultProjectRole, ProjectReleaseType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -11,7 +11,7 @@ import {
     createMockProjectRelease,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
+import { createMemberContext, createServiceContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -84,6 +84,63 @@ describe('Project Release API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should record the acting user in importedBy, not the platform owner', async () => {
+            const ownerCtx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
+            })
+            const memberCtx = await createMemberContext(app!, ownerCtx, {
+                projectRole: DefaultProjectRole.ADMIN,
+            })
+
+            const mockSourceProject = createMockProject({
+                platformId: ownerCtx.platform.id,
+                ownerId: ownerCtx.user.id,
+                releasesEnabled: true,
+            })
+            await db.save('project', mockSourceProject)
+
+            const response = await memberCtx.post('/v1/project-releases', {
+                name: 'Member Release',
+                description: 'Released by a project member',
+                selectedFlowsIds: null,
+                projectId: memberCtx.project.id,
+                type: ProjectReleaseType.PROJECT,
+                targetProjectId: mockSourceProject.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(memberCtx.user.id).not.toBe(ownerCtx.platform.ownerId)
+            expect(response?.json().importedBy).toBe(memberCtx.user.id)
+        })
+
+        it('should fall back to the platform owner for SERVICE principals', async () => {
+            const ownerCtx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
+                plan: { environmentsEnabled: true },
+            })
+            const serviceCtx = await createServiceContext(app!, ownerCtx)
+
+            const mockSourceProject = createMockProject({
+                platformId: ownerCtx.platform.id,
+                ownerId: ownerCtx.user.id,
+                releasesEnabled: true,
+            })
+            await db.save('project', mockSourceProject)
+
+            const response = await serviceCtx.post('/v1/project-releases', {
+                name: 'Service Release',
+                description: 'Released by an api key',
+                selectedFlowsIds: null,
+                projectId: ownerCtx.project.id,
+                type: ProjectReleaseType.PROJECT,
+                targetProjectId: mockSourceProject.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().importedBy).toBe(ownerCtx.platform.ownerId)
         })
     })
 
