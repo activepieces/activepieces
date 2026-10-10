@@ -26,6 +26,10 @@ const AgentEditorPage = lazyWithRetry(
   () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
   'agent-editor',
 );
+const AgencyPage = lazyWithRetry(
+  () => import('./agency').then((m) => ({ default: m.AgencyPage })),
+  'agency',
+);
 const OnboardingPage = lazyWithRetry(
   () => import('./onboarding').then((m) => ({ default: m.OnboardingPage })),
   'onboarding',
@@ -120,6 +124,14 @@ const agentEditorElement = (
 );
 
 export const projectRoutes = [
+  {
+    path: '/agency',
+    element: (
+      <Suspense fallback={<RouteLoadingBar />}>
+        <AgencyPage />
+      </Suspense>
+    ),
+  },
   // Onboarding wizard — no project context required.
   {
     path: '/onboarding',

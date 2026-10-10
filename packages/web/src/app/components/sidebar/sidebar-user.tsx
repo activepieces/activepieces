@@ -1,8 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, LogOut, Moon, Sun, UserCogIcon } from 'lucide-react';
+import { Building2, ChevronsUpDown, LogOut, Moon, Sun, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -31,6 +32,7 @@ import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const navigate = useNavigate();
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
@@ -109,6 +111,12 @@ export function SidebarUser() {
                 {t('Account Settings')}
               </DropdownMenuItem>
 
+              <DropdownMenuItem
+                onClick={() => navigate('/agency')}
+              >
+                <Building2 className="w-4 h-4 mr-2" />
+                {t('Agency Programme')}
+              </DropdownMenuItem>
               <HelpAndFeedback />
               <DropdownMenuItem
                 onClick={() =>

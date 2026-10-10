@@ -10,6 +10,7 @@ import { synkraPreflightController } from '../preflight/preflight.controller';
 import { synkraAiBalanceController } from '../ai/ai-balance.controller';
 import { synkraOauthSeed } from '../oauth/oauth-seed.service';
 import { synkraOnboardingController } from '../onboarding/onboarding.controller';
+import { synkraAgencyController } from '../agency/agency.controller';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -49,4 +50,5 @@ export const synkraBillingModule: FastifyPluginAsyncZod = async (app) => {
   await app.register(synkraPreflightController, { prefix: '/v1/synkra/preflight' });
   await app.register(synkraAiBalanceController, { prefix: '/v1/synkra/ai' });
   await app.register(synkraOnboardingController, { prefix: '/v1/synkra/onboarding' });
+  await app.register(synkraAgencyController, { prefix: '/v1/synkra/agency' });
 };
