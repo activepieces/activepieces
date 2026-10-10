@@ -210,11 +210,25 @@ ALTER TABLE foo DROP CONSTRAINT foo_col_not_null;
 - Blocking migrations: `down()` required unless `breaking = true`. `check-migration-rollback.ts` enforces the `breaking` flag on destructive DDL.
 - Background migrations: forward-only. `down()` is a no-op body; the rollback tooling skips the `background/` folder entirely. To undo a bad backfill, ship a forward-fix migration.
 
+### Recovery — permanently failing background migrations
+
+A background migration that fails every retry stops the app from booting. The guard refuses the dependent blocking DDL; boot catchup exhausts its 10 attempts and throws with the migration name. Operator options, in order of preference:
+
+1. **Fix the data.** `background_migrations.last_error` names the failing SQL and often points at the problem row. Fix (`UPDATE`, `DELETE`, or correct application code that writes invalid data) and restart the pod. The runner retries automatically.
+2. **Mark the backfill complete manually.** Dangerous — only when the backfill is a no-op for your data (e.g., the backfill fills a column you don't use, or all target rows already have the expected shape, or you plan to drop the column entirely in a later release).
+   ```sql
+   INSERT INTO background_migrations ("name", "executed_at")
+   VALUES ('YourBackfillName1858000000000', NOW())
+   ON CONFLICT ("name") DO UPDATE SET "executed_at" = NOW(), "failed_at" = NULL, "last_error" = NULL;
+   ```
+   Boot proceeds; dependent blocking DDL's guard passes.
+3. **Upgrade to a release with a patch.** If Activepieces ships a corrected backfill, upgrading past it lands the fix.
+
 ## Gotchas
 
 - **pglite doesn't support `CONCURRENTLY`.** `migrationHelpers.createIndexConcurrently` / `dropIndexConcurrently` fall back to plain `CREATE INDEX IF NOT EXISTS` / `DROP INDEX IF EXISTS` on pglite. Only affects local dev. Older migrations use an inline `const concurrently = isPGlite() ? '' : 'CONCURRENTLY'` ternary — don't reuse that pattern in new code, the helpers supersede it.
 - **`breaking = true` is the ROLLBACK-safety flag, not the customer-facing "breaking change" label.** Two different concepts. The label is decided per the [PR labels rules](../../../CLAUDE.md#pull-requests); the flag is decided per what the migration's `down()` can undo.
-- **Contract DDL in the same release as its backfill fails boot** because the backfill hasn't run yet — its row isn't in `background_migrations`. Ship contract in the next release.
+- **Contract DDL in the same release as its backfill, skip-release upgrades, and fresh installs are all handled by boot catchup.** `runMigrationsWithCatchup` wraps TypeORM's `runMigrations`: when a blocking migration's guard throws `BackgroundMigrationNotCompleteError`, the catchup catches it, runs that one backfill synchronously, and retries. Max 10 catchup attempts (one per distinct dependency), then boot fails with the failing migration name. Normal upgrade pays nothing; skip-release pays a one-time slow boot while prior backfills catch up.
 - **A brand-new hot-path index in the same release as the code that needs it can leave the app on seq scans while background CIC builds.** Only applies when there's *no* prior covering index for the query. Fixes: (a) ship the CIC in a prior release so it's built by the time the code lands (verify via `pendingCount` on `/v1/health/system`), or (b) put the CIC in the blocking track so the index is present when the app starts serving. Reshapes (replacing existing indexes) don't hit this — the old index keeps queries fast while new one builds.
 - **Same-name migration in both folders would run twice.** The two history tables are independent — a rename or folder move without a seed-row migration double-executes on customers that already ran it in the old track.
 - **Background migrations run on API pods only.** Workers don't register system-job handlers. Deployments with zero API pods will never finish backfills; not a supported topology, worth flagging if it comes up.
