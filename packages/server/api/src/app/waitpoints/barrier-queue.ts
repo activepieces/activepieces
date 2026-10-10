@@ -25,7 +25,7 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
                 const jobLogger = createLogger({
                     event: 'barrier.job',
                     job: { id: job.id, type: job.name },
-                    fanIn: { barrierId: job.data.barrierId },
+                    waitpoint: { id: job.data.barrierId },
                 })
                 return wideEvent.run({
                     logger: jobLogger,
