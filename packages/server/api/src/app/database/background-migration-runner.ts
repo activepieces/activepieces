@@ -4,9 +4,15 @@ import { FastifyBaseLogger } from 'fastify'
 import { DataSource } from 'typeorm'
 import { BackgroundMigration } from './background-migration'
 import { databaseConnection } from './database-connection'
+import { BackgroundMigrationNotCompleteError } from './migration-helpers'
 import { getBackgroundMigrations } from './postgres-connection'
 
 export const backgroundMigrationRunner = {
+    async ensureTable({ dataSource }: { dataSource?: DataSource } = {}): Promise<void> {
+        const ds = dataSource ?? databaseConnection()
+        await ensureBackgroundMigrationsTable(ds)
+    },
+
     async run({
         log,
         migrations,
@@ -30,6 +36,34 @@ export const backgroundMigrationRunner = {
         for (const migration of pending) {
             await runOne({ migration, log, dataSource: ds })
         }
+    },
+
+    async runMigrationsWithCatchup({
+        dataSource,
+        log,
+    }: {
+        dataSource: DataSource
+        log: FastifyBaseLogger
+    }): Promise<void> {
+        await ensureBackgroundMigrationsTable(dataSource)
+        for (let attempt = 1; attempt <= MAX_CATCHUP_ATTEMPTS; attempt++) {
+            const { error } = await tryCatch(async () => dataSource.runMigrations())
+            if (!error) return
+            if (!(error instanceof BackgroundMigrationNotCompleteError)) throw error
+            const name = new error.migration().name
+            log.info({ migration: { name } }, '[runMigrationsWithCatchup] Catching up prior-release backfill before retrying blocking migrations')
+            const { error: catchupError } = await tryCatch(async () =>
+                backgroundMigrationRunner.run({ log, migrations: [error.migration], dataSource }),
+            )
+            if (catchupError) {
+                throw new Error(
+                    `Boot catchup for background migration "${name}" failed. `
+                    + 'See background_migrations.last_error. '
+                    + `Cause: ${catchupError instanceof Error ? catchupError.message : String(catchupError)}`,
+                )
+            }
+        }
+        throw new Error(`runMigrationsWithCatchup exceeded ${MAX_CATCHUP_ATTEMPTS} attempts; too many distinct backfill dependencies or a loop`)
     },
 
     async getStatus({
@@ -141,6 +175,8 @@ async function getLatestFailure(dataSource: DataSource, sourceNames: string[]): 
     const failedAt = row.failed_at instanceof Date ? row.failed_at.toISOString() : row.failed_at
     return { name: row.name, failedAt, lastError: row.last_error }
 }
+
+const MAX_CATCHUP_ATTEMPTS = 10
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 

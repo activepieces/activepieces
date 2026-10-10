@@ -24,10 +24,7 @@ async function assertBackgroundMigrationComplete({
         [name],
     )
     if (rows.length === 0) {
-        throw new Error(
-            `Background migration "${name}" has not completed. `
-            + `Wait for it to finish (SELECT * FROM ${BACKGROUND_MIGRATIONS_TABLE}), then retry.`,
-        )
+        throw new BackgroundMigrationNotCompleteError(migration)
     }
 }
 
@@ -88,3 +85,11 @@ async function dropIndexConcurrently({
 }
 
 const isPGlite = (): boolean => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
+
+export class BackgroundMigrationNotCompleteError extends Error {
+    constructor(public readonly migration: new () => BackgroundMigration) {
+        const name = new migration().name
+        super(`Background migration "${name}" has not completed. See background_migrations.last_error for details.`)
+        this.name = 'BackgroundMigrationNotCompleteError'
+    }
+}
