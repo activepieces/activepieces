@@ -1,5 +1,5 @@
 import { tryCatch } from '@activepieces/core-utils'
-import { apDayjsDuration, wideEvent } from '@activepieces/server-utils'
+import { wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { DataSource } from 'typeorm'
 import { BackgroundMigration } from './background-migration'
@@ -212,7 +212,7 @@ async function getLatestFailure(dataSource: DataSource, sourceNames: string[]): 
 }
 
 const MAX_CATCHUP_ATTEMPTS = 10
-const RUN_LOCK_TIMEOUT_SECONDS = apDayjsDuration(1, 'hour').asSeconds()
+const RUN_LOCK_TIMEOUT_SECONDS = 300
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 
