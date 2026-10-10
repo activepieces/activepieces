@@ -86,7 +86,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                 <code
                   className={cn(
                     className,
-                    'bg-gray-3 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                    'bg-gray-3 px-[6px] py-[2px] rounded-md font-mono text-sm',
                   )}
                   {...props}
                 >
@@ -102,7 +102,8 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
           <CopyButton
             textToCopy={content}
             tooltipSide="bottom"
-            className="size-6 p-1 mt-2"
+            size="icon-xs"
+            className="mt-2"
           />
         )}
       </>

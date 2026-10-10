@@ -30,14 +30,14 @@ export function SvgPreview({ svg }: { svg: string }) {
 
   const actions = (
     <>
-      <CopyButton textToCopy={svg} variant="ghost" className="size-8" />
+      <CopyButton textToCopy={svg} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName="image"
         textToDownload={svg}
         mimeType="image/svg+xml"
         extension="svg"
         variant="ghost"
-        className="size-8"
+        size="icon-sm"
       />
     </>
   );
@@ -53,15 +53,12 @@ export function SvgPreview({ svg }: { svg: string }) {
             value={tab}
             onValueChange={(v) => setTab(v as 'preview' | 'code')}
           >
-            <TabsList className="h-7">
-              <TabsTrigger
-                value="preview"
-                className="gap-1.5 px-2 py-0.5 text-xs"
-              >
+            <TabsList>
+              <TabsTrigger value="preview" className="gap-1.5 text-xs">
                 <Eye className="size-3.5" />
                 {t('Preview')}
               </TabsTrigger>
-              <TabsTrigger value="code" className="gap-1.5 px-2 py-0.5 text-xs">
+              <TabsTrigger value="code" className="gap-1.5 text-xs">
                 <Code2 className="size-3.5" />
                 {t('Code')}
               </TabsTrigger>

@@ -51,9 +51,9 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
       {!onCanvas && (
         <Button
           size={'sm'}
-          variant={'basic'}
+          variant={'ghost'}
           loading={isSwitchingToDraftPending}
-          className="gap-2"
+          className="gap-2 font-medium text-accent-11"
           onClick={() => {
             if (location.pathname?.includes('/runs')) {
               navigate(`/flows/${flowId}`);

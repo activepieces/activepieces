@@ -164,7 +164,7 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
             </div>
           </ScrollArea>
         ) : (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-10 text-center">
             <ListChecks className="size-8 text-gray-11" />
             <span className="text-sm font-medium">
               {t('No required actions')}
@@ -219,7 +219,7 @@ function PieceRequiredActionsCard({
     group.actions.length - actionNamesNotInLatestPieceVersion.length;
 
   return (
-    <div className="overflow-hidden rounded-lg border shadow-xs">
+    <div className="overflow-hidden rounded-xl border shadow-xs">
       <div className="flex flex-col gap-3 px-4 py-3">
         <div className="flex items-center gap-3">
           <PieceIcon
@@ -241,8 +241,7 @@ function PieceRequiredActionsCard({
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 aria-label={t('Edit')}
                 onClick={onEdit}
               >
@@ -255,8 +254,8 @@ function PieceRequiredActionsCard({
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-8 text-danger-11 hover:bg-danger-3 hover:text-danger-11"
+                size="icon-sm"
+                className="text-danger-11 hover:bg-danger-3 hover:text-danger-11"
                 aria-label={t('Remove all')}
                 onClick={() =>
                   onRemove(group.actions.map((action) => action.name))
@@ -450,15 +449,15 @@ function EditRequiredActionsDialogContent({
               )}
             </div>
             {pieceLoading ? (
-              <div className="flex justify-center rounded-lg border py-6">
+              <div className="flex justify-center rounded-xl border py-6">
                 <Loader2 className="size-5 animate-spin text-gray-11" />
               </div>
             ) : actions.length === 0 ? (
-              <span className="rounded-lg border px-3 py-4 text-sm text-gray-11">
+              <span className="rounded-xl border px-3 py-4 text-sm text-gray-11">
                 {t('This piece has no actions.')}
               </span>
             ) : (
-              <div className="flex flex-col rounded-lg border">
+              <div className="flex flex-col rounded-xl border">
                 <label className="flex min-h-10 cursor-pointer items-center gap-3 border-b px-3">
                   <Checkbox
                     checked={pieceSetInclusionUtils.determineSelectionCheckboxState(

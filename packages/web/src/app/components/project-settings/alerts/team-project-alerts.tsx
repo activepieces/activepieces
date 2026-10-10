@@ -119,8 +119,8 @@ export const TeamProjectAlerts = () => {
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="size-8 p-0 hover:bg-danger-3"
+                        size="icon-sm"
+                        className="hover:bg-danger-3"
                         onClick={() => deleteAlert(alert)}
                         disabled={writeAlertPermission === false}
                       >

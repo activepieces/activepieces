@@ -321,7 +321,7 @@ const TabCard = ({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-panel transition-colors',
+        'rounded-xl border bg-panel transition-colors',
         tab.hidden && 'opacity-60',
         expanded && 'border-accent-7',
       )}
@@ -329,8 +329,8 @@ const TabCard = ({
       <div className="flex items-center gap-1.5 p-2">
         <SortableDragHandle
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-7 text-gray-9"
+          size="icon-xs"
+          className="text-gray-9"
         >
           <GripVerticalIcon className="size-4" />
         </SortableDragHandle>
@@ -350,8 +350,8 @@ const TabCard = ({
 
         <Button
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-7 text-gray-11"
+          size="icon-xs"
+          className="text-gray-11"
           onClick={() => onChange({ hidden: !tab.hidden })}
           title={tab.hidden ? t('Show tab') : t('Hide tab')}
         >
@@ -365,8 +365,8 @@ const TabCard = ({
         {isCustom && (
           <Button
             variant="ghost"
-            size="icon"
-            className="shrink-0 size-7 text-gray-11"
+            size="icon-xs"
+            className="text-gray-11"
             onClick={() => setExpanded((prev) => !prev)}
             title={t('Pieces & sections')}
           >
@@ -413,8 +413,8 @@ const TabCard = ({
                 />
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="shrink-0 size-7 text-gray-11 hover:text-danger-11"
+                  size="icon-xs"
+                  className="text-gray-11 hover:text-danger-11"
                   onClick={() => removeSection(section.id)}
                   title={t('Delete section')}
                 >
@@ -437,7 +437,7 @@ const TabCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-danger-11 hover:text-danger-11 hover:bg-danger-3"
+              className="text-danger-11 hover:text-danger-11 hover:bg-danger-3"
               onClick={onRemove}
             >
               <TrashIcon className="size-4 mr-2" />
@@ -492,8 +492,8 @@ const TabIconPicker = ({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-8 text-gray-12 hover:bg-gray-3"
+          size="icon-sm"
+          className="text-gray-12 hover:bg-gray-3"
         >
           {iconNode}
         </Button>
@@ -505,7 +505,7 @@ const TabIconPicker = ({
               key={key}
               variant="ghost"
               size="icon"
-              className={cn('size-9', {
+              className={cn({
                 'bg-gray-5 hover:bg-gray-5 text-accent-11 hover:text-accent-11':
                   value === key,
               })}
@@ -565,11 +565,11 @@ const PiecePickerButton = ({
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
                 {selectedPieces.map((piece) => (
                   <SortableItem key={piece.name} value={piece.name} asChild>
-                    <div className="flex items-center gap-2 rounded-sm px-1 py-0.5">
+                    <div className="flex items-center gap-2 rounded-md px-1 py-0.5">
                       <SortableDragHandle
                         variant="ghost"
-                        size="icon"
-                        className="shrink-0 size-6 text-gray-9"
+                        size="icon-xs"
+                        className="text-gray-9"
                       >
                         <GripVerticalIcon className="size-3.5" />
                       </SortableDragHandle>
@@ -584,8 +584,7 @@ const PiecePickerButton = ({
                       </span>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="shrink-0 size-6"
+                        size="icon-xs"
                         onClick={() => togglePiece(piece.name)}
                       >
                         <XIcon className="size-3.5" />

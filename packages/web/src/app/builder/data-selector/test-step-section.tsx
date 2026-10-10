@@ -21,8 +21,8 @@ export const TestStepSection = ({ stepName }: { stepName: string }) => {
       <Button
         onClick={() => selectStepByName(stepName)}
         variant="ghost"
-        size="sm"
-        className="h-6 px-2 text-xs text-accent-11 hover:text-accent-11 hover:bg-accent-3 shrink-0"
+        size="xs"
+        className="text-accent-11 hover:text-accent-11 hover:bg-accent-3"
       >
         {isTrigger ? t('Go to trigger') : t('Go to step')}
         <ArrowUpRight className="size-3" />

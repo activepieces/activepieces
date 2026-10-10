@@ -63,12 +63,12 @@ export function ConfirmPurchaseDialog() {
               </DialogHeader>
 
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1 rounded-lg border p-4">
+                <div className="flex flex-col gap-1 rounded-xl border p-4">
                   <span className="text-sm text-gray-11">
                     {t("You'll be charged")}
                   </span>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">
+                    <span className="text-3xl font-semibold">
                       {payload.priceAmount}
                     </span>
                     <span className="text-sm text-gray-11">

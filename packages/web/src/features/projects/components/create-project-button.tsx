@@ -71,8 +71,8 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       return (
         <Button
           variant="ghost"
-          size="icon"
-          className={cn('h-6 w-6 hover:bg-gray-4', className)}
+          size="icon-xs"
+          className={cn('hover:bg-gray-4', className)}
           {...control}
         >
           {locked ? <Crown className="text-accent-11" /> : <Plus />}

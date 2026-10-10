@@ -127,7 +127,7 @@ function FormatSingleValue({
       <img
         src={stringValue}
         alt=""
-        className="max-h-32 max-w-full rounded border border-gray-6 object-contain"
+        className="max-h-32 max-w-full rounded-md border border-gray-6 object-contain"
         loading="lazy"
         referrerPolicy="no-referrer"
       />

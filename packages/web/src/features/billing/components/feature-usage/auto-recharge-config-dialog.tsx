@@ -289,7 +289,7 @@ function CreditsAmountSelect({
             key={option}
             type="button"
             onClick={() => pick(option)}
-            className="flex w-full items-center rounded-sm px-3 py-2 text-sm hover:bg-gray-4"
+            className="flex w-full items-center rounded-md px-3 py-2 text-sm hover:bg-gray-4"
           >
             {option.toLocaleString()}
           </button>

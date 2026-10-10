@@ -110,11 +110,7 @@ export const AllowedDomainsStep = ({
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {envAllowedOrigins.map((d) => (
-                  <Badge
-                    key={d}
-                    variant="outline"
-                    className="font-mono text-xs"
-                  >
+                  <Badge key={d} variant="outline" className="font-mono">
                     {d}
                   </Badge>
                 ))}

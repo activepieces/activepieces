@@ -22,17 +22,17 @@ export const FileInputPreview = ({
         <img
           src={URL.createObjectURL(file)}
           alt={file.name}
-          className="w-20 h-20 object-cover rounded-lg"
+          className="w-20 h-20 object-cover rounded-xl"
         />
       )}
       {isVideo && (
         <video
           src={URL.createObjectURL(file)}
-          className="w-20 h-20 object-cover rounded-lg"
+          className="w-20 h-20 object-cover rounded-xl"
         />
       )}
       {!isImage && !isVideo && (
-        <div className="w-20 h-20 bg-gray-12 text-gray-1 rounded-lg flex items-center justify-center">
+        <div className="w-20 h-20 bg-gray-12 text-gray-1 rounded-xl flex items-center justify-center">
           <FileIcon className="w-8 h-8" />
         </div>
       )}

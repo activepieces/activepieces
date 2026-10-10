@@ -21,7 +21,7 @@ export function MemorySection() {
         <button
           type="button"
           onClick={() => setManageOpen(true)}
-          className="flex w-full items-center justify-between gap-2 rounded-lg bg-gray-3/40 px-4 py-3.5 text-left transition-colors hover:bg-gray-3/70"
+          className="flex w-full items-center justify-between gap-2 rounded-xl bg-gray-3/40 px-4 py-3.5 text-left transition-colors hover:bg-gray-3/70"
         >
           <span className="text-sm">
             <span className="font-medium">{t('View and manage memory')}</span>
