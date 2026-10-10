@@ -3,6 +3,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { securityAccess } from '../../core/security/authorization/fastify-security';
 import { AGENCY_TIERS, AgencyTier, synkraAgencyService, computeWholesaleZar } from './agency.service';
+import { synkraAgencyBillingService } from './billing.service';
 
 const tierSchema = z.enum(['agency_20', 'agency_100', 'agency_500']);
 
@@ -303,6 +304,39 @@ export const synkraAgencyController: FastifyPluginAsyncZod = async (app) => {
       ),
       publicTiers: { starter: 299, business: 599, pro: 999 },
     }),
+  );
+
+  app.get(
+    '/billing',
+    {
+      config: { security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES) },
+    },
+    async (request) => {
+      const principal = request.principal;
+      if (principal.type !== PrincipalType.USER) throw new Error('Must be signed in.');
+      const svc = synkraAgencyService(request.log);
+      const agency = await svc.getForUser(principal.id);
+      if (!agency) {
+        return {
+          agencyId: '',
+          tier: 'agency_20',
+          tierName: 'Agency 20',
+          status: 'draft',
+          agencyFeeZar: 0,
+          clients: [],
+          activeClientCount: 0,
+          draftClientCount: 0,
+          suspendedClientCount: 0,
+          clientWholesaleTotalZar: 0,
+          clientPublicTotalZar: 0,
+          clientSavingsTotalZar: 0,
+          monthlyTotalZar: 0,
+          nextBillingDate: null,
+          currency: 'ZAR',
+        };
+      }
+      return synkraAgencyBillingService(request.log).getSummary(agency.id);
+    },
   );
 
   app.post(
