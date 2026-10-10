@@ -20,7 +20,7 @@ import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
 import { AgentsFlagGuard } from './agents-flag-guard';
-import { DefaultRoute, OnboardingRedirectGate } from './default-route';
+import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
@@ -156,11 +156,7 @@ const browserRouter = createBrowserRouter(routesWithErrorBoundary);
 const ApRouter = () => {
   const { embedState } = useEmbedding();
   const router = embedState.isEmbedded ? memoryRouter : browserRouter;
-  return (
-    <OnboardingRedirectGate>
-      <RouterProvider router={router}></RouterProvider>
-    </OnboardingRedirectGate>
-  );
+  return <RouterProvider router={router}></RouterProvider>;
 };
 
 export { ApRouter };
