@@ -503,3 +503,98 @@ Additional locked principles:
 
 **End of spec. This document supersedes the strategic brief and is the source
 of truth for Chat ↔ Flow.**
+
+---
+
+# ADDENDUM — DECISIONS LOCKED
+## 10 October 2026
+
+The four open questions in section 3 are resolved. These are the answers.
+
+## A1. Chat → Flow auth = SHADOW USER
+
+Each Chat customer gets a shadow Flow user created on first integration use.
+
+- Placeholder email: chat+{chatUserId}@shadow.synkra.internal
+- Flag column: user.shadowChatUserId (indexed, nullable)
+- Personal project auto-created for the shadow user
+- Excluded from seat counting and user listings
+- Converted to a real user if they later sign up for Flow directly
+
+### Gotchas to handle in implementation
+
+| Concern | Solution |
+|---------|----------|
+| Placeholder email never receives mail | Email sender rejects @shadow.synkra.internal domain |
+| Shadow users count against usersLimit | checkSeatLimit excludes rows where shadowChatUserId IS NOT NULL |
+| Shadow users appear in admin lists | Filter shadowChatUserId IS NOT NULL out |
+| Chat user later signs up for Flow | Detect by chatUserId, convert to real user, preserve connections |
+| Chat user deletes account | Cascade delete shadow user + credentials + projects |
+
+### Why not platform token or shared workspace
+
+- Platform token = one Flow identity for all Chat customers, impossible to scope or isolate
+- Shared workspace = separate databases, cannot share rows without a sync layer
+- Shadow user = uses Flow's existing model with minimal new code
+
+## A2. Chat → Flow API = HMAC-SIGNED
+
+Three endpoints:
+
+    POST /v1/synkra/chat/oauth/start
+    POST /v1/synkra/chat/invoke
+    POST /v1/synkra/chat/invoke-workflow
+
+All require:
+
+- X-Synkra-Chat-Signature: HMAC-SHA256(timestamp.body) with shared secret
+- X-Synkra-Chat-Timestamp (reject if > 60 seconds old)
+- Optional X-Idempotency-Key for retry safety (24h cache)
+
+Rate limits: 100/min per chatUserId, 500/min per IP.
+
+Timeouts: 30s for oauth start, 60s for invoke, 5min for invoke-workflow.
+
+## A3. Chat integration launch order = DELIVERY FIRST
+
+| Order | Category | Pieces |
+|-------|----------|--------|
+| 1 | Delivery | The Courier Guy, Bob Go, Uber Direct, Pargo |
+| 2 | CRM | HubSpot, Pipedrive, Zoho CRM |
+| 3 | Team comms | Slack |
+| 4 | E-commerce | Shopify, WooCommerce |
+| 5 | Scheduling | Calendly, Cal.com |
+| 6 | AI | Synkra AI |
+| 7 | Email | SMTP, SendGrid, Postmark, Mailgun |
+
+Each category ships independently. No category ships without end-to-end
+testing with a real Chat customer account.
+
+## A4. Attribution = 6 EVENTS, 30-DAY WINDOW
+
+Events:
+
+- chat.flow.discovery_shown
+- chat.flow.discovery_clicked
+- chat.flow.account_linked
+- chat.flow.upgrade_page_viewed
+- chat.flow.subscription_started
+- chat.flow.subscription_activated
+
+Stable ID: chatUserId mapped to flowUserId once linked.
+
+Retention: 24 months. Attribution window: 30 days from discovery_clicked
+to subscription_activated.
+
+Storage: new table synkra_attribution_event (not yet built).
+
+## A5. Next code change = v36 (shadow-user safety)
+
+Before any Chat integration code starts, add the shadow-user safety column:
+
+- New column: user.shadowChatUserId varchar nullable, with index
+- Update checkSeatLimit to exclude shadow users
+- Update any user listing queries to exclude shadow users
+- Add email guard for @shadow.synkra.internal
+
+This is the prerequisite. It is small. It goes first.
