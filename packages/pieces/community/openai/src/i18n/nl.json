@@ -234,5 +234,6 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Wordt voor het hele project opgeslagen, dus andere flows met deze ID zetten hetzelfde gesprek voort."
 }
