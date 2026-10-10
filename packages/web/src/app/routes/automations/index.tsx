@@ -13,7 +13,6 @@ import { recordAccess } from '@/app/components/global-search/access-history';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
-import { GetStartedChecklist } from '@/features/synkra-onboarding';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
 import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
 import { AutomationsPagination } from '@/features/automations/components/automations-pagination';
@@ -43,6 +42,11 @@ import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+
+const GetStartedChecklist = lazyWithRetry(
+  () => import('@/features/synkra-onboarding/components/get-started-checklist').then((m) => ({ default: m.GetStartedChecklist })),
+  'get-started-checklist',
+);
 
 export const AutomationsPage = () => {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
@@ -321,7 +325,9 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   if (isEmptyState) {
     return (
       <div className="mx-auto w-full max-w-4xl p-6 flex flex-col gap-6">
-        <GetStartedChecklist />
+        <Suspense fallback={null}>
+          <GetStartedChecklist />
+        </Suspense>
         <AutomationsEmptyState
           onRefresh={() => invalidateAll()}
           agentsVisible={agentsVisible}

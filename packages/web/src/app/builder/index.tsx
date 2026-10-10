@@ -9,6 +9,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PanelImperativeHandle } from 'react-resizable-panels';
 import { usePrevious } from 'react-use';
 
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
@@ -31,7 +32,6 @@ import { FlowCanvas } from './flow-canvas';
 import { flowCanvasHooks } from './flow-canvas/hooks';
 import { flowCanvasConsts } from './flow-canvas/utils/consts';
 import { BuilderBanner } from './flow-canvas/widgets/builder-banner';
-import { BuilderNudge } from '@/features/synkra-onboarding';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
@@ -43,6 +43,11 @@ const SPLIT_MODE_SIDEBAR_SIZE_PX = 850;
 const DEFAULT_SIDEBAR_SIZE = '25%';
 const DEFAULT_MIN_SIZE = '400px';
 const SPLIT_MODE_COLLAPSE_THRESHOLD_PX = 700;
+
+const BuilderNudge = lazyWithRetry(
+  () => import('@/features/synkra-onboarding/components/builder-nudge').then((m) => ({ default: m.BuilderNudge })),
+  'builder-nudge',
+);
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -154,7 +159,9 @@ const BuilderPage = () => {
     <div className="flex h-full w-full flex-col relative max-h-[100vh]">
       <div className="z-40">
         <BuilderHeader />
-        <BuilderNudge />
+        <Suspense fallback={null}>
+          <BuilderNudge />
+        </Suspense>
       </div>
       <ResizablePanelGroup orientation="horizontal">
         <ResizablePanel defaultSize="100%" id="flow-canvas">
