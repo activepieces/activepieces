@@ -72,6 +72,8 @@ Contract-phase blocking DDL that depends on a background predecessor:
 
 Contract DDL and its backfill ship in **different releases**. Same-release attempts fail boot because the backfill hasn't run yet.
 
+**Release-notes convention:** when a release ships a background migration whose dependent contract DDL lands in a later release, that earlier release's notes must say something like "self-hosters should let backfill X complete before upgrading further; the app catches up at boot but it may take ~N minutes." Boot catchup handles skip-release correctly, but operators deserve the heads-up so they can plan the upgrade window.
+
 ### Interfaces
 
 Blocking:
