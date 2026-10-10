@@ -33,13 +33,13 @@ const BUNDLED_PIECES: BundledPieceSpec[] = [
   },
   {
     name: '@synkra/piece-yoco',
-    version: '0.1.0',
-    file: 'synkra-piece-yoco-0.1.0.tgz',
+    version: '0.1.1',
+    file: 'synkra-piece-yoco-0.1.1.tgz',
   },
   {
     name: '@synkra/piece-ikhokha',
-    version: '0.1.0',
-    file: 'synkra-piece-ikhokha-0.1.0.tgz',
+    version: '0.1.1',
+    file: 'synkra-piece-ikhokha-0.1.1.tgz',
   },
   {
     name: '@synkra/piece-courier-guy',

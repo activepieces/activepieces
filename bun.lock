@@ -4509,7 +4509,7 @@
     },
     "packages/pieces/community/ikhokha": {
       "name": "@synkra/piece-ikhokha",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10198,7 +10198,7 @@
     },
     "packages/pieces/community/yoco": {
       "name": "@synkra/piece-yoco",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
