@@ -99,7 +99,7 @@
     "request-filtering-agent": "3.2.1",
     "samlify": "2.13.0",
     "semver": "7.6.0",
-    "simple-git": "3.36.0",
+    "simple-git": "4.0.1",
     "socket.io": "4.8.1",
     "sqlite3": "5.1.7",
     "supergateway": "3.4.3",
