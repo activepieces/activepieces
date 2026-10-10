@@ -133,6 +133,16 @@ describe('backgroundMigrationRunner', () => {
         expect(status.completedCount).toBeGreaterThanOrEqual(1)
     })
 
+    it('getStatus returns error-shape instead of throwing on DB failure', async () => {
+        const ds = databaseConnection()
+        const spy = vi.spyOn(ds, 'query').mockRejectedValueOnce(new Error('db down'))
+        const status = await backgroundMigrationRunner.getStatus({ migrations: [], dataSource: ds })
+        expect(status.error).toMatch(/db down/)
+        expect(status.pendingCount).toBe(0)
+        expect(status.completedCount).toBe(0)
+        expect(status.failedMigration).toBeNull()
+        spy.mockRestore()
+    })
 })
 
 describe('runMigrationsWithCatchup', () => {
