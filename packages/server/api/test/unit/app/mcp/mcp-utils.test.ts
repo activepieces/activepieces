@@ -1,5 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AiRouterAction, BranchExecutionType, EmptyTrigger, FlowActionType, FlowTriggerType } from '@activepieces/shared'
+import { AiRouterAction, BranchExecutionType, EmptyTrigger, FlowActionType, FlowTriggerType, PropertyExecutionType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
@@ -506,5 +506,88 @@ describe('mcpUtils.resolveRouterStep', () => {
         expect(text).toMatchObject({ type: 'text' })
         expect(text && 'text' in text ? text.text : '').toContain('ROUTER or AI_ROUTER')
         expect(text && 'text' in text ? text.text : '').toContain('ai_router')
+    })
+})
+
+describe('mcpUtils.syncContainerExecutionTypes', () => {
+    const props = {
+        assetIds: arrayProp({ displayName: 'Asset Ids', required: true }),
+        headers: objectProp({ displayName: 'Headers', required: false }),
+        body: { type: PropertyType.JSON, displayName: 'Body', required: false },
+        rows: { type: PropertyType.ARRAY, displayName: 'Rows', required: false, properties: { name: shortText('Name') } },
+        note: shortText('Note'),
+    }
+
+    it('marks a list, object or JSON field holding one whole reference as dynamic', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: '{{step_3.output.assetIds}}', headers: ' {{trigger.headers}} ', body: '{{ step_1.body }}', note: '{{trigger.note}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({
+            assetIds: { type: PropertyExecutionType.DYNAMIC },
+            headers: { type: PropertyExecutionType.DYNAMIC },
+            body: { type: PropertyExecutionType.DYNAMIC },
+        })
+    })
+
+    it('leaves a value that mixes a reference with other text, or holds two references, as it was', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: '[{{step_1.a}}]', headers: '{{step_1.a}}{{step_1.b}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+
+    it('puts a real array or object back to manual and keeps the stored schema', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: ['a', 'b'], headers: { a: '1' } },
+            propertySettings: {
+                assetIds: { type: PropertyExecutionType.DYNAMIC, schema: { kept: true } },
+                headers: { type: PropertyExecutionType.DYNAMIC },
+            },
+        })
+        expect(settings).toEqual({
+            assetIds: { type: PropertyExecutionType.MANUAL, schema: { kept: true } },
+            headers: { type: PropertyExecutionType.MANUAL },
+        })
+    })
+
+    it('leaves a list of fields alone, including one with an empty field list, where dynamic means inline item mode', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { ...props, emptyRows: { type: PropertyType.ARRAY, displayName: 'Empty Rows', required: false, properties: {} } },
+            input: { rows: '{{step_1.rows}}', emptyRows: '{{step_1.rows}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+
+    it('marks a list field inside a dynamic field, keyed by its own name as the builder reads it', () => {
+        const rowDataSchema = {
+            tags: { type: PropertyType.ARRAY, displayName: 'Tags', required: false },
+            meta: { type: PropertyType.JSON, displayName: 'Meta', required: false },
+            name: { type: PropertyType.SHORT_TEXT, displayName: 'Name', required: false },
+        }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}', meta: { a: 1 }, name: '{{trigger.body.name}}' } },
+            propertySettings: { row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema }, meta: { type: PropertyExecutionType.DYNAMIC } },
+        })
+        expect(settings).toEqual({
+            row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema },
+            tags: { type: PropertyExecutionType.DYNAMIC },
+            meta: { type: PropertyExecutionType.MANUAL },
+        })
+    })
+
+    it('skips a dynamic field whose schema has not been resolved', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}' } },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
     })
 })
