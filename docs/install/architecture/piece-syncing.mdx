@@ -4,6 +4,8 @@ description: "How pieces are packaged, distributed, and pinned to flow versions"
 icon: "puzzle-piece"
 ---
 
+import { PieceVersionChecker, PIECE_VERSIONS_SNAPSHOT } from '/snippets/piece-version-checker.jsx';
+
 Pieces are standard [npm packages](https://www.npmjs.com/search?q=%40activepieces%2Fpiece-). Two facts follow from that:
 
 - **No server upgrade is needed for new pieces.** A sync job pulls fresh versions on its own.
@@ -49,6 +51,12 @@ Custom and private pieces are never touched by the sync job.
 ## Server compatibility
 
 Every piece declares a `minimumSupportedRelease` (and optional `maximumSupportedRelease`) in its definition: the range of Activepieces server releases it works on. The catalog filters pieces against the running server's release, so an out-of-range piece is never listed in the builder and never served from the registry.
+
+On every sync, your instance sends its release to the registry, and the registry returns only the piece versions whose range includes it. Your instance installs the new ones and removes any it has that the registry no longer returns. Search for a piece, then drag the slider to your instance version to see which of its versions you receive:
+
+<PieceVersionChecker snapshot={PIECE_VERSIONS_SNAPSHOT} />
+
+No official piece currently sets a maximum, so a piece version stays available on every newer release. A piece version that does set a maximum is removed by the next sync once your instance moves past it.
 
 <Warning>
 **Self-hosted: upgrade to `0.82.0` or newer.** Every new piece now declares `minimumSupportedRelease ≥ 0.82.0`, the floor that came in with the latest piece-context version. Servers below `0.82.0` will not pick up any newly published pieces or bug fixes. Cloud is always on the latest release.
