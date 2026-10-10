@@ -234,5 +234,6 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "É salvo para todo o projeto, então outros fluxos que usam este ID continuam a mesma conversa."
 }

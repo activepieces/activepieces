@@ -14,6 +14,10 @@ export const generateImage = createAction({
   displayName: 'Generate Image',
   description: 'Create an image from a text description.',
   aiMetadata: { description: 'Creates a brand new image from a text prompt using an image model available to the account (gpt-image or dall-e), saving each returned image as a file and reporting its URL. Resolution and quality both default to auto. Pick edit_image instead when an existing image is the starting point, and vision_prompt when the task is reading an image rather than producing one. Requires the prompt and a model id; not idempotent: each call renders a fresh image.', idempotent: false },
+  propertyGroups: [
+    { key: 'request', display: 'section', label: 'Image', icon: 'text', props: ['model', 'prompt'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['resolution', 'quality'] },
+  ],
   props: {
     model: Property.Dropdown({
       auth: openaiAuth,
@@ -66,10 +70,10 @@ export const generateImage = createAction({
       display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Square', value: '1024x1024', description: '1024 × 1024' },
-          { label: 'Landscape', value: '1536x1024', description: '1536 × 1024' },
-          { label: 'Portrait', value: '1024x1536', description: '1024 × 1536' },
+          { label: 'Auto', value: 'auto', icon: 'blank' },
+          { label: 'Square', value: '1024x1024', description: '1024 × 1024', icon: 'blank' },
+          { label: 'Landscape', value: '1536x1024', description: '1536 × 1024', icon: 'blank' },
+          { label: 'Portrait', value: '1024x1536', description: '1024 × 1536', icon: 'blank' },
         ],
       },
     }),

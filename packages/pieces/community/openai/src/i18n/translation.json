@@ -234,5 +234,6 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation."
 }

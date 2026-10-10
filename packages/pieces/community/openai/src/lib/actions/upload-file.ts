@@ -24,6 +24,10 @@ export const uploadFile = createAction({
   description:
     'Upload a file for assistants, batch jobs, vision or fine-tuning.',
   aiMetadata: { description: 'Uploads a file to the connected OpenAI account and returns its file id for later use with Assistants, vector stores, batch jobs, fine-tuning, or vision. The purpose is required and decides which file types are accepted; the original filename is kept unless an override including the extension is supplied. Run find_file first to avoid duplicates, and delete_file to remove one afterwards. Not idempotent: every call stores another copy under a new file id, even for identical content.', idempotent: false },
+  propertyGroups: [
+    { key: 'upload', display: 'section', label: 'Upload', icon: 'paperclip', props: ['file'] },
+    { key: 'use', display: 'section', label: 'Use for', icon: 'tag', props: ['purpose'] },
+  ],
   props: {
     file: Property.File({
       displayName: 'File',
@@ -36,12 +40,13 @@ export const uploadFile = createAction({
         'What OpenAI will use the file for. Each allows different file types.',
       required: true,
       defaultValue: 'assistants',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Assistants', value: 'assistants' },
-          { label: 'Vision', value: 'vision' },
-          { label: 'Batch', value: 'batch' },
-          { label: 'Fine-Tuning', value: 'fine-tune' },
+          { label: 'Assistants', value: 'assistants', icon: 'file' },
+          { label: 'Vision', value: 'vision', icon: 'file' },
+          { label: 'Batch', value: 'batch', icon: 'file' },
+          { label: 'Fine-Tuning', value: 'fine-tune', icon: 'file' },
         ],
       },
     }),
