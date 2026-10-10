@@ -20,7 +20,7 @@ import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
 import { AgentsFlagGuard } from './agents-flag-guard';
-import { DefaultRoute } from './default-route';
+import { DefaultRoute, OnboardingRedirectGate } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
