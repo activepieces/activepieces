@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiMonitorOutputSchema } from '../../output-schemas';
 
 export const resumeMonitorAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_resume_monitor',
+	outputSchema: scrapegrapghaiMonitorOutputSchema,
 	displayName: 'Resume Monitor',
 	description: 'Resumes a paused monitor.',
 	audience: 'ai',

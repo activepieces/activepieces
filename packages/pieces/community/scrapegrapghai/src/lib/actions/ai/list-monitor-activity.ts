@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiListMonitorActivityOutputSchema } from '../../output-schemas';
 
 export const listMonitorActivityAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_list_monitor_activity',
+	outputSchema: scrapegrapghaiListMonitorActivityOutputSchema,
 	displayName: 'List Monitor Activity',
 	description: "Lists a monitor's recent runs with change flags.",
 	audience: 'ai',

@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiGetCreditsOutputSchema } from '../../output-schemas';
 
 export const getCreditsAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_get_credits',
+	outputSchema: scrapegrapghaiGetCreditsOutputSchema,
 	displayName: 'Get Credits',
 	description: 'Gets the remaining credit balance, plan and job quotas.',
 	audience: 'ai',

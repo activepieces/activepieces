@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiExtractOutputSchema } from '../../output-schemas';
 
 export const extractDataAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_extract_data',
+	outputSchema: scrapegrapghaiExtractOutputSchema,
 	displayName: 'Extract Data',
 	description:
 		'Extracts structured data from a URL, HTML or markdown using a natural-language prompt.',

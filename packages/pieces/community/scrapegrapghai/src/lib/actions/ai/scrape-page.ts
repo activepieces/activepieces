@@ -4,10 +4,12 @@ import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
 import { scrapegraphaiUtils } from '../../common/utils';
+import { scrapegrapghaiScrapePageOutputSchema } from '../../output-schemas';
 
 export const scrapePageAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_scrape_page',
+	outputSchema: scrapegrapghaiScrapePageOutputSchema,
 	displayName: 'Scrape Page',
 	description: 'Fetches a URL and returns its content in one or more formats.',
 	audience: 'ai',

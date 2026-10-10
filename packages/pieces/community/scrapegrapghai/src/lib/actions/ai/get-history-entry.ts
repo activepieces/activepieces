@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiGetHistoryEntryOutputSchema } from '../../output-schemas';
 
 export const getHistoryEntryAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_get_history_entry',
+	outputSchema: scrapegrapghaiGetHistoryEntryOutputSchema,
 	displayName: 'Get History Entry',
 	description: 'Gets one past request and its full result by ID.',
 	audience: 'ai',

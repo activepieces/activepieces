@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiCrawlOutputSchema } from '../../output-schemas';
 
 export const getCrawlAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_get_crawl',
+	outputSchema: scrapegrapghaiCrawlOutputSchema,
 	displayName: 'Get Crawl',
 	description: 'Gets the status and progress of a crawl job.',
 	audience: 'ai',

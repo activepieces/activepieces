@@ -4,10 +4,12 @@ import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
 import { scrapegraphaiUtils } from '../../common/utils';
+import { scrapegrapghaiMonitorOutputSchema } from '../../output-schemas';
 
 export const createMonitorAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_create_monitor',
+	outputSchema: scrapegrapghaiMonitorOutputSchema,
 	displayName: 'Create Monitor',
 	description: 'Schedules a recurring fetch of a page with change detection.',
 	audience: 'ai',

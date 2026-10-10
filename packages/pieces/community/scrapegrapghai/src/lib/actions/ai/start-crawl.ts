@@ -4,10 +4,12 @@ import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
 import { scrapegraphaiUtils } from '../../common/utils';
+import { scrapegrapghaiStartCrawlOutputSchema } from '../../output-schemas';
 
 export const startCrawlAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_start_crawl',
+	outputSchema: scrapegrapghaiStartCrawlOutputSchema,
 	displayName: 'Start Crawl',
 	description: 'Starts an asynchronous multi-page crawl and returns its job ID.',
 	audience: 'ai',

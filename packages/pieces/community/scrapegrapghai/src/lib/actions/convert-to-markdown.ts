@@ -2,9 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { scrapegraphaiAuth } from '../auth';
 import { scrapegraphaiApi } from '../common/api';
+import { scrapegrapghaiMarkdownifyOutputSchema } from '../output-schemas';
 
 export const markdownifyAction = createAction({
 	name: 'markdownify',
+	outputSchema: scrapegrapghaiMarkdownifyOutputSchema,
 	classification: 'READ',
 	displayName: 'Convert to Markdown',
 	description: 'Convert any webpage into clean, readable Markdown format.',

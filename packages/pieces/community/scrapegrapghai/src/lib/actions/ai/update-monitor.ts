@@ -4,10 +4,12 @@ import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
 import { scrapegraphaiUtils } from '../../common/utils';
+import { scrapegrapghaiMonitorOutputSchema } from '../../output-schemas';
 
 export const updateMonitorAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_update_monitor',
+	outputSchema: scrapegrapghaiMonitorOutputSchema,
 	displayName: 'Update Monitor',
 	description: "Updates a monitor's schedule, name, formats, webhook or fetch options.",
 	audience: 'ai',

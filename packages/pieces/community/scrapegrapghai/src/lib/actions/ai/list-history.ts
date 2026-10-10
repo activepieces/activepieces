@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiListHistoryOutputSchema } from '../../output-schemas';
 
 export const listHistoryAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_list_history',
+	outputSchema: scrapegrapghaiListHistoryOutputSchema,
 	displayName: 'List History',
 	description: 'Lists past API requests, newest first.',
 	audience: 'ai',

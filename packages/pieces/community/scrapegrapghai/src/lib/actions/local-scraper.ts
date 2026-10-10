@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from '../auth';
 import { scrapegraphaiApi } from '../common/api';
+import { scrapegrapghaiExtractOutputSchema } from '../output-schemas';
 
 export const localScraperAction = createAction({
   name: 'local_scraper',
+  outputSchema: scrapegrapghaiExtractOutputSchema,
   classification: 'READ',
   displayName: 'Local Scraper',
   description: 'Extract content from HTML content using AI by providing a natural language prompt.',

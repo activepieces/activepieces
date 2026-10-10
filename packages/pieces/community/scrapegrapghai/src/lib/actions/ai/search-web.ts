@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiSearchWebOutputSchema } from '../../output-schemas';
 
 export const searchWebAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_search_web',
+	outputSchema: scrapegrapghaiSearchWebOutputSchema,
 	displayName: 'Search the Web',
 	description: 'Runs a web search and returns the top results with their page content.',
 	audience: 'ai',

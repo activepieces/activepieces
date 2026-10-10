@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { scrapegraphaiAuth } from '../../auth';
 import { scrapegraphaiAiProps } from '../../common/ai-props';
 import { scrapegraphaiApi } from '../../common/api';
+import { scrapegrapghaiListCrawlPagesOutputSchema } from '../../output-schemas';
 
 export const listCrawlPagesAction = createAction({
 	auth: scrapegraphaiAuth,
 	name: 'scrapegrapghai_list_crawl_pages',
+	outputSchema: scrapegrapghaiListCrawlPagesOutputSchema,
 	displayName: 'List Crawl Pages',
 	description: 'Lists the pages of a crawl job with their scraped content.',
 	audience: 'ai',
