@@ -40,6 +40,7 @@ import { appConnectionUtils } from '@/features/connections';
 import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
+import { AdminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 export default function PlatformConnectionsPage() {
@@ -121,6 +122,7 @@ export default function PlatformConnectionsPage() {
         <CopyTextTooltip
           title={t('External ID')}
           text={row.original.externalId || ''}
+          controlId={AdminControl.CONNECTIONS_EXTERNAL_ID_COPY}
         >
           <div className="flex items-center gap-2 w-fit min-w-0">
             <PieceIconWithPieceName

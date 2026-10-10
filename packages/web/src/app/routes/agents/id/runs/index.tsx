@@ -74,7 +74,7 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
               >
                 <button
                   type="button"
-                  className="flex w-full min-w-0 items-center gap-3 px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-8"
+                  className="flex w-full min-w-0 items-center gap-3 px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8"
                   onClick={() => setOpenRunId(run.id)}
                 >
                   <Icon

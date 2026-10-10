@@ -181,7 +181,7 @@ describe('UNATTENDED_WEB_TOOLS — the unattended set is listed, not subtracted'
     })
 
     it('excludes every tool that asks the user something', () => {
-        for (const chatTool of ['ap_show_connection_picker', 'ap_show_quick_replies', 'ap_discover_action_auth', 'ap_load_guide', 'ap_execute_action', 'ap_run_code', 'ap_explore_data', 'ap_list_across_projects']) {
+        for (const chatTool of ['ap_show_connection_picker', 'ap_show_quick_replies', 'ap_discover_action_auth', 'ap_execute_action', 'ap_run_code', 'ap_explore_data', 'ap_list_across_projects']) {
             expect(UNATTENDED_WEB_TOOLS).not.toContain(chatTool)
         }
     })

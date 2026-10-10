@@ -428,7 +428,8 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
-                          "admin-guide/security/audit-logs/signing-key-created"
+                          "admin-guide/security/audit-logs/signing-key-created",
+                          "admin-guide/security/audit-logs/audit-log-retention-updated"
                         ]
                       }
                     ]
@@ -459,7 +460,8 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
-                          "admin-guide/security/audit-logs/signing-key-created"
+                          "admin-guide/security/audit-logs/signing-key-created",
+                          "admin-guide/security/audit-logs/audit-log-retention-updated"
                         ]
                       },
                       "admin-guide/guides/event-streaming"
@@ -650,6 +652,17 @@
                            "endpoints/connections/list",
                            "endpoints/connections/get",
                            "endpoints/connections/delete"
+                        ]
+                     },
+                     {
+                        "group": "Variables",
+                        "icon": "key",
+                        "pages": [
+                           "endpoints/variables/schema",
+                           "endpoints/variables/create",
+                           "endpoints/variables/list",
+                           "endpoints/variables/update",
+                           "endpoints/variables/delete"
                         ]
                      },
                      {

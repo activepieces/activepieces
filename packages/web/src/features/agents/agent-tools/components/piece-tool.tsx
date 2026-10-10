@@ -135,10 +135,10 @@ export const AgentPieceToolComponent = ({
               <span
                 className={cn(
                   'size-[6px] shrink-0 rounded-full',
-                  account.state === 'connected' && 'bg-success-11',
-                  account.state === 'deleted' && 'bg-danger-11',
-                  account.state === 'missing' && 'bg-warning-11',
-                  account.state === 'mixed' && 'bg-gray-11',
+                  account.state === 'connected' && 'bg-success-10',
+                  account.state === 'deleted' && 'bg-danger-10',
+                  account.state === 'missing' && 'bg-warning-10',
+                  account.state === 'mixed' && 'bg-gray-9',
                 )}
               />
               <span className="truncate">{accountText}</span>

@@ -16,15 +16,16 @@ _Avoid_: "palette" (that is the swatch set), "ramp"
 **Exception** — one of the six named tokens that exist because no step can do their job (`--panel`,
 `--on-accent`, `--on-success`, `--on-warning`, `--on-danger`, `--scrim`).
 
-**Seed colour** — a hex a platform picks. `primaryColor` seeds the accent scale and the grey tint; the optional
+**Seed colour** — a hex a platform picks. `primaryColor` seeds the accent scale (the greys stay neutral); the optional
 danger, warning and success colours (`themeColors.status`) each seed their own scale.
 
-**Seed** — the four-key set `brandSeed` writes on `<html>` from a seed colour: for the brand `--brand-h`,
-`--brand-c`, `--accent-9`, `--on-accent`; for a status scale `--danger-h`, `--danger-c`, `--danger-seed`,
-`--on-danger-seed` (and the same for warning and success). Everything else derives from them in CSS.
+**Ramp** — the twelve steps of one scale for both themes, generated from a seed colour by `brandColors.ramp`
+(nearest colour family, contrast-checked steps 10 and 11). `brandSeed` writes a chosen colour's ramp on `<html>`
+as `--accent-light-N` / `--accent-dark-N` (and the same for danger, warning, success); the CSS defaults are the
+generator's output for the stock colours.
 
-**Mark** — a coloured shape carrying no text: a status dot, a meter, a progress bar. Step 11, except a
-filled block such as a health bar, which is the solid, step 9.
+**Mark** — a coloured shape carrying no text. A small status dot is step 10; a fill such as a progress bar,
+meter or chart series is step 9.
 
 **Swatch** — the twelve-hue *categorical* set (`swatch-1` … `swatch-12`), for "which one is this?"
 rather than "what does this mean?" — projects, avatars, chart series. Not a scale.
@@ -33,7 +34,11 @@ rather than "what does this mean?" — projects, avatars, chart series. Not a sc
 themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders one.
 
 ## Gotchas
+- **A Radix `Popover` opened from inside a `Dialog` must be `modal`, or the mouse wheel does nothing in it.** The dialog's scroll lock treats the portaled popover as "outside" and cancels wheel events there; `<Popover modal>` installs its own lock that allows scrolling inside the content. `SearchableSelect` and `ModelPickerPopover` do this; a non-modal popover looks fine until it is used in a dialog.
+- **`CommandList` (`components/ui/command.tsx`) defaults to `overflow-y-hidden`, so a cmdk list silently cannot scroll.** Every caller must add `overflow-y-auto` (or nest a `ScrollArea`); passing only a `max-h-*` looks fine with few rows and clips the rest. Bit the tiers model picker (2026-10-05).
+- **`border-dashed` on anything under ~16px renders as a broken squiggle, not a dashed circle.** Browsers cannot fit whole dashes around an 8px `rounded-full`, so a tiny dashed dot reads as a glitch. Use a solid border in a lighter step (`border-gray-7`) for a "placeholder" dot and keep dashed borders for boxes.
 
+- **`ConfirmationDeleteDialog` renders `message` inside `DialogDescription`, a `<p>`.** A select or any other form control placed in the message is invalid nesting and becomes the dialog's `aria-describedby`. A delete flow that needs an input (the tier delete's "Move them to" select) builds its own `Dialog` and keeps only the confirm button's `adminControl` id.
 - `styles.css` points the `--shadow-*` theme keys that change per theme at a plain custom property
   (`--shadow-edge: var(--edge)`). Tailwind copies a `--shadow-*` value into the utility literally, so a dark override of
   the theme key itself never lands; the indirection is what lets shadows change per theme.
@@ -46,7 +51,7 @@ themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders
 ## Key files
 
 - `packages/web/src/styles.css` — the scales, exceptions, swatches and both theme blocks
-- `packages/core/shared/src/lib/core/common/` — `brandColors.cssVariables` and `statusCssVariables` (compute the seeds; `lib/brand-seed.ts` writes them) and
+- `packages/core/shared/src/lib/core/common/` — `brandColors.ramp`, `cssVariables` and `statusCssVariables` (generate the ramps; `lib/brand-seed.ts` writes them) and
   `swatchUtils`
 - `packages/web/src/components/custom/logo-plate.tsx` — the one way to render a third-party logo
 - `packages/web/src/lib/syntax-theme.ts` — the one place the code and JSON viewers pick a theme

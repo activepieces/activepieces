@@ -21,6 +21,11 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Test the breaking-changes scripts
+        run: |
+          bun test tools/scripts/breaking-changes-rollover.test.ts
+          bun tools/scripts/breaking-change-check.ts --self-check
+
       - name: Check breaking-change declaration
         env:
           GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}

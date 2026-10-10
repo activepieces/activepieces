@@ -1,9 +1,8 @@
-import {
-  DynamicPropsValue,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { TeableCommon, makeClient } from '../common';
-import { TeableAuth, TeableAuthValue } from '../auth';
+import { DynamicPropsValue, createAction } from '@activepieces/pieces-framework';
+import { TeableCommon } from '../common';
+import { teableClient } from '../common/client';
+import { TeableAuth } from '../auth';
+import { teableOutputSchemas } from '../output-schemas';
 
 export const createRecordAction = createAction({
   auth: TeableAuth,
@@ -11,9 +10,10 @@ export const createRecordAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in a Teable table.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
-    description: 'Insert a new row into a specific Teable table within a base, populating its field values. Use when an agent needs to add data to a no-code database; requires the target table ID and a fields object keyed by field name. Not idempotent — each call appends another record even with identical input.',
+    description:
+      'Adds one new row to a Teable table. Each call appends another record, so a retry makes a duplicate.',
     idempotent: false,
   },
   props: {
@@ -21,21 +21,24 @@ export const createRecordAction = createAction({
     table_id: TeableCommon.table_id,
     fields: TeableCommon.fields,
   },
+  outputSchema: teableOutputSchemas.createRecord,
   async run(context) {
     const { table_id } = context.propsValue;
     const dynamicFields: DynamicPropsValue = context.propsValue.fields;
-
     const fields: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(dynamicFields)) {
       if (value !== undefined && value !== null && value !== '') {
         fields[key] = value;
       }
     }
-
-    const client = makeClient(context.auth as TeableAuthValue);
-    return await client.createRecord(table_id, {
+    if (Object.keys(fields).length === 0) {
+      throw new Error('Fill in at least one field value.');
+    }
+    return teableClient.createRecords({
+      auth: context.auth,
+      tableId: table_id,
       records: [{ fields }],
+      typecast: true,
     });
   },
 });
-

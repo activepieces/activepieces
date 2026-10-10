@@ -192,7 +192,7 @@ async function evaluateOnce({ fixture, systemPrompt, guides, auth, judge }: { fi
 async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown> }): Promise<{ result: AgentTurnResult, text: string }> {
     const replay = replayExecutor.create({ recordedToolCalls: fixture.recordedToolCalls })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
-    const tools = buildEvalToolSet({ replay, guides: guides ?? evalPrompts.loadGuides(), phaseState })
+    const tools = buildEvalToolSet({ replay })
     const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: fixture.model.provider, auth, config: {} }), modelId: fixture.model.modelId })
     const messages: ModelMessage[] = [
         ...fixture.initialMessages,
@@ -201,15 +201,14 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
 
     const capturedErrors: unknown[] = []
     const { data: result, error: turnError } = await tryCatch(() => runAgentTurn({
-        model,
-        provider: fixture.model.provider,
+        models: [{ model, provider: fixture.model.provider, modelId: fixture.model.tier.modelId, thinkingBudget: fixture.model.tier.thinkingBudget }],
         systemPrompt: systemPrompt ?? evalPrompts.loadSystemPrompt(),
         messages,
         tools,
         allToolNames: Object.keys(tools),
         tier: fixture.model.tier,
-        modelId: fixture.model.tier.modelId,
         phaseState,
+        skills: { surface: 'CHAT', guides: guides ?? evalPrompts.loadGuides() },
         abortSignal: new AbortController().signal,
         log: {
             debug: () => {},
@@ -232,7 +231,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
     return { result, text: renderTranscript(result) }
 }
 
-function buildEvalToolSet({ replay, guides, phaseState }: { replay: ReplayExecutor, guides: Record<string, string>, phaseState: { phase: AgentPhase } }): ToolSet {
+function buildEvalToolSet({ replay }: { replay: ReplayExecutor }): ToolSet {
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: 'eval-user', conversationId: 'eval-conversation', log: silentLog })
     const approveGate = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
@@ -241,9 +240,8 @@ function buildEvalToolSet({ replay, guides, phaseState }: { replay: ReplayExecut
     return {
         ...agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: EVAL_PROJECTS }),
         ...agentWorkerTools.createDisplayTools({ waitForApproval: dismissCard, displayToolTimeoutMs: 1_000, onConnectionSelected: async () => {}, onGateOpened: noopGate }),
-        ...agentWorkerTools.createCrossProjectTools({ executeTool: replay.executeTool, eventEmitter, waitForApproval: approveGate, onGateOpened: noopGate, guides, taintState: agentWorkerTools.createTaintState({ carried: false }) }),
+        ...agentWorkerTools.createCrossProjectTools({ executeTool: replay.executeTool, eventEmitter, waitForApproval: approveGate, onGateOpened: noopGate, taintState: agentWorkerTools.createTaintState({ carried: false }) }),
         ...agentWorkerTools.createThinkingTools(),
-        ...agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => { phaseState.phase = phase } }),
     }
 }
 

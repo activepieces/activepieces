@@ -27,7 +27,7 @@ import { firecrawlAuth } from './lib/auth';
 
 export const firecrawl = createPiece({
   displayName: 'Firecrawl',
-  description: 'Extract structured data from websites using AI with natural language prompts',
+  description: 'The context API to search, scrape, and interact with the web at scale.',
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],

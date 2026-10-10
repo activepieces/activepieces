@@ -11,6 +11,22 @@ export const twilioMakeCall = createAction({
   audience: 'both',
   aiMetadata: { description: 'Places an outbound voice call from a Twilio number that reads a text-to-speech message to the recipient. Use to deliver a spoken notification or alert by phone. Requires both numbers in E.164 format and the message text; each call places a real, billable phone call, so it is not idempotent.', idempotent: false },
   displayName: 'Call Phone',
+  propertyGroups: [
+    {
+      key: 'numbers',
+      display: 'section',
+      label: 'Phone numbers',
+      icon: 'users',
+      props: ['from', 'to'],
+    },
+    {
+      key: 'speech',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['message', 'voice', 'language'],
+    },
+  ],
   props: {
     from: twilioCommon.phoneNumberDropdown({
       displayName: 'From',
@@ -66,6 +82,11 @@ export const twilioMakeCall = createAction({
         description: 'Seconds to ring before giving up, up to 600. Empty: 60.',
         required: false,
         advanced: true,
+        display: 'stepper',
+        min: 5,
+        max: 600,
+        step: 5,
+        defaultValue: 60,
     })
   },
   async run(context) {
