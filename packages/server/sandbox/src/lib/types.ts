@@ -54,11 +54,11 @@ export type PreWarmSandboxParams = {
     flow?: { id: string, versionId: string, projectId: string }
 }
 
-// The Resolver's output and the pool's input. The pool installs each piece straight from a link: it
-// builds `${internalApiUrl}v1/engine/pieces/bundle?name=&version=&token=` per piece and hands that URL
-// to `bun install`, which follows the endpoint's redirect to npm / signed-S3 (or streams the custom
-// archive). No bytes cross the worker socket and the pool never imports WorkerToApiContract; the link
-// uses the worker's own app URL, the one it already reaches the app on. See ADR 0002.
+// The Resolver's output and the pool's input. The pool fetches each piece from
+// `${internalApiUrl}v1/engine/pieces/bundle` (engine token as a Bearer header), following the redirect
+// to npm / signed-S3 (or the streamed custom archive), saves it as a local .tgz, and `bun install`s
+// that file. No bytes cross the worker socket and the pool never imports WorkerToApiContract; the URL
+// is the worker's own app URL (ends in `/api/`), the one it already reaches the app on. See ADR 0002.
 export type ProvisionInput = {
     platformId: string
     flowVersionId?: string

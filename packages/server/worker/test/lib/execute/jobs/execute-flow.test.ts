@@ -109,7 +109,7 @@ function makeMockContext(opts?: { resolveResult?: unknown, apiOverrides?: Record
         runtime,
         workerIndex: 0,
         engineToken: 'test-token',
-        internalApiUrl: 'http://localhost:3000',
+        internalApiUrl: 'http://localhost:3000/api/',
         publicApiUrl: 'http://localhost:4200',
     } as any
 }
@@ -159,7 +159,7 @@ describe('executeFlowJob', () => {
             await executeFlowJob.execute(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
 
             const resolveInput = ctx.resolver.resolve.mock.calls[0][0]
-            expect(resolveInput.internalApiUrl).toBe('http://localhost:3000')
+            expect(resolveInput.internalApiUrl).toBe('http://localhost:3000/api/')
             expect(resolveInput).not.toHaveProperty('publicApiUrl')
         })
     })
