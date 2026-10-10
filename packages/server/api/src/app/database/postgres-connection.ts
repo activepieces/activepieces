@@ -917,7 +917,7 @@ export const getMigrations = (): (new () => Migration)[] => {
 
 export const createPostgresDataSource = (): DataSource => {
     const migrationConfig: MigrationConfig = {
-        migrationsRun: true,
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,
