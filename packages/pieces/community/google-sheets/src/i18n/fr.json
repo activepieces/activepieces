@@ -373,5 +373,6 @@
   "Trigger Column": "Colonne de déclenchement",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Veuillez noter qu'il peut y avoir un délai de 3 minutes pour que le déclencheur soit activé en raison d'un délai de la part de Google.",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
+  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets.",
+  "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle."
 }

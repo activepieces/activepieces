@@ -373,5 +373,6 @@
   "Trigger Column": "Trigger Column",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
+  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets.",
+  "Empty fields keep their current value.": "Empty fields keep their current value."
 }
