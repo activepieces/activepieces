@@ -13,6 +13,7 @@ import { StartPoint, StartPointStep } from './steps/start-point-step';
 import { OnboardingProgress } from './steps/progress';
 import { UseCaseStep } from './steps/use-case-step';
 import { ConnectToolsStep } from './steps/connect-tools-step';
+import { BuildWorkflowStep } from './steps/build-workflow-step';
 import { WelcomeStep } from './steps/welcome-step';
 
 export function OnboardingPage() {
@@ -48,8 +49,11 @@ export function OnboardingPage() {
   };
 
   const handleConnectToolsNext = async () => {
-    const point = (sessionStorage.getItem('synkra:startPoint') ?? 'explore') as StartPoint;
-    sessionStorage.removeItem('synkra:startPoint');
+    setLocalStep('build_workflow');
+    await advance.mutateAsync({ step: 'build_workflow' });
+  };
+
+  const handleBuildWorkflowChoose = async (point: StartPoint) => {
     const target =
       point === 'scratch'
         ? authenticationSession.appendProjectRoutePrefix('/flows?newFlow=true')
@@ -113,6 +117,13 @@ export function OnboardingPage() {
               useCases={data?.primaryUseCase ?? []}
               onNext={handleConnectToolsNext}
               onSkip={handleConnectToolsNext}
+            />
+          )}
+
+          {step === 'build_workflow' && (
+            <BuildWorkflowStep
+              onChoose={handleBuildWorkflowChoose}
+              onSkip={handleSkipAll}
             />
           )}
 
