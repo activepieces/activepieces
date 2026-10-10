@@ -9,6 +9,11 @@ import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   PLATFORM_FEATURES,
   useFeatureGate,
   useTeamProjectLimitGuard,
@@ -40,7 +45,7 @@ export function CreateProjectButton({
     locked: projectsGate.locked,
   });
 
-  return (
+  const dialog = (
     <NewProjectDialog
       onCreate={onCreate}
       onBlocked={() =>
@@ -57,8 +62,39 @@ export function CreateProjectButton({
         content: teamProjectLimitContent,
       }}
     >
-      {trigger}
+      {variant === 'icon' ? (
+        <TooltipTrigger
+          asChild
+          aria-label={
+            projectsGate.locked
+              ? `${t('Create Project')}, ${t('Requires a plan upgrade')}`
+              : t('Create Project')
+          }
+        >
+          {trigger}
+        </TooltipTrigger>
+      ) : (
+        trigger
+      )}
     </NewProjectDialog>
+  );
+
+  if (variant !== 'icon') {
+    return dialog;
+  }
+
+  return (
+    <Tooltip>
+      {dialog}
+      <TooltipContent side="bottom">
+        <span className="flex flex-col">
+          <span>{t('Create Project')}</span>
+          {projectsGate.locked && (
+            <span className="opacity-70">{t('Requires a plan upgrade')}</span>
+          )}
+        </span>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
