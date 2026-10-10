@@ -50,13 +50,12 @@ export const editImage = createAction({
       description: 'Higher quality takes longer and costs more.',
       required: false,
       defaultValue: 'auto',
-      display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto', icon: 'sliders' },
-          { label: 'Low', value: 'low', icon: 'sliders' },
-          { label: 'Medium', value: 'medium', icon: 'sliders' },
-          { label: 'High', value: 'high', icon: 'sliders' },
+          { label: 'Auto', value: 'auto' },
+          { label: 'Low', value: 'low' },
+          { label: 'Medium', value: 'medium' },
+          { label: 'High', value: 'high' },
         ],
       },
     }),

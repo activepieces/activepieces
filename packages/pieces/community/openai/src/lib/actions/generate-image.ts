@@ -82,13 +82,12 @@ export const generateImage = createAction({
       required: false,
       description: 'Higher quality takes longer and costs more.',
       defaultValue: 'auto',
-      display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto', icon: 'sliders' },
-          { label: 'Low', value: 'low', icon: 'sliders' },
-          { label: 'Medium', value: 'medium', icon: 'sliders' },
-          { label: 'High', value: 'high', icon: 'sliders' },
+          { label: 'Auto', value: 'auto' },
+          { label: 'Low', value: 'low' },
+          { label: 'Medium', value: 'medium' },
+          { label: 'High', value: 'high' },
         ],
       },
     }),
