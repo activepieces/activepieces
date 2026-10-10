@@ -13,3 +13,17 @@ export const stopFlowActionOutputSchema: OutputSchema = {
     { key: 'message', label: 'Message' },
   ],
 };
+
+export const waitForResumeActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'payload', label: 'Resume payload' },
+    { key: 'queryParams', label: 'Query params' },
+  ],
+};
+
+export const createWaitpointActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'waitpointId', label: 'Waitpoint ID' },
+    { key: 'resumeUrl', label: 'Resume URL', format: 'url' },
+  ],
+};
