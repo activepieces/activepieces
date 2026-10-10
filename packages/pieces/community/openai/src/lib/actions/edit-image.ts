@@ -34,10 +34,10 @@ export const editImage = createAction({
       display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Square', value: '1024x1024', description: '1024 × 1024' },
-          { label: 'Landscape', value: '1536x1024', description: '1536 × 1024' },
-          { label: 'Portrait', value: '1024x1536', description: '1024 × 1536' },
+          { label: 'Auto', value: 'auto', description: 'Model decides', icon: 'blank' },
+          { label: 'Square', value: '1024x1024', description: '1024 × 1024', icon: 'blank' },
+          { label: 'Landscape', value: '1536x1024', description: '1536 × 1024', icon: 'blank' },
+          { label: 'Portrait', value: '1024x1536', description: '1024 × 1536', icon: 'blank' },
         ],
       },
     }),
@@ -46,12 +46,13 @@ export const editImage = createAction({
       description: 'Higher quality takes longer and costs more.',
       required: false,
       defaultValue: 'auto',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Low', value: 'low' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'High', value: 'high' },
+          { label: 'Auto', value: 'auto', description: 'Model decides', icon: 'sliders' },
+          { label: 'Low', value: 'low', description: 'Fastest, cheapest', icon: 'sliders' },
+          { label: 'Medium', value: 'medium', description: 'Balanced', icon: 'sliders' },
+          { label: 'High', value: 'high', description: 'Most detail', icon: 'sliders' },
         ],
       },
     }),
