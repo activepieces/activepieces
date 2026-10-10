@@ -8,7 +8,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@googleapis/drive": "20.2.0",
     "@googleapis/sheets": "13.0.2",
-    "csv-parse": "5.6.0",
+    "csv-parse": "7.0.2",
     "dayjs": "1.11.9",
     "gaxios": "6.7.1",
     "google-auth-library": "10.5.0",
