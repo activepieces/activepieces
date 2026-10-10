@@ -373,5 +373,6 @@
   "Trigger Column": "トリガー列",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Googleからの遅延により、トリガーが発生するまでに最大3分間の遅延が発生する場合がありますのでご注意ください。",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
+  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets.",
+  "Empty fields keep their current value.": "空欄のフィールドは現在の値のままです。"
 }

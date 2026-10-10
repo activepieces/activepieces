@@ -373,5 +373,6 @@
   "Trigger Column": "Coluna de Disparo",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Observe que pode haver um atraso de até 3 minutos para o gatilho ser disparado, devido a um atraso do Google.",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
+  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets.",
+  "Empty fields keep their current value.": "Campos vazios mantêm o valor atual."
 }
