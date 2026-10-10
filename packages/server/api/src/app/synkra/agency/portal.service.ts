@@ -58,6 +58,8 @@ export const synkraAgencyPortalService = (log: FastifyBaseLogger) => ({
     };
     supportEmail: string | null;
     welcomeMessage: string | null;
+    amountOwedZar: number | null;
+    currency: string;
   }> {
     const client = await clientRepo().findOneBy({
       portalToken: token,
@@ -131,6 +133,8 @@ export const synkraAgencyPortalService = (log: FastifyBaseLogger) => ({
       },
       supportEmail: (branding.supportEmail as string) ?? null,
       welcomeMessage: (branding.welcomeMessage as string) ?? null,
+      amountOwedZar: client.clientPriceZar ?? null,
+      currency: 'ZAR',
     };
   },
 });

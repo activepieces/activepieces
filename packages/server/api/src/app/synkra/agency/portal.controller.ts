@@ -65,6 +65,8 @@ export const synkraAgencyPortalController: FastifyPluginAsyncZod = async (app) =
             }),
             supportEmail: z.string().nullable(),
             welcomeMessage: z.string().nullable(),
+            amountOwedZar: z.number().nullable(),
+            currency: z.string(),
           }),
         },
       },

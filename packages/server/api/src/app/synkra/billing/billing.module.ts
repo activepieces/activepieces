@@ -12,6 +12,7 @@ import { synkraOauthSeed } from '../oauth/oauth-seed.service';
 import { synkraOnboardingController } from '../onboarding/onboarding.controller';
 import { synkraAgencyController } from '../agency/agency.controller';
 import { synkraAgencyPortalController } from '../agency/portal.controller';
+import { synkraAgencyInvoiceController } from '../agency/invoice.controller';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -53,4 +54,5 @@ export const synkraBillingModule: FastifyPluginAsyncZod = async (app) => {
   await app.register(synkraOnboardingController, { prefix: '/v1/synkra/onboarding' });
   await app.register(synkraAgencyController, { prefix: '/v1/synkra/agency' });
   await app.register(synkraAgencyPortalController, { prefix: '/v1/synkra/agency' });
+  await app.register(synkraAgencyInvoiceController, { prefix: '/v1/synkra/agency' });
 };

@@ -26,6 +26,7 @@ export interface SynkraAgencyClient {
   portalToken: string | null;
   portalEnabled: boolean;
   portalLastViewedAt: Date | null;
+  clientPriceZar: number | null;
 }
 
 export const SynkraAgencyClientEntity = new EntitySchema<SynkraAgencyClient>({
@@ -43,6 +44,7 @@ export const SynkraAgencyClientEntity = new EntitySchema<SynkraAgencyClient>({
     portalToken: { type: String, nullable: true },
     portalEnabled: { type: Boolean, default: false },
     portalLastViewedAt: { type: 'timestamptz', nullable: true },
+    clientPriceZar: { type: 'int', nullable: true },
   },
   indices: [
     { name: 'idx_synkra_client_agency', columns: ['agencyId'] },

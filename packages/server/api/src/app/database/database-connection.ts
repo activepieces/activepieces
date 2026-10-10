@@ -69,6 +69,7 @@ import { SynkraSubscriptionEntity } from '../synkra/billing/subscription.entity'
 import { SynkraOnboardingEntity } from '../synkra/onboarding/onboarding.entity'
 import { SynkraAgencyEntity } from '../synkra/agency/agency.entity'
 import { SynkraAgencyClientEntity } from '../synkra/agency/agency-client.entity'
+import { SynkraAgencyInvoiceEntity } from '../synkra/agency/invoice.entity'
 import { VariableEntity } from '../variable/variable.entity'
 import { WaitpointEntity } from '../waitpoints/waitpoint-entity'
 import { WaitpointSignalEntity } from '../waitpoints/waitpoint-signal-entity'
@@ -103,6 +104,7 @@ function getEntities(): EntitySchema<unknown>[] {
         SynkraOnboardingEntity,
         SynkraAgencyEntity,
         SynkraAgencyClientEntity,
+        SynkraAgencyInvoiceEntity,
         AIProviderEntity,
         AiToolConfigEntity,
         PlatformModelTierEntity,
