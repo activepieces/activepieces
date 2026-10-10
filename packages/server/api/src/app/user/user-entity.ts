@@ -34,6 +34,10 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: 'timestamp with time zone',
             nullable: true,
         },
+        shadowChatUserId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

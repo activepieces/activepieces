@@ -76,9 +76,11 @@ export const synkraEnforcement = (log: FastifyBaseLogger) => ({
     const sub = await synkraSubscriptionService(log).getOrCreateForUser(ownerUserId)
     const plan = getPlanLimits(sub.tier)
 
-    const userCount = await userRepo().count({
-      where: { platformId },
-    })
+    const userCount = await userRepo()
+      .createQueryBuilder('u')
+      .where('u."platformId" = :platformId', { platformId })
+      .andWhere('u."shadowChatUserId" IS NULL')
+      .getCount()
 
     if (userCount >= plan.seats) {
       throw new ActivepiecesError({
