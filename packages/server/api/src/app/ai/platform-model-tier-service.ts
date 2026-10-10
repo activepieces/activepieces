@@ -35,6 +35,24 @@ export const platformModelTierService = {
         return listLive({ platformId })
     },
 
+    async listForPicker({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun[]> {
+        const tiers = await listLive({ platformId })
+        const configIds = unique(tiers.flatMap((tier) => tier.entries.map((entry) => entry.configId)))
+        const keys = configIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(configIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
+        return tiers
+            .filter((tier) => mainRunsIn({ tier, keyById, scope }))
+            .map((tier) => ({ tier, entries: entriesThatRun({ tier, keyById, scope }) }))
+    },
+
+    async movedTiers({ platformId, tierId }: { platformId: PlatformId, tierId: string | undefined }): Promise<Record<string, string>> {
+        if (isNil(tierId)) {
+            return {}
+        }
+        const live = (await followReplacementsInBulk({ platformId, ids: [tierId] })).get(tierId)
+        return isNil(live) || live.id === tierId ? {} : { [tierId]: live.id }
+    },
+
     async create({ platformId, request }: { platformId: PlatformId, request: CreatePlatformModelTierRequest }): Promise<PlatformModelTier> {
         return withNameConflictAsValidation(() => transaction(async (manager) => {
             await lockPlatform({ manager, platformId })
@@ -240,11 +258,15 @@ function entryRunsIn({ entry, key, scope }: { entry: PlatformModelTierEntry, key
         && aiKeyScope.rowAllowsScope({ row: key, scope })
 }
 
-function runnableEntries({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
-    const runnable = tier.entries.flatMap((entry) => {
+function entriesThatRun({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
+    return tier.entries.flatMap((entry) => {
         const key = keyById.get(entry.configId)
         return isNil(key) || !entryRunsIn({ entry, key, scope }) ? [] : [{ modelId: entry.modelId, key }]
     })
+}
+
+function runnableEntries({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
+    const runnable = entriesThatRun({ tier, keyById, scope })
     return [
         ...runnable.filter((entry) => entry.key.status === 'active'),
         ...runnable.filter((entry) => entry.key.status !== 'active'),

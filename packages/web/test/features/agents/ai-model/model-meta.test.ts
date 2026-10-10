@@ -286,13 +286,27 @@ describe('modelMeta project scope', () => {
   const open = key('open', {});
   const onlyA = key('onlyA', { projectScope: 'selected', projectIds: ['A'] });
   const notA = key('notA', { projectScope: 'except', projectIds: ['A'] });
-  const configsById = new Map([open, onlyA, notA].map((config) => [config.id, config]));
+  const configsById = new Map(
+    [open, onlyA, notA].map((config) => [config.id, config]),
+  );
   const projectIds = ['A', 'B', 'C'];
 
   it('mirrors the server rule for which projects a key serves', () => {
-    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: onlyA, projectId }))).toEqual(['A']);
-    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: notA, projectId }))).toEqual(['B', 'C']);
-    expect(projectIds.filter((projectId) => modelMeta.keyServesProject({ config: open, projectId }))).toEqual(projectIds);
+    expect(
+      projectIds.filter((projectId) =>
+        modelMeta.keyServesProject({ config: onlyA, projectId }),
+      ),
+    ).toEqual(['A']);
+    expect(
+      projectIds.filter((projectId) =>
+        modelMeta.keyServesProject({ config: notA, projectId }),
+      ),
+    ).toEqual(['B', 'C']);
+    expect(
+      projectIds.filter((projectId) =>
+        modelMeta.keyServesProject({ config: open, projectId }),
+      ),
+    ).toEqual(projectIds);
   });
 
   it('counts the projects a tier is missing from and the fallbacks skipped where it runs', () => {
@@ -323,7 +337,10 @@ describe('modelMeta project scope', () => {
 
   it('reports what narrowing a key does to the tiers that use it', () => {
     const tiers = [
-      { ...tier('Expert', [{ configId: open.id, modelId: 'main' }]), name: 'Expert' },
+      {
+        ...tier('Expert', [{ configId: open.id, modelId: 'main' }]),
+        name: 'Expert',
+      },
       {
         ...tier('Fast', [
           { configId: notA.id, modelId: 'main' },
@@ -331,7 +348,10 @@ describe('modelMeta project scope', () => {
         ]),
         name: 'Fast',
       },
-      { ...tier('Other', [{ configId: notA.id, modelId: 'main' }]), name: 'Other' },
+      {
+        ...tier('Other', [{ configId: notA.id, modelId: 'main' }]),
+        name: 'Other',
+      },
     ];
 
     const impact = modelMeta.keyScopeImpact({

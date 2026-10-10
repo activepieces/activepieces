@@ -46,7 +46,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import {
+  AgentStructuredOutput,
+  ModelPicker,
+  PROVIDER_EMBEDDING_MODELS,
+} from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
 import { agentsMutations } from '@/features/agents/hooks/agents-hooks';
@@ -209,13 +213,17 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
 const ConfigureBehaviorTab = ({
   form,
   needsModel,
+  projectId,
 }: {
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
   needsModel: boolean;
+  projectId: string;
 }) => {
   const tools = form.watch('draft.tools') ?? [];
+  const draft = form.watch('draft');
+  const provider = draft.provider;
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
   ).length;
@@ -250,18 +258,12 @@ const ConfigureBehaviorTab = ({
             {t('Pick a model so this agent can answer.')}
           </p>
         )}
-        <AIModelSelector
-          hideLabel
-          showEmbeddingNote={knowledgeCount > 0}
-          defaultProvider={form.watch('draft.provider') ?? undefined}
-          defaultModel={form.watch('draft.modelName') ?? undefined}
-          defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
-          onChange={({ provider, model, configId, picked: pickedBy }) => {
-            const picked = {
-              provider: parseProvider(provider) ?? null,
-              modelName: model ?? null,
-              providerConfigId: configId ?? null,
-            };
+        <ModelPicker
+          projectId={projectId}
+          surface="agent"
+          value={agentEditState.modelChoiceOf({ config: draft })}
+          onChange={(choice) => {
+            const picked = agentEditState.modelPickOf({ choice });
             if (
               !agentEditState.modelPickChanged({
                 picked,
@@ -270,14 +272,33 @@ const ConfigureBehaviorTab = ({
             ) {
               return;
             }
-            const shouldDirty = pickedBy !== 'default';
-            form.setValue('draft.provider', picked.provider, { shouldDirty });
-            form.setValue('draft.modelName', picked.modelName, { shouldDirty });
-            form.setValue('draft.providerConfigId', picked.providerConfigId, {
-              shouldDirty,
+            form.setValue(
+              'draft.provider',
+              parseProvider(picked.provider ?? undefined),
+              { shouldDirty: true },
+            );
+            form.setValue('draft.modelName', picked.modelName ?? null, {
+              shouldDirty: true,
+            });
+            form.setValue(
+              'draft.providerConfigId',
+              picked.providerConfigId ?? null,
+              { shouldDirty: true },
+            );
+            form.setValue('draft.modelTierId', picked.modelTierId ?? null, {
+              shouldDirty: true,
             });
           }}
         />
+        {knowledgeCount > 0 && !isNil(provider) && (
+          <p className="text-xs text-gray-11">
+            {PROVIDER_EMBEDDING_MODELS[provider]
+              ? t('Embedding model for knowledge base: {model}', {
+                  model: PROVIDER_EMBEDDING_MODELS[provider],
+                })
+              : t('This provider does not support knowledge base embeddings.')}
+          </p>
+        )}
       </FormItem>
       <FormField
         control={form.control}
@@ -502,8 +523,9 @@ const AgentConfigurePanel = forwardRef<
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
 
   const values = form.watch();
-  const formNeedsModel =
-    isNil(values.draft?.modelName) || isNil(values.draft?.provider);
+  const formNeedsModel = !agentEditState.hasModel({
+    config: values.draft ?? {},
+  });
   const live = liveValuesOf(agent);
   const hasChanges =
     isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
@@ -692,7 +714,11 @@ const AgentConfigurePanel = forwardRef<
                 value="behavior"
                 className="mt-0 flex flex-col gap-6"
               >
-                <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
+                <ConfigureBehaviorTab
+                  form={form}
+                  needsModel={formNeedsModel}
+                  projectId={agent.projectId}
+                />
               </TabsContent>
               <TabsContent
                 value="settings"

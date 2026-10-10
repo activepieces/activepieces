@@ -97,6 +97,38 @@ describe('agent crud', () => {
         expect(agent.draft.modelName).toBe('anthropic/claude-haiku-4.5')
     })
 
+    it('pins the default model to the chat key, so a key added later does not take the agent over', async () => {
+        const ctx = await context()
+        const chatKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+
+        const agent = await createAgent(ctx)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, displayName: 'Second key' })
+        const reread = await ctx.get(`/v1/agents/${agent.id}`, { projectId: ctx.project.id })
+
+        expect(agent.draft.providerConfigId).toBe(chatKey.id)
+        expect(reread.json().draft.providerConfigId).toBe(chatKey.id)
+    })
+
+    it('picks a default model the pinned chat key allows', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true, modelScope: 'selected', modelIds: ['gpt-4.1-mini'] })
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).toBe('gpt-4.1-mini')
+    })
+
+    it('pins a saved model that names no key to the key a run would use today', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+
+        const response = await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agent.draft, provider: AIProviderName.OPENAI, modelName: 'gpt-5.5', providerConfigId: null } })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().draft.providerConfigId).toBe(key.id)
+    })
+
     it('leaves the model empty where the platform has no chat provider', async () => {
         const ctx = await context()
 
@@ -786,6 +818,31 @@ describe('moving an agent to another project', () => {
         expect(inSource).toStrictEqual([])
         const row = await db.findOneByOrFail('agent_conversation', { id: conversationId })
         expect((row as { projectId: string }).projectId).toBe(target.id)
+    })
+
+    it('re-pins the model to a key the new project can use, so a moved agent keeps running', async () => {
+        const ctx = await context()
+        const target = await secondProjectOf(ctx)
+        const sourceKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, displayName: 'Source', projectScope: 'selected', projectIds: [ctx.project.id] })
+        const targetKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, displayName: 'Target', projectScope: 'selected', projectIds: [target.id] })
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, provider: AIProviderName.OPENAI, modelName: 'gpt-5.5', providerConfigId: sourceKey.id } })
+
+        const moved = await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })
+
+        expect(moved.statusCode).toBe(StatusCodes.OK)
+        expect(moved.json().draft.providerConfigId).toBe(targetKey.id)
+    })
+
+    it('keeps the pinned key on a move when the new project can use it too', async () => {
+        const ctx = await context()
+        const target = await secondProjectOf(ctx)
+        const shared = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, displayName: 'Shared' })
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, displayName: 'Other' })
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, provider: AIProviderName.OPENAI, modelName: 'gpt-5.5', providerConfigId: shared.id } })
+
+        const moved = await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })
+
+        expect(moved.json().draft.providerConfigId).toBe(shared.id)
     })
 
     it('refuses a project the caller cannot reach', async () => {
