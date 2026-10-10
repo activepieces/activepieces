@@ -87,10 +87,10 @@ export const textToSpeech = createAction({
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'MP3', value: 'mp3', description: 'Works anywhere', icon: 'file' },
-					{ label: 'Opus', value: 'opus', description: 'For streaming', icon: 'file' },
-					{ label: 'AAC', value: 'aac', description: 'Phones, YouTube', icon: 'file' },
-					{ label: 'FLAC', value: 'flac', description: 'Lossless, larger', icon: 'file' },
+					{ label: 'MP3', value: 'mp3', icon: 'file' },
+					{ label: 'Opus', value: 'opus', icon: 'file' },
+					{ label: 'AAC', value: 'aac', icon: 'file' },
+					{ label: 'FLAC', value: 'flac', icon: 'file' },
 				],
 			},
 		}),
