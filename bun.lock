@@ -10567,7 +10567,7 @@
     },
     "packages/pieces/core/http": {
       "name": "@activepieces/piece-http",
-      "version": "0.12.2",
+      "version": "0.13.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
