@@ -262,5 +262,6 @@
   "Poll Answer": "Poll Answer",
   "My Chat Member": "My Chat Member",
   "Chat Member": "Chat Member",
-  "Chat Join Request": "Chat Join Request"
+  "Chat Join Request": "Chat Join Request",
+  "Upload a file or enter a file ID. If both are set, the upload is sent.": "ファイルをアップロードするか、ファイル ID を入力してください。両方を指定した場合は、アップロードしたファイルが送信されます。"
 }

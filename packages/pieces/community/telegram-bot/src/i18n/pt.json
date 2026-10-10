@@ -262,5 +262,6 @@
   "Poll Answer": "Poll Answer",
   "My Chat Member": "My Chat Member",
   "Chat Member": "Chat Member",
-  "Chat Join Request": "Chat Join Request"
+  "Chat Join Request": "Chat Join Request",
+  "Upload a file or enter a file ID. If both are set, the upload is sent.": "Envie um arquivo ou insira um ID de arquivo. Se ambos forem preenchidos, o arquivo enviado será usado."
 }
