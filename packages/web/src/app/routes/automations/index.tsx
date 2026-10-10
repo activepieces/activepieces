@@ -13,6 +13,7 @@ import { recordAccess } from '@/app/components/global-search/access-history';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
+import { GetStartedChecklist } from '@/features/synkra-onboarding';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
 import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
 import { AutomationsPagination } from '@/features/automations/components/automations-pagination';
@@ -319,13 +320,16 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
   if (isEmptyState) {
     return (
-      <AutomationsEmptyState
-        onRefresh={() => invalidateAll()}
-        agentsVisible={agentsVisible}
-        userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
-        isCreatingAgent={mutations.isCreatingAgent}
-        onCreateAgent={() => mutations.createAgent()}
-      />
+      <div className="mx-auto w-full max-w-4xl p-6 flex flex-col gap-6">
+        <GetStartedChecklist />
+        <AutomationsEmptyState
+          onRefresh={() => invalidateAll()}
+          agentsVisible={agentsVisible}
+          userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
+          isCreatingAgent={mutations.isCreatingAgent}
+          onCreateAgent={() => mutations.createAgent()}
+        />
+      </div>
     );
   }
 
