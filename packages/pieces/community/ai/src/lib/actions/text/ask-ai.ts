@@ -44,6 +44,10 @@ export const askAI = createAction({
       displayName: 'Creativity',
       required: false,
       description: 'From 0 to 100. Lower is focused, higher is creative.',
+      display: 'stepper',
+      min: 0,
+      max: 100,
+      step: 10,
       advanced: true,
     }),
     maxOutputTokens: Property.Number({
