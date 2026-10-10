@@ -40,6 +40,11 @@ function shell(title: string, body: string, cta?: { label: string; url: string }
 }
 
 function send(log: FastifyBaseLogger, to: string, subject: string, html: string): void {
+  // Never send mail to shadow users created by Chat integration.
+  if (to.endsWith('@shadow.synkra.internal')) {
+    log.debug({ to, subject }, 'billing email skipped (shadow user address)');
+    return;
+  }
   const resend = resendSender(log);
   if (resend.isConfigured()) {
     void resend.send({ to, subject, html });
