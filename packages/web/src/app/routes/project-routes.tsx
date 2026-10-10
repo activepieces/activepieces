@@ -26,6 +26,10 @@ const AgentEditorPage = lazyWithRetry(
   () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
   'agent-editor',
 );
+const OnboardingPage = lazyWithRetry(
+  () => import('./onboarding').then((m) => ({ default: m.OnboardingPage })),
+  'onboarding',
+);
 const FlowBuilderPage = lazyWithRetry(
   () => import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
   'flow-builder',
@@ -116,6 +120,16 @@ const agentEditorElement = (
 );
 
 export const projectRoutes = [
+  // Onboarding wizard — no project context required.
+  {
+    path: '/onboarding',
+    element: (
+      <Suspense fallback={<RouteLoadingBar />}>
+        <OnboardingPage />
+      </Suspense>
+    ),
+  },
+
   // Old URL redirect: /connections -> /integrations (backward compat)
   {
     path: '/connections',

@@ -11,6 +11,7 @@ import {
 
 import { NoProjectsState } from '../components/no-projects-state';
 import { ProjectDashboardLayout } from '../components/project-layout';
+import { synkraOnboardingHooks } from '@/features/synkra-onboarding';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
@@ -28,7 +29,48 @@ export const DefaultRoute = () => {
   if (authenticationSession.isOnboarding()) {
     return <Navigate to="/create-platform" replace />;
   }
+  // If already on /onboarding, don't redirect away.
+  if (location.pathname === '/onboarding') {
+    return null;
+  }
   return <AuthenticatedDefaultRoute />;
+};
+
+/**
+ * Checks if the current user has finished or skipped onboarding.
+ * Renders children only after the check. Redirects to /onboarding
+ * if onboarding is pending.
+ */
+export const OnboardingRedirectGate = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const location = useLocation();
+  const { data, isLoading } = synkraOnboardingHooks.useState();
+
+  // Don't gate the onboarding page itself.
+  if (location.pathname === '/onboarding') return <>{children}</>;
+
+  // Don't gate sign-in, sign-up, public routes.
+  if (
+    location.pathname.startsWith('/sign-') ||
+    location.pathname.startsWith('/redirect') ||
+    location.pathname === '/' ||
+    location.pathname === '/create-platform'
+  ) {
+    return <>{children}</>;
+  }
+
+  // While loading, don't redirect — avoids a flash of the wrong screen.
+  if (isLoading) return <>{children}</>;
+
+  // If not completed and not skipped, send to /onboarding.
+  if (data && !data.completedAt && !data.skipped && data.step !== 'done') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 const AuthenticatedDefaultRoute = () => {

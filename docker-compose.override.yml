@@ -4,6 +4,10 @@
 services:
   app:
     image: synkra-flow:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: never
     container_name: synkra-flow-app
     environment:
       - AP_CONTAINER_TYPE=APP
@@ -19,9 +23,12 @@ services:
       - traefik.http.routers.synkraflow.tls=true
       - traefik.http.routers.synkraflow.tls.certresolver=letsencrypt
       - traefik.http.services.synkraflow.loadbalancer.server.port=80
-
   worker:
     image: synkra-flow:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: never
     container_name: synkra-flow-worker
     env_file: .env
     environment:
@@ -30,21 +37,18 @@ services:
       replicas: 1
     networks:
       - synkraflow
-
   postgres:
     container_name: synkra-flow-postgres
     networks:
       synkraflow:
         aliases:
           - synkra-flow-postgres
-
   redis:
     container_name: synkra-flow-redis
     networks:
       synkraflow:
         aliases:
           - synkra-flow-redis
-
 networks:
   synkraflow:
     name: synkraflow

@@ -138,7 +138,11 @@ const browserRouter = createBrowserRouter(routesWithErrorBoundary);
 const ApRouter = () => {
   const { embedState } = useEmbedding();
   const router = embedState.isEmbedded ? memoryRouter : browserRouter;
-  return <RouterProvider router={router}></RouterProvider>;
+  return (
+    <OnboardingRedirectGate>
+      <RouterProvider router={router}></RouterProvider>
+    </OnboardingRedirectGate>
+  );
 };
 
 export { ApRouter };

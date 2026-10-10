@@ -1,0 +1,53 @@
+# Run the Synkra Flow fork alongside the existing Activepieces stack.
+# Uses a different project name and port so both can run at once.
+# No Traefik labels yet — we test on the port first, then cut over.
+services:
+  app:
+    image: synkra-flow:latest
+    container_name: synkra-flow-app
+    environment:
+      - AP_CONTAINER_TYPE=APP
+    networks:
+      - synkraflow
+      - coolify
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.synkraflow.entrypoints=https
+      - traefik.http.routers.synkraflow.rule=Host(`flow.synkra.co.za`) || Host(`automations.synkra.co.za`)
+      - traefik.http.routers.synkraflow.service=synkraflow
+      - traefik.http.routers.synkraflow.tls=true
+      - traefik.http.routers.synkraflow.tls.certresolver=letsencrypt
+      - traefik.http.services.synkraflow.loadbalancer.server.port=80
+
+  worker:
+    image: synkra-flow:latest
+    container_name: synkra-flow-worker
+    env_file: .env
+    environment:
+      - AP_CONTAINER_TYPE=WORKER
+    deploy:
+      replicas: 1
+    networks:
+      - synkraflow
+
+  postgres:
+    container_name: synkra-flow-postgres
+    networks:
+      synkraflow:
+        aliases:
+          - synkra-flow-postgres
+
+  redis:
+    container_name: synkra-flow-redis
+    networks:
+      synkraflow:
+        aliases:
+          - synkra-flow-redis
+
+networks:
+  synkraflow:
+    name: synkraflow
+    driver: bridge
+  coolify:
+    external: true
