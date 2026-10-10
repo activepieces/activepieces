@@ -15,6 +15,10 @@ export const telegramRequestApprovalMessageAction = createAction({
     'Send an approval message to a chat and wait until the message is approved or disapproved',
   audience: 'both',
   aiMetadata: { description: 'Sends a message with a single button linking to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond and resumes with the decision. Use as a human approval gate before a sensitive downstream step. Not idempotent: each call sends a new message and opens a new pause/wait.', idempotent: false },
+  propertyGroups: [
+    { key: 'send_to', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['parse_mode', 'message', 'instructions_format'] },
+  ],
   props: {
     instructions: telegramCommons.form.chatIdInstructions(),
     chat_id: telegramCommons.form.chatIdProp(),
