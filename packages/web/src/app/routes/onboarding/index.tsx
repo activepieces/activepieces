@@ -12,6 +12,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { StartPoint, StartPointStep } from './steps/start-point-step';
 import { OnboardingProgress } from './steps/progress';
 import { UseCaseStep } from './steps/use-case-step';
+import { ConnectToolsStep } from './steps/connect-tools-step';
 import { WelcomeStep } from './steps/welcome-step';
 
 export function OnboardingPage() {
@@ -39,6 +40,16 @@ export function OnboardingPage() {
   };
 
   const handleStartPoint = async (point: StartPoint) => {
+    // Save the choice, then advance to connect_tools step.
+    setLocalStep('connect_tools');
+    await advance.mutateAsync({ step: 'connect_tools', skipped: false });
+    // Store the intent so the next step knows what to do.
+    sessionStorage.setItem('synkra:startPoint', point);
+  };
+
+  const handleConnectToolsNext = async () => {
+    const point = (sessionStorage.getItem('synkra:startPoint') ?? 'explore') as StartPoint;
+    sessionStorage.removeItem('synkra:startPoint');
     const target =
       point === 'scratch'
         ? authenticationSession.appendProjectRoutePrefix('/flows?newFlow=true')
@@ -94,6 +105,14 @@ export function OnboardingPage() {
             <StartPointStep
               onChoose={handleStartPoint}
               onSkip={handleSkipAll}
+            />
+          )}
+
+          {step === 'connect_tools' && (
+            <ConnectToolsStep
+              useCases={data?.primaryUseCase ?? []}
+              onNext={handleConnectToolsNext}
+              onSkip={handleConnectToolsNext}
             />
           )}
 
