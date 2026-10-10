@@ -36,12 +36,13 @@ export const uploadFile = createAction({
         'What OpenAI will use the file for. Each allows different file types.',
       required: true,
       defaultValue: 'assistants',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Assistants', value: 'assistants' },
-          { label: 'Vision', value: 'vision' },
-          { label: 'Batch', value: 'batch' },
-          { label: 'Fine-Tuning', value: 'fine-tune' },
+          { label: 'Assistants', value: 'assistants', description: 'Docs to search', icon: 'file' },
+          { label: 'Vision', value: 'vision', description: 'Images', icon: 'file' },
+          { label: 'Batch', value: 'batch', description: 'JSONL requests', icon: 'file' },
+          { label: 'Fine-Tuning', value: 'fine-tune', description: 'JSONL examples', icon: 'file' },
         ],
       },
     }),
