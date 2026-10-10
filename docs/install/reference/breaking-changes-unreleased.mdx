@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### ScrapeGraphAI Smart Scraper, Local Scraper and Convert to Markdown return the v2 API response
+
+ScrapeGraphAI shut down its v1 API, so these actions and new connections stopped working. From ScrapeGraphAI 0.3.0 they call the v2 API and work again, with the same inputs. Their output follows v2: Smart Scraper and Local Scraper return the extracted data under `json` (v1 used `result`), and Convert to Markdown returns the page under `results.markdown.data` (v1 used `result`). The `request_id` and `status` fields are gone; the request ID is now `id`.
+
+#### What you need to do
+
+If a later step reads `result`, `request_id` or `status` from one of these actions, upgrade the step to 0.3.0 and remap it to `json` (Smart Scraper, Local Scraper) or `results.markdown.data` (Convert to Markdown), and `id`. Connections need a v2 API key from the ScrapeGraphAI dashboard.
+
 #### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
 
 Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
