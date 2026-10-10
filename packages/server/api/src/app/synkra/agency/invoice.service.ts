@@ -149,6 +149,29 @@ export const synkraAgencyInvoiceService = (log: FastifyBaseLogger) => ({
       },
     });
 
+    // Send the invoice email.
+    try {
+      const { userService } = await import('../../user/user-service');
+      const { userIdentityService } = await import(
+        '../../authentication/user-identity/user-identity-service'
+      );
+      const { billingEmailService } = await import('../billing/billing-email.service');
+
+      const owner = await userService(log).getOneOrFail({ id: agency.ownerUserId });
+      const ident = await userIdentityService(log).getOneOrFail({ id: owner.identityId });
+
+      billingEmailService(log).sendAgencyInvoice({
+        to: ident.email,
+        invoiceNumber: invoice.invoiceNumber,
+        amountZar: invoice.amountZar,
+        dueDate: invoice.dueDate,
+        paymentUrl: invoice.paystackPaymentUrl,
+        lineItems: invoice.lineItems,
+      });
+    } catch (err) {
+      log.warn({ err, invoiceId: invoice.id }, 'invoice: email failed');
+    }
+
     log.info({ invoiceId: invoice.id, agencyId: agency.id, total }, 'invoice: generated');
     return invoice;
   },
@@ -209,6 +232,31 @@ export const synkraAgencyInvoiceService = (log: FastifyBaseLogger) => ({
           { invoiceId: inv.id, agencyId: inv.agencyId, amountZar: inv.amountZar },
           'invoice: agency suspended for non-payment',
         );
+
+        // Notify the agency.
+        try {
+          const { userService } = await import('../../user/user-service');
+          const { userIdentityService } = await import(
+            '../../authentication/user-identity/user-identity-service'
+          );
+          const { billingEmailService } = await import('../billing/billing-email.service');
+
+          const owner = await userService(log).getOneOrFail({
+            id: inv.agencyId === inv.agencyId ? (await agencyRepo().findOneByOrFail({ id: inv.agencyId })).ownerUserId : '',
+          });
+          const ident = await userIdentityService(log).getOneOrFail({
+            id: owner.identityId,
+          });
+
+          billingEmailService(log).sendAgencySuspended({
+            to: ident.email,
+            invoiceNumber: inv.invoiceNumber,
+            amountZar: inv.amountZar,
+            paymentUrl: inv.paystackPaymentUrl,
+          });
+        } catch (err) {
+          log.warn({ err, invoiceId: inv.id }, 'invoice: suspension email failed');
+        }
       } catch (err) {
         log.error({ err, invoiceId: inv.id }, 'invoice: enforcement failed');
       }

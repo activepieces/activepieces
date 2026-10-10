@@ -27,6 +27,7 @@ import {
   synkraAgencyHooks,
 } from '@/features/synkra-agency';
 import { BrandingCard } from './branding-card';
+import { InvoicesTab } from './invoices-tab';
 
 const TIER_LABELS: Record<AgencyTier, string> = {
   agency_20: 'Agency 20',
@@ -327,6 +328,11 @@ export function AgencyPage() {
           )}
         </div>
       </div>
+
+        {/* Invoices */}
+        <div className="flex flex-col gap-3 pt-4 border-t">
+          <InvoicesTab />
+        </div>
 
       {/* Rename dialog */}
       <Dialog open={nameDialog} onOpenChange={setNameDialog}>

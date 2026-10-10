@@ -52,3 +52,34 @@ export const synkraAgencyApi = {
   wholesalePreview: (params: { clientTier: ClientTier; agencyTier: AgencyTier }) =>
     api.post<{ wholesaleZar: number; discount: number }>('/v1/synkra/agency/wholesale-preview', params),
 };
+
+
+export type AgencyInvoiceLineItem = {
+  description: string;
+  quantity: number;
+  unitZar: number;
+  totalZar: number;
+};
+
+export type AgencyInvoice = {
+  id: string;
+  invoiceNumber: string;
+  periodStart: string;
+  periodEnd: string;
+  dueDate: string;
+  amountZar: number;
+  agencyFeeZar: number;
+  wholesaleTotalZar: number;
+  lineItems: AgencyInvoiceLineItem[];
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'failed';
+  paystackPaymentUrl: string | null;
+  paidAt: string | null;
+  remindersSent: number;
+  createdAt: string;
+};
+
+export const synkraAgencyInvoiceApi = {
+  list: () => api.get<{ invoices: AgencyInvoice[] }>('/v1/synkra/agency/invoices'),
+  get: (id: string) => api.get<AgencyInvoice>(`/v1/synkra/agency/invoices/${id}`),
+  regenerate: () => api.post('/v1/synkra/agency/invoices/regenerate', {}),
+};

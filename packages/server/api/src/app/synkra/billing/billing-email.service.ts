@@ -116,4 +116,73 @@ export const billingEmailService = (log: FastifyBaseLogger) => ({
         <p style="color:#333;line-height:1.6">Payment received. Your <strong>${TIER_LABEL[tier]}</strong> plan is active again.</p>
         <p style="color:#333;line-height:1.6">Next renewal: <strong>${nextRenewal.toLocaleDateString('en-ZA')}</strong>.</p>`));
   },
+
+  // ────────────────────────────────────────────────────────
+  // Agency invoices
+  // ────────────────────────────────────────────────────────
+
+  sendAgencyInvoice(params: {
+    to: string;
+    invoiceNumber: string;
+    amountZar: number;
+    dueDate: Date;
+    paymentUrl: string | null;
+    lineItems: { description: string; quantity: number; unitZar: number; totalZar: number }[];
+  }) {
+    const rows = params.lineItems
+      .map(
+        (li) =>
+          `<tr><td style="padding:6px 0;border-bottom:1px solid #eee;color:#333">${li.description}</td><td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;color:#333">R${li.totalZar.toLocaleString()}</td></tr>`,
+      )
+      .join('');
+    const cta = params.paymentUrl
+      ? { label: 'Pay invoice', url: params.paymentUrl }
+      : undefined;
+    send(log, params.to, `Agency invoice ${params.invoiceNumber} — R${params.amountZar}`,
+      shell(`Agency invoice ready`, `
+        <p style="color:#333;line-height:1.6">Your monthly agency invoice <strong>${params.invoiceNumber}</strong> is ready.</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0">${rows}</table>
+        <p style="color:#333;line-height:1.6"><strong>Total: R${params.amountZar.toLocaleString()}</strong></p>
+        <p style="color:#333;line-height:1.6">Due by <strong>${params.dueDate.toLocaleDateString('en-ZA')}</strong> (7-day grace period). Client environments pause after that until payment clears.</p>
+      `, cta));
+  },
+
+  sendAgencyReminder(params: {
+    to: string;
+    invoiceNumber: string;
+    amountZar: number;
+    dueDate: Date;
+    daysUntilDue: number;
+    paymentUrl: string | null;
+  }) {
+    const dayLabel = params.daysUntilDue <= 0 ? 'overdue' : `due in ${params.daysUntilDue} day${params.daysUntilDue === 1 ? '' : 's'}`;
+    const cta = params.paymentUrl ? { label: 'Pay now', url: params.paymentUrl } : undefined;
+    send(log, params.to, `Reminder: agency invoice ${params.invoiceNumber} is ${dayLabel}`,
+      shell(`Payment reminder`, `
+        <p style="color:#333;line-height:1.6">Invoice <strong>${params.invoiceNumber}</strong> for <strong>R${params.amountZar.toLocaleString()}</strong> is ${dayLabel}.</p>
+        <p style="color:#333;line-height:1.6">Due date: <strong>${params.dueDate.toLocaleDateString('en-ZA')}</strong>.</p>
+        <p style="color:#333;line-height:1.6">If we don't receive payment within the grace period, all client environments will pause until the invoice is settled.</p>
+      `, cta));
+  },
+
+  sendAgencySuspended(params: {
+    to: string;
+    invoiceNumber: string;
+    amountZar: number;
+    paymentUrl: string | null;
+  }) {
+    const cta = params.paymentUrl ? { label: 'Restore access', url: params.paymentUrl } : undefined;
+    send(log, params.to, `Agency account suspended — payment overdue`,
+      shell(`Client environments paused`, `
+        <p style="color:#333;line-height:1.6">Your invoice <strong>${params.invoiceNumber}</strong> for <strong>R${params.amountZar.toLocaleString()}</strong> is past the grace period.</p>
+        <p style="color:#333;line-height:1.6">All client environments have been paused. They will resume immediately once payment clears.</p>
+      `, cta));
+  },
+
+  sendAgencyRestored(params: { to: string; invoiceNumber: string }) {
+    send(log, params.to, `Payment received — client environments restored`,
+      shell(`Welcome back`, `
+        <p style="color:#333;line-height:1.6">Payment for invoice <strong>${params.invoiceNumber}</strong> received.</p>
+        <p style="color:#333;line-height:1.6">All client environments are now active again.</p>`));
+  },
 });

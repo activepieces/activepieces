@@ -1,9 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Agency, AgencyClient, AgencyPricing, AgencyTier, ClientTier, synkraAgencyApi } from './api';
+import {
+  Agency,
+  AgencyClient,
+  AgencyInvoice,
+  AgencyPricing,
+  AgencyTier,
+  ClientTier,
+  synkraAgencyApi,
+  synkraAgencyInvoiceApi,
+} from './api';
 
 const agencyKey = ['synkra-agency'];
 const clientsKey = ['synkra-agency-clients'];
 const pricingKey = ['synkra-agency-pricing'];
+const invoicesKey = ['synkra-agency-invoices'];
 
 export const synkraAgencyHooks = {
   useAgency: () =>
@@ -106,6 +116,21 @@ export const synkraAgencyHooks = {
         qc.invalidateQueries({ queryKey: clientsKey });
         qc.invalidateQueries({ queryKey: agencyKey });
       },
+    });
+  },
+
+  useInvoices: () =>
+    useQuery<{ invoices: AgencyInvoice[] }>({
+      queryKey: invoicesKey,
+      queryFn: () => synkraAgencyInvoiceApi.list(),
+      staleTime: 30_000,
+    }),
+
+  useRegenerateInvoice: () => {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: () => synkraAgencyInvoiceApi.regenerate(),
+      onSuccess: () => qc.invalidateQueries({ queryKey: invoicesKey }),
     });
   },
 };

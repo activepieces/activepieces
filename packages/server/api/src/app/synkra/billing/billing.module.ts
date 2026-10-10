@@ -13,6 +13,8 @@ import { synkraOnboardingController } from '../onboarding/onboarding.controller'
 import { synkraAgencyController } from '../agency/agency.controller';
 import { synkraAgencyPortalController } from '../agency/portal.controller';
 import { synkraAgencyInvoiceController } from '../agency/invoice.controller';
+import { synkraAgencyBillingCron } from '../agency/billing-cron.service';
+import { synkraAgencyWebhookController } from '../agency/agency-webhook.controller';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -27,6 +29,25 @@ export const synkraBillingModule: FastifyPluginAsyncZod = async (app) => {
   synkraBundledPiecesService(app.log).installAll().catch((err) => {
     app.log.error({ err }, 'synkra bundled pieces install failed at boot');
   });
+
+  // Agency billing cron — runs hourly.
+  // Generates invoices, sends reminders, enforces overdue.
+  const agencyRef = globalThis as unknown as { __synkraAgencyCronTimer?: NodeJS.Timeout };
+  if (!agencyRef.__synkraAgencyCronTimer) {
+    const runAgency = () => {
+      synkraAgencyBillingCron(app.log)
+        .runOnce()
+        .then((s) => {
+          if (s.invoicesGenerated || s.remindersSent || s.agenciesPaused) {
+            app.log.info(s, 'synkra agency billing cron completed');
+          }
+        })
+        .catch((err) => app.log.error({ err }, 'synkra agency billing cron threw'));
+    };
+    setTimeout(runAgency, 90_000);
+    agencyRef.__synkraAgencyCronTimer = setInterval(runAgency, ONE_HOUR_MS);
+    app.log.info('synkra agency billing cron scheduled (hourly)');
+  }
 
   const globalRef = globalThis as unknown as { __synkraRenewalsTimer?: NodeJS.Timeout };
   if (!globalRef.__synkraRenewalsTimer) {
@@ -48,6 +69,7 @@ export const synkraBillingModule: FastifyPluginAsyncZod = async (app) => {
   await app.register(synkraSubscriptionController, { prefix: '/v1/synkra/subscription' });
   await app.register(synkraCheckoutController, { prefix: '/v1/synkra/subscription' });
   await app.register(paystackWebhookController, { prefix: '/v1/synkra/paystack' });
+  await app.register(synkraAgencyWebhookController, { prefix: '/v1/synkra/paystack' });
   await app.register(synkraHealthController, { prefix: '/v1/synkra/health' });
   await app.register(synkraPreflightController, { prefix: '/v1/synkra/preflight' });
   await app.register(synkraAiBalanceController, { prefix: '/v1/synkra/ai' });
