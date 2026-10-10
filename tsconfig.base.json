@@ -96,6 +96,9 @@
       "@activepieces/piece-anyhook-websocket": [
         "packages/pieces/community/anyhook-websocket/src/index.ts"
       ],
+      "@activepieces/piece-apache-kafka": [
+        "packages/pieces/community/apache-kafka/src/index.ts"
+      ],
       "@activepieces/piece-apify": [
         "packages/pieces/community/apify/src/index.ts"
       ],

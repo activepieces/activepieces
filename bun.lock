@@ -695,6 +695,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/apache-kafka": {
+      "name": "@activepieces/piece-apache-kafka",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-framework": "workspace:*",
+        "kafkajs": "2.2.4",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/apify": {
       "name": "@activepieces/piece-apify",
       "version": "0.3.1",
@@ -11367,6 +11379,8 @@
 
     "@activepieces/piece-anyhook-websocket": ["@activepieces/piece-anyhook-websocket@workspace:packages/pieces/community/anyhook-websocket"],
 
+    "@activepieces/piece-apache-kafka": ["@activepieces/piece-apache-kafka@workspace:packages/pieces/community/apache-kafka"],
+
     "@activepieces/piece-apify": ["@activepieces/piece-apify@workspace:packages/pieces/community/apify"],
 
     "@activepieces/piece-apitable": ["@activepieces/piece-apitable@workspace:packages/pieces/community/apitable"],
@@ -16454,6 +16468,8 @@
     "jws": ["jws@3.2.3", "", { "dependencies": { "jwa": "^1.4.2", "safe-buffer": "^5.0.1" } }, "sha512-byiJ0FLRdLdSVSReO/U4E7RoEyOCKnEnEPMjq3HxWtvzLsV08/i5RQKsFVNkCldrCaPr2vDNAOMsfs8T/Hze7g=="],
 
     "jwt-decode": ["jwt-decode@4.0.0", "", {}, "sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA=="],
+
+    "kafkajs": ["kafkajs@2.2.4", "", {}, "sha512-j/YeapB1vfPT2iOIUn/vxdyKEuhuY2PxMBvf5JWux6iSaukAccrMtXEY/Lb7OvavDhOWME589bpLrEdnVHjfjA=="],
 
     "katex": ["katex@0.12.0", "", { "dependencies": { "commander": "^2.19.0" }, "bin": { "katex": "cli.js" } }, "sha512-y+8btoc/CK70XqcHqjxiGWBOeIL8upbS0peTPXTvgrh21n1RiWWcIpSWM+4uXq+IAgNh9YYQWdc7LVDPDAEEAg=="],
 
