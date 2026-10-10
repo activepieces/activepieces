@@ -14,6 +14,10 @@ export const editImage = createAction({
   displayName: 'Edit Image',
   description: 'Change an image by describing the edit.',
   aiMetadata: { description: 'Modifies an existing image supplied as a file, applying the changes described in a text prompt with the gpt-image-2 model, and writes the result out as a new PNG file. An optional mask image confines the edit to its transparent areas and must match the dimensions of the input image; size and quality can be left on auto. Pick generate_image instead when there is no source image to start from, and vision_prompt when the image only needs to be read rather than changed. Not idempotent: each call renders a fresh image.', idempotent: false },
+  propertyGroups: [
+    { key: 'edit', display: 'section', label: 'Edit', icon: 'text', props: ['image', 'prompt'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['size', 'quality'] },
+  ],
   props: {
     image: Property.File({
       displayName: 'Image',
