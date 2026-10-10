@@ -11,7 +11,7 @@ export type ScrapegraphaiFormat = {
 
 export type ScrapegraphaiScrapeParams = {
 	url: string;
-	formats: ScrapegraphaiFormat[];
+	formats?: ScrapegraphaiFormat[];
 	contentType?: string;
 	fetchConfig?: Record<string, unknown>;
 };

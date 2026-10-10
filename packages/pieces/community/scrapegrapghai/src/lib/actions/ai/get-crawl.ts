@@ -15,7 +15,7 @@ export const getCrawlAction = createAction({
 	classification: 'READ',
 	aiMetadata: {
 		description:
-			"Reads a crawl job once: status (running, completed, failed or stopped), page counters and lightweight per-page metadata with each page's `scrapeRefId`. Call it repeatedly to poll a job from Start Crawl; it never waits. Page content comes from List Crawl Pages.",
+			"Reads a crawl job once: status (running, completed, failed, or paused after Stop Crawl), page counters and lightweight per-page metadata with each page's `scrapeRefId`. Call it repeatedly to poll a job from Start Crawl; it never waits. Page content comes from List Crawl Pages.",
 		idempotent: true,
 	},
 	props: {

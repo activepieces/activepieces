@@ -39,14 +39,12 @@ export const createMonitorAction = createAction({
 			url: propsValue.url,
 			interval: propsValue.interval,
 			name: propsValue.name,
-			formats: propsValue.formats
-				? scrapegraphaiUtils.buildFormats({
-						types: propsValue.formats,
-						mode: propsValue.mode,
-						jsonPrompt: propsValue.jsonPrompt,
-						jsonSchema: propsValue.jsonSchema,
-				  })
-				: undefined,
+			formats: scrapegraphaiUtils.buildFormats({
+				types: propsValue.formats,
+				mode: propsValue.mode,
+				jsonPrompt: propsValue.jsonPrompt,
+				jsonSchema: propsValue.jsonSchema,
+			}),
 			webhookUrl: propsValue.webhookUrl,
 			fetchConfig: propsValue.fetchConfig,
 		});

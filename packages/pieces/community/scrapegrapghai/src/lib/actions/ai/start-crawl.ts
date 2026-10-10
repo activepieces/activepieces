@@ -16,7 +16,7 @@ export const startCrawlAction = createAction({
 	classification: 'WRITE',
 	aiMetadata: {
 		description:
-			"Starts an asynchronous crawl from a URL and returns the job `id` immediately, without waiting. Poll it with Get Crawl until status is completed, failed or stopped, then read content with List Crawl Pages. Uses one of the plan's crawl job slots and 2 credits plus the per-page scrape cost.",
+			"Starts an asynchronous crawl from a URL and returns the job `id` immediately, without waiting. Poll it with Get Crawl until status is completed or failed (a crawl halted with Stop Crawl reads paused), then read content with List Crawl Pages. Uses one of the plan's crawl job slots and 2 credits plus the per-page scrape cost.",
 		idempotent: false,
 	},
 	props: {
@@ -64,14 +64,12 @@ export const startCrawlAction = createAction({
 		return await scrapegraphaiApi.startCrawl({
 			auth,
 			url: propsValue.url,
-			formats: propsValue.formats
-				? scrapegraphaiUtils.buildFormats({
-						types: propsValue.formats,
-						mode: propsValue.mode,
-						jsonPrompt: propsValue.jsonPrompt,
-						jsonSchema: propsValue.jsonSchema,
-				  })
-				: undefined,
+			formats: scrapegraphaiUtils.buildFormats({
+				types: propsValue.formats,
+				mode: propsValue.mode,
+				jsonPrompt: propsValue.jsonPrompt,
+				jsonSchema: propsValue.jsonSchema,
+			}),
 			maxPages: propsValue.maxPages,
 			maxDepth: propsValue.maxDepth,
 			maxLinksPerPage: propsValue.maxLinksPerPage,

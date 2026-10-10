@@ -6,11 +6,19 @@ function buildFormats({
 	jsonPrompt,
 	jsonSchema,
 }: {
-	types: string[];
+	types?: string[];
 	mode?: string;
 	jsonPrompt?: string;
 	jsonSchema?: Record<string, unknown>;
-}): ScrapegraphaiFormat[] {
+}): ScrapegraphaiFormat[] | undefined {
+	if (!types || types.length === 0) {
+		if (mode !== undefined || jsonPrompt !== undefined || jsonSchema !== undefined) {
+			throw new Error(
+				'Markdown/HTML Mode, JSON Prompt and JSON Schema apply to the selected Formats: set Formats as well, including json for JSON Prompt and JSON Schema.',
+			);
+		}
+		return undefined;
+	}
 	return types.map((type) => {
 		if (type === 'json') {
 			return { type, prompt: jsonPrompt, schema: jsonSchema };
