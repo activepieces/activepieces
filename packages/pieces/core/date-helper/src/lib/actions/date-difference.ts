@@ -32,6 +32,13 @@ export const dateDifferenceAction = createAction({
       icon: 'calendar',
       props: ['endDate', 'endDateFormat'],
     },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'type',
+      props: ['unitDifference'],
+    },
   ],
   props: {
     startDate: Property.ShortText({
