@@ -52,6 +52,22 @@ export function AgencyPage() {
   const activateClient = synkraAgencyHooks.useActivateClient();
   const suspendClient = synkraAgencyHooks.useSuspendClient();
   const transferClient = synkraAgencyHooks.useTransferClient();
+  const [portalDialog, setPortalDialog] = useState<{ open: boolean; url: string }>({ open: false, url: '' });
+
+  const handleEnablePortal = async (clientId: string) => {
+    try {
+      const res = await fetch(
+        `/api/v1/synkra/agency/clients/${clientId}/portal/enable`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' },
+      );
+      if (!res.ok) throw new Error('Failed to enable portal');
+      const { portalToken } = await res.json();
+      const url = `${window.location.origin}/portal/${portalToken}`;
+      setPortalDialog({ open: true, url });
+    } catch (e) {
+      alert('Could not enable portal: ' + (e as Error).message);
+    }
+  };
 
   const [nameDialog, setNameDialog] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -277,6 +293,13 @@ export function AgencyPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleEnablePortal(c.id)}
+                        >
+                          {t('Portal link')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => {
                             if (confirm(t('Transfer this client out of your agency? This cannot be undone without manual re-linking.'))) {
                               transferClient.mutate(c.id);
@@ -378,6 +401,29 @@ export function AgencyPage() {
               disabled={createClient.isPending || !newClientName.trim()}
             >
               {t('Create client')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={portalDialog.open} onOpenChange={(open) => setPortalDialog({ ...portalDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('Portal link ready')}</DialogTitle>
+            <DialogDescription>
+              {t('Send this URL to your client. Anyone with the link can view the portal. Disable or regenerate it any time.')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Input readOnly value={portalDialog.url} onFocus={(e) => e.currentTarget.select()} />
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(portalDialog.url);
+                setPortalDialog({ open: false, url: '' });
+              }}
+            >
+              {t('Copy & close')}
             </Button>
           </DialogFooter>
         </DialogContent>
