@@ -56,14 +56,15 @@ async function createIndexConcurrently({
     const rows = await queryRunner.query(
         `SELECT indisvalid FROM pg_index i
          JOIN pg_class c ON c.oid = i.indexrelid
-         WHERE c.relname = $1`,
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+         WHERE c.relname = $1 AND n.nspname = current_schema()`,
         [name],
     )
-    const row = rows[0] as { indisvalid: boolean } | undefined
+    const indisvalid = extractIndisvalid(rows)
 
-    if (row?.indisvalid === true) return
+    if (indisvalid === true) return
 
-    if (row?.indisvalid === false) {
+    if (indisvalid === false) {
         await queryRunner.query(`REINDEX INDEX CONCURRENTLY "${name}"`)
         return
     }
@@ -85,6 +86,15 @@ async function dropIndexConcurrently({
 }
 
 const isPGlite = (): boolean => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
+
+function extractIndisvalid(rows: unknown): boolean | undefined {
+    if (!Array.isArray(rows) || rows.length === 0) return undefined
+    const [row] = rows
+    if (row === null || typeof row !== 'object' || !('indisvalid' in row)) return undefined
+    const value = row.indisvalid
+    if (typeof value !== 'boolean') return undefined
+    return value
+}
 
 export class BackgroundMigrationNotCompleteError extends Error {
     constructor(public readonly migration: new () => BackgroundMigration) {

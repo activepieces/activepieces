@@ -50,7 +50,8 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             SYSTEM_JOB_QUEUE,
             async (job, token) => {
                 if (!systemJobHandlers.hasHandler(job.name)) {
-                    const ageMs = Date.now() - job.timestamp
+                    const createdAt = Number.isFinite(job.timestamp) ? job.timestamp : Date.now()
+                    const ageMs = Date.now() - createdAt
                     if (ageMs > RE_QUEUE_MAX_AGE_MS) {
                         throw new Error(`No handler for system job "${job.name}" after ${Math.round(ageMs / 1000)}s; likely a retired job name`)
                     }
@@ -169,7 +170,9 @@ async function processSystemJob(job: Job<SystemJobData, unknown, SystemJobName>)
 }
 
 function instantBurstThenExponentialBackoff(attemptsMade: number, type?: string): number {
-    if (type !== INSTANT_BURST_THEN_EXPONENTIAL) return 0
+    if (type !== INSTANT_BURST_THEN_EXPONENTIAL) {
+        throw new Error(`Unknown system-job backoff type "${type ?? '<unset>'}"; register the strategy or use a built-in type`)
+    }
     const INSTANT_BURST_SIZE = 5
     const EXPONENTIAL_BASE_MS = apDayjsDuration(1, 'minute').asMilliseconds()
     const EXPONENTIAL_CAP_MS = apDayjsDuration(1, 'hour').asMilliseconds()
@@ -177,10 +180,6 @@ function instantBurstThenExponentialBackoff(attemptsMade: number, type?: string)
     const exponentialStep = attemptsMade - INSTANT_BURST_SIZE
     return Math.min(EXPONENTIAL_BASE_MS * 2 ** (exponentialStep - 1), EXPONENTIAL_CAP_MS)
 }
-
-export const SystemJobBackoff = {
-    instantBurstThenExponential: INSTANT_BURST_THEN_EXPONENTIAL,
-} as const
 
 async function removeDeprecatedJobs(log: FastifyBaseLogger): Promise<void> {
     const deprecatedJobs = [
@@ -243,3 +242,7 @@ const getJobByNameAndJobId = async (name: string, jobId: string): Promise<Job | 
     }
     return undefined
 }
+
+export const SystemJobBackoff = {
+    instantBurstThenExponential: INSTANT_BURST_THEN_EXPONENTIAL,
+} as const

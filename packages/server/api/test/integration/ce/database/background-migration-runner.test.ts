@@ -179,9 +179,11 @@ describe('runMigrationsWithCatchup', () => {
         })
         const ds = databaseConnection()
         vi.spyOn(ds, 'runMigrations').mockRejectedValue(new BackgroundMigrationNotCompleteError(BrokenBackfill))
-        await expect(
-            backgroundMigrationRunner.runMigrationsWithCatchup({ dataSource: ds, log: app!.log }),
-        ).rejects.toThrow(/Boot catchup.*BrokenCatchup.*backfill bug/)
+        const promise = backgroundMigrationRunner.runMigrationsWithCatchup({ dataSource: ds, log: app!.log })
+        await expect(promise).rejects.toThrow(/Boot catchup.*BrokenCatchup/)
+        const thrown = await promise.catch(err => err)
+        expect(thrown.cause).toBeInstanceOf(Error)
+        expect(thrown.cause.message).toMatch(/backfill bug/)
     })
 })
 

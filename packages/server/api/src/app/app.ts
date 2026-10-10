@@ -489,7 +489,9 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
-    await dispatchBackgroundMigrations(app.log)
+    dispatchBackgroundMigrations(app.log).catch(error => {
+        app.log.warn({ error: error instanceof Error ? error.message : String(error) }, '[appPostBoot] Failed to dispatch background migrations job; next pod boot will retry')
+    })
     if (environment === ApEnvironment.DEVELOPMENT) {
         app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
