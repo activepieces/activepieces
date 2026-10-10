@@ -24,6 +24,10 @@ import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
+const ClientPortalPage = lazyWithRetry(
+  () => import('@/app/routes/portal').then((m) => ({ default: m.ClientPortalPage })),
+  'portal',
+);
 const ChatWithAIPage = lazyWithRetry(
   () =>
     import('@/app/routes/chat-with-ai').then((m) => ({
@@ -49,6 +53,19 @@ function chatElement() {
 const chatRoutes = [
   { path: '/chat', element: chatElement() },
   { path: '/chat/:conversationId', element: chatElement() },
+];
+
+const portalRoutes = [
+  {
+    path: '/portal/:token',
+    element: (
+      <Suspense fallback={<RouteLoadingBar />}>
+        <PageTitle title="Portal">
+          <ClientPortalPage />
+        </PageTitle>
+      </Suspense>
+    ),
+  },
 ];
 
 const AgentsPage = lazyWithRetry(
@@ -108,6 +125,7 @@ const routes = [
   ...authRoutes,
   ...platformRoutes,
   ...chatRoutes,
+  ...portalRoutes,
   ...agentRoutes,
   {
     path: '/projects/:projectId',

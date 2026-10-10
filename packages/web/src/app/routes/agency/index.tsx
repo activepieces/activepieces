@@ -26,6 +26,7 @@ import {
   ClientTier,
   synkraAgencyHooks,
 } from '@/features/synkra-agency';
+import { BrandingCard } from './branding-card';
 
 const TIER_LABELS: Record<AgencyTier, string> = {
   agency_20: 'Agency 20',
@@ -203,6 +204,9 @@ export function AgencyPage() {
             </Select>
           </div>
         </div>
+
+        {/* Branding */}
+        <BrandingCard initial={agency.branding} />
 
         {/* Clients section */}
         <div className="flex flex-col gap-3">

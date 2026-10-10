@@ -23,6 +23,9 @@ export interface SynkraAgencyClient {
   wholesaleMonthlyZar: number; // what the agency pays Synkra for this client
   metadata: Record<string, unknown>;
   activatedAt: Date | null;
+  portalToken: string | null;
+  portalEnabled: boolean;
+  portalLastViewedAt: Date | null;
 }
 
 export const SynkraAgencyClientEntity = new EntitySchema<SynkraAgencyClient>({
@@ -37,6 +40,9 @@ export const SynkraAgencyClientEntity = new EntitySchema<SynkraAgencyClient>({
     wholesaleMonthlyZar: { type: 'int', default: 0 },
     metadata: { type: 'jsonb', default: {} },
     activatedAt: { type: 'timestamptz', nullable: true },
+    portalToken: { type: String, nullable: true },
+    portalEnabled: { type: Boolean, default: false },
+    portalLastViewedAt: { type: 'timestamptz', nullable: true },
   },
   indices: [
     { name: 'idx_synkra_client_agency', columns: ['agencyId'] },
