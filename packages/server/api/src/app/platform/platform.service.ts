@@ -490,13 +490,21 @@ async function validateDefaultProjectIds({ platform, defaultProjectIds, log }: V
             },
         })
     }
-    const teamProjects = await projectRepo().findBy({
-        id: In(uniqueIds),
-        platformId: platform.id,
-        type: ProjectType.TEAM,
+    const knownProjects = await projectRepo().find({
+        where: { id: In(uniqueIds), platformId: platform.id, type: ProjectType.TEAM },
+        withDeleted: true,
     })
-    const teamProjectIds = new Set(teamProjects.map((project) => project.id))
-    return uniqueIds.filter((id) => teamProjectIds.has(id))
+    const knownIds = new Set([...knownProjects.map((project) => project.id), ...platform.defaultProjectIds])
+    if (uniqueIds.some((id) => !knownIds.has(id))) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Default projects must be team projects of this platform',
+            },
+        })
+    }
+    const liveIds = new Set(knownProjects.filter((project) => isNil(project.deleted)).map((project) => project.id))
+    return uniqueIds.filter((id) => liveIds.has(id))
 }
 
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
