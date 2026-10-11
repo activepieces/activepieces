@@ -18,12 +18,6 @@
     ],
     "src/app/routes/platform/infra/health/components/queue-tab.tsx": [
       "spinner-loading"
-    ],
-    "src/app/routes/platform/setup/mcp/index.tsx": [
-      "spinner-loading"
-    ],
-    "src/app/routes/platform/setup/mcp/platform-mcp-hooks.ts": [
-      "raw-toast"
     ]
   }
 }
