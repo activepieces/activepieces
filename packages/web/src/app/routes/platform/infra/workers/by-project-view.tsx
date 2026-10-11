@@ -10,7 +10,12 @@ import { BarChart3, Cpu, Search, Server } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { AdminDataTable, useAdminAction } from '@/app/components/admin';
+import {
+  AdminDataTable,
+  adminActionCopy,
+  adminFeedback,
+  useAdminAction,
+} from '@/app/components/admin';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Input } from '@/components/ui/input';
@@ -23,6 +28,7 @@ import {
 } from '@/components/ui/select';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { ProjectAvatar } from './project-avatar';
@@ -389,15 +395,32 @@ function useProjectUpdate({
     name: row.displayName,
     run: (update) =>
       api.post<ProjectWithLimits>(`/v1/projects/${row.id}`, update),
+    feedback: 'none',
+    handleError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      mutationFeedback.error({
+        error,
+        title: adminActionCopy.failed({
+          verb: 'update',
+          name: row.displayName,
+        }),
+      });
+      return true;
+    },
     onSuccess: ({ data, vars }) => {
       if (vars !== latest.current) {
         return;
       }
       row.update({
-        workerGroupId: data.workerGroupId,
-        maxConcurrentJobs: data.maxConcurrentJobs,
+        ...('workerGroupId' in vars
+          ? { workerGroupId: data.workerGroupId }
+          : {}),
+        ...('maxConcurrentJobs' in vars
+          ? { maxConcurrentJobs: data.maxConcurrentJobs }
+          : {}),
       });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      adminFeedback.done({ verb: 'update', name: row.displayName });
     },
   });
   return {

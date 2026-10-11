@@ -249,7 +249,7 @@ const GlobalConnectionsTable = () => {
           label: connectionsLabel,
         });
       } finally {
-        await refetchGlobalConnections();
+        await refetchGlobalConnections().catch(() => undefined);
       }
     },
   });
@@ -277,13 +277,9 @@ const GlobalConnectionsTable = () => {
                   await bulkDeleteGlobalConnections
                     .mutateAsync(selectedRows)
                     .catch((error: unknown) => {
-                      setSelectedRows(
-                        adminBulk.remainingAfter({
-                          error,
-                          items: selectedRows,
-                        }),
-                      );
-                      throw error;
+                      if (!adminBulk.isPartialFailure(error)) {
+                        throw error;
+                      }
                     });
                   resetSelection();
                   setSelectedRows([]);

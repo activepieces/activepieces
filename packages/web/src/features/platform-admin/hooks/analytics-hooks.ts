@@ -92,7 +92,7 @@ export const platformAnalyticsHooks = {
           title: t("Couldn't refresh analytics"),
         });
       },
-      retry: true,
+      retry: 3,
       retryDelay: 50000,
     });
   },

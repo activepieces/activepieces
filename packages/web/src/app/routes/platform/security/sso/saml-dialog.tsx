@@ -113,8 +113,15 @@ const SamlWizard = ({
     onSuccess: onClose,
   });
 
+  const samlIsLastMethod =
+    connected && !platform.emailAuthEnabled && !platform.googleAuthEnabled;
   const disableAction = connected
-    ? { onDisable: () => disableSaml.mutateAsync() }
+    ? {
+        onDisable: () => disableSaml.mutateAsync(),
+        blockedReason: samlIsLastMethod
+          ? t('SAML is the only way to sign in. Turn on email or Google first.')
+          : undefined,
+      }
     : null;
 
   return (
@@ -203,6 +210,11 @@ const DomainStep = ({
   canProceed: boolean;
   disableAction: DisableAction;
 }) => {
+  const domainChangeBlocked =
+    Boolean(platform.ssoDomain) &&
+    Boolean(platform.federatedAuthProviders?.saml) &&
+    !platform.emailAuthEnabled &&
+    !platform.googleAuthEnabled;
   const form = useForm<SsoDomainFormValues>({
     resolver: zodResolver(SsoDomainFormValues),
     defaultValues: { ssoDomain: platform.ssoDomain ?? '' },
@@ -299,6 +311,14 @@ const DomainStep = ({
           />
         )}
 
+        {isDirty && domainChangeBlocked && (
+          <p className="text-sm text-gray-11">
+            {t(
+              'SAML is the only way to sign in, and a new domain must be verified again. Turn on email or Google before changing it.',
+            )}
+          </p>
+        )}
+
         <DialogFooter>
           {disableAction && <DisableSamlButton disableAction={disableAction} />}
           {isDirty ? (
@@ -310,7 +330,7 @@ const DomainStep = ({
               )}
               type="submit"
               loading={saveDomain.isPending}
-              disabled={!form.formState.isValid}
+              disabled={!form.formState.isValid || domainChangeBlocked}
             >
               {platform.ssoDomain ? t('Update domain') : t('Save domain')}
             </Button>
@@ -480,25 +500,30 @@ const DisableSamlButton = ({
 }: {
   disableAction: NonNullable<DisableAction>;
   className?: string;
-}) => (
-  <ConfirmDialog
-    title={t('Turn off SAML sign-in?')}
-    consequence={t(
-      "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.",
-    )}
-    confirmLabel={t('Turn off SAML')}
-    controlId={AdminControl.SSO_SAML_DISABLE_RUN}
-    onConfirm={disableAction.onDisable}
-  >
-    <Button
-      type="button"
-      variant="basic"
-      className={cn('text-danger-11', className)}
+}) =>
+  disableAction.blockedReason ? (
+    <p className={cn('text-xs text-gray-11', className)}>
+      {disableAction.blockedReason}
+    </p>
+  ) : (
+    <ConfirmDialog
+      title={t('Turn off SAML sign-in?')}
+      consequence={t(
+        "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.",
+      )}
+      confirmLabel={t('Turn off SAML')}
+      controlId={AdminControl.SSO_SAML_DISABLE_RUN}
+      onConfirm={disableAction.onDisable}
     >
-      {t('Disable')}
-    </Button>
-  </ConfirmDialog>
-);
+      <Button
+        type="button"
+        variant="basic"
+        className={cn('text-danger-11', className)}
+      >
+        {t('Disable')}
+      </Button>
+    </ConfirmDialog>
+  );
 
 const DomainVerificationPanel = ({
   verification,
@@ -616,6 +641,7 @@ type WizardStep = 'domain' | 'saml';
 
 type DisableAction = {
   onDisable: () => Promise<unknown>;
+  blockedReason: string | undefined;
 } | null;
 
 type ConfigureSamlDialogProps = {

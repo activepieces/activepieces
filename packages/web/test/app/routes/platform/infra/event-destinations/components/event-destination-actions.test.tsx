@@ -3,6 +3,7 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { AxiosError, AxiosHeaders } from 'axios';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,17 +21,6 @@ vi.mock('sonner', () => ({ toast: toastMock }));
 
 vi.mock('@/components/ui/sonner', () => ({
   INTERNAL_ERROR_MESSAGE: 'internal error',
-}));
-
-vi.mock('@/lib/api', () => ({
-  api: {
-    isApError: () => false,
-    isError: (error: unknown) => error instanceof Error,
-    serverErrorMessage: (error: unknown) =>
-      error instanceof Error ? error.message : undefined,
-    extractServerErrorMessage: (error: unknown, fallback: string) =>
-      error instanceof Error ? error.message : fallback,
-  },
 }));
 
 vi.mock(
@@ -119,7 +109,19 @@ import { makeDestination } from '../event-destination-fixtures';
 
 const destination = makeDestination();
 
-const serverError = new Error('Destination not reachable');
+const serverError = new AxiosError(
+  'Request failed',
+  'ERR_BAD_REQUEST',
+  undefined,
+  undefined,
+  {
+    status: 409,
+    statusText: 'Conflict',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+    data: { params: { message: 'Destination not reachable' } },
+  },
+);
 
 function mount(element: React.ReactElement) {
   render(

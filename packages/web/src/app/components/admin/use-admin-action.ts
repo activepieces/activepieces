@@ -1,4 +1,3 @@
-import { ErrorCode } from '@activepieces/core-utils';
 import {
   QueryKey,
   useMutation,
@@ -8,12 +7,7 @@ import {
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
-import { useManagePlanDialogStore } from '@/features/billing';
-import { api } from '@/lib/api';
-import {
-  MUTATION_ERROR_TOAST_ID,
-  mutationFeedback,
-} from '@/lib/mutation-feedback';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export function useAdminAction<TVars = void, TData = unknown>({
   verb,
@@ -67,9 +61,8 @@ export function useAdminAction<TVars = void, TData = unknown>({
       });
     },
     onError: (error, vars) => {
-      if (api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
-        mutationFeedback.markShown(error);
-        useManagePlanDialogStore.getState().openDialog();
+      if (mutationFeedback.isQuotaExceeded(error)) {
+        mutationFeedback.error({ error });
         return;
       }
       const handled = handleError?.(error) === true;
@@ -89,6 +82,9 @@ export function useAdminAction<TVars = void, TData = unknown>({
 }
 
 function done({ verb, name }: { verb: AdminVerb; name: string }): string {
+  if (name.trim() === '') {
+    return t('Changes saved');
+  }
   switch (verb) {
     case 'save':
       return t('Changes saved');
@@ -124,6 +120,9 @@ function done({ verb, name }: { verb: AdminVerb; name: string }): string {
 }
 
 function failed({ verb, name }: { verb: AdminVerb; name: string }): string {
+  if (name.trim() === '') {
+    return t("Couldn't save changes");
+  }
   switch (verb) {
     case 'save':
       return t("Couldn't save changes");
@@ -173,7 +172,7 @@ function notifyStatus({ ok, message }: { ok: boolean; message: string }): void {
     toast.success(message);
     return;
   }
-  toast.error(message, { id: MUTATION_ERROR_TOAST_ID });
+  toast.error(message);
 }
 
 async function runEach<T>({
@@ -204,28 +203,17 @@ async function runEach<T>({
     title: failed({ verb, name: label(failures.length) }),
     description: describe?.(failures[0]),
   });
-  const partial = new BulkPartialFailure(
-    items.filter((_, index) => results[index].status === 'fulfilled'),
-  );
+  const partial = new BulkPartialFailure();
   mutationFeedback.markShown(partial);
   throw partial;
 }
 
-function remainingAfter<T>({
-  error,
-  items,
-}: {
-  error: unknown;
-  items: T[];
-}): T[] {
-  if (!(error instanceof BulkPartialFailure)) {
-    return items;
-  }
-  return items.filter((item) => !error.succeeded.includes(item));
+function isPartialFailure(error: unknown): boolean {
+  return error instanceof BulkPartialFailure;
 }
 
 class BulkPartialFailure extends Error {
-  constructor(readonly succeeded: unknown[]) {
+  constructor() {
     super('Some items failed');
   }
 }
@@ -234,7 +222,7 @@ export const adminActionCopy = { done, failed };
 
 export const adminFeedback = { done: notifyDone, status: notifyStatus };
 
-export const adminBulk = { runEach, remainingAfter };
+export const adminBulk = { runEach, isPartialFailure };
 
 export type AdminVerb =
   | 'save'

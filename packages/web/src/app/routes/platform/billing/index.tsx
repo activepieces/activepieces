@@ -42,8 +42,16 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
+  const header = (
+    <AdminPageHeader
+      title={t('Billing & subscription')}
+      description={t(
+        'For questions about billing contact us at support@activepieces.com',
+      )}
+    />
+  );
   return (
-    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')} header={header}>
       {({ platform, info }) => (
         <AdminPage>
           <AdminPageHeader
@@ -63,7 +71,15 @@ export function BillingPlanTab() {
 
 export function BillingUsageTab() {
   return (
-    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
+    <BillingPageShell
+      lockTitle={t('Unlock Billing & Usage')}
+      header={
+        <AdminPageHeader
+          title={t('Usage')}
+          description={t('Track your workspace usage across your plan limits.')}
+        />
+      }
+    >
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
     </BillingPageShell>
   );

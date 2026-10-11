@@ -9,7 +9,6 @@ const SCOPE = [
   'src/features/platform-admin',
   'src/features/piece-sets',
   'src/features/secret-managers',
-  'src/features/connections/hooks/global-connections-hooks.ts',
 ].map((entry) => path.join(WEB_ROOT, entry));
 
 const RULES = [
@@ -32,6 +31,11 @@ const RULES = [
     id: 'legacy-confirm',
     pattern: /\bConfirmationDeleteDialog\b/,
     fix: 'ConfirmDialog from @/app/components/admin',
+  },
+  {
+    id: 'aliased-import',
+    pattern: /\b(useMutation|toast)\s+as\s+\w+/,
+    fix: 'import useMutation and toast by their own names so the check can see them',
   },
   {
     id: 'spinner-loading',
@@ -76,21 +80,51 @@ function findViolations(file) {
 function findUnhandledMutations(file) {
   const relative = path.relative(WEB_ROOT, file);
   const source = fs.readFileSync(file, 'utf8');
-  return [...source.matchAll(/\buseMutation\s*(<[^(]*>)?\(/g)].flatMap(
-    (match) => {
-      const body = callBody(source, match.index + match[0].length);
-      if (/\bonError\b/.test(body)) {
-        return [];
-      }
-      return [
-        {
-          file: relative,
-          line: source.slice(0, match.index).split('\n').length,
-          rule: UNHANDLED_MUTATION,
-        },
-      ];
-    },
-  );
+  const optionalOnError = /\bonError\?\s*:/.test(source);
+  return [...source.matchAll(/\buseMutation\b/g)].flatMap((match) => {
+    const open = callStart(source, match.index + match[0].length);
+    if (open === -1) {
+      return [];
+    }
+    const body = callBody(source, open + 1);
+    if (handlesErrors({ body, optionalOnError })) {
+      return [];
+    }
+    return [
+      {
+        file: relative,
+        line: source.slice(0, match.index).split('\n').length,
+        rule: UNHANDLED_MUTATION,
+      },
+    ];
+  });
+}
+
+function handlesErrors({ body, optionalOnError }) {
+  if (!/\bonError\b/.test(body)) {
+    return false;
+  }
+  if (/\bonError\s*:\s*\([^)]*\)\s*=>\s*(undefined|\{\s*\}|null)/.test(body)) {
+    return false;
+  }
+  const passesThrough = /\bonError\s*(,|\}|:\s*onError\b)/.test(body);
+  return !(passesThrough && optionalOnError);
+}
+
+function callStart(source, index) {
+  let cursor = index;
+  while (/\s/.test(source[cursor] ?? '')) cursor += 1;
+  if (source[cursor] === '<') {
+    let depth = 0;
+    while (cursor < source.length) {
+      if (source[cursor] === '<') depth += 1;
+      if (source[cursor] === '>' && source[cursor - 1] !== '=') depth -= 1;
+      cursor += 1;
+      if (depth === 0) break;
+    }
+    while (/\s/.test(source[cursor] ?? '')) cursor += 1;
+  }
+  return source[cursor] === '(' ? cursor : -1;
 }
 
 function callBody(source, start) {

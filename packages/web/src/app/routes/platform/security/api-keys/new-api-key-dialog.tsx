@@ -72,7 +72,7 @@ export const NewApiKeyDialog = ({
       <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>
-            {apiKey ? t('API key created') : t('Create API key')}
+            {apiKey ? t('API Key Created') : t('Create API Key')}
           </DialogTitle>
           {!apiKey && (
             <DialogDescription>

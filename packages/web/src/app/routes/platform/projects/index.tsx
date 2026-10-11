@@ -105,7 +105,7 @@ export default function ProjectsPage() {
           describe: deleteErrorMessage,
         });
       } finally {
-        await projectCollectionUtils.refetchProjects();
+        await projectCollectionUtils.refetchProjects().catch(() => undefined);
       }
     },
     handleError: (error) => {
@@ -304,13 +304,9 @@ export default function ProjectsPage() {
                   await deleteProjects
                     .mutateAsync(deletableProjects)
                     .catch((error: unknown) => {
-                      setSelectedRows(
-                        adminBulk.remainingAfter({
-                          error,
-                          items: selectedRows,
-                        }),
-                      );
-                      throw error;
+                      if (!adminBulk.isPartialFailure(error)) {
+                        throw error;
+                      }
                     });
                   resetSelection();
                   setSelectedRows([]);

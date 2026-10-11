@@ -17,11 +17,7 @@ export function SettingsPanel({
   return (
     <section
       data-slot="settings-panel"
-      className={cn(
-        adminSurface.card,
-        'flex flex-col overflow-hidden',
-        className,
-      )}
+      className={cn(adminSurface.card, 'flex flex-col', className)}
     >
       {hasHeader && (
         <header

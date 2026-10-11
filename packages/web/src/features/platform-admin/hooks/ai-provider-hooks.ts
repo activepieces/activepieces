@@ -77,7 +77,10 @@ export const aiProviderMutations = {
   useRecheckAiProvider: ({
     onSuccess,
   }: {
-    onSuccess: (result: { status: AiProviderKeyStatus }) => void;
+    onSuccess: (
+      result: { status: AiProviderKeyStatus },
+      providerId: string,
+    ) => void;
   }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),

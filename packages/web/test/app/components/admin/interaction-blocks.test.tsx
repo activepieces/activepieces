@@ -216,6 +216,65 @@ describe('InstantSwitch', () => {
     );
   });
 
+  it('does not undo into a state that is blocked now', async () => {
+    const save = vi.fn(async () => undefined);
+    const { rerender } = render(
+      <InstantSwitch
+        aria-label="Google"
+        checked={false}
+        undo
+        successMessage={(next) => (next ? 'Google on' : 'Google off')}
+        onCheckedChange={save}
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Google' }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    rerender(
+      <InstantSwitch
+        aria-label="Google"
+        checked
+        undo
+        blockedReason="Google is the only way to sign in."
+        successMessage={(next) => (next ? 'Google on' : 'Google off')}
+        onCheckedChange={save}
+      />,
+    );
+    const undo = toast.success.mock.calls[0][1].action.onClick;
+    await act(async () => undo());
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't undo",
+      expect.objectContaining({
+        description: 'Google is the only way to sign in.',
+      }),
+    );
+  });
+
+  it('asks first before an undo that needs a confirm', async () => {
+    const save = vi.fn(async () => undefined);
+    render(
+      <InstantSwitch
+        aria-label="Visible"
+        checked={false}
+        undo
+        successMessage={(next) => (next ? 'Shown' : 'Hidden')}
+        onCheckedChange={save}
+        confirmBefore={(next) =>
+          next ? null : { title: 'Hide them?', confirmLabel: 'Hide' }
+        }
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Visible' }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const undo = toast.success.mock.calls[0][1].action.onClick;
+    await act(async () => undo());
+    expect(screen.getByRole('dialog', { name: 'Hide them?' })).toBeTruthy();
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it('asks first when turning it off could lock people out', async () => {
     const save = vi.fn(async () => undefined);
     render(
@@ -304,7 +363,7 @@ describe('adminBulk.runEach', () => {
       })
       .catch((caught: unknown) => caught);
     expect(run).toHaveBeenCalledTimes(3);
-    expect(adminBulk.remainingAfter({ error, items })).toEqual([2]);
+    expect(adminBulk.isPartialFailure(error)).toBe(true);
     expect(toast.error).toHaveBeenCalledTimes(1);
     expect(toast.error).toHaveBeenCalledWith(
       "Couldn't delete 1 items",

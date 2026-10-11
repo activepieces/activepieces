@@ -42,6 +42,8 @@ export function SaveBar({
   guardSearchChanges = false,
   standDown,
   showSave: saveVisible = true,
+  saveEnabled,
+  announceStatus = true,
   children,
 }: SaveBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export function SaveBar({
     }
     rootRef.current?.closest('form')?.requestSubmit();
   };
-  const canSave = showSave && dirty && !disabled && !saving;
+  const canSave = showSave && (saveEnabled ?? dirty) && !disabled && !saving;
   useSaveShortcut({ rootRef, canSave, onSave: saveNow });
 
   return (
@@ -70,7 +72,7 @@ export function SaveBar({
         )}
       >
         <div
-          role={error ? 'alert' : 'status'}
+          role={error ? 'alert' : announceStatus ? 'status' : undefined}
           className="flex min-w-0 flex-1 items-center"
         >
           {renderStatus({ status, error, locked, dirty })}
@@ -92,16 +94,18 @@ export function SaveBar({
             type={onSave ? 'button' : 'submit'}
             onClick={onSave}
             loading={saving}
-            disabled={!dirty || disabled}
+            disabled={!(saveEnabled ?? dirty) || disabled}
             variant={locked ? 'outline' : 'default'}
           >
             <span className="flex items-center justify-center gap-2">
               {saveLabel ?? t('Save')}
-              <Shortcut
-                shortcutKey="s"
-                withCtrl
-                className={cn(!locked && 'text-on-accent/70')}
-              />
+              <span aria-hidden className="pointer-coarse:hidden">
+                <Shortcut
+                  shortcutKey="s"
+                  withCtrl
+                  className={cn(!locked && 'text-on-accent/70')}
+                />
+              </span>
             </span>
           </Button>
         )}
@@ -135,10 +139,13 @@ function useSaveShortcut({
     }
     mountedSaveBars.add(root);
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isSaveShortcut(event) || hasOpenOverlay()) {
+      if (!isSaveShortcut(event)) {
         return;
       }
       event.preventDefault();
+      if (hasOpenModal()) {
+        return;
+      }
       if (latest.current.canSave && ownsShortcut(root)) {
         latest.current.onSave();
       }
@@ -152,16 +159,19 @@ function useSaveShortcut({
 }
 
 function isSaveShortcut(event: KeyboardEvent): boolean {
+  if (typeof event.key !== 'string' || event.shiftKey || event.altKey) {
+    return false;
+  }
   const isMac = /(Mac)/i.test(navigator.userAgent);
   return (
     event.key.toLowerCase() === 's' && (isMac ? event.metaKey : event.ctrlKey)
   );
 }
 
-function hasOpenOverlay(): boolean {
+function hasOpenModal(): boolean {
   return (
     document.querySelector(
-      '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]',
+      '[data-slot="dialog-content"][data-state="open"], [data-slot="sheet-content"][data-state="open"], [role="alertdialog"][data-state="open"]',
     ) !== null
   );
 }
@@ -174,8 +184,8 @@ function ownsShortcut(root: HTMLElement): boolean {
     return true;
   }
   const active = document.activeElement;
-  const block = root.parentElement;
-  return active !== null && block !== null && block.contains(active);
+  const form = active?.closest('form') ?? null;
+  return form !== null && form.contains(root);
 }
 
 function NavigationGuard(props: NavigationGuardProps) {
@@ -280,6 +290,8 @@ type SaveBarProps = {
   guardSearchChanges?: boolean;
   standDown?: RefObject<boolean>;
   showSave?: boolean;
+  saveEnabled?: boolean;
+  announceStatus?: boolean;
   children?: ReactNode;
 };
 

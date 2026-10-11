@@ -61,7 +61,7 @@ const ApiKeysPage = () => {
             iconSize={16}
             {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
           >
-            {t('New API key')}
+            {t('New API Key')}
           </AnimatedIconButton>
         </NewApiKeyDialog>
       </AdminPageHeader>
@@ -70,7 +70,7 @@ const ApiKeysPage = () => {
         isLoading={isLoading && !isSample}
         isError={isError && !isSample}
         onRetry={refetch}
-        entity={t('API keys')}
+        entity={t('API Keys')}
         isEmpty={keys.length === 0}
         empty={
           <AdminEmpty
@@ -135,7 +135,7 @@ const ApiKeysPage = () => {
                       )}
                     >
                       <Trash className="size-4" />
-                      {t('Revoke API key')}
+                      {t('Revoke API Key')}
                     </DropdownMenuItem>
                   </ConfirmDialog>
                 </DropdownMenuContent>

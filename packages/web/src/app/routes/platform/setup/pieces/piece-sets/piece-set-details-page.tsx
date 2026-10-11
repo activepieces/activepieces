@@ -22,6 +22,7 @@ import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
@@ -47,7 +48,11 @@ const PieceSetDetailsPage = () => {
   });
 
   const handleToggle = async (value: boolean) => {
-    if (!pieceSet || !pieces) return;
+    if (!pieceSet || !pieces) {
+      throw mutationFeedback.userError(
+        t('The pieces list did not load. Refresh the page and try again.'),
+      );
+    }
     await updateSet({
       id: pieceSet.id,
       request: {
@@ -139,7 +144,7 @@ const PieceSetDetailsPage = () => {
                 checked={
                   pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
                 }
-                disabled={piecesLoading}
+                disabled={piecesLoading || !pieces}
                 onCheckedChange={handleToggle}
                 successMessage={(on) =>
                   on ? t('New pieces included') : t('New pieces excluded')

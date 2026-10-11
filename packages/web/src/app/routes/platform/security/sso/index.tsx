@@ -88,7 +88,13 @@ const SSOPage = () => {
             controlId={AdminControl.SSO_GOOGLE_TOGGLE}
             aria-label="Google"
             checked={platform.googleAuthEnabled}
-            disabled={googleIsOnlyMethod}
+            blockedReason={
+              googleIsOnlyMethod
+                ? t(
+                    'Google is the only way to sign in. Turn on email or SAML first.',
+                  )
+                : undefined
+            }
             onCheckedChange={(googleAuthEnabled) =>
               updatePlatform({ googleAuthEnabled })
             }
@@ -147,7 +153,13 @@ const SSOPage = () => {
             controlId={AdminControl.SSO_EMAIL_LOGIN_TOGGLE}
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
-            disabled={emailIsOnlyMethod}
+            blockedReason={
+              emailIsOnlyMethod
+                ? t(
+                    'Email is the only way to sign in. Turn on Google or SAML first.',
+                  )
+                : undefined
+            }
             onCheckedChange={(next) =>
               updatePlatform({ emailAuthEnabled: next })
             }

@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document */
+/* eslint-disable testing-library/no-node-access -- the footer slot is a plain DOM node outside the rendered tree */
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { createMemoryRouter, Link, RouterProvider } from 'react-router-dom';
@@ -11,8 +12,10 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
+import { AdminPage, AdminPageFooter } from '@/app/components/admin/admin-page';
 import { SaveBar } from '@/app/components/admin/save-bar';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 
 function mountWithRouter(element: React.ReactNode) {
   const router = createMemoryRouter(
@@ -99,5 +102,61 @@ describe('SaveBar shortcut', () => {
     );
     pressSave();
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('saves only the bar in the form that holds focus when two are dirty', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    mountWithRouter(
+      <>
+        <form>
+          <input aria-label="first field" />
+          <SaveBar dirty saving={false} onSave={first} />
+        </form>
+        <form>
+          <input aria-label="second field" />
+          <SaveBar dirty saving={false} onSave={second} />
+        </form>
+      </>,
+    );
+    screen.getByLabelText('second field').focus();
+    pressSave();
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(1);
+  });
+
+  it('still saves while a popover is open', () => {
+    const onSave = vi.fn();
+    mountWithRouter(
+      <>
+        <SaveBar dirty saving={false} onSave={onSave} />
+        <Popover open>
+          <PopoverContent>{'Pick a colour'}</PopoverContent>
+        </Popover>
+      </>,
+    );
+    pressSave();
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AdminPageFooter', () => {
+  it('renders its content once, in the page footer', () => {
+    render(
+      <AdminPage>
+        <p>{'Body'}</p>
+        <AdminPageFooter>
+          <span>{'Footer bar'}</span>
+        </AdminPageFooter>
+      </AdminPage>,
+    );
+    const footer = screen.getAllByText('Footer bar');
+    expect(footer).toHaveLength(1);
+    expect(
+      screen
+        .getByText('Body')
+        .closest('[data-slot="admin-page"]')
+        ?.lastElementChild?.contains(footer[0]),
+    ).toBe(true);
   });
 });

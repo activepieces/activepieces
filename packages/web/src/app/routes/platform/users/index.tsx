@@ -210,8 +210,8 @@ export default function UsersPage() {
           }
           confirmLabel={
             deleteTarget.type === 'invitation'
-              ? t('Delete invitation')
-              : t('Delete user')
+              ? t('Delete Invitation')
+              : t('Delete User')
           }
           onConfirm={() => deleteRow.mutateAsync(deleteTarget)}
           controlId={AdminControl.USERS_DELETE_CONFIRM}

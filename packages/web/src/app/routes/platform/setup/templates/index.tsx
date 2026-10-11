@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces';
-import { templateKeys, templatesApi } from '@/features/templates';
+import { templatesApi } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -66,10 +66,9 @@ const PlatformTemplatesPage = () => {
           label: (count) => templatesCountLabel(count),
         });
       } finally {
-        await refetch();
+        await refetch().catch(() => undefined);
       }
     },
-    invalidate: [templateKeys.custom],
   });
 
   const columnsWithCheckbox: ColumnDef<RowDataWithActions<Template>>[] = [
@@ -188,10 +187,9 @@ const PlatformTemplatesPage = () => {
                 await bulkDeleteMutation
                   .mutateAsync(selectedRows)
                   .catch((error: unknown) => {
-                    setSelectedRows(
-                      adminBulk.remainingAfter({ error, items: selectedRows }),
-                    );
-                    throw error;
+                    if (!adminBulk.isPartialFailure(error)) {
+                      throw error;
+                    }
                   });
                 resetSelection();
                 setSelectedRows([]);

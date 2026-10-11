@@ -21,6 +21,7 @@ const LOCK_DOCUMENTATION_URL =
 
 export function BillingPageShell({
   lockTitle,
+  header,
   children,
 }: BillingPageShellProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -36,12 +37,12 @@ export function BillingPageShell({
       )}
       lockDocumentationUrl={LOCK_DOCUMENTATION_URL}
     >
-      <BillingPageContent>{children}</BillingPageContent>
+      <BillingPageContent header={header}>{children}</BillingPageContent>
     </LockedFeatureGuard>
   );
 }
 
-function BillingPageContent({ children }: BillingPageContentProps) {
+function BillingPageContent({ header, children }: BillingPageContentProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: info,
@@ -53,6 +54,7 @@ function BillingPageContent({ children }: BillingPageContentProps) {
   if (isError && isNil(info)) {
     return (
       <AdminPage>
+        {header}
         <DataFetchErrorState
           entity={t('billing information')}
           onRetry={refetch}
@@ -64,6 +66,7 @@ function BillingPageContent({ children }: BillingPageContentProps) {
   if (isLoading || isNil(info)) {
     return (
       <AdminPage>
+        {header}
         <SkeletonList numberOfItems={3} className="h-18" />
       </AdminPage>
     );
@@ -82,6 +85,7 @@ type BillingPageShellRenderParams = {
 };
 
 type BillingPageContentProps = {
+  header: ReactNode;
   children: (params: BillingPageShellRenderParams) => ReactNode;
 };
 

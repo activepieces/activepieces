@@ -130,7 +130,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             <TooltipContent>
               {isNil(oauth2App)
                 ? t('Configure OAuth2 App')
-                : t('Delete OAuth2 app')}
+                : t('Delete OAuth2 App')}
             </TooltipContent>
           </Tooltip>
         </DialogTrigger>
@@ -218,7 +218,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
         <ConfirmDialog
           open={confirmingRemove}
           onOpenChange={setConfirmingRemove}
-          title={t('Delete OAuth2 app')}
+          title={t('Delete OAuth2 App')}
           description={t(
             'Connections that sign in through this app stop working until it is configured again.',
           )}

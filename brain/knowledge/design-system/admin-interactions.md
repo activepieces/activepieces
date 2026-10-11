@@ -17,8 +17,8 @@ mutation), `adminFeedback.done` gives the same success wording. _Avoid_: a raw `
 "successfully", "Success", "Error" as a title
 
 **Batch** — an action on several rows. `adminBulk.runEach` runs them all, keeps what succeeded, and
-reports the failures in one error, then throws so no success toast follows and the confirm stays open;
-`adminBulk.remainingAfter` narrows the selection to the rows that failed.
+reports the failures in one error, then throws so no success toast follows; `adminBulk.isPartialFailure`
+lets the caller close and clear its selection, while a full failure keeps the confirm open.
 
 **Block** — one settings panel, sheet or dialog. Saving is decided per block, not per control:
 - a block with only switches saves each switch on the spot (`InstantSwitch`), no Save button;
@@ -52,14 +52,20 @@ inline uses `feedback: 'inline'` and no toast.
 - A confirm's `onConfirm` must return the request's promise (`mutateAsync`, not `mutate`), or the dialog
   closes before the work finishes and cannot show the failure.
 - React Router allows one navigation blocker at a time. Every dirty `SaveBar` registers, and only the first
-  one mounts the guard. Cmd/Ctrl+S does nothing while a dialog is open; with two dirty bars it saves the
-  one whose block holds focus.
+  one mounts the guard. Cmd/Ctrl+S never opens the browser's Save page while a save bar is mounted; it
+  does nothing while a modal dialog or sheet is open, and with two dirty bars it saves only the one inside
+  the form that holds focus.
 - A block nested inside a page (a detail view inside a tab) puts its `SaveBar` in `AdminPageFooter`, so
   it sits in the page footer like every other save bar.
-- A polled or refetched view passes `hasData`-style checks (`isError && data === undefined`): a failed
-  refresh keeps the last data on screen instead of replacing it with an error.
-- Error toasts show the server's `params.message` only. Fastify validation text and plain JS errors fall
-  back to the generic message; an error written for the admin is thrown with `mutationFeedback.userError`.
+- A polled or refetched view passes `hasData` to `AdminQueryState` (or checks `isError && data === undefined`):
+  a failed refresh keeps the last data on screen instead of replacing it with an error.
+- Error text is the server's message when it has one (`params.message`, or a 4xx `message`), friendly copy
+  for permission, not-found, plan and schema-validation errors, and the generic message only for unknown
+  and JS errors. An error written for the admin is thrown with `mutationFeedback.userError`.
+- A partial bulk failure shows one error, no success toast, and clears the selection: the shared data
+  table gives rows new ids on refetch, so a "keep the failed rows selected" selection cannot survive.
+- No admin control may leave zero sign-in methods: the email, Google and SAML controls are blocked (with
+  a hint) when they are the last method, and an Undo re-checks the block before running.
 - Focus return to a row menu's trigger and ignoring clicks on toasts apply only inside `AdminPage`
   (`MenuFocusReturnScope`); dialogs elsewhere in the app behave as Radix does.
 - Feature locks (`PlanFeatureSample`, `LockedFeatureGuard`, `SaveBar` `locked`) follow their own rules

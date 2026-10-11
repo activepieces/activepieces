@@ -4,7 +4,6 @@ export {
   AdminPageHeader,
   AdminSection,
 } from './admin-page';
-export { AdminResources, AdminVideoDialog } from './admin-resources';
 export type { AdminResource } from './admin-resources';
 export { adminPageResources } from './admin-page-resources';
 export { adminSurface } from './admin-surface';

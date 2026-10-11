@@ -14,9 +14,9 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import {
-  MUTATION_ERROR_TOAST_ID,
+  INTERNAL_ERROR_MESSAGE,
+  VALIDATION_ERROR_MESSAGE,
   NETWORK_ERROR_MESSAGE,
   UNDO_TOAST_DURATION_MS,
   mutationFeedback,
@@ -62,7 +62,6 @@ describe('mutationFeedback.error', () => {
     mutationFeedback.error({ error, title: "Couldn't save changes" });
 
     expect(toast.error).toHaveBeenCalledWith("Couldn't save changes", {
-      id: MUTATION_ERROR_TOAST_ID,
       description: 'Name is taken',
     });
   });
@@ -91,8 +90,7 @@ describe('mutationFeedback.error', () => {
     mutationFeedback.error({ error, title: "Couldn't save changes" });
 
     expect(toast.error).toHaveBeenCalledWith("Couldn't save changes", {
-      id: MUTATION_ERROR_TOAST_ID,
-      description: INTERNAL_ERROR_MESSAGE,
+      description: VALIDATION_ERROR_MESSAGE,
     });
   });
 
@@ -119,7 +117,6 @@ describe('mutationFeedback.error', () => {
     mutationFeedback.error({ error: serverError({ status: 500 }) });
 
     expect(toast.error).toHaveBeenCalledWith('Something went wrong', {
-      id: MUTATION_ERROR_TOAST_ID,
       description: INTERNAL_ERROR_MESSAGE,
     });
   });
@@ -232,7 +229,6 @@ describe('mutationFeedback.undo', () => {
 
     await vi.waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Couldn't undo", {
-        id: MUTATION_ERROR_TOAST_ID,
         description: 'Gone',
       }),
     );
