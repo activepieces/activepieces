@@ -490,12 +490,11 @@ async function validateDefaultProjectIds({ platform, defaultProjectIds, log }: V
             },
         })
     }
-    const knownProjects = await projectRepo().find({
-        where: { id: In(uniqueIds), platformId: platform.id, type: ProjectType.TEAM },
+    const platformProjects = await projectRepo().find({
+        where: { id: In(uniqueIds), platformId: platform.id },
         withDeleted: true,
     })
-    const knownIds = new Set([...knownProjects.map((project) => project.id), ...platform.defaultProjectIds])
-    if (uniqueIds.some((id) => !knownIds.has(id))) {
+    if (platformProjects.some((project) => project.type !== ProjectType.TEAM)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
@@ -503,7 +502,7 @@ async function validateDefaultProjectIds({ platform, defaultProjectIds, log }: V
             },
         })
     }
-    const liveIds = new Set(knownProjects.filter((project) => isNil(project.deleted)).map((project) => project.id))
+    const liveIds = new Set(platformProjects.filter((project) => isNil(project.deleted)).map((project) => project.id))
     return uniqueIds.filter((id) => liveIds.has(id))
 }
 
