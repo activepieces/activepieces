@@ -156,7 +156,7 @@ function entriesOf({ items, fallback }: { items: Record<string, unknown>[]; fall
 }
 
 function keepRecent({ entries, floor }: { entries: RecentEntry[]; floor: number }): RecentGroup[] {
-  const kept = entries.filter(([, time]) => time >= floor).slice(-RECENT_CAP);
+  const kept = withinBudget({ entries: entries.filter(([, time]) => time >= floor).slice(-RECENT_CAP) });
   const byTime = new Map<number, string[]>();
   for (const [id, time] of kept) {
     const ids = byTime.get(time);
@@ -167,6 +167,22 @@ function keepRecent({ entries, floor }: { entries: RecentEntry[]; floor: number 
     }
   }
   return [...byTime.entries()];
+}
+
+function withinBudget({ entries }: { entries: RecentEntry[] }): RecentEntry[] {
+  // Each distinct time costs a group header; each ID costs its quoted text and a comma. Keep the newest entries that fit.
+  const times = new Set<number>();
+  let bytes = 0;
+  for (let index = entries.length - 1; index >= 0; index--) {
+    const [id, time] = entries[index];
+    const cost = id.length + 3 + (times.has(time) ? 0 : String(time).length + 6);
+    if (bytes + cost > RECENT_BYTE_BUDGET) {
+      return entries.slice(index + 1);
+    }
+    bytes += cost;
+    times.add(time);
+  }
+  return entries;
 }
 
 function unpack({ groups }: { groups: RecentGroup[] }): RecentEntry[] {
@@ -210,6 +226,7 @@ const MAX_PAGES = 5;
 const PAGE_SIZE = 100;
 const SEEN_CAP = 1000;
 const RECENT_CAP = 20000;
+const RECENT_BYTE_BUDGET = 400 * 1024;
 const TEST_SAMPLE_SIZE = 5;
 const STATUSES = ['PUBLISHED', 'FAILED'] as const;
 

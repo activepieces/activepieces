@@ -132,6 +132,28 @@ describe('New Published Post trigger', () => {
     expect(new TextEncoder().encode(raw).length).toBeLessThan(512 * 1024 * 0.6);
   });
 
+  it('stays under the 512 KiB store limit when every delivery has its own publish time', async () => {
+    const { store, data } = memoryStore();
+    const since = Date.parse('2026-10-11T06:00:00Z');
+    data.set(STORE_KEY, JSON.stringify({ seen: [], lastPoll: since }));
+    const ids = Array.from({ length: 25000 }, (_, i) => 100_000_000_000_000 + i);
+    fetchMock.mockImplementation(async (input: string) => {
+      const page = Number(new URL(input).searchParams.get('page'));
+      const start = (page - 1) * 100;
+      const slice = ids.slice(start, start + 100).map((id, i) => publishedPost({ id, publishedAt: new Date(since + (start + i) * 1000).toISOString() }));
+      return jsonResponse({ body: listBody({ data: slice, currentPage: page, lastPage: 250 }) });
+    });
+    for (let poll = 0; poll < 40; poll++) {
+      await call({ hook: 'run', context: hookContext({ store }) });
+      expect(new TextEncoder().encode(data.get(STORE_KEY) ?? '').length).toBeLessThan(512 * 1024);
+    }
+    const state = JSON.parse(data.get(STORE_KEY) ?? '{}');
+    const kept: string[] = state.recent.flatMap((group: [number, string[]]) => group[1]);
+    expect(state.resume).toMatchObject({ page: 201 });
+    expect(kept.length).toBeGreaterThan(10000);
+    expect(kept[kept.length - 1]).toBe(String(ids[19999]));
+  });
+
   it('keeps the seen set bounded', async () => {
     const { store, data } = memoryStore();
     data.set(STORE_KEY, JSON.stringify({ seen: Array.from({ length: 1000 }, (_, i) => String(5000 - i)), lastPoll: Date.parse('2026-10-11T11:55:00Z') }));
