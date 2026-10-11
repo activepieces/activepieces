@@ -44,7 +44,13 @@ export function decodeFilePrefix({
   }
 }
 
-function headerText(headers: Headers, name: string): string | null {
+function headerText({
+  headers,
+  name,
+}: {
+  headers: Headers;
+  name: string;
+}): string | null {
   return headers.get(`x-gitlab-${name}`);
 }
 
@@ -95,17 +101,17 @@ export const getFileAction = createAction({
       maxBytes: MAX_FILE_TEXT_BYTES + UTF8_MAX_CHAR_BYTES,
     });
     const headers = meta.headers;
-    const sizeHeader = headerText(headers, 'size');
+    const sizeHeader = headerText({ headers, name: 'size' });
     const size = sizeHeader === null ? NaN : Number(sizeHeader);
     return {
-      file_name: headerText(headers, 'file-name'),
-      file_path: headerText(headers, 'file-path'),
+      file_name: headerText({ headers, name: 'file-name' }),
+      file_path: headerText({ headers, name: 'file-path' }),
       size: Number.isFinite(size) ? size : raw.bytes.length,
-      ref: headerText(headers, 'ref'),
-      blob_id: headerText(headers, 'blob-id'),
-      commit_id: headerText(headers, 'commit-id'),
-      last_commit_id: headerText(headers, 'last-commit-id'),
-      content_sha256: headerText(headers, 'content-sha256'),
+      ref: headerText({ headers, name: 'ref' }),
+      blob_id: headerText({ headers, name: 'blob-id' }),
+      commit_id: headerText({ headers, name: 'commit-id' }),
+      last_commit_id: headerText({ headers, name: 'last-commit-id' }),
+      content_sha256: headerText({ headers, name: 'content-sha256' }),
       ...decodeFilePrefix(raw),
     };
   },
