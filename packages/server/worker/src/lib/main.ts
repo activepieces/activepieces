@@ -1,4 +1,5 @@
 import { aiDevtools } from '@activepieces/server-utils'
+import { ApEnvironment } from '@activepieces/shared'
 import { getApiUrl, getSocketUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSystemSnapshot } from './utils/system-snapshot'
@@ -7,7 +8,7 @@ import { worker } from './worker'
 const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
 
 async function main(): Promise<void> {
-    await aiDevtools.register({ enabled: system.getBoolean(WorkerSystemProp.AI_DEVTOOLS_ENABLED) ?? false })
+    await aiDevtools.register({ enabled: system.get(WorkerSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT })
     workerSystemSnapshot.start()
     const containerType = system.get(WorkerSystemProp.CONTAINER_TYPE) ?? 'WORKER_AND_APP'
     await worker.start({ apiUrl: getApiUrl(), socketUrl: getSocketUrl(), workerToken, withHealthServer: containerType === 'WORKER' })

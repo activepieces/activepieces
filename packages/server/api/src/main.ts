@@ -1,4 +1,5 @@
 import { aiDevtools, evlogSetup } from '@activepieces/server-utils'
+import { ApEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
@@ -54,7 +55,7 @@ function setupTimeZone(): void {
 
 const main = async (): Promise<void> => {
     setupTimeZone()
-    await aiDevtools.register({ enabled: system.getBoolean(AppSystemProp.AI_DEVTOOLS_ENABLED) ?? false })
+    await aiDevtools.register({ enabled: system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT })
     if (system.isApp()) {
         await distributedLock(system.globalLogger()).runExclusive({
             key: 'database-migration-lock',
