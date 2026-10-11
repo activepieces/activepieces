@@ -69,7 +69,7 @@ export const personalProjectsService = (log: FastifyBaseLogger) => ({
 async function createNextBatch({ platformId, afterUserId, log }: CreateNextBatchParams): Promise<string | null> {
     const platform = await platformService(log).getOneOrThrow(platformId)
     if (!platform.autoCreatePersonalProjects) {
-        log.info({ platformId }, '[personalProjects#createMissing] Personal projects were turned off, stopping')
+        log.info({ platform: { id: platformId } }, '[personalProjects#createMissing] Personal projects were turned off, stopping')
         return null
     }
     const query = membersWithoutPersonalProjectQuery({ platformId })
@@ -84,7 +84,7 @@ async function createNextBatch({ platformId, afterUserId, log }: CreateNextBatch
     for (const member of members) {
         const { error } = await tryCatch(() => createPersonalProject({ platformId, member, log }))
         if (!isNil(error)) {
-            log.warn({ platformId, userId: member.userId, error }, '[personalProjects#createMissing] Could not create a personal project, skipping this member')
+            log.warn({ platform: { id: platformId }, user: { id: member.userId }, error }, '[personalProjects#createMissing] Could not create a personal project, skipping this member')
         }
     }
     return members.at(-1)?.userId ?? null
