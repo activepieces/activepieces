@@ -430,7 +430,7 @@ describe('MCP Tools integration', () => {
         const resolved = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'sendEmail', type: 'action' })
         const unclear = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'send', type: 'action' })
         const ambiguous = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'email', type: 'trigger' })
-        const blank = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: '__', type: 'action' })
+        const blank = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-array', actionOrTriggerName: '__', type: 'action' })
 
         expect(text(resolved)).toContain('✅')
         expect(text(resolved)).toContain('/send_email')
