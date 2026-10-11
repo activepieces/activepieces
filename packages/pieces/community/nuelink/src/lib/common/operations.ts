@@ -67,8 +67,8 @@ async function create({ apiKey, brandId, collectionId, props, pollAllowed }: { a
   return {
     id: record['id'] ?? null,
     message: record['message'] ?? null,
-    brandId: Number(brandId),
-    collectionId: Number(collectionId),
+    brandId,
+    collectionId,
     publishMode,
     scheduledAt: schedule?.local ?? null,
     scheduledAtUtc: schedule?.utc ?? null,

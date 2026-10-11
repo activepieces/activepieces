@@ -68,7 +68,33 @@ describe('New Published Post trigger', () => {
     expect(idsOf(emitted)).toEqual([5]);
   });
 
-  it('walks pages and stops at the cap, advancing only past what it read', async () => {
+  it('drains a backlog larger than 500 that shares one publishedAt across consecutive polls', async () => {
+    const { store, data } = memoryStore();
+    data.set(STORE_KEY, JSON.stringify({ seen: [], lastPoll: Date.parse('2026-10-11T11:55:00Z') }));
+    const backlog = Array.from({ length: 1234 }, (_, i) => publishedPost({ id: i + 1, publishedAt: '2026-10-11T11:50:00.000000Z' }));
+    fetchMock.mockImplementation(async (input: string) => {
+      const params = new URL(input).searchParams;
+      const page = Number(params.get('page'));
+      const perPage = Number(params.get('per_page'));
+      const lastPage = Math.ceil(backlog.length / perPage);
+      return jsonResponse({ body: listBody({ data: backlog.slice((page - 1) * perPage, page * perPage), currentPage: page, lastPage }) });
+    });
+    const emitted: unknown[] = [];
+    const startedFrom: string[] = [];
+    for (let poll = 0; poll < 3; poll++) {
+      vi.setSystemTime(new Date(Date.parse('2026-10-11T12:00:00Z') + poll * 60_000));
+      const before = fetchMock.mock.calls.length;
+      emitted.push(...idsOf(await call({ hook: 'run', context: hookContext({ store }) })));
+      startedFrom.push(new URL(String(fetchMock.mock.calls[before][0])).searchParams.get('page') ?? '');
+    }
+    expect(emitted).toEqual(backlog.map((item) => item.id));
+    expect(startedFrom).toEqual(['1', '6', '11']);
+    const state = JSON.parse(data.get(STORE_KEY) ?? '{}');
+    expect(state.resume).toBeUndefined();
+    expect(state.lastPoll).toBe(Date.parse('2026-10-11T12:02:00Z'));
+  });
+
+  it('keeps the window fixed while a capped batch is unfinished', async () => {
     const { store, data } = memoryStore();
     data.set(STORE_KEY, JSON.stringify({ seen: [], lastPoll: Date.parse('2026-10-11T11:55:00Z') }));
     fetchMock.mockImplementation(async (input: string) => {
@@ -78,7 +104,7 @@ describe('New Published Post trigger', () => {
     const emitted = await call({ hook: 'run', context: hookContext({ store }) });
     expect(fetchMock).toHaveBeenCalledTimes(5);
     expect(Array.isArray(emitted) ? emitted.length : -1).toBe(5);
-    expect(JSON.parse(data.get(STORE_KEY) ?? '{}').lastPoll).toBe(Date.parse('2026-10-11T11:45:00Z') + 15 * 60 * 1000);
+    expect(JSON.parse(data.get(STORE_KEY) ?? '{}')).toMatchObject({ lastPoll: Date.parse('2026-10-11T11:55:00Z'), resume: { since: Date.parse('2026-10-11T11:40:00Z'), page: 6 } });
   });
 
   it('keeps the seen set bounded', async () => {

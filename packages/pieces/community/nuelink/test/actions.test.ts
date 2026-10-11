@@ -71,14 +71,21 @@ describe('new actions refuse the legacy token', () => {
 });
 
 describe('Create Post in Collection', () => {
+  it('returns brand and collection IDs as exact strings', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ status: 201, body: { status: 'success', data: { id: 1, message: 'Post created successfully' } } }));
+    const result = await runAction({ action: createCollectionPost, propsValue: { brand: '9007199254740993', collection: '9007199254740995', caption: 'Hi' } });
+    expect(result).toMatchObject({ brandId: '9007199254740993', collectionId: '9007199254740995' });
+    expect(requestOf({ fetchMock, call: 0 }).url).toBe(`${BASE}/brands/9007199254740993/collections/9007199254740995/posts`);
+  });
+
   it('defaults to DRAFT and sends only what was set', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: 201, body: { status: 'success', data: { id: 8801, message: 'Post created successfully' } } }));
     const result = await runAction({ action: createCollectionPost, propsValue: { brand: 42, collection: '77', caption: 'Hello world', postAsStory: false } });
     expect(result).toEqual({
       id: 8801,
       message: 'Post created successfully',
-      brandId: 42,
-      collectionId: 77,
+      brandId: '42',
+      collectionId: '77',
       publishMode: 'DRAFT',
       scheduledAt: null,
       scheduledAtUtc: null,

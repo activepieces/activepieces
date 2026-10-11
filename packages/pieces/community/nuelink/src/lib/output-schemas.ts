@@ -178,8 +178,8 @@ export const nuelinkOutputSchemas = {
     fields: [
       { key: 'id', label: 'Post ID', format: 'number' },
       { key: 'message', label: 'Message' },
-      { key: 'brandId', label: 'Brand ID', format: 'number' },
-      { key: 'collectionId', label: 'Collection ID', format: 'number' },
+      { key: 'brandId', label: 'Brand ID' },
+      { key: 'collectionId', label: 'Collection ID' },
       { key: 'publishMode', label: 'Publish Mode' },
       { key: 'scheduledAt', label: 'Scheduled For (Brand Time)', description: 'The brand-local time sent to Nuelink; empty unless Publish Mode is Schedule.' },
       { key: 'scheduledAtUtc', label: 'Scheduled For (UTC)', format: 'datetime' },

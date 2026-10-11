@@ -74,12 +74,15 @@ export const newPublishedPost = createTrigger({
       return [];
     }
     const startedAt = Date.now();
-    const { items, truncated } = await collect({ query, since: state.lastPoll - OVERLAP_MS });
+    const since = state.resume?.since ?? state.lastPoll - OVERLAP_MS;
+    const firstPage = state.resume?.page ?? 1;
+    const { items, truncated } = await collect({ query, since, firstPage });
     const seen = new Set(state.seen);
     const fresh = uniqueById({ items }).filter((item) => !seen.has(idOf({ item })));
     const nextState: PollState = {
       seen: [...fresh.map((item) => idOf({ item })).reverse(), ...state.seen].slice(0, SEEN_CAP),
-      lastPoll: truncated ? Math.min(startedAt, latestPublishedAt({ items, fallback: state.lastPoll }) + OVERLAP_MS) : startedAt,
+      lastPoll: truncated ? state.lastPoll : startedAt,
+      ...(truncated ? { resume: { since, page: firstPage + MAX_PAGES } } : {}),
     };
     await context.store.put<PollState>(STORE_KEY, nextState);
     return fresh;
@@ -96,7 +99,7 @@ function pollQuery({ auth, propsValue }: { auth: NuelinkAuthValue | undefined; p
 
 async function seed({ query, store }: { query: PollQuery; store: PollStore }): Promise<void> {
   const startedAt = Date.now();
-  const { items } = await collect({ query, since: startedAt - OVERLAP_MS });
+  const { items } = await collect({ query, since: startedAt - OVERLAP_MS, firstPage: 1 });
   const seen = uniqueById({ items })
     .map((item) => idOf({ item }))
     .reverse()
@@ -104,10 +107,10 @@ async function seed({ query, store }: { query: PollQuery; store: PollStore }): P
   await store.put<PollState>(STORE_KEY, { seen, lastPoll: startedAt });
 }
 
-async function collect({ query, since }: { query: PollQuery; since: number }): Promise<{ items: Record<string, unknown>[]; truncated: boolean }> {
+async function collect({ query, since, firstPage }: { query: PollQuery; since: number; firstPage: number }): Promise<{ items: Record<string, unknown>[]; truncated: boolean }> {
   const publishedFrom = new Date(since).toISOString().slice(0, 19).replace('T', ' ');
   const pages: Record<string, unknown>[][] = [];
-  for (let page = 1; page <= MAX_PAGES; page++) {
+  for (let page = firstPage; page < firstPage + MAX_PAGES; page++) {
     const result = await nuelinkClient.getPage({
       apiKey: query.apiKey,
       path: ['brands', query.brandId, 'published-posts'],
@@ -139,21 +142,23 @@ function idOf({ item }: { item: Record<string, unknown> }): string {
   return typeof id === 'number' || typeof id === 'string' ? String(id) : '';
 }
 
-function latestPublishedAt({ items, fallback }: { items: Record<string, unknown>[]; fallback: number }): number {
-  return items.reduce((latest, item) => {
-    const value = item['publishedAt'];
-    const time = typeof value === 'string' ? Date.parse(value) : Number.NaN;
-    return Number.isFinite(time) && time > latest ? time : latest;
-  }, fallback);
-}
-
 function isPollState(value: unknown): value is PollState {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
   const seen = Reflect.get(value, 'seen');
   const lastPoll = Reflect.get(value, 'lastPoll');
-  return Array.isArray(seen) && seen.every((id: unknown) => typeof id === 'string') && typeof lastPoll === 'number' && Number.isFinite(lastPoll);
+  const resume = Reflect.get(value, 'resume');
+  return Array.isArray(seen) && seen.every((id: unknown) => typeof id === 'string') && typeof lastPoll === 'number' && Number.isFinite(lastPoll) && (resume === undefined || isResumePoint(resume));
+}
+
+function isResumePoint(value: unknown): value is ResumePoint {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const since = Reflect.get(value, 'since');
+  const page = Reflect.get(value, 'page');
+  return typeof since === 'number' && Number.isFinite(since) && typeof page === 'number' && Number.isInteger(page) && page > 1;
 }
 
 const STORE_KEY = 'nuelink_new_published_post';
@@ -167,6 +172,12 @@ const STATUSES = ['PUBLISHED', 'FAILED'] as const;
 type PollState = {
   seen: string[];
   lastPoll: number;
+  resume?: ResumePoint;
+};
+
+type ResumePoint = {
+  since: number;
+  page: number;
 };
 
 type PollQuery = {
