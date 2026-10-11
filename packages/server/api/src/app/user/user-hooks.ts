@@ -10,6 +10,7 @@ export const userHooks = hooksFactory.create<UserHooks>(_log => ({
 
 export type UserPostCreateParams = {
     user: User
+    email: string
     platformId: string
     defaultProjectIds: string[]
     entityManager: EntityManager
