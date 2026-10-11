@@ -62,7 +62,6 @@ export const AllowedDomainDialog = ({
 
   const { mutate, isPending } = useAdminAction<UpdatePlatformRequestBody>({
     verb: 'save',
-    name: '',
     run: async (request) => {
       await platformApi.update(request, platform.id);
       await refetch();
@@ -93,7 +92,7 @@ export const AllowedDomainDialog = ({
       </DialogTrigger>
       <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
-          <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
+          <DialogTitle>{t('Configure allowed domains')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -160,7 +159,7 @@ export const AllowedDomainDialog = ({
               size="sm"
             >
               <Plus />
-              {t('Add Domain')}
+              {t('Add domain')}
             </Button>
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>

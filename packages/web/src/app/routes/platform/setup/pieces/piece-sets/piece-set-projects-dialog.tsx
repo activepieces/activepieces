@@ -90,23 +90,26 @@ const AssignProjectsForm = ({
     removed: string[];
   }>({
     verb: 'save',
-    name: '',
     run: async ({ added, removed }) => {
-      if (added.length > 0) {
-        await pieceSetsApi.assignProjects(pieceSet.id, { projectIds: added });
+      try {
+        if (added.length > 0) {
+          await pieceSetsApi.assignProjects(pieceSet.id, {
+            projectIds: added,
+          });
+        }
+        await Promise.all(
+          removed.map((projectId) =>
+            pieceSetsApi.removeProject(pieceSet.id, projectId),
+          ),
+        );
+      } finally {
+        await pieceSetCacheUtils.refreshAfterProjectChange({
+          queryClient,
+          id: pieceSet.id,
+        });
       }
-      await Promise.all(
-        removed.map((projectId) =>
-          pieceSetsApi.removeProject(pieceSet.id, projectId),
-        ),
-      );
     },
-    onSuccess: () => {
-      pieceSetCacheUtils
-        .refreshAfterProjectChange({ queryClient, id: pieceSet.id })
-        .catch(() => undefined);
-      onOpenChange(false);
-    },
+    onSuccess: () => onOpenChange(false),
   });
   const isSaving = saveAssignments.isPending;
 

@@ -127,6 +127,7 @@ export enum AdminControl {
   PIECES_INSTALL_SUBMIT = 'pieces.install.submit',
   PIECES_OAUTH_CONFIGURE_OPEN = 'pieces.oauth-configure.open',
   PIECES_OAUTH_CONFIGURE_SUBMIT = 'pieces.oauth-configure.submit',
+  PIECES_OAUTH_DELETE_OPEN = 'pieces.oauth-delete.open',
   PIECES_OAUTH_DELETE_RUN = 'pieces.oauth-delete.run',
   PIECES_PIN_RUN = 'pieces.pin.run',
   PIECES_REPORT_RUN = 'pieces.report.run',

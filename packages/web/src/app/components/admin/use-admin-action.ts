@@ -1,3 +1,4 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import {
   QueryKey,
   useMutation,
@@ -7,11 +8,16 @@ import {
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
-import { mutationFeedback } from '@/lib/mutation-feedback';
+import { useManagePlanDialogStore } from '@/features/billing';
+import { api } from '@/lib/api';
+import {
+  MUTATION_ERROR_TOAST_ID,
+  mutationFeedback,
+} from '@/lib/mutation-feedback';
 
 export function useAdminAction<TVars = void, TData = unknown>({
   verb,
-  name,
+  name = '',
   run,
   invalidate = [],
   onSuccess,
@@ -31,8 +37,8 @@ export function useAdminAction<TVars = void, TData = unknown>({
 
   return useMutation<TData, Error, TVars>({
     mutationFn: run,
-    onSuccess: async (data, vars) => {
-      await refresh();
+    onSuccess: (data, vars) => {
+      refresh().catch(() => undefined);
       onSuccess?.({ data, vars });
       if (feedback === 'none') {
         return;
@@ -48,12 +54,24 @@ export function useAdminAction<TVars = void, TData = unknown>({
       mutationFeedback.undo({
         message,
         onUndo: async () => {
-          await undo({ data, vars });
+          try {
+            await undo({ data, vars });
+          } catch (error) {
+            if (error instanceof Error && handleError?.(error) === true) {
+              mutationFeedback.markShown(error);
+            }
+            throw error;
+          }
           await refresh();
         },
       });
     },
     onError: (error, vars) => {
+      if (api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
+        mutationFeedback.markShown(error);
+        useManagePlanDialogStore.getState().openDialog();
+        return;
+      }
       const handled = handleError?.(error) === true;
       if (handled || feedback !== 'toast' || mutationFeedback.wasShown(error)) {
         mutationFeedback.markShown(error);
@@ -140,8 +158,22 @@ function failed({ verb, name }: { verb: AdminVerb; name: string }): string {
   }
 }
 
-function notifyDone({ verb, name }: { verb: AdminVerb; name: string }): void {
+function notifyDone({
+  verb,
+  name = '',
+}: {
+  verb: AdminVerb;
+  name?: string;
+}): void {
   toast.success(done({ verb, name }));
+}
+
+function notifyStatus({ ok, message }: { ok: boolean; message: string }): void {
+  if (ok) {
+    toast.success(message);
+    return;
+  }
+  toast.error(message, { id: MUTATION_ERROR_TOAST_ID });
 }
 
 async function runEach<T>({
@@ -149,32 +181,60 @@ async function runEach<T>({
   run,
   verb,
   label,
+  describe,
 }: {
   items: T[];
   run: (item: T) => Promise<unknown>;
   verb: AdminVerb;
   label: (count: number) => string;
+  describe?: (error: unknown) => string | undefined;
 }): Promise<void> {
   const results = await Promise.allSettled(items.map(run));
   const failures = results.flatMap((result) =>
     result.status === 'rejected' ? [result.reason] : [],
   );
-  if (failures.length === items.length && failures.length > 0) {
+  if (failures.length === 0) {
+    return;
+  }
+  if (failures.length === items.length) {
     throw failures[0];
   }
-  if (failures.length > 0) {
-    mutationFeedback.error({
-      error: failures[0],
-      title: failed({ verb, name: label(failures.length) }),
-    });
+  mutationFeedback.error({
+    error: failures[0],
+    title: failed({ verb, name: label(failures.length) }),
+    description: describe?.(failures[0]),
+  });
+  const partial = new BulkPartialFailure(
+    items.filter((_, index) => results[index].status === 'fulfilled'),
+  );
+  mutationFeedback.markShown(partial);
+  throw partial;
+}
+
+function remainingAfter<T>({
+  error,
+  items,
+}: {
+  error: unknown;
+  items: T[];
+}): T[] {
+  if (!(error instanceof BulkPartialFailure)) {
+    return items;
+  }
+  return items.filter((item) => !error.succeeded.includes(item));
+}
+
+class BulkPartialFailure extends Error {
+  constructor(readonly succeeded: unknown[]) {
+    super('Some items failed');
   }
 }
 
 export const adminActionCopy = { done, failed };
 
-export const adminFeedback = { done: notifyDone };
+export const adminFeedback = { done: notifyDone, status: notifyStatus };
 
-export const adminBulk = { runEach };
+export const adminBulk = { runEach, remainingAfter };
 
 export type AdminVerb =
   | 'save'
@@ -195,7 +255,7 @@ export type AdminVerb =
 
 export type AdminActionConfig<TVars, TData> = {
   verb: AdminVerb | ((vars: TVars) => AdminVerb);
-  name: string | ((vars: TVars) => string);
+  name?: string | ((vars: TVars) => string);
   run: (vars: TVars) => Promise<TData>;
   invalidate?: QueryKey[];
   onSuccess?: (params: { data: TData; vars: TVars }) => void;

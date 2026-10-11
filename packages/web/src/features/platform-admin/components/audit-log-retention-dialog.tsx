@@ -4,7 +4,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CirclePause, Clock, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -28,6 +27,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { auditLogKeys, auditLogQueries } from '../hooks/audit-log-hooks';
 import { auditLogRetentionUtils } from '../lib/audit-log-retention-utils';
@@ -115,7 +115,7 @@ function AuditLogRetentionForm({
       ]);
     },
     onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      mutationFeedback.success(t('Changes saved'));
       setTimeout(() => {
         queryClient
           .invalidateQueries({ queryKey: auditLogKeys.root })
@@ -123,8 +123,8 @@ function AuditLogRetentionForm({
       }, RETENTION_EVENT_REFRESH_DELAY_MS);
       onClose();
     },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
+    onError: (error) => {
+      mutationFeedback.error({ error, title: t("Couldn't save changes") });
     },
   });
 

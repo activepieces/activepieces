@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -17,16 +17,6 @@ export const apiKeyQueries = {
       staleTime: 0,
       queryFn: () => apiKeyApi.list(),
       enabled: platform.plan.apiKeysEnabled,
-    });
-  },
-};
-
-export const apiKeyMutations = {
-  useCreateApiKey: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationFn: (request: { displayName: string }) =>
-        apiKeyApi.create(request),
-      onSuccess,
     });
   },
 };

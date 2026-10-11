@@ -12,6 +12,7 @@ import {
   AdminPage,
   AdminPageHeader,
   ConfirmDialog,
+  adminBulk,
   InstantSwitch,
   SettingsPanel,
   SettingsRow,
@@ -93,8 +94,20 @@ export default function ProjectsPage() {
   const deleteProjects = useAdminAction<ProjectWithLimits[]>({
     verb: 'delete',
     name: (projects) => projectsLabel(projects),
-    run: (projects) =>
-      projectCollectionUtils.delete(projects.map((project) => project.id)),
+    run: async (projects) => {
+      try {
+        await adminBulk.runEach({
+          items: projects,
+          run: (project) => projectCollectionUtils.delete([project.id]),
+          verb: 'delete',
+          label: (count) =>
+            t('{count, plural, =1 {# project} other {# projects}}', { count }),
+          describe: deleteErrorMessage,
+        });
+      } finally {
+        await projectCollectionUtils.refetchProjects();
+      }
+    },
     handleError: (error) => {
       const description = deleteErrorMessage(error);
       if (description === undefined) {
@@ -288,7 +301,17 @@ export default function ProjectsPage() {
                 typeToConfirm={projectsLabel(deletableProjects)}
                 controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
                 onConfirm={async () => {
-                  await deleteProjects.mutateAsync(deletableProjects);
+                  await deleteProjects
+                    .mutateAsync(deletableProjects)
+                    .catch((error: unknown) => {
+                      setSelectedRows(
+                        adminBulk.remainingAfter({
+                          error,
+                          items: selectedRows,
+                        }),
+                      );
+                      throw error;
+                    });
                   resetSelection();
                   setSelectedRows([]);
                 }}

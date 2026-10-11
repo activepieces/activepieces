@@ -1,6 +1,5 @@
 'use client';
 
-import { t } from 'i18next';
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -11,14 +10,14 @@ import {
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
-import { INTERNAL_ERROR_MESSAGE } from '@/lib/mutation-feedback';
 
-export { INTERNAL_ERROR_MESSAGE };
+export const INTERNAL_ERROR_MESSAGE =
+  'An unexpected error occurred. Please try again in a moment.';
 
 export function internalErrorToast() {
   console.error('internalErrorToast', INTERNAL_ERROR_MESSAGE);
-  toast.error(t('Something went wrong'), {
-    description: t(INTERNAL_ERROR_MESSAGE),
+  toast.error('Something went wrong', {
+    description: INTERNAL_ERROR_MESSAGE,
     duration: 3000,
   });
 }

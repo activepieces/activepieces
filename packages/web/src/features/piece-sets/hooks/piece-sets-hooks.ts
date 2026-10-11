@@ -81,7 +81,7 @@ export const pieceSetQueries = {
 };
 
 export const pieceSetMutations = {
-  useUpdatePieceSet: () => {
+  useUpdatePieceSet: ({ announce = true }: { announce?: boolean } = {}) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationKey: pieceSetKeys.update,
@@ -99,6 +99,9 @@ export const pieceSetMutations = {
           queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
           queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) }),
         ]);
+        if (announce) {
+          mutationFeedback.success(t('Changes saved'));
+        }
       },
       onError: (error) => {
         mutationFeedback.error({ error, title: t("Couldn't save changes") });

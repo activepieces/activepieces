@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
+
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { projectRoleApi } from '../api/project-role-api';
 
@@ -58,9 +59,7 @@ export const projectRoleMutations = {
           onError(error);
           return;
         }
-        toast.error(t('Role name already exists'), {
-          duration: 3000,
-        });
+        mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
     });
   },

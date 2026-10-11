@@ -9,6 +9,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { MenuFocusReturnScope } from '@/hooks/use-menu-focus-return';
 
 function mountOutside({ toaster }: { toaster: boolean }) {
   const host = document.createElement('section');
@@ -24,12 +25,14 @@ function mountOutside({ toaster }: { toaster: boolean }) {
 
 function renderSheet(onOpenChange: (open: boolean) => void) {
   return render(
-    <Sheet open onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetTitle>Title</SheetTitle>
-        <SheetDescription>Description</SheetDescription>
-      </SheetContent>
-    </Sheet>,
+    <MenuFocusReturnScope>
+      <Sheet open onOpenChange={onOpenChange}>
+        <SheetContent>
+          <SheetTitle>Title</SheetTitle>
+          <SheetDescription>Description</SheetDescription>
+        </SheetContent>
+      </Sheet>
+    </MenuFocusReturnScope>,
   );
 }
 
@@ -39,7 +42,7 @@ afterEach(() => {
     .forEach((element) => element.remove());
 });
 
-describe('Sheet outside clicks', () => {
+describe('Sheet outside clicks on admin pages', () => {
   it('stays open when a toast is clicked', async () => {
     const onOpenChange = vi.fn();
     renderSheet(onOpenChange);

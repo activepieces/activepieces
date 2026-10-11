@@ -5,8 +5,9 @@ icon: 🤝
 # Admin Interactions
 
 How every platform admin page talks back to the user: saving, confirming, success and failure. The blocks
-live in `app/components/admin`; `scripts/check-admin-interactions.mjs` fails lint when a page under
-`app/routes/platform` bypasses them.
+live in `app/components/admin`; `scripts/check-admin-interactions.mjs` fails lint when admin code (the
+routes under `app/routes/platform` and the admin-only feature hooks) bypasses them: a `sonner` import or
+raw toast, a spinner, the legacy confirm, or a `useMutation` with no `onError`.
 
 **Action** — anything the admin triggers that changes data. Every action runs through `useAdminAction`
 (`verb` + `name` + `run`), which gives it a pending state, one success toast, one error toast with the
@@ -16,7 +17,8 @@ mutation), `adminFeedback.done` gives the same success wording. _Avoid_: a raw `
 "successfully", "Success", "Error" as a title
 
 **Batch** — an action on several rows. `adminBulk.runEach` runs them all, keeps what succeeded, and
-reports the failures in one error; it only throws when every item failed.
+reports the failures in one error, then throws so no success toast follows and the confirm stays open;
+`adminBulk.remainingAfter` narrows the selection to the rows that failed.
 
 **Block** — one settings panel, sheet or dialog. Saving is decided per block, not per control:
 - a block with only switches saves each switch on the spot (`InstantSwitch`), no Save button;
@@ -49,8 +51,17 @@ inline uses `feedback: 'inline'` and no toast.
   error was already shown), not when `onError` is passed to a single `mutate()` call.
 - A confirm's `onConfirm` must return the request's promise (`mutateAsync`, not `mutate`), or the dialog
   closes before the work finishes and cannot show the failure.
-- React Router allows one navigation blocker at a time; `SaveBar` mounts its guard only while dirty, so
-  two save bars on one page do not fight.
+- React Router allows one navigation blocker at a time. Every dirty `SaveBar` registers, and only the first
+  one mounts the guard. Cmd/Ctrl+S does nothing while a dialog is open; with two dirty bars it saves the
+  one whose block holds focus.
+- A block nested inside a page (a detail view inside a tab) puts its `SaveBar` in `AdminPageFooter`, so
+  it sits in the page footer like every other save bar.
+- A polled or refetched view passes `hasData`-style checks (`isError && data === undefined`): a failed
+  refresh keeps the last data on screen instead of replacing it with an error.
+- Error toasts show the server's `params.message` only. Fastify validation text and plain JS errors fall
+  back to the generic message; an error written for the admin is thrown with `mutationFeedback.userError`.
+- Focus return to a row menu's trigger and ignoring clicks on toasts apply only inside `AdminPage`
+  (`MenuFocusReturnScope`); dialogs elsewhere in the app behave as Radix does.
 - Feature locks (`PlanFeatureSample`, `LockedFeatureGuard`, `SaveBar` `locked`) follow their own rules
   and are out of scope here.
 

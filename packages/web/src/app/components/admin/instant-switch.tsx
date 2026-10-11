@@ -35,6 +35,7 @@ export function InstantSwitch({
     setPending(true);
     try {
       await onCheckedChange(next);
+      setOptimistic(null);
     } catch (error) {
       setOptimistic(null);
       if (!mutationFeedback.wasShown(error)) {
@@ -68,9 +69,13 @@ export function InstantSwitch({
       <Switch
         id={id}
         checked={shown}
-        disabled={disabled || pending}
+        disabled={disabled}
         aria-busy={pending}
+        aria-disabled={pending || undefined}
         onCheckedChange={(next) => {
+          if (pending) {
+            return;
+          }
           const confirm = confirmBefore?.(next);
           if (confirm) {
             setConfirming({ next, confirm });

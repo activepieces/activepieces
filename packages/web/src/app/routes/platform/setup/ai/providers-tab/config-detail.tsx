@@ -19,6 +19,7 @@ import { useRef, useState } from 'react';
 import { z } from 'zod';
 
 import {
+  AdminPageFooter,
   AdminPageHeader,
   AdminSection,
   ConfirmDialog,
@@ -444,21 +445,24 @@ export function ConfigDetail({
         </TabsContent>
       </Tabs>
 
-      <SaveBar
-        dirty={dirty}
-        saving={isSaving}
-        disabled={nameMissing}
-        error={saveError}
-        onSave={requestSave}
-        onDiscard={() => {
-          setDraft(draftOf(config));
-          setSaveError(null);
-        }}
-        canDiscard={dirty || saveError !== null}
-        standDown={leavingOnPurpose}
-        guardSearchChanges
-        saveControl={AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT}
-      />
+      <AdminPageFooter>
+        <SaveBar
+          width="content"
+          dirty={dirty}
+          saving={isSaving}
+          disabled={nameMissing}
+          error={saveError}
+          onSave={requestSave}
+          onDiscard={() => {
+            setDraft(draftOf(config));
+            setSaveError(null);
+          }}
+          canDiscard={dirty || saveError !== null}
+          standDown={leavingOnPurpose}
+          guardSearchChanges
+          saveControl={AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT}
+        />
+      </AdminPageFooter>
 
       <ConfirmDialog
         open={scopeImpact.length > 0}

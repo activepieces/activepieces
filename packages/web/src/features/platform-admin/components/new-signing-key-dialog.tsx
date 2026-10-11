@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { signingKeyApi } from '@/features/platform-admin/api/signing-key-api';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 type NewSigningKeyDialogProps = {
   children: React.ReactNode;
@@ -46,6 +47,12 @@ export const NewSigningKeyDialog = ({
     onSuccess: (key) => {
       setSigningKey(key);
       onCreate();
+    },
+    onError: (error) => {
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't create {name}", { name: t('signing key') }),
+      });
     },
   });
 

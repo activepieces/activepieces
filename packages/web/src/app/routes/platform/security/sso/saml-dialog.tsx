@@ -216,10 +216,18 @@ const DomainStep = ({
 
   const saveDomain = useAdminAction<SsoDomainFormValues>({
     verb: 'save',
-    name: '',
     run: async (values) => {
       await samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase());
       await refetch();
+    },
+    feedback: 'inline',
+    handleError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
+      setShowUpdateWarning(false);
+      return true;
     },
     onSuccess: () => setShowUpdateWarning(false),
   });
@@ -246,6 +254,7 @@ const DomainStep = ({
   });
 
   const handleSubmit = (values: SsoDomainFormValues) => {
+    form.clearErrors('root.serverError');
     if (platform.ssoDomain) {
       setShowUpdateWarning(true);
       return;
@@ -274,6 +283,12 @@ const DomainStep = ({
             </FormItem>
           )}
         />
+
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
 
         {verification && !isDirty && (
           <DomainVerificationPanel
@@ -347,7 +362,6 @@ const SamlStep = ({
 
   const { mutate, isPending } = useAdminAction<UpdatePlatformRequestBody>({
     verb: 'save',
-    name: '',
     run: async (request) => {
       await platformApi.update(request, platform.id);
       await refetch();

@@ -39,7 +39,8 @@ export function ProjectRolesList({
     return (
       <AdminEmpty
         icon={<Shield />}
-        title={t('No project roles yet. Create one to get started.')}
+        title={t('No project roles yet')}
+        description={t('Create one to get started.')}
       />
     );
   }

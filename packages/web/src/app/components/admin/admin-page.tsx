@@ -1,8 +1,12 @@
+import { ApFlagId } from '@activepieces/shared';
 import { ArrowLeft } from 'lucide-react';
-import { ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { MenuFocusReturnScope } from '@/hooks/use-menu-focus-return';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
@@ -16,28 +20,39 @@ export function AdminPage({
   className,
   children,
 }: AdminPageProps) {
+  const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
   return (
-    <div
-      data-slot="admin-page"
-      className={cn(
-        adminSurface.page,
-        'flex w-full flex-col',
-        fill ? 'h-full min-h-0' : 'flex-1',
-      )}
-    >
-      <div
-        className={cn(
-          'flex w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6',
-          fill && 'min-h-0',
-          WIDTH_CLASS[width],
-          className,
-        )}
-      >
-        {children}
-      </div>
-      {footer}
-    </div>
+    <MenuFocusReturnScope>
+      <AdminPageFooterContext.Provider value={footerSlot}>
+        <div
+          data-slot="admin-page"
+          className={cn(
+            adminSurface.page,
+            'flex w-full flex-col',
+            fill ? 'h-full min-h-0' : 'flex-1',
+          )}
+        >
+          <div
+            className={cn(
+              'flex w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6',
+              fill && 'min-h-0',
+              WIDTH_CLASS[width],
+              className,
+            )}
+          >
+            {children}
+          </div>
+          {footer}
+          <div ref={setFooterSlot} className="contents" />
+        </div>
+      </AdminPageFooterContext.Provider>
+    </MenuFocusReturnScope>
   );
+}
+
+export function AdminPageFooter({ children }: { children: ReactNode }) {
+  const slot = useContext(AdminPageFooterContext);
+  return slot ? createPortal(children, slot) : children;
 }
 
 export function AdminPageHeader({
@@ -49,8 +64,13 @@ export function AdminPageHeader({
   children,
 }: AdminPageHeaderProps) {
   const { embedState } = useEmbedding();
+  const { data: showCommunity } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+  );
+  const hasResources =
+    showCommunity === true && resources !== undefined && resources.length > 0;
   if (embedState.hidePageHeader) {
-    if (!back && !children) {
+    if (!back && !children && !hasResources) {
       return null;
     }
     return (
@@ -59,16 +79,15 @@ export function AdminPageHeader({
         className="flex shrink-0 flex-wrap items-center justify-between gap-2"
       >
         {back && <AdminBackLink back={back} />}
-        {children && (
+        {(hasResources || children) && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            {hasResources && <AdminResources resources={resources} />}
             {children}
           </div>
         )}
       </div>
     );
   }
-  const hasResources =
-    !embedState.isEmbedded && resources !== undefined && resources.length > 0;
 
   return (
     <header
@@ -139,6 +158,8 @@ function AdminBackLink({ back }: { back: AdminPageBack }) {
     </Link>
   );
 }
+
+const AdminPageFooterContext = createContext<HTMLDivElement | null>(null);
 
 const WIDTH_CLASS: Record<AdminPageWidth, string> = {
   full: '',

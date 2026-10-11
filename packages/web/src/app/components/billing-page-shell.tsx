@@ -7,8 +7,9 @@ import {
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
+import { AdminPage } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { billingQueries } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -49,21 +50,22 @@ function BillingPageContent({ children }: BillingPageContentProps) {
     refetch,
   } = billingQueries.usePlatformSubscription(platform.id);
 
-  if (isError) {
+  if (isError && isNil(info)) {
     return (
-      <DataFetchErrorState
-        className="h-full"
-        entity={t('billing information')}
-        onRetry={refetch}
-      />
+      <AdminPage>
+        <DataFetchErrorState
+          entity={t('billing information')}
+          onRetry={refetch}
+        />
+      </AdminPage>
     );
   }
 
   if (isLoading || isNil(info)) {
     return (
-      <div className="h-full flex items-center justify-center w-full">
-        <LoadingSpinner />
-      </div>
+      <AdminPage>
+        <SkeletonList numberOfItems={3} className="h-18" />
+      </AdminPage>
     );
   }
 

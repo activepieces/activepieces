@@ -15,7 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gem, ExternalLink } from 'lucide-react';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, RefObject, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -63,6 +63,7 @@ export const AppearanceSection = ({
   );
   const upgradeClick = useUpgradeClick();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
+  const leavingOnPurpose = useRef(false);
   const initialColor =
     !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
       ? platform.primaryColor
@@ -169,7 +170,7 @@ export const AppearanceSection = ({
       ]);
     },
     onSuccess: () => {
-      adminFeedback.done({ verb: 'save', name: '' });
+      adminFeedback.done({ verb: 'save' });
       if (brandingLocked) {
         form.resetField('name', { defaultValue: form.getValues('name') });
         return;
@@ -255,6 +256,7 @@ export const AppearanceSection = ({
                 clearImages();
               }}
               saveControl={AdminControl.GENERAL_APPEARANCE_SUBMIT}
+              standDown={leavingOnPurpose}
             />
           }
         >
@@ -311,7 +313,7 @@ export const AppearanceSection = ({
                 </Badge>
               ) : (
                 <Button
-                  {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
+                  {...adminControl(AdminControl.PLAN_BANNER_OPEN)}
                   type="button"
                   size="sm"
                   variant="outline"
@@ -399,7 +401,7 @@ export const AppearanceSection = ({
               </div>
             </div>
           </SettingsPanel>
-          {children}
+          {children?.({ standDown: leavingOnPurpose })}
         </AdminPage>
       </form>
     </Form>
@@ -519,7 +521,7 @@ type BrandImageSpec = {
 
 type AppearanceSectionProps = {
   header?: ReactNode;
-  children?: ReactNode;
+  children?: (props: { standDown: RefObject<boolean> }) => ReactNode;
 };
 
 type ColorRowProps = {

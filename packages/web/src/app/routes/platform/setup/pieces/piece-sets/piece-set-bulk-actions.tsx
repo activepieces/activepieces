@@ -31,7 +31,9 @@ export const BulkPieceSetActions = ({
   selectedPieces: PieceMetadataModelSummary[];
   resetSelection: () => void;
 }) => {
-  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet({
+    announce: false,
+  });
   const [updateToConfirm, setUpdateToConfirm] = useState<BulkUpdate | null>(
     null,
   );
@@ -47,7 +49,7 @@ export const BulkPieceSetActions = ({
   const save = (request: UpdatePieceSetRequestBody) => {
     updateSet(
       { id: pieceSet.id, request },
-      { onSuccess: () => adminFeedback.done({ verb: 'save', name: '' }) },
+      { onSuccess: () => adminFeedback.done({ verb: 'save' }) },
     );
     resetSelection();
   };

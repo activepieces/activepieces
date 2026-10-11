@@ -107,7 +107,7 @@ export default function SettingsHealthPage({
         <RunsTab
           report={report}
           isLoading={isReportLoading}
-          isError={isReportError}
+          isError={isReportError && report === undefined}
           onRetry={refetchReport}
         />
       )}
@@ -116,7 +116,7 @@ export default function SettingsHealthPage({
         <QueueTab
           live={live}
           isLoading={isLiveLoading}
-          isError={isLiveError}
+          isError={isLiveError && live === undefined}
           onRetry={refetchLive}
         />
       )}

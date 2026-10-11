@@ -5,7 +5,6 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 import { mutationFeedback } from '@/lib/mutation-feedback';
@@ -97,9 +96,7 @@ export const globalConnectionsMutations = {
       },
       onSuccess: () => {
         refetch();
-        toast.success(t('Connection has been updated.'), {
-          duration: 3000,
-        });
+        mutationFeedback.success(t('Changes saved'));
         setIsOpen(false);
       },
       onError: (error) => {

@@ -1,12 +1,21 @@
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
-import { ReactNode, RefObject, useContext, useRef } from 'react';
+import {
+  ReactNode,
+  RefObject,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useSyncExternalStore,
+} from 'react';
 import { UNSAFE_DataRouterContext } from 'react-router-dom';
 
 import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
+import { Shortcut } from '@/components/custom/shortcut';
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
@@ -32,10 +41,11 @@ export function SaveBar({
   guardNavigation = true,
   guardSearchChanges = false,
   standDown,
+  showSave: saveVisible = true,
   children,
 }: SaveBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const showSave = !locked || locked.canSaveRest === true;
+  const showSave = saveVisible && (!locked || locked.canSaveRest === true);
   const saveNow = () => {
     if (onSave) {
       onSave();
@@ -43,11 +53,14 @@ export function SaveBar({
     }
     rootRef.current?.closest('form')?.requestSubmit();
   };
+  const canSave = showSave && dirty && !disabled && !saving;
+  useSaveShortcut({ rootRef, canSave, onSave: saveNow });
 
   return (
     <div
       ref={rootRef}
       data-slot="save-bar"
+      data-dirty={dirty}
       className={cn(adminSurface.saveBar, 'sticky bottom-0 z-20 mt-auto')}
     >
       <div
@@ -81,10 +94,15 @@ export function SaveBar({
             loading={saving}
             disabled={!dirty || disabled}
             variant={locked ? 'outline' : 'default'}
-            keyboardShortcut="s"
-            onKeyboardShortcut={saveNow}
           >
-            {saveLabel ?? t('Save')}
+            <span className="flex items-center justify-center gap-2">
+              {saveLabel ?? t('Save')}
+              <Shortcut
+                shortcutKey="s"
+                withCtrl
+                className={cn(!locked && 'text-on-accent/70')}
+              />
+            </span>
           </Button>
         )}
         {locked?.action}
@@ -99,9 +117,96 @@ export function SaveBar({
   );
 }
 
+function useSaveShortcut({
+  rootRef,
+  canSave,
+  onSave,
+}: {
+  rootRef: RefObject<HTMLDivElement | null>;
+  canSave: boolean;
+  onSave: () => void;
+}) {
+  const latest = useRef({ canSave, onSave });
+  latest.current = { canSave, onSave };
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+    mountedSaveBars.add(root);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isSaveShortcut(event) || hasOpenOverlay()) {
+        return;
+      }
+      event.preventDefault();
+      if (latest.current.canSave && ownsShortcut(root)) {
+        latest.current.onSave();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      mountedSaveBars.delete(root);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [rootRef]);
+}
+
+function isSaveShortcut(event: KeyboardEvent): boolean {
+  const isMac = /(Mac)/i.test(navigator.userAgent);
+  return (
+    event.key.toLowerCase() === 's' && (isMac ? event.metaKey : event.ctrlKey)
+  );
+}
+
+function hasOpenOverlay(): boolean {
+  return (
+    document.querySelector(
+      '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]',
+    ) !== null
+  );
+}
+
+function ownsShortcut(root: HTMLElement): boolean {
+  const dirtyBars = [...mountedSaveBars].filter(
+    (bar) => bar.dataset.dirty === 'true',
+  );
+  if (dirtyBars.length <= 1) {
+    return true;
+  }
+  const active = document.activeElement;
+  const block = root.parentElement;
+  return active !== null && block !== null && block.contains(active);
+}
+
 function NavigationGuard(props: NavigationGuardProps) {
   const dataRouter = useContext(UNSAFE_DataRouterContext);
-  return dataRouter ? <LeaveGuard {...props} /> : null;
+  const id = useId();
+  useEffect(() => guardOwners.add(id), [id]);
+  const owner = useSyncExternalStore(guardOwners.subscribe, guardOwners.first);
+  return dataRouter && owner === id ? <LeaveGuard {...props} /> : null;
+}
+
+function createGuardOwners() {
+  let owners: string[] = [];
+  const listeners = new Set<() => void>();
+  const notify = () => listeners.forEach((listener) => listener());
+  return {
+    add: (id: string) => {
+      owners = [...owners, id];
+      notify();
+      return () => {
+        owners = owners.filter((owner) => owner !== id);
+        notify();
+      };
+    },
+    first: () => owners[0] ?? null,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
 }
 
 function LeaveGuard({ standDown, guardSearchChanges }: NavigationGuardProps) {
@@ -154,6 +259,9 @@ function renderStatus({
   return null;
 }
 
+const mountedSaveBars = new Set<HTMLElement>();
+const guardOwners = createGuardOwners();
+
 type SaveBarProps = {
   dirty: boolean;
   saving: boolean;
@@ -171,6 +279,7 @@ type SaveBarProps = {
   guardNavigation?: boolean;
   guardSearchChanges?: boolean;
   standDown?: RefObject<boolean>;
+  showSave?: boolean;
   children?: ReactNode;
 };
 

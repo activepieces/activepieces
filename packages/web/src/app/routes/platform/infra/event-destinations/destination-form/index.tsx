@@ -17,19 +17,14 @@ import {
   AdminPageHeader,
   adminActionCopy,
   adminFeedback,
-  adminLayout,
   adminPageResources,
-  adminSurface,
+  SaveBar,
 } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import {
-  LeaveWithoutSavingDialog,
-  useWarnBeforeLosingChanges,
-} from '@/components/custom/leave-without-saving';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { AdminControl, adminControl } from '@/lib/admin-control';
+import { AdminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
@@ -121,10 +116,6 @@ const DestinationForm = ({
 
   const isFormatAutoSwitched = useRef(false);
   const leavingOnPurpose = useRef(false);
-  const leaveBlocker = useWarnBeforeLosingChanges({
-    hasChanges: form.formState.isDirty,
-    standDown: leavingOnPurpose,
-  });
   const leaveAfterSave = () => {
     leavingOnPurpose.current = true;
     navigate(EVENT_STREAMING_PATH);
@@ -135,7 +126,7 @@ const DestinationForm = ({
       onSuccess: () => {
         adminFeedback.done({
           verb: isEdit ? 'update' : 'create',
-          name: form.getValues('url'),
+          name: t('Destination'),
         });
         leaveAfterSave();
       },
@@ -151,14 +142,19 @@ const DestinationForm = ({
       },
     });
 
-  const handleSubmit = (values: DestinationFormValues) =>
+  const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
+
+  const handleSubmit = (values: DestinationFormValues) => {
+    setInvalidMessage(null);
     saveDestination({
       destinationId: destination?.id ?? null,
       request: destinationFormUtils.toRequest(values),
     });
+  };
 
   const handleInvalidSubmit = (errors: FieldErrors<DestinationFormValues>) => {
     setStepIndex(isNil(errors.events) ? CONNECTION_STEP : EVENTS_STEP);
+    setInvalidMessage(t('Please fix the highlighted fields before saving'));
   };
 
   const goToNextStep = async () => {
@@ -195,57 +191,47 @@ const DestinationForm = ({
     <AdminPage
       width="content"
       footer={
-        <div
-          className={cn(adminSurface.saveBar, 'sticky bottom-0 z-20 mt-auto')}
+        <SaveBar
+          width="content"
+          dirty={form.formState.isDirty || (!isEdit && isLastStep)}
+          saving={isSaving}
+          showSave={showSubmit}
+          status={
+            <span className="min-w-0 text-sm text-gray-11">{footerStatus}</span>
+          }
+          error={invalidMessage}
+          onSave={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
+          saveLabel={isEdit ? t('Save changes') : t('Create destination')}
+          saveControl={
+            isEdit
+              ? AdminControl.EVENT_DESTINATIONS_DESTINATION_UPDATE_SUBMIT
+              : AdminControl.EVENT_DESTINATIONS_DESTINATION_CREATE_SUBMIT
+          }
+          standDown={leavingOnPurpose}
         >
-          <div
-            className={cn(
-              adminLayout.contentWidth,
-              'flex w-full flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-6',
-            )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(EVENT_STREAMING_PATH)}
+            disabled={isSaving}
           >
-            <span className="min-w-0 flex-1 text-sm text-gray-11">
-              {footerStatus}
-            </span>
+            {t('Cancel')}
+          </Button>
+          {!isEdit && stepIndex > DESTINATION_STEP && (
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate(EVENT_STREAMING_PATH)}
-              disabled={isSaving}
+              onClick={() => setStepIndex(stepIndex - 1)}
             >
-              {t('Cancel')}
+              {t('Back')}
             </Button>
-            {!isEdit && stepIndex > DESTINATION_STEP && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStepIndex(stepIndex - 1)}
-              >
-                {t('Back')}
-              </Button>
-            )}
-            {!isEdit && !isLastStep && (
-              <Button type="button" onClick={goToNextStep}>
-                {t('Continue')}
-              </Button>
-            )}
-            {showSubmit && (
-              <Button
-                {...adminControl(
-                  isEdit
-                    ? AdminControl.EVENT_DESTINATIONS_DESTINATION_UPDATE_SUBMIT
-                    : AdminControl.EVENT_DESTINATIONS_DESTINATION_CREATE_SUBMIT,
-                )}
-                type="button"
-                loading={isSaving}
-                disabled={isSaving}
-                onClick={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
-              >
-                {isEdit ? t('Save changes') : t('Create destination')}
-              </Button>
-            )}
-          </div>
-        </div>
+          )}
+          {!isEdit && !isLastStep && (
+            <Button type="button" onClick={goToNextStep}>
+              {t('Continue')}
+            </Button>
+          )}
+        </SaveBar>
       }
     >
       <AdminPageHeader
@@ -285,11 +271,6 @@ const DestinationForm = ({
           )}
         </form>
       </Form>
-      <LeaveWithoutSavingDialog
-        open={leaveBlocker.state === 'blocked'}
-        onKeepEditing={() => leaveBlocker.reset?.()}
-        onDiscard={() => leaveBlocker.proceed?.()}
-      />
     </AdminPage>
   );
 };

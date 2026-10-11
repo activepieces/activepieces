@@ -52,7 +52,6 @@ export const AllowedDomainsStep = ({
 
   const { mutate, isPending } = useAdminAction<AllowedOriginsForm>({
     verb: 'save',
-    name: '',
     run: async (values) => {
       await platformApi.update(
         { allowedEmbedOrigins: values.origins },

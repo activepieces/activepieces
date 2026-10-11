@@ -185,7 +185,14 @@ const PlatformTemplatesPage = () => {
               confirmLabel={t('Delete')}
               controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
               onConfirm={async () => {
-                await bulkDeleteMutation.mutateAsync(selectedRows);
+                await bulkDeleteMutation
+                  .mutateAsync(selectedRows)
+                  .catch((error: unknown) => {
+                    setSelectedRows(
+                      adminBulk.remainingAfter({ error, items: selectedRows }),
+                    );
+                    throw error;
+                  });
                 resetSelection();
                 setSelectedRows([]);
               }}

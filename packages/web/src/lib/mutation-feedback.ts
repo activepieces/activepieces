@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 
 function isNetworkError(error: unknown): boolean {
@@ -8,44 +9,29 @@ function isNetworkError(error: unknown): boolean {
 }
 
 function message(error: unknown): string {
+  if (isUserFacingError(error)) {
+    return error.message;
+  }
   if (api.isError(error)) {
     const serverMessage = api.serverErrorMessage(error);
     if (serverMessage !== undefined) {
       return serverMessage;
     }
-    const clientErrorMessage = topLevelClientErrorMessage({
-      status: error.response?.status,
-      data: error.response?.data,
-    });
-    if (clientErrorMessage !== undefined) {
-      return clientErrorMessage;
-    }
     return isNetworkError(error)
       ? t(NETWORK_ERROR_MESSAGE)
       : t(INTERNAL_ERROR_MESSAGE);
   }
-  return api.extractServerErrorMessage(error, t(INTERNAL_ERROR_MESSAGE));
+  return t(INTERNAL_ERROR_MESSAGE);
 }
 
-function topLevelClientErrorMessage({
-  status,
-  data,
-}: {
-  status: number | undefined;
-  data: unknown;
-}): string | undefined {
-  const isClientError = status !== undefined && status >= 400 && status < 500;
-  if (
-    !isClientError ||
-    typeof data !== 'object' ||
-    data === null ||
-    !('message' in data) ||
-    typeof data.message !== 'string'
-  ) {
-    return undefined;
-  }
-  const trimmed = data.message.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+function userError(text: string): Error {
+  const error = new Error(text);
+  userFacingErrors.add(error);
+  return error;
+}
+
+function isUserFacingError(error: unknown): error is Error {
+  return error instanceof Error && userFacingErrors.has(error);
 }
 
 function markShown(error: unknown): void {
@@ -64,6 +50,10 @@ function error({ error, title, description }: MutationErrorParams): void {
     id: MUTATION_ERROR_TOAST_ID,
     description: description ?? message(error),
   });
+}
+
+function success(message: string, description?: string): void {
+  toast.success(message, { description });
 }
 
 function undo({
@@ -97,9 +87,7 @@ async function runUndo({
 }
 
 const shownErrors = new WeakSet<object>();
-
-export const INTERNAL_ERROR_MESSAGE =
-  'An unexpected error occurred. Please try again in a moment.';
+const userFacingErrors = new WeakSet<Error>();
 
 export const NETWORK_ERROR_MESSAGE =
   "Couldn't reach the server. Check your connection and try again.";
@@ -109,10 +97,12 @@ export const MUTATION_ERROR_TOAST_ID = 'mutation-error';
 export const UNDO_TOAST_DURATION_MS = 8000;
 
 export const mutationFeedback = {
+  success,
   error,
   wasShown,
   markShown,
   message,
+  userError,
   isNetworkError,
   undo,
 };

@@ -150,7 +150,7 @@ function PieceActionsAndTriggersEditor({
     setShowRequiredActionWillBeExcludedConfirmationDialog,
   ] = useState(false);
   const { mutate: updatePieceSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+    pieceSetMutations.useUpdatePieceSet({ announce: false });
   const values = form.watch();
   const request = pieceActionsAndTriggersForm.toUpdateRequest({
     values,
@@ -165,7 +165,7 @@ function PieceActionsAndTriggersEditor({
       { id: pieceSet.id, request },
       {
         onSuccess: () => {
-          adminFeedback.done({ verb: 'save', name: '' });
+          adminFeedback.done({ verb: 'save' });
           onClose();
         },
       },

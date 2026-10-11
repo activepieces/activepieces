@@ -45,7 +45,7 @@ export const SigningKeysStep = ({
           <Button
             {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
           >
-            {t('New Signing Key')}
+            {t('New signing key')}
           </Button>
         </NewSigningKeyDialog>
       }

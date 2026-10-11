@@ -445,7 +445,11 @@ describe('AppearanceSection', () => {
     await type({ selector: '#name', value: 'Contoso' });
     await save();
     expect(state.toastSuccess).not.toHaveBeenCalled();
-    expect(container.textContent?.includes('network down')).toBe(true);
+    expect(
+      container.textContent?.includes(
+        'An unexpected error occurred. Please try again in a moment.',
+      ),
+    ).toBe(true);
   });
 });
 
@@ -502,7 +506,7 @@ describe('AppearanceSection on a plan without branding', () => {
     await render();
     await type({ selector: 'input[aria-label="colour"]', value: '#123456' });
     await type({ selector: '#name', value: 'Contoso' });
-    expect(submitButton().textContent === 'Save name').toBe(true);
+    expect(submitButton().textContent?.startsWith('Save name')).toBe(true);
     await save();
     const fields = sentFields();
     expect(fields.name).toBe('Contoso');

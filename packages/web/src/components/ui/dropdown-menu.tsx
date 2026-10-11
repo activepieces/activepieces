@@ -4,7 +4,7 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from 'lucide-react';
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui';
 import * as React from 'react';
 
-import { menuFocusReturn } from '@/hooks/use-menu-focus-return';
+import { useMenuSelectionMemory } from '@/hooks/use-menu-focus-return';
 import { cn } from '@/lib/utils';
 
 function DropdownMenu({
@@ -81,10 +81,11 @@ function DropdownMenuItem({
   inset?: boolean;
   variant?: 'default' | 'destructive';
 }) {
+  const rememberSelection = useMenuSelectionMemory();
   return (
     <DropdownMenuPrimitive.Item
       onSelect={(event) => {
-        menuFocusReturn.rememberSelection(event);
+        rememberSelection(event);
         onSelect?.(event);
       }}
       data-slot="dropdown-menu-item"

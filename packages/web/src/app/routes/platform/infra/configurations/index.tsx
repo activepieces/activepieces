@@ -90,7 +90,7 @@ const ConfigurationsContent = ({
         window.location.reload();
         return;
       }
-      adminFeedback.done({ verb: 'save', name: '' });
+      adminFeedback.done({ verb: 'save' });
     },
     onError: (error) => {
       setSaveError(mutationFeedback.message(error));

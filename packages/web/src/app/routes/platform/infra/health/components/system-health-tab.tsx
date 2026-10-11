@@ -172,7 +172,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     },
   ];
 
-  if (isError) {
+  if (isError && systemHealth === undefined) {
     return (
       <DataFetchErrorState entity={t('system health')} onRetry={refetch} />
     );

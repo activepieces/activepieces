@@ -14,7 +14,6 @@ import {
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import {
@@ -177,7 +176,7 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           tiers,
         );
-        toast.success(t('Changes saved'));
+        mutationFeedback.success(t('Changes saved'));
       },
       onError: (error, _variables, context) => {
         restore({ queryClient, previous: context?.previous });
@@ -203,7 +202,7 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           (old) => old && removeTier({ tiers: old, id, replacedBy }),
         );
-        toast.success(t('{name} deleted', { name }));
+        mutationFeedback.success(t('{name} deleted', { name }));
       },
       onError: (error, { name }) =>
         mutationFeedback.error({
@@ -257,7 +256,7 @@ function announce({
   message: string;
 }): void {
   if (feedback !== 'errorsOnly') {
-    toast.success(message);
+    mutationFeedback.success(message);
   }
 }
 
