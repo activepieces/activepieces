@@ -106,14 +106,13 @@ export function ProvidersTab() {
         aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
       onSuccess: () => refetch(),
     });
-  const { mutateAsync: deleteProvider } = useAdminAction<
-    AIProviderWithoutSensitiveData
-  >({
-    verb: 'delete',
-    name: (config) => config.name,
-    run: (config) => aiProviderApi.delete(config.id),
-    onSuccess: () => refetch(),
-  });
+  const { mutateAsync: deleteProvider } =
+    useAdminAction<AIProviderWithoutSensitiveData>({
+      verb: 'delete',
+      name: (config) => config.name,
+      run: (config) => aiProviderApi.delete(config.id),
+      onSuccess: () => refetch(),
+    });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
       onSuccess: () => refetch(),

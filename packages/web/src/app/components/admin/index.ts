@@ -14,7 +14,6 @@ export type { StatusTone } from './status-dot';
 export { StatCard, StatGrid } from './stat-card';
 export { LockedCallout } from './locked-callout';
 export { ConfirmDialog } from './confirm-dialog';
-export type { ConfirmDialogProps } from './confirm-dialog';
 export { InstantSwitch } from './instant-switch';
 export { AdminQueryState } from './admin-query-state';
 export {
@@ -23,4 +22,3 @@ export {
   adminFeedback,
   adminBulk,
 } from './use-admin-action';
-export type { AdminVerb } from './use-admin-action';

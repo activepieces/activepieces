@@ -6,20 +6,18 @@ import {
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Info,
-  ListChecks,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Info, ListChecks, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
-import { AdminEmpty, AdminSection, adminFeedback, adminLayout, adminSurface } from '@/app/components/admin';
+import {
+  AdminEmpty,
+  AdminSection,
+  adminFeedback,
+  adminLayout,
+  adminSurface,
+} from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -31,6 +29,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,

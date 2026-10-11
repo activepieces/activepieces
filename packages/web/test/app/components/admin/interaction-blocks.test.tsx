@@ -30,7 +30,10 @@ import { AdminQueryState } from '@/app/components/admin/admin-query-state';
 import { ConfirmDialog } from '@/app/components/admin/confirm-dialog';
 import { InstantSwitch } from '@/app/components/admin/instant-switch';
 import { SaveBar } from '@/app/components/admin/save-bar';
-import { useAdminAction } from '@/app/components/admin/use-admin-action';
+import {
+  adminBulk,
+  useAdminAction,
+} from '@/app/components/admin/use-admin-action';
 
 function serverError(message: string) {
   return new AxiosError(message, 'ERR_BAD_REQUEST', undefined, undefined, {
@@ -281,5 +284,41 @@ describe('SaveBar', () => {
     );
     expect(screen.getByRole('alert').textContent).toContain('Name is taken');
     expect(screen.getByRole('button', { name: 'Discard' })).toBeTruthy();
+  });
+});
+
+describe('adminBulk.runEach', () => {
+  it('keeps what succeeded and reports the failures once', async () => {
+    const run = vi.fn(async (id: number) => {
+      if (id === 2) {
+        throw serverError('In use');
+      }
+    });
+    await adminBulk.runEach({
+      items: [1, 2, 3],
+      run,
+      verb: 'delete',
+      label: (count) => `${count} items`,
+    });
+    expect(run).toHaveBeenCalledTimes(3);
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't delete 1 items",
+      expect.objectContaining({ description: 'In use' }),
+    );
+  });
+
+  it('fails when every item failed', async () => {
+    await expect(
+      adminBulk.runEach({
+        items: [1, 2],
+        run: async () => {
+          throw serverError('Nope');
+        },
+        verb: 'delete',
+        label: (count) => `${count} items`,
+      }),
+    ).rejects.toBeTruthy();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

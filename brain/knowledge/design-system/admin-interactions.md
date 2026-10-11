@@ -11,8 +11,12 @@ live in `app/components/admin`; `scripts/check-admin-interactions.mjs` fails lin
 **Action** — anything the admin triggers that changes data. Every action runs through `useAdminAction`
 (`verb` + `name` + `run`), which gives it a pending state, one success toast, one error toast with the
 server's message, and an optional Undo. The wording comes from `adminActionCopy`, never from the page:
-"{name} deleted" / "Couldn't delete {name}". _Avoid_: a raw `toast.success`, "successfully", "Success",
-"Error" as a title
+"{name} deleted" / "Couldn't delete {name}". When the work runs outside the hook (a dialog with its own
+mutation), `adminFeedback.done` gives the same success wording. _Avoid_: a raw `toast.success`,
+"successfully", "Success", "Error" as a title
+
+**Batch** — an action on several rows. `adminBulk.runEach` runs them all, keeps what succeeded, and
+reports the failures in one error; it only throws when every item failed.
 
 **Block** — one settings panel, sheet or dialog. Saving is decided per block, not per control:
 - a block with only switches saves each switch on the spot (`InstantSwitch`), no Save button;
@@ -55,4 +59,4 @@ inline uses `feedback: 'inline'` and no toast.
 - `packages/web/src/app/components/admin` — `useAdminAction`, `ConfirmDialog`, `InstantSwitch`,
   `AdminQueryState`, `SaveBar`
 - `packages/web/src/lib/mutation-feedback.ts` — `mutationFeedback`
-- `packages/web/scripts/check-admin-interactions.mjs` — the lint check and its shrinking allowlist
+- `packages/web/scripts/check-admin-interactions.mjs` — the lint check (part of `npm run lint` in web)

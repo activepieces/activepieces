@@ -23,7 +23,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { apiKeyApi, apiKeyKeys, apiKeyQueries } from '@/features/platform-admin';
+import {
+  apiKeyApi,
+  apiKeyKeys,
+  apiKeyQueries,
+} from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
