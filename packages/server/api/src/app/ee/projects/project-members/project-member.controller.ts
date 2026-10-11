@@ -28,7 +28,7 @@ export const projectMemberController: FastifyPluginAsyncZod = async (
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             projectRoleId: request.query.projectRoleId ?? undefined,
-            includeLastProject: true,
+            includeLastProject: request.principal.type === PrincipalType.USER,
         })
     })
 
@@ -48,7 +48,7 @@ export const projectMemberController: FastifyPluginAsyncZod = async (
         await projectMemberService(request.log).removeFromProject({
             projectId: request.projectId,
             memberId: request.params.id,
-            keepsLastProject: request.principal.type === PrincipalType.USER,
+            enforceLastProjectGuard: request.principal.type === PrincipalType.USER,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
