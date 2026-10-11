@@ -28,7 +28,8 @@ vi.mock('sonner', () => ({
   toast: { success: state.toastSuccess },
 }));
 
-vi.mock('@tanstack/react-query', () => ({
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useQueryClient: () => ({ invalidateQueries: state.invalidate }),
   useMutation: (options: MutationOptions) => ({
     mutate: () => {
@@ -276,7 +277,7 @@ describe('AppearanceSection', () => {
       document.documentElement.style.getPropertyValue('--accent-light-9');
     expect(accent()).toBe('#0ea5e9');
     await act(async () => {
-      buttonNamed({ name: 'Cancel' }).click();
+      buttonNamed({ name: 'Discard' }).click();
     });
     expect(accent()).toBe('#6e41e2');
     expect(state.update).not.toHaveBeenCalled();
@@ -386,7 +387,7 @@ describe('AppearanceSection', () => {
       document.documentElement.style.getPropertyValue('--success-light-9');
     expect(seed()).toBe('#16a34a');
     await act(async () => {
-      buttonNamed({ name: 'Cancel' }).click();
+      buttonNamed({ name: 'Discard' }).click();
     });
     expect(seed()).toBe('');
     expect(state.update).not.toHaveBeenCalled();
@@ -395,7 +396,7 @@ describe('AppearanceSection', () => {
   it('disables saving and says nothing while there are no changes', async () => {
     await render();
     expect(submitButton().disabled).toBe(true);
-    expect(buttonNamed({ name: 'Cancel' }).disabled).toBe(true);
+    expect(buttonNamed({ name: 'Discard' }).disabled).toBe(true);
     expect(hasUnsavedNotice()).toBe(false);
   });
 
@@ -407,7 +408,7 @@ describe('AppearanceSection', () => {
     expect(hasUnsavedNotice()).toBe(true);
     expect(submitButton().disabled).toBe(false);
     await act(async () => {
-      buttonNamed({ name: 'Cancel' }).click();
+      buttonNamed({ name: 'Discard' }).click();
     });
     await act(async () => {
       await Promise.resolve();
@@ -475,7 +476,7 @@ describe('AppearanceSection on a plan without branding', () => {
     await type({ selector: 'input[aria-label="colour"]', value: '#123456' });
     expect(hasText({ text: "Branding preview isn't saved" })).toBe(true);
     expect(container.querySelector('button[type="submit"]')).toBeNull();
-    expect(buttonNamed({ name: 'Cancel' }).disabled).toBe(false);
+    expect(buttonNamed({ name: 'Discard' }).disabled).toBe(false);
     await act(async () => {
       buttonNamed({ name: 'Upgrade to save' }).click();
     });

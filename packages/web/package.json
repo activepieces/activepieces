@@ -138,7 +138,7 @@
     "serve": "vite",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
-    "lint": "node scripts/check-tailwind-classes.mjs && eslint 'src/**/*.{ts,tsx}'",
+    "lint": "node scripts/check-tailwind-classes.mjs && node scripts/check-admin-interactions.mjs && eslint 'src/**/*.{ts,tsx}'",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json"
   }
 }

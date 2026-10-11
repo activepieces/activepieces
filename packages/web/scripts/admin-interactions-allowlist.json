@@ -1,0 +1,134 @@
+{
+  "files": {
+    "src/app/routes/platform/billing/index.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/infra/configurations/index.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/infra/event-destinations/components/event-destination-actions.tsx": [
+      "legacy-confirm",
+      "raw-toast"
+    ],
+    "src/app/routes/platform/infra/event-destinations/destination-form/index.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/infra/event-destinations/destination-form/webhook-connection.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/infra/event-destinations/index.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/infra/health/components/queue-tab.tsx": [
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/infra/workers/by-project-view.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/projects/index.tsx": [
+      "legacy-confirm",
+      "raw-toast"
+    ],
+    "src/app/routes/platform/security/api-keys/index.tsx": [
+      "internal-error-toast",
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/security/embed/steps/allowed-domains-step.tsx": [
+      "internal-error-toast",
+      "raw-toast",
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/security/embed/steps/dns-step.tsx": [
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/security/embed/steps/hostname-step.tsx": [
+      "legacy-confirm",
+      "raw-toast",
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/security/embed/steps/signing-keys-step.tsx": [
+      "internal-error-toast",
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/security/project-role/project-role-dialog.tsx": [
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/security/project-role/role-people-tab.tsx": [
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/security/secret-managers/index.tsx": [
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/security/sso/allowed-domain.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/security/sso/index.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/security/sso/saml-dialog.tsx": [
+      "raw-toast",
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/setup/ai/capabilities-tab/index.tsx": [
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/setup/ai/providers-tab/config-detail.tsx": [
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/setup/ai/providers-tab/index.tsx": [
+      "legacy-confirm",
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/connections/index.tsx": [
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/setup/general/appearance-section.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/mcp/index.tsx": [
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/setup/mcp/platform-mcp-hooks.ts": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/pieces/customize-selector-dialog.tsx": [
+      "legacy-confirm",
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/pieces/download-pieces-report.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/pieces/index.tsx": [
+      "legacy-confirm",
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/pieces/piece-sets/piece-actions-and-triggers-sheet.tsx": [
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/setup/pieces/piece-sets/piece-set-details-page.tsx": [
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/setup/pieces/piece-sets/piece-set-pieces-table.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/pieces/piece-sets/piece-set-projects-dialog.tsx": [
+      "raw-toast"
+    ],
+    "src/app/routes/platform/setup/pieces/piece-sets/piece-sets-tab.tsx": [
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/setup/pieces/piece-sets/required-actions-tab.tsx": [
+      "spinner-loading"
+    ],
+    "src/app/routes/platform/setup/templates/index.tsx": [
+      "legacy-confirm",
+      "raw-toast"
+    ],
+    "src/app/routes/platform/users/actions/user-actions.tsx": [
+      "legacy-confirm"
+    ],
+    "src/app/routes/platform/users/index.tsx": [
+      "internal-error-toast"
+    ]
+  }
+}
