@@ -99,17 +99,6 @@ function toBoolean({ name, value }: { name: string; value: unknown }): boolean {
 
 const MILLISECONDS_THRESHOLD = 100_000_000_000;
 
-export type TicketTypeAttribute = {
-	id?: string;
-	name: string;
-	description?: string;
-	data_type: string;
-	required_to_create?: boolean;
-	visible_to_contacts?: boolean;
-	archived?: boolean;
-	input_options?: Record<string, unknown> | null;
-};
-
 export function toWebhookTicketShape(ticket: unknown): unknown {
 	if (typeof ticket !== 'object' || ticket === null) {
 		return ticket;
@@ -130,3 +119,14 @@ export function toWebhookTicketShape(ticket: unknown): unknown {
 		},
 	};
 }
+
+export type TicketTypeAttribute = {
+	id?: string;
+	name: string;
+	description?: string;
+	data_type: string;
+	required_to_create?: boolean;
+	visible_to_contacts?: boolean;
+	archived?: boolean;
+	input_options?: Record<string, unknown> | null;
+};
