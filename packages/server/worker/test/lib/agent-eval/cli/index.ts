@@ -37,7 +37,11 @@ function parsePositiveInt(value: string): number {
 }
 
 function parseIdList(value: string): string[] {
-    return value.split(',').map((id) => id.trim()).filter((id) => id.length > 0)
+    const ids = value.split(',').map((id) => id.trim()).filter((id) => id.length > 0)
+    if (ids.length === 0) {
+        throw new InvalidArgumentError('must include at least one fixture id')
+    }
+    return ids
 }
 
 const program = new Command()
