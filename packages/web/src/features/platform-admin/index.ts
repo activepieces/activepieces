@@ -11,7 +11,6 @@ export { signingKeyApi } from './api/signing-key-api';
 export { workersApi } from './api/workers-api';
 export {
   embedSubdomainQueries,
-  embedSubdomainMutations,
   embedSubdomainKeys,
 } from './hooks/embed-subdomain-hooks';
 export { AuditLogRetentionButton } from './components/audit-log-retention-dialog';

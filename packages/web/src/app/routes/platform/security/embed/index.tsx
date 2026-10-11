@@ -45,6 +45,7 @@ const EmbedPage = () => {
   const {
     data,
     isLoading: isKeysLoading,
+    isError: isKeysError,
     refetch,
   } = signingKeyQueries.useSigningKeys();
   const isSample = !platform.plan.embeddingEnabled;
@@ -174,7 +175,8 @@ const EmbedPage = () => {
           ) : displayedStep?.kind === 'signing-keys' ? (
             <SigningKeysStep
               signingKeys={signingKeys}
-              isLoading={isKeysLoading}
+              isLoading={isKeysLoading && !isSample}
+              isError={isKeysError && !isSample}
               refetch={refetch}
             />
           ) : null}

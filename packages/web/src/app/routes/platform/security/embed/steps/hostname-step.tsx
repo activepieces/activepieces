@@ -4,12 +4,10 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -19,9 +17,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { embedSubdomainMutations } from '@/features/platform-admin';
+import {
+  embedSubdomainApi,
+  embedSubdomainKeys,
+} from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { StepShell } from '../stepper';
 
@@ -47,7 +48,7 @@ export const HostnameStep = ({
 };
 
 const EmbedHostnameForm = () => {
-  const { mutate, isPending } = embedSubdomainMutations.useUpsert();
+  const { mutate, isPending } = useSaveHostname();
 
   const form = useForm<GenerateEmbedSubdomainRequest>({
     resolver: zodResolver(GenerateEmbedSubdomainRequest),
@@ -58,16 +59,10 @@ const EmbedHostnameForm = () => {
   const handleSubmit = (values: GenerateEmbedSubdomainRequest) => {
     form.clearErrors('root.serverError');
     mutate(values, {
-      onSuccess: () => {
-        toast.success(t('Domain saved'));
-      },
       onError: (error) => {
         form.setError('root.serverError', {
           type: 'manual',
-          message: api.extractServerErrorMessage(
-            error,
-            t("Couldn't save domain"),
-          ),
+          message: mutationFeedback.message(error),
         });
       },
     });
@@ -102,9 +97,8 @@ const EmbedHostnameForm = () => {
             {...adminControl(AdminControl.EMBEDDING_HOSTNAME_SUBMIT)}
             type="submit"
             size="sm"
-            disabled={isPending}
+            loading={isPending}
           >
-            {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
             {t('Save domain')}
           </Button>
         </div>
@@ -116,7 +110,7 @@ const EmbedHostnameForm = () => {
 const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { mutateAsync, isPending } = embedSubdomainMutations.useUpsert();
+  const { mutateAsync, isPending } = useSaveHostname();
 
   const form = useForm<GenerateEmbedSubdomainRequest>({
     resolver: zodResolver(GenerateEmbedSubdomainRequest),
@@ -131,12 +125,9 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
     setErrorMessage(null);
     try {
       await mutateAsync({ hostname: hostnameValue.trim() });
-      toast.success(t('Domain updated'));
     } catch (error) {
-      setErrorMessage(
-        api.extractServerErrorMessage(error, t("Couldn't update domain")),
-      );
-      throw error;
+      setErrorMessage(mutationFeedback.message(error));
+      setConfirmOpen(false);
     }
   };
 
@@ -167,26 +158,35 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
             {...adminControl(AdminControl.EMBEDDING_HOSTNAME_UPDATE_OPEN)}
             type="submit"
             size="sm"
-            disabled={!isDirty || isPending}
+            disabled={!isDirty}
+            loading={isPending}
           >
-            {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
             {t('Update')}
           </Button>
         </div>
-        <ConfirmationDeleteDialog
+        <ConfirmDialog
           open={confirmOpen}
           onOpenChange={setConfirmOpen}
           title={t('Change embed domain?')}
-          message={t(
+          description={t(
             "Your current domain will stop working and you'll need to add new DNS records to verify the new one. Allowed websites and signing keys will be kept.",
           )}
-          warning={t('This action cannot be undone.')}
-          buttonText={t('Update domain')}
-          entityName={t('domain')}
-          mutationFn={handleConfirm}
+          consequence={t('This action cannot be undone.')}
+          confirmLabel={t('Update domain')}
+          onConfirm={handleConfirm}
           controlId={AdminControl.EMBEDDING_HOSTNAME_UPDATE_CONFIRM}
         />
       </form>
     </Form>
   );
 };
+
+function useSaveHostname() {
+  return useAdminAction<GenerateEmbedSubdomainRequest, EmbedSubdomain>({
+    verb: 'save',
+    name: '',
+    run: (request) => embedSubdomainApi.upsert(request),
+    invalidate: [embedSubdomainKeys.current],
+    feedback: 'inline',
+  });
+}
