@@ -186,8 +186,6 @@ function maskParsedUrl(value: string): string {
   return url.toString();
 }
 
-// Fallback for free text and percent-encoded URLs inside query strings: mask
-// everything between the scheme separator and the last "@" of the authority.
 function maskAuthorities(value: string): string {
   return URL_SCHEME_FORMS.reduce(
     (text, form) =>
