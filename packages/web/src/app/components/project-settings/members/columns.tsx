@@ -202,7 +202,10 @@ const ActionsCell = ({
     if (row.original.type === 'member') {
       await projectMembersApi.delete(row.original.data.id);
     } else if (isPlatformInvitation) {
-      await userInvitationApi.removeProject(row.original.data.id);
+      await userInvitationApi.removeProject({
+        id: row.original.data.id,
+        projectId: project.id,
+      });
     } else {
       await userInvitationApi.delete(row.original.data.id);
     }

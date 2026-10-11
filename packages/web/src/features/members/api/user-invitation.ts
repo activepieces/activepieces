@@ -18,9 +18,10 @@ export const userInvitationApi = {
   listAll: (request: Omit<ListUserInvitationsRequest, 'cursor'>) => {
     return listAllPages({ request, cursor: undefined });
   },
-  removeProject(id: string) {
+  removeProject({ id, projectId }: { id: string; projectId: string }) {
     return api.post<UserInvitation>(
       `/v1/user-invitations/${id}/remove-project`,
+      { projectId },
     );
   },
   delete(id: string): Promise<void> {
