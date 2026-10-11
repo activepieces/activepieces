@@ -25,10 +25,6 @@
     "src/app/routes/platform/infra/workers/by-project-view.tsx": [
       "raw-toast"
     ],
-    "src/app/routes/platform/security/api-keys/index.tsx": [
-      "internal-error-toast",
-      "legacy-confirm"
-    ],
     "src/app/routes/platform/security/embed/steps/allowed-domains-step.tsx": [
       "internal-error-toast",
       "raw-toast",

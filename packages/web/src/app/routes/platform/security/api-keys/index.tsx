@@ -6,14 +6,15 @@ import {
   AdminEmpty,
   AdminPage,
   AdminPageHeader,
+  AdminQueryState,
+  ConfirmDialog,
   SettingsPanel,
   SettingsRow,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,9 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SkeletonList } from '@/components/ui/skeleton';
-import { internalErrorToast } from '@/components/ui/sonner';
-import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
+import { apiKeyApi, apiKeyKeys, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
@@ -38,8 +37,12 @@ const ApiKeysPage = () => {
   const keys: ApiKeyResponseWithoutValue[] = isSample
     ? sampleData.apiKeysPage().data
     : data?.data ?? [];
-  const showLoading = isLoading && !isSample;
-  const showError = isError && !isSample;
+  const revokeKey = useAdminAction<ApiKeyResponseWithoutValue>({
+    verb: 'revoke',
+    name: (apiKey) => apiKey.displayName,
+    run: (apiKey) => apiKeyApi.delete(apiKey.id),
+    invalidate: [apiKeyKeys.all],
+  });
 
   return (
     <AdminPage width="content">
@@ -59,21 +62,20 @@ const ApiKeysPage = () => {
         </NewApiKeyDialog>
       </AdminPageHeader>
 
-      {showLoading && <SkeletonList numberOfItems={3} className="h-18" />}
-
-      {showError && (
-        <DataFetchErrorState entity={t('API keys')} onRetry={refetch} />
-      )}
-
-      {!showLoading && !showError && keys.length === 0 && (
-        <AdminEmpty
-          className="flex-none"
-          icon={<Key />}
-          title={t('No API keys yet. Create one to get started.')}
-        />
-      )}
-
-      {!showLoading && !showError && keys.length > 0 && (
+      <AdminQueryState
+        isLoading={isLoading && !isSample}
+        isError={isError && !isSample}
+        onRetry={refetch}
+        entity={t('API keys')}
+        isEmpty={keys.length === 0}
+        empty={
+          <AdminEmpty
+            className="flex-none"
+            icon={<Key />}
+            title={t('No API keys yet. Create one to get started.')}
+          />
+        }
+      >
         <SettingsPanel flush>
           {keys.map((apiKey) => (
             <SettingsRow
@@ -111,19 +113,14 @@ const ApiKeysPage = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <ConfirmationDeleteDialog
-                    title={t('Revoke API Key')}
-                    message={t(
+                  <ConfirmDialog
+                    title={t('Revoke {name}?', { name: apiKey.displayName })}
+                    description={t(
                       'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
                     )}
-                    entityName={t('API Key')}
-                    buttonText={t('Revoke')}
+                    confirmLabel={t('Revoke')}
                     controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
-                    mutationFn={async () => {
-                      await apiKeyApi.delete(apiKey.id);
-                      refetch();
-                    }}
-                    onError={() => internalErrorToast()}
+                    onConfirm={() => revokeKey.mutateAsync(apiKey)}
                   >
                     <DropdownMenuItem
                       variant="destructive"
@@ -135,13 +132,13 @@ const ApiKeysPage = () => {
                       <Trash className="size-4" />
                       {t('Revoke API Key')}
                     </DropdownMenuItem>
-                  </ConfirmationDeleteDialog>
+                  </ConfirmDialog>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SettingsRow>
           ))}
         </SettingsPanel>
-      )}
+      </AdminQueryState>
     </AdminPage>
   );
 };
