@@ -22,7 +22,7 @@ import {
   modelMeta,
 } from '@/features/agents/ai-model/model-meta';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { aiProviderApi } from '../api/ai-provider-api';
 import { platformModelTierApi } from '../api/platform-model-tier-api';
@@ -79,7 +79,7 @@ export const platformModelTierQueries = {
 };
 
 export const platformModelTierMutations = {
-  useCreate: () => {
+  useCreate: ({ feedback = 'toast' }: TierMutationOptions = {}) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationKey: platformModelTierKeys.admin,
@@ -90,14 +90,21 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           (old) => upsertTier({ tiers: old ?? [], tier: created }),
         );
-        toast.success(t('Tier created'), { duration: TOAST_SUCCESS_MS });
+        announce({
+          feedback,
+          message: t('{name} created', { name: created.name }),
+        });
       },
-      onError: (error) =>
-        toastError({ error, fallback: t('Could not create this tier') }),
+      onError: (error, request) =>
+        reportError({
+          feedback,
+          error,
+          title: t("Couldn't create {name}", { name: request.name }),
+        }),
       onSettled: () => settle({ queryClient }),
     });
   },
-  useUpdate: () => {
+  useUpdate: ({ feedback = 'toast' }: TierMutationOptions = {}) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationKey: platformModelTierKeys.admin,
@@ -126,11 +133,20 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           (old) => upsertTier({ tiers: old ?? [], tier: updated }),
         );
-        toast.success(t('Saved'), { duration: TOAST_SUCCESS_MS });
+        announce({
+          feedback,
+          message: t('{name} updated', { name: updated.name }),
+        });
       },
-      onError: (error, _variables, context) => {
+      onError: (error, { id }, context) => {
         restore({ queryClient, previous: context?.previous });
-        toastError({ error, fallback: t('Could not save this tier') });
+        reportError({
+          feedback,
+          error,
+          title: t("Couldn't update {name}", {
+            name: tierName({ tiers: context?.previous, id }),
+          }),
+        });
       },
       onSettled: () => settle({ queryClient }),
     });
@@ -161,11 +177,11 @@ export const platformModelTierMutations = {
           platformModelTierKeys.admin,
           tiers,
         );
-        toast.success(t('Saved'), { duration: TOAST_SUCCESS_MS });
+        toast.success(t('Changes saved'));
       },
       onError: (error, _variables, context) => {
         restore({ queryClient, previous: context?.previous });
-        toastError({ error, fallback: t('Could not reorder tiers') });
+        mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
       onSettled: () => settle({ queryClient }),
     });
@@ -174,17 +190,26 @@ export const platformModelTierMutations = {
     const queryClient = useQueryClient();
     return useMutation({
       mutationKey: platformModelTierKeys.admin,
-      mutationFn: ({ id, replacedBy }: { id: string; replacedBy?: string }) =>
-        platformModelTierApi.remove({ id, replacedBy }),
-      onSuccess: (_result, { id, replacedBy }) => {
+      mutationFn: ({
+        id,
+        replacedBy,
+      }: {
+        id: string;
+        name: string;
+        replacedBy?: string;
+      }) => platformModelTierApi.remove({ id, replacedBy }),
+      onSuccess: (_result, { id, name, replacedBy }) => {
         queryClient.setQueryData<PlatformModelTier[]>(
           platformModelTierKeys.admin,
           (old) => old && removeTier({ tiers: old, id, replacedBy }),
         );
-        toast.success(t('Tier deleted'), { duration: TOAST_SUCCESS_MS });
+        toast.success(t('{name} deleted', { name }));
       },
-      onError: (error) =>
-        toastError({ error, fallback: t('Could not delete this tier') }),
+      onError: (error, { name }) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete {name}", { name }),
+        }),
       onSettled: () => settle({ queryClient }),
     });
   },
@@ -206,41 +231,60 @@ export const platformModelTierMutations = {
         );
         return { previous };
       },
-      onSuccess: (configuration, visible) => {
+      onSuccess: (configuration) => {
         queryClient.setQueryData(
           platformConfigurationHooks.queryKey,
           configuration,
         );
-        toast.success(
-          visible
-            ? t('Specific models are visible to builders')
-            : t('Specific models are hidden from builders'),
-          { duration: TOAST_SUCCESS_MS },
-        );
       },
-      onError: (error, _variables, context) => {
+      onError: (_error, _variables, context) => {
         if (context?.previous !== undefined) {
           queryClient.setQueryData(
             platformConfigurationHooks.queryKey,
             context.previous,
           );
         }
-        toastError({ error, fallback: t('Could not save this setting') });
       },
     });
   },
 };
 
-function toastError({
-  error,
-  fallback,
+function announce({
+  feedback,
+  message,
 }: {
-  error: unknown;
-  fallback: string;
+  feedback: TierMutationFeedback;
+  message: string;
 }): void {
-  toast.error(api.serverErrorMessage(error) ?? fallback, {
-    duration: TOAST_ERROR_MS,
-  });
+  if (feedback !== 'errorsOnly') {
+    toast.success(message);
+  }
+}
+
+function reportError({
+  feedback,
+  error,
+  title,
+}: {
+  feedback: TierMutationFeedback;
+  error: unknown;
+  title: string;
+}): void {
+  if (feedback === 'inline') {
+    mutationFeedback.markShown(error);
+    return;
+  }
+  mutationFeedback.error({ error, title });
+}
+
+function tierName({
+  tiers,
+  id,
+}: {
+  tiers: PlatformModelTier[] | undefined;
+  id: string;
+}): string {
+  return tiers?.find((tier) => tier.id === id)?.name ?? t('this tier');
 }
 
 function settle({ queryClient }: { queryClient: QueryClient }): void {
@@ -343,9 +387,11 @@ function removeTier({
 }
 
 const TIERS_STALE_MS = 30 * 1000;
-const TOAST_SUCCESS_MS = 3000;
-const TOAST_ERROR_MS = 5000;
 const KEY_MODELS_STALE_MS = 5 * 60 * 1000;
+
+type TierMutationFeedback = 'toast' | 'inline' | 'errorsOnly';
+
+type TierMutationOptions = { feedback?: TierMutationFeedback };
 
 type KeyModelsQueryResult = {
   data:

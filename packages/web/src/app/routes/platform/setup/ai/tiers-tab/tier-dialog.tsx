@@ -47,6 +47,7 @@ import {
 import { ModelRow } from '@/features/agents/ai-model/model-row';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { AdminModelPicker } from './admin-model-picker';
@@ -106,9 +107,9 @@ function TierForm({
     defaultValues: defaultValuesOf({ state }),
   });
   const { mutate: create, isPending: creating } =
-    platformModelTierMutations.useCreate();
+    platformModelTierMutations.useCreate({ feedback: 'inline' });
   const { mutate: update, isPending: updating } =
-    platformModelTierMutations.useUpdate();
+    platformModelTierMutations.useUpdate({ feedback: 'inline' });
   const saving = creating || updating;
   const keepOpen = (event: Event) => {
     if (saving) {
@@ -116,7 +117,14 @@ function TierForm({
     }
   };
 
+  const showServerError = (error: unknown) =>
+    form.setError('root.serverError', {
+      type: 'manual',
+      message: mutationFeedback.message(error),
+    });
+
   const submit = (values: TierFormValues) => {
+    form.clearErrors('root.serverError');
     const shared = {
       name: values.name.trim(),
       emoji: values.emoji,
@@ -128,7 +136,10 @@ function TierForm({
       }),
     };
     if (editing !== undefined) {
-      update({ id: editing.id, request: shared }, { onSuccess: onSaved });
+      update(
+        { id: editing.id, request: shared },
+        { onSuccess: onSaved, onError: showServerError },
+      );
       return;
     }
     if (values.main === undefined) {
@@ -138,7 +149,7 @@ function TierForm({
       ...shared,
       entries: [values.main],
     };
-    create(request, { onSuccess: onSaved });
+    create(request, { onSuccess: onSaved, onError: showServerError });
   };
 
   const currentThinking = editing?.thinkingBudget ?? null;
@@ -376,6 +387,12 @@ function TierForm({
               </FormItem>
             )}
           />
+
+          {form.formState.errors.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
+          )}
 
           <DialogFooter>
             <Button

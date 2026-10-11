@@ -82,7 +82,7 @@ function DeleteTierForm({
 
   const confirm = () =>
     remove(
-      { id: tier.id, replacedBy },
+      { id: tier.id, name: tier.name, replacedBy },
       {
         onSuccess: () => {
           queryClient

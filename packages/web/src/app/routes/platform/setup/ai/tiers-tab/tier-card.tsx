@@ -24,7 +24,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { ReactNode, useRef, useState } from 'react';
 
-import { adminSurface } from '@/app/components/admin';
+import { adminFeedback, adminSurface } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,6 +46,7 @@ import {
 } from '@/features/agents/ai-model/model-meta';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { AdminModelPicker } from './admin-model-picker';
@@ -65,13 +66,49 @@ export function TierCard({
   onMoveUp,
   onMoveDown,
 }: TierCardProps) {
-  const { mutate: update, isPending } = platformModelTierMutations.useUpdate();
+  const {
+    mutate: update,
+    mutateAsync: updateAsync,
+    isPending,
+  } = platformModelTierMutations.useUpdate({ feedback: 'errorsOnly' });
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   const save = (request: UpdatePlatformModelTierRequest) =>
-    update({ id: tier.id, request });
+    update(
+      { id: tier.id, request },
+      {
+        onSuccess: (updated) =>
+          adminFeedback.done({ verb: 'update', name: updated.name }),
+      },
+    );
+  const removeEntry = (position: number) => {
+    const previous = tier.entries;
+    const removed = previous[position];
+    update(
+      {
+        id: tier.id,
+        request: {
+          entries: modelMeta.removeAt({ entries: previous, index: position }),
+        },
+      },
+      {
+        onSuccess: () => {
+          mutationFeedback.undo({
+            message: t('{model} removed from {tier}', {
+              model:
+                modelMeta.catalogModel({ keyModels, entry: removed })?.name ??
+                removed.modelId,
+              tier: tier.name,
+            }),
+            onUndo: () =>
+              updateAsync({ id: tier.id, request: { entries: previous } }),
+          });
+        },
+      },
+    );
+  };
   const move = ({ from, to }: { from: number; to: number }) =>
     save({ entries: modelMeta.moveEntry({ entries: tier.entries, from, to }) });
 
@@ -322,14 +359,7 @@ export function TierCard({
                       onMoveDown={() =>
                         move({ from: position, to: position + 1 })
                       }
-                      onRemove={() =>
-                        save({
-                          entries: modelMeta.removeAt({
-                            entries: tier.entries,
-                            index: position,
-                          }),
-                        })
-                      }
+                      onRemove={() => removeEntry(position)}
                     />
                   }
                 />

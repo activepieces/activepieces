@@ -223,7 +223,7 @@ function KeyNotices({
           key={config.id}
           className="flex items-center justify-between gap-2 text-xs text-gray-11"
         >
-          <span>{t("Couldn't load {key} models", { key: config.name })}</span>
+          <span>{t('Trouble loading {key} models', { key: config.name })}</span>
           <Button
             type="button"
             variant="ghost"
@@ -255,7 +255,7 @@ function emptyTextOf({
     return t('Loading models…');
   }
   if (total > 0 && failed === total) {
-    return t("Couldn't load models");
+    return t('Trouble loading models');
   }
   return pickable === 0
     ? t('No text models on your keys yet')

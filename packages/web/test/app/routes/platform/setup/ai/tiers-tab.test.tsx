@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled, jest-dom/prefer-to-have-attribute */
 import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModel,
@@ -9,7 +9,8 @@ import {
   AIProviderWithoutSensitiveData,
   PlatformModelTier,
 } from '@activepieces/shared';
-import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,6 +33,7 @@ const state = vi.hoisted(() => ({
     refetch: () => Promise.resolve(),
   },
   keyModels: {} as KeyModelsById,
+  setVisible: vi.fn(),
   projects: [] as { id: string; displayName: string }[],
   configuration: {
     data: { aiSpecificModelsVisible: true } as
@@ -63,7 +65,10 @@ vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
     useCreate: () => mutation(),
     useUpdate: () => mutation(),
     useDelete: () => mutation(),
-    useSetSpecificModelsVisible: () => mutation(),
+    useSetSpecificModelsVisible: () => ({
+      ...mutation(),
+      mutateAsync: state.setVisible,
+    }),
     useReorder: () => mutation(),
   },
 }));
@@ -96,15 +101,18 @@ function mutation() {
 
 function renderTab() {
   return render(
-    <MemoryRouter>
-      <TooltipProvider>
-        <TiersTab />
-      </TooltipProvider>
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <TooltipProvider>
+          <TiersTab />
+        </TooltipProvider>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
 beforeEach(() => {
+  state.setVisible = vi.fn().mockResolvedValue(undefined);
   state.tiers = {
     data: [],
     isLoading: false,
@@ -189,8 +197,8 @@ describe('TiersTab states', () => {
   it('offers the first tier and keeps specific models visible while there are none', () => {
     renderTab();
     expect(screen.getByText('Create your first tier')).toBeDefined();
-    const hide = screen.getByRole('tab', { name: 'Hidden' });
-    expect(hide.getAttribute('data-disabled')).not.toBeNull();
+    const visible = screen.getByRole('switch', { name: 'Visible to builders' });
+    expect(visible.hasAttribute('disabled')).toBe(true);
     expect(screen.getByText('Add a tier before hiding these.')).toBeDefined();
   });
 
@@ -265,6 +273,29 @@ describe('TiersTab states', () => {
       screen.getByRole('combobox', { name: 'Preview as project' }),
     ).toBeDefined();
     expect(screen.getByText('hidingLeavesProjectsEmpty')).toBeDefined();
+  });
+
+  it('asks first when hiding specific models leaves projects with nothing to pick', () => {
+    state.configs = {
+      ...state.configs,
+      data: [key('k1', { projectScope: 'selected', projectIds: ['A'] })],
+    };
+    state.tiers = {
+      ...state.tiers,
+      data: [
+        tier('expert', { entries: [{ configId: 'k1', modelId: 'sonnet' }] }),
+      ],
+    };
+    renderTab();
+    fireEvent.click(
+      screen.getByRole('switch', { name: 'Visible to builders' }),
+    );
+    expect(
+      screen.getByRole('dialog', {
+        name: 'Hide specific models from builders?',
+      }),
+    ).toBeDefined();
+    expect(state.setVisible).not.toHaveBeenCalled();
   });
 
   it('shows no scope notices or preview when every key serves every project', () => {
