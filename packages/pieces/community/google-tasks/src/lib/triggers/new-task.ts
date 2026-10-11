@@ -12,7 +12,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { getTasks, googleTasksCommon } from '../common';
+import { getAllTasks, googleTasksCommon } from '../common';
 import { googleTasksNewTaskTriggerOutputSchema } from '../output-schemas';
 
 const props = {
@@ -29,7 +29,15 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const records = await getTasks(auth, propsValue.tasks_list!);
+    const params: Record<string, string> =
+      lastFetchEpochMS > 0
+        ? { updatedMin: new Date(lastFetchEpochMS).toISOString() }
+        : {};
+    const records = await getAllTasks({
+      auth,
+      taskListId: propsValue.tasks_list,
+      params,
+    });
 
     const filtered_records = records.filter((record) => {
       const updated = Date.parse(record.updated ?? '0');

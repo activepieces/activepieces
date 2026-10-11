@@ -191,6 +191,40 @@ export async function getTasks(
   return response.body.items ?? [];
 }
 
+export async function getAllTasks({
+  auth,
+  taskListId,
+  params,
+}: {
+  auth: OAuth2PropertyValue;
+  taskListId: string;
+  params?: Record<string, string>;
+}): Promise<Task[]> {
+  const tasks: Task[] = [];
+  let pageToken: string | undefined = undefined;
+  let page = 0;
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `${googleTasksCommon.baseUrl}/tasks/v1/lists/${taskListId}/tasks`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth.access_token,
+      },
+      queryParams: {
+        ...params,
+        maxResults: '100',
+        ...(pageToken ? { pageToken } : {}),
+      },
+    };
+    const response = await httpClient.sendRequest<TasksResponse>(request);
+    tasks.push(...(response.body.items ?? []));
+    pageToken = response.body.nextPageToken;
+    page++;
+  } while (pageToken && page < 10);
+  return tasks;
+}
+
 export async function createTask(
   authProp: OAuth2PropertyValue,
   taskListId: string,
