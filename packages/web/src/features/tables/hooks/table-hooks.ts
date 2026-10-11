@@ -8,7 +8,6 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { z } from 'zod';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
@@ -93,18 +92,14 @@ export const tableHooks = {
     template: SharedTemplate;
     existingTableId: string;
     maxRecords?: number;
-  }): Promise<Table> => {
-    const tables = parseTemplateTables(template);
-    if (tables.length === 0) {
-      throw new Error('Template has no tables');
-    }
-    if (tables.length > 1) {
+  }): Promise<ImportedTable> => {
+    const tables = template.tables ?? [];
+    if (tables.length !== 1) {
       throw new Error(
         'Template must contain exactly one table when importing into existing table',
       );
     }
-
-    const tableTemplate = tables[0];
+    const [tableTemplate] = tables;
     const fieldsToCreate = parseFieldsToCreate({
       tableTemplate,
       tableId: existingTableId,
@@ -125,6 +120,7 @@ export const tableHooks = {
 
     await Promise.all(fieldsToCreate.map((field) => fieldsApi.create(field)));
 
+    let importedRecordsCount = 0;
     if (tableTemplate.data && tableTemplate.data.rows.length > 0) {
       const createdFields = await fieldsApi.list({ tableId: existingTableId });
 
@@ -137,7 +133,7 @@ export const tableHooks = {
         maxRecords ?? 1000,
       );
 
-      await recordsApi.create({
+      const importedRecords = await recordsApi.create({
         tableId: existingTableId,
         records: recordsToImport.map((record) =>
           record
@@ -154,9 +150,12 @@ export const tableHooks = {
             .filter((cell) => cell !== null),
         ),
       });
+      importedRecordsCount = importedRecords.length;
     }
 
-    return tablesApi.getById(existingTableId);
+    return tablesApi
+      .getById(existingTableId)
+      .then((table) => ({ table, importedRecordsCount }));
   },
   importTablesFromTemplates: async ({
     templates,
@@ -168,7 +167,7 @@ export const tableHooks = {
     projectId: string;
     maxRecords?: number;
     folderId?: string;
-  }): Promise<Table[]> => {
+  }): Promise<ImportedTable[]> => {
     if (templates.length === 0) {
       return [];
     }
@@ -181,7 +180,9 @@ export const tableHooks = {
       tableTemplate: TableTemplate;
     }> = [];
 
-    for (const tableTemplate of templates.flatMap(parseTemplateTables)) {
+    for (const tableTemplate of templates.flatMap(
+      (template) => template.tables ?? [],
+    )) {
       const table = await tablesApi.create({
         projectId,
         name: tableTemplate.name,
@@ -210,7 +211,7 @@ export const tableHooks = {
             maxRecords ?? 1000,
           );
 
-          await recordsApi.create({
+          const importedRecords = await recordsApi.create({
             tableId: table.id,
             records: recordsToImport.map((record) =>
               record
@@ -227,31 +228,16 @@ export const tableHooks = {
                 .filter((cell) => cell !== null),
             ),
           });
+          return { table, importedRecordsCount: importedRecords.length };
         }
 
-        return table;
+        return { table, importedRecordsCount: 0 };
       },
     );
 
     return await Promise.all(importPromises);
   },
 };
-
-function parseTemplateTables(template: SharedTemplate): TableTemplate[] {
-  const tables = template.tables ?? [];
-  const parsed = TableTemplate.pick({ name: true, fields: true })
-    .extend({
-      data: z
-        .object({ rows: z.array(z.array(z.object({ fieldId: z.string() }))) })
-        .nullish(),
-    })
-    .array()
-    .safeParse(tables);
-  if (!parsed.success) {
-    throw new Error('Template tables are not in a valid format');
-  }
-  return tables;
-}
 
 function parseFieldsToCreate({
   tableTemplate,
@@ -260,15 +246,16 @@ function parseFieldsToCreate({
   tableTemplate: TableTemplate;
   tableId: string;
 }): CreateFieldRequest[] {
-  const fields = CreateFieldRequest.array().safeParse(
+  return CreateFieldRequest.array().parse(
     tableTemplate.fields.map((field, position) => ({
       ...field,
       tableId,
       position,
     })),
   );
-  if (!fields.success) {
-    throw new Error('Template fields are not in a valid format');
-  }
-  return fields.data;
 }
+
+type ImportedTable = {
+  table: Table;
+  importedRecordsCount: number;
+};

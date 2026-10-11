@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -294,8 +295,14 @@ export function ApTableHeader({
           open={isImportTableDialogOpen}
           setIsOpen={setIsImportTableDialogOpen}
           tableId={table.id}
-          allowedFileTypes={['json', 'csv']}
-          onImportSuccess={refreshTableState}
+          onImportSuccess={({ importedRecordsCount }) => {
+            refreshTableState();
+            if (importedRecordsCount > 0) {
+              toast.success(
+                t('recordsImported', { count: importedRecordsCount }),
+              );
+            }
+          }}
         />
       </div>
     </>

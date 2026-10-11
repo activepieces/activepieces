@@ -15,6 +15,51 @@ If a CSV can't be parsed, the import fails rather than importing part of it. Che
 A table holds [10,000 records](/install/reference/environment-variables) by default. A file with more rows than the table has room left for still imports, but only up to that limit and the remaining rows are dropped without an error, so check the record count afterwards.
 </Warning>
 
+## Importing a JSON template
+
+A JSON template holds a table's fields and, optionally, its records. To get one, use **Export Template** on a table. Import it from the tables list to create a new table, or from inside a table to replace that table.
+
+<Warning>
+Importing a template into an existing table deletes all of its fields and records, then rebuilds it from the file. There's no undo.
+</Warning>
+
+Activepieces checks the file before changing anything. If the file doesn't match the format below, the dialog shows which column or part of the file is wrong and nothing is imported.
+
+```json
+{
+  "name": "Customers",
+  "fields": [
+    { "name": "Email", "type": "TEXT", "externalId": "email" },
+    {
+      "name": "Plan",
+      "type": "STATIC_DROPDOWN",
+      "externalId": "plan",
+      "data": { "options": [{ "value": "Free" }, { "value": "Pro" }] }
+    }
+  ],
+  "data": {
+    "rows": [
+      [
+        { "fieldId": "email", "value": "jane@example.com" },
+        { "fieldId": "plan", "value": "Pro" }
+      ]
+    ]
+  }
+}
+```
+
+Each column's `type` must be one of these:
+
+| `type` | Field type |
+|---|---|
+| `TEXT` | Text |
+| `NUMBER` | Number |
+| `DATE` | Date |
+| `DATETIME` | Date & Time |
+| `STATIC_DROPDOWN` | Dropdown. Also needs `data.options` with its values. |
+
+`externalId` is optional, but a cell's value is only imported when its `fieldId` matches a column's `externalId`. A row whose cells match no column is imported as an empty record. Rows beyond the table's record limit are dropped.
+
 ## Exporting
 
 - **Download data** from the table, for a spreadsheet or a backup
