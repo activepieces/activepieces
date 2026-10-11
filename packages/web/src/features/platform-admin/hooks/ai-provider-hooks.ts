@@ -82,55 +82,6 @@ export const aiProviderMutations = {
       onSuccess,
     });
   },
-  useDeleteAiProvider: ({
-    onSuccess,
-    onError,
-  }: {
-    onSuccess: () => void;
-    onError?: (
-      error: AxiosError<{ message?: string; params?: { message: string } }>,
-    ) => void;
-  }) => {
-    return useMutation({
-      mutationFn: (providerId: string) => aiProviderApi.delete(providerId),
-      onSuccess,
-      onError,
-    });
-  },
-  useUpdateAiProvider: ({
-    onSuccess,
-    onError,
-  }: {
-    onSuccess: () => void;
-    onError?: (
-      error: AxiosError<{ message?: string; params?: { message: string } }>,
-    ) => void;
-  }) => {
-    return useMutation({
-      mutationFn: ({
-        providerId,
-        request,
-      }: {
-        providerId: string;
-        request: UpdateAIProviderRequest;
-      }) => aiProviderApi.update(providerId, request),
-      onSuccess,
-      onError,
-    });
-  },
-  useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationFn: ({
-        providerId,
-        displayName,
-      }: {
-        providerId: string;
-        displayName: string;
-      }) =>
-        aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
-      onSuccess,
-    });
-  },
   useUpsertAiProvider: ({
     providerId,
     onSuccess,

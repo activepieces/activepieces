@@ -17,17 +17,19 @@ import {
 
 import {
   AdminPageHeader,
+  AdminQueryState,
+  ConfirmDialog,
   StatusDot,
   adminPageResources,
   adminSurface,
+  useAdminAction,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   aiProviderQueries,
-  aiToolConfigMutations,
+  aiToolConfigApi,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -43,11 +45,13 @@ import {
 export function CapabilitiesTab() {
   const {
     data: configs,
+    isLoading: configsLoading,
     isError: configsFailed,
     refetch: refetchConfigs,
   } = aiToolConfigQueries.useAiToolConfigs();
   const {
     data: providers,
+    isLoading: providersLoading,
     isError: providersFailed,
     refetch: refetchProviders,
   } = aiProviderQueries.useAiProviderConfigs();
@@ -59,7 +63,10 @@ export function CapabilitiesTab() {
       (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
     );
 
-  const { mutateAsync: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
+  const { mutateAsync: reset } = useAdminAction<{ id: string; name: string }>({
+    verb: 'reset',
+    name: ({ name }) => name,
+    run: ({ id }) => aiToolConfigApi.delete(id),
     onSuccess: () => refetchConfigs(),
   });
 
@@ -77,9 +84,22 @@ export function CapabilitiesTab() {
         )}
         resources={adminPageResources.aiCapabilities}
       />
-      {isError ? (
-        <DataFetchErrorState entity={t('AI tools')} onRetry={refetch} />
-      ) : (
+      <AdminQueryState
+        isLoading={configsLoading || providersLoading}
+        isError={isError}
+        onRetry={refetch}
+        entity={t('AI tools')}
+        skeleton={
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {AI_TOOL_CATALOG.map((capabilityInfo) => (
+              <Skeleton
+                key={capabilityInfo.capability}
+                className="h-44 rounded-xl"
+              />
+            ))}
+          </div>
+        }
+      >
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {AI_TOOL_CATALOG.map((capabilityInfo) => {
             const config = configs?.find(
@@ -101,14 +121,16 @@ export function CapabilitiesTab() {
                     : undefined
                 }
                 onDelete={async () => {
-                  if (config) await remove(config.id);
+                  if (config) {
+                    await reset({ id: config.id, name: capabilityInfo.name });
+                  }
                 }}
                 onSaved={() => refetchConfigs()}
               />
             );
           })}
         </div>
-      )}
+      </AdminQueryState>
     </>
   );
 }
@@ -171,9 +193,9 @@ function CapabilityCard({
           </StatusDot>
         </div>
         {config && (
-          <ConfirmationDeleteDialog
-            title={t('Reset {name}', { name: capabilityInfo.name })}
-            message={
+          <ConfirmDialog
+            title={t('Reset {name}?', { name: capabilityInfo.name })}
+            description={
               chatProviderFallback
                 ? t('Chat goes back to using {provider}.', {
                     provider: chatProviderFallback.name,
@@ -182,19 +204,20 @@ function CapabilityCard({
                     'This removes the saved API key and disables this capability.',
                   )
             }
-            entityName={capabilityInfo.name}
+            confirmLabel={t('Reset')}
             controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
-            mutationFn={onDelete}
+            onConfirm={onDelete}
           >
             <Button
               variant="ghost"
               size="icon-sm"
+              aria-label={t('Reset {name}', { name: capabilityInfo.name })}
               className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
               {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
             >
               <Trash2 className="size-4" />
             </Button>
-          </ConfirmationDeleteDialog>
+          </ConfirmDialog>
         )}
       </div>
       <p className="px-5 pb-5 text-sm text-gray-11">

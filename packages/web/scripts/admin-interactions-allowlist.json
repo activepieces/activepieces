@@ -55,16 +55,6 @@
     "src/app/routes/platform/security/secret-managers/index.tsx": [
       "legacy-confirm"
     ],
-    "src/app/routes/platform/setup/ai/capabilities-tab/index.tsx": [
-      "legacy-confirm"
-    ],
-    "src/app/routes/platform/setup/ai/providers-tab/config-detail.tsx": [
-      "legacy-confirm"
-    ],
-    "src/app/routes/platform/setup/ai/providers-tab/index.tsx": [
-      "legacy-confirm",
-      "raw-toast"
-    ],
     "src/app/routes/platform/setup/connections/index.tsx": [
       "legacy-confirm"
     ],
