@@ -42,33 +42,44 @@ describe('Default projects', () => {
         expect(response?.json().defaultProjectIds).toStrictEqual([])
     })
 
-    it('refuses a personal project', async () => {
-        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+    it('drops a personal project and keeps the rest', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
         const personalProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.PERSONAL })
 
-        const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [personalProject.id] })
+        const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [personalProject.id, mockProject.id] })
 
-        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().defaultProjectIds).toStrictEqual([mockProject.id])
     })
 
-    it('refuses a project of another platform', async () => {
-        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+    it('drops a project of another platform', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
         const { mockProject: otherPlatformProject } = await setupPlatform({ projectRolesEnabled: true })
 
-        const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [otherPlatformProject.id] })
+        const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [otherPlatformProject.id, mockProject.id] })
 
-        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().defaultProjectIds).toStrictEqual([mockProject.id])
     })
 
-    it('refuses an unknown project', async () => {
+    it('drops an unknown project', async () => {
         const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
 
         const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: ['unknown-project-id'] })
 
-        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().defaultProjectIds).toStrictEqual([])
+    })
+
+    it('saves a list from an out-of-date page that still holds a deleted project', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        const deletedProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
+        await databaseConnection().getRepository('project').update({ id: deletedProject.id }, { deleted: new Date().toISOString() })
+
+        const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [deletedProject.id, mockProject.id] })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().defaultProjectIds).toStrictEqual([mockProject.id])
     })
 
     it('refuses default projects on a plan without project roles', async () => {
