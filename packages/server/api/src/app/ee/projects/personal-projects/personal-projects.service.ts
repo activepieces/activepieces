@@ -100,7 +100,7 @@ async function createNextBatch({ platformId, afterUserId, onlyUserIds, log }: Cr
         query.andWhere('"user"."id" > :afterUserId', { afterUserId })
     }
     if (!isNil(onlyUserIds)) {
-        query.andWhere('"user"."id" IN (:...onlyUserIds)', { onlyUserIds })
+        query.andWhere('"user"."id" = ANY(:onlyUserIds)', { onlyUserIds })
     }
     const members = await query
         .select(['user.id AS "userId"', 'identity.firstName AS "firstName"'])
