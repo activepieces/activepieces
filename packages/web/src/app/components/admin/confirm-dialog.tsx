@@ -111,8 +111,9 @@ function ConfirmDialogBody({
       )}
       {typeToConfirm !== undefined && (
         <div className="flex flex-col gap-2">
-          <Label htmlFor={inputId} className="font-normal text-gray-11">
-            {t('Type {name} to confirm', { name: typeToConfirm })}
+          <Label htmlFor={inputId} className="block font-normal text-gray-11">
+            {t('To confirm, type')}{' '}
+            <span className="font-medium text-gray-12">{typeToConfirm}</span>
           </Label>
           <Input
             id={inputId}

@@ -3319,5 +3319,11 @@
   "SAML sign-in": "SAML sign-in",
   "Turn off SAML sign-in?": "Turn off SAML sign-in?",
   "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.": "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.",
-  "Turn off SAML": "Turn off SAML"
+  "Turn off SAML": "Turn off SAML",
+  "Delete {name}?": "Delete {name}?",
+  "The project you're in stays. Switch to another project to delete it.": "The project you're in stays. Switch to another project to delete it.",
+  "Automatic personal projects turned on": "Automatic personal projects turned on",
+  "Automatic personal projects turned off": "Automatic personal projects turned off",
+  "{count, plural, =1 {# project} other {# projects}}": "{count, plural, =1 {# project} other {# projects}}",
+  "To confirm, type": "To confirm, type"
 }

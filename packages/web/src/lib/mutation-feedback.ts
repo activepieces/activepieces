@@ -58,11 +58,11 @@ function wasShown(error: unknown): boolean {
   return typeof error === 'object' && error !== null && shownErrors.has(error);
 }
 
-function error({ error, title }: MutationErrorParams): void {
+function error({ error, title, description }: MutationErrorParams): void {
   markShown(error);
   toast.error(title ?? t('Something went wrong'), {
     id: MUTATION_ERROR_TOAST_ID,
-    description: message(error),
+    description: description ?? message(error),
   });
 }
 
@@ -120,6 +120,7 @@ export const mutationFeedback = {
 export type MutationErrorParams = {
   error: unknown;
   title?: string;
+  description?: string;
 };
 
 export type UndoToastParams = {

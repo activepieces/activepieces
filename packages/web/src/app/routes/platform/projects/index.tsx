@@ -1,26 +1,27 @@
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
+  InstantSwitch,
   SettingsPanel,
   SettingsRow,
+  adminActionCopy,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +37,7 @@ import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/pro
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
@@ -78,20 +80,32 @@ export default function ProjectsPage() {
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
 
-  const {
-    mutate: toggleAutoCreatePersonalProjects,
-    isPending: isAutoCreatePersonalProjectsPending,
-  } = useMutation({
-    mutationFn: (autoCreatePersonalProjects: boolean) =>
-      platformApi.update({ autoCreatePersonalProjects }, platform.id),
-    onSuccess: (updatedPlatform) => {
-      setCurrentPlatform(queryClient, updatedPlatform);
-      toast.success(t('Automatic personal project creation updated'), {
-        duration: 3000,
+  const setAutoCreatePersonalProjects = async (
+    autoCreatePersonalProjects: boolean,
+  ) => {
+    const updatedPlatform = await platformApi.update(
+      { autoCreatePersonalProjects },
+      platform.id,
+    );
+    setCurrentPlatform(queryClient, updatedPlatform);
+  };
+
+  const deleteProjects = useAdminAction<ProjectWithLimits[]>({
+    verb: 'delete',
+    name: (projects) => projectsLabel(projects),
+    run: (projects) =>
+      projectCollectionUtils.delete(projects.map((project) => project.id)),
+    handleError: (error) => {
+      const description = deleteErrorMessage(error);
+      if (description === undefined) {
+        return false;
+      }
+      mutationFeedback.error({
+        error,
+        title: adminActionCopy.failed({ verb: 'delete', name: t('projects') }),
+        description,
       });
-    },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
+      return true;
     },
   });
 
@@ -251,34 +265,32 @@ export default function ProjectsPage() {
           _: RowDataWithActions<ProjectWithLimits>[],
           resetSelection: () => void,
         ) => {
-          const canDeleteAny = selectedRows.some(
+          const deletableProjects = selectedRows.filter(
             (row) => row.id !== currentProject?.id,
           );
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Projects')}
-                message={t(
+              <ConfirmDialog
+                title={t('Delete {name}?', {
+                  name: projectsLabel(deletableProjects),
+                })}
+                description={t(
                   'The selected projects and all their data will be permanently deleted.',
                 )}
-                entityName={t('Projects')}
-                buttonText={t('Delete')}
+                consequence={
+                  deletableProjects.length < selectedRows.length
+                    ? t(
+                        "The project you're in stays. Switch to another project to delete it.",
+                      )
+                    : undefined
+                }
+                confirmLabel={t('Delete')}
+                typeToConfirm={projectsLabel(deletableProjects)}
                 controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
-                mutationFn={async () => {
-                  const deletableProjects = selectedRows.filter(
-                    (row) => row.id !== currentProject?.id,
-                  );
-                  await projectCollectionUtils.delete(
-                    deletableProjects.map((row) => row.id),
-                  );
+                onConfirm={async () => {
+                  await deleteProjects.mutateAsync(deletableProjects);
                   resetSelection();
                   setSelectedRows([]);
-                }}
-                onError={(error) => {
-                  toast.error(t('Error'), {
-                    description: errorToastMessage(error),
-                    duration: 3000,
-                  });
                 }}
               >
                 {selectedRows.length > 0 && (
@@ -286,14 +298,14 @@ export default function ProjectsPage() {
                     variant="ghost"
                     size="sm"
                     className="text-danger-11 hover:text-danger-11"
-                    disabled={!canDeleteAny}
+                    disabled={deletableProjects.length === 0}
                     {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
                   >
                     <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             </div>
           );
         },
@@ -301,21 +313,6 @@ export default function ProjectsPage() {
     ],
     [selectedRows, currentProject],
   );
-
-  const errorToastMessage = (error: unknown): string | undefined => {
-    if (validationUtils.isValidationError(error)) {
-      console.error(t('Validation error'), error);
-      switch (error.response?.data?.params?.message) {
-        case 'PROJECT_HAS_ENABLED_FLOWS':
-          return t('Project has enabled flows. Please disable them first.');
-        case 'ACTIVE_PROJECT':
-          return t(
-            'This project is active. Please switch to another project first.',
-          );
-      }
-      return undefined;
-    }
-  };
 
   const actions = [
     (row: ProjectWithLimits) => {
@@ -361,14 +358,17 @@ export default function ProjectsPage() {
             'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
           )}
         >
-          <Switch
+          <InstantSwitch
             aria-label={t('Automatic personal project creation')}
             checked={platform.autoCreatePersonalProjects}
-            onCheckedChange={(checked) =>
-              toggleAutoCreatePersonalProjects(checked)
+            onCheckedChange={setAutoCreatePersonalProjects}
+            undo
+            successMessage={(on) =>
+              on
+                ? t('Automatic personal projects turned on')
+                : t('Automatic personal projects turned off')
             }
-            disabled={isAutoCreatePersonalProjectsPending}
-            {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
+            controlId={AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE}
           />
         </SettingsRow>
       </SettingsPanel>
@@ -432,4 +432,28 @@ export default function ProjectsPage() {
       />
     </AdminPage>
   );
+}
+
+function projectsLabel(projects: ProjectWithLimits[]): string {
+  return projects.length === 1
+    ? projects[0].displayName
+    : t('{count, plural, =1 {# project} other {# projects}}', {
+        count: projects.length,
+      });
+}
+
+function deleteErrorMessage(error: unknown): string | undefined {
+  if (!validationUtils.isValidationError(error)) {
+    return undefined;
+  }
+  switch (error.response?.data?.params?.message) {
+    case 'PROJECT_HAS_ENABLED_FLOWS':
+      return t('Project has enabled flows. Please disable them first.');
+    case 'ACTIVE_PROJECT':
+      return t(
+        'This project is active. Please switch to another project first.',
+      );
+    default:
+      return undefined;
+  }
 }
