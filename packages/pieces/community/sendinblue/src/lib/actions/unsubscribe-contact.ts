@@ -63,9 +63,13 @@ export const unsubscribeContact = createAction({
 			.map((listId) => Number(listId))
 			.filter((listId) => Number.isFinite(listId));
 
+		if (unsubscribe_email !== true && unsubscribe_sms !== true && unlinkListIds.length === 0) {
+			throw new Error('Tick Unsubscribe From Email or Unsubscribe From SMS, or pick a list to remove.');
+		}
+
 		const body = {
-			emailBlacklisted: unsubscribe_email,
-			smsBlacklisted: unsubscribe_sms,
+			emailBlacklisted: unsubscribe_email === true ? true : undefined,
+			smsBlacklisted: unsubscribe_sms === true ? true : undefined,
 			unlinkListIds: unlinkListIds.length > 0 ? unlinkListIds : undefined,
 		};
 
