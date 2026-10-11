@@ -142,7 +142,6 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     const missing: string[] = []
     const uiRequired: string[] = []
     const invalidEnums: string[] = []
-    const invalidReasons: string[] = []
     const allProps: string[] = []
     const validPropKeys = new Set<string>()
     for (const [propName, prop] of Object.entries(props)) {
@@ -159,9 +158,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
         const valueProvided = value !== undefined && value !== null && value !== ''
         if (prop.required && !valueProvided) {
             const descriptionHint = prop.description ? ` — ${prop.description}` : ''
-            const resolvable = RESOLVABLE_PROP_TYPES.has(prop.type)
-            invalidReasons.push(resolvable ? `${propName} needs an id from ap_resolve_property_options` : `${propName} is missing`)
-            if (resolvable) {
+            if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
                 uiRequired.push(`${propName} (${prop.displayName})${descriptionHint}`)
             }
             else {
@@ -174,7 +171,6 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             const bad = provided.filter((v) => !allowed.some((a) => a === v))
             if (bad.length > 0) {
                 invalidEnums.push(`${propName}: ${bad.map((b) => JSON.stringify(b)).join(', ')} not allowed${optionsHint}`)
-                invalidReasons.push(`${propName} has a value it doesn't allow`)
             }
         }
     }
@@ -215,28 +211,29 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
     if (hasAuth && !input.auth) {
         parts.push(`This ${componentType} requires authentication.`)
     }
-    return { parts, missing, unknownKeys, uiRequired, invalidEnums, hasAuth, invalidReasons }
+    return { parts, missing, unknownKeys, uiRequired, invalidEnums, hasAuth }
 }
 
-async function detectUnknownInputProps({ pieceName, pieceVersion, componentName, componentType, input, platformId, log }: DetectUnknownInputPropsParams): Promise<{ unknownKeys: string[], message: string, invalidReasons: string[] }> {
-    const nothingFound = { unknownKeys: [], message: '', invalidReasons: [] }
-    const stepInput = isObject(input) ? input : {}
+async function detectUnknownInputProps({ pieceName, pieceVersion, componentName, componentType, input, platformId, log }: DetectUnknownInputPropsParams): Promise<{ unknownKeys: string[], message: string }> {
+    if (!isObject(input) || Object.keys(input).length === 0) {
+        return { unknownKeys: [], message: '' }
+    }
     try {
         const piece = await pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion })
         const component = componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName]
         if (isNil(component)) {
-            return nothingFound
+            return { unknownKeys: [], message: '' }
         }
-        const { unknownKeys, parts, invalidReasons } = diagnosePieceProps({ props: component.props, input: stepInput, pieceAuth: piece.auth, requireAuth: component.requireAuth, componentType })
+        const { unknownKeys, parts } = diagnosePieceProps({ props: component.props, input, pieceAuth: piece.auth, requireAuth: component.requireAuth, componentType })
         if (unknownKeys.length === 0) {
-            return { unknownKeys: [], message: '', invalidReasons }
+            return { unknownKeys: [], message: '' }
         }
         const unknownMessage = parts.find((p) => p.startsWith('Unknown properties:')) ?? `Unknown properties: ${unknownKeys.map((k) => `'${k}'`).join(', ')}.`
-        return { unknownKeys, message: unknownMessage, invalidReasons }
+        return { unknownKeys, message: unknownMessage }
     }
     catch (err) {
         log.warn({ error: err, piece: { name: pieceName }, componentName }, 'detectUnknownInputProps: failed to fetch piece metadata')
-        return nothingFound
+        return { unknownKeys: [], message: '' }
     }
 }
 
@@ -248,11 +245,11 @@ async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): P
     return { content: [{ type: 'text', text: `❌ ${message}` }] }
 }
 
-async function dropUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<{ input: Record<string, unknown>, unknownKeys: string[], message: string, invalidReasons: string[] }> {
+async function dropUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<{ input: Record<string, unknown>, unknownKeys: string[], message: string }> {
     const input = isObject(params.input) ? params.input : {}
-    const { unknownKeys, message, invalidReasons } = await detectUnknownInputProps(params)
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
     const knownInput = Object.fromEntries(Object.entries(input).filter(([key]) => !unknownKeys.includes(key)))
-    return { input: knownInput, unknownKeys, message, invalidReasons }
+    return { input: knownInput, unknownKeys, message }
 }
 
 async function keepKnownInputProps({ callerInput, ...params }: DetectUnknownInputPropsParams & { callerInput: Record<string, unknown> }): Promise<{ input: Record<string, unknown>, error: McpToolResult | null }> {
@@ -928,7 +925,6 @@ type DiagnosisResult = {
     uiRequired: string[]
     invalidEnums: string[]
     hasAuth: boolean
-    invalidReasons: string[]
 }
 
 type PropSummary = {

@@ -3,6 +3,7 @@ import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, 
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { flowVersionValidationUtil } from '../../flows/flow-version/flow-version-validator-util'
 import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
@@ -121,7 +122,6 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
                 const unknownPropFindings: string[] = []
-                const invalidReasonsByStep = new Map<string, string[]>([['trigger', triggerUnknown.invalidReasons]])
                 if (triggerUnknown.unknownKeys.length > 0) {
                     unknownPropFindings.push(`trigger: ${triggerUnknown.message}`)
                 }
@@ -151,7 +151,6 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
 
                     const stepUnknown = await knownStepInput({ step, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, platformId, log })
-                    invalidReasonsByStep.set(stepName, stepUnknown.invalidReasons)
                     const rewritten = mcpUtils.rewriteAllReferences({ input: stepUnknown.input, loopItems: step.loopItems, trigger: latestTrigger })
                     const rewrittenStep = { ...step, input: rewritten.input, loopItems: rewritten.loopItems }
                     const propertySettings = await stepPropertySettings({ actionName: step.actionName, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: { ...(rewritten.input ?? {}), ...(step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}) }, projectId, platformId, log })
@@ -195,7 +194,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
 
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
                 const validCount = allSteps.filter(s => s.valid).length
-                const invalidSteps = allSteps.filter(s => !s.valid).map(s => s.name)
+                const invalidStepList = allSteps.filter(s => !s.valid)
+                const invalidSteps = invalidStepList.map(s => s.name)
+                const describedInvalidSteps = await Promise.all(invalidStepList.map(async (step) => describeInvalidStep({
+                    name: step.name,
+                    reasons: await flowVersionValidationUtil(log).invalidPieceInputs({ platformId, step }),
+                })))
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
@@ -218,7 +222,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
                     return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.map((name) => describeInvalidStep({ name, reasons: invalidReasonsByStep.get(name) ?? [] })).join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${describedInvalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
             }
             catch (err) {
                 if (flowId) {
@@ -228,6 +232,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             }
         },
     }
+}
+
+function describeInvalidStep({ name, reasons }: { name: string, reasons: string[] }): string {
+    return reasons.length === 0 ? name : `${name} (${reasons.join('; ')})`
 }
 
 async function stepPropertySettings({ actionName, pieceName, pieceVersion, input, projectId, platformId, log }: {
@@ -246,21 +254,17 @@ async function stepPropertySettings({ actionName, pieceName, pieceVersion, input
     return mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input, projectId, platformId, log })
 }
 
-function describeInvalidStep({ name, reasons }: { name: string, reasons: string[] }): string {
-    return reasons.length === 0 ? name : `${name} (${reasons.join('; ')})`
-}
-
 async function knownStepInput({ step, pieceName, pieceVersion, platformId, log }: {
     step: z.infer<typeof stepSpec>
     pieceName: string | undefined
     pieceVersion: string | undefined
     platformId: string
     log: FastifyBaseLogger
-}): Promise<{ input: Record<string, unknown> | undefined, unknownKeys: string[], message: string, invalidReasons: string[] }> {
+}): Promise<{ input: Record<string, unknown> | undefined, unknownKeys: string[], message: string }> {
     const actionName = step.actionName
     const isPieceAction = step.type === FlowActionType.PIECE && !isNil(pieceName) && !isNil(pieceVersion) && !isNil(actionName)
     if (!isPieceAction) {
-        return { input: step.input, unknownKeys: [], message: '', invalidReasons: [] }
+        return { input: step.input, unknownKeys: [], message: '' }
     }
     return mcpUtils.dropUnknownInputProps({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input: step.input, platformId, log })
 }
