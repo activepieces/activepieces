@@ -6,10 +6,11 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { ImageModel, LanguageModel } from 'ai'
 import { createAiGateway } from 'ai-gateway-provider'
+import { withoutServerStorage } from './create-language-model'
 
 export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage: true }): ImageModel
 export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage?: false }): LanguageModel
-export function createCloudflareGatewayModel({ credentials, modelId, isImage = false, openaiResponsesModel = false, routing = 'compat', metadata, onOutcome }: CreateCloudflareGatewayModelParams): ImageModel | LanguageModel {
+export function createCloudflareGatewayModel({ credentials, modelId, isImage = false, routing = 'compat', metadata, onOutcome }: CreateCloudflareGatewayModelParams): ImageModel | LanguageModel {
     const { apiKey } = credentials.auth
     const { vertexProject, vertexRegion } = credentials.config
     const accountId = credentials.config.accountId ?? ''
@@ -50,7 +51,7 @@ export function createCloudflareGatewayModel({ credentials, modelId, isImage = f
             if (isImage) {
                 return openaiProvider.imageModel(actualModelId)
             }
-            return openaiResponsesModel ? openaiProvider.responses(actualModelId) : openaiProvider.chat(actualModelId)
+            return withoutServerStorage({ model: openaiProvider.responses(actualModelId), providerOptionsName: 'openai' })
         }
         default:
             return compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId })
@@ -95,7 +96,6 @@ export type CreateCloudflareGatewayModelParams = {
     credentials: Extract<AiProviderCredentials, { provider: AIProviderName.CLOUDFLARE_GATEWAY }>
     modelId: string
     isImage?: boolean
-    openaiResponsesModel?: boolean
     routing?: CloudflareGatewayRouting
     metadata?: CloudflareGatewayMetadata
     onOutcome?: ProviderOutcomeReporter

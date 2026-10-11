@@ -35,7 +35,7 @@ describe('createCloudflareGatewayModel', () => {
         it('routes an openai submodel to the gateway openai endpoint with the stripped id', () => {
             const model = identify(createCloudflareGatewayModel({ credentials, modelId: 'openai/gpt-4o', routing: 'submodel' }))
             expect(model.modelId).toBe('gpt-4o')
-            expect(model.provider).toContain('openai')
+            expect(model.provider).toBe('openai.responses')
         })
 
         it('falls back to the compat endpoint with the full model id for an unmapped prefix', () => {
