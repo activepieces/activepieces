@@ -39,19 +39,6 @@ export type GitlabUserStatus = {
   clear_status_at: string | null;
 };
 
-export type GitlabFile = {
-  file_name: string;
-  file_path: string;
-  size: number;
-  encoding: string;
-  content: string;
-  content_sha256: string;
-  ref: string;
-  blob_id: string;
-  commit_id: string;
-  last_commit_id: string;
-};
-
 export type GitlabDiff = {
   diff?: string;
   [key: string]: unknown;

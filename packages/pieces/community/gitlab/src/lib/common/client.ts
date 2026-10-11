@@ -40,6 +40,16 @@ export function encodeSegment({
   return encodeURIComponent(text);
 }
 
+export function filePathSegment(value: unknown): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error('File Path is required.');
+  }
+  if (value === '.' || value === '..') {
+    throw new Error('File Path is not valid.');
+  }
+  return encodeURIComponent(value);
+}
+
 export function projectPath(projectId: string | number): string {
   return `/projects/${encodeSegment({
     value: projectId,

@@ -107,7 +107,7 @@ export type GitlabQueryValue =
 
 export type GitlabRequest = {
   token: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE';
   path: string;
   query?: Record<string, GitlabQueryValue>;
   body?: unknown;
@@ -160,7 +160,7 @@ export function buildGitlabUrl({
 }
 
 async function readBody(response: Response): Promise<JsonValue> {
-  if (response.status === 204) {
+  if (response.status === 204 || response.body === null) {
     return undefined;
   }
   const text = await response.text();
@@ -178,13 +178,17 @@ async function readBody(response: Response): Promise<JsonValue> {
   return text;
 }
 
-export async function sendGitlabRequest<T>(
-  request: GitlabRequest
-): Promise<GitlabResponse<T>> {
+async function openGitlabResponse({
+  request,
+  accept,
+}: {
+  request: GitlabRequest;
+  accept: string;
+}): Promise<Response> {
   const url = buildGitlabUrl({ path: request.path, query: request.query });
   const headers: Record<string, string> = {
     Authorization: `Bearer ${request.token}`,
-    Accept: 'application/json',
+    Accept: accept,
   };
   let payload: string | undefined;
   if (request.body !== undefined) {
@@ -201,8 +205,8 @@ export async function sendGitlabRequest<T>(
     dispatcher,
   };
   const response = await fetch(url, init);
-  const body = await readBody(response);
   if (response.status >= 300 && response.status < 400) {
+    await response.body?.cancel();
     throw new GitlabApiError({
       message: `GitLab answered with an unexpected redirect (HTTP ${response.status}); the request was not followed.`,
       status: response.status,
@@ -212,13 +216,61 @@ export async function sendGitlabRequest<T>(
   if (!response.ok) {
     throw buildGitlabError({
       status: response.status,
-      responseBody: body,
+      responseBody: await readBody(response),
       statusMessages: request.statusMessages,
     });
   }
+  return response;
+}
+
+export async function sendGitlabRequest<T>(
+  request: GitlabRequest
+): Promise<GitlabResponse<T>> {
+  const response = await openGitlabResponse({
+    request,
+    accept: 'application/json',
+  });
+  const body = await readBody(response);
   return {
     status: response.status,
     headers: response.headers,
     body,
   };
+}
+
+export async function readGitlabRawPrefix({
+  request,
+  maxBytes,
+}: {
+  request: GitlabRequest;
+  maxBytes: number;
+}): Promise<{ bytes: Buffer; complete: boolean }> {
+  const response = await openGitlabResponse({
+    request,
+    accept: 'application/octet-stream',
+  });
+  if (response.body === null) {
+    return { bytes: Buffer.alloc(0), complete: true };
+  }
+  const reader = response.body.getReader();
+  const chunks: Buffer[] = [];
+  let length = 0;
+  let complete = true;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    const room = maxBytes - length;
+    if (value.byteLength > room) {
+      chunks.push(Buffer.from(value.subarray(0, room)));
+      length += room;
+      complete = false;
+      await reader.cancel();
+      break;
+    }
+    chunks.push(Buffer.from(value));
+    length += value.byteLength;
+  }
+  return { bytes: Buffer.concat(chunks, length), complete };
 }

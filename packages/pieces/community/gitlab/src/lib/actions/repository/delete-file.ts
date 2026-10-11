@@ -1,6 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gitlabAuth } from '../../auth';
-import { encodeSegment, gitlabRequest, projectPath } from '../../common/client';
+import {
+  filePathSegment,
+  gitlabRequest,
+  projectPath,
+} from '../../common/client';
 import { gitlabProps, optionalText, requireText } from '../../common/props';
 import { deletedFileOutputSchema } from '../../output-schemas';
 
@@ -33,20 +37,14 @@ export const deleteFileAction = createAction({
   },
   outputSchema: deletedFileOutputSchema,
   async run({ auth, propsValue }) {
-    const filePath = requireText({
-      value: propsValue.filePath,
-      label: 'File Path',
-    });
+    const filePath = propsValue.filePath;
     const branch = requireText({ value: propsValue.branch, label: 'Branch' });
     await gitlabRequest({
       auth,
       method: 'DELETE',
       path: `${projectPath(
         propsValue.projectId
-      )}/repository/files/${encodeSegment({
-        value: filePath,
-        label: 'File Path',
-      })}`,
+      )}/repository/files/${filePathSegment(filePath)}`,
       body: {
         branch,
         commit_message: requireText({

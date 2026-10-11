@@ -1,6 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gitlabAuth } from '../../auth';
-import { encodeSegment, gitlabRequest, projectPath } from '../../common/client';
+import {
+  filePathSegment,
+  gitlabRequest,
+  projectPath,
+} from '../../common/client';
 import { gitlabProps, optionalText, requireText } from '../../common/props';
 import { fileCommitOutputSchema } from '../../output-schemas';
 
@@ -67,10 +71,7 @@ export const createFileAction = createAction({
       method: 'POST',
       path: `${projectPath(
         propsValue.projectId
-      )}/repository/files/${encodeSegment({
-        value: propsValue.filePath,
-        label: 'File Path',
-      })}`,
+      )}/repository/files/${filePathSegment(propsValue.filePath)}`,
       body: {
         branch: requireText({ value: propsValue.branch, label: 'Branch' }),
         content: propsValue.content,

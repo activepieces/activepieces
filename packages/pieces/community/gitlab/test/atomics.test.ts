@@ -44,6 +44,7 @@ import { listCommitCommentsAction } from '../src/lib/actions/repository/list-com
 import {
   getFileAction,
   MAX_FILE_TEXT_BYTES,
+  decodeFilePrefix,
 } from '../src/lib/actions/repository/get-file';
 import { createFileAction } from '../src/lib/actions/repository/create-file';
 import { updateFileAction } from '../src/lib/actions/repository/update-file';
@@ -61,7 +62,8 @@ import { getUserAction } from '../src/lib/actions/users/get-user';
 import { listUsersAction } from '../src/lib/actions/users/list-users';
 import { getUserStatusAction } from '../src/lib/actions/users/get-user-status';
 import { setUserStatusAction } from '../src/lib/actions/users/set-user-status';
-import { rawPath, runAction, stubGitlab } from './helpers';
+import { FAKE_DISPATCHER, rawPath, runAction, stubGitlab } from './helpers';
+import { gitlabTransport } from '../src/lib/common/secret-request';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -504,39 +506,6 @@ const cases: Case[] = [
     query: { page: '1', per_page: '20' },
   },
   {
-    name: 'get_file',
-    action: getFileAction,
-    props: { ...P, filePath: 'src/a b.ts', ref: 'main' },
-    method: 'GET',
-    path: `${PP}/repository/files/src%2Fa%20b.ts`,
-    query: { ref: 'main' },
-    reply: {
-      file_name: 'a b.ts',
-      file_path: 'src/a b.ts',
-      size: 5,
-      encoding: 'base64',
-      content: Buffer.from('hello').toString('base64'),
-      ref: 'main',
-      blob_id: 'b',
-      commit_id: 'c',
-      last_commit_id: 'l',
-      content_sha256: 's',
-    },
-    result: {
-      file_name: 'a b.ts',
-      file_path: 'src/a b.ts',
-      size: 5,
-      ref: 'main',
-      blob_id: 'b',
-      commit_id: 'c',
-      last_commit_id: 'l',
-      content_sha256: 's',
-      content: 'hello',
-      isBinary: false,
-      truncated: false,
-    },
-  },
-  {
     name: 'create_file',
     action: createFileAction,
     props: {
@@ -726,6 +695,7 @@ describe('exact outgoing request per atomic', () => {
     const covered = new Set([
       ...cases.map((c) => c.action.name),
       'set_user_status',
+      'get_file',
     ]);
     const registered = Object.keys(gitlab.actions()).filter(
       (name) => name !== 'custom_api_call'
@@ -991,27 +961,166 @@ describe('rule checks', () => {
     ).rejects.toThrow(/Set Project/);
   });
 
-  it('get_file flags binary content and cuts large text', async () => {
-    const binary = Buffer.from([0x89, 0x50, 0x00, 0x01]).toString('base64');
-    const big = Buffer.from('a'.repeat(MAX_FILE_TEXT_BYTES + 10)).toString(
-      'base64'
+  it('get_file reads metadata with HEAD and content from the raw endpoint', async () => {
+    const seen = stubGitlab((entry) =>
+      entry.method === 'HEAD'
+        ? {
+            headers: {
+              'x-gitlab-file-name': 'a b.ts',
+              'x-gitlab-file-path': 'src/a b.ts',
+              'x-gitlab-size': '5',
+              'x-gitlab-ref': 'main',
+              'x-gitlab-blob-id': 'b',
+              'x-gitlab-commit-id': 'c',
+              'x-gitlab-last-commit-id': 'l',
+              'x-gitlab-content-sha256': 's',
+            },
+          }
+        : { body: 'hello' }
     );
-    stubGitlab([
-      { body: { encoding: 'base64', content: binary } },
-      { body: { encoding: 'base64', content: big } },
+    const result = await runAction({
+      action: getFileAction,
+      propsValue: { ...P, filePath: 'src/a b.ts', ref: 'main' },
+    });
+    expect(seen.map((s) => [s.method, rawPath(s), s.query])).toEqual([
+      ['HEAD', `${PP}/repository/files/src%2Fa%20b.ts`, { ref: 'main' }],
+      ['GET', `${PP}/repository/files/src%2Fa%20b.ts/raw`, { ref: 'main' }],
     ]);
-    expect(
-      await runAction({
-        action: getFileAction,
-        propsValue: { ...P, filePath: 'img.png', ref: 'main' },
+    expect(result).toEqual({
+      file_name: 'a b.ts',
+      file_path: 'src/a b.ts',
+      size: 5,
+      ref: 'main',
+      blob_id: 'b',
+      commit_id: 'c',
+      last_commit_id: 'l',
+      content_sha256: 's',
+      content: 'hello',
+      isBinary: false,
+      truncated: false,
+    });
+  });
+
+  it('file actions keep leading and trailing spaces in the path', async () => {
+    const seen = stubGitlab((entry) =>
+      entry.method === 'HEAD'
+        ? {}
+        : entry.method === 'DELETE'
+        ? { status: 204 }
+        : { body: 'x' }
+    );
+    await runAction({
+      action: getFileAction,
+      propsValue: { ...P, filePath: ' report.txt', ref: 'main' },
+    });
+    const deleted = await runAction({
+      action: deleteFileAction,
+      propsValue: {
+        ...P,
+        filePath: ' report.txt',
+        branch: 'main',
+        commitMessage: 'rm',
+      },
+    });
+    await runAction({
+      action: updateFileAction,
+      propsValue: {
+        ...P,
+        filePath: 'report.txt ',
+        branch: 'main',
+        content: 'x',
+        commitMessage: 'u',
+      },
+    });
+    expect(rawPath(seen[0])).toBe(`${PP}/repository/files/%20report.txt`);
+    expect(rawPath(seen[2])).toBe(`${PP}/repository/files/%20report.txt`);
+    expect(deleted).toMatchObject({ file_path: ' report.txt' });
+    expect(rawPath(seen[3])).toBe(`${PP}/repository/files/report.txt%20`);
+    await expect(
+      runAction({
+        action: createFileAction,
+        propsValue: {
+          ...P,
+          filePath: '   ',
+          branch: 'main',
+          content: 'x',
+          commitMessage: 'c',
+        },
       })
-    ).toMatchObject({ content: null, isBinary: true });
+    ).rejects.toThrow('File Path is required.');
+  });
+
+  it('get_file flags binary content and cuts large text', async () => {
+    const binary = Buffer.from([0x89, 0x50, 0x00, 0x01]);
+    const big = 'a'.repeat(MAX_FILE_TEXT_BYTES + 10);
+    stubGitlab((entry) =>
+      entry.method === 'HEAD'
+        ? {}
+        : { body: entry.path.includes('img') ? binary.toString('latin1') : big }
+    );
+    expect(decodeFilePrefix({ bytes: binary, complete: true })).toMatchObject({
+      content: null,
+      isBinary: true,
+    });
     const large: { content: string; truncated: boolean } = await runAction({
       action: getFileAction,
       propsValue: { ...P, filePath: 'big.txt', ref: 'main' },
     });
     expect(large.truncated).toBe(true);
     expect(large.content.length).toBe(MAX_FILE_TEXT_BYTES);
+  });
+
+  it('get_file stops reading the raw stream once the preview is full', async () => {
+    let pulled = 0;
+    const chunk = new Uint8Array(64 * 1024).fill(0x61);
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += chunk.byteLength;
+        controller.enqueue(chunk);
+      },
+    });
+    vi.spyOn(gitlabTransport, 'getDispatcher').mockResolvedValue(
+      FAKE_DISPATCHER
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_input: string, init: RequestInit) =>
+        init.method === 'HEAD'
+          ? new Response(null, {
+              status: 200,
+              headers: { 'x-gitlab-size': '50000000' },
+            })
+          : new Response(stream, { status: 200 })
+      )
+    );
+    const result: { truncated: boolean; size: number; content: string } =
+      await runAction({
+        action: getFileAction,
+        propsValue: { ...P, filePath: 'huge.txt', ref: 'main' },
+      });
+    expect(result.truncated).toBe(true);
+    expect(result.size).toBe(50_000_000);
+    expect(result.content.length).toBe(MAX_FILE_TEXT_BYTES);
+    expect(pulled).toBeLessThan(MAX_FILE_TEXT_BYTES + 4 * chunk.byteLength);
+  });
+
+  it('decodeFilePrefix keeps strict UTF-8 and only forgives a split character at the cut', () => {
+    const euro = Buffer.from('\u20ac');
+    const split = Buffer.concat([
+      Buffer.alloc(MAX_FILE_TEXT_BYTES - 1, 0x61),
+      euro,
+    ]);
+    const cut = decodeFilePrefix({ bytes: split, complete: false });
+    expect(cut).toMatchObject({ isBinary: false, truncated: true });
+    expect(cut.content?.length).toBe(MAX_FILE_TEXT_BYTES - 1);
+    const invalid = Buffer.concat([
+      Buffer.alloc(9000, 0x61),
+      Buffer.from([0xff, 0xfe]),
+      Buffer.alloc(MAX_FILE_TEXT_BYTES, 0x61),
+    ]);
+    expect(decodeFilePrefix({ bytes: invalid, complete: false })).toMatchObject(
+      { content: null, isBinary: true }
+    );
   });
 
   it('list_merge_request_diffs caps each diff and keeps paging from x-next-page', async () => {
