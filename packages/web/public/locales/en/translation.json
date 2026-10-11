@@ -3318,5 +3318,17 @@
   "Couldn't sync {name}": "Couldn't sync {name}",
   "Edit {email}": "Edit {email}",
   "Delete the invitation for {email}?": "Delete the invitation for {email}?",
-  "Delete {email}?": "Delete {email}?"
+  "Delete {email}?": "Delete {email}?",
+  "Google sign-in turned on": "Google sign-in turned on",
+  "Google sign-in turned off": "Google sign-in turned off",
+  "Email sign-in turned on": "Email sign-in turned on",
+  "Email sign-in turned off": "Email sign-in turned off",
+  "Turn off email sign-in?": "Turn off email sign-in?",
+  "People who sign in with an email and password, including you, will have to use Google or SAML instead.": "People who sign in with an email and password, including you, will have to use Google or SAML instead.",
+  "No other sign-in method is on. Nobody, including you, will be able to sign in until one is set up.": "No other sign-in method is on. Nobody, including you, will be able to sign in until one is set up.",
+  "Turn off email sign-in": "Turn off email sign-in",
+  "SAML sign-in": "SAML sign-in",
+  "Turn off SAML sign-in?": "Turn off SAML sign-in?",
+  "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.": "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.",
+  "Turn off SAML": "Turn off SAML"
 }

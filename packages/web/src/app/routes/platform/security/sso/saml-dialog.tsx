@@ -9,17 +9,20 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
-import { adminLayout } from '@/app/components/admin';
+import {
+  ConfirmDialog,
+  StatusDot,
+  adminLayout,
+  useAdminAction,
+} from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ApMarkdown } from '@/components/custom/markdown';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -42,7 +45,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 export const ConfigureSamlDialog = ({
@@ -97,22 +100,21 @@ const SamlWizard = ({
     connected || !domainVerified ? 'domain' : 'saml',
   );
 
-  const { mutate: disableSaml, isPending: isDisabling } = useMutation({
-    mutationFn: async () => {
+  const disableSaml = useAdminAction({
+    verb: 'turnOff',
+    name: t('SAML sign-in'),
+    run: async () => {
       await platformApi.update(
         { federatedAuthProviders: { saml: null } },
         platform.id,
       );
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
+    onSuccess: onClose,
   });
 
   const disableAction = connected
-    ? { onDisable: () => disableSaml(), isDisabling }
+    ? { onDisable: () => disableSaml.mutateAsync() }
     : null;
 
   return (
@@ -212,26 +214,16 @@ const DomainStep = ({
     ssoDomainValue.trim().toLowerCase() !== (platform.ssoDomain ?? '');
   const [showUpdateWarning, setShowUpdateWarning] = useState(false);
 
-  const { mutate: saveDomain, isPending: isSaving } = useMutation({
-    mutationFn: async (values: SsoDomainFormValues) => {
+  const saveDomain = useAdminAction<SsoDomainFormValues>({
+    verb: 'save',
+    name: '',
+    run: async (values) => {
       await samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase());
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('SSO domain saved'));
-      setShowUpdateWarning(false);
-    },
-    onError: (error) => {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: api.extractServerErrorMessage(
-          error,
-          t("Couldn't save domain"),
-        ),
-      });
-      setShowUpdateWarning(false);
-    },
+    onSuccess: () => setShowUpdateWarning(false),
   });
+  const [notFoundYet, setNotFoundYet] = useState(false);
 
   const { mutate: verifyDomain, isPending: isVerifying } = useMutation({
     mutationFn: async () => {
@@ -240,22 +232,16 @@ const DomainStep = ({
       return result;
     },
     onSuccess: (result) => {
-      if (
+      const verified =
         result.ssoDomainVerification?.status ===
-        SsoDomainVerificationStatus.VERIFIED
-      ) {
-        toast.success(t('Domain verified'));
+        SsoDomainVerificationStatus.VERIFIED;
+      setNotFoundYet(!verified);
+      if (verified) {
         onVerified();
-      } else {
-        toast.message(
-          t('TXT record not found yet — DNS can take a few minutes.'),
-        );
       }
     },
     onError: (error) => {
-      toast.error(
-        api.extractServerErrorMessage(error, t("Couldn't verify domain")),
-      );
+      mutationFeedback.error({ error, title: t("Couldn't verify domain") });
     },
   });
 
@@ -264,7 +250,7 @@ const DomainStep = ({
       setShowUpdateWarning(true);
       return;
     }
-    saveDomain(values);
+    saveDomain.mutate(values);
   };
 
   return (
@@ -293,28 +279,14 @@ const DomainStep = ({
           <DomainVerificationPanel
             verification={verification}
             isVerifying={isVerifying}
+            notFoundYet={notFoundYet}
             onVerify={() => verifyDomain()}
           />
         )}
 
-        {form.formState.errors.root?.serverError && (
-          <FormMessage>
-            {form.formState.errors.root.serverError.message}
-          </FormMessage>
-        )}
-
         <DialogFooter>
           {disableAction && (
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-              type="button"
-              variant="basic"
-              className="text-danger-11"
-              loading={disableAction.isDisabling}
-              onClick={disableAction.onDisable}
-            >
-              {t('Disable')}
-            </Button>
+            <DisableSamlButton disableAction={disableAction} />
           )}
           {isDirty ? (
             <Button
@@ -324,7 +296,7 @@ const DomainStep = ({
                   : AdminControl.SSO_SAML_DOMAIN_SUBMIT,
               )}
               type="submit"
-              loading={isSaving}
+              loading={saveDomain.isPending}
               disabled={!form.formState.isValid}
             >
               {platform.ssoDomain ? t('Update domain') : t('Save domain')}
@@ -336,39 +308,18 @@ const DomainStep = ({
           )}
         </DialogFooter>
       </form>
-      <Dialog open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
-        <DialogContent className={adminLayout.dialog.md}>
-          <DialogHeader>
-            <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
-          </DialogHeader>
-          <Alert variant="warning">
-            <TriangleAlert className="size-4" />
-            <AlertDescription>
-              {t(
-                "Users won't be able to sign in via SSO until you verify the new domain.",
-              )}
-            </AlertDescription>
-          </Alert>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={isSaving}
-              onClick={() => setShowUpdateWarning(false)}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DOMAIN_UPDATE_CONFIRM)}
-              type="button"
-              loading={isSaving}
-              onClick={() => saveDomain(form.getValues())}
-            >
-              {t('Update domain')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={showUpdateWarning}
+        onOpenChange={setShowUpdateWarning}
+        title={t('Update SSO domain?')}
+        consequence={t(
+          "Users won't be able to sign in via SSO until you verify the new domain.",
+        )}
+        confirmLabel={t('Update domain')}
+        destructive={false}
+        controlId={AdminControl.SSO_SAML_DOMAIN_UPDATE_CONFIRM}
+        onConfirm={() => saveDomain.mutateAsync(form.getValues())}
+      />
     </Form>
   );
 };
@@ -396,15 +347,15 @@ const SamlStep = ({
     ApFlagId.SAML_AUTH_ACS_URL,
   );
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
+  const { mutate, isPending } = useAdminAction<UpdatePlatformRequestBody>({
+    verb: 'save',
+    name: '',
+    run: async (request) => {
       await platformApi.update(request, platform.id);
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
+    feedback: 'inline',
+    onSuccess: onClose,
   });
 
   return (
@@ -436,7 +387,17 @@ Activepieces
         <form
           className="grid space-y-4"
           onSubmit={form.handleSubmit((data) => {
-            mutate({ federatedAuthProviders: { saml: data } });
+            form.clearErrors('root.serverError');
+            mutate(
+              { federatedAuthProviders: { saml: data } },
+              {
+                onError: (error) =>
+                  form.setError('root.serverError', {
+                    type: 'manual',
+                    message: mutationFeedback.message(error),
+                  }),
+              },
+            );
           })}
         >
           <FormField
@@ -478,16 +439,10 @@ Activepieces
 
           <DialogFooter>
             {disableAction && (
-              <Button
-                {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-                type="button"
-                variant="basic"
-                className="text-danger-11 mr-auto"
-                loading={disableAction.isDisabling}
-                onClick={disableAction.onDisable}
-              >
-                {t('Disable')}
-              </Button>
+              <DisableSamlButton
+                disableAction={disableAction}
+                className="mr-auto"
+              />
             )}
             <Button variant="outline" type="button" onClick={onBack}>
               {t('Back')}
@@ -507,13 +462,41 @@ Activepieces
   );
 };
 
+const DisableSamlButton = ({
+  disableAction,
+  className,
+}: {
+  disableAction: NonNullable<DisableAction>;
+  className?: string;
+}) => (
+  <ConfirmDialog
+    title={t('Turn off SAML sign-in?')}
+    consequence={t(
+      "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.",
+    )}
+    confirmLabel={t('Turn off SAML')}
+    controlId={AdminControl.SSO_SAML_DISABLE_RUN}
+    onConfirm={disableAction.onDisable}
+  >
+    <Button
+      type="button"
+      variant="basic"
+      className={cn('text-danger-11', className)}
+    >
+      {t('Disable')}
+    </Button>
+  </ConfirmDialog>
+);
+
 const DomainVerificationPanel = ({
   verification,
   isVerifying,
+  notFoundYet,
   onVerify,
 }: {
   verification: SsoDomainVerification;
   isVerifying: boolean;
+  notFoundYet: boolean;
   onVerify: () => void;
 }) => {
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
@@ -528,7 +511,7 @@ const DomainVerificationPanel = ({
             )}
           </p>
           <VerificationRecordRow record={verification.record} />
-          <div>
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               {...adminControl(AdminControl.SSO_SAML_DNS_RUN)}
               type="button"
@@ -539,6 +522,11 @@ const DomainVerificationPanel = ({
             >
               {t('Verify DNS')}
             </Button>
+            {notFoundYet && !isVerifying && (
+              <span role="status" className="text-xs text-gray-11">
+                {t('TXT record not found yet — DNS can take a few minutes.')}
+              </span>
+            )}
           </div>
         </>
       )}
@@ -560,10 +548,9 @@ const VerificationStatusBadge = ({
     );
   }
   return (
-    <div className="flex items-center gap-2 text-sm text-warning-11">
-      <Loader2 className="size-4 animate-spin" />
+    <StatusDot tone="warning" pulse className="text-warning-11">
       {t('Waiting for DNS')}
-    </div>
+    </StatusDot>
   );
 };
 
@@ -616,8 +603,7 @@ type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 type WizardStep = 'domain' | 'saml';
 
 type DisableAction = {
-  onDisable: () => void;
-  isDisabling: boolean;
+  onDisable: () => Promise<unknown>;
 } | null;
 
 type ConfigureSamlDialogProps = {

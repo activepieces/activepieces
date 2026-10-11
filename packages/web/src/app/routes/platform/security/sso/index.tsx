@@ -1,11 +1,15 @@
-import { SsoDomainVerificationStatus } from '@activepieces/shared';
+import {
+  SsoDomainVerificationStatus,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
-import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import {
   AdminPage,
   AdminPageHeader,
+  InstantSwitch,
   SettingsPanel,
   SettingsRow,
   StatusDot,
@@ -14,10 +18,8 @@ import {
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { AdminControl, adminControl } from '@/lib/admin-control';
+import { AdminControl } from '@/lib/admin-control';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
@@ -31,23 +33,11 @@ const SSOPage = () => {
   const emailAuthEnabled = platform.emailAuthEnabled;
   const allowedDomains = platform.allowedAuthDomains ?? [];
 
-  const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Email authentication updated'), { duration: 3000 });
-      },
-    });
-
-  const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Google authentication updated'), { duration: 3000 });
-      },
-    });
+  const updatePlatform = async (request: UpdatePlatformRequestBody) => {
+    await platformApi.update(request, platform.id);
+    await refetch();
+  };
+  const otherSignInEnabled = platform.googleAuthEnabled || samlConnected;
 
   return (
     <AdminPage width="content">
@@ -85,16 +75,17 @@ const SSOPage = () => {
             "Allow logins through google's single sign-on functionality.",
           )}
         >
-          <Switch
-            {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
+          <InstantSwitch
+            controlId={AdminControl.SSO_GOOGLE_TOGGLE}
             aria-label="Google"
             checked={platform.googleAuthEnabled}
-            onCheckedChange={() =>
-              toggleGoogleAuth({
-                googleAuthEnabled: !platform.googleAuthEnabled,
-              })
+            onCheckedChange={(googleAuthEnabled) =>
+              updatePlatform({ googleAuthEnabled })
             }
-            disabled={isGoogleAuthPending}
+            undo
+            successMessage={(on) =>
+              on ? t('Google sign-in turned on') : t('Google sign-in turned off')
+            }
           />
         </SettingsRow>
 
@@ -134,16 +125,29 @@ const SSOPage = () => {
           title={t('Allowed Email Login')}
           description={t('Allow logins through email and password.')}
         >
-          <Switch
-            {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
+          <InstantSwitch
+            controlId={AdminControl.SSO_EMAIL_LOGIN_TOGGLE}
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
-            onCheckedChange={() =>
-              toggleEmailAuthentication({
-                emailAuthEnabled: !platform.emailAuthEnabled,
-              })
+            onCheckedChange={(next) => updatePlatform({ emailAuthEnabled: next })}
+            successMessage={(on) =>
+              on ? t('Email sign-in turned on') : t('Email sign-in turned off')
             }
-            disabled={isEmailAuthPending}
+            confirmBefore={(next) =>
+              next
+                ? null
+                : {
+                    title: t('Turn off email sign-in?'),
+                    consequence: otherSignInEnabled
+                      ? t(
+                          'People who sign in with an email and password, including you, will have to use Google or SAML instead.',
+                        )
+                      : t(
+                          'No other sign-in method is on. Nobody, including you, will be able to sign in until one is set up.',
+                        ),
+                    confirmLabel: t('Turn off email sign-in'),
+                  }
+            }
           />
         </SettingsRow>
       </SettingsPanel>
