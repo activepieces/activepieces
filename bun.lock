@@ -9739,7 +9739,7 @@
     },
     "packages/pieces/community/vtiger": {
       "name": "@activepieces/piece-vtiger",
-      "version": "1.4.1",
+      "version": "1.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9747,10 +9747,12 @@
         "@activepieces/pieces-framework": "workspace:*",
         "crypto-js": "4.2.0",
         "dayjs": "1.11.9",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/crypto-js": "4.2.2",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/wafeq": {
