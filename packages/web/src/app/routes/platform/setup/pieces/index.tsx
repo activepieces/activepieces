@@ -1,4 +1,4 @@
-import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
   PieceMetadataModelSummary,
   PropertyType,
@@ -16,13 +16,14 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
@@ -32,7 +33,6 @@ import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { oauthAppsQueries } from '@/features/connections';
 import {
@@ -43,7 +43,6 @@ import {
 } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 
 export const PiecesListTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -63,6 +62,16 @@ export const PiecesListTab = () => {
 
   const { refetch: refetchPiecesOAuth2AppsMap } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
+
+  const { mutateAsync: deletePiece } =
+    useAdminAction<PieceMetadataModelSummary>({
+      verb: 'delete',
+      name: (piece) => piece.displayName,
+      run: async (piece) => {
+        await piecesApi.delete(piece.id!);
+        await refetchPieces();
+      },
+    });
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -143,44 +152,36 @@ export const PiecesListTab = () => {
                   isEnabled={isEnabled}
                 />
                 {row.original.pieceType === PieceType.CUSTOM && (
-                  <ConfirmationDeleteDialog
-                    title={t('Delete {name}', { name: row.original.name })}
-                    entityName={t('Piece')}
-                    controlId={AdminControl.PIECES_DELETE_CONFIRM}
-                    message={t(
+                  <ConfirmDialog
+                    title={t('Delete {name}?', {
+                      name: row.original.displayName,
+                    })}
+                    description={t(
                       'This will permanently delete this piece, all steps using it will fail.',
                     )}
-                    mutationFn={async () => {
-                      await piecesApi.delete(row.original.id!);
-                      await refetchPieces();
-                    }}
-                    onError={(error) => {
-                      if (api.isError(error)) {
-                        const apError = error.response?.data as ApErrorParams;
-                        if (apError?.code === ErrorCode.VALIDATION) {
-                          toast.error(apError.params.message);
-                          return;
-                        }
-                      }
-                      toast.error(t('Failed to delete piece'));
-                    }}
+                    confirmLabel={t('Delete piece')}
+                    controlId={AdminControl.PIECES_DELETE_CONFIRM}
+                    onConfirm={() => deletePiece(row.original)}
                   >
                     <Button
                       {...adminControl(AdminControl.PIECES_DELETE_OPEN)}
                       variant="ghost"
                       size={'sm'}
+                      aria-label={t('Delete {name}', {
+                        name: row.original.displayName,
+                      })}
                       disabled={!isEnabled}
                     >
                       <Trash className="size-4 text-danger-11" />
                     </Button>
-                  </ConfirmationDeleteDialog>
+                  </ConfirmDialog>
                 )}
               </div>
             );
           },
         },
       ],
-      [isEnabled, refetchPieces, refetchPiecesOAuth2AppsMap],
+      [isEnabled, refetchPieces, refetchPiecesOAuth2AppsMap, deletePiece],
     );
 
   return (

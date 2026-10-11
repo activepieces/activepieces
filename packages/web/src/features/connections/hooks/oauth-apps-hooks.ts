@@ -1,53 +1,11 @@
-import {
-  UpsertOAuth2AppRequest,
-  ApEdition,
-  ApFlagId,
-  AppConnectionType,
-} from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { toast } from 'sonner';
+import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 
 import { PiecesOAuth2AppsMap } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { oauthAppsApi } from '../api/oauth-apps';
-
-export const oauthAppsMutations = {
-  useDeleteOAuthApp: (refetch: () => void, setOpen: (open: boolean) => void) =>
-    useMutation({
-      mutationFn: async (credentialId: string) => {
-        await oauthAppsApi.delete(credentialId);
-        refetch();
-      },
-      onSuccess: () => {
-        toast.success(t('OAuth2 Credentials Deleted'), {
-          duration: 3000,
-        });
-        setOpen(false);
-      },
-    }),
-
-  useUpsertOAuthApp: (
-    refetch: () => void,
-    setOpen: (open: boolean) => void,
-    onConfigurationDone: () => void,
-  ) =>
-    useMutation({
-      mutationFn: async (request: UpsertOAuth2AppRequest) => {
-        await oauthAppsApi.upsert(request);
-        refetch();
-      },
-      onSuccess: () => {
-        toast.success(t('OAuth2 Credentials Updated'), {
-          duration: 3000,
-        });
-        onConfigurationDone();
-        setOpen(false);
-      },
-    }),
-};
 
 export const oauthAppsQueries = {
   useOAuthAppConfigured(pieceId: string) {
