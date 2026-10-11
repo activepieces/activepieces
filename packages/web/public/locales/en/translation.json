@@ -3347,5 +3347,8 @@
   "Template updated": "Template updated",
   "Rename role": "Rename role",
   "signing keys": "signing keys",
-  "Couldn't save the tools": "Couldn't save the tools"
+  "Couldn't save the tools": "Couldn't save the tools",
+  "Billing information": "Billing information",
+  "queue metrics": "queue metrics",
+  "system health": "system health"
 }

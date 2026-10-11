@@ -9,11 +9,11 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
-import { toast } from 'sonner';
 
 import {
   AdminPage,
   AdminPageHeader,
+  adminFeedback,
   adminSurface,
 } from '@/app/components/admin';
 import { BillingPageShell } from '@/app/components/billing-page-shell';
@@ -80,7 +80,11 @@ function BillingRefreshButton() {
       loading={isRefreshing}
       onClick={() =>
         refreshBilling(undefined, {
-          onSuccess: () => toast.success(t('Billing information refreshed')),
+          onSuccess: () =>
+            adminFeedback.done({
+              verb: 'update',
+              name: t('Billing information'),
+            }),
         })
       }
     >

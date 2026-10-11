@@ -55,8 +55,12 @@ export default function SettingsHealthPage({
     isError: isReportError,
     refetch: refetchReport,
   } = healthMetricsQueries.useRunMetrics(range, section === 'runs');
-  const { data: live, isLoading: isLiveLoading } =
-    healthMetricsQueries.useQueueMetrics(range, section === 'queue');
+  const {
+    data: live,
+    isLoading: isLiveLoading,
+    isError: isLiveError,
+    refetch: refetchLive,
+  } = healthMetricsQueries.useQueueMetrics(range, section === 'queue');
 
   const handleMonthChange = (month: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -109,7 +113,12 @@ export default function SettingsHealthPage({
       )}
 
       {section === 'queue' && (
-        <QueueTab live={live} isLoading={isLiveLoading} />
+        <QueueTab
+          live={live}
+          isLoading={isLiveLoading}
+          isError={isLiveError}
+          onRetry={refetchLive}
+        />
       )}
     </AdminPage>
   );

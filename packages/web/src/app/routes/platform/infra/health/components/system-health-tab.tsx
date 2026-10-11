@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 
 import { DailyHealthStrip } from './daily-health-strip';
 
@@ -46,7 +47,12 @@ type SystemHealthTabProps = {
 export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
-  const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
+  const {
+    data: systemHealth,
+    isPending,
+    isError,
+    refetch,
+  } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
   const release = systemHealth?.release;
   const currentVersion = release?.current;
@@ -165,6 +171,13 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
         : t('No workers are connected.'),
     },
   ];
+
+
+  if (isError) {
+    return (
+      <DataFetchErrorState entity={t('system health')} onRetry={refetch} />
+    );
+  }
 
   return (
     <>
