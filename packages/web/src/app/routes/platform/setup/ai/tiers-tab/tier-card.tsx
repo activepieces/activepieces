@@ -68,6 +68,9 @@ export function TierCard({
 }: TierCardProps) {
   const { mutateAsync: updateAsync, isPending } =
     platformModelTierMutations.useUpdate({ feedback: 'errorsOnly' });
+  const { mutateAsync: undoAsync } = platformModelTierMutations.useUpdate({
+    feedback: 'silent',
+  });
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -102,7 +105,7 @@ export function TierCard({
               return Promise.resolve();
             }
             const at = Math.min(position, current.length);
-            return updateAsync({
+            return undoAsync({
               id: tier.id,
               request: {
                 entries: [
@@ -245,15 +248,11 @@ export function TierCard({
               variant="ghost"
               size="icon-sm"
               aria-label={t('Tier actions')}
-              disabled={isPending}
             >
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            onCloseAutoFocus={(event) => event.preventDefault()}
-          >
+          <DropdownMenuContent align="end">
             <DropdownMenuItem
               onSelect={() => onEdit(menuTriggerRef.current)}
               {...adminControl(AdminControl.AI_TIER_OPEN)}
@@ -357,7 +356,6 @@ export function TierCard({
                   menu={
                     <RowMenu
                       isMain={isMain}
-                      disabled={isPending}
                       canMoveUp={position > 0}
                       canMoveDown={position < tier.entries.length - 1}
                       onChangeMain={() => setMainPickerOpen(true)}
@@ -554,7 +552,6 @@ function TierTag({
 
 function RowMenu({
   isMain,
-  disabled,
   canMoveUp,
   canMoveDown,
   onChangeMain,
@@ -563,7 +560,6 @@ function RowMenu({
   onRemove,
 }: {
   isMain: boolean;
-  disabled: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onChangeMain: () => void;
@@ -579,15 +575,11 @@ function RowMenu({
           size="icon-xs"
           className="shrink-0 text-gray-10"
           aria-label={t('Model actions')}
-          disabled={disabled}
         >
           <MoreHorizontal className="size-3.5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        onCloseAutoFocus={(event) => event.preventDefault()}
-      >
+      <DropdownMenuContent align="end">
         {isMain && (
           <DropdownMenuItem
             onSelect={onChangeMain}

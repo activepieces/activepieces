@@ -54,6 +54,7 @@ export const SigningKeysStep = ({
       <AdminQueryState
         isLoading={isLoading}
         isError={isError}
+        hasData={signingKeys.length > 0}
         onRetry={refetch}
         entity={t('signing keys')}
         skeleton={

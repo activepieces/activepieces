@@ -1,5 +1,6 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isPieceVisible, PieceSet } from '@activepieces/shared';
+import { useIsMutating } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -23,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetKeys, pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
   });
   const { mutate: updateSet, mutateAsync: updateSetAsync } =
     pieceSetMutations.useUpdatePieceSet();
+  const saving = useIsMutating({ mutationKey: pieceSetKeys.update }) > 0;
   const [pieceToInclude, setPieceToInclude] =
     useState<PieceMetadataModelSummary | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
@@ -236,6 +238,8 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
                 <Switch
                   {...adminControl(AdminControl.PIECE_SETS_PIECE_TOGGLE)}
                   checked={included}
+                  disabled={saving}
+                  aria-busy={saving}
                   onCheckedChange={() => togglePiece(row.original.name)}
                 />
               </div>
@@ -243,7 +247,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
           },
         },
       ],
-      [pieceSet, togglePiece],
+      [pieceSet, togglePiece, saving],
     );
 
   const openPieceOrPromptInclude = (piece: PieceMetadataModelSummary) => {

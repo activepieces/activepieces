@@ -1,3 +1,5 @@
+import { apId } from '@activepieces/core-utils';
+
 import {
   DataTable,
   DataTableProps,
@@ -23,6 +25,7 @@ export function AdminDataTable<
     >
       <DataTable
         {...props}
+        getRowId={props.getRowId ?? ((row) => row.id ?? apId())}
         emptyStateIcon={
           props.emptyStateIcon && (
             <span className="flex size-10 items-center justify-center rounded-lg bg-gray-3 text-gray-11 [&_svg]:size-5">

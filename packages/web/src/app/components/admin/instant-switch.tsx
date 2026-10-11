@@ -17,6 +17,7 @@ export function InstantSwitch({
   undo = false,
   confirmBefore,
   blockedReason,
+  beforeSave,
   disabled = false,
   controlId,
   id,
@@ -40,14 +41,23 @@ export function InstantSwitch({
   };
   const undoTo = async (target: boolean) => {
     if (latest.current.pending) {
-      return;
+      throw mutationFeedback.userError(
+        t('Wait for the current change to finish, then undo.'),
+      );
     }
     if (latest.current.blockedReason) {
       throw mutationFeedback.userError(latest.current.blockedReason);
     }
     const confirm = latest.current.confirmBefore?.(target);
     if (confirm) {
-      askFirst({ next: target, confirm, isUndo: true });
+      await new Promise<void>((resolve, reject) =>
+        askFirst({
+          next: target,
+          confirm,
+          isUndo: true,
+          settle: { resolve, reject },
+        }),
+      );
       return;
     }
     await save(target, true);
@@ -58,10 +68,16 @@ export function InstantSwitch({
       : checked;
 
   const save = async (next: boolean, isUndo: boolean) => {
+    if (latest.current.blockedReason) {
+      throw mutationFeedback.userError(latest.current.blockedReason);
+    }
     setOptimistic({ value: next, base: latestChecked.current });
     setPending(true);
     latest.current.pending = true;
     try {
+      if (beforeSave) {
+        await beforeSave(next);
+      }
       await onCheckedChange(next);
       setOptimistic(null);
     } catch (error) {
@@ -122,10 +138,20 @@ export function InstantSwitch({
           onOpenChange={(open) => {
             if (!open) {
               setConfirming(null);
+              if (lastConfirm.settle) {
+                const cancelled = new Error('Undo cancelled');
+                mutationFeedback.markShown(cancelled);
+                lastConfirm.settle.reject(cancelled);
+                lastConfirm.settle = undefined;
+              }
             }
           }}
           {...lastConfirm.confirm}
-          onConfirm={() => save(lastConfirm.next, lastConfirm.isUndo)}
+          onConfirm={async () => {
+            await save(lastConfirm.next, lastConfirm.isUndo);
+            lastConfirm.settle?.resolve();
+            lastConfirm.settle = undefined;
+          }}
         />
       )}
     </>
@@ -138,6 +164,7 @@ type PendingConfirm = {
   next: boolean;
   confirm: InstantSwitchConfirm;
   isUndo: boolean;
+  settle?: { resolve: () => void; reject: (error: unknown) => void };
 };
 
 export type InstantSwitchConfirm = Omit<
@@ -153,6 +180,7 @@ export type InstantSwitchProps = {
   undo?: boolean;
   confirmBefore?: (next: boolean) => InstantSwitchConfirm | null;
   blockedReason?: string;
+  beforeSave?: (next: boolean) => Promise<void>;
   disabled?: boolean;
   controlId?: AdminControl;
   id?: string;

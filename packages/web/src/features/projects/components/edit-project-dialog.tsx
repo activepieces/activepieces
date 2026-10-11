@@ -7,7 +7,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
@@ -29,7 +28,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -37,6 +35,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -119,14 +118,11 @@ const EditProjectForm = ({
       queryClient.invalidateQueries({
         queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
       });
-      toast.success(t('Your changes have been saved.'), {
-        duration: 3000,
-      });
+      mutationFeedback.success(t('Changes saved'));
       onClose();
     },
     (error) => {
-      console.error(error);
-      internalErrorToast();
+      mutationFeedback.error({ error, title: t("Couldn't save changes") });
     },
   );
 

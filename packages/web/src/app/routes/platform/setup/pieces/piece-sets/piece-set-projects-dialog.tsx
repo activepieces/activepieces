@@ -90,6 +90,7 @@ const AssignProjectsForm = ({
     removed: string[];
   }>({
     verb: 'save',
+    messages: { failed: t("Some project changes weren't saved") },
     run: async ({ added, removed }) => {
       try {
         if (added.length > 0) {

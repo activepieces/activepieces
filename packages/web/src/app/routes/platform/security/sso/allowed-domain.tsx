@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
@@ -44,16 +45,17 @@ export const AllowedDomainDialog = ({
   refetch,
 }: AllowedDomainDialogProps) => {
   const [open, setOpen] = useState(false);
+  const { data: currentUser } = userHooks.useCurrentUser();
   const form = useForm<AllowedDomainsFormValues>({
-    defaultValues: {
-      allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map(
-        (domain) => ({
-          domain,
-        }),
-      ),
-    },
+    defaultValues: formValuesOf(platform),
     resolver: zodResolver(AllowedDomainsFormValues),
   });
+  const openDialog = (next: boolean) => {
+    if (next) {
+      form.reset(formValuesOf(platform));
+    }
+    setOpen(next);
+  };
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -71,21 +73,13 @@ export const AllowedDomainDialog = ({
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset();
-        }
-        setOpen(open);
-      }}
-    >
+    <Dialog open={open} onOpenChange={openDialog}>
       <DialogTrigger asChild>
         <Button
           {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
           size={'sm'}
           variant={'basic'}
-          onClick={() => setOpen(true)}
+          onClick={() => openDialog(true)}
         >
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
@@ -106,6 +100,21 @@ export const AllowedDomainDialog = ({
                 ),
               ];
               form.clearErrors('root.serverError');
+              const ownDomain = currentUser?.email.split('@')[1]?.toLowerCase();
+              if (
+                domains.length > 0 &&
+                ownDomain !== undefined &&
+                !domains.includes(ownDomain)
+              ) {
+                form.setError('root.serverError', {
+                  type: 'manual',
+                  message: t(
+                    'Add your own domain ({domain}) to the list, or you will not be able to sign in.',
+                    { domain: ownDomain },
+                  ),
+                });
+                return;
+              }
               mutate(
                 {
                   allowedAuthDomains: domains,
@@ -190,3 +199,13 @@ export const AllowedDomainDialog = ({
     </Dialog>
   );
 };
+
+function formValuesOf(
+  platform: AllowedDomainDialogProps['platform'],
+): AllowedDomainsFormValues {
+  return {
+    allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map((domain) => ({
+      domain,
+    })),
+  };
+}

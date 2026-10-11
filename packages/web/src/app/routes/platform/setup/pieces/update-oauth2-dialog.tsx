@@ -53,6 +53,12 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
   const form = useForm<OAuth2FormValues>({
     resolver: zodResolver(OAuth2FormValues),
   });
+  const changeOpen = (next: boolean) => {
+    if (!next) {
+      form.reset();
+    }
+    setOpen(next);
+  };
 
   const { oauth2App, refetch } =
     oauthAppsQueries.useOAuthAppConfigured(pieceName);
@@ -77,21 +83,13 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
       feedback: 'inline',
       onSuccess: () => {
         onConfigurationDone();
-        setOpen(false);
+        changeOpen(false);
       },
     });
 
   return (
     <>
-      <Dialog
-        open={open}
-        onOpenChange={(open) => {
-          if (!open) {
-            form.reset();
-          }
-          setOpen(open);
-        }}
-      >
+      <Dialog open={open} onOpenChange={changeOpen}>
         <DialogTrigger asChild>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -197,7 +195,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setOpen(false)}
+                  onClick={() => changeOpen(false)}
                 >
                   {t('Cancel')}
                 </Button>

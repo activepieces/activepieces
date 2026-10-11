@@ -23,9 +23,14 @@ const EventDestinationActions = ({
   destination: EventDestination;
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const deleteDestination = useAdminAction({
     verb: 'delete',
     name: t('Destination'),
+    messages: {
+      done: t('Destination deleted'),
+      failed: t("Couldn't delete the destination"),
+    },
     run: () => eventDestinationsCollectionUtils.delete([destination.id]),
   });
 
@@ -53,34 +58,41 @@ const EventDestinationActions = ({
               {t('Edit')}
             </Link>
           </DropdownMenuItem>
-
-          <ConfirmDialog
-            title={t('Delete destination')}
-            description={destination.url}
-            consequence={t('Events will stop being sent to this destination.')}
-            confirmLabel={t('Delete')}
-            onConfirm={() => deleteDestination.mutateAsync()}
-            controlId={
-              AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM
-            }
+          <DropdownMenuItem
+            {...adminControl(
+              AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
+            )}
+            variant="destructive"
+            onSelect={() => {
+              setDropdownOpen(false);
+              setConfirmOpen(true);
+            }}
           >
-            <DropdownMenuItem
-              {...adminControl(
-                AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
-              )}
-              variant="destructive"
-              onSelect={(e) => {
-                e.preventDefault();
-              }}
-            >
-              <Trash className="h-4 w-4 mr-2" />
-              {t('Delete')}
-            </DropdownMenuItem>
-          </ConfirmDialog>
+            <Trash className="h-4 w-4 mr-2" />
+            {t('Delete')}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('Delete destination?')}
+        description={hostOf(destination.url)}
+        consequence={t('Events will stop being sent to this destination.')}
+        confirmLabel={t('Delete')}
+        onConfirm={() => deleteDestination.mutateAsync()}
+        controlId={AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM}
+      />
     </div>
   );
 };
+
+function hostOf(url: string): string | undefined {
+  try {
+    return new URL(url).host;
+  } catch {
+    return undefined;
+  }
+}
 
 export default EventDestinationActions;

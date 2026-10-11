@@ -2,6 +2,7 @@ import {
   SsoDomainVerificationStatus,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
 
@@ -23,8 +24,12 @@ import { AdminControl } from '@/lib/admin-control';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
+import { ssoRules } from './sso-rules';
+
 const SSOPage = () => {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { platform, refetch, setCurrentPlatform } =
+    platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
 
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const ssoDomainVerified =
@@ -34,8 +39,8 @@ const SSOPage = () => {
   const allowedDomains = platform.allowedAuthDomains ?? [];
 
   const updatePlatform = async (request: UpdatePlatformRequestBody) => {
-    await platformApi.update(request, platform.id);
-    await refetch();
+    const updated = await platformApi.update(request, platform.id);
+    setCurrentPlatform(queryClient, updated);
   };
   const samlCanSignIn = samlConnected && ssoDomainVerified;
   const otherSignInEnabled = platform.googleAuthEnabled || samlCanSignIn;
@@ -88,6 +93,9 @@ const SSOPage = () => {
             controlId={AdminControl.SSO_GOOGLE_TOGGLE}
             aria-label="Google"
             checked={platform.googleAuthEnabled}
+            beforeSave={(googleAuthEnabled) =>
+              ssoRules.assertSignInRemains({ googleAuthEnabled })
+            }
             blockedReason={
               googleIsOnlyMethod
                 ? t(
@@ -153,6 +161,9 @@ const SSOPage = () => {
             controlId={AdminControl.SSO_EMAIL_LOGIN_TOGGLE}
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
+            beforeSave={(next) =>
+              ssoRules.assertSignInRemains({ emailAuthEnabled: next })
+            }
             blockedReason={
               emailIsOnlyMethod
                 ? t(
@@ -163,6 +174,7 @@ const SSOPage = () => {
             onCheckedChange={(next) =>
               updatePlatform({ emailAuthEnabled: next })
             }
+            undo
             successMessage={(on) =>
               on ? t('Email sign-in turned on') : t('Email sign-in turned off')
             }
@@ -172,7 +184,7 @@ const SSOPage = () => {
                 : {
                     title: t('Turn off email sign-in?'),
                     consequence: t(
-                      'People who sign in with an email and password, including you, will have to use Google or SAML instead.',
+                      'People who sign in with an email and password will have to use Google or SAML instead.',
                     ),
                     confirmLabel: t('Turn off email sign-in'),
                   }

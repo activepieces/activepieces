@@ -53,8 +53,12 @@ export function TiersTab() {
     isError: configsError,
     refetch: refetchConfigs,
   } = aiProviderQueries.useAiProviderConfigs();
-  const { data: configuration, isLoading: configurationLoading } =
-    platformConfigurationHooks.useCurrentPlatformConfiguration();
+  const {
+    data: configuration,
+    isLoading: configurationLoading,
+    isError: configurationError,
+    refetch: refetchConfiguration,
+  } = platformConfigurationHooks.useCurrentPlatformConfiguration();
   const allConfigs = useMemo(() => configs ?? [], [configs]);
   const keyModels = platformModelTierQueries.useKeyModels(allConfigs);
   const { mutate: reorder, isPending: reordering } =
@@ -96,9 +100,11 @@ export function TiersTab() {
   const isLoading = tiersLoading || configsLoading || configurationLoading;
   const isError =
     (tiersError && tiers === undefined) ||
-    (configsError && configs === undefined);
+    (configsError && configs === undefined) ||
+    (configurationError && configuration === undefined);
   const noKeys = ownKeys.length === 0 && liveTiers.length === 0;
-  const retry = () => Promise.all([refetchTiers(), refetchConfigs()]);
+  const retry = () =>
+    Promise.all([refetchTiers(), refetchConfigs(), refetchConfiguration()]);
 
   return (
     <>

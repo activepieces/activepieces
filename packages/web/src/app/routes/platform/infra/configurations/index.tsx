@@ -93,6 +93,10 @@ const ConfigurationsContent = ({
       adminFeedback.done({ verb: 'save' });
     },
     onError: (error) => {
+      if (mutationFeedback.isQuotaExceeded(error)) {
+        mutationFeedback.error({ error });
+        return;
+      }
       setSaveError(mutationFeedback.message(error));
     },
   });

@@ -275,6 +275,34 @@ describe('InstantSwitch', () => {
     expect(save).toHaveBeenCalledTimes(1);
   });
 
+  it('does not say undone when the undo confirm is cancelled', async () => {
+    const save = vi.fn(async () => undefined);
+    render(
+      <InstantSwitch
+        aria-label="Visible"
+        checked={false}
+        undo
+        successMessage={(next) => (next ? 'Shown' : 'Hidden')}
+        onCheckedChange={save}
+        confirmBefore={(next) =>
+          next ? null : { title: 'Hide them?', confirmLabel: 'Hide' }
+        }
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Visible' }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    const undo = toast.success.mock.calls[0][1].action.onClick;
+    await act(async () => undo());
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Hide them?' })).toBeNull(),
+    );
+    expect(toast.success).toHaveBeenCalledTimes(1);
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it('asks first when turning it off could lock people out', async () => {
     const save = vi.fn(async () => undefined);
     render(
@@ -364,6 +392,7 @@ describe('adminBulk.runEach', () => {
       .catch((caught: unknown) => caught);
     expect(run).toHaveBeenCalledTimes(3);
     expect(adminBulk.isPartialFailure(error)).toBe(true);
+    expect(adminBulk.failedItems({ error, items })).toEqual([2]);
     expect(toast.error).toHaveBeenCalledTimes(1);
     expect(toast.error).toHaveBeenCalledWith(
       "Couldn't delete 1 items",

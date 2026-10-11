@@ -38,10 +38,15 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   ),
   DropdownMenuItem: ({
     children,
-    onSelect: _onSelect,
+    onSelect,
     variant: _variant,
-  }: React.PropsWithChildren<{ onSelect?: unknown; variant?: string }>) => (
-    <div role="menuitem">{children}</div>
+  }: React.PropsWithChildren<{
+    onSelect?: () => void;
+    variant?: string;
+  }>) => (
+    <div role="menuitem" onClick={() => onSelect?.()}>
+      {children}
+    </div>
   ),
 }));
 
@@ -181,7 +186,7 @@ describe('EventDestinationActions delete', () => {
     expect(collectionUtilsMock.delete).toHaveBeenCalledWith([destination.id]);
     expect(toastMock.error).toHaveBeenCalledTimes(1);
     expect(toastMock.error).toHaveBeenCalledWith(
-      "Couldn't delete {name}",
+      "Couldn't delete the destination",
       expect.objectContaining({ description: 'Destination not reachable' }),
     );
     expect(toastMock.success).not.toHaveBeenCalled();
@@ -194,7 +199,7 @@ describe('EventDestinationActions delete', () => {
     confirmDelete();
     await settle();
 
-    expect(toastMock.success).toHaveBeenCalledWith('{name} deleted');
+    expect(toastMock.success).toHaveBeenCalledWith('Destination deleted');
     expect(toastMock.error).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(0);
   });

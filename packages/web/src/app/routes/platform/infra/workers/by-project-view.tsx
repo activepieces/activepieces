@@ -244,13 +244,10 @@ function WorkerGroupCell({
 
   return (
     <div className="flex flex-col gap-1">
-      <Select
-        value={selectValue}
-        onValueChange={handleChange}
-        disabled={saveGroup.isPending}
-      >
+      <Select value={selectValue} onValueChange={handleChange}>
         <SelectTrigger
           size="sm"
+          aria-busy={saveGroup.isPending}
           className={cn('w-50', isOffline && 'border-danger-9')}
         >
           <div className="flex items-center gap-2 min-w-0">
