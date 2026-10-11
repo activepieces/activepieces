@@ -2,6 +2,7 @@ import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { GithubAuthValue } from '../common/auth-helpers';
 
 export const githubCreateDiscussionCommentAction = createAction({
   auth: githubAuth,
@@ -45,51 +46,64 @@ export const githubCreateDiscussionCommentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { discussion_number, body } = propsValue;
     const { owner, repo } = propsValue.repository!;
-
-    const lookup = await githubApiCall<DiscussionLookupResponse>({
+    return postDiscussionComment({
       auth,
-      method: HttpMethod.POST,
-      resourceUri: '/graphql',
-      body: {
-        query: DISCUSSION_LOOKUP_QUERY,
-        variables: { owner, name: repo, number: discussion_number },
-      },
+      owner,
+      repo,
+      discussionNumber: propsValue.discussion_number,
+      body: propsValue.body,
     });
-
-    const lookupErrors = lookup.body.errors ?? [];
-    const discussionId = lookup.body.data?.repository?.discussion?.id;
-    const notFound =
-      lookupErrors.every((error) => error.type === 'NOT_FOUND') &&
-      !discussionId;
-    if (notFound) {
-      throw new Error(
-        `Discussion #${discussion_number} was not found in ${owner}/${repo}.`
-      );
-    }
-    if (lookupErrors.length > 0 || !discussionId) {
-      throw new Error(lookupErrors[0]?.message ?? 'Discussion lookup failed.');
-    }
-
-    const response = await githubApiCall<AddDiscussionCommentResponse>({
-      auth,
-      method: HttpMethod.POST,
-      resourceUri: '/graphql',
-      body: {
-        query: ADD_DISCUSSION_COMMENT_MUTATION,
-        variables: { discussionId, body },
-      },
-    });
-
-    const mutationErrors = response.body.errors ?? [];
-    if (mutationErrors.length > 0) {
-      throw new Error(mutationErrors[0].message);
-    }
-
-    return response;
   },
 });
+
+async function postDiscussionComment({
+  auth,
+  owner,
+  repo,
+  discussionNumber,
+  body,
+}: PostDiscussionCommentParams) {
+  const lookup = await githubApiCall<DiscussionLookupResponse>({
+    auth,
+    method: HttpMethod.POST,
+    resourceUri: '/graphql',
+    body: {
+      query: DISCUSSION_LOOKUP_QUERY,
+      variables: { owner, name: repo, number: discussionNumber },
+    },
+  });
+
+  const lookupErrors = lookup.body.errors ?? [];
+  const discussionId = lookup.body.data?.repository?.discussion?.id;
+  const notFound =
+    lookupErrors.every((error) => error.type === 'NOT_FOUND') && !discussionId;
+  if (notFound) {
+    throw new Error(
+      `Discussion #${discussionNumber} was not found in ${owner}/${repo}.`
+    );
+  }
+  if (lookupErrors.length > 0 || !discussionId) {
+    throw new Error(lookupErrors[0]?.message ?? 'Discussion lookup failed.');
+  }
+
+  const response = await githubApiCall<AddDiscussionCommentResponse>({
+    auth,
+    method: HttpMethod.POST,
+    resourceUri: '/graphql',
+    body: {
+      query: ADD_DISCUSSION_COMMENT_MUTATION,
+      variables: { discussionId, body },
+    },
+  });
+
+  const mutationErrors = response.body.errors ?? [];
+  if (mutationErrors.length > 0) {
+    throw new Error(mutationErrors[0].message);
+  }
+
+  return response;
+}
 
 const DISCUSSION_LOOKUP_QUERY = `query($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {
@@ -109,6 +123,18 @@ const ADD_DISCUSSION_COMMENT_MUTATION = `mutation($discussionId: ID!, $body: Str
     }
   }
 }`;
+
+export const githubDiscussionComments = {
+  post: postDiscussionComment,
+};
+
+type PostDiscussionCommentParams = {
+  auth: GithubAuthValue;
+  owner: string;
+  repo: string;
+  discussionNumber: number;
+  body: string;
+};
 
 type GraphqlError = {
   message: string;
