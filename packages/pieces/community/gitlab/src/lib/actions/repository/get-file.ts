@@ -102,8 +102,6 @@ export const getFileAction = createAction({
     const headers = meta.headers;
     const sizeHeader = headerText({ headers, name: 'size' });
     const size = sizeHeader === null ? NaN : Number(sizeHeader);
-    // GitLab sends names as raw UTF-8 in headers, which fetch reads as Latin-1
-    // and trims, so the path, name and ref come from the exact input instead.
     return {
       file_name: propsValue.filePath.split('/').pop() ?? propsValue.filePath,
       file_path: propsValue.filePath,

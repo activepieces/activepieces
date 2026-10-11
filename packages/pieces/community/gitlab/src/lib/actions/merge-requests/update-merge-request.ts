@@ -159,8 +159,6 @@ export const updateMergeRequestAction = createAction({
       throw new Error('Set at least one field to update.');
     }
     const path = `${projectPath(propsValue.projectId)}/merge_requests/${iid}`;
-    // GitLab ignores a state change on a locked discussion even when the same
-    // request unlocks it, so unlock first.
     if (locked === false && body['state_event'] !== undefined) {
       await gitlabRequest({
         auth,
