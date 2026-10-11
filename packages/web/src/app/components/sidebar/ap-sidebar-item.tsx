@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronRight, Gem } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import React, { ComponentType, ReactNode, useRef, useState } from 'react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
 
@@ -257,9 +257,23 @@ function LockedTooltip({ tier, disabled, children }: LockedTooltipProps) {
   );
 }
 
+// Phosphor's "sketch-logo" gem (MIT), traced as a Lucide-style stroke icon.
 function PremiumGlyph({ className }: { className: string }) {
   return (
-    <Gem aria-hidden className={cn('shrink-0 text-accent-11', className)} />
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn('shrink-0 text-accent-11', className)}
+    >
+      <path d="M6.75 3.75h10.5l5.25 6L12 20.75 1.5 9.75z" />
+      <path d="M1.5 9.75h21" />
+      <path d="M8 9.75 12 3.75l4 6L12 20.75z" />
+    </svg>
   );
 }
 
