@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
-import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema } from './tool-primitives'
+import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema, stableStringify } from './tool-primitives'
 
 export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
@@ -50,9 +50,9 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
                 return refusal
             }
             const displayName = getDisplayName?.(input) ?? toolName
-            const cardKey = `${toolName}:${displayName}`
+            const cardKey = cardIdentity({ toolName, input })
             if (unansweredCards.has(cardKey)) {
-                return { timedOut: true, message: cardStillUnansweredMessage(displayName) }
+                return { notShown: true, message: cardStillUnansweredMessage(displayName) }
             }
             if (onGateOpened) {
                 const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
@@ -255,6 +255,12 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             },
         }),
     }
+}
+
+function cardIdentity({ toolName, input }: { toolName: string, input: Record<string, unknown> }): string {
+    const piece = input['piece']
+    const subject = typeof piece === 'string' ? normalizePieceName(piece) : input['connectorUuid'] ?? input['questions'] ?? null
+    return `${toolName}:${stableStringify(subject)}`
 }
 
 function cardStillUnansweredMessage(displayName: string): string {

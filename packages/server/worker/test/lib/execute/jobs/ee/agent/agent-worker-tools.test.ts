@@ -781,13 +781,22 @@ describe('an agent does not offer to connect an account its author already chose
     it('does not show a card again in the same turn after the user left it unanswered', async () => {
         const waitForApproval = vi.fn(async () => ({ outcome: 'timeout' as const }))
         const tools = agentWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1000 })
-        const card = { piece: 'gmail', displayName: 'Gmail' }
 
-        await tools['ap_show_connection_picker'].execute(card, { toolCallId: 'call-1' })
-        const second = await tools['ap_show_connection_picker'].execute(card, { toolCallId: 'call-2' })
+        await tools['ap_show_connection_picker'].execute({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1' })
+        const again = await tools['ap_show_connection_picker'].execute({ piece: '@activepieces/piece-gmail', displayName: 'My Gmail' }, { toolCallId: 'call-2' })
 
         expect(waitForApproval).toHaveBeenCalledTimes(1)
-        expect(JSON.stringify(second)).toContain('was not shown again')
+        expect(again).toMatchObject({ notShown: true })
+    })
+
+    it('still shows a different card after another one went unanswered', async () => {
+        const waitForApproval = vi.fn(async () => ({ outcome: 'timeout' as const }))
+        const tools = agentWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1000 })
+
+        await tools['ap_show_connection_picker'].execute({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1' })
+        await tools['ap_show_connection_picker'].execute({ piece: 'slack', displayName: 'Slack' }, { toolCallId: 'call-2' })
+
+        expect(waitForApproval).toHaveBeenCalledTimes(2)
     })
 
     it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('%s rejects an empty piece, so no gate opens for a card that cannot render', async (toolName) => {
