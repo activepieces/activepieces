@@ -146,3 +146,29 @@ describe('deepgram_generate_speech', () => {
     expect(seen).toHaveLength(1);
   });
 });
+
+describe('speech errors', () => {
+  test('decodes the binary error body so code and request id survive', async () => {
+    stubFetch(() => ({
+      status: 400,
+      text: JSON.stringify({
+        err_code: 'INVALID_QUERY_PARAMETER',
+        err_msg: 'Unsupported encoding.',
+        request_id: 'req-42',
+      }),
+    }));
+    const error = await runAction({
+      action: textToSpeechAction,
+      propsValue: { text: 'Hello world' },
+    }).catch((e: unknown) => e);
+    expect(error).toMatchObject({
+      name: 'DeepgramApiError',
+      status: 400,
+      code: 'INVALID_QUERY_PARAMETER',
+      requestId: 'req-42',
+    });
+    expect(String(Reflect.get(Object(error), 'message'))).toContain(
+      'Unsupported encoding.'
+    );
+  });
+});

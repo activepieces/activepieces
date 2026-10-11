@@ -109,7 +109,7 @@ async function request<T>({
       throw new DeepgramApiError({
         operation,
         status,
-        responseBody: responseBodyOf(error),
+        responseBody: decodeBody(responseBodyOf(error)),
         hint: status === 504 && timeoutHint ? timeoutHint : undefined,
       });
     }
@@ -168,11 +168,47 @@ function audioUploadBody(data: Buffer): Readable {
 }
 
 function maskUrlCredentials(value: string): string {
-  return value.replace(
-    /(\/\/|%2F%2F)((?:(?!%2F|%40)[^/@\s?&#])+)(@|%40)/gi,
-    '$1***$3'
+  return maskAuthorities(maskParsedUrl(value));
+}
+
+function maskParsedUrl(value: string): string {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return value;
+  }
+  if (url.username === '' && url.password === '') {
+    return value;
+  }
+  url.username = '***';
+  url.password = '';
+  return url.toString();
+}
+
+// Fallback for free text and percent-encoded URLs inside query strings: mask
+// everything between the scheme separator and the last "@" of the authority.
+function maskAuthorities(value: string): string {
+  return URL_SCHEME_FORMS.reduce(
+    (text, form) =>
+      text.replace(
+        form.authority,
+        (match, scheme: string, authority: string) => {
+          const at = authority.toLowerCase().lastIndexOf(form.at);
+          return at < 0 ? match : `${scheme}***${authority.slice(at)}`;
+        }
+      ),
+    value
   );
 }
+
+const URL_SCHEME_FORMS = [
+  { authority: /(:\/\/)([^/?#\s"'<>]*)/g, at: '@' },
+  {
+    authority: /(%3A%2F%2F)((?:(?!%2F|%3F|%23)[^&\s"'<>])*)/gi,
+    at: '%40',
+  },
+];
 
 function maskOptional(value: unknown): string | null {
   return typeof value === 'string' ? maskUrlCredentials(value) : null;
@@ -264,6 +300,34 @@ function responseBodyOf(error: unknown): unknown {
   }
   const response = Reflect.get(error, 'response');
   return isRecord(response) ? response['body'] : undefined;
+}
+
+function decodeBody(body: unknown): unknown {
+  const text = bytesToText(body) ?? (typeof body === 'string' ? body : null);
+  if (text === null) {
+    return body;
+  }
+  try {
+    const parsed: unknown = JSON.parse(text);
+    return isRecord(parsed) ? parsed : text;
+  } catch {
+    return text;
+  }
+}
+
+function bytesToText(body: unknown): string | null {
+  if (Buffer.isBuffer(body)) {
+    return body.toString('utf8');
+  }
+  if (body instanceof ArrayBuffer) {
+    return Buffer.from(body).toString('utf8');
+  }
+  if (ArrayBuffer.isView(body)) {
+    return Buffer.from(body.buffer, body.byteOffset, body.byteLength).toString(
+      'utf8'
+    );
+  }
+  return null;
 }
 
 function isAbort(error: unknown): boolean {

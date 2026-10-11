@@ -264,3 +264,36 @@ describe('deepgramAuth.validate', () => {
     expect(result.error).toContain('HTTP 503');
   });
 });
+
+describe('deepgramClient.maskUrlCredentials edge cases', () => {
+  const mask = deepgramClient.maskUrlCredentials;
+  test('masks credentials with percent-encoded characters', () => {
+    expect(mask('https://alice:p%2Fsecret@hooks.example.com/cb')).toBe(
+      'https://***@hooks.example.com/cb'
+    );
+    expect(mask('https://alice:p%40ss@hooks.example.com/cb')).toBe(
+      'https://***@hooks.example.com/cb'
+    );
+  });
+  test('masks a password containing ":" and a user without a password', () => {
+    expect(mask('https://alice:pa:ss@x.io/cb')).toBe('https://***@x.io/cb');
+    expect(mask('https://alice@x.io/cb')).toBe('https://***@x.io/cb');
+  });
+  test('masks URLs inside free text and percent-encoded query values', () => {
+    expect(
+      mask('Callback https://alice:p%2Fsecret@hooks.example.com/cb failed')
+    ).toBe('Callback https://***@hooks.example.com/cb failed');
+    expect(
+      mask(
+        '/v1/listen?callback=https%3A%2F%2Falice%3Ap%252Fs%40hooks.example.com%2Fcb'
+      )
+    ).toBe('/v1/listen?callback=https%3A%2F%2F***%40hooks.example.com%2Fcb');
+  });
+  test('leaves text without credentials untouched', () => {
+    expect(mask('not a url at all')).toBe('not a url at all');
+    expect(mask('email me at bob@example.com')).toBe(
+      'email me at bob@example.com'
+    );
+    expect(mask('https://x.io/cb?a=1')).toBe('https://x.io/cb?a=1');
+  });
+});
