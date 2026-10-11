@@ -52,9 +52,6 @@
     "src/app/routes/platform/security/project-role/role-people-tab.tsx": [
       "spinner-loading"
     ],
-    "src/app/routes/platform/security/secret-managers/index.tsx": [
-      "legacy-confirm"
-    ],
     "src/app/routes/platform/setup/general/appearance-section.tsx": [
       "raw-toast"
     ],
