@@ -25,7 +25,7 @@ import {
   ConfirmDialog,
   StatusDot,
   StatusTone,
-  adminActionCopy,
+  adminBulk,
   adminPageResources,
   useAdminAction,
 } from '@/app/components/admin';
@@ -58,7 +58,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
-import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { sampleData } from '../../sample-data';
 
@@ -242,24 +241,15 @@ const GlobalConnectionsTable = () => {
     verb: 'delete',
     name: (rows) => connectionsLabel(rows.length),
     run: async (rows) => {
-      const results = await Promise.allSettled(
-        rows.map((row) => globalConnectionsApi.delete(row.id)),
-      );
-      const failures = results.flatMap((result) =>
-        result.status === 'rejected' ? [result.reason] : [],
-      );
-      await refetchGlobalConnections();
-      if (failures.length === rows.length) {
-        throw failures[0];
-      }
-      if (failures.length > 0) {
-        mutationFeedback.error({
-          error: failures[0],
-          title: adminActionCopy.failed({
-            verb: 'delete',
-            name: connectionsLabel(failures.length),
-          }),
+      try {
+        await adminBulk.runEach({
+          items: rows,
+          run: (row) => globalConnectionsApi.delete(row.id),
+          verb: 'delete',
+          label: connectionsLabel,
         });
+      } finally {
+        await refetchGlobalConnections();
       }
     },
   });

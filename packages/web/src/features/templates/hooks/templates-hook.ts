@@ -114,7 +114,7 @@ export const templatesMutations = {
         templatesApi.create(request),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: templateKeys.custom });
-        toast.success(t('Template created successfully'), { duration: 3000 });
+        toast.success(t('Template created'));
         onDone();
       },
       onError,
@@ -138,22 +138,10 @@ export const templatesMutations = {
       }) => templatesApi.update(templateId, request),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: templateKeys.custom });
-        toast.success(t('Template updated successfully'), { duration: 3000 });
+        toast.success(t('Template updated'));
         onDone();
       },
       onError,
-    });
-  },
-  useBulkDeleteTemplates: ({ onSuccess }: { onSuccess: () => void }) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: async (templateIds: string[]) => {
-        await Promise.all(templateIds.map((id) => templatesApi.delete(id)));
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: templateKeys.custom });
-        onSuccess();
-      },
     });
   },
 };

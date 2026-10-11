@@ -144,9 +144,37 @@ function notifyDone({ verb, name }: { verb: AdminVerb; name: string }): void {
   toast.success(done({ verb, name }));
 }
 
+async function runEach<T>({
+  items,
+  run,
+  verb,
+  label,
+}: {
+  items: T[];
+  run: (item: T) => Promise<unknown>;
+  verb: AdminVerb;
+  label: (count: number) => string;
+}): Promise<void> {
+  const results = await Promise.allSettled(items.map(run));
+  const failures = results.flatMap((result) =>
+    result.status === 'rejected' ? [result.reason] : [],
+  );
+  if (failures.length === items.length && failures.length > 0) {
+    throw failures[0];
+  }
+  if (failures.length > 0) {
+    mutationFeedback.error({
+      error: failures[0],
+      title: failed({ verb, name: label(failures.length) }),
+    });
+  }
+}
+
 export const adminActionCopy = { done, failed };
 
 export const adminFeedback = { done: notifyDone };
+
+export const adminBulk = { runEach };
 
 export type AdminVerb =
   | 'save'

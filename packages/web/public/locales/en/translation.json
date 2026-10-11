@@ -3340,5 +3340,9 @@
   "Delete connection": "Delete connection",
   "Secret manager connected": "Secret manager connected",
   "Cache cleared": "Cache cleared",
-  "Revoke {name}?": "Revoke {name}?"
+  "Revoke {name}?": "Revoke {name}?",
+  "The selected templates will be permanently deleted.": "The selected templates will be permanently deleted.",
+  "{count, plural, =1 {# template} other {# templates}}": "{count, plural, =1 {# template} other {# templates}}",
+  "Template created": "Template created",
+  "Template updated": "Template updated"
 }
