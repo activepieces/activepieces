@@ -40,6 +40,7 @@ const SSOPage = () => {
   const samlCanSignIn = samlConnected && ssoDomainVerified;
   const otherSignInEnabled = platform.googleAuthEnabled || samlCanSignIn;
   const signInOtherThanGoogle = emailAuthEnabled || samlCanSignIn;
+  const emailIsOnlyMethod = emailAuthEnabled && !otherSignInEnabled;
 
   return (
     <AdminPage width="content">
@@ -138,12 +139,19 @@ const SSOPage = () => {
         <SettingsRow
           icon={<MailIcon />}
           title={t('Allowed Email Login')}
-          description={t('Allow logins through email and password.')}
+          description={
+            emailIsOnlyMethod
+              ? t(
+                  'Allow logins through email and password. Turn on Google or SAML before turning this off, so people can still sign in.',
+                )
+              : t('Allow logins through email and password.')
+          }
         >
           <InstantSwitch
             controlId={AdminControl.SSO_EMAIL_LOGIN_TOGGLE}
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
+            disabled={emailIsOnlyMethod}
             onCheckedChange={(next) =>
               updatePlatform({ emailAuthEnabled: next })
             }
@@ -155,13 +163,9 @@ const SSOPage = () => {
                 ? null
                 : {
                     title: t('Turn off email sign-in?'),
-                    consequence: otherSignInEnabled
-                      ? t(
-                          'People who sign in with an email and password, including you, will have to use Google or SAML instead.',
-                        )
-                      : t(
-                          'No other sign-in method is on. Nobody, including you, will be able to sign in until one is set up.',
-                        ),
+                    consequence: t(
+                      'People who sign in with an email and password, including you, will have to use Google or SAML instead.',
+                    ),
                     confirmLabel: t('Turn off email sign-in'),
                   }
             }
