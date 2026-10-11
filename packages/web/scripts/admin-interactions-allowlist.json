@@ -25,10 +25,6 @@
     "src/app/routes/platform/infra/workers/by-project-view.tsx": [
       "raw-toast"
     ],
-    "src/app/routes/platform/projects/index.tsx": [
-      "legacy-confirm",
-      "raw-toast"
-    ],
     "src/app/routes/platform/security/api-keys/index.tsx": [
       "internal-error-toast",
       "legacy-confirm"

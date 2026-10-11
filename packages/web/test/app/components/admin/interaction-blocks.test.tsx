@@ -163,7 +163,7 @@ describe('ConfirmDialog', () => {
     );
     const confirm = screen.getByRole('button', { name: 'Delete project' });
     expect(confirm.hasAttribute('disabled')).toBe(true);
-    fireEvent.change(screen.getByLabelText('Type Marketing to confirm'), {
+    fireEvent.change(screen.getByLabelText('To confirm, type Marketing'), {
       target: { value: 'Marketing' },
     });
     expect(confirm.hasAttribute('disabled')).toBe(false);
