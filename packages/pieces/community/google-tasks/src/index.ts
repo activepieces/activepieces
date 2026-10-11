@@ -39,6 +39,12 @@ export const googleTasks = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${googleTasksCommon.baseUrl}`,
+          placeholder: '/tasks/v1/users/@me/lists',
+        },
+      },
     }),
   ],
   displayName: 'Google Tasks',
