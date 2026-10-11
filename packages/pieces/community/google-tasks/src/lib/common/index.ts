@@ -150,7 +150,6 @@ export async function getLists(
   // docs: https://developers.google.com/tasks/reference/rest/v1/tasklists/list
   const lists: TasksList[] = [];
   let pageToken: string | undefined = undefined;
-  let page = 0;
   do {
     const request: HttpRequest = {
       method: HttpMethod.GET,
@@ -167,8 +166,7 @@ export async function getLists(
     const response = await httpClient.sendRequest<TasksListResponse>(request);
     lists.push(...(response.body.items ?? []));
     pageToken = response.body.nextPageToken;
-    page++;
-  } while (pageToken && page < 20);
+  } while (pageToken);
   return lists;
 }
 
@@ -202,7 +200,6 @@ export async function getAllTasks({
 }): Promise<Task[]> {
   const tasks: Task[] = [];
   let pageToken: string | undefined = undefined;
-  let page = 0;
   do {
     const request: HttpRequest = {
       method: HttpMethod.GET,
@@ -220,8 +217,7 @@ export async function getAllTasks({
     const response = await httpClient.sendRequest<TasksResponse>(request);
     tasks.push(...(response.body.items ?? []));
     pageToken = response.body.nextPageToken;
-    page++;
-  } while (pageToken && page < 10);
+  } while (pageToken);
   return tasks;
 }
 
