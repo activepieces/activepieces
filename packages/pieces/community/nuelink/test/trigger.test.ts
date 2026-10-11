@@ -91,7 +91,7 @@ describe('New Published Post trigger', () => {
     expect(startedFrom).toEqual(['1', '6', '11', '1', '6', '11']);
     const state = JSON.parse(data.get(STORE_KEY) ?? '{}');
     expect(state.resume).toBeUndefined();
-    expect(state.recent).toHaveLength(1234);
+    expect(state.recent).toEqual([[Date.parse('2026-10-11T11:50:00Z'), backlog.map((item) => String(item.id))]]);
     expect(state.lastPoll).toBe(Date.parse('2026-10-11T12:05:00Z'));
 
     vi.setSystemTime(new Date('2026-10-11T12:20:00Z'));
@@ -111,6 +111,25 @@ describe('New Published Post trigger', () => {
     expect(fetchMock).toHaveBeenCalledTimes(5);
     expect(Array.isArray(emitted) ? emitted.length : -1).toBe(5);
     expect(JSON.parse(data.get(STORE_KEY) ?? '{}')).toMatchObject({ lastPoll: Date.parse('2026-10-11T11:55:00Z'), resume: { since: Date.parse('2026-10-11T11:40:00Z'), page: 6 } });
+  });
+
+  it('keeps the saved state under the 512 KiB store limit at the recent-ID cap', async () => {
+    const { store, data } = memoryStore();
+    data.set(STORE_KEY, JSON.stringify({ seen: [], lastPoll: Date.parse('2026-10-11T11:55:00Z') }));
+    const ids = Array.from({ length: 25000 }, (_, i) => 1_000_000_000 + i);
+    fetchMock.mockImplementation(async (input: string) => {
+      const page = Number(new URL(input).searchParams.get('page'));
+      const start = (page - 1) * 100;
+      const slice = ids.slice(start, start + 100).map((id, i) => publishedPost({ id, publishedAt: `2026-10-11T11:50:${String((start + i) % 60).padStart(2, '0')}.000000Z` }));
+      return jsonResponse({ body: listBody({ data: slice, currentPage: page, lastPage: 250 }) });
+    });
+    for (let poll = 0; poll < 50; poll++) {
+      await call({ hook: 'run', context: hookContext({ store }) });
+    }
+    const raw = data.get(STORE_KEY) ?? '';
+    const state = JSON.parse(raw);
+    expect(state.recent.reduce((total: number, group: [number, string[]]) => total + group[1].length, 0)).toBe(20000);
+    expect(new TextEncoder().encode(raw).length).toBeLessThan(512 * 1024 * 0.6);
   });
 
   it('keeps the seen set bounded', async () => {

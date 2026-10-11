@@ -77,7 +77,7 @@ export const newPublishedPost = createTrigger({
     const since = state.resume?.since ?? state.lastPoll - OVERLAP_MS;
     const firstPage = state.resume?.page ?? 1;
     const { items, truncated } = await collect({ query, since, firstPage });
-    const recent = state.recent ?? [];
+    const recent = unpack({ groups: state.recent ?? [] });
     const seen = new Set([...state.seen, ...recent.map(([id]) => id)]);
     const fresh = uniqueById({ items }).filter((item) => !seen.has(idOf({ item })));
     const lastPoll = truncated ? state.lastPoll : startedAt;
@@ -155,8 +155,17 @@ function entriesOf({ items, fallback }: { items: Record<string, unknown>[]; fall
   });
 }
 
-function keepRecent({ entries, floor }: { entries: RecentEntry[]; floor: number }): RecentEntry[] {
-  return entries.filter(([, time]) => time >= floor).slice(-RECENT_CAP);
+function keepRecent({ entries, floor }: { entries: RecentEntry[]; floor: number }): RecentGroup[] {
+  const kept = entries.filter(([, time]) => time >= floor).slice(-RECENT_CAP);
+  const byTime = new Map<number, string[]>();
+  for (const [id, time] of kept) {
+    byTime.set(time, [...(byTime.get(time) ?? []), id]);
+  }
+  return [...byTime.entries()];
+}
+
+function unpack({ groups }: { groups: RecentGroup[] }): RecentEntry[] {
+  return groups.flatMap(([time, ids]) => ids.map((id): RecentEntry => [id, time]));
 }
 
 function isPollState(value: unknown): value is PollState {
@@ -173,12 +182,12 @@ function isPollState(value: unknown): value is PollState {
     typeof lastPoll === 'number' &&
     Number.isFinite(lastPoll) &&
     (resume === undefined || isResumePoint(resume)) &&
-    (recent === undefined || (Array.isArray(recent) && recent.every(isRecentEntry)))
+    (recent === undefined || (Array.isArray(recent) && recent.every(isRecentGroup)))
   );
 }
 
-function isRecentEntry(value: unknown): value is RecentEntry {
-  return Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && typeof value[1] === 'number' && Number.isFinite(value[1]);
+function isRecentGroup(value: unknown): value is RecentGroup {
+  return Array.isArray(value) && value.length === 2 && typeof value[0] === 'number' && Number.isFinite(value[0]) && Array.isArray(value[1]) && value[1].every((id: unknown) => typeof id === 'string');
 }
 
 function isResumePoint(value: unknown): value is ResumePoint {
@@ -201,12 +210,14 @@ const STATUSES = ['PUBLISHED', 'FAILED'] as const;
 
 type PollState = {
   seen: string[];
-  recent?: RecentEntry[];
+  recent?: RecentGroup[];
   lastPoll: number;
   resume?: ResumePoint;
 };
 
 type RecentEntry = [string, number];
+
+type RecentGroup = [number, string[]];
 
 type ResumePoint = {
   since: number;
