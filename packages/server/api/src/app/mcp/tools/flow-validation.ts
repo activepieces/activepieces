@@ -1,3 +1,4 @@
+import { AP_FUNCTIONS } from '@activepieces/core-formula'
 import { isNil } from '@activepieces/core-utils'
 import { BranchExecutionType, flowStructureUtil, FlowTrigger, FlowTriggerType, Step } from '@activepieces/shared'
 
@@ -140,11 +141,17 @@ function extractReferencedStepNames({ value }: { value: string }): string[] {
 
 function findBareFormulaFunctions({ value }: { value: string }): string[] {
     const outsideFormulas = value.replace(WRAPPED_FORMULA, '')
-    return [...new Set([...outsideFormulas.matchAll(BARE_FUNCTION_CALL)].map((match) => match[1]))]
+    const called = [...outsideFormulas.matchAll(BARE_FUNCTION_CALL)].map((match) => match[1])
+    return [...new Set(called.filter((name) => FORMULA_FUNCTION_NAMES.has(comparableFunctionName(name))))]
+}
+
+function comparableFunctionName(name: string): string {
+    return name.toLowerCase().replace(/_/g, '')
 }
 
 const WRAPPED_FORMULA = /ap-formula-v(\d+)::\{[\s\S]*?\}::ap-formula-v\1/g
 const BARE_FUNCTION_CALL = /\{\{\s*([A-Za-z_]\w*)\s*\(/g
+const FORMULA_FUNCTION_NAMES = new Set(AP_FUNCTIONS.map((fn) => comparableFunctionName(fn.name)))
 const CATEGORY_ORDER: ValidationIssue['category'][] = ['step_validity', 'template_reference', 'empty_branch']
 const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
     step_validity: 'Step Validity',

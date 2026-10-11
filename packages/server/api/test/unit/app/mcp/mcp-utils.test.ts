@@ -516,6 +516,15 @@ describe('mcpUtils.normalizeFormulaText — double braces around a formula', () 
         expect(fixed).toBe('ap-formula-v1::{formatDate(addDays(now(); -7); "YYYY-MM-DD")}::ap-formula-v1')
     })
 
+    it('fixes double braces in router conditions too', () => {
+        const trigger: EmptyTrigger = { name: 'trigger', displayName: 'Trigger', type: FlowTriggerType.EMPTY, valid: false, lastUpdatedDate: '2026-10-11T00:00:00.000Z', settings: {} }
+        const conditions = [[{ firstValue: 'ap-formula-v1::{{count(1; 2)}}::ap-formula-v1' }]]
+
+        const rewritten = mcpUtils.rewriteAllReferences({ conditions, trigger })
+
+        expect(rewritten.conditions).toEqual([[{ firstValue: 'ap-formula-v1::{count(1; 2)}::ap-formula-v1' }]])
+    })
+
     it('leaves a correct formula and a plain reference untouched', () => {
         const correct = 'ap-formula-v1::{count({{step_1[\'output\'].rows}})}::ap-formula-v1 and {{step_1[\'output\'].id}}'
 

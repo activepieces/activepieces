@@ -638,7 +638,7 @@ function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigg
     return {
         input: input ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<Record<string, unknown>>(input, normalizeFormulaText), stepNames, true) : undefined,
         loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: normalizeFormulaText(loopItems), stepNames, idempotent: true }) : loopItems,
-        conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
+        conditions: conditions ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<C>(conditions, normalizeFormulaText), stepNames, true) : conditions,
     }
 }
 

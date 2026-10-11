@@ -17,6 +17,18 @@ describe('flowValidation.validateFlow — formulas', () => {
         expect(result.issues[0].message).toContain('ap-formula-v1::{length(')
     })
 
+    it('accepts a JavaScript helper the engine runs inside {{ }}', () => {
+        const result = flowValidation.validateFlow({ trigger: flowWithInput({ text: "{{ flattenNestedKeys(trigger['output'], ['users', 'name']) }}" }) })
+
+        expect(result.issues).toEqual([])
+    })
+
+    it('names a camelCase formula function written inside {{ }}', () => {
+        const result = flowValidation.validateFlow({ trigger: flowWithInput({ text: '{{formatDate(now(); "YYYY")}}' }) })
+
+        expect(result.issues.map((issue) => issue.message)).toEqual([expect.stringContaining('formatDate()')])
+    })
+
     it('still flags a reference to a step that does not exist', () => {
         const result = flowValidation.validateFlow({ trigger: flowWithInput({ text: '{{step_9[\'output\'].id}}' }) })
 
