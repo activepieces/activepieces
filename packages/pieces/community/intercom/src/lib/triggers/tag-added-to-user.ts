@@ -5,6 +5,7 @@ import { tagIdProp } from '../common/props';
 
 export const tagAddedToUserTrigger = createTrigger({
 	name: 'tag-added-to-user',
+	classification: 'READ',
 	displayName: 'Tag Added to User',
 	description: 'Triggers when a tag is added to a user.',
 	aiMetadata: {

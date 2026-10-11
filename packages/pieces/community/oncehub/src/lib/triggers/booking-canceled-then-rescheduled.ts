@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const bookingCanceledThenRescheduled = createTrigger({
   auth: oncehubAuth,
   name: 'bookingCanceledThenRescheduled',
+  classification: 'READ',
   displayName: 'Booking Canceled Then Rescheduled',
   description:
     'Triggered when Customer cancels a booking and then reschedules on a different booking page.',

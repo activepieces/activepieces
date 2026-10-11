@@ -9,6 +9,7 @@ import { workdayWqlRequest } from '../common';
 export const findRecordsWql = createAction({
 	auth: workdayAuth,
 	name: 'find_records_wql',
+	classification: 'SEARCH',
 	displayName: 'Find Records (WQL)',
 	description:
 		'Executes a Workday Query Language (WQL) query and returns the results.',

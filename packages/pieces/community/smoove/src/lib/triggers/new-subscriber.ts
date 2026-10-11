@@ -163,6 +163,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, {
 export const newSubscriber = createTrigger({
     auth: smooveAuth,
     name: 'newSubscriber',
+    classification: 'READ',
     displayName: 'New Subscriber',
     description: 'Fires when a new subscriber is added to your Smoove account',
     aiMetadata: {

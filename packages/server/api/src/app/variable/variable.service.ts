@@ -1,8 +1,9 @@
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { AppConnectionOwners, Variable, VariableWithoutSensitiveData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Equal, ILike, QueryFailedError } from 'typeorm'
+import { Equal, ILike } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { isUniqueViolation } from '../core/db/unique-violation'
 import { encryptUtils } from '../helper/encryption'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -156,21 +157,6 @@ async function getOneOrThrowWithoutValue(params: GetOneParams): Promise<Variable
         })
     }
     return stripSensitiveData(row)
-}
-
-const POSTGRES_UNIQUE_VIOLATION = '23505'
-
-function isUniqueViolation(error: unknown): boolean {
-    if (!(error instanceof QueryFailedError)) {
-        return false
-    }
-    const driverError: unknown = error.driverError
-    return (
-        typeof driverError === 'object' &&
-        driverError !== null &&
-        'code' in driverError &&
-        driverError.code === POSTGRES_UNIQUE_VIOLATION
-    )
 }
 
 function stripSensitiveData(row: VariableSchema): VariableWithoutSensitiveData {

@@ -57,6 +57,7 @@ const polling: Polling<
 export const updatedTicket = createTrigger({
   auth: freshserviceAuth,
   name: 'updated_ticket',
+  classification: 'READ',
   displayName: 'Updated Ticket',
   description: 'Triggers when an existing ticket is updated in Freshservice.',
   aiMetadata: {

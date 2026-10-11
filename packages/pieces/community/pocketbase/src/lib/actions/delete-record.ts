@@ -5,6 +5,7 @@ import { pocketbaseAuthenticate, normalizeHost } from '../common/client';
 
 export const deleteRecord = createAction({
   name: 'deleteRecord',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Deletes a single record from a collection',
   audience: 'both',

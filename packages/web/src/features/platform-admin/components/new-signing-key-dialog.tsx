@@ -22,6 +22,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { signingKeyApi } from '@/features/platform-admin/api/signing-key-api';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type NewSigningKeyDialogProps = {
   children: React.ReactNode;
@@ -66,7 +67,7 @@ export const NewSigningKeyDialog = ({
         {signingKey && (
           <div className="p-4">
             <div className="flex flex-col items-start gap-2">
-              <span className="text-md">
+              <span>
                 {t(
                   'Please save this secret key somewhere safe and accessible. For security reasons,',
                 )}{' '}
@@ -80,6 +81,7 @@ export const NewSigningKeyDialog = ({
                 useInput={false}
                 fileName={signingKey.displayName}
                 textToCopy={signingKey.privateKey}
+                controlId={AdminControl.EMBEDDING_SIGNING_KEY_SECRET_COPY}
               />
             </div>
           </div>
@@ -120,6 +122,7 @@ export const NewSigningKeyDialog = ({
                 {t('Cancel')}
               </Button>
               <Button
+                {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_SUBMIT)}
                 disabled={isPending || !form.formState.isValid}
                 loading={isPending}
                 onClick={() => mutate()}

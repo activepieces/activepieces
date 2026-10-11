@@ -5,6 +5,7 @@ import { makeClient } from '../common';
 export const getCampaigns = createAction({
   auth: tarventAuth,
   name: 'tarvent_get_campaigns',
+  classification: 'SEARCH',
   displayName: 'Find Campaign',
   description: 'Finds a campaign by name, status or tags.',
   audience: 'both',

@@ -1,4 +1,4 @@
-import { AppConnectionValueForAuthProperty, createTrigger, PiecePropValueSchema, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { twilioAuth } from '../..';
 
@@ -83,7 +83,7 @@ export const twilioNewRecording = createTrigger({
     name: 'new_recording',
     classification: 'READ',
     displayName: 'New Recording',
-    description: 'Triggers when a new call recording is completed and available.',
+    description: 'Triggers when a new call recording is added to your account.',
     aiMetadata: {
       description: 'Fires when a new call recording becomes available on the Twilio account. Each event represents one completed recording, including its call SID, duration, and status.',
     },

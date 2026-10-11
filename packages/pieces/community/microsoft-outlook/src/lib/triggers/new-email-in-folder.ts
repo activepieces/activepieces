@@ -1,7 +1,6 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	AppConnectionValueForAuthProperty,
-	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
@@ -61,7 +60,7 @@ export const newEmailInFolderTrigger = createTrigger({
 	name: 'newEmailInFolder',
 	classification: 'READ',
 	displayName: 'New Email in Folder',
-	description: 'Triggers when a new email is delivered into the specified folder.',
+	description: 'Triggers when a new email lands in the folder you pick.',
 	aiMetadata: {
 		description: 'Fires when a new message appears in the chosen Outlook mail folder. Each fire represents one new email added to that folder.',
 	},
@@ -69,7 +68,7 @@ export const newEmailInFolderTrigger = createTrigger({
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',
-			description: '',
+			description: 'New emails in this folder start the flow.',
 			required: true,
 		}),
 	},

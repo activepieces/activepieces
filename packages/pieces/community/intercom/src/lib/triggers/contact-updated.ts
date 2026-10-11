@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const contactUpdatedTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'contact-updated',
+	classification: 'READ',
 	displayName: 'Updated Contact',
 	description: 'Triggers when a contact is updated.',
 	aiMetadata: {

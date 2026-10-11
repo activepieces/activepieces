@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const newTicketTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'new-ticket',
+	classification: 'READ',
 	displayName: 'New Ticket',
 	description: 'Triggers when a new ticket is created.',
 	aiMetadata: {

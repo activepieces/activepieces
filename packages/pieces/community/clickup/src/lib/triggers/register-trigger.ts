@@ -1,4 +1,9 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import {
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+  createTrigger,
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpRequest,
@@ -34,11 +39,32 @@ export const clickupRegisterTrigger = ({
     aiMetadata,
     props: {
       workspace_id: clickupCommon.workspace_id(true),
-      space_id: clickupCommon.space_id(false), // Optional, depends on workspace
-      folder_id: clickupCommon.folder_id(false), // Optional, depends on space
-      list_id: clickupCommon.list_id(false), // Optional, depends on folder or space
-      task_id: clickupCommon.task_id(false), // Optional, depends on list
+      scope_info: Property.MarkDown({
+        value:
+          'Leave space, folder, list and task empty to listen to the whole workspace.',
+        variant: MarkdownVariant.INFO,
+      }),
+      space_id: clickupCommon.space_id(false),
+      folder_id: clickupCommon.folder_id(false),
+      list_id: clickupCommon.list_id(false),
+      task_id: clickupCommon.task_id(false),
     },
+    propertyGroups: [
+      {
+        key: 'scope',
+        display: 'section',
+        label: 'Listen In',
+        icon: 'inbox',
+        props: [
+          'workspace_id',
+          'scope_info',
+          'space_id',
+          'folder_id',
+          'list_id',
+          'task_id',
+        ],
+      },
+    ],
     outputSchema: clickupTriggerOutputSchemas[name],
     sampleData,
     type: TriggerStrategy.WEBHOOK,

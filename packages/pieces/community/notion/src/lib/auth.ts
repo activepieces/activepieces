@@ -17,16 +17,19 @@ export const notionOAuth2Auth = PieceAuth.OAuth2({
   },
   authorizationMethod: OAuth2AuthorizationMethod.HEADER,
   required: true,
+  getConnectionIdentifier: async ({ auth }) =>
+    labelOf(auth.data) || fetchBotLabel(auth.access_token),
 });
 
 const notionCustomAuth = PieceAuth.CustomAuth({
   displayName: 'Access Token',
-  description:
-    'Connect using a Notion Internal Integration Token. Create one at https://www.notion.so/my-integrations.',
+  description: `1. Open [My integrations](https://www.notion.so/my-integrations) and create an internal integration.
+2. Copy its Internal Integration Secret and paste it below.
+3. In Notion, open each page or database you want to use and share it with the integration.`,
   required: true,
   props: {
     accessToken: PieceAuth.SecretText({
-      displayName: 'Internal Integration Token',
+      displayName: 'Internal Integration Secret',
       required: true,
     }),
   },
@@ -48,6 +51,38 @@ const notionCustomAuth = PieceAuth.CustomAuth({
       return { valid: false, error: (e as Error).message };
     }
   },
+  getConnectionIdentifier: async ({ auth }) => fetchBotLabel(auth.accessToken),
 });
 
 export const notionAuth = [notionOAuth2Auth, notionCustomAuth];
+
+function labelOf(grant: NotionGrant | undefined): string | undefined {
+  return (
+    grant?.owner?.user?.person?.email ||
+    grant?.workspace_name ||
+    grant?.owner?.user?.name ||
+    undefined
+  );
+}
+
+async function fetchBotLabel(token: string): Promise<string | undefined> {
+  try {
+    const response = await httpClient.sendRequest<{ bot?: NotionGrant }>({
+      method: HttpMethod.GET,
+      url: 'https://api.notion.com/v1/users/me',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Notion-Version': '2022-02-22',
+      },
+      timeout: 5000,
+    });
+    return labelOf(response.body.bot);
+  } catch {
+    return undefined;
+  }
+}
+
+type NotionGrant = {
+  workspace_name?: string | null;
+  owner?: { user?: { name?: string | null; person?: { email?: string } } };
+};

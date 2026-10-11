@@ -39,6 +39,7 @@ const polling: Polling<
 export const newPerson = createTrigger({
   auth: twentyAuth,
   name: 'new_person',
+  classification: 'READ',
   displayName: 'New Person',
   description: 'Triggers when a new person is created in Twenty CRM.',
   aiMetadata: {

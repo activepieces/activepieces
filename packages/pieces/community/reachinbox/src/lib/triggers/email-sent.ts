@@ -22,6 +22,7 @@ Follow the below steps:
 
 export const emailSent = createTrigger({
   name: 'emailSent',
+  classification: 'READ',
   displayName: 'Email Sent',
   description: 'Triggers when an email is successfully sent.',
   aiMetadata: {

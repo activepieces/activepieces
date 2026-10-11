@@ -4,6 +4,7 @@ import { intercomClient, TriggerPayload } from '../common';
 
 export const conversationRated = createTrigger({
 	name: 'conversationRated',
+	classification: 'READ',
 	displayName: 'Conversation was rated',
 	description: 'Triggers when a conversation is rated',
 	aiMetadata: {

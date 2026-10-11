@@ -6,6 +6,7 @@ import { buildPolling } from './common';
 export const newDeal = createTrigger({
   auth: ninjapipeAuth,
   name: 'new_deal',
+  classification: 'READ',
   displayName: 'New Deal',
   description: 'Triggers when a new deal is created.',
   aiMetadata: {

@@ -8,6 +8,7 @@ import { StreakSearchResponse } from '../common/types';
 export const findBoxAction = createAction({
   auth: streakAuth,
   name: 'find_box',
+  classification: 'SEARCH',
   displayName: 'Find Boxes',
   description:
     'Search boxes by name or query. Returns matching boxes across all pipelines, optionally filtered to one pipeline.',

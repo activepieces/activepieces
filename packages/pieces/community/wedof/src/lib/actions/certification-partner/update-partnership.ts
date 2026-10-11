@@ -10,6 +10,7 @@ import { wedofCommon } from '../../common/wedof';
 export const updatePartnership = createAction({
   auth: wedofAuth,
   name: 'updatePartnership',
+  classification: 'WRITE',
   displayName: 'Mettre à jour le partenariat',
   description: 'Permet de mettre à jour le partenariat',
   audience: 'both',

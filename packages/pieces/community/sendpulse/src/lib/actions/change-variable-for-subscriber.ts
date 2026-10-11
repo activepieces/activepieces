@@ -61,6 +61,7 @@ const variableDropdown = Property.Dropdown({
 export const changeVariableForSubscriberAction = createAction({
   auth: sendpulseAuth,
   name: 'change-variable-for-subscriber',
+  classification: 'WRITE',
   displayName: 'Change Variable for Subscriber',
   description: 'Update subscriber variable',
   audience: 'both',

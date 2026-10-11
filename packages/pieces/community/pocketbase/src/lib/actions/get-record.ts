@@ -5,6 +5,7 @@ import { pocketbaseAuthenticate, normalizeHost } from '../common/client';
 
 export const getRecord = createAction({
   name: 'getRecord',
+  classification: 'READ',
   displayName: 'Get Record',
   description: 'Gets a single record by ID from a collection',
   audience: 'both',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pushoverAuth } from '../..';
+import { buildMessageBody } from '../common';
 import { sendNotificationActionOutputSchema } from '../output-schemas';
 
 export const sendNotification = createAction({
@@ -9,7 +10,7 @@ export const sendNotification = createAction({
   classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to Pushover',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Sends a push notification through Pushover to the device(s) tied to the configured user/group key. Use to alert a person or group on their phone/desktop. The message body is required; optional priority (-2 to 2) controls urgency, and emergency priority (2) additionally requires retry and expire values. Not idempotent: each call delivers a new notification.',
     idempotent: false,
@@ -74,38 +75,25 @@ export const sendNotification = createAction({
   },
   outputSchema: sendNotificationActionOutputSchema,
   async run({ auth, propsValue }) {
-    const baseUrl = 'https://api.pushover.net/1/messages.json';
-    const apiToken = auth.props.api_token;
-    const userKey = auth.props.user_key;
-
-    const title = propsValue.title;
-    const message = propsValue.message;
-    const html = propsValue.html;
-    const priority = propsValue.priority;
-    const url = propsValue.url;
-    const url_title = propsValue.url_title;
-    const timestamp = propsValue.timestamp;
-    const device = propsValue.device;
-    const retry = propsValue.retry;
-    const expire = propsValue.expire;
+    const body = buildMessageBody({
+      apiToken: auth.props.api_token,
+      userKey: auth.props.user_key,
+      message: propsValue.message,
+      title: propsValue.title,
+      html: propsValue.html,
+      priority: propsValue.priority,
+      retry: propsValue.retry,
+      expire: propsValue.expire,
+      url: propsValue.url,
+      urlTitle: propsValue.url_title,
+      timestamp: propsValue.timestamp,
+      device: propsValue.device,
+    });
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: baseUrl,
-      body: {
-        token: apiToken,
-        user: userKey,
-        title,
-        message,
-        html: html ? 1 : 0,
-        url,
-        url_title,
-        timestamp,
-        device,
-        ...(priority && { priority: +priority }),
-        ...(retry && { retry: +retry }),
-        ...(expire && { expire: +expire }),
-      },
+      url: 'https://api.pushover.net/1/messages.json',
+      body,
     });
   },
 });

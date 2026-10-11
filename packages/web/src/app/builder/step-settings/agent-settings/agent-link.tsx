@@ -1,4 +1,8 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils';
+import {
+  AIProviderName,
+  isNil,
+  spreadIfDefined,
+} from '@activepieces/core-utils';
 import {
   AgentPieceProps,
   AgentSummary,
@@ -31,6 +35,7 @@ import {
   agentsQueries,
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -77,7 +82,13 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
     : !linked.isPublished
     ? t('Not published yet. Publish it before this flow can run.')
     : undefined;
-  const modelLabel = linkedConfig?.modelName ?? undefined;
+  const { tiers: flowTiers } = aiProviderQueries.useModelTiers('flow');
+  const modelLabel =
+    (linkedConfig?.provider === AIProviderName.ACTIVEPIECES
+      ? flowTiers.find((tier) => tier.id === linkedConfig.modelName)?.label
+      : undefined) ??
+    linkedConfig?.modelName ??
+    undefined;
   const toolPieces = new Set(
     (linked?.toolPieceNames ?? []).map((pieceName) =>
       pieceName.replace('@activepieces/piece-', ''),
@@ -199,9 +210,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
         <div className="flex flex-col gap-2.5 rounded-lg border p-3">
           {summaryText && (
             <TextWithTooltip tooltipMessage={summaryText}>
-              <p className="line-clamp-2 text-xs text-muted-foreground">
-                {summaryText}
-              </p>
+              <p className="line-clamp-2 text-xs text-gray-11">{summaryText}</p>
             </TextWithTooltip>
           )}
 
@@ -228,9 +237,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           <p
             className={cn(
               'text-xs',
-              isNil(blockedReason)
-                ? 'text-muted-foreground'
-                : 'text-warning-700 dark:text-warning-300',
+              isNil(blockedReason) ? 'text-gray-11' : 'text-warning-11',
             )}
           >
             {blockedReason ??

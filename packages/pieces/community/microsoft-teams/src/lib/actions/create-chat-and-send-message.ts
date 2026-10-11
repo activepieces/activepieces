@@ -9,6 +9,7 @@ import { Chat } from '@microsoft/microsoft-graph-types';
 export const createChatAndSendMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_create_chat_and_send_message',
+	classification: 'WRITE',
 	displayName: 'Create Chat & Send Message',
 	description: 'Start a new chat and send an initial message.',
 	audience: 'both',

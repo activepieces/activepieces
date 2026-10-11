@@ -8,7 +8,6 @@ import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecisio
 function createProgressGuard() {
     const failureCounts = new Map<string, number>()
     const succeededWrites = new Set<string>()
-    const loadedGuides = new Set<string>()
 
     const actionKey = ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): string =>
         `${pieceName}::${actionName}::${stableStringify(input ?? {})}`
@@ -41,20 +40,14 @@ function createProgressGuard() {
             }
             failureCounts.set(key, (failureCounts.get(key) ?? 0) + 1)
         },
-        markGuideLoaded: (topic: string): boolean => {
-            if (loadedGuides.has(topic)) return true
-            loadedGuides.add(topic)
-            return false
-        },
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    guides: Record<string, string>
     taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -116,6 +109,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
                 })
+                taintState.tainted = true
 
                 if (needsPreview) {
                     const previewData: ActionPreviewEvent = {
@@ -204,6 +198,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 status: z.string().optional().describe('Filter by status'),
             }),
             execute: async (input) => {
+                taintState.tainted = true
                 return truncateLargeResult(await executeWithTimeout('ap_list_across_projects', input))
             },
         }),
@@ -237,6 +232,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Optional extra values merged into `inputs`'),
             }),
             execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_run_code', toolInput)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
                 const producedFiles = Array.isArray(resultObj['producedFiles']) ? resultObj['producedFiles'] : []
@@ -262,29 +258,21 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
             },
         }),
 
-        ap_load_guide: tool({
-            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes), about_activepieces (what Activepieces is — open source, self-hosting, editions/pricing, security, how integrations work, how you work).',
-            inputSchema: z.object({
-                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces']).describe('Which guide to load'),
-            }),
-            execute: async (toolInput) => {
-                const guide = guides[toolInput.topic]
-                if (!guide) {
-                    return `No guide found for "${toolInput.topic}".`
-                }
-                if (progressGuard.markGuideLoaded(toolInput.topic)) {
-                    return `You already loaded the "${toolInput.topic}" guide earlier in this turn — re-read it from the conversation above instead of reloading.`
-                }
-                return guide
-            },
-        }),
-
         ap_remember: tool({
             description: 'Save a durable fact or preference about THIS user so it carries across all future conversations (silent, internal). Call it whenever the user would otherwise have to repeat themselves next time: when they explicitly ask you to remember something ("remember I love cheese") — always honor that — or when they volunteer a durable personal fact, preference, default, or correction ("I love cheese", "I prefer TypeScript", "default notify channel is #ops", "always EU-based candidates", "stop asking me things you can find"). One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so err toward saving when unsure. Do NOT use for one-off task details (those go in the brief).',
             inputSchema: z.object({
                 memory: z.string().describe('One concise durable preference/fact about the user'),
             }),
-            execute: async (toolInput) => {
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                if (taintState.tainted) {
+                    const label = `Remember: "${toolInput.memory}"`
+                    eventEmitter.emitActionPreview({ toolCallId, pieceName: '', actionName: 'ap_remember', actionDisplayName: label, input: toolInput, isBatch: false })
+                    await tryCatch(async () => onGateOpened?.({ gateId: toolCallId, toolName: 'ap_remember', displayName: label, toolInput }))
+                    const decision = await waitForApproval({ gateId: toolCallId })
+                    if (decision.outcome !== 'approved') {
+                        return { saved: false, message: decision.outcome === 'timeout' ? gateNoResponseMessage('memory approval') : 'The user chose not to save this. Do not retry it.' }
+                    }
+                }
                 return executeTool('ap_remember', toolInput)
             },
         }),

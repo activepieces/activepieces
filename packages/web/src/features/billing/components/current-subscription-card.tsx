@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import nonFreePlanBg from '@/assets/img/custom/non-free-plan-bg.jpg';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingUtils } from '../utils/billing-utils';
@@ -23,19 +24,21 @@ export const CurrentSubscriptionCard = ({
   if (isPaid) {
     return (
       <div
+        data-theme="light"
         className="flex flex-col gap-6 rounded-xl bg-cover bg-center p-5"
         style={{ backgroundImage: `url(${nonFreePlanBg})` }}
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="text-2xl font-bold text-neutral-900">
+          <span className="text-2xl font-bold text-gray-12">
             {planTitle(info)}
           </span>
-          <Badge className="rounded-full border-0 bg-white px-3 py-1 text-primary shadow-sm hover:bg-white">
+          <Badge className="rounded-full border-0 bg-panel px-3 py-1 text-accent-11 shadow-edge">
             {isYearly ? t('Yearly') : t('Monthly')}
           </Badge>
         </div>
         <Button
-          className="w-full  text-neutral-900 shadow-sm hover:bg-white/90"
+          {...adminControl(AdminControl.BILLING_UPGRADE_OPEN)}
+          className="w-full text-gray-12 shadow-edge"
           onClick={onExplorePlans}
           variant={'outline'}
         >
@@ -48,14 +51,17 @@ export const CurrentSubscriptionCard = ({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-xl border border-primary/20 p-5',
-        'bg-gradient-to-r from-amber-50 to-primary/10',
-        'dark:border-primary/20 dark:from-muted/40 dark:to-primary/10',
+        'flex flex-col gap-4 rounded-xl border border-accent-6 p-5',
+        'bg-accent-3',
       )}
     >
-      <span className="text-sm text-muted-foreground">{t('Current plan')}</span>
+      <span className="text-sm text-gray-11">{t('Current plan')}</span>
       <div className="text-2xl font-semibold">{planTitle(info)}</div>
-      <Button className="w-full" onClick={onExplorePlans}>
+      <Button
+        {...adminControl(AdminControl.BILLING_UPGRADE_OPEN)}
+        className="w-full"
+        onClick={onExplorePlans}
+      >
         {t('Upgrade')}
       </Button>
     </div>

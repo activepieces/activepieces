@@ -8,6 +8,7 @@ import { emailOctopusProps } from "../common/props";
 export const addTagToContact = createAction({
     auth: emailOctopusAuth,
     name: 'add_tag_to_contact',
+    classification: 'WRITE',
     displayName: 'Add Tag to Contact',
     description: 'Add one or more tags to a contact in a specified list.',
     audience: 'both',

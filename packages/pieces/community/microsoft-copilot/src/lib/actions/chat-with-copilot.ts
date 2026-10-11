@@ -7,6 +7,7 @@ export const chatWithCopilot = createAction({
   audience: 'both',
   auth: microsoft365CopilotAuth,
   name: 'chatWithCopilot',
+  classification: 'READ',
   displayName: 'Chat with Copilot',
   description:
     'Send a message to an existing Copilot conversation or creating a new one and get a response',

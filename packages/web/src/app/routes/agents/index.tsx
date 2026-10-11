@@ -1,9 +1,6 @@
 import {
-  AgentIcon,
   AgentListSort,
   AgentSummary,
-  ColorName,
-  DEFAULT_AGENT_MAX_STEPS,
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -48,6 +45,7 @@ import {
   agentsQueries,
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
+import { blankAgentUtils } from '@/features/agents/lib/blank-agent';
 import { NewBlankAgentButton } from '@/features/agents/new-blank-agent-button';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -69,22 +67,22 @@ const SUGGESTIONS = [
 const TEMPLATE_STARTERS: TemplateStarter[] = [
   {
     label: 'Research analyst',
-    dot: '#0D9488',
+    dot: 'bg-swatch-9-mark',
     prompt: 'Research a company and send me a cited brief on it',
   },
   {
     label: 'Support triage',
-    dot: '#D97706',
+    dot: 'bg-swatch-6-mark',
     prompt: 'Read a support ticket, tag its severity, and route it to a team',
   },
   {
     label: 'Lead enrichment',
-    dot: '#2563EB',
+    dot: 'bg-swatch-11-mark',
     prompt: 'Enrich a new lead with company details and write the first email',
   },
   {
     label: 'SEO writer',
-    dot: '#E11D48',
+    dot: 'bg-swatch-3-mark',
     prompt: 'Research keywords for a topic and draft a post that targets them',
   },
 ];
@@ -101,10 +99,10 @@ const AgentsPage = () => {
   const agentsAvailable = useAgentsAvailable();
   return (
     <LockedFeatureGuard
+      featureKey="AGENTS"
       locked={!agentsAvailable}
       lockTitle={t('Unlock Agents')}
       lockDescription={t('Build an agent once, then use it in any flow.')}
-      featureKey="AGENTS"
     >
       <AgentsPageContent />
     </LockedFeatureGuard>
@@ -180,19 +178,7 @@ const AgentsPageContent = () => {
     if (createAgent.isPending) {
       return;
     }
-    createAgent.mutate({
-      projectId,
-      displayName: t('New agent'),
-      description: null,
-      icon: AgentIcon.BOT,
-      color: ColorName.PURPLE,
-      draft: {
-        instructions: '',
-        maxSteps: DEFAULT_AGENT_MAX_STEPS,
-        tools: [],
-        structuredOutput: [],
-      },
-    });
+    createAgent.mutate(blankAgentUtils.request({ projectId }));
   };
 
   const projectDotColorFor = (agent: AgentSummary) =>
@@ -234,7 +220,7 @@ const AgentsPageContent = () => {
                 className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[520px] -translate-x-1/2 -translate-y-[230px]"
                 style={{
                   backgroundImage:
-                    'radial-gradient(ellipse at center, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0) 70%)',
+                    'radial-gradient(ellipse at center, color-mix(in oklab, var(--accent-9), transparent 90%) 0%, transparent 70%)',
                 }}
               />
               <AgentTrioMark className="mb-[22px]" />
@@ -253,7 +239,7 @@ const AgentsPageContent = () => {
           </h1>
           <p
             className={cn(
-              'text-[15px] leading-[18px] text-muted-foreground',
+              'text-[15px] leading-[18px] text-gray-11',
               firstRun && 'max-w-[468px] text-center text-base leading-6',
             )}
           >
@@ -279,9 +265,9 @@ const AgentsPageContent = () => {
             <>
               <div
                 className={cn(
-                  'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border border-border bg-muted ps-5 pe-2 py-2 transition-colors',
+                  'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border border-gray-6 bg-gray-3 ps-5 pe-2 py-2 transition-colors',
                   firstRun &&
-                    'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-background px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
+                    'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-gray-1 px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
                 )}
               >
                 <Textarea
@@ -303,7 +289,7 @@ const AgentsPageContent = () => {
                       : t('Draft weekly launch posts and file them in Notion…')
                   }
                   className={cn(
-                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-neutral-400',
+                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-gray-11',
                     firstRun && 'min-h-11 px-1 py-1 text-[15px] leading-[22px]',
                   )}
                 />
@@ -328,7 +314,7 @@ const AgentsPageContent = () => {
               >
                 <span
                   className={cn(
-                    'text-[13px] leading-4 text-muted-foreground',
+                    'text-[13px] leading-4 text-gray-11',
                     firstRun && 'font-medium',
                   )}
                 >
@@ -341,12 +327,14 @@ const AgentsPageContent = () => {
                           key={starter.label}
                           type="button"
                           onClick={() => askChat(t(starter.prompt))}
-                          className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-neutral-700 transition-colors hover:bg-accent"
+                          className="flex items-center gap-2 rounded-full border border-gray-6 py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-gray-11 transition-colors hover:bg-gray-4"
                         >
                           <span
                             aria-hidden
-                            className="size-[11px] shrink-0 rounded-sm"
-                            style={{ backgroundColor: starter.dot }}
+                            className={cn(
+                              'size-[11px] shrink-0 rounded-sm',
+                              starter.dot,
+                            )}
                           />
                           {t(starter.label)}
                         </button>
@@ -356,13 +344,25 @@ const AgentsPageContent = () => {
                           key={suggestion}
                           type="button"
                           onClick={() => askChat(t(suggestion))}
-                          className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent"
+                          className="rounded-full border border-gray-6 px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-gray-4"
                         >
                           {t(suggestion)}
                         </button>
                       ))}
                 </div>
               </div>
+              {firstRun && (
+                <NewBlankAgentButton
+                  projects={allProjects ?? []}
+                  pending={createAgent.isPending}
+                  onCreate={createBlankAgent}
+                  variant="ghost"
+                  size="sm"
+                  className="mt-4 gap-2 text-gray-11"
+                  icon={<Plus size={15} />}
+                  label={t('Start from scratch')}
+                />
+              )}
             </>
           )}
         </section>
@@ -384,23 +384,23 @@ const AgentsPageContent = () => {
               <h2 className="text-xl font-semibold leading-6 tracking-[-0.01em]">
                 {t('Your agents')}
               </h2>
-              <span className="text-[15px] leading-[18px] text-muted-foreground">
+              <span className="text-[15px] leading-[18px] text-gray-11">
                 {agents.length}
               </span>
               {hasNextPage && (
-                <span className="text-[13px] leading-4 text-muted-foreground">
+                <span className="text-[13px] leading-4 text-gray-11">
                   {t('Showing {count} so far', { count: agents.length })}
                 </span>
               )}
             </div>
             <div className="ms-auto flex items-center gap-3">
-              <div className="flex h-8 w-[180px] shrink-0 items-center gap-2 rounded-full border border-border bg-muted px-3">
-                <Search size={14} className="shrink-0 text-muted-foreground" />
+              <div className="flex h-8 w-[180px] shrink-0 items-center gap-2 rounded-full border border-gray-6 bg-gray-3 px-3">
+                <Search size={14} className="shrink-0 text-gray-11" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={t('Search agents')}
-                  className="w-full bg-transparent text-xs leading-4 outline-none placeholder:text-muted-foreground"
+                  className="w-full bg-transparent text-xs leading-4 outline-none placeholder:text-gray-11"
                 />
               </div>
               {(allProjects ?? []).length > 1 && (
@@ -419,13 +419,10 @@ const AgentsPageContent = () => {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex h-8 items-center gap-2 rounded-md border border-border px-3 text-[13px] leading-4 transition-colors hover:bg-accent"
+                    className="flex h-8 items-center gap-2 rounded-md border border-gray-6 px-3 text-[13px] leading-4 transition-colors hover:bg-gray-4"
                   >
                     {t(SORT_LABELS[sort])}
-                    <ChevronsUpDown
-                      size={14}
-                      className="text-muted-foreground"
-                    />
+                    <ChevronsUpDown size={14} className="text-gray-11" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -441,19 +438,19 @@ const AgentsPageContent = () => {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="flex h-8 items-center gap-[2px] rounded-full border border-border p-[3px]">
+              <div className="flex h-8 items-center gap-[2px] rounded-full border border-gray-6 p-[3px]">
                 <button
                   type="button"
                   aria-label={t('Grid view')}
                   onClick={() => setLayout('grid')}
                   className={cn(
                     'flex h-6 w-8 shrink-0 items-center justify-center rounded-full',
-                    layout === 'grid' && 'bg-neutral-100',
+                    layout === 'grid' && 'bg-gray-3',
                   )}
                 >
                   <LayoutGrid
                     size={15}
-                    className={cn(layout !== 'grid' && 'text-neutral-400')}
+                    className={cn(layout !== 'grid' && 'text-gray-11')}
                   />
                 </button>
                 <button
@@ -462,12 +459,12 @@ const AgentsPageContent = () => {
                   onClick={() => setLayout('list')}
                   className={cn(
                     'flex h-6 w-8 shrink-0 items-center justify-center rounded-full',
-                    layout === 'list' && 'bg-neutral-100',
+                    layout === 'list' && 'bg-gray-3',
                   )}
                 >
                   <List
                     size={15}
-                    className={cn(layout !== 'list' && 'text-neutral-400')}
+                    className={cn(layout !== 'list' && 'text-gray-11')}
                   />
                 </button>
               </div>
@@ -476,7 +473,7 @@ const AgentsPageContent = () => {
                 pending={createAgent.isPending}
                 onCreate={createBlankAgent}
                 size="sm"
-                className="px-3.5 text-neutral-700"
+                className="px-3.5 text-gray-11"
                 icon={<Plus size={15} />}
                 label={t('New agent')}
               />

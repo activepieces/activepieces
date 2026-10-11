@@ -1,5 +1,6 @@
-import { isObject } from '@activepieces/core-utils';
+import { AIProviderName, isObject } from '@activepieces/core-utils';
 import {
+  aiProviderUtils,
   ActionReceiptEvent,
   BuildPlanEvent,
   BuildPlanStep,
@@ -577,8 +578,20 @@ function reopensSameConversation({
   return current === next;
 }
 
+function newChatModelName({
+  provider,
+}: {
+  provider: AIProviderName | undefined;
+}): string | null {
+  if (provider === undefined) {
+    return null;
+  }
+  return aiProviderUtils.getCuratedChatModels({ provider })?.[0]?.id ?? null;
+}
+
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
+  newChatModelName,
   reopensSameConversation,
   sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>

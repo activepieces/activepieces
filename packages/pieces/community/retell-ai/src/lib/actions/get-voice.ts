@@ -7,6 +7,7 @@ import { voiceIdDropdown } from '../common/props';
 export const getVoice = createAction({
   auth: retellAiAuth,
   name: 'get_voice',
+  classification: 'READ',
   displayName: 'Get Voice',
   description: 'Retrieve details for a specific voice model or configuration by ID in Retell AI.',
   audience: 'both',

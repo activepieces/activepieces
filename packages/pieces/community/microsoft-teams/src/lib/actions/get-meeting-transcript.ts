@@ -7,6 +7,7 @@ import { createGraphClient, resolveMeetingId, withGraphRetry } from '../common/g
 export const getMeetingTranscriptAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_get_meeting_transcript',
+	classification: 'SEARCH',
 	displayName: 'Get Meeting Transcript',
 	description:
 		'Retrieves transcripts for a Teams meeting. Provide a Transcript to fetch its text content; omit it to list all available transcripts.',

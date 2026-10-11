@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const createGeneralAudit = createAction({
   auth: wedofAuth,
   name: 'createGeneralAudit',
+  classification: 'DESTRUCTIVE',
   displayName: "Générer un audit général sur les partenaires d'une certification",
   description: "Permet de générer et clôturer un audit pour chacun des partenariats (actifs) de certification",
   audience: 'both',

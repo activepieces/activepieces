@@ -17,8 +17,16 @@ Ownership verification a provider requires before it will send events — a chal
 An internal-bus domain event (27 names). The one vocabulary shared by audit logs, event destinations, and alerts — not an HTTP concept.
 
 ### 📡 Event Destination
-An outbound webhook subscribing to a chosen subset of Application Events at PLATFORM or PROJECT scope, delivered via BullMQ. EE/Cloud only, gated by `auditLogEnabled`.
-- *Avoid:* "event stream" — the delivery is per-destination fan-out, not a stream anyone subscribes to.
+An outbound endpoint subscribing to a chosen subset of Application Events at PLATFORM or PROJECT scope, delivered via BullMQ in its Format. EE/Cloud only, gated by `eventStreamingEnabled`. "Event Streaming" is only the name of the feature and its admin page.
+- *Avoid:* "event stream", "audit stream" — the delivery is per-destination fan-out, not a stream anyone subscribes to.
+
+### 🧾 Format
+How an Event Destination encodes each Application Event on the wire: `RAW` (the event JSON), `OTLP_JSON`, or `OTLP_PROTOBUF` (an OpenTelemetry logs export request).
+- *Avoid:* "mapper", "payload template", "preset", "destination type" — all retired; the encoding is part of the Format, not a separate setting.
+
+### 🧭 Handler Flow
+A flow on the same instance whose webhook URL is an Event Destination URL. It gets events in-process when the URL is on the instance's public origin, and over HTTP otherwise (an embed-host URL). A generated one routes on the `RAW` Format; the API refuses `OTLP_PROTOBUF` for any webhook URL.
+- *Avoid:* "internal flow".
 
 ## Pages
 

@@ -21,7 +21,8 @@ export const airtableFindTableAction = createAction({
     base: airtableCommon.base,
     tableName: Property.ShortText({
       displayName: 'Table Name',
-      description: 'The exact name of the table you want to find.',
+      description: 'Exact table name. Case does not matter.',
+      placeholder: 'e.g. Contacts',
       required: true,
     }),
   },

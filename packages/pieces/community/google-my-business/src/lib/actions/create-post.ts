@@ -10,7 +10,7 @@ export const createPost = createAction({
   outputSchema: createPostActionOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Post',
-  description: 'Creates a post for a specified location.',
+  description: 'Publish an update, event, offer or alert on a location.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,94 +18,137 @@ export const createPost = createAction({
     idempotent: false,
   },
   auth: googleAuth,
+  propertyGroups: [
+    {
+      key: 'business',
+      display: 'section',
+      label: 'Business',
+      icon: 'location',
+      props: ['account', 'location'],
+    },
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'text',
+      props: ['topicType', 'summary', 'mediaSourceUrl', 'languageCode', 'alertType'],
+    },
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event and Offer Details',
+      icon: 'calendar',
+      props: ['eventTitle', 'eventStartDate', 'eventStartTime', 'eventEndDate', 'eventEndTime'],
+    },
+    {
+      key: 'offer',
+      display: 'section',
+      label: 'Offer Details',
+      icon: 'tag',
+      props: ['offerCouponCode', 'offerRedeemOnlineUrl', 'offerTermsConditions'],
+    },
+    {
+      key: 'button',
+      display: 'section',
+      label: 'Button',
+      icon: 'send',
+      props: ['callToActionType', 'callToActionUrl'],
+    },
+  ],
   props: {
     account: googleBusinessCommon.account,
     location: googleBusinessCommon.location,
     topicType: Property.StaticDropdown({
       displayName: 'Post Type',
-      description: 'The kind of post to publish.',
       required: true,
       defaultValue: 'STANDARD',
+      display: 'cards',
       options: { disabled: false, options: localPostUtils.topicOptions },
     }),
     summary: Property.LongText({
-      displayName: 'Summary',
-      description: 'The body text of the post.',
+      displayName: 'Post Text',
+      placeholder: 'We are open late this Friday!',
       required: true,
-    }),
-    languageCode: Property.ShortText({
-      displayName: 'Language Code',
-      description: 'BCP 47 language code of the post text, for example `en` or `en-GB`.',
-      required: true,
-      defaultValue: 'en',
-    }),
-    scheduledTime: Property.DateTime({
-      displayName: 'Publish At',
-      description:
-        'Leave empty to publish immediately. Set a future time to schedule the post, which keeps it off the listing until then.',
-      required: false,
     }),
     mediaSourceUrl: Property.ShortText({
       displayName: 'Photo URL',
-      description:
-        'Publicly accessible URL of a photo to attach. Google fetches the image, so it must not require authentication.',
+      description: 'A public image link. Google must open it without a login.',
+      placeholder: 'https://example.com/photo.jpg',
       required: false,
     }),
-    callToActionType: Property.StaticDropdown({
-      displayName: 'Call To Action',
-      description: 'Optional button shown on the post.',
-      required: false,
-      options: { disabled: false, options: localPostUtils.callToActionOptions },
+    languageCode: Property.ShortText({
+      displayName: 'Language Code',
+      description: 'Language of the post text, like en or en-GB.',
+      required: true,
+      defaultValue: 'en',
     }),
-    callToActionUrl: Property.ShortText({
-      displayName: 'Call To Action URL',
-      description:
-        'Where the button links to. Required for every call to action except Call Now, which uses the location phone number.',
+    alertType: Property.StaticDropdown({
+      displayName: 'Alert Type',
+      description: 'Required for Alert posts.',
       required: false,
+      options: { disabled: false, options: localPostUtils.alertTypeOptions },
     }),
     eventTitle: Property.ShortText({
-      displayName: 'Event / Offer Title',
-      description: 'Required when the post type is Event or Offer.',
+      displayName: 'Title',
+      description: 'Required for Event and Offer posts, with both dates.',
       required: false,
     }),
     eventStartDate: Property.ShortText({
       displayName: 'Start Date',
-      description: 'Required for Event and Offer posts, as `YYYY-MM-DD`.',
+      placeholder: '2026-12-31',
+      width: 'half',
       required: false,
     }),
     eventStartTime: Property.ShortText({
       displayName: 'Start Time',
-      description:
-        'Optional time of day as `HH:mm` in 24-hour form. Interpreted in the location time zone, so no offset is sent.',
+      description: '24-hour clock, location time zone.',
+      placeholder: '09:00',
+      width: 'half',
       required: false,
     }),
     eventEndDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Required for Event and Offer posts, as `YYYY-MM-DD`.',
+      placeholder: '2026-12-31',
+      width: 'half',
       required: false,
     }),
     eventEndTime: Property.ShortText({
       displayName: 'End Time',
-      description: 'Optional time of day as `HH:mm` in 24-hour form.',
+      description: '24-hour clock, location time zone.',
+      placeholder: '17:00',
+      width: 'half',
       required: false,
     }),
     offerCouponCode: Property.ShortText({
       displayName: 'Coupon Code',
+      placeholder: 'SAVE20',
       required: false,
     }),
     offerRedeemOnlineUrl: Property.ShortText({
       displayName: 'Redeem Online URL',
+      placeholder: 'https://example.com/offer',
       required: false,
     }),
     offerTermsConditions: Property.LongText({
-      displayName: 'Terms And Conditions',
+      displayName: 'Terms and Conditions',
       required: false,
     }),
-    alertType: Property.StaticDropdown({
-      displayName: 'Alert Type',
-      description: 'Required when the post type is Alert.',
+    callToActionType: Property.StaticDropdown({
+      displayName: 'Button Type',
       required: false,
-      options: { disabled: false, options: localPostUtils.alertTypeOptions },
+      options: { disabled: false, options: localPostUtils.callToActionOptions },
+    }),
+    callToActionUrl: Property.ShortText({
+      displayName: 'Button Link',
+      description: 'Required for every button except Call Now, which dials the location.',
+      placeholder: 'https://example.com',
+      required: false,
+    }),
+    scheduledTime: Property.DateTime({
+      displayName: 'Publish At',
+      description: 'Leave empty to publish now.',
+      advanced: true,
+      required: false,
     }),
   },
   async run(ctx) {

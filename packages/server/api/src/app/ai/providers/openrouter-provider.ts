@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderModel, AIProviderModelType, OpenRouterProviderAuthConfig, OpenRouterProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { AIProviderStrategy } from './ai-provider'
+import { AIProviderStrategy, MODEL_LIST_TIMEOUT_MS } from './ai-provider'
 
 export const openRouterProvider: AIProviderStrategy<OpenRouterProviderAuthConfig, OpenRouterProviderConfig> = {
     name: 'OpenRouter',
@@ -19,6 +19,7 @@ export const openRouterProvider: AIProviderStrategy<OpenRouterProviderAuthConfig
         const res = await httpClient.sendRequest<{ data: OpenRouterModel[] }>({
             url: 'https://openrouter.ai/api/v1/models',
             method: HttpMethod.GET,
+            timeout: MODEL_LIST_TIMEOUT_MS,
             headers: {
                 'Content-Type': 'application/json',
             },

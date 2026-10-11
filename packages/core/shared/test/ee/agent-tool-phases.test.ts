@@ -7,6 +7,7 @@ const ALL = [
     'ap_resolve_property_options',
     'ap_list_connections',
     'ap_explore_data',
+    'ap_validate_flow',
     'ap_show_questions',
     'ap_build_flow',
     'ap_add_step',
@@ -36,7 +37,7 @@ describe('agentToolPhases.activeToolsForPhase', () => {
     it('keeps read/discovery tools available in both phases', () => {
         const discovery = agentToolPhases.activeToolsForPhase({ phase: 'discovery', allToolNames: ALL })
         const build = agentToolPhases.activeToolsForPhase({ phase: 'build', allToolNames: ALL })
-        for (const tool of ['ap_research_pieces', 'ap_get_piece_props', 'ap_list_connections', 'ap_explore_data']) {
+        for (const tool of ['ap_research_pieces', 'ap_get_piece_props', 'ap_list_connections', 'ap_explore_data', 'ap_validate_flow']) {
             expect(discovery).toContain(tool)
             expect(build).toContain(tool)
         }

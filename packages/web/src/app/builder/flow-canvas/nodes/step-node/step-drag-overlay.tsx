@@ -1,8 +1,9 @@
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import { useStore } from '@xyflow/react';
 import { t } from 'i18next';
 import { useState } from 'react';
 
-import { SIDEBAR_ID } from '@/app/components/sidebar/dashboard';
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { stepsHooks } from '@/features/pieces';
 
 import {
@@ -15,15 +16,17 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { cursorPosition } = useCursorPosition();
   const [overlayPosition, setOverlayPosition] =
     useState<typeof cursorPosition>(cursorPosition);
-  const sidebar = document.getElementById(SIDEBAR_ID);
-  const sidebarWidth = sidebar?.clientWidth ?? 0;
+  const canvasElement = useStore((state) => state.domNode);
+  const canvasRect = canvasElement?.getBoundingClientRect();
   const left = `${
     overlayPosition.x -
     flowCanvasConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
-    sidebarWidth
+    (canvasRect?.left ?? 0)
   }px`;
   const top = `${
-    overlayPosition.y - flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
+    overlayPosition.y -
+    flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT / 2 -
+    (canvasRect?.top ?? 0)
   }px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
@@ -34,7 +37,7 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   return (
     <div
       className={
-        'p-4 absolute left-0 top-0 cursor-grabbing z-50  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-background cursor-grabbing'
+        'p-4 absolute left-0 top-0 cursor-grabbing z-50  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-gray-1 cursor-grabbing'
       }
       style={{
         left,
@@ -45,11 +48,11 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
       }}
       id={'dragged-step-overlay'}
     >
-      <img
-        id={t('logo')}
-        className={'object-contain left-0 right-0 static !cursor-grabbing'}
+      <LogoPlate
+        className="h-full w-full !cursor-grabbing"
         src={step?.settings?.customLogoUrl ?? stepMetadata?.logoUrl}
         alt={t('Step Icon')}
+        tint
       />
     </div>
   );

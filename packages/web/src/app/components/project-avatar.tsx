@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared';
 
 import { Avatar } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface ProjectAvatarProps {
   displayName: string;
@@ -54,7 +55,7 @@ export const ProjectAvatar = ({
           showBackground ? 'rounded-tr-md' : ''
         } ${showDetails ? 'py-6' : ''}`}
         style={{
-          backgroundColor: showBackground ? '#f3f4f6' : 'transparent',
+          backgroundColor: showBackground ? 'var(--gray-3)' : 'transparent',
         }}
       >
         <Avatar
@@ -64,21 +65,21 @@ export const ProjectAvatar = ({
             showDetails ? 'mb-3' : ''
           }`}
           style={{
-            backgroundColor: '#9ca3af',
-            color: '#ffffff',
+            backgroundColor: 'var(--gray-11)',
+            color: 'var(--gray-1)',
           }}
         >
-          <span className={currentSize.text}>
+          <span className={cn(currentSize.text, 'leading-none')}>
             {displayName.charAt(0).toUpperCase()}
           </span>
         </Avatar>
         {showDetails && (
           <div className="px-4 text-center">
-            <div className="font-semibold text-sm text-black">
+            <div className="font-semibold text-sm text-gray-12">
               {displayName}
             </div>
             {createdDate && (
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-xs text-gray-11 mt-1">
                 Created on{' '}
                 {new Intl.DateTimeFormat('en-US', {
                   month: 'numeric',
@@ -102,7 +103,7 @@ export const ProjectAvatar = ({
       } ${showDetails ? 'py-6' : ''}`}
       style={{
         backgroundColor: showBackground
-          ? PROJECT_COLOR_PALETTE[iconColor].color + '26'
+          ? `color-mix(in oklab, ${PROJECT_COLOR_PALETTE[iconColor].color}, transparent 85%)`
           : 'transparent',
       }}
     >
@@ -117,15 +118,17 @@ export const ProjectAvatar = ({
           color: PROJECT_COLOR_PALETTE[iconColor].textColor,
         }}
       >
-        <span className={currentSize.text}>
+        <span className={cn(currentSize.text, 'leading-none')}>
           {displayName.charAt(0).toUpperCase()}
         </span>
       </Avatar>
       {showDetails && (
         <div className="px-4 text-center">
-          <div className="font-semibold text-sm text-black">{displayName}</div>
+          <div className="font-semibold text-sm text-gray-12">
+            {displayName}
+          </div>
           {createdDate && (
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-gray-11 mt-1">
               Created on{' '}
               {new Intl.DateTimeFormat('en-US', {
                 month: 'numeric',

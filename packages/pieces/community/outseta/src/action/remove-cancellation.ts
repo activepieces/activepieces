@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const removeCancellationAction = createAction({
   name: 'remove_cancellation',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Remove Cancellation',
   description:

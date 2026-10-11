@@ -65,17 +65,17 @@ function FileChip({ file }: { file: FileProducedEvent }) {
   const size = formatBytes(file.byteSize);
   return (
     <motion.div
-      className="flex max-w-md items-center gap-3 rounded-xl border bg-card p-3"
+      className="flex max-w-md items-center gap-3 rounded-xl border bg-panel p-3"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-        <FileIcon className="size-4 text-muted-foreground" />
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3">
+        <FileIcon className="size-4 text-gray-11" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{label}</p>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="truncate text-xs text-gray-11">
           {file.mediaType}
           {size ? ` · ${size}` : ''}
         </p>
@@ -118,7 +118,7 @@ export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
     return (
       <>
         <motion.div
-          className="max-w-md overflow-hidden rounded-xl border bg-card"
+          className="max-w-md overflow-hidden rounded-xl border bg-panel"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -131,7 +131,7 @@ export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
             <img src={file.url} alt={label} className="h-auto w-full" />
           </button>
           <div className="flex items-center justify-between gap-2 p-2">
-            <p className="min-w-0 truncate text-xs text-muted-foreground">
+            <p className="min-w-0 truncate text-xs text-gray-11">
               {label}
               {size ? ` · ${size}` : ''}
             </p>
@@ -154,10 +154,10 @@ export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
   if (canPreview && !isError) {
     if (isLoading || content === undefined) {
       return (
-        <div className="w-full overflow-hidden rounded-xl border bg-card">
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-            <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-            <span className="truncate text-xs font-medium text-muted-foreground">
+        <div className="w-full overflow-hidden rounded-xl border bg-panel">
+          <div className="flex items-center gap-2 border-b border-gray-6 px-3 py-2">
+            <FileIcon className="size-4 shrink-0 text-gray-11" />
+            <span className="truncate text-xs font-medium text-gray-11">
               {label}
             </span>
           </div>

@@ -14,7 +14,7 @@ export const wooUpdateCustomer = createAction({
   classification: 'WRITE',
   displayName: 'Update Customer',
   description: 'Update a customer name, email or billing details',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates an existing WooCommerce customer by ID. Can change the email, first and last name, and billing phone, city, postcode and country. Only the fields provided are changed. Idempotent: sending the same values twice leaves the customer in the same state.',

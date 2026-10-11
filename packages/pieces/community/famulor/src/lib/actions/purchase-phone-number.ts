@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const purchasePhoneNumber = createAction({
   auth: famulorAuth,
   name: 'purchasePhoneNumber',
+  classification: 'WRITE',
   displayName: 'Purchase Phone Number',
   description: 'Purchase a phone number from the available search results.',
   audience: 'both',

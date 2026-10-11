@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOrgApiCallAction = createAction({
   name: 'get_org_api_call',
+  classification: 'READ',
   displayName: 'Get Organization API Call',
   description: 'Retrieve details of a specific API call made by your organization',
   audience: 'both',

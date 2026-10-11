@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const listCasesAction = createAction({
   name: 'list_cases',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Cases',
   description:

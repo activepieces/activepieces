@@ -52,6 +52,7 @@ const assistantDropdownForWebhook = () =>
 export const phoneCallEnded = createTrigger({
     auth: famulorAuth,
     name: 'phoneCallEnded',
+    classification: 'READ',
     displayName: 'Phone Call Completed',
     description: 'Triggers when a phone call completes.',
     aiMetadata: {

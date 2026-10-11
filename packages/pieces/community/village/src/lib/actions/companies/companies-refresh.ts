@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const companiesRefresh = createAction({
   auth: villageAuth,
   name: 'companies_refresh',
+  classification: 'WRITE',
   displayName: 'Refresh Companies',
   description:
     'Refresh/import company data from LinkedIn URLs or domains. Realtime mode returns enriched data synchronously (or times out after 25s); async mode returns job IDs for later status checking. At least one of linkedin_urls or domains must be provided.',

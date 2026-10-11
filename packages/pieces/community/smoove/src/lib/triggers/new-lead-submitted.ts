@@ -150,6 +150,7 @@ async function fetchSubmissionsForPage(
 export const newLeadSubmitted = createTrigger({
     auth: smooveAuth,
     name: 'newLeadSubmitted',
+    classification: 'READ',
     displayName: 'New Lead Submitted',
     description: 'Fires when a lead submits via form, popup, or mobile campaign',
     aiMetadata: {

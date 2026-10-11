@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertPowerAction = createAction({
   name: 'convert_power',
+  classification: 'READ',
   displayName: 'Convert Power',
   description: 'Convert power measurements between different units',
   audience: 'both',

@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const pagePerformedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_page_performed',
+  classification: 'READ',
   displayName: 'Landing Page CTA Performed',
   description: 'Triggers when a known or unknown contact performs a Call-To-Action within a landing page.',
   aiMetadata: {

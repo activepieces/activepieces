@@ -24,6 +24,16 @@ export const PlatformConfigurationEntity = new EntitySchema<PlatformConfiguratio
             nullable: false,
             default: true,
         },
+        maxBarrierSignals: {
+            type: Number,
+            nullable: false,
+            default: 10000,
+        },
+        aiSpecificModelsVisible: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
     },
     indices: [
         {

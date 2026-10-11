@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitSchemeSelection = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-scheme-selection',
+  classification: 'WRITE',
   displayName: 'Submit Scheme Selection',
   description: 'Submit the scheme details selected by the PSU. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

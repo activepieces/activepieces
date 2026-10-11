@@ -9,7 +9,7 @@ export const getBoardItemValuesAction = createAction({
   classification: 'SEARCH',
   displayName: 'Get Board Values',
   description: "Gets a list of board's items.",
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieves all items on a monday.com board with their column values, optionally narrowed to specific column ids. Use to read or list the rows of a board. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: mondayCommon.workspace_id(true),

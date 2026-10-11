@@ -10,6 +10,7 @@
  * branch-settings test, since @testing-library/react is opted into per file.
  */
 /* eslint-disable testing-library/no-unnecessary-act */
+import { AIProviderName } from '@activepieces/core-utils';
 import { AgentVisibility } from '@activepieces/shared';
 import * as React from 'react';
 import { act } from 'react';
@@ -21,6 +22,7 @@ const state = vi.hoisted(() => ({
   agentsAvailable: true,
   agents: [] as unknown[],
   isError: false,
+  linkedAgent: undefined as unknown,
 }));
 
 vi.mock('@/features/agents/hooks/agents-hooks', () => ({
@@ -32,7 +34,19 @@ vi.mock('@/features/agents/hooks/agents-hooks', () => ({
       isError: state.isError,
       refetch: vi.fn(),
     }),
-    useAgent: () => ({ data: undefined }),
+    useAgent: () => ({ data: state.linkedAgent }),
+  },
+}));
+
+vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
+  aiProviderQueries: {
+    useModelTiers: () => ({
+      tiers: [
+        { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5' },
+        { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8' },
+      ],
+      defaultTierId: 'fast',
+    }),
   },
 }));
 
@@ -128,6 +142,7 @@ function render(agentId?: string) {
 beforeEach(() => {
   state.agentsAvailable = true;
   state.isError = false;
+  state.linkedAgent = undefined;
   state.agents = [
     agent({ displayName: 'Ops', visibility: AgentVisibility.PROJECT }),
   ];
@@ -190,4 +205,48 @@ describe('the agent picker on a Run Agent step', () => {
       container.querySelector('[data-testid="agent-picker-error"]'),
     ).not.toBe(null);
   });
+
+  it('names a managed agent model by its tier label, not its tier id', () => {
+    state.linkedAgent = linkedAgent({
+      provider: AIProviderName.ACTIVEPIECES,
+      modelName: 'premium',
+    });
+
+    render('ext-Ops');
+
+    expect(container.textContent).toContain('Heavy');
+    expect(container.textContent).not.toContain('premium');
+  });
+
+  it('shows a model id that is not a tier as it is stored', () => {
+    state.linkedAgent = linkedAgent({
+      provider: AIProviderName.ACTIVEPIECES,
+      modelName: 'anthropic/claude-opus-4.8',
+    });
+
+    render('ext-Ops');
+
+    expect(container.textContent).toContain('anthropic/claude-opus-4.8');
+  });
 });
+
+function linkedAgent({
+  provider,
+  modelName,
+}: {
+  provider: AIProviderName;
+  modelName: string;
+}) {
+  return {
+    id: 'id-Ops',
+    draft: null,
+    published: {
+      provider,
+      modelName,
+      instructions: 'Answer tickets.',
+      tools: [],
+      structuredOutput: [],
+      maxSteps: 10,
+    },
+  };
+}

@@ -48,7 +48,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
       sideOffset={4}
     >
       <div className="px-2 py-1.5">
-        <p className="text-xs text-muted-foreground">{t('Platforms')}</p>
+        <p className="text-xs text-gray-11">{t('Platforms')}</p>
       </div>
       <ScrollArea viewPortClassName="max-h-[400px]">
         {platforms.map((platform) => (
