@@ -79,6 +79,20 @@ describe('New members join default projects', () => {
         expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({})
     })
 
+    it('gives a SCIM user without a role the role of their latest accepted invite, not an older Admin one', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+        const email = `${apId()}@example.com`
+        await savePlatformInvite({ email, platformId: mockPlatform.id, platformRole: PlatformRole.ADMIN, updated: '2026-01-01T00:00:00.000Z' })
+        await savePlatformInvite({ email, platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, updated: '2026-02-01T00:00:00.000Z' })
+
+        const response = await createScimUser({ platformId: mockPlatform.id, email })
+
+        const user = await databaseConnection().getRepository('user').findOneByOrFail({ id: response?.json().id })
+        expect(user.platformRole).toBe(PlatformRole.MEMBER)
+        expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.EDITOR })
+    })
+
     it('keeps the role SCIM sends over an accepted Admin invite, and adds a Member to the default projects', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
         await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
@@ -229,15 +243,19 @@ async function saveIdentity() {
     return identity
 }
 
-async function savePlatformInvite({ email, platformId, platformRole }: { email: string, platformId: string, platformRole: PlatformRole }) {
+async function savePlatformInvite({ email, platformId, platformRole, updated }: { email: string, platformId: string, platformRole: PlatformRole, updated?: string }) {
+    const id = apId()
     await databaseConnection().getRepository('user_invitation').save({
-        id: apId(),
+        id,
         email,
         type: InvitationType.PLATFORM,
         platformId,
         platformRole,
         status: InvitationStatus.ACCEPTED,
     })
+    if (updated) {
+        await databaseConnection().getRepository('user_invitation').update({ id }, { updated })
+    }
 }
 
 async function createScimUser({ platformId, email, platformRole }: { platformId: string, email: string, platformRole?: PlatformRole }) {
