@@ -262,8 +262,8 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         })
         return { registered: true }
     },
-    async hasAcceptedAdminOrOperatorInvite({ email, platformId, entityManager }: HasAcceptedAdminOrOperatorInviteParams): Promise<boolean> {
-        return repo(entityManager).createQueryBuilder('user_invitation')
+    async getAcceptedAdminOrOperatorInviteRole({ email, platformId, entityManager }: GetAcceptedAdminOrOperatorInviteRoleParams): Promise<PlatformRole | null> {
+        const invitation = await repo(entityManager).createQueryBuilder('user_invitation')
             .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
             .andWhere({
                 platformId,
@@ -271,7 +271,9 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 status: InvitationStatus.ACCEPTED,
                 platformRole: In([PlatformRole.ADMIN, PlatformRole.OPERATOR]),
             })
-            .getExists()
+            .orderBy('"user_invitation"."updated"', 'DESC')
+            .getOne()
+        return invitation?.platformRole ?? null
     },
     async hasAnyAcceptedInvitationsForEmail({ email }: { email: string }): Promise<boolean> {
         const count = await repo().createQueryBuilder('user_invitation')
@@ -422,8 +424,8 @@ type GetOneByPlatformIdAndEmailParams = {
     projectId: string | null
 }
 
-type HasAcceptedAdminOrOperatorInviteParams = {
+type GetAcceptedAdminOrOperatorInviteRoleParams = {
     email: string
     platformId: string
-    entityManager: EntityManager
+    entityManager?: EntityManager
 }
