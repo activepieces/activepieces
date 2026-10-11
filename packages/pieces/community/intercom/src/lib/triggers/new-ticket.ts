@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
 import { ticketTriggerOutputSchema } from '../output-schemas';
+import { toWebhookTicketShape } from '../common/ticket-attributes';
 
 export const newTicketTrigger = createTrigger({
 	auth: intercomAuth,
@@ -43,7 +44,7 @@ export const newTicketTrigger = createTrigger({
 			pagination: { per_page: 5 },
 		});
 
-		return response.data;
+		return response.data.map(toWebhookTicketShape);
 	},
 	async run(context) {
 		const payload = context.payload.body as TriggerPayload;

@@ -4,6 +4,8 @@ import { intercom } from '../src/index';
 import { leadConvertedToUserTrigger } from '../src/lib/triggers/lead-converted-to-user';
 import { conversationAssigned } from '../src/lib/triggers/conversation-assigned';
 import { replyFromUser } from '../src/lib/triggers/reply-from-user';
+import { newTicketTrigger } from '../src/lib/triggers/new-ticket';
+import { updatedTicketTrigger } from '../src/lib/triggers/updated-ticket';
 import { callWith, customAuth, ME, stubIntercom } from './helpers';
 
 afterEach(() => {
@@ -97,5 +99,49 @@ describe('action metadata', () => {
 			counts[action.audience ?? 'none'] = (counts[action.audience ?? 'none'] ?? 0) + 1;
 		}
 		expect(counts).toEqual({ ai: 31, both: 9, human: 16 });
+	});
+});
+
+describe('ticket triggers', () => {
+	test.each([
+		['new ticket', newTicketTrigger],
+		['updated ticket', updatedTicketTrigger],
+	])('%s test() returns tickets in the webhook ticket_state shape', async (_name, trigger) => {
+		stubIntercom([
+			{
+				method: 'POST',
+				path: '/tickets/search',
+				reply: {
+					body: {
+						type: 'ticket.list',
+						tickets: [
+							{
+								type: 'ticket',
+								id: '7',
+								ticket_state: 'in_progress',
+								ticket_state_internal_label: 'In progress',
+								ticket_state_external_label: 'Being worked on',
+							},
+						],
+						total_count: 1,
+						pages: { type: 'pages', page: 1, per_page: 5, total_pages: 1 },
+					},
+				},
+			},
+		]);
+		const samples: unknown = await callWith({ fn: trigger.test, ctx: { auth: customAuth() } });
+		if (!Array.isArray(samples)) {
+			throw new Error('expected an array of samples');
+		}
+		expect(samples[0]).toEqual({
+			type: 'ticket',
+			id: '7',
+			ticket_state: {
+				type: 'ticket_state',
+				category: 'in_progress',
+				internal_label: 'In progress',
+				external_label: 'Being worked on',
+			},
+		});
 	});
 });
