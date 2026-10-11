@@ -446,9 +446,7 @@ describe('AppearanceSection', () => {
     await save();
     expect(state.toastSuccess).not.toHaveBeenCalled();
     expect(
-      container.textContent?.includes(
-        'Failed to save changes. Please try again.',
-      ),
+      container.textContent?.includes('network down'),
     ).toBe(true);
   });
 });
