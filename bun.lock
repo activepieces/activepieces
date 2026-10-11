@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -11040,6 +11039,7 @@
       "devDependencies": {
         "@types/node": "24.11.0",
         "@types/write-file-atomic": "4.0.3",
+        "deno": "2.9.3",
         "socket.io-client": "4.8.1",
         "sucrase": "3.35.1",
         "vitest": "3.2.6",
