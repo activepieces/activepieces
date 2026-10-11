@@ -1272,6 +1272,25 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('invalid')
     })
 
+    it('47b. ap_build_flow — says why each invalid step is invalid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Reasons',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{
+                type: FlowActionType.PIECE,
+                displayName: 'Send Email',
+                pieceName: '@activepieces/piece-test-email',
+                actionName: 'send_email',
+                input: { to: 'a@b.com' },
+            }],
+        })
+
+        expect(text(result)).toContain('step_1 (subject is missing)')
+    })
+
     it('48. ap_build_flow — empty steps array creates trigger-only flow', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
