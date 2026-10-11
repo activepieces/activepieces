@@ -4,12 +4,14 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { isUniqueViolation } from '../core/db/unique-violation'
+import { PlatformConfigurationEntity } from '../platform/platform-configuration.entity'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { PlatformModelTierEntity, PlatformModelTierSchema } from './platform-model-tier-entity'
 
 const tierRepo = repoFactory<PlatformModelTierSchema>(PlatformModelTierEntity)
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
+const platformConfigurationRepo = repoFactory(PlatformConfigurationEntity)
 
 const MAX_LIVE_TIERS = 50
 const MAX_REPLACEMENT_HOPS = 3
@@ -126,6 +128,7 @@ export const platformModelTierService = {
                 await assertLastTierCanGo({ manager, platformId })
                 await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
                 await tierRepo(manager).softDelete({ platformId, id })
+                await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
                 return
             }
             await getLiveOrThrow({ manager, platformId, id: replacedBy })
@@ -142,6 +145,13 @@ export const platformModelTierService = {
                 })
             }
         })
+    },
+
+    async assertSpecificModelsVisibilityAllowed({ manager, platformId, visible }: { manager: EntityManager, platformId: PlatformId, visible: boolean }): Promise<void> {
+        await lockPlatform({ manager, platformId })
+        if (!visible && (await listLive({ platformId, manager })).length === 0) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Add a tier before hiding specific models from builders' } })
+        }
     },
 
     async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
