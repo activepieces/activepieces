@@ -42,33 +42,33 @@ describe('Default projects', () => {
         expect(response?.json().defaultProjectIds).toStrictEqual([])
     })
 
-    it('drops a personal project and keeps the rest', async () => {
+    it('refuses a personal project', async () => {
         const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
         const personalProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.PERSONAL })
 
         const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [personalProject.id, mockProject.id] })
 
-        expect(response?.statusCode).toBe(StatusCodes.OK)
-        expect(response?.json().defaultProjectIds).toStrictEqual([mockProject.id])
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
     })
 
-    it('drops a project of another platform', async () => {
+    it('refuses a project of another platform', async () => {
         const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
         const { mockProject: otherPlatformProject } = await setupPlatform({ projectRolesEnabled: true })
 
         const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [otherPlatformProject.id, mockProject.id] })
 
-        expect(response?.statusCode).toBe(StatusCodes.OK)
-        expect(response?.json().defaultProjectIds).toStrictEqual([mockProject.id])
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
     })
 
-    it('drops an unknown project', async () => {
+    it('refuses an unknown project', async () => {
         const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
 
         const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: ['unknown-project-id'] })
 
-        expect(response?.statusCode).toBe(StatusCodes.OK)
-        expect(response?.json().defaultProjectIds).toStrictEqual([])
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
     })
 
     it('saves a list from an out-of-date page that still holds a deleted project', async () => {
