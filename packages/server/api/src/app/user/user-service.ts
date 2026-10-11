@@ -63,7 +63,7 @@ export const userService = (log: FastifyBaseLogger) => ({
                         callPostCreateHooks: false,
                     })
                     : null
-                await userHooks.get(log).postCreate({ user: createdUser, platformId, defaultProjectIds, entityManager })
+                await userHooks.get(log).postCreate({ user: createdUser, email: identity.email, platformId, defaultProjectIds, entityManager })
                 return { newUser: createdUser, personalProject: createdPersonalProject }
             })
             if (!isNil(personalProject)) {

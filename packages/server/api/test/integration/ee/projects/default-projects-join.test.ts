@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { DefaultProjectRole, InvitationStatus, InvitationType, ProjectType } from '@activepieces/shared'
+import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { userEnterpriseHooks } from '../../../../src/app/ee/users/ee-user-hooks'
@@ -116,6 +116,31 @@ describe('New members join default projects', () => {
         expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.VIEWER })
     })
 
+    it.each([PlatformRole.ADMIN, PlatformRole.OPERATOR])('does not add someone invited as %s to the default projects', async (platformRole) => {
+        const { mockPlatform, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+        const identity = await saveIdentity()
+        await savePlatformInvite({ email: identity.email, platformId: mockPlatform.id, platformRole })
+
+        await userInvitationsService(mockLog).provisionUserInvitation({ email: identity.email })
+
+        const user = await databaseConnection().getRepository('user').findOneByOrFail({ identityId: identity.id, platformId: mockPlatform.id })
+        expect(user.platformRole).toBe(platformRole)
+        expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({})
+    })
+
+    it('adds someone invited to the platform as Member to the default projects', async () => {
+        const { mockPlatform, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+        const identity = await saveIdentity()
+        await savePlatformInvite({ email: identity.email, platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
+
+        await userInvitationsService(mockLog).provisionUserInvitation({ email: identity.email })
+
+        const user = await databaseConnection().getRepository('user').findOneByOrFail({ identityId: identity.id, platformId: mockPlatform.id })
+        expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.EDITOR })
+    })
+
     it('never joins a personal project or another platform\'s project, even when saved as a default', async () => {
         const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
         const { mockProject: otherPlatformProject } = await setupPlatform({ projectRolesEnabled: true })
@@ -175,6 +200,17 @@ async function saveIdentity() {
     const identity = createMockUserIdentity({ verified: true })
     await databaseConnection().getRepository('user_identity').save(identity)
     return identity
+}
+
+async function savePlatformInvite({ email, platformId, platformRole }: { email: string, platformId: string, platformRole: PlatformRole }) {
+    await databaseConnection().getRepository('user_invitation').save({
+        id: apId(),
+        email,
+        type: InvitationType.PLATFORM,
+        platformId,
+        platformRole,
+        status: InvitationStatus.ACCEPTED,
+    })
 }
 
 async function provisionNewUser({ platformId }: { platformId: string }) {
