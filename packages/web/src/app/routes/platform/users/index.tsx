@@ -13,6 +13,7 @@ import {
   AdminPage,
   AdminPageHeader,
   adminPageResources,
+  ConfirmDialog,
   useAdminAction,
 } from '@/app/components/admin';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
@@ -43,6 +44,7 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserRowData | null>(null);
   const {
     isOutOfSeats,
     ensureSeatsAvailable,
@@ -179,13 +181,42 @@ export default function UsersPage() {
             <UserActions
               row={row}
               isUpdatingStatus={setStatus.isPending}
-              onDelete={(target) => deleteRow.mutateAsync(target)}
+              onDelete={setDeleteTarget}
               onToggleStatus={handleToggleStatus}
               onUpdate={refetch}
             />
           ),
         ]}
       />
+      {deleteTarget && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleteTarget(null);
+            }
+          }}
+          title={
+            deleteTarget.type === 'invitation'
+              ? t('Delete the invitation for {email}?', {
+                  email: deleteTarget.data.email,
+                })
+              : t('Delete {email}?', { email: deleteTarget.data.email })
+          }
+          description={
+            deleteTarget.type === 'invitation'
+              ? t('This invitation will be permanently deleted.')
+              : t('This user and all their data will be permanently deleted.')
+          }
+          confirmLabel={
+            deleteTarget.type === 'invitation'
+              ? t('Delete invitation')
+              : t('Delete user')
+          }
+          onConfirm={() => deleteRow.mutateAsync(deleteTarget)}
+          controlId={AdminControl.USERS_DELETE_CONFIRM}
+        />
+      )}
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
