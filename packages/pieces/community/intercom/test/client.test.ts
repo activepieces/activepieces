@@ -127,6 +127,30 @@ describe('intercomRequest', () => {
 		expect(error.message).toContain('lacks the permission');
 	});
 
+	test('a 403 action_forbidden business rule gets no permission hint', async () => {
+		stubIntercom([
+			{
+				method: 'POST',
+				path: '/messages',
+				reply: {
+					status: 403,
+					body: { errors: [{ code: 'action_forbidden', message: 'One or more users are unsubscribed from emails' }] },
+				},
+			},
+		]);
+		const error = await intercomRequest({
+			auth: customAuth(),
+			method: HttpMethod.POST,
+			path: ['messages'],
+			body: {},
+			operation: 'send the message',
+		}).catch((e: unknown) => e);
+		if (!(error instanceof Error)) {
+			throw new Error('expected an Error');
+		}
+		expect(error.message).toBe('Intercom send the message failed (403): One or more users are unsubscribed from emails');
+	});
+
 	test('POST is never retried on 5xx', async () => {
 		const seen = stubIntercom([{ method: 'POST', path: '/conversations/1/reply', reply: { status: 502, body: { errors: [{ code: 'bad_gateway' }] } } }]);
 		await expect(

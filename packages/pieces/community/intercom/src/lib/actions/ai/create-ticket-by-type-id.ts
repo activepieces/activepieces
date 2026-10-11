@@ -15,7 +15,7 @@ export const createTicketByTypeIdAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Creates a ticket of a given ticket type for one contact (by contact ID, email or external ID). Call List Ticket Types first to get the type ID and its attribute names; list attributes take the option ID, dates take ISO 8601. Each call creates another ticket, so retries duplicate.',
+			'Creates a ticket of a given ticket type for one contact (by contact ID, email or external ID). An email that matches no contact makes Intercom create a new contact for it, so look the contact up first if that is not wanted. Call List Ticket Types first to get the type ID and its attribute names; list attributes take the option ID, dates take ISO 8601. Each call creates another ticket, so retries duplicate.',
 		idempotent: false,
 	},
 	props: {
@@ -39,7 +39,7 @@ export const createTicketByTypeIdAction = createAction({
 		}),
 		contactValue: Property.ShortText({
 			displayName: 'Contact',
-			description: 'The contact ID, email or external ID, matching Identify Contact By.',
+			description: 'The contact ID, email or external ID, matching Identify Contact By. An unknown email creates a new contact.',
 			required: true,
 		}),
 		title: Property.ShortText({

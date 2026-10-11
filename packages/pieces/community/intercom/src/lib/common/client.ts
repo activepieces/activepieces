@@ -357,7 +357,7 @@ function describeError({ status, responseBody }: { status: number; responseBody:
 	const hint =
 		status === 401
 			? ' Check the access token and the region, then reconnect Intercom.'
-			: status === 403
+			: status === 403 && errorCode(responseBody) !== 'action_forbidden'
 			? ' The Intercom app behind this connection lacks the permission for this action; add it in the Developer Hub and reconnect.'
 			: '';
 	const text = vendorMessage ?? 'No error details returned.';
