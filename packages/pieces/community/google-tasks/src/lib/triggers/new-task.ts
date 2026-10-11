@@ -72,7 +72,21 @@ export const newTaskTrigger = createTrigger({
     },
   ],
   outputSchema: googleTasksNewTaskTriggerOutputSchema,
-  sampleData: {},
+  sampleData: {
+    kind: 'tasks#task',
+    id: 'MTIzNDU2Nzg5MDEyMzQ1Njc4OTA',
+    etag: '"LTEyMzQ1Njc4OTA"',
+    title: 'Call the dentist',
+    updated: '2026-10-11T09:30:00.000Z',
+    selfLink:
+      'https://www.googleapis.com/tasks/v1/lists/MDEyMzQ1Njc4OTAxMjM0NTY3ODk/tasks/MTIzNDU2Nzg5MDEyMzQ1Njc4OTA',
+    position: '00000000000000000000',
+    notes: 'Ask about the cleaning appointment',
+    status: 'needsAction',
+    due: '2026-10-15T00:00:00.000Z',
+    links: [],
+    webViewLink: 'https://tasks.google.com/task/MTIzNDU2Nzg5MDEyMzQ1Njc4OTA',
+  },
   async test(context) {
     const store = context.store;
     const auth = context.auth;
@@ -89,7 +103,7 @@ export const newTaskTrigger = createTrigger({
     const store = context.store;
     const auth = context.auth;
     const propsValue = context.propsValue;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
   async run(context) {
     const store = context.store;
