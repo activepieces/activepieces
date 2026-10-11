@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   InvitationStatus,
@@ -52,6 +52,7 @@ import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
 import { DefaultProjectsNote } from './default-projects-note';
 import { InvitedProjectSelect } from './invited-project-select';
+import { NoTeamProjectsState } from './no-team-projects-state';
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
 const buildInvalidEmailsMessage = (emails: string[]): string => {
@@ -126,7 +127,11 @@ const InviteUserDialogInternal = ({
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
-  const { activeDefaultProjectIds } = platformHooks.useNewMemberSettings();
+  const { activeDefaultProjectIds, personalProjectsActive } =
+    platformHooks.useNewMemberSettings();
+  const { data: teamProjects } = projectCollectionUtils.useAllPlatformProjects({
+    type: [ProjectType.TEAM],
+  });
   const { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog } =
     useSeatLimitGuard();
   const { data: isSmtpConfigured } = flagsHooks.useFlag<boolean>(
@@ -170,6 +175,7 @@ const InviteUserDialogInternal = ({
               ...invitedProjectFields({
                 data,
                 projectRolesEnabled: platform.plan.projectRolesEnabled,
+                personalProjectsActive,
               }),
             })
           : userInvitationApi.invite({
@@ -228,7 +234,9 @@ const InviteUserDialogInternal = ({
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
-      projectId: activeDefaultProjectIds[0],
+      projectId: personalProjectsActive
+        ? undefined
+        : activeDefaultProjectIds[0],
     },
   });
 
@@ -245,11 +253,14 @@ const InviteUserDialogInternal = ({
   const joinsDefaultProjects =
     invitationType === InvitationType.PROJECT ||
     selectedPlatformRole === PlatformRole.MEMBER;
-  const requiresProject = requiresInvitedProject({
+  const projectMode = invitedProjectMode({
     type: invitationType,
     platformRole: selectedPlatformRole,
     projectRolesEnabled: platform.plan.projectRolesEnabled,
+    personalProjectsActive,
   });
+  const needsAProjectFirst =
+    projectMode === 'required' && teamProjects.length === 0;
 
   const handleEmailsChange = useCallback(
     (emails: ReadonlyArray<string>) => {
@@ -273,7 +284,7 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    if (requiresProject && !data.projectId) {
+    if (projectMode === 'required' && !data.projectId) {
       form.setError('projectId', {
         type: 'required',
         message: t('Please select a project'),
@@ -282,7 +293,8 @@ const InviteUserDialogInternal = ({
     }
 
     if (
-      (data.type === InvitationType.PROJECT || requiresProject) &&
+      (data.type === InvitationType.PROJECT ||
+        (projectMode !== 'none' && !isNil(data.projectId))) &&
       !data.projectRole
     ) {
       form.setError('projectRole', {
@@ -395,23 +407,45 @@ const InviteUserDialogInternal = ({
                   {form.getValues().type === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />
                   )}
-                  {requiresProject && (
+                  {needsAProjectFirst && (
+                    <NoTeamProjectsState
+                      onCreate={(created) =>
+                        form.setValue('projectId', created.id)
+                      }
+                    />
+                  )}
+                  {projectMode !== 'none' && !needsAProjectFirst && (
                     <>
                       <FormField
                         control={form.control}
                         name="projectId"
                         render={({ field }) => (
                           <FormItem className="grid gap-3">
-                            <Label>{t('Project')}</Label>
+                            <Label>
+                              {projectMode === 'optional'
+                                ? t('Project (optional)')
+                                : t('Project')}
+                            </Label>
                             <InvitedProjectSelect
                               value={field.value}
                               onValueChange={field.onChange}
+                              allowNone={projectMode === 'optional'}
                             />
+                            {projectMode === 'required' && (
+                              <p className="text-xs text-gray-11">
+                                {t(
+                                  'Personal projects are off, so pick a project for them to start in.',
+                                )}
+                              </p>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <ProjectRoleSelect form={form} />
+                      {(projectMode === 'required' ||
+                        !isNil(selectedProjectId)) && (
+                        <ProjectRoleSelect form={form} />
+                      )}
                     </>
                   )}
                   {form.getValues().type === InvitationType.PROJECT && (
@@ -443,6 +477,7 @@ const InviteUserDialogInternal = ({
                     <Button
                       type="submit"
                       loading={isPending}
+                      disabled={needsAProjectFirst}
                       {...adminControl(AdminControl.USERS_INVITE_SUBMIT)}
                     >
                       {isPlatformInvite ? t('Invite') : t('Add')}
@@ -500,29 +535,34 @@ const InviteUserDialogInternal = ({
   );
 };
 
-function requiresInvitedProject({
+function invitedProjectMode({
   type,
   platformRole,
   projectRolesEnabled,
-}: RequiresInvitedProjectParams): boolean {
-  return (
-    type === InvitationType.PLATFORM &&
-    platformRole === PlatformRole.MEMBER &&
-    projectRolesEnabled
-  );
+  personalProjectsActive,
+}: InvitedProjectModeParams): InvitedProjectMode {
+  if (
+    type !== InvitationType.PLATFORM ||
+    platformRole !== PlatformRole.MEMBER ||
+    !projectRolesEnabled
+  ) {
+    return 'none';
+  }
+  return personalProjectsActive ? 'optional' : 'required';
 }
 
 function invitedProjectFields({
   data,
   projectRolesEnabled,
+  personalProjectsActive,
 }: InvitedProjectFieldsParams): { projectId?: string; projectRole?: string } {
-  if (
-    !requiresInvitedProject({
-      type: data.type,
-      platformRole: data.platformRole,
-      projectRolesEnabled,
-    })
-  ) {
+  const mode = invitedProjectMode({
+    type: data.type,
+    platformRole: data.platformRole,
+    projectRolesEnabled,
+    personalProjectsActive,
+  });
+  if (mode === 'none' || isNil(data.projectId)) {
     return {};
   }
   return { projectId: data.projectId, projectRole: data.projectRole };
@@ -655,13 +695,17 @@ type InviteUserDialogProps = {
   onInviteSuccess?: () => void;
 };
 
-type RequiresInvitedProjectParams = {
+type InvitedProjectMode = 'none' | 'optional' | 'required';
+
+type InvitedProjectModeParams = {
   type: InvitationType;
   platformRole: PlatformRole;
   projectRolesEnabled: boolean;
+  personalProjectsActive: boolean;
 };
 
 type InvitedProjectFieldsParams = {
   data: FormSchema;
   projectRolesEnabled: boolean;
+  personalProjectsActive: boolean;
 };

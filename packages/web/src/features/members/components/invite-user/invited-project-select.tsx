@@ -15,6 +15,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 export function InvitedProjectSelect({
   value,
   onValueChange,
+  allowNone,
 }: InvitedProjectSelectProps) {
   const { activeDefaultProjectIds } = platformHooks.useNewMemberSettings();
   const { data: teamProjects } = projectCollectionUtils.useAllPlatformProjects({
@@ -25,11 +26,19 @@ export function InvitedProjectSelect({
   );
 
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select
+      value={value ?? (allowNone ? NO_PROJECT : undefined)}
+      onValueChange={(selected) =>
+        onValueChange(selected === NO_PROJECT ? undefined : selected)
+      }
+    >
       <SelectTrigger aria-label={t('Project')}>
         <SelectValue placeholder={t('Select a project')} />
       </SelectTrigger>
       <SelectContent>
+        {allowNone && (
+          <SelectItem value={NO_PROJECT}>{t('No project')}</SelectItem>
+        )}
         {sortedProjects.map((project) => (
           <SelectItem key={project.id} value={project.id}>
             <span className="flex min-w-0 items-center gap-2">
@@ -50,7 +59,10 @@ export function InvitedProjectSelect({
   );
 }
 
+const NO_PROJECT = 'no-project';
+
 type InvitedProjectSelectProps = {
   value: string | undefined;
-  onValueChange: (projectId: string) => void;
+  onValueChange: (projectId: string | undefined) => void;
+  allowNone?: boolean;
 };
