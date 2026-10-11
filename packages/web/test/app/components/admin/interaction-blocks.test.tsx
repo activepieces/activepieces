@@ -212,6 +212,27 @@ describe('InstantSwitch', () => {
       ),
     );
   });
+
+  it('asks first when turning it off could lock people out', async () => {
+    const save = vi.fn(async () => undefined);
+    render(
+      <InstantSwitch
+        aria-label="Email sign-in"
+        checked
+        onCheckedChange={save}
+        confirmBefore={(next) =>
+          next
+            ? null
+            : { title: 'Turn off email sign-in?', confirmLabel: 'Turn off' }
+        }
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Email sign-in' }));
+    expect(save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Turn off' }));
+    await waitFor(() => expect(save).toHaveBeenCalledWith(false));
+  });
 });
 
 describe('AdminQueryState', () => {

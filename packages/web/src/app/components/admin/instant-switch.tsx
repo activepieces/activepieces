@@ -6,12 +6,15 @@ import { Switch } from '@/components/ui/switch';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
+import { ConfirmDialog, ConfirmDialogProps } from './confirm-dialog';
+
 export function InstantSwitch({
   checked,
   onCheckedChange,
   successMessage,
   errorTitle,
   undo = false,
+  confirmBefore,
   disabled = false,
   controlId,
   id,
@@ -19,6 +22,7 @@ export function InstantSwitch({
 }: InstantSwitchProps) {
   const [optimistic, setOptimistic] = useState<OptimisticValue | null>(null);
   const [pending, setPending] = useState(false);
+  const [confirming, setConfirming] = useState<PendingConfirm | null>(null);
   const latestChecked = useRef(checked);
   latestChecked.current = checked;
   const shown =
@@ -60,21 +64,47 @@ export function InstantSwitch({
   };
 
   return (
-    <Switch
-      id={id}
-      checked={shown}
-      disabled={disabled || pending}
-      aria-busy={pending}
-      onCheckedChange={(next) => {
-        save(next, false).catch(() => undefined);
-      }}
-      {...aria}
-      {...adminControl(controlId)}
-    />
+    <>
+      <Switch
+        id={id}
+        checked={shown}
+        disabled={disabled || pending}
+        aria-busy={pending}
+        onCheckedChange={(next) => {
+          const confirm = confirmBefore?.(next);
+          if (confirm) {
+            setConfirming({ next, confirm });
+            return;
+          }
+          save(next, false).catch(() => undefined);
+        }}
+        {...aria}
+        {...adminControl(controlId)}
+      />
+      {confirming && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setConfirming(null);
+            }
+          }}
+          {...confirming.confirm}
+          onConfirm={() => save(confirming.next, false)}
+        />
+      )}
+    </>
   );
 }
 
 type OptimisticValue = { value: boolean; base: boolean };
+
+type PendingConfirm = { next: boolean; confirm: InstantSwitchConfirm };
+
+export type InstantSwitchConfirm = Omit<
+  ConfirmDialogProps,
+  'onConfirm' | 'open' | 'onOpenChange' | 'children'
+>;
 
 export type InstantSwitchProps = {
   checked: boolean;
@@ -82,6 +112,7 @@ export type InstantSwitchProps = {
   successMessage?: (next: boolean) => string;
   errorTitle?: string;
   undo?: boolean;
+  confirmBefore?: (next: boolean) => InstantSwitchConfirm | null;
   disabled?: boolean;
   controlId?: AdminControl;
   id?: string;

@@ -3,16 +3,14 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +23,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
@@ -61,17 +60,15 @@ export const AllowedDomainDialog = ({
     name: 'allowedAuthDomains',
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
+  const { mutate, isPending } = useAdminAction<UpdatePlatformRequestBody>({
+    verb: 'save',
+    name: '',
+    run: async (request) => {
       await platformApi.update(request, platform.id);
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('Allowed domains updated'), {
-        duration: 3000,
-      });
-      setOpen(false);
-    },
+    feedback: 'inline',
+    onSuccess: () => setOpen(false),
   });
 
   return (
@@ -102,13 +99,27 @@ export const AllowedDomainDialog = ({
           <form
             className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((data) => {
-              mutate({
-                allowedAuthDomains: data.allowedAuthDomains.map(
-                  (d) => d.domain,
+              const domains = [
+                ...new Set(
+                  data.allowedAuthDomains.map((d) =>
+                    d.domain.trim().toLowerCase(),
+                  ),
                 ),
-                enforceAllowedAuthDomains:
-                  data.allowedAuthDomains.length === 0 ? false : true,
-              });
+              ];
+              form.clearErrors('root.serverError');
+              mutate(
+                {
+                  allowedAuthDomains: domains,
+                  enforceAllowedAuthDomains: domains.length > 0,
+                },
+                {
+                  onError: (error) =>
+                    form.setError('root.serverError', {
+                      type: 'manual',
+                      message: mutationFeedback.message(error),
+                    }),
+                },
+              );
             })}
           >
             <p className="text-sm text-gray-11">
