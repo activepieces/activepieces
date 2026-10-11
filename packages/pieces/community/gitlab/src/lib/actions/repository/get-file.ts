@@ -83,12 +83,11 @@ export const getFileAction = createAction({
     const filePath = `${projectPath(
       propsValue.projectId
     )}/repository/files/${filePathSegment(propsValue.filePath)}`;
-    const query = {
-      ref: requireText({
-        value: propsValue.ref,
-        label: 'Branch, Tag or Commit',
-      }),
-    };
+    const ref = requireText({
+      value: propsValue.ref,
+      label: 'Branch, Tag or Commit',
+    });
+    const query = { ref };
     const token = gitlabToken(auth);
     const meta = await sendGitlabRequest<undefined>({
       token,
@@ -103,11 +102,13 @@ export const getFileAction = createAction({
     const headers = meta.headers;
     const sizeHeader = headerText({ headers, name: 'size' });
     const size = sizeHeader === null ? NaN : Number(sizeHeader);
+    // GitLab sends names as raw UTF-8 in headers, which fetch reads as Latin-1
+    // and trims, so the path, name and ref come from the exact input instead.
     return {
-      file_name: headerText({ headers, name: 'file-name' }),
-      file_path: headerText({ headers, name: 'file-path' }),
+      file_name: propsValue.filePath.split('/').pop() ?? propsValue.filePath,
+      file_path: propsValue.filePath,
       size: Number.isFinite(size) ? size : raw.bytes.length,
-      ref: headerText({ headers, name: 'ref' }),
+      ref,
       blob_id: headerText({ headers, name: 'blob-id' }),
       commit_id: headerText({ headers, name: 'commit-id' }),
       last_commit_id: headerText({ headers, name: 'last-commit-id' }),

@@ -147,11 +147,17 @@ export const updateIssueAction = createAction({
     if (Object.keys(body).length === 0) {
       throw new Error('Set at least one field to update.');
     }
-    return gitlabRequest({
-      auth,
-      method: 'PUT',
-      path: `${projectPath(propsValue.projectId)}/issues/${iid}`,
-      body,
-    });
+    const path = `${projectPath(propsValue.projectId)}/issues/${iid}`;
+    // GitLab ignores a state change on a locked discussion even when the same
+    // request unlocks it, so unlock first.
+    if (locked === false && body['state_event'] !== undefined) {
+      await gitlabRequest({
+        auth,
+        method: 'PUT',
+        path,
+        body: { discussion_locked: false },
+      });
+    }
+    return gitlabRequest({ auth, method: 'PUT', path, body });
   },
 });

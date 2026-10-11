@@ -795,6 +795,32 @@ describe('rule checks', () => {
     expect(seen).toHaveLength(1);
   });
 
+  it('update actions unlock the discussion before a state change', async () => {
+    const seen = stubGitlab([{ body: {} }, { body: {} }, { body: {} }]);
+    await runAction({
+      action: updateIssueAction,
+      propsValue: {
+        ...P,
+        issueIid: 1,
+        stateEvent: 'reopen',
+        discussionLocked: 'false',
+      },
+    });
+    await runAction({
+      action: updateMergeRequestAction,
+      propsValue: { ...P, mergeRequestIid: 2, title: 'only a title' },
+    });
+    expect(seen.map((s) => [s.method, rawPath(s), s.body])).toEqual([
+      ['PUT', `${PP}/issues/1`, { discussion_locked: false }],
+      [
+        'PUT',
+        `${PP}/issues/1`,
+        { state_event: 'reopen', discussion_locked: false },
+      ],
+      ['PUT', `${PP}/merge_requests/2`, { title: 'only a title' }],
+    ]);
+  });
+
   it('validates IIDs and paging before any request', async () => {
     const seen = stubGitlab([]);
     await expect(
@@ -1001,6 +1027,29 @@ describe('rule checks', () => {
     });
   });
 
+  it('get_file reports non-ASCII paths and refs exactly', async () => {
+    stubGitlab((entry) =>
+      entry.method === 'HEAD'
+        ? {
+            headers: {
+              'x-gitlab-file-name': Buffer.from('日本.txt').toString('latin1'),
+              'x-gitlab-file-path': Buffer.from('ü/日本.txt').toString('latin1'),
+              'x-gitlab-ref': Buffer.from('fix/ü').toString('latin1'),
+            },
+          }
+        : { body: 'x' }
+    );
+    const result = await runAction({
+      action: getFileAction,
+      propsValue: { ...P, filePath: 'ü/日本.txt', ref: 'fix/ü' },
+    });
+    expect(result).toMatchObject({
+      file_name: '日本.txt',
+      file_path: 'ü/日本.txt',
+      ref: 'fix/ü',
+    });
+  });
+
   it('file actions keep leading and trailing spaces in the path', async () => {
     const seen = stubGitlab((entry) =>
       entry.method === 'HEAD'
@@ -1009,9 +1058,13 @@ describe('rule checks', () => {
         ? { status: 204 }
         : { body: 'x' }
     );
-    await runAction({
+    const read = await runAction({
       action: getFileAction,
       propsValue: { ...P, filePath: ' report.txt', ref: 'main' },
+    });
+    expect(read).toMatchObject({
+      file_name: ' report.txt',
+      file_path: ' report.txt',
     });
     const deleted = await runAction({
       action: deleteFileAction,
