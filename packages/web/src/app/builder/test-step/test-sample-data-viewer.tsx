@@ -235,7 +235,7 @@ const SegmentedTabs = ({
 }: SegmentedTabsProps) => (
   <div
     className={cn(
-      'inline-flex items-center rounded-md bg-gray-3 p-0.5 gap-0.5',
+      'inline-flex items-center rounded-lg bg-gray-3 p-0.5 gap-0.5',
       disabled && 'opacity-50',
     )}
   >

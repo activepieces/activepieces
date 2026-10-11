@@ -294,7 +294,7 @@ function RoleDialogBody({
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-3">
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-11">{t('Based on')}</span>
-              <div className="inline-flex items-center rounded-md bg-gray-3 p-1">
+              <div className="inline-flex items-center rounded-lg bg-gray-3 p-1">
                 {ROLE_BASES.map((roleBase) => (
                   <Button
                     key={roleBase}
@@ -302,7 +302,7 @@ function RoleDialogBody({
                     size="xs"
                     variant="ghost"
                     className={cn(
-                      'rounded-md text-gray-11',
+                      'rounded-sm text-gray-11',
                       base === roleBase &&
                         'bg-panel text-gray-12 shadow-xs hover:bg-panel',
                     )}
