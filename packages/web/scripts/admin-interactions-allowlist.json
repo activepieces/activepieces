@@ -22,9 +22,6 @@
     "src/app/routes/platform/infra/health/components/queue-tab.tsx": [
       "spinner-loading"
     ],
-    "src/app/routes/platform/infra/workers/by-project-view.tsx": [
-      "raw-toast"
-    ],
     "src/app/routes/platform/security/embed/steps/allowed-domains-step.tsx": [
       "internal-error-toast",
       "raw-toast",

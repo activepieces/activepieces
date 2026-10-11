@@ -9,9 +9,8 @@ import { t } from 'i18next';
 import { BarChart3, Cpu, Search, Server } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
-import { AdminDataTable } from '@/app/components/admin';
+import { AdminDataTable, useAdminAction } from '@/app/components/admin';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Input } from '@/components/ui/input';
@@ -230,24 +229,20 @@ function WorkerGroupCell({
     !isNil(row.workerGroupId) &&
     !workerGroups.some((info) => info.label === row.workerGroupId);
 
-  const handleChange = async (value: string) => {
+  const saveGroup = useProjectUpdate({ row, queryClient });
+
+  const handleChange = (value: string) => {
     const workerGroupId = value === SHARED_SENTINEL ? null : value;
-    const result = await saveProjectUpdate({
-      projectId: row.id!,
-      update: { workerGroupId },
-    });
-    if (result.success) {
-      row.update({ workerGroupId });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success(t('Saved'));
-    } else {
-      toast.error(t('Failed to save'));
-    }
+    saveGroup.mutate({ workerGroupId });
   };
 
   return (
     <div className="flex flex-col gap-1">
-      <Select value={selectValue} onValueChange={handleChange}>
+      <Select
+        value={selectValue}
+        onValueChange={handleChange}
+        disabled={saveGroup.isPending}
+      >
         <SelectTrigger
           size="sm"
           className={cn('w-50', isOffline && 'border-danger-9')}
@@ -310,31 +305,27 @@ function ConcurrencyCell({
   const poolSlots = assignedGroup ? assignedGroup.slots : sharedSlots;
   const concurrencyPlaceholder = t('Default {count}', { count: poolSlots });
 
-  const [concurrencyInput, setConcurrencyInput] = useState(
-    row.maxConcurrentJobs != null ? String(row.maxConcurrentJobs) : '',
-  );
+  const savedValue =
+    row.maxConcurrentJobs != null ? String(row.maxConcurrentJobs) : '';
+  const [concurrencyInput, setConcurrencyInput] = useState(savedValue);
+  const [invalid, setInvalid] = useState(false);
+  const saveConcurrency = useProjectUpdate({ row, queryClient });
 
-  const commitConcurrency = async () => {
+  const commitConcurrency = () => {
+    if (concurrencyInput === savedValue) {
+      return;
+    }
     const parsed =
       concurrencyInput.trim() === '' ? null : parseInt(concurrencyInput, 10);
     if (parsed !== null && (isNaN(parsed) || parsed <= 0)) {
-      toast.error(t('Concurrency limit must be a positive number'));
-      setConcurrencyInput(
-        row.maxConcurrentJobs != null ? String(row.maxConcurrentJobs) : '',
-      );
+      setInvalid(true);
       return;
     }
-    const result = await saveProjectUpdate({
-      projectId: row.id!,
-      update: { maxConcurrentJobs: parsed },
-    });
-    if (result.success) {
-      row.update({ maxConcurrentJobs: parsed });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success(t('Saved'));
-    } else {
-      toast.error(t('Failed to save'));
-    }
+    setInvalid(false);
+    saveConcurrency.mutate(
+      { maxConcurrentJobs: parsed },
+      { onError: () => setConcurrencyInput(savedValue) },
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -355,32 +346,51 @@ function ConcurrencyCell({
   };
 
   return (
-    <Input
-      type="text"
-      inputMode="numeric"
-      size="sm"
-      max={poolSlots > 0 ? poolSlots : undefined}
-      className="w-36"
-      placeholder={concurrencyPlaceholder}
-      value={concurrencyInput}
-      onChange={(e) => handleChange(e.target.value)}
-      onBlur={commitConcurrency}
-      onKeyDown={handleKeyDown}
-    />
+    <div className="flex flex-col gap-1">
+      <Input
+        type="text"
+        inputMode="numeric"
+        size="sm"
+        max={poolSlots > 0 ? poolSlots : undefined}
+        className="w-36"
+        placeholder={concurrencyPlaceholder}
+        value={concurrencyInput}
+        aria-invalid={invalid}
+        disabled={saveConcurrency.isPending}
+        onChange={(e) => {
+          setInvalid(false);
+          handleChange(e.target.value);
+        }}
+        onBlur={commitConcurrency}
+        onKeyDown={handleKeyDown}
+      />
+      {invalid && (
+        <p className="text-xs text-danger-11">
+          {t('Concurrency limit must be a positive number')}
+        </p>
+      )}
+    </div>
   );
 }
 
-async function saveProjectUpdate({
-  projectId,
-  update,
+function useProjectUpdate({
+  row,
+  queryClient,
 }: {
-  projectId: string;
-  update: UpdateProjectPlatformRequest;
-}): Promise<{ success: boolean }> {
-  try {
-    await api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, update);
-    return { success: true };
-  } catch {
-    return { success: false };
-  }
+  row: RowDataWithActions<ProjectWithLimits>;
+  queryClient: ReturnType<typeof useQueryClient>;
+}) {
+  return useAdminAction<UpdateProjectPlatformRequest, ProjectWithLimits>({
+    verb: 'update',
+    name: row.displayName,
+    run: (update) =>
+      api.post<ProjectWithLimits>(`/v1/projects/${row.id}`, update),
+    onSuccess: ({ data }) => {
+      row.update({
+        workerGroupId: data.workerGroupId,
+        maxConcurrentJobs: data.maxConcurrentJobs,
+      });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
 }
