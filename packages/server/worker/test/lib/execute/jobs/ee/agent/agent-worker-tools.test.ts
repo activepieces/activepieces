@@ -778,6 +778,18 @@ describe('an agent does not offer to connect an account its author already chose
         expect(gatesOpened).toEqual(['ap_show_connection_picker'])
     })
 
+    it('does not show a card again in the same turn after the user left it unanswered', async () => {
+        const waitForApproval = vi.fn(async () => ({ outcome: 'timeout' as const }))
+        const tools = agentWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1000 })
+        const card = { piece: 'gmail', displayName: 'Gmail' }
+
+        await tools['ap_show_connection_picker'].execute(card, { toolCallId: 'call-1' })
+        const second = await tools['ap_show_connection_picker'].execute(card, { toolCallId: 'call-2' })
+
+        expect(waitForApproval).toHaveBeenCalledTimes(1)
+        expect(JSON.stringify(second)).toContain('was not shown again')
+    })
+
     it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('%s rejects an empty piece, so no gate opens for a card that cannot render', async (toolName) => {
         const { tools } = pickerTools({})
         const result = await asSchema(tools[toolName].inputSchema).validate?.({ piece: '', displayName: 'Gmail' })

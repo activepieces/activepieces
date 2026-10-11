@@ -12,6 +12,8 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     accountAlreadyChosenFor?: (pieceName: string) => boolean
     connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
 }): ToolSet {
+    const unansweredCards = new Set<string>()
+
     function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
         if (isNil(accountAlreadyChosenFor) || !accountAlreadyChosenFor(normalizePieceName(piece))) {
@@ -47,6 +49,11 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             if (!isNil(refusal)) {
                 return refusal
             }
+            const displayName = getDisplayName?.(input) ?? toolName
+            const cardKey = `${toolName}:${displayName}`
+            if (unansweredCards.has(cardKey)) {
+                return { timedOut: true, message: cardStillUnansweredMessage(displayName) }
+            }
             if (onGateOpened) {
                 const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
@@ -58,7 +65,8 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
             if (decision.outcome === 'timeout') {
-                return { timedOut: true, message: gateNoResponseMessage(getDisplayName?.(input) ?? toolName) }
+                unansweredCards.add(cardKey)
+                return { timedOut: true, message: gateNoResponseMessage(displayName) }
             }
             if (decision.outcome !== 'approved') {
                 return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
@@ -249,3 +257,6 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     }
 }
 
+function cardStillUnansweredMessage(displayName: string): string {
+    return `The ${displayName} card was already shown in this turn and the user has not answered it, so it was not shown again. Do not ask for it again now. End your reply with one short line saying what you need from them, and continue when they answer.`
+}
