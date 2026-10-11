@@ -3,9 +3,6 @@
     "src/app/routes/platform/billing/index.tsx": [
       "raw-toast"
     ],
-    "src/app/routes/platform/infra/configurations/index.tsx": [
-      "raw-toast"
-    ],
     "src/app/routes/platform/infra/event-destinations/components/event-destination-actions.tsx": [
       "legacy-confirm",
       "raw-toast"
@@ -44,9 +41,6 @@
     ],
     "src/app/routes/platform/security/project-role/role-people-tab.tsx": [
       "spinner-loading"
-    ],
-    "src/app/routes/platform/setup/general/appearance-section.tsx": [
-      "raw-toast"
     ],
     "src/app/routes/platform/setup/mcp/index.tsx": [
       "spinner-loading"

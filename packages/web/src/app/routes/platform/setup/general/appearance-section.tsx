@@ -17,7 +17,6 @@ import { t } from 'i18next';
 import { Gem, ExternalLink } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
@@ -25,6 +24,7 @@ import {
   AdminPage,
   SaveBar,
   SaveBarLock,
+  adminFeedback,
   SettingsPanel,
   SettingsRow,
 } from '@/app/components/admin';
@@ -45,6 +45,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { brandSeed } from '@/lib/brand-seed';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { BrandImageField } from './brand-image-field';
 import { ColorPreview, ColorTone } from './color-preview';
@@ -168,7 +169,7 @@ export const AppearanceSection = ({
       ]);
     },
     onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      adminFeedback.done({ verb: 'save', name: '' });
       if (brandingLocked) {
         form.resetField('name', { defaultValue: form.getValues('name') });
         return;
@@ -176,10 +177,10 @@ export const AppearanceSection = ({
       clearImages();
       form.reset(form.getValues());
     },
-    onError: () => {
+    onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: t('Failed to save changes. Please try again.'),
+        message: mutationFeedback.message(error),
       });
     },
   });
@@ -246,13 +247,7 @@ export const AppearanceSection = ({
               canDiscard={hasChanges}
               saving={isPending}
               disabled={brandingLocked ? !!errors.name : hasFieldErrors}
-              status={
-                form.formState.errors.root?.serverError ? (
-                  <FormMessage>
-                    {form.formState.errors.root.serverError.message}
-                  </FormMessage>
-                ) : undefined
-              }
+              error={form.formState.errors.root?.serverError?.message}
               locked={lockedSave}
               saveLabel={previewingLockedBranding ? t('Save name') : undefined}
               onDiscard={() => {
