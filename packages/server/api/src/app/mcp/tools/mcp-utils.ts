@@ -442,6 +442,9 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
 
 function closestComponentName({ guess, available }: { guess: string, available: string[] }): string | undefined {
     const wanted = comparableName(guess)
+    if (wanted.length === 0) {
+        return undefined
+    }
     const matches = available.filter((name) => comparableName(name).endsWith(wanted))
     return matches.length === 1 ? matches[0] : undefined
 }
