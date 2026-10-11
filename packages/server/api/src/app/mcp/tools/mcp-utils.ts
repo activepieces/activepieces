@@ -1,4 +1,4 @@
-import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
@@ -433,11 +433,21 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     const component = componentMap[componentName]
     if (isNil(component)) {
         const available = Object.keys(componentMap)
-        const suggestion = available.find((name) => name.includes(componentName))
-        const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true } }
+        const closestName = closestComponentName({ guess: componentName, available })
+        const hint = isNil(closestName) ? '' : ` Did you mean "${closestName}"?`
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true }, ...spreadIfDefined('closestName', closestName) }
     }
     return { piece, component, pieceName: normalized }
+}
+
+function closestComponentName({ guess, available }: { guess: string, available: string[] }): string | undefined {
+    const wanted = comparableName(guess)
+    const matches = available.filter((name) => comparableName(name).endsWith(wanted))
+    return matches.length === 1 ? matches[0] : undefined
+}
+
+function comparableName(name: string): string {
+    return name.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/s$/, '')
 }
 
 function findResolvableProps({ props, componentProps, auth, providedInput }: FindResolvablePropsParams): PropSummary[] {
@@ -950,8 +960,8 @@ type LookupPieceComponentParams = {
 }
 
 type LookupPieceComponentResult =
-    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
-    | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
+    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never, closestName?: never }
+    | { error: McpToolResult, closestName?: string, piece?: never, component?: never, pieceName?: never }
 
 type ResolveFolderResult =
     | { folderId: string | undefined, folderName: string | undefined, error?: never }
