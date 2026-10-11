@@ -17,10 +17,13 @@ export function useAdminAction<TVars = void, TData = unknown>({
   onSuccess,
   undo,
   feedback = 'toast',
+  handleError,
 }: AdminActionConfig<TVars, TData>): UseMutationResult<TData, Error, TVars> {
   const queryClient = useQueryClient();
   const nameOf = (vars: TVars) =>
     typeof name === 'function' ? name(vars) : name;
+  const verbOf = (vars: TVars) =>
+    typeof verb === 'function' ? verb(vars) : verb;
   const refresh = () =>
     Promise.all(
       invalidate.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
@@ -34,7 +37,10 @@ export function useAdminAction<TVars = void, TData = unknown>({
       if (feedback === 'none') {
         return;
       }
-      const message = adminActionCopy.done({ verb, name: nameOf(vars) });
+      const message = adminActionCopy.done({
+        verb: verbOf(vars),
+        name: nameOf(vars),
+      });
       if (undo === undefined) {
         toast.success(message);
         return;
@@ -48,13 +54,17 @@ export function useAdminAction<TVars = void, TData = unknown>({
       });
     },
     onError: (error, vars) => {
-      if (feedback !== 'toast' || mutationFeedback.wasShown(error)) {
+      const handled = handleError?.(error) === true;
+      if (handled || feedback !== 'toast' || mutationFeedback.wasShown(error)) {
         mutationFeedback.markShown(error);
         return;
       }
       mutationFeedback.error({
         error,
-        title: adminActionCopy.failed({ verb, name: nameOf(vars) }),
+        title: adminActionCopy.failed({
+          verb: verbOf(vars),
+          name: nameOf(vars),
+        }),
       });
     },
   });
@@ -150,11 +160,12 @@ export type AdminVerb =
   | 'sync';
 
 export type AdminActionConfig<TVars, TData> = {
-  verb: AdminVerb;
+  verb: AdminVerb | ((vars: TVars) => AdminVerb);
   name: string | ((vars: TVars) => string);
   run: (vars: TVars) => Promise<TData>;
   invalidate?: QueryKey[];
   onSuccess?: (params: { data: TData; vars: TVars }) => void;
   undo?: (params: { data: TData; vars: TVars }) => Promise<unknown>;
   feedback?: 'toast' | 'inline' | 'none';
+  handleError?: (error: Error) => boolean;
 };

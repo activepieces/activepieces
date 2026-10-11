@@ -4,13 +4,12 @@ import {
   User,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 
 import { platformUserApi } from '@/api/platform-user-api';
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,17 +24,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const UpdateUserDialog = ({
   children,
   onUpdate,
   userId,
+  email,
   role,
   externalId,
 }: {
   children: React.ReactNode;
   onUpdate: (role: PlatformRole) => void;
   userId: string;
+  email: string;
   role: PlatformRole;
   externalId?: string;
 }) => {
@@ -50,16 +52,16 @@ export const UpdateUserDialog = ({
       externalId?: string;
     }>,
   });
-  const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
-    {
-      mutationKey: ['update-user'],
-      mutationFn: (request) => platformUserApi.update(userId, request),
-      onSuccess: (user) => {
-        onUpdate(user.platformRole);
-        setOpen(false);
-      },
+  const { mutate, isPending } = useAdminAction<UpdateUserRequestBody, User>({
+    verb: 'update',
+    name: email,
+    run: (request) => platformUserApi.update(userId, request),
+    feedback: 'inline',
+    onSuccess: ({ data }) => {
+      onUpdate(data.platformRole);
+      setOpen(false);
     },
-  );
+  });
 
   return (
     <Dialog
@@ -72,7 +74,7 @@ export const UpdateUserDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
-          <DialogTitle>{t('Update User Role')}</DialogTitle>
+          <DialogTitle>{t('Edit {email}', { email })}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -129,10 +131,20 @@ export const UpdateUserDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              mutate({
-                platformRole: form.getValues().role,
-                externalId: form.getValues().externalId,
-              });
+              form.clearErrors('root.serverError');
+              mutate(
+                {
+                  platformRole: form.getValues().role,
+                  externalId: form.getValues().externalId,
+                },
+                {
+                  onError: (error) =>
+                    form.setError('root.serverError', {
+                      type: 'manual',
+                      message: mutationFeedback.message(error),
+                    }),
+                },
+              );
             }}
           >
             {t('Save')}

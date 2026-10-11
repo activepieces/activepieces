@@ -1,4 +1,8 @@
-import { PlatformRole, UserStatus } from '@activepieces/shared';
+import {
+  PlatformRole,
+  UserStatus,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CircleMinus,
@@ -9,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserRowData } from '../index';
@@ -26,8 +31,8 @@ import { UpdateUserDialog } from './update-user-dialog';
 type UserActionsProps = {
   row: UserRowData;
   isUpdatingStatus: boolean;
-  onDelete: (id: string, isInvitation: boolean) => Promise<void>;
-  onToggleStatus: (userId: string, currentStatus: UserStatus) => void;
+  onDelete: (row: UserRowData) => Promise<unknown>;
+  onToggleStatus: (user: UserWithMetaInformation) => void;
   onUpdate: () => void;
 };
 
@@ -39,7 +44,9 @@ export const UserActions = ({
   onUpdate,
 }: UserActionsProps) => {
   const [open, setOpen] = useState(false);
+  const { data: currentUser } = userHooks.useCurrentUser();
   const isInvitation = row.type === 'invitation';
+  const isSelf = !isInvitation && row.data.id === currentUser?.id;
   const isAdmin = !isInvitation && row.data.platformRole === PlatformRole.ADMIN;
   const isActive = !isInvitation && row.data.status === UserStatus.ACTIVE;
 
@@ -55,6 +62,7 @@ export const UserActions = ({
           {!isInvitation && (
             <UpdateUserDialog
               userId={row.data.id}
+              email={row.data.email}
               role={row.data.platformRole}
               externalId={row.data.externalId ?? undefined}
               onUpdate={onUpdate}
@@ -72,7 +80,7 @@ export const UserActions = ({
             <DropdownMenuItem
               disabled={isAdmin || isUpdatingStatus}
               onSelect={() => {
-                onToggleStatus(row.data.id, row.data.status);
+                onToggleStatus(row.data);
                 setOpen(false);
               }}
               {...adminControl(
@@ -89,30 +97,35 @@ export const UserActions = ({
               {isActive ? t('Deactivate') : t('Activate')}
             </DropdownMenuItem>
           )}
-          <ConfirmationDeleteDialog
-            title={isInvitation ? t('Delete Invitation') : t('Delete User')}
-            message={
+          <ConfirmDialog
+            title={
+              isInvitation
+                ? t('Delete the invitation for {email}?', {
+                    email: row.data.email,
+                  })
+                : t('Delete {email}?', { email: row.data.email })
+            }
+            description={
               isInvitation
                 ? t('This invitation will be permanently deleted.')
                 : t('This user and all their data will be permanently deleted.')
             }
-            entityName={`${isInvitation ? t('Invitation') : t('User')} ${
-              row.data.email
-            }`}
-            mutationFn={() =>
-              onDelete(isInvitation ? row.id : row.data.id, isInvitation)
+            confirmLabel={
+              isInvitation ? t('Delete invitation') : t('Delete user')
             }
+            onConfirm={() => onDelete(row)}
             controlId={AdminControl.USERS_DELETE_CONFIRM}
           >
             <DropdownMenuItem
               variant="destructive"
+              disabled={isSelf}
               onSelect={(e) => e.preventDefault()}
               {...adminControl(AdminControl.USERS_DELETE_OPEN)}
             >
               <Trash className="h-4 w-4" />
               {t('Delete')}
             </DropdownMenuItem>
-          </ConfirmationDeleteDialog>
+          </ConfirmDialog>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

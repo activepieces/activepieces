@@ -3304,5 +3304,8 @@
   "Couldn't invite {name}": "Couldn't invite {name}",
   "Couldn't connect {name}": "Couldn't connect {name}",
   "Couldn't duplicate {name}": "Couldn't duplicate {name}",
-  "Couldn't sync {name}": "Couldn't sync {name}"
+  "Couldn't sync {name}": "Couldn't sync {name}",
+  "Edit {email}": "Edit {email}",
+  "Delete the invitation for {email}?": "Delete the invitation for {email}?",
+  "Delete {email}?": "Delete {email}?"
 }

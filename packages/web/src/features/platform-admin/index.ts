@@ -57,7 +57,6 @@ export { workersQueries, workersKeys } from './hooks/workers-hooks';
 export { healthQueries, healthKeys } from './hooks/health-hooks';
 export {
   platformUserHooks,
-  platformUserMutations,
   platformUserKeys,
 } from './hooks/platform-user-hooks';
 export {
