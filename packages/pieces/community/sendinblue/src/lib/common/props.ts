@@ -59,7 +59,7 @@ function connectFirst() {
 
 function loadFailed(noun: string) {
 	return {
-		disabled: true,
+		disabled: false,
 		options: [],
 		placeholder: `Could not load ${noun}. Check your connection.`,
 	};
