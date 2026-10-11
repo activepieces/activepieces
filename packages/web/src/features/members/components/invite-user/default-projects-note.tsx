@@ -17,7 +17,6 @@ export function DefaultProjectsNote({
 
   const joinsDefaultProjects =
     invitesSomeoneNew &&
-    platformRole === PlatformRole.ADMIN &&
     activeDefaultProjectIds.some(
       (projectId) => isNil(invitedProjectId) || projectId !== invitedProjectId,
     );
@@ -41,12 +40,16 @@ export function DefaultProjectsNote({
   return (
     <p className="text-xs text-gray-11">
       {before}
-      <Link
-        to={ROLES_AND_ACCESS_PATH}
-        className="text-accent-11 underline-offset-4 hover:underline"
-      >
-        {t('default projects')}
-      </Link>
+      {platformRole === PlatformRole.ADMIN ? (
+        <Link
+          to={ROLES_AND_ACCESS_PATH}
+          className="text-accent-11 underline-offset-4 hover:underline"
+        >
+          {t('default projects')}
+        </Link>
+      ) : (
+        t('default projects')
+      )}
       {after}
     </p>
   );
