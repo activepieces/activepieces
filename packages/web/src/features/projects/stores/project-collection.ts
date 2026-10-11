@@ -118,8 +118,8 @@ export const projectCollectionUtils = {
       );
     });
   },
-  delete: (projectIds: string[]) => {
-    projectCollection.delete(projectIds);
+  delete: async (projectIds: string[]) => {
+    await projectCollection.delete(projectIds).isPersisted.promise;
   },
   refetchProjects: () => {
     authoritativeProjectsGeneration += 1;

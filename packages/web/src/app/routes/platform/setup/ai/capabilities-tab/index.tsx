@@ -52,7 +52,7 @@ export function CapabilitiesTab() {
       (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
     );
 
-  const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
+  const { mutateAsync: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
     onSuccess: () => refetchConfigs(),
   });
 
@@ -93,7 +93,9 @@ export function CapabilitiesTab() {
                     ? chatProvider
                     : undefined
                 }
-                onDelete={() => config && remove(config.id)}
+                onDelete={async () => {
+                  if (config) await remove(config.id);
+                }}
                 onSaved={() => refetchConfigs()}
               />
             );
@@ -116,7 +118,7 @@ function CapabilityCard({
   config?: AiToolConfigWithoutSensitiveData;
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
   onSaved: () => void;
 }) {
   const Icon = CAPABILITY_ICON[capabilityInfo.capability];
@@ -175,7 +177,7 @@ function CapabilityCard({
             }
             entityName={capabilityInfo.name}
             controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
-            mutationFn={async () => onDelete()}
+            mutationFn={onDelete}
           >
             <Button
               variant="ghost"

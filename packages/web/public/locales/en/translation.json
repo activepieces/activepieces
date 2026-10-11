@@ -3269,6 +3269,7 @@
   "The full logo in the sidebar, emails and the sign-in page.": "The full logo in the sidebar, emails and the sign-in page.",
   "The square mark used where the full logo does not fit.": "The square mark used where the full logo does not fit.",
   "The small icon in the browser tab.": "The small icon in the browser tab.",
-  "configurations": "configurations",
-  "Needs attention": "Needs attention"
+  "Needs attention": "Needs attention",
+  "An unexpected error occurred. Please try again in a moment.": "An unexpected error occurred. Please try again in a moment.",
+  "billing information": "billing information"
 }

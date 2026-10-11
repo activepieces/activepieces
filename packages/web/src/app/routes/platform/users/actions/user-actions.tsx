@@ -26,7 +26,7 @@ import { UpdateUserDialog } from './update-user-dialog';
 type UserActionsProps = {
   row: UserRowData;
   isUpdatingStatus: boolean;
-  onDelete: (id: string, isInvitation: boolean) => void;
+  onDelete: (id: string, isInvitation: boolean) => Promise<void>;
   onToggleStatus: (userId: string, currentStatus: UserStatus) => void;
   onUpdate: () => void;
 };
@@ -99,9 +99,9 @@ export const UserActions = ({
             entityName={`${isInvitation ? t('Invitation') : t('User')} ${
               row.data.email
             }`}
-            mutationFn={async () => {
-              onDelete(isInvitation ? row.id : row.data.id, isInvitation);
-            }}
+            mutationFn={() =>
+              onDelete(isInvitation ? row.id : row.data.id, isInvitation)
+            }
             controlId={AdminControl.USERS_DELETE_CONFIRM}
           >
             <DropdownMenuItem

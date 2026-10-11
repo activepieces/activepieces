@@ -52,7 +52,7 @@ const SecretManagersPage = () => {
   } = secretManagersHooks.useListSecretManagerConnections({
     listForPlatform: true,
   });
-  const { mutate: deleteConnection } =
+  const { mutateAsync: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();
 
   const isLoading = isLoadingConnections;

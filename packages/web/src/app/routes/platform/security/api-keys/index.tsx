@@ -12,6 +12,7 @@ import {
 } from '@/app/components/admin';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -32,12 +33,13 @@ import { sampleData } from '../../sample-data';
 
 const ApiKeysPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data, isLoading, refetch } = apiKeyQueries.useApiKeys();
+  const { data, isLoading, isError, refetch } = apiKeyQueries.useApiKeys();
   const isSample = !platform.plan.apiKeysEnabled;
   const keys: ApiKeyResponseWithoutValue[] = isSample
     ? sampleData.apiKeysPage().data
     : data?.data ?? [];
   const showLoading = isLoading && !isSample;
+  const showError = isError && !isSample;
 
   return (
     <AdminPage width="content">
@@ -59,7 +61,11 @@ const ApiKeysPage = () => {
 
       {showLoading && <SkeletonList numberOfItems={3} className="h-18" />}
 
-      {!showLoading && keys.length === 0 && (
+      {showError && (
+        <DataFetchErrorState entity={t('API keys')} onRetry={refetch} />
+      )}
+
+      {!showLoading && !showError && keys.length === 0 && (
         <AdminEmpty
           className="flex-none"
           icon={<Key />}
@@ -67,7 +73,7 @@ const ApiKeysPage = () => {
         />
       )}
 
-      {!showLoading && keys.length > 0 && (
+      {!showLoading && !showError && keys.length > 0 && (
         <SettingsPanel flush>
           {keys.map((apiKey) => (
             <SettingsRow

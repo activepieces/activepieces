@@ -29,6 +29,7 @@ import {
   adminSurface,
 } from '@/app/components/admin';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -51,7 +52,12 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
   const isCloud = edition === ApEdition.CLOUD;
-  const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
+  const {
+    data: workersData,
+    isLoading,
+    isError,
+    refetch,
+  } = workersQueries.useWorkerMachines();
 
   const fleetType = workersData?.[0]?.type;
 
@@ -120,8 +126,13 @@ export default function WorkersPage({ section }: WorkersPageProps) {
         </div>
       )}
 
+      {section === 'health' && !isLoading && isError && (
+        <DataFetchErrorState entity={t('workers')} onRetry={refetch} />
+      )}
+
       {section === 'health' &&
         !isLoading &&
+        !isError &&
         (workersData ?? []).length === 0 && (
           <AdminEmpty
             icon={<Server />}
@@ -132,13 +143,16 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           />
         )}
 
-      {section === 'health' && !isLoading && (workersData ?? []).length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {(workersData ?? []).map((worker, index) => (
-            <WorkerCard key={worker.id} worker={worker} index={index} />
-          ))}
-        </div>
-      )}
+      {section === 'health' &&
+        !isLoading &&
+        !isError &&
+        (workersData ?? []).length > 0 && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {(workersData ?? []).map((worker, index) => (
+              <WorkerCard key={worker.id} worker={worker} index={index} />
+            ))}
+          </div>
+        )}
 
       {section === 'worker-groups' && (
         <LockedFeatureGuard
