@@ -17,5 +17,9 @@ export { ConfirmDialog } from './confirm-dialog';
 export type { ConfirmDialogProps } from './confirm-dialog';
 export { InstantSwitch } from './instant-switch';
 export { AdminQueryState } from './admin-query-state';
-export { useAdminAction, adminActionCopy } from './use-admin-action';
+export {
+  useAdminAction,
+  adminActionCopy,
+  adminFeedback,
+} from './use-admin-action';
 export type { AdminVerb } from './use-admin-action';

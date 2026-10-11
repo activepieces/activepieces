@@ -3325,5 +3325,7 @@
   "Automatic personal projects turned on": "Automatic personal projects turned on",
   "Automatic personal projects turned off": "Automatic personal projects turned off",
   "{count, plural, =1 {# project} other {# projects}}": "{count, plural, =1 {# project} other {# projects}}",
-  "To confirm, type": "To confirm, type"
+  "To confirm, type": "To confirm, type",
+  "Reset {name}?": "Reset {name}?",
+  "Delete key": "Delete key"
 }

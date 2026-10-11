@@ -3,6 +3,7 @@ import {
   AIProviderWithoutSensitiveData,
   PlatformAdminSurface,
   Project,
+  UpdateAIProviderRequest,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -16,20 +17,21 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import {
   AdminEmpty,
   AdminPageHeader,
   AdminSection,
+  ConfirmDialog,
   SettingsPanel,
   SettingsRow,
+  adminFeedback,
   adminPageResources,
   adminSurface,
+  useAdminAction,
 } from '@/app/components/admin';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +54,7 @@ import {
   useUpgradeClick,
 } from '@/features/billing';
 import {
+  aiProviderApi,
   aiProviderKeys,
   aiProviderMutations,
   aiProviderQueries,
@@ -63,7 +66,7 @@ import { cn } from '@/lib/utils';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
-import { KeyStatusBadge, keyStatusText } from './key-status';
+import { KeyStatusBadge } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
 
@@ -96,53 +99,35 @@ export function ProvidersTab() {
   );
 
   const { mutate: toggleChatProvider, isPending: isSwitchingChatProvider } =
-    aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Chat provider updated'));
-      },
-    });
-  const { mutateAsync: deleteProvider } =
-    aiProviderMutations.useDeleteAiProvider({
+    useAdminAction<{ providerId: string; displayName: string }>({
+      verb: 'update',
+      name: t('Chat provider'),
+      run: ({ providerId, displayName }) =>
+        aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
       onSuccess: () => refetch(),
-      onError: (error) => {
-        const data = error.response?.data;
-        toast.error(
-          t(
-            data?.params?.message ??
-              data?.message ??
-              'Could not delete this key',
-          ),
-        );
-      },
     });
+  const { mutateAsync: deleteProvider } = useAdminAction<
+    AIProviderWithoutSensitiveData
+  >({
+    verb: 'delete',
+    name: (config) => config.name,
+    run: (config) => aiProviderApi.delete(config.id),
+    onSuccess: () => refetch(),
+  });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
-      onSuccess: ({ status }) => {
-        refetch();
-        const label = keyStatusText({ status });
-        if (status === 'active') {
-          toast.success(label ?? t('Saved'));
-          return;
-        }
-        toast.error(label ?? t('Could not reach this provider'));
-      },
+      onSuccess: () => refetch(),
     });
-  const { mutateAsync: updateProvider, isPending: isSaving } =
-    aiProviderMutations.useUpdateAiProvider({
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Saved'));
-      },
-      onError: (error) => {
-        const data = error.response?.data;
-        toast.error(
-          t(
-            data?.params?.message ?? data?.message ?? 'Could not save this key',
-          ),
-        );
-      },
-    });
+  const { mutateAsync: updateProvider, isPending: isSaving } = useAdminAction<{
+    providerId: string;
+    request: UpdateAIProviderRequest;
+  }>({
+    verb: 'save',
+    name: '',
+    run: ({ providerId, request }) => aiProviderApi.update(providerId, request),
+    feedback: 'inline',
+    onSuccess: () => refetch(),
+  });
 
   const openConfig = (id: string) => {
     const next = new URLSearchParams(searchParams);
@@ -171,7 +156,7 @@ export function ProvidersTab() {
         queryKey: aiProviderKeys.configModels(),
       }),
     ]);
-    toast.success(t('Saved'));
+    adminFeedback.done({ verb: 'save', name: '' });
     if (createdId) {
       openConfig(createdId);
       return;
@@ -214,7 +199,7 @@ export function ProvidersTab() {
               updateProvider({ providerId: activeConfig.id, request }),
             )
           }
-          onDelete={() => deleteProvider(activeConfig.id)}
+          onDelete={() => deleteProvider(activeConfig)}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
@@ -284,7 +269,7 @@ export function ProvidersTab() {
               locked={locked}
               onAdd={() => openConnect(provider)}
               onOpen={openConfig}
-              onDelete={(id) => deleteProvider(id)}
+              onDelete={(config) => deleteProvider(config)}
             />
           ))}
           {!locked && available.length > 0 && (
@@ -381,7 +366,7 @@ function ProviderGroup({
   locked: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
-  onDelete: (id: string) => Promise<unknown>;
+  onDelete: (config: AIProviderWithoutSensitiveData) => Promise<unknown>;
 }) {
   const info = providerInfoOf({ provider });
   if (!info) {
@@ -420,7 +405,7 @@ function ProviderGroup({
           projects={projects}
           locked={locked}
           onOpen={() => onOpen(config.id)}
-          onDelete={() => onDelete(config.id)}
+          onDelete={() => onDelete(config)}
         />
       ))}
     </SettingsPanel>
@@ -539,18 +524,14 @@ function ConfigRow({
         {!locked && (
           <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
         )}
-        <ConfirmationDeleteDialog
+        <ConfirmDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
-          title={t('Delete {name}', { name: config.name })}
-          message={t('Flows and agents that use this key will fail.')}
-          entityName={config.name}
-          showToast={true}
-          onError={() => undefined}
+          title={t('Delete {name}?', { name: config.name })}
+          description={t('Flows and agents that use this key will fail.')}
+          confirmLabel={t('Delete key')}
           controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
-          mutationFn={async () => {
-            await onDelete();
-          }}
+          onConfirm={onDelete}
         />
       </div>
     </div>

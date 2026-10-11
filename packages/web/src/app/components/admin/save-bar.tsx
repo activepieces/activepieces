@@ -30,6 +30,7 @@ export function SaveBar({
   locked,
   width = 'full',
   guardNavigation = true,
+  guardSearchChanges = false,
   standDown,
   children,
 }: SaveBarProps) {
@@ -88,21 +89,27 @@ export function SaveBar({
         )}
         {locked?.action}
       </div>
-      {guardNavigation && dirty && <NavigationGuard standDown={standDown} />}
+      {guardNavigation && dirty && (
+        <NavigationGuard
+          standDown={standDown}
+          guardSearchChanges={guardSearchChanges}
+        />
+      )}
     </div>
   );
 }
 
-function NavigationGuard({ standDown }: { standDown?: RefObject<boolean> }) {
+function NavigationGuard(props: NavigationGuardProps) {
   const dataRouter = useContext(UNSAFE_DataRouterContext);
-  return dataRouter ? <LeaveGuard standDown={standDown} /> : null;
+  return dataRouter ? <LeaveGuard {...props} /> : null;
 }
 
-function LeaveGuard({ standDown }: { standDown?: RefObject<boolean> }) {
+function LeaveGuard({ standDown, guardSearchChanges }: NavigationGuardProps) {
   const fallbackStandDown = useRef(false);
   const leaveBlocker = useWarnBeforeLosingChanges({
     hasChanges: true,
     standDown: standDown ?? fallbackStandDown,
+    blockSearchChanges: guardSearchChanges,
   });
   return (
     <LeaveWithoutSavingDialog
@@ -162,8 +169,14 @@ type SaveBarProps = {
   locked?: SaveBarLock;
   width?: 'full' | 'content';
   guardNavigation?: boolean;
+  guardSearchChanges?: boolean;
   standDown?: RefObject<boolean>;
   children?: ReactNode;
+};
+
+type NavigationGuardProps = {
+  standDown?: RefObject<boolean>;
+  guardSearchChanges: boolean;
 };
 
 export type SaveBarLock = {

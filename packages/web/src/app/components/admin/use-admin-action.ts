@@ -140,7 +140,13 @@ function failed({ verb, name }: { verb: AdminVerb; name: string }): string {
   }
 }
 
+function notifyDone({ verb, name }: { verb: AdminVerb; name: string }): void {
+  toast.success(done({ verb, name }));
+}
+
 export const adminActionCopy = { done, failed };
+
+export const adminFeedback = { done: notifyDone };
 
 export type AdminVerb =
   | 'save'
