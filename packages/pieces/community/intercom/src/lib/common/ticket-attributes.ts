@@ -36,6 +36,27 @@ export function toTicketAttributes({
 	);
 }
 
+export function toWebhookTicketShape(ticket: unknown): unknown {
+	if (typeof ticket !== 'object' || ticket === null) {
+		return ticket;
+	}
+	const state: unknown = Reflect.get(ticket, 'ticket_state');
+	if (typeof state !== 'string') {
+		return ticket;
+	}
+	const flatLabelKeys = ['ticket_state_internal_label', 'ticket_state_external_label'];
+	const rest = Object.fromEntries(Object.entries(ticket).filter(([key]) => !flatLabelKeys.includes(key)));
+	return {
+		...rest,
+		ticket_state: {
+			type: 'ticket_state',
+			category: state,
+			internal_label: Reflect.get(ticket, 'ticket_state_internal_label') ?? null,
+			external_label: Reflect.get(ticket, 'ticket_state_external_label') ?? null,
+		},
+	};
+}
+
 function convertValue({
 	name,
 	value,
@@ -98,27 +119,6 @@ function toBoolean({ name, value }: { name: string; value: unknown }): boolean {
 }
 
 const MILLISECONDS_THRESHOLD = 100_000_000_000;
-
-export function toWebhookTicketShape(ticket: unknown): unknown {
-	if (typeof ticket !== 'object' || ticket === null) {
-		return ticket;
-	}
-	const state: unknown = Reflect.get(ticket, 'ticket_state');
-	if (typeof state !== 'string') {
-		return ticket;
-	}
-	const flatLabelKeys = ['ticket_state_internal_label', 'ticket_state_external_label'];
-	const rest = Object.fromEntries(Object.entries(ticket).filter(([key]) => !flatLabelKeys.includes(key)));
-	return {
-		...rest,
-		ticket_state: {
-			type: 'ticket_state',
-			category: state,
-			internal_label: Reflect.get(ticket, 'ticket_state_internal_label') ?? null,
-			external_label: Reflect.get(ticket, 'ticket_state_external_label') ?? null,
-		},
-	};
-}
 
 export type TicketTypeAttribute = {
 	id?: string;
