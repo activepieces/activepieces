@@ -7,6 +7,7 @@ import { legacyGetAttachmentOutputSchema } from '../output-schemas';
 export const getIssueAttachmentAction = createAction({
     auth: jiraCloudAuth,
     name: 'get-issue-attachment',
+    classification: 'READ',
     displayName: 'Get Issue Attachment',
     description: 'Retrieves an attachment from an issue.',
     audience: 'human',

@@ -24,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { ProjectSelector } from '../../projects/components/projects-selector';
 import { globalConnectionsMutations } from '../hooks/global-connections-hooks';
@@ -88,6 +89,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                   e.preventDefault();
                   setIsOpen(true);
                 }}
+                {...adminControl(AdminControl.CONNECTIONS_CONNECTION_EDIT_OPEN)}
               >
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -176,7 +178,12 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 >
                   {t('Cancel')}
                 </Button>
-                <Button loading={isUpdatingGlobalConnection}>
+                <Button
+                  loading={isUpdatingGlobalConnection}
+                  {...adminControl(
+                    AdminControl.CONNECTIONS_CONNECTION_EDIT_SUBMIT,
+                  )}
+                >
                   {t('Save')}
                 </Button>
               </DialogFooter>

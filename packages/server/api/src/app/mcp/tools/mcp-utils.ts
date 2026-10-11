@@ -1,10 +1,11 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
+import { flowFolderService } from '../../flows/folder/folder.service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -242,6 +243,22 @@ async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): P
         return null
     }
     return { content: [{ type: 'text', text: `❌ ${message}` }] }
+}
+
+async function dropUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<{ input: Record<string, unknown>, unknownKeys: string[], message: string }> {
+    const input = isObject(params.input) ? params.input : {}
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
+    const knownInput = Object.fromEntries(Object.entries(input).filter(([key]) => !unknownKeys.includes(key)))
+    return { input: knownInput, unknownKeys, message }
+}
+
+async function keepKnownInputProps({ callerInput, ...params }: DetectUnknownInputPropsParams & { callerInput: Record<string, unknown> }): Promise<{ input: Record<string, unknown>, error: McpToolResult | null }> {
+    const { input, unknownKeys } = await dropUnknownInputProps(params)
+    const callerSentUnknownKey = unknownKeys.some((key) => key in callerInput)
+    if (callerSentUnknownKey) {
+        return { input, error: await rejectUnknownInputProps({ ...params, input: callerInput }) }
+    }
+    return { input, error: null }
 }
 
 const MAX_PROP_DEPTH = 3
@@ -504,6 +521,21 @@ function resolveConnectionExternalId({ connectionExternalId, input }: { connecti
     return typeof inlineAuth === 'string' ? inlineAuth : undefined
 }
 
+async function resolveFolder({ projectId, folderName, log }: { projectId: string, folderName: string | undefined, log: FastifyBaseLogger }): Promise<ResolveFolderResult> {
+    if (isNil(folderName)) {
+        return { folderId: undefined, folderName: undefined }
+    }
+    const folder = await flowFolderService(log).getOneByDisplayNameCaseInsensitive({ projectId, displayName: folderName })
+    if (isNil(folder)) {
+        return { error: { content: [{ type: 'text', text: `❌ Folder "${folderName}" does not exist. Create it with ap_create_folder first, then retry.` }], isError: true } }
+    }
+    return { folderId: folder.id, folderName: folder.displayName }
+}
+
+function folderSuffix(folderName: string | undefined): string {
+    return isNil(folderName) ? '' : ` in folder "${folderName}"`
+}
+
 function validateAuth(auth: string | undefined): McpToolResult | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
         return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }], isError: true }
@@ -625,6 +657,8 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 
 const RESOLVE_TIMEOUT_MS = 30_000
 
+const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder once with ap_create_folder, then pass the same folderName to each of them.')
+
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
     pieceName: string
     pieceVersion: string
@@ -678,6 +712,38 @@ async function executePropertyResolution({ pieceName, pieceVersion, actionOrTrig
         return { status: 'dynamic', props: options }
     }
     return { status: 'failed', message: 'Unrecognized options format' }
+}
+
+async function resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName, componentType, input, propertySettings, changedKeys = [], projectId, platformId, log }: {
+    pieceName: string
+    pieceVersion: string
+    componentName: string
+    componentType: 'action' | 'trigger'
+    input: Record<string, unknown>
+    propertySettings?: unknown
+    changedKeys?: string[]
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<Record<string, PropertySettings>> {
+    const current = z.record(z.string(), PropertySettings).safeParse(propertySettings).data ?? {}
+    const { data: piece } = await tryCatch(() => pieceMetadataService(log).getOrThrow({ platformId, name: pieceName, version: pieceVersion }))
+    const component = isNil(piece) ? undefined : (componentType === 'action' ? piece.actions[componentName] : piece.triggers[componentName])
+    if (isNil(component)) {
+        return current
+    }
+    const needingSchema = Object.entries(component.props).filter(([name, prop]) => {
+        const watchedKeys = [name, ...('refreshers' in prop ? prop.refreshers : [])]
+        const needsSchema = isNil(current[name]?.schema) || watchedKeys.some((key) => changedKeys.includes(key))
+        return prop.type === PropertyType.DYNAMIC && !isNil(input[name]) && needsSchema
+    })
+    const refreshed = await Promise.all(needingSchema.map(async ([name]) => {
+        const type = current[name]?.type ?? PropertyExecutionType.MANUAL
+        const { data: result } = await tryCatch(() => executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName: componentName, propertyName: name, input, projectId, platformId, log }))
+        const settings: PropertySettings = result?.status === 'dynamic' ? { type, schema: result.props } : { type }
+        return [name, settings] as const
+    }))
+    return { ...current, ...Object.fromEntries(refreshed) }
 }
 
 // Classify an action by how many records it returns, from its name. This is the signal the agent
@@ -789,6 +855,8 @@ export const mcpUtils = {
     coerceEmptyContainerInputs,
     detectUnknownInputProps,
     rejectUnknownInputProps,
+    dropUnknownInputProps,
+    keepKnownInputProps,
     buildPropSummaries,
     buildExampleInput,
     buildRequiredInputs,
@@ -800,6 +868,8 @@ export const mcpUtils = {
     findResolvableProps,
     resolveConnectionExternalId,
     validateAuth,
+    folderSuffix,
+    resolveFolder,
     fillDefaultsForMissingOptionalProps,
     buildErrorHandlingOptions,
     resolveLatestPieceVersion,
@@ -809,9 +879,11 @@ export const mcpUtils = {
     rewriteAllReferences,
     extractOptionsArray,
     executePropertyResolution,
+    resolveDynamicPropertySettings,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
+    FOLDER_NAME_SCHEMA,
 }
 
 export type { PropSummary }
@@ -880,6 +952,10 @@ type LookupPieceComponentParams = {
 type LookupPieceComponentResult =
     | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
+
+type ResolveFolderResult =
+    | { folderId: string | undefined, folderName: string | undefined, error?: never }
+    | { error: McpToolResult, folderId?: never, folderName?: never }
 
 type ResolveRouterStepResult =
     | { routerStep: BranchedAction, error?: never }

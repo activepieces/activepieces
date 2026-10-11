@@ -84,6 +84,7 @@ const polling = createJiraPolling<IssueAssignedProps>({
 
 export const issueAssigned = createTrigger({
   name: 'issue_assigned',
+  classification: 'READ',
   displayName: 'Issue Assigned',
   description:
     'Fires when a Jira issue is assigned to someone. Use it to ping people in Slack/Teams the moment work lands on them, auto-create a to-do when tickets hit your queue, or track hand-offs between teammates.',

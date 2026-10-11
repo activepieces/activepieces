@@ -119,7 +119,8 @@ import { stripeCloseDispute } from './lib/actions/close-dispute';
 export const stripeAuth = PieceAuth.SecretText({
   displayName: 'Secret API Key',
   required: true,
-  description: 'Secret key acquired from your Stripe dashboard',
+  description:
+    'Paste a secret key (sk_live_ or sk_test_) or a restricted key (rk_).\n\n1. In the Stripe Dashboard, open Developers > API keys.\n2. Copy the Secret key, or create a restricted key.\n3. A restricted key needs read access to Customers to connect, and access to everything your flows use.\n4. Paste it here.',
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({
@@ -145,7 +146,7 @@ export const stripe = createPiece({
   displayName: 'Stripe',
   description: 'Online payment processing for internet businesses',
 
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
   authors: [
     'lldiegon',

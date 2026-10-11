@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const sendWhatsAppTemplate = createAction({
   auth: famulorAuth,
   name: 'sendWhatsAppTemplate',
+  classification: 'WRITE',
   displayName: 'Send WhatsApp Template Message',
   description: 'Send an approved WhatsApp template message via a Famulor sender.',
   audience: 'both',

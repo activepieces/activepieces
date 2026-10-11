@@ -9,6 +9,7 @@ import {
   ApplicationEventName,
   buildMockEvent,
   EventDestination,
+  EventDestinationFormat,
   EventDestinationScope,
   ProjectRole,
   SecretManagerConnectionScope,
@@ -106,16 +107,28 @@ function projectRoles(): ProjectRole[] {
 
 function eventDestinations(): EventDestination[] {
   return [
-    'https://splunk.acme.com/services/collector',
-    'https://http-intake.logs.datadoghq.com/api/v2/logs',
-    'https://siem.acme.com/hooks/activepieces',
-  ].map((url, index) => ({
+    {
+      url: 'https://otlp.datadoghq.com/v1/logs',
+      format: EventDestinationFormat.OTLP_PROTOBUF,
+    },
+    {
+      url: 'https://us.i.posthog.com/i/v1/logs',
+      format: EventDestinationFormat.OTLP_JSON,
+    },
+    {
+      url: 'https://siem.acme.com/hooks/activepieces',
+      format: EventDestinationFormat.RAW,
+    },
+  ].map(({ url, format }, index) => ({
     id: `sample-destination-${index}`,
     ...agedTimestamps((index + 1) * 5 * 24 * 60),
     platformId: SAMPLE_PLATFORM_ID,
     scope: EventDestinationScope.PLATFORM,
     url,
     events: SAMPLE_EVENT_NAMES.slice(0, 4),
+    enabled: true,
+    headers: null,
+    format,
   }));
 }
 

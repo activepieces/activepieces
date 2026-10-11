@@ -28,6 +28,7 @@ export function createEnvelopeEventTrigger({
   return createTrigger({
     auth: docusignAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

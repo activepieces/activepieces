@@ -251,12 +251,12 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             tryCatch(() => aiToolConfigService(log).getEnabledTools({ platformId })),
         ])
         const webSearch = enabledTools.data?.webSearch ?? null
-        const modelId = await agentHelpers.resolveModelId({ platformId, providerConfig: provider, selectedModel: null, scope: PERSONALIZATION_PROVIDER_SCOPE, log })
+        const modelId = await agentHelpers.resolveModelId({ platformId, providerConfig: provider, selectedModel: null, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log })
         return {
             claimed: true,
             credentials: provider,
             modelId,
-            fastModelId: await agentHelpers.resolveFastModelId({ platformId, providerConfig: provider, scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
+            fastModelId: await agentHelpers.resolveFastModelId({ platformId, providerConfig: provider, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
             user: { firstName: user.firstName, lastName: user.lastName, email: user.email },
             platformName: platform.name,
             website: companyRow?.domain ?? null,

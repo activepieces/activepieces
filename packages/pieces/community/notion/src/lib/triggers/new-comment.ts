@@ -19,8 +19,7 @@ export const newComment = createTrigger({
   name: 'new_comment',
   classification: 'READ',
   displayName: 'New Comment',
-  description:
-    'Triggers when a comment is added to a page.',
+  description: 'Triggers when a comment is added to a page.',
   aiMetadata: {
     description:
       'Fires when a new comment is posted on the selected Notion page, emitting the comment. Use to react to feedback or discussion activity on a specific page; requires read-comments capability on the integration.',

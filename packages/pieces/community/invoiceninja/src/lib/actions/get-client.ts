@@ -9,6 +9,7 @@ import { invoiceninjaAuth } from '../..';
 export const getClient = createAction({
   auth: invoiceninjaAuth,
   name: 'getclient_task',
+  classification: 'READ',
   displayName: 'Get Client Details from e-mail',
   description: 'Gets the client details if they exist by e-mail.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const newCertificationFolderCreated = createTrigger({
   auth: wedofAuth,
   name: 'newCertificationFolderCreated',
+  classification: 'READ',
   displayName: 'Nouveau dossier de certification',
   description:
     "Se déclenche lorsqu'un nouveau dossier de certification est créé",

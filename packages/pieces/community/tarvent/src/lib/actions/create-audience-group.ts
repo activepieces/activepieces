@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const createAudienceGroup = createAction({
   auth: tarventAuth,
   name: 'tarvent_create_audience_group',
+  classification: 'WRITE',
   displayName: 'Create An Audience Group',
   description: 'Creates an audience group in the selected audience.',
   audience: 'both',

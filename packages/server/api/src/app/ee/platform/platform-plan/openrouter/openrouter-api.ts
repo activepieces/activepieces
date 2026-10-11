@@ -20,6 +20,10 @@ export const openRouterApi = {
         return openRouterRequest<GetKeyResponse>({ method: 'GET', path: `/keys/${hash}` })
     },
 
+    async deleteKey({ hash }: DeleteKeyRequest): Promise<void> {
+        await openRouterRequest<unknown>({ method: 'DELETE', path: `/keys/${hash}` })
+    },
+
     async listKeys({ offset, include_disabled }: ListKeysRequest): Promise<ListKeysResponse> {
         return openRouterRequest<ListKeysResponse>({
             method: 'GET',
@@ -94,6 +98,10 @@ type GetKeyRequest = {
 }
 type GetKeyResponse = {
     data: OpenRouterApikey
+}
+
+type DeleteKeyRequest = {
+    hash: string
 }
 
 type ListKeysRequest = {

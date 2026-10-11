@@ -74,7 +74,7 @@ export function PlatformSidebar() {
             { to: '/platform/users', label: t('Members'), end: true },
             {
               to: '/platform/users/roles',
-              label: t('Project Roles'),
+              label: t('Roles & Access'),
               locked: !platform.plan.projectRolesEnabled,
               tier: PLATFORM_FEATURES.projectRoles.tier,
             },
@@ -124,6 +124,8 @@ export function PlatformSidebar() {
           to: '/platform/ai',
           label: t('AI Center'),
           icon: SparklesIcon,
+          locked: !platform.plan.aiProvidersEnabled,
+          tier: PLATFORM_FEATURES.aiProviders.tier,
           subItems:
             edition === ApEdition.COMMUNITY
               ? undefined
@@ -198,8 +200,7 @@ export function PlatformSidebar() {
           label: t('MCP Server'),
           icon: McpSvg,
           subItems: [
-            { to: '/platform/mcp', label: t('Connection'), end: true },
-            { to: '/platform/mcp/tools', label: t('Tools') },
+            { to: '/platform/mcp', label: t('Tools'), end: true },
             { to: '/platform/mcp/activity', label: t('Activity') },
           ],
         },

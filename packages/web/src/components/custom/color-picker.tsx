@@ -18,6 +18,7 @@ interface ColorPickerProps {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
+  side?: 'top' | 'right' | 'bottom' | 'left';
 }
 
 const ColorPicker = forwardRef<
@@ -25,7 +26,7 @@ const ColorPicker = forwardRef<
   Omit<ButtonProps, 'value' | 'onChange' | 'onBlur'> & ColorPickerProps
 >(
   (
-    { disabled, value, onChange, onBlur, name, className, ...props },
+    { disabled, value, onChange, onBlur, name, className, side, ...props },
     forwardedRef,
   ) => {
     const ref = useForwardedRef(forwardedRef);
@@ -54,9 +55,18 @@ const ColorPicker = forwardRef<
             <div />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full">
-          <HexColorPicker color={parsedValue} onChange={onChange} />
+        <PopoverContent
+          side={side}
+          align="start"
+          className="flex w-60 flex-col gap-3 p-3"
+        >
+          <HexColorPicker
+            className="w-full! h-44!"
+            color={parsedValue}
+            onChange={onChange}
+          />
           <Input
+            className="h-8 font-mono"
             maxLength={7}
             onChange={(e) => {
               onChange(e?.currentTarget?.value);

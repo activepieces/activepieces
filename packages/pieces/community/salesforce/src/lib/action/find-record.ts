@@ -7,6 +7,7 @@ import { rawQueryOutputSchema } from '../output-schemas';
 export const findRecord = createAction({
     auth: salesforceAuth,
     name: 'find_record',
+    classification: 'SEARCH',
     displayName: 'Find Record',
     description: 'Finds a record by a field value.',
     audience: 'human',

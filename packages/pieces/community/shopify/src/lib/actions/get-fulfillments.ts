@@ -5,6 +5,7 @@ import { getFulfillments } from '../common';
 export const getFulfillmentsAction = createAction({
   auth: shopifyAuth,
   name: 'get_fulfillments',
+  classification: 'SEARCH',
   displayName: 'Get Fulfillments',
   description: `Get an order's fulfillments.`,
   audience: 'both',

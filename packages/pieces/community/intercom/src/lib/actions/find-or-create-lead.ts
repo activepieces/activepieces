@@ -5,6 +5,7 @@ import { intercomClient } from '../common';
 export const findOrCreateLeadAction = createAction({
 	auth: intercomAuth,
 	name: 'find-or-create-lead',
+	classification: 'WRITE',
 	displayName: 'Find or Create Lead',
 	description: 'Finds a lead by email, ID, or User ID, creating it if none is found.',
 	audience: 'both',

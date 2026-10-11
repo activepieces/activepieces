@@ -7,7 +7,7 @@ import { generateContentWithFilesearchActionOutputSchema } from '../output-schem
 
 export const generateContentWithFileSearchAction = createAction({
   audience: 'both',
-  description: 'Generate content with file search functionality.',
+  description: 'Upload a file and have Gemini answer a prompt from it.',
   aiMetadata: { description: 'Uploads one file to a newly created Gemini File Search store, waits for indexing to finish, then answers the prompt grounded on that document. Use it for one-shot question answering over a document supplied at run time; prefer generate_content when no file grounding is needed or when a different built-in tool such as Google Search or URL Context fits better. Both a file and a store display name are required. Not idempotent: every call creates another file search store and a fresh completion.', idempotent: false },
   displayName: 'Generate Content with File Search',
   name: 'generate_content_with_filesearch',
@@ -17,24 +17,26 @@ export const generateContentWithFileSearchAction = createAction({
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
-      description: 'The prompt to generate content from.',
+      description: 'Question or instruction Gemini answers from the file.',
     }),
     model: Property.Dropdown({
       displayName: 'Model',
       auth: googleGeminiAuth,
       required: true,
-      description: 'The model which will generate the completion',
+      description: 'Gemini model that writes the response.',
       refreshers: [],
       defaultValue: defaultLLM,
       options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
-    fileStoreName: Property.ShortText({
-      displayName: 'File Store Name',
-      required: true,
-    }),
     file: Property.File({
       displayName: 'File',
       required: true,
+      description: 'File Gemini searches to answer the prompt.',
+    }),
+    fileStoreName: Property.ShortText({
+      displayName: 'File Store Name',
+      required: true,
+      description: 'Name for the search store this step creates on each run.',
     }),
   },
   outputSchema: generateContentWithFilesearchActionOutputSchema,

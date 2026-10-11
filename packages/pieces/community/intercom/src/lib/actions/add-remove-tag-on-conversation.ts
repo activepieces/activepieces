@@ -6,6 +6,7 @@ import { intercomClient } from '../common';
 export const addOrRemoveTagOnConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'add-or-remove-tag-on-conversation',
+	classification: 'WRITE',
 	displayName: 'Add/Remove Tag on Conversation',
 	description: 'Attach or remove a tag from a specific conversation.',
 	audience: 'both',

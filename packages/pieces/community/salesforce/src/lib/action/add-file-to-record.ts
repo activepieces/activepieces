@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const addFileToRecord = createAction({
     auth: salesforceAuth,
     name: 'add_file_to_record',
+    classification: 'WRITE',
     displayName: 'Add File to Record',
     description: 'Uploads a file and attaches it to an existing record.',
     audience: 'human',

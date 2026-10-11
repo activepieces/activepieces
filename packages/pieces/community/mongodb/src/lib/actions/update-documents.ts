@@ -6,6 +6,7 @@ import { mongodbCommon, mongodbConnect } from '../common';
 export default createAction({
   auth: mongodbAuth,
   name: 'update_documents',
+  classification: 'WRITE',
   displayName: 'Update Documents',
   description: 'Update multiple documents in a collection',
   audience: 'both',

@@ -11,6 +11,7 @@ import { exportReportOutputSchema } from '../output-schemas';
 export const exportReport = createAction({
   auth: salesforceAuth,
   name: 'export_report',
+  classification: 'READ',
   displayName: 'Export Report ',
   description: 'Export a Salesforce report as an Excel file.',
   audience: 'both',

@@ -32,6 +32,7 @@ import {
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -128,7 +129,7 @@ const SecretManagersPage = () => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
           return (
-            <Badge variant="outline" className="text-xs text-muted-foreground">
+            <Badge variant="outline" className="text-xs text-gray-11">
               {t('Not configured')}
             </Badge>
           );
@@ -158,7 +159,13 @@ const SecretManagersPage = () => {
         return (
           <div className="flex items-center gap-1 justify-end">
             <AddEditSecretManagerConnectionDialog connection={connection}>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                {...adminControl(
+                  AdminControl.SECRET_MANAGERS_CONNECTION_EDIT_OPEN,
+                )}
+              >
                 <Pencil className="size-4" />
               </Button>
             </AddEditSecretManagerConnectionDialog>
@@ -172,13 +179,20 @@ const SecretManagersPage = () => {
                 'Deleting this secret manager connection will break all flows/app connections using it.',
               )}
               entityName={connection.name}
+              controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
               mutationFn={async () => deleteConnection(connection.id)}
             >
               <div>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash className="size-4 text-destructive" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      {...adminControl(
+                        AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_OPEN,
+                      )}
+                    >
+                      <Trash className="size-4 text-danger-11" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Delete')}</TooltipContent>
@@ -198,7 +212,12 @@ const SecretManagersPage = () => {
         description={t('Manage Secret Manager connections')}
       >
         <AddEditSecretManagerConnectionDialog>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+            {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_OPEN)}
+          >
             {t('New Connection')}
           </AnimatedIconButton>
         </AddEditSecretManagerConnectionDialog>
@@ -238,6 +257,7 @@ const SecretManagerClearCacheButton = ({
           size="sm"
           loading={isClearingCache}
           onClick={() => clearCache(connection.id)}
+          {...adminControl(AdminControl.SECRET_MANAGERS_CACHE_RUN)}
         >
           <RefreshCcw className="size-4" />
         </Button>

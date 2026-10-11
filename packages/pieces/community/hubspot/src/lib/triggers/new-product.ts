@@ -80,7 +80,7 @@ export const newProductTrigger = createTrigger({
 	name: 'new-product',
 	classification: 'READ',
 	displayName: 'New Product',
-	description: 'Triggers when new product is available.',
+	description: 'Triggers when a new product is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new product is created in the HubSpot product library. Each event represents one product record with properties such as name, description, price, and tax. Polls for products by creation date; does not fire on updates to existing products.',
@@ -88,15 +88,13 @@ export const newProductTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                        
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.PRODUCT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

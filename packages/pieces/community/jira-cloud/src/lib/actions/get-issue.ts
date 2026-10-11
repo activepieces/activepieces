@@ -8,6 +8,7 @@ import { issueOutputSchema } from '../output-schemas';
 export const getIssueAction = createAction({
   auth: jiraCloudAuth,
   name: 'get_issue',
+  classification: 'READ',
   displayName: 'Get Issue',
   description: 'Get issue data.',
   audience: 'human',

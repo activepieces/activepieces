@@ -78,7 +78,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     <SidebarMenuButton
       asChild
       className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
-        'bg-sidebar-accent hover:bg-sidebar-accent!': isRowHighlighted,
+        'bg-gray-4 hover:bg-gray-4!': isRowHighlighted,
         'pr-8': hasSubItems && !isCollapsed,
       })}
     >
@@ -123,7 +123,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       )}
       {!isCollapsed && hasSubItems && (
         <SidebarMenuAction
-          className="right-1.5 text-sidebar-foreground/60"
+          className="right-1.5 text-gray-9"
           aria-label={isExpanded ? t('Collapse') : t('Expand')}
           aria-expanded={isExpanded}
           onClick={() => setIsExpanded((expanded) => !expanded)}
@@ -139,6 +139,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         <SidebarMenuSub className="mx-0 ml-7 border-0 px-0 py-1">
           {subItems.map((subItem) => {
             const shut = isSubItemLocked(subItem);
+            const subItemTier = subItem.tier ?? item.tier;
             const subItemActive = isRouteActive({
               pathname,
               to: subItem.to,
@@ -159,7 +160,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                       ? () =>
                           captureLockedClick({
                             path: subItem.to,
-                            tier: subItem.tier,
+                            tier: subItemTier,
                           })
                       : undefined
                   }
@@ -174,7 +175,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
             return (
               <SidebarMenuSubItem key={subItem.to}>
                 {shut && !isCrowned ? (
-                  <LockedTooltip tier={subItem.tier}>{subButton}</LockedTooltip>
+                  <LockedTooltip tier={subItemTier}>{subButton}</LockedTooltip>
                 ) : (
                   subButton
                 )}
@@ -206,10 +207,7 @@ function LockedTooltip({ tier, children }: LockedTooltipProps) {
 function CrownMark() {
   return (
     <>
-      <Crown
-        aria-hidden
-        className="size-3.5! shrink-0 text-sidebar-foreground/50"
-      />
+      <Crown aria-hidden className="size-3.5! shrink-0 text-gray-9" />
       <span className="sr-only">{t('Requires a plan upgrade')}</span>
     </>
   );

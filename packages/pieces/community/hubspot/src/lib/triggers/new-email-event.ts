@@ -71,7 +71,7 @@ export const newEmailEventTrigger = createTrigger({
 	name: 'new-email-event',
 	classification: 'READ',
 	displayName: 'New Email Event',
-	description: 'Triggers when all,or specific new email event is available.',
+	description: 'Triggers on new marketing email events, such as opens or clicks.',
 	aiMetadata: {
 		description:
 			'Fires when a new marketing-email event occurs in HubSpot, optionally filtered to a single event type (sent, delivered, open, click, bounce, dropped, deferred, processed, status change, or spam report). Each event represents one email engagement record with its recipient and timestamp. Polls the email events API by timestamp.',
@@ -80,6 +80,7 @@ export const newEmailEventTrigger = createTrigger({
 	props: {
 		eventType: Property.StaticDropdown({
 			displayName: 'Event Type',
+			description: 'Leave empty to trigger on every event type.',
 			required: false,
 			options: {
 				disabled: false,

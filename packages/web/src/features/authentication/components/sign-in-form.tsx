@@ -194,14 +194,14 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                       <button
                         type="button"
                         onClick={onForgotPassword}
-                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                        className="text-gray-11 text-xs hover:text-accent-11 transition-all duration-200"
                       >
                         {t('Forgot your password?')}
                       </button>
                     ) : (
                       <Link
                         to="/forget-password"
-                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                        className="text-gray-11 text-xs hover:text-accent-11 transition-all duration-200"
                       >
                         {t('Forgot your password?')}
                       </Link>
@@ -224,7 +224,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                     size="icon"
                     tabIndex={-1}
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />

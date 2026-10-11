@@ -8,6 +8,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const reviewResume = createAction({
     auth: magicalApiAuth,
     name: 'review_resume',
+    classification: 'READ',
     displayName: 'Review Resume',
     description: 'Analyze parsed resume using predefined criteria.',
     audience: 'both',

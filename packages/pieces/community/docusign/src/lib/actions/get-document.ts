@@ -7,6 +7,7 @@ import { createApiClient } from '../common';
 
 export const getDocument = createAction({
   name: 'getDocument',
+  classification: 'READ',
   displayName: 'Download Document from Signing Request',
   description:
     'Download a document (or all documents) from a signing request as a file.',

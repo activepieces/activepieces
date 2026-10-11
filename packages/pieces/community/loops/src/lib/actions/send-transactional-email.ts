@@ -4,6 +4,7 @@ import { loopsAuth, LOOPS_BASE_URL } from '../auth';
 
 export const sendTransactionalEmail = createAction({
   name: 'send_transactional_email',
+  classification: 'WRITE',
   displayName: 'Send Transactional Email',
   description:
     'Sends a transactional email to a contact using a pre-built template in Loops.',

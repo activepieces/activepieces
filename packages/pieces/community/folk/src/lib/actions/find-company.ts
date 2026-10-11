@@ -5,6 +5,7 @@ import { folkClient } from '../common/client';
 export const findCompany = createAction({
   auth: folkAuth,
   name: 'findCompany',
+  classification: 'SEARCH',
   displayName: 'Find Company',
   description: 'Search for companies in your Folk workspace by name or email address.',
   audience: 'both',

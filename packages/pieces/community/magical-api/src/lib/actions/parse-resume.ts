@@ -8,6 +8,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const parseResume = createAction({
     auth: magicalApiAuth,
     name: 'parse_resume',
+    classification: 'READ',
     displayName: 'Parse Resume',
     description: 'Extract structured data (name, email, experience, skills, etc.) from a resume file.',
     audience: 'both',

@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const createTask = createAction({
     auth: salesforceAuth,
     name: 'create_task',
+    classification: 'WRITE',
     displayName: 'Create Task',
     description: 'Creates a new task.',
     audience: 'human',

@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { isAppSumoCreditedPlan, McpToolResult, PopulatedMcpServer } from '@activepieces/shared'
+import { McpToolDefinition, McpToolResult, PopulatedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -26,6 +26,27 @@ export const mcpUsageTracker = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+export function withCallBilling({ execute, toolName, projectId, billing }: WithCallBillingParams): McpToolDefinition['execute'] {
+    if (!BILLABLE_TOOL_NAMES.includes(toolName)) {
+        return execute
+    }
+    return async (args) => {
+        const refusal = await billing.refusalWhenOutOfCredits({ toolName })
+        if (!isNil(refusal)) {
+            return refusal
+        }
+        const result = await execute(args)
+        if (actionRan(result)) {
+            billing.charge({ toolName, projectId })
+        }
+        return result
+    }
+}
+
+function actionRan(result: McpToolResult): boolean {
+    return result.isError !== true || typeof result.structuredContent?.runId === 'string'
+}
 
 async function resolvePlatformId({ mcp, log }: { mcp: PopulatedMcpServer, log: FastifyBaseLogger }): Promise<string | null> {
     if (!isNil(mcp.platformId)) {
@@ -72,7 +93,6 @@ async function chargeCall({ platformId, projectId, toolName, clientId, log }: Ch
             log,
             licenseKey: platformPlan.licenseKey,
             credits: usage,
-            ...(isAppSumoCreditedPlan(platformPlan.plan) ? { appSumo: { ...usage, idempotencyKey: `mcpAppSumo:${apId()}` } } : {}),
         })
     })
     if (!isNil(error)) {
@@ -87,9 +107,18 @@ const EXEMPT_FROM_BILLING: McpCallBilling = {
 
 export const MCP_CALL_CREDITS = 1
 
+export const BILLABLE_TOOL_NAMES: string[] = ['ap_run_action']
+
 export type McpCallBilling = {
     refusalWhenOutOfCredits: (params: { toolName: string }) => Promise<McpToolResult | null>
     charge: (params: { toolName: string, projectId: string | null }) => void
+}
+
+type WithCallBillingParams = {
+    execute: McpToolDefinition['execute']
+    toolName: string
+    projectId: string | null
+    billing: McpCallBilling
 }
 
 type ResolveCallBillingParams = {

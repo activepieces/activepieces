@@ -1,8 +1,11 @@
 import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderModel } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import * as React from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -17,6 +20,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { cn } from '@/lib/utils';
 
 import { aiModelHooks } from './hooks';
@@ -80,6 +84,16 @@ export function AIModelSelector({
     aiModelHooks.useListProviders();
   const { data: models = [], isLoading: modelsLoading } =
     aiModelHooks.useGetModelsForProvider(selectedProvider, selectedConfigId);
+  const { status: modelTiersStatus } = useQuery(
+    aiProviderQueries.modelTiersOptions(),
+  );
+  const { defaultTierId } = aiProviderQueries.useModelTiers('flow');
+  const managed = selectedProvider === AIProviderName.ACTIVEPIECES;
+  const waitingForTiers = managed && modelTiersStatus === 'pending';
+  const defaultModelId = defaultPick({
+    models,
+    preferredId: managed ? defaultTierId : undefined,
+  });
 
   const getProviderLogo = React.useCallback((providerName: string) => {
     return ALL_PROVIDERS.find((p) => p.provider === providerName)?.logoUrl;
@@ -126,13 +140,13 @@ export function AIModelSelector({
       selectedProvider &&
       models.length > 0 &&
       !selectedModel &&
-      !modelsLoading
+      !modelsLoading &&
+      !waitingForTiers
     ) {
-      const firstModel = models[0].id;
-      setSelectedModel(firstModel);
+      setSelectedModel(defaultModelId);
       onChange({
         provider: selectedProvider,
-        model: firstModel,
+        model: defaultModelId,
         configId: selectedConfigId,
         picked: 'default',
       });
@@ -140,6 +154,8 @@ export function AIModelSelector({
   }, [
     models,
     modelsLoading,
+    waitingForTiers,
+    defaultModelId,
     selectedProvider,
     selectedModel,
     selectedConfigId,
@@ -153,17 +169,17 @@ export function AIModelSelector({
       models.length > 0 &&
       !models.some((m) => m.id === selectedModel)
     ) {
-      const fallback = models[0]?.id;
-      setSelectedModel(fallback);
+      setSelectedModel(defaultModelId);
       onChange({
         provider: selectedProvider,
-        model: fallback,
+        model: defaultModelId,
         configId: selectedConfigId,
         picked: 'default',
       });
     }
   }, [
     models,
+    defaultModelId,
     selectedModel,
     selectedProvider,
     selectedConfigId,
@@ -196,7 +212,7 @@ export function AIModelSelector({
         <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
       )}
 
-      <div className="flex items-stretch border rounded-md bg-background overflow-hidden">
+      <div className="flex items-stretch border rounded-md bg-gray-1 overflow-hidden">
         <Popover open={providerOpen} onOpenChange={setProviderOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -214,10 +230,10 @@ export function AIModelSelector({
               ) : selectedProvider ? (
                 <div className="flex items-center gap-2">
                   {getProviderLogo(selectedProvider) && (
-                    <img
+                    <LogoPlate
                       src={getProviderLogo(selectedProvider)}
                       alt={selectedProvider}
-                      className="h-4 w-4 object-contain"
+                      className="size-4 rounded-sm p-px"
                     />
                   )}
                   <span className="truncate">
@@ -225,7 +241,7 @@ export function AIModelSelector({
                   </span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">
+                <span className="text-gray-11">
                   {providers.length === 0
                     ? t('No providers')
                     : t('Select provider')}
@@ -253,10 +269,10 @@ export function AIModelSelector({
                   >
                     <div className="flex items-center gap-2 flex-1">
                       {getProviderLogo(option.provider) && (
-                        <img
+                        <LogoPlate
                           src={getProviderLogo(option.provider)}
                           alt={option.provider}
-                          className="h-4 w-4 object-contain"
+                          className="size-4 rounded-sm p-px"
                         />
                       )}
                       <span>{option.label}</span>
@@ -276,7 +292,7 @@ export function AIModelSelector({
           </PopoverContent>
         </Popover>
 
-        <div className="w-px bg-border self-stretch" />
+        <div className="w-px bg-gray-6 self-stretch" />
 
         <Popover open={modelOpen} onOpenChange={setModelOpen}>
           <PopoverTrigger asChild>
@@ -303,7 +319,7 @@ export function AIModelSelector({
                     selectedModel}
                 </span>
               ) : (
-                <span className="text-muted-foreground">
+                <span className="text-gray-11">
                   {!selectedProvider
                     ? t('Select provider first')
                     : models.length === 0
@@ -347,7 +363,7 @@ export function AIModelSelector({
       </div>
 
       {selectedProvider && showEmbeddingNote && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-11">
           {PROVIDER_EMBEDDING_MODELS[selectedProvider]
             ? t('Embedding model for knowledge base: {model}', {
                 model: PROVIDER_EMBEDDING_MODELS[selectedProvider],
@@ -357,4 +373,16 @@ export function AIModelSelector({
       )}
     </div>
   );
+}
+
+function defaultPick({
+  models,
+  preferredId,
+}: {
+  models: AIProviderModel[];
+  preferredId: string | undefined;
+}): string | undefined {
+  return models.some((model) => model.id === preferredId)
+    ? preferredId
+    : models[0]?.id;
 }

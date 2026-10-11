@@ -40,10 +40,12 @@ import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
   onCreate?: (project: ProjectWithLimits) => void;
+  onBlocked?: () => void;
   gate?: {
     locked: boolean;
     content: (args: { onClose: () => void }) => React.ReactNode;
@@ -67,6 +69,9 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
 
   const changeOpen = (next: boolean) => {
     setOpen(next);
+    if (next && props.gate?.locked === true) {
+      props.onBlocked?.();
+    }
     if (!next) {
       setBlockedOnSubmit(false);
     }
@@ -103,7 +108,10 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
                     ? undefined
                     : {
                         locked: props.gate.locked,
-                        onBlocked: () => setBlockedOnSubmit(true),
+                        onBlocked: () => {
+                          setBlockedOnSubmit(true);
+                          props.onBlocked?.();
+                        },
                       }
                 }
               />
@@ -221,7 +229,7 @@ const NewProjectForm = ({
                   className="rounded-sm"
                   value={field.value ?? ''}
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-gray-11">
                   {t('Receives flow failure emails for this project.')}
                 </span>
                 <FormMessage />
@@ -245,6 +253,7 @@ const NewProjectForm = ({
                     id="sensitive"
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
+                    {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
                   />
                   <FormMessage />
                 </FormItem>
@@ -302,6 +311,7 @@ const NewProjectForm = ({
             <Button
               disabled={isPending}
               loading={isPending}
+              {...adminControl(AdminControl.PROJECTS_NEW_SUBMIT)}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();

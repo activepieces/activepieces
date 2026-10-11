@@ -5,6 +5,7 @@ import { createAction } from '@activepieces/pieces-framework';
 export const collectionList = createAction({
   auth: qdrantAuth,
   name: 'collection_list',
+  classification: 'SEARCH',
   displayName: 'Get Collection List',
   description: 'Get the list of all the collections of your database',
   audience: 'both',

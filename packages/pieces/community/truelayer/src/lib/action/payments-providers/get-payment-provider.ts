@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const getPaymentProvider = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-payment-provider',
+  classification: 'READ',
   displayName: 'Get Payment Provider',
   description: 'Returns payment provider details. This API can be called without the need for authentication.',
   audience: 'both',

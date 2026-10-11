@@ -8,8 +8,7 @@ export const stripeCancelSubscription = createAction({
   classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Cancel Subscription',
-  description:
-    'Cancel an existing subscription, either immediately or at the end of the current billing period.',
+  description: 'Cancel a subscription now or at the end of its billing period.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -21,7 +20,7 @@ export const stripeCancelSubscription = createAction({
     cancel_at_period_end: Property.Checkbox({
       displayName: 'Cancel at Period End',
       description:
-        'If true, the subscription remains active until the end of the current billing period. If false, it cancels immediately.',
+        'On: it stays active until the period ends. Off: it ends now.',
       required: false,
       defaultValue: false,
     }),

@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const newUserTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'new-user',
+	classification: 'READ',
 	displayName: 'New User',
 	description: 'Triggers when a new user is created.',
 	aiMetadata: {

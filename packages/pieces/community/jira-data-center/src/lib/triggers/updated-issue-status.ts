@@ -36,6 +36,7 @@ const polling: Polling<
 
 export const updatedIssueStatus = createTrigger({
 	name: 'updated_issue_status',
+	classification: 'READ',
 	displayName: 'Updated Issue Status',
 	description: 'Triggers when an issue status is updated',
 	aiMetadata: {

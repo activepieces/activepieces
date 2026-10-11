@@ -43,7 +43,7 @@ export const TeamProjectAlerts = () => {
   return (
     <>
       <Alert variant="default">
-        <Bell className="inline w-4 h-4 text-amber-900" />
+        <Bell className="inline w-4 h-4 text-warning-11" />
         <div className="flex flex-col gap-1">
           <AlertTitle>{t('Frequency')}</AlertTitle>
           <AlertDescription className="text-sm">
@@ -95,12 +95,12 @@ export const TeamProjectAlerts = () => {
           </div>
         )}
         {alertsError && (
-          <div className="text-center text-destructive py-8 text-sm">
+          <div className="text-center text-danger-11 py-8 text-sm">
             {t('Error, please try again.')}
           </div>
         )}
         {alertsData && alertsData.length === 0 && (
-          <div className="text-center text-muted-foreground py-8 text-sm">
+          <div className="text-center text-gray-11 py-8 text-sm">
             {t('No emails added yet.')}
           </div>
         )}
@@ -120,11 +120,11 @@ export const TeamProjectAlerts = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="size-8 p-0 hover:bg-destructive-50"
+                        className="size-8 p-0 hover:bg-danger-3"
                         onClick={() => deleteAlert(alert)}
                         disabled={writeAlertPermission === false}
                       >
-                        <Trash className="size-4 text-destructive" />
+                        <Trash className="size-4 text-danger-11" />
                       </Button>
                     </TooltipTrigger>
                     {writeAlertPermission === false && (

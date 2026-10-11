@@ -21,6 +21,7 @@
     "write-file-atomic": "5.0.1"
   },
   "devDependencies": {
+    "sucrase": "3.35.1",
     "@types/write-file-atomic": "4.0.3",
     "@types/node": "24.11.0",
     "socket.io-client": "4.8.1",

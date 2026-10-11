@@ -11,6 +11,7 @@ const polling = createJiraPolling();
 
 export const updatedIssue = createTrigger({
   name: 'updated_issue',
+  classification: 'READ',
   displayName: 'Updated Issue',
   description: 'Triggers when an issue is updated',
   aiMetadata: {

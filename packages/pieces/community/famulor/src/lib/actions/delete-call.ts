@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const deleteCall = createAction({
   auth: famulorAuth,
   name: 'deleteCall',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Call',
   description: 'Permanently delete a call record including its transcript and recording.',
   audience: 'both',

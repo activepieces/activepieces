@@ -10,6 +10,7 @@ import { folkProps } from '../common/props';
 export const companyRemoved = createTrigger({
   auth: folkAuth,
   name: 'company_removed',
+  classification: 'READ',
   displayName: 'Company Removed',
   description: 'Fires when a company is removed from your Folk workspace.',
   aiMetadata: {

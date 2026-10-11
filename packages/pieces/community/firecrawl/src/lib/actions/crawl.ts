@@ -1,7 +1,7 @@
 import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots, FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { crawlWebsiteActionOutputSchema } from '../output-schemas';
 
 function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
@@ -254,6 +254,7 @@ export const crawl = createAction({
       sitemap: "include", 
       crawlEntireDomain: false,
       maxDiscoveryDepth: 10,
+      origin: FIRECRAWL_ORIGIN,
     };
 
     if (propsValue.limit !== undefined) {

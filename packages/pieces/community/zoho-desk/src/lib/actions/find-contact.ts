@@ -8,6 +8,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const findContactAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'find-contact',
+	classification: 'SEARCH',
 	displayName: 'Find Contact',
 	description: 'Finds an existing contact by email.',
 	audience: 'both',

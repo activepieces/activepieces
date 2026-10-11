@@ -5,6 +5,7 @@ import { pastefyAuth } from '../..';
 export default createAction({
   auth: pastefyAuth,
   name: 'get_folder_hierarchy',
+  classification: 'SEARCH',
   displayName: 'Get Folder Hierarchy',
   description: 'Retrieves a hierarchy of all folders',
   audience: 'both',

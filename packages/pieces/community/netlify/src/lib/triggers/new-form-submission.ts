@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const newFormSubmission = createTrigger({
   name: "new_form_submission",
+  classification: 'READ',
   displayName: "New Form Submission",
   description: "Fires when a Netlify form submission is received.",
   aiMetadata: {

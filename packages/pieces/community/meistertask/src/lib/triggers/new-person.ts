@@ -42,6 +42,7 @@ const newPersonPolling: Polling<
 export const newPerson = createTrigger({
   auth: meistertaskAuth,
   name: 'new_person',
+  classification: 'READ',
   displayName: 'New Person',
   description: 'Triggers when a new person is added to a project.',
   aiMetadata: {

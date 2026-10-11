@@ -15,8 +15,7 @@ export const listDatabasePages = createAction({
   name: 'list_database_pages',
   classification: 'SEARCH',
   displayName: 'List Pages',
-  description:
-    'List pages in a database, optionally filtered by field values.',
+  description: 'List pages in a database, optionally filtered by field values.',
   audience: 'human',
   aiMetadata: {
     description:

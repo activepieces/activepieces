@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 export const updateTicketAction = createAction({
 	auth: intercomAuth,
 	name: 'update-ticket',
+	classification: 'WRITE',
 	displayName: 'Update Ticket',
 	description: 'Updates an existing ticket.',
 	audience: 'both',
