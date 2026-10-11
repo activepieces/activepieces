@@ -13,6 +13,7 @@ export type UserPostCreateParams = {
     email: string
     platformId: string
     defaultProjectIds: string[]
+    platformRoleAssigned: boolean
     entityManager: EntityManager
 }
 

@@ -34,7 +34,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
         return userRepo(params.entityManager).save(user)
     },
-    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<GetOrCreateWithProjectResult> {
+    async getOrCreateWithProject({ identity, platformId, platformRole }: GetOrCreateWithProjectParams): Promise<GetOrCreateWithProjectResult> {
         const user = await this.getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
@@ -50,7 +50,7 @@ export const userService = (log: FastifyBaseLogger) => ({
                 const createdUser = await this.create({
                     identityId: identity.id,
                     platformId,
-                    platformRole: PlatformRole.MEMBER,
+                    platformRole: platformRole ?? PlatformRole.MEMBER,
                     entityManager,
                 })
                 const createdPersonalProject = createsPersonalProject
@@ -63,7 +63,7 @@ export const userService = (log: FastifyBaseLogger) => ({
                         callPostCreateHooks: false,
                     })
                     : null
-                await userHooks.get(log).postCreate({ user: createdUser, email: identity.email, platformId, defaultProjectIds, entityManager })
+                await userHooks.get(log).postCreate({ user: createdUser, email: identity.email, platformId, defaultProjectIds, platformRoleAssigned: !isNil(platformRole), entityManager })
                 return { newUser: createdUser, personalProject: createdPersonalProject }
             })
             if (!isNil(personalProject)) {
@@ -409,6 +409,7 @@ type UpdatePlatformIdParams = {
 type GetOrCreateWithProjectParams = {
     identity: UserIdentity
     platformId: string
+    platformRole?: PlatformRole
 }
 
 type GetOrCreateWithProjectResult = {

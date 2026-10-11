@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, ProjectType } from '@activepieces/shared'
+import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, ProjectType, SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { userEnterpriseHooks } from '../../../../src/app/ee/users/ee-user-hooks'
@@ -60,18 +60,45 @@ describe('New members join default projects', () => {
     it('adds a user created by SCIM to the default projects', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
         await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
-        const apiKey = createMockApiKey({ platformId: mockPlatform.id })
-        await databaseConnection().getRepository('api_key').save(apiKey)
-        const email = `${apId()}@example.com`
 
-        const response = await app?.inject({
-            method: 'POST',
-            url: '/api/v1/scim/v2/Users',
-            headers: { authorization: `Bearer ${apiKey.value}` },
-            body: { schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'], externalId: apId(), userName: email, name: { givenName: 'Scim', familyName: 'User' }, emails: [{ value: email, primary: true }], active: true },
-        })
+        const response = await createScimUser({ platformId: mockPlatform.id, email: `${apId()}@example.com` })
 
         expect(await roleNamesByProject({ userId: response?.json().id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.EDITOR })
+    })
+
+    it('gives a SCIM user without a role the role of their accepted Admin invite, and no default projects', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+        const email = `${apId()}@example.com`
+        await savePlatformInvite({ email, platformId: mockPlatform.id, platformRole: PlatformRole.ADMIN })
+
+        const response = await createScimUser({ platformId: mockPlatform.id, email })
+
+        const user = await databaseConnection().getRepository('user').findOneByOrFail({ id: response?.json().id })
+        expect(user.platformRole).toBe(PlatformRole.ADMIN)
+        expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({})
+    })
+
+    it('keeps the role SCIM sends over an accepted Admin invite, and adds a Member to the default projects', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+        const email = `${apId()}@example.com`
+        await savePlatformInvite({ email, platformId: mockPlatform.id, platformRole: PlatformRole.ADMIN })
+
+        const response = await createScimUser({ platformId: mockPlatform.id, email, platformRole: PlatformRole.MEMBER })
+
+        const user = await databaseConnection().getRepository('user').findOneByOrFail({ id: response?.json().id })
+        expect(user.platformRole).toBe(PlatformRole.MEMBER)
+        expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.EDITOR })
+    })
+
+    it('does not add a SCIM user created as Admin to the default projects', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+
+        const response = await createScimUser({ platformId: mockPlatform.id, email: `${apId()}@example.com`, platformRole: PlatformRole.ADMIN })
+
+        expect(await roleNamesByProject({ userId: response?.json().id })).toStrictEqual({})
     })
 
     it('joins nothing on a plan without project roles', async () => {
@@ -210,6 +237,25 @@ async function savePlatformInvite({ email, platformId, platformRole }: { email: 
         platformId,
         platformRole,
         status: InvitationStatus.ACCEPTED,
+    })
+}
+
+async function createScimUser({ platformId, email, platformRole }: { platformId: string, email: string, platformRole?: PlatformRole }) {
+    const apiKey = createMockApiKey({ platformId })
+    await databaseConnection().getRepository('api_key').save(apiKey)
+    return app?.inject({
+        method: 'POST',
+        url: '/api/v1/scim/v2/Users',
+        headers: { authorization: `Bearer ${apiKey.value}` },
+        body: {
+            schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+            externalId: apId(),
+            userName: email,
+            name: { givenName: 'Scim', familyName: 'User' },
+            emails: [{ value: email, primary: true }],
+            active: true,
+            ...(platformRole ? { [SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]: { platformRole } } : {}),
+        },
     })
 }
 
