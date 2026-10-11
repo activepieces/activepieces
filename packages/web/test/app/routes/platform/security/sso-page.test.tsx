@@ -52,8 +52,15 @@ function renderPage() {
   );
 }
 
+const GOOGLE_HINT =
+  "Allow logins through google's single sign-on functionality. Turn on email or SAML before turning this off, so people can still sign in.";
+
 beforeEach(() => {
-  state.platform = { ...state.platform, googleAuthEnabled: false };
+  state.platform = {
+    ...state.platform,
+    googleAuthEnabled: false,
+    emailAuthEnabled: true,
+  };
 });
 
 describe('SSOPage email sign-in', () => {
@@ -70,5 +77,27 @@ describe('SSOPage email sign-in', () => {
     const toggle = screen.getByRole('switch', { name: 'Allowed Email Login' });
     expect(toggle.hasAttribute('disabled')).toBe(false);
     expect(screen.queryByText(HINT)).toBeNull();
+  });
+});
+
+describe('SSOPage Google sign-in', () => {
+  it('cannot be turned off while it is the only sign-in method', () => {
+    state.platform = {
+      ...state.platform,
+      googleAuthEnabled: true,
+      emailAuthEnabled: false,
+    };
+    renderPage();
+    const toggle = screen.getByRole('switch', { name: 'Google' });
+    expect(toggle.hasAttribute('disabled')).toBe(true);
+    expect(screen.getByText(GOOGLE_HINT)).toBeTruthy();
+  });
+
+  it('can be turned off while email sign-in is on', () => {
+    state.platform = { ...state.platform, googleAuthEnabled: true };
+    renderPage();
+    const toggle = screen.getByRole('switch', { name: 'Google' });
+    expect(toggle.hasAttribute('disabled')).toBe(false);
+    expect(screen.queryByText(GOOGLE_HINT)).toBeNull();
   });
 });
