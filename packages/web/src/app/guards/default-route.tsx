@@ -11,7 +11,7 @@ import {
 
 import { NoProjectsState } from '../components/no-projects-state';
 import { ProjectDashboardLayout } from '../components/project-layout';
-import { synkraOnboardingHooks } from '@/features/synkra-onboarding';
+import { synkraOnboardingHooks } from '@/features/synkra-onboarding/hooks';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
