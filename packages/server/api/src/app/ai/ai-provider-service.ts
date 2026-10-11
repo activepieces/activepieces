@@ -83,12 +83,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return []
         }
         const auth = await decryptRowAuth({ aiProvider, platformId, log })
-        const { data, error } = await tryCatch(async () => strategy.suggestModels?.(auth, aiProvider.config) ?? [])
+        const { data, error } = await tryCatch(async () => strategy.suggestModels?.(auth, aiProvider.config))
         if (!isNil(error)) {
             log.warn({ error, providerId: aiProvider.id }, '[aiProviderService#suggestModelsForConfig] could not fetch model suggestions')
             return []
         }
-        return data
+        return data ?? []
     },
 
     async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<AIProviderWithoutSensitiveData> {
