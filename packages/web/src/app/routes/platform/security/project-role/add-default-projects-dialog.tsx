@@ -95,7 +95,7 @@ function AddDefaultProjectsContent({
         <DialogTitle>{t('Add default projects')}</DialogTitle>
         <DialogDescription>
           {t(
-            'New members join the projects you pick. You can change them any time.',
+            "New Members join these as Editors. People already on the platform aren't added.",
           )}
         </DialogDescription>
       </DialogHeader>

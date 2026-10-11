@@ -80,7 +80,7 @@ export function DefaultProjectsSection() {
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-base font-medium">{t('Default projects')}</h2>
           <p className="max-w-2xl text-sm text-gray-11">
-            {t('All new members join these as Editors.')}
+            {t('New Members join these as Editors.')}
           </p>
         </div>
         <AnimatedIconButton
@@ -99,7 +99,7 @@ export function DefaultProjectsSection() {
           <ItemContent>
             <ItemTitle>{t('No default projects yet')}</ItemTitle>
             <ItemDescription>
-              {t('Add one and new members join it automatically.')}
+              {t('New Members will join it as an Editor.')}
             </ItemDescription>
           </ItemContent>
         </Item>
