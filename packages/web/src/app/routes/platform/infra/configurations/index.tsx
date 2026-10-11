@@ -21,6 +21,7 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -30,14 +31,27 @@ import { TelemetrySection } from './telemetry-section';
 
 export const ConfigurationsPage = () => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { data: configuration, isLoading } =
-    platformConfigurationHooks.useCurrentPlatformConfiguration({
-      refetchOnMount: 'always',
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
-    });
+  const {
+    data: configuration,
+    isLoading,
+    isError,
+    refetch,
+  } = platformConfigurationHooks.useCurrentPlatformConfiguration({
+    refetchOnMount: 'always',
+    meta: { showErrorDialog: true, loadSubsetOptions: {} },
+  });
 
   if (edition === ApEdition.CLOUD) {
     return <Navigate to="/platform/workers" replace />;
+  }
+
+  if (isError && isNil(configuration)) {
+    return (
+      <AdminPage width="content">
+        <ConfigurationsHeader />
+        <DataFetchErrorState entity={t('configurations')} onRetry={refetch} />
+      </AdminPage>
+    );
   }
 
   if (isLoading || isNil(configuration)) {
@@ -115,10 +129,7 @@ const ConfigurationsHeader = () => (
 const ConfigurationsSkeleton = () => {
   return (
     <div className="flex flex-1 flex-col">
-      <AdminPage
-        width="content"
-        footer={<SaveBar width="content" dirty={false} saving={false} />}
-      >
+      <AdminPage width="content">
         <ConfigurationsHeader />
         <SettingsPanel
           title={t('Telemetry')}

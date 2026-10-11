@@ -1,6 +1,7 @@
 import { cva } from 'class-variance-authority';
 import { ReactNode } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { cn } from '@/lib/utils';
 
 const dotVariants = cva('size-2 shrink-0 rounded-full', {
@@ -36,7 +37,13 @@ export function StatusDot({
         aria-hidden
         className={cn(dotVariants({ tone }), pulse && 'animate-pulse')}
       />
-      {children !== undefined && <span className="truncate">{children}</span>}
+      {typeof children === 'string' ? (
+        <TextWithTooltip tooltipMessage={children}>
+          <span className="truncate">{children}</span>
+        </TextWithTooltip>
+      ) : (
+        children !== undefined && <span className="truncate">{children}</span>
+      )}
     </span>
   );
 }

@@ -139,7 +139,7 @@ export const adminPageResources = {
     docs({ label: () => t('Health guide'), path: 'admin-guide/guides/health' }),
     docs({
       label: () => t('Production setup'),
-      path: 'install/configure-operate/production-setup',
+      path: 'install/configure-operate/production-setup#what-it-looks-like',
       control: AdminControl.HEALTH_PRODUCTION_SETUP_LINK,
     }),
   ],

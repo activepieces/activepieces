@@ -243,7 +243,7 @@ export default function PlatformConnectionsPage() {
           emptyStateTextDescription={t(
             'Connections created in any project on this platform will appear here.',
           )}
-          emptyStateIcon={<Unplug className="size-14" />}
+          emptyStateIcon={<Unplug />}
           columns={columns}
           page={connections}
           isLoading={isLoading}

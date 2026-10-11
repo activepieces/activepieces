@@ -42,7 +42,13 @@ export function SettingsPanel({
       <div
         className={cn(
           'flex flex-col',
-          flush ? cn('divide-y', adminSurface.divider) : 'gap-4 p-5',
+          flush
+            ? cn(
+                'divide-y *:last:rounded-b-xl',
+                !hasHeader && '*:first:rounded-t-xl',
+                adminSurface.divider,
+              )
+            : 'gap-4 p-5',
         )}
       >
         {children}

@@ -222,7 +222,7 @@ const PlatformTemplatesPage = () => {
         emptyStateTextDescription={t(
           'Create a template for your user to inspire them',
         )}
-        emptyStateIcon={<FileText className="size-14" />}
+        emptyStateIcon={<FileText />}
         columns={columnsWithCheckbox}
         page={isSample ? sampleData.templatesPage() : data}
         hidePagination={true}

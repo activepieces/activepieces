@@ -110,7 +110,7 @@ export function ByProjectView({
         emptyStateTextDescription={t(
           'Start by creating projects to manage your automation teams',
         )}
-        emptyStateIcon={<Server className="size-14" />}
+        emptyStateIcon={<Server />}
         toolbarButtons={[searchBar]}
       />
     </div>

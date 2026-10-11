@@ -67,12 +67,13 @@ export function AdminPageHeader({
       </div>
     );
   }
-  const hasResources = resources !== undefined && resources.length > 0;
+  const hasResources =
+    !embedState.isEmbedded && resources !== undefined && resources.length > 0;
 
   return (
     <header
       data-slot="admin-page-header"
-      className={cn(adminSurface.header, 'flex shrink-0 flex-col gap-2')}
+      className="flex shrink-0 flex-col gap-2"
     >
       {back && <AdminBackLink back={back} />}
       <div className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-2">

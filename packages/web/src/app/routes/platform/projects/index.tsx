@@ -377,7 +377,7 @@ export default function ProjectsPage() {
         emptyStateTextDescription={t(
           'Start by creating projects to manage your automation teams',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={<Package />}
         onRowClick={async (project) => {
           await projectCollectionUtils.setCurrentProject(project.id);
           navigate('/');

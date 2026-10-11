@@ -141,7 +141,7 @@ export default function AuditLogsPage() {
         emptyStateTextDescription={t(
           'Come back later when you have some activity to audit',
         )}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={<History />}
         filters={filters}
         columns={[
           {

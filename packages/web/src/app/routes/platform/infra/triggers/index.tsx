@@ -247,7 +247,7 @@ export default function TriggerHealthPage() {
         emptyStateTextDescription={t(
           'Trigger health information will appear here',
         )}
-        emptyStateIcon={<CheckCircle className="size-14" />}
+        emptyStateIcon={<CheckCircle />}
         hidePagination={true}
         columns={columns}
         page={{ data: triggerHealthData, previous: '', next: '' }}

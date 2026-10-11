@@ -209,7 +209,7 @@ const SecretManagersPage = () => {
         emptyStateTextDescription={t(
           'Add a secret manager connection to manage your secrets',
         )}
-        emptyStateIcon={<KeyRound className="size-14" />}
+        emptyStateIcon={<KeyRound />}
         columns={columns}
         page={page}
         isLoading={isSample ? false : isLoading}

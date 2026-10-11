@@ -319,7 +319,7 @@ const GlobalConnectionsTable = () => {
         emptyStateTextDescription={t(
           'Create a global connection that can be shared to multiple projects',
         )}
-        emptyStateIcon={<Globe className="size-14" />}
+        emptyStateIcon={<Globe />}
         columns={columns}
         page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
         isLoading={isSample ? false : isLoadingGlobalConnections}

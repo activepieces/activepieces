@@ -65,7 +65,7 @@ export default function SettingsHealthPage({
   };
 
   return (
-    <AdminPage>
+    <AdminPage width="content">
       <AdminPageHeader
         title={t('Health')}
         description={t('Check the status of your platform and its components')}

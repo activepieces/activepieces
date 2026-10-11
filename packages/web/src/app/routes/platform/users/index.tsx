@@ -153,7 +153,7 @@ export default function UsersPage() {
       <AdminDataTable
         emptyStateTextTitle={t('No users found')}
         emptyStateTextDescription={t('Start inviting users to your project')}
-        emptyStateIcon={<User className="size-14" />}
+        emptyStateIcon={<User />}
         columns={columns}
         page={{
           data: combinedData,

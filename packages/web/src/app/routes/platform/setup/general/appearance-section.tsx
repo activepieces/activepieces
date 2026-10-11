@@ -62,9 +62,10 @@ export const AppearanceSection = ({
   );
   const upgradeClick = useUpgradeClick();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
-  const initialColor = HEX_COLOR_PATTERN.test(platform.primaryColor)
-    ? platform.primaryColor
-    : branding.colors.primary.default;
+  const initialColor =
+    !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
+      ? platform.primaryColor
+      : branding.colors.primary.default;
 
   const storedStatusColors = brandingLocked
     ? branding.statusColors
@@ -308,12 +309,29 @@ export const AppearanceSection = ({
                   )
             }
             action={
-              brandingLocked ? (
+              !brandingLocked ? undefined : edition === ApEdition.COMMUNITY ? (
                 <Badge variant="info">
                   <Gem />
                   {t('{tier} plan', { tier: tierLabel })}
                 </Badge>
-              ) : undefined
+              ) : (
+                <Button
+                  {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    upgradeClick({
+                      feature: 'BRANDING',
+                      tier: BRANDING_TIER,
+                      surface: PlatformAdminSurface.SAMPLE,
+                    })
+                  }
+                >
+                  <Gem />
+                  {t('Upgrade to {tier}', { tier: tierLabel })}
+                </Button>
+              )
             }
           >
             {BRAND_IMAGES.map((image) => (

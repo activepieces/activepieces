@@ -205,7 +205,7 @@ export const PiecesListTab = () => {
         emptyStateTextDescription={t(
           'Start by installing pieces that you want to use in your automations',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={<Package />}
         columns={columns}
         filters={[
           {

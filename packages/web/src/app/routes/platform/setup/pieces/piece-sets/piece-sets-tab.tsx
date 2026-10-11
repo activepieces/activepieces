@@ -190,7 +190,7 @@ export const PieceSetsTab = () => {
         emptyStateTextDescription={t(
           'Create a piece set to control which pieces are available to specific projects',
         )}
-        emptyStateIcon={<Layers className="size-14" />}
+        emptyStateIcon={<Layers />}
         columns={columns}
         filters={[
           {
