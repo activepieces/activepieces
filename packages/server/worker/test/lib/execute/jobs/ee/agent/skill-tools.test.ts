@@ -198,10 +198,30 @@ describe('ap_lazy_tool', () => {
         expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_send_email"')
     })
 
-    it('drops a top-level key the tool does not declare instead of failing the call', async () => {
-        const received = await runThroughLazyTool({ targetSchema: z.strictObject({ flowId: z.string() }), outer: {}, input: { flowId: 'f1', pieceName: '@activepieces/piece-tables' } })
+    function surfaceWithMcpTool({ additionalProperties }: { additionalProperties: boolean }) {
+        return buildSkillSurface({
+            tools: {
+                ...stubTools(CHAT_TOOL_NAMES),
+                ap_rename_flow: tool({ description: 'Rename a flow.', inputSchema: jsonSchema<Record<string, unknown>>({ type: 'object', properties: { flowId: { type: 'string' } }, required: ['flowId'], additionalProperties }), execute: async () => ({}) }),
+            },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+    }
 
-        expect(received).toEqual({ flowId: 'f1' })
+    it('drops a top-level key a strict MCP tool does not declare instead of failing the call', async () => {
+        const checked = await validateWrapped({ surface: surfaceWithMcpTool({ additionalProperties: false }), value: { tool: 'ap_rename_flow', input: { flowId: 'f1', pieceName: '@activepieces/piece-tables' } } })
+
+        expect(checked).toMatchObject({ success: true, value: { input: { flowId: 'f1' } } })
+        expect(checked).not.toMatchObject({ value: { input: { pieceName: expect.anything() } } })
+    })
+
+    it('keeps extra keys for an MCP tool whose schema allows them', async () => {
+        const checked = await validateWrapped({ surface: surfaceWithMcpTool({ additionalProperties: true }), value: { tool: 'ap_rename_flow', input: { flowId: 'f1', note: 'kept' } } })
+
+        expect(checked).toMatchObject({ success: true, value: { input: { flowId: 'f1', note: 'kept' } } })
     })
 
     it('still rejects a call that is missing a required key', async () => {

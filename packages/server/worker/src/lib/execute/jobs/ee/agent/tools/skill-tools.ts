@@ -156,8 +156,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
                 return { success: false, error: new Error(paidToolRefusal(toolName)) }
             }
-            const declaredInput = await withoutUndeclaredKeys({ target, input })
-            const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input: declaredInput }) })
+            const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input }) })
             if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
@@ -172,17 +171,18 @@ async function validateToolInput({ target, input }: { target: ToolSet[string], i
         const result = await schema.validate(input)
         return result.success ? { success: true, value: isObject(result.value) ? result.value : input } : result
     }
-    const { data: zodSchema } = await tryCatch(async () => z.fromJSONSchema(plainJsonSchema<z.core.JSONSchema.JSONSchema>(await schema.jsonSchema)))
+    const jsonSchema = plainJsonSchema<z.core.JSONSchema.JSONSchema>(await schema.jsonSchema)
+    const declaredInput = withoutUndeclaredKeys({ schema: jsonSchema, input })
+    const { data: zodSchema } = await tryCatch(async () => z.fromJSONSchema(jsonSchema))
     if (isNil(zodSchema)) {
-        return { success: true, value: input }
+        return { success: true, value: declaredInput }
     }
-    const result = zodSchema.safeParse(input)
-    return result.success ? { success: true, value: input } : { success: false, error: new Error(result.error.message) }
+    const result = zodSchema.safeParse(declaredInput)
+    return result.success ? { success: true, value: declaredInput } : { success: false, error: new Error(result.error.message) }
 }
 
-async function withoutUndeclaredKeys({ target, input }: { target: ToolSet[string], input: Record<string, unknown> }): Promise<Record<string, unknown>> {
-    const schema = plainJsonSchema(await asSchema(target.inputSchema).jsonSchema)
-    if (!isObject(schema) || !isObject(schema['properties'])) {
+function withoutUndeclaredKeys({ schema, input }: { schema: unknown, input: Record<string, unknown> }): Record<string, unknown> {
+    if (!isObject(schema) || !isObject(schema['properties']) || schema['additionalProperties'] !== false) {
         return input
     }
     const declared = schema['properties']
