@@ -9,6 +9,7 @@ const DRAFT_TOOLS = new Set([
   'ap_create_flow',
   'ap_duplicate_flow',
   'ap_rename_flow',
+  'ap_move_flow_to_folder',
   'ap_build_flow',
   'ap_update_trigger',
   'ap_add_step',
