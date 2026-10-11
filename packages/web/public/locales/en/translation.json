@@ -3271,5 +3271,9 @@
   "The small icon in the browser tab.": "The small icon in the browser tab.",
   "Needs attention": "Needs attention",
   "An unexpected error occurred. Please try again in a moment.": "An unexpected error occurred. Please try again in a moment.",
-  "billing information": "billing information"
+  "billing information": "billing information",
+  "Couldn't undo": "Couldn't undo",
+  "Changes saved": "Changes saved",
+  "Undone": "Undone",
+  "Couldn't reach the server. Check your connection and try again.": "Couldn't reach the server. Check your connection and try again."
 }
