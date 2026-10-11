@@ -3,6 +3,7 @@ import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, Pri
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformService } from '../../../../src/app/platform/platform.service'
 import { userService } from '../../../../src/app/user/user-service'
@@ -215,6 +216,32 @@ describe('A platform invite and a project invite for the same project', () => {
         expect(await invitationsOf({ email, platformId: mockPlatform.id })).toStrictEqual([
             { type: InvitationType.PLATFORM, platformRole: PlatformRole.MEMBER, projectId: null },
             { type: InvitationType.PROJECT, platformRole: null, projectId: mockProject.id },
+        ])
+    })
+
+    it('a failed project invite leaves the platform invite with its project', async () => {
+        const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const email = faker.internet.email().toLowerCase()
+        await mockBasicUser({ userIdentity: { email }, user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER } })
+        const viewerRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER })
+        await databaseConnection().getRepository('user_invitation').save({
+            id: apId(),
+            email,
+            type: InvitationType.PLATFORM,
+            platformRole: PlatformRole.MEMBER,
+            platformId: mockPlatform.id,
+            projectId: mockProject.id,
+            projectRoleId: viewerRole.id,
+            status: InvitationStatus.PENDING,
+        })
+        const upsert = vi.spyOn(Repository.prototype, 'upsert').mockRejectedValueOnce(new Error('upsert failed'))
+
+        const response = await inviteToProject({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR })
+        upsert.mockRestore()
+
+        expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+        expect(await invitationsOf({ email, platformId: mockPlatform.id })).toStrictEqual([
+            { type: InvitationType.PLATFORM, platformRole: PlatformRole.MEMBER, projectId: mockProject.id },
         ])
     })
 
