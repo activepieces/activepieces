@@ -163,7 +163,7 @@ const DataSelectorNodeContent = ({
 
         {showInsertButton && (
           <Button
-            variant="ghost"
+            variant="basic"
             size="xs"
             tabIndex={-1}
             onClick={(e) => {
@@ -173,7 +173,7 @@ const DataSelectorNodeContent = ({
               }
             }}
             className={cn(
-              'font-medium text-accent-11 opacity-0 transition-opacity',
+              'opacity-0 transition-opacity',
               'group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >

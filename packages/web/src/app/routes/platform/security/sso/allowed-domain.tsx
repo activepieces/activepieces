@@ -87,8 +87,7 @@ export const AllowedDomainDialog = ({
         <Button
           {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
           size={'sm'}
-          variant={'ghost'}
-          className="font-medium text-accent-11"
+          variant={'basic'}
           onClick={() => setOpen(true)}
         >
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}

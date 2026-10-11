@@ -193,7 +193,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
           'Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.',
         )}
         button={
-          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="ghost" />
+          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="basic" />
         }
       />
     );

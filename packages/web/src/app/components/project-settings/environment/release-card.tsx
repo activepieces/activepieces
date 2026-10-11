@@ -23,13 +23,13 @@ const ReleaseCard = () => {
         </div>
         <div className="flex flex-row justify-center items-center gap-1">
           <Button
-            variant={'ghost'}
+            variant={'basic'}
             onClick={() =>
               projectCollectionUtils.update(project.id, {
                 releasesEnabled: !project.releasesEnabled,
               })
             }
-            className={cn('font-medium text-accent-11', {
+            className={cn({
               'text-danger-11': project.releasesEnabled,
             })}
           >

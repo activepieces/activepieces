@@ -11,7 +11,6 @@ import { SendIcon } from '@/components/icons/send';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { userHooks } from '@/hooks/user-hooks';
 import { telemetryUtils } from '@/lib/telemetry-utils';
-import { cn } from '@/lib/utils';
 
 export const RequestTrial = ({
   featureKey,
@@ -44,7 +43,6 @@ export const RequestTrial = ({
     <AnimatedIconButton
       variant={buttonVariant}
       size={buttonSize}
-      className={cn(buttonVariant === 'ghost' && 'font-medium text-accent-11')}
       onClick={handleClick}
       icon={SendIcon}
       iconSize={14}
@@ -108,6 +106,6 @@ type RequestTrialProps = {
   featureKey: FeatureKey;
   surface?: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
   customButton?: React.ReactNode;
-  buttonVariant?: 'default' | 'ghost';
+  buttonVariant?: 'default' | 'basic';
   buttonSize?: 'default' | 'sm' | 'xs';
 };
