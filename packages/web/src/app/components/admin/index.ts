@@ -1,4 +1,9 @@
-export { AdminPage, AdminPageHeader, AdminSection } from './admin-page';
+export {
+  AdminPage,
+  AdminPageFooter,
+  AdminPageHeader,
+  AdminSection,
+} from './admin-page';
 export { AdminResources, AdminVideoDialog } from './admin-resources';
 export type { AdminResource } from './admin-resources';
 export { adminPageResources } from './admin-page-resources';

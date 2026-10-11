@@ -184,7 +184,6 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
 function useSaveHostname() {
   return useAdminAction<GenerateEmbedSubdomainRequest, EmbedSubdomain>({
     verb: 'save',
-    name: '',
     run: (request) => embedSubdomainApi.upsert(request),
     invalidate: [embedSubdomainKeys.current],
     feedback: 'inline',

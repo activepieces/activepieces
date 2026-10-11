@@ -7,7 +7,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { BarChart3, Cpu, Search, Server } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { AdminDataTable, useAdminAction } from '@/app/components/admin';
@@ -380,12 +380,19 @@ function useProjectUpdate({
   row: RowDataWithActions<ProjectWithLimits>;
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
-  return useAdminAction<UpdateProjectPlatformRequest, ProjectWithLimits>({
+  const latest = useRef<UpdateProjectPlatformRequest | null>(null);
+  const action = useAdminAction<
+    UpdateProjectPlatformRequest,
+    ProjectWithLimits
+  >({
     verb: 'update',
     name: row.displayName,
     run: (update) =>
       api.post<ProjectWithLimits>(`/v1/projects/${row.id}`, update),
-    onSuccess: ({ data }) => {
+    onSuccess: ({ data, vars }) => {
+      if (vars !== latest.current) {
+        return;
+      }
       row.update({
         workerGroupId: data.workerGroupId,
         maxConcurrentJobs: data.maxConcurrentJobs,
@@ -393,4 +400,14 @@ function useProjectUpdate({
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
+  return {
+    ...action,
+    mutate: (
+      update: UpdateProjectPlatformRequest,
+      options?: Parameters<typeof action.mutate>[1],
+    ) => {
+      latest.current = update;
+      action.mutate(update, options);
+    },
+  };
 }

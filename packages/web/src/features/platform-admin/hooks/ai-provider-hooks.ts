@@ -10,8 +10,10 @@ import {
 } from '@activepieces/shared';
 import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { t } from 'i18next';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import {
   aiProviderApi,
@@ -80,6 +82,9 @@ export const aiProviderMutations = {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't recheck the key") });
+      },
     });
   },
   useUpsertAiProvider: ({

@@ -59,7 +59,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const { mutateAsync: removeOAuth2App, isPending: isDeleting } =
     useAdminAction<string>({
-      verb: 'remove',
+      verb: 'delete',
       name: t('OAuth2 app'),
       run: async (id) => {
         await oauthAppsApi.delete(id);
@@ -70,7 +70,6 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
   const { mutate: upsert, isPending: isUpserting } =
     useAdminAction<UpsertOAuth2AppRequest>({
       verb: 'save',
-      name: '',
       run: async (request) => {
         await oauthAppsApi.upsert(request);
         await refetch();
@@ -100,7 +99,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                 {...adminControl(
                   isNil(oauth2App)
                     ? AdminControl.PIECES_OAUTH_CONFIGURE_OPEN
-                    : AdminControl.PIECES_OAUTH_DELETE_RUN,
+                    : AdminControl.PIECES_OAUTH_DELETE_OPEN,
                 )}
                 ref={ref}
                 size={'sm'}
@@ -131,7 +130,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             <TooltipContent>
               {isNil(oauth2App)
                 ? t('Configure OAuth2 App')
-                : t('Delete OAuth2 App')}
+                : t('Delete OAuth2 app')}
             </TooltipContent>
           </Tooltip>
         </DialogTrigger>
@@ -195,7 +194,11 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
               )}
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
                   {t('Cancel')}
                 </Button>
                 <Button
@@ -215,7 +218,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
         <ConfirmDialog
           open={confirmingRemove}
           onOpenChange={setConfirmingRemove}
-          title={t('Delete OAuth2 App')}
+          title={t('Delete OAuth2 app')}
           description={t(
             'Connections that sign in through this app stop working until it is configured again.',
           )}

@@ -37,7 +37,9 @@ const SSOPage = () => {
     await platformApi.update(request, platform.id);
     await refetch();
   };
-  const otherSignInEnabled = platform.googleAuthEnabled || samlConnected;
+  const samlCanSignIn = samlConnected && ssoDomainVerified;
+  const otherSignInEnabled = platform.googleAuthEnabled || samlCanSignIn;
+  const signInOtherThanGoogle = emailAuthEnabled || samlCanSignIn;
 
   return (
     <AdminPage width="content">
@@ -82,11 +84,22 @@ const SSOPage = () => {
             onCheckedChange={(googleAuthEnabled) =>
               updatePlatform({ googleAuthEnabled })
             }
-            undo
+            undo={signInOtherThanGoogle}
             successMessage={(on) =>
               on
                 ? t('Google sign-in turned on')
                 : t('Google sign-in turned off')
+            }
+            confirmBefore={(next) =>
+              next || signInOtherThanGoogle
+                ? null
+                : {
+                    title: t('Turn off Google sign-in?'),
+                    consequence: t(
+                      'No other sign-in method is on. Nobody, including you, will be able to sign in until one is set up.',
+                    ),
+                    confirmLabel: t('Turn off Google sign-in'),
+                  }
             }
           />
         </SettingsRow>

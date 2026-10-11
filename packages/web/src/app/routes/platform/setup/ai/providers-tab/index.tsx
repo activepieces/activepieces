@@ -66,7 +66,7 @@ import { cn } from '@/lib/utils';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
-import { KeyStatusBadge } from './key-status';
+import { KeyStatusBadge, keyStatusText } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
 
@@ -115,14 +115,23 @@ export function ProvidersTab() {
     });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
-      onSuccess: () => refetch(),
+      onSuccess: ({ status }) => {
+        refetch();
+        adminFeedback.status({
+          ok: status === 'active',
+          message:
+            keyStatusText({ status }) ??
+            (status === 'active'
+              ? t('Key is working')
+              : t('Could not reach this provider')),
+        });
+      },
     });
   const { mutateAsync: updateProvider, isPending: isSaving } = useAdminAction<{
     providerId: string;
     request: UpdateAIProviderRequest;
   }>({
     verb: 'save',
-    name: '',
     run: ({ providerId, request }) => aiProviderApi.update(providerId, request),
     feedback: 'inline',
     onSuccess: () => refetch(),
@@ -155,7 +164,7 @@ export function ProvidersTab() {
         queryKey: aiProviderKeys.configModels(),
       }),
     ]);
-    adminFeedback.done({ verb: 'save', name: '' });
+    adminFeedback.done({ verb: 'save' });
     if (createdId) {
       openConfig(createdId);
       return;
@@ -449,6 +458,9 @@ function ConfigRow({
       tabIndex={locked ? undefined : 0}
       onClick={locked ? undefined : onOpen}
       onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) {
+          return;
+        }
         if (!locked && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onOpen();

@@ -326,8 +326,9 @@ function EditRequiredActionsDialogContent({
     name: pieceName ?? '',
     enabled: pieceName !== null,
   });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
+    announce: false,
+  });
 
   const isEditing = initialPieceName !== null;
   const description =
@@ -381,7 +382,7 @@ function EditRequiredActionsDialogContent({
       },
       {
         onSuccess: () => {
-          adminFeedback.done({ verb: 'save', name: '' });
+          adminFeedback.done({ verb: 'save' });
           onClose();
         },
       },

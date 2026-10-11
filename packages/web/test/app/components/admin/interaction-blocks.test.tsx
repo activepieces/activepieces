@@ -41,7 +41,7 @@ function serverError(message: string) {
     statusText: 'Bad Request',
     headers: {},
     config: { headers: new AxiosHeaders() },
-    data: { message },
+    data: { params: { message } },
   });
 }
 
@@ -288,19 +288,23 @@ describe('SaveBar', () => {
 });
 
 describe('adminBulk.runEach', () => {
-  it('keeps what succeeded and reports the failures once', async () => {
+  it('keeps what succeeded, reports the failures once and narrows the selection', async () => {
     const run = vi.fn(async (id: number) => {
       if (id === 2) {
         throw serverError('In use');
       }
     });
-    await adminBulk.runEach({
-      items: [1, 2, 3],
-      run,
-      verb: 'delete',
-      label: (count) => `${count} items`,
-    });
+    const items = [1, 2, 3];
+    const error = await adminBulk
+      .runEach({
+        items,
+        run,
+        verb: 'delete',
+        label: (count) => `${count} items`,
+      })
+      .catch((caught: unknown) => caught);
     expect(run).toHaveBeenCalledTimes(3);
+    expect(adminBulk.remainingAfter({ error, items })).toEqual([2]);
     expect(toast.error).toHaveBeenCalledTimes(1);
     expect(toast.error).toHaveBeenCalledWith(
       "Couldn't delete 1 items",

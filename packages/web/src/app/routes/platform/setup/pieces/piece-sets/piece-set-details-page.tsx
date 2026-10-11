@@ -10,18 +10,18 @@ import {
   AdminPage,
   AdminPageHeader,
   AdminQueryState,
+  InstantSwitch,
   SettingsPanel,
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { AdminControl, adminControl } from '@/lib/admin-control';
+import { AdminControl } from '@/lib/admin-control';
 
 import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
@@ -42,11 +42,13 @@ const PieceSetDetailsPage = () => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
+  const { mutateAsync: updateSet } = pieceSetMutations.useUpdatePieceSet({
+    announce: false,
+  });
 
-  const handleToggle = (value: boolean) => {
+  const handleToggle = async (value: boolean) => {
     if (!pieceSet || !pieces) return;
-    updateSet({
+    await updateSet({
       id: pieceSet.id,
       request: {
         pieces: flipSelectionMode({
@@ -131,14 +133,17 @@ const PieceSetDetailsPage = () => {
                 'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
               )}
             >
-              <Switch
-                {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
+              <InstantSwitch
+                controlId={AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE}
                 aria-label={t('Include new pieces')}
                 checked={
                   pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
                 }
                 disabled={piecesLoading}
                 onCheckedChange={handleToggle}
+                successMessage={(on) =>
+                  on ? t('New pieces included') : t('New pieces excluded')
+                }
               />
             </SettingsRow>
           </SettingsPanel>

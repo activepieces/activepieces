@@ -23,15 +23,16 @@ import {
   AdminEmpty,
   AdminPage,
   AdminPageHeader,
+  AdminQueryState,
   LockedCallout,
   StatusDot,
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -55,9 +56,10 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const {
     data: workersData,
     isLoading,
-    isError,
+    isError: isWorkersError,
     refetch,
   } = workersQueries.useWorkerMachines();
+  const isError = isWorkersError && workersData === undefined;
 
   const fleetType = workersData?.[0]?.type;
 
@@ -101,58 +103,37 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           </Alert>
         )}
 
-      {section === 'health' && isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className={cn(
-                adminSurface.card,
-                'flex animate-pulse flex-col gap-4 p-5',
+      {section === 'health' && (
+        <AdminQueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          entity={t('workers')}
+          isEmpty={(workersData ?? []).length === 0}
+          empty={
+            <AdminEmpty
+              icon={<Server />}
+              title={t('No workers found')}
+              description={t(
+                "You don't have any workers yet. Spin up new workers to execute your automations",
               )}
-            >
-              <div className="flex items-center justify-between">
-                <div className="h-4 w-28 rounded-md bg-gray-3" />
-                <div className="h-5 w-16 rounded-md bg-gray-3" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="h-3 w-full rounded-md bg-gray-3" />
-                <div className="h-3 w-full rounded-md bg-gray-3" />
-                <div className="h-3 w-full rounded-md bg-gray-3" />
-              </div>
-              <div className="h-4 w-full rounded-md bg-gray-3" />
+            />
+          }
+          skeleton={
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-44 rounded-xl" />
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-
-      {section === 'health' && !isLoading && isError && (
-        <DataFetchErrorState entity={t('workers')} onRetry={refetch} />
-      )}
-
-      {section === 'health' &&
-        !isLoading &&
-        !isError &&
-        (workersData ?? []).length === 0 && (
-          <AdminEmpty
-            icon={<Server />}
-            title={t('No workers found')}
-            description={t(
-              "You don't have any workers yet. Spin up new workers to execute your automations",
-            )}
-          />
-        )}
-
-      {section === 'health' &&
-        !isLoading &&
-        !isError &&
-        (workersData ?? []).length > 0 && (
+          }
+        >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {(workersData ?? []).map((worker, index) => (
               <WorkerCard key={worker.id} worker={worker} index={index} />
             ))}
           </div>
-        )}
+        </AdminQueryState>
+      )}
 
       {section === 'worker-groups' && (
         <LockedFeatureGuard

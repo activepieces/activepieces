@@ -61,7 +61,7 @@ const ApiKeysPage = () => {
             iconSize={16}
             {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
           >
-            {t('New API Key')}
+            {t('New API key')}
           </AnimatedIconButton>
         </NewApiKeyDialog>
       </AdminPageHeader>
@@ -76,7 +76,8 @@ const ApiKeysPage = () => {
           <AdminEmpty
             className="flex-none"
             icon={<Key />}
-            title={t('No API keys yet. Create one to get started.')}
+            title={t('No API keys yet')}
+            description={t('Create one to get started.')}
           />
         }
       >
@@ -134,7 +135,7 @@ const ApiKeysPage = () => {
                       )}
                     >
                       <Trash className="size-4" />
-                      {t('Revoke API Key')}
+                      {t('Revoke API key')}
                     </DropdownMenuItem>
                   </ConfirmDialog>
                 </DropdownMenuContent>

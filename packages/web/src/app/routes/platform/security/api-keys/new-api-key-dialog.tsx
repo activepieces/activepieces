@@ -1,12 +1,11 @@
 import { ApiKeyResponseWithValue } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,10 +50,12 @@ export const NewApiKeyDialog = ({
     resolver: zodResolver(FormSchema),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => apiKeyApi.create(form.getValues()),
-    onSuccess: (apiKey) => {
-      setApiKey(apiKey);
+  const { mutate, isPending } = useAdminAction<void, ApiKeyResponseWithValue>({
+    verb: 'create',
+    name: t('API key'),
+    run: () => apiKeyApi.create(form.getValues()),
+    onSuccess: ({ data }) => {
+      setApiKey(data);
       onCreate();
     },
   });
@@ -71,7 +72,7 @@ export const NewApiKeyDialog = ({
       <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>
-            {apiKey ? t('API Key Created') : t('Create API Key')}
+            {apiKey ? t('API key created') : t('Create API key')}
           </DialogTitle>
           {!apiKey && (
             <DialogDescription>

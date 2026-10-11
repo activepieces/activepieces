@@ -74,7 +74,9 @@ export const UpdateUserDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
-          <DialogTitle>{t('Edit {email}', { email })}</DialogTitle>
+          <DialogTitle className="break-words">
+            {t('Edit {email}', { email })}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>

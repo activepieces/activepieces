@@ -1,6 +1,15 @@
-import { RefObject, useLayoutEffect, useRef } from 'react';
+import {
+  createContext,
+  ReactNode,
+  RefObject,
+  useContext,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 
-let lastMenuSelection: MenuSelection | null = null;
+import { toastInteraction } from '@/lib/toast-interaction';
+
+let lastMenuSelection: HTMLElement | null = null;
 
 function resolveMenuTrigger(element: Element): HTMLElement | null {
   let trigger: HTMLElement | null = null;
@@ -22,7 +31,12 @@ function rememberMenuSelection(event: Event): void {
     return;
   }
   const trigger = resolveMenuTrigger(event.target);
-  lastMenuSelection = trigger ? { trigger, at: Date.now() } : null;
+  lastMenuSelection = trigger;
+  requestAnimationFrame(() => {
+    if (lastMenuSelection === trigger) {
+      lastMenuSelection = null;
+    }
+  });
 }
 
 function takeMenuTrigger(): HTMLElement | null {
@@ -30,12 +44,7 @@ function takeMenuTrigger(): HTMLElement | null {
   const fromFocus = active ? resolveMenuTrigger(active) : null;
   const selection = lastMenuSelection;
   lastMenuSelection = null;
-  if (fromFocus) {
-    return fromFocus;
-  }
-  const isRecent =
-    selection !== null && Date.now() - selection.at < SELECTION_WINDOW_MS;
-  return isRecent ? selection.trigger : null;
+  return fromFocus ?? selection;
 }
 
 function focusedBeforeOpen(): HTMLElement | null {
@@ -54,10 +63,35 @@ function MenuTriggerCapture({ triggerRef }: MenuTriggerCaptureProps) {
   return null;
 }
 
-function useMenuFocusReturn({ onCloseAutoFocus }: UseMenuFocusReturnParams) {
+function MenuFocusReturnScope({ children }: { children: ReactNode }) {
+  return (
+    <MenuFocusReturnContext.Provider value={true}>
+      {children}
+    </MenuFocusReturnContext.Provider>
+  );
+}
+
+function useMenuSelectionMemory() {
+  const enabled = useContext(MenuFocusReturnContext);
+  return (event: Event) => {
+    if (enabled) {
+      rememberMenuSelection(event);
+    }
+  };
+}
+
+function useMenuFocusReturn<E extends Event>({
+  onCloseAutoFocus,
+  onInteractOutside,
+}: UseMenuFocusReturnParams<E>) {
+  const enabled = useContext(MenuFocusReturnContext);
   const triggerRef = useRef<HTMLElement | null>(null);
+  if (!enabled) {
+    return { capture: null, onCloseAutoFocus, onInteractOutside };
+  }
   return {
     capture: <MenuTriggerCapture triggerRef={triggerRef} />,
+    onInteractOutside: toastInteraction.ignore(onInteractOutside),
     onCloseAutoFocus: (event: Event) => {
       onCloseAutoFocus?.(event);
       const trigger = triggerRef.current;
@@ -71,23 +105,19 @@ function useMenuFocusReturn({ onCloseAutoFocus }: UseMenuFocusReturnParams) {
   };
 }
 
-const SELECTION_WINDOW_MS = 1000;
+const MenuFocusReturnContext = createContext(false);
 
 export const menuFocusReturn = {
   rememberSelection: rememberMenuSelection,
 };
 
-export { useMenuFocusReturn };
-
-type MenuSelection = {
-  trigger: HTMLElement;
-  at: number;
-};
+export { MenuFocusReturnScope, useMenuFocusReturn, useMenuSelectionMemory };
 
 type MenuTriggerCaptureProps = {
   triggerRef: RefObject<HTMLElement | null>;
 };
 
-export type UseMenuFocusReturnParams = {
+export type UseMenuFocusReturnParams<E extends Event> = {
   onCloseAutoFocus?: (event: Event) => void;
+  onInteractOutside?: (event: E) => void;
 };

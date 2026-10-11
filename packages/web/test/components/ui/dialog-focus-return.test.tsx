@@ -16,7 +16,10 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { menuFocusReturn } from '@/hooks/use-menu-focus-return';
+import {
+  MenuFocusReturnScope,
+  menuFocusReturn,
+} from '@/hooks/use-menu-focus-return';
 
 function mountMenu() {
   const trigger = document.createElement('button');
@@ -41,8 +44,14 @@ function selectItem({ menu, item }: { menu: HTMLElement; item: HTMLElement }) {
   menu.remove();
 }
 
-function DialogUnderTest({ open }: { open: boolean }) {
-  return (
+function DialogUnderTest({
+  open,
+  admin = true,
+}: {
+  open: boolean;
+  admin?: boolean;
+}) {
+  const dialog = (
     <Dialog open={open}>
       <DialogContent>
         <DialogTitle>Title</DialogTitle>
@@ -51,17 +60,20 @@ function DialogUnderTest({ open }: { open: boolean }) {
       </DialogContent>
     </Dialog>
   );
+  return admin ? <MenuFocusReturnScope>{dialog}</MenuFocusReturnScope> : dialog;
 }
 
 function SheetUnderTest({ open }: { open: boolean }) {
   return (
-    <Sheet open={open}>
-      <SheetContent>
-        <SheetTitle>Title</SheetTitle>
-        <SheetDescription>Description</SheetDescription>
-        <input aria-label="name" />
-      </SheetContent>
-    </Sheet>
+    <MenuFocusReturnScope>
+      <Sheet open={open}>
+        <SheetContent>
+          <SheetTitle>Title</SheetTitle>
+          <SheetDescription>Description</SheetDescription>
+          <input aria-label="name" />
+        </SheetContent>
+      </Sheet>
+    </MenuFocusReturnScope>
   );
 }
 
@@ -87,6 +99,15 @@ describe('focus return to the menu trigger', () => {
     const { rerender } = render(<SheetUnderTest open />);
     rerender(<SheetUnderTest open={false} />);
     await waitFor(() => expect(document.activeElement).toBe(menu.trigger));
+  });
+
+  it('leaves dialogs outside admin pages alone', async () => {
+    const menu = mountMenu();
+    selectItem(menu);
+    const { rerender } = render(<DialogUnderTest open admin={false} />);
+    rerender(<DialogUnderTest open={false} admin={false} />);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).not.toBe(menu.trigger);
   });
 
   it('leaves focus alone when the dialog was not opened from a menu', async () => {

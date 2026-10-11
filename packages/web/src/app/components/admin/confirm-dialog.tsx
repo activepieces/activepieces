@@ -29,9 +29,13 @@ export function ConfirmDialog({
   ...bodyProps
 }: ConfirmDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const [pending, setPending] = useState(false);
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : uncontrolledOpen;
   const setOpen = (next: boolean) => {
+    if (!next && pending) {
+      return;
+    }
     if (!isControlled) {
       setUncontrolledOpen(next);
     }
@@ -43,12 +47,22 @@ export function ConfirmDialog({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         className={adminLayout.dialog.sm}
+        showCloseButton={!pending}
         onClick={(event) => event.stopPropagation()}
+        onEscapeKeyDown={(event) => pending && event.preventDefault()}
+        onInteractOutside={(event) => pending && event.preventDefault()}
       >
         <ConfirmDialogBody
           key={isOpen ? 'open' : 'closed'}
           {...bodyProps}
-          onDone={() => setOpen(false)}
+          onPendingChange={setPending}
+          onDone={() => {
+            setPending(false);
+            if (!isControlled) {
+              setUncontrolledOpen(false);
+            }
+            onOpenChange?.(false);
+          }}
         />
       </DialogContent>
     </Dialog>
@@ -66,13 +80,16 @@ function ConfirmDialogBody({
   onConfirm,
   controlId,
   onDone,
+  onPendingChange,
 }: ConfirmDialogBodyProps) {
   const inputId = useId();
   const [typed, setTyped] = useState('');
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
+      onPendingChange?.(true);
       await onConfirm();
     },
+    onSettled: () => onPendingChange?.(false),
     onSuccess: () => {
       onDone();
       if (successMessage) {
@@ -96,7 +113,7 @@ function ConfirmDialogBody({
   return (
     <>
       <DialogHeader className="min-w-0">
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle className="break-words">{title}</DialogTitle>
         {description && (
           <DialogDescription className="break-words">
             {description}
@@ -159,9 +176,13 @@ type ConfirmDialogBodyProps = {
   onConfirm: () => Promise<unknown> | unknown;
   controlId?: AdminControl;
   onDone: () => void;
+  onPendingChange?: (pending: boolean) => void;
 };
 
-export type ConfirmDialogProps = Omit<ConfirmDialogBodyProps, 'onDone'> & {
+export type ConfirmDialogProps = Omit<
+  ConfirmDialogBodyProps,
+  'onDone' | 'onPendingChange'
+> & {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   children?: ReactNode;

@@ -76,7 +76,6 @@ function AssignProjectsContent({
 
   const saveAssignments = useAdminAction<AssignmentChange[]>({
     verb: 'save',
-    name: '',
     run: (changes) =>
       adminBulk.runEach({
         items: changes,

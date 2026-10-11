@@ -61,8 +61,9 @@ const EditPieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
+    announce: false,
+  });
 
   const handleSubmit = ({ name, key }: FormValues) => {
     updateSet(

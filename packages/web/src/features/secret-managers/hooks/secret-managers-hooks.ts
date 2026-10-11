@@ -4,10 +4,10 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { secretManagersApi } from '../api/secret-managers-api';
 
@@ -53,7 +53,7 @@ export const secretManagersHooks = {
       mutationFn: secretManagersApi.create,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Secret manager connected'));
+        mutationFeedback.success(t('Secret manager connected'));
         onSuccess();
       },
       onError,
@@ -75,7 +75,7 @@ export const secretManagersHooks = {
       mutationFn: ({ id, config }) => secretManagersApi.update(id, config),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Changes saved'));
+        mutationFeedback.success(t('Changes saved'));
         onSuccess();
       },
       onError,
@@ -87,7 +87,10 @@ export const secretManagersHooks = {
       mutationFn: (connectionId) => secretManagersApi.clearCache(connectionId),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Cache cleared'));
+        mutationFeedback.success(t('Cache cleared'));
+      },
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't clear the cache") });
       },
     });
   },

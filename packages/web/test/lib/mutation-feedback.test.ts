@@ -14,8 +14,8 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import {
-  INTERNAL_ERROR_MESSAGE,
   MUTATION_ERROR_TOAST_ID,
   NETWORK_ERROR_MESSAGE,
   UNDO_TOAST_DURATION_MS,
@@ -67,7 +67,7 @@ describe('mutationFeedback.error', () => {
     });
   });
 
-  it('shows the top-level message of a validation error', () => {
+  it('keeps raw validation text out of the toast', () => {
     const config = { headers: new AxiosHeaders() };
     const error = new AxiosError(
       'Request failed',
@@ -92,7 +92,7 @@ describe('mutationFeedback.error', () => {
 
     expect(toast.error).toHaveBeenCalledWith("Couldn't save changes", {
       id: MUTATION_ERROR_TOAST_ID,
-      description: 'body/displayName must NOT have fewer than 1 characters',
+      description: INTERNAL_ERROR_MESSAGE,
     });
   });
 
@@ -132,10 +132,22 @@ describe('mutationFeedback.error', () => {
     );
   });
 
-  it('uses the message of a plain Error', () => {
+  it('keeps the text of a plain Error out of the toast', () => {
     mutationFeedback.error({ error: new Error('Disk full') });
 
-    expect(toast.error.mock.calls[0][1].description).toBe('Disk full');
+    expect(toast.error.mock.calls[0][1].description).toBe(
+      INTERNAL_ERROR_MESSAGE,
+    );
+  });
+
+  it('shows the message of an error meant for the admin', () => {
+    mutationFeedback.error({
+      error: mutationFeedback.userError('Flow import returned no flow.'),
+    });
+
+    expect(toast.error.mock.calls[0][1].description).toBe(
+      'Flow import returned no flow.',
+    );
   });
 
   it('records the error so later layers can stay quiet', () => {

@@ -1,7 +1,6 @@
 import { PieceSelectorConfig } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { pieceCacheUtils, piecesApi } from '@/features/pieces';
@@ -28,7 +27,10 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+        mutationFeedback.success(t('Changes saved'));
+      },
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
     });
   },
@@ -47,7 +49,7 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Changes saved'));
+        mutationFeedback.success(t('Changes saved'));
       },
       onError: (error) => {
         mutationFeedback.error({ error, title: t("Couldn't save changes") });
@@ -62,11 +64,10 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Pieces synced'), {
-          description: t(
-            'Pieces have been synced from the activepieces cloud.',
-          ),
-        });
+        mutationFeedback.success(
+          t('Pieces synced'),
+          t('Pieces have been synced from the activepieces cloud.'),
+        );
       },
       onError: (error) => {
         mutationFeedback.error({ error, title: t("Couldn't sync pieces") });

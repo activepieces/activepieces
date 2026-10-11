@@ -31,6 +31,10 @@ const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
 }));
 
+vi.mock('@/hooks/flags-hooks', () => ({
+  flagsHooks: { useFlag: () => ({ data: undefined }) },
+}));
+
 vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
@@ -193,7 +197,8 @@ describe('ConfigDetail save (manual models)', () => {
 
   const clickButton = (text: string) => {
     const button = Array.from(container.querySelectorAll('button')).find(
-      (candidate) => candidate.textContent?.trim() === text,
+      (candidate) =>
+        candidate.textContent?.replace(/(Ctrl|⌘) \+ S$/, '').trim() === text,
     );
     expect(button).toBeDefined();
     act(() => {

@@ -274,7 +274,17 @@ const GlobalConnectionsTable = () => {
                 confirmLabel={t('Delete')}
                 controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
                 onConfirm={async () => {
-                  await bulkDeleteGlobalConnections.mutateAsync(selectedRows);
+                  await bulkDeleteGlobalConnections
+                    .mutateAsync(selectedRows)
+                    .catch((error: unknown) => {
+                      setSelectedRows(
+                        adminBulk.remainingAfter({
+                          error,
+                          items: selectedRows,
+                        }),
+                      );
+                      throw error;
+                    });
                   resetSelection();
                   setSelectedRows([]);
                 }}

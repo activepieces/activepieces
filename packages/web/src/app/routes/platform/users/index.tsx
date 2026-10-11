@@ -45,6 +45,7 @@ export type UserRowData =
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserRowData | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const {
     isOutOfSeats,
     ensureSeatsAvailable,
@@ -181,7 +182,10 @@ export default function UsersPage() {
             <UserActions
               row={row}
               isUpdatingStatus={setStatus.isPending}
-              onDelete={setDeleteTarget}
+              onDelete={(row) => {
+                setDeleteTarget(row);
+                setDeleteOpen(true);
+              }}
               onToggleStatus={handleToggleStatus}
               onUpdate={refetch}
             />
@@ -190,12 +194,8 @@ export default function UsersPage() {
       />
       {deleteTarget && (
         <ConfirmDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setDeleteTarget(null);
-            }
-          }}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
           title={
             deleteTarget.type === 'invitation'
               ? t('Delete the invitation for {email}?', {
