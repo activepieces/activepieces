@@ -22,9 +22,12 @@ import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
   StatusDot,
   StatusTone,
+  adminActionCopy,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
@@ -38,7 +41,6 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import {
   DefaultTag,
@@ -48,14 +50,15 @@ import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   EditGlobalConnectionDialog,
-  globalConnectionsMutations,
   globalConnectionsQueries,
 } from '@/features/connections';
+import { globalConnectionsApi } from '@/features/connections/api/global-connections';
 import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { sampleData } from '../../sample-data';
 
@@ -233,10 +236,33 @@ const GlobalConnectionsTable = () => {
     Permission.WRITE_APP_CONNECTION,
   );
 
-  const bulkDeleteGlobalConnections =
-    globalConnectionsMutations.useBulkDeleteGlobalConnections(
-      refetchGlobalConnections,
-    );
+  const bulkDeleteGlobalConnections = useAdminAction<
+    AppConnectionWithoutSensitiveData[]
+  >({
+    verb: 'delete',
+    name: (rows) => connectionsLabel(rows.length),
+    run: async (rows) => {
+      const results = await Promise.allSettled(
+        rows.map((row) => globalConnectionsApi.delete(row.id)),
+      );
+      const failures = results.flatMap((result) =>
+        result.status === 'rejected' ? [result.reason] : [],
+      );
+      await refetchGlobalConnections();
+      if (failures.length === rows.length) {
+        throw failures[0];
+      }
+      if (failures.length > 0) {
+        mutationFeedback.error({
+          error: failures[0],
+          title: adminActionCopy.failed({
+            verb: 'delete',
+            name: connectionsLabel(failures.length),
+          }),
+        });
+      }
+    },
+  });
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
@@ -247,19 +273,18 @@ const GlobalConnectionsTable = () => {
         ) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Connections')}
-                message={t(
+              <ConfirmDialog
+                title={t('Delete {name}?', {
+                  name: connectionsLabel(selectedRows.length),
+                })}
+                description={t(
                   'The selected connections will be permanently deleted.',
                 )}
-                warning={<DeleteConnectionWarning />}
-                entityName="connections"
-                buttonText={t('Delete')}
+                consequence={<DeleteConnectionWarning />}
+                confirmLabel={t('Delete')}
                 controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
-                mutationFn={async () => {
-                  await bulkDeleteGlobalConnections.mutateAsync(
-                    selectedRows.map((row) => row.id),
-                  );
+                onConfirm={async () => {
+                  await bulkDeleteGlobalConnections.mutateAsync(selectedRows);
                   resetSelection();
                   setSelectedRows([]);
                 }}
@@ -278,7 +303,7 @@ const GlobalConnectionsTable = () => {
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             </div>
           );
         },
@@ -338,3 +363,9 @@ const CONNECTION_STATUS_TONE: Record<AppConnectionStatus, StatusTone> = {
 };
 
 export { GlobalConnectionsTable };
+
+function connectionsLabel(count: number): string {
+  return t('{count, plural, =1 {# connection} other {# connections}}', {
+    count,
+  });
+}
