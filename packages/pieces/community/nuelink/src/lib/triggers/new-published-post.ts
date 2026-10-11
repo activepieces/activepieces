@@ -77,11 +77,14 @@ export const newPublishedPost = createTrigger({
     const since = state.resume?.since ?? state.lastPoll - OVERLAP_MS;
     const firstPage = state.resume?.page ?? 1;
     const { items, truncated } = await collect({ query, since, firstPage });
-    const seen = new Set(state.seen);
+    const recent = state.recent ?? [];
+    const seen = new Set([...state.seen, ...recent.map(([id]) => id)]);
     const fresh = uniqueById({ items }).filter((item) => !seen.has(idOf({ item })));
+    const lastPoll = truncated ? state.lastPoll : startedAt;
     const nextState: PollState = {
       seen: [...fresh.map((item) => idOf({ item })).reverse(), ...state.seen].slice(0, SEEN_CAP),
-      lastPoll: truncated ? state.lastPoll : startedAt,
+      recent: keepRecent({ entries: [...recent, ...entriesOf({ items: fresh, fallback: startedAt })], floor: truncated ? since : lastPoll - OVERLAP_MS }),
+      lastPoll,
       ...(truncated ? { resume: { since, page: firstPage + MAX_PAGES } } : {}),
     };
     await context.store.put<PollState>(STORE_KEY, nextState);
@@ -100,11 +103,13 @@ function pollQuery({ auth, propsValue }: { auth: NuelinkAuthValue | undefined; p
 async function seed({ query, store }: { query: PollQuery; store: PollStore }): Promise<void> {
   const startedAt = Date.now();
   const { items } = await collect({ query, since: startedAt - OVERLAP_MS, firstPage: 1 });
-  const seen = uniqueById({ items })
+  const unique = uniqueById({ items });
+  const seen = unique
     .map((item) => idOf({ item }))
     .reverse()
     .slice(0, SEEN_CAP);
-  await store.put<PollState>(STORE_KEY, { seen, lastPoll: startedAt });
+  const recent = keepRecent({ entries: entriesOf({ items: unique, fallback: startedAt }), floor: startedAt - OVERLAP_MS });
+  await store.put<PollState>(STORE_KEY, { seen, recent, lastPoll: startedAt });
 }
 
 async function collect({ query, since, firstPage }: { query: PollQuery; since: number; firstPage: number }): Promise<{ items: Record<string, unknown>[]; truncated: boolean }> {
@@ -142,6 +147,18 @@ function idOf({ item }: { item: Record<string, unknown> }): string {
   return typeof id === 'number' || typeof id === 'string' ? String(id) : '';
 }
 
+function entriesOf({ items, fallback }: { items: Record<string, unknown>[]; fallback: number }): RecentEntry[] {
+  return items.map((item) => {
+    const value = item['publishedAt'];
+    const time = typeof value === 'string' ? Date.parse(value) : Number.NaN;
+    return [idOf({ item }), Number.isFinite(time) ? time : fallback];
+  });
+}
+
+function keepRecent({ entries, floor }: { entries: RecentEntry[]; floor: number }): RecentEntry[] {
+  return entries.filter(([, time]) => time >= floor).slice(-RECENT_CAP);
+}
+
 function isPollState(value: unknown): value is PollState {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -149,7 +166,19 @@ function isPollState(value: unknown): value is PollState {
   const seen = Reflect.get(value, 'seen');
   const lastPoll = Reflect.get(value, 'lastPoll');
   const resume = Reflect.get(value, 'resume');
-  return Array.isArray(seen) && seen.every((id: unknown) => typeof id === 'string') && typeof lastPoll === 'number' && Number.isFinite(lastPoll) && (resume === undefined || isResumePoint(resume));
+  const recent = Reflect.get(value, 'recent');
+  return (
+    Array.isArray(seen) &&
+    seen.every((id: unknown) => typeof id === 'string') &&
+    typeof lastPoll === 'number' &&
+    Number.isFinite(lastPoll) &&
+    (resume === undefined || isResumePoint(resume)) &&
+    (recent === undefined || (Array.isArray(recent) && recent.every(isRecentEntry)))
+  );
+}
+
+function isRecentEntry(value: unknown): value is RecentEntry {
+  return Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && typeof value[1] === 'number' && Number.isFinite(value[1]);
 }
 
 function isResumePoint(value: unknown): value is ResumePoint {
@@ -166,14 +195,18 @@ const OVERLAP_MS = 15 * 60 * 1000;
 const MAX_PAGES = 5;
 const PAGE_SIZE = 100;
 const SEEN_CAP = 1000;
+const RECENT_CAP = 20000;
 const TEST_SAMPLE_SIZE = 5;
 const STATUSES = ['PUBLISHED', 'FAILED'] as const;
 
 type PollState = {
   seen: string[];
+  recent?: RecentEntry[];
   lastPoll: number;
   resume?: ResumePoint;
 };
+
+type RecentEntry = [string, number];
 
 type ResumePoint = {
   since: number;

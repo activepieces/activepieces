@@ -41,7 +41,7 @@ describe('New Published Post trigger', () => {
     const request = requestOf({ fetchMock, call: 0 });
     expect(request.path).toBe('/api/public/v1/brands/42/published-posts');
     expect(request.query).toEqual({ status: 'PUBLISHED', published_from: '2026-10-11 11:45:00', sort_by: 'id', sort_order: 'asc', page: '1', per_page: '100' });
-    expect(JSON.parse(data.get(STORE_KEY) ?? '{}')).toEqual({ seen: ['11', '10'], lastPoll: Date.parse('2026-10-11T12:00:00Z') });
+    expect(JSON.parse(data.get(STORE_KEY) ?? '{}')).toEqual({ seen: ['11', '10'], recent: [], lastPoll: Date.parse('2026-10-11T12:00:00Z') });
   });
 
   it('emits only unseen results and does not repeat them on the next overlapping poll', async () => {
@@ -81,17 +81,23 @@ describe('New Published Post trigger', () => {
     });
     const emitted: unknown[] = [];
     const startedFrom: string[] = [];
-    for (let poll = 0; poll < 3; poll++) {
+    for (let poll = 0; poll < 6; poll++) {
       vi.setSystemTime(new Date(Date.parse('2026-10-11T12:00:00Z') + poll * 60_000));
       const before = fetchMock.mock.calls.length;
       emitted.push(...idsOf(await call({ hook: 'run', context: hookContext({ store }) })));
       startedFrom.push(new URL(String(fetchMock.mock.calls[before][0])).searchParams.get('page') ?? '');
     }
     expect(emitted).toEqual(backlog.map((item) => item.id));
-    expect(startedFrom).toEqual(['1', '6', '11']);
+    expect(startedFrom).toEqual(['1', '6', '11', '1', '6', '11']);
     const state = JSON.parse(data.get(STORE_KEY) ?? '{}');
     expect(state.resume).toBeUndefined();
-    expect(state.lastPoll).toBe(Date.parse('2026-10-11T12:02:00Z'));
+    expect(state.recent).toHaveLength(1234);
+    expect(state.lastPoll).toBe(Date.parse('2026-10-11T12:05:00Z'));
+
+    vi.setSystemTime(new Date('2026-10-11T12:20:00Z'));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ body: listBody({ data: [] }) }));
+    await expect(call({ hook: 'run', context: hookContext({ store }) })).resolves.toEqual([]);
+    expect(JSON.parse(data.get(STORE_KEY) ?? '{}').recent).toEqual([]);
   });
 
   it('keeps the window fixed while a capped batch is unfinished', async () => {
