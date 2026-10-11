@@ -94,7 +94,7 @@ function Stat({
 }) {
   return (
     <span className={cn('flex flex-col', className)}>
-      <span className="text-xss uppercase tracking-wide text-gray-10">
+      <span className="text-xs uppercase tracking-wide text-gray-10">
         {label}
       </span>
       <span className="text-sm tabular-nums text-gray-12">{children}</span>
