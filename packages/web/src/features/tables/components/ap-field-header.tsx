@@ -82,7 +82,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
             noAnimationOnOut={true}
             onCloseAutoFocus={(e) => e.preventDefault()}
             align="start"
-            className="w-56 rounded-md"
+            className="w-56"
           >
             {actions.map((action, index) => (
               <div key={index}>

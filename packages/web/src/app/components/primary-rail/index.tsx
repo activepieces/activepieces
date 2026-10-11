@@ -731,7 +731,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
           )}
         </Tooltip>
         <DropdownMenuContent
-          className="w-56 rounded-lg"
+          className="w-56"
           side="right"
           align="end"
           sideOffset={10}

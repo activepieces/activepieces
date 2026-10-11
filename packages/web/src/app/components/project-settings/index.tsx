@@ -190,7 +190,7 @@ export function ProjectSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-md flex flex-col p-0">
+      <DialogContent className="max-w-5xl w-full max-h-[95vh] flex flex-col p-0">
         <div className="flex h-[700px]">
           <div className="w-[238px]">
             <nav className="space-y-1 bg-gray-3 rounded-md rounded-r-none h-full flex flex-col rounded-l-md">

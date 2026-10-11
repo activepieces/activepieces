@@ -74,7 +74,7 @@ export function SidebarUser() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-999"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 z-999"
             side="top"
             align="start"
             sideOffset={10}

@@ -107,7 +107,7 @@ const ThirdPartyLogin = React.memo(
           <Button
             variant="outline"
             size="lg"
-            className="w-full font-normal"
+            className="w-full rounded-xl font-normal"
             onClick={(e) =>
               handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
             }
@@ -120,7 +120,7 @@ const ThirdPartyLogin = React.memo(
           <Button
             variant="outline"
             size="lg"
-            className="w-full font-normal"
+            className="w-full rounded-xl font-normal"
             onClick={() => {
               capture({
                 name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
@@ -139,7 +139,7 @@ const ThirdPartyLogin = React.memo(
           <Button
             variant="outline"
             size="lg"
-            className="w-full font-normal"
+            className="w-full rounded-xl font-normal"
             onClick={() => {
               capture({
                 name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
