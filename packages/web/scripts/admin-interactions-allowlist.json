@@ -36,12 +36,6 @@
       "internal-error-toast",
       "legacy-confirm"
     ],
-    "src/app/routes/platform/security/project-role/project-role-dialog.tsx": [
-      "legacy-confirm"
-    ],
-    "src/app/routes/platform/security/project-role/role-people-tab.tsx": [
-      "spinner-loading"
-    ],
     "src/app/routes/platform/setup/mcp/index.tsx": [
       "spinner-loading"
     ],

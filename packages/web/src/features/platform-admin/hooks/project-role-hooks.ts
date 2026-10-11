@@ -64,23 +64,6 @@ export const projectRoleMutations = {
       },
     });
   },
-  useDeleteProjectRole: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationKey: ['delete-project-role'],
-      mutationFn: (name: string) => projectRoleApi.delete(name),
-      onSuccess: () => {
-        onSuccess();
-        toast.success(t('Project Role entry deleted successfully'), {
-          duration: 3000,
-        });
-      },
-      onError: () => {
-        toast.error(t('Could not delete the role. Try again.'), {
-          duration: 5000,
-        });
-      },
-    });
-  },
 };
 
 type UpsertProjectRoleHandlers = {

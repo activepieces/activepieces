@@ -1,7 +1,7 @@
 import { ProjectRole } from '@activepieces/core-utils';
 import { ProjectMemberWithUser } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUpRight, Loader2, Users } from 'lucide-react';
+import { ArrowUpRight, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -9,6 +9,7 @@ import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { projectRoleQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
@@ -25,8 +26,8 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-gray-11" />
+      <div className="px-6 pt-4">
+        <SkeletonList numberOfItems={5} className="h-10" />
       </div>
     );
   }
@@ -77,12 +78,9 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={isFetchingNextPage}
+                loading={isFetchingNextPage}
                 onClick={() => fetchNextPage()}
               >
-                {isFetchingNextPage && (
-                  <Loader2 className="size-4 animate-spin" />
-                )}
                 {t('Load more')}
               </Button>
             </div>
