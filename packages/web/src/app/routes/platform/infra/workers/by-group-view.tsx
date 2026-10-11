@@ -99,7 +99,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-xs font-medium text-gray-11">
-              {t('PROJECTS')}
+              {t('Projects')}
             </span>
             <Button
               {...adminControl(AdminControl.WORKERS_ASSIGN_OPEN)}
