@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { ticketTriggerOutputSchema } from '../output-schemas';
 
 export const updatedTicketTrigger = createTrigger({
 	auth: intercomAuth,
@@ -13,9 +14,10 @@ export const updatedTicketTrigger = createTrigger({
 			'Fires when an existing Intercom ticket changes, covering both ticket state transitions and ticket attribute updates. Outputs the updated ticket object.',
 	},
 	props: {},
+	outputSchema: ticketTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -27,11 +29,11 @@ export const updatedTicketTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.tickets.search({
 			query: {

@@ -1,22 +1,24 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
+import { conversationEnvelopeTriggerOutputSchema } from '../output-schemas';
+import { conversationEnvelopeSample, recentConversationEnvelopes } from '../common/webhook-samples';
 
 export const conversationSnoozed = createTrigger({
-	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
 	name: 'conversationSnoozed',
 	classification: 'READ',
 	displayName: 'Conversation snoozed',
 	description: 'Triggers when a conversation is snoozed',
 	aiMetadata: {
-		description: 'Fires when a conversation is snoozed in Intercom, meaning an admin temporarily pauses it until a chosen time. Outputs the snoozed conversation object, including its snoozed_until time.',
+		description: 'Fires when a conversation is snoozed in Intercom, meaning an admin temporarily pauses it until a chosen time. Outputs the whole webhook notification (id, topic, created_at); the conversation, with the new parts, is under data.item.',
 	},
 	props: {},
-	sampleData: undefined,
+	sampleData: conversationEnvelopeSample('conversation.admin.snoozed'),
 	auth: intercomAuth,
+	outputSchema: conversationEnvelopeTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -28,8 +30,11 @@ export const conversationSnoozed = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
+	},
+	async test(context) {
+		return recentConversationEnvelopes({ auth: context.auth, topic: 'conversation.admin.snoozed' });
 	},
 	async run(context) {
 		return [context.payload.body];

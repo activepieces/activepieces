@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
+import { findLeadOutputSchema } from '../output-schemas';
 
 export const findLeadAction = createAction({
     auth: intercomAuth,
@@ -8,7 +9,7 @@ export const findLeadAction = createAction({
     classification: 'READ',
     displayName: 'Find Lead',
     description: 'Finds an existing lead.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Look up a single existing lead (prospect contact) by email, Intercom ID, or external user ID. Read-only and repeatable; returns the first match plus a found flag and only matches role=lead. To find a signed-up user instead, use Find User.', idempotent: true },
     props: {
         searchField: Property.StaticDropdown({
@@ -28,10 +29,11 @@ export const findLeadAction = createAction({
             required: true,
         }),
     },
+    outputSchema: findLeadOutputSchema,
     async run(context) {
         const { searchField, searchValue } = context.propsValue;
 
-        const client = intercomClient(context.auth);
+        const client = await intercomClient(context.auth);
 
         const contactResponse = await client.contacts.search({
             query: {

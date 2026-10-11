@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createAction } from "@activepieces/pieces-framework";
 import { intercomClient } from "../common";
+import { listTagsOutputSchema } from '../output-schemas';
 
 export const listAllTagsAction = createAction({
     auth:intercomAuth,
@@ -11,8 +12,9 @@ export const listAllTagsAction = createAction({
     audience: 'both',
     aiMetadata: { description: 'List all tags defined in the Intercom workspace. Takes no input; read-only and repeatable. Use to discover tag IDs before tagging or untagging a conversation, contact, or company.', idempotent: true },
     props:{},
+    outputSchema: listTagsOutputSchema,
     async run(context){
-        const client = intercomClient(context.auth);
+        const client = await intercomClient(context.auth);
 
         const response = await client.tags.list();
 

@@ -5,6 +5,7 @@ import {
 import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
 import { tagIdProp } from '../common/props';
+import { CONVERSATION_PART_TAG_SAMPLE } from '../common/webhook-samples';
 
 export const conversationPartTagged = createTrigger({
   name: 'conversationPartTagged',
@@ -20,7 +21,7 @@ export const conversationPartTagged = createTrigger({
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {
-    const client = intercomClient(context.auth);
+    const client = await intercomClient(context.auth);
     const response = await client.admins.identify();
 
     if (!response.app?.id_code) {
@@ -32,9 +33,9 @@ export const conversationPartTagged = createTrigger({
       identifierValue: response['app']['id_code'],
     });
   },
-  async onDisable(context) {
-    // implement webhook deletion logic
-  },
+  async onDisable() {
+		return;
+	},
 
   async run(context) {
     const tag = context.propsValue.tagId;
@@ -44,7 +45,7 @@ export const conversationPartTagged = createTrigger({
     }
     return [];
   },
-  sampleData: undefined
+  sampleData: CONVERSATION_PART_TAG_SAMPLE,
 });
 
 type IntercomPayloadBodyType = {
