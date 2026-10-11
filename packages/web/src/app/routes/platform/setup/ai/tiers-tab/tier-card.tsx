@@ -66,48 +66,56 @@ export function TierCard({
   onMoveUp,
   onMoveDown,
 }: TierCardProps) {
-  const {
-    mutate: update,
-    mutateAsync: updateAsync,
-    isPending,
-  } = platformModelTierMutations.useUpdate({ feedback: 'errorsOnly' });
+  const { mutateAsync: updateAsync, isPending } =
+    platformModelTierMutations.useUpdate({ feedback: 'errorsOnly' });
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
+  const latestEntries = useRef(tier.entries);
+  latestEntries.current = tier.entries;
   const save = (request: UpdatePlatformModelTierRequest) =>
-    update(
-      { id: tier.id, request },
-      {
-        onSuccess: (updated) =>
-          adminFeedback.done({ verb: 'update', name: updated.name }),
-      },
-    );
+    updateAsync({ id: tier.id, request })
+      .then((updated) =>
+        adminFeedback.done({ verb: 'update', name: updated.name }),
+      )
+      .catch(() => undefined);
   const removeEntry = (position: number) => {
-    const previous = tier.entries;
-    const removed = previous[position];
-    update(
-      {
-        id: tier.id,
-        request: {
-          entries: modelMeta.removeAt({ entries: previous, index: position }),
-        },
+    const removed = tier.entries[position];
+    updateAsync({
+      id: tier.id,
+      request: {
+        entries: modelMeta.removeAt({ entries: tier.entries, index: position }),
       },
-      {
-        onSuccess: () => {
-          mutationFeedback.undo({
-            message: t('{model} removed from {tier}', {
-              model:
-                modelMeta.catalogModel({ keyModels, entry: removed })?.name ??
-                removed.modelId,
-              tier: tier.name,
-            }),
-            onUndo: () =>
-              updateAsync({ id: tier.id, request: { entries: previous } }),
-          });
-        },
-      },
-    );
+    })
+      .then(() =>
+        mutationFeedback.undo({
+          message: t('{model} removed from {tier}', {
+            model:
+              modelMeta.catalogModel({ keyModels, entry: removed })?.name ??
+              removed.modelId,
+            tier: tier.name,
+          }),
+          onUndo: () => {
+            const current = latestEntries.current;
+            if (current.some((entry) => modelMeta.sameEntry(entry, removed))) {
+              return Promise.resolve();
+            }
+            const at = Math.min(position, current.length);
+            return updateAsync({
+              id: tier.id,
+              request: {
+                entries: [
+                  ...current.slice(0, at),
+                  removed,
+                  ...current.slice(at),
+                ],
+              },
+            });
+          },
+        }),
+      )
+      .catch(() => undefined);
   };
   const move = ({ from, to }: { from: number; to: number }) =>
     save({ entries: modelMeta.moveEntry({ entries: tier.entries, from, to }) });

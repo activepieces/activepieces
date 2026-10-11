@@ -12,6 +12,7 @@ import {
   AdminEmpty,
   AdminPageHeader,
   AdminQueryState,
+  adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
@@ -113,6 +114,7 @@ export function TiersTab() {
         description={t(
           'Named model groups your builders pick. Each one is a main model plus fallbacks.',
         )}
+        resources={adminPageResources.aiProviders}
       >
         {!isLoading && !isError && !noKeys && (
           <>

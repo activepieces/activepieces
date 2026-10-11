@@ -215,6 +215,16 @@ export function ConfigDetail({
     }
   };
 
+  const confirmSave = async () => {
+    if (nameMissing) {
+      throw mutationFeedback.userError(t('Give this key a name first.'));
+    }
+    if (saveInFlight.current) {
+      throw mutationFeedback.userError(t('A save is already in progress.'));
+    }
+    await save();
+  };
+
   return (
     <>
       <AdminPageHeader
@@ -483,7 +493,7 @@ export function ConfigDetail({
         }
         confirmLabel={t('Save anyway')}
         destructive={false}
-        onConfirm={save}
+        onConfirm={confirmSave}
       />
     </>
   );

@@ -165,7 +165,7 @@ const SecretManagersPage = () => {
               consequence={t(
                 'Deleting this secret manager connection will break all flows/app connections using it.',
               )}
-              confirmLabel={t('Delete connection')}
+              confirmLabel={t('Delete Connection')}
               controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
               onConfirm={() =>
                 deleteConnection({ id: connection.id, name: connection.name })

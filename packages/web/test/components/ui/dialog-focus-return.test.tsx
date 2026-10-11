@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/sheet';
 import {
   MenuFocusReturnScope,
-  menuFocusReturn,
+  useMenuSelectionMemory,
 } from '@/hooks/use-menu-focus-return';
 
 function mountMenu() {
@@ -36,11 +36,20 @@ function mountMenu() {
   return { trigger, menu, item };
 }
 
-function selectItem({ menu, item }: { menu: HTMLElement; item: HTMLElement }) {
+function SelectionRecorder({ item }: { item: HTMLElement }) {
+  const remember = useMenuSelectionMemory();
   const event = new Event('menu.itemSelect');
-  item.dispatchEvent(event);
   Object.defineProperty(event, 'target', { value: item });
-  menuFocusReturn.rememberSelection(event);
+  remember(event);
+  return null;
+}
+
+function selectItem({ menu, item }: { menu: HTMLElement; item: HTMLElement }) {
+  render(
+    <MenuFocusReturnScope>
+      <SelectionRecorder item={item} />
+    </MenuFocusReturnScope>,
+  );
   menu.remove();
 }
 

@@ -6,6 +6,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 export function AdminQueryState({
   isLoading,
   isError,
+  hasData = false,
   onRetry,
   entity,
   isEmpty = false,
@@ -13,7 +14,7 @@ export function AdminQueryState({
   skeleton,
   children,
 }: AdminQueryStateProps) {
-  if (isError) {
+  if (isError && !hasData) {
     return <DataFetchErrorState entity={entity} onRetry={onRetry} />;
   }
   if (isLoading) {
@@ -28,6 +29,7 @@ export function AdminQueryState({
 type AdminQueryStateProps = {
   isLoading: boolean;
   isError: boolean;
+  hasData?: boolean;
   onRetry?: () => unknown;
   entity: string;
   isEmpty?: boolean;

@@ -103,10 +103,9 @@ const AssignProjectsForm = ({
           ),
         );
       } finally {
-        await pieceSetCacheUtils.refreshAfterProjectChange({
-          queryClient,
-          id: pieceSet.id,
-        });
+        pieceSetCacheUtils
+          .refreshAfterProjectChange({ queryClient, id: pieceSet.id })
+          .catch(() => undefined);
       }
     },
     onSuccess: () => onOpenChange(false),

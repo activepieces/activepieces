@@ -47,7 +47,6 @@ export function ConfirmDialog({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         className={adminLayout.dialog.sm}
-        showCloseButton={!pending}
         onClick={(event) => event.stopPropagation()}
         onEscapeKeyDown={(event) => pending && event.preventDefault()}
         onInteractOutside={(event) => pending && event.preventDefault()}

@@ -96,7 +96,11 @@ function useMenuFocusReturn<E extends Event>({
       onCloseAutoFocus?.(event);
       const trigger = triggerRef.current;
       triggerRef.current = null;
-      if (event.defaultPrevented || !trigger?.isConnected) {
+      if (
+        event.defaultPrevented ||
+        !trigger?.isConnected ||
+        trigger.matches(':disabled')
+      ) {
         return;
       }
       event.preventDefault();
@@ -106,10 +110,6 @@ function useMenuFocusReturn<E extends Event>({
 }
 
 const MenuFocusReturnContext = createContext(false);
-
-export const menuFocusReturn = {
-  rememberSelection: rememberMenuSelection,
-};
 
 export { MenuFocusReturnScope, useMenuFocusReturn, useMenuSelectionMemory };
 

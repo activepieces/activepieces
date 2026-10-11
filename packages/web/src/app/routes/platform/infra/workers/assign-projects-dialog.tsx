@@ -75,7 +75,8 @@ function AssignProjectsContent({
   };
 
   const saveAssignments = useAdminAction<AssignmentChange[]>({
-    verb: 'save',
+    verb: 'update',
+    name: (changes) => projectsCountLabel(changes.length),
     run: (changes) =>
       adminBulk.runEach({
         items: changes,
@@ -84,8 +85,7 @@ function AssignProjectsContent({
             workerGroupId: change.workerGroupId,
           }).isPersisted.promise,
         verb: 'update',
-        label: (count) =>
-          t('{count, plural, =1 {# project} other {# projects}}', { count }),
+        label: projectsCountLabel,
       }),
     onSuccess: () => onOpenChange(false),
   });
@@ -216,6 +216,10 @@ function AssignProjectsContent({
       </DialogFooter>
     </>
   );
+}
+
+function projectsCountLabel(count: number): string {
+  return t('{count, plural, =1 {# project} other {# projects}}', { count });
 }
 
 type AssignProjectsDialogProps = {

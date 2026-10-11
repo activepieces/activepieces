@@ -118,15 +118,21 @@ export function ProvidersTab() {
     });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
-      onSuccess: ({ status }) => {
+      onSuccess: ({ status }, providerId) => {
         refetch();
+        const name =
+          configs.find((config) => config.id === providerId)?.name ?? '';
         adminFeedback.status({
           ok: status === 'active',
           message:
-            keyStatusText({ status }) ??
-            (status === 'active'
-              ? t('Key is working')
-              : t('Could not reach this provider')),
+            status === 'active'
+              ? t('{name} is working', { name })
+              : t('{name}: {status}', {
+                  name,
+                  status:
+                    keyStatusText({ status }) ??
+                    t('Could not reach this provider'),
+                }),
         });
       },
     });

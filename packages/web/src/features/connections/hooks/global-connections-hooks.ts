@@ -5,9 +5,10 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
+import { toast } from 'sonner';
 
+import { internalErrorToast } from '@/components/ui/sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { globalConnectionsApi } from '../api/global-connections';
 import {
@@ -49,6 +50,18 @@ export const globalConnectionsQueries = {
 };
 
 export const globalConnectionsMutations = {
+  useBulkDeleteGlobalConnections: (refetch: () => void) =>
+    useMutation({
+      mutationFn: async (ids: string[]) => {
+        await Promise.all(ids.map((id) => globalConnectionsApi.delete(id)));
+      },
+      onSuccess: () => {
+        refetch();
+      },
+      onError: () => {
+        internalErrorToast();
+      },
+    }),
   useUpdateGlobalConnection: (
     refetch: () => void,
     setIsOpen: (isOpen: boolean) => void,
@@ -96,7 +109,9 @@ export const globalConnectionsMutations = {
       },
       onSuccess: () => {
         refetch();
-        mutationFeedback.success(t('Changes saved'));
+        toast.success(t('Connection has been updated.'), {
+          duration: 3000,
+        });
         setIsOpen(false);
       },
       onError: (error) => {
@@ -109,12 +124,7 @@ export const globalConnectionsMutations = {
             message: error.message,
           });
         } else {
-          mutationFeedback.error({
-            error,
-            title: t("Couldn't update {name}", {
-              name: editConnectionForm.getValues('displayName'),
-            }),
-          });
+          internalErrorToast();
         }
       },
     }),

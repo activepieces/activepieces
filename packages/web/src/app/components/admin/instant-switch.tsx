@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
+import { cn } from '@/lib/utils';
 
 import { ConfirmDialog, ConfirmDialogProps } from './confirm-dialog';
 
@@ -15,6 +16,7 @@ export function InstantSwitch({
   errorTitle,
   undo = false,
   confirmBefore,
+  blockedReason,
   disabled = false,
   controlId,
   id,
@@ -23,8 +25,33 @@ export function InstantSwitch({
   const [optimistic, setOptimistic] = useState<OptimisticValue | null>(null);
   const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState<PendingConfirm | null>(null);
+  const [lastConfirm, setLastConfirm] = useState<PendingConfirm | null>(null);
   const latestChecked = useRef(checked);
   latestChecked.current = checked;
+  const latest = useRef({ blockedReason, confirmBefore, pending: false });
+  latest.current = {
+    blockedReason,
+    confirmBefore,
+    pending: latest.current.pending,
+  };
+  const askFirst = (pendingConfirm: PendingConfirm) => {
+    setConfirming(pendingConfirm);
+    setLastConfirm(pendingConfirm);
+  };
+  const undoTo = async (target: boolean) => {
+    if (latest.current.pending) {
+      return;
+    }
+    if (latest.current.blockedReason) {
+      throw mutationFeedback.userError(latest.current.blockedReason);
+    }
+    const confirm = latest.current.confirmBefore?.(target);
+    if (confirm) {
+      askFirst({ next: target, confirm, isUndo: true });
+      return;
+    }
+    await save(target, true);
+  };
   const shown =
     optimistic !== null && optimistic.base === checked
       ? optimistic.value
@@ -33,6 +60,7 @@ export function InstantSwitch({
   const save = async (next: boolean, isUndo: boolean) => {
     setOptimistic({ value: next, base: latestChecked.current });
     setPending(true);
+    latest.current.pending = true;
     try {
       await onCheckedChange(next);
       setOptimistic(null);
@@ -49,6 +77,7 @@ export function InstantSwitch({
       throw error;
     } finally {
       setPending(false);
+      latest.current.pending = false;
     }
     if (isUndo) {
       return;
@@ -57,7 +86,7 @@ export function InstantSwitch({
     if (undo) {
       mutationFeedback.undo({
         message,
-        onUndo: () => save(!next, true),
+        onUndo: () => undoTo(!next),
       });
     } else if (successMessage) {
       toast.success(message);
@@ -69,7 +98,8 @@ export function InstantSwitch({
       <Switch
         id={id}
         checked={shown}
-        disabled={disabled}
+        disabled={disabled || Boolean(blockedReason)}
+        className={cn(pending && 'cursor-progress opacity-60')}
         aria-busy={pending}
         aria-disabled={pending || undefined}
         onCheckedChange={(next) => {
@@ -78,7 +108,7 @@ export function InstantSwitch({
           }
           const confirm = confirmBefore?.(next);
           if (confirm) {
-            setConfirming({ next, confirm });
+            askFirst({ next, confirm, isUndo: false });
             return;
           }
           save(next, false).catch(() => undefined);
@@ -86,16 +116,16 @@ export function InstantSwitch({
         {...aria}
         {...adminControl(controlId)}
       />
-      {confirming && (
+      {lastConfirm && (
         <ConfirmDialog
-          open
+          open={confirming !== null}
           onOpenChange={(open) => {
             if (!open) {
               setConfirming(null);
             }
           }}
-          {...confirming.confirm}
-          onConfirm={() => save(confirming.next, false)}
+          {...lastConfirm.confirm}
+          onConfirm={() => save(lastConfirm.next, lastConfirm.isUndo)}
         />
       )}
     </>
@@ -104,7 +134,11 @@ export function InstantSwitch({
 
 type OptimisticValue = { value: boolean; base: boolean };
 
-type PendingConfirm = { next: boolean; confirm: InstantSwitchConfirm };
+type PendingConfirm = {
+  next: boolean;
+  confirm: InstantSwitchConfirm;
+  isUndo: boolean;
+};
 
 export type InstantSwitchConfirm = Omit<
   ConfirmDialogProps,
@@ -118,6 +152,7 @@ export type InstantSwitchProps = {
   errorTitle?: string;
   undo?: boolean;
   confirmBefore?: (next: boolean) => InstantSwitchConfirm | null;
+  blockedReason?: string;
   disabled?: boolean;
   controlId?: AdminControl;
   id?: string;

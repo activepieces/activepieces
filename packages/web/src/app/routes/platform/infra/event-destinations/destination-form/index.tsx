@@ -3,7 +3,7 @@ import { EventDestination } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import {
   Navigate,
@@ -143,6 +143,14 @@ const DestinationForm = ({
     });
 
   const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
+  const goToStep = (index: number) => {
+    setInvalidMessage(null);
+    setStepIndex(index);
+  };
+  useEffect(() => {
+    const subscription = form.watch(() => setInvalidMessage(null));
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const handleSubmit = (values: DestinationFormValues) => {
     setInvalidMessage(null);
@@ -164,7 +172,7 @@ const DestinationForm = ({
     if (stepIndex === EVENTS_STEP && !(await form.trigger('events'))) {
       return;
     }
-    setStepIndex(stepIndex + 1);
+    goToStep(stepIndex + 1);
   };
 
   const watchedEvents = useWatch({ control: form.control, name: 'events' });
@@ -193,7 +201,9 @@ const DestinationForm = ({
       footer={
         <SaveBar
           width="content"
-          dirty={form.formState.isDirty || (!isEdit && isLastStep)}
+          dirty={form.formState.isDirty}
+          saveEnabled={isEdit || isLastStep}
+          announceStatus={false}
           saving={isSaving}
           showSave={showSubmit}
           status={
@@ -221,7 +231,7 @@ const DestinationForm = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setStepIndex(stepIndex - 1)}
+              onClick={() => goToStep(stepIndex - 1)}
             >
               {t('Back')}
             </Button>
@@ -255,7 +265,7 @@ const DestinationForm = ({
             ]}
             activeIndex={stepIndex}
             canJump={isEdit}
-            onSelect={setStepIndex}
+            onSelect={goToStep}
           />
           {stepIndex === DESTINATION_STEP && (
             <DestinationStep form={form} isEdit={isEdit} />

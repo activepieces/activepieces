@@ -1,12 +1,18 @@
-import { ApFlagId } from '@activepieces/shared';
 import { ArrowLeft } from 'lucide-react';
-import { createContext, ReactNode, useContext, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { billingDialogHooks } from '@/features/billing';
 import { MenuFocusReturnScope } from '@/hooks/use-menu-focus-return';
+import { PLAN_LIMIT_EVENT } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
@@ -21,9 +27,16 @@ export function AdminPage({
   children,
 }: AdminPageProps) {
   const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
+  const footerContext = { inPage: true, slot: footerSlot };
+  useEffect(() => {
+    const openPlanDialog = () =>
+      billingDialogHooks.useManagePlanDialogStore.getState().openDialog();
+    window.addEventListener(PLAN_LIMIT_EVENT, openPlanDialog);
+    return () => window.removeEventListener(PLAN_LIMIT_EVENT, openPlanDialog);
+  }, []);
   return (
     <MenuFocusReturnScope>
-      <AdminPageFooterContext.Provider value={footerSlot}>
+      <AdminPageFooterContext.Provider value={footerContext}>
         <div
           data-slot="admin-page"
           className={cn(
@@ -51,8 +64,11 @@ export function AdminPage({
 }
 
 export function AdminPageFooter({ children }: { children: ReactNode }) {
-  const slot = useContext(AdminPageFooterContext);
-  return slot ? createPortal(children, slot) : children;
+  const { inPage, slot } = useContext(AdminPageFooterContext);
+  if (!inPage) {
+    return children;
+  }
+  return slot ? createPortal(children, slot) : null;
 }
 
 export function AdminPageHeader({
@@ -64,13 +80,10 @@ export function AdminPageHeader({
   children,
 }: AdminPageHeaderProps) {
   const { embedState } = useEmbedding();
-  const { data: showCommunity } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
   const hasResources =
-    showCommunity === true && resources !== undefined && resources.length > 0;
+    !embedState.isEmbedded && resources !== undefined && resources.length > 0;
   if (embedState.hidePageHeader) {
-    if (!back && !children && !hasResources) {
+    if (!back && !children) {
       return null;
     }
     return (
@@ -79,9 +92,8 @@ export function AdminPageHeader({
         className="flex shrink-0 flex-wrap items-center justify-between gap-2"
       >
         {back && <AdminBackLink back={back} />}
-        {(hasResources || children) && (
+        {children && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {hasResources && <AdminResources resources={resources} />}
             {children}
           </div>
         )}
@@ -159,7 +171,10 @@ function AdminBackLink({ back }: { back: AdminPageBack }) {
   );
 }
 
-const AdminPageFooterContext = createContext<HTMLDivElement | null>(null);
+const AdminPageFooterContext = createContext<{
+  inPage: boolean;
+  slot: HTMLDivElement | null;
+}>({ inPage: false, slot: null });
 
 const WIDTH_CLASS: Record<AdminPageWidth, string> = {
   full: '',

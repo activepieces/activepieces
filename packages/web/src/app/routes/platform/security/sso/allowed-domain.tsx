@@ -92,7 +92,7 @@ export const AllowedDomainDialog = ({
       </DialogTrigger>
       <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
-          <DialogTitle>{t('Configure allowed domains')}</DialogTitle>
+          <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -159,7 +159,7 @@ export const AllowedDomainDialog = ({
               size="sm"
             >
               <Plus />
-              {t('Add domain')}
+              {t('Add Domain')}
             </Button>
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>

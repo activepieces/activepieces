@@ -51,6 +51,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -116,13 +117,12 @@ function ConnectProviderForm({
       onError: (
         error: AxiosError<{ message?: string; params?: { message: string } }>,
       ) => {
-        const data = error.response?.data;
         form.setError('root.serverError', {
           type: 'manual',
-          message:
-            data?.params?.message ??
-            data?.message ??
-            t('The provider rejected these credentials.'),
+          message: mutationFeedback.messageOr({
+            error,
+            fallback: t('The provider rejected these credentials.'),
+          }),
         });
       },
     });

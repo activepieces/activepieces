@@ -135,7 +135,7 @@ export const eventDestinationsCollectionUtils = {
           `/v1/event-destinations/test`,
           request,
         ),
-      onError: () => undefined,
+      onError: (error) => mutationFeedback.markShown(error),
     });
   },
 
@@ -154,7 +154,7 @@ export const eventDestinationsCollectionUtils = {
             project.ownerId === currentUser?.id,
         );
         if (!personalProject) {
-          throw new Error(
+          throw mutationFeedback.userError(
             t('You need a personal project to generate the handler flow.'),
           );
         }

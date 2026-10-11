@@ -313,7 +313,7 @@ export const AppearanceSection = ({
                 </Badge>
               ) : (
                 <Button
-                  {...adminControl(AdminControl.PLAN_BANNER_OPEN)}
+                  {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
                   type="button"
                   size="sm"
                   variant="outline"

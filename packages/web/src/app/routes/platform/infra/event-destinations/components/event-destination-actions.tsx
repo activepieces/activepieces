@@ -25,7 +25,7 @@ const EventDestinationActions = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const deleteDestination = useAdminAction({
     verb: 'delete',
-    name: destination.url,
+    name: t('Destination'),
     run: () => eventDestinationsCollectionUtils.delete([destination.id]),
   });
 

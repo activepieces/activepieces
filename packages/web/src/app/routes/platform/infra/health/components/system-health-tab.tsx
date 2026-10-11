@@ -31,9 +31,6 @@ import { DailyHealthStrip } from './daily-health-strip';
 const HARDWARE_DOCS_LINK =
   'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications';
 
-const PRODUCTION_SETUP_LINK =
-  'https://www.activepieces.com/docs/install/configure-operate/production-setup#what-it-looks-like';
-
 // Matches UNKNOWN_VERSION in @activepieces/server-utils: the sentinel the backend reports when
 // it could not read its release from package.json. Not importable here (server-only package).
 const UNREADABLE_RELEASE_VERSION = '0.0.0';
@@ -185,15 +182,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
         <AlertDescription className="text-pretty">
           {t(
             'In production setups, we recommend a ratio of about 1 app instance to 10 workers.',
-          )}{' '}
-          <a
-            {...adminControl(AdminControl.HEALTH_PRODUCTION_SETUP_LINK)}
-            href={PRODUCTION_SETUP_LINK}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t('Learn more')}
-          </a>
+          )}
         </AlertDescription>
       </Alert>
       <HealthCard
