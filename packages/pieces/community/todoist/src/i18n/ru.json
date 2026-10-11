@@ -60,7 +60,7 @@
   "Extra details shown under the title. Markdown is supported.": "Дополнительные сведения под названием. Поддерживается Markdown.",
   "Names of personal or shared labels to add.": "Названия личных или общих меток для добавления.",
   "1 is normal, 4 is urgent; Todoist shows 4 as P1.": "1 — обычный, 4 — срочный; в Todoist 4 отображается как P1.",
-  "A date like 2026-12-31, a date and time, or words like 'every Friday'.": "Дата вида 2026-12-31, дата и время или слова вроде 'every Friday'.",
+  "YYYY-MM-DD or English words. Repeating dates work too.": "ГГГГ-ММ-ДД или английские слова. Повторяющиеся даты тоже работают.",
   "The task's ID, from a Create Task or Find Task step.": "ID задачи из шага «Создать задачу» или «Найти задачу».",
   "Fields left empty keep their current value.": "Пустые поля сохраняют текущее значение.",
   "Replaces the task's labels with these names.": "Заменяет метки задачи этими названиями.",

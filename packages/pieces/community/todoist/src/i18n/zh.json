@@ -261,7 +261,7 @@
   "Extra details shown under the title. Markdown is supported.": "显示在标题下方的额外详情。支持 Markdown。",
   "Names of personal or shared labels to add.": "要添加的个人或共享标签名称。",
   "1 is normal, 4 is urgent; Todoist shows 4 as P1.": "1 为普通，4 为紧急；Todoist 将 4 显示为 P1。",
-  "A date like 2026-12-31, a date and time, or words like 'every Friday'.": "日期（如 2026-12-31）、日期和时间，或 'every Friday' 之类的词语。",
+  "YYYY-MM-DD or English words. Repeating dates work too.": "YYYY-MM-DD 或英文词语。也支持重复日期。",
   "The task's ID, from a Create Task or Find Task step.": "任务 ID，来自 Create Task 或 Find Task 步骤。",
   "Fields left empty keep their current value.": "留空的字段保持当前值。",
   "Replaces the task's labels with these names.": "用这些名称替换任务的标签。",

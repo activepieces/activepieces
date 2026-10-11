@@ -261,7 +261,7 @@
   "Extra details shown under the title. Markdown is supported.": "Detalhes extras exibidos abaixo do título. Markdown é suportado.",
   "Names of personal or shared labels to add.": "Nomes de marcadores pessoais ou compartilhados a adicionar.",
   "1 is normal, 4 is urgent; Todoist shows 4 as P1.": "1 é normal, 4 é urgente; o Todoist mostra 4 como P1.",
-  "A date like 2026-12-31, a date and time, or words like 'every Friday'.": "Uma data como 2026-12-31, uma data e hora, ou palavras como 'every Friday'.",
+  "YYYY-MM-DD or English words. Repeating dates work too.": "AAAA-MM-DD ou palavras em inglês. Datas recorrentes também funcionam.",
   "The task's ID, from a Create Task or Find Task step.": "O ID da tarefa, de uma etapa Criar tarefa ou Procurar Tarefa.",
   "Fields left empty keep their current value.": "Campos deixados vazios mantêm o valor atual.",
   "Replaces the task's labels with these names.": "Substitui os marcadores da tarefa por estes nomes.",

@@ -261,7 +261,7 @@
   "Extra details shown under the title. Markdown is supported.": "Extra details onder de titel. Markdown wordt ondersteund.",
   "Names of personal or shared labels to add.": "Namen van persoonlijke of gedeelde labels om toe te voegen.",
   "1 is normal, 4 is urgent; Todoist shows 4 as P1.": "1 is normaal, 4 is urgent; Todoist toont 4 als P1.",
-  "A date like 2026-12-31, a date and time, or words like 'every Friday'.": "Een datum zoals 2026-12-31, een datum en tijd, of woorden zoals 'every Friday'.",
+  "YYYY-MM-DD or English words. Repeating dates work too.": "JJJJ-MM-DD of Engelse woorden. Terugkerende datums werken ook.",
   "The task's ID, from a Create Task or Find Task step.": "De ID van de taak, uit een stap Taak maken of Zoek Taak.",
   "Fields left empty keep their current value.": "Lege velden behouden hun huidige waarde.",
   "Replaces the task's labels with these names.": "Vervangt de labels van de taak door deze namen.",

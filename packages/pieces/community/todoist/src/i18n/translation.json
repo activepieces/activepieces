@@ -150,7 +150,7 @@
   "Extra details shown under the title. Markdown is supported.": "Extra details shown under the title. Markdown is supported.",
   "Names of personal or shared labels to add.": "Names of personal or shared labels to add.",
   "1 is normal, 4 is urgent; Todoist shows 4 as P1.": "1 is normal, 4 is urgent; Todoist shows 4 as P1.",
-  "A date like 2026-12-31, a date and time, or words like 'every Friday'.": "A date like 2026-12-31, a date and time, or words like 'every Friday'.",
+  "YYYY-MM-DD or English words. Repeating dates work too.": "YYYY-MM-DD or English words. Repeating dates work too.",
   "The task's ID, from a Create Task or Find Task step.": "The task's ID, from a Create Task or Find Task step.",
   "Fields left empty keep their current value.": "Fields left empty keep their current value.",
   "Replaces the task's labels with these names.": "Replaces the task's labels with these names.",
