@@ -83,7 +83,7 @@ export const AgentTable = ({
             <TableCell>
               <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span
-                  className="size-[7px] shrink-0 rounded-sm"
+                  className="size-[7px] shrink-0 rounded-xs"
                   style={{
                     backgroundColor: agent.projectIsPrivate
                       ? PRIVATE_DOT_COLOR

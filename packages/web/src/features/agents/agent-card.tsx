@@ -28,7 +28,7 @@ const AgentChip = ({
   <span className="flex items-center gap-[6px] rounded-full border border-gray-6 px-[9px] py-[3px] text-xs leading-4">
     {dotColor && (
       <span
-        className="size-[7px] shrink-0 rounded-sm"
+        className="size-[7px] shrink-0 rounded-xs"
         style={{ backgroundColor: dotColor }}
       />
     )}
