@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { contactFlags } from '../common/contact-flags';
 import { brevoProps } from '../common/props';
 
 export const unsubscribeContact = createAction({
@@ -63,15 +64,11 @@ export const unsubscribeContact = createAction({
 			.map((listId) => Number(listId))
 			.filter((listId) => Number.isFinite(listId));
 
-		if (unsubscribe_email !== true && unsubscribe_sms !== true && unlinkListIds.length === 0) {
-			throw new Error('Tick Unsubscribe From Email or Unsubscribe From SMS, or pick a list to remove.');
-		}
-
-		const body = {
-			emailBlacklisted: unsubscribe_email === true ? true : undefined,
-			smsBlacklisted: unsubscribe_sms === true ? true : undefined,
-			unlinkListIds: unlinkListIds.length > 0 ? unlinkListIds : undefined,
-		};
+		const body = contactFlags.unsubscribeBody({
+			unsubscribeEmail: unsubscribe_email,
+			unsubscribeSms: unsubscribe_sms,
+			unlinkListIds,
+		});
 
 		await brevoCommon.apiCall({
 			apiKey: context.auth.secret_text,

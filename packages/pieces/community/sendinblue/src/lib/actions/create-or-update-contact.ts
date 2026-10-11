@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { contactFlags } from '../common/contact-flags';
 import { brevoProps } from '../common/props';
 import { createOrUpdateContactActionOutputSchema } from '../output-schemas';
 
@@ -101,8 +102,8 @@ export const createOrUpdateContact = createAction({
 			email,
 			ext_id,
 			attributes: brevoCommon.isEmptyObject(attributes) ? undefined : attributes,
-			emailBlacklisted: email_blacklisted === true ? true : undefined,
-			smsBlacklisted: sms_blacklisted === true ? true : undefined,
+			emailBlacklisted: contactFlags.blacklistFlag(email_blacklisted),
+			smsBlacklisted: contactFlags.blacklistFlag(sms_blacklisted),
 			listIds: listIds.length > 0 ? listIds : undefined,
 			smtpBlacklistSender: blockedSenders.length > 0 ? blockedSenders : undefined,
 			updateEnabled: true,
