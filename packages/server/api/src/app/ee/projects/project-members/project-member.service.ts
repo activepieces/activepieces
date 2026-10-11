@@ -136,12 +136,12 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             return paginationHelper.createPage<ProjectMemberWithUser>(members, cursor)
         }
         const memberUserIds = members
-            .filter(isGuardedMember)
+            .filter((member) => isGuardedUser(member.user))
             .map((member) => member.userId)
         const projectCounts = await countProjectsOfUsers({ userIds: memberUserIds, platformId })
         const enrichedData = members.map((member) => ({
             ...member,
-            isLastProject: isGuardedMember(member) && (projectCounts.get(member.userId) ?? 0) <= 1,
+            isLastProject: isGuardedUser(member.user) && (projectCounts.get(member.userId) ?? 0) <= 1,
         }))
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
@@ -228,7 +228,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         })
         return members.map((member) => member.projectId)
     },
-    async removeFromProject({ projectId, memberId, keepsLastProject }: RemoveFromProjectParams): Promise<void> {
+    async removeFromProject({ projectId, memberId, enforceLastProjectGuard }: RemoveFromProjectParams): Promise<void> {
         const member = await repo().findOneBy({ projectId, id: memberId })
         if (isNil(member)) {
             return
@@ -241,7 +241,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
                 if (isNil(currentMember)) {
                     return
                 }
-                if (keepsLastProject) {
+                if (enforceLastProjectGuard) {
                     await assertMemberKeepsAProject({ member: currentMember, log })
                 }
                 await repo().delete({ projectId, id: memberId })
@@ -309,13 +309,13 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function isGuardedMember(member: ProjectMemberWithUser): boolean {
-    return member.user.platformRole === PlatformRole.MEMBER && member.user.status === UserStatus.ACTIVE
+function isGuardedUser({ platformRole, status }: { platformRole: PlatformRole, status: UserStatus }): boolean {
+    return platformRole === PlatformRole.MEMBER && status === UserStatus.ACTIVE
 }
 
 async function assertMemberKeepsAProject({ member, log }: AssertMemberKeepsAProjectParams): Promise<void> {
     const user = await userService(log).getOneOrFail({ id: member.userId })
-    if (user.platformRole !== PlatformRole.MEMBER || user.status !== UserStatus.ACTIVE) {
+    if (!isGuardedUser(user)) {
         return
     }
     const projectCounts = await countProjectsOfUsers({ userIds: [member.userId], platformId: member.platformId })
@@ -390,7 +390,7 @@ type AddToTeamProjectsParams = {
 type RemoveFromProjectParams = {
     projectId: ProjectId
     memberId: ProjectMemberId
-    keepsLastProject: boolean
+    enforceLastProjectGuard: boolean
 }
 
 type CountProjectsOfUsersParams = {
