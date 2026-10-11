@@ -3327,5 +3327,8 @@
   "{count, plural, =1 {# project} other {# projects}}": "{count, plural, =1 {# project} other {# projects}}",
   "To confirm, type": "To confirm, type",
   "Reset {name}?": "Reset {name}?",
-  "Delete key": "Delete key"
+  "Delete key": "Delete key",
+  "piece set": "piece set",
+  "Include {name}?": "Include {name}?",
+  "Delete piece set": "Delete piece set"
 }

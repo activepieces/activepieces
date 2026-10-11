@@ -6,14 +6,14 @@ import {
 import { PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminFeedback, adminLayout } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormField } from '@/components/ui/form';
 import {
@@ -100,8 +100,8 @@ function PieceActionsAndTriggersSheetBody({
         </div>
       </SheetHeader>
       {isLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-gray-11" />
+        <div className="flex flex-col gap-3 px-4">
+          <SkeletonList numberOfItems={6} className="h-10" />
         </div>
       ) : !pieceModel ? (
         <DataFetchErrorState
@@ -161,7 +161,15 @@ function PieceActionsAndTriggersEditor({
   const isDirty = form.formState.isDirty;
 
   const updateAndClose = () =>
-    updatePieceSet({ id: pieceSet.id, request }, { onSuccess: onClose });
+    updatePieceSet(
+      { id: pieceSet.id, request },
+      {
+        onSuccess: () => {
+          adminFeedback.done({ verb: 'save', name: '' });
+          onClose();
+        },
+      },
+    );
 
   const save = () => {
     if (

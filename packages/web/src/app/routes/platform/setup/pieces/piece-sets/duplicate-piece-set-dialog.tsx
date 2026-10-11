@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetKeys, pieceSetsApi } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type DuplicatePieceSetDialogProps = {
@@ -47,8 +47,15 @@ const DuplicatePieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: duplicateSet, isPending } =
-    pieceSetMutations.useDuplicatePieceSet();
+  const { mutate: duplicateSet, isPending } = useAdminAction<{
+    id: string;
+    name: string;
+  }>({
+    verb: 'duplicate',
+    name: sourceName,
+    run: ({ id, name }) => pieceSetsApi.duplicate(id, { name }),
+    invalidate: [pieceSetKeys.all],
+  });
 
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {
     duplicateSet(

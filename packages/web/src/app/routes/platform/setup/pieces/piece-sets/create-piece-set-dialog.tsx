@@ -1,4 +1,4 @@
-import { CreatePieceSetRequestBody } from '@activepieces/shared';
+import { CreatePieceSetRequestBody, PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetKeys, pieceSetsApi } from '@/features/piece-sets';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -52,8 +52,15 @@ const CreatePieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: createSet, isPending } =
-    pieceSetMutations.useCreatePieceSet();
+  const { mutate: createSet, isPending } = useAdminAction<
+    CreatePieceSetRequestBody,
+    PieceSet
+  >({
+    verb: 'create',
+    name: (request) => request.name,
+    run: (request) => pieceSetsApi.create(request),
+    invalidate: [pieceSetKeys.all],
+  });
 
   const handleSubmit = (data: FormValues) => {
     createSet(data, {

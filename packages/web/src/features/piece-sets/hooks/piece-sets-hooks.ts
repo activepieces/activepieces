@@ -1,22 +1,22 @@
 import {
-  CreatePieceSetRequestBody,
   PieceSet,
   pieceSetConfigUtil,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
 import {
+  QueryClient,
   useMutation,
   useMutationState,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { pieceCacheUtils } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { pieceSetsApi } from '../api/piece-sets-api';
 
@@ -78,20 +78,6 @@ export const pieceSetQueries = {
 };
 
 export const pieceSetMutations = {
-  useCreatePieceSet: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: (request: CreatePieceSetRequestBody) =>
-        pieceSetsApi.create(request),
-      onSuccess: () => {
-        toast.success(t('Piece set created'));
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
-      },
-      onError: () => {
-        toast.error(t('Failed to create piece set. Please try again.'));
-      },
-    });
-  },
   useUpdatePieceSet: () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -110,87 +96,31 @@ export const pieceSetMutations = {
           queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
           queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) }),
         ]);
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
-      onError: () => {
-        toast.error(t('Failed to save changes. Please try again.'));
-      },
-    });
-  },
-  useDeletePieceSet: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: (id: string) => pieceSetsApi.delete(id),
-      onSuccess: () => {
-        toast.success(t('Piece set deleted'));
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
-        projectCollectionUtils.refetchProjects();
-      },
-      onError: () => {
-        toast.error(t('Failed to delete piece set. Please try again.'));
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
     });
   },
-  useDuplicatePieceSet: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: ({ id, name }: { id: string; name: string }) =>
-        pieceSetsApi.duplicate(id, { name }),
-      onSuccess: () => {
-        toast.success(t('Piece set duplicated'));
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
-      },
-    });
-  },
-  useAssignProjects: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: ({ id, projectIds }: { id: string; projectIds: string[] }) =>
-        pieceSetsApi.assignProjects(id, { projectIds }),
-      onSuccess: (_, { id }) => {
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) });
-        queryClient.invalidateQueries({ queryKey: ['projects-for-platforms'] });
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
-        projectCollectionUtils.refetchProjects();
-      },
-    });
-  },
-  useRemoveProject: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: ({ id, projectId }: { id: string; projectId: string }) =>
-        pieceSetsApi.removeProject(id, projectId),
-      onSuccess: (_, { id }) => {
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) });
-        queryClient.invalidateQueries({ queryKey: ['projects-for-platforms'] });
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
-        projectCollectionUtils.refetchProjects();
-      },
-    });
-  },
-  useBulkRemoveProjects: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: ({ id, projectIds }: { id: string; projectIds: string[] }) =>
-        Promise.all(
-          projectIds.map((projectId) =>
-            pieceSetsApi.removeProject(id, projectId),
-          ),
-        ),
-      onSuccess: (_, { id }) => {
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) });
-        queryClient.invalidateQueries({ queryKey: ['projects-for-platforms'] });
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
-        projectCollectionUtils.refetchProjects();
-      },
-    });
+};
+
+export const pieceSetCacheUtils = {
+  refreshAfterProjectChange: async ({
+    queryClient,
+    id,
+  }: {
+    queryClient: QueryClient;
+    id?: string;
+  }) => {
+    pieceCacheUtils.invalidatePieceCaches(queryClient);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
+      id === undefined
+        ? Promise.resolve()
+        : queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) }),
+      queryClient.invalidateQueries({ queryKey: ['projects-for-platforms'] }),
+      projectCollectionUtils.refetchProjects(),
+    ]);
   },
 };
 

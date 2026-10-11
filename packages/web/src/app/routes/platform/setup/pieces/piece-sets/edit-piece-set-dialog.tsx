@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminFeedback, adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -73,7 +73,12 @@ const EditPieceSetForm = ({
           key: key || undefined,
         },
       },
-      { onSuccess: () => onOpenChange(false) },
+      {
+        onSuccess: () => {
+          adminFeedback.done({ verb: 'update', name });
+          onOpenChange(false);
+        },
+      },
     );
   };
 

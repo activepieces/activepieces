@@ -78,24 +78,6 @@
       "legacy-confirm",
       "raw-toast"
     ],
-    "src/app/routes/platform/setup/pieces/piece-sets/piece-actions-and-triggers-sheet.tsx": [
-      "spinner-loading"
-    ],
-    "src/app/routes/platform/setup/pieces/piece-sets/piece-set-details-page.tsx": [
-      "spinner-loading"
-    ],
-    "src/app/routes/platform/setup/pieces/piece-sets/piece-set-pieces-table.tsx": [
-      "raw-toast"
-    ],
-    "src/app/routes/platform/setup/pieces/piece-sets/piece-set-projects-dialog.tsx": [
-      "raw-toast"
-    ],
-    "src/app/routes/platform/setup/pieces/piece-sets/piece-sets-tab.tsx": [
-      "legacy-confirm"
-    ],
-    "src/app/routes/platform/setup/pieces/piece-sets/required-actions-tab.tsx": [
-      "spinner-loading"
-    ],
     "src/app/routes/platform/setup/templates/index.tsx": [
       "legacy-confirm",
       "raw-toast"
