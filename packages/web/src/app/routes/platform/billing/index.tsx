@@ -43,10 +43,7 @@ import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => (
         <AdminPage>
           <AdminPageHeader
@@ -66,10 +63,7 @@ export function BillingPlanTab() {
 
 export function BillingUsageTab() {
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')}>
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
     </BillingPageShell>
   );

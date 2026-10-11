@@ -257,15 +257,11 @@ const GlobalConnectionsTable = () => {
                 buttonText={t('Delete')}
                 controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
                 mutationFn={async () => {
-                  try {
-                    await bulkDeleteGlobalConnections.mutateAsync(
-                      selectedRows.map((row) => row.id),
-                    );
-                    resetSelection();
-                    setSelectedRows([]);
-                  } catch (error) {
-                    console.error('Error deleting connections:', error);
-                  }
+                  await bulkDeleteGlobalConnections.mutateAsync(
+                    selectedRows.map((row) => row.id),
+                  );
+                  resetSelection();
+                  setSelectedRows([]);
                 }}
               >
                 {selectedRows.length > 0 && (

@@ -268,7 +268,7 @@ export default function ProjectsPage() {
                   const deletableProjects = selectedRows.filter(
                     (row) => row.id !== currentProject?.id,
                   );
-                  projectCollectionUtils.delete(
+                  await projectCollectionUtils.delete(
                     deletableProjects.map((row) => row.id),
                   );
                   resetSelection();

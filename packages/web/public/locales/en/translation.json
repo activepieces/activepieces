@@ -1310,7 +1310,6 @@
   "Connections created in any project on this platform will appear here.": "Connections created in any project on this platform will appear here.",
   "Global": "Global",
   "{count, plural, =1 {1 project} other {# projects}}": "{count, plural, =1 {1 project} other {# projects}}",
-  "configurations": "configurations",
   "Failed to save changes. Please try again.": "Failed to save changes. Please try again.",
   "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.": "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.",
   "Limits": "Limits",
@@ -3281,5 +3280,7 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "An unexpected error occurred. Please try again in a moment.": "An unexpected error occurred. Please try again in a moment.",
+  "billing information": "billing information"
 }

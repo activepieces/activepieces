@@ -59,7 +59,7 @@ export const PieceSetsTab = () => {
     isError,
     refetch,
   } = pieceSetQueries.usePieceSets({ cursor, limit, name });
-  const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
+  const { mutateAsync: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
 
@@ -154,9 +154,7 @@ export const PieceSetsTab = () => {
               message={t(
                 'Projects assigned to this set will be reassigned to the default set.',
               )}
-              mutationFn={async () => {
-                deleteSet(row.original.id);
-              }}
+              mutationFn={() => deleteSet(row.original.id)}
             >
               <Button
                 {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}

@@ -88,11 +88,11 @@ export default function UsersPage() {
   const isLoading = usersLoading || invitationsLoading;
   const isError = usersError || invitationsError;
 
-  const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
+  const { mutateAsync: deleteUser } = platformUserMutations.useDeleteUser({
     onSuccess: refetch,
   });
 
-  const { mutate: deleteInvitation } =
+  const { mutateAsync: deleteInvitation } =
     platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
 
   const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
@@ -105,11 +105,11 @@ export default function UsersPage() {
       },
     });
 
-  const handleDelete = (id: string, isInvitation: boolean) => {
+  const handleDelete = async (id: string, isInvitation: boolean) => {
     if (isInvitation) {
-      deleteInvitation(id);
+      await deleteInvitation(id);
     } else {
-      deleteUser(id);
+      await deleteUser(id);
     }
   };
 

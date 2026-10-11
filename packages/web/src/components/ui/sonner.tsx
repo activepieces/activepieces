@@ -1,5 +1,6 @@
 'use client';
 
+import { t } from 'i18next';
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -16,8 +17,8 @@ export const INTERNAL_ERROR_MESSAGE =
 
 export function internalErrorToast() {
   console.error('internalErrorToast', INTERNAL_ERROR_MESSAGE);
-  toast.error('Something went wrong', {
-    description: INTERNAL_ERROR_MESSAGE,
+  toast.error(t('Something went wrong'), {
+    description: t(INTERNAL_ERROR_MESSAGE),
     duration: 3000,
   });
 }
