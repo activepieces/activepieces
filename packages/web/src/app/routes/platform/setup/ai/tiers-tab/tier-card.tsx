@@ -267,7 +267,7 @@ export function TierCard({
 
       <div className="flex flex-col gap-1 border-t border-gray-6/60 px-3 pb-3 pt-3">
         <div className="flex items-center gap-1.5 px-2 pb-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+          <span className="text-xs font-medium text-gray-11">
             {t('Model & fallbacks')}
           </span>
           <Tooltip>
