@@ -588,7 +588,47 @@ export const contactTagTriggerOutputSchema: OutputSchema = {
 	],
 };
 
-export const companyTriggerOutputSchema: OutputSchema = { fields: companyFields };
+const ISO = 'ISO 8601 date and time.';
+
+const companyWebhookFields: OutputSchema['fields'] = [
+	...companyFields
+		.filter((field) => field.key !== 'tags')
+		.map((field) => (field.description === UNIX ? { ...field, description: ISO } : field)),
+	{ key: 'tag_ids', label: 'Tag IDs' },
+];
+
+const ticketWebhookFields: OutputSchema['fields'] = [
+	...ticketFields
+		.filter((field) => !['ticket_state', 'ticket_state_internal_label', 'ticket_state_external_label'].includes(field.key))
+		.flatMap((field) =>
+			field.key === 'category'
+				? [
+						field,
+						{
+							key: 'ticket_state',
+							label: 'State',
+							children: [
+								{ key: 'id', label: 'State ID' },
+								{ key: 'category', label: 'State Category', description: 'submitted, in_progress, waiting_on_customer or resolved.' },
+								{ key: 'internal_label', label: 'Internal Label' },
+								{ key: 'external_label', label: 'Customer Label' },
+							],
+						},
+					]
+				: [field],
+		),
+	{ key: 'previous_ticket_state_id', label: 'Previous State ID' },
+];
+
+export const companyTriggerOutputSchema: OutputSchema = { fields: companyWebhookFields };
+
+export const conversationPartTaggedTriggerOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'created_at', label: 'Tagged At', description: UNIX },
+		{ key: 'tag', label: 'Tag', children: tagFields },
+		{ key: 'conversation', label: 'Conversation', children: conversationFields },
+	],
+};
 
 export const conversationTriggerOutputSchema: OutputSchema = { fields: conversationFields };
 
@@ -603,4 +643,4 @@ export const conversationEnvelopeTriggerOutputSchema: OutputSchema = {
 	]),
 };
 
-export const ticketTriggerOutputSchema: OutputSchema = { fields: ticketFields };
+export const ticketTriggerOutputSchema: OutputSchema = { fields: ticketWebhookFields };

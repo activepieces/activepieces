@@ -6,6 +6,7 @@ import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
 import { tagIdProp } from '../common/props';
 import { CONVERSATION_PART_TAG_SAMPLE } from '../common/webhook-samples';
+import { conversationPartTaggedTriggerOutputSchema } from '../output-schemas';
 
 export const conversationPartTagged = createTrigger({
   name: 'conversationPartTagged',
@@ -18,6 +19,7 @@ export const conversationPartTagged = createTrigger({
   props: {
     tagId: tagIdProp('Tag', false),
   },
+  outputSchema: conversationPartTaggedTriggerOutputSchema,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

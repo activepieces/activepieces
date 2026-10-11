@@ -63,7 +63,13 @@ export const newTicketTrigger = createTrigger({
 			'date time': null,
 			files: [],
 		},
-		ticket_state: 'in_progress',
+		ticket_state: {
+			type: 'ticket_state',
+			id: '9744094',
+			category: 'in_progress',
+			internal_label: 'In progress',
+			external_label: 'In progress',
+		},
 		ticket_type: {
 			type: 'ticket_type',
 			id: '1',
