@@ -33,7 +33,7 @@ export const googleTasksAddNewTaskAction = createAction({
         ? TaskStatus.COMPLETED
         : TaskStatus.NEEDS_ACTION,
       title: propsValue.title,
-      completed: propsValue.completed ? new Date().toISOString() : '',
+      completed: propsValue.completed ? new Date().toISOString() : undefined,
       notes: propsValue.notes,
       due: propsValue.due
         ? `${new Date(propsValue.due).toISOString().split('T')[0]}T00:00:00Z`
