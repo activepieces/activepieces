@@ -196,25 +196,41 @@ ALTER TABLE foo VALIDATE CONSTRAINT fk_foo;
 
 **CHECK:** same `NOT VALID` → `VALIDATE` pattern as FK.
 
-**`NOT NULL` on existing column** (PG 12+). Step 4's blocking migration MUST call the guard first, otherwise a skip-release upgrade hits unfilled nulls, Postgres raises, and boot catchup can't help:
+**`NOT NULL` on existing column** (PG 12+). Three migrations across two releases. The background migration MUST do both the backfill AND the `VALIDATE CONSTRAINT` in one `up()` — splitting them lets Step 3's blocking `SET NOT NULL` boot against a non-validated CHECK, which forces Postgres into a full-table scan under ACCESS EXCLUSIVE. That reintroduces the exact boot stall this whole runner exists to prevent.
+
+Step 1 — blocking, release N:
+```sql
+ALTER TABLE foo ADD CONSTRAINT foo_col_not_null CHECK (col IS NOT NULL) NOT VALID;
+```
+
+Step 2 — background, release N (backfill + validate, atomic from the guard's perspective):
 ```ts
-// Step 4 — blocking, next release
+public async up(q: QueryRunner): Promise<void> {
+    while (true) {
+        const rows = await q.query(`
+            WITH updated AS (
+                UPDATE foo SET col = <value>
+                 WHERE id IN (SELECT id FROM foo WHERE col IS NULL LIMIT 1000)
+                RETURNING 1
+            )
+            SELECT count(*)::int AS updated_count FROM updated
+        `) as [{ updated_count: number }]
+        if (rows[0].updated_count === 0) break
+    }
+    await q.query(`ALTER TABLE foo VALIDATE CONSTRAINT foo_col_not_null`)
+}
+```
+
+Step 3 — blocking, release N+1 (guard implies both backfill and validate are done, so `SET NOT NULL` is metadata-only):
+```ts
 public async up(q: QueryRunner): Promise<void> {
     await migrationHelpers.assertBackgroundMigrationComplete({
         queryRunner: q,
-        migration: BackfillFooColNulls, // the backfill from Step 2
+        migration: BackfillAndValidateFooColNulls, // the single background migration above
     })
     await q.query(`ALTER TABLE foo ALTER COLUMN col SET NOT NULL`)
     await q.query(`ALTER TABLE foo DROP CONSTRAINT foo_col_not_null`)
 }
-```
-```sql
--- Step 1: blocking
-ALTER TABLE foo ADD CONSTRAINT foo_col_not_null CHECK (col IS NOT NULL) NOT VALID;
--- Step 2: background — backfill nulls (see chunking above)
--- Step 3: background
-ALTER TABLE foo VALIDATE CONSTRAINT foo_col_not_null;
--- Step 4: blocking, next release — see TS block above; PG 12+ skips the scan because the CHECK is VALID
 ```
 
 ### Rollback
