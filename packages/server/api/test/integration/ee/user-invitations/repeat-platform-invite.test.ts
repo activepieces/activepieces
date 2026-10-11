@@ -127,6 +127,20 @@ describe('Re-inviting someone who already accepted', () => {
         expect(invitations[0].platformRole).toBe(PlatformRole.ADMIN)
     })
 
+    it('renews the seat reservation when re-sent unchanged', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+        const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
+        await databaseConnection().getRepository('user_invitation').update({ id: invitation.id }, { updated: sixDaysAgo })
+
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(Date.now() - new Date(after.updated).getTime()).toBeLessThan(60 * 1000)
+    })
+
     it('gives a fresh link when re-sent to someone who clicked it but never signed up', async () => {
         const { platformId, ownerToken } = await setupPlatform()
         const email = faker.internet.email().toLowerCase()
@@ -194,7 +208,7 @@ describe('Removing a platform invite from a project', () => {
         await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
         const [invitation] = await platformInvitesOf({ email, platformId })
 
-        const response = await removeProject({ token: ownerToken, invitationId: invitation.id })
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
         const [after] = await platformInvitesOf({ email, platformId })
@@ -202,6 +216,22 @@ describe('Removing a platform invite from a project', () => {
         expect(after.platformRole).toBe(PlatformRole.MEMBER)
         expect(after.projectId).toBeNull()
         expect(after.projectRoleId).toBeNull()
+    })
+
+    it('leaves the invite alone when it was re-sent for another project since the page loaded', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const otherProject = createMockProject({ platformId, ownerId: (await ownerOf({ platformId })), type: ProjectType.TEAM })
+        await databaseConnection().getRepository('project').save(otherProject)
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId: otherProject.id, projectRole: DefaultProjectRole.VIEWER })
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBe(otherProject.id)
     })
 
     it('is refused to a member who is not a platform admin', async () => {
@@ -212,7 +242,7 @@ describe('Removing a platform invite from a project', () => {
         const { mockUser } = await mockBasicUser({ user: { platformId, platformRole: PlatformRole.MEMBER } })
         const memberToken = await generateMockToken({ id: mockUser.id, type: PrincipalType.USER, platform: { id: platformId } })
 
-        const response = await removeProject({ token: memberToken, invitationId: invitation.id })
+        const response = await removeProject({ token: memberToken, invitationId: invitation.id, projectId })
 
         expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         const [after] = await platformInvitesOf({ email, platformId })
@@ -225,7 +255,7 @@ describe('Removing a platform invite from a project', () => {
         await inviteProject({ token: ownerToken, email, projectId, projectRole: DefaultProjectRole.VIEWER })
         const [invitation] = await invitesOf({ email, platformId })
 
-        const response = await removeProject({ token: ownerToken, invitationId: invitation.id })
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
 
         expect(response?.json().code).toBe(ErrorCode.VALIDATION)
     })
@@ -237,7 +267,7 @@ describe('Removing a platform invite from a project', () => {
         await invitePlatform({ token: second.ownerToken, email, platformRole: PlatformRole.MEMBER, projectId: second.projectId, projectRole: DefaultProjectRole.EDITOR })
         const [invitation] = await platformInvitesOf({ email, platformId: second.platformId })
 
-        const response = await removeProject({ token: first.ownerToken, invitationId: invitation.id })
+        const response = await removeProject({ token: first.ownerToken, invitationId: invitation.id, projectId: second.projectId })
 
         expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         const [after] = await platformInvitesOf({ email, platformId: second.platformId })
@@ -338,10 +368,11 @@ async function ownerOf({ platformId }: { platformId: string }) {
     return platform.ownerId
 }
 
-async function removeProject({ token, invitationId }: { token: string, invitationId: string }) {
+async function removeProject({ token, invitationId, projectId }: { token: string, invitationId: string, projectId: string }) {
     return app?.inject({
         method: 'POST',
         url: `/api/v1/user-invitations/${invitationId}/remove-project`,
         headers: { authorization: `Bearer ${token}` },
+        body: { projectId },
     })
 }

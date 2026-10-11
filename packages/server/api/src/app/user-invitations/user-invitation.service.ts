@@ -90,7 +90,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
         await repo(entityManager).update({ type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
     },
-    async removeProjectFromPlatformInvite({ id, platformId }: PlatformAndIdParams): Promise<UserInvitation> {
+    async removeProjectFromPlatformInvite({ id, platformId, projectId }: RemoveProjectFromPlatformInviteParams): Promise<UserInvitation> {
         const invitation = await this.getOneOrThrow({ id, platformId })
         if (invitation.type !== InvitationType.PLATFORM) {
             throw new ActivepiecesError({
@@ -100,7 +100,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await repo().update({ id, platformId }, { projectId: null, projectRoleId: null })
+        await repo().update({ id, platformId, type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
         return this.getOneOrThrow({ id, platformId })
     },
     async detachProjectRoleFromPlatformInvites({ projectRoleId, entityManager }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
@@ -134,6 +134,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     id: replaced.id,
                     ...record,
                     status: replaced.wasAccepted ? InvitationStatus.ACCEPTED : status,
+                    updated: dayjs().toISOString(),
                 })
                 return this.getOneOrThrow({ id: replaced.id, platformId, entityManager })
             }
@@ -537,6 +538,12 @@ type PlatformAndIdParams = {
     id: string
     platformId: string
     entityManager?: EntityManager
+}
+
+type RemoveProjectFromPlatformInviteParams = {
+    id: string
+    platformId: string
+    projectId: string
 }
 export type UserInvitationToken = {
     id: string

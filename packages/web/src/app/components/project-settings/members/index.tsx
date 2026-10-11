@@ -204,7 +204,11 @@ export const MembersSettings = () => {
         )}
         emptyStateIcon={<Users className="size-14" />}
       />
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
+      <InviteUserDialog
+        open={inviteOpen}
+        setOpen={setInviteOpen}
+        onInviteSuccess={refetch}
+      />
     </div>
   );
 };
