@@ -234,6 +234,19 @@ describe('requests', () => {
     expect(JSON.stringify(result)).not.toContain('secret');
   });
 
+  test.each([null, {}])(
+    'get_request fails clearly when Deepgram returns %j for an unknown ID',
+    async (body) => {
+      stubFetch(() => ({ body }));
+      await expect(
+        runAction({
+          action: getRequestAction,
+          propsValue: { project: 'p-1', requestId: 'missing-1' },
+        })
+      ).rejects.toThrow('Deepgram has no request with ID missing-1');
+    }
+  );
+
   test('get_request also reads the documented wrapped row', async () => {
     stubFetch(() => ({ body: { request: requestRow } }));
     const result = await runAction({

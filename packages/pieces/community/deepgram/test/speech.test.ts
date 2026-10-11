@@ -167,8 +167,8 @@ describe('speech errors', () => {
       code: 'INVALID_QUERY_PARAMETER',
       requestId: 'req-42',
     });
-    expect(String(Reflect.get(Object(error), 'message'))).toContain(
-      'Unsupported encoding.'
-    );
+    const message = String(Reflect.get(Object(error), 'message'));
+    expect(message).toContain('Unsupported encoding.');
+    expect(message).toContain('Deepgram request ID: req-42.');
   });
 });

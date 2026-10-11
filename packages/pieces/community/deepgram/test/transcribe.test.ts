@@ -347,7 +347,7 @@ describe('create_transcription_callback', () => {
       },
     });
     expect(seen[0].url).toBe(
-      'https://api.deepgram.com/v1/listen?model=nova&callback=https%3A%2F%2Fu%3Asecret%40hooks.example.com%2Fcb&callback_method=PUT&language=en'
+      'https://api.deepgram.com/v1/listen?model=nova&callback=https%3A%2F%2Fu%3Asecret%40hooks.example.com%2Fcb&callback_method=put&language=en'
     );
     expect(result).toEqual({
       requestId: 'cb-1',

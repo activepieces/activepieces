@@ -66,9 +66,12 @@ export async function getRequest({
     operation: 'get the request',
   });
   const row = response.body?.request ?? response.body;
-  return deepgramReports.flattenRequest(
-    row && row.request_id ? row : { request_id: requestId }
-  );
+  if (!row || !row.request_id) {
+    throw new Error(
+      `Deepgram has no request with ID ${requestId} in this project. Check the request ID and project; a request made in the last few minutes may not be listed yet.`
+    );
+  }
+  return deepgramReports.flattenRequest(row);
 }
 
 export type GetRequestInput = {

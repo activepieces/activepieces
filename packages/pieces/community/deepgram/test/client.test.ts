@@ -70,7 +70,7 @@ describe('deepgramClient.request', () => {
     expect(error).toBeInstanceOf(DeepgramApiError);
     const message = String(Reflect.get(Object(error), 'message'));
     expect(message).toBe(
-      'Deepgram could not do x (HTTP 400 Bad Request): No such model/version/tier combination found.'
+      'Deepgram could not do x (HTTP 400 Bad Request): No such model/version/tier combination found. Deepgram request ID: r-1.'
     );
     expect(Reflect.get(Object(error), 'requestId')).toBe('r-1');
     expect(Reflect.get(Object(error), 'body')).toBeUndefined();

@@ -44,11 +44,16 @@ export class DeepgramApiError extends Error {
     ];
     const detail = vendor ? `: ${vendor}` : '.';
     const help = hint ?? statusHint(status);
-    super(`${parts[0]}${detail}${help ? ` ${help}` : ''}`);
+    const requestId = requestIdOf(responseBody);
+    super(
+      `${parts[0]}${detail}${help ? ` ${help}` : ''}${
+        requestId ? ` Deepgram request ID: ${requestId}.` : ''
+      }`
+    );
     this.name = 'DeepgramApiError';
     this.status = status;
     this.code = code;
-    this.requestId = requestIdOf(responseBody);
+    this.requestId = requestId;
     this.responseBody = responseBody;
   }
 }

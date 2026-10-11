@@ -113,7 +113,7 @@ export const createTranscriptionCallbackAction = createAction({
       query: {
         model,
         callback: callbackUrl,
-        callback_method: callbackMethod,
+        callback_method: callbackMethod?.toLowerCase(),
         language,
         smart_format: props.smartFormat === true ? 'true' : undefined,
         diarize_model: props.diarize === true ? 'latest' : undefined,

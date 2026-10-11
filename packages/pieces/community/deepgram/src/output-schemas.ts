@@ -73,6 +73,7 @@ export const listProjectsOutputSchema: OutputSchema = {
           label: 'Model Improvement Opt-Out',
           format: 'boolean',
         },
+        { key: 'allowed_providers', label: 'Allowed Providers' },
       ],
     },
   ],
