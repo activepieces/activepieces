@@ -1,4 +1,4 @@
-import { isNil, Permission } from '@activepieces/core-utils'
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils'
 import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -196,10 +196,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 const validCount = allSteps.filter(s => s.valid).length
                 const invalidStepList = allSteps.filter(s => !s.valid)
                 const invalidSteps = invalidStepList.map(s => s.name)
-                const describedInvalidSteps = await Promise.all(invalidStepList.map(async (step) => describeInvalidStep({
-                    name: step.name,
-                    reasons: await flowVersionValidationUtil(log).invalidPieceInputs({ platformId, step }),
-                })))
+                const describedInvalidSteps = await Promise.all(invalidStepList.map(async (step) => {
+                    const { data: reasons } = await tryCatch(() => flowVersionValidationUtil(log).invalidPieceInputs({ platformId, step }))
+                    return describeInvalidStep({ name: step.name, reasons: reasons ?? [] })
+                }))
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
