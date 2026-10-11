@@ -77,8 +77,8 @@ function summarizeComponent(c: { name: string, displayName: string, description:
     }
 }
 
-function detailOnlyFor({ components, recommended }: { components: ComponentSummary[], recommended: string[] }): Partial<ComponentSummary>[] {
-    if (recommended.length === 0) {
+function detailOnlyFor({ components, recommended }: { components: ComponentSummary[], recommended: string[] | undefined }): Partial<ComponentSummary>[] {
+    if (isNil(recommended)) {
         return components
     }
     return components.map((component) => recommended.includes(component.name) ? component : { name: component.name, displayName: component.displayName })
@@ -104,8 +104,8 @@ async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }:
         }
         const actions = Object.values(piece.actions).map(summarizeComponent)
         const triggers = Object.values(piece.triggers).map(summarizeComponent)
-        const recommendedActions = forIntent ? mcpUtils.rankActionsByIntent({ actions, forIntent }) : []
-        const recommendedTriggers = forIntent ? mcpUtils.rankActionsByIntent({ actions: triggers, forIntent }) : []
+        const recommendedActions = isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions, forIntent })
+        const recommendedTriggers = isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions: triggers, forIntent })
         return {
             name: piece.name,
             found: true as const,
@@ -113,7 +113,7 @@ async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }:
             description: piece.description,
             actions: detailOnlyFor({ components: actions, recommended: recommendedActions }),
             triggers: detailOnlyFor({ components: triggers, recommended: recommendedTriggers }),
-            ...(recommendedActions.length > 0 && { recommendedActions }),
+            ...(!isNil(recommendedActions) && recommendedActions.length > 0 && { recommendedActions }),
         }
     }))
 

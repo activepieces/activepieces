@@ -2529,8 +2529,8 @@ describe('MCP Tools integration', () => {
     it('93. ap_research_pieces — with an intent, only the matching actions and triggers carry their full description', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
-
-        const mailPiece = createMockPieceMetadata({
+        const component = ({ name, displayName, description, aiDescription }: { name: string, displayName: string, description: string, aiDescription: string }) => ({ name, displayName, description, requireAuth: false, props: {}, aiMetadata: { description: aiDescription } })
+        await db.save('piece_metadata', createMockPieceMetadata({
             name: '@activepieces/piece-intent-mail',
             displayName: 'Intent Mail',
             version: '0.1.0',
@@ -2538,21 +2538,28 @@ describe('MCP Tools integration', () => {
             packageType: PackageType.REGISTRY,
             platformId: ctx.platform.id,
             actions: {
-                send_email: { name: 'send_email', displayName: 'Send Email', description: 'Send an email to a recipient', requireAuth: false, props: {} },
-                archive_thread: { name: 'archive_thread', displayName: 'Archive Thread', description: 'Move a thread out of the inbox', requireAuth: false, props: {} },
+                send_email: component({ name: 'send_email', displayName: 'Send Email', description: 'Send an email to a recipient', aiDescription: 'AI hint for sending email' }),
+                archive_thread: component({ name: 'archive_thread', displayName: 'Archive Thread', description: 'Move a thread out of the inbox', aiDescription: 'AI hint for archiving' }),
             },
-            triggers: {},
-        })
-        await db.save('piece_metadata', mailPiece)
+            triggers: {
+                new_email: component({ name: 'new_email', displayName: 'New Email', description: 'Fires when an email arrives', aiDescription: 'AI hint for incoming email' }),
+                new_label: component({ name: 'new_label', displayName: 'New Label', description: 'Fires when a label is created', aiDescription: 'AI hint for labels' }),
+            },
+        }))
 
-        const result = await apResearchPiecesTool(mcp, mockLog).execute({
-            pieceNames: ['@activepieces/piece-intent-mail'],
-            forIntent: 'send an email',
-        })
+        const matched = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'], forIntent: 'send an email' }))
+        const unmatched = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'], forIntent: 'translate a document' }))
+        const noIntent = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'] }))
 
-        expect(text(result)).toContain('Send an email to a recipient')
-        expect(text(result)).toContain('archive_thread')
-        expect(text(result)).not.toContain('Move a thread out of the inbox')
+        expect(matched).toContain('AI hint for sending email')
+        expect(matched).toContain('AI hint for incoming email')
+        expect(matched).toContain('archive_thread')
+        expect(matched).not.toContain('AI hint for archiving')
+        expect(matched).not.toContain('AI hint for labels')
+        expect(unmatched).toContain('new_label')
+        expect(unmatched).not.toContain('AI hint')
+        expect(noIntent).toContain('AI hint for archiving')
+        expect(noIntent).toContain('AI hint for labels')
     })
 
     // ── Flow attribution (createdBy / ownerId) ───────────────────────
