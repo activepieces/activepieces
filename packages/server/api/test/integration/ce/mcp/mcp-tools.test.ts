@@ -1,5 +1,5 @@
 import { apId, isObject } from '@activepieces/core-utils'
-import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -2530,6 +2530,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
         const component = ({ name, displayName, description, aiDescription }: { name: string, displayName: string, description: string, aiDescription: string }) => ({ name, displayName, description, requireAuth: false, props: {}, aiMetadata: { description: aiDescription } })
+        const trigger = (fields: Parameters<typeof component>[0]) => ({ ...component(fields), type: TriggerStrategy.POLLING, sampleData: {}, testStrategy: TriggerTestStrategy.SIMULATION })
         await db.save('piece_metadata', createMockPieceMetadata({
             name: '@activepieces/piece-intent-mail',
             displayName: 'Intent Mail',
@@ -2542,8 +2543,8 @@ describe('MCP Tools integration', () => {
                 archive_thread: component({ name: 'archive_thread', displayName: 'Archive Thread', description: 'Move a thread out of the inbox', aiDescription: 'AI hint for archiving' }),
             },
             triggers: {
-                new_email: component({ name: 'new_email', displayName: 'New Email', description: 'Fires when an email arrives', aiDescription: 'AI hint for incoming email' }),
-                new_label: component({ name: 'new_label', displayName: 'New Label', description: 'Fires when a label is created', aiDescription: 'AI hint for labels' }),
+                new_email: trigger({ name: 'new_email', displayName: 'New Email', description: 'Fires when an email arrives', aiDescription: 'AI hint for incoming email' }),
+                new_label: trigger({ name: 'new_label', displayName: 'New Label', description: 'Fires when a label is created', aiDescription: 'AI hint for labels' }),
             },
         }))
 
