@@ -41,7 +41,7 @@ async function startConversation({ ctx, projectId }: { ctx: TestContext, project
 }
 
 async function chatClient({ ctx, conversationId }: { ctx: TestContext, conversationId: string }): Promise<McpClient> {
-    const accessToken = await mcpOAuthTokenService.issueInternalAccessToken({ userId: ctx.user.id, platformId: ctx.platform.id, projectId: null })
+    const accessToken = await mcpOAuthTokenService.issueChatTurnAccessToken({ userId: ctx.user.id, platformId: ctx.platform.id, projectId: null })
     return { accessToken, endpoint: '/mcp/platform', conversationId }
 }
 
@@ -76,6 +76,17 @@ describe('In-app AI Chat on the MCP server', () => {
         const text = await mcpClientHelpers.callTool({ app, mcpClient, name: 'ap_list_flows' }).finally(() => vi.useRealTimers())
 
         expect(text).toContain('✅')
+    })
+
+    it('keeps the 15-minute lifetime on a token from the /token route', async () => {
+        const { owner } = await setup({ permissions: [Permission.READ_FLOW] })
+        const accessToken = await mcpOAuthTokenService.issueInternalAccessToken({ userId: owner.user.id, platformId: owner.platform.id, projectId: owner.project.id })
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(Date.now() + LONG_TURN_MS)
+
+        const text = await mcpClientHelpers.callTool({ app, mcpClient: { accessToken, endpoint: '/mcp' }, name: 'ap_list_flows' }).catch((error: unknown) => String(error)).finally(() => vi.useRealTimers())
+
+        expect(text).not.toContain('✅')
     })
 
     it('keeps the READ_MCP gate on a project-scoped token from the /token route', async () => {

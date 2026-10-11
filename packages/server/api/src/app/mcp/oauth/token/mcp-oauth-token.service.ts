@@ -14,7 +14,7 @@ import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
 import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
 import { mcpOAuthRevocationList } from './mcp-oauth-revocation-list'
-import { MCP_INTERNAL_CHAT_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_REFRESH_TOKEN_TTL_MS } from './mcp-oauth-token-lifetimes'
+import { MCP_CHAT_TURN_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_REFRESH_TOKEN_TTL_MS } from './mcp-oauth-token-lifetimes'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 
 const repo = repoFactory(McpOAuthTokenEntity)
@@ -231,9 +231,16 @@ export const mcpOAuthTokenService = {
         await mcpOAuthRevocationList.revoke({ grantIds })
     },
 
-    async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
-        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: DEFAULT_MCP_OAUTH_SCOPES, expiresInSeconds: MCP_INTERNAL_CHAT_ACCESS_TOKEN_TTL_SECONDS })
+    async issueInternalAccessToken(params: InternalTokenParams): Promise<string> {
+        return issueInternalToken({ ...params, expiresInSeconds: MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS })
     },
+    async issueChatTurnAccessToken(params: InternalTokenParams): Promise<string> {
+        return issueInternalToken({ ...params, expiresInSeconds: MCP_CHAT_TURN_ACCESS_TOKEN_TTL_SECONDS })
+    },
+}
+
+async function issueInternalToken({ userId, platformId, projectId, expiresInSeconds }: InternalTokenParams & { expiresInSeconds: number }): Promise<string> {
+    return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: DEFAULT_MCP_OAUTH_SCOPES, expiresInSeconds })
 }
 
 function applyGrantScope<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, { platformId, userId }: GrantScope): void {
@@ -262,6 +269,12 @@ export class OAuthTokenError extends Error {
     ) {
         super(errorDescription)
     }
+}
+
+type InternalTokenParams = {
+    userId: string
+    platformId: string
+    projectId: string | null
 }
 
 type IssueAccessTokenParams = {
