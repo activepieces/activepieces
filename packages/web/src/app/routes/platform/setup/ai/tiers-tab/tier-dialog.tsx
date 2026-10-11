@@ -12,6 +12,7 @@ import { KeyboardEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -148,7 +149,7 @@ function TierForm({
 
   return (
     <DialogContent
-      className="sm:max-w-md"
+      className={adminLayout.dialog.sm}
       showCloseButton={!saving}
       onEscapeKeyDown={keepOpen}
       onPointerDownOutside={keepOpen}

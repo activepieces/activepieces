@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { SettingsPanel } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -33,7 +34,6 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { ModelDetailRow } from '../components/model-detail-row';
-import { SectionHeader } from '../components/section-header';
 import { KeyStatusBadge } from '../providers-tab/key-status';
 import { ProviderLogo } from '../providers-tab/provider-logo';
 
@@ -78,66 +78,68 @@ export function SpecificModelsSection({
     );
 
   return (
-    <section className="flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel">
+    <SettingsPanel
+      flush
+      title={
+        <span className="flex items-baseline gap-2">
+          {t('Specific models')}
+          <span className="text-sm font-normal tabular-nums text-gray-11">
+            {models.length}
+          </span>
+        </span>
+      }
+      description={t("Models not used as a tier's main model.")}
+      action={
+        <Tabs
+          value={visible ? 'visible' : 'hidden'}
+          onValueChange={(value) => setVisible(value === 'visible')}
+        >
+          <TabsList
+            className="h-8"
+            aria-label={t('Specific models visible to builders')}
+            {...adminControl(AdminControl.AI_SPECIFIC_MODELS_VISIBLE_TOGGLE)}
+          >
+            <TabsTrigger
+              value="visible"
+              className="gap-1.5 text-xs"
+              disabled={isPending}
+            >
+              <Eye className="size-3.5" />
+              {t('Visible')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="hidden"
+              className="gap-1.5 text-xs"
+              disabled={cannotHide || isPending}
+            >
+              <EyeOff className="size-3.5" />
+              {t('Hidden')}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      }
+    >
       <div className="flex flex-col gap-3 px-5 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <SectionHeader
-            title={t('Specific models')}
-            count={models.length}
-            description={t("Models not used as a tier's main model.")}
-          />
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
-              <Tabs
-                value={visible ? 'visible' : 'hidden'}
-                onValueChange={(value) => setVisible(value === 'visible')}
-              >
-                <TabsList
-                  className="h-8"
-                  aria-label={t('Specific models visible to builders')}
-                  {...adminControl(
-                    AdminControl.AI_SPECIFIC_MODELS_VISIBLE_TOGGLE,
-                  )}
-                >
-                  <TabsTrigger
-                    value="visible"
-                    className="gap-1.5 text-xs"
-                    disabled={isPending}
-                  >
-                    <Eye className="size-3.5" />
-                    {t('Visible')}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="hidden"
-                    className="gap-1.5 text-xs"
-                    disabled={cannotHide || isPending}
-                  >
-                    <EyeOff className="size-3.5" />
-                    {t('Hidden')}
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            <p className="text-xs text-gray-11">
-              {cannotHide
-                ? t('Add a tier before hiding these.')
-                : visible
-                ? t('Builders can pick these directly.')
-                : t('Builders only see tiers.')}
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-gray-11">
+            {cannotHide
+              ? t('Add a tier before hiding these.')
+              : visible
+              ? t('Builders can pick these directly.')
+              : t('Builders only see tiers.')}
+          </p>
+          {!cannotHide && projectsWithoutTier > 0 && (
+            <p className="flex items-center gap-1 text-sm text-warning-11">
+              <TriangleAlert className="size-3.5 shrink-0" />
+              {visible
+                ? t('hidingLeavesProjectsEmpty', {
+                    count: projectsWithoutTier,
+                  })
+                : t('projectsWithNothingToPick', {
+                    count: projectsWithoutTier,
+                  })}
             </p>
-            {!cannotHide && projectsWithoutTier > 0 && (
-              <p className="flex items-center gap-1 text-xs text-warning-11">
-                <TriangleAlert className="size-3 shrink-0" />
-                {visible
-                  ? t('hidingLeavesProjectsEmpty', {
-                      count: projectsWithoutTier,
-                    })
-                  : t('projectsWithNothingToPick', {
-                      count: projectsWithoutTier,
-                    })}
-              </p>
-            )}
-          </div>
+          )}
         </div>
         {models.length > SEARCH_THRESHOLD && (
           <Input
@@ -149,32 +151,28 @@ export function SpecificModelsSection({
           />
         )}
       </div>
-      <div className="flex flex-col border-t border-gray-6/60">
-        {groups.map((group) => (
-          <KeyGroup
-            key={group.config.id}
-            config={group.config}
-            items={group.items}
-            total={
-              models.filter((item) => item.config.id === group.config.id).length
-            }
-            hasTextModels={(group.state?.models?.length ?? 0) > 0}
-            isLoading={group.state?.isLoading === true}
-            isFetching={group.state?.isFetching === true}
-            isError={group.state?.isError === true}
-            onRetry={() => group.state?.refetch()}
-            forceOpen={needle !== ''}
-            defaultOpen={ownKeys.length === 1}
-            onMakeTier={onMakeTier}
-          />
-        ))}
-        {groups.length === 0 && (
-          <p className="px-5 py-6 text-sm text-gray-11">
-            {t('No models match')}
-          </p>
-        )}
-      </div>
-    </section>
+      {groups.map((group) => (
+        <KeyGroup
+          key={group.config.id}
+          config={group.config}
+          items={group.items}
+          total={
+            models.filter((item) => item.config.id === group.config.id).length
+          }
+          hasTextModels={(group.state?.models?.length ?? 0) > 0}
+          isLoading={group.state?.isLoading === true}
+          isFetching={group.state?.isFetching === true}
+          isError={group.state?.isError === true}
+          onRetry={() => group.state?.refetch()}
+          forceOpen={needle !== ''}
+          defaultOpen={ownKeys.length === 1}
+          onMakeTier={onMakeTier}
+        />
+      ))}
+      {groups.length === 0 && (
+        <p className="px-5 py-6 text-sm text-gray-11">{t('No models match')}</p>
+      )}
+    </SettingsPanel>
   );
 }
 
@@ -208,11 +206,7 @@ function KeyGroup({
     </Button>
   );
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setOpen}
-      className="border-b border-gray-6/60 last:border-b-0"
-    >
+    <Collapsible open={isOpen} onOpenChange={setOpen}>
       <div className="flex items-center gap-2 pr-5 hover:bg-gray-2">
         <CollapsibleTrigger asChild>
           <button
