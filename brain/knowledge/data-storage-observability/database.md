@@ -65,12 +65,13 @@ Blocking runs under a Redis lock at boot — anything more than seconds blocks e
 
 ### Cross-track dependency
 
-Contract-phase blocking DDL that depends on a background predecessor:
+**Any blocking migration that depends on a background backfill MUST call `migrationHelpers.assertBackgroundMigrationComplete({ queryRunner, migration: TheBackfill })` as the first statement of `up()`.** No exceptions — not for `DROP COLUMN`, not for `SET NOT NULL`, not for `USING INDEX`, not for `VALIDATE CONSTRAINT`.
 
-- **Postgres-safe** (`SET NOT NULL` on nulls, `USING INDEX` on missing index, `VALIDATE CONSTRAINT` on orphans, `ADD FOREIGN KEY` on orphans) — Postgres raises. No guard needed.
-- **Silently dangerous** (`DROP COLUMN`, `DELETE FROM`) — call `migrationHelpers.assertBackgroundMigrationComplete({ queryRunner, migration: TheBackfill })` at the top of `up()`. Boot fails with a clear message if the backfill hasn't run.
+The guard is what triggers boot catchup. Catchup only reacts to the typed `BackgroundMigrationNotCompleteError` the guard throws; a raw Postgres error (nulls hitting `SET NOT NULL`, missing index hitting `USING INDEX`, orphans hitting `VALIDATE CONSTRAINT`) is NOT recognized as a cross-track failure — catchup rethrows it and boot wedges in a restart loop. The guard is the only way for the catchup to know which backfill to run.
 
-Contract DDL and its backfill ship in **different releases**. Same-release attempts fail boot because the backfill hasn't run yet.
+The guard also prevents the silently dangerous cases (`DROP COLUMN`, `DELETE FROM`) that Postgres won't error on at all.
+
+Contract DDL and its backfill ship in **different releases**. Same-release attempts fail boot, catchup runs the backfill, retries — this is the intended path.
 
 **Release-notes convention:** when a release ships a background migration whose dependent contract DDL lands in a later release, that earlier release's notes must say something like "self-hosters should let backfill X complete before upgrading further; the app catches up at boot but it may take ~N minutes." Boot catchup handles skip-release correctly, but operators deserve the heads-up so they can plan the upgrade window.
 
@@ -195,16 +196,25 @@ ALTER TABLE foo VALIDATE CONSTRAINT fk_foo;
 
 **CHECK:** same `NOT VALID` → `VALIDATE` pattern as FK.
 
-**`NOT NULL` on existing column** (PG 12+):
+**`NOT NULL` on existing column** (PG 12+). Step 4's blocking migration MUST call the guard first, otherwise a skip-release upgrade hits unfilled nulls, Postgres raises, and boot catchup can't help:
+```ts
+// Step 4 — blocking, next release
+public async up(q: QueryRunner): Promise<void> {
+    await migrationHelpers.assertBackgroundMigrationComplete({
+        queryRunner: q,
+        migration: BackfillFooColNulls, // the backfill from Step 2
+    })
+    await q.query(`ALTER TABLE foo ALTER COLUMN col SET NOT NULL`)
+    await q.query(`ALTER TABLE foo DROP CONSTRAINT foo_col_not_null`)
+}
+```
 ```sql
--- blocking
+-- Step 1: blocking
 ALTER TABLE foo ADD CONSTRAINT foo_col_not_null CHECK (col IS NOT NULL) NOT VALID;
--- background: backfill nulls first (see chunking above)
--- background
+-- Step 2: background — backfill nulls (see chunking above)
+-- Step 3: background
 ALTER TABLE foo VALIDATE CONSTRAINT foo_col_not_null;
--- blocking, next release: PG 12+ skips the scan because the CHECK is VALID
-ALTER TABLE foo ALTER COLUMN col SET NOT NULL;
-ALTER TABLE foo DROP CONSTRAINT foo_col_not_null;
+-- Step 4: blocking, next release — see TS block above; PG 12+ skips the scan because the CHECK is VALID
 ```
 
 ### Rollback
