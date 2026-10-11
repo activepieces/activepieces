@@ -34,6 +34,10 @@ type HardDeleteProjectSystemJobData = {
 
 type CreateMissingPersonalProjectsSystemJobData = {
     platformId: PlatformId
+    retry?: {
+        userIds: string[]
+        attemptsLeft: number
+    }
 }
 
 type HardDeletePlatformSystemJobData = {
