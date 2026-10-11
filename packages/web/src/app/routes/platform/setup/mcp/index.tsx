@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 import {
   AdminPage,
   AdminPageHeader,
+  AdminQueryState,
   adminPageResources,
 } from '@/app/components/admin';
 import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
@@ -60,28 +60,24 @@ function AccessContent() {
   } = platformMcpHooks.usePlatformMcpServer();
   const { mutate: updateTools } = platformMcpHooks.useUpdatePlatformMcpTools();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isError || !mcpServer) {
-    return (
-      <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
-    );
-  }
-
   return (
-    <McpToolTierList
-      disabledTools={mcpServer.disabledTools}
-      scope="platform"
-      onUpdateDisabledTools={({ tools, onSettled }) =>
-        updateTools({ disabledTools: tools }, { onSettled })
-      }
-    />
+    <AdminQueryState
+      isLoading={isLoading}
+      isError={isError || (!isLoading && !mcpServer)}
+      onRetry={refetch}
+      entity={t('the MCP server')}
+      skeleton={<SkeletonList numberOfItems={4} className="h-24 rounded-xl" />}
+    >
+      {mcpServer && (
+        <McpToolTierList
+          disabledTools={mcpServer.disabledTools}
+          scope="platform"
+          onUpdateDisabledTools={({ tools, onSettled }) =>
+            updateTools({ disabledTools: tools }, { onSettled })
+          }
+        />
+      )}
+    </AdminQueryState>
   );
 }
 
