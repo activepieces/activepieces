@@ -3,7 +3,7 @@ import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, Pri
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { Repository } from 'typeorm'
+import { ObjectLiteral, Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformService } from '../../../../src/app/platform/platform.service'
 import { userService } from '../../../../src/app/user/user-service'
@@ -234,7 +234,13 @@ describe('A platform invite and a project invite for the same project', () => {
             projectRoleId: viewerRole.id,
             status: InvitationStatus.PENDING,
         })
-        const upsert = vi.spyOn(Repository.prototype, 'upsert').mockRejectedValueOnce(new Error('upsert failed'))
+        const originalUpsert = Repository.prototype.upsert
+        const upsert = vi.spyOn(Repository.prototype, 'upsert').mockImplementation(function (this: Repository<ObjectLiteral>, ...args: Parameters<Repository<ObjectLiteral>['upsert']>) {
+            if (this.metadata.tableName === 'user_invitation') {
+                return Promise.reject(new Error('upsert failed'))
+            }
+            return originalUpsert.apply(this, args)
+        })
 
         const response = await inviteToProject({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR })
         upsert.mockRestore()
