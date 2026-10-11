@@ -65,8 +65,8 @@ const SSOPage = () => {
               {t('Restrict authentication to specific email domains.')}
               {allowedDomains.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {allowedDomains.map((domain) => (
-                    <Badge key={domain} variant="outline">
+                  {allowedDomains.map((domain, index) => (
+                    <Badge key={`${domain}-${index}`} variant="outline">
                       {domain}
                     </Badge>
                   ))}

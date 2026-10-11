@@ -38,7 +38,7 @@ export const ConfigurationsPage = () => {
     refetch,
   } = platformConfigurationHooks.useCurrentPlatformConfiguration({
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
+    meta: { loadSubsetOptions: {} },
   });
 
   if (edition === ApEdition.CLOUD) {
