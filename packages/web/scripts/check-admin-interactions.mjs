@@ -24,7 +24,7 @@ const RULES = [
   },
   {
     id: 'spinner-loading',
-    pattern: /\bLoadingSpinner\b|<Loader2\b/,
+    pattern: /\bLoadingSpinner\b|\banimate-spin\b/,
     fix: 'AdminQueryState (skeleton) for data, Button loading for actions',
   },
 ];

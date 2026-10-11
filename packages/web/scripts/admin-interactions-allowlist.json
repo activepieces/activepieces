@@ -1,8 +1,5 @@
 {
   "files": {
-    "src/app/routes/platform/billing/index.tsx": [
-      "raw-toast"
-    ],
     "src/app/routes/platform/infra/event-destinations/components/event-destination-actions.tsx": [
       "legacy-confirm",
       "raw-toast"
@@ -15,9 +12,6 @@
     ],
     "src/app/routes/platform/infra/event-destinations/index.tsx": [
       "raw-toast"
-    ],
-    "src/app/routes/platform/infra/health/components/queue-tab.tsx": [
-      "spinner-loading"
     ]
   }
 }
