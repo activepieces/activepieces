@@ -51,17 +51,17 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         }
 
         const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
-        const userInvitationRecord = wouldAddNewUser
-            ? await transaction(async (entityManager) => {
+        const userInvitationRecord = await transaction(async (entityManager) => {
+            if (wouldAddNewUser) {
                 const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
                     email,
                     platformId,
                     entityManager,
                 })
                 await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
-                return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
-            })
-            : await userInvitationsService(request.log).createInvitationRecord(invitationRecordParams)
+            }
+            return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
+        })
 
         const invitation = await userInvitationsService(request.log).finalizeInvitation({
             userInvitation: userInvitationRecord,
