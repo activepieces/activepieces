@@ -168,6 +168,79 @@ describe('A platform invite outlives its project', () => {
     })
 })
 
+describe('A platform invite and a project invite for the same project', () => {
+    it('a project invite takes the project off a platform invite instead of replacing it', async () => {
+        const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const email = faker.internet.email().toLowerCase()
+        await invite({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.VIEWER })
+
+        const response = await inviteToProject({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR })
+
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        const invitations = await invitationsOf({ email, platformId: mockPlatform.id })
+        expect(invitations).toStrictEqual([
+            { type: InvitationType.PLATFORM, platformRole: PlatformRole.MEMBER, projectId: null },
+            { type: InvitationType.PROJECT, platformRole: null, projectId: mockProject.id },
+        ])
+    })
+
+    it('a platform invite naming a project replaces a pending project invite for it', async () => {
+        const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const email = faker.internet.email().toLowerCase()
+        await inviteToProject({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR })
+
+        await invite({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.VIEWER })
+
+        expect(await invitationsOf({ email, platformId: mockPlatform.id })).toStrictEqual([
+            { type: InvitationType.PLATFORM, platformRole: PlatformRole.MEMBER, projectId: mockProject.id },
+        ])
+    })
+
+    it('a platform invite leaves the project to a project invite that was already accepted', async () => {
+        const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const email = faker.internet.email().toLowerCase()
+        const editorRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.EDITOR })
+        await databaseConnection().getRepository('user_invitation').save({
+            id: apId(),
+            email,
+            type: InvitationType.PROJECT,
+            platformId: mockPlatform.id,
+            projectId: mockProject.id,
+            projectRoleId: editorRole.id,
+            status: InvitationStatus.ACCEPTED,
+        })
+
+        await invite({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.VIEWER })
+
+        expect(await invitationsOf({ email, platformId: mockPlatform.id })).toStrictEqual([
+            { type: InvitationType.PLATFORM, platformRole: PlatformRole.MEMBER, projectId: null },
+            { type: InvitationType.PROJECT, platformRole: null, projectId: mockProject.id },
+        ])
+    })
+
+    it('never adds someone to another platform\'s project, even when an invite names one', async () => {
+        const { mockPlatform } = await setupPlatform({ projectRolesEnabled: true })
+        const { mockProject: otherPlatformProject } = await setupPlatform({ projectRolesEnabled: true })
+        const email = faker.internet.email().toLowerCase()
+        const editorRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.EDITOR })
+        const invitationId = apId()
+        await databaseConnection().getRepository('user_invitation').save({
+            id: invitationId,
+            email,
+            type: InvitationType.PLATFORM,
+            platformRole: PlatformRole.MEMBER,
+            platformId: mockPlatform.id,
+            projectId: otherPlatformProject.id,
+            projectRoleId: editorRole.id,
+            status: InvitationStatus.PENDING,
+        })
+
+        const user = await acceptAndProvision({ invitationId, email, platformId: mockPlatform.id })
+
+        expect(await roleNamesByProject({ userId: user.id })).not.toHaveProperty(otherPlatformProject.id)
+    })
+})
+
 describe('Platform users list says who has a project', () => {
     it('ignores a membership in a soft-deleted project', async () => {
         const { mockPlatform, mockOwner, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
@@ -267,6 +340,20 @@ async function invite({ token, email, projectId, projectRole }: { token: string,
             projectRole,
         },
     })
+}
+
+async function inviteToProject({ token, email, projectId, projectRole }: { token: string, email: string, projectId: string, projectRole: string }) {
+    return app?.inject({
+        method: 'POST',
+        url: '/api/v1/user-invitations',
+        headers: { authorization: `Bearer ${token}` },
+        body: { email, type: InvitationType.PROJECT, projectId, projectRole },
+    })
+}
+
+async function invitationsOf({ email, platformId }: { email: string, platformId: string }) {
+    const invitations = await databaseConnection().getRepository('user_invitation').find({ where: { email, platformId }, order: { type: 'ASC' } })
+    return invitations.map((invitation) => ({ type: invitation.type, platformRole: invitation.platformRole, projectId: invitation.projectId }))
 }
 
 async function acceptAndProvision({ invitationId, email, platformId }: { invitationId: string, email: string, platformId: string }) {
