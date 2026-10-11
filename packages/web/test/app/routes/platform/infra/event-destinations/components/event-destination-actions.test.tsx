@@ -24,6 +24,8 @@ vi.mock('@/components/ui/sonner', () => ({
 
 vi.mock('@/lib/api', () => ({
   api: {
+    isError: () => false,
+    serverErrorMessage: () => undefined,
     extractServerErrorMessage: (error: unknown, fallback: string) =>
       error instanceof Error ? error.message : fallback,
   },
@@ -173,9 +175,11 @@ describe('EventDestinationActions delete', () => {
     await settle();
 
     expect(collectionUtilsMock.delete).toHaveBeenCalledWith([destination.id]);
-    expect(toastMock.error).toHaveBeenCalledWith('Error', {
-      description: serverError.message,
-    });
+    expect(toastMock.error).toHaveBeenCalledTimes(1);
+    expect(toastMock.error).toHaveBeenCalledWith(
+      "Couldn't delete {name}",
+      expect.objectContaining({ description: serverError.message }),
+    );
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(1);
   });
@@ -186,7 +190,7 @@ describe('EventDestinationActions delete', () => {
     confirmDelete();
     await settle();
 
-    expect(toastMock.success).toHaveBeenCalledWith('Removed {entityName}');
+    expect(toastMock.success).toHaveBeenCalledWith('{name} deleted');
     expect(toastMock.error).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(0);
   });

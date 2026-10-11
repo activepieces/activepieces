@@ -1,17 +1,3 @@
 {
-  "files": {
-    "src/app/routes/platform/infra/event-destinations/components/event-destination-actions.tsx": [
-      "legacy-confirm",
-      "raw-toast"
-    ],
-    "src/app/routes/platform/infra/event-destinations/destination-form/index.tsx": [
-      "raw-toast"
-    ],
-    "src/app/routes/platform/infra/event-destinations/destination-form/webhook-connection.tsx": [
-      "raw-toast"
-    ],
-    "src/app/routes/platform/infra/event-destinations/index.tsx": [
-      "raw-toast"
-    ]
-  }
+  "files": {}
 }

@@ -11,14 +11,15 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import {
   AdminPage,
   AdminPageHeader,
+  adminActionCopy,
+  adminFeedback,
+  adminLayout,
   adminPageResources,
   adminSurface,
-  adminLayout,
 } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
@@ -29,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { destinationErrors } from '../lib/destination-errors';
@@ -131,15 +133,19 @@ const DestinationForm = ({
   const { mutate: saveDestination, isPending: isSaving } =
     eventDestinationsCollectionUtils.useSaveEventDestination({
       onSuccess: () => {
-        toast.success(t('Success'), {
-          description: isEdit
-            ? t('Destination updated successfully')
-            : t('Destination created successfully'),
+        adminFeedback.done({
+          verb: isEdit ? 'update' : 'create',
+          name: form.getValues('url'),
         });
         leaveAfterSave();
       },
       onError: (error) => {
-        toast.error(t('Error'), {
+        mutationFeedback.error({
+          error,
+          title: adminActionCopy.failed({
+            verb: isEdit ? 'update' : 'create',
+            name: t('destination'),
+          }),
           description: destinationErrors.describe(error),
         });
       },
@@ -153,9 +159,6 @@ const DestinationForm = ({
 
   const handleInvalidSubmit = (errors: FieldErrors<DestinationFormValues>) => {
     setStepIndex(isNil(errors.events) ? CONNECTION_STEP : EVENTS_STEP);
-    toast.error(t('Error'), {
-      description: t('Please fix the highlighted fields before saving'),
-    });
   };
 
   const goToNextStep = async () => {

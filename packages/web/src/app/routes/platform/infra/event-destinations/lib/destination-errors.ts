@@ -3,6 +3,7 @@ import { EventDestinationTestError } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 function describe(error: unknown): string {
   if (
@@ -25,7 +26,7 @@ function describe(error: unknown): string {
       'A flow webhook accepts only JSON. Choose the JSON encoding, or send to a webhook instead.',
     );
   }
-  return api.serverErrorMessage(error) ?? t('Something went wrong');
+  return mutationFeedback.message(error);
 }
 
 function describeTestError({
