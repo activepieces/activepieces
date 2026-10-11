@@ -3,7 +3,6 @@ import { ApFlagId, ApplicationEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Info, Plus, Workflow } from 'lucide-react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { SettingsPanel, StatusDot } from '@/app/components/admin';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,7 +20,7 @@ import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { destinationErrors } from '../lib/destination-errors';
 import {
@@ -152,6 +151,8 @@ const GenerateHandlerFlowCard = ({
 }) => {
   const eventLabels = buildEventLabels();
   const selectedEvents = useWatch({ control: form.control, name: 'events' });
+  const webhookPrefixConfigured =
+    !isNil(webhookPrefixUrl) && webhookPrefixUrl !== '';
 
   const { mutate: importHandlerFlow, isPending: isImporting } =
     eventDestinationsCollectionUtils.useImportHandlerFlow({
@@ -162,17 +163,16 @@ const GenerateHandlerFlowCard = ({
         });
       },
       onError: (error) => {
-        toast.error(t('Error'), {
-          description: api.isError(error)
-            ? destinationErrors.describe(error)
-            : error.message,
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't create the handler flow"),
+          description: destinationErrors.describe(error),
         });
       },
     });
 
   const handleGenerate = () => {
-    if (isNil(webhookPrefixUrl) || webhookPrefixUrl === '') {
-      toast.error(t('Webhook URL prefix is not configured.'));
+    if (!webhookPrefixConfigured) {
       return;
     }
     importHandlerFlow({
@@ -208,12 +208,21 @@ const GenerateHandlerFlowCard = ({
           {...adminControl(AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_RUN)}
           type="button"
           onClick={handleGenerate}
-          disabled={isImporting || selectedEvents.length === 0}
+          disabled={
+            isImporting ||
+            selectedEvents.length === 0 ||
+            !webhookPrefixConfigured
+          }
           loading={isImporting}
         >
           <Plus className="size-4" />
           {t('Generate handler flow')}
         </Button>
+        {!webhookPrefixConfigured && (
+          <span className="text-xs text-danger-11">
+            {t('Webhook URL prefix is not configured.')}
+          </span>
+        )}
       </div>
     </SettingsPanel>
   );

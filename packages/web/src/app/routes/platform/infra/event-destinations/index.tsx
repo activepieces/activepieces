@@ -11,7 +11,6 @@ import { t } from 'i18next';
 import { Globe, ListChecks, Radio } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import {
   AdminDataTable,
@@ -29,6 +28,7 @@ import { flowHooks, flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import { sampleData } from '../../sample-data';
@@ -252,7 +252,11 @@ async function toggleDestination({
       }).isPersisted.promise,
   );
   if (!isNil(error)) {
-    toast.error(destinationErrors.describe(error));
+    mutationFeedback.error({
+      error,
+      title: t("Couldn't save changes"),
+      description: destinationErrors.describe(error),
+    });
   }
 }
 
