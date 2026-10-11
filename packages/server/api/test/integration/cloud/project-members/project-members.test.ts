@@ -415,6 +415,20 @@ describe('Removing someone from their last project', () => {
 })
 
 describe('Members list marks who has no other project', () => {
+    it('leaves the flag out for an API key, which the guard never stops', async () => {
+        const { mockPlatform, mockProject, mockMember, mockApiKey } = await createBasicEnvironment()
+        await saveMembership({ userId: mockMember.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await app?.inject({
+            method: 'GET',
+            url: `/api/v1/project-members?projectId=${mockProject.id}&limit=50`,
+            headers: { authorization: `Bearer ${mockApiKey.value}` },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().data.every((member: { isLastProject?: boolean }) => member.isLastProject === undefined)).toBe(true)
+    })
+
     it('does not flag a deactivated member, who can still be removed', async () => {
         const { mockPlatform, mockProject, mockMember, mockOwnerToken } = await createBasicEnvironment()
         await db.update('user', mockMember.id, { status: UserStatus.INACTIVE })
