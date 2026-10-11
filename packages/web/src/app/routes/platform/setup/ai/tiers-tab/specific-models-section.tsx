@@ -4,17 +4,10 @@ import {
   PlatformModelTierEntry,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Plus,
-  RefreshCw,
-  TriangleAlert,
-} from 'lucide-react';
-import { useState } from 'react';
+import { ChevronRight, Plus, RefreshCw, TriangleAlert } from 'lucide-react';
+import { useId, useState } from 'react';
 
-import { SettingsPanel } from '@/app/components/admin';
+import { InstantSwitch, SettingsPanel } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -23,7 +16,6 @@ import {
 } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   KeyModelsById,
   modelMeta,
@@ -46,8 +38,9 @@ export function SpecificModelsSection({
   projectsWithoutTier,
   onMakeTier,
 }: SpecificModelsSectionProps) {
-  const { mutate: setVisible, isPending } =
+  const { mutateAsync: setVisible } =
     platformModelTierMutations.useSetSpecificModelsVisible();
+  const visibleLabelId = useId();
   const [search, setSearch] = useState('');
   const models = modelMeta.specificModelsOf({
     configs: ownKeys,
@@ -91,33 +84,35 @@ export function SpecificModelsSection({
       }
       description={t("Models not used as a tier's main model.")}
       action={
-        <Tabs
-          value={visible ? 'visible' : 'hidden'}
-          onValueChange={(value) => setVisible(value === 'visible')}
-        >
-          <TabsList
-            className="h-8"
-            aria-label={t('Specific models visible to builders')}
-            {...adminControl(AdminControl.AI_SPECIFIC_MODELS_VISIBLE_TOGGLE)}
-          >
-            <TabsTrigger
-              value="visible"
-              className="gap-1.5 text-xs"
-              disabled={isPending}
-            >
-              <Eye className="size-3.5" />
-              {t('Visible')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="hidden"
-              className="gap-1.5 text-xs"
-              disabled={cannotHide || isPending}
-            >
-              <EyeOff className="size-3.5" />
-              {t('Hidden')}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2">
+          <span id={visibleLabelId} className="text-sm text-gray-11">
+            {t('Visible to builders')}
+          </span>
+          <InstantSwitch
+            checked={visible}
+            disabled={cannotHide}
+            onCheckedChange={(next) => setVisible(next)}
+            undo
+            successMessage={(next) =>
+              next
+                ? t('Specific models are visible to builders')
+                : t('Specific models are hidden from builders')
+            }
+            confirmBefore={(next) =>
+              next || projectsWithoutTier === 0
+                ? null
+                : {
+                    title: t('Hide specific models from builders?'),
+                    consequence: t('hidingLeavesProjectsEmpty', {
+                      count: projectsWithoutTier,
+                    }),
+                    confirmLabel: t('Hide models'),
+                  }
+            }
+            aria-labelledby={visibleLabelId}
+            controlId={AdminControl.AI_SPECIFIC_MODELS_VISIBLE_TOGGLE}
+          />
+        </div>
       }
     >
       <div className="flex flex-col gap-3 px-5 py-4">
@@ -225,7 +220,7 @@ function KeyGroup({
                 {isLoading ? (
                   <Skeleton className="h-3 w-20" />
                 ) : isError ? (
-                  t("Couldn't load {key} models", { key: config.name })
+                  t('Trouble loading {key} models', { key: config.name })
                 ) : (
                   t('modelsCount', { count: total })
                 )}
@@ -259,7 +254,7 @@ function KeyGroup({
           {isError && (
             <div className="flex items-center gap-2 py-3 text-sm text-gray-11">
               <span>
-                {t("Couldn't load {key} models", { key: config.name })}
+                {t('Trouble loading {key} models', { key: config.name })}
               </span>
               {retryButton}
             </div>

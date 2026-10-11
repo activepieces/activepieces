@@ -3351,5 +3351,11 @@
   "Billing information": "Billing information",
   "queue metrics": "queue metrics",
   "system health": "system health",
-  "Couldn't create the handler flow": "Couldn't create the handler flow"
+  "Couldn't create the handler flow": "Couldn't create the handler flow",
+  "{model} removed from {tier}": "{model} removed from {tier}",
+  "this tier": "this tier",
+  "Visible to builders": "Visible to builders",
+  "Hide specific models from builders?": "Hide specific models from builders?",
+  "Hide models": "Hide models",
+  "Trouble loading {key} models": "Trouble loading {key} models"
 }
