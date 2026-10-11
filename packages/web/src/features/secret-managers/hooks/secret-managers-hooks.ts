@@ -53,7 +53,7 @@ export const secretManagersHooks = {
       mutationFn: secretManagersApi.create,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Connected successfully'));
+        toast.success(t('Secret manager connected'));
         onSuccess();
       },
       onError,
@@ -75,20 +75,10 @@ export const secretManagersHooks = {
       mutationFn: ({ id, config }) => secretManagersApi.update(id, config),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Updated successfully'));
+        toast.success(t('Changes saved'));
         onSuccess();
       },
       onError,
-    });
-  },
-  useDeleteSecretManagerConnection: () => {
-    const queryClient = useQueryClient();
-    return useMutation<void, Error, string>({
-      mutationFn: (id) => secretManagersApi.delete(id),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Deleted successfully'));
-      },
     });
   },
   useClearCache: () => {
@@ -97,7 +87,7 @@ export const secretManagersHooks = {
       mutationFn: (connectionId) => secretManagersApi.clearCache(connectionId),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
-        toast.success(t('Cache cleared successfully'));
+        toast.success(t('Cache cleared'));
       },
     });
   },

@@ -18,13 +18,14 @@ import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
   StatusDot,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PlusIcon } from '@/components/icons/plus';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
+import { secretManagersApi } from '@/features/secret-managers/api/secret-managers-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -52,8 +54,15 @@ const SecretManagersPage = () => {
   } = secretManagersHooks.useListSecretManagerConnections({
     listForPlatform: true,
   });
-  const { mutateAsync: deleteConnection } =
-    secretManagersHooks.useDeleteSecretManagerConnection();
+  const { mutateAsync: deleteConnection } = useAdminAction<{
+    id: string;
+    name: string;
+  }>({
+    verb: 'delete',
+    name: ({ name }) => name,
+    run: ({ id }) => secretManagersApi.delete(id),
+    invalidate: [['secret-managers']],
+  });
 
   const isLoading = isLoadingConnections;
 
@@ -151,17 +160,16 @@ const SecretManagersPage = () => {
               </Button>
             </AddEditSecretManagerConnectionDialog>
             <SecretManagerClearCacheButton connection={connection} />
-            <ConfirmationDeleteDialog
-              title={t('Delete Connection')}
-              message={t(
-                'Are you sure you want to delete this secret manager connection?',
-              )}
-              warning={t(
+            <ConfirmDialog
+              title={t('Delete {name}?', { name: connection.name })}
+              consequence={t(
                 'Deleting this secret manager connection will break all flows/app connections using it.',
               )}
-              entityName={connection.name}
+              confirmLabel={t('Delete connection')}
               controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
-              mutationFn={async () => deleteConnection(connection.id)}
+              onConfirm={() =>
+                deleteConnection({ id: connection.id, name: connection.name })
+              }
             >
               <div>
                 <Tooltip>
@@ -180,7 +188,7 @@ const SecretManagersPage = () => {
                   <TooltipContent>{t('Delete')}</TooltipContent>
                 </Tooltip>
               </div>
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </div>
         );
       },
