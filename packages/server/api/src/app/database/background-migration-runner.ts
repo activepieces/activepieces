@@ -212,7 +212,7 @@ async function getLatestFailure(dataSource: DataSource, sourceNames: string[]): 
 }
 
 const MAX_CATCHUP_ATTEMPTS = 10
-const RUN_LOCK_TIMEOUT_SECONDS = 300
+const RUN_LOCK_TIMEOUT_SECONDS = 240
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 
