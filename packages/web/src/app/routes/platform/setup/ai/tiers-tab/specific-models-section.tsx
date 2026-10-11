@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  Loader2,
   Plus,
   RefreshCw,
   TriangleAlert,
@@ -90,12 +89,6 @@ export function SpecificModelsSection({
           />
           <div className="flex shrink-0 flex-col items-end gap-1">
             <div className="flex items-center gap-2">
-              {isPending && (
-                <Loader2
-                  className="size-3.5 animate-spin text-gray-10"
-                  aria-label={t('Saving')}
-                />
-              )}
               <Tabs
                 value={visible ? 'visible' : 'hidden'}
                 onValueChange={(value) => setVisible(value === 'visible')}
@@ -209,10 +202,10 @@ function KeyGroup({
       variant="ghost"
       size="icon-xs"
       aria-label={t('Retry')}
-      disabled={isFetching}
+      loading={isFetching}
       onClick={onRetry}
     >
-      <RefreshCw className={cn('size-3', isFetching && 'animate-spin')} />
+      <RefreshCw className="size-3" />
     </Button>
   );
   return (
