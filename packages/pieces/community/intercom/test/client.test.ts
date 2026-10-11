@@ -226,4 +226,23 @@ describe('network errors', () => {
 		).rejects.toThrow('fetch failed');
 		expect(calls).toBe(1);
 	});
+	test('network errors and 503s share one budget of three GET attempts', async () => {
+		let calls = 0;
+		vi.spyOn(intercomHttpInternals, 'sleep').mockResolvedValue(undefined);
+		vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				calls += 1;
+				if (calls % 2 === 1) {
+					throw new TypeError('fetch failed');
+				}
+				return new Response(JSON.stringify({}), { status: 503, headers: { 'content-type': 'application/json' } });
+			}),
+		);
+		await expect(
+			intercomRequest({ auth: customAuth(), method: HttpMethod.GET, path: ['tags'], operation: 'list tags' }),
+		).rejects.toThrow('fetch failed');
+		expect(calls).toBe(3);
+	});
 });

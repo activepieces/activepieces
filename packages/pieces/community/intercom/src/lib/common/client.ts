@@ -222,32 +222,22 @@ async function sendIntercomHttp<T = unknown>({
 		followRedirects: false,
 	};
 	for (let attempt = 0; ; attempt++) {
-		const result = await sendOnceWithNetworkRetry<T>({ request, dispatcher, attempt });
-		if (!result.ok && attempt < MAX_RETRIES && shouldRetry({ method, status: result.status })) {
+		const canRetry = attempt < MAX_RETRIES;
+		let result: IntercomHttpResult<T>;
+		try {
+			result = await sendOnce<T>({ request, dispatcher });
+		} catch (error) {
+			if (method !== HttpMethod.GET || !canRetry || !isNetworkError(error)) {
+				throw error;
+			}
+			await intercomHttpInternals.sleep(1000);
+			continue;
+		}
+		if (!result.ok && canRetry && shouldRetry({ method, status: result.status })) {
 			await intercomHttpInternals.sleep(Math.min(2000 * 2 ** attempt, 10_000));
 			continue;
 		}
 		return result;
-	}
-}
-
-async function sendOnceWithNetworkRetry<T>({
-	request,
-	dispatcher,
-	attempt,
-}: {
-	request: HttpRequest;
-	dispatcher: unknown;
-	attempt: number;
-}): Promise<IntercomHttpResult<T>> {
-	try {
-		return await sendOnce<T>({ request, dispatcher });
-	} catch (error) {
-		if (request.method !== HttpMethod.GET || attempt >= MAX_RETRIES || !isNetworkError(error)) {
-			throw error;
-		}
-		await intercomHttpInternals.sleep(1000);
-		return sendOnceWithNetworkRetry<T>({ request, dispatcher, attempt: attempt + 1 });
 	}
 }
 
