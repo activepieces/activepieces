@@ -2526,6 +2526,35 @@ describe('MCP Tools integration', () => {
         expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
     })
 
+    it('93. ap_research_pieces — with an intent, only the matching actions and triggers carry their full description', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const mailPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-intent-mail',
+            displayName: 'Intent Mail',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                send_email: { name: 'send_email', displayName: 'Send Email', description: 'Send an email to a recipient', requireAuth: false, props: {} },
+                archive_thread: { name: 'archive_thread', displayName: 'Archive Thread', description: 'Move a thread out of the inbox', requireAuth: false, props: {} },
+            },
+            triggers: {},
+        })
+        await db.save('piece_metadata', mailPiece)
+
+        const result = await apResearchPiecesTool(mcp, mockLog).execute({
+            pieceNames: ['@activepieces/piece-intent-mail'],
+            forIntent: 'send an email',
+        })
+
+        expect(text(result)).toContain('Send an email to a recipient')
+        expect(text(result)).toContain('archive_thread')
+        expect(text(result)).not.toContain('Move a thread out of the inbox')
+    })
+
     // ── Flow attribution (createdBy / ownerId) ───────────────────────
 
     it('ap_create_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
