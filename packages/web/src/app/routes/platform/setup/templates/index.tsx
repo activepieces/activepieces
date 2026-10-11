@@ -5,18 +5,19 @@ import { t } from 'i18next';
 import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
+  adminBulk,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces';
-import { templatesApi, templatesMutations } from '@/features/templates';
+import { templateKeys, templatesApi } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -42,6 +43,7 @@ const PlatformTemplatesPage = () => {
   const isSample = !platform.plan.manageTemplatesEnabled;
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['templates', searchParams.toString()],
+    enabled: !isSample,
     staleTime: 0,
     queryFn: () => {
       return templatesApi.list({
@@ -52,13 +54,22 @@ const PlatformTemplatesPage = () => {
 
   const [selectedRows, setSelectedRows] = useState<Template[]>([]);
 
-  const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
-    onSuccess: () => {
-      refetch();
-      toast.success(t('Templates deleted successfully'), {
-        duration: 3000,
-      });
+  const bulkDeleteMutation = useAdminAction<Template[]>({
+    verb: 'delete',
+    name: (templates) => templatesLabel(templates),
+    run: async (templates) => {
+      try {
+        await adminBulk.runEach({
+          items: templates,
+          run: (template) => templatesApi.delete(template.id),
+          verb: 'delete',
+          label: (count) => templatesCountLabel(count),
+        });
+      } finally {
+        await refetch();
+      }
     },
+    invalidate: [templateKeys.custom],
   });
 
   const columnsWithCheckbox: ColumnDef<RowDataWithActions<Template>>[] = [
@@ -164,17 +175,17 @@ const PlatformTemplatesPage = () => {
           resetSelection: () => void,
         ) => (
           <div onClick={(e) => e.stopPropagation()}>
-            <ConfirmationDeleteDialog
-              title={t('Delete Templates')}
-              message={t(
-                'Are you sure you want to delete the selected templates?',
+            <ConfirmDialog
+              title={t('Delete {name}?', {
+                name: templatesLabel(selectedRows),
+              })}
+              description={t(
+                'The selected templates will be permanently deleted.',
               )}
-              entityName={t('Templates')}
+              confirmLabel={t('Delete')}
               controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
-              mutationFn={async () => {
-                await bulkDeleteMutation.mutateAsync(
-                  selectedRows.map((row) => row.id),
-                );
+              onConfirm={async () => {
+                await bulkDeleteMutation.mutateAsync(selectedRows);
                 resetSelection();
                 setSelectedRows([]);
               }}
@@ -190,7 +201,7 @@ const PlatformTemplatesPage = () => {
                   {`${t('Delete')} (${selectedRows.length})`}
                 </Button>
               )}
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </div>
         ),
       },
@@ -264,3 +275,13 @@ const PlatformTemplatesPage = () => {
 };
 
 export { PlatformTemplatesPage };
+
+function templatesLabel(templates: Template[]): string {
+  return templates.length === 1
+    ? templates[0].name
+    : templatesCountLabel(templates.length);
+}
+
+function templatesCountLabel(count: number): string {
+  return t('{count, plural, =1 {# template} other {# templates}}', { count });
+}

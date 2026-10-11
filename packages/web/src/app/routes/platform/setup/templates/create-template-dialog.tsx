@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminFeedback, adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,7 +27,7 @@ import { templateUtils } from '@/features/flows';
 import { templatesApi } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 
@@ -92,15 +92,17 @@ export const CreateTemplateDialog = ({
       });
     },
     onSuccess: () => {
+      adminFeedback.done({
+        verb: 'create',
+        name: form.getValues().displayName,
+      });
       onDone();
       setOpen(false);
     },
     onError: (error) => {
-      if (api.isError(error)) {
-        form.setError('template', {
-          message: error.message,
-        });
-      }
+      form.setError('template', {
+        message: mutationFeedback.message(error),
+      });
     },
   });
 

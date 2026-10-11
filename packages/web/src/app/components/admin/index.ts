@@ -21,5 +21,6 @@ export {
   useAdminAction,
   adminActionCopy,
   adminFeedback,
+  adminBulk,
 } from './use-admin-action';
 export type { AdminVerb } from './use-admin-action';

@@ -56,10 +56,6 @@
     ],
     "src/app/routes/platform/setup/mcp/platform-mcp-hooks.ts": [
       "raw-toast"
-    ],
-    "src/app/routes/platform/setup/templates/index.tsx": [
-      "legacy-confirm",
-      "raw-toast"
     ]
   }
 }
