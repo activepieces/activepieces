@@ -87,12 +87,12 @@ export function HtmlPreview({
             value={tab}
             onValueChange={(v) => setTab(v as 'preview' | 'code')}
           >
-            <TabsList>
-              <TabsTrigger value="preview" className="gap-1.5 text-xs">
+            <TabsList size="sm">
+              <TabsTrigger value="preview" size="sm" className="gap-1.5">
                 <Eye className="size-3.5" />
                 {t('Preview')}
               </TabsTrigger>
-              <TabsTrigger value="code" className="gap-1.5 text-xs">
+              <TabsTrigger value="code" size="sm" className="gap-1.5">
                 <Code2 className="size-3.5" />
                 {t('Code')}
               </TabsTrigger>

@@ -90,11 +90,11 @@ function OutputViewerShell({
               tooltipSide="bottom"
             />
           </div>
-          <TabsList>
-            <TabsTrigger value="friendly" className="text-xs">
+          <TabsList size="sm">
+            <TabsTrigger value="friendly" size="sm">
               {t('Friendly View')}
             </TabsTrigger>
-            <TabsTrigger value="raw" className="text-xs">
+            <TabsTrigger value="raw" size="sm">
               {t('Raw JSON')}
             </TabsTrigger>
           </TabsList>

@@ -433,11 +433,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 value={viewMode}
                 onValueChange={(v) => setViewMode(v as 'friendly' | 'advanced')}
               >
-                <TabsList className="shrink-0">
-                  <TabsTrigger value="friendly" className="text-xs">
+                <TabsList size="sm" className="shrink-0">
+                  <TabsTrigger value="friendly" size="sm">
                     {t('Friendly View')}
                   </TabsTrigger>
-                  <TabsTrigger value="advanced" className="text-xs">
+                  <TabsTrigger value="advanced" size="sm">
                     {t('Advanced')}
                   </TabsTrigger>
                 </TabsList>
