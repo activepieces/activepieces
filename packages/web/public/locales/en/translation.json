@@ -3345,5 +3345,6 @@
   "{count, plural, =1 {# template} other {# templates}}": "{count, plural, =1 {# template} other {# templates}}",
   "Template created": "Template created",
   "Template updated": "Template updated",
-  "Rename role": "Rename role"
+  "Rename role": "Rename role",
+  "signing keys": "signing keys"
 }

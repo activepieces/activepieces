@@ -2,8 +2,13 @@ import { SigningKey } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
-import { AdminEmpty, SettingsRow } from '@/app/components/admin';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  AdminEmpty,
+  AdminQueryState,
+  ConfirmDialog,
+  SettingsRow,
+  useAdminAction,
+} from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog, signingKeyApi } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
@@ -22,10 +26,12 @@ import { StepShell } from '../stepper';
 export const SigningKeysStep = ({
   signingKeys,
   isLoading,
+  isError,
   refetch,
 }: {
   signingKeys: SigningKey[];
   isLoading: boolean;
+  isError: boolean;
   refetch: () => void;
 }) => {
   return (
@@ -45,31 +51,38 @@ export const SigningKeysStep = ({
       }
       flush
     >
-      <SigningKeysList
-        signingKeys={signingKeys}
+      <AdminQueryState
         isLoading={isLoading}
-        refetch={refetch}
-      />
+        isError={isError}
+        onRetry={refetch}
+        entity={t('signing keys')}
+        skeleton={
+          <div className="p-5">
+            <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+          </div>
+        }
+      >
+        <SigningKeysList signingKeys={signingKeys} refetch={refetch} />
+      </AdminQueryState>
     </StepShell>
   );
 };
 
 const SigningKeysList = ({
   signingKeys,
-  isLoading,
   refetch,
 }: {
   signingKeys: SigningKey[];
-  isLoading: boolean;
   refetch: () => void;
 }) => {
-  if (isLoading) {
-    return (
-      <div className="p-5">
-        <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
-      </div>
-    );
-  }
+  const deleteKey = useAdminAction<SigningKey>({
+    verb: 'delete',
+    name: (signingKey) => signingKey.displayName,
+    run: async (signingKey) => {
+      await signingKeyApi.delete(signingKey.id);
+      refetch();
+    },
+  });
 
   if (signingKeys.length === 0) {
     return (
@@ -105,31 +118,26 @@ const SigningKeysList = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <ConfirmationDeleteDialog
-                title={t('Delete Signing Key')}
-                message={t(
+              <ConfirmDialog
+                title={t('Delete {name}?', { name: signingKey.displayName })}
+                description={t(
                   'Deleting this signing key will invalidate any tokens signed with it.',
                 )}
-                entityName={t('Signing Key')}
-                buttonText={t('Delete')}
-                mutationFn={async () => {
-                  await signingKeyApi.delete(signingKey.id);
-                  refetch();
-                }}
-                onError={() => internalErrorToast()}
+                confirmLabel={t('Delete key')}
+                onConfirm={() => deleteKey.mutateAsync(signingKey)}
                 controlId={AdminControl.EMBEDDING_SIGNING_KEY_DELETE_CONFIRM}
               >
                 <DropdownMenuItem
                   {...adminControl(
                     AdminControl.EMBEDDING_SIGNING_KEY_DELETE_OPEN,
                   )}
-                  className="text-danger-11 focus:text-danger-11"
+                  variant="destructive"
                   onSelect={(e) => e.preventDefault()}
                 >
-                  <Trash className="text-danger-11" />
+                  <Trash />
                   {t('Delete Signing Key')}
                 </DropdownMenuItem>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             </DropdownMenuContent>
           </DropdownMenu>
         </SettingsRow>

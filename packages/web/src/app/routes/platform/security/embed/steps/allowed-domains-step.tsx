@@ -1,13 +1,11 @@
 import { allowedEmbedOriginSchema, ApFlagId } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { useAdminAction } from '@/app/components/admin';
 import { TagInput } from '@/components/custom/tag-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -53,18 +50,17 @@ export const AllowedDomainsStep = ({
     mode: 'onChange',
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (values: AllowedOriginsForm) => {
+  const { mutate, isPending } = useAdminAction<AllowedOriginsForm>({
+    verb: 'save',
+    name: '',
+    run: async (values) => {
       await platformApi.update(
         { allowedEmbedOrigins: values.origins },
         platform.id,
       );
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('Allowed domains updated'));
-    },
-    onError: () => internalErrorToast(),
+    onSuccess: ({ vars }) => form.reset(vars),
   });
 
   return (
@@ -122,9 +118,8 @@ export const AllowedDomainsStep = ({
               {...adminControl(AdminControl.EMBEDDING_ALLOWED_DOMAINS_SUBMIT)}
               size="sm"
               type="submit"
-              disabled={isPending}
+              loading={isPending}
             >
-              {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
               {t('Save')}
             </Button>
           </div>

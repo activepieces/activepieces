@@ -19,23 +19,6 @@
     "src/app/routes/platform/infra/health/components/queue-tab.tsx": [
       "spinner-loading"
     ],
-    "src/app/routes/platform/security/embed/steps/allowed-domains-step.tsx": [
-      "internal-error-toast",
-      "raw-toast",
-      "spinner-loading"
-    ],
-    "src/app/routes/platform/security/embed/steps/dns-step.tsx": [
-      "spinner-loading"
-    ],
-    "src/app/routes/platform/security/embed/steps/hostname-step.tsx": [
-      "legacy-confirm",
-      "raw-toast",
-      "spinner-loading"
-    ],
-    "src/app/routes/platform/security/embed/steps/signing-keys-step.tsx": [
-      "internal-error-toast",
-      "legacy-confirm"
-    ],
     "src/app/routes/platform/setup/mcp/index.tsx": [
       "spinner-loading"
     ],
