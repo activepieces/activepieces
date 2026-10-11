@@ -1,5 +1,7 @@
 import {
   AppConnectionValueForAuthProperty,
+  MarkdownVariant,
+  Property,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
@@ -15,6 +17,10 @@ import { googleTasksNewTaskTriggerOutputSchema } from '../output-schemas';
 
 const props = {
   tasks_list: googleTasksCommon.tasksList,
+  info: Property.MarkDown({
+    value: 'Edits to a task fire this trigger again, so the same task can arrive more than once.',
+    variant: MarkdownVariant.INFO,
+  }),
 };
 
 const polling: Polling<
@@ -42,12 +48,21 @@ export const newTaskTrigger = createTrigger({
   name: 'new_task',
   classification: 'READ',
   displayName: 'New Task',
-  description: 'Triggers when a task is created',
+  description: 'Triggers when a task is added or edited in a list.',
   aiMetadata: {
     description: 'Fires when a task in the selected Google Tasks list is newly created or updated since the last poll, emitting the task that changed. Use to react to additions or edits in a specific task list.',
   },
   type: TriggerStrategy.POLLING,
   props,
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Watch',
+      icon: 'inbox',
+      props: ['tasks_list', 'info'],
+    },
+  ],
   outputSchema: googleTasksNewTaskTriggerOutputSchema,
   sampleData: {},
   async test(context) {

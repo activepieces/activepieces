@@ -78,7 +78,7 @@ export const googleTasksCommon = {
    * @property Target task list ID where the new task will be created
    */
   tasksList: Property.Dropdown<string,true,typeof googleTasksAuth>({
-    displayName: 'Tasks List',
+    displayName: 'Task List',
     auth: googleTasksAuth,
     refreshers: [],
     required: true,
@@ -107,6 +107,7 @@ export const googleTasksCommon = {
   }),
   title: Property.ShortText({
     displayName: 'Title',
+    placeholder: 'Call the dentist',
     required: true,
   }),
   notes: Property.LongText({
@@ -115,13 +116,15 @@ export const googleTasksCommon = {
   }),
   due: Property.DateTime({
     displayName: 'Due Date',
-    description: 'Due date of the task (YYYY-MM-DD)',
+    description: 'Google Tasks keeps the date only; the time is ignored.',
+    placeholder: '2026-10-15',
     required: false,
   }),
   completed: Property.Checkbox({
     displayName: 'Completed',
-    description: 'Mark task as completed',
+    description: 'Add the task already checked off.',
     required: false,
+    defaultValue: false,
   }),
 };
 
