@@ -3,14 +3,13 @@ import {
   PieceSet,
   PROJECT_COLOR_PALETTE,
   ProjectWithLimits,
-  tryCatch,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -30,7 +29,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import {
+  pieceSetCacheUtils,
+  pieceSetQueries,
+  pieceSetsApi,
+} from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -81,10 +84,31 @@ const AssignProjectsForm = ({
   const movingCount = selected.filter(
     (id) => !serverAssignedIds.includes(id),
   ).length;
-  const assignMutation = pieceSetMutations.useAssignProjects();
-  const removeMutation = pieceSetMutations.useBulkRemoveProjects();
-
-  const isSaving = assignMutation.isPending || removeMutation.isPending;
+  const queryClient = useQueryClient();
+  const saveAssignments = useAdminAction<{
+    added: string[];
+    removed: string[];
+  }>({
+    verb: 'save',
+    name: '',
+    run: async ({ added, removed }) => {
+      if (added.length > 0) {
+        await pieceSetsApi.assignProjects(pieceSet.id, { projectIds: added });
+      }
+      await Promise.all(
+        removed.map((projectId) =>
+          pieceSetsApi.removeProject(pieceSet.id, projectId),
+        ),
+      );
+    },
+    onSuccess: () => {
+      pieceSetCacheUtils
+        .refreshAfterProjectChange({ queryClient, id: pieceSet.id })
+        .catch(() => undefined);
+      onOpenChange(false);
+    },
+  });
+  const isSaving = saveAssignments.isPending;
 
   const toggleProject = (projectId: string) => {
     setSelected((prev) =>
@@ -94,7 +118,7 @@ const AssignProjectsForm = ({
     );
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const serverSet = new Set(serverAssignedIds);
     const draftSet = new Set(selected);
     const added = selected.filter((id) => !serverSet.has(id));
@@ -107,24 +131,7 @@ const AssignProjectsForm = ({
       return;
     }
 
-    const promises: Promise<unknown>[] = [];
-    if (added.length > 0) {
-      promises.push(
-        assignMutation.mutateAsync({ id: pieceSet.id, projectIds: added }),
-      );
-    }
-    if (removed.length > 0) {
-      promises.push(
-        removeMutation.mutateAsync({ id: pieceSet.id, projectIds: removed }),
-      );
-    }
-
-    const { error } = await tryCatch(() => Promise.all(promises));
-    if (error) {
-      toast.error(t('Failed to save changes. Please try again.'));
-      return;
-    }
-    onOpenChange(false);
+    saveAssignments.mutate({ added, removed });
   };
 
   return (

@@ -9,7 +9,6 @@ import { t } from 'i18next';
 import {
   Info,
   ListChecks,
-  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -17,14 +16,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import {
-  AdminEmpty,
-  AdminSection,
-  adminSurface,
-  adminLayout,
-} from '@/app/components/admin';
+import { AdminEmpty, AdminSection, adminFeedback, adminLayout, adminSurface } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -139,9 +134,7 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
         }
       >
         {isLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="size-6 animate-spin text-gray-11" />
-          </div>
+          <SkeletonList numberOfItems={3} className="h-24 rounded-xl" />
         ) : requiredActionsGroupedByPiece.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
             <div className="flex flex-col gap-4 pr-3">
@@ -387,7 +380,12 @@ function EditRequiredActionsDialogContent({
           selectedActionsOfPiece,
         }),
       },
-      { onSuccess: onClose },
+      {
+        onSuccess: () => {
+          adminFeedback.done({ verb: 'save', name: '' });
+          onClose();
+        },
+      },
     );
   };
 
@@ -446,9 +444,7 @@ function EditRequiredActionsDialogContent({
               )}
             </div>
             {pieceLoading ? (
-              <div className="flex justify-center rounded-xl border py-6">
-                <Loader2 className="size-5 animate-spin text-gray-11" />
-              </div>
+              <SkeletonList numberOfItems={3} className="h-8" />
             ) : actions.length === 0 ? (
               <span className="rounded-xl border px-3 py-4 text-sm text-gray-11">
                 {t('This piece has no actions.')}
