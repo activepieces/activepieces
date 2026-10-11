@@ -141,6 +141,27 @@ describe('createLanguageModel', () => {
         expect(request.body.store).toBe(false)
     })
 
+    it.each([
+        { provider: AIProviderName.OPENAI, optionsKey: 'openai' },
+        { provider: AIProviderName.AZURE, optionsKey: 'azure' },
+    ])('replays a saved $provider tool turn in full instead of as a stored item reference', async ({ provider, optionsKey }) => {
+        const model = buildFor(provider)
+        const request = await captureSentRequest(() => model.doGenerate({
+            tools: [{ type: 'function', name: 'getWeather', inputSchema: { type: 'object', properties: {} } }],
+            prompt: [
+                { role: 'user', content: [{ type: 'text', text: 'weather in Paris?' }] },
+                { role: 'assistant', content: [{ type: 'text', text: 'Checking the weather.', providerOptions: { [optionsKey]: { itemId: 'msg_saved' } } }, { type: 'tool-call', toolCallId: 'call_1', toolName: 'getWeather', input: { city: 'Paris' }, providerOptions: { [optionsKey]: { itemId: 'fc_saved' } } }] },
+                { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'call_1', toolName: 'getWeather', output: { type: 'json', value: { celsius: 20 } } }] },
+            ],
+        }))
+        const items = Array.isArray(request.body.input) ? request.body.input : []
+
+        expect(items).toContainEqual(expect.objectContaining({ role: 'assistant' }))
+        expect(items).toContainEqual(expect.objectContaining({ type: 'function_call', call_id: 'call_1', name: 'getWeather' }))
+        expect(items).toContainEqual(expect.objectContaining({ type: 'function_call_output', call_id: 'call_1' }))
+        expect(items).not.toContainEqual(expect.objectContaining({ type: 'item_reference' }))
+    })
+
     it('routes Vertex straight at the configured GCP project and region', () => {
         const model = buildFor(AIProviderName.VERTEX)
         const { config } = identifyVertex(model)
