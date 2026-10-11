@@ -203,6 +203,13 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
         }
+        if (touchesSignInMethods(params)) {
+            const current = await this.getOneWithFederatedAuthOrThrow(params.id)
+            assertSignInMethodRemains({
+                before: current,
+                after: { ...current, ...updatedPlatform, federatedAuthProviders: federatedAuthProviders ?? current.federatedAuthProviders },
+            })
+        }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
                 platformId: params.id,
@@ -459,6 +466,31 @@ function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     return rest
 }
 
+function touchesSignInMethods(params: UpdateParams): boolean {
+    return params.emailAuthEnabled !== undefined
+        || params.googleAuthEnabled !== undefined
+        || params.federatedAuthProviders !== undefined
+        || params.ssoDomain !== undefined
+        || params.ssoDomainVerification !== undefined
+}
+
+function signInMethodCount(platform: SignInMethodsState): number {
+    const samlSignIn = !isNil(platform.federatedAuthProviders?.saml)
+        && platform.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
+    return [platform.emailAuthEnabled, platform.googleAuthEnabled, samlSignIn].filter(Boolean).length
+}
+
+function assertSignInMethodRemains({ before, after }: { before: SignInMethodsState, after: SignInMethodsState }): void {
+    if (signInMethodCount(before) > 0 && signInMethodCount(after) === 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'This change would leave no way to sign in. Keep email, Google or a verified SAML sign-in turned on.',
+            },
+        })
+    }
+}
+
 function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
     return 'federatedAuthProviders' in platform
 }
@@ -479,6 +511,8 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     platform: PlatformWithoutFederatedAuth
     auditLogRetentionDays: number | null | undefined
 }
+
+type SignInMethodsState = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders' | 'ssoDomainVerification'>
 
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId

@@ -1,5 +1,6 @@
 import { ErrorCode } from '@activepieces/core-utils';
 import { t } from 'i18next';
+import { ReactNode } from 'react';
 import { toast } from 'sonner';
 
 import { api } from '@/lib/api';
@@ -118,7 +119,7 @@ function error({ error, title, description }: MutationErrorParams): void {
   });
 }
 
-function success(message: string, description?: string): void {
+function success(message: ReactNode, description?: string): void {
   toast.success(message, { description });
 }
 

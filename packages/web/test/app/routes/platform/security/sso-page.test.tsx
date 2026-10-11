@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -28,6 +29,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
     useCurrentPlatform: () => ({
       platform: state.platform,
       refetch: () => Promise.resolve(),
+      setCurrentPlatform: () => undefined,
     }),
   },
 }));
@@ -46,9 +48,11 @@ const HINT =
 
 function renderPage() {
   return render(
-    <MemoryRouter>
-      <SSOPage />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <SSOPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

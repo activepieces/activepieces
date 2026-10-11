@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { globalConnectionsApi } from '../api/global-connections';
 import {
@@ -70,6 +71,7 @@ export const globalConnectionsMutations = {
       projectIds: string[];
       preSelectForNewProjects: boolean;
     }>,
+    { adminFeedback = false }: { adminFeedback?: boolean } = {},
   ) =>
     useMutation<
       AppConnectionWithoutSensitiveData,
@@ -109,9 +111,13 @@ export const globalConnectionsMutations = {
       },
       onSuccess: () => {
         refetch();
-        toast.success(t('Connection has been updated.'), {
-          duration: 3000,
-        });
+        if (adminFeedback) {
+          mutationFeedback.success(t('Changes saved'));
+        } else {
+          toast.success(t('Connection has been updated.'), {
+            duration: 3000,
+          });
+        }
         setIsOpen(false);
       },
       onError: (error) => {
@@ -123,6 +129,8 @@ export const globalConnectionsMutations = {
           editConnectionForm.setError('projectIds', {
             message: error.message,
           });
+        } else if (adminFeedback) {
+          mutationFeedback.error({ error, title: t("Couldn't save changes") });
         } else {
           internalErrorToast();
         }

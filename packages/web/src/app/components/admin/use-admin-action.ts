@@ -18,6 +18,7 @@ export function useAdminAction<TVars = void, TData = unknown>({
   undo,
   feedback = 'toast',
   handleError,
+  messages,
 }: AdminActionConfig<TVars, TData>): UseMutationResult<TData, Error, TVars> {
   const queryClient = useQueryClient();
   const nameOf = (vars: TVars) =>
@@ -37,10 +38,12 @@ export function useAdminAction<TVars = void, TData = unknown>({
       if (feedback === 'none') {
         return;
       }
-      const message = adminActionCopy.done({
-        verb: verbOf(vars),
-        name: nameOf(vars),
-      });
+      const message =
+        messages?.done ??
+        adminActionCopy.done({
+          verb: verbOf(vars),
+          name: nameOf(vars),
+        });
       if (undo === undefined) {
         toast.success(message);
         return;
@@ -51,7 +54,7 @@ export function useAdminAction<TVars = void, TData = unknown>({
           try {
             await undo({ data, vars });
           } catch (error) {
-            if (error instanceof Error && handleError?.(error) === true) {
+            if (error instanceof Error && handleError?.(error, vars) === true) {
               mutationFeedback.markShown(error);
             }
             throw error;
@@ -65,17 +68,19 @@ export function useAdminAction<TVars = void, TData = unknown>({
         mutationFeedback.error({ error });
         return;
       }
-      const handled = handleError?.(error) === true;
+      const handled = handleError?.(error, vars) === true;
       if (handled || feedback !== 'toast' || mutationFeedback.wasShown(error)) {
         mutationFeedback.markShown(error);
         return;
       }
       mutationFeedback.error({
         error,
-        title: adminActionCopy.failed({
-          verb: verbOf(vars),
-          name: nameOf(vars),
-        }),
+        title:
+          messages?.failed ??
+          adminActionCopy.failed({
+            verb: verbOf(vars),
+            name: nameOf(vars),
+          }),
       });
     },
   });
@@ -203,7 +208,9 @@ async function runEach<T>({
     title: failed({ verb, name: label(failures.length) }),
     description: describe?.(failures[0]),
   });
-  const partial = new BulkPartialFailure();
+  const partial = new BulkPartialFailure(
+    items.filter((_, index) => results[index].status === 'rejected'),
+  );
   mutationFeedback.markShown(partial);
   throw partial;
 }
@@ -212,8 +219,15 @@ function isPartialFailure(error: unknown): boolean {
   return error instanceof BulkPartialFailure;
 }
 
+function failedItems<T>({ error, items }: { error: unknown; items: T[] }): T[] {
+  if (!(error instanceof BulkPartialFailure)) {
+    return items;
+  }
+  return items.filter((item) => error.failed.includes(item));
+}
+
 class BulkPartialFailure extends Error {
-  constructor() {
+  constructor(readonly failed: unknown[]) {
     super('Some items failed');
   }
 }
@@ -222,7 +236,7 @@ export const adminActionCopy = { done, failed };
 
 export const adminFeedback = { done: notifyDone, status: notifyStatus };
 
-export const adminBulk = { runEach, isPartialFailure };
+export const adminBulk = { runEach, isPartialFailure, failedItems };
 
 export type AdminVerb =
   | 'save'
@@ -249,5 +263,6 @@ export type AdminActionConfig<TVars, TData> = {
   onSuccess?: (params: { data: TData; vars: TVars }) => void;
   undo?: (params: { data: TData; vars: TVars }) => Promise<unknown>;
   feedback?: 'toast' | 'inline' | 'none';
-  handleError?: (error: Error) => boolean;
+  handleError?: (error: Error, vars: TVars) => boolean;
+  messages?: { done?: string; failed?: string };
 };

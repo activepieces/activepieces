@@ -69,6 +69,7 @@ const ApiKeysPage = () => {
       <AdminQueryState
         isLoading={isLoading && !isSample}
         isError={isError && !isSample}
+        hasData={data !== undefined}
         onRetry={refetch}
         entity={t('API Keys')}
         isEmpty={keys.length === 0}

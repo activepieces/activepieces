@@ -32,11 +32,11 @@ function rememberMenuSelection(event: Event): void {
   }
   const trigger = resolveMenuTrigger(event.target);
   lastMenuSelection = trigger;
-  requestAnimationFrame(() => {
+  window.setTimeout(() => {
     if (lastMenuSelection === trigger) {
       lastMenuSelection = null;
     }
-  });
+  }, SELECTION_MEMORY_MS);
 }
 
 function takeMenuTrigger(): HTMLElement | null {
@@ -108,6 +108,8 @@ function useMenuFocusReturn<E extends Event>({
     },
   };
 }
+
+const SELECTION_MEMORY_MS = 500;
 
 const MenuFocusReturnContext = createContext(false);
 

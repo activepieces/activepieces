@@ -85,10 +85,6 @@ vi.mock('@/components/custom/leave-without-saving', () => ({
   useWarnBeforeLosingChanges: () => ({ state: 'unblocked' }),
 }));
 
-vi.mock('@/app/routes/platform/setup/components/section-header', () => ({
-  SectionHeader: () => null,
-}));
-
 vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-status', () => ({
   KeyStatusBadge: () => null,
 }));

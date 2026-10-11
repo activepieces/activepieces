@@ -90,7 +90,9 @@ export function SpecificModelsSection({
           </span>
           <InstantSwitch
             checked={visible}
-            disabled={cannotHide}
+            blockedReason={
+              cannotHide ? t('Add a tier before hiding these.') : undefined
+            }
             onCheckedChange={(next) => setVisible(next)}
             undo
             successMessage={(next) =>

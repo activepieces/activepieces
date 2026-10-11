@@ -138,7 +138,7 @@ export const platformModelTierMutations = {
         });
       },
       onError: (error, { id }, context) => {
-        restore({ queryClient, previous: context?.previous });
+        restoreTier({ queryClient, previous: context?.previous, id });
         reportError({
           feedback,
           error,
@@ -255,7 +255,7 @@ function announce({
   feedback: TierMutationFeedback;
   message: string;
 }): void {
-  if (feedback !== 'errorsOnly') {
+  if (feedback === 'toast' || feedback === 'inline') {
     mutationFeedback.success(message);
   }
 }
@@ -269,7 +269,10 @@ function reportError({
   error: unknown;
   title: string;
 }): void {
-  if (feedback === 'inline') {
+  if (feedback === 'silent') {
+    return;
+  }
+  if (feedback === 'inline' && !mutationFeedback.isQuotaExceeded(error)) {
     mutationFeedback.markShown(error);
     return;
   }
@@ -292,6 +295,25 @@ function settle({ queryClient }: { queryClient: QueryClient }): void {
   ) {
     queryClient.invalidateQueries({ queryKey: platformModelTierKeys.admin });
   }
+}
+
+function restoreTier({
+  queryClient,
+  previous,
+  id,
+}: {
+  queryClient: QueryClient;
+  previous: PlatformModelTier[] | undefined;
+  id: string;
+}): void {
+  const before = previous?.find((tier) => tier.id === id);
+  if (before === undefined) {
+    return;
+  }
+  queryClient.setQueryData<PlatformModelTier[]>(
+    platformModelTierKeys.admin,
+    (old) => old?.map((tier) => (tier.id === id ? before : tier)),
+  );
 }
 
 function restore({
@@ -388,7 +410,7 @@ function removeTier({
 const TIERS_STALE_MS = 30 * 1000;
 const KEY_MODELS_STALE_MS = 5 * 60 * 1000;
 
-type TierMutationFeedback = 'toast' | 'inline' | 'errorsOnly';
+type TierMutationFeedback = 'toast' | 'inline' | 'errorsOnly' | 'silent';
 
 type TierMutationOptions = { feedback?: TierMutationFeedback };
 

@@ -32,6 +32,10 @@ export function ConfirmDialog({
   const [pending, setPending] = useState(false);
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : uncontrolledOpen;
+  const [session, setSession] = useState({ open: isOpen, key: 0 });
+  if (session.open !== isOpen) {
+    setSession({ open: isOpen, key: isOpen ? session.key + 1 : session.key });
+  }
   const setOpen = (next: boolean) => {
     if (!next && pending) {
       return;
@@ -52,7 +56,7 @@ export function ConfirmDialog({
         onInteractOutside={(event) => pending && event.preventDefault()}
       >
         <ConfirmDialogBody
-          key={isOpen ? 'open' : 'closed'}
+          key={session.key}
           {...bodyProps}
           onPendingChange={setPending}
           onDone={() => {

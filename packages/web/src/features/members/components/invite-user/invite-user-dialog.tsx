@@ -47,6 +47,7 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { HttpError } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
@@ -116,6 +117,7 @@ const InviteUserDialogInternal = ({
   open,
   setOpen,
   onInviteSuccess,
+  adminFeedback = false,
 }: InviteUserDialogProps) => {
   const { embedState } = useEmbedding();
   const [invitationResults, setInvitationResults] = useState<
@@ -193,7 +195,9 @@ const InviteUserDialogInternal = ({
         sentCount: results.length - addedCount - invitedCount,
         projectName: project.displayName,
       });
-      if (toastMessage) {
+      if (toastMessage && adminFeedback) {
+        mutationFeedback.success(toastMessage);
+      } else if (toastMessage) {
         toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
@@ -201,6 +205,13 @@ const InviteUserDialogInternal = ({
     },
     onError: (error) => {
       if (handleSeatLimitError(error)) {
+        return;
+      }
+      if (adminFeedback) {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't send the invitations"),
+        });
         return;
       }
       toast.error(error.message || t('Failed to send invitations'), {
@@ -559,4 +570,5 @@ type InviteUserDialogProps = {
   open: boolean;
   setOpen: (_open: boolean) => void;
   onInviteSuccess?: () => void;
+  adminFeedback?: boolean;
 };

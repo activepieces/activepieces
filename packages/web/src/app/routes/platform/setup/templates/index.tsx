@@ -184,13 +184,20 @@ const PlatformTemplatesPage = () => {
               confirmLabel={t('Delete')}
               controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
               onConfirm={async () => {
-                await bulkDeleteMutation
+                const outcome = await bulkDeleteMutation
                   .mutateAsync(selectedRows)
                   .catch((error: unknown) => {
                     if (!adminBulk.isPartialFailure(error)) {
                       throw error;
                     }
+                    setSelectedRows(
+                      adminBulk.failedItems({ error, items: selectedRows }),
+                    );
+                    return 'partial';
                   });
+                if (outcome === 'partial') {
+                  return;
+                }
                 resetSelection();
                 setSelectedRows([]);
               }}

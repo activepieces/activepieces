@@ -44,6 +44,7 @@ type EditGlobalConnectionDialogProps = {
   preSelectForNewProjects: boolean;
   onEdit: () => void;
   userHasPermissionToEdit: boolean;
+  adminFeedback?: boolean;
 };
 
 const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
@@ -53,6 +54,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   preSelectForNewProjects,
   onEdit,
   userHasPermissionToEdit,
+  adminFeedback = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -72,6 +74,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
     onEdit,
     setIsOpen,
     editConnectionForm,
+    { adminFeedback },
   );
 
   return (

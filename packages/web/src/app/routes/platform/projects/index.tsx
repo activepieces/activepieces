@@ -108,14 +108,17 @@ export default function ProjectsPage() {
         await projectCollectionUtils.refetchProjects().catch(() => undefined);
       }
     },
-    handleError: (error) => {
+    handleError: (error, projects) => {
       const description = deleteErrorMessage(error);
       if (description === undefined) {
         return false;
       }
       mutationFeedback.error({
         error,
-        title: adminActionCopy.failed({ verb: 'delete', name: t('projects') }),
+        title: adminActionCopy.failed({
+          verb: 'delete',
+          name: projectsLabel(projects),
+        }),
         description,
       });
       return true;
@@ -301,13 +304,26 @@ export default function ProjectsPage() {
                 typeToConfirm={projectsLabel(deletableProjects)}
                 controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
                 onConfirm={async () => {
-                  await deleteProjects
+                  const outcome = await deleteProjects
                     .mutateAsync(deletableProjects)
                     .catch((error: unknown) => {
                       if (!adminBulk.isPartialFailure(error)) {
                         throw error;
                       }
+                      setSelectedRows([
+                        ...selectedRows.filter(
+                          (row) => !deletableProjects.includes(row),
+                        ),
+                        ...adminBulk.failedItems({
+                          error,
+                          items: deletableProjects,
+                        }),
+                      ]);
+                      return 'partial';
                     });
+                  if (outcome === 'partial') {
+                    return;
+                  }
                   resetSelection();
                   setSelectedRows([]);
                 }}
@@ -321,7 +337,7 @@ export default function ProjectsPage() {
                     {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
                   >
                     <Trash className="mr-1 w-4" />
-                    {`${t('Delete')} (${selectedRows.length})`}
+                    {`${t('Delete')} (${deletableProjects.length})`}
                   </Button>
                 )}
               </ConfirmDialog>

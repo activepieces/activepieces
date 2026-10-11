@@ -64,6 +64,7 @@ function AccessContent() {
     <AdminQueryState
       isLoading={isLoading}
       isError={isError || (!isLoading && !mcpServer)}
+      hasData={mcpServer !== undefined && mcpServer !== null}
       onRetry={refetch}
       entity={t('the MCP server')}
       skeleton={<SkeletonList numberOfItems={4} className="h-24 rounded-xl" />}

@@ -80,6 +80,7 @@ export function CapabilitiesTab() {
       <AdminQueryState
         isLoading={configsLoading || providersLoading}
         isError={isError}
+        hasData={configs !== undefined && providers !== undefined}
         onRetry={refetch}
         entity={t('AI tools')}
         skeleton={

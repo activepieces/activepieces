@@ -4,9 +4,10 @@ import {
   PieceSet,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 
 import {
+  AdminEmpty,
   AdminPage,
   AdminPageHeader,
   AdminQueryState,
@@ -16,6 +17,7 @@ import {
   adminPageResources,
 } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
@@ -74,9 +76,22 @@ const PieceSetDetailsPage = () => {
       <AdminPage fill>
         <AdminQueryState
           isLoading={isLoading}
-          isError={isError || !isLoading}
+          isError={isError}
           onRetry={refetch}
           entity={t('piece set')}
+          isEmpty
+          empty={
+            <AdminEmpty
+              title={t('This piece set no longer exists')}
+              action={
+                <Button asChild variant="outline">
+                  <Link to="/platform/pieces/piece-sets">
+                    {t('Back to piece sets')}
+                  </Link>
+                </Button>
+              }
+            />
+          }
           skeleton={
             <div className="flex flex-col gap-4">
               <Skeleton className="h-8 w-64" />
@@ -134,9 +149,15 @@ const PieceSetDetailsPage = () => {
             </SettingsRow>
             <SettingsRow
               title={t('Include new pieces')}
-              description={t(
-                'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
-              )}
+              description={
+                !piecesLoading && !pieces
+                  ? t(
+                      'The pieces list did not load. Refresh the page to change this.',
+                    )
+                  : t(
+                      'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
+                    )
+              }
             >
               <InstantSwitch
                 controlId={AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE}

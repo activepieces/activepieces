@@ -105,6 +105,54 @@ describe('Platform API', () => {
             expect(responseBody.cloudAuthEnabled).toBe(false)
         }),
 
+        it('rejects turning off the last sign-in method', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: false,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain('no way to sign in')
+        })
+
+        it('turns off email sign-in while Google sign-in stays on', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().emailAuthEnabled).toBe(false)
+        })
+
         it('updates the platform logo icons', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {

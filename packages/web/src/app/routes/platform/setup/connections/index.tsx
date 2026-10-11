@@ -190,6 +190,7 @@ const GlobalConnectionsTable = () => {
                 row.original.preSelectForNewProjects ?? false
               }
               userHasPermissionToEdit={true}
+              adminFeedback
               onEdit={() => {
                 refetchGlobalConnections();
               }}
@@ -274,13 +275,20 @@ const GlobalConnectionsTable = () => {
                 confirmLabel={t('Delete')}
                 controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
                 onConfirm={async () => {
-                  await bulkDeleteGlobalConnections
+                  const outcome = await bulkDeleteGlobalConnections
                     .mutateAsync(selectedRows)
                     .catch((error: unknown) => {
                       if (!adminBulk.isPartialFailure(error)) {
                         throw error;
                       }
+                      setSelectedRows(
+                        adminBulk.failedItems({ error, items: selectedRows }),
+                      );
+                      return 'partial';
                     });
+                  if (outcome === 'partial') {
+                    return;
+                  }
                   resetSelection();
                   setSelectedRows([]);
                 }}

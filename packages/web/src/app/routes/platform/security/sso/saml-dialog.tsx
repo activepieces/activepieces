@@ -48,6 +48,8 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
+import { ssoRules } from './sso-rules';
+
 export const ConfigureSamlDialog = ({
   platform,
   connected,
@@ -104,6 +106,7 @@ const SamlWizard = ({
     verb: 'turnOff',
     name: t('SAML sign-in'),
     run: async () => {
+      await ssoRules.assertSignInRemains({ samlConnected: false });
       await platformApi.update(
         { federatedAuthProviders: { saml: null } },
         platform.id,
@@ -229,6 +232,9 @@ const DomainStep = ({
   const saveDomain = useAdminAction<SsoDomainFormValues>({
     verb: 'save',
     run: async (values) => {
+      if (platform.ssoDomain) {
+        await ssoRules.assertSignInRemains({ domainChanges: true });
+      }
       await samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase());
       await refetch();
     },
@@ -380,7 +386,13 @@ const SamlStep = ({
     ApFlagId.SAML_AUTH_ACS_URL,
   );
 
-  const { mutate, isPending } = useAdminAction<UpdatePlatformRequestBody>({
+  const samlIsOnlyMethod =
+    !!platform.federatedAuthProviders?.saml &&
+    !platform.emailAuthEnabled &&
+    !platform.googleAuthEnabled;
+  const [settingsToConfirm, setSettingsToConfirm] =
+    useState<Saml2FormValues | null>(null);
+  const { mutateAsync, isPending } = useAdminAction<UpdatePlatformRequestBody>({
     verb: 'save',
     run: async (request) => {
       await platformApi.update(request, platform.id);
@@ -389,6 +401,14 @@ const SamlStep = ({
     feedback: 'inline',
     onSuccess: onClose,
   });
+  const saveSettings = (data: Saml2FormValues) =>
+    mutateAsync({ federatedAuthProviders: { saml: data } }).catch(
+      (error: unknown) =>
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
+        }),
+    );
 
   return (
     <>
@@ -420,16 +440,11 @@ Activepieces
           className="grid space-y-4"
           onSubmit={form.handleSubmit((data) => {
             form.clearErrors('root.serverError');
-            mutate(
-              { federatedAuthProviders: { saml: data } },
-              {
-                onError: (error) =>
-                  form.setError('root.serverError', {
-                    type: 'manual',
-                    message: mutationFeedback.message(error),
-                  }),
-              },
-            );
+            if (samlIsOnlyMethod) {
+              setSettingsToConfirm(data);
+              return;
+            }
+            saveSettings(data).catch(() => undefined);
           })}
         >
           <FormField
@@ -490,6 +505,25 @@ Activepieces
           </DialogFooter>
         </form>
       </Form>
+      <ConfirmDialog
+        open={settingsToConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSettingsToConfirm(null);
+          }
+        }}
+        title={t('Save new SAML settings?')}
+        consequence={t(
+          'SAML is the only way to sign in. If these settings are wrong, nobody can sign in until they are fixed.',
+        )}
+        confirmLabel={t('Save settings')}
+        destructive={false}
+        onConfirm={async () => {
+          if (settingsToConfirm) {
+            await saveSettings(settingsToConfirm);
+          }
+        }}
+      />
     </>
   );
 };

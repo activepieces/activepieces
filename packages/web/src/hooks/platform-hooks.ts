@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { flagsHooks } from './flags-hooks';
 
@@ -22,11 +23,14 @@ export const platformHooks = {
         await platformApi.deletePlatform();
       },
       onSuccess: () => {
-        toast.success(t('Platform deleted successfully'));
+        mutationFeedback.success(t('Platform deleted'));
         navigate('/sign-in');
       },
-      onError: () => {
-        toast.error(t('Failed to delete platform. Please try again.'));
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the platform"),
+        });
       },
     });
   },

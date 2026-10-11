@@ -9,16 +9,20 @@ live in `app/components/admin`; `scripts/check-admin-interactions.mjs` fails lin
 routes under `app/routes/platform` and the admin-only feature hooks) bypasses them: a `sonner` import or
 raw toast, a spinner, the legacy confirm, or a `useMutation` with no `onError`.
 
-**Action** — anything the admin triggers that changes data. Every action runs through `useAdminAction`
+**Action** — anything the admin triggers that changes data. Page actions run through `useAdminAction`
 (`verb` + `name` + `run`), which gives it a pending state, one success toast, one error toast with the
-server's message, and an optional Undo. The wording comes from `adminActionCopy`, never from the page:
-"{name} deleted" / "Couldn't delete {name}". When the work runs outside the hook (a dialog with its own
-mutation), `adminFeedback.done` gives the same success wording. _Avoid_: a raw `toast.success`,
+server's message, and an optional Undo. The wording comes from `adminActionCopy` ("{name} deleted" /
+"Couldn't delete {name}"), or from `messages` when the name does not read well inside it. Feature hooks
+that need optimistic updates (tiers, piece sets) keep `useMutation` and report through
+`mutationFeedback` with the same wording; dialogs with their own mutation use `adminFeedback.done`.
+Shared dialogs that also appear outside admin take an `adminFeedback` option instead of changing their
+app behaviour. _Avoid_: a raw `toast.success`,
 "successfully", "Success", "Error" as a title
 
 **Batch** — an action on several rows. `adminBulk.runEach` runs them all, keeps what succeeded, and
-reports the failures in one error, then throws so no success toast follows; `adminBulk.isPartialFailure`
-lets the caller close and clear its selection, while a full failure keeps the confirm open.
+reports the failures in one error, then throws so no success toast follows. On a partial failure the
+caller closes and keeps only the failed rows selected (`adminBulk.failedItems`; admin tables key rows by
+id, so the selection survives the refetch); a full failure keeps the confirm open.
 
 **Block** — one settings panel, sheet or dialog. Saving is decided per block, not per control:
 - a block with only switches saves each switch on the spot (`InstantSwitch`), no Save button;
@@ -33,7 +37,8 @@ wire their own leave guard.
 - reversible (deactivate, turn off): no confirm, an Undo toast instead;
 - irreversible (delete a key, role, connection, template): `ConfirmDialog` naming the item and the
   consequence, one click;
-- can lock people out (turn off email sign-in, disable SAML): `ConfirmDialog` that spells out the risk;
+- can lock people out (turn off email sign-in, disable SAML, new SAML settings): `ConfirmDialog` that
+  spells out the risk, and blocked outright when it would leave no sign-in method;
 - destroys a whole space of other people's data (delete platform, delete project): `typeToConfirm`.
   Nothing else types to confirm. _Avoid_: "Are you sure…?", a red button for a non-destructive action
 
@@ -41,9 +46,9 @@ wire their own leave guard.
 Retry), empty, content. `AdminQueryState` renders the right one. A failed load never shows an empty
 state, zeros, or a spinner that never ends.
 
-**One error per failure** — `mutationFeedback` shows one error toast at a time and remembers the errors
-it showed, so a dialog wrapping a failed action does not toast it again. A form that shows the error
-inline uses `feedback: 'inline'` and no toast.
+**One error per failure** — `mutationFeedback` remembers the errors it showed, so a dialog wrapping a
+failed action does not toast the same failure again. A form that shows the error inline uses
+`feedback: 'inline'` and must show it (`handleError`, or `form.setError` with `mutationFeedback.message`).
 
 ## Gotchas
 
@@ -62,10 +67,10 @@ inline uses `feedback: 'inline'` and no toast.
 - Error text is the server's message when it has one (`params.message`, or a 4xx `message`), friendly copy
   for permission, not-found, plan and schema-validation errors, and the generic message only for unknown
   and JS errors. An error written for the admin is thrown with `mutationFeedback.userError`.
-- A partial bulk failure shows one error, no success toast, and clears the selection: the shared data
-  table gives rows new ids on refetch, so a "keep the failed rows selected" selection cannot survive.
-- No admin control may leave zero sign-in methods: the email, Google and SAML controls are blocked (with
-  a hint) when they are the last method, and an Undo re-checks the block before running.
+- Sign-in lock-out: the email, Google and SAML controls are blocked (with a hint) when they are the last
+  method; every save, confirm and Undo re-checks against freshly fetched platform data first; and the
+  platform update endpoint rejects any change that leaves no sign-in method, so a stale tab or a second
+  admin cannot get around the UI.
 - Focus return to a row menu's trigger and ignoring clicks on toasts apply only inside `AdminPage`
   (`MenuFocusReturnScope`); dialogs elsewhere in the app behave as Radix does.
 - Feature locks (`PlanFeatureSample`, `LockedFeatureGuard`, `SaveBar` `locked`) follow their own rules

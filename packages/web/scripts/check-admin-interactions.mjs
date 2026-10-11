@@ -9,6 +9,11 @@ const SCOPE = [
   'src/features/platform-admin',
   'src/features/piece-sets',
   'src/features/secret-managers',
+  'src/features/projects/components/edit-project-dialog.tsx',
+].map((entry) => path.join(WEB_ROOT, entry));
+
+const SHARED_WITH_APP = [
+  'src/features/platform-admin/hooks/analytics-hooks.ts',
 ].map((entry) => path.join(WEB_ROOT, entry));
 
 const RULES = [
@@ -33,6 +38,11 @@ const RULES = [
     fix: 'ConfirmDialog from @/app/components/admin',
   },
   {
+    id: 'ui-sonner-import',
+    pattern: /from ['"]@\/components\/ui\/sonner['"]/,
+    fix: 'show errors through mutationFeedback, not the app-wide toast helpers',
+  },
+  {
     id: 'aliased-import',
     pattern: /\b(useMutation|toast)\s+as\s+\w+/,
     fix: 'import useMutation and toast by their own names so the check can see them',
@@ -44,6 +54,11 @@ const RULES = [
   },
 ];
 
+const SILENT_INLINE = {
+  id: 'silent-inline-action',
+  fix: "an action with feedback: 'inline' must show the error: handleError, or form.setError with mutationFeedback.message",
+};
+
 const UNHANDLED_MUTATION = {
   id: 'unhandled-mutation',
   fix: 'useAdminAction, or give useMutation an onError that reports through mutationFeedback or the form',
@@ -51,9 +66,11 @@ const UNHANDLED_MUTATION = {
 
 const violations = SCOPE.flatMap((entry) => walk(entry))
   .filter((file) => /\.(ts|tsx)$/.test(file))
+  .filter((file) => !SHARED_WITH_APP.includes(file))
   .flatMap((file) => [
     ...findViolations(file),
     ...findUnhandledMutations(file),
+    ...findSilentInlineActions(file),
   ]);
 
 if (violations.length > 0) {
@@ -100,11 +117,41 @@ function findUnhandledMutations(file) {
   });
 }
 
+function findSilentInlineActions(file) {
+  const relative = path.relative(WEB_ROOT, file);
+  const source = fs.readFileSync(file, 'utf8');
+  const showsMessages = /setError\(|mutationFeedback\.message|tryCatch\(/.test(
+    source,
+  );
+  return [...source.matchAll(/\buseAdminAction\b/g)].flatMap((match) => {
+    const open = callStart(source, match.index + match[0].length);
+    if (open === -1) {
+      return [];
+    }
+    const body = callBody(source, open + 1);
+    const inline = /feedback\s*:\s*['"]inline['"]/.test(body);
+    if (!inline || /\bhandleError\b/.test(body) || showsMessages) {
+      return [];
+    }
+    return [
+      {
+        file: relative,
+        line: source.slice(0, match.index).split('\n').length,
+        rule: SILENT_INLINE,
+      },
+    ];
+  });
+}
+
 function handlesErrors({ body, optionalOnError }) {
   if (!/\bonError\b/.test(body)) {
     return false;
   }
-  if (/\bonError\s*:\s*\([^)]*\)\s*=>\s*(undefined|\{\s*\}|null)/.test(body)) {
+  if (
+    /\bonError\s*:\s*\([^)]*\)\s*=>\s*(undefined|\{\s*\}|null)/.test(body) ||
+    /\bonError\s*\([^)]*\)\s*\{\s*\}/.test(body) ||
+    /\bonError\s*:\s*noop\b/.test(body)
+  ) {
     return false;
   }
   const passesThrough = /\bonError\s*(,|\}|:\s*onError\b)/.test(body);

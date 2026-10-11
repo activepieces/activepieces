@@ -181,7 +181,9 @@ export default function UsersPage() {
           (row) => (
             <UserActions
               row={row}
-              isUpdatingStatus={setStatus.isPending}
+              isUpdatingStatus={
+                setStatus.isPending && setStatus.variables?.userId === row.id
+              }
               onDelete={(row) => {
                 setDeleteTarget(row);
                 setDeleteOpen(true);
@@ -221,6 +223,7 @@ export default function UsersPage() {
         open={inviteOpen}
         setOpen={setInviteOpen}
         onInviteSuccess={refetch}
+        adminFeedback
       />
       {seatLimitDialog}
     </AdminPage>

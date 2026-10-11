@@ -3,12 +3,10 @@ import {
   PlatformAnalyticsReport,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { useCallback, useContext } from 'react';
 
 import { analyticsApi } from '@/features/platform-admin/api/analytics-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { RefreshAnalyticsContext } from '../stores/refresh-analytics-context';
 
@@ -85,14 +83,7 @@ export const platformAnalyticsHooks = {
         setIsRefreshing(false);
         queryClient.invalidateQueries({ queryKey: analyticsQueryKey });
       },
-      onError: (error) => {
-        setIsRefreshing(false);
-        mutationFeedback.error({
-          error,
-          title: t("Couldn't refresh analytics"),
-        });
-      },
-      retry: 3,
+      retry: true,
       retryDelay: 50000,
     });
   },

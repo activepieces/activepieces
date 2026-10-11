@@ -8,7 +8,6 @@ import { t } from 'i18next';
 import { ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
-import { adminFeedback } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -31,9 +30,7 @@ export const BulkPieceSetActions = ({
   selectedPieces: PieceMetadataModelSummary[];
   resetSelection: () => void;
 }) => {
-  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet({
-    announce: false,
-  });
+  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
   const [updateToConfirm, setUpdateToConfirm] = useState<BulkUpdate | null>(
     null,
   );
@@ -47,10 +44,7 @@ export const BulkPieceSetActions = ({
     : null;
 
   const save = (request: UpdatePieceSetRequestBody) => {
-    updateSet(
-      { id: pieceSet.id, request },
-      { onSuccess: () => adminFeedback.done({ verb: 'save' }) },
-    );
+    updateSet({ id: pieceSet.id, request });
     resetSelection();
   };
 

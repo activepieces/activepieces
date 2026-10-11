@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { planSelectorUtils } from '../components/plan-selector-utils';
@@ -208,12 +209,14 @@ export const billingMutations = {
         queryClient.invalidateQueries({
           queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
         });
-        toast.success(t('Auto top-up config saved'));
+        mutationFeedback.success(t('Auto top-up config saved'));
       },
-      onError: (_error, _params, context) => {
+      onError: (error, _params, context) => {
         restoreBillingSubscription(queryClient, context?.previous);
-        toast.error(t('Auto top-up config change failed'));
-        internalErrorToast();
+        mutationFeedback.error({
+          error,
+          title: t('Auto top-up config change failed'),
+        });
       },
     });
   },
@@ -227,8 +230,11 @@ export const billingMutations = {
           window.open(url, '_blank');
         }
       },
-      onError: () => {
-        internalErrorToast();
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't open the payment page"),
+        });
       },
     });
   },

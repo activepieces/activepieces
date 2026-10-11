@@ -143,7 +143,7 @@ function useSaveShortcut({
         return;
       }
       event.preventDefault();
-      if (hasOpenModal()) {
+      if (event.repeat || hasOpenModal()) {
         return;
       }
       if (latest.current.canSave && ownsShortcut(root)) {
@@ -171,7 +171,7 @@ function isSaveShortcut(event: KeyboardEvent): boolean {
 function hasOpenModal(): boolean {
   return (
     document.querySelector(
-      '[data-slot="dialog-content"][data-state="open"], [data-slot="sheet-content"][data-state="open"], [role="alertdialog"][data-state="open"]',
+      '[data-slot="dialog-content"][data-state="open"], [data-slot="sheet-content"][data-state="open"], [data-slot="select-content"][data-state="open"], [role="alertdialog"][data-state="open"]',
     ) !== null
   );
 }
@@ -243,9 +243,12 @@ function renderStatus({
 }: Pick<SaveBarProps, 'status' | 'error' | 'locked' | 'dirty'>) {
   if (error) {
     return (
-      <span className="flex min-w-0 items-start gap-2 text-sm text-danger-11">
-        <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-        <span className="break-words">{error}</span>
+      <span className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-1">
+        <span className="flex min-w-0 items-start gap-2 text-sm text-danger-11">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <span className="break-words">{error}</span>
+        </span>
+        {status}
       </span>
     );
   }
