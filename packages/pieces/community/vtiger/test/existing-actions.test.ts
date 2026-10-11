@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { createRecord } from '../src/lib/actions/create-record';
 import { deleteRecord } from '../src/lib/actions/delete-record';
 import { getRecord } from '../src/lib/actions/get-record';
-import { makeAPICall, resolveCustomCallTarget } from '../src/lib/actions/make-api-call';
+import { customApiCallAuthHeaders, makeAPICall, resolveCustomCallTarget } from '../src/lib/actions/make-api-call';
 import { queryRecords } from '../src/lib/actions/query-records';
 import { searchFiltersFromFields, searchRecords } from '../src/lib/actions/search-record';
 import { updateRecord } from '../src/lib/actions/update-record';
@@ -260,7 +260,71 @@ describe('B6 deprecated make_api_call stays on the instance', () => {
   });
 });
 
+describe('Custom API Call only sends credentials to the connected REST base', () => {
+  test.each([
+    'https://evil.example/collect',
+    'https://acme.od2.vtiger.com.evil.io/restapi/v1/vtiger/default/me',
+    'http://acme.od2.vtiger.com/restapi/v1/vtiger/default/me',
+    'https://u:p@acme.od2.vtiger.com/restapi/v1/vtiger/default/me',
+    'https://acme.od2.vtiger.com/webservice.php',
+    'https://acme.od2.vtiger.com/restapi/v1/vtiger/defaultx/me',
+  ])('refuses %s', (url) => {
+    expect(() => customApiCallAuthHeaders({ creds: creds(), url })).toThrow('must point to the connected instance');
+  });
+
+  test.each(['/me', 'me', `${INSTANCE}/restapi/v1/vtiger/default/me`, `${INSTANCE}/restapi/v1/vtiger/default`])(
+    'allows %s',
+    (url) => {
+      expect(customApiCallAuthHeaders({ creds: creds(), url })).toEqual({ Authorization: basic() });
+    }
+  );
+});
+
 describe('B9 trigger', () => {
+  test('a record deleted between sync and retrieve is skipped; the rest are delivered', async () => {
+    stubVtiger([
+      { method: 'GET', path: '/sync', reply: ok({ updated: ['4x1', '4x2', '4x3'], deleted: [], more: false, lastModifiedTime: 200 }) },
+      {
+        method: 'GET',
+        path: '/retrieve',
+        reply: (req) => (req.query['id'] === '4x2' ? { status: 400 } : ok({ id: req.query['id'] })),
+      },
+    ]);
+    const out = await fetchChangedRecords({ creds: creds(), module: 'Contacts', syncType: 'application', limit: 100, lastFetchEpochMS: 100_000 });
+    expect(out.map((r) => r['id'])).toEqual(['4x1', '4x3']);
+  });
+
+  test('RECORD_NOT_FOUND from webservice.php is skipped', async () => {
+    stubVtiger(
+      vtwsRoutes([
+        { method: 'GET', path: `${REST}/sync`, reply: { status: 404 } },
+        { method: 'GET', path: '/webservice.php', operation: 'sync', reply: ok({ updated: ['12x4', '12x5'], deleted: [], more: false, lastModifiedTime: 5 }) },
+        {
+          method: 'GET',
+          path: '/webservice.php',
+          operation: 'retrieve',
+          reply: (req) =>
+            req.query['id'] === '12x4' ? fail({ code: 'RECORD_NOT_FOUND', message: 'Record not found' }) : ok({ id: '12x5' }),
+        },
+      ])
+    );
+    const out = await fetchChangedRecords({ creds: creds(), module: 'Contacts', syncType: 'application', limit: 100, lastFetchEpochMS: 1_000_000 });
+    expect(out).toEqual([{ id: '12x5' }]);
+  });
+
+  test.each([
+    ['permission', { status: 403 }],
+    ['server error', { status: 500 }],
+  ])('a %s error on retrieve still fails the poll', async (_label, reply) => {
+    stubVtiger([
+      { method: 'GET', path: '/sync', reply: ok({ updated: ['4x1'], deleted: [], more: false, lastModifiedTime: 200 }) },
+      { method: 'GET', path: '/retrieve', reply },
+    ]);
+    await expect(
+      fetchChangedRecords({ creds: creds(), module: 'Contacts', syncType: 'application', limit: 100, lastFetchEpochMS: 100_000 })
+    ).rejects.toThrow();
+  });
+
   test('Vtiger times are parsed as UTC', () => {
     expect(vtigerTimeToEpochMs('2026-01-02 03:04:05')).toBe(Date.UTC(2026, 0, 2, 3, 4, 5));
     expect(vtigerTimeToEpochMs('')).toBe(0);

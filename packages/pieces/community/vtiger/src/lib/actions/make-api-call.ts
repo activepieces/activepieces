@@ -52,6 +52,31 @@ export function resolveCustomCallTarget({
   return { url: `${origin}/webservice.php`, useRestAuth: false };
 }
 
+export function customApiCallAuthHeaders({
+  creds,
+  url,
+}: {
+  creds: VtigerCredentials;
+  url: unknown;
+}): { Authorization: string } {
+  const value = typeof url === 'string' ? url.trim() : '';
+  if (/^https?:\/\//i.test(value)) {
+    const parsed = parseAbsolute(value);
+    const restBase = new URL(restBaseUrl(creds));
+    if (
+      parsed.origin !== restBase.origin ||
+      parsed.username !== '' ||
+      parsed.password !== '' ||
+      !`${parsed.pathname}/`.startsWith(`${restBase.pathname}/`)
+    ) {
+      throw new Error(
+        `Absolute URLs must point to the connected instance's REST API (${restBase.toString()}). Use a relative path such as /me instead.`
+      );
+    }
+  }
+  return { Authorization: basicAuthorization(creds) };
+}
+
 export const makeAPICall = createAction({
   name: 'make_api_call',
   classification: 'WRITE',

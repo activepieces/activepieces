@@ -5,6 +5,7 @@ import {
   assertRecordId,
   buildWhere,
   clampLimit,
+  escapeLikePattern,
   filterValueToString,
   pagedQuery,
   vtqlQuote,
@@ -126,5 +127,26 @@ describe('D9 paging loops LIMIT off,100 until a short page', () => {
     await expect(
       pagedQuery({ module: 'Leads', where: '', orderBy: 'x; DROP', limit: 1, fetchPage: async () => [] })
     ).rejects.toThrow('Invalid field name');
+  });
+});
+
+describe('LIKE patterns treat % and _ as literal characters', () => {
+  test('escapeLikePattern escapes backslash, percent and underscore', () => {
+    expect(escapeLikePattern('jo_ann%50\\x')).toBe('jo\\_ann\\%50\\\\x');
+  });
+
+  test('buildWhere sends escaped wildcards inside the quoted pattern', () => {
+    expect(buildWhere({ filters: [{ field: 'email', value: 'jo_ann@example.com', operator: 'LIKE' }] })).toBe(
+      " WHERE email LIKE '%jo\\\\_ann@example.com%'"
+    );
+    expect(buildWhere({ filters: [{ field: 'title', value: '100%', operator: 'LIKE' }] })).toBe(
+      " WHERE title LIKE '%100\\\\%%'"
+    );
+  });
+
+  test('exact matches are not escaped', () => {
+    expect(buildWhere({ filters: [{ field: 'email', value: 'jo_ann@example.com', operator: '=' }] })).toBe(
+      " WHERE email = 'jo_ann@example.com'"
+    );
   });
 });

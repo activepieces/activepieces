@@ -38,6 +38,10 @@ export function vtqlQuote(value: string): string {
   return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 }
 
+export function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 export function filterValueToString(value: unknown): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -64,7 +68,7 @@ export function buildWhere({ filters }: { filters: VtqlFilter[] }): string {
   const clauses = filters.map(({ field, value, operator }) => {
     const name = assertFieldName(field);
     return operator === 'LIKE'
-      ? `${name} LIKE ${vtqlQuote(`%${value}%`)}`
+      ? `${name} LIKE ${vtqlQuote(`%${escapeLikePattern(value)}%`)}`
       : `${name} = ${vtqlQuote(value)}`;
   });
   return ` WHERE ${clauses.join(' AND ')}`;

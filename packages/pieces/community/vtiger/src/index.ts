@@ -3,7 +3,7 @@ import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createRecord } from './lib/actions/create-record';
 import { deleteRecord } from './lib/actions/delete-record';
 import { getRecord } from './lib/actions/get-record';
-import { makeAPICall } from './lib/actions/make-api-call';
+import { customApiCallAuthHeaders, makeAPICall } from './lib/actions/make-api-call';
 import { queryRecords } from './lib/actions/query-records';
 import { searchRecords } from './lib/actions/search-record';
 import { updateRecord } from './lib/actions/update-record';
@@ -32,7 +32,7 @@ import { searchModuleRecordsAction } from './lib/actions/ai/search-module-record
 import { unlinkRecordsAction } from './lib/actions/ai/unlink-records';
 import { updateRecordFieldsAction } from './lib/actions/ai/update-record-fields';
 import { vtigerAuth } from './lib/auth';
-import { basicAuthorization, restBaseUrl } from './lib/rest-client';
+import { isRecord, restBaseUrl } from './lib/rest-client';
 import { newOrUpdatedRecord } from './lib/triggers/new-or-updated-record';
 
 export const vtiger = createPiece({
@@ -78,7 +78,8 @@ export const vtiger = createPiece({
     createCustomApiCallAction({
       auth: vtigerAuth,
       baseUrl: (auth) => (auth ? restBaseUrl(auth.props) : ''),
-      authMapping: async (auth) => ({ Authorization: basicAuthorization(auth.props) }),
+      authMapping: async (auth, propsValue) =>
+        customApiCallAuthHeaders({ creds: auth.props, url: isRecord(propsValue['url']) ? propsValue['url']['url'] : undefined }),
     }),
   ],
   triggers: [newOrUpdatedRecord],

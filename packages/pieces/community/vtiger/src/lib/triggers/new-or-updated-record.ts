@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { vtigerAuth } from '../auth';
 import { elementTypeProperty, propText } from '../common';
-import { isRecord, VtigerCredentials, vtigerRest } from '../rest-client';
+import { isRecord, VtigerApiError, VtigerCredentials, vtigerRest } from '../rest-client';
 import { restOrVtws, vtwsCall, vtwsLogin, vtwsQuery, VtwsSession } from '../vtws';
 import { assertModuleName, clampLimit } from '../vtql';
 
@@ -57,9 +57,36 @@ export async function fetchChangedRecords({
   }
   const records: Record<string, unknown>[] = [];
   for (const item of changed) {
-    records.push(item.record ?? (await transport.retrieve(item.id)));
+    const record = item.record ?? (await retrieveUnlessDeleted({ retrieve: transport.retrieve, id: item.id }));
+    if (record !== undefined) {
+      records.push(record);
+    }
   }
   return records;
+}
+
+export function isMissingRecordError(error: unknown): boolean {
+  return (
+    error instanceof VtigerApiError &&
+    (error.status === 400 || error.status === 404 || MISSING_RECORD_CODES.has(error.code))
+  );
+}
+
+async function retrieveUnlessDeleted({
+  retrieve,
+  id,
+}: {
+  retrieve: (id: string) => Promise<Record<string, unknown>>;
+  id: string;
+}): Promise<Record<string, unknown> | undefined> {
+  try {
+    return await retrieve(id);
+  } catch (error) {
+    if (isMissingRecordError(error)) {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 export async function fetchNewestRecords({
@@ -234,6 +261,7 @@ const polling: Polling<
 };
 
 const MAX_SYNC_PAGES = 10;
+const MISSING_RECORD_CODES = new Set(['RECORD_NOT_FOUND']);
 const TEST_SAMPLE_SIZE = 5;
 
 type SyncResult = {
