@@ -1,15 +1,10 @@
-import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { ProjectType } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../../core/db/repo-factory'
 import { platformService } from '../../platform/platform.service'
 import { projectRepo } from '../../project/project-repo'
 import { UserProjectHooks } from '../../user/user-project-hooks'
-import { ProjectMemberEntity } from '../projects/project-members/project-member.entity'
-import { projectRoleService } from '../projects/project-role/project-role.service'
-
-const projectMemberRepo = repoFactory(ProjectMemberEntity)
+import { projectMemberService } from '../projects/project-members/project-member.service'
 
 export const userProjectEnterpriseHooks = (log: FastifyBaseLogger): UserProjectHooks => ({
     async addToProject({ userId, platformId, projectId, projectRoleName, entityManager }) {
@@ -31,19 +26,6 @@ export const userProjectEnterpriseHooks = (log: FastifyBaseLogger): UserProjectH
                 },
             })
         }
-        const projectRole = await projectRoleService.getOneOrThrow({ name: projectRoleName, platformId })
-        await projectMemberRepo(entityManager)
-            .createQueryBuilder()
-            .insert()
-            .values({
-                id: apId(),
-                updated: dayjs().toISOString(),
-                userId,
-                platformId,
-                projectId,
-                projectRoleId: projectRole.id,
-            })
-            .orUpdate(['projectRoleId', 'updated'], ['projectId', 'userId', 'platformId'])
-            .execute()
+        await projectMemberService(log).upsert({ userId, projectId, projectRoleName, entityManager })
     },
 })
