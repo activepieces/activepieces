@@ -3,8 +3,11 @@ import { t } from 'i18next';
 import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
-import { adminLayout } from '@/app/components/admin';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  ConfirmDialog,
+  adminLayout,
+  useAdminAction,
+} from '@/app/components/admin';
 import EditableText from '@/components/custom/editable-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,10 +34,14 @@ import {
   RoleBase,
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
-import { projectRoleMutations } from '@/features/platform-admin';
+import {
+  projectRoleApi,
+  projectRoleMutations,
+} from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { PermissionGrid } from './permission-grid';
 import { RoleAvatar } from './role-avatar';
@@ -112,14 +119,15 @@ function RoleDialogBody({
         setSaveError(
           isDuplicateNameError(error)
             ? t('nameAlreadyTaken', { name: name.trim() })
-            : t('Could not save the role. Try again.'),
+            : mutationFeedback.message(error),
         ),
     });
-  const { mutateAsync: deleteRole } = projectRoleMutations.useDeleteProjectRole(
-    {
-      onSuccess: onSaved,
-    },
-  );
+  const { mutateAsync: deleteRole } = useAdminAction<string>({
+    verb: 'delete',
+    name: (roleName) => roleName,
+    run: (roleName) => projectRoleApi.delete(roleName),
+    onSuccess: onSaved,
+  });
 
   const granted = rolePermissionModel.grantedBoxes({ permissions });
   const total = rolePermissionModel.totalBoxes();
@@ -258,18 +266,14 @@ function RoleDialogBody({
                   <Pencil className="size-4" />
                   {t('Edit permissions')}
                 </DropdownMenuItem>
-                <ConfirmationDeleteDialog
-                  isDanger={true}
-                  title={t('Delete role')}
-                  message={t(
+                <ConfirmDialog
+                  title={t('Delete {name}?', { name: projectRole.name })}
+                  consequence={t(
                     'Deleting this role will remove {count} project member(s) and all associated invitations.',
                     { count: projectRole.userCount },
                   )}
-                  entityName={`${t('Project Role')} ${projectRole.name}`}
-                  buttonText={t('Delete role')}
-                  mutationFn={async () => {
-                    await deleteRole(projectRole.name);
-                  }}
+                  confirmLabel={t('Delete role')}
+                  onConfirm={() => deleteRole(projectRole.name)}
                   controlId={AdminControl.ROLES_DELETE_CONFIRM}
                 >
                   <DropdownMenuItem
@@ -280,7 +284,7 @@ function RoleDialogBody({
                     <Trash className="size-4" />
                     {t('Delete role')}
                   </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
+                </ConfirmDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
