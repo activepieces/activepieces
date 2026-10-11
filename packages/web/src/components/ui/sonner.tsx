@@ -11,9 +11,9 @@ import {
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
+import { INTERNAL_ERROR_MESSAGE } from '@/lib/mutation-feedback';
 
-export const INTERNAL_ERROR_MESSAGE =
-  'An unexpected error occurred. Please try again in a moment.';
+export { INTERNAL_ERROR_MESSAGE };
 
 export function internalErrorToast() {
   console.error('internalErrorToast', INTERNAL_ERROR_MESSAGE);

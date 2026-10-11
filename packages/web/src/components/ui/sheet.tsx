@@ -5,6 +5,8 @@ import { Dialog as SheetPrimitive } from 'radix-ui';
 import * as React from 'react';
 
 import { ModalLayer } from '@/components/ui/modal-layer';
+import { useMenuFocusReturn } from '@/hooks/use-menu-focus-return';
+import { toastInteraction } from '@/lib/toast-interaction';
 import { cn } from '@/lib/utils';
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -51,12 +53,15 @@ function SheetContent({
   side = 'right',
   hideCloseButton = false,
   overlayClassName,
+  onInteractOutside,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left';
   hideCloseButton?: boolean;
   overlayClassName?: string;
 }) {
+  const focusReturn = useMenuFocusReturn({ onCloseAutoFocus });
   return (
     <SheetPortal>
       <SheetOverlay className={overlayClassName} />
@@ -75,8 +80,11 @@ function SheetContent({
             'inset-x-0 bottom-0 h-auto border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
           className,
         )}
+        onInteractOutside={toastInteraction.ignore(onInteractOutside)}
+        onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         {...props}
       >
+        {focusReturn.capture}
         <ModalLayer>{children}</ModalLayer>
         {!hideCloseButton && (
           <SheetPrimitive.Close className="absolute top-4 right-4 rounded-md opacity-70 ring-offset-gray-1 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-gray-8 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-gray-3">
