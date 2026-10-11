@@ -41,6 +41,8 @@ const SSOPage = () => {
   const otherSignInEnabled = platform.googleAuthEnabled || samlCanSignIn;
   const signInOtherThanGoogle = emailAuthEnabled || samlCanSignIn;
   const emailIsOnlyMethod = emailAuthEnabled && !otherSignInEnabled;
+  const googleIsOnlyMethod =
+    platform.googleAuthEnabled && !signInOtherThanGoogle;
 
   return (
     <AdminPage width="content">
@@ -74,33 +76,27 @@ const SSOPage = () => {
         <SettingsRow
           icon={<img className="size-5" src={GoogleIcon} alt="icon" />}
           title="Google"
-          description={t(
-            "Allow logins through google's single sign-on functionality.",
-          )}
+          description={
+            googleIsOnlyMethod
+              ? t(
+                  "Allow logins through google's single sign-on functionality. Turn on email or SAML before turning this off, so people can still sign in.",
+                )
+              : t("Allow logins through google's single sign-on functionality.")
+          }
         >
           <InstantSwitch
             controlId={AdminControl.SSO_GOOGLE_TOGGLE}
             aria-label="Google"
             checked={platform.googleAuthEnabled}
+            disabled={googleIsOnlyMethod}
             onCheckedChange={(googleAuthEnabled) =>
               updatePlatform({ googleAuthEnabled })
             }
-            undo={signInOtherThanGoogle}
+            undo
             successMessage={(on) =>
               on
                 ? t('Google sign-in turned on')
                 : t('Google sign-in turned off')
-            }
-            confirmBefore={(next) =>
-              next || signInOtherThanGoogle
-                ? null
-                : {
-                    title: t('Turn off Google sign-in?'),
-                    consequence: t(
-                      'No other sign-in method is on. Nobody, including you, will be able to sign in until one is set up.',
-                    ),
-                    confirmLabel: t('Turn off Google sign-in'),
-                  }
             }
           />
         </SettingsRow>
