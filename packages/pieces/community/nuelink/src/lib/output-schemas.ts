@@ -117,19 +117,22 @@ const collectionFields: OutputSchema['fields'] = [
       { key: 'status', label: 'Status' },
     ],
   },
-  {
-    key: 'postsCount',
-    label: 'Post Counts',
-    children: [
-      { key: 'queued', label: 'Queued', format: 'number' },
-      { key: 'scheduled', label: 'Scheduled', format: 'number' },
-      { key: 'drafts', label: 'Drafts', format: 'number' },
-      { key: 'published', label: 'Published', format: 'number' },
-    ],
-  },
   { key: 'createdAt', label: 'Created At', format: 'datetime' },
   { key: 'updatedAt', label: 'Updated At', format: 'datetime' },
 ];
+
+const collectionPostCountsField: OutputSchema['fields'][number] = {
+  key: 'postsCount',
+  label: 'Post Counts',
+  children: [
+    { key: 'queued', label: 'Queued', format: 'number' },
+    { key: 'scheduled', label: 'Scheduled', format: 'number' },
+    { key: 'drafts', label: 'Drafts', format: 'number' },
+    { key: 'published', label: 'Published', format: 'number' },
+  ],
+};
+
+const evergreenIntervalField: OutputSchema['fields'][number] = { key: 'maxRepublish', label: 'Evergreen Interval (weeks)', format: 'number' };
 
 const WEEKDAYS: Array<[string, string]> = [
   ['MON', 'Monday'],
@@ -210,7 +213,7 @@ export const nuelinkOutputSchemas = {
     fields: [{ key: 'items', label: 'Brands', labelKey: 'title', listItems: brandFields }, ...pagingFields],
   },
   listCollections: {
-    fields: [{ key: 'items', label: 'Collections', labelKey: 'title', listItems: collectionFields }, ...pagingFields],
+    fields: [{ key: 'items', label: 'Collections', labelKey: 'title', listItems: [...collectionFields, evergreenIntervalField, collectionPostCountsField] }, ...pagingFields],
   },
   newPublishedPost: { fields: publishedPostFields },
   profile: {
@@ -232,7 +235,7 @@ export const nuelinkOutputSchemas = {
       },
     ],
   },
-  collection: { fields: [...collectionFields, { key: 'maxRepublish', label: 'Evergreen Interval (weeks)', format: 'number' }] },
+  collection: { fields: [...collectionFields, evergreenIntervalField] },
   queueSlot: { fields: queueSlotFields },
   deletedQueueSlot: {
     fields: [
