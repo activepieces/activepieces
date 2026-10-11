@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaCustomProperties } from '../common/custom-properties';
 import { outsetaErrors } from '../common/errors';
 import { outsetaLookup } from '../common/lookup';
 import { outsetaMappers } from '../common/mappers';
@@ -62,11 +63,22 @@ export const getPersonAction = createAction({
         ? await personByUid({ client, uid: lookup.value })
         : await personByEmail({ client, email: lookup.value });
 
+    const customPropertyNames = await outsetaCustomProperties.names({
+      client,
+      entityType: 'Person',
+    });
+
     if (isNil(person)) {
-      return { found: false, ...outsetaMappers.person({}) };
+      return {
+        found: false,
+        ...outsetaMappers.person({ raw: {}, customPropertyNames }),
+      };
     }
 
-    return { found: true, ...outsetaMappers.person(person) };
+    return {
+      found: true,
+      ...outsetaMappers.person({ raw: person, customPropertyNames }),
+    };
   },
 });
 

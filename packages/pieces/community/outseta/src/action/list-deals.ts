@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaCustomProperties } from '../common/custom-properties';
 import { pipelineDropdown, pipelineStageDropdown } from '../common/dropdowns';
 import { outsetaListProps } from '../common/list-props';
 import { outsetaMappers } from '../common/mappers';
@@ -155,8 +156,15 @@ export const listDealsAction = createAction({
       `/api/v1/crm/deals?${query}&${DEAL_FIELDS}`
     );
 
+    const customPropertyNames = await outsetaCustomProperties.names({
+      client,
+      entityType: 'Deal',
+    });
+
     return {
-      items: result.items.map(outsetaMappers.deal),
+      items: result.items.map((raw) =>
+        outsetaMappers.deal({ raw, customPropertyNames })
+      ),
       ...outsetaQuery.pageInfo(result),
     };
   },

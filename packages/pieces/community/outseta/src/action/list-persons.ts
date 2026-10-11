@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaCustomProperties } from '../common/custom-properties';
 import { outsetaListProps } from '../common/list-props';
 import { outsetaMappers } from '../common/mappers';
 import { outsetaQuery } from '../common/list-query';
@@ -134,8 +135,15 @@ export const listPersonsAction = createAction({
       `/api/v1/crm/people?${query}&${PERSON_FIELDS}`
     );
 
+    const customPropertyNames = await outsetaCustomProperties.names({
+      client,
+      entityType: 'Person',
+    });
+
     return {
-      items: result.items.map(outsetaMappers.person),
+      items: result.items.map((raw) =>
+        outsetaMappers.person({ raw, customPropertyNames })
+      ),
       ...outsetaQuery.pageInfo(result),
     };
   },

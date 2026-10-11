@@ -16,49 +16,6 @@ import {
   OutsetaTransaction,
 } from './outseta-types';
 
-const ACCOUNT_NATIVE_KEYS = new Set([
-  '_objectType', 'ActivityEventData', 'Uid', 'Created', 'Updated',
-  'SchemaLessData', 'SchemaLessDataLoaded', 'LastEventCreated', 'ProcessedStripeEventIds',
-  'Name', 'ClientIdentifier', 'Currency', 'InvoiceNotes', 'IsDemo',
-  'BillingAddress', 'MailingAddress', 'AccountStage', 'AccountStageLabel',
-  'PaymentInformation', 'PersonAccount', 'Subscriptions', 'Deals',
-  'CurrentSubscription', 'LatestSubscription', 'PrimarySubscription',
-  'PrimaryContact', 'DomainName', 'HasLoggedIn', 'LifetimeRevenue',
-  'LastLoginDateTime', 'Nonce', 'RecaptchaToken', 'WebflowSlug',
-  'RewardFulReferralId', 'ToltReferralId', 'TaxIds', 'TaxStatus',
-  'TaxId', 'TaxIdIsInvalid', 'TaxIdType',
-  'StripeId', 'IsLivemode', 'StripeDefaultPaymentMethodId', 'StripeInvoices',
-  'StripePaymentMethods', 'StripeSubscriptions', 'PrimaryStripeSubscription',
-  'CurrentStripeProducts', 'NextStripeInvoiceDate', 'StripeNextInvoiceSequence',
-  'StripePrice', 'StripePriceIds', 'StripePromotionCode',
-  'AccountSpecificPageUrl1', 'AccountSpecificPageUrl2', 'AccountSpecificPageUrl3',
-  'AccountSpecificPageUrl4', 'AccountSpecificPageUrl5', 'AccountSpecificPageUrl6',
-  'AccountSpecificPageUrl7', 'AccountSpecificPageUrl8', 'AccountSpecificPageUrl9',
-  'AccountSpecificPageUrl10',
-]);
-
-const PERSON_NATIVE_KEYS = new Set([
-  '_objectType', 'ActivityEventData', 'Uid', 'Created', 'Updated',
-  'SchemaLessData', 'SchemaLessDataLoaded',
-  'Email', 'FirstName', 'LastName', 'FullName', 'Title',
-  'PhoneMobile', 'PhoneWork', 'MailingAddress', 'ProfileImageS3Url',
-  'Timezone', 'Language', 'IPAddress', 'Referer', 'UserAgent',
-  'UserAgentPlatformBrowser', 'LastLoginDateTime', 'HasLoggedIn',
-  'Password', 'PasswordLastUpdated', 'PasswordMustChange',
-  'PersonAccount', 'Account', 'AccountUids', 'DealPeople',
-  'LeadFormSubmissions', 'EmailListPerson', 'OptInToEmailList', 'HasUnsubscribed',
-  'OAuthGoogleProfileId', 'OAuthIntegrationStatus',
-  'DiscordUser', 'IsConnectedToDiscord', 'RecaptchaToken',
-]);
-
-const DEAL_NATIVE_KEYS = new Set([
-  '_objectType', 'ActivityEventData', 'Uid', 'Created', 'Updated',
-  'SchemaLessData', 'SchemaLessDataLoaded',
-  'Name', 'Amount', 'DueDate', 'Weight', 'AssignedToPersonClientIdentifier',
-  'DealPipelineStage', 'PipelineUid', 'DealPeople', 'Contacts',
-  'Account', 'AccountId', 'Owner',
-]);
-
 function toArray<T>(collection: OutsetaCollection<T>): T[] {
   if (Array.isArray(collection)) {
     return collection;
@@ -66,13 +23,14 @@ function toArray<T>(collection: OutsetaCollection<T>): T[] {
   return collection?.items ?? collection?.Items ?? [];
 }
 
-function customPropertiesOf(
-  entity: Record<string, unknown>,
-  nativeKeys: Set<string>
-): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(entity).filter(([key]) => !nativeKeys.has(key))
-  );
+function customPropertiesOf({
+  entity,
+  names,
+}: {
+  entity: Record<string, unknown>;
+  names: string[];
+}): Record<string, unknown> {
+  return Object.fromEntries(names.map((name) => [name, entity[name] ?? null]));
 }
 
 function address(prefix: string, value: OutsetaAddress | null | undefined) {
@@ -103,7 +61,10 @@ function subscriptionAddOns(subscription: OutsetaSubscription | null | undefined
   );
 }
 
-function account(raw: OutsetaAccount) {
+function account({
+  raw,
+  customPropertyNames,
+}: WithCustomProperties<OutsetaAccount>) {
   return {
     uid: raw.Uid ?? null,
     name: raw.Name ?? null,
@@ -129,11 +90,17 @@ function account(raw: OutsetaAccount) {
     current_subscription_uid: raw.CurrentSubscription?.Uid ?? null,
     plan_uid: raw.CurrentSubscription?.Plan?.Uid ?? null,
     plan_name: raw.CurrentSubscription?.Plan?.Name ?? null,
-    custom_properties: customPropertiesOf(raw, ACCOUNT_NATIVE_KEYS),
+    custom_properties: customPropertiesOf({
+      entity: raw,
+      names: customPropertyNames,
+    }),
   };
 }
 
-function person(raw: OutsetaPerson) {
+function person({
+  raw,
+  customPropertyNames,
+}: WithCustomProperties<OutsetaPerson>) {
   const membership = firstMembership(raw);
   return {
     uid: raw.Uid ?? null,
@@ -158,11 +125,17 @@ function person(raw: OutsetaPerson) {
       membership?.Account?.AccountStage ?? raw.Account?.AccountStage ?? null,
     account_role: outsetaEnums.accountRole.label(membership?.Role),
     is_primary_contact: membership?.IsPrimary ?? null,
-    custom_properties: customPropertiesOf(raw, PERSON_NATIVE_KEYS),
+    custom_properties: customPropertiesOf({
+      entity: raw,
+      names: customPropertyNames,
+    }),
   };
 }
 
-function deal(raw: OutsetaDeal) {
+function deal({
+  raw,
+  customPropertyNames,
+}: WithCustomProperties<OutsetaDeal>) {
   return {
     uid: raw.Uid ?? null,
     name: raw.Name ?? null,
@@ -180,7 +153,10 @@ function deal(raw: OutsetaDeal) {
       .filter((email): email is string => !isNil(email)),
     created: raw.Created ?? null,
     updated: raw.Updated ?? null,
-    custom_properties: customPropertiesOf(raw, DEAL_NATIVE_KEYS),
+    custom_properties: customPropertiesOf({
+      entity: raw,
+      names: customPropertyNames,
+    }),
   };
 }
 
@@ -344,4 +320,9 @@ export const outsetaMappers = {
   supportCase,
   transaction,
   toArray,
+};
+
+type WithCustomProperties<T> = {
+  raw: T;
+  customPropertyNames: string[];
 };

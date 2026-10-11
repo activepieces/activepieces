@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaCustomProperties } from '../common/custom-properties';
 import { outsetaErrors } from '../common/errors';
 import { outsetaLookup } from '../common/lookup';
 import { outsetaMappers } from '../common/mappers';
@@ -71,11 +72,22 @@ export const getAccountAction = createAction({
       ? null
       : await accountByUid({ client, uid: accountUid });
 
+    const customPropertyNames = await outsetaCustomProperties.names({
+      client,
+      entityType: 'Account',
+    });
+
     if (isNil(account)) {
-      return { found: false, ...outsetaMappers.account({}) };
+      return {
+        found: false,
+        ...outsetaMappers.account({ raw: {}, customPropertyNames }),
+      };
     }
 
-    return { found: true, ...outsetaMappers.account(account) };
+    return {
+      found: true,
+      ...outsetaMappers.account({ raw: account, customPropertyNames }),
+    };
   },
 });
 

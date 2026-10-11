@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaCustomProperties } from '../common/custom-properties';
 import { pipelineDropdown } from '../common/dropdowns';
 import { outsetaErrors } from '../common/errors';
 import { outsetaMappers } from '../common/mappers';
@@ -106,11 +107,22 @@ export const getDealAction = createAction({
             }),
           });
 
+    const customPropertyNames = await outsetaCustomProperties.names({
+      client,
+      entityType: 'Deal',
+    });
+
     if (isNil(deal)) {
-      return { found: false, ...outsetaMappers.deal({}) };
+      return {
+        found: false,
+        ...outsetaMappers.deal({ raw: {}, customPropertyNames }),
+      };
     }
 
-    return { found: true, ...outsetaMappers.deal(deal) };
+    return {
+      found: true,
+      ...outsetaMappers.deal({ raw: deal, customPropertyNames }),
+    };
   },
 });
 
