@@ -1,7 +1,7 @@
 import { apId, Permission, RoleType } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { mcpOAuthTokenService } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
 import { db } from '../../../helpers/db'
 import { McpClient, mcpClientHelpers } from '../../../helpers/mcp-client'
@@ -66,6 +66,18 @@ describe('In-app AI Chat on the MCP server', () => {
         expect(text).toContain(Permission.WRITE_FLOW)
     })
 
+    it('keeps the chat token working for a turn that runs longer than an outside client token lasts', async () => {
+        const { owner, member } = await setup({ permissions: [Permission.READ_FLOW] })
+        const conversationId = await startConversation({ ctx: member, projectId: owner.project.id })
+        const mcpClient = await chatClient({ ctx: member, conversationId })
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(Date.now() + LONG_TURN_MS)
+
+        const text = await mcpClientHelpers.callTool({ app, mcpClient, name: 'ap_list_flows' }).finally(() => vi.useRealTimers())
+
+        expect(text).toContain('✅')
+    })
+
     it('keeps the READ_MCP gate on a project-scoped token from the /token route', async () => {
         const { owner, member } = await setup({ permissions: [Permission.READ_FLOW] })
         const accessToken = await mcpOAuthTokenService.issueInternalAccessToken({ userId: member.user.id, platformId: owner.platform.id, projectId: owner.project.id })
@@ -106,3 +118,5 @@ describe('In-app AI Chat on the MCP server', () => {
         expect(text).toContain('✅')
     })
 })
+
+const LONG_TURN_MS = 45 * 60 * 1000
