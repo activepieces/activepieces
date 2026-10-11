@@ -159,7 +159,12 @@ function keepRecent({ entries, floor }: { entries: RecentEntry[]; floor: number 
   const kept = entries.filter(([, time]) => time >= floor).slice(-RECENT_CAP);
   const byTime = new Map<number, string[]>();
   for (const [id, time] of kept) {
-    byTime.set(time, [...(byTime.get(time) ?? []), id]);
+    const ids = byTime.get(time);
+    if (ids === undefined) {
+      byTime.set(time, [id]);
+    } else {
+      ids.push(id);
+    }
   }
   return [...byTime.entries()];
 }
