@@ -3340,5 +3340,11 @@
   "Delete key": "Delete key",
   "piece set": "piece set",
   "Include {name}?": "Include {name}?",
-  "Delete piece set": "Delete piece set"
+  "Delete piece set": "Delete piece set",
+  "Couldn't download the pieces report": "Couldn't download the pieces report",
+  "Delete piece": "Delete piece",
+  "Sync from cloud": "Sync from cloud",
+  "Couldn't sync pieces": "Couldn't sync pieces",
+  "OAuth2 app": "OAuth2 app",
+  "Connections that sign in through this app stop working until it is configured again.": "Connections that sign in through this app stop working until it is configured again."
 }

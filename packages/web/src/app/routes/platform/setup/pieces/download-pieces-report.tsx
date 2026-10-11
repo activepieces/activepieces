@@ -1,11 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const DownloadPiecesReportButton = () => {
   const { mutate, isPending } = useMutation({
@@ -27,8 +27,11 @@ const DownloadPiecesReportButton = () => {
       anchor.click();
       URL.revokeObjectURL(url);
     },
-    onError: () => {
-      toast.error(t('Failed to download pieces report'));
+    onError: (error) => {
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't download the pieces report"),
+      });
     },
   });
 

@@ -67,17 +67,6 @@
     "src/app/routes/platform/setup/mcp/platform-mcp-hooks.ts": [
       "raw-toast"
     ],
-    "src/app/routes/platform/setup/pieces/customize-selector-dialog.tsx": [
-      "legacy-confirm",
-      "raw-toast"
-    ],
-    "src/app/routes/platform/setup/pieces/download-pieces-report.tsx": [
-      "raw-toast"
-    ],
-    "src/app/routes/platform/setup/pieces/index.tsx": [
-      "legacy-confirm",
-      "raw-toast"
-    ],
     "src/app/routes/platform/setup/templates/index.tsx": [
       "legacy-confirm",
       "raw-toast"

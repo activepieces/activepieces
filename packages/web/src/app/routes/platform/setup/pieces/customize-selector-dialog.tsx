@@ -20,10 +20,8 @@ import {
   XIcon,
 } from 'lucide-react';
 import { ReactNode, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
-import { adminLayout } from '@/app/components/admin';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog, adminLayout } from '@/app/components/admin';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -142,6 +140,7 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
   const { pieces } = piecesHooks.usePieces({
     includeHidden: true,
   });
+  const [validationError, setValidationError] = useState<string | null>(null);
   const saveMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
     platformId: platform.id,
     refetch,
@@ -187,16 +186,17 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       (tab) => tab.kind === 'CUSTOM' && !tab.title,
     );
     if (customTabWithoutName) {
-      toast.error(t('Custom tabs must have a name'));
+      setValidationError(t('Custom tabs must have a name'));
       return;
     }
     const sectionWithoutName = normalizedTabs.some((tab) =>
       (tab.sections ?? []).some((section) => section.title === ''),
     );
     if (sectionWithoutName) {
-      toast.error(t('Sections must have a name'));
+      setValidationError(t('Sections must have a name'));
       return;
     }
+    setValidationError(null);
     saveMutation.mutate({ tabs: normalizedTabs }, { onSuccess: onClose });
   };
 
@@ -243,16 +243,17 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       </ScrollArea>
 
       <SheetFooter className="flex-row justify-between px-6 py-4 border-t">
-        <ConfirmationDeleteDialog
+        <ConfirmDialog
           title={t('Reset to default?')}
-          message={t('The piece selector will return to its default layout.')}
-          warning={t(
+          description={t(
+            'The piece selector will return to its default layout.',
+          )}
+          consequence={t(
             'All your custom tabs and sections will be permanently removed.',
           )}
-          buttonText={t('Reset')}
-          entityName={t('customization')}
+          confirmLabel={t('Reset')}
           controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
-          mutationFn={async () => {
+          onConfirm={async () => {
             await saveMutation.mutateAsync(null);
             onClose();
           }}
@@ -263,14 +264,21 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           >
             {t('Reset to default')}
           </Button>
-        </ConfirmationDeleteDialog>
-        <Button
-          {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
-          onClick={handleSave}
-          loading={saveMutation.isPending}
-        >
-          {t('Save')}
-        </Button>
+        </ConfirmDialog>
+        <div className="flex min-w-0 items-center gap-3">
+          {validationError && (
+            <span role="alert" className="text-sm text-danger-11">
+              {validationError}
+            </span>
+          )}
+          <Button
+            {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
+            onClick={handleSave}
+            loading={saveMutation.isPending}
+          >
+            {t('Save')}
+          </Button>
+        </div>
       </SheetFooter>
     </>
   );
