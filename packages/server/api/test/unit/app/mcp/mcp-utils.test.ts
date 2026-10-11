@@ -508,3 +508,17 @@ describe('mcpUtils.resolveRouterStep', () => {
         expect(text && 'text' in text ? text.text : '').toContain('ai_router')
     })
 })
+
+describe('mcpUtils.normalizeFormulaText — double braces around a formula', () => {
+    it('turns ap-formula-v1::{{fn(...)}}::ap-formula-v1 into single braces and keeps the references inside', () => {
+        const fixed = mcpUtils.normalizeFormulaText('ap-formula-v1::{{formatDate(addDays(now(); -7); "YYYY-MM-DD")}}::ap-formula-v1')
+
+        expect(fixed).toBe('ap-formula-v1::{formatDate(addDays(now(); -7); "YYYY-MM-DD")}::ap-formula-v1')
+    })
+
+    it('leaves a correct formula and a plain reference untouched', () => {
+        const correct = 'ap-formula-v1::{count({{step_1[\'output\'].rows}})}::ap-formula-v1 and {{step_1[\'output\'].id}}'
+
+        expect(mcpUtils.normalizeFormulaText(correct)).toBe(correct)
+    })
+})
