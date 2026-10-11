@@ -198,6 +198,20 @@ describe('ap_lazy_tool', () => {
         expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_send_email"')
     })
 
+    it('drops a top-level key the tool does not declare instead of failing the call', async () => {
+        const received = await runThroughLazyTool({ targetSchema: z.strictObject({ flowId: z.string() }), outer: {}, input: { flowId: 'f1', pieceName: '@activepieces/piece-tables' } })
+
+        expect(received).toEqual({ flowId: 'f1' })
+    })
+
+    it('still rejects a call that is missing a required key', async () => {
+        const surface = surfaceWithJsonSchemaTool(async () => ({ renamed: true }))
+
+        const rejected = await validateWrapped({ surface, value: { tool: 'ap_rename_flow', input: { pieceName: 'x' } } })
+
+        expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_rename_flow"')
+    })
+
     it('hands a JSON-schema tool its input unchanged', async () => {
         const execute = vi.fn(async () => ({ renamed: true }))
         await executeWrapped({ surface: surfaceWithJsonSchemaTool(execute), toolName: 'ap_rename_flow', input: { flowId: 'f1' } })

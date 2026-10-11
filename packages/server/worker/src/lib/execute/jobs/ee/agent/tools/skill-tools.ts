@@ -156,7 +156,8 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (chatBilling.isPaidTool(toolName) && !canAffordPaidTool()) {
                 return { success: false, error: new Error(paidToolRefusal(toolName)) }
             }
-            const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input }) })
+            const declaredInput = await withoutUndeclaredKeys({ target, input })
+            const inner = await validateToolInput({ target, input: await withOuterLabels({ target, outer: parsed.data, input: declaredInput }) })
             if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
@@ -177,6 +178,15 @@ async function validateToolInput({ target, input }: { target: ToolSet[string], i
     }
     const result = zodSchema.safeParse(input)
     return result.success ? { success: true, value: input } : { success: false, error: new Error(result.error.message) }
+}
+
+async function withoutUndeclaredKeys({ target, input }: { target: ToolSet[string], input: Record<string, unknown> }): Promise<Record<string, unknown>> {
+    const schema = plainJsonSchema(await asSchema(target.inputSchema).jsonSchema)
+    if (!isObject(schema) || !isObject(schema['properties'])) {
+        return input
+    }
+    const declared = schema['properties']
+    return Object.fromEntries(Object.entries(input).filter(([key]) => key in declared))
 }
 
 async function withOuterLabels({ target, outer, input }: { target: ToolSet[string], outer: Record<string, unknown>, input: Record<string, unknown> }): Promise<Record<string, unknown>> {
