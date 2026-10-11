@@ -10,7 +10,6 @@ import {
   ArrowUp,
   Brain,
   Info,
-  Loader2,
   MessageSquare,
   MoreHorizontal,
   Pencil,
@@ -23,7 +22,7 @@ import {
   LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
@@ -69,7 +68,6 @@ export function TierCard({
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
-  const showSpinner = useDelayedFlag({ active: isPending, delayMs: 300 });
 
   const save = (request: UpdatePlatformModelTierRequest) =>
     update({ id: tier.id, request });
@@ -174,12 +172,6 @@ export function TierCard({
               <TierTag icon={MessageSquare}>
                 {t('Recommended for chat')}
               </TierTag>
-            )}
-            {showSpinner && (
-              <Loader2
-                className="size-3.5 animate-spin text-gray-10"
-                aria-label={t('Saving')}
-              />
             )}
           </div>
           {tier.description && (
@@ -589,25 +581,6 @@ function RowMenu({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-function useDelayedFlag({
-  active,
-  delayMs,
-}: {
-  active: boolean;
-  delayMs: number;
-}): boolean {
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    if (!active) {
-      setShown(false);
-      return;
-    }
-    const timer = window.setTimeout(() => setShown(true), delayMs);
-    return () => window.clearTimeout(timer);
-  }, [active, delayMs]);
-  return shown;
 }
 
 const MAX_ENTRIES = 5;
