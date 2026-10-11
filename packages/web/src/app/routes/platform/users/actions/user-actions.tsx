@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { ConfirmDialog } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -31,7 +30,7 @@ import { UpdateUserDialog } from './update-user-dialog';
 type UserActionsProps = {
   row: UserRowData;
   isUpdatingStatus: boolean;
-  onDelete: (row: UserRowData) => Promise<unknown>;
+  onDelete: (row: UserRowData) => void;
   onToggleStatus: (user: UserWithMetaInformation) => void;
   onUpdate: () => void;
 };
@@ -97,35 +96,18 @@ export const UserActions = ({
               {isActive ? t('Deactivate') : t('Activate')}
             </DropdownMenuItem>
           )}
-          <ConfirmDialog
-            title={
-              isInvitation
-                ? t('Delete the invitation for {email}?', {
-                    email: row.data.email,
-                  })
-                : t('Delete {email}?', { email: row.data.email })
-            }
-            description={
-              isInvitation
-                ? t('This invitation will be permanently deleted.')
-                : t('This user and all their data will be permanently deleted.')
-            }
-            confirmLabel={
-              isInvitation ? t('Delete invitation') : t('Delete user')
-            }
-            onConfirm={() => onDelete(row)}
-            controlId={AdminControl.USERS_DELETE_CONFIRM}
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={isSelf}
+            onSelect={() => {
+              onDelete(row);
+              setOpen(false);
+            }}
+            {...adminControl(AdminControl.USERS_DELETE_OPEN)}
           >
-            <DropdownMenuItem
-              variant="destructive"
-              disabled={isSelf}
-              onSelect={(e) => e.preventDefault()}
-              {...adminControl(AdminControl.USERS_DELETE_OPEN)}
-            >
-              <Trash className="h-4 w-4" />
-              {t('Delete')}
-            </DropdownMenuItem>
-          </ConfirmDialog>
+            <Trash className="h-4 w-4" />
+            {t('Delete')}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
