@@ -170,7 +170,6 @@ function keepRecent({ entries, floor }: { entries: RecentEntry[]; floor: number 
 }
 
 function withinBudget({ entries }: { entries: RecentEntry[] }): RecentEntry[] {
-  // Each distinct time costs a group header; each ID costs its quoted text and a comma. Keep the newest entries that fit.
   const times = new Set<number>();
   let bytes = 0;
   for (let index = entries.length - 1; index >= 0; index--) {
