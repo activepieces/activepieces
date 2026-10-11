@@ -9,13 +9,28 @@ export const denoStepTranspiler = {
         const result = await deno.run({
             body: `
 ${SUCRASE_SOURCE}
-    const transformed = globalThis.__apSucrase.transform(${JSON.stringify(source)}, {
+    const transpile = (src) => globalThis.__apSucrase.transform(src, {
         transforms: ['typescript', 'imports'],
         disableESTransforms: true,
         production: true,
     }).code.replace(/^"use strict";/, '');
+    let transformed = null;
+    try {
+        transformed = transpile(${JSON.stringify(source)});
+    }
+    catch {
+        try {
+            transformed = transpile(';' + ${JSON.stringify(source)});
+        }
+        catch {
+            transformed = null;
+        }
+    }
     let result;
     try {
+        if (transformed === null) {
+            throw new Error('transpile failed');
+        }
         new Function(transformed);
         result = { code: transformed };
     }
