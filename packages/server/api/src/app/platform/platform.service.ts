@@ -495,15 +495,8 @@ async function validateDefaultProjectIds({ platform, defaultProjectIds, log }: V
         platformId: platform.id,
         type: ProjectType.TEAM,
     })
-    if (teamProjects.length !== uniqueIds.length) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'Default projects must be team projects of this platform',
-            },
-        })
-    }
-    return uniqueIds
+    const teamProjectIds = new Set(teamProjects.map((project) => project.id))
+    return uniqueIds.filter((id) => teamProjectIds.has(id))
 }
 
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
