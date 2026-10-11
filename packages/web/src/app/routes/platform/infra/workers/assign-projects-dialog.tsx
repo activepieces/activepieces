@@ -3,7 +3,11 @@ import { t } from 'i18next';
 import { Layers, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import { adminLayout } from '@/app/components/admin';
+import {
+  adminBulk,
+  adminLayout,
+  useAdminAction,
+} from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -74,21 +78,40 @@ function AssignProjectsContent({
     });
   };
 
-  const handleSave = async () => {
-    for (const project of allProjects) {
+  const saveAssignments = useAdminAction<AssignmentChange[]>({
+    verb: 'save',
+    name: '',
+    run: (changes) =>
+      adminBulk.runEach({
+        items: changes,
+        run: (change) =>
+          projectCollectionUtils.update(change.projectId, {
+            workerGroupId: change.workerGroupId,
+          }).isPersisted.promise,
+        verb: 'update',
+        label: (count) =>
+          t('{count, plural, =1 {# project} other {# projects}}', { count }),
+      }),
+    onSuccess: () => onOpenChange(false),
+  });
+
+  const handleSave = () => {
+    const changes = allProjects.flatMap((project): AssignmentChange[] => {
       const wasInGroup = project.workerGroupId === groupLabel;
       const isNowChecked = checkedIds.has(project.id);
       if (isNowChecked && !wasInGroup) {
-        await projectCollectionUtils.update(project.id, {
-          workerGroupId: groupLabel,
-        });
-      } else if (!isNowChecked && wasInGroup) {
-        await projectCollectionUtils.update(project.id, {
-          workerGroupId: null,
-        });
+        return [{ projectId: project.id, workerGroupId: groupLabel }];
       }
+      if (!isNowChecked && wasInGroup) {
+        return [{ projectId: project.id, workerGroupId: null }];
+      }
+      return [];
+    });
+    if (changes.length === 0) {
+      onOpenChange(false);
+      return;
     }
-    onOpenChange(false);
+    saveAssignments.mutate(changes);
   };
 
   const getSubtitle = (project: ProjectWithLimits): string => {
@@ -189,6 +212,7 @@ function AssignProjectsContent({
           <Button
             {...adminControl(AdminControl.WORKERS_ASSIGN_SUBMIT)}
             type="button"
+            loading={saveAssignments.isPending}
             onClick={handleSave}
           >
             {t('Save')}
@@ -210,4 +234,9 @@ type AssignProjectsContentProps = {
   groupLabel: string;
   allProjects: ProjectWithLimits[];
   onOpenChange: (open: boolean) => void;
+};
+
+type AssignmentChange = {
+  projectId: string;
+  workerGroupId: string | null;
 };
