@@ -19,7 +19,7 @@ import { newTaskTrigger } from './lib/triggers/new-task';
 import { googleTasksAuth } from './lib/auth';
 
 export const googleTasks = createPiece({
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
