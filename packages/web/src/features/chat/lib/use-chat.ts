@@ -29,7 +29,7 @@ import {
   SetChatStore,
   ToolCallMeta,
 } from './chat-store';
-import { useChatStoreApi } from './chat-store-context';
+import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
@@ -344,6 +344,7 @@ export function useAgentChat({
   onTurnEnd?: () => void;
 } = {}) {
   const store = useChatStoreApi();
+  const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
 
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
@@ -668,11 +669,19 @@ export function useAgentChat({
     const base = [...persistedMessages];
     if (optimisticUserMessage) base.push(optimisticUserMessage);
     if (streamingMessage) base.push(streamingMessage);
-    return injectFilePartsIntoLastUserMessage({
-      messages: base,
-      fileNames: lastSentFileNamesRef.current,
+    return appendRunningTaskParts({
+      messages: injectFilePartsIntoLastUserMessage({
+        messages: base,
+        fileNames: lastSentFileNamesRef.current,
+      }),
+      toolCallMeta,
     });
-  }, [persistedMessages, optimisticUserMessage, streamingMessage]);
+  }, [
+    persistedMessages,
+    optimisticUserMessage,
+    streamingMessage,
+    toolCallMeta,
+  ]);
 
   const error =
     sendStatus.type === 'error'
@@ -1024,12 +1033,6 @@ export function useAgentChat({
             );
           }
         }
-        setPersistedMessages((prev) =>
-          appendRunningTaskParts({
-            messages: prev,
-            toolCallMeta: store.getState().toolCallMeta,
-          }),
-        );
       }
       return mapped;
     },

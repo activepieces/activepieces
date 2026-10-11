@@ -207,16 +207,17 @@ describe('createTaskSubagentTools', () => {
         expect(reportTurn.skills).toEqual(workTurn.skills)
     })
 
-    it('never gives a task the status tool, so no step is spent on status alone', async () => {
+    it('never gives a task the status tool or email to the user, which stay with the main chat', async () => {
         runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
             return turnResult()
         })
-        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow', 'ap_update_thinking_status']) })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow', 'ap_update_thinking_status', 'ap_send_email']) })
 
         await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
 
         expect(Object.keys(runAgentTurn.mock.calls[0][0].tools)).not.toContain('ap_update_thinking_status')
+        expect(Object.keys(runAgentTurn.mock.calls[0][0].tools)).not.toContain('ap_send_email')
     })
 
     it('shows the latest step title on the card when the task sends no status', async () => {
