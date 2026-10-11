@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType, ProjectType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -173,6 +174,16 @@ describe('Creating personal projects for existing members', () => {
 
         expect(await personalProjectCountOf({ ownerId: failed.id })).toBe(1)
         expect(await personalProjectCountOf({ ownerId: other.id })).toBe(0)
+    })
+
+    it('a retry handles more failed members than a query can take as parameters', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        const member = await saveUser({ platformId })
+        const userIds = [...Array.from({ length: 70_000 }, () => apId()), member.id]
+
+        await personalProjectsService(mockLog).createMissingHandler({ platformId, retry: { userIds, attemptsLeft: 2 } })
+
+        expect(await personalProjectCountOf({ ownerId: member.id })).toBe(1)
     })
 
     it('never creates a second one when it runs again', async () => {
