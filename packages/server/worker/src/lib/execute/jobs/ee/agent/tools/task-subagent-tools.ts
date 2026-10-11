@@ -20,7 +20,7 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
     }
     return {
         [TASK_TOOL_NAME]: tool({
-            description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: goals that can run in parallel (several calls in one step run at once), like the separate flows of a multi-flow solution; or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build a single flow and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
+            description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: independent goals that can run in parallel (several calls in one step run at once), or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build flows yourself, even several at once, and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
             inputSchema: taskInput,
             toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls'])) }),
             execute: async ({ title, brief, taskId }, { toolCallId }) => runTask({ deps, title, brief, taskId, progressId: toolCallId }),
@@ -77,7 +77,7 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
     }
     const workTurn = await workUntilSettled({ title, turnParams, finished: () => !isNil(finish.result) })
     const turn = isNil(finish.result) && endedCleanly({ turn: workTurn, abortSignal })
-        ? await continueTurn({ title, turnParams, previous: workTurn, request: REPORT_REQUEST, overrides: { tools: finishTool(finish), allToolNames: [TASK_COMPLETION_TOOL_NAME], stepCeiling: 1, skills: undefined } })
+        ? await continueTurn({ title, turnParams, previous: workTurn, request: REPORT_REQUEST, overrides: { stepCeiling: REPORT_STEPS } })
         : workTurn
     const result = finish.result ?? fallbackResult(turn)
     const activity = finalActivity({ title, turn, result, startedAt })
@@ -219,7 +219,7 @@ function runningActivity({ title, uiParts, startedAt }: { title: string, uiParts
     return {
         title,
         status: 'running',
-        statusLine: statuses[statuses.length - 1],
+        statusLine: statuses[statuses.length - 1] ?? lastToolTitle(uiParts),
         stepCount: uiParts.filter((part) => part.type === PersistedAgentPartType.TOOL_CALL).length,
         pieces: piecesFrom(uiParts),
         startedAt: startedAt.toISOString(),
@@ -236,6 +236,14 @@ function finalActivity({ title, turn, result, startedAt }: { title: string, turn
         ...(isNil(result.needs) ? {} : { needs: result.needs }),
         durationMs: Date.now() - startedAt.getTime(),
     }
+}
+
+function lastToolTitle(parts: PersistedAgentPart[]): string | undefined {
+    return parts.filter(isTitledToolCall).at(-1)?.title.trim()
+}
+
+function isTitledToolCall(part: PersistedAgentPart): part is Extract<PersistedAgentPart, { type: PersistedAgentPartType.TOOL_CALL }> & { title: string } {
+    return part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.title) && part.title.trim().length > 0
 }
 
 function statusLines(parts: PersistedAgentPart[]): string[] {
@@ -300,10 +308,12 @@ const TASK_SKILL_SURFACE: SkillSurface = 'CHAT'
 const REPORT_REQUEST = `You stopped without reporting. Call ${TASK_COMPLETION_TOOL_NAME} now with your result.`
 const CONTINUE_REQUEST = 'You were cut off. Continue from where you stopped.'
 const MAX_CONTINUATIONS = 2
+const REPORT_STEPS = 2
 
 const NOT_FOR_TASKS = [
     TASK_TOOL_NAME,
     ...AGENT_SURFACE_TOOLS,
+    'ap_update_thinking_status',
     'ap_show_questions',
     'ap_show_quick_replies',
     'ap_show_connection_picker',

@@ -71,7 +71,7 @@ describe('createTaskSubagentTools', () => {
         expect(view).toEqual({ type: 'text', value: JSON.stringify({ taskId: 'task-1', status: 'done', summary: 'ok', artifacts: [] }) })
     })
 
-    it('asks a task that stopped without reporting for its result, with only the report tool', async () => {
+    it('asks a task that stopped without reporting for its result, keeping its tools so the cache holds', async () => {
         runAgentTurn
             .mockResolvedValueOnce(turnResult())
             .mockImplementationOnce(async (params: { tools: ToolSet }) => {
@@ -82,9 +82,9 @@ describe('createTaskSubagentTools', () => {
 
         const result = await tasks['ap_run_task'].execute?.({ title: 'Research Asana', brief: 'Find pricing' }, EXECUTION_OPTIONS)
 
-        const reportParams = runAgentTurn.mock.calls[1][0]
-        expect(Object.keys(reportParams.tools)).toEqual([TASK_COMPLETION_TOOL_NAME])
-        expect(reportParams.stepCeiling).toBe(1)
+        const [workParams, reportParams] = runAgentTurn.mock.calls.map(([params]) => params)
+        expect(Object.keys(reportParams.tools)).toEqual(Object.keys(workParams.tools))
+        expect(reportParams.stepCeiling).toBe(2)
         expect(result).toMatchObject({ status: 'done', summary: 'Asana costs $13.49 a seat.' })
     })
 
@@ -191,7 +191,7 @@ describe('createTaskSubagentTools', () => {
         expect(result).toMatchObject({ status: 'done', summary: 'Saved on retry.' })
     })
 
-    it('loads its guides as skills, the way the main chat does, and drops them for the report-only turn', async () => {
+    it('loads its guides as skills and keeps them for the report turn', async () => {
         runAgentTurn
             .mockResolvedValueOnce(turnResult())
             .mockImplementationOnce(async (params: { tools: ToolSet }) => {
@@ -204,8 +204,33 @@ describe('createTaskSubagentTools', () => {
 
         const [workTurn, reportTurn] = runAgentTurn.mock.calls.map(([params]) => params)
         expect(workTurn.skills).toEqual({ surface: 'CHAT', guides: BASE_PARAMS.guides })
-        expect(reportTurn.skills).toBeUndefined()
-        expect(reportTurn.allToolNames).toEqual([TASK_COMPLETION_TOOL_NAME])
+        expect(reportTurn.skills).toEqual(workTurn.skills)
+    })
+
+    it('never gives a task the status tool, so no step is spent on status alone', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow', 'ap_update_thinking_status']) })
+
+        await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        expect(Object.keys(runAgentTurn.mock.calls[0][0].tools)).not.toContain('ap_update_thinking_status')
+    })
+
+    it('shows the latest step title on the card when the task sends no status', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet, sinks: { onProgress: (progress: { uiParts: unknown[] }) => void } }) => {
+            params.sinks.onProgress({ uiParts: [{ type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'b1', toolName: 'ap_build_flow', title: 'Building your intake flow', input: {}, status: PersistedToolCallStatus.COMPLETED }] })
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })
+
+        await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        const lines = emitSubagentProgress.mock.calls.map(([event]) => event.data.statusLine)
+        expect(lines).toContain('Building your intake flow')
     })
 
     it('never gives a task the tools that create, change or publish saved agents', async () => {
