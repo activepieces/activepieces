@@ -130,7 +130,7 @@ describe('Creating personal projects for existing members', () => {
         expect(await personalProjectCountOf({ ownerId: embedded.id })).toBe(0)
     })
 
-    it('skips a member whose personal project fails and still creates the rest', async () => {
+    it('creates the rest when one member fails, then fails the job so it is retried', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const members = await Promise.all(Array.from({ length: 3 }, () => saveUser({ platformId })))
         const [failing, ...others] = members
@@ -144,7 +144,7 @@ describe('Creating personal projects for existing members', () => {
         }))
 
         try {
-            await personalProjectsService(mockLog).createMissingHandler({ platformId })
+            await expect(personalProjectsService(mockLog).createMissingHandler({ platformId })).rejects.toThrow()
         }
         finally {
             projectHooks.set(projectEnterpriseHooks)
@@ -153,6 +153,29 @@ describe('Creating personal projects for existing members', () => {
         expect(await personalProjectCountOf({ ownerId: failing.id })).toBe(0)
         const counts = await Promise.all(others.map((member) => personalProjectCountOf({ ownerId: member.id })))
         expect(counts).toStrictEqual([1, 1])
+    })
+
+    it('creates the failed member\'s project on the retry', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        const member = await saveUser({ platformId })
+        projectHooks.set((log) => ({
+            postCreate: async (project, context) => {
+                if (project.ownerId === member.id) {
+                    throw new Error('post-create failed')
+                }
+                await projectEnterpriseHooks(log).postCreate(project, context)
+            },
+        }))
+        try {
+            await expect(personalProjectsService(mockLog).createMissingHandler({ platformId })).rejects.toThrow()
+        }
+        finally {
+            projectHooks.set(projectEnterpriseHooks)
+        }
+
+        await personalProjectsService(mockLog).createMissingHandler({ platformId })
+
+        expect(await personalProjectCountOf({ ownerId: member.id })).toBe(1)
     })
 
     it('never creates a second one when it runs again', async () => {
