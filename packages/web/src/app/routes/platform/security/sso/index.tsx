@@ -84,7 +84,9 @@ const SSOPage = () => {
             }
             undo
             successMessage={(on) =>
-              on ? t('Google sign-in turned on') : t('Google sign-in turned off')
+              on
+                ? t('Google sign-in turned on')
+                : t('Google sign-in turned off')
             }
           />
         </SettingsRow>
@@ -129,7 +131,9 @@ const SSOPage = () => {
             controlId={AdminControl.SSO_EMAIL_LOGIN_TOGGLE}
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
-            onCheckedChange={(next) => updatePlatform({ emailAuthEnabled: next })}
+            onCheckedChange={(next) =>
+              updatePlatform({ emailAuthEnabled: next })
+            }
             successMessage={(on) =>
               on ? t('Email sign-in turned on') : t('Email sign-in turned off')
             }

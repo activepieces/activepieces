@@ -4,13 +4,12 @@ import { fileURLToPath } from 'node:url';
 
 const WEB_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCOPE = path.join(WEB_ROOT, 'src/app/routes/platform');
-const ALLOWLIST_PATH = path.join(WEB_ROOT, 'scripts/admin-interactions-allowlist.json');
 
 const RULES = [
   {
     id: 'raw-toast',
     pattern: /\btoast(\.(success|error|info|warning|message))?\(/,
-    fix: 'useAdminAction, InstantSwitch or ConfirmDialog show the toast; mutationFeedback.error for anything else',
+    fix: 'useAdminAction, InstantSwitch or ConfirmDialog show the toast; adminFeedback.done or mutationFeedback.error for anything else',
   },
   {
     id: 'internal-error-toast',
@@ -29,39 +28,16 @@ const RULES = [
   },
 ];
 
-const allowlist = JSON.parse(fs.readFileSync(ALLOWLIST_PATH, 'utf8'));
-const allowed = new Map(Object.entries(allowlist.files));
-
 const violations = walk(SCOPE)
   .filter((file) => /\.(ts|tsx)$/.test(file))
   .flatMap((file) => findViolations(file));
 
-const byFile = groupBy(violations, (violation) => violation.file);
-const unexpected = violations.filter(
-  (violation) => !(allowed.get(violation.file) ?? []).includes(violation.rule),
-);
-const stale = [...allowed.entries()].flatMap(([file, rules]) =>
-  rules
-    .filter((rule) => !(byFile.get(file) ?? []).some((violation) => violation.rule === rule))
-    .map((rule) => ({ file, rule })),
-);
-
-if (unexpected.length > 0) {
+if (violations.length > 0) {
   console.error('Admin pages must use the shared interaction blocks (brain/knowledge/design-system/admin-interactions.md).\n');
-  for (const violation of unexpected) {
-    const rule = RULES.find((candidate) => candidate.id === violation.rule);
-    console.error(`${violation.file}:${violation.line}  ${violation.rule}: ${rule.fix}`);
+  for (const violation of violations) {
+    console.error(`${violation.file}:${violation.line}  ${violation.rule.id}: ${violation.rule.fix}`);
   }
-  console.error(`\n${unexpected.length} violation(s).\n`);
-  process.exitCode = 1;
-}
-
-if (stale.length > 0) {
-  console.error('These allowlist entries are fixed now. Remove them from scripts/admin-interactions-allowlist.json:\n');
-  for (const entry of stale) {
-    console.error(`${entry.file}  ${entry.rule}`);
-  }
-  console.error('');
+  console.error(`\n${violations.length} violation(s).\n`);
   process.exitCode = 1;
 }
 
@@ -72,16 +48,9 @@ function findViolations(file) {
     RULES.filter((rule) => rule.pattern.test(text)).map((rule) => ({
       file: relative,
       line: index + 1,
-      rule: rule.id,
+      rule,
     })),
   );
-}
-
-function groupBy(items, keyOf) {
-  return items.reduce((groups, item) => {
-    const key = keyOf(item);
-    return groups.set(key, [...(groups.get(key) ?? []), item]);
-  }, new Map());
 }
 
 function walk(directory) {

@@ -311,7 +311,7 @@ export default function ProjectsPage() {
         },
       },
     ],
-    [selectedRows, currentProject],
+    [selectedRows, currentProject, deleteProjects],
   );
 
   const actions = [

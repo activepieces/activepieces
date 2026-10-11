@@ -3,11 +3,7 @@ import { t } from 'i18next';
 import { Layers, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import {
-  adminBulk,
-  adminLayout,
-  useAdminAction,
-} from '@/app/components/admin';
+import { adminBulk, adminLayout, useAdminAction } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';

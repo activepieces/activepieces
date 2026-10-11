@@ -445,9 +445,7 @@ describe('AppearanceSection', () => {
     await type({ selector: '#name', value: 'Contoso' });
     await save();
     expect(state.toastSuccess).not.toHaveBeenCalled();
-    expect(
-      container.textContent?.includes('network down'),
-    ).toBe(true);
+    expect(container.textContent?.includes('network down')).toBe(true);
   });
 });
 

@@ -4,9 +4,9 @@ import {
   PROJECT_COLOR_PALETTE,
   ProjectWithLimits,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { adminLayout, useAdminAction } from '@/app/components/admin';

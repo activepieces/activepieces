@@ -285,9 +285,7 @@ const DomainStep = ({
         )}
 
         <DialogFooter>
-          {disableAction && (
-            <DisableSamlButton disableAction={disableAction} />
-          )}
+          {disableAction && <DisableSamlButton disableAction={disableAction} />}
           {isDirty ? (
             <Button
               {...adminControl(

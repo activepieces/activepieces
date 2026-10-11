@@ -13,7 +13,6 @@ import { adminFeedback, adminLayout } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormField } from '@/components/ui/form';
 import {
@@ -23,6 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,

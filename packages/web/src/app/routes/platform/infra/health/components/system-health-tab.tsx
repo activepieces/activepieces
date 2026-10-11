@@ -20,11 +20,11 @@ import {
   StatusDot,
   StatusTone,
 } from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 
 import { DailyHealthStrip } from './daily-health-strip';
 
@@ -171,7 +171,6 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
         : t('No workers are connected.'),
     },
   ];
-
 
   if (isError) {
     return (
