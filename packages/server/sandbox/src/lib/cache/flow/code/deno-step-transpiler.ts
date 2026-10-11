@@ -15,6 +15,7 @@ ${SUCRASE_SOURCE}
         production: true,
     }).code.replace(/^"use strict";/, '');
     let transformed = null;
+    let transformError = null;
     try {
         transformed = transpile(${JSON.stringify(source)});
     }
@@ -22,20 +23,20 @@ ${SUCRASE_SOURCE}
         try {
             transformed = transpile(';' + ${JSON.stringify(source)});
         }
-        catch {
-            transformed = null;
+        catch (retryError) {
+            transformError = retryError;
         }
     }
     let result;
     try {
         if (transformed === null) {
-            throw new Error('transpile failed');
+            throw transformError;
         }
         new Function(transformed);
         result = { code: transformed };
     }
-    catch {
-        result = { fallbackToEsm: true };
+    catch (error) {
+        result = { fallbackToEsm: true, error: String(error && error.message ? error.message : error) };
     }
 `,
             permissions: [],
@@ -66,7 +67,9 @@ type ToCommonJsParams = {
 export type TranspileResult = {
     code: string
     fallbackToEsm?: undefined
+    error?: undefined
 } | {
     code?: undefined
     fallbackToEsm: true
+    error?: string
 }
