@@ -1,6 +1,7 @@
-import { apId, isNil, tryCatch } from '@activepieces/core-utils'
+import { apId, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { PersonalProjectsSummary, ProjectType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -15,6 +16,8 @@ import { userRepo } from '../../../user/user-service'
 
 const projectRepo = repoFactory(ProjectEntity)
 const CREATE_MISSING_BATCH_SIZE = 50
+const CREATE_MISSING_RETRY_ATTEMPTS = 5
+const CREATE_MISSING_RETRY_DELAY_MINUTES = 5
 
 export const personalProjectsService = (log: FastifyBaseLogger) => ({
     async summary({ platformId }: PlatformParams): Promise<PersonalProjectsSummary> {
@@ -32,17 +35,7 @@ export const personalProjectsService = (log: FastifyBaseLogger) => ({
             fn: async () => {
                 const platform = await platformService(log).getOneOrThrow(platformId)
                 await platformService(log).update({ id: platformId, autoCreatePersonalProjects: true })
-                const { error } = await tryCatch(() => systemJobsSchedule(log).upsertJob({
-                    job: {
-                        name: SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS,
-                        data: { platformId },
-                        jobId: `create-missing-personal-projects-${platformId}-${apId()}`,
-                    },
-                    schedule: {
-                        type: 'one-time',
-                        date: apDayjs(),
-                    },
-                }))
+                const { error } = await tryCatch(() => scheduleCreateMissing({ platformId, date: apDayjs(), log }))
                 if (!isNil(error)) {
                     await platformService(log).update({ id: platformId, autoCreatePersonalProjects: platform.autoCreatePersonalProjects })
                     throw error
@@ -50,51 +43,82 @@ export const personalProjectsService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async createMissingHandler({ platformId }: SystemJobData<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>): Promise<void> {
+    async createMissingHandler({ platformId, retry }: SystemJobData<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>): Promise<void> {
         let afterUserId: string | null = null
-        let failedMembers = 0
+        let failedUserIds: string[] = []
         for (;;) {
             const batch: CreatedBatch = await distributedLock(log).runExclusive({
                 key: `create-missing-personal-projects:${platformId}`,
                 timeoutInSeconds: 120,
-                fn: () => createNextBatch({ platformId, afterUserId, log }),
+                fn: () => createNextBatch({ platformId, afterUserId, onlyUserIds: retry?.userIds, log }),
             })
-            failedMembers += batch.failedMembers
+            failedUserIds = [...failedUserIds, ...batch.failedUserIds]
             if (isNil(batch.lastUserId)) {
                 break
             }
             afterUserId = batch.lastUserId
         }
-        if (failedMembers > 0) {
-            throw new Error(`[personalProjects#createMissing] Could not create a personal project for ${failedMembers} member(s), retrying the job`)
+        const attemptsLeft = retry?.attemptsLeft ?? CREATE_MISSING_RETRY_ATTEMPTS
+        if (failedUserIds.length === 0) {
+            return
         }
+        if (attemptsLeft === 0) {
+            log.error({ platform: { id: platformId }, users: { ids: failedUserIds } }, '[personalProjects#createMissing] Giving up on creating personal projects for these members')
+            return
+        }
+        await scheduleCreateMissing({
+            platformId,
+            date: apDayjs().add(CREATE_MISSING_RETRY_DELAY_MINUTES, 'minute'),
+            retry: { userIds: failedUserIds, attemptsLeft: attemptsLeft - 1 },
+            log,
+        })
     },
 })
 
-async function createNextBatch({ platformId, afterUserId, log }: CreateNextBatchParams): Promise<CreatedBatch> {
+async function scheduleCreateMissing({ platformId, date, retry, log }: ScheduleCreateMissingParams): Promise<void> {
+    await systemJobsSchedule(log).upsertJob({
+        job: {
+            name: SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS,
+            data: { platformId, ...spreadIfDefined('retry', retry) },
+            jobId: `create-missing-personal-projects-${platformId}-${apId()}`,
+        },
+        schedule: {
+            type: 'one-time',
+            date,
+        },
+    })
+}
+
+async function createNextBatch({ platformId, afterUserId, onlyUserIds, log }: CreateNextBatchParams): Promise<CreatedBatch> {
     const platform = await platformService(log).getOneOrThrow(platformId)
     if (!platform.autoCreatePersonalProjects) {
         log.info({ platform: { id: platformId } }, '[personalProjects#createMissing] Personal projects were turned off, stopping')
-        return { lastUserId: null, failedMembers: 0 }
+        return { lastUserId: null, failedUserIds: [] }
     }
     const query = membersWithoutPersonalProjectQuery({ platformId })
     if (!isNil(afterUserId)) {
         query.andWhere('"user"."id" > :afterUserId', { afterUserId })
+    }
+    if (!isNil(onlyUserIds)) {
+        query.andWhere('"user"."id" IN (:...onlyUserIds)', { onlyUserIds })
     }
     const members = await query
         .select(['user.id AS "userId"', 'identity.firstName AS "firstName"'])
         .orderBy('user.id')
         .limit(CREATE_MISSING_BATCH_SIZE)
         .getRawMany<MemberWithoutPersonalProject>()
-    let failedMembers = 0
+    const results: MemberResult[] = []
     for (const member of members) {
         const { error } = await tryCatch(() => createPersonalProject({ platformId, member, log }))
         if (!isNil(error)) {
-            failedMembers++
-            log.warn({ platform: { id: platformId }, user: { id: member.userId }, error }, '[personalProjects#createMissing] Could not create a personal project, skipping this member until the retry')
+            log.warn({ platform: { id: platformId }, user: { id: member.userId }, error }, '[personalProjects#createMissing] Could not create a personal project, retrying this member later')
         }
+        results.push({ userId: member.userId, failed: !isNil(error) })
     }
-    return { lastUserId: members.at(-1)?.userId ?? null, failedMembers }
+    return {
+        lastUserId: members.at(-1)?.userId ?? null,
+        failedUserIds: results.filter((result) => result.failed).map((result) => result.userId),
+    }
 }
 
 async function createPersonalProject({ platformId, member, log }: CreatePersonalProjectParams): Promise<void> {
@@ -135,6 +159,7 @@ type PlatformParams = {
 type CreateNextBatchParams = {
     platformId: string
     afterUserId: string | null
+    onlyUserIds?: string[]
     log: FastifyBaseLogger
 }
 
@@ -144,9 +169,24 @@ type CreatePersonalProjectParams = {
     log: FastifyBaseLogger
 }
 
+type MemberResult = {
+    userId: string
+    failed: boolean
+}
+
 type CreatedBatch = {
     lastUserId: string | null
-    failedMembers: number
+    failedUserIds: string[]
+}
+
+type ScheduleCreateMissingParams = {
+    platformId: string
+    date: Dayjs
+    retry?: {
+        userIds: string[]
+        attemptsLeft: number
+    }
+    log: FastifyBaseLogger
 }
 
 type MemberWithoutPersonalProject = {
