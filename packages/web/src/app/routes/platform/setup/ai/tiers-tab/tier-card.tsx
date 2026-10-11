@@ -24,6 +24,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { ReactNode, useRef, useState } from 'react';
 
+import { adminSurface } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -132,7 +133,8 @@ export function TierCard({
   return (
     <section
       className={cn(
-        'flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel transition-opacity',
+        adminSurface.card,
+        'flex flex-col transition-opacity',
         unavailableHere && 'opacity-60',
       )}
       aria-label={tier.name}
@@ -257,7 +259,7 @@ export function TierCard({
         </DropdownMenu>
       </header>
 
-      <div className="flex flex-col gap-1 border-t border-gray-6/60 px-3 pb-3 pt-3">
+      <div className="flex flex-col gap-1 border-t px-3 pb-3 pt-3">
         <div className="flex items-center gap-1.5 px-2 pb-1">
           <span className="text-xs font-medium text-gray-11">
             {t('Model & fallbacks')}
@@ -373,7 +375,7 @@ export function TierCard({
           <div className="flex items-stretch gap-3 px-2">
             <div className="flex w-4 shrink-0 flex-col items-center">
               <span className="w-px flex-1 bg-gray-6" />
-              <span className="my-1 size-2 shrink-0 rounded-full border-2 border-gray-7 bg-panel" />
+              <span className="my-1 size-2 shrink-0 rounded-full border-2 border-gray-7 bg-(--admin-surface)" />
               <span className="w-px flex-1" />
             </div>
             <div className="my-1 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-dashed border-gray-7 px-3 py-2.5">

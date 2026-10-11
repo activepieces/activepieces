@@ -8,7 +8,12 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  AdminQueryState,
+  adminSurface,
+} from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -27,8 +32,6 @@ import {
 import { projectCollectionUtils } from '@/features/projects';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-
-import { SectionHeader } from '../components/section-header';
 
 import { DeleteTierDialog } from './delete-tier-dialog';
 import { SpecificModelsSection } from './specific-models-section';
@@ -89,10 +92,7 @@ export function TiersTab() {
     setDialog({ open: true, mode: 'create', initialMain });
   };
 
-  if (tiersLoading || configsLoading || configurationLoading) {
-    return <TiersSkeleton />;
-  }
-
+  const isLoading = tiersLoading || configsLoading || configurationLoading;
   const isError =
     (tiersError && tiers === undefined) ||
     (configsError && configs === undefined);
@@ -100,18 +100,22 @@ export function TiersTab() {
   const retry = () => Promise.all([refetchTiers(), refetchConfigs()]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-3">
-        <SectionHeader
-          title={t('Tiers')}
-          isPageTitle
-          count={isError ? undefined : liveTiers.length}
-          description={t(
-            'Named model groups your builders pick. Each one is a main model plus fallbacks.',
-          )}
-        />
-        {!isError && !noKeys && (
-          <div className="flex shrink-0 items-center gap-2">
+    <>
+      <AdminPageHeader
+        title={t('Tiers')}
+        badge={
+          isLoading || isError ? undefined : (
+            <span className="text-sm tabular-nums text-gray-11">
+              {liveTiers.length}
+            </span>
+          )
+        }
+        description={t(
+          'Named model groups your builders pick. Each one is a main model plus fallbacks.',
+        )}
+      >
+        {!isLoading && !isError && !noKeys && (
+          <>
             {showPreview && (
               <Select
                 value={previewProjectId ?? ALL_PROJECTS}
@@ -120,7 +124,6 @@ export function TiersTab() {
                 }
               >
                 <SelectTrigger
-                  size="sm"
                   className="w-48"
                   aria-label={t('Preview as project')}
                 >
@@ -140,106 +143,112 @@ export function TiersTab() {
             )}
             <Button
               id={NEW_TIER_BUTTON_ID}
-              size="sm"
-              className="shrink-0"
               onClick={(event) => openCreate({ trigger: event.currentTarget })}
               {...adminControl(AdminControl.AI_TIER_OPEN)}
             >
               <Plus className="size-4" />
               {t('New tier')}
             </Button>
-          </div>
+          </>
         )}
-      </div>
+      </AdminPageHeader>
 
-      {isError ? (
-        <DataFetchErrorState entity={t('tiers')} onRetry={retry} />
-      ) : noKeys ? (
-        <NoKeysState />
-      ) : (
-        <>
-          {liveTiers.length === 0 ? (
-            <NoTiersState onCreate={(trigger) => openCreate({ trigger })} />
-          ) : (
-            <div className="flex flex-col gap-4">
-              <AnimatePresence initial={false}>
-                {liveTiers.map((tier, position) => (
-                  <motion.div
-                    key={tier.id}
-                    layout={!reducedMotion}
-                    initial={reducedMotion ? false : { opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={reducedMotion ? undefined : { opacity: 0, height: 0 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <TierCard
-                      tier={tier}
-                      configsById={configsById}
-                      ownKeys={ownKeys}
-                      keyModels={keyModels}
-                      projectIds={projectIds}
-                      previewProjectId={previewProjectId}
-                      reducedMotion={reducedMotion}
-                      onEdit={(trigger) => {
-                        setFocusTarget(trigger);
-                        setDialog({ open: true, mode: 'edit', tier });
-                      }}
-                      onDelete={(trigger) => {
-                        setFocusTarget(trigger);
-                        setDeleting(tier);
-                      }}
-                      onMoveUp={
-                        position === 0 || reordering
-                          ? undefined
-                          : () =>
-                              reorder({
-                                tierIds: movedIds({
-                                  tiers: liveTiers,
-                                  from: position,
-                                  to: position - 1,
-                                }),
-                              })
+      <AdminQueryState
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={retry}
+        entity={t('tiers')}
+        skeleton={<TiersSkeleton />}
+      >
+        {noKeys ? (
+          <NoKeysState />
+        ) : (
+          <>
+            {liveTiers.length === 0 ? (
+              <NoTiersState onCreate={(trigger) => openCreate({ trigger })} />
+            ) : (
+              <div className="flex flex-col gap-4">
+                <AnimatePresence initial={false}>
+                  {liveTiers.map((tier, position) => (
+                    <motion.div
+                      key={tier.id}
+                      layout={!reducedMotion}
+                      initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={
+                        reducedMotion ? undefined : { opacity: 0, height: 0 }
                       }
-                      onMoveDown={
-                        position === liveTiers.length - 1 || reordering
-                          ? undefined
-                          : () =>
-                              reorder({
-                                tierIds: movedIds({
-                                  tiers: liveTiers,
-                                  from: position,
-                                  to: position + 1,
-                                }),
-                              })
-                      }
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
-          <SpecificModelsSection
-            tiers={liveTiers}
-            ownKeys={ownKeys}
-            keyModels={keyModels}
-            visible={specificModelsVisible}
-            projectsWithoutTier={modelMeta.projectsWithoutTier({
-              tiers: liveTiers,
-              configsById,
-              projectIds,
-            })}
-            onMakeTier={(entry) =>
-              openCreate({
-                trigger:
-                  document.activeElement instanceof HTMLElement
-                    ? document.activeElement
-                    : null,
-                initialMain: entry,
-              })
-            }
-          />
-        </>
-      )}
+                      transition={{ duration: 0.18 }}
+                    >
+                      <TierCard
+                        tier={tier}
+                        configsById={configsById}
+                        ownKeys={ownKeys}
+                        keyModels={keyModels}
+                        projectIds={projectIds}
+                        previewProjectId={previewProjectId}
+                        reducedMotion={reducedMotion}
+                        onEdit={(trigger) => {
+                          setFocusTarget(trigger);
+                          setDialog({ open: true, mode: 'edit', tier });
+                        }}
+                        onDelete={(trigger) => {
+                          setFocusTarget(trigger);
+                          setDeleting(tier);
+                        }}
+                        onMoveUp={
+                          position === 0 || reordering
+                            ? undefined
+                            : () =>
+                                reorder({
+                                  tierIds: movedIds({
+                                    tiers: liveTiers,
+                                    from: position,
+                                    to: position - 1,
+                                  }),
+                                })
+                        }
+                        onMoveDown={
+                          position === liveTiers.length - 1 || reordering
+                            ? undefined
+                            : () =>
+                                reorder({
+                                  tierIds: movedIds({
+                                    tiers: liveTiers,
+                                    from: position,
+                                    to: position + 1,
+                                  }),
+                                })
+                        }
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+            <SpecificModelsSection
+              tiers={liveTiers}
+              ownKeys={ownKeys}
+              keyModels={keyModels}
+              visible={specificModelsVisible}
+              projectsWithoutTier={modelMeta.projectsWithoutTier({
+                tiers: liveTiers,
+                configsById,
+                projectIds,
+              })}
+              onMakeTier={(entry) =>
+                openCreate({
+                  trigger:
+                    document.activeElement instanceof HTMLElement
+                      ? document.activeElement
+                      : null,
+                  initialMain: entry,
+                })
+              }
+            />
+          </>
+        )}
+      </AdminQueryState>
 
       <TierDialog
         state={dialog}
@@ -265,7 +274,7 @@ export function TiersTab() {
         returnFocusTo={focusTarget}
         onReturnFocus={focusBack}
       />
-    </div>
+    </>
   );
 }
 
@@ -290,22 +299,16 @@ function focusBack({ target }: { target: HTMLElement | null }): void {
 
 function NoKeysState() {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-6/60 bg-panel px-6 py-14 text-center">
-      <div className="flex size-12 items-center justify-center rounded-xl bg-accent-3">
-        <Layers className="size-5 text-accent-11" />
-      </div>
-      <div className="flex flex-col gap-1">
-        <p className="text-base font-semibold tracking-tight">
-          {t('Add a provider key first')}
-        </p>
-        <p className="max-w-md text-sm text-gray-11">
-          {t("Tiers are built from your keys' models.")}
-        </p>
-      </div>
-      <Button asChild variant="outline">
-        <Link to="/platform/ai">{t('Go to Providers')}</Link>
-      </Button>
-    </div>
+    <AdminEmpty
+      icon={<Layers />}
+      title={t('Add a provider key first')}
+      description={t("Tiers are built from your keys' models.")}
+      action={
+        <Button asChild variant="outline">
+          <Link to="/platform/ai">{t('Go to Providers')}</Link>
+        </Button>
+      }
+    />
   );
 }
 
@@ -315,26 +318,20 @@ function NoTiersState({
   onCreate: (trigger: HTMLElement | null) => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-gray-6 bg-panel px-6 py-14 text-center">
-      <div className="flex size-12 items-center justify-center rounded-xl bg-accent-3">
-        <Layers className="size-5 text-accent-11" />
-      </div>
-      <div className="flex flex-col gap-1">
-        <p className="text-base font-semibold tracking-tight">
-          {t('Create your first tier')}
-        </p>
-        <p className="max-w-md text-sm text-gray-11">
-          {t('Name it, pick a main model, add fallbacks.')}
-        </p>
-      </div>
-      <Button
-        onClick={(event) => onCreate(event.currentTarget)}
-        {...adminControl(AdminControl.AI_TIER_OPEN)}
-      >
-        <Plus className="size-4" />
-        {t('New tier')}
-      </Button>
-    </div>
+    <AdminEmpty
+      icon={<Layers />}
+      title={t('Create your first tier')}
+      description={t('Name it, pick a main model, add fallbacks.')}
+      action={
+        <Button
+          onClick={(event) => onCreate(event.currentTarget)}
+          {...adminControl(AdminControl.AI_TIER_OPEN)}
+        >
+          <Plus className="size-4" />
+          {t('New tier')}
+        </Button>
+      }
+    />
   );
 }
 
@@ -346,18 +343,8 @@ function TiersSkeleton() {
       role="status"
       aria-label={t('Loading tiers')}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-4 w-80" />
-        </div>
-        <Skeleton className="h-8 w-24 rounded-md" />
-      </div>
       {[0, 1].map((card) => (
-        <section
-          key={card}
-          className="rounded-xl border border-gray-6/60 bg-panel shadow-panel"
-        >
+        <section key={card} className={adminSurface.card}>
           <div className="flex items-center gap-3 px-5 py-4">
             <Skeleton className="size-10 shrink-0 rounded-xl" />
             <div className="flex flex-1 flex-col gap-2">
@@ -366,7 +353,7 @@ function TiersSkeleton() {
             </div>
             <Skeleton className="size-8 rounded-md" />
           </div>
-          <div className="flex flex-col border-t border-gray-6/60 px-3 pb-3 pt-3">
+          <div className="flex flex-col border-t px-3 pb-3 pt-3">
             <Skeleton className="mx-2 mb-2 h-3 w-28" />
             {[0, 1, 2].map((row) => (
               <div key={row} className="flex items-center gap-3 px-2 py-2.5">
@@ -388,7 +375,7 @@ function TiersSkeleton() {
           </div>
         </section>
       ))}
-      <section className="rounded-xl border border-gray-6/60 bg-panel shadow-panel">
+      <section className={adminSurface.card}>
         <div className="flex items-start justify-between gap-3 px-5 py-4">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-5 w-32" />
@@ -397,10 +384,7 @@ function TiersSkeleton() {
           <Skeleton className="h-8 w-40 rounded-md" />
         </div>
         {[0, 1].map((row) => (
-          <div
-            key={row}
-            className="flex items-center gap-3 border-t border-gray-6/60 px-5 py-3"
-          >
+          <div key={row} className="flex items-center gap-3 border-t px-5 py-3">
             <Skeleton className="size-8 shrink-0 rounded-xl" />
             <div className="flex flex-1 flex-col gap-1.5">
               <Skeleton className="h-3.5 w-32" />
