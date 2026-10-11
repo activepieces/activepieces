@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCo
 import { InvitationStatus, InvitationType, PlatformRole, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
@@ -262,6 +262,17 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         })
         return { registered: true }
     },
+    async hasAcceptedAdminOrOperatorInvite({ email, platformId, entityManager }: HasAcceptedAdminOrOperatorInviteParams): Promise<boolean> {
+        return repo(entityManager).createQueryBuilder('user_invitation')
+            .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
+            .andWhere({
+                platformId,
+                type: InvitationType.PLATFORM,
+                status: InvitationStatus.ACCEPTED,
+                platformRole: In([PlatformRole.ADMIN, PlatformRole.OPERATOR]),
+            })
+            .getExists()
+    },
     async hasAnyAcceptedInvitationsForEmail({ email }: { email: string }): Promise<boolean> {
         const count = await repo().createQueryBuilder('user_invitation')
             .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
@@ -409,4 +420,10 @@ type GetOneByPlatformIdAndEmailParams = {
     email: string
     platformId: string
     projectId: string | null
+}
+
+type HasAcceptedAdminOrOperatorInviteParams = {
+    email: string
+    platformId: string
+    entityManager: EntityManager
 }
