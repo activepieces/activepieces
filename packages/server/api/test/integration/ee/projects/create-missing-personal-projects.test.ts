@@ -2,7 +2,9 @@ import { PlatformRole, PrincipalType, ProjectType, UserIdentityProvider, UserSta
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { projectEnterpriseHooks } from '../../../../src/app/ee/projects/ee-project-hooks'
 import { personalProjectsService } from '../../../../src/app/ee/projects/personal-projects/personal-projects.service'
+import { projectHooks } from '../../../../src/app/project/project-hooks'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockProject, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -126,6 +128,31 @@ describe('Creating personal projects for existing members', () => {
         expect(await personalProjectCountOf({ ownerId })).toBe(1)
         expect(await personalProjectCountOf({ ownerId: deactivated.id })).toBe(0)
         expect(await personalProjectCountOf({ ownerId: embedded.id })).toBe(0)
+    })
+
+    it('skips a member whose personal project fails and still creates the rest', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        const members = await Promise.all(Array.from({ length: 3 }, () => saveUser({ platformId })))
+        const [failing, ...others] = members
+        projectHooks.set((log) => ({
+            postCreate: async (project, context) => {
+                if (project.ownerId === failing.id) {
+                    throw new Error('post-create failed')
+                }
+                await projectEnterpriseHooks(log).postCreate(project, context)
+            },
+        }))
+
+        try {
+            await personalProjectsService(mockLog).createMissingHandler({ platformId })
+        }
+        finally {
+            projectHooks.set(projectEnterpriseHooks)
+        }
+
+        expect(await personalProjectCountOf({ ownerId: failing.id })).toBe(0)
+        const counts = await Promise.all(others.map((member) => personalProjectCountOf({ ownerId: member.id })))
+        expect(counts).toStrictEqual([1, 1])
     })
 
     it('never creates a second one when it runs again', async () => {

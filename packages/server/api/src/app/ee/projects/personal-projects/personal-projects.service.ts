@@ -51,34 +51,43 @@ export const personalProjectsService = (log: FastifyBaseLogger) => ({
         })
     },
     async createMissingHandler({ platformId }: SystemJobData<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>): Promise<void> {
+        let afterUserId: string | null = null
         for (;;) {
-            const createdCount = await distributedLock(log).runExclusive({
+            const lastUserId: string | null = await distributedLock(log).runExclusive({
                 key: `create-missing-personal-projects:${platformId}`,
                 timeoutInSeconds: 120,
-                fn: () => createNextBatch({ platformId, log }),
+                fn: () => createNextBatch({ platformId, afterUserId, log }),
             })
-            if (createdCount === 0) {
+            if (isNil(lastUserId)) {
                 return
             }
+            afterUserId = lastUserId
         }
     },
 })
 
-async function createNextBatch({ platformId, log }: CreateNextBatchParams): Promise<number> {
+async function createNextBatch({ platformId, afterUserId, log }: CreateNextBatchParams): Promise<string | null> {
     const platform = await platformService(log).getOneOrThrow(platformId)
     if (!platform.autoCreatePersonalProjects) {
         log.info({ platformId }, '[personalProjects#createMissing] Personal projects were turned off, stopping')
-        return 0
+        return null
     }
-    const members = await membersWithoutPersonalProjectQuery({ platformId })
+    const query = membersWithoutPersonalProjectQuery({ platformId })
+    if (!isNil(afterUserId)) {
+        query.andWhere('"user"."id" > :afterUserId', { afterUserId })
+    }
+    const members = await query
         .select(['user.id AS "userId"', 'identity.firstName AS "firstName"'])
         .orderBy('user.id')
         .limit(CREATE_MISSING_BATCH_SIZE)
         .getRawMany<MemberWithoutPersonalProject>()
     for (const member of members) {
-        await createPersonalProject({ platformId, member, log })
+        const { error } = await tryCatch(() => createPersonalProject({ platformId, member, log }))
+        if (!isNil(error)) {
+            log.warn({ platformId, userId: member.userId, error }, '[personalProjects#createMissing] Could not create a personal project, skipping this member')
+        }
     }
-    return members.length
+    return members.at(-1)?.userId ?? null
 }
 
 async function createPersonalProject({ platformId, member, log }: CreatePersonalProjectParams): Promise<void> {
@@ -118,6 +127,7 @@ type PlatformParams = {
 
 type CreateNextBatchParams = {
     platformId: string
+    afterUserId: string | null
     log: FastifyBaseLogger
 }
 
