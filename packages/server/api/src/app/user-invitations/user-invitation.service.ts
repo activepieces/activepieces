@@ -147,12 +147,16 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async finalizeInvitation({
         userInvitation,
         invitationExpirySeconds,
+        resent,
     }: FinalizeInvitationParams): Promise<UserInvitationWithLink> {
         if (userInvitation.status === InvitationStatus.ACCEPTED) {
-            await this.accept({
+            const { registered } = await this.accept({
                 invitationId: userInvitation.id,
                 platformId: userInvitation.platformId,
             })
+            if (resent && !registered) {
+                return enrichWithInvitationLink(userInvitation, invitationExpirySeconds, log)
+            }
             if (smtpEmailSender(log).isSmtpConfigured()) {
                 await emailService(log).sendProjectMemberAdded({
                     userInvitation,
@@ -561,6 +565,7 @@ export type CreateInvitationRecordParams = {
 export type FinalizeInvitationParams = {
     userInvitation: UserInvitation
     invitationExpirySeconds: number
+    resent: boolean
 }
 
 export type CountAdditionalSeatsNeededParams = {

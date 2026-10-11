@@ -127,6 +127,19 @@ describe('Re-inviting someone who already accepted', () => {
         expect(invitations[0].platformRole).toBe(PlatformRole.ADMIN)
     })
 
+    it('gives a fresh link when re-sent to someone who clicked it but never signed up', async () => {
+        const { platformId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.OPERATOR })
+        await databaseConnection().getRepository('user_invitation').update({ email, platformId }, { status: InvitationStatus.ACCEPTED })
+
+        const response = await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.OPERATOR })
+
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        expect(response?.json().link).toEqual(expect.stringContaining('/invitation?token='))
+        expect((await platformInvitesOf({ email, platformId }))[0].status).toBe(InvitationStatus.ACCEPTED)
+    })
+
     it('keeps an accepted project invite, and the platform invite does not take that project', async () => {
         const { platformId, projectId, ownerToken } = await setupPlatform()
         const email = faker.internet.email().toLowerCase()

@@ -73,6 +73,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         const invitation = await userInvitationsService(request.log).finalizeInvitation({
             userInvitation: userInvitationRecord,
             invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
+            resent: status === InvitationStatus.PENDING && userInvitationRecord.status === InvitationStatus.ACCEPTED,
         })
         rejectedPromiseHandler(trackInviteSent({
             principal: request.principal,
