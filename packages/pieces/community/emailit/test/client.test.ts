@@ -46,11 +46,26 @@ describe('client', () => {
   });
   test('GET retries 429 at most twice, honoring retry-after', async () => {
     vi.useFakeTimers();
-    const seen = stubFetch(replies([{ status: 429, headers: { 'retry-after': '1' } }, { status: 429 }, { status: 429, body: { error: 'Rate limit exceeded' } }]));
+    const seen = stubFetch(replies([{ status: 429, body: { retry_after: 1 } }, { status: 429 }, { status: 429, body: { error: 'Rate limit exceeded' } }]));
     const promise = failure(emailitClient.request({ auth, method: HttpMethod.GET, path: '/x' }));
     await vi.runAllTimersAsync();
     expect(await promise).toMatchObject({ status: 429 });
     expect(seen).toHaveLength(3);
+  });
+  test('a retry-after longer than 10 s fails at once instead of retrying early', async () => {
+    const seen = stubFetch(replies([{ status: 429, headers: { 'retry-after': '60' }, body: { error: 'Daily limit exceeded', retry_after: 41760 } }]));
+    expect(await failure(emailitClient.request({ auth, method: HttpMethod.GET, path: '/x' }))).toMatchObject({ status: 429 });
+    expect(seen).toHaveLength(1);
+  });
+  test('the documented retry_after body field is honoured', async () => {
+    vi.useFakeTimers();
+    const seen = stubFetch(replies([{ status: 429, body: { error: 'Rate limit exceeded', retry_after: 5 } }, { body: { ok: true } }]));
+    const promise = emailitClient.request({ auth, method: HttpMethod.GET, path: '/x' });
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(seen).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1_500);
+    expect(await promise).toEqual({ ok: true });
+    expect(seen).toHaveLength(2);
   });
   test('a POST without an idempotency key is never auto-retried; with a key it is', async () => {
     vi.useFakeTimers();

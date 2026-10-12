@@ -3,11 +3,14 @@ const HEADER_NAME = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{1,256}$/;
 
 function recipients({ value, label, required }: { value: unknown; label: string; required: boolean }): string[] | undefined {
-  const raw = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : value === undefined || value === null ? [] : [value];
+  const raw = Array.isArray(value) ? value : typeof value === 'string' ? [value] : value === undefined || value === null ? [] : [value];
   const list = raw
-    .flatMap((item) => (typeof item === 'string' ? item.split(',') : typeof item === 'number' ? [String(item)] : []))
+    .flatMap((item) => (typeof item === 'string' ? splitAddresses(item) : typeof item === 'number' ? [String(item)] : []))
     .map((item) => item.trim())
     .filter((item) => item !== '');
+  if (list.some((item) => /"[^"]*,[^"]*"/.test(item))) {
+    throw new Error(`${label}: Emailit does not accept a comma inside a display name such as "Doe, Jane" <jane@example.com>. Remove the comma or use the bare address.`);
+  }
   if (list.some((item) => /[\r\n]/.test(item))) {
     throw new Error(`${label} must not contain line breaks.`);
   }
@@ -116,8 +119,34 @@ function sender({ name, email }: { name: unknown; email: unknown }): string {
   }
   const display = singleLine({ value: name, label: 'Sender Name' });
   if (display === undefined) return address;
-  const safe = display.replace(/["\\<>]/g, '');
-  return `"${safe}" <${address}>`;
+  if (/["\\<>]/.test(display)) {
+    throw new Error('Sender Name cannot contain quotes, backslashes or angle brackets: Emailit rejects them.');
+  }
+  return `"${display}" <${address}>`;
+}
+
+function splitAddresses(text: string): string[] {
+  const list: string[] = [];
+  let start = 0;
+  let quoted = false;
+  let angle = false;
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    if (quoted && char === '\\') {
+      index++;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (!quoted && char === '<') {
+      angle = true;
+    } else if (!quoted && char === '>') {
+      angle = false;
+    } else if (!quoted && !angle && char === ',') {
+      list.push(text.slice(start, index));
+      start = index + 1;
+    }
+  }
+  list.push(text.slice(start));
+  return list;
 }
 
 function tracking(value: unknown): boolean | undefined {

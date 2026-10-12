@@ -31,6 +31,20 @@ describe('send_email (existing action)', () => {
     expect(seen[0].body).toMatchObject({ to: ['ada@example.com', 'b@x.io', 'c@x.io'], reply_to: ['r1@x.io', 'r2@x.io'] });
     expect(seen[0].body).not.toHaveProperty('cc');
   });
+  test('a comma inside a quoted display name is not split; Emailit rejects it, so the step explains why', async () => {
+    const seen = stubFetch(replies([{ body: SEND_REPLY }]));
+    await expect(run({ action: sendEmailAction, props: { ...base, to: ['"Doe, Jane" <jane@example.com>'] } })).rejects.toThrow('comma inside a display name');
+    await run({ action: sendEmailAction, props: { ...base, to: ['"Jane Doe" <jane@example.com>, a@x.io'], reply_to: '"Support" <s@x.io>, b@x.io' } });
+    expect(seen).toHaveLength(1);
+    expect(seen[0].body).toMatchObject({ to: ['"Jane Doe" <jane@example.com>', 'a@x.io'], reply_to: ['"Support" <s@x.io>', 'b@x.io'] });
+  });
+  test('a sender name Emailit would reject fails clearly instead of being changed', async () => {
+    const seen = stubFetch(replies([{ body: SEND_REPLY }]));
+    await expect(run({ action: sendEmailAction, props: { ...base, to: ['a@b.co'], from_name: 'Acme "Support"' } })).rejects.toThrow('Sender Name cannot contain quotes');
+    await run({ action: sendEmailAction, props: { ...base, to: ['a@b.co'], from_name: 'Acme Support, EU' } });
+    expect(seen).toHaveLength(1);
+    expect(seen[0].body).toMatchObject({ from: '"Acme Support, EU" <hello@acme.com>' });
+  });
   test('the 50-address limit applies per field, not combined', async () => {
     const seen = stubFetch(replies([{ body: SEND_REPLY }]));
     const fifty = Array.from({ length: 50 }, (_, index) => `u${index}@x.io`);

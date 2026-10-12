@@ -131,10 +131,13 @@ function headerValue({ headers, name }: { headers: unknown; name: string }): str
   return typeof value === 'string' ? value : null;
 }
 
-function retryDelayMs({ header, attempt }: { header: string | null; attempt: number }): number {
-  const seconds = header ? Number(header) : NaN;
-  const wait = Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : 1000 * 2 ** attempt;
-  return Math.min(wait, MAX_RETRY_WAIT_MS);
+function retryDelayMs({ response, attempt }: { response: RawResponse; attempt: number }): number | null {
+  const header = headerValue({ headers: response.headers, name: 'retry-after' });
+  const bodyValue = isRecord(response.body) ? response.body['retry_after'] : undefined;
+  const raw = header ?? (typeof bodyValue === 'number' || typeof bodyValue === 'string' ? String(bodyValue) : '');
+  const seconds = /^\d+(\.\d+)?$/.test(raw.trim()) ? Number(raw.trim()) : NaN;
+  const wait = Number.isFinite(seconds) ? seconds * 1000 : 1000 * 2 ** attempt;
+  return wait > MAX_RETRY_WAIT_MS ? null : wait;
 }
 
 function verifiedTls(): Promise<unknown> {
@@ -185,8 +188,11 @@ async function send(request: EmailitRequest): Promise<RawResponse> {
   const retryable = request.method === HttpMethod.GET || request.idempotencyKey !== undefined || request.safeToRetry === true;
   for (let attempt = 0; ; attempt++) {
     const response = await sendOnce(request);
-    if (response.status === 429 && retryable && attempt < MAX_RETRIES_ON_429) {
-      await new Promise((resolve) => setTimeout(resolve, retryDelayMs({ header: headerValue({ headers: response.headers, name: 'retry-after' }), attempt })));
+    const delay = response.status === 429 && retryable && attempt < MAX_RETRIES_ON_429
+      ? retryDelayMs({ response, attempt })
+      : null;
+    if (delay !== null) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
       continue;
     }
     if (response.status < 200 || response.status >= 300) {
