@@ -269,6 +269,30 @@ export const shortIoSchemas = {
       { key: 'count', label: 'Count', format: 'number' },
     ],
   } satisfies OutputSchema,
+  duplicatedLink: {
+    fields: [{ key: 'duplicatedFrom', label: 'Copied From Link ID' }, ...linkFields],
+  } satisfies OutputSchema,
+  folderLookup: {
+    fields: [
+      { key: 'found', label: 'Found', format: 'boolean' },
+      { key: 'folder', label: 'Folder', children: [
+        { key: 'id', label: 'Folder ID' },
+        { key: 'name', label: 'Name' },
+        { key: 'domainId', label: 'Domain ID', format: 'number' },
+      ] },
+    ],
+  } satisfies OutputSchema,
+  openGraph: {
+    fields: [
+      { key: 'linkId', label: 'Link ID' },
+      { key: 'properties', label: 'Properties', dynamicKey: true, description: 'Map of OpenGraph property (title, description, image, twitter:card…) to value.' },
+      { key: 'items', label: 'Property List', listItems: [
+        { key: 'property', label: 'Property' },
+        { key: 'value', label: 'Value' },
+      ] },
+      { key: 'count', label: 'Count', format: 'number' },
+    ],
+  } satisfies OutputSchema,
   linksByUrl: {
     fields: [
       { key: 'items', label: 'Links', listItems: linkFields },

@@ -17,8 +17,8 @@ const LEGACY_HUMAN = [
 const AI_TWINS = ['create_link', 'update_link', 'find_link_by_path', 'list_links', 'delete_link', 'set_country_rule', 'get_domain_statistics'];
 
 describe('piece metadata', () => {
-  test('31 actions plus Custom API Call, 1 trigger, 0.88.2', () => {
-    expect(nonCustom).toHaveLength(31);
+  test('34 actions plus Custom API Call, 1 trigger, 0.88.2', () => {
+    expect(nonCustom).toHaveLength(34);
     expect(byName['custom_api_call']).toBeDefined();
     expect(Object.keys(shortIo.triggers())).toEqual(['new_link_created']);
     expect(shortIo.minimumSupportedRelease).toBe('0.88.2');
@@ -30,10 +30,10 @@ describe('piece metadata', () => {
     expect(typeof action.aiMetadata?.idempotent).toBe('boolean');
     expect(action.outputSchema?.fields.length).toBeGreaterThan(0);
   });
-  test('8 dropdown actions are human, 7 AI twins are ai, 16 are both', () => {
+  test('8 dropdown actions are human, 7 AI twins are ai, 19 are both', () => {
     expect(nonCustom.filter((action) => action.audience === 'human').map((action) => action.name).sort()).toEqual([...LEGACY_HUMAN].sort());
     expect(nonCustom.filter((action) => action.audience === 'ai').map((action) => action.name).sort()).toEqual([...AI_TWINS].sort());
-    expect(nonCustom.filter((action) => action.audience === 'both')).toHaveLength(16);
+    expect(nonCustom.filter((action) => action.audience === 'both')).toHaveLength(19);
   });
   test('AI-visible actions have no dynamic dropdowns', () => {
     for (const action of nonCustom.filter((item) => item.audience !== 'human')) {
@@ -43,7 +43,7 @@ describe('piece metadata', () => {
   });
   test('non-idempotent actions are the creating ones', () => {
     expect(nonCustom.filter((action) => action.aiMetadata?.idempotent === false).map((action) => action.name).sort()).toEqual(
-      ['create-country-targeting-rule', 'create-short-link', 'create_folder', 'create_link', 'create_links_bulk', 'delete-short-link', 'set_country_rule'].sort(),
+      ['create-country-targeting-rule', 'create-short-link', 'create_folder', 'create_link', 'create_links_bulk', 'delete-short-link', 'duplicate_link', 'set_country_rule'].sort(),
     );
   });
   test('trigger has aiMetadata, outputSchema and no password in sample data', () => {

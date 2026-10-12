@@ -14,6 +14,9 @@ import { createFolderAction } from './lib/actions/create-folder';
 import { createLinksBulkAction } from './lib/actions/create-links-bulk';
 import { createShortLinkAction } from './lib/actions/create-short-link';
 import { deleteCountryRuleAction } from './lib/actions/delete-country-rule';
+import { duplicateLinkAction } from './lib/actions/duplicate-link';
+import { getFolderAction } from './lib/actions/get-folder';
+import { getLinkOpenGraphAction } from './lib/actions/get-link-open-graph';
 import { deleteShortLinkAction } from './lib/actions/delete-short-link';
 import { domainStatisticsAction } from './lib/actions/domain-statistics';
 import { expireShortLinkAction } from './lib/actions/expire-short-link';
@@ -65,6 +68,9 @@ export const shortIo = createPiece({
     deleteCountryRuleAction,
     listRecentClicksAction,
     getTopLinksAction,
+    duplicateLinkAction,
+    getFolderAction,
+    getLinkOpenGraphAction,
     createLinkAiAction,
     updateLinkAiAction,
     findLinkByPathAiAction,
