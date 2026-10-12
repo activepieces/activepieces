@@ -86,7 +86,7 @@ export function ConfirmPurchaseDialog() {
                         className="flex items-center gap-2 text-sm text-gray-12"
                       >
                         <Check className="size-4 shrink-0 text-accent-11" />
-                        <span>{t(feature)}</span>
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
