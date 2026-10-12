@@ -335,7 +335,7 @@ const ImportTableForm = ({
                   href={TABLE_TEMPLATE_DOCS_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm text-primary underline"
+                  className="text-sm text-accent-11 underline"
                 >
                   {t('See the template format')}
                 </a>
