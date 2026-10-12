@@ -1,81 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
 
-export const gitlabProps = {
-  projectId: (
-    description = 'Numeric project ID or full path, e.g. `my-group/my-project`. Shown on the project overview page.'
-  ) =>
-    Property.ShortText({
-      displayName: 'Project ID or Path',
-      description,
-      required: true,
-    }),
-  issueIid: () =>
-    Property.Number({
-      displayName: 'Issue IID',
-      description:
-        'The issue number inside the project (the `iid`, shown as #12 in GitLab), not the global issue ID.',
-      required: true,
-    }),
-  mergeRequestIid: () =>
-    Property.Number({
-      displayName: 'Merge Request IID',
-      description:
-        'The merge request number inside the project (the `iid`, shown as !12 in GitLab), not the global ID.',
-      required: true,
-    }),
-  noteId: () =>
-    Property.Number({
-      displayName: 'Note ID',
-      description: 'Numeric ID of the comment (note).',
-      required: true,
-    }),
-  sha: (displayName = 'Commit SHA') =>
-    Property.ShortText({
-      displayName,
-      description:
-        'Commit SHA, or a branch or tag name that resolves to a commit.',
-      required: true,
-    }),
-  branch: (displayName = 'Branch', description = 'Branch name.') =>
-    Property.ShortText({ displayName, description, required: true }),
-  page: () =>
-    Property.Number({
-      displayName: 'Page',
-      description:
-        'Page number to fetch, starting at 1. Use `nextPage` from the previous result to continue.',
-      required: false,
-    }),
-  perPage: () =>
-    Property.Number({
-      displayName: 'Per Page',
-      description: 'Items per page, 1 to 100. Defaults to 20.',
-      required: false,
-    }),
-  sort: () =>
-    Property.StaticDropdown({
-      displayName: 'Sort',
-      required: false,
-      options: {
-        options: [
-          { label: 'Descending', value: 'desc' },
-          { label: 'Ascending', value: 'asc' },
-        ],
-      },
-    }),
-  triState: (displayName: string, description: string) =>
-    Property.StaticDropdown<string>({
-      displayName,
-      description,
-      required: false,
-      options: {
-        options: [
-          { label: 'Yes', value: 'true' },
-          { label: 'No', value: 'false' },
-        ],
-      },
-    }),
-};
-
 export function requirePositiveInt({
   value,
   label,
@@ -215,3 +139,79 @@ export function requireDuration({
   }
   return compact;
 }
+
+export const gitlabProps = {
+  projectId: (
+    description = 'Numeric project ID or full path, e.g. `my-group/my-project`. Shown on the project overview page.'
+  ) =>
+    Property.ShortText({
+      displayName: 'Project ID or Path',
+      description,
+      required: true,
+    }),
+  issueIid: () =>
+    Property.Number({
+      displayName: 'Issue IID',
+      description:
+        'The issue number inside the project (the `iid`, shown as #12 in GitLab), not the global issue ID.',
+      required: true,
+    }),
+  mergeRequestIid: () =>
+    Property.Number({
+      displayName: 'Merge Request IID',
+      description:
+        'The merge request number inside the project (the `iid`, shown as !12 in GitLab), not the global ID.',
+      required: true,
+    }),
+  noteId: () =>
+    Property.Number({
+      displayName: 'Note ID',
+      description: 'Numeric ID of the comment (note).',
+      required: true,
+    }),
+  sha: (displayName = 'Commit SHA') =>
+    Property.ShortText({
+      displayName,
+      description:
+        'Commit SHA, or a branch or tag name that resolves to a commit.',
+      required: true,
+    }),
+  branch: (displayName = 'Branch', description = 'Branch name.') =>
+    Property.ShortText({ displayName, description, required: true }),
+  page: () =>
+    Property.Number({
+      displayName: 'Page',
+      description:
+        'Page number to fetch, starting at 1. Use `nextPage` from the previous result to continue.',
+      required: false,
+    }),
+  perPage: () =>
+    Property.Number({
+      displayName: 'Per Page',
+      description: 'Items per page, 1 to 100. Defaults to 20.',
+      required: false,
+    }),
+  sort: () =>
+    Property.StaticDropdown({
+      displayName: 'Sort',
+      required: false,
+      options: {
+        options: [
+          { label: 'Descending', value: 'desc' },
+          { label: 'Ascending', value: 'asc' },
+        ],
+      },
+    }),
+  triState: (displayName: string, description: string) =>
+    Property.StaticDropdown<string>({
+      displayName,
+      description,
+      required: false,
+      options: {
+        options: [
+          { label: 'Yes', value: 'true' },
+          { label: 'No', value: 'false' },
+        ],
+      },
+    }),
+};

@@ -12,10 +12,6 @@ function getVerifiedTlsAgent(): Promise<Dispatcher> {
   return verifiedTlsAgent;
 }
 
-export const gitlabTransport = {
-  getDispatcher: getVerifiedTlsAgent,
-};
-
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -96,30 +92,6 @@ export function buildGitlabError({
 }
 
 type JsonValue = ReturnType<typeof JSON.parse>;
-
-export type GitlabQueryValue =
-  | string
-  | number
-  | boolean
-  | undefined
-  | null
-  | Array<string | number>;
-
-export type GitlabRequest = {
-  token: string;
-  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE';
-  path: string;
-  query?: Record<string, GitlabQueryValue>;
-  body?: unknown;
-  statusMessages?: Partial<Record<number, string>>;
-  timeoutMs?: number;
-};
-
-export type GitlabResponse<T> = {
-  status: number;
-  headers: Headers;
-  body: T;
-};
 
 export function buildGitlabUrl({
   path,
@@ -274,3 +246,31 @@ export async function readGitlabRawPrefix({
   }
   return { bytes: Buffer.concat(chunks, length), complete };
 }
+
+export const gitlabTransport = {
+  getDispatcher: getVerifiedTlsAgent,
+};
+
+export type GitlabQueryValue =
+  | string
+  | number
+  | boolean
+  | undefined
+  | null
+  | Array<string | number>;
+
+export type GitlabRequest = {
+  token: string;
+  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE';
+  path: string;
+  query?: Record<string, GitlabQueryValue>;
+  body?: unknown;
+  statusMessages?: Partial<Record<number, string>>;
+  timeoutMs?: number;
+};
+
+export type GitlabResponse<T> = {
+  status: number;
+  headers: Headers;
+  body: T;
+};

@@ -8,8 +8,6 @@ import {
 import { gitlabProps, requireText } from '../../common/props';
 import { fileOutputSchema } from '../../output-schemas';
 
-export const MAX_FILE_TEXT_BYTES = 1_000_000;
-
 const UTF8_MAX_CHAR_BYTES = 4;
 
 export function decodeFilePrefix({
@@ -115,3 +113,5 @@ export const getFileAction = createAction({
     };
   },
 });
+
+export const MAX_FILE_TEXT_BYTES = 1_000_000;
