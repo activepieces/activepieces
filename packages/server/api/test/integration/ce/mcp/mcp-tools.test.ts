@@ -423,6 +423,22 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('subject')
     })
 
+    it('11b. ap_get_piece_props — a guessed name that clearly means one action returns that action', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const resolved = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'sendEmail', type: 'action' })
+        const unclear = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'send', type: 'action' })
+        const ambiguous = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'email', type: 'trigger' })
+        const blank = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-array', actionOrTriggerName: '__', type: 'action' })
+
+        expect(text(resolved)).toContain('✅')
+        expect(text(resolved)).toContain('/send_email')
+        expect(text(unclear)).toContain('❌')
+        expect(text(ambiguous)).toContain('❌')
+        expect(text(blank)).toContain('❌')
+    })
+
     it('12. ap_get_piece_props — returns error for non-existent piece', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
