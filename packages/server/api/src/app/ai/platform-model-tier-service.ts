@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, partition, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique } from '@activepieces/core-utils'
 import { AiProviderModelScope, CreatePlatformModelTierRequest, PlatformModelTier, PlatformModelTierEntry, PlatformModelTierSummary, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -154,17 +154,33 @@ export const platformModelTierService = {
         }
     },
 
-    async deleteTiersUsingKey({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
+    async removeKeyFromTiers({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
         await lockPlatform({ manager, platformId })
-        const tierIds = (await findLiveTiersUsingKey({ manager, platformId, configId })).map((tier) => tier.id)
-        if (tierIds.length === 0) {
+        const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
+        const trimmed = tiers.map((tier) => ({ ...tier, entries: tier.entries.filter((entry) => entry.configId !== configId) }))
+        const [emptied, kept] = partition(trimmed, (tier) => tier.entries.length === 0)
+        for (const tier of kept) {
+            await tierRepo(manager).update({ platformId, id: tier.id }, { entries: tier.entries })
+        }
+        if (emptied.length === 0) {
             return
         }
-        await tierRepo(manager).update({ platformId, id: In(tierIds) }, { isDefault: false, isFast: false })
-        await tierRepo(manager).softDelete({ platformId, id: In(tierIds) })
-        if ((await listLive({ platformId, manager })).length === 0) {
+        const emptiedIds = emptied.map((tier) => tier.id)
+        await tierRepo(manager).update({ platformId, id: In(emptiedIds) }, { isDefault: false, isFast: false })
+        await tierRepo(manager).softDelete({ platformId, id: In(emptiedIds) })
+        const replacement = (await listLive({ platformId, manager }))[0]
+        if (isNil(replacement)) {
             await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
+            return
         }
+        await manager.query(
+            'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = ANY($3) OR "replacedBy" = ANY($3))',
+            [replacement.id, platformId, emptiedIds],
+        )
+        await tierRepo(manager).update({ platformId, id: replacement.id }, {
+            ...(emptied.some((tier) => tier.isDefault) ? { isDefault: true } : {}),
+            ...(emptied.some((tier) => tier.isFast) ? { isFast: true } : {}),
+        })
     },
 
     async getFastForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {

@@ -315,7 +315,23 @@ describe('Platform model tiers API', () => {
     })
 
     describe('key guard', () => {
-        it('deletes the tiers a key is in when the key is deleted', async () => {
+        it('removes a deleted key from a tier and keeps the tier when other models are left', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const otherKey = await seedKey({ testCtx: ctx })
+            const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, entries: [
+                { configId: key.id, modelId: 'gpt-4o' },
+                { configId: otherKey.id, modelId: 'gpt-4o-mini' },
+            ] }) })
+
+            const response = await ctx.delete(`/v1/ai-providers/${key.id}`)
+
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(await listAdmin({ testCtx: ctx })).toMatchObject([
+                { id: tier.id, isDefault: true, isFast: true, entries: [{ configId: otherKey.id, modelId: 'gpt-4o-mini' }] },
+            ])
+        })
+
+        it('deletes a tier left with no models and moves its users and flags to the first tier left', async () => {
             const key = await seedKey({ testCtx: ctx })
             const otherKey = await seedKey({ testCtx: ctx })
             const expert = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Expert' }) })
@@ -324,8 +340,8 @@ describe('Platform model tiers API', () => {
             const response = await ctx.delete(`/v1/ai-providers/${key.id}`)
 
             expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect((await listAdmin({ testCtx: ctx })).map((tier) => tier.id)).toEqual([kept.id])
-            expect(await findWithDeleted({ id: expert.id })).toMatchObject({ isDefault: false, isFast: false })
+            expect(await listAdmin({ testCtx: ctx })).toMatchObject([{ id: kept.id, isDefault: true, isFast: true }])
+            expect(await findWithDeleted({ id: expert.id })).toMatchObject({ replacedBy: kept.id, isDefault: false, isFast: false })
         })
 
         it('shows specific models again when deleting a key removes the last tier', async () => {
