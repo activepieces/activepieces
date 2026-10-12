@@ -1,14 +1,27 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
-import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
+import {
+  AIProviderWithoutSensitiveData,
+  PlatformAdminSurface,
+  Project,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, ChevronRight, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import {
+  Bot,
+  ChevronRight,
+  Lock,
+  MessageSquare,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -25,11 +38,17 @@ import {
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
+  PLATFORM_FEATURES,
+  TIER_LABELS,
+  useUpgradeClick,
+} from '@/features/billing';
+import {
   aiProviderKeys,
   aiProviderMutations,
   aiProviderQueries,
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +72,8 @@ export function ProvidersTab() {
   >(undefined);
 
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const locked = !platform.plan.aiProvidersEnabled;
   const {
     data: providers,
     isLoading,
@@ -77,6 +98,16 @@ export function ProvidersTab() {
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
       onSuccess: () => refetch(),
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ??
+              data?.message ??
+              'Could not delete this key',
+          ),
+        );
+      },
     });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
@@ -162,7 +193,7 @@ export function ProvidersTab() {
   const activeInfo = activeConfig
     ? providerInfoOf({ provider: activeConfig.provider })
     : undefined;
-  if (activeConfig && activeInfo) {
+  if (activeConfig && activeInfo && !locked) {
     return (
       <>
         <ConfigDetail
@@ -193,7 +224,7 @@ export function ProvidersTab() {
     );
   }
 
-  return (
+  const page = (
     <>
       <div className="flex flex-col gap-6">
         <div className="flex items-start justify-between gap-3">
@@ -209,15 +240,17 @@ export function ProvidersTab() {
                 : t('Each key has its own models and project access.')
             }
           />
-          <Button
-            size="sm"
-            className="shrink-0"
-            onClick={() => openConnect()}
-            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
-          >
-            <Plus className="size-4" />
-            {t('Add key')}
-          </Button>
+          {!locked && (
+            <Button
+              size="sm"
+              className="shrink-0"
+              onClick={() => openConnect()}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+            >
+              <Plus className="size-4" />
+              {t('Add key')}
+            </Button>
+          )}
         </div>
 
         {isProvidersError ? (
@@ -226,12 +259,15 @@ export function ProvidersTab() {
           <EmptyProviders onConnect={openConnect} />
         ) : (
           <>
-            <ChatProviderRow
-              configs={providers ?? []}
-              value={chatProviderRow?.id ?? null}
-              isSwitching={isSwitchingChatProvider}
-              onChange={selectChatConfig}
-            />
+            {locked && <LockedProvidersAlert />}
+            {!locked && (
+              <ChatProviderRow
+                configs={providers ?? []}
+                value={chatProviderRow?.id ?? null}
+                isSwitching={isSwitchingChatProvider}
+                onChange={selectChatConfig}
+              />
+            )}
             <div className="flex flex-col gap-6">
               {connectedProviders.map((provider) => (
                 <ProviderGroup
@@ -241,13 +277,14 @@ export function ProvidersTab() {
                     (config) => config.provider === provider,
                   )}
                   projects={projects}
+                  locked={locked}
                   onAdd={() => openConnect(provider)}
                   onOpen={openConfig}
                   onDelete={(id) => deleteProvider(id)}
                 />
               ))}
             </div>
-            {available.length > 0 && (
+            {!locked && available.length > 0 && (
               <section className="flex flex-col gap-4 border-t border-gray-6/60 pt-6">
                 <SectionHeader
                   title={t('Also available')}
@@ -280,12 +317,51 @@ export function ProvidersTab() {
       />
     </>
   );
+
+  if (configs.length === 0 && !isProvidersError) {
+    return <PlanFeatureSample feature="aiProviders">{page}</PlanFeatureSample>;
+  }
+  return page;
+}
+
+function LockedProvidersAlert() {
+  const upgradeClick = useUpgradeClick();
+  const { featureKey, tier } = PLATFORM_FEATURES.aiProviders;
+
+  return (
+    <Alert variant="primary">
+      <Lock />
+      <AlertTitle>
+        {t('Your plan does not include Bring your own AI keys')}
+      </AlertTitle>
+      <AlertDescription className="flex flex-col items-start gap-3">
+        <p>
+          {t(
+            'You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.',
+          )}
+        </p>
+        <Button
+          size="sm"
+          onClick={() =>
+            upgradeClick({
+              feature: featureKey,
+              tier,
+              surface: PlatformAdminSurface.SAMPLE,
+            })
+          }
+        >
+          {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
 }
 
 function ProviderGroup({
   provider,
   configs,
   projects,
+  locked,
   onAdd,
   onOpen,
   onDelete,
@@ -293,6 +369,7 @@ function ProviderGroup({
   provider: AIProviderName;
   configs: AIProviderWithoutSensitiveData[];
   projects: Project[];
+  locked: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => Promise<unknown>;
@@ -317,15 +394,17 @@ function ProviderGroup({
             {t('configurationsCount', { count: configs.length })}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onAdd}
-          {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
-        >
-          <Plus className="size-4" />
-          {t('Add key')}
-        </Button>
+        {!locked && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onAdd}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
+            <Plus className="size-4" />
+            {t('Add key')}
+          </Button>
+        )}
       </div>
       <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
         <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
@@ -338,6 +417,7 @@ function ProviderGroup({
             key={config.id}
             config={config}
             projects={projects}
+            locked={locked}
             onOpen={() => onOpen(config.id)}
             onDelete={() => onDelete(config.id)}
           />
@@ -350,11 +430,13 @@ function ProviderGroup({
 function ConfigRow({
   config,
   projects,
+  locked,
   onOpen,
   onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
+  locked: boolean;
   onOpen: () => void;
   onDelete: () => Promise<unknown>;
 }) {
@@ -379,18 +461,19 @@ function ConfigRow({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
+      role={locked ? undefined : 'button'}
+      tabIndex={locked ? undefined : 0}
+      onClick={locked ? undefined : onOpen}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (!locked && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onOpen();
         }
       }}
       className={cn(
         'group flex items-center gap-4 px-5 py-3 transition-colors',
-        'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+        !locked &&
+          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -440,7 +523,10 @@ function ConfigRow({
             <Button
               variant="ghost"
               size="sm"
-              className="px-2 text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100"
+              className={cn(
+                'px-2 text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100',
+                locked && 'opacity-100',
+              )}
               onClick={() => setDeleteOpen(true)}
               {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
             >
@@ -450,7 +536,9 @@ function ConfigRow({
           </TooltipTrigger>
           <TooltipContent>{t('Delete')}</TooltipContent>
         </Tooltip>
-        <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+        {!locked && (
+          <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+        )}
         <ConfirmationDeleteDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}

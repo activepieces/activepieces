@@ -183,7 +183,7 @@ const PLAN_CATALOG: PlanCatalogEntry[] = [
       { metric: 'seats' },
       { label: 'Agents' },
       { label: '1 team project, MCPs' },
-      { label: 'BYOK' },
+      { label: 'Bring your own AI keys' },
       { label: 'Team analytics' },
     ],
   },

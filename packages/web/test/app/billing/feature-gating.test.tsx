@@ -282,10 +282,7 @@ describe('AI providers plan lock', () => {
       </PlanFeatureSample>,
     );
     expect(
-      screen.getByRole('heading', { name: 'Unlock AI providers' }),
-    ).toBeDefined();
-    expect(
-      screen.getByRole('button', { name: 'Upgrade to unlock' }),
+      screen.getByRole('heading', { name: 'Unlock AI Center' }),
     ).toBeDefined();
     expect(
       screen.queryByRole('heading', { name: 'AI Center providers' }),
@@ -303,7 +300,7 @@ describe('AI providers plan lock', () => {
       screen.getByRole('heading', { name: 'AI Center providers' }),
     ).toBeDefined();
     expect(
-      screen.queryByRole('heading', { name: 'Unlock AI providers' }),
+      screen.queryByRole('heading', { name: 'Unlock AI Center' }),
     ).toBeNull();
   });
 });

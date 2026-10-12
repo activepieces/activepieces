@@ -26,7 +26,9 @@ vi.mock('@/hooks/flags-hooks', () => ({
 
 vi.mock('@/features/billing', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  billingDialogHooks: {
+    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  },
 }));
 
 vi.mock('@/app/components/platform-layout', () => ({
@@ -51,16 +53,16 @@ function renderAiCenterRoute() {
 }
 
 describe('/platform/ai route', () => {
-  it('shows the plan lock when the plan lacks aiProvidersEnabled', async () => {
+  it('leaves the plan lock to the providers tab when the plan lacks aiProvidersEnabled', async () => {
     plan.aiProvidersEnabled = false;
 
     renderAiCenterRoute();
 
     expect(
-      await screen.findAllByRole('heading', { name: 'Unlock AI providers' }),
+      await screen.findAllByRole('heading', { name: 'AI Center providers' }),
     ).toEqual([expect.any(HTMLHeadingElement)]);
     expect(
-      screen.queryAllByRole('heading', { name: 'AI Center providers' }),
+      screen.queryAllByRole('heading', { name: 'Unlock AI Center' }),
     ).toEqual([]);
   });
 
@@ -73,7 +75,7 @@ describe('/platform/ai route', () => {
       await screen.findAllByRole('heading', { name: 'AI Center providers' }),
     ).toEqual([expect.any(HTMLHeadingElement)]);
     expect(
-      screen.queryAllByRole('heading', { name: 'Unlock AI providers' }),
+      screen.queryAllByRole('heading', { name: 'Unlock AI Center' }),
     ).toEqual([]);
   });
 });

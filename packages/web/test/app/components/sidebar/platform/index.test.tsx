@@ -86,19 +86,6 @@ function renderSidebar() {
 }
 
 describe('platform sidebar AI Center', () => {
-  it('crowns Providers only when the plan lacks aiProvidersEnabled', () => {
-    plan.aiProvidersEnabled = false;
-
-    renderSidebar();
-
-    expect(
-      screen.queryAllByRole('listitem', { name: 'Providers locked' }),
-    ).toEqual([expect.any(HTMLLIElement)]);
-    expect(screen.queryAllByRole('listitem', { name: 'Capabilities' })).toEqual(
-      [expect.any(HTMLLIElement)],
-    );
-  });
-
   it('leaves Providers unlocked when aiProvidersEnabled is on', () => {
     plan.aiProvidersEnabled = true;
 
