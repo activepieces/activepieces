@@ -4666,7 +4666,7 @@
     },
     "packages/pieces/community/intercom": {
       "name": "@activepieces/piece-intercom",
-      "version": "0.8.3",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4675,6 +4675,7 @@
         "dayjs": "1.11.9",
         "intercom-client": "6.2.0",
         "string-strip-html": "8.5.0",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
