@@ -661,8 +661,6 @@ const CONTAINER_PROP_TYPES = new Set<PropertyType>([PropertyType.ARRAY, Property
 
 const ContainerCheckedProp = z.object({ type: z.enum(PropertyType), properties: z.unknown().optional() })
 
-const ContainerCheckedPropMap = z.record(z.string(), ContainerCheckedProp)
-
 const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder once with ap_create_folder, then pass the same folderName to each of them.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
@@ -757,9 +755,11 @@ function syncContainerExecutionTypes({ props, input, propertySettings }: {
     input: Record<string, unknown>
     propertySettings: Record<string, PropertySettings>
 }): Record<string, PropertySettings> {
-    const topLevelFields = Object.entries(props).map(([name, prop]) => ({ name, prop, value: input[name] }))
-    const nestedFields = Object.entries(props).flatMap(([name, prop]) => dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }))
-    const updates = [...topLevelFields, ...nestedFields].flatMap(({ name, prop, value }): [string, PropertySettings][] => {
+    const fields = Object.entries(props).flatMap(([name, prop]) => [
+        { name, prop, value: input[name] },
+        ...dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }),
+    ])
+    const updates = fields.flatMap(({ name, prop, value }): [string, PropertySettings][] => {
         const type = containerExecutionType({ prop, value })
         if (isNil(type) || (propertySettings[name]?.type ?? PropertyExecutionType.MANUAL) === type) {
             return []
@@ -773,21 +773,19 @@ function dynamicChildFields({ prop, value, schema }: { prop: ContainerCheckedPro
     if (prop.type !== PropertyType.DYNAMIC || !isObject(value)) {
         return []
     }
-    const children = ContainerCheckedPropMap.safeParse(schema).data ?? {}
+    const children = z.record(z.string(), ContainerCheckedProp).safeParse(schema).data ?? {}
     return Object.entries(children).map(([name, child]) => ({ name, prop: child, value: value[name] }))
 }
 
 function containerExecutionType({ prop, value }: { prop: ContainerCheckedProp, value: unknown }): PropertyExecutionType | undefined {
-    if (!CONTAINER_PROP_TYPES.has(prop.type) || isStructuredArray(prop)) {
+    const isStructuredArray = prop.type === PropertyType.ARRAY && !isNil(prop.properties)
+    if (!CONTAINER_PROP_TYPES.has(prop.type) || isStructuredArray) {
         return undefined
     }
     if (isWholeReference(value)) {
         return PropertyExecutionType.DYNAMIC
     }
-    if (Array.isArray(value) || isObject(value)) {
-        return PropertyExecutionType.MANUAL
-    }
-    return undefined
+    return Array.isArray(value) || isObject(value) ? PropertyExecutionType.MANUAL : undefined
 }
 
 function isWholeReference(value: unknown): boolean {
@@ -796,10 +794,6 @@ function isWholeReference(value: unknown): boolean {
     }
     const tokens = extractMustacheTokens(value)
     return tokens.length === 1 && tokens[0].token === value.trim()
-}
-
-function isStructuredArray(prop: ContainerCheckedProp): boolean {
-    return prop.type === PropertyType.ARRAY && !isNil(prop.properties)
 }
 
 // Classify an action by how many records it returns, from its name. This is the signal the agent
