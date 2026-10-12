@@ -40,7 +40,7 @@ describe('Cloud sign-in for someone with no project', () => {
         expect(picked).toBe(busyPlatform.id)
     })
 
-    it('skips the last-used platform when they have no project there but do elsewhere', async () => {
+    it('keeps the last-used platform even when they have no project there', async () => {
         const emptyPlatformId = await platformWithoutPersonalProjects()
         const { mockPlatform: busyPlatform } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true }, project: { type: ProjectType.TEAM } })
         const identityId = await joinPlatforms({ platformIds: [emptyPlatformId, busyPlatform.id] })
@@ -48,7 +48,7 @@ describe('Cloud sign-in for someone with no project', () => {
 
         const picked = await authenticationService(mockLog).selectCloudSignInPlatformId({ identityId })
 
-        expect(picked).toBe(busyPlatform.id)
+        expect(picked).toBe(emptyPlatformId)
     })
 })
 
