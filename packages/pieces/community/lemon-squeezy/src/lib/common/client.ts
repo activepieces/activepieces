@@ -92,12 +92,14 @@ export async function lsRequest({
   path,
   query,
   body,
+  rateLimitWaitsMs = RATE_LIMIT_WAITS.action,
 }: {
   apiKey: string;
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   path: string;
   query?: Record<string, string | undefined>;
   body?: unknown;
+  rateLimitWaitsMs?: readonly number[];
 }): Promise<{ status: number; body: unknown }> {
   if (!path.startsWith('/') || path.startsWith('//') || path.includes('..')) {
     throw new Error(`Invalid Lemon Squeezy API path: ${path}`);
@@ -111,8 +113,9 @@ export async function lsRequest({
       body,
       redactBodyInErrors: body !== undefined,
     });
-    if (response.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
-      await sleep(RATE_LIMIT_WAITS_MS[attempt] ?? MAX_RETRY_WAIT_MS);
+    const wait = rateLimitWaitsMs[attempt];
+    if (response.status === 429 && wait !== undefined) {
+      await sleep(wait);
       continue;
     }
     if (response.status >= 300 && response.status < 400) {
@@ -226,6 +229,7 @@ export async function listAllPages({
       method: 'GET',
       path,
       query: { ...query, 'page[number]': String(pageNumber), 'page[size]': '100' },
+      rateLimitWaitsMs: RATE_LIMIT_WAITS.interactive,
     });
     const data = readPath({ value: body, path: ['data'] });
     for (const item of Array.isArray(data) ? data : []) items.push(toResource(item));
@@ -236,7 +240,7 @@ export async function listAllPages({
 }
 
 export async function getTestModeForKey(apiKey: string): Promise<boolean> {
-  const { body } = await lsRequest({ apiKey, method: 'GET', path: '/users/me' });
+  const { body } = await lsRequest({ apiKey, method: 'GET', path: '/users/me', rateLimitWaitsMs: RATE_LIMIT_WAITS.interactive });
   return readPath({ value: body, path: ['meta', 'test_mode'] }) === true;
 }
 
@@ -268,9 +272,6 @@ export async function lookupLicenseKeyId(licenseKey: string): Promise<string | u
 }
 
 const REQUEST_TIMEOUT_MS = 30_000;
-const MAX_RATE_LIMIT_RETRIES = 2;
-const RATE_LIMIT_WAITS_MS = [20_000, 40_000];
-const MAX_RETRY_WAIT_MS = 40_000;
 
 let verifiedTlsAgent: Promise<unknown> | undefined;
 
@@ -333,6 +334,8 @@ async function send(request: HttpRequest): Promise<RawResponse> {
     throw error;
   }
 }
+
+export const RATE_LIMIT_WAITS: { action: readonly number[]; interactive: readonly number[] } = { action: [20_000, 40_000], interactive: [] };
 
 export type JsonApiResource = { id: string; type: string; attributes: Record<string, unknown> };
 

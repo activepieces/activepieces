@@ -1,7 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { Property } from '@activepieces/pieces-framework';
 import { lemonSqueezyAuth } from './auth';
-import { LemonSqueezyApiError, getTestModeForKey, isRecord, lsRequest, numericId, readPath, seg } from './client';
+import { LemonSqueezyApiError, RATE_LIMIT_WAITS, getTestModeForKey, isRecord, lsRequest, numericId, readPath, seg } from './client';
 import { storeOptions } from './props';
 
 export const createWebhookTriggerKey = (eventName: string) => `_${eventName}_trigger`;
@@ -36,6 +36,7 @@ export async function subscribeWebhook({
     apiKey,
     method: 'POST',
     path: '/webhooks',
+    rateLimitWaitsMs: RATE_LIMIT_WAITS.interactive,
     body: {
       data: {
         type: 'webhooks',
@@ -53,7 +54,12 @@ export async function subscribeWebhook({
 
 export async function unsubscribeWebhook({ apiKey, webhookId }: { apiKey: string; webhookId: string }): Promise<void> {
   try {
-    await lsRequest({ apiKey, method: 'DELETE', path: `/webhooks/${seg({ value: webhookId, label: 'Webhook ID' })}` });
+    await lsRequest({
+      apiKey,
+      method: 'DELETE',
+      path: `/webhooks/${seg({ value: webhookId, label: 'Webhook ID' })}`,
+      rateLimitWaitsMs: RATE_LIMIT_WAITS.interactive,
+    });
   } catch (error) {
     if (error instanceof LemonSqueezyApiError && error.status === 404) return;
     throw error;

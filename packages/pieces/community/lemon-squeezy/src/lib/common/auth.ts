@@ -1,5 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { LemonSqueezyApiError, lsRequest } from './client';
+import { LemonSqueezyApiError, RATE_LIMIT_WAITS, lsRequest } from './client';
 
 export const lemonSqueezyAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -19,7 +19,7 @@ Keys created in test mode only see test-mode data, and webhooks for this connect
       return { valid: false, error: 'API key is required' };
     }
     try {
-      await lsRequest({ apiKey: auth, method: 'GET', path: '/users/me' });
+      await lsRequest({ apiKey: auth, method: 'GET', path: '/users/me', rateLimitWaitsMs: RATE_LIMIT_WAITS.interactive });
       return { valid: true };
     } catch (error) {
       if (error instanceof LemonSqueezyApiError && (error.status === 401 || error.status === 403)) {

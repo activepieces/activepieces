@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LemonSqueezyApiError, buildQueryString, lsRequest, listAllPages, numericId, pageParams, seg } from '../src/lib/common/client';
+import { lemonSqueezyAuth } from '../src/lib/common/auth';
+import { storeOptions } from '../src/lib/common/props';
 import { installFetch, jsonResponse } from './helpers';
 
 afterEach(() => {
@@ -73,6 +75,28 @@ describe('lsRequest', () => {
     expect(n).toBe(3);
   });
 
+  it('does not retry 429 for connection checks and dropdowns (they must finish well inside 60 s)', async () => {
+    vi.useFakeTimers();
+    let n = 0;
+    installFetch({
+      'GET /users/me': () => {
+        n++;
+        return jsonResponse({ value: {}, status: 429 });
+      },
+      'GET /stores': () => {
+        n++;
+        return jsonResponse({ value: {}, status: 429 });
+      },
+    });
+    const started = Date.now();
+    const validation = await validate('k');
+    expect(validation).toMatchObject({ valid: false, error: expect.stringContaining('rate limit') });
+    const dropdown = await storeOptions({ auth: { secret_text: 'k' } });
+    expect(dropdown).toMatchObject({ disabled: true, placeholder: expect.stringContaining('rate limit') });
+    expect(n).toBe(2);
+    expect(Date.now() - started).toBe(0);
+  });
+
   it('fails after the retries are used up', async () => {
     vi.useFakeTimers();
     installFetch({ 'GET /stores': () => jsonResponse({ value: {}, status: 429 }) });
@@ -105,3 +129,7 @@ describe('listAllPages', () => {
     expect(calls).toHaveLength(10);
   });
 });
+
+function validate(auth: string) {
+  return lemonSqueezyAuth.validate?.({ auth, server: { apiUrl: 'http://localhost:3000', publicUrl: 'http://localhost:4200', mintOidcToken: async () => '' } });
+}
