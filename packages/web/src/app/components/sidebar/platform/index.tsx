@@ -26,6 +26,7 @@ import {
   SidebarMenu,
 } from '@/components/ui/sidebar-shadcn';
 import { PLATFORM_FEATURES } from '@/features/billing';
+import { pieceSetTerms } from '@/features/piece-sets';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -85,7 +86,7 @@ export function PlatformNav() {
             { to: '/platform/pieces', label: t('Pieces'), end: true },
             {
               to: '/platform/pieces/piece-sets',
-              label: t('Piece Sets'),
+              label: pieceSetTerms.get().title,
               locked: !platform.plan.managePiecesEnabled,
               tier: PLATFORM_FEATURES.pieces.tier,
             },
