@@ -2,6 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType, ProjectType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { ObjectLiteral, Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { projectEnterpriseHooks } from '../../../../src/app/ee/projects/ee-project-hooks'
 import { personalProjectsService } from '../../../../src/app/ee/projects/personal-projects/personal-projects.service'
@@ -160,7 +161,7 @@ describe('Creating personal projects for existing members', () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const member = await saveUser({ platformId })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId, retry: { userIds: [member.id], attemptsLeft: 2 } })
+        await personalProjectsService(mockLog).createMissingHandler({ platformId, onlyUserIds: [member.id], attemptsLeft: 2 })
 
         expect(await personalProjectCountOf({ ownerId: member.id })).toBe(1)
     })
@@ -170,7 +171,7 @@ describe('Creating personal projects for existing members', () => {
         const failed = await saveUser({ platformId })
         const other = await saveUser({ platformId })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId, retry: { userIds: [failed.id], attemptsLeft: 2 } })
+        await personalProjectsService(mockLog).createMissingHandler({ platformId, onlyUserIds: [failed.id], attemptsLeft: 2 })
 
         expect(await personalProjectCountOf({ ownerId: failed.id })).toBe(1)
         expect(await personalProjectCountOf({ ownerId: other.id })).toBe(0)
@@ -181,9 +182,40 @@ describe('Creating personal projects for existing members', () => {
         const member = await saveUser({ platformId })
         const userIds = [...Array.from({ length: 70_000 }, () => apId()), member.id]
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId, retry: { userIds, attemptsLeft: 2 } })
+        await personalProjectsService(mockLog).createMissingHandler({ platformId, onlyUserIds: userIds, attemptsLeft: 2 })
 
         expect(await personalProjectCountOf({ ownerId: member.id })).toBe(1)
+    })
+
+    it('a resumed run starts after the last member the stopped run reached', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        const members = await Promise.all(Array.from({ length: 3 }, () => saveUser({ platformId })))
+        const [reached, ...rest] = [...members].sort((a, b) => a.id.localeCompare(b.id))
+
+        await personalProjectsService(mockLog).createMissingHandler({ platformId, afterUserId: reached.id, attemptsLeft: 2 })
+
+        expect(await personalProjectCountOf({ ownerId: reached.id })).toBe(0)
+        const counts = await Promise.all(rest.map((member) => personalProjectCountOf({ ownerId: member.id })))
+        expect(counts).toStrictEqual([1, 1])
+    })
+
+    it('does not fail the job when the scan stops part-way, so the queue never reruns the whole scan', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        await saveUser({ platformId })
+        const originalCreateQueryBuilder = Repository.prototype.createQueryBuilder
+        const createQueryBuilder = vi.spyOn(Repository.prototype, 'createQueryBuilder').mockImplementation(function (this: Repository<ObjectLiteral>, ...args: Parameters<Repository<ObjectLiteral>['createQueryBuilder']>) {
+            if (this.metadata.tableName === 'user') {
+                throw new Error('database blip')
+            }
+            return originalCreateQueryBuilder.apply(this, args)
+        })
+
+        try {
+            await expect(personalProjectsService(mockLog).createMissingHandler({ platformId, attemptsLeft: 0 })).resolves.toBeUndefined()
+        }
+        finally {
+            createQueryBuilder.mockRestore()
+        }
     })
 
     it('never creates a second one when it runs again', async () => {
