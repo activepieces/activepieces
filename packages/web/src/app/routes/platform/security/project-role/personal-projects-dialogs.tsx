@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -14,26 +15,21 @@ import {
 } from '@/components/ui/dialog';
 
 export function TurnOnPersonalProjectsDialog({
-  open,
-  onOpenChange,
+  onClose,
   membersWithoutPersonalProject,
-  isCountLoading,
   isPending,
   onConfirm,
 }: TurnOnPersonalProjectsDialogProps) {
   const [createForExistingMembers, setCreateForExistingMembers] =
     useState(false);
-  const offersExistingMembers =
-    !isCountLoading &&
-    (membersWithoutPersonalProject === null ||
-      membersWithoutPersonalProject > 0);
 
   return (
     <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setCreateForExistingMembers(false);
-        onOpenChange(nextOpen);
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
       }}
     >
       <DialogContent>
@@ -43,44 +39,40 @@ export function TurnOnPersonalProjectsDialog({
             {t('New members get a personal project when they join.')}
           </DialogDescription>
         </DialogHeader>
-        {offersExistingMembers && (
-          <label
-            htmlFor={EXISTING_MEMBERS_CHECKBOX_ID}
-            className="flex cursor-pointer items-center gap-2 text-sm"
-          >
-            <Checkbox
-              id={EXISTING_MEMBERS_CHECKBOX_ID}
-              checked={createForExistingMembers}
-              onCheckedChange={(checked) =>
-                setCreateForExistingMembers(checked === true)
-              }
-            />
-            {membersWithoutPersonalProject === null
-              ? t("Also create one for members who don't have one yet")
-              : t('createForMembersWithoutOne', {
-                  count: membersWithoutPersonalProject,
-                })}
-          </label>
+        <label
+          htmlFor={EXISTING_MEMBERS_CHECKBOX_ID}
+          className="flex cursor-pointer items-center gap-2 text-sm"
+        >
+          <Checkbox
+            id={EXISTING_MEMBERS_CHECKBOX_ID}
+            checked={createForExistingMembers}
+            onCheckedChange={(checked) =>
+              setCreateForExistingMembers(checked === true)
+            }
+          />
+          {t('createForMembersWithoutPersonalProject', {
+            count: membersWithoutPersonalProject,
+          })}
+        </label>
+        {createForExistingMembers && (
+          <span className="flex items-center gap-1.5 pl-6 text-sm text-warning-11">
+            <TriangleAlert className="size-3.5 shrink-0" />
+            {t('createsPersonalProjectsNow', {
+              count: membersWithoutPersonalProject,
+            })}
+          </span>
         )}
         <DialogFooter>
-          <Button
-            variant="outline"
-            disabled={isPending}
-            onClick={() => onOpenChange(false)}
-          >
+          <Button variant="outline" disabled={isPending} onClick={onClose}>
             {t('Cancel')}
           </Button>
           <Button
             loading={isPending}
-            disabled={isCountLoading}
-            onClick={() =>
-              onConfirm({
-                createForExistingMembers:
-                  offersExistingMembers && createForExistingMembers,
-              })
-            }
+            onClick={() => onConfirm({ createForExistingMembers })}
           >
-            {t('Turn on')}
+            {createForExistingMembers
+              ? t('turnOnAndCreate', { count: membersWithoutPersonalProject })
+              : t('Turn on')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -137,10 +129,8 @@ export function TurnOffPersonalProjectsDialog({
 const EXISTING_MEMBERS_CHECKBOX_ID = 'personal-projects-existing-members';
 
 type TurnOnPersonalProjectsDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  membersWithoutPersonalProject: number | null;
-  isCountLoading: boolean;
+  onClose: () => void;
+  membersWithoutPersonalProject: number;
   isPending: boolean;
   onConfirm: (params: { createForExistingMembers: boolean }) => void;
 };
