@@ -13,7 +13,6 @@ import {
   Eye,
   EyeOff,
   GripVertical,
-  MoreHorizontal,
   Pin,
   Plus,
   Puzzle,
@@ -30,9 +29,11 @@ import {
   SaveBar,
   SettingsPanel,
   adminPageResources,
+  adminSurface,
   useAdminAction,
 } from '@/app/components/admin';
 import { EnterpriseLockedSection } from '@/app/components/enterprise-gate';
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -42,12 +43,6 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
@@ -61,15 +56,20 @@ import {
 } from '@/components/ui/sortable';
 import { useEnterpriseGate } from '@/features/billing';
 import {
-  PieceIcon,
   pieceSelectorCustomization,
   PIECE_SELECTOR_TAB_ICON_OPTIONS,
   piecesHooks,
   pieceCacheUtils,
+  PieceSelectorTabType,
 } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
+
+import {
+  PieceSelectorPreview,
+  pieceSelectorPreviewUtils,
+} from './piece-selector-preview';
 
 const borderlessInputClass =
   'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
@@ -86,7 +86,39 @@ export function PieceSelectorPage() {
   const savedPins = platform.pinnedPieces ?? [];
   const [tabs, setDraftTabs] = useState<PieceSelectorTabConfig[]>(savedTabs);
   const [pins, setPins] = useState<string[]>(savedPins);
-  const [previewTabId, setPreviewTabId] = useState<string | null>(null);
+  const [focus, setFocus] = useState<{ key: string | null; version: number }>({
+    key: null,
+    version: 0,
+  });
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const [flashedKey, setFlashedKey] = useState<string | null>(null);
+  const [flashedPiece, setFlashedPiece] = useState<string | null>(null);
+
+  const showInPreview = (key: string) =>
+    setFocus((prev) => ({ key, version: prev.version + 1 }));
+  const flashTab = (key: string) => {
+    setFlashedKey(key);
+    window.setTimeout(
+      () => setFlashedKey((current) => (current === key ? null : current)),
+      FLASH_MS,
+    );
+  };
+  const flashPiece = (pieceName: string) => {
+    setFlashedPiece(pieceName);
+    window.setTimeout(
+      () =>
+        setFlashedPiece((current) => (current === pieceName ? null : current)),
+      FLASH_MS,
+    );
+  };
+  const togglePin = (pieceName: string) => {
+    setPins((prev) =>
+      prev.includes(pieceName)
+        ? prev.filter((name) => name !== pieceName)
+        : [...prev, pieceName],
+    );
+    flashPiece(pieceName);
+  };
   const [newTabId, setNewTabId] = useState<string | null>(null);
   const { pieces } = piecesHooks.usePieces({
     includeHidden: true,
@@ -117,10 +149,21 @@ export function PieceSelectorPage() {
     update: (prev: PieceSelectorTabConfig[]) => PieceSelectorTabConfig[],
   ) => setDraftTabs(update);
 
-  const updateTab = (id: string, patch: Partial<PieceSelectorTabConfig>) =>
+  const updateTab = (
+    tab: PieceSelectorTabConfig,
+    patch: Partial<PieceSelectorTabConfig>,
+  ) => {
     setTabs((prev) =>
-      prev.map((tab) => (tab.id === id ? { ...tab, ...patch } : tab)),
+      prev.map((candidate) =>
+        candidate.id === tab.id ? { ...candidate, ...patch } : candidate,
+      ),
     );
+    const key = pieceSelectorPreviewUtils.tabKey(tab);
+    flashTab(key);
+    if (patch.hidden !== true) {
+      showInPreview(key);
+    }
+  };
 
   const removeTab = (id: string) =>
     setTabs((prev) => prev.filter((tab) => tab.id !== id));
@@ -128,6 +171,8 @@ export function PieceSelectorPage() {
   const addCustomTab = () => {
     const id = apId();
     setNewTabId(id);
+    showInPreview(id);
+    flashTab(id);
     setTabs((prev) => [
       ...prev,
       {
@@ -166,6 +211,7 @@ export function PieceSelectorPage() {
 
   const resetToDefault = () => {
     setDraftTabs(pieceSelectorCustomization.getDefaultTabConfigs());
+    showInPreview(PieceSelectorTabType.EXPLORE);
   };
 
   return (
@@ -191,33 +237,10 @@ export function PieceSelectorPage() {
         <AdminPageHeader
           title={t('Piece selector')}
           description={t(
-            'Arrange what builders see when they add a step: the tabs, the pieces in custom tabs, and the pinned pieces at the top of Explore.',
+            'This is the menu builders see when they add a step. Reorder, rename or hide its tabs, group pieces into custom tabs, and pin the pieces they reach for most. The preview updates as you go.',
           )}
           resources={adminPageResources.pieces}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={t('More actions')}
-              >
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                {...adminControl(AdminControl.PIECES_SELECTOR_RESET_CONFIRM)}
-                onSelect={resetToDefault}
-              >
-                <RotateCcw />
-                {t('Reset tabs to default')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </AdminPageHeader>
+        ></AdminPageHeader>
 
         <EnterpriseLockedSection
           unlocked={canEdit}
@@ -228,29 +251,78 @@ export function PieceSelectorPage() {
           )}
         />
 
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+          <SettingsPanel
+            flush
+            className="min-w-0 xl:sticky xl:top-6"
+            title={t('What builders see')}
+            description={t(
+              'Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.',
+            )}
+          >
+            <PieceSelectorPreview
+              tabs={tabs}
+              pins={pins}
+              focus={focus}
+              highlightedKeys={[hoveredKey, flashedKey].filter(
+                (key): key is string => key !== null,
+              )}
+              flashedPiece={flashedPiece}
+              onTogglePin={togglePin}
+            />
+          </SettingsPanel>
           <div className="flex min-w-0 flex-col gap-6">
             <SettingsPanel
               flush
               title={t('Tabs')}
               description={t(
-                'Drag to reorder. Rename a tab, give it an icon, or hide it. Custom tabs hold the pieces you pick, in sections.',
+                'Drag to reorder. Point at a tab to find it in the preview, click it to open it there.',
               )}
+              action={
+                <Button
+                  {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetToDefault}
+                >
+                  <RotateCcw />
+                  {t('Reset')}
+                </Button>
+              }
             >
-              <div className="flex flex-col gap-2 p-5">
+              <div className="flex flex-col gap-3 p-4">
                 <Sortable
                   value={tabs}
                   onValueChange={(next) => setTabs(() => next)}
                 >
-                  <div className="flex flex-col gap-2">
+                  <div
+                    className={cn(
+                      adminSurface.listFrame,
+                      'flex flex-col divide-y overflow-hidden',
+                      adminSurface.divider,
+                    )}
+                  >
                     {tabs.map((tab) => (
                       <SortableItem key={tab.id} value={tab.id} asChild>
-                        <div>
+                        <div
+                          onMouseEnter={() =>
+                            setHoveredKey(pieceSelectorPreviewUtils.tabKey(tab))
+                          }
+                          onMouseLeave={() => setHoveredKey(null)}
+                          onClickCapture={() => {
+                            if (!tab.hidden) {
+                              showInPreview(
+                                pieceSelectorPreviewUtils.tabKey(tab),
+                              );
+                            }
+                          }}
+                        >
                           <TabCard
                             tab={tab}
                             isNew={tab.id === newTabId}
                             pieces={pieces ?? []}
-                            onChange={(patch) => updateTab(tab.id, patch)}
+                            onChange={(patch) => updateTab(tab, patch)}
                             onRemove={() => removeTab(tab.id)}
                           />
                         </div>
@@ -273,18 +345,12 @@ export function PieceSelectorPage() {
             <PinnedPiecesPanel
               pins={pins}
               pieces={pieces ?? []}
-              onChange={setPins}
+              onChange={(next) => {
+                setPins(next);
+                showInPreview(PieceSelectorTabType.EXPLORE);
+              }}
             />
           </div>
-          <aside className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-6">
-            <MenuPreview
-              tabs={tabs}
-              pins={pins}
-              pieces={pieces ?? []}
-              selectedId={previewTabId}
-              onSelect={setPreviewTabId}
-            />
-          </aside>
         </div>
       </AdminPage>
     </form>
@@ -309,7 +375,7 @@ function PinnedPiecesPanel({
         'Shown first in the Explore tab, in this order. Drag to reorder.',
       )}
     >
-      <div className="flex flex-col gap-2 p-5">
+      <div className="flex flex-col gap-3 p-4">
         {pins.length === 0 ? (
           <p className="text-sm text-gray-11">
             {t(
@@ -321,12 +387,18 @@ function PinnedPiecesPanel({
             value={pins.map((name) => ({ id: name }))}
             onValueChange={(next) => onChange(next.map((item) => item.id))}
           >
-            <ul className="flex flex-col gap-1.5">
+            <ul
+              className={cn(
+                adminSurface.listFrame,
+                'flex flex-col divide-y overflow-hidden',
+                adminSurface.divider,
+              )}
+            >
               {pins.map((name) => {
                 const piece = byName.get(name);
                 return (
                   <SortableItem key={name} value={name} asChild>
-                    <li className="flex h-10 min-w-0 items-center gap-2 rounded-lg border bg-(--admin-surface) px-2 text-sm">
+                    <li className="flex h-11 min-w-0 items-center gap-2 px-2 text-sm">
                       <SortableDragHandle
                         type="button"
                         variant="ghost"
@@ -335,13 +407,7 @@ function PinnedPiecesPanel({
                       >
                         <GripVertical />
                       </SortableDragHandle>
-                      <PieceIcon
-                        size="xs"
-                        border
-                        displayName={piece?.displayName}
-                        logoUrl={piece?.logoUrl}
-                        showTooltip={false}
-                      />
+                      <LogoPlate src={piece?.logoUrl} alt="" size="xs" border />
                       <span className="min-w-0 flex-1 truncate text-gray-12">
                         {piece?.displayName ?? name}
                       </span>
@@ -428,145 +494,6 @@ function serializeTabs(tabs: PieceSelectorTabConfig[]): string {
   );
 }
 
-function MenuPreview({
-  tabs,
-  pins,
-  pieces,
-  selectedId,
-  onSelect,
-}: {
-  tabs: PieceSelectorTabConfig[];
-  pins: string[];
-  pieces: PieceMetadataModelSummary[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  const visible = tabs.filter((tab) => !tab.hidden);
-  const selected =
-    visible.find((tab) => tab.id === selectedId) ?? visible[0] ?? null;
-  const byName = new Map(pieces.map((piece) => [piece.name, piece]));
-  const labelOf = (tab: PieceSelectorTabConfig) => {
-    const display = pieceSelectorCustomization.getBuiltinTabDisplay(
-      tab.builtinTab,
-    );
-    return (
-      (tab.title ?? '').trim() ||
-      (display ? t(display.defaultLabel) : t('Untitled tab'))
-    );
-  };
-  return (
-    <SettingsPanel
-      flush
-      title={t('Preview')}
-      description={t('What builders see when they add a step. Click a tab.')}
-    >
-      {visible.length === 0 ? (
-        <p className="p-5 text-sm text-gray-11">
-          {t('Every tab is hidden. Builders will only see search.')}
-        </p>
-      ) : (
-        <div className="flex flex-col gap-4 p-5">
-          <div className="flex flex-wrap gap-1 rounded-xl bg-gray-3 p-1">
-            {visible.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onSelect(tab.id)}
-                className={cn(
-                  'flex h-7 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-gray-11 outline-hidden focus-visible:ring-2 focus-visible:ring-gray-8 [&_svg]:size-3.5',
-                  selected?.id === tab.id && 'bg-panel text-gray-12 shadow-xs',
-                )}
-              >
-                {pieceSelectorCustomization.renderIcon(tab.icon) ??
-                  pieceSelectorCustomization.renderIcon(
-                    pieceSelectorCustomization.getBuiltinTabDisplay(
-                      tab.builtinTab,
-                    )?.defaultIconKey,
-                  )}
-                <span className="truncate">{labelOf(tab)}</span>
-              </button>
-            ))}
-          </div>
-          {selected && selected.kind === 'CUSTOM' ? (
-            <div className="flex flex-col gap-3">
-              <PreviewPieces
-                names={selected.pieceNames ?? []}
-                byName={byName}
-              />
-              {(selected.sections ?? []).map((section) => (
-                <div key={section.id} className="flex flex-col gap-2">
-                  <span className="text-xs font-medium text-gray-11">
-                    {section.title || t('Untitled section')}
-                  </span>
-                  <PreviewPieces names={section.pieceNames} byName={byName} />
-                </div>
-              ))}
-              {(selected.pieceNames ?? []).length === 0 &&
-                (selected.sections ?? []).length === 0 && (
-                  <p className="text-sm text-gray-11">
-                    {t(
-                      'This tab is empty. Open it on the left to pick pieces.',
-                    )}
-                  </p>
-                )}
-            </div>
-          ) : selected?.builtinTab === 'EXPLORE' && pins.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-gray-11">
-                {t('Pinned')}
-              </span>
-              <PreviewPieces names={pins} byName={byName} />
-              <p className="text-sm text-gray-11">
-                {t('Popular pieces from the catalog follow.')}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-11">
-              {t(
-                'A standard tab. It lists its pieces from the catalog, so it updates on its own.',
-              )}
-            </p>
-          )}
-        </div>
-      )}
-    </SettingsPanel>
-  );
-}
-
-function PreviewPieces({
-  names,
-  byName,
-}: {
-  names: string[];
-  byName: Map<string, PieceMetadataModelSummary>;
-}) {
-  if (names.length === 0) {
-    return null;
-  }
-  return (
-    <ul className="grid grid-cols-2 gap-1.5">
-      {names.map((name) => {
-        const piece = byName.get(name);
-        return (
-          <li
-            key={name}
-            className="flex h-9 min-w-0 items-center gap-2 rounded-lg border px-2 text-sm"
-          >
-            <PieceIcon
-              size="xs"
-              border
-              displayName={piece?.displayName}
-              logoUrl={piece?.logoUrl}
-              showTooltip={false}
-            />
-            <span className="truncate">{piece?.displayName ?? name}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 const TabCard = ({
   tab,
   pieces,
@@ -613,14 +540,13 @@ const TabCard = ({
     });
 
   return (
-    <div
-      className={cn(
-        'rounded-xl border bg-panel transition-colors',
-        tab.hidden && 'opacity-60',
-        expanded && 'border-accent-7',
-      )}
-    >
-      <div className="flex items-center gap-1.5 p-2">
+    <div className={cn('transition-colors', expanded && 'bg-gray-2')}>
+      <div
+        className={cn(
+          'flex h-11 items-center gap-1 px-2',
+          tab.hidden && 'opacity-60',
+        )}
+      >
         <SortableDragHandle
           variant="ghost"
           size="icon-xs"
@@ -887,12 +813,7 @@ const PiecePickerButton = ({
                       >
                         <GripVertical />
                       </SortableDragHandle>
-                      <PieceIcon
-                        logoUrl={piece.logoUrl}
-                        displayName={piece.displayName}
-                        showTooltip={false}
-                        size="sm"
-                      />
+                      <LogoPlate src={piece.logoUrl} alt="" size="xs" border />
                       <span className="grow truncate text-sm">
                         {piece.displayName}
                       </span>
@@ -929,12 +850,7 @@ const PiecePickerButton = ({
                     onSelect={() => togglePiece(piece.name)}
                     className="flex items-center gap-2"
                   >
-                    <PieceIcon
-                      logoUrl={piece.logoUrl}
-                      displayName={piece.displayName}
-                      showTooltip={false}
-                      size="sm"
-                    />
+                    <LogoPlate src={piece.logoUrl} alt="" size="xs" border />
                     <span className="grow truncate">{piece.displayName}</span>
                     {isSelected && <Check className="size-4 text-accent-11" />}
                   </CommandItem>
@@ -947,3 +863,5 @@ const PiecePickerButton = ({
     </Popover>
   );
 };
+
+const FLASH_MS = 1400;

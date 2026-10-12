@@ -45,6 +45,7 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const PiecesListTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
+  piecesHooks.usePrefetchPieces({});
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
