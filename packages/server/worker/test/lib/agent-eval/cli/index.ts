@@ -3,17 +3,23 @@ import { Command, InvalidArgumentError } from 'commander'
 import { agentEvalRunner } from '../core/runner'
 import { evalExportCalibration } from './export-calibration'
 import { evalReview } from './review'
-import { evalRun } from './run'
+import { evalProgressView } from './progress-view'
+import { evalRun, RunParams } from './run'
 import { evalStore, RunResult } from './store'
 
-async function runFresh({ candidatePath, baselineModelId, candidateModelId, only, limit }: RunOptions): Promise<RunResult> {
+async function runFresh(options: RunOptions): Promise<RunResult> {
     if (!agentEvalRunner.hasProviderKey()) {
         console.error(chalk.red('  No OpenRouter key found. Set AP_OPENROUTER_PROVISION_KEY or OPENROUTER_API_KEY.'))
         console.error(chalk.dim('  (npm run agent-evals loads these from .env.dev automatically.)'))
         process.exit(2)
     }
     console.log(chalk.dim('  running live evals (baseline vs candidate)…'))
-    return evalRun.run({ candidatePath, baselineModelId, candidateModelId, only, limit, onProgress: (message) => console.log(chalk.dim(`    ${message}`)) })
+    const view = evalProgressView.create()
+    const { run, remaining, spentUsd } = await evalRun.run({ ...options, onProgress: view.update }).finally(view.stop)
+    if (remaining > 0) {
+        console.log(chalk.yellow(`  stopped at the $${options.maxCostUsd} cap ($${spentUsd.toFixed(2)} spent) after ${run.comparisons.length} of ${run.comparisons.length + remaining} fixtures, rerun with a higher --max-cost and without --fresh to resume`))
+    }
+    return run
 }
 
 async function reviewLoop({ run, options }: { run: RunResult, options: RunOptions }): Promise<never> {
@@ -21,7 +27,7 @@ async function reviewLoop({ run, options }: { run: RunResult, options: RunOption
     for (;;) {
         const outcome = await evalReview.review({ run: current })
         if (outcome.kind === 'rerun') {
-            current = await runFresh(options)
+            current = await runFresh({ ...options, fresh: true })
             continue
         }
         process.exit(outcome.code)
@@ -32,6 +38,14 @@ function parsePositiveInt(value: string): number {
     const parsed = Number(value)
     if (!Number.isInteger(parsed) || parsed < 1) {
         throw new InvalidArgumentError('must be a whole number of at least 1')
+    }
+    return parsed
+}
+
+function parsePositiveNumber(value: string): number {
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new InvalidArgumentError('must be a number above 0')
     }
     return parsed
 }
@@ -48,16 +62,18 @@ const program = new Command()
 program
     .name('agent-eval')
     .description('Interactive chat-prompt eval — baseline vs candidate, review, and decide')
-    .option('--fresh', 'evaluate live instead of reusing the cached run')
+    .option('--fresh', 'evaluate live from scratch, ignoring the cached run and any stopped run')
     .option('--candidate <path>', 'A/B an explicit candidate system-prompt file (default: working tree vs HEAD)')
     .option('--baseline-model <id>', 'OpenRouter model for the baseline arm (default: the fixture model)')
     .option('--candidate-model <id>', 'OpenRouter model for the candidate arm (default: the fixture model)')
     .option('--limit <n>', 'run only the first n fixtures', parsePositiveInt)
     .option('--only <ids>', 'run only these fixtures (comma-separated ids)', parseIdList)
-    .action(async (options: { fresh?: boolean, candidate?: string, baselineModel?: string, candidateModel?: string, limit?: number, only?: string[] }) => {
-        const runOptions: RunOptions = { candidatePath: options.candidate, baselineModelId: options.baselineModel, candidateModelId: options.candidateModel, only: options.only, limit: options.limit }
-        const wantsLiveRun = [options.baselineModel, options.candidateModel, options.limit, options.only].some((option) => option !== undefined)
-        const cached = options.fresh || wantsLiveRun ? null : evalStore.readRun()
+    .option('--concurrency <n>', 'how many fixtures to evaluate at once (default: 4)', parsePositiveInt)
+    .option('--max-cost <usd>', 'stop starting new fixtures once this many dollars are spent', parsePositiveNumber)
+    .action(async (options: { fresh?: boolean, candidate?: string, baselineModel?: string, candidateModel?: string, limit?: number, only?: string[], concurrency?: number, maxCost?: number }) => {
+        const runOptions: RunOptions = { candidatePath: options.candidate, baselineModelId: options.baselineModel, candidateModelId: options.candidateModel, only: options.only, limit: options.limit, fresh: options.fresh, concurrency: options.concurrency, maxCostUsd: options.maxCost }
+        const wantsLiveRun = [options.baselineModel, options.candidateModel, options.limit, options.only, options.concurrency, options.maxCost].some((option) => option !== undefined)
+        const cached = options.fresh || wantsLiveRun || evalStore.readPartial() !== null ? null : evalStore.readRun()
         if (cached) {
             console.log(chalk.dim(`  reviewing cached run from ${cached.at} — pass --fresh to re-run live`))
         }
@@ -73,9 +89,14 @@ program
         console.log(`  wrote ${written} case(s), skipped ${skipped} already present — set "humanLabel" to "pass" or "fail" in each`)
     })
 
+process.once('SIGINT', () => {
+    console.log(chalk.dim('\n  interrupted, results so far are saved, rerun without --fresh to resume'))
+    agentEvalRunner.cleanupAuth().finally(() => process.exit(130)).catch(() => undefined)
+})
+
 program.parseAsync(process.argv).catch((error) => {
     console.error(chalk.red(`  agent-eval failed: ${error instanceof Error ? error.message : String(error)}`))
     process.exit(2)
 })
 
-type RunOptions = { candidatePath?: string, baselineModelId?: string, candidateModelId?: string, only?: string[], limit?: number }
+type RunOptions = Omit<RunParams, 'onProgress'>
