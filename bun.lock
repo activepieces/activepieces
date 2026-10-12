@@ -2509,17 +2509,19 @@
     },
     "packages/pieces/community/deepgram": {
       "name": "@activepieces/piece-deepgram",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "mime-types": "2.1.35",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/mime-types": "2.1.1",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/deepl": {
