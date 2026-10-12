@@ -63,16 +63,16 @@ describe('billingUtils.formatCredits', () => {
     );
   });
 
-  it('rounds a fractional credit count to a whole credit', () => {
+  it('rounds a fractional credit count down to a whole credit', () => {
     expect(billingUtils.formatCredits(838.822)).toBe(
-      formatUtils.formatNumber(839),
+      formatUtils.formatNumber(838),
     );
-    expect(billingUtils.formatCredits(0.4)).toBe(formatUtils.formatNumber(0));
+    expect(billingUtils.formatCredits(0.9)).toBe(formatUtils.formatNumber(0));
   });
 
-  it('rounds before choosing compact notation', () => {
+  it('rounds down before choosing compact notation', () => {
     expect(billingUtils.formatCredits(999_999.6)).toBe(
-      formatUtils.formatNumberCompact(1_000_000),
+      formatUtils.formatNumber(999_999),
     );
   });
 });

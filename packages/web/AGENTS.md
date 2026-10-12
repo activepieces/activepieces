@@ -143,6 +143,23 @@ This project uses **ICU MessageFormat** via `i18next-icu` (configured in `src/i1
   ```json
   "membersAddedCount": "{count, plural, =1 {1 member joined {projectName}} other {# members joined {projectName}}}"
   ```
+- **Every translated string must appear in the code as `t('literal text')`.** The key extractor (`i18next-parser.config.js`, `keepRemoved: false`) only finds keys written as `t('...')` with a string literal, and deletes every other key from `translation.json`. A string kept in a constant or config array and rendered later as `t(item.label)` is invisible to it, so its key disappears on the next extraction.
+- **Static copy in arrays or config objects goes in a function that calls `t('...')`, called inside the component's render.** Never call `t()` at module scope: that runs at import time, before the language has loaded, so the text stays in English. Render the returned strings as they are, without a second `t()`.
+  ```tsx
+  // ✅ Correct — the extractor finds each key, and t() runs during render
+  function planCatalog() {
+    return [{ label: t('Unlimited flows'), tooltip: t('Build as many automations as you want.') }];
+  }
+  function PlanCard() {
+    return planCatalog().map((feature) => <span key={feature.label}>{feature.label}</span>);
+  }
+
+  // ❌ Wrong — the extractor never sees 'Unlimited flows', so the key is deleted
+  const PLAN_CATALOG = [{ label: 'Unlimited flows' }];
+  function PlanCard() {
+    return PLAN_CATALOG.map((feature) => <span key={feature.label}>{t(feature.label)}</span>);
+  }
+  ```
 
 ## Guidelines
 

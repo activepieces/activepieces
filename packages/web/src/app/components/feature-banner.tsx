@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useManagePlanDialogStore } from '@/features/billing';
+import { billingDialogHooks } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -12,7 +12,8 @@ export function FeatureBanner({
   documentationUrl,
   className,
 }: FeatureBannerProps) {
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const { openDialog: openManagePlanDialog } =
+    billingDialogHooks.useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;

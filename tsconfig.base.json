@@ -223,6 +223,9 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
+      "@activepieces/piece-google-translate": [
+        "packages/pieces/community/google-translate/src/index.ts"
+      ],
       "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/rounded-studio/src/index.ts"
       ],

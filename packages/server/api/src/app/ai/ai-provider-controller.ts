@@ -1,11 +1,13 @@
 import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
 import { modelTierCatalog } from '@activepieces/server-utils'
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AIProviderModel, CreateAIProviderRequest, ModelOptions, ModelOptionsSurface, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { aiModelOptionsService } from './ai-model-options-service'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
@@ -28,6 +30,14 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         flow: modelTierCatalog.current('flow'),
         chat: modelTierCatalog.current('chat'),
     }))
+    app.get('/model-options', ListModelOptions, async (request) => {
+        return aiModelOptionsService(app.log).list({
+            platformId: request.principal.platform.id,
+            projectId: request.projectId,
+            surface: request.query.surface,
+            tierId: request.query.tierId,
+        })
+    })
     app.get('/:provider/models', ListModels, async (request) => {
         return aiProviderService(app.log).listModels({
             platformId: request.principal.platform.id,
@@ -112,6 +122,22 @@ const ListModelTiers = {
     },
 }
 
+const ListModelOptions = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, { type: ProjectResourceType.QUERY }),
+    },
+    schema: {
+        querystring: z.object({
+            projectId: z.string().optional(),
+            surface: ModelOptionsSurface,
+            tierId: z.string().optional(),
+        }),
+        response: {
+            [StatusCodes.OK]: ModelOptions,
+        },
+    },
+}
+
 const ListModels = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, { type: ProjectResourceType.QUERY }),
@@ -134,6 +160,7 @@ const CreateAIProvider = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
+    preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
         body: CreateAIProviderRequest,
     },

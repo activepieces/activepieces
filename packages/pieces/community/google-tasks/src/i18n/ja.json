@@ -88,5 +88,11 @@
   "Form Data": "フォームデータ",
   "Raw": "Raw",
   "New Task": "新しいタスク",
-  "Triggers when a task is created": "タスクが作成されたときにトリガーします"
+  "Triggers when a task is created": "タスクが作成されたときにトリガーします",
+  "Task List": "タスクリスト",
+  "Google Tasks keeps the date only; the time is ignored.": "Google Tasks は日付のみを保存し、時刻は無視されます。",
+  "Add the task already checked off.": "タスクを完了済みとして追加します。",
+  "Triggers when a task is added or edited in a list.": "リスト内のタスクが追加または編集されたときにトリガーします。",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "タスクを編集するとこのトリガーが再度実行されるため、同じタスクが複数回届くことがあります。"
 }

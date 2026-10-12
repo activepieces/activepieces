@@ -82,10 +82,19 @@ export const aiProviderMutations = {
       onSuccess,
     });
   },
-  useDeleteAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+  useDeleteAiProvider: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError?: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => void;
+  }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.delete(providerId),
       onSuccess,
+      onError,
     });
   },
   useUpdateAiProvider: ({

@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { mauticCommon, searchEntity } from '../common';
 import { mauticAuth } from '../auth';
+import { mauticApi } from '../common/api';
+import { mauticProps } from '../common/props';
+import { searchMauticContactOutputSchema } from '../output-schemas';
 
-export const searchContact = createAction({
+export const searchContactAction = createAction({
   auth: mauticAuth,
-  description: 'Search for a contact in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
-  audience: 'both',
+  description: 'Search for a contact in Mautic CRM',
+  audience: 'human',
   aiMetadata: {
     description:
       'Look up a contact in Mautic by matching the supplied field values (each provided field becomes an exact-equality filter), returning the first matching contact. Use to find a contact or resolve its id before updating, or to verify whether someone already exists before creating one. Read-only and idempotent.',
@@ -13,25 +15,13 @@ export const searchContact = createAction({
   },
   displayName: 'Search Contact',
   name: 'search_mautic_contact',
+  outputSchema: searchMauticContactOutputSchema,
   classification: 'SEARCH',
   props: {
-    fields: mauticCommon.contactFields,
+    fields: mauticProps.contactFields({ required: true }),
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth.props;
-    const url =
-      (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/contacts';
-    const fields = context.propsValue.fields;
-    const keys = Object.keys(fields);
-    let count = 0;
-    let searchParams = '?';
-    for (const key of keys) {
-      if (fields[key]) {
-        searchParams += `where[${count}][col]=${key}&where[${count}][expr]=eq&where[${count}][val]=${fields[key]}&`;
-        ++count;
-      }
-    }
-    const response = await searchEntity(url, searchParams, username, password);
-    return Object.values(response.body.contacts)[0];
+    const response = await mauticApi.searchContacts({ auth: context.auth, fields: context.propsValue.fields });
+    return Object.values(response.contacts)[0];
   },
 });
