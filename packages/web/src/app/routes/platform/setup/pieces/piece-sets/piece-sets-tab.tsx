@@ -44,6 +44,7 @@ import {
   pieceSetMutations,
   pieceSetQueries,
   pieceSetTerms,
+  useShowEmbedKey,
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { projectHooks } from '@/features/projects';
@@ -55,7 +56,6 @@ import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
 import { pieceSetSamples } from './piece-set-samples';
 import { pieceSetSummary } from './piece-set-summary';
-import { useShowEmbedKey } from './use-show-embed-key';
 
 export function PieceSetsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
