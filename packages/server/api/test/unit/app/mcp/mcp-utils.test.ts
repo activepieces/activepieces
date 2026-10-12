@@ -608,6 +608,16 @@ describe('mcpUtils.syncContainerExecutionTypes', () => {
         expect(settings.filter_value).toEqual({ type: PropertyExecutionType.DYNAMIC })
     })
 
+    it('syncs a field inside a dynamic field named like an inherited object key', () => {
+        const rowDataSchema = { constructor: { type: PropertyType.ARRAY, displayName: 'Constructor', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { constructor: '{{trigger.body.tags}}' } },
+            propertySettings: { row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema } },
+        })
+        expect(settings.constructor).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
     it('skips a dynamic field whose schema has not been resolved', () => {
         const settings = mcpUtils.syncContainerExecutionTypes({
             props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
