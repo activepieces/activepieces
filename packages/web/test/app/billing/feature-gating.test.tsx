@@ -49,12 +49,16 @@ vi.mock('@/hooks/flags-hooks', () => ({
     useFlags: () => ({ data: {} }),
   },
 }));
-vi.mock('@/features/billing/stores/manage-plan-dialog-state', () => ({
-  useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
+  billingDialogHooks: {
+    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  },
 }));
 vi.mock('@/features/billing', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  billingDialogHooks: {
+    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  },
 }));
 vi.mock('@/features/connections', () => ({
   globalConnectionsQueries: {

@@ -18,10 +18,10 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
 import { useCancelSubscriptionGuard } from '../hooks/use-cancel-subscription-guard';
 import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
-import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog-state';
 
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
 import { KeepPlanDialog } from './keep-plan-dialog';
@@ -63,7 +63,8 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     platform.id,
     enabled,
   );
-  const { openDialog: openConfirmDialog } = useConfirmPurchaseDialogStore();
+  const { openDialog: openConfirmDialog } =
+    billingDialogHooks.useConfirmPurchaseDialogStore();
 
   const currentPlanId = subscription?.plan.plan ?? platform.plan.plan;
   const hasScheduledChange = !isNil(subscription?.cancelAt);

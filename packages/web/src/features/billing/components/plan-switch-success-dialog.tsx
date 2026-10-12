@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { billingQueries } from '../hooks/billing-hooks';
-import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
 
 import {
   planSelectorUtils,
@@ -22,7 +22,8 @@ function resolveEntry(planId: string): PlanCatalogEntry | undefined {
 }
 
 export function PlanSwitchSuccessDialog() {
-  const { payload: planId, closeDialog } = usePlanSwitchSuccessDialogStore();
+  const { planId, closeDialog } =
+    billingDialogHooks.usePlanSwitchSuccessDialogStore();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: plans } = billingQueries.useListPlans(
     platform.id,
