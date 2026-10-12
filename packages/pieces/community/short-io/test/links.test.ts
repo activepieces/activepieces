@@ -94,3 +94,17 @@ describe('owner photo URL', () => {
     expect(result).toMatchObject({ data: { User: { id: 1, email: 'a@b.c' } } });
   });
 });
+
+describe('Greptile follow-ups', () => {
+  test('old Domain Statistics ignores leftover dates when a preset period is set', async () => {
+    const seen = stubFetch(replies([{ body: { clicks: 1, links: 1 } }]));
+    await run({ action: domainStatisticsAction, props: { domainId: DOMAIN_PROP, period: 'last7', startDate: '2026-01-01', endDate: '2026-01-02' } });
+    expect(seen[0].url.searchParams.get('period')).toBe('last7');
+    expect(seen[0].url.searchParams.get('startDate')).toBeNull();
+  });
+  test('update-short-link sends tags: [] to clear tags', async () => {
+    const seen = stubFetch(replies([{ body: link() }]));
+    await run({ action: updateShortLinkAction, props: { domain: DOMAIN_PROP, linkId: 'link_a_b', tags: [] } });
+    expect(seen[0].body).toEqual({ tags: [] });
+  });
+});

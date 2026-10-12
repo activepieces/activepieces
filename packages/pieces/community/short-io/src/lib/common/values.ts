@@ -63,10 +63,15 @@ function validateTimezone(value: string | undefined): string | undefined {
   return tz;
 }
 
-function statsRange({ period, startDate, endDate }: { period: unknown; startDate?: string; endDate?: string }): Record<string, string> {
+function statsRange({ period, startDate, endDate, ignoreDatesForPresets = false }: {
+  period: unknown;
+  startDate?: string;
+  endDate?: string;
+  ignoreDatesForPresets?: boolean;
+}): Record<string, string> {
   const normalized = normalizePeriod(period);
   if (normalized !== 'custom') {
-    if (startDate || endDate) {
+    if (!ignoreDatesForPresets && (startDate || endDate)) {
       throw new Error('Start and end dates are only used when the period is "custom".');
     }
     return { period: normalized };

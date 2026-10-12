@@ -15,12 +15,13 @@ function chartInterval(value: unknown): string | undefined {
   return String(value);
 }
 
-async function domainStatistics({ auth, domainId, period, startDate, endDate, tz, clicksChartInterval }: StatsInput & {
+async function domainStatistics({ auth, domainId, period, startDate, endDate, tz, clicksChartInterval, ignoreDatesForPresets }: StatsInput & {
+  ignoreDatesForPresets?: boolean;
   domainId: number;
   clicksChartInterval?: unknown;
 }): Promise<Record<string, unknown>> {
   const query = {
-    ...shortIoValues.statsRange({ period, startDate, endDate }),
+    ...shortIoValues.statsRange({ period, startDate, endDate, ignoreDatesForPresets }),
     tz: shortIoValues.validateTimezone(tz),
     clicksChartInterval: chartInterval(clicksChartInterval),
   };

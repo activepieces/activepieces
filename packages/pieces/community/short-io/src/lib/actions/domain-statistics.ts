@@ -83,6 +83,7 @@ export const domainStatisticsAction = createAction({
       endDate: propsValue.endDate,
       tz: propsValue.tz,
       clicksChartInterval: propsValue.clicksChartInterval,
+      ignoreDatesForPresets: true,
     });
     const clicks = Number(stats['clicks'] ?? 0);
     const links = Number(stats['links'] ?? 0);

@@ -7,13 +7,16 @@ import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown } from '../common/props';
 
 const LEGACY_IDS_KEY = 'shortio-last-link-ids';
-const WATERMARK_KEY = 'shortio-link-watermark-v2';
+const STATE_KEY = 'shortio-new-links-v3';
 const PAGE_SIZE = 150;
 const MAX_PAGES = 10;
+const DEEP_SCAN_PAGES = 20;
+const SEEN_LIMIT = 5000;
+const UPDATED_AT_MARGIN_MS = 5 * 60 * 1000;
 const TEST_SAMPLE_SIZE = 5;
 
-function createdAtMs(link: Record<string, unknown>): number {
-  const value = link['createdAt'];
+function timeMs({ link, key }: { link: Record<string, unknown>; key: string }): number {
+  const value = link[key];
   if (typeof value === 'number') {
     return value;
   }
@@ -67,71 +70,89 @@ async function newestLinks({ auth, domain, limit }: { auth: ShortIoAuthValue; do
   return page.links;
 }
 
-function watermarkOf({ links, fallback }: { links: Record<string, unknown>[]; fallback: number }): Watermark {
-  const times = links.map(createdAtMs).filter((time) => Number.isFinite(time));
-  if (times.length === 0) {
-    return { createdAt: fallback, ids: [] };
-  }
-  const newest = times.reduce((max, time) => (time > max ? time : max), times[0]);
-  return { createdAt: newest, ids: links.filter((link) => createdAtMs(link) === newest).map(linkId) };
-}
-
-async function baseline({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<void> {
-  const links = await newestLinks({ auth, domain, limit: 1 });
-  await store.put<Watermark>(WATERMARK_KEY, watermarkOf({ links, fallback: Date.now() }));
-}
-
-async function pollNewLinks({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<Record<string, unknown>[]> {
-  const watermark = await store.get<Watermark>(WATERMARK_KEY);
-  if (!watermark) {
-    return migrateFromLegacy({ auth, domain, store });
-  }
-  const seen = new Set(watermark.ids);
-  const collected: Record<string, unknown>[] = [];
-  let pageToken: string | undefined;
-  for (let page = 0; page < MAX_PAGES; page++) {
+async function scan({ auth, domain, seen, startToken, maxPages, stopWhenSeen, accept }: {
+  auth: ShortIoAuthValue;
+  domain: ShortIoDomainRef;
+  seen: Set<string>;
+  startToken: string | undefined;
+  maxPages: number;
+  stopWhenSeen: boolean;
+  accept: (link: Record<string, unknown>) => boolean;
+}): Promise<ScanResult> {
+  const found: Record<string, unknown>[] = [];
+  let pageToken = startToken;
+  let count: number | null = null;
+  for (let page = 0; page < maxPages; page++) {
     const result = await shortIoLinkQueries.listPage({
       auth,
       domainId: domain.id,
-      query: {
-        limit: PAGE_SIZE,
-        dateSortOrder: 'asc',
-        afterDate: new Date(watermark.createdAt - 1).toISOString(),
-        pageToken,
-      },
+      query: { limit: PAGE_SIZE, dateSortOrder: 'desc', pageToken },
     });
-    collected.push(...result.links);
+    count = count ?? result.count;
+    const fresh = result.links.filter((link) => !seen.has(linkId(link)) && accept(link));
+    found.push(...fresh);
     pageToken = result.nextPageToken ?? undefined;
-    if (!pageToken) {
-      break;
+    if (!pageToken || (stopWhenSeen && fresh.length === 0)) {
+      return { found, nextToken: pageToken ?? null, exhausted: pageToken === undefined, stoppedOnSeenPage: fresh.length === 0, count };
     }
   }
-  const truncated = pageToken !== undefined;
-  const fresh = collected
-    .filter((link) => {
-      const time = createdAtMs(link);
-      return Number.isFinite(time) && (time > watermark.createdAt || (time === watermark.createdAt && !seen.has(linkId(link))));
-    })
-    .sort((a, b) => createdAtMs(a) - createdAtMs(b));
-  if (fresh.length === 0) {
-    return [];
+  return { found, nextToken: pageToken ?? null, exhausted: false, stoppedOnSeenPage: false, count };
+}
+
+async function baseline({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<PollState> {
+  const result = await scan({ auth, domain, seen: new Set(), startToken: undefined, maxPages: MAX_PAGES, stopWhenSeen: false, accept: () => true });
+  const state: PollState = { seen: result.found.map(linkId).slice(0, SEEN_LIMIT), lastCount: result.count, lastPollAt: Date.now(), resumeToken: null };
+  await store.put<PollState>(STATE_KEY, state);
+  return state;
+}
+
+async function pollNewLinks({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<Record<string, unknown>[]> {
+  const state = await store.get<PollState>(STATE_KEY);
+  if (!state) {
+    return migrateFromLegacy({ auth, domain, store });
   }
-  const next = watermarkOf({ links: fresh, fallback: watermark.createdAt });
-  const ids = next.createdAt === watermark.createdAt ? [...watermark.ids, ...next.ids] : next.ids;
-  await store.put<Watermark>(WATERMARK_KEY, { createdAt: next.createdAt, ids, ...(truncated ? { truncatedAt: Date.now() } : {}) });
-  return fresh;
+  const now = Date.now();
+  const seen = new Set(state.seen);
+  const top = await scan({ auth, domain, seen, startToken: undefined, maxPages: MAX_PAGES, stopWhenSeen: true, accept: () => true });
+  top.found.forEach((link) => seen.add(linkId(link)));
+  const resumed = state.resumeToken
+    ? await scan({ auth, domain, seen, startToken: state.resumeToken, maxPages: MAX_PAGES, stopWhenSeen: false, accept: () => true })
+    : null;
+  resumed?.found.forEach((link) => seen.add(linkId(link)));
+  const resumeToken = !top.stoppedOnSeenPage && !top.exhausted ? top.nextToken : resumed && !resumed.exhausted ? resumed.nextToken : null;
+  const foundSoFar = top.found.length + (resumed?.found.length ?? 0);
+  const growth = top.count !== null && state.lastCount !== null ? top.count - state.lastCount : 0;
+  const deep =
+    growth > foundSoFar && resumeToken === null && top.nextToken
+      ? await scan({
+          auth,
+          domain,
+          seen,
+          startToken: top.nextToken,
+          maxPages: DEEP_SCAN_PAGES,
+          stopWhenSeen: false,
+          accept: (link) => timeMs({ link, key: 'updatedAt' }) >= state.lastPollAt - UPDATED_AT_MARGIN_MS,
+        })
+      : null;
+  const emitted = [...top.found, ...(resumed?.found ?? []), ...(deep?.found ?? [])];
+  const unique = [...new Map(emitted.map((link) => [linkId(link), link])).values()].sort(
+    (a, b) => timeMs({ link: a, key: 'updatedAt' }) - timeMs({ link: b, key: 'updatedAt' }),
+  );
+  const nextSeen = [...unique.map(linkId).reverse(), ...state.seen.filter((id) => !unique.some((link) => linkId(link) === id))].slice(0, SEEN_LIMIT);
+  await store.put<PollState>(STATE_KEY, { seen: nextSeen, lastCount: top.count ?? state.lastCount, lastPollAt: now, resumeToken });
+  return unique;
 }
 
 async function migrateFromLegacy({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<Record<string, unknown>[]> {
   const legacyIds = await store.get<string[]>(LEGACY_IDS_KEY);
   const links = await newestLinks({ auth, domain, limit: PAGE_SIZE });
-  await store.put<Watermark>(WATERMARK_KEY, watermarkOf({ links, fallback: Date.now() }));
+  await baseline({ auth, domain, store });
   if (!legacyIds) {
     return [];
   }
   await store.delete(LEGACY_IDS_KEY);
   const known = new Set(legacyIds);
-  return links.filter((link) => !known.has(linkId(link))).sort((a, b) => createdAtMs(a) - createdAtMs(b));
+  return links.filter((link) => !known.has(linkId(link))).reverse();
 }
 
 export const newLinkCreatedTrigger = createTrigger({
@@ -175,7 +196,7 @@ export const newLinkCreatedTrigger = createTrigger({
     await baseline({ auth: context.auth, domain, store: context.store });
   },
   async onDisable(context) {
-    await context.store.delete(WATERMARK_KEY);
+    await context.store.delete(STATE_KEY);
     await context.store.delete(LEGACY_IDS_KEY);
   },
   async run(context) {
@@ -225,4 +246,6 @@ export const newLinkCreatedTrigger = createTrigger({
   },
 });
 
-type Watermark = { createdAt: number; ids: string[]; truncatedAt?: number };
+type PollState = { seen: string[]; lastCount: number | null; lastPollAt: number; resumeToken: string | null };
+
+type ScanResult = { found: Record<string, unknown>[]; nextToken: string | null; exhausted: boolean; stoppedOnSeenPage: boolean; count: number | null };
