@@ -23,7 +23,8 @@ function makeLink({ id, createdAt, updatedAt }: { id: string; createdAt: string;
 
 function fakeShortIo(db: Record<string, unknown>[]): { requests: () => number } {
   const seen = stubFetch((request) => {
-    const sorted = [...db].sort((a, b) => Date.parse(String(b['createdAt'])) - Date.parse(String(a['createdAt'])));
+    const direction = request.url.searchParams.get('dateSortOrder') === 'asc' ? -1 : 1;
+    const sorted = [...db].sort((a, b) => direction * (Date.parse(String(b['createdAt'])) - Date.parse(String(a['createdAt']))));
     const offset = Number(request.url.searchParams.get('pageToken') ?? '0');
     const limit = Number(request.url.searchParams.get('limit') ?? '150');
     const page = sorted.slice(offset, offset + limit);
@@ -131,6 +132,18 @@ describe('new_link_created', () => {
     const store = memoryStore();
     await trigger.onEnable(context(store));
     db[1900] = { ...db[1900], updatedAt: new Date().toISOString() };
+    db.push(makeLink({ id: 'link_8yXK_9new1', createdAt: new Date().toISOString() }));
+    db.push(makeLink({ id: 'link_8yXK_9new2', createdAt: new Date().toISOString() }));
+    db.push(makeLink({ id: 'link_8yXK_9backdated', createdAt: '2020-01-01T00:00:00.000Z', updatedAt: new Date().toISOString() }));
+    expect(ids(await trigger.run(context(store))).sort()).toEqual(['link_8yXK_9backdated', 'link_8yXK_9new1', 'link_8yXK_9new2']);
+  });
+
+  test('an existing back-dated link at the oldest end does not fire when edited later', async () => {
+    const db = [...oldLinks(2000), makeLink({ id: 'link_8yXK_5existingbackdated', createdAt: '2019-01-01T00:00:00.000Z' })];
+    fakeShortIo(db);
+    const store = memoryStore();
+    await trigger.onEnable(context(store));
+    db[2000] = { ...db[2000], updatedAt: new Date().toISOString() };
     db.push(makeLink({ id: 'link_8yXK_9new1', createdAt: new Date().toISOString() }));
     db.push(makeLink({ id: 'link_8yXK_9new2', createdAt: new Date().toISOString() }));
     db.push(makeLink({ id: 'link_8yXK_9backdated', createdAt: '2020-01-01T00:00:00.000Z', updatedAt: new Date().toISOString() }));

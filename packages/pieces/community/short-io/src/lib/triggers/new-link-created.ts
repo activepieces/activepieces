@@ -90,8 +90,9 @@ async function newestLinks({ auth, domain, limit }: { auth: ShortIoAuthValue; do
   return page.links;
 }
 
-async function scan({ auth, domain, seen, startToken, maxPages, stopWhenSeen, accept }: {
+async function scan({ auth, domain, seen, startToken, maxPages, stopWhenSeen, accept, order = 'desc' }: {
   auth: ShortIoAuthValue;
+  order?: 'asc' | 'desc';
   domain: ShortIoDomainRef;
   seen: Set<string>;
   startToken: string | undefined;
@@ -107,7 +108,7 @@ async function scan({ auth, domain, seen, startToken, maxPages, stopWhenSeen, ac
     const result = await shortIoLinkQueries.listPage({
       auth,
       domainId: domain.id,
-      query: { limit: PAGE_SIZE, dateSortOrder: 'desc', pageToken },
+      query: { limit: PAGE_SIZE, dateSortOrder: order, pageToken },
     });
     count = count ?? result.count;
     pageIds.push(...result.links.map(linkId));
@@ -123,8 +124,11 @@ async function scan({ auth, domain, seen, startToken, maxPages, stopWhenSeen, ac
 
 async function baseline({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<PollState> {
   const result = await scan({ auth, domain, seen: new Set(), startToken: undefined, maxPages: MAX_PAGES, stopWhenSeen: false, accept: () => true });
+  const oldest = result.exhausted
+    ? null
+    : await scan({ auth, domain, seen: new Set(result.pageIds), startToken: undefined, maxPages: MAX_PAGES, stopWhenSeen: false, accept: () => true, order: 'asc' });
   const now = Date.now();
-  const ids = result.found.map(linkId);
+  const ids = [...result.found, ...(oldest?.found ?? [])].map(linkId);
   const state: PollState = { seen: ids.slice(0, SEEN_LIMIT), lastCount: result.count, lastPollAt: now, resumeToken: null, baselineAt: now, baselineMaxKey: maxOrderKey(ids) };
   await store.put<PollState>(STATE_KEY, state);
   return state;
