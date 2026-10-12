@@ -112,7 +112,7 @@ export async function lsRequest({
       redactBodyInErrors: body !== undefined,
     });
     if (response.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
-      await sleep(retryDelayMs({ retryAfter: headerValue({ headers: response.headers, name: 'retry-after' }), attempt }));
+      await sleep(RATE_LIMIT_WAITS_MS[attempt] ?? MAX_RETRY_WAIT_MS);
       continue;
     }
     if (response.status >= 300 && response.status < 400) {
@@ -269,7 +269,8 @@ export async function lookupLicenseKeyId(licenseKey: string): Promise<string | u
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_RATE_LIMIT_RETRIES = 2;
-const MAX_RETRY_WAIT_MS = 10_000;
+const RATE_LIMIT_WAITS_MS = [20_000, 40_000];
+const MAX_RETRY_WAIT_MS = 40_000;
 
 let verifiedTlsAgent: Promise<unknown> | undefined;
 
@@ -313,21 +314,9 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function retryDelayMs({ retryAfter, attempt }: { retryAfter: string | undefined; attempt: number }): number {
-  const seconds = Number(retryAfter);
-  const ms = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 2000 * (attempt + 1);
-  return Math.min(ms, MAX_RETRY_WAIT_MS);
-}
-
 function failureOf(error: unknown): RawResponse | null {
   const status = readPath({ value: error, path: ['response', 'status'] });
-  return typeof status === 'number' ? { status, body: readPath({ value: error, path: ['response', 'body'] }), headers: {} } : null;
-}
-
-function headerValue({ headers, name }: { headers: Record<string, unknown>; name: string }): string | undefined {
-  const value = headers[name] ?? headers[name.toLowerCase()];
-  if (Array.isArray(value)) return typeof value[0] === 'string' ? value[0] : undefined;
-  return typeof value === 'string' ? value : undefined;
+  return typeof status === 'number' ? { status, body: readPath({ value: error, path: ['response', 'body'] }) } : null;
 }
 
 async function send(request: HttpRequest): Promise<RawResponse> {
@@ -337,8 +326,7 @@ async function send(request: HttpRequest): Promise<RawResponse> {
       { ...request, timeout: REQUEST_TIMEOUT_MS, followRedirects: false, responseType: 'json' },
       { dispatcher },
     );
-    const headers: Record<string, unknown> = { ...response.headers };
-    return { status: response.status, body: response.body, headers };
+    return { status: response.status, body: response.body };
   } catch (error) {
     const failure = failureOf(error);
     if (failure) return failure;
@@ -348,4 +336,4 @@ async function send(request: HttpRequest): Promise<RawResponse> {
 
 export type JsonApiResource = { id: string; type: string; attributes: Record<string, unknown> };
 
-type RawResponse = { status: number; body: unknown; headers: Record<string, unknown> };
+type RawResponse = { status: number; body: unknown };

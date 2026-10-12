@@ -219,6 +219,15 @@ describe('license keys', () => {
     expect(calls[0].headers['authorization']).toBeUndefined();
   });
 
+  it('get_license_key looks the key up when the ID field arrives blank', async () => {
+    const { calls } = installFetch({
+      'POST /licenses/validate': () => jsonResponse({ value: { valid: true, license_key: { id: 11 } } }),
+      'GET /license-keys/11': () => jsonResponse({ value: { data: resource({ type: 'license-keys', id: '11' }) } }),
+    });
+    expect(await runAction({ action: getLicenseKey, props: { licenseKeyId: '  ', licenseKey: 'ABC' } })).toEqual({ found: true, license_key: { id: '11' } });
+    expect(calls).toHaveLength(2);
+  });
+
   it('get_license_key returns found=false for an unknown key and needs exactly one input', async () => {
     installFetch({ 'POST /licenses/validate': () => jsonResponse({ value: { valid: false, error: 'license_key not found.', license_key: null }, status: 404 }) });
     expect(await runAction({ action: getLicenseKey, props: { licenseKey: 'NOPE' } })).toEqual({ found: false, license_key: null });

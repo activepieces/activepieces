@@ -35,8 +35,8 @@ export const getLicenseKey = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const byId = propsValue.licenseKeyId?.trim();
-    const byKey = propsValue.licenseKey?.trim();
+    const byId = propsValue.licenseKeyId?.trim() || undefined;
+    const byKey = propsValue.licenseKey?.trim() || undefined;
     if ((byId ? 1 : 0) + (byKey ? 1 : 0) !== 1) throw new Error('Provide exactly one of License Key ID or License Key.');
     const id = byId ?? ((byKey ? await lookupLicenseKeyId(byKey) : undefined));
     if (!id) return { found: false, license_key: null };

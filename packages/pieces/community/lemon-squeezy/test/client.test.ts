@@ -57,19 +57,25 @@ describe('lsRequest', () => {
     expect('body' in error).toBe(false);
   });
 
-  it('retries 429 at most twice, honouring Retry-After', async () => {
+  it('retries 429 at most twice, waiting 20 s then 40 s for the one-minute window', async () => {
     vi.useFakeTimers();
     let n = 0;
-    installFetch({ 'GET /stores': () => (++n < 3 ? jsonResponse({ value: {}, status: 429, headers: { 'retry-after': '1' } }) : jsonResponse({ value: { data: [] } })) });
+    installFetch({ 'GET /stores': () => (++n < 3 ? jsonResponse({ value: {}, status: 429 }) : jsonResponse({ value: { data: [] } })) });
     const promise = lsRequest({ apiKey: 'k', method: 'GET', path: '/stores' });
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(19_999);
+    expect(n).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(n).toBe(2);
+    await vi.advanceTimersByTimeAsync(39_999);
+    expect(n).toBe(2);
+    await vi.advanceTimersByTimeAsync(1);
     await expect(promise).resolves.toEqual({ status: 200, body: { data: [] } });
     expect(n).toBe(3);
   });
 
   it('fails after the retries are used up', async () => {
     vi.useFakeTimers();
-    installFetch({ 'GET /stores': () => jsonResponse({ value: {}, status: 429, headers: { 'retry-after': '1' } }) });
+    installFetch({ 'GET /stores': () => jsonResponse({ value: {}, status: 429 }) });
     const promise = lsRequest({ apiKey: 'k', method: 'GET', path: '/stores' }).catch((e) => e);
     await vi.runAllTimersAsync();
     expect((await promise).status).toBe(429);
