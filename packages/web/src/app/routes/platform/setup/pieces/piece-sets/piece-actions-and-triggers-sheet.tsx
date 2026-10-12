@@ -1,4 +1,9 @@
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
+import { unique } from '@activepieces/core-utils';
+import {
+  ActionBase,
+  ActionClassification,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -7,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { SaveBar } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Collapsible,
@@ -20,6 +26,7 @@ import {
   pieceSetChanges,
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
+import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { AdminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
@@ -130,6 +137,19 @@ function PieceActionsAndTriggersSheetContent({
       setTouchedHiddenTriggers(flip(localHiddenTriggers));
     }
   };
+
+  const actionNamesWith = (classifications: ActionClassification[]) =>
+    allActions
+      .filter(
+        (item) =>
+          item.data.classification !== undefined &&
+          classifications.includes(item.data.classification),
+      )
+      .map((item) => item.data.name);
+  const destructiveNames = actionNamesWith(['DESTRUCTIVE']);
+  const writeOrDestructiveNames = actionNamesWith(['WRITE', 'DESTRUCTIVE']);
+  const turnOff = (names: string[]) =>
+    setTouchedHiddenActions(unique([...localHiddenActions, ...names]));
 
   const toggleSelectAll = () => {
     const hideAll = checkedCount === totalCount;
@@ -271,6 +291,28 @@ function PieceActionsAndTriggersSheetContent({
             </span>
           </label>
         )}
+        {showCheckboxes && writeOrDestructiveNames.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {destructiveNames.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => turnOff(destructiveNames)}
+              >
+                {t('Turn off destructive actions')}
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => turnOff(writeOrDestructiveNames)}
+            >
+              {t('Turn off write and destructive actions')}
+            </Button>
+          </div>
+        )}
         {isLoading ? (
           <SkeletonRows count={6} className="h-12 rounded-lg" />
         ) : isError ? (
@@ -383,6 +425,16 @@ function ComponentSection({
                     </p>
                   )}
                 </div>
+                {item.data.classification !== undefined && (
+                  <Badge
+                    variant={CLASSIFICATION_VARIANT[item.data.classification]}
+                    className="shrink-0"
+                  >
+                    {ACTION_CLASSIFICATION_BADGES[
+                      item.data.classification
+                    ].label()}
+                  </Badge>
+                )}
                 {requiredNames.includes(item.data.name) && (
                   <Badge variant="outline" className="shrink-0">
                     {t('Required')}
@@ -439,4 +491,14 @@ type ComponentSectionProps = {
   requiredNames: string[];
   showCheckboxes: boolean;
   onToggle: (item: ComponentItem) => void;
+};
+
+const CLASSIFICATION_VARIANT: Record<
+  ActionClassification,
+  'outline' | 'warning' | 'destructive'
+> = {
+  READ: 'outline',
+  SEARCH: 'outline',
+  WRITE: 'warning',
+  DESTRUCTIVE: 'destructive',
 };
