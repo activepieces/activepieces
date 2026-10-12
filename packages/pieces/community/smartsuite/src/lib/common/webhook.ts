@@ -162,10 +162,12 @@ async function pullNewEvents({
 	}
 	const storedToken = (await store.get<string>(PAGE_TOKEN_KEY)) ?? '';
 	const storedNow = (await store.get<string[]>(SEEN_EVENTS_KEY)) ?? [];
+	const claimedElsewhere = new Set(storedNow);
+	const unclaimed = fresh.filter((event) => !claimedElsewhere.has(eventKey(event)));
 	const merged = Array.from(new Set([...storedNow, ...seen]));
 	await store.put(PAGE_TOKEN_KEY, laterToken({ stored: storedToken, mine: lastToken }));
 	await store.put(SEEN_EVENTS_KEY, merged.slice(-MAX_SEEN_EVENT_IDS));
-	return fresh;
+	return unclaimed;
 }
 
 async function requestContinuation({ webhookUrl, webhookId }: { webhookUrl: string; webhookId: string }): Promise<void> {

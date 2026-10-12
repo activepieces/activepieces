@@ -167,6 +167,18 @@ describe('webhook triggers', () => {
 		expect(store.snapshot()['seenEventIds']).toBeUndefined();
 		vi.useRealTimers();
 	});
+	test('events another run recorded while this run was fetching are not emitted again', async () => {
+		const store = memoryStore({ new_record: 'w1' });
+		stubFetch((request: SeenRequest) => {
+			if (request.path.includes('ListEvents')) {
+				void store.put('seenEventIds', ['e1']);
+				return { body: { events: [event({ id: 'e1', recordId: 'r1' }), event({ id: 'e2', recordId: 'r2' })] } };
+			}
+			return { body: TABLE };
+		});
+		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r2', Title: 'rec r2', _dedupe_key: 'smartsuite:e2' }]);
+		expect(store.snapshot()['seenEventIds']).toEqual(['e1', 'e2']);
+	});
 	test('an older run finishing last never moves the cursor back', async () => {
 		const store = memoryStore({ new_record: 'w1', pageToken: '100' });
 		stubFetch((request: SeenRequest) => {
