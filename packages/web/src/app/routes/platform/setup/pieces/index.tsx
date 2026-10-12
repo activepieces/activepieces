@@ -187,7 +187,7 @@ export const PiecesListTab = () => {
   return (
     <AdminPage fill>
       <AdminPageHeader
-        title={t('Pieces')}
+        title={t('Catalog')}
         description={t('Manage the pieces that are available to your users')}
         resources={adminPageResources.pieces}
       >

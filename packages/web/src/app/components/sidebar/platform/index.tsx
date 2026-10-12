@@ -2,7 +2,9 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
+import { BoxIcon } from '@/components/icons/box';
 import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
 import { FrameIcon } from '@/components/icons/frame';
@@ -59,6 +61,29 @@ export function PlatformNav() {
             },
           ],
         },
+      ],
+    },
+    {
+      label: t('Pieces'),
+      items: [
+        {
+          to: '/platform/pieces',
+          label: t('Catalog'),
+          icon: PuzzleIcon,
+          end: true,
+        },
+        {
+          to: '/platform/pieces/piece-sets',
+          label: pieceSetTerms.get().title,
+          icon: BoxIcon,
+          locked: !platform.plan.managePiecesEnabled,
+          tier: PLATFORM_FEATURES.pieces.tier,
+        },
+        {
+          to: '/platform/pieces/selector',
+          label: t('Piece selector'),
+          icon: CompassIcon,
+        },
         {
           to: '/platform/connections',
           label: t('Connections'),
@@ -69,20 +94,6 @@ export function PlatformNav() {
     {
       label: t('Catalogue'),
       items: [
-        {
-          to: '/platform/pieces',
-          label: t('Pieces'),
-          icon: PuzzleIcon,
-          subItems: [
-            { to: '/platform/pieces', label: t('Pieces'), end: true },
-            {
-              to: '/platform/pieces/piece-sets',
-              label: pieceSetTerms.get().title,
-              locked: !platform.plan.managePiecesEnabled,
-              tier: PLATFORM_FEATURES.pieces.tier,
-            },
-          ],
-        },
         {
           to: '/platform/templates',
           label: t('Templates'),
@@ -273,6 +284,7 @@ export function PlatformNav() {
                   locked={item.locked}
                   tier={item.tier}
                   subItems={item.subItems}
+                  end={item.end}
                 />
               ))}
             </SidebarMenu>
@@ -285,5 +297,5 @@ export function PlatformNav() {
 
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems'
+  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems' | 'end'
 >;
