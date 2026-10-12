@@ -246,6 +246,23 @@ describe('TiersTab states', () => {
     expect(screen.getByText('Claude Haiku')).toBeDefined();
   });
 
+  it('names each tier panel by the tier and keeps its tags out of the heading', () => {
+    state.tiers = {
+      ...state.tiers,
+      data: [
+        tier('expert', {
+          name: 'Expert',
+          isDefault: true,
+          isFast: true,
+          entries: [{ configId: 'k1', modelId: 'sonnet' }],
+        }),
+      ],
+    };
+    renderTab();
+    expect(screen.getByRole('region', { name: 'Expert' })).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Expert' })).toBeDefined();
+  });
+
   it('tells the admin builders only see tiers when specific models are hidden', () => {
     state.tiers = {
       ...state.tiers,

@@ -241,7 +241,7 @@ function KeyGroup({
         {isError && retryButton}
       </div>
       <CollapsibleContent>
-        <div className="flex flex-col pb-2 pl-16 pr-4">
+        <div className="@container flex flex-col pb-2 pl-16 pr-4">
           {isLoading &&
             [0, 1, 2].map((row) => (
               <div key={row} className="flex items-center gap-3 py-2.5">

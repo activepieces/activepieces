@@ -17,6 +17,7 @@ export function ProviderLogo({
         alt={info.name}
         size="md"
         border
+        tint
         className="rounded-lg"
         fallback={<Bot className="size-4 text-gray-11" />}
       />

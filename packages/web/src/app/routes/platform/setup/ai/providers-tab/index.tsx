@@ -293,6 +293,7 @@ export function ProvidersTab() {
           />
           <AvailableProviders
             providers={SUPPORTED_AI_PROVIDERS}
+            emphasizeRecommended
             onConnect={openConnect}
           />
         </>
@@ -321,7 +322,11 @@ export function ProvidersTab() {
             />
           ))}
           {!locked && available.length > 0 && (
-            <AvailableProviders providers={available} onConnect={openConnect} />
+            <AvailableProviders
+              providers={available}
+              emphasizeRecommended={false}
+              onConnect={openConnect}
+            />
           )}
         </>
       )}
@@ -485,26 +490,23 @@ function ConfigRow({
 
   return (
     <SettingsRow
-      role={locked ? undefined : 'button'}
-      tabIndex={locked ? undefined : 0}
-      onClick={locked ? undefined : onOpen}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) {
-          return;
-        }
-        if (!locked && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
       className={cn(
-        'group transition-colors',
-        !locked &&
-          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8',
+        'group relative py-3 transition-colors',
+        !locked && 'hover:bg-gray-4',
       )}
       title={
         <>
-          <span className="truncate">{config.name}</span>
+          {locked ? (
+            <span className="truncate">{config.name}</span>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpen}
+              className="truncate text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-gray-8"
+            >
+              {config.name}
+            </button>
+          )}
           {config.enabledForChat && (
             <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
               {t('Chat')}
@@ -514,47 +516,52 @@ function ConfigRow({
         </>
       }
       description={
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="block w-fit max-w-full truncate">
-              {modelsLabel}
-              <span aria-hidden> · </span>
-              {projectsLabel}
-              {tierCount > 0 && (
-                <>
-                  <span aria-hidden> · </span>
-                  {t('usedByTiersCount', { count: tierCount })}
-                </>
-              )}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={config.modelIds.length > 0 ? 0 : undefined}
+                className="relative z-10 min-w-0 truncate rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8"
+              >
+                {modelsLabel}
+                <span aria-hidden> · </span>
+                {projectsLabel}
+                {tierCount > 0 && (
+                  <>
+                    <span aria-hidden> · </span>
+                    {t('usedByTiersCount', { count: tierCount })}
+                  </>
+                )}
+              </span>
+            </TooltipTrigger>
+            {config.modelIds.length > 0 && (
+              <TooltipContent className="max-w-64">
+                {config.modelIds.join(', ')}
+              </TooltipContent>
+            )}
+          </Tooltip>
+          {config.projectScope !== 'all' && (
+            <span className="relative z-10 min-w-0">
+              <ProjectChips
+                projects={namedProjects}
+                excluded={config.projectScope === 'except'}
+                allowedCount={allowedProjectCount}
+              />
             </span>
-          </TooltipTrigger>
-          {config.modelIds.length > 0 && (
-            <TooltipContent className="max-w-64">
-              {config.modelIds.join(', ')}
-            </TooltipContent>
           )}
-        </Tooltip>
+        </span>
       }
     >
-      {config.projectScope !== 'all' && (
-        <ProjectChips
-          projects={namedProjects}
-          excluded={config.projectScope === 'except'}
-          allowedCount={allowedProjectCount}
-        />
-      )}
-      <div
-        className="flex shrink-0 items-center gap-1"
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className="relative z-10 flex shrink-0 items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon-sm"
               className={cn(
-                'text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100',
-                locked && 'opacity-100',
+                'text-gray-11 transition-opacity hover:bg-danger-3 hover:text-danger-11',
+                !locked &&
+                  '[@media(hover:hover)]:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100',
               )}
               onClick={() => setDeleteOpen(true)}
               {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
@@ -566,7 +573,10 @@ function ConfigRow({
           <TooltipContent>{t('Delete')}</TooltipContent>
         </Tooltip>
         {!locked && (
-          <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+          <ChevronRight
+            aria-hidden
+            className="pointer-events-none size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12"
+          />
         )}
         <ConfirmDialog
           open={deleteOpen}
@@ -673,9 +683,11 @@ function ChatProviderRow({
 
 function AvailableProviders({
   providers,
+  emphasizeRecommended,
   onConnect,
 }: {
   providers: AiProviderInfo[];
+  emphasizeRecommended: boolean;
   onConnect: (provider?: AIProviderName) => void;
 }) {
   const ordered = [
@@ -690,14 +702,22 @@ function AvailableProviders({
   return (
     <SettingsPanel
       flush
+      aria-label={t('Add a provider')}
       title={t('Add a provider')}
+      meta={
+        <span className="text-sm tabular-nums text-gray-11">
+          {providers.length}
+        </span>
+      }
       description={t('Bring your own API key to connect any of these.')}
     >
       {ordered.map((info) => {
-        const recommended = RECOMMENDED_PROVIDERS.includes(info.provider);
+        const recommended =
+          emphasizeRecommended && RECOMMENDED_PROVIDERS.includes(info.provider);
         return (
           <SettingsRow
             key={info.provider}
+            className="py-3"
             media={<ProviderLogo info={info} size="row" />}
             title={
               <>
@@ -707,7 +727,11 @@ function AvailableProviders({
                 )}
               </>
             }
-            description={recommendedTagline({ provider: info.provider })}
+            description={
+              recommended
+                ? recommendedTagline({ provider: info.provider })
+                : undefined
+            }
           >
             <Button
               size="sm"
