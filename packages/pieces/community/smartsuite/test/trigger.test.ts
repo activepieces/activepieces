@@ -102,7 +102,7 @@ describe('webhook triggers', () => {
 			hooks.run(ctx({ store, body: { webhookId: 'w1' } })),
 		]);
 		expect(first).toHaveLength(2);
-		const keys = [...first, ...second].map((payload) => (payload as Record<string, unknown>)['_dedupe_key']);
+		const keys = [...first, ...second].map((payload) => (typeof payload === 'object' && payload !== null && '_dedupe_key' in payload ? payload['_dedupe_key'] : undefined));
 		expect(new Set(keys)).toEqual(new Set(['smartsuite:e1', 'smartsuite:e2']));
 		expect(store.snapshot()['pageToken']).toBe('p1');
 		expect(store.snapshot()['seenEventIds']).toEqual(['e1', 'e2']);
