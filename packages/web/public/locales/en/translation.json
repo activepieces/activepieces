@@ -3683,5 +3683,21 @@
   "This project is embedded: the embed token sets its {term} at each sign-in, so a change here lasts until the next sign-in.": "This project is embedded: the embed token sets its {term} at each sign-in, so a change here lasts until the next sign-in.",
   "Turn off destructive actions": "Turn off destructive actions",
   "Turn off write and destructive actions": "Turn off write and destructive actions",
-  "{Term} for {name}": "{Term} for {name}"
+  "{Term} for {name}": "{Term} for {name}",
+  "Open project": "Open project",
+  "Upgrade to manage global connections": "Upgrade to manage global connections",
+  "{count, plural, =0 {Global · no projects} =1 {Global · 1 project} other {Global · # projects}}": "{count, plural, =0 {Global · no projects} =1 {Global · 1 project} other {Global · # projects}}",
+  "Global connection": "Global connection",
+  "Project connection": "Project connection",
+  "Shared with": "Shared with",
+  "{count, plural, =1 {Delete 1 connection?} other {Delete # connections?}}": "{count, plural, =1 {Delete 1 connection?} other {Delete # connections?}}",
+  "{count, plural, =1 {The credentials are removed from the platform and from every project the connection is shared with.} other {Their credentials are removed from the platform and from every project they are shared with.}} Nothing is changed at the provider.": "{count, plural, =1 {The credentials are removed from the platform and from every project the connection is shared with.} other {Their credentials are removed from the platform and from every project they are shared with.}} Nothing is changed at the provider.",
+  "Where": "Where",
+  "Delete ({count})": "Delete ({count})",
+  "New global connection": "New global connection",
+  "Every connection in every project, and the global ones you share with the projects you choose.": "Every connection in every project, and the global ones you share with the projects you choose.",
+  "No connections match": "No connections match",
+  "Try a different search or clear a filter.": "Try a different search or clear a filter.",
+  "Connections from every project appear here, next to the global ones you share.": "Connections from every project appear here, next to the global ones you share.",
+  "No connections yet": "No connections yet"
 }
