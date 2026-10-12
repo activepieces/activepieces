@@ -6,6 +6,7 @@ import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activep
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
+import { diskLock } from '../../../utils/distributed-lock'
 import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
 import { denoStepTranspiler } from './deno-step-transpiler'
@@ -36,6 +37,10 @@ const TS_CONFIG_CONTENT = `
 `
 
 const DENO_TRANSPILER_VERSION = 'sucrase-v1'
+
+const INSTALL_LOCKS_DIR = '.install-locks'
+
+const INSTALL_LOCK_TIMEOUT_MS = 15 * 60 * 1000
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
 
@@ -83,20 +88,21 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     || (useDeno && hasDependencies && !existsSync(path.join(codePath, 'node_modules')))
             },
             installFn: async () => {
-                const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
-                if (codeNeedCleanUp) {
-                    await rm(codePath, { recursive: true })
-                }
-
                 await fileSystemUtils.threadSafeMkdir(codePath)
+                await cache.clear()
+                await removeStaleBuildOutputs({ codes, flowVersionId, stepName: name })
 
                 const installError = await wideEvent.timed({
                     name: 'codeDeps',
                     fn: async () => {
-                        const { error } = await tryCatch(() => installDependencies({
-                            path: codePath,
-                            packageJson,
-                        }, log))
+                        const { error } = await tryCatch(() => diskLock(path.join(codesFolderPath, INSTALL_LOCKS_DIR)).runExclusive({
+                            key: codePath,
+                            timeoutMs: INSTALL_LOCK_TIMEOUT_MS,
+                            fn: () => installDependencies({
+                                path: codePath,
+                                packageJson,
+                            }, log),
+                        }))
                         if (error) {
                             log.info({ codePath, error }, 'Dependency installation error')
                         }
@@ -201,11 +207,20 @@ function getPackageJson(packageJson: string, getSettings: () => SandboxSettings)
     })
 }
 
+async function removeStaleBuildOutputs({ codes, flowVersionId, stepName }: RemoveStaleBuildOutputsParams): Promise<void> {
+    const ref = { flowVersionId, stepName }
+    await Promise.all([
+        rm(codes.stepEntryPath(ref), { force: true }),
+        rm(codes.compiledStepPath(ref), { force: true }),
+        rm(codes.transpiledStepPath(ref), { force: true }),
+    ])
+}
+
 async function installDependencies({ path, packageJson }: InstallDependenciesParams, log: ApLogger): Promise<void> {
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
     if (deps.length > 0) {
-        await bunRunner(log).install({ path, filtersPath: [] })
+        await bunRunner(log).install({ path, filtersPath: [], force: true })
     }
 }
 
@@ -235,6 +250,12 @@ async function writeInvalidArtifact({ entryPath, useDeno, errorMessage }: WriteI
 type ProcessCodeStepParams = {
     artifact: CodeArtifact
     codesFolderPath: string
+}
+
+type RemoveStaleBuildOutputsParams = {
+    codes: ReturnType<typeof codeCache>
+    flowVersionId: string
+    stepName: string
 }
 
 type InstallDependenciesParams = {
