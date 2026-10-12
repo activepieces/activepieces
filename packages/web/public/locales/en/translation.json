@@ -3140,5 +3140,9 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "agentMoveLosesConnections": "{count, plural, =1 {{names} has no connection in {project}, so that tool stops working until you connect it there.} other {{names} have no connections in {project}, so those tools stop working until you connect them there.}}",
+  "agentMoveLosesFlows": "{count, plural, =1 {The flow {names} does not exist in {project}, so that tool stops working.} other {The flows {names} do not exist in {project}, so those tools stop working.}}",
+  "agentMoveLosesKnowledge": "{count, plural, =1 {The file {names} is not in {project}, so that tool stops working.} other {The files {names} are not in {project}, so those tools stop working.}}",
+  "invalidHexColor": "Enter a color as #abc or #aabbcc"
 }

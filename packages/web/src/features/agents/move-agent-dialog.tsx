@@ -25,10 +25,15 @@ import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { api } from '@/lib/api';
 
 const MAX_NAMED_LOSSES = 2;
-const LOSS_KEYS: Record<AgentMoveLossKind, string> = {
-  [AgentMoveLossKind.CONNECTION]: 'agentMoveLosesConnections',
-  [AgentMoveLossKind.FLOW]: 'agentMoveLosesFlows',
-  [AgentMoveLossKind.KNOWLEDGE]: 'agentMoveLosesKnowledge',
+const LOSS_MESSAGES: Record<
+  AgentMoveLossKind,
+  (params: LossMessageParams) => string
+> = {
+  [AgentMoveLossKind.CONNECTION]: (params) =>
+    t('agentMoveLosesConnections', params),
+  [AgentMoveLossKind.FLOW]: (params) => t('agentMoveLosesFlows', params),
+  [AgentMoveLossKind.KNOWLEDGE]: (params) =>
+    t('agentMoveLosesKnowledge', params),
 };
 
 export const MoveAgentDialog = ({
@@ -218,7 +223,7 @@ const useLossLines = ({
     }
     const shown = named.slice(0, MAX_NAMED_LOSSES);
     return [
-      t(LOSS_KEYS[kind], {
+      LOSS_MESSAGES[kind]({
         count: named.length,
         project: projectName,
         names:
@@ -248,4 +253,10 @@ type MoveAgentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMoved?: (projectId: string) => void;
+};
+
+type LossMessageParams = {
+  count: number;
+  project: string;
+  names: string;
 };
