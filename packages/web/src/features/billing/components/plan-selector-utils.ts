@@ -2,6 +2,8 @@ import { isNil } from '@activepieces/core-utils';
 import { PurchasablePlan } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { formatUtils } from '@/lib/format-utils';
+
 const FREE_PLAN_ID = 'free';
 const ANNUAL_INTERVAL = 'year';
 const SALES_URL = 'https://www.activepieces.com/sales?ap_cta=app_plan_selector';
@@ -48,7 +50,7 @@ function computePricing({
     const amount = isNil(apiPlan.price)
       ? apiPlan.priceDisplay ?? ''
       : `$${apiPlan.price}`;
-    return { amount, suffix: t('/mo') };
+    return { amount, note: t('flat per month, billed monthly') };
   }
   if (isNil(apiPlan.price)) {
     return { amount: apiPlan.priceDisplay ?? '', suffix: t('/year') };
@@ -56,8 +58,25 @@ function computePricing({
   const perMonth = Math.floor(apiPlan.price / 12);
   return {
     amount: `$${perMonth.toLocaleString()}`,
-    annualNote: t('flat per month, billed yearly'),
+    note: t('flat per month, billed yearly'),
   };
+}
+
+function creditTopUpFeature(apiPlan?: PurchasablePlan): PlanFeature[] {
+  if (isNil(apiPlan?.creditTopUp)) {
+    return [];
+  }
+  return [
+    {
+      label: t('Auto recharge: {price} per {credits} credits', {
+        price: `$${apiPlan.creditTopUp.price.toLocaleString()}`,
+        credits: formatUtils.formatNumberCompact(apiPlan.creditTopUp.credits),
+      }),
+      tooltip: t(
+        'When your credits run out, auto recharge buys more at this price. It stays off until you turn it on.',
+      ),
+    },
+  ];
 }
 
 function annualSavedMonths(plans: PurchasablePlan[]): number | null {
@@ -190,12 +209,6 @@ function planCatalog(): PlanCatalogEntry[] {
           ),
         },
         {
-          label: t('Then pay as you go'),
-          tooltip: t(
-            'Keep running past your allowance at $0.007 per credit. Nothing switches off.',
-          ),
-        },
-        {
           label: t('Up to 5 users'),
           tooltip: t(
             'Invite up to five teammates to build and run automations together.',
@@ -220,7 +233,9 @@ function planCatalog(): PlanCatalogEntry[] {
       features: [
         {
           label: t('5× the Plus plan'),
-          tooltip: t('50,000 credits a month, then $0.007 per extra credit.'),
+          tooltip: t(
+            '50,000 credits a month, five times what the Plus plan gets.',
+          ),
         },
         {
           label: t('Unlimited projects'),
@@ -315,6 +330,7 @@ export const planSelectorUtils = {
   actionFor,
   buildSuccessUrl,
   planCatalog,
+  creditTopUpFeature,
   FREE_PLAN_ID,
   ANNUAL_INTERVAL,
   SALES_URL,
@@ -329,7 +345,7 @@ export type CheckoutAction = 'create' | 'upgrade' | 'downgrade';
 export type PlanPricing = {
   amount: string;
   suffix?: string;
-  annualNote?: string;
+  note?: string;
 };
 
 export type PlanKey = 'free' | 'plus' | 'team' | 'enterprise';

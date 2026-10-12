@@ -272,8 +272,8 @@ function PlanColumn({
                 <span className="text-sm text-gray-11">{pricing.suffix}</span>
               )}
             </div>
-            {!isNil(pricing.annualNote) && (
-              <span className="text-xs text-gray-11">{pricing.annualNote}</span>
+            {!isNil(pricing.note) && (
+              <span className="text-xs text-gray-11">{pricing.note}</span>
             )}
           </>
         )}
@@ -298,7 +298,11 @@ function PlanColumn({
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium">{entry.featuresHeader}</span>
         <ul className="flex flex-col gap-2.5">
-          {entry.features.map((feature) => (
+          {[
+            ...entry.features.slice(0, 1),
+            ...planSelectorUtils.creditTopUpFeature(apiPlan),
+            ...entry.features.slice(1),
+          ].map((feature) => (
             <li
               key={feature.label}
               className="flex items-center gap-2 text-sm text-gray-12"
