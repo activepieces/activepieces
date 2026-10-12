@@ -112,6 +112,29 @@ describe('webhook triggers', () => {
 		const store = memoryStore({ new_record: 'w1', pullClaim: { owner: 'dead', at: Date.now() - 10 * 60_000 } });
 		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r1', Title: 'rec r1' }]);
 	});
+	test('a claim left by a crashed run is taken over once it expires and the queued events are delivered', async () => {
+		const seen = stubFetch((request: SeenRequest) =>
+			request.path.includes('ListEvents') ? { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: 'p1' } } : { body: TABLE },
+		);
+		const store = memoryStore({ new_record: 'w1', pageToken: 'p0', pullClaim: { owner: 'crashed', at: Date.now() - 45_000 + 400 } });
+		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r1', Title: 'rec r1' }]);
+		expect(seen.filter((r) => r.path.includes('ListEvents'))[0].body).toMatchObject({ page_token: 'p0' });
+		expect(store.snapshot()['pageToken']).toBe('p1');
+		expect(store.snapshot()['pullClaim']).toBeUndefined();
+	});
+	test('a run that lost its claim stops without emitting or moving the cursor', async () => {
+		const store = memoryStore({ new_record: 'w1', pageToken: 'p0' });
+		stubFetch((request: SeenRequest) => {
+			if (request.path.includes('ListEvents')) {
+				void store.put('pullClaim', { owner: 'other', at: Date.now() });
+				return { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: 'p1' } };
+			}
+			return { body: TABLE };
+		});
+		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).rejects.toThrow(/another run took over/);
+		expect(store.snapshot()['pageToken']).toBe('p0');
+		expect(store.snapshot()['seenEventIds']).toBeUndefined();
+	});
 	test('run ignores notifications for another webhook', async () => {
 		const seen = stubFetch(() => ({ body: {} }));
 		const store = memoryStore({ new_record: 'w1' });

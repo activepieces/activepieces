@@ -7,8 +7,9 @@ const EVENTS_PAGE_SIZE = 50;
 const MAX_EVENT_PAGES = 20;
 const MAX_SEEN_EVENT_IDS = 500;
 const RECENT_RECORDS_LIMIT = 5;
-const CLAIM_TTL_MS = 120_000;
-const CLAIM_WAIT_MS = 15_000;
+const EVENTS_REQUEST_TIMEOUT_MS = 10_000;
+const CLAIM_TTL_MS = 45_000;
+const CLAIM_WAIT_MS = 60_000;
 const CLAIM_POLL_MS = 200;
 const CLAIM_SETTLE_MS = 50;
 
@@ -120,17 +121,24 @@ async function pullNewEvents({
 		return [];
 	}
 	const owner = await claimPull({ store });
-	if (owner === null) {
-		return [];
-	}
 	try {
-		return await readEvents({ credentials, store, webhookId: notifiedWebhookId });
+		return await readEvents({ credentials, store, webhookId: notifiedWebhookId, owner });
 	} finally {
 		await releasePull({ store, owner });
 	}
 }
 
-async function readEvents({ credentials, store, webhookId }: { credentials: SmartSuiteCredentials; store: TriggerStore; webhookId: string }): Promise<SmartSuiteEvent[]> {
+async function readEvents({
+	credentials,
+	store,
+	webhookId,
+	owner,
+}: {
+	credentials: SmartSuiteCredentials;
+	store: TriggerStore;
+	webhookId: string;
+	owner: string;
+}): Promise<SmartSuiteEvent[]> {
 	const startToken = (await store.get<string>(PAGE_TOKEN_KEY)) ?? '';
 	const seen = new Set((await store.get<string[]>(SEEN_EVENTS_KEY)) ?? []);
 	const collected: SmartSuiteEvent[] = [];
@@ -144,7 +152,9 @@ async function readEvents({ credentials, store, webhookId }: { credentials: Smar
 			path: API_ENDPOINTS.LIST_EVENTS,
 			body: { webhook_id: webhookId, page_size: EVENTS_PAGE_SIZE, page_token: pageToken },
 			operation: 'list webhook events',
+			timeoutMs: EVENTS_REQUEST_TIMEOUT_MS,
 		});
+		await renewPull({ store, owner });
 		const events = response?.events ?? [];
 		collected.push(...events);
 		const next = response?.next_page_token ?? '';
@@ -164,12 +174,13 @@ async function readEvents({ credentials, store, webhookId }: { credentials: Smar
 		seen.add(key);
 		return true;
 	});
+	await renewPull({ store, owner });
 	await store.put(PAGE_TOKEN_KEY, lastToken);
 	await store.put(SEEN_EVENTS_KEY, Array.from(seen).slice(-MAX_SEEN_EVENT_IDS));
 	return fresh;
 }
 
-async function claimPull({ store }: { store: TriggerStore }): Promise<string | null> {
+async function claimPull({ store }: { store: TriggerStore }): Promise<string> {
 	const owner = randomUUID();
 	const deadline = Date.now() + CLAIM_WAIT_MS;
 	for (;;) {
@@ -183,10 +194,18 @@ async function claimPull({ store }: { store: TriggerStore }): Promise<string | n
 			}
 		}
 		if (Date.now() >= deadline) {
-			return null;
+			throw new Error('Another run is still reading SmartSuite webhook events for this trigger, so this notification was not processed. Its events stay queued in SmartSuite and are read by the next notification.');
 		}
 		await pause(CLAIM_POLL_MS);
 	}
+}
+
+async function renewPull({ store, owner }: { store: TriggerStore; owner: string }): Promise<void> {
+	const current = await store.get<unknown>(CLAIM_KEY);
+	if (!isPullClaim(current) || current.owner !== owner) {
+		throw new Error('This run stalled and another run took over reading SmartSuite webhook events, so this run stopped without emitting; the other run delivers the events.');
+	}
+	await store.put<PullClaim>(CLAIM_KEY, { owner, at: Date.now() });
 }
 
 async function releasePull({ store, owner }: { store: TriggerStore; owner: string }): Promise<void> {
