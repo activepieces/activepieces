@@ -51,6 +51,7 @@ const polling: Polling<
 export const newExpense = createTrigger({
   auth: quickbooksAuth,
   name: 'new_expense',
+  classification: 'READ',
   displayName: 'New Expense (Purchase)',
   description: 'Triggers when an Expense (Purchase) is created.',
   aiMetadata: {

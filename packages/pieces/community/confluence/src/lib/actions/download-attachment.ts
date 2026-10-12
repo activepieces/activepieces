@@ -14,6 +14,7 @@ type AttachmentResponse = {
 export const downloadAttachmentAction = createAction({
 	auth: confluenceAuth,
 	name: 'download-attachment',
+	classification: 'READ',
 	displayName: 'Download Attachment',
 	description: 'Downloads an attachment file by its ID and returns it as a file.',
 	audience: 'both',

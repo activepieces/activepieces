@@ -31,7 +31,7 @@ export const apResearchPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
             locale: researchPiecesSchema.shape.locale,
             includeActions: z.boolean().optional().describe('When true, include action names and descriptions for each piece (only applies to searchQuery mode)'),
             includeTriggers: z.boolean().optional().describe('When true, include trigger names and descriptions for each piece (only applies to searchQuery mode)'),
-            forIntent: z.string().optional().describe('What you are trying to do (e.g. "list all my open deals"). When set, each piece also returns recommendedActions — the actions whose AI guidance best matches your intent — so you can pick the right action in one shot. Advisory only; the full action list is always returned.'),
+            forIntent: z.string().optional().describe('What you are trying to do (e.g. "list all my open deals"). When set, each piece also returns recommendedActions — the actions whose AI guidance best matches your intent — so you can pick the right action in one shot. Every action and trigger is still listed, but only the ones matching your intent carry their full description.'),
         },
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -77,6 +77,13 @@ function summarizeComponent(c: { name: string, displayName: string, description:
     }
 }
 
+function detailOnlyFor({ components, recommended }: { components: ComponentSummary[], recommended: string[] | undefined }): Partial<ComponentSummary>[] {
+    if (isNil(recommended)) {
+        return components
+    }
+    return components.map((component) => recommended.includes(component.name) ? component : { name: component.name, displayName: component.displayName })
+}
+
 async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }: {
     pieceNames: string[]
     forIntent: string | undefined
@@ -96,15 +103,17 @@ async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }:
             return { name: normalized, found: false as const }
         }
         const actions = Object.values(piece.actions).map(summarizeComponent)
-        const recommendedActions = forIntent ? mcpUtils.rankActionsByIntent({ actions, forIntent }) : []
+        const triggers = Object.values(piece.triggers).map(summarizeComponent)
+        const recommendedActions = isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions, forIntent })
+        const recommendedTriggers = isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions: triggers, forIntent })
         return {
             name: piece.name,
             found: true as const,
             displayName: piece.displayName,
             description: piece.description,
-            actions,
-            triggers: Object.values(piece.triggers).map(summarizeComponent),
-            ...(recommendedActions.length > 0 && { recommendedActions }),
+            actions: detailOnlyFor({ components: actions, recommended: recommendedActions }),
+            triggers: detailOnlyFor({ components: triggers, recommended: recommendedTriggers }),
+            ...(!isNil(recommendedActions) && recommendedActions.length > 0 && { recommendedActions }),
         }
     }))
 

@@ -7,6 +7,7 @@ import { foreplayCoAuth } from '../..';
 
 export const findBrands = createAction({
   name: 'findBrands',
+  classification: 'SEARCH',
   displayName: 'Find Brands',
   description: 'Search for brands by name with fuzzy matching.',
   audience: 'both',

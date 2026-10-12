@@ -1,12 +1,19 @@
-import { ProjectWithLimits } from '@activepieces/shared';
+import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { Crown, Plus } from 'lucide-react';
+import React from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
-import { useTeamProjectLimitGuard } from '@/features/billing';
+import {
+  PLATFORM_FEATURES,
+  useFeatureGate,
+  useTeamProjectLimitGuard,
+} from '@/features/billing';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
@@ -17,51 +24,77 @@ export function CreateProjectButton({
   onCreate,
   className,
 }: CreateProjectButtonProps) {
-  const {
-    hasReachedLimit,
-    ensureTeamProjectAvailable,
-    teamProjectLimitDialog,
-  } = useTeamProjectLimitGuard({ projects });
+  const { hasReachedLimit, teamProjectLimitContent } = useTeamProjectLimitGuard(
+    { projects },
+  );
+  const projectsGate = useFeatureGate({
+    locked: hasReachedLimit,
+    feature: PLATFORM_FEATURES.projects,
+  });
+  const { capture } = useTelemetry();
 
   const trigger = triggerFor({
     variant,
     className,
-    onClick: hasReachedLimit ? () => ensureTeamProjectAvailable() : undefined,
+    crown: projectsGate.crown,
+    locked: projectsGate.locked,
   });
 
   return (
-    <>
-      {hasReachedLimit ? (
-        trigger
-      ) : (
-        <NewProjectDialog onCreate={onCreate}>{trigger}</NewProjectDialog>
-      )}
-      {teamProjectLimitDialog}
-    </>
+    <NewProjectDialog
+      onCreate={onCreate}
+      onBlocked={() =>
+        capture({
+          name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+          payload: {
+            feature: PLATFORM_FEATURES.projects.featureKey,
+            control: AdminControl.PROJECTS_NEW_OPEN,
+          },
+        })
+      }
+      gate={{
+        locked: hasReachedLimit,
+        content: teamProjectLimitContent,
+      }}
+    >
+      {trigger}
+    </NewProjectDialog>
   );
 }
 
-function triggerFor({ variant, className, onClick }: TriggerForParams) {
+function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
+  const control = adminControl(
+    locked ? undefined : AdminControl.PROJECTS_NEW_OPEN,
+  );
   switch (variant) {
     case 'icon':
       return (
         <Button
           variant="ghost"
           size="icon"
-          className={cn('h-6 w-6 hover:bg-accent', className)}
-          onClick={onClick}
+          className={cn('h-6 w-6 hover:bg-gray-4', className)}
+          {...control}
         >
-          <Plus />
+          {locked ? <Crown className="text-accent-11" /> : <Plus />}
         </Button>
       );
     case 'full':
-      return (
+      return crown ? (
+        <Button
+          size="sm"
+          className={cn('has-[>svg]:px-2.5', className)}
+          {...control}
+        >
+          {crown}
+          {t('New Project')}
+        </Button>
+      ) : (
         <AnimatedIconButton
           icon={PlusIcon}
           iconSize={16}
           size="sm"
           className={className}
-          onClick={onClick}
+          {...control}
         >
           {t('New Project')}
         </AnimatedIconButton>
@@ -69,10 +102,14 @@ function triggerFor({ variant, className, onClick }: TriggerForParams) {
     case 'sidebar-menu':
       return (
         <SidebarMenuButton
-          className={cn('text-muted-foreground gap-2', className)}
-          onClick={onClick}
+          className={cn('text-gray-11 gap-2', className)}
+          {...control}
         >
-          <Plus className="size-4" />
+          {locked ? (
+            <Crown className="size-4 text-accent-11" />
+          ) : (
+            <Plus className="size-4" />
+          )}
           <span>{t('Add team project')}</span>
         </SidebarMenuButton>
       );
@@ -84,7 +121,8 @@ type CreateProjectButtonVariant = 'icon' | 'full' | 'sidebar-menu';
 type TriggerForParams = {
   variant: CreateProjectButtonVariant;
   className?: string;
-  onClick?: () => void;
+  crown: React.ReactNode;
+  locked: boolean;
 };
 
 type CreateProjectButtonProps = {

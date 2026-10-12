@@ -39,10 +39,11 @@ let sent: Captured[] = [];
 beforeEach(() => {
   sent = [];
   vi.stubGlobal('fetch', async (url: string, init: FetchInit) => {
+    const headers = new Headers(init.headers);
     sent.push({
       url: String(url),
-      contentType: init.headers['content-type'] ?? '',
-      authorization: init.headers['authorization'] ?? '',
+      contentType: headers.get('content-type') ?? '',
+      authorization: headers.get('authorization') ?? '',
       body: await readBody(init.body),
     });
     return new Response(JSON.stringify({ id: 'msg_1' }), {
@@ -289,6 +290,6 @@ function actionContext(propsValue: Record<string, unknown>) {
 }
 
 type FetchInit = {
-  headers: Record<string, string>;
+  headers: HeadersInit;
   body: unknown;
 };

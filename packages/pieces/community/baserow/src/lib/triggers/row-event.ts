@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { rowEventTriggerOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
   events: ['rows.created', 'rows.updated', 'rows.deleted'],
@@ -11,6 +12,7 @@ const triggerHooks = createWebhookTriggerHooks({
 export const rowEventTrigger = createTrigger({
   name: 'baserow_row_event',
   classification: 'READ',
+  outputSchema: rowEventTriggerOutputSchema,
   auth: baserowAuth,
   displayName: 'Any Row Change',
   description:

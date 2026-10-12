@@ -1,6 +1,5 @@
 import {
   FlowApprovalRequest,
-  FlowApprovalRequestState,
   ListFlowApprovalRequestsQuery,
   PopulatedFlowApprovalRequest,
   RejectFlowApprovalRequestBody,
@@ -33,8 +32,4 @@ export const flowApprovalsApi = {
   },
 };
 
-export type {
-  FlowApprovalRequest,
-  FlowApprovalRequestState,
-  PopulatedFlowApprovalRequest,
-};
+export type { FlowApprovalRequest, PopulatedFlowApprovalRequest };

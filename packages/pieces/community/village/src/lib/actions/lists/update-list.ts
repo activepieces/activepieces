@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const updateList = createAction({
   auth: villageAuth,
   name: 'update_list',
+  classification: 'WRITE',
   displayName: 'Update a list',
   description:
     "Update a list's metadata. Provide at least one of: title or description. The list type cannot be changed after creation.",

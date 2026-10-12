@@ -8,6 +8,7 @@ import { ExecutionType } from '@activepieces/pieces-framework';
 export const requestApprovalDirectMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'request_approval_direct_message',
+  classification: 'WRITE',
   displayName: 'Request Approval from a User',
   description:
     'Send approval message to a user and then wait until the message is approved or disapproved',

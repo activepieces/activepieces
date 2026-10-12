@@ -6,6 +6,7 @@ import { callSevenApi } from '../common';
 export const sendSmsAction = createAction({
   auth: sevenAuth,
   name: 'send-sms',
+  classification: 'WRITE',
   displayName: 'Send SMS',
   description: 'Sends an SMS to one or more recipients.',
   audience: 'both',

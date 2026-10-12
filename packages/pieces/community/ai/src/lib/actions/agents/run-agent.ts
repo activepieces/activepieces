@@ -62,7 +62,7 @@ export const runAgent = createAction({
   name: 'run_agent',
   classification: 'WRITE',
   displayName: 'Run Agent',
-  description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
+  description: 'Let an agent use tools and work step by step until the task is done.',
   aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the piece actions you attach to this step, iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Sub-flow, MCP and knowledge-base tools are not supported on this step. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
@@ -73,7 +73,7 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.PROMPT]: Property.LongText({
       displayName: 'Prompt',
-      description: 'Describe what you want the assistant to do.',
+      description: 'Describe what you want the agent to do.',
       required: true,
     }),
     [AgentPieceProps.AI_PROVIDER_MODEL]: Property.Object({
@@ -87,8 +87,8 @@ export const runAgent = createAction({
       properties: agentToolArrayItems,
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
-      displayName: 'Max steps',
-      description: 'The number of iterations the agent can do. Comes from the agent when the step runs a saved one.',
+      displayName: 'Max Steps',
+      description: 'Maximum number of steps before the agent stops.',
       required: false,
       defaultValue: 20,
     }),

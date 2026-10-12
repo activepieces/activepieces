@@ -47,14 +47,14 @@ function MultiChoiceInput({
             onClick={() => toggle(option.label)}
             aria-pressed={selected}
             className={cn(
-              'group flex items-center gap-3 rounded-xl border border-border/60 px-3 py-2 text-start text-sm transition-colors hover:bg-muted',
-              selected && 'border-primary/40 bg-primary/5',
+              'group flex items-center gap-3 rounded-xl border border-gray-6/60 px-3 py-2 text-start text-sm transition-colors hover:bg-gray-3',
+              selected && 'border-accent-7 bg-accent-3',
             )}
           >
             <span
               className={cn(
-                'flex size-5 shrink-0 items-center justify-center rounded-md border border-border transition-colors',
-                selected && 'border-primary bg-primary text-primary-foreground',
+                'flex size-5 shrink-0 items-center justify-center rounded-md border border-gray-6 transition-colors',
+                selected && 'border-accent-9 bg-accent-9 text-on-accent',
               )}
             >
               {selected && <Check className="size-3.5" />}
@@ -70,14 +70,14 @@ function MultiChoiceInput({
               option.icon && (
                 <DynamicLucideIcon
                   name={option.icon}
-                  className="size-4 text-muted-foreground"
+                  className="size-4 text-gray-11"
                 />
               )
             )}
             <span className="flex-1 min-w-0 leading-snug">
               <span className="block truncate">{option.label}</span>
               {option.description && (
-                <span className="block truncate text-xs text-muted-foreground">
+                <span className="block truncate text-xs text-gray-11">
                   {option.description}
                 </span>
               )}
@@ -107,13 +107,13 @@ function SliderInput({
   return (
     <div className="px-1">
       <div className="mb-4 flex items-baseline justify-between">
-        <span className="text-2xl font-semibold tabular-nums text-foreground">
+        <span className="text-2xl font-semibold tabular-nums text-gray-12">
           {value}
           {unit ? (
-            <span className="ms-1 text-base text-muted-foreground">{unit}</span>
+            <span className="ms-1 text-base text-gray-11">{unit}</span>
           ) : null}
         </span>
-        <span className="text-xs tabular-nums text-muted-foreground">
+        <span className="text-xs tabular-nums text-gray-11">
           {min}
           {' – '}
           {max}
@@ -150,9 +150,9 @@ function ColorInput({
               aria-label={hex}
               onClick={() => onChange(hex)}
               className={cn(
-                'size-8 rounded-full border border-border/60 transition-transform hover:scale-110',
+                'size-8 rounded-full border border-gray-6/60 transition-transform hover:scale-110',
                 value.toLowerCase() === hex.toLowerCase() &&
-                  'ring-2 ring-primary ring-offset-2 ring-offset-background',
+                  'ring-2 ring-accent-9 ring-offset-2 ring-offset-gray-1',
               )}
               style={{ backgroundColor: hex }}
             />
@@ -169,7 +169,7 @@ function ColorInput({
       <div className="flex items-center gap-2">
         <span
           aria-hidden
-          className="size-7 shrink-0 rounded-md border border-border/60"
+          className="size-7 shrink-0 rounded-md border border-gray-6/60"
           style={{ backgroundColor: value }}
         />
         <Input

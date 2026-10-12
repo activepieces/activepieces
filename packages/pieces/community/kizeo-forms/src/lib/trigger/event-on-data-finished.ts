@@ -15,6 +15,7 @@ const triggerNameInStore = 'event_on_data_finished_trigger';
 export const eventOnDataFinished = createTrigger({
   auth: kizeoFormsAuth,
   name: 'event_on_data_finished',
+  classification: 'READ',
   displayName: 'Event On Data Finished',
   description: 'Handle EventOnData save event via webhooks',
   aiMetadata: {

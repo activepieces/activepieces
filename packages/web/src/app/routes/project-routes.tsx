@@ -18,6 +18,8 @@ import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
 import { ApprovalsPage } from './approvals';
 import { AutomationsPage } from './automations';
+import { LegacyPiecesRedirect } from './mcp-server/legacy-pieces-redirect';
+import { McpReachGuard } from './mcp-server/mcp-reach-guard';
 
 const AgentEditorPage = lazyWithRetry(
   () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
@@ -288,16 +290,20 @@ export const projectRoutes = [
     ),
   },
   {
+    path: '/mcp-server/pieces',
+    element: <LegacyPiecesRedirect />,
+  },
+  {
     path: '/mcp-server/:tab?',
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={[Permission.READ_MCP]}>
+        <McpReachGuard>
           <PageTitle title="MCP Server">
             <SuspenseWrapper>
               <McpServerPage />
             </SuspenseWrapper>
           </PageTitle>
-        </RoutePermissionGuard>
+        </McpReachGuard>
       </ProjectDashboardLayout>
     ),
   },

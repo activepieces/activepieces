@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const subscriptionCreatedTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'subscription_created',
+  classification: 'READ',
   displayName: 'Subscription Created',
   description: 'Triggers when a subscription is created for a payer',
   aiMetadata: {

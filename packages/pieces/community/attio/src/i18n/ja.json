@@ -15,7 +15,7 @@
   "Get Task": "タスクを取得",
   "Delete Task": "タスクの削除",
   "Update Task": "タスクの更新",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Creates a new record such as peron,company or deal.": "peron、company、dealなどの新しいレコードを作成します。",
   "Update an existing record with new attribute values.": "新しい属性値を持つ既存のレコードを更新します。",
   "Search for records in Attio using filters and return matching results.": "フィルタを使用してAttioのレコードを検索し、一致する結果を返します。",

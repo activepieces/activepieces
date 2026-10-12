@@ -5,6 +5,7 @@ import { intercomClient } from "../common";
 export const listAllTagsAction = createAction({
     auth:intercomAuth,
     name:'list-all-tags',
+    classification: 'SEARCH',
     displayName:'List Tags',
     description:'List all tags.',
     audience: 'both',

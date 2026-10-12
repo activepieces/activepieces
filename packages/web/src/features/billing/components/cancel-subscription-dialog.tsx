@@ -23,6 +23,7 @@ import {
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 export function CancelSubscriptionDialog({
@@ -103,14 +104,14 @@ function CancelSubscriptionForm({
                       )
                     }
                     className={cn(
-                      'flex items-center gap-3 rounded-lg border p-3 text-left text-sm transition-colors hover:bg-accent',
-                      checked && 'border-primary bg-primary/5',
+                      'flex items-center gap-3 rounded-lg border p-3 text-left text-sm transition-colors hover:bg-gray-4',
+                      checked && 'border-accent-9 bg-accent-3',
                     )}
                   >
                     <span
                       className={cn(
-                        'flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium text-muted-foreground',
-                        checked && 'bg-primary text-primary-foreground',
+                        'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-xs font-medium text-gray-11',
+                        checked && 'bg-accent-9 text-on-accent',
                       )}
                     >
                       {String.fromCharCode(LETTER_A_CHAR_CODE + index)}
@@ -158,7 +159,12 @@ function CancelSubscriptionForm({
           >
             {t('Keep my plan')}
           </Button>
-          <Button type="submit" variant="destructive" loading={isPending}>
+          <Button
+            {...adminControl(AdminControl.BILLING_CANCEL_SUBSCRIPTION_SUBMIT)}
+            type="submit"
+            variant="destructive"
+            loading={isPending}
+          >
             {confirmText}
           </Button>
         </DialogFooter>

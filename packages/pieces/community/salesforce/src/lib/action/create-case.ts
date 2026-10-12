@@ -2,14 +2,17 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const createCase = createAction({
     auth: salesforceAuth,
     name: 'create_case',
+    classification: 'WRITE',
     displayName: 'Create Case',
     description: 'Creates a Case, which represents a customer issue or problem.',
     audience: 'both',
     aiMetadata: { description: 'Create a new support Case (customer issue/problem) with a required Subject and optional status, priority, origin, and links to an Account or Contact. Not idempotent — each call opens a separate Case, so guard against duplicate submissions.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         Subject: Property.ShortText({
             displayName: 'Subject',

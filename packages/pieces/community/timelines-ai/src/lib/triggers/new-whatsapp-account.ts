@@ -5,6 +5,7 @@ import { WebhookInformation } from '../common/types';
 export const newWhatsappAccount = createTrigger({
   auth: timelinesAiAuth,
   name: 'newWhatsappAccount',
+  classification: 'READ',
   displayName: 'New WhatsApp Account',
   description: 'Fires when a new WhatsApp account is added/registered.',
   aiMetadata: {

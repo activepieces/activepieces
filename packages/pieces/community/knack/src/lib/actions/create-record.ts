@@ -12,6 +12,7 @@ import {
 export const createRecordAction = createAction({
   auth: knackAuth,
   name: 'create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record into a specified object/table.',
   audience: 'both',

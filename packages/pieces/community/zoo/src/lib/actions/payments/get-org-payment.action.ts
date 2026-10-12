@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOrgPaymentAction = createAction({
   name: 'get_org_payment',
+  classification: 'READ',
   displayName: 'Get Organization Payment Info',
   description: 'Retrieve payment information for your organization',
   audience: 'both',

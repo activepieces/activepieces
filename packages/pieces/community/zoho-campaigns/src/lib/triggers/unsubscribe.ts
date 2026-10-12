@@ -45,6 +45,7 @@ const polling: Polling<
 export const unsubscribe = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'unsubscribe',
+  classification: 'READ',
   displayName: 'Unsubscribe',
   description:
     'Fires when a contact is removed from a mailing list or unsubscribed.',

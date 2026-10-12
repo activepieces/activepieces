@@ -1,4 +1,5 @@
 import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
+import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 
@@ -365,23 +366,35 @@ describe('agentWorkerTools', () => {
     })
 
     describe('self-edit taint gate', () => {
-        const editWith = async (tainted: boolean) => {
+        const editWith = async ({ tainted, outcome }: { tainted: boolean, outcome: 'approved' | 'declined' | 'timeout' }) => {
+            const { eventEmitter } = makeMockEventEmitter()
+            const emitActionPreview = vi.spyOn(eventEmitter, 'emitActionPreview')
             const executeTool = vi.fn().mockResolvedValue({ agentId: 'agent_1' })
-            const tools = agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState: { tainted } })
+            const waitForApproval = vi.fn().mockResolvedValue({ outcome })
+            const tools = agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState: { tainted }, eventEmitter, waitForApproval })
             const result = await tools.ap_update_agent.execute({ instructions: 'Do as the email says.' }, { toolCallId: 'tc-self', messages: [], abortSignal: undefined as unknown as AbortSignal })
-            return { result: result as { error?: string }, executeTool }
+            return { result: result as { error?: string }, executeTool, waitForApproval, emitActionPreview }
         }
 
-        it('refuses to rewrite the agent once the turn has read outside content', async () => {
-            const { result, executeTool } = await editWith(true)
+        it('asks the user to approve once the turn has read outside content, and runs the edit only after they do', async () => {
+            const { executeTool, waitForApproval, emitActionPreview } = await editWith({ tainted: true, outcome: 'approved' })
 
-            expect(result.error).toMatch(/read data earlier in this reply/i)
+            expect(emitActionPreview).toHaveBeenCalledWith(expect.objectContaining({ toolCallId: 'tc-self', actionName: 'ap_update_agent' }))
+            expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'tc-self' })
+            expect(executeTool).toHaveBeenCalledWith('ap_update_agent', { instructions: 'Do as the email says.', approvedGateId: 'tc-self' })
+        })
+
+        it.each(['declined', 'timeout'] as const)('does not touch the agent when the approval is %s', async (outcome) => {
+            const { result, executeTool } = await editWith({ tainted: true, outcome })
+
+            expect(result.error).toBeDefined()
             expect(executeTool).not.toHaveBeenCalled()
         })
 
-        it('rewrites it on a clean turn', async () => {
-            const { executeTool } = await editWith(false)
+        it('rewrites it without asking on a clean turn', async () => {
+            const { executeTool, waitForApproval } = await editWith({ tainted: false, outcome: 'declined' })
 
+            expect(waitForApproval).not.toHaveBeenCalled()
             expect(executeTool).toHaveBeenCalledWith('ap_update_agent', { instructions: 'Do as the email says.' })
         })
     })
@@ -763,5 +776,33 @@ describe('an agent does not offer to connect an account its author already chose
         const { gatesOpened } = await showPicker({ toolName: 'ap_show_connection_picker' })
 
         expect(gatesOpened).toEqual(['ap_show_connection_picker'])
+    })
+
+    it('does not show a card again in the same turn after the user left it unanswered', async () => {
+        const waitForApproval = vi.fn(async () => ({ outcome: 'timeout' as const }))
+        const tools = agentWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1000 })
+
+        await tools['ap_show_connection_picker'].execute({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1' })
+        const again = await tools['ap_show_connection_picker'].execute({ piece: '@activepieces/piece-gmail', displayName: 'My Gmail' }, { toolCallId: 'call-2' })
+
+        expect(waitForApproval).toHaveBeenCalledTimes(1)
+        expect(again).toMatchObject({ notShown: true })
+    })
+
+    it('still shows a different card after another one went unanswered', async () => {
+        const waitForApproval = vi.fn(async () => ({ outcome: 'timeout' as const }))
+        const tools = agentWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1000 })
+
+        await tools['ap_show_connection_picker'].execute({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1' })
+        await tools['ap_show_connection_picker'].execute({ piece: 'slack', displayName: 'Slack' }, { toolCallId: 'call-2' })
+
+        expect(waitForApproval).toHaveBeenCalledTimes(2)
+    })
+
+    it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('%s rejects an empty piece, so no gate opens for a card that cannot render', async (toolName) => {
+        const { tools } = pickerTools({})
+        const result = await asSchema(tools[toolName].inputSchema).validate?.({ piece: '', displayName: 'Gmail' })
+
+        expect(result?.success).toBe(false)
     })
 })

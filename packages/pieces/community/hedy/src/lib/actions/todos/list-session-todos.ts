@@ -24,6 +24,7 @@ function toTodoArray(result: unknown): Todo[] {
 export const listSessionTodos = createAction({
   auth: hedyAuth,
   name: 'list-session-todos',
+  classification: 'SEARCH',
   displayName: 'List Session Todos',
   description: 'Retrieve todos generated for a specific session.',
   audience: 'both',

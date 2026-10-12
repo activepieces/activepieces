@@ -14,20 +14,13 @@ export const smtpAuth = PieceAuth.CustomAuth({
   props: {
     host: Property.ShortText({
       displayName: 'Host',
+      placeholder: 'smtp.example.com',
       required: true,
-    }),
-    email: Property.ShortText({
-      displayName: 'Email',
-      description: 'Leave blank if your mail relay does not require authentication.',
-      required: false,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      description: 'Leave blank if your mail relay does not require authentication.',
-      required: false,
     }),
     port: Property.StaticDropdown({
       displayName: 'Port',
+      description:
+        '465 encrypts from the start; other ports upgrade to STARTTLS if the server offers it.',
       required: true,
       options: {
         disabled: false,
@@ -40,9 +33,21 @@ export const smtpAuth = PieceAuth.CustomAuth({
       },
     }),
     TLS: Property.Checkbox({
-      displayName: 'Require TLS?',
+      displayName: 'Require TLS',
+      description: 'Fail instead of sending unencrypted if STARTTLS is unavailable.',
       defaultValue: false,
       required: true,
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'Login name, usually your email address. Blank if no login is needed.',
+      placeholder: 'you@example.com',
+      required: false,
+    }),
+    password: PieceAuth.SecretText({
+      displayName: 'Password',
+      description: 'Leave blank if your mail relay does not require authentication.',
+      required: false,
     }),
   },
   validate: async ({ auth }) => {
@@ -85,7 +90,7 @@ export const smtpAuth = PieceAuth.CustomAuth({
 export const smtp = createPiece({
   displayName: 'SMTP',
   description: 'Send emails using Simple Mail Transfer Protocol',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/smtp.svg',
   categories: [PieceCategory.CORE],
   authors: [

@@ -6,6 +6,7 @@ import { QuickbooksVendor } from '../lib/types';
 export const findVendorAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_vendor',
+	classification: 'READ',
 	displayName: 'Find Vendor',
 	description: 'Search for a vendor in QuickBooks by display name, email address, or account number.',
 	audience: 'both',

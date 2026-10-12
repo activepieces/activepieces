@@ -16,11 +16,6 @@ function getValueByDotPath(obj: unknown, path: string): unknown {
   return pathUtils.getValueByDotPath(obj, path);
 }
 
-function resolveValue(json: unknown, field: OutputSchemaField): unknown {
-  const path = field.value ?? field.key;
-  return getValueByDotPath(json, path);
-}
-
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -84,7 +79,7 @@ function FormatSingleValue({
   currency?: string;
 }) {
   if (isNil(value) || value === '') {
-    return <span className="text-muted-foreground italic">{t('empty')}</span>;
+    return <span className="text-gray-11 italic">{t('empty')}</span>;
   }
 
   if (isStepFileUrl(value)) {
@@ -100,7 +95,7 @@ function FormatSingleValue({
     return (
       <a
         href={`mailto:${stringValue}`}
-        className="text-primary underline-offset-4 hover:underline"
+        className="text-accent-11 underline-offset-4 hover:underline"
         title={stringValue}
       >
         {stringValue}
@@ -117,7 +112,7 @@ function FormatSingleValue({
         href={stringValue}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-primary underline-offset-4 hover:underline break-all"
+        className="text-accent-11 underline-offset-4 hover:underline break-all"
       >
         {stringValue}
       </a>
@@ -132,7 +127,7 @@ function FormatSingleValue({
       <img
         src={stringValue}
         alt=""
-        className="max-h-32 max-w-full rounded border border-dividers object-contain"
+        className="max-h-32 max-w-full rounded border border-gray-6 object-contain"
         loading="lazy"
         referrerPolicy="no-referrer"
       />
@@ -199,11 +194,11 @@ function PrimitiveArrayPreview({
   currency?: string;
 }) {
   if (items.length === 0) {
-    return <span className="text-muted-foreground italic">{t('empty')}</span>;
+    return <span className="text-gray-11 italic">{t('empty')}</span>;
   }
   const parts = items.map((item, idx) => (
     <span key={`${idx}-${String(item)}`}>
-      {idx > 0 && <span className="text-muted-foreground">, </span>}
+      {idx > 0 && <span className="text-gray-11">, </span>}
       <FormatSingleValue value={item} format={format} currency={currency} />
     </span>
   ));
@@ -212,7 +207,7 @@ function PrimitiveArrayPreview({
 
 function FormatValue({ value, field }: FormatValueProps) {
   if (isNil(value) || value === '') {
-    return <span className="text-muted-foreground italic">{t('empty')}</span>;
+    return <span className="text-gray-11 italic">{t('empty')}</span>;
   }
 
   if (Array.isArray(value) && !field.listItems) {
@@ -250,7 +245,6 @@ function FormatValue({ value, field }: FormatValueProps) {
 export {
   FormatValue,
   FormatSingleValue,
-  resolveValue,
   getValueByDotPath,
   isSafeUrl,
   isSafeEmail,

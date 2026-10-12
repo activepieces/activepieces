@@ -17,37 +17,40 @@ export const googleDriveListFiles = createAction({
   auth: googleDriveAuth,
   name: 'list-files',
   classification: 'SEARCH',
-  displayName: 'List files',
-  description: 'List files from a Google Drive folder',
+  displayName: 'List Files',
+  description: 'List the files and folders inside a folder.',
   audience: 'human',
   aiMetadata: { description: 'Lists files and subfolders inside a given Drive folder, with optional recursion to a chosen depth and optional download of each file\'s content. Use to enumerate the contents of a known folder ID. Read-only and idempotent. Requires the folder ID, not a name.', idempotent: true },
   props: {
     folderId: Property.ShortText({
       displayName: 'Folder ID',
-      description: 'Folder ID coming from | New Folder -> id | (or any other source)',
+      description: 'The ID after /folders/ in the folder URL, or from an earlier step.',
       required: true,
-    }),
-    include_team_drives: common.properties.include_team_drives,
-    
-    includeTrashed: Property.Checkbox({
-      displayName: 'Include Trashed',
-      description: 'Include new files that have been trashed.',
-      required: false,
-      defaultValue: false
+      placeholder: '1aMEtTqIYn5651wdK7WLxaK_SDim4mvXW',
     }),
 
     depthLevel: Property.Number({
-      displayName: 'Depth Level',
-      description: 'How many levels deep to search for files. 1 = current folder only, 2 = current + next level, etc.',
+      displayName: 'Folder Depth',
+      description: '1 lists only this folder; 2 adds its subfolders, and so on.',
       required: false,
       defaultValue: 1
     }),
 
     downloadFiles: Property.Checkbox({
       displayName: 'Download Files',
-      description: 'Download all file contents in a list',
+      description: 'Also download every file. Slow for large folders.',
       required: false,
       defaultValue: false
+    }),
+
+    include_team_drives: common.properties.include_team_drives,
+
+    includeTrashed: Property.Checkbox({
+      displayName: 'Include Trashed',
+      description: 'Also list files that are in the bin.',
+      required: false,
+      defaultValue: false,
+      advanced: true
     }),
   },
   outputSchema: listFilesActionOutputSchema,

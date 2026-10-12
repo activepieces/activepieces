@@ -20,8 +20,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { userHooks, userMutations } from '@/hooks/user-hooks';
 
-import LanguageToggle from './language-toggle';
-import ThemeToggle from './theme-toggle';
+import { LanguageToggle } from './language-toggle';
+import { ThemeToggle } from './theme-toggle';
 
 export interface AccountSettingsDialogProps {
   open: boolean;
@@ -91,8 +91,11 @@ export function AccountSettingsDialog({
                   disableTooltip
                   imageUrl={user?.imageUrl}
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-5 w-5 text-white" />
+                <div
+                  data-theme="dark"
+                  className="absolute inset-0 flex items-center justify-center bg-scrim rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Camera className="h-5 w-5 text-gray-12" />
                 </div>
                 <input
                   ref={fileInputRef}
@@ -107,7 +110,7 @@ export function AccountSettingsDialog({
                 <div className="text-sm font-semibold">
                   {user?.firstName} {user?.lastName}
                 </div>
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <div className="text-xs text-gray-11 flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" />
                   {user?.email}
                 </div>
@@ -127,5 +130,3 @@ export function AccountSettingsDialog({
     </Dialog>
   );
 }
-
-export default AccountSettingsDialog;

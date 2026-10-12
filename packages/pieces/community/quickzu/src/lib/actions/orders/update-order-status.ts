@@ -6,6 +6,7 @@ import { OrderStatus } from '../../common/constants';
 export const updateOrderStatusAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_order_status',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Order Status',
   description: 'Updates status of order in store.',
   audience: 'both',

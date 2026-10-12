@@ -1,29 +1,32 @@
-import { BranchExecutionType, FlowActionType } from '../actions/action'
+import { AiRouterAction, BranchExecutionType, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { MoveBranchRequest } from '.'
 
 
 const isIndexWithinBounds = (index: number, arrayLength: number) => index >= 0 && index < arrayLength
+
 export function _moveBranch(flowVersion: FlowVersion, request: MoveBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
-        if (stepToUpdate.name !== request.stepName || stepToUpdate.type !== FlowActionType.ROUTER) {
+        if (stepToUpdate.name !== request.stepName || !flowStructureUtil.isBranchedAction(stepToUpdate)) {
             return stepToUpdate
         }
-        const routerStep = stepToUpdate
-        if (!isIndexWithinBounds(request.sourceBranchIndex, routerStep.settings.branches.length) || !isIndexWithinBounds(request.targetBranchIndex, routerStep.settings.branches.length) || request.sourceBranchIndex === request.targetBranchIndex) {
+        const branches = stepToUpdate.settings.branches
+        if (!isIndexWithinBounds(request.sourceBranchIndex, branches.length) || !isIndexWithinBounds(request.targetBranchIndex, branches.length) || request.sourceBranchIndex === request.targetBranchIndex) {
             return stepToUpdate
         }
-        if (routerStep.settings.branches[request.sourceBranchIndex].branchType === BranchExecutionType.FALLBACK || routerStep.settings.branches[request.targetBranchIndex].branchType === BranchExecutionType.FALLBACK) {
+        if (branches[request.sourceBranchIndex].branchType === BranchExecutionType.FALLBACK || branches[request.targetBranchIndex].branchType === BranchExecutionType.FALLBACK) {
             return stepToUpdate
         }
-        const sourceBranch = routerStep.settings.branches[request.sourceBranchIndex]
-        routerStep.settings.branches.splice(request.sourceBranchIndex, 1)
-        routerStep.settings.branches.splice(request.targetBranchIndex, 0, sourceBranch)
-        const sourceBranchChildren = routerStep.children[request.sourceBranchIndex]
-        routerStep.children.splice(request.sourceBranchIndex, 1)
-        routerStep.children.splice(request.targetBranchIndex, 0, sourceBranchChildren)
-        return routerStep
+        moveInPlace({ items: stepToUpdate.children, from: request.sourceBranchIndex, to: request.targetBranchIndex })
+        moveInPlace<Branch>({ items: stepToUpdate.settings.branches, from: request.sourceBranchIndex, to: request.targetBranchIndex })
+        return stepToUpdate
     })
-
 }
+
+function moveInPlace<T>({ items, from, to }: { items: T[], from: number, to: number }): void {
+    const [moved] = items.splice(from, 1)
+    items.splice(to, 0, moved)
+}
+
+type Branch = (RouterAction | AiRouterAction)['settings']['branches'][number]

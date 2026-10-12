@@ -4,6 +4,7 @@ import { humeAiAuth } from '../common/auth';
 
 export const createVoice = createAction({
   name: 'create_voice',
+  classification: 'WRITE',
   displayName: 'Create Voice',
   description: 'Save a custom voice to your account using a TTS generation ID',
   audience: 'both',

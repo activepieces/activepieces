@@ -12,7 +12,7 @@ import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
-import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
+import { INTERNAL_CHAT_CLIENT_ID, mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
     registerMcpEndpoint(app, McpServerType.PROJECT)
@@ -77,7 +77,7 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
             : mcp
-        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId })
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId, isInAppChat: isInAppChatIdentity(identity) })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -188,6 +188,10 @@ type IdentityResult =
     | { status: 'unavailable' }
 
 const chatConversationRepo = repoFactory(AgentConversationEntity)
+
+function isInAppChatIdentity(identity: ResolvedIdentity): boolean {
+    return identity.type === McpServerType.PLATFORM && identity.clientId === INTERNAL_CHAT_CLIENT_ID
+}
 
 async function resolveConversationProjectId({ conversationId, identity, log }: {
     conversationId: string

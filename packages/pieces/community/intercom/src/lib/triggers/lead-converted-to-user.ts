@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const leadConvertedToUserTrigger = createTrigger({
   auth: intercomAuth,
   name: 'lead-converted-to-user',
+  classification: 'READ',
   displayName: 'Lead Converted To User',
   description: 'Triggers when a lead is converted to a user.',
   aiMetadata: {

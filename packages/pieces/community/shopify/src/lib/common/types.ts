@@ -1,7 +1,4 @@
-import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
-import { shopifyAuth } from "../..";
-
-export type ShopifyAuth = AppConnectionValueForAuthProperty<typeof shopifyAuth>;
+export type { ShopifyAuth } from './auth';
 
 export type ShopifyCustomer = {
   id: number;

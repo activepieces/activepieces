@@ -5,6 +5,7 @@ import { makeClient, tarventCommon } from '../common';
 export const updateJourneyStatus = createAction({
   auth: tarventAuth,
   name: 'tarvent_update_journey_status',
+  classification: 'WRITE',
   displayName: 'Start/Stop Journey',
   description: 'Starts or stops a journey.',
   audience: 'both',

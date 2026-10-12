@@ -13,6 +13,7 @@ import { httpClient } from '@activepieces/pieces-common';
 
 export const queryRecords = createAction({
   name: 'query_records',
+  classification: 'SEARCH',
   auth: vtigerAuth,
   displayName: 'Query Records',
   description: 'Query records by SQL statement.',

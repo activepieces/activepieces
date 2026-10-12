@@ -6,6 +6,7 @@ import { parallelClient } from '../common/client';
 export const getTaskRunResultAction = createAction({
   auth: parallelAuth,
   name: 'get_task_run_result',
+  classification: 'READ',
   displayName: 'Get Task Run Result',
   description:
     'Retrieve a task run result by run ID. Blocks until the run completes (or until the timeout is reached).',

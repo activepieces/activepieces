@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import {
-  slackChannel,
+  slackChannel, onlyBotChannels,
 } from '../common/props';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { uploadFileActionOutputSchema } from '../output-schemas';
@@ -33,6 +33,7 @@ export const uploadFile = createAction({
       placeholder: 'report.pdf',
       required: false,
     }),
+    onlyBotChannels,
     channel: slackChannel(false),
   },
   async run(context) {

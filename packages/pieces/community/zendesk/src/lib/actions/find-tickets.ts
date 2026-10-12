@@ -1,20 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { isEmpty } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs'
+import { findTicketsOutputSchema } from '../output-schemas';
 
 export const findTicketsAction = createAction({
   auth: zendeskAuth,
   name: 'find-tickets',
+  outputSchema: findTicketsOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Ticket(s)',
   description: 'Search tickets by ID, field, or content.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Searches Zendesk tickets and returns matching records. A required search-type selector chooses the mode: match by ticket ID, status, priority, type, tag, requester or assignee email, subject/content text, or pass a raw Zendesk search-syntax string via the Custom Query mode. Optional date-time filters narrow by created/updated/solved/due date with comparison operators. Use to locate tickets or a ticket ID before commenting or updating; results can be sorted. Read-only and idempotent.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({
@@ -284,15 +286,9 @@ export const findTicketsAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${
-          authentication.props.subdomain
-        }.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
+        url: `${getZendeskBaseUrl(authentication)}/search.json?${searchParams.toString()}`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
       });
 
       const responseBody = response.body as {

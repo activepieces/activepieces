@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, TelemetryEventName, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
@@ -9,25 +9,23 @@ import { applicationEvents } from '../../../helper/application-events'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { Order } from '../../../helper/pagination/paginator'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
+import { telemetry } from '../../../helper/telemetry.utils'
 import { triggerSourceService } from '../../../trigger/trigger-source/trigger-source-service'
 import { FlowApprovalRequestEntity } from './flow-approval-request.entity'
 
 const flowApprovalRequestRepo = repoFactory(FlowApprovalRequestEntity)
 
 export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
-    async submitForApproval({ flow, userId, projectId, platformId, requestedStatus }: SubmitParams): Promise<FlowApprovalRequest> {
-        const draft = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: flow.id,
-            versionId: undefined,
-        })
+    async submitForApproval({ flow, flowVersionToPublish, userId, projectId, platformId, requestedStatus }: SubmitParams): Promise<FlowApprovalRequest> {
         return transaction(async (entityManager) => {
-            const lockedVersion = draft.state === FlowVersionState.LOCKED
-                ? draft
+            const lockedVersion = flowVersionToPublish.state === FlowVersionState.LOCKED
+                ? flowVersionToPublish
                 : await flowVersionService(log).applyOperation({
                     userId,
                     projectId,
                     platformId,
-                    flowVersion: draft,
+                    flowVersion: flowVersionToPublish,
                     userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
                     entityManager,
                 })
@@ -124,6 +122,13 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             projectId: approval.projectId,
             newStatus: approval.requestedStatus,
         })
+        rejectedPromiseHandler(telemetry(log).trackProject({
+            projectId: approval.projectId,
+            event: {
+                name: TelemetryEventName.FLOW_PUBLISHED,
+                payload: { flowId: flow.id },
+            },
+        }), log)
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_GRANTED,
             data: {
@@ -299,6 +304,7 @@ function assertRowsAffected(affected: number | null | undefined): void {
 
 type SubmitParams = {
     flow: Flow
+    flowVersionToPublish: FlowVersion
     userId: UserId | null
     projectId: ProjectId
     platformId: PlatformId

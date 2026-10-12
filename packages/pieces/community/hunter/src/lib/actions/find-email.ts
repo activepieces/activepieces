@@ -14,6 +14,7 @@ import {
 export const findEmailAction = createAction({
     auth: hunterAuth,
     name: 'find-email',
+    classification: 'SEARCH',
     displayName: 'Find Email',
     description: 'Retrieve/propose the most likely email for a person at a domain.',
     audience: 'both',

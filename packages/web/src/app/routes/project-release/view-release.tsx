@@ -68,10 +68,10 @@ const ViewRelease = () => {
   return (
     <div className="space-y-6 w-full">
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-gray-11">
           <Button
             variant="link"
-            className="p-0 h-auto text-sm text-muted-foreground hover:text-primary"
+            className="p-0 h-auto text-sm text-gray-11 hover:text-accent-11"
             onClick={() => navigate('/releases')}
           >
             {t('Releases')}
@@ -81,7 +81,7 @@ const ViewRelease = () => {
         </div>
         <div className="flex justify-between items-center w-full">
           <div className="flex flex-col items-start gap-2 w-full">
-            <div className="flex items-center gap-2 text-md justify-between w-full">
+            <div className="flex items-center gap-2 justify-between w-full">
               <h1 className="text-3xl font-bold">{release?.name}</h1>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -104,7 +104,7 @@ const ViewRelease = () => {
                 <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
               </Tooltip>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-11">
               {t('Created')}: {timeAgo}
             </p>
           </div>
@@ -112,7 +112,7 @@ const ViewRelease = () => {
       </div>
 
       <div className="space-y-2">
-        <span className="text-md font-semibold">{t('Summary')}</span>
+        <span className="font-semibold">{t('Summary')}</span>
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : (
@@ -123,7 +123,7 @@ const ViewRelease = () => {
                   <TooltipTrigger asChild>
                     <span className="flex items-center flex-row gap-1">
                       {t('Imported by')}
-                      <span className="font-semibold text-md">
+                      <span className="font-semibold">
                         {release?.importedByUser?.firstName}{' '}
                         {release?.importedByUser?.lastName}
                       </span>
@@ -143,7 +143,7 @@ const ViewRelease = () => {
         )}
       </div>
       <div className="space-y-2">
-        <span className="text-md font-semibold">{t('Description')}</span>
+        <span className="font-semibold">{t('Description')}</span>
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : (

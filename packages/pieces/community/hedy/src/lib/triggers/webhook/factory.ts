@@ -18,6 +18,7 @@ export function createHedyWebhookTrigger(config: TriggerConfig) {
   return createTrigger({
     auth: hedyAuth,
     name: config.name,
+    classification: 'READ',
     displayName: config.displayName,
     description: config.description,
     aiMetadata: config.aiMetadata,

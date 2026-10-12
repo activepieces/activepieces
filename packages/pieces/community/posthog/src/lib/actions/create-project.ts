@@ -5,6 +5,7 @@ import { posthogAuth, PostHogAuth } from '../..';
 export const posthogCreateProject = createAction({
   auth: posthogAuth,
   name: 'create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new PostHog project in your organization',
   audience: 'both',

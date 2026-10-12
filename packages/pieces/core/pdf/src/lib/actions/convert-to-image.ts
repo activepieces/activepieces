@@ -37,7 +37,7 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
 
         const files = await fs.readdir(outputDir);
         const imageBuffers = [];
-        for (const file of files) {
+        for (const file of [...files].sort()) {
             const filePath = join(outputDir, file);
             const imageBuffer = await fs.readFile(filePath);
             await fs.unlink(filePath);
@@ -72,16 +72,18 @@ export const convertToImage = createAction({
     name: 'convertToImage',
     classification: 'READ',
     displayName: 'Convert to Image',
-    description: 'Convert a PDF file or URL to an image',
+    description: 'Render a PDF file or URL as PNG images.',
     aiMetadata: { description: 'Rasterizes a PDF to PNG images, either as one tall combined image or as a separate image per page (selected via Output Image Type). Pick this when a downstream vision or OCR step needs pixels rather than a text layer; prefer Extract Text for text-based PDFs and Image to PDF for the reverse direction. Requires the pdftoppm binary on the worker and a PDF no larger than 16 MB; the render is deterministic, so idempotent.', idempotent: true },
     outputSchema: convertToImageActionOutputSchema,
     props: {
         file: Property.File({
             displayName: 'PDF File or URL',
             required: true,
+            placeholder: 'https://example.com/document.pdf',
         }),
         imageOutputType: Property.StaticDropdown({
             displayName: 'Output Image Type',
+            description: 'One tall image of all pages, or one image per page.',
             required: true,
             options: {
                 options: [
@@ -91,14 +93,6 @@ export const convertToImage = createAction({
             },
             defaultValue: 'multiple',
         }),
-    },
-    errorHandlingOptions: {
-        continueOnFailure: {
-            defaultValue: false,
-        },
-        retryOnFailure: {
-            hide: true
-        },
     },
     async run(context) {
         const file = context.propsValue.file;

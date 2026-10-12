@@ -6,6 +6,7 @@ import { intercomClient } from '../common';
 export const addOrRemoveTagOnContactAction = createAction({
 	auth: intercomAuth,
 	name: 'add-or-remove-tag-on-contact',
+	classification: 'WRITE',
 	displayName: 'Add/Remove Tag on Contact',
 	description: 'Attach or remove a tag from a specific contact.',
 	audience: 'both',

@@ -7,6 +7,7 @@ import { BASE_URL } from '../common';
 export const getUserDetailsAction = createAction({
 	auth: firefliesAiAuth,
 	name: 'get-user-details',
+	classification: 'READ',
 	displayName: 'Get User Details',
 	description: 'Retrieves profile information by ID.',
 	audience: 'both',

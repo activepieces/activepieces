@@ -14,28 +14,27 @@ export const getCompanyAction = createAction({
 	name: 'get-company',
 	classification: 'READ',
 	displayName: 'Get Company',
-	description: 'Gets a company.',
+	description: 'Gets a company by its ID.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single company by its HubSpot company ID, returning default and any requested additional properties. Use when you already have the company ID; use Find Company to look one up by domain or another property first. Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',
-			description: 'The ID of the company to get.',
+			description: 'Map it from an earlier step like Find Company.',
 			required: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-					
-					name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
-					
-					**Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

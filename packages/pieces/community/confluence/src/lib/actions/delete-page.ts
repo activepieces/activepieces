@@ -7,6 +7,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const deletePageAction = createAction({
 	auth: confluenceAuth,
 	name: 'delete-page',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Page',
 	description: 'Trashes or permanently deletes a page.',
 	audience: 'both',

@@ -22,6 +22,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Re
 export const expenseReportSubmitted = createTrigger({
 	auth: workdayAuth,
 	name: 'expense_report_submitted',
+	classification: 'READ',
 	displayName: 'Expense Report Submitted',
 	description: 'Triggers when an expense report is submitted in Workday.',
 	aiMetadata: {

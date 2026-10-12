@@ -49,6 +49,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -163,7 +164,7 @@ function ConnectProviderForm({
               name="provider"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel>{t('Provider')}</FormLabel>
+                  <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={(selected) => {
@@ -206,7 +207,7 @@ function ConnectProviderForm({
               name="name"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel>{t('Name')}</FormLabel>
+                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder={t('e.g. Marketing')} />
                   </FormControl>
@@ -235,7 +236,16 @@ function ConnectProviderForm({
           <Button type="button" variant="outline" onClick={onCancel}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={connecting} disabled={connecting}>
+          <Button
+            type="submit"
+            loading={connecting}
+            disabled={connecting}
+            {...adminControl(
+              editing
+                ? AdminControl.AI_PROVIDER_KEY_CREDENTIALS_SUBMIT
+                : AdminControl.AI_PROVIDER_KEY_SUBMIT,
+            )}
+          >
             {editing ? t('Save credentials') : t('Connect')}
           </Button>
         </DialogFooter>
@@ -277,13 +287,8 @@ function CredentialFieldInput({
       name={`credentials.${field.key}`}
       render={({ field: formField }) => (
         <FormItem className="flex flex-col gap-1.5">
-          <FormLabel>
+          <FormLabel showRequiredIndicator={!field.optional}>
             {field.label}
-            {field.optional && (
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                {t('optional')}
-              </span>
-            )}
           </FormLabel>
           {field.options ? (
             <Select value={formField.value} onValueChange={formField.onChange}>
@@ -317,7 +322,9 @@ function CredentialFieldInput({
             </FormControl>
           )}
           {field.description && (
-            <FormDescription>{field.description}</FormDescription>
+            <FormDescription className="text-xs">
+              {field.description}
+            </FormDescription>
           )}
           <FormMessage />
         </FormItem>
@@ -350,7 +357,7 @@ function SecretInput({
         size="icon"
         tabIndex={-1}
         onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
+        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-gray-11 hover:text-gray-12"
       >
         {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>
@@ -365,7 +372,7 @@ function SetupInstructions({ info }: { info: AiProviderInfo }) {
       <CollapsibleTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-full items-center gap-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <ChevronDown
             className={cn('size-4 transition-transform', open && 'rotate-180')}

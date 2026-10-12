@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const closeIncidents = createAction({
   auth: coralogixAuth,
   name: 'closeIncidents',
+  classification: 'WRITE',
   displayName: 'Close Incidents',
   description: 'Close one or more Coralogix incidents (e.g. false positives or noise). Use Resolve for incidents that were actually fixed.',
   audience: 'both',

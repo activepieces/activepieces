@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -33,6 +32,9 @@ import {
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import { sampleData } from '../../sample-data';
 
 import AddEditSecretManagerConnectionDialog from './connect-secret-manager-dialog';
 
@@ -51,9 +53,9 @@ const SecretManagersPage = () => {
 
   const isLoading = isLoadingConnections;
 
-  const page = connections
-    ? { data: connections, next: null, previous: null }
-    : undefined;
+  const isSample = !platform.plan.secretManagersEnabled;
+  const rows = isSample ? sampleData.secretManagers() : connections;
+  const page = rows ? { data: rows, next: null, previous: null } : undefined;
 
   const columns: ColumnDef<
     RowDataWithActions<SecretManagerConnectionWithStatus>,
@@ -127,7 +129,7 @@ const SecretManagersPage = () => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
           return (
-            <Badge variant="outline" className="text-xs text-muted-foreground">
+            <Badge variant="outline" className="text-xs text-gray-11">
               {t('Not configured')}
             </Badge>
           );
@@ -157,7 +159,13 @@ const SecretManagersPage = () => {
         return (
           <div className="flex items-center gap-1 justify-end">
             <AddEditSecretManagerConnectionDialog connection={connection}>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                {...adminControl(
+                  AdminControl.SECRET_MANAGERS_CONNECTION_EDIT_OPEN,
+                )}
+              >
                 <Pencil className="size-4" />
               </Button>
             </AddEditSecretManagerConnectionDialog>
@@ -171,13 +179,20 @@ const SecretManagersPage = () => {
                 'Deleting this secret manager connection will break all flows/app connections using it.',
               )}
               entityName={connection.name}
+              controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
               mutationFn={async () => deleteConnection(connection.id)}
             >
               <div>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash className="size-4 text-destructive" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      {...adminControl(
+                        AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_OPEN,
+                      )}
+                    >
+                      <Trash className="size-4 text-danger-11" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Delete')}</TooltipContent>
@@ -191,39 +206,37 @@ const SecretManagersPage = () => {
   ];
 
   return (
-    <LockedFeatureGuard
-      featureKey="SECRET_MANAGERS"
-      locked={!platform.plan.secretManagersEnabled}
-      lockTitle={t('Enable Secret Managers')}
-      lockDescription={t('Manage your secrets from a single and secure place')}
-    >
-      <div className="flex-col w-full">
-        <DashboardPageHeader
-          title={t('Secret Managers')}
-          description={t('Manage Secret Manager connections')}
-        >
-          <AddEditSecretManagerConnectionDialog>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Connection')}
-            </AnimatedIconButton>
-          </AddEditSecretManagerConnectionDialog>
-        </DashboardPageHeader>
-        <DataTable
-          emptyStateTextTitle={t('No connections found')}
-          emptyStateTextDescription={t(
-            'Add a secret manager connection to manage your secrets',
-          )}
-          emptyStateIcon={<KeyRound className="size-14" />}
-          columns={columns}
-          page={page}
-          isLoading={isLoading}
-          isError={isConnectionsError}
-          errorStateEntity={t('secret managers')}
-          onRetry={refetchConnections}
-          hidePagination={true}
-        />
-      </div>
-    </LockedFeatureGuard>
+    <div className="flex-col w-full">
+      <DashboardPageHeader
+        title={t('Secret Managers')}
+        description={t('Manage Secret Manager connections')}
+      >
+        <AddEditSecretManagerConnectionDialog>
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+            {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_OPEN)}
+          >
+            {t('New Connection')}
+          </AnimatedIconButton>
+        </AddEditSecretManagerConnectionDialog>
+      </DashboardPageHeader>
+      <DataTable
+        emptyStateTextTitle={t('No connections found')}
+        emptyStateTextDescription={t(
+          'Add a secret manager connection to manage your secrets',
+        )}
+        emptyStateIcon={<KeyRound className="size-14" />}
+        columns={columns}
+        page={page}
+        isLoading={isSample ? false : isLoading}
+        isError={isSample ? false : isConnectionsError}
+        errorStateEntity={t('secret managers')}
+        onRetry={refetchConnections}
+        hidePagination={true}
+      />
+    </div>
   );
 };
 
@@ -244,6 +257,7 @@ const SecretManagerClearCacheButton = ({
           size="sm"
           loading={isClearingCache}
           onClick={() => clearCache(connection.id)}
+          {...adminControl(AdminControl.SECRET_MANAGERS_CACHE_RUN)}
         >
           <RefreshCcw className="size-4" />
         </Button>

@@ -5,6 +5,7 @@ import { posthogAuth } from '../..';
 export const posthogGetFeatureFlags = createAction({
   auth: posthogAuth,
   name: 'get_feature_flags',
+  classification: 'SEARCH',
   displayName: 'Get Feature Flags',
   description: 'List all feature flags in your PostHog project',
   audience: 'both',

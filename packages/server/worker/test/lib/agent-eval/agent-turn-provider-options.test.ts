@@ -26,14 +26,12 @@ async function capturedProviderOptions({ provider, modelId }: { provider: AIProv
     })
 
     await runAgentTurn({
-        model,
-        provider,
+        models: [{ model, provider, modelId: modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'hello' }],
         tools: {},
         allToolNames: [],
         tier: TIER,
-        modelId,
         phaseState: { phase: 'discovery' },
         abortSignal: new AbortController().signal,
         log: silentLog,

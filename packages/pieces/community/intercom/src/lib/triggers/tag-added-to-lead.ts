@@ -5,6 +5,7 @@ import { tagIdProp } from '../common/props';
 
 export const tagAddedToLeadTrigger = createTrigger({
 	name: 'tag-added-to-lead',
+	classification: 'READ',
 	displayName: 'Tag Added to Lead',
 	description: 'Triggers when a tag is added to a lead.',
 	aiMetadata: {

@@ -6,6 +6,7 @@ import { parallelClient } from '../common/client';
 export const getFindAllResultAction = createAction({
   auth: parallelAuth,
   name: 'get_findall_result',
+  classification: 'READ',
   displayName: 'Get FindAll Result',
   description:
     'Return the current snapshot of matched candidates for a FindAll run, including any enrichment fields.',

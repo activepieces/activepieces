@@ -17,13 +17,13 @@ export const FileMessage: React.FC<FileMessageProps> = ({
   const isVideo = mimeType?.startsWith('video/');
   return (
     <a
-      className="p-2 w-80 rounded-lg border px-2 max-w-full hover:bg-muted transition-colors cursor-pointer"
+      className="p-2 w-80 rounded-lg border px-2 max-w-full hover:bg-gray-3 transition-colors cursor-pointer"
       href={content}
       download={fileName ?? 'file'}
     >
       <div className="flex flex-row items-center gap-2">
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md">
-          <div className="h-full w-full flex items-center justify-center bg-foreground text-background">
+          <div className="h-full w-full flex items-center justify-center bg-gray-12 text-gray-1">
             {isVideo ? (
               <VideoIcon className="h-5 w-5" />
             ) : (
@@ -36,7 +36,7 @@ export const FileMessage: React.FC<FileMessageProps> = ({
             {fileName ?? (role === 'user' ? 'Untitled File' : 'Download File')}
           </div>
           {fileName && (
-            <div className="truncate text-sm text-token-text-tertiary leading-none">
+            <div className="truncate text-sm text-gray-11 leading-none">
               {role === 'user' ? 'View File' : 'Download File'}
             </div>
           )}
