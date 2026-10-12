@@ -123,6 +123,8 @@ export enum AdminControl {
   PIECE_SETS_SAVE_SUBMIT = 'piece-sets.save.submit',
   PIECE_SETS_REQUIRED_OPEN = 'piece-sets.required.open',
   PIECE_SETS_REQUIRED_SUBMIT = 'piece-sets.required.submit',
+  PIECE_SETS_REQUIRED_BULK_OPEN = 'piece-sets.required-bulk.open',
+  PIECE_SETS_REQUIRED_BULK_SUBMIT = 'piece-sets.required-bulk.submit',
   PIECES_DELETE_CONFIRM = 'pieces.delete.confirm',
   PIECES_DELETE_OPEN = 'pieces.delete.open',
   PIECES_INSTALL_OPEN = 'pieces.install.open',
