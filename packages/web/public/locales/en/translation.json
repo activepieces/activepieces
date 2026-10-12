@@ -3678,6 +3678,10 @@
   "{count, plural, =1 {1 required action} other {# required actions}}": "{count, plural, =1 {1 required action} other {# required actions}}",
   "{name} hidden": "{name} hidden",
   "{name} shown": "{name} shown",
+  "Decides which pieces builders in this project see.": "Decides which pieces builders in this project see.",
+  "Set by the embed token": "Set by the embed token",
+  "This project is embedded: the embed token sets its {term} at each sign-in, so a change here lasts until the next sign-in.": "This project is embedded: the embed token sets its {term} at each sign-in, so a change here lasts until the next sign-in.",
   "Turn off destructive actions": "Turn off destructive actions",
-  "Turn off write and destructive actions": "Turn off write and destructive actions"
+  "Turn off write and destructive actions": "Turn off write and destructive actions",
+  "{Term} for {name}": "{Term} for {name}"
 }

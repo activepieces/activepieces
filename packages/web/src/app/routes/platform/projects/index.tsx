@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { globalConnectionsQueries } from '@/features/connections';
+import { pieceSetQueries } from '@/features/piece-sets';
 import {
   CreateProjectButton,
   EditProjectDialog,
@@ -44,6 +45,7 @@ import { mutationFeedback } from '@/lib/mutation-feedback';
 import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
+import { useProjectPieceSetField } from './use-project-piece-set-field';
 
 export default function ProjectsPage() {
   const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
@@ -159,12 +161,18 @@ export default function ProjectsPage() {
         ).length ?? 0,
     }));
   }, [allProjects, allGlobalConnectionsPage?.data]);
+  const { data: pieceSets } = pieceSetQueries.useAllPieceSets();
+  const pieceSetField = useProjectPieceSetField({
+    project: editDialogProject,
+    pieceSets,
+  });
   const columns = useMemo(
     () =>
       projectsTableColumns({
         platform,
+        pieceSets,
       }),
-    [platform],
+    [platform, pieceSets],
   );
 
   const columnsWithCheckbox: ColumnDef<
@@ -526,6 +534,7 @@ export default function ProjectsPage() {
           }
         }
         projectId={editDialogProjectId}
+        pieceSetField={pieceSetField}
       />
     </AdminPage>
   );

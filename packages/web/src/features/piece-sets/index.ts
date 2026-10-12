@@ -9,3 +9,6 @@ export { pieceSetChanges } from './utils/piece-set-changes';
 export { pieceSetTerms } from './utils/piece-set-terms';
 export type { ChangePieceSet, PieceSetChange } from './utils/piece-set-changes';
 export { RequiredActionGroupHeader } from './components/required-action-group-header';
+export { PieceSetSelect } from './components/piece-set-select';
+export { projectPieceSet } from './utils/project-piece-set';
+export { useShowEmbedKey } from './hooks/use-show-embed-key';

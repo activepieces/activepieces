@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  PieceSet,
   PlatformWithoutSensitiveData,
   ProjectWithLimits,
   ProjectType,
@@ -15,18 +16,25 @@ import {
   Clock,
   Hash,
   Link2,
+  Puzzle,
 } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Skeleton } from '@/components/ui/skeleton';
+import { pieceSetTerms } from '@/features/piece-sets';
+
+import { ProjectPieceSetCell } from './project-piece-set-cell';
 
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
+  pieceSets: PieceSet[] | undefined;
 };
 
 export const projectsTableColumns = ({
   platform,
+  pieceSets,
 }: ProjectsTableColumnsProps): ColumnDef<
   RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
 >[] => {
@@ -105,6 +113,30 @@ export const projectsTableColumns = ({
       },
     },
   ];
+
+  if (platform.plan.managePiecesEnabled) {
+    const pieceSetColumn: ColumnDef<
+      RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
+    > & { notClickable: boolean } = {
+      id: 'pieceSet',
+      size: 220,
+      notClickable: true,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={pieceSetTerms.get().titleSingular}
+          icon={Puzzle}
+        />
+      ),
+      cell: ({ row }) =>
+        pieceSets === undefined ? (
+          <Skeleton className="h-8 w-44" />
+        ) : (
+          <ProjectPieceSetCell project={row.original} pieceSets={pieceSets} />
+        ),
+    };
+    columns.push(pieceSetColumn);
+  }
 
   if (platform.plan.embeddingEnabled) {
     columns.push({

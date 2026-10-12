@@ -33,6 +33,7 @@ import {
   pieceSetMutations,
   pieceSetQueries,
   pieceSetTerms,
+  useShowEmbedKey,
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -55,7 +56,6 @@ import {
   RequiredActionsList,
   RequiredActionsSheet,
 } from './required-actions';
-import { useShowEmbedKey } from './use-show-embed-key';
 
 const PieceSetDetailsPage = () => {
   const { id = '' } = useParams<{ id: string }>();
