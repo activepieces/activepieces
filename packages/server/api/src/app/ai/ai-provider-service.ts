@@ -124,6 +124,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return
         }
 
+        await this.assertAiProvidersPlan(platformId)
         await assertDisplayNameIsFree({ platformId, provider: aiProvider.provider, displayName: request.displayName, exceptId: providerId })
 
         const config = request.config ?? aiProvider.config
@@ -198,7 +199,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
-            await platformModelTierService.assertKeyCanBeDeleted({ manager, platformId, configId: providerId })
+            await platformModelTierService.removeKeyFromTiers({ manager, platformId, configId: providerId })
             return deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
         })
         await revokeKeyIfManaged({ row: deleted, log })
@@ -292,6 +293,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async assertModelAllowed({ platformId, provider, scope, configId, modelId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string, modelId: string }): Promise<void> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
         this.assertKeyAllowsModel({ key: aiProvider, modelId })
+    },
+    async assertAiProvidersPlan(platformId: PlatformId): Promise<void> {
+        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.aiProvidersEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: { message: 'AI providers are not included in your plan' },
+            })
+        }
     },
     assertKeyAllowsModel({ key, modelId }: { key: Pick<AIProviderSchema, 'modelScope' | 'modelIds'>, modelId: string }): void {
         if (!aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId })) {

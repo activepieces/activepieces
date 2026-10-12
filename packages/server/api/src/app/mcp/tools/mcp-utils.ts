@@ -1,4 +1,4 @@
-import { extractMustacheTokens, isNil, isObject, tryCatch } from '@activepieces/core-utils'
+import { applyFunctionToValuesSync, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
@@ -433,11 +433,24 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     const component = componentMap[componentName]
     if (isNil(component)) {
         const available = Object.keys(componentMap)
-        const suggestion = available.find((name) => name.includes(componentName))
-        const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true } }
+        const closestName = closestComponentName({ guess: componentName, available })
+        const hint = isNil(closestName) ? '' : ` Did you mean "${closestName}"?`
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true }, ...spreadIfDefined('closestName', closestName) }
     }
     return { piece, component, pieceName: normalized }
+}
+
+function closestComponentName({ guess, available }: { guess: string, available: string[] }): string | undefined {
+    const wanted = comparableName(guess)
+    if (wanted.length === 0) {
+        return undefined
+    }
+    const matches = available.filter((name) => comparableName(name).endsWith(wanted))
+    return matches.length === 1 ? matches[0] : undefined
+}
+
+function comparableName(name: string): string {
+    return name.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/s$/, '')
 }
 
 function findResolvableProps({ props, componentProps, auth, providedInput }: FindResolvablePropsParams): PropSummary[] {
@@ -636,10 +649,14 @@ function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigg
 }): { input?: Record<string, unknown>, loopItems?: string, conditions?: C } {
     const stepNames = flowStructureUtil.getAllSteps(trigger).map(s => s.name)
     return {
-        input: input ? expressionRewriter.rewriteDeep(input, stepNames, true) : undefined,
-        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
-        conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
+        input: input ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<Record<string, unknown>>(input, normalizeFormulaText), stepNames, true) : undefined,
+        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: normalizeFormulaText(loopItems), stepNames, idempotent: true }) : loopItems,
+        conditions: conditions ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<C>(conditions, normalizeFormulaText), stepNames, true) : conditions,
     }
+}
+
+function normalizeFormulaText(text: string): string {
+    return text.replace(DOUBLE_BRACED_FORMULA, (_match, version: string, expression: string) => `ap-formula-v${version}::{${expression}}::ap-formula-v${version}`)
 }
 
 function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
@@ -656,12 +673,13 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 }
 
 const RESOLVE_TIMEOUT_MS = 30_000
+const DOUBLE_BRACED_FORMULA = /ap-formula-v(\d+)::\{\{\s*([A-Za-z_]\w*\s*\([\s\S]*?\))\s*\}\}::ap-formula-v\1/g
 
 const CONTAINER_PROP_TYPES = new Set<PropertyType>([PropertyType.ARRAY, PropertyType.OBJECT, PropertyType.JSON])
 
 const ContainerCheckedProp = z.object({ type: z.enum(PropertyType), properties: z.unknown().optional() })
 
-const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder once with ap_create_folder, then pass the same folderName to each of them.')
+const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder with ap_create_folder in an earlier step than the calls that use it (never in the same step, they run at once), then pass the same folderName to each of them.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
     pieceName: string
@@ -903,6 +921,7 @@ export const mcpUtils = {
     publishedFlowWarning,
     diagnosePieceProps,
     coerceEmptyContainerInputs,
+    normalizeFormulaText,
     detectUnknownInputProps,
     rejectUnknownInputProps,
     dropUnknownInputProps,
@@ -1001,8 +1020,8 @@ type LookupPieceComponentParams = {
 }
 
 type LookupPieceComponentResult =
-    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
-    | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
+    | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never, closestName?: never }
+    | { error: McpToolResult, closestName?: string, piece?: never, component?: never, pieceName?: never }
 
 type ContainerCheckedProp = z.infer<typeof ContainerCheckedProp>
 

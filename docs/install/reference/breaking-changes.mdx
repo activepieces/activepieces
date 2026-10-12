@@ -4,96 +4,9 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
-## Unreleased
+## 0.92.0
 
 ### What has changed?
-
-#### Square 1.0.0 removes the New Invoice and New Appointment triggers
-
-Square 1.0.0 removes the **New Invoice** and **New Appointment** triggers. It also stops requesting the `INVOICES_READ`, `APPOINTMENTS_READ` and `APPOINTMENTS_WRITE` permissions, which nothing in the piece uses any more, and requests `PAYMENTS_WRITE`, `INVENTORY_READ`, `INVENTORY_WRITE` and `EMPLOYEES_READ` for the new payment, inventory and team actions.
-
-#### What you need to do
-
-Flows keep running on the Square version they were built with. If a flow starts with New Invoice or New Appointment, keep its Square trigger on its current version. To move it to 1.0.0, replace the trigger with the **Webhook** piece, subscribed in the Square Developer Console to `invoice.created` or `booking.created`. The webhook already carries the invoice or booking. To read the full record with **Custom API Call** (`GET /v2/invoices/{id}` or `GET /v2/bookings/{id}`), use a Square connection created before 1.0.0, because connections created or reconnected on 1.0.0 no longer have the invoice and appointment read permissions. Existing Square connections keep working. Reconnect Square only for the new actions that need payment, inventory or team permissions, and keep a separate older connection for invoice or booking reads.
-
-#### Total CMS 1.0.0 supports Total CMS 3 only
-
-Total CMS 0.2.0 called the Total CMS 1 and 2 API (`rw_common/plugins/stacks/total-cms/totalapi.php` with a license key), which Total CMS 3 no longer has. From 1.0.0 the piece uses the Total CMS 3 REST API. The connection now takes a **Site URL** and an **API Key** (Utilities → API Keys in the Total CMS admin, Pro edition) instead of a domain and license key.
-
-Actions now take a Collection ID and an Object ID instead of a "CMS ID", and a blog post's permalink is now its Post ID. The thumbnail, scale, crop and extension options on image actions are removed, because Total CMS 3 resizes images on request through ImageWorks. The RSS title and description, genre, labels, extra2 and archived fields on blog posts are removed, because the Total CMS 3 blog schema does not have them. Get Content takes a collection instead of a data type, Save Date takes a date and time instead of a Unix timestamp, and New Blog Post takes a blog collection, fires on the post's created time and skips drafts by default.
-
-#### What you need to do
-
-Upgrade the site to Total CMS 3, create an API key and reconnect with the Site URL and API Key. Then upgrade each Total CMS step to 1.0.0 and map its inputs again. Steps keep running on the version they were built with until you upgrade them, and those steps stop working once the site runs Total CMS 3.
-
-#### AI steps and agents stop running a model their key no longer allows
-
-An AI provider key can limit which models it offers. Until now, a flow AI step or a flow-step agent that already named a model kept running it after an admin removed that model from the key's list. From this release the step fails with "The model … isn't allowed for this AI provider key anymore". This is checked when the step is queued and again when it runs.
-
-Two key edits are now refused instead of silently breaking things: limiting the projects of a key that web search, web scraping or image generation uses for every project, and removing a typed-in model (Vertex, OpenAI-compatible, Cloudflare) that a platform tier uses. Platform-wide AI work, such as tool-search embeddings, now prefers a key that serves every project over one limited to a few.
-
-#### What you need to do
-
-If a flow step or agent fails with that message, pick a model the key allows, or add the model back to the key's list in AI Center. To limit a capability key's projects, choose a different key for that capability first.
-
-#### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
-
-Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
-
-Get File used to return a `file_url` that contained the bot token, which put the token in the run's step output. From 0.8.0 the output no longer has `file_url`. With **Download File** on, it still returns the content as `file_content_base64`.
-
-#### What you need to do
-
-If a flow branches on Get Chat or Get Chat Member returning `ok: false`, handle the failure with the step's error handling options instead. If a later step reads Get File's `file_url`, turn on **Download File** and use `file_content_base64`. Steps keep running on the version they were built with until you upgrade them.
-
-#### Xero connections request Xero's granular scopes
-
-Since 2 March 2026 Xero refuses the broad scopes `accounting.transactions`, `accounting.reports.read` and `accounting.journals.read` for newly created Xero apps, so connecting such an app failed with `invalid_scope`. From Xero 0.8.0, new connections request the granular scopes instead: `accounting.invoices`, `accounting.payments`, `accounting.banktransactions`, `accounting.manualjournals` and the per-report scopes (aged, balance sheet, bank summary, executive summary, profit and loss, tax and trial balance reports). Existing connections are unaffected: Xero keeps the permissions granted at sign-in, and token refresh sends no scope.
-
-New connections no longer have Xero's Receipts, Expense Claims or Journals permissions, because Xero does not grant `accounting.classicexpenses` or `accounting.journals.read` to new apps. On those connections, Upload Attachment with the Receipt resource type fails with a message saying so, and Custom API Call to `/Receipts`, `/ExpenseClaims` or `/Journals` returns 401 or 403.
-
-#### What you need to do
-
-Nothing for existing Xero connections. To connect a Xero app created on or after 2 March 2026, upgrade the Xero step to 0.8.0 or later before creating the connection; a connection created from a step still on an earlier version requests the old scopes. Keep a connection created before 0.8.0 if your flows attach files to Receipts or call the Receipts, Expense Claims or Journals endpoints.
-
-#### Helm chart 0.5.0 uses the cluster's default StorageClass again
-
-Chart 0.4.0 set the app's cache volume to the `local-path` StorageClass whenever `persistence.storageClassName` was unset, which only exists on k3s-style clusters, so new installs elsewhere stayed `Pending`. From 0.5.0 an unset value uses the cluster's default StorageClass again, as chart 0.3.x did. A StatefulSet's volume class cannot change after it is created, so `helm upgrade` keeps the class your release already uses.
-
-#### What you need to do
-
-If your release was created with chart 0.4.0, you never set `persistence.storageClassName`, and you deploy by rendering the chart without a cluster connection (Argo CD, `helm template | kubectl apply`), pin the class your StatefulSet was created with before upgrading, or every sync fails with `updates to statefulset spec ... are forbidden`:
-
-```yaml
-persistence:
-  storageClassName: "local-path"
-```
-
-Direct `helm upgrade` needs no change. A new install on a cluster with no default StorageClass (`kubectl get storageclass` shows none marked `(default)`) must set `persistence.storageClassName`, or the cache volume and the app pod stay `Pending`.
-
-#### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
-
-Read File used to send the connection's Zoho access token to whatever URL it was given, including hosts outside Zoho. From Zoho CRM 0.4.0 it only fetches `https` URLs on the connection's own Zoho API host under `/crm/` (for example `https://www.zohoapis.com/crm/bulk/v8/read/<job>/result`), or on that data centre's download hosts (for example `https://download-accl.zoho.com/v2/crm/...` for a data backup). Custom Zoho function URLs (`/crm/.../functions/...`) and URLs in another data centre are refused. Any other URL fails before a request is made. Redirects are followed only to those same hosts; a redirect anywhere else stops the download before that host is requested. The file is streamed, so the deployment's file size limit (`AP_MAX_FILE_SIZE_MB`) applies.
-
-Custom API Call keeps working with paths such as `/Leads` and with full URLs on the connection's own API host (for example `https://www.zohoapis.com/crm/v8/...`). A full URL on any other host, including other Zoho hosts, now fails before a request is made instead of receiving the token.
-
-#### What you need to do
-
-Nothing if your Read File steps point at Zoho CRM backup, bulk-read or API file URLs of the connected account, and your Custom API Call steps use a path or a URL on the connection's API host. If a step calls any other URL, replace it with the HTTP piece's Send HTTP Request action. Steps keep running on the version they were built with until you upgrade them.
-
-#### Instagram for Business no longer reports success when a reel fails to publish
-
-Publishing a reel uploads the video to Instagram and then waits for Instagram to finish processing it before the post goes live. The piece used to give up after about a hundred seconds and return the boolean `false`, which the flow recorded as a **successful** step. Anything downstream carried on with `false` where a media id was expected, and nothing in the run said the post had not been published.
-
-Upload Reel now throws when Instagram reports an error, and waits up to five minutes, which is the window Instagram's own guidance describes. Upload Photo waits for the same signal instead of publishing blind, so a container Instagram rejects now surfaces as a failed step rather than a confusing error from the next call.
-
-The piece also moves from Graph API v17.0, which expired on 12 September 2025, to v23.0.
-
-#### What you need to do
-
-If a flow branches on the output of Upload Reel being `false`, that branch will no longer be taken — the step fails instead. Handle the failure with the step's error handling options, or with a branch on the run status.
-
-Reconnect your Instagram connections. The piece now requests the permissions needed for comments, insights, content management, direct messages and Page metadata, and a token issued before this release does not carry them. Steps that were saved earlier will also ask you to select the Page again, because messaging needs the Facebook Page id that the Page dropdown now stores.
 
 #### The AI provider config endpoint is removed
 
@@ -175,28 +88,6 @@ Clearing a description from this action is therefore no longer possible; that is
 #### What you need to do
 
 Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
-
-#### WhatsApp Business' Send Message and Send Media return the API response instead of the HTTP envelope
-
-The WhatsApp Business piece returned two different shapes depending on which action you used. `Send Template Message` returned the WhatsApp Cloud API payload directly, while `Send Message` and `Send Media` returned the whole HTTP response, so the same payload sat one level down under `body`, alongside `status` and `headers`.
-
-Both actions now return the API payload directly, matching `Send Template Message` and every other action in the piece. A step that produced
-
-```json
-{ "status": 200, "headers": { }, "body": { "messaging_product": "whatsapp", "messages": [{ "id": "wamid.…" }] } }
-```
-
-now produces
-
-```json
-{ "messaging_product": "whatsapp", "contacts": [{ "input": "…", "wa_id": "…" }], "messages": [{ "id": "wamid.…" }] }
-```
-
-The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE` constant. It previously split between `v17.0` (expired September 2025) and `v20.0` (expires 24 September 2026).
-
-#### What you need to do
-
-Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.
 
 ## 0.91.0
 
