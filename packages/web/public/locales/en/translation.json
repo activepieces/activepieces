@@ -3677,5 +3677,7 @@
   "{count, plural, =1 {1 piece shown} other {# pieces shown}}": "{count, plural, =1 {1 piece shown} other {# pieces shown}}",
   "{count, plural, =1 {1 required action} other {# required actions}}": "{count, plural, =1 {1 required action} other {# required actions}}",
   "{name} hidden": "{name} hidden",
-  "{name} shown": "{name} shown"
+  "{name} shown": "{name} shown",
+  "Turn off destructive actions": "Turn off destructive actions",
+  "Turn off write and destructive actions": "Turn off write and destructive actions"
 }
