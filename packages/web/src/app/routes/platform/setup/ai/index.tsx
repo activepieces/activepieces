@@ -1,7 +1,6 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
-import { AdminPage } from '@/app/components/admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { CapabilitiesTab } from './capabilities-tab';
@@ -14,25 +13,17 @@ export default function AIProvidersPage({ section }: AIProvidersPageProps) {
 
 function AICenter({ section }: { section: AISection }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const [searchParams] = useSearchParams();
-  const showsSettings =
-    section === 'capabilities' || searchParams.has('config');
 
   if (section === 'capabilities' && edition === ApEdition.COMMUNITY) {
     return <Navigate to="/platform/ai" replace />;
   }
-
-  return (
-    <AdminPage width={showsSettings ? 'content' : 'full'}>
-      {section === 'providers' ? (
-        <ProvidersTab />
-      ) : section === 'tiers' ? (
-        <TiersTab />
-      ) : (
-        <CapabilitiesTab />
-      )}
-    </AdminPage>
-  );
+  if (section === 'providers') {
+    return <ProvidersTab />;
+  }
+  if (section === 'tiers') {
+    return <TiersTab />;
+  }
+  return <CapabilitiesTab />;
 }
 
 type AISection = 'providers' | 'capabilities' | 'tiers';

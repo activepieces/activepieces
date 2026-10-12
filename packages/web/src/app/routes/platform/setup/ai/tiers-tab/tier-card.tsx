@@ -24,7 +24,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { ReactNode, useRef, useState } from 'react';
 
-import { adminFeedback, adminSurface } from '@/app/components/admin';
+import { adminFeedback, SettingsPanel } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -179,68 +179,46 @@ export function TierCard({
   );
 
   return (
-    <section
-      className={cn(
-        adminSurface.card,
-        'flex flex-col transition-opacity',
-        unavailableHere && 'opacity-60',
-      )}
-      aria-label={tier.name}
-    >
-      <header className="flex items-center gap-3 px-5 py-4">
-        <span
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-3 text-xl"
-          aria-hidden="true"
-        >
-          {tier.emoji}
+    <SettingsPanel
+      flush
+      className={cn('transition-opacity', unavailableHere && 'opacity-60')}
+      title={
+        <span className="flex flex-wrap items-center gap-2">
+          <span
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-base"
+            aria-hidden="true"
+          >
+            {tier.emoji}
+          </span>
+          <TextWithTooltip tooltipMessage={tier.name}>
+            <span className="truncate">{tier.name}</span>
+          </TextWithTooltip>
+          {tier.isDefault && (
+            <TierTag
+              icon={Star}
+              className="border-accent-6 bg-accent-3 text-accent-11"
+            >
+              {t('Default')}
+            </TierTag>
+          )}
+          {tier.isFast && (
+            <TierTag
+              icon={Zap}
+              className="border-warning-7 bg-warning-3 text-warning-11"
+            >
+              {t('Fast')}
+            </TierTag>
+          )}
+          {thinkingChip !== undefined && (
+            <TierTag icon={Brain}>{thinkingChip}</TierTag>
+          )}
+          {tools === 'recommended' && (
+            <TierTag icon={MessageSquare}>{t('Recommended for chat')}</TierTag>
+          )}
         </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <TextWithTooltip tooltipMessage={tier.name}>
-              <h3 className="truncate text-sm font-semibold">{tier.name}</h3>
-            </TextWithTooltip>
-            {tier.isDefault && (
-              <TierTag
-                icon={Star}
-                className="border-accent-6 bg-accent-3 text-accent-11"
-              >
-                {t('Default')}
-              </TierTag>
-            )}
-            {tier.isFast && (
-              <TierTag
-                icon={Zap}
-                className="border-warning-7 bg-warning-3 text-warning-11"
-              >
-                {t('Fast')}
-              </TierTag>
-            )}
-            {thinkingChip !== undefined && (
-              <TierTag icon={Brain}>{thinkingChip}</TierTag>
-            )}
-            {tools === 'recommended' && (
-              <TierTag icon={MessageSquare}>
-                {t('Recommended for chat')}
-              </TierTag>
-            )}
-          </div>
-          {tier.description && (
-            <p className="truncate text-xs text-gray-11">{tier.description}</p>
-          )}
-          {notices.length > 0 && (
-            <ul className="flex flex-col gap-0.5 pt-1">
-              {notices.map((notice) => (
-                <li
-                  key={notice}
-                  className="flex items-start gap-1.5 text-xs text-warning-11"
-                >
-                  <TriangleAlert className="mt-0.5 size-3 shrink-0" />
-                  <span>{notice}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      }
+      description={tier.description || undefined}
+      action={
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -301,9 +279,22 @@ export function TierCard({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </header>
-
-      <div className="flex flex-col gap-1 border-t px-3 pb-3 pt-3">
+      }
+    >
+      <div className="flex flex-col gap-1 px-3 pb-3 pt-3">
+        {notices.length > 0 && (
+          <ul className="flex flex-col gap-0.5 px-2 pb-2">
+            {notices.map((notice) => (
+              <li
+                key={notice}
+                className="flex items-start gap-1.5 text-xs text-warning-11"
+              >
+                <TriangleAlert className="mt-0.5 size-3 shrink-0" />
+                <span>{notice}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <div className="flex items-center gap-1.5 px-2 pb-1">
           <span className="text-xs font-medium text-gray-11">
             {t('Model & fallbacks')}
@@ -470,7 +461,7 @@ export function TierCard({
           </div>
         )}
       </div>
-    </section>
+    </SettingsPanel>
   );
 }
 

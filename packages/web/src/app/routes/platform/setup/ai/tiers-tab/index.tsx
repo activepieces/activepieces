@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 
 import {
   AdminEmpty,
+  AdminPage,
   AdminPageHeader,
   AdminQueryState,
   adminPageResources,
@@ -107,7 +108,7 @@ export function TiersTab() {
     Promise.all([refetchTiers(), refetchConfigs(), refetchConfiguration()]);
 
   return (
-    <>
+    <AdminPage width="content">
       <AdminPageHeader
         title={t('Tiers')}
         badge={
@@ -282,7 +283,7 @@ export function TiersTab() {
         returnFocusTo={focusTarget}
         onReturnFocus={focusBack}
       />
-    </>
+    </AdminPage>
   );
 }
 
