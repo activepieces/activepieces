@@ -2,7 +2,7 @@
 
 Drop this folder into `packages/pieces/community/bulkpublish` of activepieces/activepieces.
 
-- **Auth:** Secret Text API key (`bp_...`, from BulkPublish **Settings > API Keys**), sent as `Authorization: Bearer <key>`. Validated with `GET /api/channels`.
+- **Auth:** Secret Text API key (`bp_...`, from https://app.bulkpublish.com/developer), sent as `Authorization: Bearer <key>`. Validated with `GET /api/channels`.
 - **Actions:** Create Post (publish now / schedule / draft, multi-channel), Upload Media, Update Post, Delete Post, Retry Failed Post, List Channels, Get Post, Custom API Call.
 - **Triggers (polling):** New Post Published, Post Failed, New Scheduled Post. All poll `GET /api/posts?status=...&limit=100` and dedupe by post ID in the trigger store. BulkPublish has no outbound webhooks.
 

@@ -12,7 +12,7 @@ export const BULKPUBLISH_BASE_URL = 'https://app.bulkpublish.com';
 export const bulkpublishAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description:
-    'Create an API key in BulkPublish under **Settings > API Keys**. It starts with `bp_`.',
+    'Create an API key at https://app.bulkpublish.com/developer. It starts with `bp_`.',
   required: true,
   validate: async ({ auth }) => {
     try {
