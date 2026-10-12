@@ -5,7 +5,6 @@ import { Check, Info } from 'lucide-react';
 import { useState } from 'react';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -76,6 +75,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
   const hasAnnualOption = allPlans.some(
     (plan) => plan.interval === planSelectorUtils.ANNUAL_INTERVAL,
   );
+  const annualSavedMonths = planSelectorUtils.annualSavedMonths(allPlans);
   const [cycleOverride, setCycleOverride] = useState<BillingCycle | null>(null);
   const billingCycle =
     cycleOverride ??
@@ -129,7 +129,16 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
         >
           <TabsList>
             <TabsTrigger value="month">{t('Monthly')}</TabsTrigger>
-            <TabsTrigger value="year">{t('Annually')}</TabsTrigger>
+            <TabsTrigger value="year" className="gap-1.5">
+              {t('Annually')}
+              {!isNil(annualSavedMonths) && (
+                <span className="text-xs font-medium text-accent-11">
+                  {t('Save {count, plural, =1 {1 month} other {# months}}', {
+                    count: annualSavedMonths,
+                  })}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       )}
@@ -143,14 +152,6 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
                   key: entry.key,
                   cycle: entry.key === 'free' ? 'month' : billingCycle,
                 });
-          const monthlySibling =
-            entry.key === 'enterprise' || entry.key === 'free'
-              ? undefined
-              : planSelectorUtils.findPurchasablePlan({
-                  plans: allPlans,
-                  key: entry.key,
-                  cycle: 'month',
-                });
           return (
             <PlanColumn
               key={entry.key}
@@ -159,7 +160,6 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
               pricing={planSelectorUtils.computePricing({
                 entry,
                 apiPlan,
-                monthlySibling,
               })}
               currentPlanId={currentPlanId}
               hasScheduledChange={hasScheduledChange}
@@ -271,16 +271,6 @@ function PlanColumn({
               <span className="text-3xl font-bold">{pricing.amount}</span>
               {!isNil(pricing.suffix) && (
                 <span className="text-sm text-gray-11">{pricing.suffix}</span>
-              )}
-              {!isNil(pricing.freeMonths) && (
-                <Badge variant="accent" className="rounded-sm">
-                  {t(
-                    '{count, plural, =1 {1 free month} other {# free months}}',
-                    {
-                      count: pricing.freeMonths,
-                    },
-                  )}
-                </Badge>
               )}
             </div>
             {!isNil(pricing.annualNote) && (

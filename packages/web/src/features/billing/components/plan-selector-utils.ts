@@ -31,11 +31,9 @@ function findPurchasablePlan({
 function computePricing({
   entry,
   apiPlan,
-  monthlySibling,
 }: {
   entry: PlanCatalogEntry;
   apiPlan?: PurchasablePlan;
-  monthlySibling?: PurchasablePlan;
 }): PlanPricing | null {
   if (entry.key === 'enterprise') {
     return null;
@@ -56,19 +54,31 @@ function computePricing({
     return { amount: apiPlan.priceDisplay ?? '', suffix: t('/year') };
   }
   const perMonth = Math.floor(apiPlan.price / 12);
-  const monthlyPrice = monthlySibling?.price;
-  const freeMonths =
-    !isNil(monthlyPrice) && monthlyPrice > 0
-      ? Math.round(12 - apiPlan.price / monthlyPrice)
-      : null;
   return {
     amount: `$${perMonth.toLocaleString()}`,
-    suffix: t('/mo'),
-    freeMonths: !isNil(freeMonths) && freeMonths >= 1 ? freeMonths : null,
-    annualNote: t('billed annually ({total}/year)', {
-      total: `$${apiPlan.price.toLocaleString()}`,
-    }),
+    annualNote: t('flat per month, billed yearly'),
   };
+}
+
+function annualSavedMonths(plans: PurchasablePlan[]): number | null {
+  const savedMonths = PLAN_CATALOG.flatMap((entry) => {
+    const annualPrice = findPurchasablePlan({
+      plans,
+      key: entry.key,
+      cycle: 'year',
+    })?.price;
+    const monthlyPrice = findPurchasablePlan({
+      plans,
+      key: entry.key,
+      cycle: 'month',
+    })?.price;
+    if (isNil(annualPrice) || isNil(monthlyPrice) || monthlyPrice <= 0) {
+      return [];
+    }
+    return [Math.round(12 - annualPrice / monthlyPrice)];
+  });
+  const mostSaved = Math.max(0, ...savedMonths);
+  return mostSaved >= 1 ? mostSaved : null;
 }
 
 function resolveFeatures({
@@ -263,6 +273,7 @@ export const planSelectorUtils = {
   stripPlanInterval,
   findPurchasablePlan,
   computePricing,
+  annualSavedMonths,
   resolveFeatures,
   creditsLabel,
   dropToFreeWarning,
@@ -283,7 +294,6 @@ export type CheckoutAction = 'create' | 'upgrade' | 'downgrade';
 export type PlanPricing = {
   amount: string;
   suffix?: string;
-  freeMonths?: number | null;
   annualNote?: string;
 };
 
