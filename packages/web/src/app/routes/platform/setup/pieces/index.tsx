@@ -26,7 +26,6 @@ import {
   useAdminAction,
 } from '@/app/components/admin';
 import { EnterpriseLockedSection } from '@/app/components/enterprise-gate';
-import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
@@ -227,7 +226,6 @@ export const PiecesListTab = () => {
         errorStateEntity={t('pieces')}
         onRetry={refetchPieces}
         toolbarButtons={[
-          <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
           <DownloadPiecesReportButton key="download-report" />,
           <SyncPiecesButton key="sync" />,
         ]}
