@@ -91,7 +91,9 @@ export default function UsersPage() {
   }, [usersData, invitationsData]);
 
   const isLoading = usersLoading || invitationsLoading;
-  const isError = usersError || invitationsError;
+  const isError =
+    (usersError && usersData === undefined) ||
+    (invitationsError && invitationsData === undefined);
 
   const invalidate = [platformUserKeys.users, platformUserKeys.invitations];
 
@@ -168,7 +170,7 @@ export default function UsersPage() {
         emptyStateIcon={<User />}
         columns={columns}
         page={{
-          data: combinedData,
+          data: isError ? [] : combinedData,
           next: usersData?.next || null,
           previous: usersData?.previous || null,
         }}

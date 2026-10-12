@@ -18,6 +18,7 @@ import {
 import { Shortcut } from '@/components/custom/shortcut';
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { TOAST_CLEARANCE_VAR } from '@/lib/toast-interaction';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
@@ -57,6 +58,7 @@ export function SaveBar({
   };
   const canSave = showSave && (saveEnabled ?? dirty) && !disabled && !saving;
   useSaveShortcut({ rootRef, canSave, onSave: saveNow });
+  useToastClearance(rootRef);
 
   return (
     <div
@@ -154,6 +156,24 @@ function useSaveShortcut({
     return () => {
       mountedSaveBars.delete(root);
       document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [rootRef]);
+}
+
+function useToastClearance(rootRef: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const style = document.documentElement.style;
+    const observer = new ResizeObserver(() => {
+      style.setProperty(TOAST_CLEARANCE_VAR, `${root.offsetHeight}px`);
+    });
+    observer.observe(root);
+    return () => {
+      observer.disconnect();
+      style.removeProperty(TOAST_CLEARANCE_VAR);
     };
   }, [rootRef]);
 }

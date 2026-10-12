@@ -45,7 +45,7 @@ export function useAdminAction<TVars = void, TData = unknown>({
           name: nameOf(vars),
         });
       if (undo === undefined) {
-        toast.success(message);
+        toast.success(message, { id: message });
         return;
       }
       mutationFeedback.undo({
@@ -169,12 +169,13 @@ function notifyDone({
   verb: AdminVerb;
   name?: string;
 }): void {
-  toast.success(done({ verb, name }));
+  const message = done({ verb, name });
+  toast.success(message, { id: message });
 }
 
 function notifyStatus({ ok, message }: { ok: boolean; message: string }): void {
   if (ok) {
-    toast.success(message);
+    toast.success(message, { id: message });
     return;
   }
   toast.error(message);
@@ -185,12 +186,14 @@ async function runEach<T>({
   run,
   verb,
   label,
+  nameOf,
   describe,
 }: {
   items: T[];
   run: (item: T) => Promise<unknown>;
   verb: AdminVerb;
   label: (count: number) => string;
+  nameOf?: (item: T) => string;
   describe?: (error: unknown) => string | undefined;
 }): Promise<void> {
   const results = await Promise.allSettled(items.map(run));
@@ -203,14 +206,19 @@ async function runEach<T>({
   if (failures.length === items.length) {
     throw failures[0];
   }
+  const failedOnes = items.filter(
+    (_, index) => results[index].status === 'rejected',
+  );
+  const name =
+    failedOnes.length === 1 && nameOf !== undefined
+      ? nameOf(failedOnes[0])
+      : label(failures.length);
   mutationFeedback.error({
     error: failures[0],
-    title: failed({ verb, name: label(failures.length) }),
+    title: failed({ verb, name }),
     description: describe?.(failures[0]),
   });
-  const partial = new BulkPartialFailure(
-    items.filter((_, index) => results[index].status === 'rejected'),
-  );
+  const partial = new BulkPartialFailure(failedOnes);
   mutationFeedback.markShown(partial);
   throw partial;
 }

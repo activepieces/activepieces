@@ -199,7 +199,9 @@ describe('EventDestinationActions delete', () => {
     confirmDelete();
     await settle();
 
-    expect(toastMock.success).toHaveBeenCalledWith('Destination deleted');
+    expect(toastMock.success).toHaveBeenCalledWith('Destination deleted', {
+      id: 'Destination deleted',
+    });
     expect(toastMock.error).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(0);
   });

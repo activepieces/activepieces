@@ -11,6 +11,7 @@ import { McpToolTierList } from '@/app/components/project-settings/mcp-server/to
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
 
@@ -58,7 +59,8 @@ function AccessContent() {
     isError,
     refetch,
   } = platformMcpHooks.usePlatformMcpServer();
-  const { mutate: updateTools } = platformMcpHooks.useUpdatePlatformMcpTools();
+  const { mutate: updateTools, mutateAsync: updateToolsAsync } =
+    platformMcpHooks.useUpdatePlatformMcpTools();
 
   return (
     <AdminQueryState
@@ -73,9 +75,20 @@ function AccessContent() {
         <McpToolTierList
           disabledTools={mcpServer.disabledTools}
           scope="platform"
-          onUpdateDisabledTools={({ tools, onSettled }) =>
-            updateTools({ disabledTools: tools }, { onSettled })
-          }
+          onUpdateDisabledTools={({ tools, onSettled }) => {
+            const previous = mcpServer.disabledTools ?? [];
+            updateTools(
+              { disabledTools: tools },
+              {
+                onSettled,
+                onSuccess: () =>
+                  mutationFeedback.undo({
+                    message: t('Changes saved'),
+                    onUndo: () => updateToolsAsync({ disabledTools: previous }),
+                  }),
+              },
+            );
+          }}
         />
       )}
     </AdminQueryState>

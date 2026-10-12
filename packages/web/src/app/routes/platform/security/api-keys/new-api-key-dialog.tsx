@@ -1,3 +1,4 @@
+import { formErrors } from '@activepieces/core-utils';
 import { ApiKeyResponseWithValue } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
@@ -33,7 +34,7 @@ type NewApiKeyDialogProps = {
   onCreate: () => void;
 };
 const FormSchema = z.object({
-  displayName: z.string().min(1, t('Name is required')),
+  displayName: z.string().trim().min(1, formErrors.required),
 });
 
 type FormSchema = z.infer<typeof FormSchema>;
@@ -48,12 +49,15 @@ export const NewApiKeyDialog = ({
   );
   const form = useForm<FormSchema>({
     resolver: zodResolver(FormSchema),
+    mode: 'onChange',
+    defaultValues: { displayName: '' },
   });
 
   const { mutate, isPending } = useAdminAction<void, ApiKeyResponseWithValue>({
     verb: 'create',
     name: t('API key'),
-    run: () => apiKeyApi.create(form.getValues()),
+    run: () =>
+      apiKeyApi.create({ displayName: form.getValues().displayName.trim() }),
     onSuccess: ({ data }) => {
       setApiKey(data);
       onCreate();
@@ -130,11 +134,7 @@ export const NewApiKeyDialog = ({
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
                     <FormLabel>{t('Name')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      placeholder={t('API Key Name')}
-                    />
+                    <Input {...field} placeholder={t('API Key Name')} />
                     <FormMessage />
                   </FormItem>
                 )}

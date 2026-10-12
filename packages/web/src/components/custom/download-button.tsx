@@ -45,6 +45,7 @@ export const DownloadButton = ({
           size="icon"
           className={className}
           onClick={() => downloadFile()}
+          aria-label={t('Download')}
           {...props}
         >
           <Download className="h-4 w-4"></Download>

@@ -17,7 +17,14 @@ function ignoreToastInteraction<E extends Event>(
   };
 }
 
+function bottomOffset(base: number): string {
+  return `calc(${base}px + var(${TOAST_CLEARANCE_VAR}, 0px))`;
+}
+
+export const TOAST_CLEARANCE_VAR = '--ap-toast-clearance';
+
 export const toastInteraction = {
   isToastInteraction,
   ignore: ignoreToastInteraction,
+  bottomOffset,
 };

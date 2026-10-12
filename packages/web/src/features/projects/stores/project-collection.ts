@@ -16,7 +16,12 @@ import {
   or,
   useLiveSuspenseQuery,
 } from '@tanstack/react-db';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  skipToken,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -70,7 +75,10 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
 
 let authoritativeProjectsGeneration = 0;
 
+const UPDATE_PROJECT_MUTATION_KEY = ['update-project'];
+
 export const projectCollectionUtils = {
+  updateMutationKey: UPDATE_PROJECT_MUTATION_KEY,
   useCreateProject: (
     onSuccess: (project: ProjectWithLimits) => void,
     onError: (error: Error) => void,
@@ -93,6 +101,7 @@ export const projectCollectionUtils = {
     onError: (error: Error) => void,
   ) => {
     return useMutation({
+      mutationKey: UPDATE_PROJECT_MUTATION_KEY,
       mutationFn: ({
         projectId,
         request,
@@ -124,6 +133,13 @@ export const projectCollectionUtils = {
   refetchProjects: () => {
     authoritativeProjectsGeneration += 1;
     return projectCollection.utils.refetch();
+  },
+  useLoadState: () => {
+    const { isError, isFetching } = useQuery(
+      { queryKey: ['projects'], queryFn: skipToken },
+      collectionQueryClient,
+    );
+    return { isError, isFetching };
   },
   markFlowActivity: ({
     projectId,

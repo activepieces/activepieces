@@ -57,7 +57,7 @@ function renderPage() {
 }
 
 const GOOGLE_HINT =
-  "Allow logins through google's single sign-on functionality. Turn on email or SAML before turning this off, so people can still sign in.";
+  'Allow logins through Google single sign-on. Turn on email or SAML before turning this off, so people can still sign in.';
 
 beforeEach(() => {
   state.platform = {

@@ -84,9 +84,9 @@ const SSOPage = () => {
           description={
             googleIsOnlyMethod
               ? t(
-                  "Allow logins through google's single sign-on functionality. Turn on email or SAML before turning this off, so people can still sign in.",
+                  'Allow logins through Google single sign-on. Turn on email or SAML before turning this off, so people can still sign in.',
                 )
-              : t("Allow logins through google's single sign-on functionality.")
+              : t('Allow logins through Google single sign-on.')
           }
         >
           <InstantSwitch
@@ -120,9 +120,7 @@ const SSOPage = () => {
           title={t('SAML 2.0')}
           description={
             <div className="flex flex-col gap-2">
-              {t(
-                "Allow logins through saml 2.0's single sign-on functionality.",
-              )}
+              {t('Allow logins through SAML 2.0 single sign-on.')}
               {platform.ssoDomain && (
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{platform.ssoDomain}</Badge>

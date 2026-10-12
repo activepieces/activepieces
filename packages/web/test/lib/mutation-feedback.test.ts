@@ -18,6 +18,7 @@ import {
   INTERNAL_ERROR_MESSAGE,
   VALIDATION_ERROR_MESSAGE,
   NETWORK_ERROR_MESSAGE,
+  PLAN_LIMIT_EVENT,
   UNDO_TOAST_DURATION_MS,
   mutationFeedback,
 } from '@/lib/mutation-feedback';
@@ -36,6 +37,17 @@ const serverError = ({
     headers: {},
     config,
     data: message === undefined ? {} : { params: { message } },
+  });
+};
+
+const quotaError = () => {
+  const config = { headers: new AxiosHeaders() };
+  return new AxiosError('Request failed', 'ERR_BAD_REQUEST', config, null, {
+    status: 402,
+    statusText: '',
+    headers: {},
+    config,
+    data: { code: 'QUOTA_EXCEEDED', params: { metric: 'users' } },
   });
 };
 
@@ -233,6 +245,47 @@ describe('mutationFeedback.undo', () => {
       }),
     );
     expect(toast.success).toHaveBeenCalledTimes(1);
+  });
+
+  it('says the undo failed when it hits a plan limit', async () => {
+    const failure = quotaError();
+    const onPlanLimit = vi.fn();
+    window.addEventListener(PLAN_LIMIT_EVENT, onPlanLimit);
+    mutationFeedback.undo({
+      message: 'Acme deactivated',
+      onUndo: vi.fn().mockRejectedValue(failure),
+    });
+
+    toast.success.mock.calls[0][1].action.onClick();
+
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Couldn't undo", {
+        description: "You've reached your plan's limit.",
+      }),
+    );
+    expect(onPlanLimit).toHaveBeenCalledTimes(1);
+    window.removeEventListener(PLAN_LIMIT_EVENT, onPlanLimit);
+  });
+
+  it('still says the undo failed when a plan limit dialog already opened', async () => {
+    const failure = quotaError();
+    mutationFeedback.markShown(failure);
+    const onPlanLimit = vi.fn();
+    window.addEventListener(PLAN_LIMIT_EVENT, onPlanLimit);
+    mutationFeedback.undo({
+      message: 'Acme deactivated',
+      onUndo: vi.fn().mockRejectedValue(failure),
+    });
+
+    toast.success.mock.calls[0][1].action.onClick();
+
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Couldn't undo", {
+        description: "You've reached your plan's limit.",
+      }),
+    );
+    expect(onPlanLimit).not.toHaveBeenCalled();
+    window.removeEventListener(PLAN_LIMIT_EVENT, onPlanLimit);
   });
 
   it('does not toast twice when the undo error was already shown', async () => {

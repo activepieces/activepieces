@@ -1,6 +1,7 @@
 import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   AdminEmpty,
@@ -41,9 +42,12 @@ const ApiKeysPage = () => {
   const keys: ApiKeyResponseWithoutValue[] = isSample
     ? sampleData.apiKeysPage().data
     : data?.data ?? [];
+  const [revokeTarget, setRevokeTarget] =
+    useState<ApiKeyResponseWithoutValue | null>(null);
+  const [revokeOpen, setRevokeOpen] = useState(false);
   const revokeKey = useAdminAction<ApiKeyResponseWithoutValue>({
     verb: 'revoke',
-    name: (apiKey) => apiKey.displayName,
+    name: (apiKey) => apiKey.displayName.trim() || t('API key'),
     run: (apiKey) => apiKeyApi.delete(apiKey.id),
     invalidate: [apiKeyKeys.all],
   });
@@ -119,32 +123,38 @@ const ApiKeysPage = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <ConfirmDialog
-                    title={t('Revoke {name}?', { name: apiKey.displayName })}
-                    description={t(
-                      'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
-                    )}
-                    confirmLabel={t('Revoke')}
-                    controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
-                    onConfirm={() => revokeKey.mutateAsync(apiKey)}
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => {
+                      setRevokeTarget(apiKey);
+                      setRevokeOpen(true);
+                    }}
+                    {...adminControl(AdminControl.API_KEYS_API_KEY_REVOKE_OPEN)}
                   >
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={(e) => e.preventDefault()}
-                      {...adminControl(
-                        AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
-                      )}
-                    >
-                      <Trash className="size-4" />
-                      {t('Revoke API Key')}
-                    </DropdownMenuItem>
-                  </ConfirmDialog>
+                    <Trash className="size-4" />
+                    {t('Revoke API Key')}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SettingsRow>
           ))}
         </SettingsPanel>
       </AdminQueryState>
+      {revokeTarget && (
+        <ConfirmDialog
+          open={revokeOpen}
+          onOpenChange={setRevokeOpen}
+          title={t('Revoke {name}?', {
+            name: revokeTarget.displayName.trim() || t('API key'),
+          })}
+          description={t(
+            'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
+          )}
+          confirmLabel={t('Revoke')}
+          controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
+          onConfirm={() => revokeKey.mutateAsync(revokeTarget)}
+        />
+      )}
     </AdminPage>
   );
 };
