@@ -1,9 +1,9 @@
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { cn } from '@/lib/utils';
 
 export function TurnOnPersonalProjectsDialog({
   open,
@@ -23,20 +21,18 @@ export function TurnOnPersonalProjectsDialog({
   isPending,
   onConfirm,
 }: TurnOnPersonalProjectsDialogProps) {
-  const [scope, setScope] = useState<TurnOnScope>('new-members');
-  const isCountKnown = membersWithoutPersonalProject !== null;
+  const [createForExistingMembers, setCreateForExistingMembers] =
+    useState(false);
   const offersExistingMembers =
     !isCountLoading &&
     (membersWithoutPersonalProject === null ||
       membersWithoutPersonalProject > 0);
-  const createsForExistingMembers =
-    offersExistingMembers && scope === 'existing-members';
 
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        setScope('new-members');
+        setCreateForExistingMembers(false);
         onOpenChange(nextOpen);
       }}
     >
@@ -48,41 +44,23 @@ export function TurnOnPersonalProjectsDialog({
           </DialogDescription>
         </DialogHeader>
         {offersExistingMembers && (
-          <RadioGroup
-            value={scope}
-            onValueChange={(value) =>
-              setScope(
-                value === 'existing-members'
-                  ? 'existing-members'
-                  : 'new-members',
-              )
-            }
-            className="gap-2"
+          <label
+            htmlFor={EXISTING_MEMBERS_CHECKBOX_ID}
+            className="flex cursor-pointer items-center gap-2 text-sm"
           >
-            <TurnOnOption
-              value="new-members"
-              selected={scope === 'new-members'}
-              title={t('New members only')}
-            />
-            <TurnOnOption
-              value="existing-members"
-              selected={scope === 'existing-members'}
-              title={
-                isCountKnown
-                  ? t('createForExistingMembers', {
-                      count: membersWithoutPersonalProject,
-                    })
-                  : t('Also create for existing members without one')
-              }
-              warning={
-                isCountKnown
-                  ? t('createsPersonalProjectsNow', {
-                      count: membersWithoutPersonalProject,
-                    })
-                  : t('Creates a personal project for each of them now.')
+            <Checkbox
+              id={EXISTING_MEMBERS_CHECKBOX_ID}
+              checked={createForExistingMembers}
+              onCheckedChange={(checked) =>
+                setCreateForExistingMembers(checked === true)
               }
             />
-          </RadioGroup>
+            {membersWithoutPersonalProject === null
+              ? t("Also create one for members who don't have one yet")
+              : t('createForMembersWithoutOne', {
+                  count: membersWithoutPersonalProject,
+                })}
+          </label>
         )}
         <DialogFooter>
           <Button
@@ -96,14 +74,13 @@ export function TurnOnPersonalProjectsDialog({
             loading={isPending}
             disabled={isCountLoading}
             onClick={() =>
-              onConfirm({ createForExistingMembers: createsForExistingMembers })
+              onConfirm({
+                createForExistingMembers:
+                  offersExistingMembers && createForExistingMembers,
+              })
             }
           >
-            {!createsForExistingMembers
-              ? t('Turn on')
-              : isCountKnown
-              ? t('turnOnAndCreate', { count: membersWithoutPersonalProject })
-              : t('Turn on and create')}
+            {t('Turn on')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -157,38 +134,7 @@ export function TurnOffPersonalProjectsDialog({
   );
 }
 
-function TurnOnOption({ value, selected, title, warning }: TurnOnOptionProps) {
-  const id = `personal-projects-${value}`;
-  return (
-    <label
-      htmlFor={id}
-      className={cn(
-        'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3',
-        selected && 'border-accent-7 bg-accent-3',
-      )}
-    >
-      <span className="flex items-center gap-3">
-        <RadioGroupItem id={id} value={value} />
-        <span className="text-sm font-medium">{title}</span>
-      </span>
-      {selected && warning && (
-        <span className="flex items-center gap-1.5 pl-7 text-sm text-warning-11">
-          <TriangleAlert className="size-3.5 shrink-0" />
-          {warning}
-        </span>
-      )}
-    </label>
-  );
-}
-
-type TurnOnScope = 'new-members' | 'existing-members';
-
-type TurnOnOptionProps = {
-  value: TurnOnScope;
-  selected: boolean;
-  title: string;
-  warning?: string;
-};
+const EXISTING_MEMBERS_CHECKBOX_ID = 'personal-projects-existing-members';
 
 type TurnOnPersonalProjectsDialogProps = {
   open: boolean;
