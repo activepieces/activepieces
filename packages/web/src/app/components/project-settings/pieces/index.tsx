@@ -5,13 +5,12 @@ import { t } from 'i18next';
 import { Info, Package, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { EnterpriseLockedSection } from '@/app/components/enterprise-gate';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
-import { LockedAlert } from '@/components/custom/locked-alert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
@@ -103,20 +102,10 @@ const PiecesSettings = () => {
 
   return (
     <div className="space-y-6">
-      {!platform.plan.managePiecesEnabled && (
-        <LockedAlert
-          title={t('Control Pieces')}
-          description={t(
-            "Show the pieces that matter most to your users and hide the ones you don't like.",
-          )}
-          button={
-            <RequestTrial
-              featureKey="ENTERPRISE_PIECES"
-              buttonVariant="basic"
-            />
-          }
-        />
-      )}
+      <EnterpriseLockedSection
+        unlocked={platform.plan.managePiecesEnabled}
+        featureKey="PIECES"
+      />
       {platform.plan.managePiecesEnabled && (
         <Alert variant="primary">
           <Info className="size-4" />

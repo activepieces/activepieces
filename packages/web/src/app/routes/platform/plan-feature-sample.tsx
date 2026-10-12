@@ -2,10 +2,8 @@ import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import React from 'react';
 
 import { FeatureSample } from '@/app/components/feature-sample';
-import {
-  FeatureTeaser,
-  FeatureTeaserProps,
-} from '@/app/components/feature-teaser';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { FeatureKey } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export function PlanFeatureSample({
@@ -19,11 +17,7 @@ export function PlanFeatureSample({
     <FeatureSample
       locked={isLocked(platform.plan)}
       title={teaser.title}
-      description={teaser.description}
-      tier={teaser.tier}
-      documentationUrl={teaser.documentationUrl}
       featureKey={teaser.featureKey}
-      showContactSales={teaser.showContactSales}
     >
       {children}
     </FeatureSample>
@@ -37,7 +31,16 @@ export function PlanFeatureGuard({
   const { platform } = platformHooks.useCurrentPlatform();
   const { isLocked, teaser } = PLAN_FEATURE_SAMPLES[feature];
 
-  return isLocked(platform.plan) ? <FeatureTeaser {...teaser} /> : children;
+  return (
+    <LockedFeatureGuard
+      locked={isLocked(platform.plan)}
+      featureKey={teaser.featureKey}
+      lockTitle={teaser.title}
+      lockDescription={teaser.description}
+    >
+      {children}
+    </LockedFeatureGuard>
+  );
 }
 
 const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
@@ -48,7 +51,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       title: 'Enable Single Sign On',
       description:
         'Let your users sign in with your current SSO provider or give them self serve sign up access',
-      tier: 'team',
     },
   },
   projectRoles: {
@@ -58,7 +60,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       title: 'Enable Custom Roles',
       description:
         'Define custom roles and permissions to control what your team members can access and modify',
-      tier: 'team',
     },
   },
   globalConnections: {
@@ -67,7 +68,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       featureKey: 'GLOBAL_CONNECTIONS',
       title: 'Enable Global Connections',
       description: 'Manage platform-wide connections to external systems.',
-      tier: 'team',
     },
   },
   templates: {
@@ -77,7 +77,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       title: 'Unlock Templates',
       description:
         'Convert the most common automations into reusable templates 1 click away from your users',
-      tier: 'enterprise',
     },
   },
   embedding: {
@@ -86,7 +85,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       featureKey: 'SIGNING_KEYS',
       title: 'Unlock Embedding Through JS SDK',
       description: 'Enable signing keys to access embedding functionalities.',
-      tier: 'enterprise',
     },
   },
   apiKeys: {
@@ -95,7 +93,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       featureKey: 'API',
       title: 'Enable API Keys',
       description: 'Create and manage API keys to access Activepieces APIs.',
-      tier: 'team',
     },
   },
   secretManagers: {
@@ -104,7 +101,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       featureKey: 'SECRET_MANAGERS',
       title: 'Enable Secret Managers',
       description: 'Manage your secrets from a single and secure place',
-      tier: 'enterprise',
     },
   },
   auditLogs: {
@@ -114,7 +110,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       title: 'Unlock Audit Logs',
       description:
         'Comply with internal and external security policies by tracking activities done within your account',
-      tier: 'enterprise',
     },
   },
   eventStreaming: {
@@ -124,9 +119,15 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       title: 'Unlock Event Streaming',
       description:
         'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
-      tier: 'enterprise',
-      documentationUrl:
-        'https://www.activepieces.com/docs/admin-guide/guides/event-streaming',
+    },
+  },
+  pieces: {
+    isLocked: (plan) => !plan.managePiecesEnabled,
+    teaser: {
+      featureKey: 'PIECES',
+      title: 'Choose which pieces your users see',
+      description:
+        'Hide what your teams should not use and add private pieces for your own systems.',
     },
   },
   aiProviders: {
@@ -136,7 +137,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       title: 'Unlock AI Center',
       description:
         'Bring your own AI provider keys and choose the models that power your automations',
-      tier: 'plus',
     },
   },
 };
@@ -151,11 +151,18 @@ type PlanFeature =
   | 'secretManagers'
   | 'auditLogs'
   | 'eventStreaming'
+  | 'pieces'
   | 'aiProviders';
 
 type PlanFeatureSampleSpec = {
   isLocked: (plan: PlatformWithoutSensitiveData['plan']) => boolean;
-  teaser: FeatureTeaserProps;
+  teaser: PlanFeatureTeaser;
+};
+
+type PlanFeatureTeaser = {
+  featureKey: FeatureKey;
+  title: string;
+  description: string;
 };
 
 type PlanFeatureSampleProps = {

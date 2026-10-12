@@ -15,9 +15,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { LockedFeatureGuard } from './locked-feature-guard';
 
-const LOCK_DOCUMENTATION_URL =
-  'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
-
 export function BillingPageShell({
   lockTitle,
   header,
@@ -28,13 +25,11 @@ export function BillingPageShell({
   return (
     <LockedFeatureGuard
       featureKey="BILLING"
-      showContactSales={false}
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={lockTitle}
       lockDescription={t(
         'Switch to the Enterprise edition to access billing and usage management.',
       )}
-      lockDocumentationUrl={LOCK_DOCUMENTATION_URL}
     >
       <BillingPageContent header={header}>{children}</BillingPageContent>
     </LockedFeatureGuard>

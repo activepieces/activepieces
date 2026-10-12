@@ -6,12 +6,6 @@ import { useState } from 'react';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { PlatformRolesList } from './platform-roles-list';
@@ -26,25 +20,13 @@ export function RolesCard({
   isError,
   refetch,
 }: RolesCardProps) {
-  const { platform } = platformHooks.useCurrentPlatform();
   const [activeTab, setActiveTab] = useState<RolesTab>('project');
 
   const projectRolesCount =
     isLoading || isError ? null : projectRoles?.data.length ?? 0;
   const platformRolesCount = PLATFORM_ROLE_COUNT;
 
-  const newRoleButton = !platform.plan.customRolesEnabled ? (
-    <Tooltip>
-      <TooltipTrigger>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} disabled>
-          {t('New role')}
-        </AnimatedIconButton>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {t('Contact sales to unlock custom roles')}
-      </TooltipContent>
-    </Tooltip>
-  ) : (
+  const newRoleButton = (
     <ProjectRoleDialog mode="create" onSave={() => refetch()}>
       <AnimatedIconButton
         icon={PlusIcon}

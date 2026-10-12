@@ -17,7 +17,7 @@ const state = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   invalidate: vi.fn(async (_filters: unknown) => undefined),
   saving: Promise.resolve() as Promise<unknown>,
-  upgradeClick: vi.fn(),
+  gateRun: vi.fn(),
 }));
 
 vi.mock('i18next', () => ({
@@ -31,15 +31,16 @@ vi.mock('sonner', () => ({
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useQueryClient: () => ({ invalidateQueries: state.invalidate }),
-  useMutation: (options: MutationOptions) => ({
-    mutate: () => {
-      state.saving = options.mutationFn().then(
-        (data: unknown) => options.onSuccess(data),
+  useMutation: (options: MutationOptions) => {
+    const run = (variables: SaveVariables) => {
+      state.saving = options.mutationFn(variables).then(
+        (data: unknown) => options.onSuccess(data, variables),
         (error: unknown) => options.onError(error),
       );
-    },
-    isPending: false,
-  }),
+      return state.saving;
+    };
+    return { mutate: run, mutateAsync: run, isPending: false };
+  },
 }));
 
 vi.mock('@/api/platforms-api', () => ({
@@ -123,8 +124,14 @@ vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
 }));
 
 vi.mock('@/features/billing', () => ({
-  TIER_LABELS: { enterprise: 'Enterprise' },
-  useUpgradeClick: () => state.upgradeClick,
+  LockedGem: () => null,
+  EnterpriseTrialSalesLink: () => null,
+  useEnterpriseGate: ({ unlocked }: { unlocked: boolean }) => ({
+    access: unlocked ? 'entitled' : 'trial_available',
+    locked: !unlocked,
+    run: state.gateRun,
+    explain: vi.fn(),
+  }),
 }));
 
 import { AppearanceSection } from '@/app/routes/platform/setup/general/appearance-section';
@@ -469,7 +476,7 @@ describe('AppearanceSection on a plan without branding', () => {
   beforeEach(() => {
     state.update.mockReset();
     state.update.mockResolvedValue(undefined);
-    state.upgradeClick.mockClear();
+    state.gateRun.mockClear();
     state.saving = Promise.resolve();
     state.customAppearanceEnabled = false;
     state.primaryColor = '#6e41e2';
@@ -483,18 +490,23 @@ describe('AppearanceSection on a plan without branding', () => {
     container.remove();
   });
 
-  it('lets the admin try a colour and turns save into upgrade', async () => {
+  it('lets the admin try a colour and saves it once Enterprise is on', async () => {
     await render();
     await type({ selector: 'input[aria-label="colour"]', value: '#123456' });
-    expect(hasText({ text: "Branding preview isn't saved" })).toBe(true);
+    expect(
+      hasText({ text: 'Try it now. Saving needs the Enterprise plan.' }),
+    ).toBe(true);
     expect(container.querySelector('button[type="submit"]')).toBeNull();
     expect(buttonNamed({ name: 'Discard' }).disabled).toBe(false);
     await act(async () => {
-      buttonNamed({ name: 'Upgrade to save' }).click();
+      buttonNamed({ name: 'Save branding' }).click();
     });
-    expect(state.upgradeClick).toHaveBeenCalledWith(
-      expect.objectContaining({ feature: 'BRANDING', tier: 'enterprise' }),
-    );
+    expect(state.gateRun).toHaveBeenCalledTimes(1);
+    const [resume] = state.gateRun.mock.calls[0];
+    await act(async () => {
+      await resume();
+    });
+    expect(sentFields().primaryColor).toBe('#123456');
   });
 
   it('saves the name even when a previewed status colour is incomplete', async () => {
@@ -527,9 +539,11 @@ describe('AppearanceSection on a plan without branding', () => {
   });
 });
 
+type SaveVariables = { includeBranding: boolean };
+
 type MutationOptions = {
-  mutationFn: () => Promise<unknown>;
-  onSuccess: (data: unknown) => void;
+  mutationFn: (variables: SaveVariables) => Promise<unknown>;
+  onSuccess: (data: unknown, variables: SaveVariables) => void;
   onError: (error: unknown) => void;
 };
 

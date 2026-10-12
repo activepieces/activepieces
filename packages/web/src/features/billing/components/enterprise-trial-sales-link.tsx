@@ -4,29 +4,35 @@ import { t } from 'i18next';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 
-import { planSelectorUtils } from './plan-selector-utils';
+import { FeatureKey, useSalesUrl } from './request-trial';
 
 export function EnterpriseTrialSalesLink({
   surface,
   label,
   size,
+  variant = 'outline',
   className,
+  featureKey,
+  onClick,
 }: EnterpriseTrialSalesLinkProps) {
   const { capture } = useTelemetry();
+  const salesUrl = useSalesUrl(featureKey);
   return (
-    <Button variant="outline" size={size} className={className} asChild>
+    <Button variant={variant} size={size} className={className} asChild>
       <a
-        href={planSelectorUtils.SALES_URL}
+        href={salesUrl}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={() =>
+        onClick={() => {
+          onClick?.();
           capture({
             name: TelemetryEventName.SALES_HANDOFF_CLICKED,
             payload: { plan: 'enterprise', surface },
-          })
-        }
+          });
+        }}
       >
         {label ?? t('Talk to sales for 14 more days')}
+        <span className="sr-only"> {t('(opens in a new tab)')}</span>
       </a>
     </Button>
   );
@@ -35,6 +41,9 @@ export function EnterpriseTrialSalesLink({
 type EnterpriseTrialSalesLinkProps = {
   surface: string;
   label?: string;
-  size?: 'sm' | 'default';
+  size?: 'xs' | 'sm' | 'default';
+  variant?: 'outline' | 'default' | 'link';
   className?: string;
+  featureKey?: FeatureKey;
+  onClick?: () => void;
 };

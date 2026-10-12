@@ -16,7 +16,6 @@ const state = vi.hoisted(() => ({
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
@@ -29,7 +28,8 @@ vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: 'cloud' }) },
 }));
 
-vi.mock('@/features/billing', () => ({
+vi.mock('@/features/billing', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   PLATFORM_FEATURES: {
     aiProviders: {
       featureKey: 'UNIVERSAL_AI',
@@ -133,12 +133,12 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
 
     expect(
       screen.getByText('Your plan does not include Bring your own AI keys'),
-    ).toBeDefined();
+    ).toBeInTheDocument();
     expect(screen.getAllByText('Trial Anthropic key').length).toBeGreaterThan(
       0,
     );
     expect(screen.queryAllByRole('combobox')).toEqual([]);
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
     expect(screen.queryAllByRole('button', { name: /Add key/ })).toEqual([]);
     expect(screen.queryAllByRole('button', { name: /Trial Anthropic/ })).toEqual(
       [],
@@ -156,14 +156,18 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
     );
   });
 
-  it('shows the upgrade sample when there is nothing to delete', () => {
+  it('shows the locked AI Center card when there is nothing to delete', async () => {
     renderTab();
 
     expect(
-      screen.getByRole('heading', { name: 'Unlock AI Center' }),
-    ).toBeDefined();
+      await screen.findByRole('heading', {
+        name: 'Bring your own AI providers',
+      }),
+    ).toBeInTheDocument();
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
   });
 });
@@ -179,7 +183,9 @@ describe('providers tab on a plan with aiProvidersEnabled', () => {
       screen.getAllByRole('button', { name: /Add key/ }).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
     expect(
       screen.queryAllByRole('heading', { name: 'Unlock AI Center' }),
