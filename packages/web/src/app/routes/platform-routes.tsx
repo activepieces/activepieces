@@ -81,6 +81,11 @@ const PiecesListPage = React.lazy(() =>
     default: m.PiecesListTab,
   })),
 );
+const PieceSelectorPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-selector-page').then((m) => ({
+    default: m.PieceSelectorPage,
+  })),
+);
 const PieceSetsPage = React.lazy(() =>
   import('./platform/setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
     default: m.PieceSetsTab,
@@ -244,6 +249,18 @@ export const platformRoutes = [
               <PiecesListPage />
             </SuspenseWrapper>
           </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/pieces/selector',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Piece selector">
+          <SuspenseWrapper>
+            <PieceSelectorPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
