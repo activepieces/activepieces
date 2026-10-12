@@ -51,6 +51,7 @@ export default function UsersPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const {
     isOutOfSeats,
+    canBuySeats,
     ensureSeatsAvailable,
     handleSeatLimitError,
     seatLimitDialog,
@@ -172,7 +173,7 @@ export default function UsersPage() {
           <Button
             {...adminControl(AdminControl.USERS_INVITE_OPEN)}
             onClick={() => {
-              if (usersGate.access === 'trial_available') {
+              if (usersGate.access === 'trial_available' && !canBuySeats) {
                 usersGate.run(() => setInviteOpen(true));
                 return;
               }

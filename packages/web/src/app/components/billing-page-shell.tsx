@@ -30,6 +30,10 @@ export function BillingPageShell({
       lockDescription={t(
         'Switch to the Enterprise edition to access billing and usage management.',
       )}
+      communityGuide={{
+        url: EDITION_GUIDE_URL,
+        label: t('How to switch to the Enterprise edition'),
+      }}
     >
       <BillingPageContent header={header}>{children}</BillingPageContent>
     </LockedFeatureGuard>
@@ -86,3 +90,6 @@ type BillingPageContentProps = {
 type BillingPageShellProps = BillingPageContentProps & {
   lockTitle: string;
 };
+
+const EDITION_GUIDE_URL =
+  'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';

@@ -126,13 +126,15 @@ beforeEach(() => {
 });
 
 describe('providers tab on a plan without aiProvidersEnabled', () => {
-  it('lists existing keys with delete only and an upgrade note', () => {
+  it('lists existing keys with delete only and an upgrade note', async () => {
     state.providers = [ANTHROPIC_KEY];
 
     renderTab();
 
     expect(
-      screen.getByText('Your plan does not include Bring your own AI keys'),
+      await screen.findByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toBeDefined();
     expect(screen.getAllByText('Trial Anthropic key').length).toBeGreaterThan(
       0,

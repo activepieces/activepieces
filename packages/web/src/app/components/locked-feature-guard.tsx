@@ -18,6 +18,7 @@ export const LockedFeatureGuard = ({
   lockBullets,
   featureKey,
   pageTitle,
+  communityGuide,
 }: LockedFeatureGuardProps) => {
   if (!locked) {
     return children;
@@ -30,6 +31,7 @@ export const LockedFeatureGuard = ({
       description={lockDescription}
       bullets={lockBullets}
       videoUrl={lockVideoUrl}
+      communityGuide={communityGuide}
     />
   );
   if (pageTitle === undefined) {
@@ -49,6 +51,7 @@ function LockedFeatureTeaser({
   description,
   bullets,
   videoUrl,
+  communityGuide,
 }: LockedFeatureTeaserProps) {
   const gate = useEnterpriseGate({ unlocked: false, featureKey });
 
@@ -63,6 +66,16 @@ function LockedFeatureTeaser({
         showBenefits
         surface={PlatformAdminSurface.TEASER}
       />
+      {gate.access === 'community' && communityGuide && (
+        <a
+          href={communityGuide.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-fit text-sm font-medium text-accent-11 hover:underline"
+        >
+          {communityGuide.label}
+        </a>
+      )}
       {videoUrl && (
         <video
           autoPlay
@@ -89,6 +102,12 @@ type LockedFeatureGuardProps = {
   lockVideoUrl?: string;
   lockBullets?: string[];
   pageTitle?: React.ReactNode;
+  communityGuide?: CommunityGuide;
+};
+
+type CommunityGuide = {
+  url: string;
+  label: string;
 };
 
 type LockedFeatureTeaserProps = {
@@ -97,4 +116,5 @@ type LockedFeatureTeaserProps = {
   description: string;
   bullets?: string[];
   videoUrl?: string;
+  communityGuide?: CommunityGuide;
 };

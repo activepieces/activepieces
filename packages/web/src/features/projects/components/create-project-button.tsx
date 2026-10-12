@@ -62,24 +62,26 @@ export function CreateProjectButton({
     className,
     crown: projectsGate.crown,
     locked: projectsGate.locked,
-    onClick: gate.locked
-      ? () => {
-          reportBlocked();
-          capture({
-            name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
-            payload: {
-              limit: PlatformAdminLimit.TEAM_PROJECTS,
-              used,
-              allowed: limit ?? 0,
-            },
-          });
-          if (gate.access === 'community') {
-            projectsGate.open();
-            return;
-          }
-          gate.run(() => setCreateOpen(true));
-        }
-      : undefined,
+    onClick: () => {
+      if (!gate.locked) {
+        setCreateOpen(true);
+        return;
+      }
+      reportBlocked();
+      capture({
+        name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
+        payload: {
+          limit: PlatformAdminLimit.TEAM_PROJECTS,
+          used,
+          allowed: limit ?? 0,
+        },
+      });
+      if (gate.access === 'community') {
+        projectsGate.open();
+        return;
+      }
+      gate.run(() => setCreateOpen(true));
+    },
   });
 
   const triggerNode =
@@ -98,7 +100,7 @@ export function CreateProjectButton({
       trigger
     );
 
-  const dialog = gate.locked ? (
+  const dialog = (
     <>
       {triggerNode}
       <NewProjectDialog
@@ -108,8 +110,6 @@ export function CreateProjectButton({
       />
       {projectsGate.dialog}
     </>
-  ) : (
-    <NewProjectDialog onCreate={onCreate}>{triggerNode}</NewProjectDialog>
   );
 
   if (variant !== 'icon') {

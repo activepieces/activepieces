@@ -189,15 +189,24 @@ describe('create project gating', () => {
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
   });
 
-  it('opens the project form once the upgrade dialog finishes the blocked click', async () => {
+  it('opens the project form once the trial lifts the limit and resumes the blocked click', async () => {
     edition = 'cloud';
     teamProjectsLimit = 1;
-    renderWithQueryClient(
-      <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const button = (
+      <QueryClientProvider client={client}>
+        <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />
+      </QueryClientProvider>
     );
+    const view = render(button);
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
     const resume = useEnterpriseTrialDialogStore.getState().payload?.resume;
     expect(resume).toBeDefined();
+    expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+    teamProjectsLimit = null;
+    view.rerender(button);
     await act(async () => {
       await resume?.();
     });
@@ -279,14 +288,16 @@ describe('feature sample', () => {
     expect(screen.getByRole('link', { name: /talk to sales/i })).toBeDefined();
   });
 
-  it('shows no sales form for a surface with no feature key', () => {
-    edition = 'ce';
+  it('keeps the sampled page read-only behind the lock', () => {
     renderWithQueryClient(
-      <FeatureSample locked title="Unlock Audit Logs">
-        <div />
+      <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
+        <button type="button">Export logs</button>
       </FeatureSample>,
     );
-    expect(screen.queryByRole('link', { name: /talk to sales/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Export logs' })).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Export logs', hidden: true }),
+    ).toBeDefined();
   });
 });
 

@@ -496,7 +496,6 @@
   "System": "System",
   "Switch to the Enterprise edition to access billing and usage management.": "Switch to the Enterprise edition to access billing and usage management.",
   "Upgrade plan": "Upgrade plan",
-  "Upgrade to {tier}": "Upgrade to {tier}",
   "Flow has been renamed.": "Flow has been renamed.",
   "Moved flow successfully": "Moved flow successfully",
   "Push to Git": "Push to Git",
@@ -1766,7 +1765,6 @@
   "AI providers": "AI providers",
   "Bring your own API key to connect any of these.": "Bring your own API key to connect any of these.",
   "Your plan does not include Bring your own AI keys": "Your plan does not include Bring your own AI keys",
-  "You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.": "You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.",
   "configurationsCount": "{count, plural, =1 {1 key} other {# keys}}",
   "modelsCount": "{count, plural, =1 {1 model} other {# models}}",
   "exceptProjectsCount": "{count, plural, =1 {All except 1 project} other {All except # projects}}",
@@ -3414,7 +3412,6 @@
   "How the trial works": "How the trial works",
   "Impact analytics": "Impact analytics",
   "Included in the Enterprise plan": "Included in the Enterprise plan",
-  "Included in the Enterprise plan: {feature}": "Included in the Enterprise plan: {feature}",
   "Invite as many people as you need": "Invite as many people as you need",
   "Invite everyone who builds or runs automations, without counting seats.": "Invite everyone who builds or runs automations, without counting seats.",
   "It ended on {date}. You are back on the {plan} plan.": "It ended on {date}. You are back on the {plan} plan.",
@@ -3518,5 +3515,12 @@
   "Included in the Plus plan and up": "Included in the Plus plan and up",
   "Included in the Team plan and up": "Included in the Team plan and up",
   "More below": "More below",
-  "Start free {days}-day Enterprise plan trial": "Start free {days}-day Enterprise plan trial"
+  "Start free {days}-day Enterprise plan trial": "Start free {days}-day Enterprise plan trial",
+  "How to set up worker groups": "How to set up worker groups",
+  "How to switch to the Enterprise edition": "How to switch to the Enterprise edition",
+  "Try {feature} in the Enterprise plan trial": "Try {feature} in the Enterprise plan trial",
+  "Unlock branding": "Unlock branding",
+  "You can still delete the keys below. Adding or changing keys needs that plan.": "You can still delete the keys below. Adding or changing keys needs that plan.",
+  "Your Enterprise plan trial was extended until {date}.": "Your Enterprise plan trial was extended until {date}.",
+  "Your automations run on shared workers today. Dedicated workers stay warm and ready, so every flow starts faster.": "Your automations run on shared workers today. Dedicated workers stay warm and ready, so every flow starts faster."
 }

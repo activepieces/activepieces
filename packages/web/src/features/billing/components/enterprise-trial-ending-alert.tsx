@@ -7,6 +7,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
@@ -35,7 +36,7 @@ export function EnterpriseTrialEndingAlert() {
     trial.isPlatformAdmin &&
     trial.state === 'active' &&
     !isNil(trial.endsAt) &&
-    (trial.ending || trial.justStarted) &&
+    (trial.ending || trial.justStarted || trial.extended) &&
     !dismissed;
 
   if (!visible) {
@@ -72,10 +73,14 @@ export function EnterpriseTrialEndingAlert() {
           ) : (
             <>
               <span className="font-medium">
-                {t(
-                  'You are on a free trial of the Enterprise plan until {date}.',
-                  { date: dayjs(trial.endsAt).format('MMM D') },
-                )}
+                {trial.extended
+                  ? t('Your Enterprise plan trial was extended until {date}.', {
+                      date: dayjs(trial.endsAt).format('MMM D'),
+                    })
+                  : t(
+                      'You are on a free trial of the Enterprise plan until {date}.',
+                      { date: dayjs(trial.endsAt).format('MMM D') },
+                    )}
               </span>{' '}
               <span className="text-gray-11">
                 {t(
@@ -89,6 +94,7 @@ export function EnterpriseTrialEndingAlert() {
           {ending && (
             <>
               <Button
+                {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
                 variant="outline"
                 size="sm"
                 className={tone.secondary}

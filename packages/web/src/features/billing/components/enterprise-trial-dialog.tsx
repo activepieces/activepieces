@@ -21,6 +21,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
@@ -169,7 +170,7 @@ function StartTrial({
           {featureName && (
             <span className="flex items-center gap-2 text-sm font-medium text-accent-11">
               <Gem className="size-4" />
-              {t('Included in the Enterprise plan: {feature}', {
+              {t('Try {feature} in the Enterprise plan trial', {
                 feature: featureName,
               })}
             </span>
@@ -259,7 +260,12 @@ function StartTrial({
               {t('We could not start your trial. Please try again.')}
             </p>
           )}
-          <Button size="lg" loading={isPending} onClick={onStart}>
+          <Button
+            {...adminControl(AdminControl.TRIAL_START_SUBMIT)}
+            size="lg"
+            loading={isPending}
+            onClick={onStart}
+          >
             <Gem />
             {resumes
               ? t('Start trial and save')

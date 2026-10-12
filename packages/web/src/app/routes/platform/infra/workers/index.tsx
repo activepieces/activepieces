@@ -81,6 +81,9 @@ export default function WorkersPage({ section }: WorkersPageProps) {
             unlocked={false}
             featureKey="DEDICATED_WORKERS"
             title={t('Start every automation faster on your own workers')}
+            description={t(
+              'Your automations run on shared workers today. Dedicated workers stay warm and ready, so every flow starts faster.',
+            )}
           />
         )}
       {section === 'health' &&
@@ -137,6 +140,10 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           lockDescription={t(
             'Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest',
           )}
+          communityGuide={{
+            url: WORKER_GROUPS_GUIDE_URL,
+            label: t('How to set up worker groups'),
+          }}
         >
           <WorkerAssignmentsTab />
         </LockedFeatureGuard>
@@ -325,3 +332,6 @@ type WorkersSection = 'health' | 'worker-groups';
 type WorkersPageProps = {
   section: WorkersSection;
 };
+
+const WORKER_GROUPS_GUIDE_URL =
+  'https://www.activepieces.com/docs/install/configure-operate/worker-groups';

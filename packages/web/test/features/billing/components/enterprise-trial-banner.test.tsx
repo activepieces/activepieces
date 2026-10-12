@@ -79,10 +79,12 @@ function activeTrial({
   startedAt,
   endsAt,
   isPlatformAdmin = true,
+  extended = false,
 }: {
   startedAt: Date | null;
   endsAt: Date;
   isPlatformAdmin?: boolean;
+  extended?: boolean;
 }): EnterpriseTrial {
   return {
     state: 'active',
@@ -91,10 +93,24 @@ function activeTrial({
       endsAt,
       now: Date.now(),
     }),
+    extended,
     isPlatformAdmin,
     basePlanName: 'Free',
   };
 }
+
+const noTrial = (): EnterpriseTrial => ({
+  state: 'unavailable',
+  startedAt: null,
+  endsAt: null,
+  daysLeft: 0,
+  endsToday: false,
+  ending: false,
+  justStarted: false,
+  extended: false,
+  isPlatformAdmin: true,
+  basePlanName: 'Free',
+});
 
 const justStarted = () =>
   activeTrial({
@@ -204,17 +220,29 @@ describe('trial banner', () => {
     expect(screen.getByText(STARTED_COPY)).toBeDefined();
   });
 
-  it('shows the started banner again after the trial is extended', () => {
-    trial = justStarted();
+  it('announces an extension once, even late in the trial', () => {
+    trial = activeTrial({
+      startedAt: dayjs(NOW).subtract(6, 'day').toDate(),
+      endsAt: dayjs(NOW).add(14, 'day').toDate(),
+      extended: true,
+    });
     const view = renderInRouter(<EnterpriseTrialEndingAlert />);
+    expect(
+      screen.getByText(/Your Enterprise plan trial was extended until/),
+    ).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     view.unmount();
+    renderInRouter(<EnterpriseTrialEndingAlert />);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('does not guess a start date it does not know', () => {
     trial = activeTrial({
-      startedAt: dayjs(NOW).subtract(1, 'hour').toDate(),
-      endsAt: dayjs(NOW).add(21, 'day').toDate(),
+      startedAt: null,
+      endsAt: dayjs(NOW).add(6, 'day').toDate(),
     });
     renderInRouter(<EnterpriseTrialEndingAlert />);
-    expect(screen.getByText(STARTED_COPY)).toBeDefined();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('says ends tomorrow on the day before, and ends today on the last day', () => {
@@ -286,7 +314,7 @@ describe('enterprise plan indicator', () => {
   });
 
   it('says Enterprise plan on any paid Enterprise plan id', () => {
-    trial = { ...midTrial(), state: 'unavailable', endsAt: null };
+    trial = noTrial();
     for (const plan of [
       'enterprise',
       'enterprise_annual',
@@ -300,7 +328,7 @@ describe('enterprise plan indicator', () => {
   });
 
   it('shows nothing on other plans', () => {
-    trial = { ...midTrial(), state: 'unavailable', endsAt: null };
+    trial = noTrial();
     for (const plan of ['free', 'plus', 'team', 'enterprise_trial']) {
       planName = plan;
       const view = renderInRouter(<EnterprisePlanIndicator />);
