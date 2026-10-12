@@ -71,6 +71,8 @@ A turn is kept alive / reclaimed by three separate mechanisms in `execute-agent-
 
 - **A task agent's cost is steps × context, and a cache read isn't free.** A cache read still costs 10% of the normal input price, so a 30-step task over a 30k context costs about $0.60 on Sonnet even with 92% cache hits. Three things broke task cost (measured 2026-10-11): a status-only step every other step (tasks get no `ap_update_thinking_status`; the card falls back to the latest tool title), a report turn that swapped the tool set (any change to the tools, or `activeTools`, re-writes the whole cached context: 25–44k at write price), and researchers on Sonnet with full 128KB pages. After the fixes a researcher costs 3–5¢ on Haiku. Builds are the opposite: a task per flow costs $0.21–0.38 because it repeats the chat's setup, while the main chat builds four flows with parallel `ap_build_flow` calls for about $0.51, so builds stay in the main chat.
 
+- **The chat's internal MCP token lives as long as a turn can (2 hours), not 15 minutes.** It's issued once per turn by `issueChatTurnAccessToken` (called from `agentMcp.getCredentials`) and kept in worker memory. `issueInternalAccessToken`, which the `/mcp-server/token` route hands to callers, keeps 15 minutes. With the 15-minute outside-client lifetime, any turn that waited on a card long enough lost every `ap_*` tool with "authentication failed" and stopped half done. Outside MCP clients keep their 15-minute tokens.
+
 ### Key files
 Entry point: `agentModule`, the Fastify plugin registered in `packages/server/api/src/app/app.ts`.
 
