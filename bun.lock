@@ -1441,6 +1441,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/bulkpublish": {
+      "name": "@activepieces/piece-bulkpublish",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/bumpups": {
       "name": "@activepieces/piece-bumpups",
       "version": "0.2.0",
@@ -11482,6 +11495,8 @@
     "@activepieces/piece-bubble": ["@activepieces/piece-bubble@workspace:packages/pieces/community/bubble"],
 
     "@activepieces/piece-buffer": ["@activepieces/piece-buffer@workspace:packages/pieces/community/buffer"],
+
+    "@activepieces/piece-bulkpublish": ["@activepieces/piece-bulkpublish@workspace:packages/pieces/community/bulkpublish"],
 
     "@activepieces/piece-bumpups": ["@activepieces/piece-bumpups@workspace:packages/pieces/community/bumpups"],
 

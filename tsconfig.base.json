@@ -192,6 +192,9 @@
       "@activepieces/piece-blockscout": [
         "packages/pieces/community/blockscout/src/index.ts"
       ],
+      "@activepieces/piece-bulkpublish": [
+        "packages/pieces/community/bulkpublish/src/index.ts"
+      ],
       "@activepieces/piece-bluesky": [
         "packages/pieces/community/bluesky/src/index.ts"
       ],
