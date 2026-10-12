@@ -1,4 +1,5 @@
-import { tryCatchSync } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
+import { PlatformAdminSurface } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Gem, X } from 'lucide-react';
@@ -6,37 +7,43 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
-import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
-import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import {
+  EnterpriseTrial,
+  enterpriseTrialHooks,
+} from '../hooks/enterprise-trial-hooks';
+import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseMotion } from '../utils/enterprise-motion';
+import { enterpriseTrialCopy } from '../utils/enterprise-trial-copy';
 
-import { trialEndsText } from './enterprise-trial-pill';
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
 export function EnterpriseTrialEndingAlert() {
   const trial = enterpriseTrialHooks.useTrial();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { openDialog: openPlans } =
-    billingDialogHooks.useManagePlanDialogStore();
-  const ending = trial.lastDay;
-  const dismissKey = ending
-    ? `${ENDING_DISMISS_KEY_PREFIX}${platform.id}-${dayjs().format(
-        'YYYY-MM-DD',
-      )}`
-    : `${STARTED_DISMISS_KEY_PREFIX}${platform.id}`;
+  const upgradeClick = useUpgradeClick();
+  const dismissKey = bannerDismissKey({
+    trial,
+    platformId: platform.id,
+    userId: authenticationSession.getCurrentUserId(),
+  });
   const [dismissedKey, setDismissedKey] = useState<string | null>(null);
   const dismissed = dismissedKey === dismissKey || readFlag(dismissKey);
+  const visible =
+    trial.isPlatformAdmin &&
+    trial.state === 'active' &&
+    !isNil(trial.endsAt) &&
+    (trial.ending || trial.justStarted) &&
+    !dismissed;
 
-  if (!trial.isPlatformAdmin || trial.state !== 'active' || dismissed) {
+  if (!visible) {
     return null;
   }
 
-  const tone =
-    ending && dayjs(trial.endsAt).isSame(dayjs(), 'day')
-      ? TONE.today
-      : TONE.soon;
+  const ending = trial.ending;
+  const tone = trial.endsToday ? TONE.today : TONE.soon;
 
   return (
     <div className={cn(DASHBOARD_CONTENT_PADDING_X, 'w-full pt-3')}>
@@ -53,7 +60,9 @@ export function EnterpriseTrialEndingAlert() {
         <p className="min-w-0 flex-1 basis-64 text-gray-12">
           {ending ? (
             <>
-              <span className="font-medium">{trialEndsText(trial)}</span>{' '}
+              <span className="font-medium">
+                {enterpriseTrialCopy.endsSentence(trial)}
+              </span>{' '}
               <span className="text-gray-11">
                 {t(
                   'Want to keep the Enterprise plan? Talk to our team. Nothing is deleted either way.',
@@ -65,9 +74,7 @@ export function EnterpriseTrialEndingAlert() {
               <span className="font-medium">
                 {t(
                   'You are on a free trial of the Enterprise plan until {date}.',
-                  {
-                    date: dayjs(trial.endsAt).format('MMM D'),
-                  },
+                  { date: dayjs(trial.endsAt).format('MMM D') },
                 )}
               </span>{' '}
               <span className="text-gray-11">
@@ -85,7 +92,9 @@ export function EnterpriseTrialEndingAlert() {
                 variant="outline"
                 size="sm"
                 className={tone.secondary}
-                onClick={openPlans}
+                onClick={() =>
+                  upgradeClick({ surface: PlatformAdminSurface.BANNER })
+                }
               >
                 {t('Explore plans')}
               </Button>
@@ -114,6 +123,23 @@ export function EnterpriseTrialEndingAlert() {
       </div>
     </div>
   );
+}
+
+function bannerDismissKey({
+  trial,
+  platformId,
+  userId,
+}: {
+  trial: EnterpriseTrial;
+  platformId: string;
+  userId: string | null;
+}): string {
+  const trialId = `${platformId}-${userId ?? 'unknown'}-${
+    trial.endsAt?.toISOString() ?? 'unknown'
+  }`;
+  return trial.ending
+    ? `${ENDING_DISMISS_KEY_PREFIX}${trialId}-${dayjs().format('YYYY-MM-DD')}`
+    : `${STARTED_DISMISS_KEY_PREFIX}${trialId}`;
 }
 
 function readFlag(key: string): boolean {

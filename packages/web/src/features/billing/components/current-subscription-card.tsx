@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 
 import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { billingUtils } from '../utils/billing-utils';
+import { enterpriseTrialCopy } from '../utils/enterprise-trial-copy';
 
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
@@ -42,9 +43,7 @@ export const CurrentSubscriptionCard = ({
               {t('Enterprise plan trial')}
             </span>
             <Badge variant="outline" className="rounded-full">
-              {t('{count, plural, =1 {1 day left} other {# days left}}', {
-                count: trial.daysLeft,
-              })}
+              {enterpriseTrialCopy.daysLeftLabel(trial)}
             </Badge>
           </span>
           <span className="text-sm text-gray-11">

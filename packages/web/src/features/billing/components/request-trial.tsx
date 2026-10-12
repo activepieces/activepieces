@@ -1,52 +1,8 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  PlatformAdminSurface,
-  TelemetryEventName,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
-import { t } from 'i18next';
+import { UserWithMetaInformation } from '@activepieces/shared';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { SendIcon } from '@/components/icons/send';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { userHooks } from '@/hooks/user-hooks';
 import { telemetryUtils } from '@/lib/telemetry-utils';
-
-export const RequestTrial = ({
-  featureKey,
-  surface,
-  buttonVariant = 'default',
-  buttonSize = 'default',
-}: RequestTrialProps) => {
-  const salesUrl = useSalesUrl(featureKey);
-  const { capture } = useTelemetry();
-
-  const handleClick = () => {
-    if (surface !== undefined) {
-      capture({
-        name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
-        payload: { feature: featureKey, surface },
-      });
-    }
-    capture({
-      name: TelemetryEventName.SALES_HANDOFF_CLICKED,
-      payload: { featureKey, surface: 'locked_feature' },
-    });
-    window.open(salesUrl, '_blank', 'noopener noreferrer');
-  };
-
-  return (
-    <AnimatedIconButton
-      variant={buttonVariant}
-      size={buttonSize}
-      onClick={handleClick}
-      icon={SendIcon}
-      iconSize={14}
-    >
-      {t('Talk to sales')}
-    </AnimatedIconButton>
-  );
-};
 
 export function useSalesUrl(featureKey?: FeatureKey): string {
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -109,11 +65,3 @@ export type FeatureKey =
   | 'MCPS'
   | 'SECRET_MANAGERS'
   | 'DEDICATED_WORKERS';
-
-type RequestTrialProps = {
-  featureKey: FeatureKey;
-  surface?: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
-  customButton?: React.ReactNode;
-  buttonVariant?: 'default' | 'basic';
-  buttonSize?: 'default' | 'sm' | 'xs';
-};
