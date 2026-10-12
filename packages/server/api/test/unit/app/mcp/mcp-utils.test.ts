@@ -582,6 +582,19 @@ describe('mcpUtils.syncContainerExecutionTypes', () => {
         })
     })
 
+    it('never lets a field inside a dynamic field overwrite the setting of a top-level field with the same name', () => {
+        const updateDataSchema = { filter_values: { type: PropertyType.ARRAY, displayName: 'Filter Values', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: {
+                filter_values: arrayProp({ displayName: 'Filter Values', required: false }),
+                update_data: { type: PropertyType.DYNAMIC, displayName: 'Update Data', required: true, refreshers: [], props: async () => ({}) },
+            },
+            input: { filter_values: '{{trigger.body.ids}}', update_data: { filter_values: ['a'] } },
+            propertySettings: { filter_values: { type: PropertyExecutionType.DYNAMIC }, update_data: { type: PropertyExecutionType.MANUAL, schema: updateDataSchema } },
+        })
+        expect(settings.filter_values).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
     it('skips a dynamic field whose schema has not been resolved', () => {
         const settings = mcpUtils.syncContainerExecutionTypes({
             props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },

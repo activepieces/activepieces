@@ -775,7 +775,7 @@ function syncContainerExecutionTypes({ props, input, propertySettings }: {
 }): Record<string, PropertySettings> {
     const fields = Object.entries(props).flatMap(([name, prop]) => [
         { name, prop, value: input[name] },
-        ...dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }),
+        ...dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }).filter((child) => !(child.name in props)),
     ])
     const updates = fields.flatMap(({ name, prop, value }): [string, PropertySettings][] => {
         const type = containerExecutionType({ prop, value })
