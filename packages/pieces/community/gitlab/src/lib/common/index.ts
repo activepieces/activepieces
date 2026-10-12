@@ -3,8 +3,6 @@ import { gitlabAuth } from '../auth';
 import { GitlabAuthValue, gitlabListPage } from './client';
 import { GitlabProjectSummary } from './models';
 
-export const PROJECT_DROPDOWN_PAGE_CAP = 10;
-
 export async function listProjectOptions({
   auth,
   searchValue,
@@ -45,6 +43,8 @@ export async function listProjectOptions({
   }
   return { options, truncated: page !== null };
 }
+
+export const PROJECT_DROPDOWN_PAGE_CAP = 10;
 
 export const gitlabCommon = {
   projectId: (required = true) =>

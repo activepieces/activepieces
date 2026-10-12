@@ -6,19 +6,6 @@ import {
   sendGitlabRequest,
 } from './secret-request';
 
-export type GitlabAuthValue = OAuth2PropertyValue;
-
-export type GitlabCall = Omit<GitlabRequest, 'token'>;
-
-export type GitlabPage<T> = {
-  items: T[];
-  count: number;
-  page: number;
-  nextPage: number | null;
-  hasMore: boolean;
-  total: number | null;
-};
-
 export function gitlabToken(auth: GitlabAuthValue): string {
   return getAccessTokenOrThrow(auth);
 }
@@ -120,3 +107,16 @@ export async function gitlabListPage<T>({
     total: headerInt({ headers: response.headers, name: 'x-total' }),
   };
 }
+
+export type GitlabAuthValue = OAuth2PropertyValue;
+
+export type GitlabCall = Omit<GitlabRequest, 'token'>;
+
+export type GitlabPage<T> = {
+  items: T[];
+  count: number;
+  page: number;
+  nextPage: number | null;
+  hasMore: boolean;
+  total: number | null;
+};
