@@ -66,6 +66,7 @@ const polling: Polling<
 export const newRowTrigger = createTrigger({
   auth: oracleDbAuth,
   name: 'new_row',
+  classification: 'READ',
   displayName: 'New Row',
   description: 'Triggers when a new row is created',
   aiMetadata: {

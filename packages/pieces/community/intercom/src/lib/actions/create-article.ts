@@ -6,6 +6,7 @@ import { collectionIdProp } from '../common/props';
 export const createArticleAction = createAction({
 	auth: intercomAuth,
 	name: 'create-article',
+	classification: 'WRITE',
 	displayName: 'Create Article',
 	description: 'Creates a new article in your Help Center.',
 	audience: 'both',

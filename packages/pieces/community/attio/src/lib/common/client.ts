@@ -18,6 +18,8 @@ export type AttioApiCallParams = {
 	query?: Record<string, string | number | string[] | undefined>;
 	body?: any;
 	retries?: number;
+	headers?: Record<string, string>;
+	responseType?: HttpRequest['responseType'];
 };
 
 export async function attioApiCall<T extends HttpMessageBody>({
@@ -27,6 +29,8 @@ export async function attioApiCall<T extends HttpMessageBody>({
 	query,
 	body,
 	retries,
+	headers,
+	responseType,
 }: AttioApiCallParams): Promise<T> {
 	const qs: QueryParams = {};
 
@@ -48,6 +52,8 @@ export async function attioApiCall<T extends HttpMessageBody>({
 		queryParams: qs,
 		body,
 		retries,
+		headers,
+		responseType,
 	};
 
 	const response = await httpClient.sendRequest<T>(request);
@@ -98,7 +104,7 @@ export async function attioPaginatedApiCall<T extends HttpMessageBody>({
 
 export async function buildMembersMap(
 	accessToken: string,
-	records: AttioRecordResponse[],
+	records: Pick<AttioRecordResponse, 'values'>[],
 ): Promise<Record<string, WorkspaceMemberResponse>> {
 	const actorIds = new Set<string>();
 	for (const record of records) {
@@ -177,7 +183,7 @@ function extractAttributeValue(
 }
 
 export function normalizeRecord(
-	record: AttioRecordResponse,
+	record: Pick<AttioRecordResponse, 'values'>,
 	membersMap: Record<string, WorkspaceMemberResponse>,
 ): Record<string, unknown> {
 	const flatValues: Record<string, unknown> = {};

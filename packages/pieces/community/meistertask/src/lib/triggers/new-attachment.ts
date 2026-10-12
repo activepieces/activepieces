@@ -58,6 +58,7 @@ const newAttachmentPolling: Polling<
 export const newAttachment = createTrigger({
   auth: meistertaskAuth,
   name: 'new_attachment',
+  classification: 'READ',
   displayName: 'New Attachment',
   description: 'Triggers when an attachment is created.',
   aiMetadata: {

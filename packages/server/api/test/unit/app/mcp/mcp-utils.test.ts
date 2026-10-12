@@ -1,4 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
+import { AiRouterAction, BranchExecutionType, EmptyTrigger, FlowActionType, FlowTriggerType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
@@ -464,5 +465,46 @@ describe('mcpUtils.buildExampleInput — runnable, sentinel-free once resolved',
         expect(serialized).not.toContain('resolve with')
         expect(example.channel).toBe('C123')
         expect(example.fields).toEqual({ name: '<Name>' })
+    })
+})
+
+describe('mcpUtils.resolveRouterStep', () => {
+    const aiRouter: AiRouterAction = {
+        name: 'ai_router',
+        displayName: 'AI Router',
+        type: FlowActionType.AI_ROUTER,
+        valid: true,
+        lastUpdatedDate: '2026-09-23T00:00:00.000Z',
+        settings: {
+            text: '{{trigger.body}}',
+            question: 'Which team?',
+            branches: [
+                { branchType: BranchExecutionType.CONDITION, branchName: 'Billing', description: 'Payments' },
+                { branchType: BranchExecutionType.FALLBACK, branchName: 'Otherwise', description: 'Anything else' },
+            ],
+        },
+        children: [null, null],
+    }
+    const trigger: EmptyTrigger = {
+        name: 'trigger',
+        displayName: 'Trigger',
+        type: FlowTriggerType.EMPTY,
+        valid: false,
+        lastUpdatedDate: '2026-09-23T00:00:00.000Z',
+        settings: {},
+        nextAction: aiRouter,
+    }
+
+    it('resolves an AI router as a branched step', () => {
+        const resolved = mcpUtils.resolveRouterStep({ stepName: 'ai_router', trigger })
+        expect(resolved.routerStep?.name).toBe('ai_router')
+    })
+
+    it('names both router kinds and lists the AI router when the step is not one', () => {
+        const resolved = mcpUtils.resolveRouterStep({ stepName: 'trigger', trigger })
+        const text = resolved.error?.content[0]
+        expect(text).toMatchObject({ type: 'text' })
+        expect(text && 'text' in text ? text.text : '').toContain('ROUTER or AI_ROUTER')
+        expect(text && 'text' in text ? text.text : '').toContain('ai_router')
     })
 })

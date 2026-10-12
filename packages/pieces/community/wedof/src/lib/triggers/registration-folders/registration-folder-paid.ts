@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const registrationFolderPaid = createTrigger({
   auth: wedofAuth,
   name: 'registrationFolderPaid',
+  classification: 'READ',
   displayName: 'Dossier de formation payé (acompte ou payé totalement)',
   description: "Se déclenche lorsqu'un dossier de formation est payé",
   aiMetadata: {

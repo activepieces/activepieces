@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 export const createOrUpdateCompanyAction = createAction({
 	auth: intercomAuth,
 	name: 'create-or-update-company',
+	classification: 'WRITE',
 	displayName: 'Create or Update Company',
 	description: 'Creates a new company or updates an existing one (matched by Company ID).',
 	audience: 'both',

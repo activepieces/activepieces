@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, silentProperty, dynamicRefTypeProperty, d
 export const attachFileAction = createAction({
   auth: podioAuth,
   name: 'attach_file',
+  classification: 'WRITE',
   displayName: 'Attach File',
   description: 'Upload and attach a file to an item/task/comment.',
   audience: 'both',

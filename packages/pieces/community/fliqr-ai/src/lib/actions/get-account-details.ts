@@ -7,6 +7,7 @@ import { fliqrConfig } from '../common/models';
 export const getFliqrAccountDetails = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'get_fliqr_account_details',
+  classification: 'READ',
   auth: fliqrAuth,
   displayName: 'Get Business Account details',
   description: 'Get basic account details of business',

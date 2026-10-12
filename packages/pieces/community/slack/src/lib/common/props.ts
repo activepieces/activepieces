@@ -1,5 +1,5 @@
 import { MarkdownVariant, Property } from '@activepieces/pieces-framework';
-import { UsersListResponse, WebClient } from '@slack/web-api';
+import { ConversationsListResponse, UsersConversationsResponse, UsersListResponse, WebClient } from '@slack/web-api';
 import { slackAuth } from '../auth';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const multiSelectChannelInfo = Property.MarkDown({
@@ -27,13 +27,13 @@ export const interactivitySetupInfo = Property.MarkDown({
 });
 
 export const slackChannel = <R extends boolean>(required: R) =>
-  Property.Dropdown<string, R,typeof slackAuth>({
+  Property.Dropdown<string, R, typeof slackAuth>({
     auth: slackAuth,
     displayName: 'Channel',
     description: 'Private channels appear only after the bot is added to them.',
     required,
-    refreshers: [],
-    async options({ auth }) {
+    refreshers: ['onlyBotChannels'],
+    async options({ auth, onlyBotChannels }) {
       if (!auth) {
         return {
           disabled: true,
@@ -43,7 +43,7 @@ export const slackChannel = <R extends boolean>(required: R) =>
       }
       const accessToken = getBotToken(auth as SlackAuthValue);
 
-      const channels = await getChannels(accessToken);
+      const channels = await getChannels({ accessToken, onlyBotChannels: onlyBotChannels === true });
 
       return {
         disabled: false,
@@ -52,6 +52,39 @@ export const slackChannel = <R extends boolean>(required: R) =>
       };
     },
   });
+
+export const onlyBotChannels = Property.Checkbox({
+  displayName: 'Only Channels the Bot Is In',
+  description: 'Show only channels the bot is a member of.',
+  required: false,
+  defaultValue: true,
+});
+
+export const slackChannels = Property.MultiSelectDropdown<string, false, typeof slackAuth>({
+  auth: slackAuth,
+  displayName: 'Channels',
+  description: 'Empty means every channel the bot is in.',
+  required: false,
+  refreshers: ['onlyBotChannels'],
+  async options({ auth, onlyBotChannels }) {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'connect slack account',
+        options: [],
+      };
+    }
+    const accessToken = getBotToken(auth as SlackAuthValue);
+
+    const channels = await getChannels({ accessToken, onlyBotChannels: onlyBotChannels === true });
+
+    return {
+      disabled: false,
+      placeholder: 'Select channels',
+      options: channels,
+    };
+  },
+});
 
 export const username = Property.ShortText({
   displayName: 'Username',
@@ -259,19 +292,28 @@ export async function getUsers(accessToken: string) {
   return users;
 }
 
-export async function getChannels(accessToken: string) {
+export async function getChannels({
+  accessToken,
+  onlyBotChannels,
+}: {
+  accessToken: string;
+  onlyBotChannels?: boolean;
+}) {
   const client = new WebClient(accessToken);
   const channels: { label: string; value: string }[] = [];
   const CHANNELS_LIMIT = 2000;
 
-  let cursor;
+  let cursor: string | undefined;
   do {
-    const response = await client.conversations.list({
+    const params = {
       types: 'public_channel,private_channel',
       exclude_archived: true,
       limit: 1000,
       cursor,
-    });
+    };
+    const response: ConversationsListResponse | UsersConversationsResponse = onlyBotChannels
+      ? await client.users.conversations(params)
+      : await client.conversations.list(params);
 
     if (response.channels) {
       channels.push(

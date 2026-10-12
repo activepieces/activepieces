@@ -4,6 +4,7 @@ import { intercomClient, TriggerPayload } from '../common';
 
 export const contactRepliedTrigger = createTrigger({
 	name: 'contactReplied',
+	classification: 'READ',
 	displayName: 'Contact Replied',
 	description: 'Triggers when a contact replies to a Conversation in Intercom.',
 	aiMetadata: {

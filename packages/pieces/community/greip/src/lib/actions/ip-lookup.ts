@@ -6,6 +6,7 @@ import { greipApiCall } from '../common/client';
 export const ipLookup = createAction({
   auth: greipAuth,
   name: 'ip_lookup',
+  classification: 'READ',
   displayName: 'IP Lookup',
   description: 'Look up comprehensive information about an IP address including location, ISP, security, and risk factors',
   audience: 'both',

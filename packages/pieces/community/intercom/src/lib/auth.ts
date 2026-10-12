@@ -35,6 +35,8 @@ export const intercomOAuth2Auth = PieceAuth.OAuth2({
 	props: {
 		region:regionProp
 	},
+	getConnectionIdentifier: async ({ auth }) =>
+		fetchAdminLabel({ token: auth.access_token, region: auth.props?.['region'] }),
 });
 
 
@@ -64,6 +66,32 @@ const intercomCustomAuth = PieceAuth.CustomAuth({
 			return { valid: false, error: (e as Error).message };
 		}
 	},
+	getConnectionIdentifier: async ({ auth }) =>
+		fetchAdminLabel({ token: auth.accessToken, region: auth.region }),
 });
 
 export const intercomAuth = [intercomOAuth2Auth, intercomCustomAuth];
+
+async function fetchAdminLabel({
+	token,
+	region,
+}: {
+	token: string;
+	region: unknown;
+}): Promise<string | undefined> {
+	const host = typeof region === 'string' && region.length > 0 ? region : 'intercom';
+	try {
+		const response = await httpClient.sendRequest<IntercomAdmin>({
+			method: HttpMethod.GET,
+			url: `https://api.${host}.io/me`,
+			headers: { Authorization: `Bearer ${token}` },
+			timeout: 5000,
+		});
+		const admin = response.body;
+		return admin.email || admin.name || admin.app?.name || undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+type IntercomAdmin = { email?: string; name?: string; app?: { name?: string } };

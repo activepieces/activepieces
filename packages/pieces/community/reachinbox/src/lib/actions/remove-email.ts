@@ -12,6 +12,7 @@ interface EmailAccount {
 export const removeEmail = createAction({
   auth: ReachinboxAuth,
   name: 'removeEmail',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove Email',
   description: 'Remove an email account from the system.',
   audience: 'both',

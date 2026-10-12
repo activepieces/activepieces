@@ -5,6 +5,7 @@ import { documentDropdown, parserDropdown } from '../common/properties';
 export const getParsedDocumentById = createAction({
   auth: parseurAuth,
   name: 'getParsedDocumentById',
+  classification: 'READ',
   displayName: 'Get Parsed Document by ID',
   description: 'Fetch parsed JSON / structured output for a given document ID',
   audience: 'both',

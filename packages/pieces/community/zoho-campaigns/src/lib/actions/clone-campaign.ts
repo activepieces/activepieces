@@ -5,6 +5,7 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 export const cloneCampaign = createAction({
   auth: zohoCampaignsAuth,
   name: 'cloneCampaign',
+  classification: 'WRITE',
   displayName: 'Clone Campaign',
   description: 'Clone an existing campaign, optionally renaming.',
   audience: 'both',

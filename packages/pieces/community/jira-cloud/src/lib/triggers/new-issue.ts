@@ -6,10 +6,12 @@ import {
 import { jiraCloudAuth } from '../../auth';
 import { createJiraPolling } from '../common/polling';
 
+import { issueOutputSchema } from '../output-schemas';
 const polling = createJiraPolling({ timeField: 'created' });
 
 export const newIssue = createTrigger({
   name: 'new_issue',
+  classification: 'READ',
   displayName: 'New Issue',
   description: 'Triggers when a new issue is created',
   aiMetadata: {
@@ -18,6 +20,7 @@ export const newIssue = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueOutputSchema,
   props: {
     jql: Property.LongText({
       displayName: 'JQL',

@@ -9,6 +9,7 @@ import { optionalQueryParamsProperty, sharedModuleProps } from '../common/props'
 export const searchBusinessObjectBatch = createAction({
 	auth: workdayAuth,
 	name: 'search_business_object_batch',
+	classification: 'SEARCH',
 	displayName: 'Search Business Object (Batch)',
 	description:
 		'Searches business objects with pagination and returns all matching records.',

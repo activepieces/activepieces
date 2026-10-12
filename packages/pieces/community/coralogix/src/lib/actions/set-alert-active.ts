@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const setAlertActive = createAction({
   auth: coralogixAuth,
   name: 'setAlertActive',
+  classification: 'WRITE',
   displayName: 'Enable / Disable Alert',
   description:
     'Enable or disable a Coralogix alert definition. Use this to mute alerts during maintenance windows.',

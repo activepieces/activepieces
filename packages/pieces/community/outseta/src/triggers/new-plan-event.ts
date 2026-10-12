@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const newPlanEventTrigger = createTrigger({
   name: 'new_plan_event',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'New Plan Event',
   description: 'Triggers when a billing plan is created or updated in the Outseta catalog.',

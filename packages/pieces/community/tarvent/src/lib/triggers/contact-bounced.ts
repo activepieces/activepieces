@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const contactBouncedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_contact_bounced',
+  classification: 'READ',
   displayName: 'Campaign Or Transactional Email Bounced',
   description: 'Triggers when a campaign or transactional email bounces (is rejected) for a contact.',
   aiMetadata: {

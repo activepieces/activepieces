@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import {
-  ConnectionPickerData,
+  isConnectionPickerData,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
@@ -127,8 +127,8 @@ export function ChatBottomBar({
         className={cn(
           'overflow-hidden rounded-2xl border transition-colors',
           minimal
-            ? 'border-transparent bg-transparent hover:bg-muted/30'
-            : 'border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40',
+            ? 'border-transparent bg-transparent hover:bg-gray-3/30'
+            : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
         )}
       >
         {banner}
@@ -190,9 +190,10 @@ function BlockingDisplayCard({
       );
     case 'ap_show_connection_required':
     case 'ap_show_connection_picker':
+      if (!isConnectionPickerData(data)) return null;
       return (
         <ConnectionPickerCard
-          picker={data as unknown as ConnectionPickerData}
+          picker={data}
           onResolve={(payload) => approveGate(toolCallId, payload)}
           onDismiss={() => rejectGate(toolCallId)}
         />

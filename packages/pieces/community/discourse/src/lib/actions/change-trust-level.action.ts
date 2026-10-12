@@ -6,6 +6,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 export const changeUserTrustLevel = createAction({
   auth: discourseAuth,
   name: 'change_user_trust_level',
+  classification: 'WRITE',
   description: 'Change the trust level of a user',
   audience: 'both',
   aiMetadata: { description: 'Set a Discourse user account to a specific trust level, identified by the numeric user ID. Use when an agent needs to promote or demote a member to control their permissions. Because it sets an absolute target level rather than incrementing, repeating the same call leaves the user at the same level.', idempotent: true },

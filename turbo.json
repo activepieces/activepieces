@@ -100,14 +100,15 @@
         "@activepieces/piece-http#build",
         "@activepieces/piece-data-mapper#build",
         "@activepieces/piece-approval#build",
-        "@activepieces/piece-webhook#build"
+        "@activepieces/piece-webhook#build",
+        "@activepieces/piece-delay#build"
       ],
       "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
     "lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
       "outputs": []
     },
     "test": {

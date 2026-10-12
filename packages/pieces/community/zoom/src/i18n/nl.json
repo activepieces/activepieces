@@ -1,6 +1,6 @@
 {
   "Video conferencing, web conferencing, webinars, screen sharing": "Videoconferentie, webconferentie, webinars, schermdelen",
-  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **webinar:read:webinar**, and **meeting:write:registrant** as scopes.": "\n  1. Ga naar [marketplace.zoom.us](https://marketplace.zoom.us/) en log in op je account.\n  2. Klik in de rechterbovenhoek op **Ontwikkelen** en vervolgens **Build App**.\n  3. Selecteer **Algemene App**.\n  4. Kopieer de Client-ID en Client-geheim. dd Redirect URL en druk op doorgaan.\n  5. Ga naar **Scopes** van linker zijbalk en voeg **meeting:write:vergadering**, **meeting:lees:meeting**, **meeting:read:list_meetings**, **meeting:update:vergadering**, **webinar:read:webinar**, en **meeting:schrijven:registrant** als scopes.",
+  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.",
   "Create Zoom Meeting": "Maak Zoom Vergadering",
   "Create Zoom Meeting Registrant": "Maak Zoom Meeting Registrant",
   "Find Zoom Meeting": "Zoom vergadering zoeken",
@@ -8,7 +8,7 @@
   "Custom API Call": "Custom API Call",
   "Create a new Zoom Meeting": "Maak een nieuwe Zoom Vergadering",
   "Create and submit a user's registration to a meeting.": "Maak en stuur de registratie van een gebruiker aan een vergadering.",
-  "Retrieve the details of an existing meeting or webinar.": "Haal de details op van een bestaande vergadering of webinar.",
+  "Retrieve the details of an existing meeting.": "Retrieve the details of an existing meeting.",
   "Update the details of an existing meeting.": "Werk de details van een bestaande vergadering bij.",
   "Make a custom API call to a specific endpoint": "Maak een aangepaste API call naar een specifiek eindpunt",
   "Meeting's topic": "Onderwerp van vergadering",

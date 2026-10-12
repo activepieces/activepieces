@@ -33,6 +33,7 @@ export interface promptResponse {
 export interface openRouterModels {
   data: {
     id: string;
+    name: string;
   }[];
 }
 

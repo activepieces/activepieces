@@ -8,6 +8,7 @@ import { invoiceninjaAuth } from '../..';
 export const actionRecurringInvoice = createAction({
   auth: invoiceninjaAuth,
   name: 'action_recurring_invoice',
+  classification: 'DESTRUCTIVE',
   displayName: 'Perform Action on Recurring Invoice',
   description:
     'Actions include: start, stop, send_now, restore, archive, delete.',

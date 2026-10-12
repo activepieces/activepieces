@@ -7,6 +7,7 @@ import { workspaceId } from '../common/props';
 export const stopTimerAction = createAction({
 	auth: clockifyAuth,
 	name: 'stop-timer',
+	classification: 'WRITE',
 	displayName: 'Stop Timer',
 	description: 'Stops currently running timer on specified workspace.',
 	audience: 'both',

@@ -4,16 +4,18 @@ import { ExtractStructuredDataJobData, ResolveAiProviderResponse } from '@active
 import { generateText, jsonSchema, ModelMessage, tool, UserModelMessage } from 'ai'
 import { ResolvedAiFile } from './ai-files'
 
-export async function extractStructuredData({ data, resolved, flowStep, billing, files }: {
+export async function extractStructuredData({ data, resolved, modelId, flowStep, billing, files, maxRetries }: {
     data: ExtractStructuredDataJobData
     resolved: ResolveAiProviderResponse
+    modelId: string
+    maxRetries?: number
     flowStep: FlowStepMetadata
     billing: ActivepiecesAiBilling
     files: ResolvedAiFile[]
 }): Promise<unknown> {
     const model = aiUtils.createModel({
         credentials: resolved,
-        modelId: data.modelId,
+        modelId,
         flowStep,
         billing,
     })
@@ -27,6 +29,7 @@ export async function extractStructuredData({ data, resolved, flowStep, billing,
     try {
         const result = await generateText({
             model,
+            ...spreadIfDefined('maxRetries', maxRetries),
             ...spreadIfDefined('maxOutputTokens', data.maxOutputTokens),
             tools: { extractData: extractionTool },
             toolChoice: 'required',
@@ -39,7 +42,7 @@ export async function extractStructuredData({ data, resolved, flowStep, billing,
         return restoreFieldNames({ extracted: toolCalls[0].input, sanitizedNameMap })
     }
     catch (error) {
-        throw new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        throw new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error })
     }
 }
 

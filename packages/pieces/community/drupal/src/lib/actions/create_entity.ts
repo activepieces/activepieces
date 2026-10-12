@@ -13,6 +13,7 @@ import {
 export const drupalCreateEntityAction = createAction({
   auth: drupalAuth,
   name: 'drupal-create-entity',
+  classification: 'WRITE',
   displayName: 'Create Entity',
   description: 'Create a new entity in Drupal with smart field discovery and validation',
   audience: 'both',

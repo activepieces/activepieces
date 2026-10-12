@@ -32,7 +32,7 @@ const STATUS_CATEGORIES = [
   {
     label: 'Succeeded',
     statuses: [FlowRunStatus.SUCCEEDED],
-    color: 'hsl(var(--success))',
+    color: 'var(--success-9)',
   },
   {
     label: 'Failed',
@@ -44,27 +44,27 @@ const STATUS_CATEGORIES = [
       FlowRunStatus.QUOTA_EXCEEDED,
       FlowRunStatus.LOG_SIZE_EXCEEDED,
     ],
-    color: 'hsl(var(--destructive))',
+    color: 'var(--danger-9)',
   },
   {
     label: 'Running',
     statuses: [FlowRunStatus.RUNNING],
-    color: 'hsl(var(--primary))',
+    color: 'var(--accent-9)',
   },
   {
     label: 'Queued',
     statuses: [FlowRunStatus.QUEUED],
-    color: 'var(--muted-foreground)',
+    color: 'var(--gray-9)',
   },
   {
     label: 'Paused',
     statuses: [FlowRunStatus.PAUSED],
-    color: 'hsl(var(--warning))',
+    color: 'var(--warning-9)',
   },
   {
     label: 'Canceled',
     statuses: [FlowRunStatus.CANCELED],
-    color: 'var(--muted-foreground)',
+    color: 'var(--gray-9)',
   },
 ] as const;
 

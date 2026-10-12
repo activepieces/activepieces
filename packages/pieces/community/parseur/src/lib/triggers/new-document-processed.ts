@@ -6,6 +6,7 @@ import { WebhookInformation } from '../common/types';
 export const newDocumentProcessed = createTrigger({
   auth: parseurAuth,
   name: 'newDocumentProcessed',
+  classification: 'READ',
   displayName: 'New Document Processed',
   description:
     'Fires when a new document is successfully processed and parsed by Parseur.',

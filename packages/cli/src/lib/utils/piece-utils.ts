@@ -120,7 +120,7 @@ export async function publishPieceFromFolder(
                 }
             }
         } else {
-            console.error(chalk.red(`Unexpected error: ${error.message}`));
+            console.error(chalk.red(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`));
             if (failOnError) {
               console.info(chalk.yellow(`Terminating process due to unexpected error for piece '${packageJson.name}' (fail-on-error is enabled)`));
               process.exit(1);
@@ -165,12 +165,12 @@ export function displayNameToCamelCase(input: string): string {
     return camelCaseWords.join('');
   }
 
-export const assertPieceExists = async (pieceName: string | null) => {
+export function assertPieceExists(pieceName: string | null): asserts pieceName is string {
     if (!pieceName) {
       console.error(chalk.red(`🚨 Piece ${pieceName} not found`));
       process.exit(1);
     }
-  };
+  }
 
 
   export const removeStartingSlashes = (str: string) => {

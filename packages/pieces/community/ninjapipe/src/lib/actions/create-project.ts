@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDate
 export const createProject = createAction({
   auth: ninjapipeAuth,
   name: 'create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Creates a new project.',
   audience: 'both',

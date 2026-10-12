@@ -2,7 +2,9 @@ import assert from 'assert'
 import { execSync } from 'child_process'
 
 const BREAKING_LABEL = '⛓️‍💥 breaking-change'
-const BREAKING_CHANGES_DOC = 'docs/install/reference/breaking-changes.mdx'
+const UNRELEASED_DOC = 'docs/install/reference/breaking-changes-unreleased.mdx'
+const PUBLISHED_DOC = 'docs/install/reference/breaking-changes.mdx'
+const UNRELEASED_HEADING = /^##\s+Unreleased\b/i
 
 type TemplateChoice = 'yes' | 'no' | 'unset' | 'multiple'
 
@@ -61,7 +63,8 @@ function main(): void {
     const hasBreakingLabel = labels.includes(BREAKING_LABEL)
     const templateChoice = sectionChoice({ body, heading: /^#{2,3}\s*Breaking change\?/im })
     const securityChoice = sectionChoice({ body, heading: /^#{2,3}\s*Security impact\?/im })
-    const docAdded = hasBreakingEntry(addedDocLines({ baseRef, file: BREAKING_CHANGES_DOC }))
+    const docAdded = hasBreakingEntry(addedDocLines({ baseRef, file: UNRELEASED_DOC }))
+    const publishedAdded = addedDocLines({ baseRef, file: PUBLISHED_DOC })
 
     const errors: string[] = []
 
@@ -83,10 +86,13 @@ function main(): void {
 
     // R3 — the breaking label, the template answer, and the docs entry must agree.
     if (hasBreakingLabel && !docAdded) {
-        errors.push(`PR carries the "${BREAKING_LABEL}" label but adds no entry to ${BREAKING_CHANGES_DOC}. Document the change (what changed + required action) so it reaches self-hosters.`)
+        errors.push(`PR carries the "${BREAKING_LABEL}" label but adds no entry to ${UNRELEASED_DOC}. Document the change (what changed + required action) at the top of that page; the release moves it onto ${PUBLISHED_DOC}.`)
     }
     if (docAdded && !hasBreakingLabel) {
-        errors.push(`PR adds an entry to ${BREAKING_CHANGES_DOC} but is missing the "${BREAKING_LABEL}" label. Apply the label so it lands in the release notes.`)
+        errors.push(`PR adds an entry to ${UNRELEASED_DOC} but is missing the "${BREAKING_LABEL}" label. Apply the label so it lands in the release notes.`)
+    }
+    if (publishedAdded.some((line) => UNRELEASED_HEADING.test(line))) {
+        errors.push(`"## Unreleased" no longer exists on ${PUBLISHED_DOC}. Add the entry to ${UNRELEASED_DOC} instead; the release rolls it under the version that ships it.`)
     }
     if (templateChoice === 'yes' && !hasBreakingLabel) {
         errors.push(`The PR template declares a breaking change but the "${BREAKING_LABEL}" label is missing. Apply it.`)
@@ -100,7 +106,7 @@ function main(): void {
         for (const error of errors) {
             console.error(`   - ${error}`)
         }
-        console.error('\nSee docs/install/reference/breaking-changes.mdx and the PR template for guidance.')
+        console.error(`\nSee ${UNRELEASED_DOC} and the PR template for guidance.`)
         process.exit(1)
     }
 
@@ -113,6 +119,8 @@ function runSelfCheck(): void {
     assert(hasBreakingEntry(['---']) === false, 'a separator is not an entry')
     assert(hasBreakingEntry(['## 0.87.0', 'Set AP_FOO is gone.']) === false, 'a version bump without a #### title is not an entry')
     assert(hasBreakingEntry(['Just a stray sentence.']) === false, 'placeholder prose without a title is not an entry')
+    assert(UNRELEASED_HEADING.test('## Unreleased') === true, 'a hand-written Unreleased heading is detected')
+    assert(UNRELEASED_HEADING.test('## 0.92.0') === false, 'a version heading is not an Unreleased heading')
     console.log('breaking-change-check self-check passed')
 }
 

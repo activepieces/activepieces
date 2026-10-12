@@ -19,17 +19,22 @@ export const telegramSendMediaAction = createAction({
   auth: telegramBotAuth,
   name: 'send_media',
   classification: 'WRITE',
-  description: 'Send a media message (photo, video, sticker, GIF) through a Telegram bot',
+  description: 'Send a photo, video, sticker or GIF to a chat.',
   audience: 'human',
   aiMetadata: { description: 'Sends a single photo, video, sticker, or animated GIF to a Telegram chat, supplied either as an uploaded file or a previously uploaded Telegram file_id. Use when delivering one rich-media item with an optional caption; for multiple items in one album use Send Media Group. Not idempotent: each call posts a new message.', idempotent: false },
   displayName: 'Send Media',
+  propertyGroups: [
+    { key: 'send_to', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id'] },
+    { key: 'media_card', display: 'section', label: 'Media', icon: 'file', props: ['media_type', 'media'] },
+    { key: 'caption', display: 'section', label: 'Caption', icon: 'text', props: ['format', 'message', 'instructions_format'] },
+  ],
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
-    message_thread_id: telegramCommons.messageThreadIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
     media_type: Property.StaticDropdown({
       displayName: 'Media Type',
       required: true,
+      display: 'cards',
       options: {
         disabled: false,
         placeholder: 'Select media type',
@@ -43,7 +48,7 @@ export const telegramSendMediaAction = createAction({
     }),
     media: Property.DynamicProperties({
       auth: telegramBotAuth,
-      displayName: 'Media Properties',
+      displayName: 'File',
       required: false,
       refreshers: ['media_type'],
       async props({ media_type }) {
@@ -51,65 +56,58 @@ export const telegramSendMediaAction = createAction({
           photo: () => ({
             photo: Property.File({
               displayName: 'Image',
-              description: 'The image to be uploaded as a file',
+              description: 'Upload an image, or use Image ID instead.',
               required: false,
             }),
             photoId: Property.ShortText({
-              displayName: 'Image Id',
-              description:
-                "The image id previously uploaded to Telegram's servers",
+              displayName: 'Image ID',
+              description: 'file_id of an image already on Telegram.',
               required: false,
             }),
           }),
           video: () => ({
             video: Property.File({
               displayName: 'Video',
-              description: 'The video to be uploaded as a file',
+              description: 'Upload a video, or use Video ID instead.',
               required: false,
             }),
             videoId: Property.ShortText({
-              displayName: 'Video Id',
-              description:
-                "The video id previously uploaded to Telegram's servers",
+              displayName: 'Video ID',
+              description: 'file_id of a video already on Telegram.',
               required: false,
             }),
           }),
           sticker: () => ({
             sticker: Property.File({
               displayName: 'Sticker',
-              description:
-                'The sticker to be uploaded as a file (supports .WEBP files for static and .TGS for animated)',
+              description: 'Upload a WEBP, TGS or WEBM sticker, or use Sticker ID.',
               required: false,
             }),
             emoji: Property.ShortText({
               displayName: 'Emoji',
-              description:
-                'Emoji associated with the sticker. Only for just uploaded stickers',
+              description: 'Emoji for an uploaded sticker.',
               required: false,
             }),
             stickerId: Property.ShortText({
-              displayName: 'Sticker Id',
-              description:
-                "The sticker id previously uploaded to Telegram's servers",
+              displayName: 'Sticker ID',
+              description: 'file_id of a sticker already on Telegram.',
               required: false,
             }),
           }),
           animation: () => ({
             animation: Property.File({
               displayName: 'GIF',
-              description:
-                'The GIF or MPEG-4 without sound file to be uploaded as a auto-playing animation',
+              description: 'Upload a GIF or silent MP4, or use GIF ID instead.',
               required: false,
             }),
             animationId: Property.ShortText({
-              displayName: 'GIF Id',
-              description:
-                "The GIF or MPEG-4 without sound id previously uploaded to Telegram's servers",
+              displayName: 'GIF ID',
+              description: 'file_id of a GIF already on Telegram.',
               required: false,
             }),
             duration: Property.Number({
               displayName: 'Duration',
-              description: 'Duration of sent video in seconds',
+              description: 'Length in seconds.',
               required: false,
             }),
           }),
@@ -121,16 +119,17 @@ export const telegramSendMediaAction = createAction({
         return builder();
       },
     }),
-    format: telegramCommons.parseModeProp(),
-    instructions_format: telegramCommons.formatLinkInstructions(),
+    format: telegramCommons.form.parseModeProp(),
     message: Property.LongText({
       displayName: 'Caption',
-      description: 'The caption to send with the media',
+      description: 'Up to 1024 characters. Not shown on stickers.',
       required: false,
     }),
-    disable_notification: telegramCommons.disableNotificationProp(),
-    protect_content: telegramCommons.protectContentProp(),
-    reply_markup: telegramCommons.replyMarkupProp(),
+    instructions_format: telegramCommons.form.formatLinkInstructions(),
+    message_thread_id: telegramCommons.form.messageThreadIdProp(),
+    disable_notification: telegramCommons.form.disableNotificationProp(),
+    protect_content: telegramCommons.form.protectContentProp(),
+    reply_markup: telegramCommons.form.replyMarkupProp(),
   },
   outputSchema: sendMediaActionOutputSchema,
   async run(ctx) {
@@ -158,6 +157,10 @@ export const telegramSendMediaAction = createAction({
     const file = ctx.propsValue.media?.[mediaType] as ApFile | undefined;
     const id = ctx.propsValue.media?.[mediaType + 'Id'] as string | undefined;
     const parseMode = telegramCommons.resolveParseMode(ctx.propsValue['format']);
+    const emoji = ctx.propsValue.media?.['emoji'];
+    const duration = ctx.propsValue.media?.['duration'];
+    const animationDuration =
+      mediaType === 'animation' && typeof duration === 'number' ? duration : undefined;
 
     if (file && file.data && file.filename) {
       const form = new FormData();
@@ -181,6 +184,12 @@ export const telegramSendMediaAction = createAction({
       if (ctx.propsValue['reply_markup']) {
         form.append('reply_markup', JSON.stringify(ctx.propsValue['reply_markup']));
       }
+      if (mediaType === 'sticker' && typeof emoji === 'string' && emoji !== '') {
+        form.append('emoji', emoji);
+      }
+      if (animationDuration !== undefined) {
+        form.append('duration', String(animationDuration));
+      }
 
       body = form;
       Object.assign(headers, form.getHeaders());
@@ -194,6 +203,7 @@ export const telegramSendMediaAction = createAction({
         disable_notification: ctx.propsValue['disable_notification'] ?? false,
         protect_content: ctx.propsValue['protect_content'] ?? false,
         reply_markup: ctx.propsValue['reply_markup'] ?? undefined,
+        duration: animationDuration,
       };
     } else {
       throw new Error('No media defined. Provide either a file or an id.');

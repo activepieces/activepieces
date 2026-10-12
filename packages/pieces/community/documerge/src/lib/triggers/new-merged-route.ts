@@ -8,6 +8,7 @@ import { documergeAuth } from '../common/auth';
 export const newMergedRoute = createTrigger({
   auth: documergeAuth,
   name: 'new_merged_route',
+  classification: 'READ',
   displayName: 'New Merged Route',
   description: 'Triggers when a merged/populated route is created',
   aiMetadata: {

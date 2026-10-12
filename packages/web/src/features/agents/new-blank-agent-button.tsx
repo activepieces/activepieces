@@ -55,7 +55,7 @@ export const NewBlankAgentButton = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[220px]">
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+        <DropdownMenuLabel className="text-xs font-normal text-gray-11">
           {t('Create it in')}
         </DropdownMenuLabel>
         {projects.map((project) => (
@@ -75,7 +75,7 @@ type NewBlankAgentButtonProps = {
   projects: Project[];
   pending: boolean;
   onCreate: (projectId: string) => void;
-  variant?: 'outline' | 'default';
+  variant?: 'outline' | 'default' | 'ghost';
   size?: 'sm';
   className?: string;
   icon: ReactNode;

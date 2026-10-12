@@ -3,14 +3,16 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import { linkedRecordDropdown, objectTypeIdDropdown } from '../common/props';
+import { createTaskOutputSchema } from '../output-schemas';
 
 export const createTaskAction = createAction({
 	auth: attioAuth,
 	name: 'create_task',
+	outputSchema: createTaskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Create a new task in Attio, optionally linked to a record and assigned to a member.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new task in Attio with text content, optionally a deadline, completion flag, a linked record (object type plus record ID), and an assignee by workspace member email. Choose this to add a to-do item, optionally tied to a CRM record. Not idempotent — each call creates a separate task.', idempotent: false },
 	props: {
 		content: Property.LongText({

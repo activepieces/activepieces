@@ -29,13 +29,13 @@ function PlatformUserItem({
     if (user.memberStatus === 'has-access') {
       return {
         label: t('Has Access'),
-        className: 'text-primary bg-primary/15',
+        className: 'text-success-11 bg-success-3',
       };
     }
     if (user.memberStatus === 'already-invited') {
       return {
         label: t('Invited'),
-        className: 'text-muted-foreground bg-muted-foreground/15',
+        className: 'text-gray-11 bg-gray-3',
       };
     }
     return { label: formatUtils.convertEnumToHumanReadable(user.platformRole) };
@@ -63,9 +63,7 @@ function PlatformUserItem({
           <span className="text-sm font-medium truncate">
             {user.firstName} {user.lastName}
           </span>
-          <span className="text-xs text-muted-foreground truncate">
-            {user.email}
-          </span>
+          <span className="text-xs text-gray-11 truncate">{user.email}</span>
         </div>
         <Badge
           variant="ghost"
@@ -92,26 +90,25 @@ function EmailStatusSuggestionItem({
       case 'new-user':
         return {
           label: isPlatformInvite ? t('New User') : t('New Member'),
-          className:
-            'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-900',
+          className: 'text-accent-11 bg-accent-3 border-accent-7',
           disabled: false,
         };
       case 'has-access':
         return {
           label: t('Has Access'),
-          className: 'text-primary bg-primary/15',
+          className: 'text-success-11 bg-success-3',
           disabled: true,
         };
       case 'in-project':
         return {
           label: t('Member'),
-          className: 'text-warning bg-warning/15',
+          className: 'text-warning-11 bg-warning-3',
           disabled: true,
         };
       case 'already-invited':
         return {
           label: t('Invited'),
-          className: 'text-muted-foreground bg-muted-foreground/15',
+          className: 'text-gray-11 bg-gray-3',
           disabled: false,
         };
     }
@@ -142,9 +139,7 @@ function EmailStatusSuggestionItem({
             {user ? `${user.firstName} ${user.lastName}` : emailStatus.email}
           </span>
           {user && (
-            <span className="text-xs text-muted-foreground truncate">
-              {user.email}
-            </span>
+            <span className="text-xs text-gray-11 truncate">{user.email}</span>
           )}
         </div>
         <Badge

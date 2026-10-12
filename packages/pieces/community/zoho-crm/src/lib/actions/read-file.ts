@@ -1,47 +1,39 @@
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { zohoCrmAuth } from '../auth';
-import { Property, createAction } from "@activepieces/pieces-framework";
-
+import { downloadToFile, lastPathSegment } from '../common/download';
 
 export const readFile = createAction({
-    auth: zohoCrmAuth,
-    name: 'read-file',
-    displayName: 'Read file',
-    description: 'Download a file content from Zoho CRM. e.g.: a Backup File',
-    audience: 'both',
-    aiMetadata: { description: 'Downloads the binary content of a file from Zoho CRM (e.g. a backup or attachment) given its full URL, authenticating with the connected account, and returns it as a stored file. Use when you already hold a Zoho CRM file URL and need its bytes for a later step. Requires the complete URL including the base host; read-only, so repeating the call is safe.', idempotent: true },
-    props: {
-        url: Property.ShortText({
-            displayName: 'URL',
-            description: 'The full URL to use, including the base URL',
-            required: true,
-            defaultValue: '',
-        })
-    },
-    run: async ({ auth, propsValue, files }) => {
-        const url = propsValue['url'];
-
-        const download = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${auth.access_token}`,
-            },
-        })
-            .then((response) =>
-                response.ok ? response.blob() : Promise.reject(response)
-            )
-            .catch((error) =>
-                Promise.reject(
-                    new Error(
-                        `Error when download file:\n\tDownload file response: ${(error as Error).message ?? error
-                        }`
-                    )
-                )
-            );
-
-        const fileName = url.split('/').pop() ?? url;
-
-        return files.write({
-            fileName: fileName,
-            data: Buffer.from(await download.arrayBuffer()),
-        });
-    },
+  auth: zohoCrmAuth,
+  name: 'read-file',
+  classification: 'READ',
+  displayName: 'Read file',
+  description: 'Download a file content from Zoho CRM. e.g.: a Backup File',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Downloads the binary content of a Zoho CRM file (e.g. a data backup or bulk-read result) from its full https URL and returns it as a stored file. Only URLs on the connection\'s own Zoho API host under /crm/ or its data centre\'s download host are accepted, because the token is sent with the request. The file size limit of this Activepieces deployment applies. Read-only and idempotent.',
+    idempotent: true,
+  },
+  props: {
+    url: Property.ShortText({
+      displayName: 'URL',
+      description: 'Full https URL on your Zoho API host (/crm/...) or download host.',
+      required: true,
+      defaultValue: '',
+    }),
+  },
+  run: async ({ auth, propsValue, files }) => {
+    const url = propsValue['url'].trim();
+    const fileName = lastPathSegmentOf(url);
+    const downloaded = await downloadToFile({ auth, url, files, fileName });
+    return downloaded.file;
+  },
 });
+
+function lastPathSegmentOf(url: string): string | undefined {
+  try {
+    return lastPathSegment(new URL(url));
+  } catch {
+    return undefined;
+  }
+}

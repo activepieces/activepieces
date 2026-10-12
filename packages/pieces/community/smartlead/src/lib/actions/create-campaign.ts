@@ -6,6 +6,7 @@ import { smartleadAuth } from '../auth';
 export const createCampaignAction = createAction({
   auth: smartleadAuth,
   name: 'create_campaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Create a new cold email campaign in SmartLead',
   audience: 'both',

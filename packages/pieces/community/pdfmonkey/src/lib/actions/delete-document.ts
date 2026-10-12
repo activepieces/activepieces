@@ -7,6 +7,7 @@ import { documentIdDropdown } from '../common/props';
 export const deleteDocumentAction = createAction({
 	auth: pdfmonkeyAuth,
 	name: 'deleteDocument',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Document',
 	description: 'Deletes a document.',
 	audience: 'both',

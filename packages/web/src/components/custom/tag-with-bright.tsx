@@ -1,3 +1,4 @@
+import { brandColors } from '@activepieces/shared';
 import { LineChart, Clock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -37,13 +38,13 @@ export const TagWithBright = ({
         }`}
         style={{
           backgroundColor: color,
-          color: '#000000',
+          color: brandColors.onPrimaryFor({ hex: color }),
         }}
       >
         <span
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 50%, transparent 100%)`,
+            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)`,
             animation: 'shine 2.5s ease-out infinite',
             width: '100%',
             transform: 'translateX(-100%)',

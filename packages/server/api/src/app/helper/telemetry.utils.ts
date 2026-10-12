@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, AppInstance, AttributionParams, attributionUtils, DeploymentConfig, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, SignUpMethod, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppInstance, AttributionParams, attributionUtils, DeploymentConfig, DeploymentKind, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, SignUpMethod, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
@@ -54,6 +54,30 @@ export const telemetry = (log: FastifyBaseLogger) => ({
                     signup_method: method,
                     ...(attributionUtils.isEmptyAttribution({ attribution }) ? {} : attribution),
                 },
+            },
+        })
+    },
+    async aliasIdentity({ identityId, userId, platformId }: AliasIdentityParams): Promise<void> {
+        if (system.getEdition() !== ApEdition.CLOUD) {
+            return
+        }
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
+            return
+        }
+        getPostHog().alias({ distinctId: userId, alias: identityId })
+    },
+    async identifyPlatformGroup({ platformId, properties }: IdentifyPlatformGroupParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
+            return
+        }
+        getPostHog().groupIdentify({
+            groupType: PLATFORM_GROUP_TYPE,
+            groupKey: platformId,
+            properties: {
+                ...pickPlatformGroupPii(properties),
+                plan: properties.plan,
+                createdAt: properties.createdAt,
+                deployment: getDeploymentKind(),
             },
         })
     },
@@ -149,9 +173,29 @@ async function getMetadata() {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: system.get(AppSystemProp.ENVIRONMENT),
         activepiecesEdition: edition,
+        deployment: getDeploymentKind(),
         source_site: 'product',
     }
 }
+
+function pickPlatformGroupPii(properties: PlatformGroupProperties): { name?: string } {
+    if (system.getEdition() !== ApEdition.CLOUD) {
+        return {}
+    }
+    return { name: properties.name }
+}
+
+function getDeploymentKind(): DeploymentKind {
+    if (system.getEdition() === ApEdition.CLOUD) {
+        return DeploymentKind.CLOUD
+    }
+    if (system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT) {
+        return DeploymentKind.DEV
+    }
+    return DeploymentKind.SELF_HOSTED
+}
+
+const PLATFORM_GROUP_TYPE = 'platform'
 
 export enum LicenseKeyPostHogEvents {
     AI_USAGE_PER_RUN = 'ai_usage_per_run',
@@ -240,6 +284,23 @@ type IdentifySignUpParams = {
     platformId: string
     method: SignUpMethod
     attribution: AttributionParams | undefined
+}
+
+type AliasIdentityParams = {
+    identityId: string
+    userId: UserId
+    platformId: string
+}
+
+export type PlatformGroupProperties = {
+    name: string
+    plan: string | null
+    createdAt: string
+}
+
+type IdentifyPlatformGroupParams = {
+    platformId: string
+    properties: PlatformGroupProperties
 }
 
 type TrackPlatformParams = {

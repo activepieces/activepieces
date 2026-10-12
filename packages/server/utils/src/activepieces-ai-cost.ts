@@ -38,6 +38,19 @@ export function reportFixedCredits({ billing, provider, modelId, generationId }:
     })
 }
 
+export function reportProviderCost({ billing, provider, modelId, costUsd, inputTokens, outputTokens, generationId }: ReportProviderCostParams): void {
+    const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId }
+    if (isNil(costUsd)) {
+        report({ context, generationId, call: undefined })
+        return
+    }
+    report({
+        context,
+        generationId,
+        call: { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens, outputTokens },
+    })
+}
+
 function billingContextOf({ provider, modelId, billing, charge }: BillingContextParams): BillingContext | undefined {
     if (isNil(billing) || isNil(charge)) {
         return undefined
@@ -236,6 +249,7 @@ export const activepiecesAiCost = {
     billedLanguageModel,
     billedEmbeddingModel,
     reportFixedCredits,
+    reportProviderCost,
 }
 
 type BillingContext = {
@@ -273,6 +287,10 @@ type ReportFixedCreditsParams = {
     provider: AIProviderName
     modelId: string
     generationId?: string
+}
+
+type ReportProviderCostParams = ReportFixedCreditsParams & AiCallTokens & {
+    costUsd?: number
 }
 
 type StreamState = {

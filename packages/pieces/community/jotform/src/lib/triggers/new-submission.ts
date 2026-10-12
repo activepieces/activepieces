@@ -1,10 +1,11 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { WebhookInformation, jotformCommon } from '../common';
-import { jotformAuth } from '../..';
+import { jotformAuth } from '../auth';
 
 export const newSubmission = createTrigger({
   auth: jotformAuth,
   name: 'new_submission',
+  classification: 'READ',
   displayName: 'New Submission',
   description:
     'Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.',

@@ -7,6 +7,7 @@ import { getIssueActionOutputSchema } from '../output-schemas';
 export const getIssueAction = createAction({
   auth: youtrackAuth,
   name: 'get_issue',
+  classification: 'READ',
   outputSchema: getIssueActionOutputSchema,
   displayName: 'Get Issue',
   description: 'Retrieves full details of an issue including all custom field values.',

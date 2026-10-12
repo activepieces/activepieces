@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const getMandate = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-mandate',
+  classification: 'READ',
   displayName: 'Get Mandate',
   description: 'Returns a mandate with the stated ID. This endpoint can be called either by the regular `backend token` or the `mandate token` for that mandate.',
   audience: 'both',

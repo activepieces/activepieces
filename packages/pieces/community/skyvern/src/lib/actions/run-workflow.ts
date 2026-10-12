@@ -7,6 +7,7 @@ import { workflowId, workflowParams } from '../common/props';
 export const runWorkflowAction = createAction({
 	auth: skyvernAuth,
 	name: 'run-workflow',
+	classification: 'WRITE',
 	displayName: 'Run Workflow',
 	description: 'Runs the workflow.',
 	audience: 'both',

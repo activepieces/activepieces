@@ -8,6 +8,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const createEvent = createAction({
   name: 'create_event', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   auth: talkableAuth,
   displayName: 'Create event',
   description: 'Create event in Talkable',

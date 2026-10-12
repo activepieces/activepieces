@@ -8,7 +8,7 @@ Steps already pass data forward via `{{stepN['output'].field}}` — that's per-r
 |---|---|---|
 | Counter, dedup key, last-seen cursor, one value per entity | **Store** | Atomic key/value, fast, opaque |
 | Scratch shared across steps within a single run | **Store**, scope `RUN` | Auto-cleaned after the run |
-| Many rows of the same shape you'll query or inspect | **Tables** | Typed fields, filters, visible in the dashboard — see `ap_load_guide('tables')` |
+| Many rows of the same shape you'll query or inspect | **Tables** | Typed fields, filters, visible in the dashboard — see `ap_load_skill('tables')` |
 | Data the user edits as a spreadsheet | **Google Sheets / Airtable / Notion** | The human owns the source of truth |
 | A system of record that already exists | the external piece (HubSpot, Salesforce, Postgres…) | Don't duplicate state |
 

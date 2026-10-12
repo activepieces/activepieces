@@ -1,0 +1,171 @@
+---
+title: "AI Router"
+description: "Ask one question and Jev, an evaluation model, picks the route"
+icon: "shuffle"
+---
+
+A normal [Router](/flows/building-flows) asks you to write a condition for every branch. The AI
+Router inverts that: you write **one question**, and each branch is **one possible answer**.
+
+```
+Input      {{trigger.body.message}}
+Question   Which team should handle this?
+
+Routes
+  Billing      Payments, invoices, refunds
+  Technical    Bugs, errors, something not working
+  Sales        Pricing questions, upgrades
+  Otherwise    Anything that fits none of the routes above
+```
+
+One request decides. Jev, an evaluation model built to judge text rather than generate it, makes
+the call. By default exactly one route runs; switch **Match** to run every route that applies.
+
+## Which router do you want?
+
+The AI Router reads. The normal [Router](/flows/building-flows) compares. Reach for the AI Router
+the moment you catch yourself typing a fifth `OR contains "…"`.
+
+**Use the normal Router for** exact field values, numbers and dates, comparing two dynamic values
+against each other (`{{step.total}} > {{step.limit}}`), "does this field exist", anything inside a
+big loop, and anything that has to be auditable or reproducible — compliance gates, billing tiers,
+approval thresholds. It is free, instant and gives the same answer forever.
+
+**Use the AI Router for** anything a human typed. Intent, topic, sentiment, urgency, "is this worth
+a call". It routes `"i got billed 2x lol wtf"` and `"Mi tarjeta fue cobrada dos veces"` to Billing
+without you listing a single keyword in either language.
+
+**Most real flows use both.** Let the AI Router take the judgement and put a normal Router inside
+the branch for the facts:
+
+```
+AI Router — "Which team should handle this?"
+├── Billing ──▶ Router — "Over $500?" ──▶ approval / auto-refund
+├── Technical ─▶ create an issue
+└── Otherwise ─▶ human review
+```
+
+Never ask the model whether 500 is bigger than 499.
+
+## Fields
+
+| Field | What it does |
+|---|---|
+| **Input** | The text the model reads. Reference a previous step, e.g. `{{trigger.body.message}}`. Only the first 20,000 characters are sent. |
+| **Question** | One question. With the default match, exactly one route answers it. |
+| **Routes** | Each route's **name** is a possible answer; its **description** tells the model when to pick it. |
+| **Otherwise** | Always present, always last. Edit its description like any other route. |
+| **Match** | Take the best route, or every route that applies. |
+| **Confidence floor** | Optional. Below it, the flow takes the Otherwise route, and the run detail says so. |
+
+## One route, or every route that applies
+
+**Match** decides how many routes run.
+
+**The best route** (the default) asks one question and exactly one route runs. Use it when the routes
+are alternatives — a ticket goes to one team.
+
+**Every route that applies** runs each route that fits, and the Otherwise route only when none did.
+Use it when the routes are independent — one message can be *both* a billing question *and* an
+angry customer.
+
+```
+Input   {{trigger.body}}
+Question   What does this message need?
+Match   Every route that applies
+
+Routes
+  Refund        Wants money back
+  Escalate      Angry, threatening to churn, or asking for a manager
+  Log feedback  Mentions a feature or a complaint about the product
+  Otherwise     Nothing above applies
+```
+
+`"I want a refund and honestly I'm done with you"` runs **Refund** and **Escalate**, and skips the
+other two.
+
+Two things to know before you switch:
+
+- It **asks the model once per route**, so a 6-route step is 6 questions instead of 1. They go in one
+  request. On the built-in Activepieces key you pay the real cost of those extra questions, still a
+  fraction of a credit; on your own OpenRouter key it is one credit either way.
+- It does **not** send Otherwise to the model. There is no forced choice to decline from — every
+  route can simply answer no — so Otherwise is decided here rather than by the model, and its
+  description is unused in this mode.
+
+A confidence floor works per route here: a route the model affirmed at 60% is dropped by a 70%
+floor, and if the floor rejects every route, Otherwise runs.
+
+## Write route descriptions, not prompts
+
+The description is the whole instruction the model gets for that route. Short and concrete beats
+long and careful:
+
+<CodeGroup>
+```text Good
+Billing     Payments, invoices, refunds, double charges
+Technical   Bugs, errors, something not working
+```
+
+```text Worse
+Billing     If the customer seems to be talking about anything financial in nature,
+            including but not limited to payments, you should probably pick this one
+```
+</CodeGroup>
+
+## Otherwise is a real route (best-route mode)
+
+Give it a description. It is sent to the model as a genuine option, not used as a leftover bucket,
+and that is what lets the router decline rather than guess.
+
+The difference is large. With `Billing / Technical / Sales` and no Otherwise description, the input
+`"hi"` is routed to **Sales** — confidently, and past any threshold you would have set. Add
+*"Anything that fits none of the routes above"* and `"hi"` goes to **Otherwise** instead, while a
+clear billing message still goes to Billing.
+
+## Reading a run
+
+In a published flow the step pauses the run while the decision is made, usually a second or two, so
+you may see it as Paused before it turns green. Test runs from the builder wait for the answer
+instead.
+
+The run detail shows how sure the model was across every route, not just the one it picked:
+
+```
+Billing     ████████████░░   91%
+Technical   █░░░░░░░░░░░░░    6%
+Sales       ░░░░░░░░░░░░░░    3%
+```
+
+The route that ran is marked. A route picked at 91% and one picked at 34% look identical in a
+normal run log. Use the spread to tell a routing rule you can trust from one you cannot, and tighten
+the descriptions that come out close.
+
+When a confidence floor sends the run to Otherwise, the run detail says which route fell short:
+
+```
+Billing     ████████░░░░░░   63%
+Technical   ████░░░░░░░░░░   33%
+Otherwise   █░░░░░░░░░░░░░    4%
+
+Billing scored 63%, under your 70% floor, so Otherwise ran
+```
+
+## When a call fails
+
+The step **fails**. It does not quietly take the Otherwise route, because sending a refund down the
+wrong branch because a model timed out is a bug that looks like normal operation. A failed step is
+visible in the run and can be retried.
+
+When the platform is out of AI credits, the step fails the same way, with an error that says so, and
+nothing is charged. If no answer arrives within ten minutes, the step fails too.
+
+## Self-hosting
+
+The AI Router runs on the platform's OpenRouter key, the same way every AI step does, and reaches Jev
+through OpenRouter's Decisions API. On Cloud, and on Enterprise instances with billing, that is the
+built-in Activepieces provider, and each decision is billed at the cost OpenRouter reports, about
+0.03 credit. With your own OpenRouter key, added under **AI providers** in the platform admin, each
+decision costs one AI credit, and nothing on Community Edition, which has no credits. The step
+appears in the step list as soon as the project can reach one of those keys, and is hidden otherwise.
+There is nothing to configure on the step itself.

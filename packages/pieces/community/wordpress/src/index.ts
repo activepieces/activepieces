@@ -17,16 +17,45 @@ import { getWordPressPost } from './lib/actions/get-post.action';
 import { wordpressCommon } from './lib/common';
 import { wordpressNewPost } from './lib/trigger/new-post.trigger';
 import { updateWordPressPost } from './lib/actions/update-post.action';
+import { listPostsAction } from './lib/actions/list-posts.action';
+import { getPostByIdAction } from './lib/actions/get-post-by-id.action';
+import { createBlogPostAction } from './lib/actions/create-blog-post.action';
+import { updateBlogPostAction } from './lib/actions/update-blog-post.action';
+import { trashPostAction } from './lib/actions/trash-post.action';
+import { deletePostPermanentlyAction } from './lib/actions/delete-post-permanently.action';
+import { listPagesAction } from './lib/actions/list-pages.action';
+import { getPageAction } from './lib/actions/get-page.action';
+import { createSitePageAction } from './lib/actions/create-site-page.action';
+import { updatePageAction } from './lib/actions/update-page.action';
+import { trashPageAction } from './lib/actions/trash-page.action';
+import { listCategoriesAction } from './lib/actions/list-categories.action';
+import { createCategoryAction } from './lib/actions/create-category.action';
+import { deleteCategoryAction } from './lib/actions/delete-category.action';
+import { listTagsAction } from './lib/actions/list-tags.action';
+import { createTagAction } from './lib/actions/create-tag.action';
+import { deleteTagAction } from './lib/actions/delete-tag.action';
+import { listCommentsAction } from './lib/actions/list-comments.action';
+import { createCommentAction } from './lib/actions/create-comment.action';
+import { moderateCommentAction } from './lib/actions/moderate-comment.action';
+import { deleteCommentAction } from './lib/actions/delete-comment.action';
+import { listMediaAction } from './lib/actions/list-media.action';
+import { getMediaAction } from './lib/actions/get-media.action';
+import { uploadMediaAction } from './lib/actions/upload-media.action';
+import { updateMediaDetailsAction } from './lib/actions/update-media-details.action';
+import { deleteMediaAction } from './lib/actions/delete-media.action';
+import { getCurrentUserAction } from './lib/actions/get-current-user.action';
+import { listUsersAction } from './lib/actions/list-users.action';
+import { searchSiteContentAction } from './lib/actions/search-site-content.action';
+import { getSiteSettingsAction } from './lib/actions/get-site-settings.action';
 
 const markdownPropertyDescription = `
-**Enable Basic Authentication:**
+Connect with a WordPress **application password**:
 
-1. Download the plugin from: https://github.com/WP-API/Basic-Auth (Click on Code -> Download Zip)
-2. Log in to your WordPress dashboard.
-3. Go to "Plugins" and click "Add New."
-4. Choose "Upload Plugin" and select the downloaded file.
-5. Install and activate the plugin.
+1. In your WordPress admin, open **Users → Profile**.
+2. Under **Application Passwords**, type a name and click **Add New Application Password**.
+3. Copy the generated password and paste it below together with your username.
 
+Your site must use HTTPS: the password travels with every request. On WordPress older than 5.6, install the [Basic Auth plugin](https://github.com/WP-API/Basic-Auth) and use your login password instead, still over HTTPS.
 `;
 
 export const wordpressAuth = PieceAuth.CustomAuth({
@@ -36,16 +65,19 @@ export const wordpressAuth = PieceAuth.CustomAuth({
     username: Property.ShortText({
       displayName: 'Username',
       required: true,
+      description: 'The WordPress user the flow acts as.',
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
       required: true,
+      description:
+        'Application password, or the login password with the Basic Auth plugin.',
     }),
     website_url: Property.ShortText({
       displayName: 'Website URL',
       required: true,
-      description:
-        'URL of the wordpress url i.e https://www.example-website.com',
+      description: 'Address of your WordPress site.',
+      placeholder: 'https://example.com',
     }),
   },
   validate: async ({ auth }) => {
@@ -53,7 +85,7 @@ export const wordpressAuth = PieceAuth.CustomAuth({
     if (!username || !password || !website_url) {
       return {
         valid: false,
-        error: 'please fill all the fields [username, password, website_url] ',
+        error: 'Please fill in the username, password and website URL.',
       };
     }
     if (!wordpressCommon.isBaseUrl(website_url.trim())) {
@@ -69,13 +101,13 @@ export const wordpressAuth = PieceAuth.CustomAuth({
     if (!apiEnabled) {
       return {
         valid: false,
-        error: `REST API is not reachable, visit ${website_url.trim()}/wp-json" \n make sure your settings (Settings -> Permalinks) are set to "Post name" (or any option other than "Plain") and disable any security plugins that might block the REST API `,
+        error: `REST API is not reachable at ${website_url.trim()}/wp-json. In Settings → Permalinks pick any option other than "Plain", and disable security plugins that block the REST API.`,
       };
     }
     try {
       const request: HttpRequest = {
         method: HttpMethod.GET,
-        url: `${website_url}/wp-json/wp/v2/categories`,
+        url: `${website_url.trim()}/wp-json/wp/v2/categories`,
         authentication: {
           type: AuthenticationType.BASIC,
           username: username,
@@ -86,10 +118,11 @@ export const wordpressAuth = PieceAuth.CustomAuth({
       return {
         valid: true,
       };
-    } catch (e: any) {
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
       return {
         valid: false,
-        error: 'Credentials are invalid. ' + e?.message,
+        error: 'Credentials are invalid. ' + message,
       };
     }
   },
@@ -99,7 +132,7 @@ export const wordpress = createPiece({
   displayName: 'WordPress',
   description: 'Open-source website creation software',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,
@@ -117,6 +150,36 @@ export const wordpress = createPiece({
     createWordPressPage,
     updateWordPressPost,
     getWordPressPost,
+    listPostsAction,
+    getPostByIdAction,
+    createBlogPostAction,
+    updateBlogPostAction,
+    trashPostAction,
+    deletePostPermanentlyAction,
+    listPagesAction,
+    getPageAction,
+    createSitePageAction,
+    updatePageAction,
+    trashPageAction,
+    listCategoriesAction,
+    createCategoryAction,
+    deleteCategoryAction,
+    listTagsAction,
+    createTagAction,
+    deleteTagAction,
+    listCommentsAction,
+    createCommentAction,
+    moderateCommentAction,
+    deleteCommentAction,
+    listMediaAction,
+    getMediaAction,
+    uploadMediaAction,
+    updateMediaDetailsAction,
+    deleteMediaAction,
+    getCurrentUserAction,
+    listUsersAction,
+    searchSiteContentAction,
+    getSiteSettingsAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>auth ?
         (auth.props.website_url).trim() + '/wp-json/wp/v2' : '',

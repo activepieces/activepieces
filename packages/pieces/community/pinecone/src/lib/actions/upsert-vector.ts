@@ -5,6 +5,7 @@ import { pineconeAuth } from '../auth';
 export const upsertVector = createAction({
   auth: pineconeAuth,
   name: 'upsert_vector',
+  classification: 'WRITE',
   displayName: 'Upsert Vector',
   description: 'Upsert vectors into a namespace. Overwrites existing vectors with the same ID.',
   audience: 'both',

@@ -4,6 +4,7 @@ import { FlowAction, FlowActionType, SingleActionSchema } from '../actions/actio
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
+import { updateStepUtil } from './update-step-util'
 
 function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVersion {
     const next = flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
@@ -75,11 +76,24 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
                 }
                 break
             }
+
+            case FlowActionType.AI_ROUTER: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.AI_ROUTER ? stepToUpdate.settings.sampleData : undefined
+                const children = stepToUpdate.type === FlowActionType.AI_ROUTER ? stepToUpdate.children : [null, null]
+                updatedAction = {
+                    ...baseProps,
+                    settings: { ...request.settings, sampleData: existingSampleData },
+                    type: FlowActionType.AI_ROUTER,
+                    nextAction: stepToUpdate.nextAction,
+                    children,
+                }
+                break
+            }
         }
         const parseResult = SingleActionSchema.safeParse(updatedAction)
         const valid = (isNil(request.valid) ? true : request.valid) && parseResult.success
         return {
-            ...updatedAction,
+            ...updateStepUtil.preserveLastUpdatedDate({ existingStep: stepToUpdate, updatedStep: updatedAction }),
             valid,
         }
     })

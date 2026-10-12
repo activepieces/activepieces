@@ -3,10 +3,10 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { appWebhookSetupInfo, onlyBotChannels, slackChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
-import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newCommandTriggerOutputSchema } from '../output-schemas';
 
 export const newCommand = createTrigger({
@@ -30,29 +30,8 @@ export const newCommand = createTrigger({
       required: true,
       defaultValue: ['help'],
     }),
-    channels: Property.MultiSelectDropdown({
-      auth: slackAuth,
-      displayName: 'Channels',
-      description: 'Empty means every channel the bot is in.',
-      required: false,
-      refreshers: [],
-      async options({ auth }) {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect slack account',
-            options: [],
-          };
-        }
-        const accessToken = getBotToken(auth as SlackAuthValue);
-        const channels = await getChannels(accessToken);
-        return {
-          disabled: false,
-          placeholder: 'Select channel',
-          options: channels,
-        };
-      },
-    }),
+    onlyBotChannels,
+    channels: slackChannels,
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages',
       description: 'Skip messages posted by bots and apps.',

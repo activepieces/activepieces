@@ -10,9 +10,9 @@ import { getFileName } from './lib/actions/get-file-name';
 
 export const filesHelper = createPiece({
   displayName: 'Files Helper',
-  description: 'Read file content and return it in different formats.',
+  description: 'Read, create, convert, check, zip and unzip files in your flow.',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/file-helper.svg',
   categories: [PieceCategory.CORE],
   authors: ['kishanprmr', 'MoShizzle', 'abuaboud', 'Seb-C', 'danielpoonwj'],

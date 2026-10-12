@@ -1,14 +1,16 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, formatFieldValues, makeClient } from '../common';
+import { rowOutputSchema } from '../output-schemas';
 
 export const cleanRowAction = createAction({
   name: 'baserow_clean_row',
   classification: 'DESTRUCTIVE',
+  outputSchema: rowOutputSchema,
   displayName: 'Clean Row',
   description:
     'Sets all fields in a row to empty/null. To update only specific fields, use Update Row instead.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Clears the supplied fields on one existing Baserow row (identified by row ID) to empty/null, including blank values that Update Row would skip. Use specifically to wipe field contents rather than set new values; to change only some fields to new values use Update Row. Idempotent: re-clearing the same row leaves it in the same empty state.',

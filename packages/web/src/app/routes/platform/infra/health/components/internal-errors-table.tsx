@@ -40,7 +40,7 @@ export function InternalErrorsTable({
         <CardTitle className="flex items-center justify-between text-base font-medium">
           <span>{t('Internal errors — impact')}</span>
           {total > 0 && (
-            <span className="text-sm font-normal text-muted-foreground">
+            <span className="text-sm font-normal text-gray-11">
               {t('{count} errors', { count: total })}
             </span>
           )}
@@ -55,8 +55,8 @@ export function InternalErrorsTable({
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : errors.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
-            <CircleCheck className="size-8 text-emerald-500" />
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-gray-11">
+            <CircleCheck className="size-8 text-success-11" />
             <p className="text-sm">{t('No internal errors in this period')}</p>
           </div>
         ) : (
@@ -80,7 +80,7 @@ export function InternalErrorsTable({
                     )
                   }
                 >
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-gray-11">
                     {error.projectName}
                   </TableCell>
                   <TableCell className="font-medium">
@@ -89,7 +89,7 @@ export function InternalErrorsTable({
                   <TableCell className="text-right tabular-nums">
                     {formatUtils.formatNumber(error.count)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                  <TableCell className="text-right tabular-nums text-gray-11">
                     {total === 0
                       ? '—'
                       : `${Math.round((error.count / total) * 100)}%`}
