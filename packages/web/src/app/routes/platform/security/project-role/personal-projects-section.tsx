@@ -79,7 +79,9 @@ export function PersonalProjectsSection() {
       return;
     }
     if (createForExistingMembers) {
-      toast.success(t('Creating personal projects for existing members.'));
+      toast.success(
+        t("Creating personal projects for members who don't have one."),
+      );
     }
   };
 
