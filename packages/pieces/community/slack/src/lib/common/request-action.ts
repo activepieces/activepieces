@@ -59,6 +59,11 @@ export const requestAction = async (conversationId: string, context: any) => {
             },
         );
 
+        const customBlocks = context.propsValue.blocks;
+        if (customBlocks !== undefined && !Array.isArray(customBlocks)) {
+            throw new Error('Blocks must be a JSON array');
+        }
+
         const messageResponse: ChatPostMessageResponse = await slackSendMessage({
             token,
             text: `${context.propsValue.text}`,
@@ -70,6 +75,7 @@ export const requestAction = async (conversationId: string, context: any) => {
             replyBroadcast,
             blocks: [
                 ...textToSectionBlocks(`${context.propsValue.text}`),
+                ...(Array.isArray(customBlocks) ? customBlocks : []),
                 {
                     type: 'actions',
                     block_id: 'actions',

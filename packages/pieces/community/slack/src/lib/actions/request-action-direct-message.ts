@@ -8,6 +8,7 @@ import {
   username,
   actions,
   mentionOriginFlow,
+  customBlocks,
 } from '../common/props';
 import { requestAction } from '../common/request-action';
 import { requestActionActionOutputSchema } from '../output-schemas';
@@ -26,6 +27,7 @@ export const requestActionDirectMessageAction = createAction({
     userId: userId(true),
     text,
     actions,
+    blocks: customBlocks,
     username,
     profilePicture,
     mentionOriginFlow,
