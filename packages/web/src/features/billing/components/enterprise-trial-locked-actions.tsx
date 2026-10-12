@@ -4,6 +4,7 @@ import { Gem, UserRound } from 'lucide-react';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { ENTERPRISE_TRIAL_DAYS } from '../hooks/enterprise-trial-hooks';
@@ -37,6 +38,7 @@ export function EnterpriseTrialLockedActions({
   };
   const explorePlans = (variant: 'default' | 'outline') => (
     <Button
+      {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
       variant={variant}
       onClick={() => {
         onAction?.();
@@ -61,6 +63,7 @@ export function EnterpriseTrialLockedActions({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Button
+            {...adminControl(AdminControl.TRIAL_START_OPEN)}
             onClick={() => {
               onAction?.();
               openDialog({ featureKey });

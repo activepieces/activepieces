@@ -239,11 +239,9 @@ export const platformRoutes = [
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
-            <PlanFeatureSample feature="pieces">
-              <SuspenseWrapper>
-                <PiecesListPage />
-              </SuspenseWrapper>
-            </PlanFeatureSample>
+            <SuspenseWrapper>
+              <PiecesListPage />
+            </SuspenseWrapper>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>

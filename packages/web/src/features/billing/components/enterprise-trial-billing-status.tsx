@@ -1,9 +1,11 @@
+import { isNil } from '@activepieces/core-utils';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Gem } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
@@ -13,12 +15,15 @@ import {
 } from '../hooks/enterprise-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { enterpriseMotion } from '../utils/enterprise-motion';
+import { enterpriseTrialTime } from '../utils/enterprise-trial-time';
+import { planTiers } from '../utils/plan-tiers';
 
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
 export function EnterpriseTrialBillingStatus() {
   const trial = enterpriseTrialHooks.useTrial();
   const { isPaid } = useCreditsUsage();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
 
   if (trial.state === 'eligible') {
@@ -63,7 +68,14 @@ export function EnterpriseTrialBillingStatus() {
     );
   }
 
-  if (trial.state === 'ended' || trial.state === 'used') {
+  if (
+    (trial.state === 'ended' || trial.state === 'used') &&
+    showsTrialAftermath({
+      endsAt: trial.endsAt,
+      plan: platform.plan.plan,
+      isPaid,
+    })
+  ) {
     return (
       <StatusCallout
         title={
@@ -87,6 +99,27 @@ export function EnterpriseTrialBillingStatus() {
   }
 
   return null;
+}
+
+function showsTrialAftermath({
+  endsAt,
+  plan,
+  isPaid,
+}: {
+  endsAt: Date | null;
+  plan: string | null | undefined;
+  isPaid: boolean;
+}): boolean {
+  if (planTiers.isEnterprisePlan(plan)) {
+    return false;
+  }
+  if (isNil(endsAt)) {
+    return !isPaid;
+  }
+  return (
+    enterpriseTrialTime.calendarDaysBetween({ from: endsAt, to: Date.now() }) <=
+    AFTERMATH_DAYS
+  );
 }
 
 function StatusCallout({
@@ -121,3 +154,5 @@ function StatusCallout({
     </div>
   );
 }
+
+const AFTERMATH_DAYS = 30;

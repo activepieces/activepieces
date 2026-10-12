@@ -13,9 +13,6 @@ export function FeatureSample({
   featureKey,
   children,
 }: FeatureSampleProps) {
-  if (featureKey === undefined) {
-    return children;
-  }
   return (
     <EnterpriseGate
       mode="preview"
@@ -30,7 +27,7 @@ export function FeatureSample({
 
 export type FeatureSampleProps = {
   locked: boolean;
-  featureKey?: FeatureKey;
+  featureKey: FeatureKey;
   title: string;
   children: ReactNode;
 };

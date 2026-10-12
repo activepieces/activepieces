@@ -52,8 +52,8 @@ import {
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
   PLATFORM_FEATURES,
-  TIER_LABELS,
-  useUpgradeClick,
+  EnterpriseTrialLockedActions,
+  usePlanTier,
 } from '@/features/billing';
 import {
   aiProviderApi,
@@ -349,8 +349,7 @@ export function ProvidersTab() {
 }
 
 function LockedProvidersAlert() {
-  const upgradeClick = useUpgradeClick();
-  const { featureKey, tier } = PLATFORM_FEATURES.aiProviders;
+  const plan = usePlanTier(PLATFORM_FEATURES.aiProviders.featureKey);
 
   return (
     <Alert variant="primary">
@@ -360,22 +359,15 @@ function LockedProvidersAlert() {
       </AlertTitle>
       <AlertDescription className="flex flex-col items-start gap-3">
         <p>
+          {plan.label}.{' '}
           {t(
-            'You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.',
+            'You can still delete the keys below. Adding or changing keys needs that plan.',
           )}
         </p>
-        <Button
-          size="sm"
-          onClick={() =>
-            upgradeClick({
-              feature: featureKey,
-              tier,
-              surface: PlatformAdminSurface.SAMPLE,
-            })
-          }
-        >
-          {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
-        </Button>
+        <EnterpriseTrialLockedActions
+          featureKey={PLATFORM_FEATURES.aiProviders.featureKey}
+          surface={PlatformAdminSurface.SAMPLE}
+        />
       </AlertDescription>
     </Alert>
   );

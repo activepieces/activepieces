@@ -63,7 +63,12 @@ export const CurrentSubscriptionCard = ({
             className="flex-1"
             label={t('Talk to sales')}
           />
-          <Button variant="outline" className="flex-1" onClick={onExplorePlans}>
+          <Button
+            {...adminControl(AdminControl.BILLING_PLANS_OPEN)}
+            variant="outline"
+            className="flex-1"
+            onClick={onExplorePlans}
+          >
             {t('Explore plans')}
           </Button>
         </div>

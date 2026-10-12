@@ -82,7 +82,7 @@ export function AdminPage({
             </AdminPageHeaderSlotContext.Provider>
           </div>
           {!lock && footer}
-          <div ref={setFooterSlot} className="contents" />
+          <div ref={setFooterSlot} inert={lock !== null} className="contents" />
         </div>
       </AdminPageFooterContext.Provider>
     </MenuFocusReturnScope>

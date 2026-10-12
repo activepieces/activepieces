@@ -85,6 +85,7 @@ export const enterpriseTrialHooks = {
       return toActiveTrial({
         startedAt: status.startedAt ?? platform.plan.enterpriseTrialStartedAt,
         endsAt: status.endsAt,
+        extended: status.extended,
         isPlatformAdmin,
         basePlanName,
       });
@@ -93,6 +94,7 @@ export const enterpriseTrialHooks = {
       return toActiveTrial({
         startedAt: platform.plan.enterpriseTrialStartedAt,
         endsAt: planEndsAt,
+        extended: false,
         isPlatformAdmin,
         basePlanName,
       });
@@ -107,10 +109,6 @@ export const enterpriseTrialHooks = {
       isPlatformAdmin,
       basePlanName,
     };
-  },
-  useLiveTrialEndsAt: (): Date | null => {
-    const trial = enterpriseTrialHooks.useTrial();
-    return trial.state === 'active' ? trial.endsAt : null;
   },
 };
 
@@ -177,11 +175,13 @@ function toBasePlanName(plan: string | null | undefined): string {
 function toActiveTrial({
   startedAt,
   endsAt,
+  extended,
   isPlatformAdmin,
   basePlanName,
 }: {
   startedAt: string | Date | null | undefined;
   endsAt: string | Date;
+  extended: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
 }): EnterpriseTrial {
@@ -192,6 +192,7 @@ function toActiveTrial({
       endsAt,
       now: Date.now(),
     }),
+    extended,
     isPlatformAdmin,
     basePlanName,
   };
@@ -205,6 +206,7 @@ const NO_TRIAL: EnterpriseTrial = {
   endsToday: false,
   ending: false,
   justStarted: false,
+  extended: false,
   isPlatformAdmin: false,
   basePlanName: 'Free',
 };
@@ -223,6 +225,7 @@ export type EnterpriseTrial = {
   endsToday: boolean;
   ending: boolean;
   justStarted: boolean;
+  extended: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
 };

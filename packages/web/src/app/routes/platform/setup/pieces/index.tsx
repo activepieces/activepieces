@@ -25,6 +25,7 @@ import {
   adminPageResources,
   useAdminAction,
 } from '@/app/components/admin';
+import { EnterpriseLockedSection } from '@/app/components/enterprise-gate';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
@@ -196,6 +197,7 @@ export const PiecesListTab = () => {
           scope={PieceScope.PLATFORM}
         />
       </AdminPageHeader>
+      <EnterpriseLockedSection unlocked={isEnabled} featureKey="PIECES" />
       <AdminDataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(

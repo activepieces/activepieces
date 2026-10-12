@@ -40,7 +40,9 @@ import { Input } from '@/components/ui/input';
 import {
   EnterpriseTrialSalesLink,
   LockedGem,
+  PLATFORM_FEATURES,
   useEnterpriseGate,
+  useFeatureGate,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -64,6 +66,10 @@ export const AppearanceSection = ({
   );
   const brandingLocked = !platform.plan.customAppearanceEnabled;
   const leavingOnPurpose = useRef(false);
+  const brandingFeatureGate = useFeatureGate({
+    locked: brandingLocked,
+    feature: PLATFORM_FEATURES.branding,
+  });
   const gate = useEnterpriseGate({
     unlocked: !brandingLocked,
     featureKey: 'BRANDING',
@@ -207,6 +213,7 @@ export const AppearanceSection = ({
             />
           ) : (
             <Button
+              {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
               type="button"
               onClick={() =>
                 gate.run(() => updatePlatformAsync({ includeBranding: true }))
@@ -297,6 +304,25 @@ export const AppearanceSection = ({
 
           <SettingsPanel
             title={t('Branding')}
+            action={
+              brandingLocked ? (
+                <>
+                  <Button
+                    {...adminControl(
+                      AdminControl.GENERAL_BRANDING_UPGRADE_OPEN,
+                    )}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={brandingFeatureGate.open}
+                  >
+                    <LockedGem />
+                    {t('Unlock branding')}
+                  </Button>
+                  {brandingFeatureGate.dialog}
+                </>
+              ) : undefined
+            }
             description={
               brandingLocked
                 ? t(

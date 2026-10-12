@@ -30,9 +30,7 @@ function activeTrialTiming({
     daysLeft,
     endsToday: daysLeft === 0,
     ending: daysLeft <= ENDING_PHASE_DAYS,
-    justStarted: isNil(daysSinceStart)
-      ? daysLeft >= TRIAL_DAYS - JUST_STARTED_DAYS
-      : daysSinceStart < JUST_STARTED_DAYS,
+    justStarted: !isNil(daysSinceStart) && daysSinceStart < JUST_STARTED_DAYS,
   };
 }
 
