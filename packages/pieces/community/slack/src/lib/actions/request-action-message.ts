@@ -19,6 +19,22 @@ export const requestActionMessageAction = createAction({
     idempotent: false,
   },
   outputSchema: requestActionActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text', 'actions', 'threadTs'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
     onlyBotChannels,
