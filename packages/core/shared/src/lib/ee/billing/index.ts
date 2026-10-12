@@ -78,7 +78,7 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tablesEnabled: true,
     eventStreamingEnabled: false,
-    includedCredits: 100,
+    includedCredits: 1000,
     activeFlowsLimit: undefined,
     projectsLimit: 1,
     embeddingEnabled: false,
