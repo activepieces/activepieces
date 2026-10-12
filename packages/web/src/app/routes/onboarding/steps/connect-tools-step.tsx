@@ -39,10 +39,10 @@ export function ConnectToolsStep({
   onNext: () => void;
   onSkip: () => void;
 }) {
-  const { data, isLoading } = piecesHooks.usePieces({});
+  const { pieces, isLoading } = piecesHooks.usePieces({});
 
   const recommended = useMemo(() => {
-    const all = data?.data ?? [];
+    const all = pieces ?? [];
     // Collect preferred piece names for the selected use cases.
     const preferred = new Set<string>();
     for (const uc of useCases) {
@@ -53,7 +53,7 @@ export function ConnectToolsStep({
       return all.slice(0, 6);
     }
     return all.filter((p) => preferred.has(p.name)).slice(0, 8);
-  }, [data, useCases]);
+  }, [pieces, useCases]);
 
   return (
     <div className="flex flex-col max-w-4xl mx-auto gap-6 py-8">

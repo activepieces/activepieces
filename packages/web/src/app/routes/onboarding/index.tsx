@@ -13,7 +13,6 @@ import { StartPoint, StartPointStep } from './steps/start-point-step';
 import { OnboardingProgress } from './steps/progress';
 import { UseCaseStep } from './steps/use-case-step';
 import { ConnectToolsStep } from './steps/connect-tools-step';
-import { BuildWorkflowStep } from './steps/build-workflow-step';
 import { WelcomeStep } from './steps/welcome-step';
 
 export function OnboardingPage() {
@@ -41,19 +40,14 @@ export function OnboardingPage() {
   };
 
   const handleStartPoint = async (point: StartPoint) => {
-    // Save the choice, then advance to connect_tools step.
-    setLocalStep('connect_tools');
-    await advance.mutateAsync({ step: 'connect_tools', skipped: false });
-    // Store the intent so the next step knows what to do.
     sessionStorage.setItem('synkra:startPoint', point);
+    setLocalStep('connect_tools');
+    await advance.mutateAsync({ step: 'connect_tools' });
   };
 
   const handleConnectToolsNext = async () => {
-    setLocalStep('build_workflow');
-    await advance.mutateAsync({ step: 'build_workflow' });
-  };
-
-  const handleBuildWorkflowChoose = async (point: StartPoint) => {
+    const point = (sessionStorage.getItem('synkra:startPoint') ?? 'explore') as StartPoint;
+    sessionStorage.removeItem('synkra:startPoint');
     const target =
       point === 'scratch'
         ? authenticationSession.appendProjectRoutePrefix('/flows?newFlow=true')
@@ -119,31 +113,6 @@ export function OnboardingPage() {
               onSkip={handleConnectToolsNext}
             />
           )}
-
-          {step === 'build_workflow' && (
-            <BuildWorkflowStep
-              onChoose={handleBuildWorkflowChoose}
-              onSkip={handleSkipAll}
-            />
-          )}
-
-          {step !== 'welcome' &&
-            step !== 'use_case' &&
-            step !== 'start_point' && (
-              <div className="text-center max-w-md">
-                <h2 className="text-xl font-semibold mb-3">
-                  {t('Almost there')}
-                </h2>
-                <p className="text-sm text-gray-11 mb-6">
-                  {t(
-                    'The guided first-workflow builder is coming soon. For now, jump straight in.',
-                  )}
-                </p>
-                <Button onClick={() => finishOnboarding('/')}>
-                  {t('Go to Synkra Flow')}
-                </Button>
-              </div>
-            )}
         </div>
 
         {!isEmbedded && (
