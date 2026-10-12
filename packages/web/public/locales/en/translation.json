@@ -1757,9 +1757,8 @@
   "Danger zone": "Danger zone",
   "Irreversible actions for this key.": "Irreversible actions for this key.",
   "Delete this key": "Delete this key",
-  "Steps and agents using it will stop working.": "Steps and agents using it will stop working.",
+  "Flows and agents that use it will fail.": "Flows and agents that use it will fail.",
   "Delete {name}": "Delete {name}",
-  "Steps and agents using this key will stop working.": "Steps and agents using this key will stop working.",
   "You have unsaved changes": "You have unsaved changes",
   "Change which projects can use {name}?": "Change which projects can use {name}?",
   "Save anyway": "Save anyway",
@@ -3157,5 +3156,6 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Flows and agents that use this key will fail.": "Flows and agents that use this key will fail."
 }

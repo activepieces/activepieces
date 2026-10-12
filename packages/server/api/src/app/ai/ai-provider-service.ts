@@ -199,7 +199,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
-            await platformModelTierService.assertKeyCanBeDeleted({ manager, platformId, configId: providerId })
+            await platformModelTierService.deleteTiersUsingKey({ manager, platformId, configId: providerId })
             return deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
         })
         await revokeKeyIfManaged({ row: deleted, log })

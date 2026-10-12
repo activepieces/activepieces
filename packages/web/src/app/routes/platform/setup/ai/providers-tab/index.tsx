@@ -543,9 +543,10 @@ function ConfigRow({
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           title={t('Delete {name}', { name: config.name })}
-          message={t('Steps and agents using this key will stop working.')}
+          message={t('Flows and agents that use this key will fail.')}
           entityName={config.name}
           showToast={true}
+          onError={() => undefined}
           controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
           mutationFn={async () => {
             await onDelete();

@@ -315,14 +315,29 @@ describe('Platform model tiers API', () => {
     })
 
     describe('key guard', () => {
-        it('refuses to delete a key a tier uses', async () => {
+        it('deletes the tiers a key is in when the key is deleted', async () => {
             const key = await seedKey({ testCtx: ctx })
-            await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Expert' }) })
+            const otherKey = await seedKey({ testCtx: ctx })
+            const expert = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Expert' }) })
+            const kept = await createTier({ testCtx: ctx, body: tierBody({ configId: otherKey.id, name: 'Kept' }) })
 
             const response = await ctx.delete(`/v1/ai-providers/${key.id}`)
 
-            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(response.body).toContain('Expert')
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect((await listAdmin({ testCtx: ctx })).map((tier) => tier.id)).toEqual([kept.id])
+            expect(await findWithDeleted({ id: expert.id })).toMatchObject({ isDefault: false, isFast: false })
+        })
+
+        it('shows specific models again when deleting a key removes the last tier', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
+            await ctx.post(CONFIGURATIONS, { aiSpecificModelsVisible: false })
+
+            const response = await ctx.delete(`/v1/ai-providers/${key.id}`)
+
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(await listAdmin({ testCtx: ctx })).toEqual([])
+            expect((await ctx.get(CONFIGURATIONS)).json()).toMatchObject({ aiSpecificModelsVisible: true })
         })
 
         it('refuses a scope change that drops a tier model', async () => {

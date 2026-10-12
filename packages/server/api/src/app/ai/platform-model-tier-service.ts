@@ -154,11 +154,16 @@ export const platformModelTierService = {
         }
     },
 
-    async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
+    async deleteTiersUsingKey({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
         await lockPlatform({ manager, platformId })
-        const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
-        if (tiers.length > 0) {
-            throw keyInUseError({ tierNames: tiers.map((tier) => tier.name) })
+        const tierIds = (await findLiveTiersUsingKey({ manager, platformId, configId })).map((tier) => tier.id)
+        if (tierIds.length === 0) {
+            return
+        }
+        await tierRepo(manager).update({ platformId, id: In(tierIds) }, { isDefault: false, isFast: false })
+        await tierRepo(manager).softDelete({ platformId, id: In(tierIds) })
+        if ((await listLive({ platformId, manager })).length === 0) {
+            await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
         }
     },
 
