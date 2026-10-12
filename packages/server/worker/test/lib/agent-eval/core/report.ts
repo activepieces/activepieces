@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { evalFormat, JudgeAgreement } from './eval-format'
+import { FailureType } from './llm-judge'
 
 function render({ entries, judgeAgreement }: { entries: EvalReportEntry[], judgeAgreement: JudgeAgreement | null }): string {
     const first = entries[0]
@@ -64,4 +65,4 @@ export type EvalReportEntry = {
 
 type AssertionEntry = { label: string, pass: boolean, reason: string }
 
-type JudgeVerdictEntry = { dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string }
+type JudgeVerdictEntry = { dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string, failure?: FailureType }
