@@ -39,25 +39,38 @@ export function PersonalProjectsSection() {
     newMemberSettingsMutations.useUpdateNewMemberSettings();
   const { mutateAsync: createMissing, isPending: isCreatingMissing } =
     newMemberSettingsMutations.useCreateMissingPersonalProjects();
-  const {
-    data: summary,
-    isFetching: isSummaryFetching,
-    isError: isSummaryError,
-    refetch: refetchSummary,
-  } = newMemberSettingsQueries.usePersonalProjectsSummary({
-    enabled: !gate.locked,
-  });
-  const isPending = isUpdating || isCreatingMissing;
+  const { data: summary, refetch: refetchSummary } =
+    newMemberSettingsQueries.usePersonalProjectsSummary({
+      enabled: !gate.locked,
+    });
+  const [isCheckingMembers, setIsCheckingMembers] = useState(false);
+  const [membersToOffer, setMembersToOffer] = useState(0);
+  const isPending = isUpdating || isCreatingMissing || isCheckingMembers;
 
   const isEnabled = gate.locked || platform.autoCreatePersonalProjects;
 
-  const onCheckedChange = (checked: boolean) => {
+  const onCheckedChange = async (checked: boolean) => {
     if (gate.locked) {
       gate.open();
       return;
     }
-    refetchSummary();
-    setOpenDialog(checked ? 'turn-on' : 'turn-off');
+    if (!checked) {
+      refetchSummary();
+      setOpenDialog('turn-off');
+      return;
+    }
+    setIsCheckingMembers(true);
+    const fresh = await refetchSummary();
+    setIsCheckingMembers(false);
+    const membersWithoutPersonalProject = fresh.isError
+      ? 0
+      : fresh.data?.membersWithoutPersonalProject ?? 0;
+    if (membersWithoutPersonalProject === 0) {
+      await turnOn({ createForExistingMembers: false });
+      return;
+    }
+    setMembersToOffer(membersWithoutPersonalProject);
+    setOpenDialog('turn-on');
   };
 
   const turnOn = async ({
@@ -79,9 +92,7 @@ export function PersonalProjectsSection() {
       return;
     }
     if (createForExistingMembers) {
-      toast.success(
-        t("Creating personal projects for members who don't have one."),
-      );
+      toast.success(t('Creating personal projects for members without one.'));
     }
   };
 
@@ -122,16 +133,14 @@ export function PersonalProjectsSection() {
           />
         </ItemActions>
       </Item>
-      <TurnOnPersonalProjectsDialog
-        open={openDialog === 'turn-on'}
-        onOpenChange={(open) => setOpenDialog(open ? 'turn-on' : null)}
-        membersWithoutPersonalProject={
-          isSummaryError ? null : summary?.membersWithoutPersonalProject ?? null
-        }
-        isCountLoading={isSummaryFetching}
-        isPending={isPending}
-        onConfirm={turnOn}
-      />
+      {openDialog === 'turn-on' && (
+        <TurnOnPersonalProjectsDialog
+          onClose={() => setOpenDialog(null)}
+          membersWithoutPersonalProject={membersToOffer}
+          isPending={isPending}
+          onConfirm={turnOn}
+        />
+      )}
       <TurnOffPersonalProjectsDialog
         open={openDialog === 'turn-off'}
         onOpenChange={(open) => setOpenDialog(open ? 'turn-off' : null)}
