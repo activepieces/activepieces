@@ -1,5 +1,5 @@
 import { aiUtils } from '@activepieces/server-utils'
-import { AIProviderName, aiProviderCredentials, tryCatch } from '@activepieces/core-utils';
+import { AIProviderName, aiProviderCredentials, spreadIfDefined, tryCatch } from '@activepieces/core-utils';
 import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared';
 import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
 import { evalCalibration } from './calibration'
@@ -25,10 +25,11 @@ const OPENROUTER_INFERENCE_ENV = 'OPENROUTER_API_KEY'
 const OPENROUTER_PROVISION_ENV = 'AP_OPENROUTER_PROVISION_KEY'
 const REPEATS_ENV = 'CHAT_EVAL_REPEATS'
 const JUDGE_MODEL_ENV = 'CHAT_EVAL_JUDGE_MODEL'
-const JUDGE_MODEL_DEFAULT = 'anthropic/claude-opus-4.8'
+const JUDGE_MODEL_DEFAULT = 'typesafe/jev-1.13'
 const TRANSCRIPT_FIELD_MAX = 4_000
 const TRANSCRIPT_STRING_MAX = 300
 const MINTED_KEY_LIMIT_USD = 25
+const TURN_TIMEOUT_MS = 5 * 60_000
 
 const silentLog = {
     info: () => {},
@@ -74,7 +75,7 @@ async function cleanupAuth(): Promise<void> {
     mintedKeyPromise = null
 }
 
-async function evaluateFixture({ fixture, systemPrompt, guides, modelId, repeats = repeatsFromEnv() }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, modelId?: string, repeats?: number }): Promise<EvalReportEntry> {
+async function evaluateFixture({ fixture, systemPrompt, guides, modelId, repeats = repeatsFromEnv(), onStage }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, modelId?: string, repeats?: number, onStage?: (stage: string) => void }): Promise<EvalReportEntry> {
     const auth = await resolveAuth()
     if (!auth) {
         throw new Error(`No OpenRouter key found. Set ${OPENROUTER_INFERENCE_ENV} or ${OPENROUTER_PROVISION_ENV} to run the eval.`)
@@ -82,7 +83,11 @@ async function evaluateFixture({ fixture, systemPrompt, guides, modelId, repeats
 
     const model = effectiveModel({ fixture, modelId })
     const judge = llmJudge.create({ provider: model.provider, modelId: judgeModelId(), auth })
-    const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge }).catch((error: unknown) => crashedRun({ error })) })
+    const times = Math.max(1, repeats)
+    const runs = await runSequentially({ times, run: (index) => {
+        const repeatNote = times > 1 ? `repeat ${index + 1}/${times}, ` : ''
+        return evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge, onStage: (stage) => onStage?.(`${repeatNote}${stage}`) }).catch((error: unknown) => crashedRun({ error }))
+    } })
     const passes = runs.filter((run) => run.passed).length
     const assertionsHeldEveryRun = runs.every((run) => run.assertions.every((assertion) => assertion.pass))
     const shown = runs.find((run) => !run.passed) ?? runs[0]
@@ -168,16 +173,18 @@ function repeatsFromEnv(): number {
     return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
 }
 
-async function runSequentially<T>({ times, run }: { times: number, run: () => Promise<T> }): Promise<T[]> {
+async function runSequentially<T>({ times, run }: { times: number, run: (index: number) => Promise<T> }): Promise<T[]> {
     const results: T[] = []
     for (let i = 0; i < times; i++) {
-        results.push(await run())
+        results.push(await run(i))
     }
     return results
 }
 
-async function evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge }: { fixture: ChatEvalFixture, model: ChatEvalFixtureModel, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown>, judge: Judge }): Promise<SingleRun> {
-    const transcript = await runTurn({ fixture, model, systemPrompt, guides, auth })
+async function evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge, onStage }: { fixture: ChatEvalFixture, model: ChatEvalFixtureModel, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown>, judge: Judge, onStage: (stage: string) => void }): Promise<SingleRun> {
+    onStage('agent turn, step 1')
+    const transcript = await runTurn({ fixture, model, systemPrompt, guides, auth, onStep: (step) => onStage(`agent turn, step ${step}`) })
+    onStage(fixture.judge.length > 0 ? `judging ${fixture.judge.length} check(s)` : 'checking')
     const assertions = fixture.assertions.map((assertion) => {
         const outcome = transcriptAssertions.runAssertion(transcript.result, assertion)
         return { label: assertion.type, pass: outcome.pass, reason: outcome.reason }
@@ -187,11 +194,13 @@ async function evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge 
         // "pass" = the judge's label matched what this dimension EXPECTS. A capability fixture can
         // expect FAIL (documenting a known limitation), so a literal PASS-only check would peg it
         // permanently red and hide whether a prompt change moved it.
+        const pass = verdict.pass === (dimension.expectedLabel === 'pass')
         return {
             dimension: dimension.dimension,
             expectedLabel: dimension.expectedLabel,
-            pass: verdict.pass === (dimension.expectedLabel === 'pass'),
+            pass,
             reason: verdict.reason,
+            ...spreadIfDefined('failure', pass ? undefined : verdict.failure),
         }
     }))
     return {
@@ -203,7 +212,7 @@ async function evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge 
     }
 }
 
-async function runTurn({ fixture, model, systemPrompt, guides, auth }: { fixture: ChatEvalFixture, model: ChatEvalFixtureModel, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown> }): Promise<{ result: AgentTurnResult, text: string, costUsd: number | null }> {
+async function runTurn({ fixture, model, systemPrompt, guides, auth, onStep }: { fixture: ChatEvalFixture, model: ChatEvalFixtureModel, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown>, onStep: (step: number) => void }): Promise<{ result: AgentTurnResult, text: string, costUsd: number | null }> {
     const replay = replayExecutor.create({ recordedToolCalls: fixture.recordedToolCalls })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const tools = buildEvalToolSet({ replay })
@@ -214,6 +223,8 @@ async function runTurn({ fixture, model, systemPrompt, guides, auth }: { fixture
     ]
 
     const capturedErrors: unknown[] = []
+    const abortSignal = AbortSignal.timeout(TURN_TIMEOUT_MS)
+    let steps = 0
     const { data: result, error: turnError } = await tryCatch(() => runAgentTurn({
         models: [{ model: tracked.model, provider: model.provider, modelId: model.tier.modelId, thinkingBudget: model.tier.thinkingBudget }],
         systemPrompt: systemPrompt ?? evalPrompts.loadSystemPrompt(),
@@ -223,7 +234,11 @@ async function runTurn({ fixture, model, systemPrompt, guides, auth }: { fixture
         tier: model.tier,
         phaseState,
         skills: { surface: 'CHAT', guides: guides ?? evalPrompts.loadGuides() },
-        abortSignal: new AbortController().signal,
+        abortSignal,
+        onStepModel: () => {
+            steps += 1
+            onStep(steps)
+        },
         log: {
             debug: () => {},
             info: () => {},
@@ -238,6 +253,9 @@ async function runTurn({ fixture, model, systemPrompt, guides, auth }: { fixture
         stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall)],
     }))
 
+    if (abortSignal.aborted) {
+        throw new Error(`The chat turn did not finish within ${TURN_TIMEOUT_MS / 1000}s`)
+    }
     if (!result) {
         const cause = capturedErrors[0] ?? turnError
         throw new Error(`Chat turn produced no output. Underlying provider error: ${cause instanceof Error ? cause.message : String(cause)}`, { cause: cause instanceof Error ? cause : undefined })
@@ -311,6 +329,7 @@ export const agentEvalRunner = {
     measureJudgeAgreement,
     failedEntry,
     repeatsFromEnv,
+    judgeModelId,
     hasProviderKey,
     cleanupAuth,
 }
