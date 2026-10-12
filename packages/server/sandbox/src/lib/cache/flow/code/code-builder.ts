@@ -95,14 +95,11 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                 const installError = await wideEvent.timed({
                     name: 'codeDeps',
                     fn: async () => {
-                        const { error } = await tryCatch(() => diskLock(path.join(codesFolderPath, INSTALL_LOCKS_DIR)).runExclusive({
-                            key: codePath,
-                            timeoutMs: INSTALL_LOCK_TIMEOUT_MS,
-                            fn: () => installDependencies({
-                                path: codePath,
-                                packageJson,
-                            }, log),
-                        }))
+                        const { error } = await tryCatch(() => installDependencies({
+                            path: codePath,
+                            packageJson,
+                            locksPath: path.join(codesFolderPath, INSTALL_LOCKS_DIR),
+                        }, log))
                         if (error) {
                             log.info({ codePath, error }, 'Dependency installation error')
                         }
@@ -216,12 +213,18 @@ async function removeStaleBuildOutputs({ codes, flowVersionId, stepName }: Remov
     ])
 }
 
-async function installDependencies({ path, packageJson }: InstallDependenciesParams, log: ApLogger): Promise<void> {
-    await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
-    const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
-    if (deps.length > 0) {
-        await bunRunner(log).install({ path, filtersPath: [], force: true })
-    }
+async function installDependencies({ path, packageJson, locksPath }: InstallDependenciesParams, log: ApLogger): Promise<void> {
+    await diskLock(locksPath).runExclusive({
+        key: path,
+        timeoutMs: INSTALL_LOCK_TIMEOUT_MS,
+        fn: async () => {
+            await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
+            const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
+            if (deps.length > 0) {
+                await bunRunner(log).install({ path, filtersPath: [], force: true })
+            }
+        },
+    })
 }
 
 async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Promise<void> {
@@ -261,6 +264,7 @@ type RemoveStaleBuildOutputsParams = {
 type InstallDependenciesParams = {
     path: string
     packageJson: string
+    locksPath: string
 }
 
 type CompileCodeParams = {
