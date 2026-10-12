@@ -165,7 +165,10 @@ async function pullNewEvents({
 	const claimedElsewhere = new Set(storedNow);
 	const unclaimed = fresh.filter((event) => !claimedElsewhere.has(eventKey(event)));
 	const merged = Array.from(new Set([...storedNow, ...seen]));
-	await store.put(PAGE_TOKEN_KEY, laterToken({ stored: storedToken, mine: lastToken }));
+	const nextToken = cursorToStore({ stored: storedToken, start: startToken, mine: lastToken });
+	if (nextToken !== storedToken) {
+		await store.put(PAGE_TOKEN_KEY, nextToken);
+	}
 	await store.put(SEEN_EVENTS_KEY, merged.slice(-MAX_SEEN_EVENT_IDS));
 	return unclaimed;
 }
@@ -180,11 +183,14 @@ async function requestContinuation({ webhookUrl, webhookId }: { webhookUrl: stri
 	});
 }
 
-function laterToken({ stored, mine }: { stored: string; mine: string }): string {
-	if (/^\d+$/.test(stored) && /^\d+$/.test(mine)) {
-		return BigInt(stored) > BigInt(mine) ? stored : mine;
+function cursorToStore({ stored, start, mine }: { stored: string; start: string; mine: string }): string {
+	if (stored === start) {
+		return mine;
 	}
-	return mine;
+	if (/^\d+$/.test(stored) && /^\d+$/.test(mine) && BigInt(mine) > BigInt(stored)) {
+		return mine;
+	}
+	return stored;
 }
 
 async function ownNotificationWebhookId({ store, storeKey, payload }: { store: TriggerStore; storeKey: string; payload: unknown }): Promise<string | undefined> {

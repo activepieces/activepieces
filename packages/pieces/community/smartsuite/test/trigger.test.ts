@@ -179,18 +179,30 @@ describe('webhook triggers', () => {
 		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r2', Title: 'rec r2', _dedupe_key: 'smartsuite:e2' }]);
 		expect(store.snapshot()['seenEventIds']).toEqual(['e1', 'e2']);
 	});
-	test('an older run finishing last never moves the cursor back', async () => {
-		const store = memoryStore({ new_record: 'w1', pageToken: '100' });
+	test.each([
+		{ format: 'numeric', start: '100', other: '120', mine: '110' },
+		{ format: 'opaque', start: 'tokA', other: 'tokC', mine: 'tokB' },
+	])('an older run finishing last never moves the cursor back ($format tokens)', async ({ start, other, mine }) => {
+		const store = memoryStore({ new_record: 'w1', pageToken: start });
 		stubFetch((request: SeenRequest) => {
 			if (request.path.includes('ListEvents')) {
-				void store.put('pageToken', '120');
-				return { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: '110' } };
+				void store.put('pageToken', other);
+				return { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: mine } };
 			}
 			return { body: TABLE };
 		});
 		await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
-		expect(store.snapshot()['pageToken']).toBe('120');
+		expect(store.snapshot()['pageToken']).toBe(other);
 	});
+	test('a run that started from the stored cursor advances it with any token format', async () => {
+		const store = memoryStore({ new_record: 'w1', pageToken: 'tokA' });
+		stubFetch((request: SeenRequest) =>
+			request.path.includes('ListEvents') ? { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: 'tokB' } } : { body: TABLE },
+		);
+		await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
+		expect(store.snapshot()['pageToken']).toBe('tokB');
+	});
+
 	test('run ignores notifications for another webhook', async () => {
 		const seen = stubFetch(() => ({ body: {} }));
 		const store = memoryStore({ new_record: 'w1' });
