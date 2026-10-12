@@ -28,7 +28,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { SidebarUsageLimits } from '@/features/billing';
+import {
+  EnterprisePlanIndicator,
+  SidebarUsageLimits,
+} from '@/features/billing';
 import { PlatformSwitcher } from '@/features/projects';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -82,7 +85,10 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
             {mode === 'app' ? (
               <AppFooterExtras />
             ) : (
-              <SidebarSeparator className="mx-2 my-1" />
+              <>
+                <EnterprisePlanIndicator />
+                <SidebarSeparator className="mx-2 my-1" />
+              </>
             )}
             <SidebarUser />
           </SidebarFooter>

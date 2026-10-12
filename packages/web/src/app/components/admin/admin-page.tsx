@@ -4,6 +4,7 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -16,6 +17,11 @@ import { PLAN_LIMIT_EVENT } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
+import {
+  AdminPageHeaderSlotContext,
+  AdminPageLockedPreview,
+  useAdminPageLock,
+} from './admin-page-lock';
 import { AdminResource, AdminResources } from './admin-resources';
 import { adminSurface } from './admin-surface';
 
@@ -34,6 +40,10 @@ export function AdminPage({
     window.addEventListener(PLAN_LIMIT_EVENT, openPlanDialog);
     return () => window.removeEventListener(PLAN_LIMIT_EVENT, openPlanDialog);
   }, []);
+  const lock = useAdminPageLock();
+  const claim = lock?.claim;
+  const [headerTarget, setHeaderTarget] = useState<HTMLDivElement | null>(null);
+  useLayoutEffect(() => claim?.(), [claim]);
   return (
     <MenuFocusReturnScope>
       <AdminPageFooterContext.Provider value={footerContext}>
@@ -53,9 +63,25 @@ export function AdminPage({
               className,
             )}
           >
-            {children}
+            <AdminPageHeaderSlotContext.Provider
+              value={lock ? { target: headerTarget } : null}
+            >
+              {lock ? (
+                <>
+                  <div
+                    ref={setHeaderTarget}
+                    data-slot="admin-page-lock-header"
+                    className="contents"
+                  />
+                  {lock.callout}
+                  <AdminPageLockedPreview>{children}</AdminPageLockedPreview>
+                </>
+              ) : (
+                children
+              )}
+            </AdminPageHeaderSlotContext.Provider>
           </div>
-          {footer}
+          {!lock && footer}
           <div ref={setFooterSlot} className="contents" />
         </div>
       </AdminPageFooterContext.Provider>
@@ -80,10 +106,44 @@ export function AdminPageHeader({
   children,
 }: AdminPageHeaderProps) {
   const { embedState } = useEmbedding();
+  const headerSlot = useContext(AdminPageHeaderSlotContext);
+  const lock = useAdminPageLock();
+  const locked = headerSlot !== null || lock !== null;
+  const actions = locked ? null : children;
+  const content = headerContent({
+    title,
+    description,
+    back,
+    badge,
+    resources,
+    actions,
+    hidden: embedState.hidePageHeader,
+    embedded: embedState.isEmbedded,
+  });
+  if (headerSlot === null) {
+    return content;
+  }
+  return headerSlot.target ? createPortal(content, headerSlot.target) : null;
+}
+
+function headerContent({
+  title,
+  description,
+  back,
+  badge,
+  resources,
+  actions,
+  hidden,
+  embedded,
+}: Omit<AdminPageHeaderProps, 'children'> & {
+  actions: ReactNode;
+  hidden: boolean;
+  embedded: boolean;
+}): ReactNode {
   const hasResources =
-    !embedState.isEmbedded && resources !== undefined && resources.length > 0;
-  if (embedState.hidePageHeader) {
-    if (!back && !children) {
+    !embedded && resources !== undefined && resources.length > 0;
+  if (hidden) {
+    if (!back && !actions) {
       return null;
     }
     return (
@@ -92,9 +152,9 @@ export function AdminPageHeader({
         className="flex shrink-0 flex-wrap items-center justify-between gap-2"
       >
         {back && <AdminBackLink back={back} />}
-        {children && (
+        {actions && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {children}
+            {actions}
           </div>
         )}
       </div>
@@ -118,10 +178,10 @@ export function AdminPageHeader({
           )}
           {badge}
         </div>
-        {(hasResources || children) && (
+        {(hasResources || actions) && (
           <div className="flex flex-wrap items-center gap-2">
             {hasResources && <AdminResources resources={resources} />}
-            {children}
+            {actions}
           </div>
         )}
       </div>

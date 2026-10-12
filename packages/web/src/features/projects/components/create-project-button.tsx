@@ -1,7 +1,11 @@
-import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
+import {
+  PlatformAdminLimit,
+  ProjectWithLimits,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import { Gem, Plus } from 'lucide-react';
-import React from 'react';
+import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
@@ -15,6 +19,8 @@ import {
 } from '@/components/ui/tooltip';
 import {
   PLATFORM_FEATURES,
+  LockedGem,
+  useEnterpriseGate,
   useFeatureGate,
   useTeamProjectLimitGuard,
 } from '@/features/billing';
@@ -29,54 +35,81 @@ export function CreateProjectButton({
   onCreate,
   className,
 }: CreateProjectButtonProps) {
-  const { hasReachedLimit, teamProjectLimitContent } = useTeamProjectLimitGuard(
-    { projects },
-  );
+  const { hasReachedLimit, used, limit } = useTeamProjectLimitGuard({
+    projects,
+  });
   const projectsGate = useFeatureGate({
     locked: hasReachedLimit,
     feature: PLATFORM_FEATURES.projects,
   });
+  const gate = useEnterpriseGate({
+    unlocked: !hasReachedLimit,
+    featureKey: PLATFORM_FEATURES.projects.featureKey,
+  });
+  const [createOpen, setCreateOpen] = useState(false);
   const { capture } = useTelemetry();
+  const reportBlocked = () =>
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+      payload: {
+        feature: PLATFORM_FEATURES.projects.featureKey,
+        control: AdminControl.PROJECTS_NEW_OPEN,
+      },
+    });
 
   const trigger = triggerFor({
     variant,
     className,
     crown: projectsGate.crown,
     locked: projectsGate.locked,
+    onClick: gate.locked
+      ? () => {
+          reportBlocked();
+          capture({
+            name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
+            payload: {
+              limit: PlatformAdminLimit.TEAM_PROJECTS,
+              used,
+              allowed: limit ?? 0,
+            },
+          });
+          if (gate.access === 'community') {
+            projectsGate.open();
+            return;
+          }
+          gate.run(() => setCreateOpen(true));
+        }
+      : undefined,
   });
 
-  const dialog = (
-    <NewProjectDialog
-      onCreate={onCreate}
-      onBlocked={() =>
-        capture({
-          name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
-          payload: {
-            feature: PLATFORM_FEATURES.projects.featureKey,
-            control: AdminControl.PROJECTS_NEW_OPEN,
-          },
-        })
-      }
-      gate={{
-        locked: hasReachedLimit,
-        content: teamProjectLimitContent,
-      }}
-    >
-      {variant === 'icon' ? (
-        <TooltipTrigger
-          asChild
-          aria-label={
-            projectsGate.locked
-              ? `${t('Create Project')}, ${t('Requires a plan upgrade')}`
-              : t('Create Project')
-          }
-        >
-          {trigger}
-        </TooltipTrigger>
-      ) : (
-        trigger
-      )}
-    </NewProjectDialog>
+  const triggerNode =
+    variant === 'icon' ? (
+      <TooltipTrigger
+        asChild
+        aria-label={
+          projectsGate.locked
+            ? `${t('Create Project')}, ${t('Requires a plan upgrade')}`
+            : t('Create Project')
+        }
+      >
+        {trigger}
+      </TooltipTrigger>
+    ) : (
+      trigger
+    );
+
+  const dialog = gate.locked ? (
+    <>
+      {triggerNode}
+      <NewProjectDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreate={onCreate}
+      />
+      {projectsGate.dialog}
+    </>
+  ) : (
+    <NewProjectDialog onCreate={onCreate}>{triggerNode}</NewProjectDialog>
   );
 
   if (variant !== 'icon') {
@@ -98,10 +131,17 @@ export function CreateProjectButton({
   );
 }
 
-function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
-  const control = adminControl(
-    locked ? undefined : AdminControl.PROJECTS_NEW_OPEN,
-  );
+function triggerFor({
+  variant,
+  className,
+  crown,
+  locked,
+  onClick,
+}: TriggerForParams) {
+  const control = {
+    ...adminControl(locked ? undefined : AdminControl.PROJECTS_NEW_OPEN),
+    onClick,
+  };
   switch (variant) {
     case 'icon':
       return (
@@ -111,7 +151,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           className={cn('hover:bg-gray-4', className)}
           {...control}
         >
-          {locked ? <Gem className="text-accent-11" /> : <Plus />}
+          {locked ? <LockedGem className="size-4 text-accent-11" /> : <Plus />}
         </Button>
       );
     case 'full':
@@ -142,7 +182,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           {...control}
         >
           {locked ? (
-            <Gem className="size-4 text-accent-11" />
+            <LockedGem className="size-4 text-accent-11" />
           ) : (
             <Plus className="size-4" />
           )}
@@ -159,6 +199,7 @@ type TriggerForParams = {
   className?: string;
   crown: React.ReactNode;
   locked: boolean;
+  onClick?: () => void;
 };
 
 type CreateProjectButtonProps = {

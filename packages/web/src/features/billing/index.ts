@@ -38,9 +38,31 @@ export type { FeatureKey } from './components/request-trial';
 export { TIER_LABELS } from './utils/feature-tier';
 export type { FeatureTier } from './utils/feature-tier';
 export { PLATFORM_FEATURES } from './utils/platform-features';
+export { EnterpriseTrialBillingStatus } from './components/enterprise-trial-billing-status';
 export { EnterpriseTrialCta } from './components/enterprise-trial-cta';
+export { EnterpriseTrialLockedActions } from './components/enterprise-trial-locked-actions';
+export { enterpriseTrialFeatures } from './utils/enterprise-trial-features';
 export { EnterpriseTrialDialog } from './components/enterprise-trial-dialog';
 export { EnterpriseTrialEndedDialog } from './components/enterprise-trial-ended-dialog';
 export { EnterpriseTrialEndingAlert } from './components/enterprise-trial-ending-alert';
-export { EnterpriseTrialPill } from './components/enterprise-trial-pill';
-export { enterpriseTrialHooks } from './hooks/enterprise-trial-hooks';
+export {
+  EnterprisePlanIndicator,
+  EnterpriseTrialPill,
+} from './components/enterprise-trial-pill';
+export {
+  enterpriseTrialHooks,
+  enterpriseTrialKey,
+} from './hooks/enterprise-trial-hooks';
+export { LockedGem } from './components/locked-gem';
+export { EnterpriseTrialSalesLink } from './components/enterprise-trial-sales-link';
+export { EnterpriseLockedCard } from './components/enterprise-locked-card';
+export { EnterpriseUsageMeter } from './components/enterprise-usage-meter';
+export {
+  useEnterpriseAccess,
+  useEnterpriseGate,
+} from './hooks/use-enterprise-gate';
+export type {
+  EnterpriseAccess,
+  EnterpriseGate as EnterpriseGateState,
+} from './hooks/use-enterprise-gate';
+export { enterpriseMotion } from './utils/enterprise-motion';

@@ -25,7 +25,6 @@ import {
   adminPageResources,
   useAdminAction,
 } from '@/app/components/admin';
-import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
   CURSOR_QUERY_PARAM,
   RowDataWithActions,
@@ -205,7 +204,6 @@ export const PieceSetsTab = () => {
       >
         <CreatePieceSetDialog onCreated={() => refetch()} />
       </AdminPageHeader>
-      <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <AdminDataTable
         emptyStateTextTitle={
           platform.plan.managePiecesEnabled

@@ -1,6 +1,7 @@
-import { tryCatchSync } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CalendarX } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -12,56 +13,117 @@ import {
 } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
+import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
 
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
 export function EnterpriseTrialEndedDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: status } = enterpriseTrialHooks.useStatus();
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
-  const storageKey = `${SEEN_KEY_PREFIX}${platform.id}`;
-  const [seen, setSeen] = useState(() => readSeen(storageKey));
+  const trial = enterpriseTrialHooks.useTrial();
+  const { openDialog: openPlans } =
+    billingDialogHooks.useManagePlanDialogStore();
+  const storageKey = `${SEEN_KEY_PREFIX}${platform.id}-${
+    trial.endsAt?.toISOString() ?? 'unknown'
+  }`;
+  const [seenKey, setSeenKey] = useState<string | null>(null);
+  const seen = seenKey === storageKey || readSeen(storageKey);
 
-  const open = status?.state === 'ended' && !seen;
+  const open = trial.state === 'ended' && trial.isPlatformAdmin && !seen;
   const close = () => {
     writeSeen(storageKey);
-    setSeen(true);
+    setSeenKey(storageKey);
   };
+  const features = enterpriseTrialFeatures.list();
+  const kept = [
+    t('Flows, connections and data'),
+    t('Your credits'),
+    t('The {plan} plan', { plan: trial.basePlanName }),
+  ];
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
-      <DialogContent className="max-w-md">
-        <div className="flex flex-col gap-4">
-          <span className="grid size-10 place-items-center rounded-lg bg-gray-3">
-            <CalendarX className="size-5 text-gray-11" />
+      <DialogContent
+        onOpenAutoFocus={focusDialogItself}
+        className="gap-5 p-7 sm:max-w-lg sm:rounded-2xl"
+      >
+        <div className="flex flex-col gap-2 pr-6">
+          <DialogTitle className="text-xl font-semibold tracking-tight">
+            {t('Thanks for trying the Enterprise plan')}
+          </DialogTitle>
+          <DialogDescription className="text-base text-pretty">
+            {isNil(trial.endsAt)
+              ? t('You are back on the {plan} plan.', {
+                  plan: trial.basePlanName,
+                })
+              : t('It ended on {date}. You are back on the {plan} plan.', {
+                  date: dayjs(trial.endsAt).format('MMM D'),
+                  plan: trial.basePlanName,
+                })}
+          </DialogDescription>
+        </div>
+        <div className="flex flex-col gap-3">
+          <span className="text-sm font-medium text-gray-12">
+            {t('Everything you built is still here')}
           </span>
-          <div className="flex flex-col gap-1">
-            <DialogTitle className="text-xl">
-              {t('Your Enterprise trial has ended')}
-            </DialogTitle>
-            <DialogDescription>
-              {t(
-                'Enterprise features are now switched off. Need more time? Talk to our team to get 14 more days, or upgrade to keep everything unlocked.',
-              )}
-            </DialogDescription>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={() => {
-                close();
-                openManagePlanDialog();
-              }}
-            >
-              {t('Upgrade')}
-            </Button>
-            <EnterpriseTrialSalesLink surface="enterprise_trial_ended" />
-          </div>
+          <ul className="flex flex-col gap-2.5">
+            {kept.map((item) => (
+              <li
+                key={item}
+                className="flex items-center gap-2.5 text-sm text-gray-12"
+              >
+                <Check className="size-4 shrink-0 text-success-11" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-col gap-3 border-t pt-5">
+          <span className="text-sm text-gray-11">{t('Paused for now')}</span>
+          <ul className="flex flex-wrap gap-2">
+            {features.map((feature) => (
+              <li
+                key={feature.title}
+                className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-gray-11"
+              >
+                <feature.icon className="size-3.5 shrink-0 text-gray-9" />
+                {feature.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="text-sm text-gray-11">
+          {t(
+            'Our team can extend your trial or set you up on the Enterprise plan.',
+          )}
+        </p>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            onClick={() => {
+              close();
+              openPlans();
+            }}
+          >
+            {t('Explore plans')}
+          </Button>
+          <EnterpriseTrialSalesLink
+            surface="enterprise_trial_ended"
+            variant="default"
+            label={t('Talk to sales')}
+          />
         </div>
       </DialogContent>
     </Dialog>
   );
+}
+
+function focusDialogItself(event: Event): void {
+  event.preventDefault();
+  if (event.currentTarget instanceof HTMLElement) {
+    event.currentTarget.focus();
+  }
 }
 
 function readSeen(key: string): boolean {

@@ -5,7 +5,6 @@ import {
   brandColors,
   formErrors,
   HEX_COLOR_PATTERN,
-  PlatformAdminSurface,
   ThemeHexColor,
   PlatformThemeColors,
   StatusColors,
@@ -14,7 +13,6 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Gem, ExternalLink } from 'lucide-react';
 import { ReactNode, RefObject, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -29,7 +27,6 @@ import {
   SettingsRow,
 } from '@/app/components/admin';
 import { ColorPicker } from '@/components/custom/color-picker';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -40,7 +37,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { TIER_LABELS, useUpgradeClick } from '@/features/billing';
+import {
+  EnterpriseTrialSalesLink,
+  LockedGem,
+  useEnterpriseGate,
+} from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -61,9 +62,12 @@ export const AppearanceSection = ({
   const { data: maxFileSizeMb } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FILE_SIZE_MB,
   );
-  const upgradeClick = useUpgradeClick();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
   const leavingOnPurpose = useRef(false);
+  const gate = useEnterpriseGate({
+    unlocked: !brandingLocked,
+    featureKey: 'BRANDING',
+  });
   const initialColor =
     !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
       ? platform.primaryColor
@@ -130,21 +134,24 @@ export const AppearanceSection = ({
     dirtyFields.color === true ||
     Object.values(dirtyFields.statusColors ?? {}).some(Boolean);
   const previewingLockedBranding = brandingLocked && brandingDirty;
-  const tierLabel = TIER_LABELS[BRANDING_TIER];
   const [imageFieldsKey, setImageFieldsKey] = useState(0);
   const clearImages = () => {
     setImages(EMPTY_IMAGES);
     setImageFieldsKey((key) => key + 1);
   };
 
-  const { mutate: updatePlatform, isPending } = useMutation({
-    mutationFn: async () => {
+  const {
+    mutate: updatePlatform,
+    mutateAsync: updatePlatformAsync,
+    isPending,
+  } = useMutation({
+    mutationFn: async ({ includeBranding }: { includeBranding: boolean }) => {
       form.clearErrors('root.serverError');
       const { name, color, statusColors } = form.getValues();
 
       const formdata = new FormData();
       formdata.append('name', name);
-      if (!brandingLocked) {
+      if (includeBranding) {
         if (color !== initialColor) {
           formdata.append('primaryColor', color);
         }
@@ -169,9 +176,9 @@ export const AppearanceSection = ({
         queryClient.invalidateQueries({ queryKey: flagsHooks.queryKey }),
       ]);
     },
-    onSuccess: () => {
+    onSuccess: (_data, { includeBranding }) => {
       adminFeedback.done({ verb: 'save' });
-      if (brandingLocked) {
+      if (!includeBranding) {
         form.resetField('name', { defaultValue: form.getValues('name') });
         return;
       }
@@ -188,33 +195,25 @@ export const AppearanceSection = ({
 
   const lockedSave: SaveBarLock | undefined = previewingLockedBranding
     ? {
-        message: t("Branding preview isn't saved"),
+        message: t('Try it now. Saving needs the Enterprise plan.'),
         canSaveRest: nameDirty,
         action:
           edition === ApEdition.COMMUNITY ? (
-            <Button type="button" asChild>
-              <a
-                href={ENTERPRISE_DOCUMENTATION_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('Read the docs')}
-                <ExternalLink />
-              </a>
-            </Button>
+            <EnterpriseTrialSalesLink
+              surface="enterprise_locked"
+              variant="default"
+              label={t('Talk to sales')}
+              featureKey="BRANDING"
+            />
           ) : (
             <Button
               type="button"
               onClick={() =>
-                upgradeClick({
-                  feature: 'BRANDING',
-                  tier: BRANDING_TIER,
-                  surface: PlatformAdminSurface.SAMPLE,
-                })
+                gate.run(() => updatePlatformAsync({ includeBranding: true }))
               }
             >
-              <Gem />
-              {t('Upgrade to save')}
+              <LockedGem />
+              {t('Save branding')}
             </Button>
           ),
       }
@@ -226,7 +225,9 @@ export const AppearanceSection = ({
         className="flex flex-1 flex-col"
         onSubmit={(event) => {
           if (!brandingLocked) {
-            form.handleSubmit(() => updatePlatform())(event);
+            form.handleSubmit(() => updatePlatform({ includeBranding: true }))(
+              event,
+            );
             return;
           }
           event.preventDefault();
@@ -234,7 +235,7 @@ export const AppearanceSection = ({
           form
             .trigger('name')
             .then((nameIsValid) => {
-              if (nameIsValid) updatePlatform();
+              if (nameIsValid) updatePlatform({ includeBranding: false });
             })
             .catch(() => undefined);
         }}
@@ -299,36 +300,11 @@ export const AppearanceSection = ({
             description={
               brandingLocked
                 ? t(
-                    'Try your logo and colors here. The preview is only for you and is not saved until you upgrade.',
+                    'Try your logo and colors here. The preview is only for you until you save it with the Enterprise plan.',
                   )
                 : t(
                     'Your logo and colors replace ours everywhere, including sign-in and emails.',
                   )
-            }
-            action={
-              !brandingLocked ? undefined : edition === ApEdition.COMMUNITY ? (
-                <Badge variant="info">
-                  <Gem />
-                  {t('{tier} plan', { tier: tierLabel })}
-                </Badge>
-              ) : (
-                <Button
-                  {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    upgradeClick({
-                      feature: 'BRANDING',
-                      tier: BRANDING_TIER,
-                      surface: PlatformAdminSurface.SAMPLE,
-                    })
-                  }
-                >
-                  <Gem />
-                  {t('Upgrade to {tier}', { tier: tierLabel })}
-                </Button>
-              )
             }
           >
             {BRAND_IMAGES.map((image) => (
@@ -480,10 +456,7 @@ const PlatformAppearanceSchema = z.object({
 
 type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;
 
-const BRANDING_TIER = 'enterprise';
 const DEFAULT_MAX_FILE_SIZE_MB = 25;
-const ENTERPRISE_DOCUMENTATION_URL =
-  'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
 const EMPTY_IMAGES: BrandImages = { logo: null, icon: null, favicon: null };
 
 const BRAND_IMAGES: BrandImageSpec[] = [

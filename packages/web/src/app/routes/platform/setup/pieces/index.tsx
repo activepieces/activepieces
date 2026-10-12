@@ -28,7 +28,6 @@ import {
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
-import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { RowDataWithActions } from '@/components/custom/data-table';
@@ -197,11 +196,6 @@ export const PiecesListTab = () => {
           scope={PieceScope.PLATFORM}
         />
       </AdminPageHeader>
-      <PiecesLockedBanner
-        message={t(
-          "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
-        )}
-      />
       <AdminDataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(
