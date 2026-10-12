@@ -142,5 +142,11 @@ function buildHealth(current: string): GetSystemHealthChecksResponse {
       current,
       workers: { total: 1, versionMismatched: 0, mismatchedVersions: [] },
     },
+    backgroundMigrations: {
+      pendingCount: 0,
+      completedCount: 0,
+      error: null,
+      failedMigration: null,
+    },
   };
 }
