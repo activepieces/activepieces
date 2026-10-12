@@ -159,9 +159,10 @@ describe('flow with looping', () => {
             }),
             executionState: FlowExecutorContext.empty(),
             constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        }).finally(() => {
+            keepTicking = false
+            upsertSpy.mockRestore()
         })
-        keepTicking = false
-        upsertSpy.mockRestore()
 
         const loopOut = result.steps.loop as LoopStepOutput
         expect(loopOut.output?.iterations.length).toBe(iterationCount)
