@@ -166,7 +166,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.200.0",
+      "version": "0.200.1",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -5664,7 +5664,7 @@
     },
     "packages/pieces/community/mcp-client": {
       "name": "@activepieces/piece-mcp-client",
-      "version": "0.0.6",
+      "version": "0.0.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10833,7 +10833,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.40.0",
+      "version": "0.41.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
