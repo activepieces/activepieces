@@ -1,3 +1,5 @@
+import { Bot } from 'lucide-react';
+
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { AiProviderInfo } from '@/features/agents';
 
@@ -6,8 +8,20 @@ export function ProviderLogo({
   size = 'md',
 }: {
   info: AiProviderInfo;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'row';
 }) {
+  if (size === 'row') {
+    return (
+      <LogoPlate
+        src={info.logoUrl}
+        alt={info.name}
+        size="md"
+        border
+        className="rounded-lg"
+        fallback={<Bot className="size-4 text-gray-11" />}
+      />
+    );
+  }
   if (!info.logoUrl) {
     return size === 'sm' ? null : (
       <div className="size-8 shrink-0 rounded-xl bg-gray-3" />

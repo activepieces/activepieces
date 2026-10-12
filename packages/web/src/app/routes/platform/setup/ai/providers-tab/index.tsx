@@ -22,9 +22,9 @@ import {
   AdminEmpty,
   adminFeedback,
   AdminFetchErrorState,
+  AdminPage,
   AdminPageHeader,
   adminPageResources,
-  AdminSection,
   adminSurface,
   ConfirmDialog,
   SettingsPanel,
@@ -33,6 +33,7 @@ import {
 } from '@/app/components/admin';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -191,7 +192,11 @@ export function ProvidersTab() {
   );
 
   if (isLoading) {
-    return <ProvidersSkeleton />;
+    return (
+      <AdminPage width="content">
+        <ProvidersSkeleton />
+      </AdminPage>
+    );
   }
 
   const activeConfig = configs.find(
@@ -202,7 +207,7 @@ export function ProvidersTab() {
     : undefined;
   if (activeConfig && activeInfo && !locked) {
     return (
-      <>
+      <AdminPage width="content">
         <ConfigDetail
           key={`${activeConfig.id}:${credentialsVersion}`}
           config={activeConfig}
@@ -230,11 +235,11 @@ export function ProvidersTab() {
           defaultProvider={dialogProvider}
           onConnected={onConnected}
         />
-      </>
+      </AdminPage>
     );
   }
 
-  const page = (
+  const content = (
     <>
       <AdminPageHeader
         title={t('Providers')}
@@ -266,7 +271,28 @@ export function ProvidersTab() {
       {isProvidersError ? (
         <AdminFetchErrorState entity={t('AI providers')} onRetry={refetch} />
       ) : configs.length === 0 ? (
-        <EmptyProviders onConnect={openConnect} />
+        <>
+          <AdminEmpty
+            icon={<Bot />}
+            title={t('Connect your first provider')}
+            description={t(
+              'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
+            )}
+            action={
+              <Button
+                onClick={() => openConnect()}
+                {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+              >
+                <Plus className="size-4" />
+                {t('Connect a provider')}
+              </Button>
+            }
+          />
+          <AvailableProviders
+            providers={SUPPORTED_AI_PROVIDERS}
+            onConnect={openConnect}
+          />
+        </>
       ) : (
         <>
           {locked && <LockedProvidersAlert />}
@@ -291,27 +317,7 @@ export function ProvidersTab() {
             />
           ))}
           {!locked && available.length > 0 && (
-            <AdminSection
-              title={
-                <span className="flex items-baseline gap-2">
-                  {t('Also available')}
-                  <span className="text-sm font-normal tabular-nums text-gray-11">
-                    {available.length}
-                  </span>
-                </span>
-              }
-              description={t('Bring your own API key to connect any of these.')}
-            >
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {available.map((info) => (
-                  <AvailableProviderCard
-                    key={info.provider}
-                    info={info}
-                    onConnect={() => openConnect(info.provider)}
-                  />
-                ))}
-              </div>
-            </AdminSection>
+            <AvailableProviders providers={available} onConnect={openConnect} />
           )}
         </>
       )}
@@ -326,14 +332,17 @@ export function ProvidersTab() {
     </>
   );
 
-  if (configs.length === 0 && !isProvidersError) {
-    return (
-      <PlanFeatureSample feature="aiProviders">
-        <div className="flex flex-col gap-6">{page}</div>
-      </PlanFeatureSample>
-    );
-  }
-  return page;
+  return (
+    <AdminPage width="content">
+      {configs.length === 0 && !isProvidersError ? (
+        <PlanFeatureSample feature="aiProviders">
+          <div className="flex flex-col gap-6">{content}</div>
+        </PlanFeatureSample>
+      ) : (
+        content
+      )}
+    </AdminPage>
+  );
 }
 
 function LockedProvidersAlert() {
@@ -415,7 +424,6 @@ function ProviderGroup({
         )
       }
     >
-      <p className="px-5 py-2 text-xs font-medium text-gray-11">{t('Keys')}</p>
       {configs.map((config) => (
         <ConfigRow
           key={config.id}
@@ -463,7 +471,7 @@ function ConfigRow({
       : t('projectsCount', { count: allowedProjectCount });
 
   return (
-    <div
+    <SettingsRow
       role={locked ? undefined : 'button'}
       tabIndex={locked ? undefined : 0}
       onClick={locked ? undefined : onOpen}
@@ -477,30 +485,29 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-4 px-5 py-3 transition-colors',
+        'group transition-colors',
         !locked &&
-          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8',
       )}
-    >
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-medium text-gray-12">
-            {config.name}
-          </p>
+      title={
+        <>
+          <span className="truncate">{config.name}</span>
           {config.enabledForChat && (
             <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
               {t('Chat')}
             </span>
           )}
           <KeyStatusBadge status={config.status} />
-        </div>
+        </>
+      }
+      description={
         <Tooltip>
           <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-gray-11">
+            <span className="block w-fit max-w-full truncate">
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
-            </p>
+            </span>
           </TooltipTrigger>
           {config.modelIds.length > 0 && (
             <TooltipContent className="max-w-64">
@@ -508,18 +515,15 @@ function ConfigRow({
             </TooltipContent>
           )}
         </Tooltip>
-      </div>
-
+      }
+    >
       {config.projectScope !== 'all' && (
-        <div className="flex min-w-0 items-center gap-2">
-          <ProjectChips
-            projects={namedProjects}
-            excluded={config.projectScope === 'except'}
-            allowedCount={allowedProjectCount}
-          />
-        </div>
+        <ProjectChips
+          projects={namedProjects}
+          excluded={config.projectScope === 'except'}
+          allowedCount={allowedProjectCount}
+        />
       )}
-
       <div
         className="flex shrink-0 items-center gap-1"
         onClick={(event) => event.stopPropagation()}
@@ -555,7 +559,7 @@ function ConfigRow({
           onConfirm={onDelete}
         />
       </div>
-    </div>
+    </SettingsRow>
   );
 }
 
@@ -648,89 +652,56 @@ function ChatProviderRow({
   );
 }
 
-function EmptyProviders({
+function AvailableProviders({
+  providers,
   onConnect,
 }: {
+  providers: AiProviderInfo[];
   onConnect: (provider?: AIProviderName) => void;
 }) {
-  const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
-    SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
-  ).filter((info): info is AiProviderInfo => info !== undefined);
-  const others = SUPPORTED_AI_PROVIDERS.filter(
-    ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
-  );
+  const ordered = [
+    ...RECOMMENDED_PROVIDERS.flatMap((provider) =>
+      providers.filter((info) => info.provider === provider),
+    ),
+    ...providers.filter(
+      ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
+    ),
+  ];
 
   return (
-    <>
-      <AdminEmpty
-        icon={<Bot />}
-        title={t('Connect your first provider')}
-        description={t(
-          'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
-        )}
-        action={
-          <Button
-            onClick={() => onConnect()}
-            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
-          >
-            <Plus className="size-4" />
-            {t('Connect a provider')}
-          </Button>
-        }
-      />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {recommended.map((info) => (
-          <AvailableProviderCard
+    <SettingsPanel
+      flush
+      title={t('Add a provider')}
+      description={t('Bring your own API key to connect any of these.')}
+    >
+      {ordered.map((info) => {
+        const recommended = RECOMMENDED_PROVIDERS.includes(info.provider);
+        return (
+          <SettingsRow
             key={info.provider}
-            info={info}
-            tagline={recommendedTagline({ provider: info.provider })}
-            recommended
-            onConnect={() => onConnect(info.provider)}
-          />
-        ))}
-      </div>
-      <AdminSection title={t('Or choose another provider')}>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {others.map((info) => (
-            <AvailableProviderCard
-              key={info.provider}
-              info={info}
-              onConnect={() => onConnect(info.provider)}
-            />
-          ))}
-        </div>
-      </AdminSection>
-    </>
-  );
-}
-
-function AvailableProviderCard({
-  info,
-  tagline,
-  recommended,
-  onConnect,
-}: {
-  info: AiProviderInfo;
-  tagline?: string;
-  recommended?: boolean;
-  onConnect: () => void;
-}) {
-  return (
-    <div className={cn(adminSurface.card, 'flex items-center gap-4 p-5')}>
-      <ProviderLogo info={info} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-sm font-medium text-gray-12">{info.name}</p>
-        {tagline && <p className="truncate text-xs text-gray-11">{tagline}</p>}
-      </div>
-      <Button
-        size="sm"
-        variant={recommended ? 'default' : 'outline'}
-        onClick={onConnect}
-        {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
-      >
-        {t('Connect')}
-      </Button>
-    </div>
+            media={<ProviderLogo info={info} size="row" />}
+            title={
+              <>
+                <span className="truncate">{info.name}</span>
+                {recommended && (
+                  <Badge variant="secondary">{t('Recommended')}</Badge>
+                )}
+              </>
+            }
+            description={recommendedTagline({ provider: info.provider })}
+          >
+            <Button
+              size="sm"
+              variant={recommended ? 'default' : 'outline'}
+              onClick={() => onConnect(info.provider)}
+              {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
+            >
+              {t('Connect')}
+            </Button>
+          </SettingsRow>
+        );
+      })}
+    </SettingsPanel>
   );
 }
 

@@ -143,7 +143,7 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
     expect(screen.queryAllByRole('button', { name: /Trial Anthropic/ })).toEqual(
       [],
     );
-    expect(screen.queryAllByText('Also available')).toEqual([]);
+    expect(screen.queryAllByText('Add a provider')).toEqual([]);
   });
 
   it('does not open the key detail from a deep link', () => {
