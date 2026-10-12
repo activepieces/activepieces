@@ -1,15 +1,19 @@
-import { PieceSelectionMode, PieceSet } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
+import {
+  isNil,
+  PieceSelectionMode,
+  PieceSet,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  CheckIcon,
   Copy,
-  Hash,
   Layers,
-  LayoutGrid,
-  Settings2,
-  ToggleLeft,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Star,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -19,249 +23,473 @@ import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
-  ConfirmDialog,
-  RowActionTooltip,
   StatusDot,
   adminPageResources,
-  useAdminAction,
+  ConfirmDialog,
 } from '@/app/components/admin';
-import {
-  CURSOR_QUERY_PARAM,
-  RowDataWithActions,
-} from '@/components/custom/data-table';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/custom/formatted-date';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  pieceSetCacheUtils,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  pieceSetChanges,
+  pieceSetMutations,
   pieceSetQueries,
-  pieceSetsApi,
+  pieceSetTerms,
 } from '@/features/piece-sets';
+import { piecesHooks } from '@/features/pieces';
+import { projectHooks } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
-import { pieceSetName } from './piece-set-name';
+import { pieceSetSamples } from './piece-set-samples';
+import { useShowEmbedKey } from './use-show-embed-key';
 
-export const PieceSetsTab = () => {
+export function PieceSetsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
-  const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
+  if (!platform.plan.managePiecesEnabled) {
+    return <SamplePieceSetsList />;
+  }
+  return <LivePieceSetsList />;
+}
 
-  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
-  const limitParam = searchParams.get('limit');
-  const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-
+function LivePieceSetsList() {
   const {
-    data: pieceSetsPage,
+    data: pieceSets,
     isLoading,
     isError,
     refetch,
-  } = pieceSetQueries.usePieceSets({ cursor, limit });
-  const queryClient = useQueryClient();
-  const { mutateAsync: deleteSet } = useAdminAction<PieceSet>({
-    verb: 'delete',
-    name: (pieceSet) => pieceSetName.short(pieceSet.name),
-    run: (pieceSet) => pieceSetsApi.delete(pieceSet.id),
-    onSuccess: () => {
-      pieceSetCacheUtils
-        .refreshAfterProjectChange({ queryClient })
-        .catch(() => undefined);
-    },
-  });
+  } = pieceSetQueries.useAllPieceSets();
+  const { data: platformsData, isLoading: projectsLoading } =
+    projectHooks.useProjectsForPlatforms();
+  const projectCounts = useMemo(
+    () =>
+      countProjectsPerSet({
+        pieceSets: pieceSets ?? [],
+        projects: platformsData?.flatMap((p) => p.projects),
+      }),
+    [pieceSets, platformsData],
+  );
+  return (
+    <PieceSetsList
+      pieceSets={pieceSets ?? []}
+      projectCounts={projectCounts}
+      projectsLoading={projectsLoading}
+      isLoading={isLoading}
+      isError={isError}
+      onRetry={refetch}
+    />
+  );
+}
 
-  const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
+function SamplePieceSetsList() {
+  const { pieces: catalog } = piecesHooks.usePieces({
+    includeHidden: true,
+    isTableQuery: true,
+    skipProjectFilter: true,
+  });
+  const pieceSets = useMemo(
+    () =>
+      pieceSetSamples.samplePieceSets({
+        pieceNames: (catalog ?? []).map((piece) => piece.name),
+      }),
+    [catalog],
+  );
+  return (
+    <PieceSetsList
+      pieceSets={pieceSets}
+      projectCounts={pieceSetSamples.sampleProjectCounts()}
+      projectsLoading={false}
+      isLoading={false}
+      isError={false}
+    />
+  );
+}
+
+function PieceSetsList({
+  pieceSets,
+  projectCounts,
+  projectsLoading,
+  isLoading,
+  isError,
+  onRetry,
+}: PieceSetsListProps) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get(SEARCH_PARAM) ?? '';
+  const showKey = useShowEmbedKey();
+  const [creating, setCreating] = useState(false);
+  const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
+  const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
+  const [deletingSet, setDeletingSet] = useState<PieceSet | null>(null);
+  const { mutateAsync: deleteSet } = pieceSetMutations.useDeletePieceSet();
+
+  const deletingSetProjects = deletingSet
+    ? projectCounts.get(deletingSet.id)
+    : undefined;
+  const visibleSets = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (query === '') {
+      return pieceSets;
+    }
+    return pieceSets.filter(
+      (set) =>
+        set.name.toLowerCase().includes(query) ||
+        (showKey && (set.key ?? '').toLowerCase().includes(query)),
+    );
+  }, [pieceSets, search, showKey]);
+
+  const openSet = (set: PieceSet) =>
+    navigate(`/platform/pieces/piece-sets/${set.id}`);
 
   const columns: ColumnDef<RowDataWithActions<PieceSet>>[] = useMemo(
     () => [
       {
         accessorKey: 'name',
+        size: 360,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t('Name')}
-            icon={LayoutGrid}
+            title={pieceSetTerms.get().Term}
           />
         ),
         cell: ({ row }) => (
-          <div className="flex min-w-0 items-center gap-2">
-            <TextWithTooltip tooltipMessage={row.original.name}>
-              <span className="min-w-0 font-medium">{row.original.name}</span>
-            </TextWithTooltip>
-            {row.original.isDefault && (
-              <Badge variant="default" className="shrink-0">
-                {t('Default')}
-              </Badge>
-            )}
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="flex min-w-0 items-center gap-2">
+              <TextWithTooltip tooltipMessage={row.original.name}>
+                <span className="truncate font-medium text-gray-12">
+                  {row.original.name}
+                </span>
+              </TextWithTooltip>
+              {row.original.isDefault && (
+                <Badge variant="outline">{t('Default')}</Badge>
+              )}
+            </span>
+            <span className="truncate text-xs text-gray-11">
+              {selectionSentence(row.original)}
+            </span>
           </div>
         ),
       },
+      ...(showKey ? [embedKeyColumn()] : []),
       {
-        accessorKey: 'key',
+        id: 'appliesTo',
+        size: 170,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Key')} icon={Hash} />
-        ),
-        cell: ({ row }) =>
-          row.original.key ? (
-            <TextWithTooltip tooltipMessage={row.original.key}>
-              <span className="block font-mono text-sm">
-                {row.original.key}
-              </span>
-            </TextWithTooltip>
-          ) : (
-            <span className="text-gray-11">—</span>
-          ),
-      },
-      {
-        id: 'includeNewPieces',
-        size: 160,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Include new pieces')}
-            icon={ToggleLeft}
-          />
+          <DataTableColumnHeader column={column} title={t('Applies to')} />
         ),
         cell: ({ row }) => {
-          const includesNewPieces =
-            row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
+          if (row.original.isDefault) {
+            return (
+              <span className="text-gray-11">{t('Every other project')}</span>
+            );
+          }
+          const count = projectCounts.get(row.original.id);
+          if (count === undefined) {
+            return projectsLoading ? (
+              <Skeleton className="h-4 w-20" />
+            ) : (
+              <span className="text-gray-11">—</span>
+            );
+          }
           return (
-            <StatusDot tone={includesNewPieces ? 'success' : 'neutral'}>
-              {includesNewPieces ? t('Yes') : t('No')}
-            </StatusDot>
+            <span className="text-gray-11">
+              {t(
+                '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
+                { count },
+              )}
+            </span>
           );
         },
       },
       {
+        id: 'newPieces',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('New pieces')} />
+        ),
+        cell: ({ row }) =>
+          row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL ? (
+            <StatusDot tone="success">{t('Allowed')}</StatusDot>
+          ) : (
+            <StatusDot tone="neutral">{t('Blocked')}</StatusDot>
+          ),
+      },
+      {
+        id: 'required',
+        size: 140,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Required')} />
+        ),
+        cell: ({ row }) => {
+          const count = pieceSetChanges.countRequiredActions(
+            row.original.config,
+          );
+          return count === 0 ? (
+            <span className="text-gray-11">—</span>
+          ) : (
+            <span className="flex min-w-0 items-center gap-1.5 text-gray-12">
+              <Star className="size-3.5 shrink-0 fill-current text-warning-11" />
+              <span className="truncate">
+                {t('{count, plural, =1 {1 action} other {# actions}}', {
+                  count,
+                })}
+              </span>
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'updated',
+        size: 140,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Updated')} />
+        ),
+        cell: ({ row }) => (
+          <FormattedDate
+            date={new Date(row.original.updated)}
+            className="text-gray-11"
+          />
+        ),
+      },
+      {
         id: 'actions',
-        size: 80,
+        size: 56,
         notClickable: true,
         cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
-            <RowActionTooltip label={t('Edit Details')}>
-              <Button
-                {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
-                variant="ghost"
-                size="sm"
-                aria-label={t('Edit {name}', { name: row.original.name })}
-                onClick={() => setEditingSet(row.original)}
-              >
-                <Settings2 className="size-4" />
-              </Button>
-            </RowActionTooltip>
-            <RowActionTooltip label={t('Duplicate')}>
-              <Button
-                {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
-                variant="ghost"
-                size="sm"
-                aria-label={t('Duplicate {name}', { name: row.original.name })}
-                onClick={() => setDuplicatingSet(row.original)}
-              >
-                <Copy className="size-4" />
-              </Button>
-            </RowActionTooltip>
-            <ConfirmDialog
-              title={t('Delete {name}?', {
-                name: pieceSetName.short(row.original.name),
-              })}
-              description={t(
-                'Projects assigned to this set will be reassigned to the default set.',
-              )}
-              confirmLabel={t('Delete piece set')}
-              controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
-              onConfirm={() => deleteSet(row.original)}
-            >
-              <Button
-                {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}
-                variant="ghost"
-                size="sm"
-                aria-label={t('Delete {name}', { name: row.original.name })}
-                disabled={row.original.isDefault}
-              >
-                <Trash2 className="size-4 text-danger-11" />
-              </Button>
-            </ConfirmDialog>
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('More actions')}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-44">
+                <DropdownMenuItem
+                  {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
+                  onSelect={() => setEditingSet(row.original)}
+                >
+                  <Pencil />
+                  {t('Edit details')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
+                  onSelect={() => setDuplicatingSet(row.original)}
+                >
+                  <Copy />
+                  {t('Duplicate')}
+                </DropdownMenuItem>
+                {!row.original.isDefault && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}
+                      variant="destructive"
+                      onSelect={() => setDeletingSet(row.original)}
+                    >
+                      <Trash2 />
+                      {t('Delete')}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         ),
       },
     ],
-    [deleteSet, setDuplicatingSet, setEditingSet],
+    [projectCounts, projectsLoading, showKey],
   );
+
+  const newSetButton = (
+    <Button
+      {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
+      onClick={() => setCreating(true)}
+    >
+      <Plus />
+      {t('New {term}', pieceSetTerms.get())}
+    </Button>
+  );
+  const filtered = search.trim() !== '';
 
   return (
     <AdminPage>
       <AdminPageHeader
-        title={t('Piece Sets')}
+        title={pieceSetTerms.get().title}
         description={t(
-          'A piece set decides which pieces (actions/triggers) a project can see. It can also set required actions that a flow must include before it can be published.',
+          'A {term} decides which pieces, actions and triggers its projects can use, and which actions a flow must use before it can be published.',
+          pieceSetTerms.get(),
         )}
         resources={adminPageResources.pieces}
       >
-        <CreatePieceSetDialog onCreated={() => refetch()} />
+        {newSetButton}
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={
-          platform.plan.managePiecesEnabled
-            ? t('No piece sets found')
-            : t('No piece sets yet')
+          filtered
+            ? t('No {term} matches', pieceSetTerms.get())
+            : t('No {terms} yet', pieceSetTerms.get())
         }
         emptyStateTextDescription={
-          platform.plan.managePiecesEnabled
-            ? t(
-                'Create a piece set to control which pieces are available to specific projects',
+          filtered
+            ? t('Try a different search.')
+            : t(
+                'Every project uses the Default {term}. Make a {term} to give some projects fewer pieces, or require actions in their flows.',
+                pieceSetTerms.get(),
               )
-            : ''
         }
         emptyStateIcon={<Layers />}
+        emptyStateAction={filtered ? undefined : newSetButton}
         columns={columns}
         filters={[
           {
             type: 'input',
-            title: t('Set Name'),
-            accessorKey: 'name',
-            icon: CheckIcon,
+            title: showKey
+              ? t('Search by name or embed key')
+              : t('Search by name'),
+            accessorKey: SEARCH_PARAM,
+            icon: Search,
           },
         ]}
-        page={{
-          data: pieceSets,
-          next: pieceSetsPage?.next ?? null,
-          previous: pieceSetsPage?.previous ?? null,
-        }}
+        page={{ data: visibleSets, next: null, previous: null }}
+        onRowClick={(row) => openSet(row)}
         isLoading={isLoading}
         isError={isError}
-        errorStateEntity={t('piece sets')}
-        onRetry={refetch}
-        clientFiltering={true}
-        onRowClick={(pieceSet) =>
-          navigate(`/platform/pieces/piece-sets/${pieceSet.id}`)
-        }
+        errorStateEntity={t('piece {terms}', pieceSetTerms.get())}
+        onRetry={onRetry}
+        hidePagination
+      />
+      <CreatePieceSetDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onCreated={(pieceSet) => openSet(pieceSet)}
       />
       {duplicatingSet && (
         <DuplicatePieceSetDialog
-          open={!!duplicatingSet}
-          onOpenChange={(open) => {
-            if (!open) setDuplicatingSet(null);
-          }}
+          open
+          onOpenChange={(open) => !open && setDuplicatingSet(null)}
           sourceId={duplicatingSet.id}
           sourceName={duplicatingSet.name}
         />
       )}
       {editingSet && (
         <EditPieceSetDialog
-          open={!!editingSet}
-          onOpenChange={(open) => {
-            if (!open) setEditingSet(null);
-          }}
+          open
+          onOpenChange={(open) => !open && setEditingSet(null)}
           id={editingSet.id}
           currentName={editingSet.name}
           currentKey={editingSet.key ?? null}
         />
       )}
+      {deletingSet && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDeletingSet(null)}
+          title={t('Delete {name}?', { name: deletingSet.name })}
+          description={t(
+            'The {term} is removed from the platform.',
+            pieceSetTerms.get(),
+          )}
+          consequence={
+            deletingSetProjects === undefined
+              ? t(
+                  'Its projects move to the Default {term}.',
+                  pieceSetTerms.get(),
+                )
+              : t(
+                  '{count, plural, =0 {No projects use this {term}.} =1 {1 project moves to the Default {term}.} other {# projects move to the Default {term}.}}',
+                  { ...pieceSetTerms.get(), count: deletingSetProjects },
+                )
+          }
+          confirmLabel={t('Delete {term}', pieceSetTerms.get())}
+          controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
+          successMessage={t('{name} deleted', { name: deletingSet.name })}
+          onConfirm={async () => {
+            await deleteSet(deletingSet.id);
+          }}
+        />
+      )}
     </AdminPage>
   );
+}
+
+function embedKeyColumn(): ColumnDef<RowDataWithActions<PieceSet>> {
+  return {
+    accessorKey: 'key',
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Embed key')} />
+    ),
+    cell: ({ row }) =>
+      row.original.key ? (
+        <span className="font-mono text-xs text-gray-11">
+          {row.original.key}
+        </span>
+      ) : (
+        <span className="text-gray-11">—</span>
+      ),
+  };
+}
+
+function selectionSentence(set: PieceSet): string {
+  const count = set.config.pieces.exceptions.length;
+  if (set.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL) {
+    return count === 0
+      ? t('Every piece')
+      : t(
+          '{count, plural, =1 {Every piece except 1} other {Every piece except # pieces}}',
+          { count },
+        );
+  }
+  return t('{count, plural, =1 {Only 1 piece} other {Only # pieces}}', {
+    count,
+  });
+}
+
+function countProjectsPerSet({
+  pieceSets,
+  projects,
+}: {
+  pieceSets: PieceSet[];
+  projects: ProjectWithLimits[] | undefined;
+}): Map<string, number> {
+  if (isNil(projects)) {
+    return new Map();
+  }
+  const defaultSetId = pieceSets.find((set) => set.isDefault)?.id;
+  return projects.reduce((counts, project) => {
+    const setId = project.pieceSetId ?? defaultSetId;
+    if (isNil(setId)) {
+      return counts;
+    }
+    return new Map(counts).set(setId, (counts.get(setId) ?? 0) + 1);
+  }, new Map<string, number>(pieceSets.map((set) => [set.id, 0])));
+}
+
+const SEARCH_PARAM = 'name';
+
+type PieceSetsListProps = {
+  pieceSets: PieceSet[];
+  projectCounts: Map<string, number>;
+  projectsLoading: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  onRetry?: () => void;
 };
