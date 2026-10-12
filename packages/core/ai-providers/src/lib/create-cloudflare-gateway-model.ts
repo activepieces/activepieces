@@ -21,6 +21,11 @@ export function createCloudflareGatewayModel({ credentials, modelId, isImage = f
         ...(isNil(metadata) ? {} : { 'cf-aig-metadata': JSON.stringify(metadata) }),
     }
 
+    if (providerPrefix === 'openai' && !isImage) {
+        const openaiProvider = openAiGatewayProvider({ accountId, gatewayId, headers, onOutcome })
+        return withoutServerStorage({ model: openaiProvider.responses(actualModelId), providerOptionsName: 'openai' })
+    }
+
     if (routing === 'compat') {
         return compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId: actualModelId, onOutcome })
     }
@@ -41,18 +46,8 @@ export function createCloudflareGatewayModel({ credentials, modelId, isImage = f
                 headers,
             })(actualModelId)
         }
-        case 'openai': {
-            const openaiProvider = createOpenAI({
-                apiKey: NO_KEY_PLACEHOLDER,
-                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
-                headers,
-                fetch: stripAuthorizationHeader,
-            })
-            if (isImage) {
-                return openaiProvider.imageModel(actualModelId)
-            }
-            return withoutServerStorage({ model: openaiProvider.responses(actualModelId), providerOptionsName: 'openai' })
-        }
+        case 'openai':
+            return openAiGatewayProvider({ accountId, gatewayId, headers }).imageModel(actualModelId)
         default:
             return compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId })
     }
@@ -75,10 +70,26 @@ function compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId, o
     return isImage ? provider.imageModel(modelId) : provider.chatModel(modelId)
 }
 
-const stripAuthorizationHeader: typeof globalThis.fetch = (input, init) => {
-    const headers = new Headers(init?.headers)
-    headers.delete('Authorization')
-    return fetch(input, { ...init, headers })
+function openAiGatewayProvider({ accountId, gatewayId, headers, onOutcome }: {
+    accountId: string
+    gatewayId: string
+    headers: Record<string, string>
+    onOutcome?: ProviderOutcomeReporter
+}): ReturnType<typeof createOpenAI> {
+    return createOpenAI({
+        apiKey: NO_KEY_PLACEHOLDER,
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
+        headers,
+        fetch: withoutAuthorizationHeader(observedProviderFetch(onOutcome)),
+    })
+}
+
+function withoutAuthorizationHeader(delegate: typeof globalThis.fetch | undefined): typeof globalThis.fetch {
+    return (input, init) => {
+        const headers = new Headers(init?.headers)
+        headers.delete('Authorization')
+        return (delegate ?? globalThis.fetch)(input, { ...init, headers })
+    }
 }
 
 const NO_KEY_PLACEHOLDER = 'no-key'
