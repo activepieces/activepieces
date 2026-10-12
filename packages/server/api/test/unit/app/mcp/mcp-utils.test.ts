@@ -595,6 +595,19 @@ describe('mcpUtils.syncContainerExecutionTypes', () => {
         expect(settings.filter_values).toEqual({ type: PropertyExecutionType.DYNAMIC })
     })
 
+    it('lets a field inside a dynamic field set the shared setting when the top-level field with the same name does not need one', () => {
+        const updateDataSchema = { filter_value: { type: PropertyType.ARRAY, displayName: 'Filter Value', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: {
+                filter_value: shortText('Filter Value'),
+                update_data: { type: PropertyType.DYNAMIC, displayName: 'Update Data', required: true, refreshers: [], props: async () => ({}) },
+            },
+            input: { filter_value: 'abc', update_data: { filter_value: '{{trigger.body.tags}}' } },
+            propertySettings: { update_data: { type: PropertyExecutionType.MANUAL, schema: updateDataSchema } },
+        })
+        expect(settings.filter_value).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
     it('skips a dynamic field whose schema has not been resolved', () => {
         const settings = mcpUtils.syncContainerExecutionTypes({
             props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },

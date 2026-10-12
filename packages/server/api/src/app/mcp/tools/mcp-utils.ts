@@ -773,12 +773,13 @@ function syncContainerExecutionTypes({ props, input, propertySettings }: {
     input: Record<string, unknown>
     propertySettings: Record<string, PropertySettings>
 }): Record<string, PropertySettings> {
-    const fields = Object.entries(props).flatMap(([name, prop]) => [
-        { name, prop, value: input[name] },
-        ...dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }).filter((child) => !(child.name in props)),
-    ])
-    const updates = fields.flatMap(({ name, prop, value }): [string, PropertySettings][] => {
-        const type = containerExecutionType({ prop, value })
+    const topLevelFields = Object.entries(props).map(([name, prop]) => ({ name, type: containerExecutionType({ prop, value: input[name] }) }))
+    const claimedByTopLevel = new Set(topLevelFields.filter(({ type }) => !isNil(type)).map(({ name }) => name))
+    const childFields = Object.entries(props)
+        .flatMap(([name, prop]) => dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }))
+        .filter(({ name }) => !claimedByTopLevel.has(name))
+        .map(({ name, prop, value }) => ({ name, type: containerExecutionType({ prop, value }) }))
+    const updates = [...topLevelFields, ...childFields].flatMap(({ name, type }): [string, PropertySettings][] => {
         if (isNil(type) || (propertySettings[name]?.type ?? PropertyExecutionType.MANUAL) === type) {
             return []
         }
