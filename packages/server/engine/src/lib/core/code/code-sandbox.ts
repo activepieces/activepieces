@@ -15,7 +15,7 @@ const loadV8IsolateSandbox = async (): Promise<CodeSandbox> => {
     return v8IsolateCodeSandboxModule.v8IsolateCodeSandbox
 }
 
-const loadDenoCodeSandbox = async ({ permissions, codeStepMemoryLimitMb }: { permissions: DenoPermission[], codeStepMemoryLimitMb: number | null }): Promise<CodeSandbox> => {
+const loadDenoCodeSandbox = async ({ permissions, codeStepMemoryLimitMb }: LoadDenoCodeSandboxParams): Promise<CodeSandbox> => {
     const denoCodeSandboxModule = await import('./deno-code-sandbox')
     return denoCodeSandboxModule.denoCodeSandbox({ permissions, codeStepMemoryLimitMb })
 }
@@ -79,4 +79,9 @@ export const initCodeSandbox = async ({ useDeno }: { useDeno: boolean }): Promis
     }
 
     return instances[kind]
+}
+
+type LoadDenoCodeSandboxParams = {
+    permissions: DenoPermission[]
+    codeStepMemoryLimitMb: number | null
 }
