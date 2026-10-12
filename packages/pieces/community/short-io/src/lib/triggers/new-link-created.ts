@@ -1,10 +1,138 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, Property, Store, TriggerStrategy } from '@activepieces/pieces-framework';
 import { shortIoAuth } from '../common/auth';
-import { shortIoApiCall } from '../common/client';
+import { ShortIoAuthValue } from '../common/client';
+import { shortIoLinkQueries } from '../common/link-queries';
+import { shortIoLinks, ShortIoDomainRef } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown } from '../common/props';
 
-const LAST_LINK_IDS_KEY = 'shortio-last-link-ids';
+const LEGACY_IDS_KEY = 'shortio-last-link-ids';
+const WATERMARK_KEY = 'shortio-link-watermark-v2';
+const PAGE_SIZE = 150;
+const MAX_PAGES = 10;
+const TEST_SAMPLE_SIZE = 5;
+
+function createdAtMs(link: Record<string, unknown>): number {
+  const value = link['createdAt'];
+  if (typeof value === 'number') {
+    return value;
+  }
+  return typeof value === 'string' ? Date.parse(value) : NaN;
+}
+
+function linkId(link: Record<string, unknown>): string {
+  return String(link['idString'] ?? link['id'] ?? '');
+}
+
+function toEvent({ link, domain }: { link: Record<string, unknown>; domain: ShortIoDomainRef }): Record<string, unknown> {
+  return {
+    id: linkId(link),
+    originalURL: link['originalURL'],
+    shortURL: link['shortURL'],
+    secureShortURL: link['secureShortURL'],
+    title: link['title'],
+    path: link['path'],
+    createdAt: link['createdAt'],
+    updatedAt: link['updatedAt'],
+    tags: link['tags'],
+    redirectType: link['redirectType'],
+    domainId: link['DomainId'] ?? link['domainId'],
+    folderId: link['FolderId'],
+    ownerId: link['OwnerId'],
+    hasPassword: link['hasPassword'],
+    cloaking: link['cloaking'],
+    expiresAt: link['expiresAt'],
+    expiredURL: link['expiredURL'],
+    clicksLimit: link['clicksLimit'],
+    archived: link['archived'],
+    utmSource: link['utmSource'],
+    utmMedium: link['utmMedium'],
+    utmCampaign: link['utmCampaign'],
+    utmTerm: link['utmTerm'],
+    utmContent: link['utmContent'],
+    androidURL: link['androidURL'],
+    iphoneURL: link['iphoneURL'],
+    triggerInfo: {
+      source: 'short.io',
+      type: 'new_link_created',
+      detectedAt: new Date().toISOString(),
+      domain: domain.hostname,
+    },
+    raw: link,
+  };
+}
+
+async function newestLinks({ auth, domain, limit }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; limit: number }): Promise<Record<string, unknown>[]> {
+  const page = await shortIoLinkQueries.listPage({ auth, domainId: domain.id, query: { limit, dateSortOrder: 'desc' } });
+  return page.links;
+}
+
+function watermarkOf({ links, fallback }: { links: Record<string, unknown>[]; fallback: number }): Watermark {
+  const times = links.map(createdAtMs).filter((time) => Number.isFinite(time));
+  if (times.length === 0) {
+    return { createdAt: fallback, ids: [] };
+  }
+  const newest = times.reduce((max, time) => (time > max ? time : max), times[0]);
+  return { createdAt: newest, ids: links.filter((link) => createdAtMs(link) === newest).map(linkId) };
+}
+
+async function baseline({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<void> {
+  const links = await newestLinks({ auth, domain, limit: 1 });
+  await store.put<Watermark>(WATERMARK_KEY, watermarkOf({ links, fallback: Date.now() }));
+}
+
+async function pollNewLinks({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<Record<string, unknown>[]> {
+  const watermark = await store.get<Watermark>(WATERMARK_KEY);
+  if (!watermark) {
+    return migrateFromLegacy({ auth, domain, store });
+  }
+  const seen = new Set(watermark.ids);
+  const collected: Record<string, unknown>[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const result = await shortIoLinkQueries.listPage({
+      auth,
+      domainId: domain.id,
+      query: {
+        limit: PAGE_SIZE,
+        dateSortOrder: 'asc',
+        afterDate: new Date(watermark.createdAt - 1).toISOString(),
+        pageToken,
+      },
+    });
+    collected.push(...result.links);
+    pageToken = result.nextPageToken ?? undefined;
+    if (!pageToken) {
+      break;
+    }
+  }
+  const truncated = pageToken !== undefined;
+  const fresh = collected
+    .filter((link) => {
+      const time = createdAtMs(link);
+      return Number.isFinite(time) && (time > watermark.createdAt || (time === watermark.createdAt && !seen.has(linkId(link))));
+    })
+    .sort((a, b) => createdAtMs(a) - createdAtMs(b));
+  if (fresh.length === 0) {
+    return [];
+  }
+  const next = watermarkOf({ links: fresh, fallback: watermark.createdAt });
+  const ids = next.createdAt === watermark.createdAt ? [...watermark.ids, ...next.ids] : next.ids;
+  await store.put<Watermark>(WATERMARK_KEY, { createdAt: next.createdAt, ids, ...(truncated ? { truncatedAt: Date.now() } : {}) });
+  return fresh;
+}
+
+async function migrateFromLegacy({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<Record<string, unknown>[]> {
+  const legacyIds = await store.get<string[]>(LEGACY_IDS_KEY);
+  const links = await newestLinks({ auth, domain, limit: PAGE_SIZE });
+  await store.put<Watermark>(WATERMARK_KEY, watermarkOf({ links, fallback: Date.now() }));
+  if (!legacyIds) {
+    return [];
+  }
+  await store.delete(LEGACY_IDS_KEY);
+  const known = new Set(legacyIds);
+  return links.filter((link) => !known.has(linkId(link))).sort((a, b) => createdAtMs(a) - createdAtMs(b));
+}
 
 export const newLinkCreatedTrigger = createTrigger({
   auth: shortIoAuth,
@@ -13,10 +141,11 @@ export const newLinkCreatedTrigger = createTrigger({
   displayName: 'New Link Created',
   description: 'Fires when a new short link is created on a domain. Useful to sync newly created links to other systems.',
   aiMetadata: {
-    description: 'Fires when a new short link appears on the selected Short.io domain, detected by polling the domain\'s link list on a configurable interval. Each event represents one newly created link with its details. Use to kick off a workflow whenever someone creates a link on the domain.',
+    description:
+      "Fires once for each new short link created on the selected Short.io domain, detected by polling the domain's link list. Each event is one link (short URL, original URL, path, title, tags); the link password is never included.",
   },
   type: TriggerStrategy.POLLING,
-
+  outputSchema: shortIoSchemas.trigger,
   props: {
     domain: {
       ...domainIdDropdown,
@@ -25,8 +154,8 @@ export const newLinkCreatedTrigger = createTrigger({
     },
     pollingInterval: Property.StaticDropdown({
       displayName: 'Polling Interval',
-      description: 'How often to check for new links. More frequent polling may hit rate limits.',
-      required: true,
+      description: 'Not used: Activepieces sets the polling schedule. Kept so existing flows keep working.',
+      required: false,
       defaultValue: '5',
       options: {
         disabled: false,
@@ -40,200 +169,25 @@ export const newLinkCreatedTrigger = createTrigger({
       },
     }),
   },
-
   async onEnable(context) {
-    const { domain: domainString } = context.propsValue;
-    
-    if (!domainString) {
-      throw new Error('Domain is required. Please select a domain.');
-    }
-
-    const domainObject = JSON.parse(domainString as string);
-    const domainId = domainObject.id;
-
-    try {
-      const response = await shortIoApiCall<{ links: ShortIoLink[] }>({
-        auth: context.auth,
-        method: HttpMethod.GET,
-        resourceUri: `/api/links`,
-        query: {
-          domain_id: domainId,
-          limit: 100,
-          dateSortOrder: 'desc',
-        },
-      });
-
-      const currentIds = (response.links || []).map((link) => link.idString);
-      await context.store.put<string[]>(LAST_LINK_IDS_KEY, currentIds);
-    } catch (error: any) {
-      throw new Error(`Failed to initialize trigger: ${error.message}`);
-    }
+    const domain = shortIoLinks.parseDomainProp(context.propsValue.domain);
+    await context.store.delete(LEGACY_IDS_KEY);
+    await baseline({ auth: context.auth, domain, store: context.store });
   },
-
-  async onDisable() {
-    // No-op 
+  async onDisable(context) {
+    await context.store.delete(WATERMARK_KEY);
+    await context.store.delete(LEGACY_IDS_KEY);
   },
-
   async run(context) {
-    const { domain: domainString } = context.propsValue;
-    
-    if (!domainString) {
-      throw new Error('Domain is required. Please select a domain.');
-    }
-
-    const domainObject = JSON.parse(domainString as string);
-    const domainId = domainObject.id;
-    
-    const previousIds = await context.store.get<string[]>(LAST_LINK_IDS_KEY) || [];
-
-    try {
-      const response = await shortIoApiCall<{ links: ShortIoLink[] }>({
-        auth: context.auth,
-        method: HttpMethod.GET,
-        resourceUri: `/api/links`,
-        query: {
-          domain_id: domainId,
-          limit: 100,
-          dateSortOrder: 'desc',
-        },
-      });
-
-      const allLinks = response.links || [];
-      const currentIds = allLinks.map((link) => link.idString);
-
-      await context.store.put<string[]>(LAST_LINK_IDS_KEY, currentIds);
-
-      const newLinks = allLinks.filter((link) => !previousIds.includes(link.idString));
-
-      return newLinks.map((link) => ({
-        id: link.idString,
-        originalURL: link.originalURL,
-        shortURL: link.shortURL,
-        secureShortURL: link.secureShortURL,
-        title: link.title,
-        path: link.path,
-        createdAt: link.createdAt,
-        updatedAt: link.updatedAt,
-        tags: link.tags,
-        redirectType: link.redirectType,
-        domainId: link.DomainId || link.domainId,
-        folderId: link.FolderId,
-        ownerId: link.OwnerId,
-        hasPassword: link.hasPassword,
-        cloaking: link.cloaking,
-        password: link.password,
-        expiresAt: link.expiresAt,
-        expiredURL: link.expiredURL,
-        clicksLimit: link.clicksLimit,
-        archived: link.archived,
-        utmSource: link.utmSource,
-        utmMedium: link.utmMedium,
-        utmCampaign: link.utmCampaign,
-        utmTerm: link.utmTerm,
-        utmContent: link.utmContent,
-        androidURL: link.androidURL,
-        iphoneURL: link.iphoneURL,
-        triggerInfo: {
-          source: 'short.io',
-          type: 'new_link_created',
-          detectedAt: new Date().toISOString(),
-          domain: domainObject.hostname,
-        },
-        raw: link,
-      }));
-    } catch (error: any) {
-      if (error.message.includes('403')) {
-        throw new Error(`Access denied to domain. Please check your API key permissions for domain: ${domainObject.hostname}`);
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(`Domain not found: ${domainObject.hostname}. Please verify the domain exists.`);
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error('Rate limit exceeded. Consider increasing the polling interval.');
-      }
-
-      throw new Error(`Failed to check for new links: ${error.message}`);
-    }
+    const domain = shortIoLinks.parseDomainProp(context.propsValue.domain);
+    const links = await pollNewLinks({ auth: context.auth, domain, store: context.store });
+    return links.map((link) => toEvent({ link, domain }));
   },
-
   async test(context) {
-    const { domain: domainString } = context.propsValue;
-    
-    if (!domainString) {
-      throw new Error('Domain is required. Please select a domain.');
-    }
-
-    const domainObject = JSON.parse(domainString as string);
-    const domainId = domainObject.id;
-
-    try {
-      const response = await shortIoApiCall<{ links: ShortIoLink[] }>({
-        auth: context.auth,
-        method: HttpMethod.GET,
-        resourceUri: `/api/links`,
-        query: {
-          domain_id: domainId,
-          limit: 1,
-          dateSortOrder: 'desc',
-        },
-      });
-
-      const link = response.links?.[0];
-      if (link) {
-        return [{
-          id: link.idString,
-          originalURL: link.originalURL,
-          shortURL: link.shortURL,
-          secureShortURL: link.secureShortURL,
-          title: link.title,
-          path: link.path,
-          createdAt: link.createdAt,
-          updatedAt: link.updatedAt,
-          tags: link.tags,
-          redirectType: link.redirectType,
-          domainId: link.DomainId || link.domainId,
-          folderId: link.FolderId,
-          ownerId: link.OwnerId,
-          hasPassword: link.hasPassword,
-          cloaking: link.cloaking,
-          password: link.password,
-          expiresAt: link.expiresAt,
-          expiredURL: link.expiredURL,
-          clicksLimit: link.clicksLimit,
-          archived: link.archived,
-          utmSource: link.utmSource,
-          utmMedium: link.utmMedium,
-          utmCampaign: link.utmCampaign,
-          utmTerm: link.utmTerm,
-          utmContent: link.utmContent,
-          androidURL: link.androidURL,
-          iphoneURL: link.iphoneURL,
-          triggerInfo: {
-            source: 'short.io',
-            type: 'new_link_created',
-            detectedAt: new Date().toISOString(),
-            domain: domainObject.hostname,
-          },
-          raw: link,
-        }];
-      }
-
-      return [];
-    } catch (error: any) {
-      if (error.message.includes('403')) {
-        throw new Error(`Access denied to domain. Please check your API key permissions for domain: ${domainObject.hostname}`);
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(`Domain not found: ${domainObject.hostname}. Please verify the domain exists.`);
-      }
-
-      throw new Error(`Failed to test trigger: ${error.message}`);
-    }
+    const domain = shortIoLinks.parseDomainProp(context.propsValue.domain);
+    const links = await newestLinks({ auth: context.auth, domain, limit: TEST_SAMPLE_SIZE });
+    return links.map((link) => toEvent({ link, domain }));
   },
-
   sampleData: {
     id: 'lnk_61Mb_0dnRUg3vvtmAPZh3dhQh6',
     originalURL: 'https://example.com/page',
@@ -250,7 +204,6 @@ export const newLinkCreatedTrigger = createTrigger({
     ownerId: 789,
     hasPassword: false,
     cloaking: false,
-    password: null,
     expiresAt: null,
     expiredURL: null,
     clicksLimit: null,
@@ -272,50 +225,4 @@ export const newLinkCreatedTrigger = createTrigger({
   },
 });
 
-interface ShortIoLink {
-  idString: string;
-  id: string;
-  originalURL: string;
-  shortURL: string;
-  secureShortURL: string;
-  title?: string;
-  path: string;
-  createdAt: string;
-  updatedAt?: string;
-  tags: string[];
-  redirectType?: number;
-  DomainId?: number;
-  domainId?: number;
-  FolderId?: string | null;
-  OwnerId?: number;
-  hasPassword?: boolean;
-  cloaking?: boolean;
-  password?: string | null;
-  expiresAt?: string | number | null;
-  expiredURL?: string | null;
-  clicksLimit?: number | null;
-  passwordContact?: boolean | null;
-  skipQS?: boolean;
-  archived?: boolean;
-  splitURL?: string | null;
-  splitPercent?: number | null;
-  utmSource?: string;
-  utmMedium?: string;
-  utmCampaign?: string;
-  utmTerm?: string;
-  utmContent?: string;
-  ttl?: string | number | null;
-  androidURL?: string | null;
-  iphoneURL?: string | null;
-  integrationAdroll?: string | null;
-  integrationFB?: string | null;
-  integrationGA?: string | null;
-  integrationGTM?: string | null;
-  User?: {
-    id: number;
-    name: string | null;
-    email: string;
-    photoURL: string | null;
-  };
-  [key: string]: any;
-}
+type Watermark = { createdAt: number; ids: string[]; truncatedAt?: number };
