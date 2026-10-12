@@ -128,7 +128,7 @@ export const PieceSetPiecesTab = ({
       flush
       title={t('Pieces')}
       description={t(
-        'Every piece on the platform, and what this {term} allows of it.',
+        'Every piece on the platform, and whether builders on this {term} see it.',
         pieceSetTerms.get(),
       )}
     >
@@ -148,9 +148,9 @@ export const PieceSetPiecesTab = ({
           }}
           options={[
             { value: 'all', label: t('All'), count: counts?.all },
-            { value: 'allowed', label: t('Allowed'), count: counts?.allowed },
+            { value: 'allowed', label: t('Shown'), count: counts?.allowed },
             { value: 'limited', label: t('Limited'), count: counts?.limited },
-            { value: 'blocked', label: t('Blocked'), count: counts?.blocked },
+            { value: 'blocked', label: t('Hidden'), count: counts?.blocked },
           ]}
         />
       </div>
@@ -211,7 +211,7 @@ export const PieceSetPiecesTab = ({
                   onClick={() => setSelectedVisibility(true)}
                 >
                   <CheckCircle2 />
-                  {t('Allow')}
+                  {t('Show')}
                 </Button>
                 <Button
                   {...adminControl(AdminControl.PIECE_SETS_EXCLUDE_RUN)}
@@ -223,7 +223,7 @@ export const PieceSetPiecesTab = ({
                   onClick={() => setSelectedVisibility(false)}
                 >
                   <Ban />
-                  {t('Block')}
+                  {t('Hide')}
                 </Button>
               </div>
             )}
@@ -272,7 +272,7 @@ export const PieceSetPiecesTab = ({
                 >
                   {allowed
                     ? componentSummary({ pieceSet, piece })
-                    : t('Blocked')}
+                    : t('Hidden')}
                   {requiredCount({ pieceSet, piece }) > 0 && (
                     <span className="flex items-center gap-1 text-warning-11">
                       <Star className="size-3.5 fill-current" />
@@ -288,7 +288,9 @@ export const PieceSetPiecesTab = ({
                 >
                   <Switch
                     {...adminControl(AdminControl.PIECE_SETS_PIECE_TOGGLE)}
-                    aria-label={t('Allow {name}', { name: piece.displayName })}
+                    aria-label={t('Show {name} in the builder', {
+                      name: piece.displayName,
+                    })}
                     checked={allowed}
                     onCheckedChange={(checked) =>
                       setVisibility({ targets: [piece], visible: checked })
@@ -396,15 +398,15 @@ function requiredCount({
 
 const EMPTY_SEGMENT_TITLES: Record<Segment, () => string> = {
   all: () => t('No pieces yet'),
-  allowed: () => t('No piece is allowed'),
+  allowed: () => t('No piece is shown'),
   limited: () => t('No piece is limited'),
-  blocked: () => t('No piece is blocked'),
+  blocked: () => t('No piece is hidden'),
 };
 
 const EMPTY_SEGMENT_DESCRIPTIONS: Record<Segment, () => string> = {
   all: () => t('Install a piece and it shows up here.'),
-  allowed: () => t('Allow pieces from the Blocked tab.'),
-  limited: () => t('Open an allowed piece to limit it to some of its actions.'),
+  allowed: () => t('Show pieces from the Hidden tab.'),
+  limited: () => t('Open a shown piece to limit it to some of its actions.'),
   blocked: () =>
     t('Every piece is available on this {term}.', pieceSetTerms.get()),
 };
