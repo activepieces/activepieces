@@ -1,4 +1,4 @@
-import { formErrors, Permission } from '@activepieces/core-utils';
+import { formErrors, Permission, tryCatch } from '@activepieces/core-utils';
 import {
   AppConnectionWithoutSensitiveData,
   UpdateProjectPlatformRequest,
@@ -7,6 +7,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -49,6 +50,7 @@ interface EditProjectDialogProps {
     externalId?: string;
     sensitive?: boolean;
   };
+  pieceSetField?: PieceSetField;
 }
 
 export function EditProjectDialog({
@@ -56,6 +58,7 @@ export function EditProjectDialog({
   onClose,
   projectId,
   initialValues,
+  pieceSetField,
 }: EditProjectDialogProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
@@ -97,6 +100,7 @@ export function EditProjectDialog({
             initialValues={initialValues}
             globalConnections={globalConnections}
             globalConnectionsEnabled={globalConnectionsEnabled}
+            pieceSetField={pieceSetField}
           />
         ) : (
           <SkeletonList numberOfItems={3} className="h-10" />
@@ -112,18 +116,19 @@ const EditProjectForm = ({
   initialValues,
   globalConnections,
   globalConnectionsEnabled,
+  pieceSetField,
 }: {
   onClose: () => void;
   projectId: string;
   initialValues?: EditProjectDialogProps['initialValues'];
   globalConnections: AppConnectionWithoutSensitiveData[];
   globalConnectionsEnabled: boolean;
+  pieceSetField?: PieceSetField;
 }) => {
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
-
   const currentConnectionExternalIds = globalConnections
     .filter((connection) => connection.projectIds.includes(projectId))
     .map((connection) => connection.externalId);
@@ -152,6 +157,7 @@ const EditProjectForm = ({
       externalId: initialValues?.externalId,
       sensitive: initialValues?.sensitive ?? false,
       globalConnectionExternalIds: currentConnectionExternalIds,
+      pieceSetId: pieceSetField?.initialValue,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
@@ -160,8 +166,24 @@ const EditProjectForm = ({
     <Form {...form}>
       <form
         className="space-y-4"
-        onSubmit={form.handleSubmit((values) => {
+        onSubmit={form.handleSubmit(async (values) => {
           form.clearErrors('root.serverError');
+          if (
+            pieceSetField &&
+            values.pieceSetId !== undefined &&
+            values.pieceSetId !== pieceSetField.initialValue
+          ) {
+            const { error } = await tryCatch(() =>
+              pieceSetField.save(values.pieceSetId ?? ''),
+            );
+            if (error) {
+              form.setError('root.serverError', {
+                type: 'manual',
+                message: mutationFeedback.message(error),
+              });
+              return;
+            }
+          }
           mutate({
             projectId,
             request: {
@@ -236,6 +258,22 @@ const EditProjectForm = ({
             />
           )}
 
+        {pieceSetField && (
+          <FormField
+            name="pieceSetId"
+            render={({ field }) => (
+              <FormItem>
+                {pieceSetField.render({
+                  value: field.value,
+                  onChange: field.onChange,
+                  disabled: field.disabled,
+                })}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         {globalConnectionsEnabled && (
           <FormField
             name="globalConnectionExternalIds"
@@ -292,6 +330,17 @@ const EditProjectForm = ({
 
 const EditProjectFormSchema = UpdateProjectPlatformRequest.extend({
   displayName: z.string().trim().min(1, formErrors.required),
+  pieceSetId: z.string().optional(),
 });
 
 type EditProjectFormValues = z.infer<typeof EditProjectFormSchema>;
+
+export type PieceSetField = {
+  initialValue: string | undefined;
+  render: (field: {
+    value: string | undefined;
+    onChange: (value: string) => void;
+    disabled?: boolean;
+  }) => ReactNode;
+  save: (pieceSetId: string) => Promise<void>;
+};
