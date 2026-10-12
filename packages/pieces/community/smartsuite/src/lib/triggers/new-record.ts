@@ -67,6 +67,7 @@ export const newRecord = createTrigger({
 			store: context.store,
 			storeKey: 'new_record',
 			payload: context.payload.body,
+			webhookUrl: context.webhookUrl,
 		});
 		if (events.length === 0) {
 			return [];

@@ -126,28 +126,58 @@ describe('webhook triggers', () => {
 		const store = memoryStore({ new_record: 'w1', pullClaim: { owner: 'crashed', at: Date.now() } });
 		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r1', Title: 'rec r1', _dedupe_key: 'smartsuite:e1' }]);
 	});
-	test('run stops paging at its 20 s budget and the next run resumes from the stored cursor', async () => {
+	test('run stops paging at its 15 s budget, pings its own webhook URL to continue, and the next run resumes from the stored cursor', async () => {
 		vi.useFakeTimers({ toFake: ['Date'] });
 		const pageTokens: unknown[] = [];
 		let n = 0;
-		stubFetch((request: SeenRequest) => {
+		const seen = stubFetch((request: SeenRequest) => {
+			if (request.url.startsWith('https://hook.example/')) return { body: {} };
 			if (!request.path.includes('ListEvents')) return { body: TABLE };
 			pageTokens.push(typeof request.body === 'object' && request.body !== null && 'page_token' in request.body ? request.body['page_token'] : undefined);
 			vi.setSystemTime(Date.now() + 7_000);
 			n++;
-			return { body: { events: [event({ id: `e${n}`, recordId: `r${n}` })], next_page_token: `p${n}` } };
+			return { body: { events: [event({ id: `e${n}`, recordId: `r${n}` })], next_page_token: `${100 + n}` } };
 		});
-		const store = memoryStore({ new_record: 'w1', pageToken: 'p0' });
+		const store = memoryStore({ new_record: 'w1', pageToken: '100' });
 		const started = Date.now();
 		const first = await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
-		expect(first).toHaveLength(3);
-		expect(pageTokens).toEqual(['p0', 'p1', 'p2']);
-		expect(Date.now() - started).toBeLessThan(25_000);
-		expect(store.snapshot()['pageToken']).toBe('p3');
-		const second = await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
-		expect(pageTokens.slice(3, 4)).toEqual(['p3']);
-		expect(second.map((payload) => (typeof payload === 'object' && payload !== null && 'id' in payload ? payload['id'] : undefined))).toEqual(['r4', 'r5', 'r6']);
+		expect(first).toHaveLength(2);
+		expect(pageTokens).toEqual(['100', '101']);
+		expect(Date.now() - started).toBeLessThan(20_000);
+		expect(store.snapshot()['pageToken']).toBe('102');
+		const pings = seen.filter((r) => r.url.startsWith('https://hook.example/'));
+		expect(pings).toHaveLength(1);
+		expect(pings[0]).toMatchObject({ method: 'POST', body: { webhookId: 'w1', continuation: true } });
+		const second = await hooks.run(ctx({ store, body: pings[0].body }));
+		expect(pageTokens[2]).toBe('102');
+		expect(second.map((payload) => (typeof payload === 'object' && payload !== null && 'id' in payload ? payload['id'] : undefined))).toEqual(['r3', 'r4']);
 		vi.useRealTimers();
+	});
+	test('if the continuation ping fails the run fails and the cursor stays put', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		stubFetch((request: SeenRequest) => {
+			if (request.url.startsWith('https://hook.example/')) return { status: 500, body: {} };
+			if (!request.path.includes('ListEvents')) return { body: TABLE };
+			vi.setSystemTime(Date.now() + 7_000);
+			return { body: { events: [event({ id: `e${Date.now()}`, recordId: 'r' })], next_page_token: `${Date.now()}` } };
+		});
+		const store = memoryStore({ new_record: 'w1', pageToken: '100' });
+		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).rejects.toThrow();
+		expect(store.snapshot()['pageToken']).toBe('100');
+		expect(store.snapshot()['seenEventIds']).toBeUndefined();
+		vi.useRealTimers();
+	});
+	test('an older run finishing last never moves the cursor back', async () => {
+		const store = memoryStore({ new_record: 'w1', pageToken: '100' });
+		stubFetch((request: SeenRequest) => {
+			if (request.path.includes('ListEvents')) {
+				void store.put('pageToken', '120');
+				return { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: '110' } };
+			}
+			return { body: TABLE };
+		});
+		await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
+		expect(store.snapshot()['pageToken']).toBe('120');
 	});
 	test('run ignores notifications for another webhook', async () => {
 		const seen = stubFetch(() => ({ body: {} }));

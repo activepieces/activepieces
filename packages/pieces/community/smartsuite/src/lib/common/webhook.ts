@@ -1,4 +1,4 @@
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { API_ENDPOINTS } from './constants';
 import { smartSuiteClient, SmartSuiteCredentials } from './client';
 
@@ -6,7 +6,8 @@ const EVENTS_PAGE_SIZE = 50;
 const MAX_EVENT_PAGES = 20;
 const MAX_SEEN_EVENT_IDS = 500;
 const RECENT_RECORDS_LIMIT = 5;
-const PULL_BUDGET_MS = 20_000;
+const PULL_BUDGET_MS = 15_000;
+const CONTINUATION_TIMEOUT_MS = 5_000;
 const MIN_PAGE_BUDGET_MS = 2_000;
 
 async function createWebhook({
@@ -104,11 +105,13 @@ async function pullNewEvents({
 	store,
 	storeKey,
 	payload,
+	webhookUrl,
 }: {
 	credentials: SmartSuiteCredentials;
 	store: TriggerStore;
 	storeKey: string;
 	payload: unknown;
+	webhookUrl: string;
 }): Promise<SmartSuiteEvent[]> {
 	const notifiedWebhookId = await ownNotificationWebhookId({ store, storeKey, payload });
 	if (notifiedWebhookId === undefined) {
@@ -120,6 +123,7 @@ async function pullNewEvents({
 	const collected: SmartSuiteEvent[] = [];
 	let pageToken = startToken;
 	let lastToken = startToken;
+	let readToEnd = false;
 	for (let page = 0; page < MAX_EVENT_PAGES; page++) {
 		if (page > 0 && deadlineAt - Date.now() < MIN_PAGE_BUDGET_MS) {
 			break;
@@ -140,6 +144,7 @@ async function pullNewEvents({
 			lastToken = next;
 		}
 		if (events.length === 0 || next.length === 0 || next === pageToken) {
+			readToEnd = true;
 			break;
 		}
 		pageToken = next;
@@ -152,11 +157,32 @@ async function pullNewEvents({
 		seen.add(key);
 		return true;
 	});
+	if (!readToEnd) {
+		await requestContinuation({ webhookUrl, webhookId: notifiedWebhookId });
+	}
+	const storedToken = (await store.get<string>(PAGE_TOKEN_KEY)) ?? '';
 	const storedNow = (await store.get<string[]>(SEEN_EVENTS_KEY)) ?? [];
 	const merged = Array.from(new Set([...storedNow, ...seen]));
-	await store.put(PAGE_TOKEN_KEY, lastToken);
+	await store.put(PAGE_TOKEN_KEY, laterToken({ stored: storedToken, mine: lastToken }));
 	await store.put(SEEN_EVENTS_KEY, merged.slice(-MAX_SEEN_EVENT_IDS));
 	return fresh;
+}
+
+async function requestContinuation({ webhookUrl, webhookId }: { webhookUrl: string; webhookId: string }): Promise<void> {
+	await httpClient.sendRequest({
+		method: HttpMethod.POST,
+		url: webhookUrl,
+		headers: { 'Content-Type': 'application/json' },
+		body: { webhookId, continuation: true },
+		timeout: CONTINUATION_TIMEOUT_MS,
+	});
+}
+
+function laterToken({ stored, mine }: { stored: string; mine: string }): string {
+	if (/^\d+$/.test(stored) && /^\d+$/.test(mine)) {
+		return BigInt(stored) > BigInt(mine) ? stored : mine;
+	}
+	return mine;
 }
 
 async function ownNotificationWebhookId({ store, storeKey, payload }: { store: TriggerStore; storeKey: string; payload: unknown }): Promise<string | undefined> {
