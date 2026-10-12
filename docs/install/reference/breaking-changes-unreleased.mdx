@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### MessageBird 1.0.0 becomes Bird and uses the current Bird API
+
+The proposed 1.0.0 major keeps the `@activepieces/piece-messagebird` package name and displays as **Bird**. It uses Bird OAuth or a current Bird access key instead of the legacy API key, workspace ID and channel ID connection. Legacy `send-sms` and `listMessages` actions are removed. The new actions use current regional Bird APIs and return different response shapes.
+
+**Custom API Call** keeps its `custom_api_call` action ID but changes authentication, inputs and API. It accepts versioned paths on the regional Bird API host with JSON or no request body. Like the legacy connector, it does not enumerate endpoints; new paths need no connector release and Bird enforces connection permissions. It does not accept arbitrary URLs or legacy Channels API requests.
+
+#### What you need to do
+
+Keep existing 0.3.x steps pinned and their legacy connections intact until replacements have been tested. Create a separate Bird OAuth or current access-key connection for the new actions; do not convert a legacy connection to either method. Reconnect legacy connections using the Legacy MessageBird authentication option, which preserves the original API key, workspace ID and channel ID fields. It retains the original save behavior without an API-validation callback. New Bird actions require OAuth or a current Bird access key; they do not accept legacy credentials.
+
+Replace legacy **Send SMS** (`send-sms`) with the new **Send SMS** (`sms_send`) and map the sender, recipient and message again. Replace **List Messages** (`listMessages`) with **List sent emails**, **List received emails**, **List SMS messages** or **List WhatsApp messages** for the corresponding current channel. Remap filters and response references: lists now return one page in `data`, default to 25 messages (maximum 100), and expose `next_cursor` for the next page. Current SMS, WhatsApp and received-email lists retain messages for 30 days; sent email lists omit message bodies. Rebuild **Custom API Call** inputs for the current API or retain the old step for legacy calls. Major upgrades reset inputs and sample data, so remap downstream response references and test the draft before publishing the workflow. Keep old connections while other flows still use them.
+
 #### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
 
 Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
