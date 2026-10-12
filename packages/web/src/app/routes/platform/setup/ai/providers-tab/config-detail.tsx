@@ -387,7 +387,7 @@ export function ConfigDetail({
               {t('Delete this key')}
             </p>
             <p className="mt-1 text-sm text-gray-11">
-              {t('Steps and agents using it will stop working.')}
+              {t('Flows and agents that use it will fail.')}
             </p>
           </div>
           <Button
@@ -405,9 +405,10 @@ export function ConfigDetail({
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           title={t('Delete {name}', { name: config.name })}
-          message={t('Steps and agents using this key will stop working.')}
+          message={t('Flows and agents that use this key will fail.')}
           entityName={config.name}
           showToast={true}
+          onError={() => undefined}
           controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
           mutationFn={async () => {
             await onDelete();

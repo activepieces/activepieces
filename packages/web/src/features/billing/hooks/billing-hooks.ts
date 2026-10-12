@@ -26,7 +26,8 @@ import { api } from '@/lib/api';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { planSelectorUtils } from '../components/plan-selector-utils';
-import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
+
+import { billingDialogHooks } from './billing-dialog-hooks';
 
 export const PLATFORM_BILLING_SUBSCRIPTION_KEY = [
   'platform-billing-subscription',
@@ -60,7 +61,9 @@ export const billingMutations = {
           window.open(checkoutUrl, '_blank');
         } else {
           refreshBillingCaches(queryClient);
-          usePlanSwitchSuccessDialogStore.getState().openDialog(planId);
+          billingDialogHooks.usePlanSwitchSuccessDialogStore
+            .getState()
+            .openDialog(planId);
         }
         onDone?.();
       },

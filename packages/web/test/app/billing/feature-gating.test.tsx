@@ -9,6 +9,7 @@ import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 let teamProjectsLimit: number | null = 0;
+let aiProvidersEnabled = false;
 let edition = 'cloud';
 const createProject = vi.fn();
 
@@ -27,6 +28,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
         plan: {
           billedTeamProjectsLimit: teamProjectsLimit,
           globalConnectionsEnabled: false,
+          aiProvidersEnabled,
         },
       },
     }),
@@ -47,12 +49,16 @@ vi.mock('@/hooks/flags-hooks', () => ({
     useFlags: () => ({ data: {} }),
   },
 }));
-vi.mock('@/features/billing/stores/manage-plan-dialog-state', () => ({
-  useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
+  billingDialogHooks: {
+    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  },
 }));
 vi.mock('@/features/billing', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  billingDialogHooks: {
+    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  },
 }));
 vi.mock('@/features/connections', () => ({
   globalConnectionsQueries: {
@@ -96,6 +102,7 @@ vi.mock('@/components/ui/sidebar-shadcn', () => ({
 
 import { FeatureSample } from '@/app/components/feature-sample';
 import { FeatureTeaser } from '@/app/components/feature-teaser';
+import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 
 const LIMIT_REACHED_COPY = "You've reached your team project limit";
@@ -118,6 +125,7 @@ const usedTeamProjects = (count: number) =>
 
 beforeEach(() => {
   teamProjectsLimit = 0;
+  aiProvidersEnabled = false;
   edition = 'cloud';
   createProject.mockClear();
 });
@@ -263,5 +271,36 @@ describe('feature sample', () => {
       </FeatureSample>,
     );
     expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
+  });
+});
+
+describe('AI providers plan lock', () => {
+  it('locks the providers page when the plan lacks aiProvidersEnabled', () => {
+    render(
+      <PlanFeatureSample feature="aiProviders">
+        <h1>AI Center providers</h1>
+      </PlanFeatureSample>,
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Unlock AI Center' }),
+    ).toBeDefined();
+    expect(
+      screen.queryByRole('heading', { name: 'AI Center providers' }),
+    ).toBeNull();
+  });
+
+  it('renders the providers page untouched when aiProvidersEnabled is on', () => {
+    aiProvidersEnabled = true;
+    render(
+      <PlanFeatureSample feature="aiProviders">
+        <h1>AI Center providers</h1>
+      </PlanFeatureSample>,
+    );
+    expect(
+      screen.getByRole('heading', { name: 'AI Center providers' }),
+    ).toBeDefined();
+    expect(
+      screen.queryByRole('heading', { name: 'Unlock AI Center' }),
+    ).toBeNull();
   });
 });

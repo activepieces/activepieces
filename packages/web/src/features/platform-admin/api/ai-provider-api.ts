@@ -3,6 +3,8 @@ import {
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
+  ModelOptions,
+  ModelOptionsSurface,
   ProjectAIProvider,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
@@ -37,6 +39,21 @@ export const aiProviderApi = {
     return api.get<string[]>(
       `/v1/ai-providers/configs/${configId}/suggested-models`,
     );
+  },
+  listModelOptions({
+    projectId,
+    surface,
+    tierId,
+  }: {
+    projectId: string;
+    surface: ModelOptionsSurface;
+    tierId?: string;
+  }) {
+    return api.get<ModelOptions>('/v1/ai-providers/model-options', {
+      projectId,
+      surface,
+      ...(tierId === undefined ? {} : { tierId }),
+    });
   },
   listModelTiers() {
     return api.get<ModelTiersResponse>('/v1/ai-providers/tiers');
