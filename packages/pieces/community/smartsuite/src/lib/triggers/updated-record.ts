@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { DEDUPE_KEY_PROPERTY, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon, transformRecordFields } from '../common/props';
 import { WEBHOOK_EVENTS } from '../common/constants';
@@ -68,7 +68,10 @@ export const updatedRecord = createTrigger({
 			return [];
 		}
 		const table = await smartSuiteApi.getTable({ credentials, tableId: context.propsValue.tableId });
-		return events.map((event) => transformRecordFields({ tableSchema: table.structure, tableValues: smartSuiteWebhooks.recordOf(event) }));
+		return events.map((event) => ({
+			...transformRecordFields({ tableSchema: table.structure, tableValues: smartSuiteWebhooks.recordOf(event) }),
+			[DEDUPE_KEY_PROPERTY]: smartSuiteWebhooks.dedupeKeyOf(event),
+		}));
 	},
 
 	sampleData: {

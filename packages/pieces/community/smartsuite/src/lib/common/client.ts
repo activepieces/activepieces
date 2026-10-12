@@ -128,7 +128,6 @@ async function smartSuiteRequest<T>({
 	api = 'rest',
 	headers,
 	wait = sleep,
-	timeoutMs = REQUEST_TIMEOUT_MS,
 }: SmartSuiteRequest): Promise<T> {
 	const baseUrl = api === 'webhooks' ? SMARTSUITE_WEBHOOKS_API_URL : SMARTSUITE_API_URL;
 	const request: HttpRequest = {
@@ -136,7 +135,7 @@ async function smartSuiteRequest<T>({
 		url: `${baseUrl}${path}`,
 		headers: authHeaders(credentials),
 		queryParams: toQueryParams(query),
-		timeout: timeoutMs,
+		timeout: REQUEST_TIMEOUT_MS,
 		followRedirects: false,
 	};
 	if (body !== undefined) {
@@ -196,5 +195,4 @@ export type SmartSuiteRequest = {
 	api?: 'rest' | 'webhooks';
 	headers?: Record<string, string>;
 	wait?: (ms: number) => Promise<void>;
-	timeoutMs?: number;
 };

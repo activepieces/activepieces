@@ -64,7 +64,7 @@ describe('webhook triggers', () => {
 		});
 		const store = memoryStore({ new_record: 'w1', pageToken: 'p0' });
 		const result = await hooks.run(ctx({ store, body: { webhookId: 'w1', locator: {} } }));
-		expect(result).toEqual([{ id: 'r1', Title: 'rec r1' }]);
+		expect(result).toEqual([{ id: 'r1', Title: 'rec r1', _dedupe_key: 'smartsuite:e1' }]);
 		expect(seen.filter((r) => r.path.includes('ListEvents'))).toHaveLength(1);
 		expect(store.snapshot()['pageToken']).toBe('p0');
 	});
@@ -89,10 +89,10 @@ describe('webhook triggers', () => {
 		);
 		const store = memoryStore({ new_record: 'w1', seenEventIds: ['e1'] });
 		const result = await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
-		expect(result).toEqual([{ id: 'r2', Title: 'rec r2' }]);
+		expect(result).toEqual([{ id: 'r2', Title: 'rec r2', _dedupe_key: 'smartsuite:e2' }]);
 		expect(store.snapshot()['seenEventIds']).toEqual(['e1', 'e2']);
 	});
-	test('overlapping notifications emit each event once and keep the newest cursor', async () => {
+	test('overlapping runs both deliver, and each event carries one dedupe key so the platform starts one run per event', async () => {
 		stubFetch((request: SeenRequest) =>
 			request.path.includes('ListEvents') ? { body: { events: [event({ id: 'e1', recordId: 'r1' }), event({ id: 'e2', recordId: 'r2' })], next_page_token: 'p1' } } : { body: TABLE },
 		);
@@ -101,39 +101,30 @@ describe('webhook triggers', () => {
 			hooks.run(ctx({ store, body: { webhookId: 'w1' } })),
 			hooks.run(ctx({ store, body: { webhookId: 'w1' } })),
 		]);
-		expect([...first, ...second]).toEqual([{ id: 'r1', Title: 'rec r1' }, { id: 'r2', Title: 'rec r2' }]);
+		expect(first).toHaveLength(2);
+		const keys = [...first, ...second].map((payload) => (payload as Record<string, unknown>)['_dedupe_key']);
+		expect(new Set(keys)).toEqual(new Set(['smartsuite:e1', 'smartsuite:e2']));
 		expect(store.snapshot()['pageToken']).toBe('p1');
-		expect(store.snapshot()['pullClaim']).toBeUndefined();
+		expect(store.snapshot()['seenEventIds']).toEqual(['e1', 'e2']);
 	});
-	test('a stale claim from a crashed run does not block delivery', async () => {
-		stubFetch((request: SeenRequest) =>
-			request.path.includes('ListEvents') ? { body: { events: [event({ id: 'e1', recordId: 'r1' })] } } : { body: TABLE },
-		);
-		const store = memoryStore({ new_record: 'w1', pullClaim: { owner: 'dead', at: Date.now() - 10 * 60_000 } });
-		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r1', Title: 'rec r1' }]);
-	});
-	test('a claim left by a crashed run is taken over once it expires and the queued events are delivered', async () => {
-		const seen = stubFetch((request: SeenRequest) =>
-			request.path.includes('ListEvents') ? { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: 'p1' } } : { body: TABLE },
-		);
-		const store = memoryStore({ new_record: 'w1', pageToken: 'p0', pullClaim: { owner: 'crashed', at: Date.now() - 45_000 + 400 } });
-		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r1', Title: 'rec r1' }]);
-		expect(seen.filter((r) => r.path.includes('ListEvents'))[0].body).toMatchObject({ page_token: 'p0' });
-		expect(store.snapshot()['pageToken']).toBe('p1');
-		expect(store.snapshot()['pullClaim']).toBeUndefined();
-	});
-	test('a run that lost its claim stops without emitting or moving the cursor', async () => {
-		const store = memoryStore({ new_record: 'w1', pageToken: 'p0' });
+	test('the seen list keeps IDs another run stored while this run was reading', async () => {
+		const store = memoryStore({ new_record: 'w1', seenEventIds: ['e0'] });
 		stubFetch((request: SeenRequest) => {
 			if (request.path.includes('ListEvents')) {
-				void store.put('pullClaim', { owner: 'other', at: Date.now() });
-				return { body: { events: [event({ id: 'e1', recordId: 'r1' })], next_page_token: 'p1' } };
+				void store.put('seenEventIds', ['e0', 'e9']);
+				return { body: { events: [event({ id: 'e1', recordId: 'r1' })] } };
 			}
 			return { body: TABLE };
 		});
-		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).rejects.toThrow(/another run took over/);
-		expect(store.snapshot()['pageToken']).toBe('p0');
-		expect(store.snapshot()['seenEventIds']).toBeUndefined();
+		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toHaveLength(1);
+		expect(store.snapshot()['seenEventIds']).toEqual(['e0', 'e9', 'e1']);
+	});
+	test('a notification is never answered empty because of state left by an earlier run', async () => {
+		stubFetch((request: SeenRequest) =>
+			request.path.includes('ListEvents') ? { body: { events: [event({ id: 'e1', recordId: 'r1' })] } } : { body: TABLE },
+		);
+		const store = memoryStore({ new_record: 'w1', pullClaim: { owner: 'crashed', at: Date.now() } });
+		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r1', Title: 'rec r1', _dedupe_key: 'smartsuite:e1' }]);
 	});
 	test('run ignores notifications for another webhook', async () => {
 		const seen = stubFetch(() => ({ body: {} }));
