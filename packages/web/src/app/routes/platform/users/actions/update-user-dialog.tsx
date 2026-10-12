@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  InvitationType,
   PlatformRole,
   UpdateUserRequestBody,
   User,
@@ -27,6 +28,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members';
+import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { InvitedProjectSelect } from '@/features/members/components/invite-user/invited-project-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -36,6 +38,7 @@ export const UpdateUserDialog = ({
   children,
   onUpdate,
   userId,
+  email,
   firstName,
   role,
   externalId,
@@ -61,13 +64,22 @@ export const UpdateUserDialog = ({
 
   const { mutate, isPending } = useMutation<User, Error, UpdateUserFormValues>({
     mutationKey: ['update-user'],
-    mutationFn: (values) => {
+    mutationFn: async (values) => {
+      if (
+        needsAProject &&
+        !isNil(values.projectId) &&
+        !isNil(values.projectRole)
+      ) {
+        await userInvitationApi.invite({
+          email,
+          type: InvitationType.PROJECT,
+          projectId: values.projectId,
+          projectRole: values.projectRole,
+        });
+      }
       const request: UpdateUserRequestBody = {
         platformRole: values.role,
         externalId: values.externalId,
-        ...(needsAProject
-          ? { projectId: values.projectId, projectRole: values.projectRole }
-          : {}),
       };
       return platformUserApi.update(userId, request);
     },
@@ -220,6 +232,7 @@ type UpdateUserDialogProps = {
   children: React.ReactNode;
   onUpdate: (role: PlatformRole) => void;
   userId: string;
+  email: string;
   firstName: string;
   role: PlatformRole;
   externalId?: string;
