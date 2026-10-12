@@ -45,8 +45,6 @@ export const adminPageResources = {
       label: () => t('Connections guide'),
       path: 'admin-guide/guides/connections',
     }),
-  ],
-  globalConnections: [
     docs({
       label: () => t('Global connections guide'),
       path: 'admin-guide/guides/global-connections',
