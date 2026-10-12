@@ -1,5 +1,6 @@
 import { apId } from '@activepieces/core-utils'
-import { CreateTemplateRequestBody, PlatformPlan, PlatformRole, PrincipalType, TemplateType } from '@activepieces/shared'
+import { CreateTemplateRequestBody, FlowTrigger, FlowTriggerType, PlatformPlan, PlatformRole, PrincipalType, TemplateType } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
@@ -366,8 +367,58 @@ describe('Templates', () => {
             expect(response?.json().flows).toHaveLength(1)
             expect(response?.json().flows[0].displayName).toBe('replacement-flow')
         })
+
+        it('should list the pieces of every flow when an update carries several', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockPlatformTemplate } =
+                await createMockPlatformTemplate({ platformId: apId() })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const flowUsing = (pieceName: string) => ({
+                ...createMockTemplate().flows[0],
+                trigger: pieceTrigger({ pieceName }),
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    flows: [flowUsing('@activepieces/piece-slack'), flowUsing('@activepieces/piece-gmail')],
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().flows).toHaveLength(2)
+            expect(response?.json().pieces).toEqual(expect.arrayContaining(['@activepieces/piece-slack', '@activepieces/piece-gmail']))
+        })
     })
 })
+
+function pieceTrigger({ pieceName }: { pieceName: string }): FlowTrigger {
+    return {
+        type: FlowTriggerType.PIECE,
+        name: 'trigger',
+        displayName: 'Trigger',
+        valid: true,
+        lastUpdatedDate: dayjs().toISOString(),
+        settings: {
+            pieceName,
+            pieceVersion: '0.1.0',
+            triggerName: 'new_message',
+            input: {},
+            propertySettings: {},
+        },
+    }
+}
 
 async function createMockPlatformTemplate({ platformId, plan, type }: { platformId: string, plan?: Partial<PlatformPlan>, type?: TemplateType }) {
     const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
