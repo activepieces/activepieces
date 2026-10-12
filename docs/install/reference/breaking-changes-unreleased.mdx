@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### SmartSuite 0.3.0: Upload File returns the file list, and record and selector actions are builder-only
+
+Upload File used to return the record's fields keyed by field label. From SmartSuite 0.3.0 it returns `{ recordId, field, fileName, files }`, where `files` is the field's file list (handle, name and metadata) after the upload.
+
+Create Record, Update Record, Find Records, Get Record, Delete Record and Upload File, and the new actions that pick a solution, table, record, field or member, are now builder-only. AI agents use their twins that take plain IDs and field slugs, such as Get Record (by ID), Create Record (by Table ID), Update Record Fields, List Records and the other `*_by_id` actions.
+
+#### What you need to do
+
+If a later step reads fields from Upload File's output, read the record with Get Record after the upload, or use the new `files` list. Agents that used the builder actions as tools switch to the `*_by_id` twins. Steps keep running on the version they were built with until you upgrade them.
+
 #### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
 
 Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
