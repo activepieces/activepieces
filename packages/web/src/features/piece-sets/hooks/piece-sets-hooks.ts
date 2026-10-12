@@ -236,26 +236,24 @@ function describeChange(change: PieceSetChange): string {
       const count = values.length;
       if (values.every(Boolean)) {
         return count === 1 && change.label
-          ? t('{name} allowed', { name: change.label })
-          : t(
-              '{count, plural, =1 {1 piece allowed} other {# pieces allowed}}',
-              { count },
-            );
+          ? t('{name} shown', { name: change.label })
+          : t('{count, plural, =1 {1 piece shown} other {# pieces shown}}', {
+              count,
+            });
       }
       if (values.every((visible) => !visible)) {
         return count === 1 && change.label
-          ? t('{name} blocked', { name: change.label })
-          : t(
-              '{count, plural, =1 {1 piece blocked} other {# pieces blocked}}',
-              { count },
-            );
+          ? t('{name} hidden', { name: change.label })
+          : t('{count, plural, =1 {1 piece hidden} other {# pieces hidden}}', {
+              count,
+            });
       }
       return t('Changes saved');
     }
     case 'newPieces':
       return change.include
-        ? t('New pieces are allowed automatically')
-        : t('New pieces stay blocked until you allow them');
+        ? t('New pieces are shown automatically')
+        : t('New pieces stay hidden until you show them');
     case 'requiredMode':
     case 'required':
       return t('Publishing rule saved');

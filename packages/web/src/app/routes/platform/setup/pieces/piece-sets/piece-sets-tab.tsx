@@ -13,7 +13,6 @@ import {
   Pencil,
   Plus,
   Search,
-  Star,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -42,7 +41,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  pieceSetChanges,
   pieceSetMutations,
   pieceSetQueries,
   pieceSetTerms,
@@ -56,6 +54,7 @@ import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
 import { pieceSetSamples } from './piece-set-samples';
+import { pieceSetSummary } from './piece-set-summary';
 import { useShowEmbedKey } from './use-show-embed-key';
 
 export function PieceSetsTab() {
@@ -179,10 +178,23 @@ function PieceSetsList({
               )}
             </span>
             <span className="truncate text-xs text-gray-11">
-              {selectionSentence(row.original)}
+              {pieceSetSummary.describe(row.original)}
             </span>
           </div>
         ),
+      },
+      {
+        id: 'newPieces',
+        size: 190,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('New pieces')} />
+        ),
+        cell: ({ row }) =>
+          row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL ? (
+            <StatusDot tone="success">{t('Shown automatically')}</StatusDot>
+          ) : (
+            <StatusDot tone="neutral">{t('Hidden until shown')}</StatusDot>
+          ),
       },
       ...(showKey ? [embedKeyColumn()] : []),
       {
@@ -211,43 +223,6 @@ function PieceSetsList({
                 '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
                 { count },
               )}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'newPieces',
-        size: 120,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('New pieces')} />
-        ),
-        cell: ({ row }) =>
-          row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL ? (
-            <StatusDot tone="success">{t('Allowed')}</StatusDot>
-          ) : (
-            <StatusDot tone="neutral">{t('Blocked')}</StatusDot>
-          ),
-      },
-      {
-        id: 'required',
-        size: 140,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Required')} />
-        ),
-        cell: ({ row }) => {
-          const count = pieceSetChanges.countRequiredActions(
-            row.original.config,
-          );
-          return count === 0 ? (
-            <span className="text-gray-11">—</span>
-          ) : (
-            <span className="flex min-w-0 items-center gap-1.5 text-gray-12">
-              <Star className="size-3.5 shrink-0 fill-current text-warning-11" />
-              <span className="truncate">
-                {t('{count, plural, =1 {1 action} other {# actions}}', {
-                  count,
-                })}
-              </span>
             </span>
           );
         },
@@ -446,21 +421,6 @@ function embedKeyColumn(): ColumnDef<RowDataWithActions<PieceSet>> {
         <span className="text-gray-11">—</span>
       ),
   };
-}
-
-function selectionSentence(set: PieceSet): string {
-  const count = set.config.pieces.exceptions.length;
-  if (set.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL) {
-    return count === 0
-      ? t('Every piece')
-      : t(
-          '{count, plural, =1 {Every piece except 1} other {Every piece except # pieces}}',
-          { count },
-        );
-  }
-  return t('{count, plural, =1 {Only 1 piece} other {Only # pieces}}', {
-    count,
-  });
 }
 
 function countProjectsPerSet({

@@ -429,7 +429,7 @@ function PiecePicker({
       <SearchInput
         value={search}
         onChange={setSearch}
-        placeholder={t('Search allowed pieces')}
+        placeholder={t('Search shown pieces')}
       />
       {isLoading ? (
         <SkeletonRows count={5} className="h-10 rounded-xl" />
@@ -437,7 +437,7 @@ function PiecePicker({
         <DataFetchErrorState entity={t('pieces')} onRetry={refetch} />
       ) : matches.length === 0 ? (
         <p className="text-sm text-gray-11">
-          {t('No allowed piece matches. Allow a piece first to require it.')}
+          {t('No shown piece matches. Show a piece first to require it.')}
         </p>
       ) : (
         <ul className="flex flex-col rounded-xl border">
@@ -564,7 +564,7 @@ function ActionPicker({
                   </span>
                   {!isAllowed(action.name) && (
                     <Badge variant="outline" className="shrink-0">
-                      {t('Not allowed yet')}
+                      {t('Hidden for now')}
                     </Badge>
                   )}
                 </label>
@@ -576,7 +576,7 @@ function ActionPicker({
       {requiredNames.some((name) => !isAllowed(name)) && (
         <p className="text-xs text-gray-11">
           {t(
-            'Actions this {term} does not allow yet are allowed when you make them required.',
+            'Actions this {term} hides are shown again when you make them required.',
             pieceSetTerms.get(),
           )}
         </p>
