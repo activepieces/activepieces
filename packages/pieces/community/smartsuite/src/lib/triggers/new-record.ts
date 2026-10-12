@@ -58,6 +58,10 @@ export const newRecord = createTrigger({
 
 	async run(context) {
 		const credentials = smartSuiteClient.credentialsOf(context.auth);
+		if ((await smartSuiteWebhooks.ownNotificationWebhookId({ store: context.store, storeKey: 'new_record', payload: context.payload.body })) === undefined) {
+			return [];
+		}
+		const table = await smartSuiteApi.getTable({ credentials, tableId: context.propsValue.tableId });
 		const events = await smartSuiteWebhooks.pullNewEvents({
 			credentials,
 			store: context.store,
@@ -67,7 +71,6 @@ export const newRecord = createTrigger({
 		if (events.length === 0) {
 			return [];
 		}
-		const table = await smartSuiteApi.getTable({ credentials, tableId: context.propsValue.tableId });
 		return events.map((event) => ({
 			...transformRecordFields({ tableSchema: table.structure, tableValues: smartSuiteWebhooks.recordOf(event) }),
 			[DEDUPE_KEY_PROPERTY]: smartSuiteWebhooks.dedupeKeyOf(event),

@@ -126,6 +126,29 @@ describe('webhook triggers', () => {
 		const store = memoryStore({ new_record: 'w1', pullClaim: { owner: 'crashed', at: Date.now() } });
 		await expect(hooks.run(ctx({ store, body: { webhookId: 'w1' } }))).resolves.toEqual([{ id: 'r1', Title: 'rec r1', _dedupe_key: 'smartsuite:e1' }]);
 	});
+	test('run stops paging at its 20 s budget and the next run resumes from the stored cursor', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		const pageTokens: unknown[] = [];
+		let n = 0;
+		stubFetch((request: SeenRequest) => {
+			if (!request.path.includes('ListEvents')) return { body: TABLE };
+			pageTokens.push(typeof request.body === 'object' && request.body !== null && 'page_token' in request.body ? request.body['page_token'] : undefined);
+			vi.setSystemTime(Date.now() + 7_000);
+			n++;
+			return { body: { events: [event({ id: `e${n}`, recordId: `r${n}` })], next_page_token: `p${n}` } };
+		});
+		const store = memoryStore({ new_record: 'w1', pageToken: 'p0' });
+		const started = Date.now();
+		const first = await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
+		expect(first).toHaveLength(3);
+		expect(pageTokens).toEqual(['p0', 'p1', 'p2']);
+		expect(Date.now() - started).toBeLessThan(25_000);
+		expect(store.snapshot()['pageToken']).toBe('p3');
+		const second = await hooks.run(ctx({ store, body: { webhookId: 'w1' } }));
+		expect(pageTokens.slice(3, 4)).toEqual(['p3']);
+		expect(second.map((payload) => (typeof payload === 'object' && payload !== null && 'id' in payload ? payload['id'] : undefined))).toEqual(['r4', 'r5', 'r6']);
+		vi.useRealTimers();
+	});
 	test('run ignores notifications for another webhook', async () => {
 		const seen = stubFetch(() => ({ body: {} }));
 		const store = memoryStore({ new_record: 'w1' });

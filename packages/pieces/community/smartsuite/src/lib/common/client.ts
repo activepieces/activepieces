@@ -128,6 +128,7 @@ async function smartSuiteRequest<T>({
 	api = 'rest',
 	headers,
 	wait = sleep,
+	deadlineAt,
 }: SmartSuiteRequest): Promise<T> {
 	const baseUrl = api === 'webhooks' ? SMARTSUITE_WEBHOOKS_API_URL : SMARTSUITE_API_URL;
 	const request: HttpRequest = {
@@ -143,6 +144,13 @@ async function smartSuiteRequest<T>({
 		request.headers = { ...request.headers, ...(headers ?? { 'Content-Type': 'application/json' }) };
 	}
 	for (let attempt = 0; ; attempt++) {
+		if (deadlineAt !== undefined) {
+			const remaining = deadlineAt - Date.now();
+			if (remaining <= 0) {
+				throw new Error(`SmartSuite ${operation} ran past its time budget.`);
+			}
+			request.timeout = Math.min(REQUEST_TIMEOUT_MS, remaining);
+		}
 		try {
 			const response = await httpClient.sendRequest<T>(request);
 			if (response.status >= 300) {
@@ -157,7 +165,8 @@ async function smartSuiteRequest<T>({
 			if (status === undefined) {
 				throw error;
 			}
-			if (status === 429 && attempt < RATE_LIMIT_RETRY_DELAYS_MS.length) {
+			const retryFits = deadlineAt === undefined || Date.now() + RATE_LIMIT_RETRY_DELAYS_MS[attempt] < deadlineAt;
+			if (status === 429 && attempt < RATE_LIMIT_RETRY_DELAYS_MS.length && retryFits) {
 				await wait(RATE_LIMIT_RETRY_DELAYS_MS[attempt]);
 				continue;
 			}
@@ -195,4 +204,5 @@ export type SmartSuiteRequest = {
 	api?: 'rest' | 'webhooks';
 	headers?: Record<string, string>;
 	wait?: (ms: number) => Promise<void>;
+	deadlineAt?: number;
 };

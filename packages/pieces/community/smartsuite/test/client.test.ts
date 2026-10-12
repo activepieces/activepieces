@@ -47,6 +47,17 @@ describe('client', () => {
 		expect(seen).toHaveLength(3);
 		expect(waits).toEqual([2_000, 5_000]);
 	});
+	test('with a deadline it skips a 429 retry that would not fit and never starts a request past it', async () => {
+		const seen = stubFetch(replies([{ status: 429 }, { status: 429 }]));
+		const waits: number[] = [];
+		await expect(
+			smartSuiteClient.request({ credentials, method: HttpMethod.GET, path: '/x', operation: 'x', deadlineAt: Date.now() + 4_000, wait: async (ms) => { waits.push(ms); } }),
+		).rejects.toMatchObject({ status: 429 });
+		expect(waits).toEqual([2_000]);
+		expect(seen).toHaveLength(2);
+		await expect(smartSuiteClient.request({ credentials, method: HttpMethod.GET, path: '/x', operation: 'x', deadlineAt: Date.now() - 1 })).rejects.toThrow(/time budget/);
+		expect(seen).toHaveLength(2);
+	});
 	test('pathSegment encodes and rejects empty or dot segments', () => {
 		expect(smartSuiteClient.pathSegment({ value: 'a/b?c', label: 'ID' })).toBe('a%2Fb%3Fc');
 		expect(() => smartSuiteClient.pathSegment({ value: ' ', label: 'ID' })).toThrow('ID is required.');

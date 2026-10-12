@@ -6,6 +6,8 @@ const EVENTS_PAGE_SIZE = 50;
 const MAX_EVENT_PAGES = 20;
 const MAX_SEEN_EVENT_IDS = 500;
 const RECENT_RECORDS_LIMIT = 5;
+const PULL_BUDGET_MS = 20_000;
+const MIN_PAGE_BUDGET_MS = 2_000;
 
 async function createWebhook({
 	credentials,
@@ -108,17 +110,20 @@ async function pullNewEvents({
 	storeKey: string;
 	payload: unknown;
 }): Promise<SmartSuiteEvent[]> {
-	const notifiedWebhookId = notificationWebhookId(payload);
-	const ownWebhookId = await store.get<string>(storeKey);
-	if (!notifiedWebhookId || (ownWebhookId && notifiedWebhookId !== ownWebhookId)) {
+	const notifiedWebhookId = await ownNotificationWebhookId({ store, storeKey, payload });
+	if (notifiedWebhookId === undefined) {
 		return [];
 	}
 	const startToken = (await store.get<string>(PAGE_TOKEN_KEY)) ?? '';
 	const seen = new Set((await store.get<string[]>(SEEN_EVENTS_KEY)) ?? []);
+	const deadlineAt = Date.now() + PULL_BUDGET_MS;
 	const collected: SmartSuiteEvent[] = [];
 	let pageToken = startToken;
 	let lastToken = startToken;
 	for (let page = 0; page < MAX_EVENT_PAGES; page++) {
+		if (page > 0 && deadlineAt - Date.now() < MIN_PAGE_BUDGET_MS) {
+			break;
+		}
 		const response = await smartSuiteClient.request<{ events?: SmartSuiteEvent[]; next_page_token?: string }>({
 			credentials,
 			api: 'webhooks',
@@ -126,6 +131,7 @@ async function pullNewEvents({
 			path: API_ENDPOINTS.LIST_EVENTS,
 			body: { webhook_id: notifiedWebhookId, page_size: EVENTS_PAGE_SIZE, page_token: pageToken },
 			operation: 'list webhook events',
+			deadlineAt,
 		});
 		const events = response?.events ?? [];
 		collected.push(...events);
@@ -151,6 +157,15 @@ async function pullNewEvents({
 	await store.put(PAGE_TOKEN_KEY, lastToken);
 	await store.put(SEEN_EVENTS_KEY, merged.slice(-MAX_SEEN_EVENT_IDS));
 	return fresh;
+}
+
+async function ownNotificationWebhookId({ store, storeKey, payload }: { store: TriggerStore; storeKey: string; payload: unknown }): Promise<string | undefined> {
+	const notifiedWebhookId = notificationWebhookId(payload);
+	const ownWebhookId = await store.get<string>(storeKey);
+	if (!notifiedWebhookId || (ownWebhookId && notifiedWebhookId !== ownWebhookId)) {
+		return undefined;
+	}
+	return notifiedWebhookId;
 }
 
 function notificationWebhookId(payload: unknown): string | undefined {
@@ -196,12 +211,14 @@ export const smartSuiteWebhooks = {
 	enable,
 	disable,
 	pullNewEvents,
+	ownNotificationWebhookId,
 	recordOf,
 	dedupeKeyOf,
 	deleteWebhook,
 	RECENT_RECORDS_LIMIT,
 	MAX_EVENT_PAGES,
 	MAX_SEEN_EVENT_IDS,
+	PULL_BUDGET_MS,
 };
 
 export type SmartSuiteEvent = Record<string, unknown>;
