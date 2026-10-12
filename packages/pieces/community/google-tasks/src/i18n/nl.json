@@ -88,5 +88,11 @@
   "Form Data": "Formulieren gegevens",
   "Raw": "Onbewerkte",
   "New Task": "Nieuwe taak",
-  "Triggers when a task is created": "Triggert wanneer een taak wordt aangemaakt"
+  "Triggers when a task is created": "Triggert wanneer een taak wordt aangemaakt",
+  "Task List": "Takenlijst",
+  "Google Tasks keeps the date only; the time is ignored.": "Google Tasks bewaart alleen de datum; de tijd wordt genegeerd.",
+  "Add the task already checked off.": "Voeg de taak toe als al afgevinkt.",
+  "Triggers when a task is added or edited in a list.": "Wordt geactiveerd wanneer een taak in een lijst wordt toegevoegd of bewerkt.",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Wijzigingen aan een taak activeren deze trigger opnieuw, dus dezelfde taak kan meer dan eens binnenkomen."
 }

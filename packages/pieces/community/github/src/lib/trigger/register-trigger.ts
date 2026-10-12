@@ -1,4 +1,9 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { githubAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -7,11 +12,13 @@ export const githubRegisterTrigger = ({
   name,
   displayName,
   description,
+  activityNote,
   sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
+  activityNote: string;
   sampleData: object;
 }) =>
   createTrigger({
@@ -25,6 +32,10 @@ export const githubRegisterTrigger = ({
         'Fires on activity for a configured GitHub event type on a chosen repository (one of: pull request, star, issue, push, discussion, or discussion comment, depending on which trigger variant is used). Represents a repository webhook event delivering the raw GitHub event payload.',
     },
     props: {
+      activityNote: Property.MarkDown({
+        value: activityNote,
+        variant: MarkdownVariant.INFO,
+      }),
       repository: githubCommon.repositoryDropdown,
     },
     sampleData,

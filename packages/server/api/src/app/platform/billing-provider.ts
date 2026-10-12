@@ -87,6 +87,16 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
     }
 }
 
+export async function assertCreditsNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { credits } = await billingProvider.get(log).getCreditsAndAppSumoState(platformId)
+    if (credits.blocked) {
+        throw new ActivepiecesError({
+            code: ErrorCode.QUOTA_EXCEEDED,
+            params: { metric: PlatformUsageMetric.CREDITS, usage: credits.usage, limit: credits.limit },
+        })
+    }
+}
+
 export async function creditsLeftAfter({ platformId, pendingCredits, log }: { platformId: string, pendingCredits: number, log: FastifyBaseLogger }): Promise<number | null> {
     const { data: state, error } = await tryCatch(() => billingProvider.get(log).getCreditsAndAppSumoState(platformId))
     if (isNil(state)) {

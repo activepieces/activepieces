@@ -22,6 +22,22 @@ export const generateImageAction = createAction({
   displayName: 'Generate Image',
   description: 'Create or edit images from a text description.',
   aiMetadata: { description: 'Generates an image from a text prompt with an image-capable model and writes it out as a flow file; when Input Images are attached and the model supports editing, it edits, varies, or merges those images instead of generating from scratch. Pick it for any image creation or edit step; use askAi or run_agent when you need text output. Requires a prompt plus an image-capable provider/model, and input images fail on a model that cannot accept them; not idempotent, as each call generates and stores a new image file.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'ai_model',
+      display: 'section',
+      label: 'AI Model',
+      icon: 'sliders',
+      props: ['provider', 'model'],
+    },
+    {
+      key: 'image',
+      display: 'section',
+      label: 'Image',
+      icon: 'file',
+      props: ['prompt', 'inputImages', 'advancedOptions'],
+    },
+  ],
   props: {
     provider: aiProps({ modelType: 'image' }).provider,
     model: aiProps({ modelType: 'image' }).model,
