@@ -34,7 +34,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-baseline gap-1.5">
             <span className="text-3xl font-bold text-gray-12">
-              {(isUnlimited ? used : total).toLocaleString()}
+              {Math.floor(isUnlimited ? used : total).toLocaleString()}
             </span>
             <span className="text-gray-11">{t('credits')}</span>
           </div>
@@ -44,7 +44,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
             <Progress value={percentUsed} usage />
             <span className="text-sm text-gray-11">
               {t('{amount} remaining', {
-                amount: Math.round(remaining).toLocaleString(),
+                amount: Math.floor(remaining).toLocaleString(),
               })}
             </span>
           </>

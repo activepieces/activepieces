@@ -373,5 +373,6 @@
   "Trigger Column": "触发列",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "请注意，由于谷歌的延迟，触发点可能会延迟3分钟。",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
+  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets.",
+  "Empty fields keep their current value.": "留空的字段保留当前值。"
 }

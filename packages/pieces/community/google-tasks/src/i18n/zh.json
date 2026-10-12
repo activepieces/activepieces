@@ -88,5 +88,11 @@
   "Form Data": "表单数据",
   "Raw": "原始文件",
   "New Task": "New Task",
-  "Triggers when a task is created": "Triggers when a task is created"
+  "Triggers when a task is created": "Triggers when a task is created",
+  "Task List": "任务列表",
+  "Google Tasks keeps the date only; the time is ignored.": "Google Tasks 仅保留日期，时间会被忽略。",
+  "Add the task already checked off.": "添加时直接将任务标记为已完成。",
+  "Triggers when a task is added or edited in a list.": "当列表中的任务被添加或编辑时触发。",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "编辑任务会再次触发此触发器，因此同一任务可能会多次出现。"
 }
