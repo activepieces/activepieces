@@ -59,8 +59,36 @@ const DefaultRouteWithOnboardingCheck = () => {
   return <AuthenticatedDefaultRoute />;
 };
 
-/**
- * Checks if the current user has finished or skipped onboarding.
- * Renders children only after the check. Redirects to /onboarding
- * if onboarding is pending.
- */
+
+const AuthenticatedDefaultRoute = () => {
+  const { checkAccess } = useAuthorization();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const location = useLocation();
+  const currentProjectId = authenticationSession.getProjectId();
+  const trialKey = new URLSearchParams(location.search).get(
+    TRIAL_KEY_QUERY_PARAM,
+  );
+  if (isNil(currentProjectId)) {
+    return (
+      <ProjectDashboardLayout>
+        <NoProjectsState />
+      </ProjectDashboardLayout>
+    );
+  }
+  return (
+    <Navigate
+      to={{
+        pathname: determineDefaultRoute({
+          checkAccess,
+          chatEnabled: platform.plan.chatEnabled,
+        }),
+        search: isNil(trialKey)
+          ? ''
+          : new URLSearchParams({
+              [TRIAL_KEY_QUERY_PARAM]: trialKey,
+            }).toString(),
+      }}
+      replace
+    ></Navigate>
+  );
+};
