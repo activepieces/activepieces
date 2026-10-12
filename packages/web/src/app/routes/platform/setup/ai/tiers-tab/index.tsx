@@ -34,6 +34,7 @@ import {
 import { projectCollectionUtils } from '@/features/projects';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
 
 import { DeleteTierDialog } from './delete-tier-dialog';
 import { SpecificModelsSection } from './specific-models-section';
@@ -354,15 +355,20 @@ function TiersSkeleton() {
     >
       {[0, 1].map((card) => (
         <section key={card} className={adminSurface.card}>
-          <div className="flex items-center gap-3 px-5 py-4">
-            <Skeleton className="size-10 shrink-0 rounded-xl" />
+          <div
+            className={cn(
+              adminSurface.panelHeader,
+              'flex items-start gap-3 p-5',
+            )}
+          >
+            <Skeleton className="size-8 shrink-0 rounded-lg" />
             <div className="flex flex-1 flex-col gap-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-3 w-40" />
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3.5 w-48" />
             </div>
             <Skeleton className="size-8 rounded-md" />
           </div>
-          <div className="flex flex-col border-t px-3 pb-3 pt-3">
+          <div className="@container flex flex-col px-3 pb-3 pt-3">
             <Skeleton className="mx-2 mb-2 h-3 w-28" />
             {[0, 1, 2].map((row) => (
               <div key={row} className="flex items-center gap-3 px-2 py-2.5">
@@ -372,7 +378,7 @@ function TiersSkeleton() {
                   <Skeleton className="h-3.5 w-40" />
                   <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="hidden items-center gap-4 md:flex">
+                <div className="hidden items-center gap-4 @lg:flex">
                   <Skeleton className="h-8 w-16" />
                   <Skeleton className="h-8 w-28" />
                   <Skeleton className="size-6 rounded-md" />

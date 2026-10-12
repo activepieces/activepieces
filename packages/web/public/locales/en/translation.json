@@ -3340,5 +3340,7 @@
   "Couldn't download this piece. Check the piece name and version, then try again.": "Couldn't download this piece. Check the piece name and version, then try again.",
   "Edit {name}": "Edit {name}",
   "Your data is safe. Try again in a moment.": "Your data is safe. Try again in a moment.",
-  "Add a provider": "Add a provider"
+  "Add a provider": "Add a provider",
+  "Available to the assistant": "Available to the assistant",
+  "The assistant can't do this yet": "The assistant can't do this yet"
 }

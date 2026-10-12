@@ -42,13 +42,13 @@ export function ModelDetailRow({
         )}
       </div>
       {loading && model === undefined && (
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 @lg:flex">
           <Skeleton className="h-8 w-16" />
           <Skeleton className="h-8 w-28" />
         </div>
       )}
       {model !== undefined && (
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 @lg:flex">
           <Stat label={t('Context')} className="w-16">
             {metadata?.contextTokens === undefined
               ? EMPTY

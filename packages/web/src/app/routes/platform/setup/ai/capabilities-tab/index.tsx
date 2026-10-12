@@ -174,25 +174,30 @@ function CapabilityRow({
   const statusText = isNil(chosenModelId)
     ? status
     : `${status} · ${chosenModelId}`;
+  const statusLine = `${statusText} · ${
+    inUse
+      ? t('Available to the assistant')
+      : t("The assistant can't do this yet")
+  }`;
 
   return (
     <SettingsRow
       className="group"
       icon={<Icon />}
-      title={
-        <>
-          <span className="truncate">{capabilityInfo.name}</span>
+      title={capabilityInfo.name}
+      description={
+        <span className="flex flex-col gap-1">
           <StatusDot
             tone={inUse ? 'success' : 'neutral'}
-            className="min-w-0 text-xs font-normal text-gray-11"
+            className="text-xs text-gray-11"
           >
-            <TextWithTooltip tooltipMessage={statusText}>
-              <span className="truncate">{statusText}</span>
+            <TextWithTooltip tooltipMessage={statusLine}>
+              <span className="truncate">{statusLine}</span>
             </TextWithTooltip>
           </StatusDot>
-        </>
+          <span>{capabilityInfo.description}</span>
+        </span>
       }
-      description={capabilityInfo.description}
     >
       {config && (
         <ConfirmDialog

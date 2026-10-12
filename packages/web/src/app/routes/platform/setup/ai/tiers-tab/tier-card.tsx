@@ -181,18 +181,23 @@ export function TierCard({
   return (
     <SettingsPanel
       flush
+      aria-label={tier.name}
       className={cn('transition-opacity', unavailableHere && 'opacity-60')}
+      media={
+        <span
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-base"
+          aria-hidden="true"
+        >
+          {tier.emoji}
+        </span>
+      }
       title={
-        <span className="flex flex-wrap items-center gap-2">
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-base"
-            aria-hidden="true"
-          >
-            {tier.emoji}
-          </span>
-          <TextWithTooltip tooltipMessage={tier.name}>
-            <span className="truncate">{tier.name}</span>
-          </TextWithTooltip>
+        <TextWithTooltip tooltipMessage={tier.name}>
+          <span className="block truncate">{tier.name}</span>
+        </TextWithTooltip>
+      }
+      meta={
+        <>
           {tier.isDefault && (
             <TierTag
               icon={Star}
@@ -215,7 +220,7 @@ export function TierCard({
           {tools === 'recommended' && (
             <TierTag icon={MessageSquare}>{t('Recommended for chat')}</TierTag>
           )}
-        </span>
+        </>
       }
       description={tier.description || undefined}
       action={
@@ -281,7 +286,7 @@ export function TierCard({
         </DropdownMenu>
       }
     >
-      <div className="flex flex-col gap-1 px-3 pb-3 pt-3">
+      <div className="@container flex flex-col gap-1 px-3 pb-3 pt-3">
         {notices.length > 0 && (
           <ul className="flex flex-col gap-0.5 px-2 pb-2">
             {notices.map((notice) => (
