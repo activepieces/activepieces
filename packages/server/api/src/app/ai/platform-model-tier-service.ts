@@ -159,8 +159,19 @@ export const platformModelTierService = {
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
         const trimmed = tiers.map((tier) => ({ ...tier, entries: tier.entries.filter((entry) => entry.configId !== configId) }))
         const [emptied, kept] = partition(trimmed, (tier) => tier.entries.length === 0)
-        for (const tier of kept) {
-            await tierRepo(manager).update({ platformId, id: tier.id }, { entries: tier.entries })
+        if (kept.length > 0) {
+            await manager.query(
+                `
+                UPDATE "platform_model_tier"
+                SET "entries" = (
+                    SELECT jsonb_agg(entry ORDER BY position)
+                    FROM jsonb_array_elements("entries") WITH ORDINALITY AS kept_entries(entry, position)
+                    WHERE entry->>'configId' <> $3
+                )
+                WHERE "platformId" = $1 AND "id" = ANY($2)
+                `,
+                [platformId, kept.map((tier) => tier.id), configId],
+            )
         }
         if (emptied.length === 0) {
             return
