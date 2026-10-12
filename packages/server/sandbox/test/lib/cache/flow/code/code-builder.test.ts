@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
@@ -373,5 +373,58 @@ describe('codeBuilder.processCodeStep', () => {
         expect(statuses).toEqual(Array.from({ length: concurrentCount }, () => 'success'))
         expect(installMock).toHaveBeenCalledTimes(1)
         await expect(readFile(entryPath, 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
+    })
+})
+
+describe('codeBuilder atomic step builds', () => {
+    it('keeps the previous build fully readable while a rebuild runs, then swaps the new one in', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{}')
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const entryPath = codeCache(codesFolderPath).stepEntryPath(ref)
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        const changedSource = 'export const code = async () => 43'
+        const changedArtifact = { ...artifact, sourceCode: { ...artifact.sourceCode, code: changedSource } }
+        let entryDuringRebuild: string | null = null
+        transpileMock.mockImplementation(async () => {
+            entryDuringRebuild = await readFile(entryPath, 'utf8')
+            return { code: TRANSPILED_SOURCE }
+        })
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact: changedArtifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        expect(entryDuringRebuild).toBe(SOURCE)
+        await expect(readFile(entryPath, 'utf8')).resolves.toBe(changedSource)
+    })
+
+    it('leaves no staging directories behind after successful and failed builds', async () => {
+        const codesFolderPath = uniqueFolder()
+        const okArtifact = buildArtifact('{}')
+        await codeBuilder(noopLog, getSettings).processCodeStep({ artifact: okArtifact, codesFolderPath })
+
+        const failedArtifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        installMock.mockImplementation(async ({ path }: { path: string }) => {
+            await mkdir(join(path, 'node_modules', 'half-written-pkg'), { recursive: true })
+            throw new Error('install interrupted')
+        })
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact: failedArtifact, codesFolderPath }),
+        ).resolves.toBe('install-failed')
+
+        for (const artifact of [okArtifact, failedArtifact]) {
+            const stepDir = codeCache(codesFolderPath).stepDir({ flowVersionId: artifact.flowVersionId, stepName: artifact.name })
+            const siblings = await readdir(join(stepDir, '..'))
+            expect(siblings.filter((name) => name.includes('-staging-'))).toEqual([])
+        }
+
+        const failedStepDir = codeCache(codesFolderPath).stepDir({ flowVersionId: failedArtifact.flowVersionId, stepName: failedArtifact.name })
+        expect(existsSync(join(failedStepDir, 'node_modules'))).toBe(false)
+        await expect(readFile(join(failedStepDir, 'index.ts'), 'utf8')).resolves.toContain('install interrupted')
     })
 })

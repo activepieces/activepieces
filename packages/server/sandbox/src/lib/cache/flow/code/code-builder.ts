@@ -4,6 +4,7 @@ import path from 'node:path'
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
 import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { cacheState } from '../../cache-state'
@@ -83,87 +84,93 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     || (useDeno && hasDependencies && !existsSync(path.join(codePath, 'node_modules')))
             },
             installFn: async () => {
-                const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
-                if (codeNeedCleanUp) {
-                    await rm(codePath, { recursive: true })
-                }
+                const stagingPath = `${codePath}-staging-${nanoid()}`
+                const stagingEntryPath = path.join(stagingPath, path.basename(entryPath))
+                const stagingTranspiledPath = path.join(stagingPath, path.basename(transpiledPath))
+                try {
+                    await fileSystemUtils.threadSafeMkdir(stagingPath)
 
-                await fileSystemUtils.threadSafeMkdir(codePath)
-
-                const installError = await wideEvent.timed({
-                    name: 'codeDeps',
-                    fn: async () => {
-                        const { error } = await tryCatch(() => installDependencies({
-                            path: codePath,
-                            packageJson,
-                        }, log))
-                        if (error) {
-                            log.info({ codePath, error }, 'Dependency installation error')
-                        }
-                        else {
-                            log.info({ path: codePath }, 'Installed dependencies')
-                        }
-                        return error
-                    },
-                })
-
-                if (installError) {
-                    await writeInvalidArtifact({
-                        entryPath,
-                        useDeno,
-                        errorMessage: `Failed to install dependencies. ${installError ?? 'error installing dependencies'}`,
-                    })
-                    await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
-                    buildStatus = 'install-failed'
-                    return currentHash
-                }
-
-                if (useDeno) {
-                    await wideEvent.timed({
-                        name: 'codeCompile',
+                    const installError = await wideEvent.timed({
+                        name: 'codeDeps',
                         fn: async () => {
-                            await fs.writeFile(entryPath, sourceCode.code, 'utf8')
-                            const { data: transpiled, error } = await tryCatch(() => denoStepTranspiler.toCommonJs({ source: sourceCode.code }))
-                            if (error !== null || transpiled.fallbackToEsm === true) {
-                                if (error !== null) {
-                                    log.info({ codePath, error }, 'Deno step transpile failed, falling back to raw source')
-                                }
-                                return
+                            const { error } = await tryCatch(() => installDependencies({
+                                path: stagingPath,
+                                packageJson,
+                            }, log))
+                            if (error) {
+                                log.info({ codePath, error }, 'Dependency installation error')
                             }
-                            await fs.writeFile(transpiledPath, transpiled.code, 'utf8')
+                            else {
+                                log.info({ path: codePath }, 'Installed dependencies')
+                            }
+                            return error
                         },
                     })
+
+                    if (installError) {
+                        await writeInvalidArtifact({
+                            entryPath: stagingEntryPath,
+                            useDeno,
+                            errorMessage: `Failed to install dependencies. ${installError ?? 'error installing dependencies'}`,
+                        })
+                        await tryCatch(() => rm(path.join(stagingPath, 'node_modules'), { recursive: true }))
+                        buildStatus = 'install-failed'
+                        await swapIntoPlace({ stagingPath, targetPath: codePath })
+                        return currentHash
+                    }
+
+                    if (useDeno) {
+                        await wideEvent.timed({
+                            name: 'codeCompile',
+                            fn: async () => {
+                                await fs.writeFile(stagingEntryPath, sourceCode.code, 'utf8')
+                                const { data: transpiled, error } = await tryCatch(() => denoStepTranspiler.toCommonJs({ source: sourceCode.code }))
+                                if (error !== null || transpiled.fallbackToEsm === true) {
+                                    if (error !== null) {
+                                        log.info({ codePath, error }, 'Deno step transpile failed, falling back to raw source')
+                                    }
+                                    return
+                                }
+                                await fs.writeFile(stagingTranspiledPath, transpiled.code, 'utf8')
+                            },
+                        })
+                        await swapIntoPlace({ stagingPath, targetPath: codePath })
+                        return currentHash
+                    }
+
+                    const compileError = await wideEvent.timed({
+                        name: 'codeCompile',
+                        fn: async () => {
+                            const { error } = await tryCatch(() => compileCode({
+                                path: stagingPath,
+                                code: sourceCode.code,
+                            }, log))
+                            if (error) {
+                                log.info({ codePath, error }, 'Compilation error')
+                                await writeInvalidArtifact({
+                                    entryPath: stagingEntryPath,
+                                    useDeno,
+                                    errorMessage: `Compilation Error ${error ?? 'error compiling'}`,
+                                })
+                            }
+                            else {
+                                log.info({ codePath }, 'Compilation success')
+                            }
+                            return error
+                        },
+                    })
+                    if (compileError) {
+                        buildStatus = 'compile-failed'
+                    }
+
+                    // node_modules is only needed at runtime by deno steps; the legacy bundle inlines it.
+                    await tryCatch(() => rm(path.join(stagingPath, 'node_modules'), { recursive: true }))
+                    await swapIntoPlace({ stagingPath, targetPath: codePath })
                     return currentHash
                 }
-
-                const compileError = await wideEvent.timed({
-                    name: 'codeCompile',
-                    fn: async () => {
-                        const { error } = await tryCatch(() => compileCode({
-                            path: codePath,
-                            code: sourceCode.code,
-                        }, log))
-                        if (error) {
-                            log.info({ codePath, error }, 'Compilation error')
-                            await writeInvalidArtifact({
-                                entryPath,
-                                useDeno,
-                                errorMessage: `Compilation Error ${error ?? 'error compiling'}`,
-                            })
-                        }
-                        else {
-                            log.info({ codePath }, 'Compilation success')
-                        }
-                        return error
-                    },
-                })
-                if (compileError) {
-                    buildStatus = 'compile-failed'
+                finally {
+                    await tryCatch(() => rm(stagingPath, { recursive: true, force: true }))
                 }
-
-                // node_modules is only needed at runtime by deno steps; the legacy bundle inlines it.
-                await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
-                return currentHash
             },
             skipSave: () => buildStatus !== 'success',
         })
@@ -222,6 +229,20 @@ async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Pr
     })
 }
 
+async function swapIntoPlace({ stagingPath, targetPath }: SwapIntoPlaceParams): Promise<void> {
+    const attempts = 3
+    let lastError: Error | null = null
+    for (let attempt = 0; attempt < attempts; attempt++) {
+        await tryCatch(() => rm(targetPath, { recursive: true, force: true }))
+        const { error } = await tryCatch(() => fs.rename(stagingPath, targetPath))
+        if (error === null) {
+            return
+        }
+        lastError = error
+    }
+    throw new Error(`Failed to move the built code step into place at ${targetPath}: ${lastError?.message}`)
+}
+
 async function writeInvalidArtifact({ entryPath, useDeno, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
     const template = useDeno ? INVALID_DENO_ARTIFACT_TEMPLATE : INVALID_LEGACY_ARTIFACT_TEMPLATE
     const invalidArtifactContent = template.replace(
@@ -244,6 +265,11 @@ type InstallDependenciesParams = {
 type CompileCodeParams = {
     path: string
     code: string
+}
+
+type SwapIntoPlaceParams = {
+    stagingPath: string
+    targetPath: string
 }
 
 type WriteInvalidArtifactParams = {
