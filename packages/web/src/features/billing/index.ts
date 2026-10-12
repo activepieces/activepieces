@@ -33,13 +33,11 @@ export { AutomaticTrialActivation } from './components/automatic-trial-activatio
 export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
 export { useUpgradeClick } from './hooks/use-upgrade-click';
 export type { PlatformFeature } from './hooks/use-feature-gate';
-export { RequestTrial } from './components/request-trial';
 export type { FeatureKey } from './components/request-trial';
 export { TIER_LABELS } from './utils/feature-tier';
 export type { FeatureTier } from './utils/feature-tier';
 export { PLATFORM_FEATURES } from './utils/platform-features';
 export { EnterpriseTrialBillingStatus } from './components/enterprise-trial-billing-status';
-export { EnterpriseTrialCta } from './components/enterprise-trial-cta';
 export { EnterpriseTrialLockedActions } from './components/enterprise-trial-locked-actions';
 export { enterpriseTrialFeatures } from './utils/enterprise-trial-features';
 export { EnterpriseTrialDialog } from './components/enterprise-trial-dialog';
@@ -66,3 +64,5 @@ export type {
   EnterpriseGate as EnterpriseGateState,
 } from './hooks/use-enterprise-gate';
 export { enterpriseMotion } from './utils/enterprise-motion';
+export { planTiers } from './utils/plan-tiers';
+export { usePlanTier } from './hooks/use-plan-tier';

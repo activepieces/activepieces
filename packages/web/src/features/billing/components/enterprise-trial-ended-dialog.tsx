@@ -1,4 +1,5 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils';
+import { PlatformAdminSurface } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
@@ -13,8 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
 
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
@@ -22,8 +23,7 @@ import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 export function EnterpriseTrialEndedDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
   const trial = enterpriseTrialHooks.useTrial();
-  const { openDialog: openPlans } =
-    billingDialogHooks.useManagePlanDialogStore();
+  const upgradeClick = useUpgradeClick();
   const storageKey = `${SEEN_KEY_PREFIX}${platform.id}-${
     trial.endsAt?.toISOString() ?? 'unknown'
   }`;
@@ -35,7 +35,7 @@ export function EnterpriseTrialEndedDialog() {
     writeSeen(storageKey);
     setSeenKey(storageKey);
   };
-  const features = enterpriseTrialFeatures.list();
+  const paused = enterpriseTrialFeatures.pausedAfterTrial(platform.plan.plan);
   const kept = [
     t('Flows, connections and data'),
     t('Your credits'),
@@ -46,7 +46,7 @@ export function EnterpriseTrialEndedDialog() {
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
       <DialogContent
         onOpenAutoFocus={focusDialogItself}
-        className="gap-5 p-7 sm:max-w-lg sm:rounded-2xl"
+        className="max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto p-7 sm:max-w-lg sm:rounded-2xl"
       >
         <div className="flex flex-col gap-2 pr-6">
           <DialogTitle className="text-xl font-semibold tracking-tight">
@@ -79,20 +79,22 @@ export function EnterpriseTrialEndedDialog() {
             ))}
           </ul>
         </div>
-        <div className="flex flex-col gap-3 border-t pt-5">
-          <span className="text-sm text-gray-11">{t('Paused for now')}</span>
-          <ul className="flex flex-wrap gap-2">
-            {features.map((feature) => (
-              <li
-                key={feature.title}
-                className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-gray-11"
-              >
-                <feature.icon className="size-3.5 shrink-0 text-gray-9" />
-                {feature.title}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {paused.length > 0 && (
+          <div className="flex flex-col gap-3 border-t pt-5">
+            <span className="text-sm text-gray-11">{t('Paused for now')}</span>
+            <ul className="flex flex-wrap gap-2">
+              {paused.map((feature) => (
+                <li
+                  key={feature.title}
+                  className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-gray-11"
+                >
+                  <feature.icon className="size-3.5 shrink-0 text-gray-9" />
+                  {feature.title}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <p className="text-sm text-gray-11">
           {t(
             'Our team can extend your trial or set you up on the Enterprise plan.',
@@ -103,7 +105,7 @@ export function EnterpriseTrialEndedDialog() {
             variant="outline"
             onClick={() => {
               close();
-              openPlans();
+              upgradeClick({ surface: PlatformAdminSurface.DIALOG });
             }}
           >
             {t('Explore plans')}

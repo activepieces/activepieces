@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
@@ -40,7 +41,6 @@ vi.mock('@/features/billing', async (importOriginal) => ({
   },
   TIER_LABELS: { plus: 'Plus' },
   useUpgradeClick: () => vi.fn(),
-  RequestTrial: () => null,
 }));
 
 vi.mock('@/features/platform-admin', () => {
@@ -133,12 +133,12 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
 
     expect(
       screen.getByText('Your plan does not include Bring your own AI keys'),
-    ).toBeInTheDocument();
+    ).toBeDefined();
     expect(screen.getAllByText('Trial Anthropic key').length).toBeGreaterThan(
       0,
     );
     expect(screen.queryAllByRole('combobox')).toEqual([]);
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDefined();
     expect(screen.queryAllByRole('button', { name: /Add key/ })).toEqual([]);
     expect(screen.queryAllByRole('button', { name: /Trial Anthropic/ })).toEqual(
       [],
@@ -163,7 +163,7 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
       await screen.findByRole('heading', {
         name: 'Bring your own AI providers',
       }),
-    ).toBeInTheDocument();
+    ).toBeDefined();
     expect(
       screen.queryAllByText(
         'Your plan does not include Bring your own AI keys',

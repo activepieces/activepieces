@@ -34,7 +34,9 @@ export function EnterpriseTrialBillingStatus() {
         action={
           <Button onClick={() => openDialog({})}>
             <Gem />
-            {t('Start free {days}-day trial', { days: ENTERPRISE_TRIAL_DAYS })}
+            {t('Start free {days}-day Enterprise plan trial', {
+              days: ENTERPRISE_TRIAL_DAYS,
+            })}
           </Button>
         }
       />

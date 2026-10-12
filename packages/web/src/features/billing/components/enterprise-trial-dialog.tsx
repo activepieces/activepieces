@@ -8,9 +8,10 @@ import {
   Check,
   CircleAlert,
   Gem,
+  ChevronDown,
   LoaderCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -151,11 +152,19 @@ function StartTrial({
 }) {
   const trial = enterpriseTrialHooks.useTrial();
   const features = enterpriseTrialFeatures.list();
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  const moreBelow = useMoreBelow(scroller);
   const featureName = enterpriseTrialFeatures.name(featureKey);
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div
+        ref={setScroller}
+        tabIndex={0}
+        role="region"
+        aria-label={t('What is included')}
+        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-8"
+      >
         <div className="flex flex-col gap-2 px-7 pt-7 pb-6 pr-14">
           {featureName && (
             <span className="flex items-center gap-2 text-sm font-medium text-accent-11">
@@ -223,6 +232,14 @@ function StartTrial({
             <TrialTimeline basePlanName={trial.basePlanName} started={false} />
           </aside>
         </div>
+        {moreBelow && (
+          <div className="pointer-events-none sticky bottom-0 flex justify-center pb-3">
+            <span className="flex items-center gap-1 rounded-full border bg-gray-1 px-2.5 py-1 text-xs text-gray-11 shadow-sm">
+              <ChevronDown className="size-3.5" />
+              {t('More below')}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex shrink-0 flex-col-reverse items-stretch gap-3 border-t px-7 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -246,7 +263,7 @@ function StartTrial({
             <Gem />
             {resumes
               ? t('Start trial and save')
-              : t('Start free {days}-day trial', {
+              : t('Start free {days}-day Enterprise plan trial', {
                   days: ENTERPRISE_TRIAL_DAYS,
                 })}
           </Button>
@@ -507,6 +524,29 @@ function TrialNotStarted({ onClose }: { onClose: () => void }) {
   );
 }
 
+function useMoreBelow(element: HTMLElement | null): boolean {
+  const [moreBelow, setMoreBelow] = useState(false);
+  useEffect(() => {
+    if (isNil(element)) {
+      return;
+    }
+    const update = () =>
+      setMoreBelow(
+        element.scrollHeight - element.scrollTop - element.clientHeight >
+          SCROLL_HINT_SLACK_PX,
+      );
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    element.addEventListener('scroll', update, { passive: true });
+    return () => {
+      observer.disconnect();
+      element.removeEventListener('scroll', update);
+    };
+  }, [element]);
+  return moreBelow;
+}
+
 function viewFor({
   result,
   offer,
@@ -547,6 +587,7 @@ function celebrate(): void {
 }
 
 const RESUME_ATTEMPT_DELAYS_MS = [0, 2000];
+const SCROLL_HINT_SLACK_PX = 8;
 
 type DialogView = 'start' | 'started' | 'used' | 'unavailable' | 'locked';
 

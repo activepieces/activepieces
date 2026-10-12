@@ -17,6 +17,10 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { billingUtils } from '../utils/billing-utils';
+import {
+  enterpriseTrialTime,
+  TRIAL_DAYS,
+} from '../utils/enterprise-trial-time';
 
 import { refreshBillingCaches } from './billing-hooks';
 
@@ -79,6 +83,7 @@ export const enterpriseTrialHooks = {
     }
     if (status?.state === 'active' && !isNil(status.endsAt)) {
       return toActiveTrial({
+        startedAt: status.startedAt ?? platform.plan.enterpriseTrialStartedAt,
         endsAt: status.endsAt,
         isPlatformAdmin,
         basePlanName,
@@ -86,6 +91,7 @@ export const enterpriseTrialHooks = {
     }
     if (liveFromPlan) {
       return toActiveTrial({
+        startedAt: platform.plan.enterpriseTrialStartedAt,
         endsAt: planEndsAt,
         isPlatformAdmin,
         basePlanName,
@@ -132,8 +138,8 @@ function useTrialClock(endsAt: string | Date | null | undefined): void {
     if (isNil(end)) {
       return;
     }
-    const next = nextTrialBoundary({ end, now: Date.now() });
-    if (isNil(next)) {
+    const next = enterpriseTrialTime.nextBoundary({ end, now: Date.now() });
+    if (isNil(next) || next - Date.now() > MAX_TIMER_MS) {
       return;
     }
     const timer = setTimeout(() => {
@@ -146,25 +152,6 @@ function useTrialClock(endsAt: string | Date | null | undefined): void {
     }, next - Date.now() + BOUNDARY_GRACE_MS);
     return () => clearTimeout(timer);
   }, [end, tick, queryClient]);
-}
-
-function nextTrialBoundary({
-  end,
-  now,
-}: {
-  end: number;
-  now: number;
-}): number | null {
-  const candidates = [
-    end - LAST_DAY_HOURS * HOUR_MS,
-    end,
-    dayjs(now).add(1, 'day').startOf('day').valueOf(),
-  ].filter((moment) => moment > now && moment <= end + HOUR_MS);
-  if (candidates.length === 0) {
-    return null;
-  }
-  const next = Math.min(...candidates);
-  return next - now > MAX_TIMER_MS ? null : next;
 }
 
 function refetchAfterTrialEnds(
@@ -188,23 +175,23 @@ function toBasePlanName(plan: string | null | undefined): string {
 }
 
 function toActiveTrial({
+  startedAt,
   endsAt,
   isPlatformAdmin,
   basePlanName,
 }: {
+  startedAt: string | Date | null | undefined;
   endsAt: string | Date;
   isPlatformAdmin: boolean;
   basePlanName: string;
 }): EnterpriseTrial {
-  const end = dayjs(endsAt);
-  const hoursLeft = Math.max(0, end.diff(dayjs(), 'hour'));
-  const endsTodayOrTomorrow = !end.isAfter(dayjs().add(1, 'day').endOf('day'));
   return {
     state: 'active',
-    endsAt: end.toDate(),
-    daysLeft: Math.max(1, Math.ceil(hoursLeft / 24)),
-    endingSoon: endsTodayOrTomorrow,
-    lastDay: hoursLeft <= LAST_DAY_HOURS,
+    ...enterpriseTrialTime.activeTrialTiming({
+      startedAt,
+      endsAt,
+      now: Date.now(),
+    }),
     isPlatformAdmin,
     basePlanName,
   };
@@ -212,17 +199,17 @@ function toActiveTrial({
 
 const NO_TRIAL: EnterpriseTrial = {
   state: 'none',
+  startedAt: null,
   endsAt: null,
   daysLeft: 0,
-  endingSoon: false,
-  lastDay: false,
+  endsToday: false,
+  ending: false,
+  justStarted: false,
   isPlatformAdmin: false,
   basePlanName: 'Free',
 };
 
-export const ENTERPRISE_TRIAL_DAYS = 7;
-const LAST_DAY_HOURS = 36;
-const HOUR_MS = 60 * 60 * 1000;
+export const ENTERPRISE_TRIAL_DAYS = TRIAL_DAYS;
 const BOUNDARY_GRACE_MS = 5 * 1000;
 const EXPIRED_POLL_MS = 60 * 1000;
 const MAX_POLL_MS = 60 * 60 * 1000;
@@ -230,10 +217,12 @@ const MAX_TIMER_MS = 2 ** 31 - 1;
 
 export type EnterpriseTrial = {
   state: EnterpriseTrialState | 'none';
+  startedAt: Date | null;
   endsAt: Date | null;
   daysLeft: number;
-  endingSoon: boolean;
-  lastDay: boolean;
+  endsToday: boolean;
+  ending: boolean;
+  justStarted: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
 };
