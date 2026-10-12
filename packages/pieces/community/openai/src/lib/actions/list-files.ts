@@ -9,26 +9,25 @@ export const listFiles = createAction({
   name: 'list_files',
   classification: 'SEARCH',
   displayName: 'List Files',
-  description:
-    'Return the list of files uploaded to the connected OpenAI account, optionally filtered by purpose.',
+  description: 'List the files in your OpenAI account.',
   aiMetadata: { description: 'Returns the files stored in the connected OpenAI account together with their ids, names, sizes, and purposes, either the whole account or, when a purpose filter is supplied, only assistants, vision, batch, or fine-tune files, capped by an optional limit. Use it to browse or audit what has been uploaded and to collect file ids; find_file is the better choice when checking for one exact filename. Read-only and idempotent.', idempotent: true },
   props: {
     purpose: Property.StaticDropdown({
-      displayName: 'Purpose Filter',
-      description: 'If supplied, only files with this purpose are returned.',
+      displayName: 'Purpose',
+      description: 'Only include files with this purpose.',
       required: false,
       options: {
         options: [
           { label: 'Assistants', value: 'assistants' },
           { label: 'Vision', value: 'vision' },
           { label: 'Batch', value: 'batch' },
-          { label: 'Fine-tune', value: 'fine-tune' },
+          { label: 'Fine-Tuning', value: 'fine-tune' },
         ],
       },
     }),
     limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of files to return (1-10000). Defaults to 10000.',
+      displayName: 'Max Results',
+      description: 'Up to this many files, from 1 to 10,000.',
       required: false,
       defaultValue: 100,
     }),

@@ -12,25 +12,41 @@ export const stripeCreatePaymentIntent = createAction({
   name: 'create_payment_intent',
   classification: 'WRITE',
   auth: stripeAuth,
-  displayName: 'Create Payment (Payment Intent)',
-  description: 'Creates a new payment intent to start a payment flow.',
+  displayName: 'Create Payment',
+  description: 'Start a payment for an amount, and optionally charge it now.',
   audience: 'human',
   aiMetadata: {
     description:
       'Creates a Stripe PaymentIntent for a given amount and currency to begin collecting a payment, optionally tied to a customer. Can run in two modes: leave it unconfirmed to obtain a client secret for client-side completion, or set confirm to immediately charge a supplied payment method (which then also requires a return URL). Not idempotent: each call starts a separate payment.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'payment',
+      display: 'section',
+      label: 'Payment',
+      icon: 'tag',
+      props: [
+        'amount',
+        'currency',
+        'customer',
+        'description',
+        'payment_method',
+        'confirm',
+      ],
+    },
+  ],
   props: {
     amount: Property.Number({
       displayName: 'Amount',
-      description:
-        'The amount to charge, in a decimal format (e.g., 10.50 for $10.50).',
+      description: "In the currency's main unit, e.g. 10.50 for $10.50.",
       required: true,
+      width: 'half',
     }),
     currency: Property.StaticDropdown({
       displayName: 'Currency',
-      description: 'The three-letter ISO code for the currency.',
       required: true,
+      width: 'half',
       options: {
         options: [
           { label: 'US Dollar', value: 'usd' },
@@ -46,35 +62,41 @@ export const stripeCreatePaymentIntent = createAction({
         ],
       },
     }),
-    customer: stripeCommon.customer,
+    customer: {
+      ...stripeCommon.customer,
+      required: false,
+      description: "Links the payment to this customer's record.",
+    },
     payment_method: Property.ShortText({
       displayName: 'Payment Method ID',
-      description:
-        'The ID of the Payment Method to attach (e.g., `pm_...`). Required if you want to confirm the payment immediately.',
+      description: 'Starts with pm_. Needed when Charge Now is on.',
       required: false,
+      placeholder: 'pm_...',
     }),
     confirm: Property.Checkbox({
-      displayName: 'Confirm Payment Immediately',
-      description:
-        'If true, Stripe will attempt to charge the provided payment method. A `Payment Method ID` is required.',
+      displayName: 'Charge Now',
+      description: 'Charge the payment method right away.',
       required: false,
       defaultValue: false,
+      reveals: ['return_url'],
     }),
     return_url: Property.ShortText({
       displayName: 'Return URL',
-      description:
-        'The URL to redirect your customer back to after they authenticate their payment. Required when confirming the payment.',
+      description: 'Where the customer returns after any bank check.',
       required: false,
+      placeholder: 'https://example.com/return',
     }),
     description: Property.LongText({
       displayName: 'Description',
+      description: 'Shown with the payment in your Stripe Dashboard.',
       required: false,
     }),
     receipt_email: Property.ShortText({
       displayName: 'Receipt Email',
-      description:
-        "The email address to send a receipt to. This will override the customer's email address.",
+      description: "Send the receipt here instead of the customer's email.",
       required: false,
+      advanced: true,
+      placeholder: 'jane@example.com',
     }),
   },
   outputSchema: paymentIntentOutputSchema,
@@ -91,14 +113,10 @@ export const stripeCreatePaymentIntent = createAction({
     } = context.propsValue;
 
     if (confirm && !payment_method) {
-      throw new Error(
-        "A Payment Method ID is required when 'Confirm Payment' is set to true."
-      );
+      throw new Error('Add a Payment Method ID, or turn off Charge Now.');
     }
     if (confirm && !return_url) {
-      throw new Error(
-        "A Return URL is required when 'Confirm Payment' is set to true."
-      );
+      throw new Error('Add a Return URL, or turn off Charge Now.');
     }
 
     const amountInCents = Math.round(amount * 100);

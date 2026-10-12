@@ -9,25 +9,25 @@ export const findFile = createAction({
   name: 'find_file',
   classification: 'SEARCH',
   displayName: 'Find File',
-  description:
-    'Check whether a file with the given name already exists in the connected OpenAI account.',
+  description: 'Look up files in your OpenAI account by exact name.',
   aiMetadata: { description: 'Checks whether a file with an exact filename, matched case-insensitively, already exists in the connected OpenAI account and returns a found flag, a match count, and the matching file records including their ids. Use it before upload_file to avoid duplicates, or to resolve a filename into the file id that delete_file needs; list_files is the one for browsing everything on the account. An optional purpose filter narrows the search to assistants, vision, batch, or fine-tune files. Read-only and idempotent.', idempotent: true },
   props: {
     fileName: Property.ShortText({
       displayName: 'File Name',
-      description: 'The exact filename to look for (case-insensitive).',
+      description: 'Exact file name, including the extension. Case does not matter.',
+      placeholder: 'e.g. report.pdf',
       required: true,
     }),
     purpose: Property.StaticDropdown({
-      displayName: 'Purpose Filter',
-      description: 'If supplied, only files with this purpose are searched.',
+      displayName: 'Purpose',
+      description: 'Only include files with this purpose.',
       required: false,
       options: {
         options: [
           { label: 'Assistants', value: 'assistants' },
           { label: 'Vision', value: 'vision' },
           { label: 'Batch', value: 'batch' },
-          { label: 'Fine-tune', value: 'fine-tune' },
+          { label: 'Fine-Tuning', value: 'fine-tune' },
         ],
       },
     }),

@@ -94,6 +94,14 @@ function neverCalledTool(result: AgentTurnResult, toolName: string): AssertionOu
         : { pass: true, reason: `"${toolName}" was never called` }
 }
 
+function noToolArgMatches(result: AgentTurnResult, pattern: string, toolName?: string): AssertionOutcome {
+    const regex = new RegExp(pattern, 'i')
+    const match = result.toolCalls.find((call) => (toolName === undefined || call.toolName === toolName) && regex.test(JSON.stringify(call.input)))
+    return match
+        ? { pass: false, reason: `"${match.toolName}" (order ${match.order}) was called with arguments matching /${pattern}/` }
+        : { pass: true, reason: `no ${toolName ? `"${toolName}" ` : ''}call had arguments matching /${pattern}/` }
+}
+
 function askedToTurnItOn(result: AgentTurnResult): AssertionOutcome {
     const cardOrder = result.toolCalls.find((call) => DEFAULT_QUESTION_CARD_PATTERN.test(call.toolName) && TURN_IT_ON_PATTERN.test(JSON.stringify(call.input)))?.order
     if (cardOrder === undefined) {
@@ -129,6 +137,8 @@ function runAssertion(result: AgentTurnResult, assertion: ChatEvalAssertion): As
             return { type: assertion.type, ...maxQuestionCards(result, assertion.n, assertion.toolNames) }
         case 'neverCalledTool':
             return { type: assertion.type, ...neverCalledTool(result, assertion.toolName) }
+        case 'noToolArgMatches':
+            return { type: assertion.type, ...noToolArgMatches(result, assertion.pattern, assertion.toolName) }
         case 'askedToTurnItOn':
             return { type: assertion.type, ...askedToTurnItOn(result) }
         case 'noLiveClaimWithoutPublish':
@@ -144,6 +154,7 @@ export const transcriptAssertions = {
     reachedToolWithin,
     maxQuestionCards,
     neverCalledTool,
+    noToolArgMatches,
     askedToTurnItOn,
     noLiveClaimWithoutPublish,
     runAssertion,

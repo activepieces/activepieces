@@ -5,6 +5,7 @@ import {
   Columns3,
   Copy,
   FlaskConical,
+  FolderPlus,
   GitBranch,
   Globe,
   Image,
@@ -60,6 +61,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
 
   ap_build_flow: Workflow,
   ap_create_flow: Plus,
+  ap_create_folder: FolderPlus,
   ap_add_step: Plus,
   ap_update_step: Pencil,
   ap_delete_step: Trash2,

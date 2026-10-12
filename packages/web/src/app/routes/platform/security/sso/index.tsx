@@ -18,6 +18,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
@@ -90,6 +91,7 @@ const SSOPage = () => {
           </ItemContent>
           <ItemActions>
             <Switch
+              {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
               checked={platform.googleAuthEnabled}
               onCheckedChange={() =>
                 toggleGoogleAuth({
@@ -116,12 +118,12 @@ const SSOPage = () => {
               <div className="mt-1 gap-2 flex items-center">
                 <Badge variant="outline">{platform.ssoDomain}</Badge>
                 {ssoDomainVerified ? (
-                  <span className="flex items-center gap-1 text-xs text-success-600">
+                  <span className="flex items-center gap-1 text-xs text-success-11">
                     <CheckCircle className="size-3" />
                     {t('Verified')}
                   </span>
                 ) : (
-                  <span className="text-xs text-warning">
+                  <span className="text-xs text-warning-11">
                     {t('Pending verification')}
                   </span>
                 )}
@@ -149,6 +151,7 @@ const SSOPage = () => {
           </ItemContent>
           <ItemActions>
             <Switch
+              {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
               checked={emailAuthEnabled}
               onCheckedChange={() =>
                 toggleEmailAuthentication({

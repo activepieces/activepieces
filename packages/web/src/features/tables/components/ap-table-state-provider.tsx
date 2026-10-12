@@ -136,13 +136,13 @@ export function ApTableStateProvider({
   ) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-        <div className="rounded-full bg-muted p-4">
-          <FileX className="h-10 w-10 text-muted-foreground" />
+        <div className="rounded-full bg-gray-3 p-4">
+          <FileX className="h-10 w-10 text-gray-11" />
         </div>
 
         <div>
           <h2 className="text-lg font-semibold">{t('Table not available')}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-11">
             {t(
               'We couldn’t load this table. It may have been removed or is unavailable.',
             )}

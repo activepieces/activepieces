@@ -8,13 +8,14 @@ export const extractStructuredDataAction = createAction({
 	auth: openaiAuth,
 	name: 'extract-structured-data',
 	classification: 'READ',
-	displayName: 'Extract Structured Data from Text',
-	description: 'Returns structured data from provided unstructured text.',
+	displayName: 'Extract Structured Data',
+	description: 'Pull the fields you define out of a block of text.',
 	aiMetadata: { description: 'Pulls a caller-defined set of named fields out of one block of unstructured text and returns them as a flat object, with each field declared as text, number, or boolean and optionally marked to fail the step when it is absent. Use it to turn prose, emails, or documents into machine-readable values; prefer analyze_sentiment or classify_text for a judgement about the text and ask_chatgpt for free-form output. Requires the text plus at least one field definition, and the step errors when the model returns no extraction at all. Not idempotent: each call is a fresh model completion and the extracted values can vary between runs.', idempotent: false },
 	props: {
 		model: Property.Dropdown({
   auth: openaiAuth,
 			displayName: 'Model',
+			description: 'The OpenAI model that reads the text.',
 			required: true,
 			refreshers: [],
 			defaultValue: 'gpt-3.5-turbo',
@@ -45,34 +46,36 @@ export const extractStructuredDataAction = createAction({
 					return {
 						disabled: true,
 						options: [],
-						placeholder: "Couldn't load models, API key is invalid",
+						placeholder: "Couldn't load models. Check your API key or try again.",
 					};
 				}
 			},
 		}),
 		text: Property.LongText({
-			displayName: 'Unstructured Text',
+			displayName: 'Text',
+			description: 'The text to pull the fields from.',
 			required: true,
 		}),
 		params: Property.Array({
-			displayName: 'Data Definition',
+			displayName: 'Fields',
+			description: 'One row per value you want back.',
 			required: true,
 			properties: {
 				propName: Property.ShortText({
 					displayName: 'Name',
-					description:
-						'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+					description: 'Short, unique name for this value in the output.',
+					placeholder: 'e.g. invoice_total',
 					required: true,
 				}),
 				propDescription: Property.LongText({
 					displayName: 'Description',
-					description:
-						'Brief description of the data, this hints for the AI on what to look for',
+					description: 'Tells the AI what to look for.',
+					placeholder: 'e.g. Total due, including tax',
 					required: false,
 				}),
 				propDataType: Property.StaticDropdown({
 					displayName: 'Data Type',
-					description: 'Type of parameter.',
+					description: 'Data type of the extracted value.',
 					required: true,
 					defaultValue: 'string',
 					options: {
@@ -85,7 +88,9 @@ export const extractStructuredDataAction = createAction({
 					},
 				}),
 				propIsRequired: Property.Checkbox({
-					displayName: 'Fail if Not present?',
+					displayName: 'Required',
+					description:
+						'Asks the AI to always fill this field. The step does not check it.',
 					required: true,
 					defaultValue: false,
 				}),

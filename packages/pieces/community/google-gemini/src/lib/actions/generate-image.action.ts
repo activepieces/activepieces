@@ -25,6 +25,7 @@ export const generateImageAction = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      description: 'Gemini image model that creates the picture.',
       required: true,
       auth: googleGeminiAuth,
       refreshers: [],

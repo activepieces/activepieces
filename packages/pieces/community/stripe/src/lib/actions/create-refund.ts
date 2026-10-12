@@ -12,8 +12,8 @@ export const stripeCreateRefund = createAction({
   name: 'create_refund',
   classification: 'WRITE',
   auth: stripeAuth,
-  displayName: 'Create a Refund',
-  description: 'Create a full or partial refund for a payment.',
+  displayName: 'Create Refund',
+  description: 'Refund all or part of a successful payment.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -25,12 +25,11 @@ export const stripeCreateRefund = createAction({
     amount: Property.Number({
       displayName: 'Amount',
       description:
-        'The amount to refund (e.g., 12.99). If left blank, a full refund will be issued.',
+        'Amount to refund, e.g. 12.99. Empty refunds the full payment.',
       required: false,
     }),
     reason: Property.StaticDropdown({
       displayName: 'Reason',
-      description: 'An optional reason for the refund.',
       required: false,
       options: {
         options: [
@@ -42,9 +41,9 @@ export const stripeCreateRefund = createAction({
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
-      description:
-        'A set of key-value pairs to store additional information about the refund.',
+      description: 'Extra key/value data to store on the refund.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: refundOutputSchema,

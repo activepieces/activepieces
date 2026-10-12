@@ -16,7 +16,7 @@
     "@activepieces/pieces-framework": "*",
     "@activepieces/shared": "*",
     "autocannon": "8.0.0",
-    "axios": "1.18.0",
+    "axios": "1.20.0",
     "chalk": "4.1.2",
     "commander": "11.1.0",
     "dayjs": "1.11.9",
@@ -30,6 +30,8 @@
   },
   "devDependencies": {
     "@types/autocannon": "7.12.7",
+    "@types/inquirer": "8.2.13",
+    "@types/jsonwebtoken": "9.0.10",
     "@types/node": "24.11.0"
   }
 }

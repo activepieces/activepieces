@@ -1,18 +1,21 @@
 import { t } from 'i18next';
 import { Download, FolderInput, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
 
 type AutomationsSelectionBarProps = {
   selectedCount: number;
   isDeleting: boolean;
   isMoving: boolean;
   isExporting: boolean;
-  hasMovableOrExportableItems: boolean;
+  hasMovableItems: boolean;
+  hasExportableItems: boolean;
   onMoveClick: () => void;
   onDeleteClick: () => void;
   onExportClick: () => void;
@@ -24,7 +27,8 @@ export const AutomationsSelectionBar = ({
   isDeleting,
   isMoving,
   isExporting,
-  hasMovableOrExportableItems,
+  hasMovableItems,
+  hasExportableItems,
   onMoveClick,
   onDeleteClick,
   onExportClick,
@@ -42,13 +46,13 @@ export const AutomationsSelectionBar = ({
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="flex items-center gap-3 bg-background border rounded-lg shadow-lg p-2">
+          <div className="flex items-center gap-3 bg-gray-1 border rounded-lg shadow-lg p-2">
             {!embedState.hideFolders && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onMoveClick}
-                disabled={isMoving || !hasMovableOrExportableItems}
+                disabled={isMoving || !hasMovableItems}
               >
                 <FolderInput className="h-4 w-4 mr-1" />
                 {t('Move to')}
@@ -59,7 +63,7 @@ export const AutomationsSelectionBar = ({
                 variant="ghost"
                 size="sm"
                 onClick={onExportClick}
-                disabled={isExporting || !hasMovableOrExportableItems}
+                disabled={isExporting || !hasExportableItems}
               >
                 {isExporting ? (
                   <LoadingSpinner className="size-4 mr-2" />
@@ -76,13 +80,21 @@ export const AutomationsSelectionBar = ({
                 { count: selectedCount },
               )}
               mutationFn={async () => onDeleteClick()}
+              onError={(error) =>
+                toast.error(
+                  api.extractServerErrorMessage(
+                    error,
+                    t('Failed to delete items'),
+                  ),
+                )
+              }
               entityName={t('items')}
               buttonText={t('Delete')}
             >
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive"
+                className="text-danger-11 hover:text-danger-11"
                 disabled={isDeleting}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
@@ -90,7 +102,7 @@ export const AutomationsSelectionBar = ({
               </Button>
             </ConfirmationDeleteDialog>
             <div className="border-l h-6 mx-1" />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-gray-11">
               {t('{count} selected', { count: selectedCount })}
             </span>
             <Button

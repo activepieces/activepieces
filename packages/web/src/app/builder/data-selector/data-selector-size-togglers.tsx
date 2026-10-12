@@ -30,9 +30,9 @@ export const DataSelectorSizeTogglers = ({
   };
 
   const buttonClassName = (btnState: DataSelectorSizeState) =>
-    cn('', {
-      'text-outline': state === btnState,
-      'text-outline opacity-50': state !== btnState,
+    cn('text-gray-11 enabled:hover:text-gray-12', {
+      'text-gray-12': state === btnState,
+      'opacity-50': state !== btnState,
     });
 
   return (

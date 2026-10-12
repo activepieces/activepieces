@@ -4,7 +4,7 @@ import {
   Trigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { shopifyAuth, shopifyAuthHelpers } from './auth';
+import { SHOPIFY_API_VERSION, shopifyAuth, shopifyAuthHelpers } from './auth';
 
 export const createShopifyWebhookTrigger = ({
   name,
@@ -39,7 +39,7 @@ export const createShopifyWebhookTrigger = ({
         };
       }>({
         method: HttpMethod.POST,
-        url: `https://${shopName}.myshopify.com/admin/api/2023-01/webhooks.json`,
+        url: `https://${shopName}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}/webhooks.json`,
         headers: shopifyAuthHelpers.getAuthHeaders(context.auth),
         body: {
           webhook: {
@@ -61,7 +61,7 @@ export const createShopifyWebhookTrigger = ({
         };
       }>({
         method: HttpMethod.DELETE,
-        url: `https://${shopName}.myshopify.com/admin/api/2023-01/webhooks/${webhookId}.json`,
+        url: `https://${shopName}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}/webhooks/${webhookId}.json`,
         headers: shopifyAuthHelpers.getAuthHeaders(context.auth),
       });
       await context.store?.put(`shopify_webhook_id`, null);

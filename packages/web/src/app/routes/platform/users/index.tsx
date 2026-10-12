@@ -18,6 +18,7 @@ import {
   platformUserHooks,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
@@ -149,6 +150,7 @@ export default function UsersPage() {
               key="invite"
               className="gap-2"
               size="sm"
+              {...adminControl(AdminControl.USERS_INVITE_OPEN)}
               onClick={() => {
                 if (ensureSeatsAvailable(1)) {
                   setInviteOpen(true);
@@ -156,7 +158,7 @@ export default function UsersPage() {
               }}
             >
               {isOutOfSeats ? (
-                <Crown className="size-4 shrink-0 text-primary-foreground/90" />
+                <Crown className="size-4 shrink-0 text-on-accent/90" />
               ) : (
                 <UserRoundPlusIcon size={16} />
               )}

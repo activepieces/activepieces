@@ -187,7 +187,7 @@ describe('agentRpcHandlers.updateAgentProgress — incremental LLM message persi
     })
 })
 
-async function callSaveChatMessages(input: { conversationId: string, runId?: string, messages: unknown[], uiMessages: unknown[] }): Promise<void> {
+async function callSaveChatMessages(input: { conversationId: string, runId?: string, messages: unknown[], uiMessages: unknown[], answeredBy?: { provider: string, modelId: string } }): Promise<void> {
     await agentRpcHandlers(noopLogger as never).saveAgentMessages(input as never)
 }
 
@@ -262,6 +262,15 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
 
         expect(mockTrack).toHaveBeenCalledTimes(1)
         expect(mockTrack.mock.calls[0][0]).toMatchObject({ runId: 'run-1' })
+    })
+
+    it('bills a platform tier turn against the model that answered it', async () => {
+        mockExecute.mockResolvedValue({ raw: [{ id: 'conv-1' }] })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }], answeredBy: { provider: 'openai', modelId: 'gpt-4o' } })
+
+        expect(mockTrack.mock.calls[0][0]).toMatchObject({ answeredBy: { provider: 'openai', modelId: 'gpt-4o' } })
     })
 
     it('does not bill when the write returned nothing, on any driver', async () => {

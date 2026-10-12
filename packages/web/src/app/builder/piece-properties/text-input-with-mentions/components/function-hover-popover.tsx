@@ -248,8 +248,9 @@ export function FunctionTooltipCard({
   return createPortal(
     <div
       data-fn-tooltip
+      data-theme="dark"
       className={cn(
-        'fixed z-[9999] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 space-y-2 transition-opacity duration-150',
+        'fixed z-[9999] bg-gray-2 border border-gray-6 rounded-lg shadow-2xl p-3 space-y-2 transition-opacity duration-150',
         visible
           ? 'opacity-100 pointer-events-auto'
           : 'opacity-0 pointer-events-none',
@@ -269,13 +270,13 @@ export function FunctionTooltipCard({
     >
       {fnDef.deprecated && (
         <div className="flex items-center gap-1.5 text-[11px]">
-          <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wide text-[10px]">
+          <span className="px-1.5 py-0.5 rounded bg-warning-4 text-warning-11 font-semibold uppercase tracking-wide text-[10px]">
             {t('Deprecated')}
           </span>
           {fnDef.deprecated.replacement && (
-            <span className="text-gray-300">
+            <span className="text-gray-12/80">
               {t('Use')}{' '}
-              <code className="font-mono text-amber-300">
+              <code className="font-mono text-warning-11">
                 {fnDef.deprecated.replacement}
               </code>{' '}
               {t('instead')}
@@ -283,39 +284,39 @@ export function FunctionTooltipCard({
           )}
         </div>
       )}
-      <p className="text-[12px] text-gray-100 leading-snug">
+      <p className="text-[12px] text-gray-12 leading-snug">
         {t(fnDef.description)}
       </p>
       {argNames.length > 0 && currentArgIndex != null && (
-        <div className="flex flex-wrap gap-x-0.5 gap-y-0.5 text-[12px] font-mono bg-gray-800 rounded px-2 py-1">
-          <span className="text-purple-400">{fnDef.name}(</span>
+        <div className="flex flex-wrap gap-x-0.5 gap-y-0.5 text-[12px] font-mono bg-gray-4 rounded px-2 py-1">
+          <span className="text-accent-11">{fnDef.name}(</span>
           {argNames.map((arg, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <span className="text-gray-500">; </span>}
+              {i > 0 && <span className="text-gray-12/60">; </span>}
               <span
                 className={cn(
                   i === currentArgIndex
-                    ? 'text-amber-400 font-semibold'
-                    : 'text-gray-400',
+                    ? 'text-warning-11 font-semibold'
+                    : 'text-gray-12/70',
                 )}
               >
                 {arg}
               </span>
             </React.Fragment>
           ))}
-          <span className="text-purple-400">)</span>
+          <span className="text-accent-11">)</span>
         </div>
       )}
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+        <p className="text-[10px] font-semibold text-gray-12/70 uppercase tracking-wide">
           Example
         </p>
-        <code className="block bg-gray-800 rounded px-2 py-1.5 text-[11px] font-mono text-gray-100 break-all leading-relaxed">
+        <code className="block bg-gray-4 rounded px-2 py-1.5 text-[11px] font-mono text-gray-12 break-all leading-relaxed">
           {t(fnDef.example)}
         </code>
-        <code className="flex items-center gap-1.5 bg-gray-800 rounded px-2 py-1.5 text-[11px] font-mono break-all leading-relaxed">
-          <span className="text-gray-500 shrink-0">↳</span>
-          <span className="text-green-400">{t(fnDef.exampleResult)}</span>
+        <code className="flex items-center gap-1.5 bg-gray-4 rounded px-2 py-1.5 text-[11px] font-mono break-all leading-relaxed">
+          <span className="text-gray-12/60 shrink-0">↳</span>
+          <span className="text-success-11">{t(fnDef.exampleResult)}</span>
         </code>
       </div>
     </div>,

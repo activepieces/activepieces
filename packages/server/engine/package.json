@@ -23,7 +23,7 @@
     "jsep": "1.4.0",
     "socket.io-client": "4.8.1",
     "tslib": "2.6.2",
-    "undici": "7.29.0",
+    "undici": "7.29.1",
     "zod": "4.3.6",
     "@activepieces/core-utils": "workspace:*",
     "@activepieces/core-formula": "workspace:*"

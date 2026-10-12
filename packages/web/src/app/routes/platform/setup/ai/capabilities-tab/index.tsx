@@ -17,7 +17,7 @@ import {
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
@@ -34,8 +34,6 @@ export function CapabilitiesTab() {
     isError: configsFailed,
     refetch: refetchConfigs,
   } = aiToolConfigQueries.useAiToolConfigs();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
   const {
     data: providers,
     isError: providersFailed,
@@ -86,7 +84,6 @@ export function CapabilitiesTab() {
                     ? chatProvider
                     : undefined
                 }
-                allowWrite={allowWrite}
                 onDelete={() => config && remove(config.id)}
                 onSaved={() => refetchConfigs()}
               />
@@ -103,7 +100,6 @@ function CapabilityCard({
   config,
   providers,
   chatProviderFallback,
-  allowWrite,
   onDelete,
   onSaved,
 }: {
@@ -111,7 +107,6 @@ function CapabilityCard({
   config?: AiToolConfigWithoutSensitiveData;
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
-  allowWrite: boolean;
   onDelete: () => void;
   onSaved: () => void;
 }) {
@@ -139,20 +134,20 @@ function CapabilityCard({
     : `${status} · ${chosenModelId}`;
 
   return (
-    <div className="group flex flex-col rounded-lg border bg-card">
+    <div className="group flex flex-col rounded-lg border bg-panel">
       <div className="flex items-start gap-3 p-4 pb-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
-          <Icon className="size-4 text-muted-foreground" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
+          <Icon className="size-4 text-gray-11" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <p className="truncate text-sm font-medium leading-none">
             {capabilityInfo.name}
           </p>
-          <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-1.5 text-xs text-gray-11">
             <span
               className={cn('size-1.5 shrink-0 rounded-full', {
-                'bg-success-500': inUse,
-                'border border-muted-foreground/50': !inUse,
+                'bg-success-10': inUse,
+                'border border-gray-8': !inUse,
               })}
             />
             <TextWithTooltip tooltipMessage={statusText}>
@@ -160,7 +155,7 @@ function CapabilityCard({
             </TextWithTooltip>
           </span>
         </div>
-        {config && allowWrite && (
+        {config && (
           <ConfirmationDeleteDialog
             title={t('Reset {name}', { name: capabilityInfo.name })}
             message={
@@ -173,39 +168,43 @@ function CapabilityCard({
                   )
             }
             entityName={capabilityInfo.name}
+            controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
             mutationFn={async () => onDelete()}
           >
             <Button
               variant="ghost"
               size="icon-sm"
-              className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-focus-within:opacity-100 group-hover:opacity-100"
+              className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
+              {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
             >
               <Trash2 className="size-4" />
             </Button>
           </ConfirmationDeleteDialog>
         )}
       </div>
-      <p className="px-4 pb-4 text-sm text-muted-foreground">
+      <p className="px-4 pb-4 text-sm text-gray-11">
         {capabilityInfo.description}
       </p>
       <div className="mt-auto flex items-center justify-between gap-4 border-t px-4 py-2.5">
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-gray-11">
           {inUse
             ? t('Available to the assistant')
             : t("The assistant can't do this yet")}
         </span>
-        {allowWrite && (
-          <AiCapabilityDialog
-            capabilityInfo={capabilityInfo}
-            existingConfig={config}
-            defaultProviderId={chatProviderFallback?.id}
-            onSaved={onSaved}
+        <AiCapabilityDialog
+          capabilityInfo={capabilityInfo}
+          existingConfig={config}
+          defaultProviderId={chatProviderFallback?.id}
+          onSaved={onSaved}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
           >
-            <Button variant="outline" size="sm">
-              {inUse ? t('Change') : t('Connect')}
-            </Button>
-          </AiCapabilityDialog>
-        )}
+            {inUse ? t('Change') : t('Connect')}
+          </Button>
+        </AiCapabilityDialog>
       </div>
     </div>
   );

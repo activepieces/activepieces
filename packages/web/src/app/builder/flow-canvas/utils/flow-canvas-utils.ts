@@ -11,7 +11,6 @@ import {
   BranchedAction,
   StepLocationRelativeToParent,
   FlowTrigger,
-  FlowTriggerType,
   Note,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -137,7 +136,7 @@ const createStepGraph: (params: {
     edges:
       step.type !== FlowActionType.LOOP_ON_ITEMS &&
       !flowStructureUtil.isBranchedAction(step) &&
-      !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      !flowStructureUtil.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
   };
@@ -164,7 +163,7 @@ const buildFlowGraph: (params: {
       ? buildLoopChildGraph({ step, orientation })
       : flowStructureUtil.isBranchedAction(step)
       ? buildRouterChildGraph({ step, orientation })
-      : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      : flowStructureUtil.hasContinueOnFailureBranches(step)
       ? buildContinueOnFailureBranchesGraph({ step, orientation })
       : null;
 
@@ -636,31 +635,6 @@ const createAddOperationFromAddButtonData = (data: ApButtonData) => {
   } as const;
 };
 
-const isSkipped = (stepName: string, trigger: FlowTrigger) => {
-  const step = flowStructureUtil.getStep(stepName, trigger);
-  if (
-    isNil(step) ||
-    step.type === FlowTriggerType.EMPTY ||
-    step.type === FlowTriggerType.PIECE
-  ) {
-    return false;
-  }
-  const skippedParents = flowStructureUtil
-    .findPathToStep(trigger, stepName)
-    .filter(
-      (stepInPath) =>
-        stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
-        flowStructureUtil.isBranchedAction(stepInPath) ||
-        sharedFlowCanvasUtils.hasContinueOnFailureBranches(stepInPath),
-    )
-    .filter((parentInPath) =>
-      flowStructureUtil.isChildOf(parentInPath, stepName),
-    )
-    .filter((parent) => parent.skip);
-
-  return skippedParents.length > 0 || !!step.skip;
-};
-
 const getStepStatus = (
   stepName: string | undefined,
   run: FlowRun | null,
@@ -749,7 +723,6 @@ export const flowCanvasUtils = {
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
   createAddOperationFromAddButtonData,
-  isSkipped,
   getStepStatus,
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,
