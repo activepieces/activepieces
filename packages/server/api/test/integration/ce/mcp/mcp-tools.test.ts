@@ -2778,12 +2778,13 @@ describe('MCP Tools integration', () => {
         const flowId = await createFlowAndGetId(mcp, 'Folder flow')
         const otherFlowId = await createFlowAndGetId(mcp, 'Folder flow 2')
         const moveSchema = z.object({ folderId: z.string().nullable(), folderName: z.string().nullable(), moved: z.boolean() })
+        const move = apMoveFlowToFolderTool({ mcp }, mockLog).execute
 
-        const created = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, folderName: 'Order intake' })
-        const reused = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: otherFlowId, folderName: 'order INTAKE' })
-        const again = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, folderName: 'Order intake' })
+        const created = await move({ flowId, folderName: 'Order intake' })
+        const reused = await move({ flowId: otherFlowId, folderName: 'order INTAKE' })
+        const again = await move({ flowId, folderName: 'Order intake' })
         const listed = await apListFoldersTool(mcp, mockLog).execute({})
-        const out = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, uncategorized: true })
+        const out = await move({ flowId, uncategorized: true })
 
         const createdContent = structured({ result: created, schema: moveSchema })
         const otherFlow = await flowService(mockLog).getOneOrThrow({ id: otherFlowId, projectId: ctx.project.id })
@@ -2821,10 +2822,11 @@ describe('MCP Tools integration', () => {
         const mcp = makeMcp(ctx.project.id)
         const flowId = await createFlowAndGetId(mcp, 'Guarded flow')
         const foreignFlowId = await createFlowAndGetId(makeMcp(other.project.id), 'Other project flow')
+        const move = apMoveFlowToFolderTool({ mcp }, mockLog).execute
 
-        const none = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId })
-        const both = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId, folderName: 'A', uncategorized: true })
-        const foreign = await apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: foreignFlowId, folderName: 'Mine' })
+        const none = await move({ flowId })
+        const both = await move({ flowId, folderName: 'A', uncategorized: true })
+        const foreign = await move({ flowId: foreignFlowId, folderName: 'Mine' })
 
         const foreignFlow = await flowService(mockLog).getOneOrThrow({ id: foreignFlowId, projectId: other.project.id })
         expect(text(none)).toContain('exactly one')

@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
+import { FlowOperationRequest, FlowOperationType, Folder, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -23,28 +23,26 @@ export const apMoveFlowToFolderTool = ({ mcp, userId }: McpToolContext, log: Fas
         execute: async (args) => {
             try {
                 const { flowId, folderName, uncategorized } = moveFlowToFolderInput.parse(args)
-                if (isNil(folderName) === (uncategorized !== true)) {
+                const toFolder = !isNil(folderName)
+                const toUncategorized = uncategorized === true
+                if (toFolder === toUncategorized) {
                     return { content: [{ type: 'text', text: '❌ Pass exactly one of folderName or uncategorized=true.' }], isError: true }
                 }
-                const [flow, platformId] = await Promise.all([
-                    flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
-                    projectService(log).getPlatformId(mcp.projectId),
-                ])
+                const flow = await flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId })
                 if (isNil(flow)) {
                     return { content: [{ type: 'text', text: '❌ Flow not found' }], isError: true }
                 }
-                const target = isNil(folderName) ? UNCATEGORIZED : await getOrCreateFolder({ projectId: mcp.projectId, folderName, log })
-                if (flow.folderId === target.folderId) {
-                    return {
-                        content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" is already ${describeTarget(target)}.` }],
-                        structuredContent: { flowId: flow.id, ...target, moved: false },
-                    }
+                const folder = isNil(folderName) ? null : await getOrCreateFolder({ projectId: mcp.projectId, folderName, log })
+                const folderId = folder?.id ?? null
+                const moved = flow.folderId !== folderId
+                if (moved) {
+                    const platformId = await projectService(log).getPlatformId(mcp.projectId)
+                    const operation: FlowOperationRequest = { type: FlowOperationType.CHANGE_FOLDER, request: { folderId } }
+                    await flowService(log).update({ id: flow.id, projectId: mcp.projectId, userId, previousFlow: flow, platformId, operation })
                 }
-                const operation: FlowOperationRequest = { type: FlowOperationType.CHANGE_FOLDER, request: { folderId: target.folderId } }
-                await flowService(log).update({ id: flow.id, projectId: mcp.projectId, userId, previousFlow: flow, platformId, operation })
                 return {
-                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" moved ${isNil(target.folderId) ? 'out of its folder' : `to folder "${target.folderName}"`}.` }],
-                    structuredContent: { flowId: flow.id, ...target, moved: true },
+                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" ${describeOutcome({ moved, folderName: folder?.displayName })}.` }],
+                    structuredContent: { flowId: flow.id, folderId, folderName: folder?.displayName ?? null, moved },
                 }
             }
             catch (err) {
@@ -54,18 +52,14 @@ export const apMoveFlowToFolderTool = ({ mcp, userId }: McpToolContext, log: Fas
     }
 }
 
-async function getOrCreateFolder({ projectId, folderName, log }: { projectId: string, folderName: string, log: FastifyBaseLogger }): Promise<MoveTarget> {
-    const folder = await flowFolderService(log).upsert({ projectId, request: { projectId, displayName: folderName } })
-    return { folderId: folder.id, folderName: folder.displayName }
+async function getOrCreateFolder({ projectId, folderName, log }: { projectId: string, folderName: string, log: FastifyBaseLogger }): Promise<Pick<Folder, 'id' | 'displayName'>> {
+    const existing = await flowFolderService(log).getOneByDisplayNameCaseInsensitive({ projectId, displayName: folderName })
+    return existing ?? flowFolderService(log).upsert({ projectId, request: { projectId, displayName: folderName } })
 }
 
-function describeTarget(target: MoveTarget): string {
-    return isNil(target.folderId) ? 'in no folder' : `in folder "${target.folderName}"`
-}
-
-const UNCATEGORIZED: MoveTarget = { folderId: null, folderName: null }
-
-type MoveTarget = {
-    folderId: string | null
-    folderName: string | null
+function describeOutcome({ moved, folderName }: { moved: boolean, folderName: string | undefined }): string {
+    if (isNil(folderName)) {
+        return moved ? 'moved out of its folder' : 'is already in no folder'
+    }
+    return moved ? `moved to folder "${folderName}"` : `is already in folder "${folderName}"`
 }

@@ -21,7 +21,7 @@ export const apListFoldersTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }))
                 if (folders.length === 0) {
                     return {
-                        content: [{ type: 'text', text: 'No folders in this project. Create one with ap_create_folder.' }],
+                        content: [{ type: 'text', text: 'No folders in this project. Create one with ap_create_folder, or move a flow into a new one with ap_move_flow_to_folder.' }],
                         structuredContent: { folders, count: 0 },
                     }
                 }
