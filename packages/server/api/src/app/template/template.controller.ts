@@ -85,8 +85,14 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/:id', { ...UpdateParams,
         preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            // Only migrate flows the request actually carries. Coercing an absent
+            // `flows` to [] made it *defined*, and the CUSTOM update path then stored
+            // that empty array over the template's packaged workflow — a details-only
+            // edit (name, summary, categories, metadata) destroyed the flow export.
+            if (isNil(request.body.flows)) {
+                return
+            }
+            request.body.flows = await migrateFlowVersionTemplateList(request.body.flows)
         },
     }, async (request, reply) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })

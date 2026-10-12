@@ -305,6 +305,35 @@ describe('Templates', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json().name).toBe('updated-name')
         })
+
+        it('should keep the packaged flow when the update does not carry one', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockPlatformTemplate } =
+                await createMockPlatformTemplate({ platformId: apId() })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/templates/${mockPlatformTemplate.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    summary: 'updated-summary',
+                },
+            })
+
+            // assert: an edit that omits `flows` must not erase the export
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().summary).toBe('updated-summary')
+            expect(response?.json().flows).toHaveLength(mockPlatformTemplate.flows.length)
+            expect(response?.json().flows[0].displayName).toBe(mockPlatformTemplate.flows[0].displayName)
+        })
     })
 })
 

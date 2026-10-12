@@ -1,4 +1,4 @@
-import { apId, Metadata, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, isNil, Metadata, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
 import { flowPieceUtil, FlowVersionTemplate, Template, TemplateStatus, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TemplateEntity } from '../../template/template.entity'
@@ -29,7 +29,10 @@ export const platformTemplateService = () => ({
     },
     async update({ id, params }: UpdateParams): Promise<Template> {
         const { name, description, summary, tags, blogUrl, metadata, categories, flows, status } = params
-        const flow: FlowVersionTemplate | undefined = flows?.[0] ? sanitizeObjectForPostgresql(flows[0]) : undefined
+        // An empty `flows` is not a request to erase the packaged workflow: mirror
+        // templateService.update and replace it only when one is actually supplied.
+        const nextFlows = !isNil(flows) && flows.length > 0 ? flows : undefined
+        const flow: FlowVersionTemplate | undefined = nextFlows?.[0] ? sanitizeObjectForPostgresql(nextFlows[0]) : undefined
         const pieces = flow ? flowPieceUtil.getUsedPieces(flow.trigger) : undefined
         await templateRepo().update(id, {
             ...spreadIfDefined('name', name),
@@ -39,7 +42,7 @@ export const platformTemplateService = () => ({
             ...spreadIfDefined('blogUrl', blogUrl),
             ...spreadIfDefined('metadata', metadata),
             ...spreadIfDefined('categories', categories),
-            ...spreadIfDefined('flows', flows),
+            ...spreadIfDefined('flows', nextFlows),
             ...spreadIfDefined('pieces', pieces),
             ...spreadIfDefined('status', status),
         })
