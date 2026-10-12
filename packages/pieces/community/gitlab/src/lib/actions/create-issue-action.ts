@@ -1,14 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { gitlabAuth } from '../auth';
-import { gitlabCommon, makeClient } from '../common';
+import { gitlabCommon } from '../common';
+import { gitlabRequest, projectPath } from '../common/client';
+import { optionalText, requireText } from '../common/props';
+import { issueOutputSchema } from '../output-schemas';
 
 export const createIssueAction = createAction({
   auth: gitlabAuth,
   name: 'create_issue',
   classification: 'WRITE',
   description: 'Create a project issue',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a new issue in a GitLab project, identified by its numeric project ID, with a title and optional description. Use to open a bug report, feature request, or task. Not idempotent: each call creates a separate issue even with identical inputs.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Creates a new issue in a GitLab project chosen from a dropdown, with a title and optional description. Not idempotent: each call creates a separate issue even with identical inputs.',
+    idempotent: false,
+  },
   displayName: 'Create Issue',
   props: {
     projectId: gitlabCommon.projectId(),
@@ -21,12 +28,16 @@ export const createIssueAction = createAction({
       required: false,
     }),
   },
+  outputSchema: issueOutputSchema,
   async run({ propsValue, auth }) {
-    const { projectId, title, description } = propsValue;
-    const client = makeClient({ auth });
-    return await client.createProjectIssue(projectId as string, {
-      title: title,
-      description: description,
+    return gitlabRequest({
+      auth,
+      method: 'POST',
+      path: `${projectPath(String(propsValue.projectId))}/issues`,
+      body: {
+        title: requireText({ value: propsValue.title, label: 'Issue Title' }),
+        description: optionalText(propsValue.description),
+      },
     });
   },
 });

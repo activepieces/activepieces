@@ -88,5 +88,11 @@
   "Form Data": "Données du formulaire",
   "Raw": "Brut",
   "New Task": "Nouvelle tâche",
-  "Triggers when a task is created": "Déclenche quand une tâche est créée"
+  "Triggers when a task is created": "Déclenche quand une tâche est créée",
+  "Task List": "Liste de tâches",
+  "Google Tasks keeps the date only; the time is ignored.": "Google Tasks ne conserve que la date ; l’heure est ignorée.",
+  "Add the task already checked off.": "Ajouter la tâche déjà cochée comme terminée.",
+  "Triggers when a task is added or edited in a list.": "Se déclenche lorsqu’une tâche est ajoutée ou modifiée dans une liste.",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Les modifications d’une tâche relancent ce déclencheur : la même tâche peut donc arriver plusieurs fois."
 }

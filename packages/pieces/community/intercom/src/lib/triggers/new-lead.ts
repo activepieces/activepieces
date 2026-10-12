@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { contactTriggerOutputSchema } from '../output-schemas';
 
 export const newLeadTrigger = createTrigger({
 	auth: intercomAuth,
@@ -12,9 +13,10 @@ export const newLeadTrigger = createTrigger({
 		description: 'Fires when a new lead is created in Intercom. A lead is an unidentified or not-yet-signed-up contact (role "lead"), as opposed to a user. Outputs the newly created lead contact object with its attributes.',
 	},
 	props: {},
+	outputSchema: contactTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -26,11 +28,11 @@ export const newLeadTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.contacts.search({
 			query: {

@@ -373,5 +373,6 @@
   "Trigger Column": "Spalte auslösen",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Bitte beachten Sie, dass es aufgrund einer Verzögerung von Google eine Verzögerung von bis zu 3 Minuten geben kann, bis der Trigger angezündet wird.",
   "Fire only when this column changes. Any Column fires on any cell.": "Fire only when this column changes. Any Column fires on any cell.",
-  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets."
+  "The spreadsheet to watch for new worksheets.": "The spreadsheet to watch for new worksheets.",
+  "Empty fields keep their current value.": "Leere Felder behalten ihren aktuellen Wert."
 }

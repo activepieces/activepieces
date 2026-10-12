@@ -1,6 +1,7 @@
 import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
 import { modelTierCatalog } from '@activepieces/server-utils'
 import { AIProviderModel, CreateAIProviderRequest, ModelOptions, ModelOptionsSurface, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -159,6 +160,7 @@ const CreateAIProvider = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
+    preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
         body: CreateAIProviderRequest,
     },

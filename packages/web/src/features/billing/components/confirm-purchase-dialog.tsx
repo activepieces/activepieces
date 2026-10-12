@@ -13,16 +13,17 @@ import {
 } from '@/components/ui/dialog';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { billingMutations } from '../hooks/billing-hooks';
 import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
-import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog-state';
 
 import { planSelectorUtils } from './plan-selector-utils';
 
 export function ConfirmPurchaseDialog() {
-  const { payload, closeDialog } = useConfirmPurchaseDialogStore();
+  const { purchase, closeDialog } =
+    billingDialogHooks.useConfirmPurchaseDialogStore();
   const { openSeatFloor, seatFloorDialog } = usePlanSeatFloorGuard({
-    enabled: !isNil(payload),
+    enabled: !isNil(purchase),
   });
   const { mutate: checkout, isPending } = billingMutations.useCheckout({
     onDone: () => closeDialog(),
@@ -37,7 +38,7 @@ export function ConfirmPurchaseDialog() {
   });
 
   const cycleLabel =
-    payload?.billingCycle === planSelectorUtils.ANNUAL_INTERVAL
+    purchase?.billingCycle === planSelectorUtils.ANNUAL_INTERVAL
       ? t('Annually')
       : t('Monthly');
 
@@ -45,15 +46,15 @@ export function ConfirmPurchaseDialog() {
     <>
       {seatFloorDialog}
       <Dialog
-        open={!isNil(payload)}
+        open={!isNil(purchase)}
         onOpenChange={(open) => !open && closeDialog()}
       >
         <DialogContent className="max-w-md">
-          {!isNil(payload) && (
+          {!isNil(purchase) && (
             <>
               <DialogHeader>
                 <DialogTitle>
-                  {t('Confirm your {plan} plan', { plan: payload.planName })}
+                  {t('Confirm your {plan} plan', { plan: purchase.planName })}
                 </DialogTitle>
                 <DialogDescription>
                   {t(
@@ -69,7 +70,7 @@ export function ConfirmPurchaseDialog() {
                   </span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold">
-                      {payload.priceAmount}
+                      {purchase.priceAmount}
                     </span>
                     <span className="text-sm text-gray-11">
                       {t('billed {cycle}', { cycle: cycleLabel.toLowerCase() })}
@@ -77,15 +78,15 @@ export function ConfirmPurchaseDialog() {
                   </div>
                 </div>
 
-                {payload.features.length > 0 && (
+                {purchase.features.length > 0 && (
                   <ul className="flex flex-col gap-2.5">
-                    {payload.features.map((feature) => (
+                    {purchase.features.map((feature) => (
                       <li
                         key={feature}
                         className="flex items-center gap-2 text-sm text-gray-12"
                       >
                         <Check className="size-4 shrink-0 text-accent-11" />
-                        <span>{t(feature)}</span>
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -109,8 +110,8 @@ export function ConfirmPurchaseDialog() {
                   loading={isPending}
                   onClick={() =>
                     checkout({
-                      planId: payload.planId,
-                      successUrl: payload.successUrl,
+                      planId: purchase.planId,
+                      successUrl: purchase.successUrl,
                     })
                   }
                 >

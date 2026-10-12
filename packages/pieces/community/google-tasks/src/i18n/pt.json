@@ -88,5 +88,11 @@
   "Form Data": "Dados de Formulário",
   "Raw": "RAW",
   "New Task": "Nova tarefa",
-  "Triggers when a task is created": "Dispara quando uma tarefa é criada"
+  "Triggers when a task is created": "Dispara quando uma tarefa é criada",
+  "Task List": "Lista de tarefas",
+  "Google Tasks keeps the date only; the time is ignored.": "O Google Tasks guarda apenas a data; o horário é ignorado.",
+  "Add the task already checked off.": "Adicionar a tarefa já marcada como concluída.",
+  "Triggers when a task is added or edited in a list.": "Dispara quando uma tarefa é adicionada ou editada em uma lista.",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Edições em uma tarefa disparam este gatilho de novo, então a mesma tarefa pode chegar mais de uma vez."
 }
