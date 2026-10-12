@@ -1,5 +1,5 @@
 import { apId, isObject } from '@activepieces/core-utils'
-import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -1288,6 +1288,77 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('invalid')
     })
 
+    it('47b. ap_build_flow — says why each invalid step is invalid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Reasons',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{
+                type: FlowActionType.PIECE,
+                displayName: 'Send Email',
+                pieceName: '@activepieces/piece-test-email',
+                actionName: 'send_email',
+                input: { to: 'a@b.com' },
+            }],
+        })
+
+        expect(text(result)).toMatch(/step_1 \([^)]*subject is missing/)
+    })
+
+    it('47b2. ap_build_flow — says when only the connection is missing', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-test-keyed',
+            displayName: 'Test Keyed',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            auth: { type: 'SECRET_TEXT', displayName: 'API key', required: true },
+            actions: { ping: { name: 'ping', displayName: 'Ping', description: 'Ping', requireAuth: true, props: {} } },
+            triggers: {},
+        }))
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Connection Reason',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Ping', pieceName: '@activepieces/piece-test-keyed', actionName: 'ping', input: {} }],
+        })
+
+        expect(text(result)).toContain('step_1 (connection is missing)')
+    })
+
+    it('47c. ap_build_flow — explains an empty or incomplete required array', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const buildWithItems = (items: unknown[]) => apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Array Reasons',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'With Array', pieceName: '@activepieces/piece-test-array', actionName: 'action_with_array', input: { items } }],
+        })
+
+        const incomplete = text(await buildWithItems([{}]))
+
+        expect(incomplete).toContain('step_1 (items has an invalid value)')
+    })
+
+    it('47d. ap_build_flow — never blames a dropdown that holds a step reference', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Reference Reasons',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Send Email', pieceName: '@activepieces/piece-test-email', actionName: 'send_email', input: { to: 'a@b.com', folder: "{{trigger['output'].folder}}" } }],
+        })
+
+        expect(text(result)).toMatch(/step_1 \([^)]*subject is missing/)
+        expect(text(result)).not.toContain('folder')
+    })
+
     it('48. ap_build_flow — empty steps array creates trigger-only flow', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
@@ -2540,6 +2611,43 @@ describe('MCP Tools integration', () => {
         // piece is invisible here, so the correct successful result is "no pieces matched".
         expect(text(result)).not.toContain('❌')
         expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
+    })
+
+    it('93. ap_research_pieces — with an intent, only the matching actions and triggers carry their full description', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const component = ({ name, displayName, description, aiDescription }: { name: string, displayName: string, description: string, aiDescription: string }) => ({ name, displayName, description, requireAuth: false, props: {}, aiMetadata: { description: aiDescription } })
+        const trigger = (fields: Parameters<typeof component>[0]) => ({ ...component(fields), type: TriggerStrategy.POLLING, sampleData: {}, testStrategy: TriggerTestStrategy.SIMULATION })
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-intent-mail',
+            displayName: 'Intent Mail',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                send_email: component({ name: 'send_email', displayName: 'Send Email', description: 'Send an email to a recipient', aiDescription: 'AI hint for sending email' }),
+                archive_thread: component({ name: 'archive_thread', displayName: 'Archive Thread', description: 'Move a thread out of the inbox', aiDescription: 'AI hint for archiving' }),
+            },
+            triggers: {
+                new_email: trigger({ name: 'new_email', displayName: 'New Email', description: 'Fires when an email arrives', aiDescription: 'AI hint for incoming email' }),
+                new_label: trigger({ name: 'new_label', displayName: 'New Label', description: 'Fires when a label is created', aiDescription: 'AI hint for labels' }),
+            },
+        }))
+
+        const matched = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'], forIntent: 'send an email' }))
+        const unmatched = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'], forIntent: 'translate a document' }))
+        const noIntent = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'] }))
+
+        expect(matched).toContain('AI hint for sending email')
+        expect(matched).toContain('AI hint for incoming email')
+        expect(matched).toContain('archive_thread')
+        expect(matched).not.toContain('AI hint for archiving')
+        expect(matched).not.toContain('AI hint for labels')
+        expect(unmatched).toContain('new_label')
+        expect(unmatched).not.toContain('AI hint')
+        expect(noIntent).toContain('AI hint for archiving')
+        expect(noIntent).toContain('AI hint for labels')
     })
 
     // ── Flow attribution (createdBy / ownerId) ───────────────────────

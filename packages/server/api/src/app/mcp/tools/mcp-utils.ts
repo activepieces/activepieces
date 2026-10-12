@@ -1,4 +1,4 @@
-import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { applyFunctionToValuesSync, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
@@ -649,10 +649,14 @@ function rewriteAllReferences<C = unknown>({ input, loopItems, conditions, trigg
 }): { input?: Record<string, unknown>, loopItems?: string, conditions?: C } {
     const stepNames = flowStructureUtil.getAllSteps(trigger).map(s => s.name)
     return {
-        input: input ? expressionRewriter.rewriteDeep(input, stepNames, true) : undefined,
-        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: loopItems, stepNames, idempotent: true }) : loopItems,
-        conditions: conditions ? expressionRewriter.rewriteDeep(conditions, stepNames, true) : conditions,
+        input: input ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<Record<string, unknown>>(input, normalizeFormulaText), stepNames, true) : undefined,
+        loopItems: loopItems != null ? expressionRewriter.rewriteStepReferences({ input: normalizeFormulaText(loopItems), stepNames, idempotent: true }) : loopItems,
+        conditions: conditions ? expressionRewriter.rewriteDeep(applyFunctionToValuesSync<C>(conditions, normalizeFormulaText), stepNames, true) : conditions,
     }
+}
+
+function normalizeFormulaText(text: string): string {
+    return text.replace(DOUBLE_BRACED_FORMULA, (_match, version: string, expression: string) => `ap-formula-v${version}::{${expression}}::ap-formula-v${version}`)
 }
 
 function extractOptionsArray(options: unknown): Array<{ label: string, value: unknown }> | null {
@@ -669,8 +673,9 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 }
 
 const RESOLVE_TIMEOUT_MS = 30_000
+const DOUBLE_BRACED_FORMULA = /ap-formula-v(\d+)::\{\{\s*([A-Za-z_]\w*\s*\([\s\S]*?\))\s*\}\}::ap-formula-v\1/g
 
-const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder once with ap_create_folder, then pass the same folderName to each of them.')
+const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder with ap_create_folder in an earlier step than the calls that use it (never in the same step, they run at once), then pass the same folderName to each of them.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
     pieceName: string
@@ -866,6 +871,7 @@ export const mcpUtils = {
     publishedFlowWarning,
     diagnosePieceProps,
     coerceEmptyContainerInputs,
+    normalizeFormulaText,
     detectUnknownInputProps,
     rejectUnknownInputProps,
     dropUnknownInputProps,
