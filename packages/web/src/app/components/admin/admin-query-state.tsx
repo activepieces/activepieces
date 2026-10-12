@@ -1,4 +1,5 @@
-import { ReactNode } from 'react';
+import { t } from 'i18next';
+import { ComponentProps, ReactNode } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -15,7 +16,7 @@ export function AdminQueryState({
   children,
 }: AdminQueryStateProps) {
   if (isError && !hasData) {
-    return <DataFetchErrorState entity={entity} onRetry={onRetry} />;
+    return <AdminFetchErrorState entity={entity} onRetry={onRetry} />;
   }
   if (isLoading) {
     return skeleton ?? <SkeletonList numberOfItems={3} className="h-18" />;
@@ -25,6 +26,20 @@ export function AdminQueryState({
   }
   return children;
 }
+
+export function AdminFetchErrorState(
+  props: Omit<ComponentProps<typeof DataFetchErrorState>, 'description'>,
+) {
+  return (
+    <DataFetchErrorState {...props} description={fetchErrorDescription()} />
+  );
+}
+
+function fetchErrorDescription(): string {
+  return t('Your data is safe. Try again in a moment.');
+}
+
+export const adminFetchError = { description: fetchErrorDescription };
 
 type AdminQueryStateProps = {
   isLoading: boolean;

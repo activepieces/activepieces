@@ -4,8 +4,12 @@ import { t } from 'i18next';
 import { ChevronRight, Shield } from 'lucide-react';
 import { useState } from 'react';
 
-import { AdminEmpty, SettingsPanel, SettingsRow } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  AdminEmpty,
+  AdminFetchErrorState,
+  SettingsPanel,
+  SettingsRow,
+} from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -28,7 +32,7 @@ export function ProjectRolesList({
   }
 
   if (isError) {
-    return <DataFetchErrorState entity={t('roles')} onRetry={refetch} />;
+    return <AdminFetchErrorState entity={t('roles')} onRetry={refetch} />;
   }
 
   const roles = roleCopy.sortProjectRoles({

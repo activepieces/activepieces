@@ -3343,5 +3343,6 @@
   "You can't deactivate or delete your own account.": "You can't deactivate or delete your own account.",
   "Admins can't be deactivated. Change their role first.": "Admins can't be deactivated. Change their role first.",
   "Couldn't download this piece. Check the piece name and version, then try again.": "Couldn't download this piece. Check the piece name and version, then try again.",
-  "Edit {name}": "Edit {name}"
+  "Edit {name}": "Edit {name}",
+  "Your data is safe. Try again in a moment.": "Your data is safe. Try again in a moment."
 }

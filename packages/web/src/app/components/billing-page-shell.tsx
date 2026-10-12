@@ -7,8 +7,7 @@ import {
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
-import { AdminPage } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { AdminFetchErrorState, AdminPage } from '@/app/components/admin';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { billingQueries } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -55,7 +54,7 @@ function BillingPageContent({ header, children }: BillingPageContentProps) {
     return (
       <AdminPage>
         {header}
-        <DataFetchErrorState
+        <AdminFetchErrorState
           entity={t('billing information')}
           onRetry={refetch}
         />

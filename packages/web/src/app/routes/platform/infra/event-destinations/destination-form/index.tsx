@@ -13,14 +13,14 @@ import {
 } from 'react-router-dom';
 
 import {
-  AdminPage,
-  AdminPageHeader,
   adminActionCopy,
   adminFeedback,
+  AdminFetchErrorState,
+  AdminPage,
+  AdminPageHeader,
   adminPageResources,
   SaveBar,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -67,7 +67,7 @@ const EditDestination = ({ destinationId }: { destinationId: string }) => {
       );
     case 'error':
       return (
-        <DataFetchErrorState
+        <AdminFetchErrorState
           entity={t('destination')}
           onRetry={eventDestinationsCollectionUtils.refetch}
         />

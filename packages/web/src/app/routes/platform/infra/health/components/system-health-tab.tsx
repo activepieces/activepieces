@@ -15,12 +15,12 @@ import React from 'react';
 import semver from 'semver';
 
 import {
+  AdminFetchErrorState,
   SettingsPanel,
   SettingsRow,
   StatusDot,
   StatusTone,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -171,7 +171,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
 
   if (isError && systemHealth === undefined) {
     return (
-      <DataFetchErrorState entity={t('system health')} onRetry={refetch} />
+      <AdminFetchErrorState entity={t('system health')} onRetry={refetch} />
     );
   }
 

@@ -9,11 +9,11 @@ import { Globe, Key, ListChecks, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
 import {
+  AdminFetchErrorState,
   AdminPage,
   AdminPageHeader,
   adminPageResources,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
   embedSubdomainQueries,
@@ -162,7 +162,7 @@ const EmbedPage = () => {
           {isLoading ? (
             <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
           ) : subdomainStepFailed ? (
-            <DataFetchErrorState
+            <AdminFetchErrorState
               entity={t('the embed subdomain')}
               onRetry={refetchSubdomain}
             />
