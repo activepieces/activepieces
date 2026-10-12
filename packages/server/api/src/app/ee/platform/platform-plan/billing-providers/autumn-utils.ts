@@ -393,6 +393,7 @@ function largestGrantResetAt(balance: Balance): number | null {
 
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
     const creditsItem = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && isNil(item.price))
+    const creditTopUpPrice = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && !isNil(item.price))?.price
     return {
         id: plan.id,
         name: plan.name,
@@ -404,6 +405,7 @@ function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
         includedSeats: (plan.items ?? []).find((item) => item.featureId === UnconsumableFeatureId.USERS_LIMIT)?.included ?? null,
         includedCredits: creditsItem?.included ?? null,
         creditsResetInterval: creditsItem?.reset?.interval ?? null,
+        creditTopUp: isNil(creditTopUpPrice?.amount) ? null : { price: creditTopUpPrice.amount, credits: creditTopUpPrice.billingUnits ?? 1 },
     }
 }
 
