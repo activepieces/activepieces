@@ -4,10 +4,8 @@ import { Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { platformHooks } from '@/hooks/platform-hooks';
 
-import { billingQueries } from '../hooks/billing-hooks';
-import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 
 import {
   planSelectorUtils,
@@ -18,23 +16,14 @@ const HIGHLIGHT_COUNT = 3;
 
 function resolveEntry(planId: string): PlanCatalogEntry | undefined {
   const key = planId.replace(/_annual$/, '');
-  return planSelectorUtils.PLAN_CATALOG.find((entry) => entry.key === key);
+  return planSelectorUtils.planCatalog().find((entry) => entry.key === key);
 }
 
 export function PlanSwitchSuccessDialog() {
-  const { payload: planId, closeDialog } = usePlanSwitchSuccessDialogStore();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: plans } = billingQueries.useListPlans(
-    platform.id,
-    !isNil(planId),
-  );
+  const { planId, closeDialog } =
+    billingDialogHooks.usePlanSwitchSuccessDialogStore();
   const entry = isNil(planId) ? undefined : resolveEntry(planId);
-  const features = isNil(entry)
-    ? []
-    : planSelectorUtils.resolveFeatures({
-        entry,
-        apiPlan: plans?.find((plan) => plan.id === planId),
-      });
+  const features = entry?.features ?? [];
 
   return (
     <Dialog
@@ -49,7 +38,7 @@ export function PlanSwitchSuccessDialog() {
             </span>
             <div className="flex flex-col gap-2">
               <h2 className="text-xl font-semibold">
-                {t("You're on the {plan} plan", { plan: t(entry.name) })}
+                {t("You're on the {plan} plan", { plan: entry.name })}
               </h2>
               <p className="text-sm text-gray-11">
                 {t('You now have access to {benefits}.', {
@@ -59,7 +48,7 @@ export function PlanSwitchSuccessDialog() {
                   }).format(
                     features
                       .slice(0, HIGHLIGHT_COUNT)
-                      .map((feature) => t(feature.label)),
+                      .map((feature) => feature.label),
                   ),
                 })}
               </p>

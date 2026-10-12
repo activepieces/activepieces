@@ -88,5 +88,11 @@
   "Form Data": "Formulardaten",
   "Raw": "Rohe",
   "New Task": "Neue Aufgabe",
-  "Triggers when a task is created": "Wird ausgelöst, wenn eine Aufgabe erstellt wird"
+  "Triggers when a task is created": "Wird ausgelöst, wenn eine Aufgabe erstellt wird",
+  "Task List": "Aufgabenliste",
+  "Google Tasks keeps the date only; the time is ignored.": "Google Tasks speichert nur das Datum; die Uhrzeit wird ignoriert.",
+  "Add the task already checked off.": "Die Aufgabe bereits als erledigt hinzufügen.",
+  "Triggers when a task is added or edited in a list.": "Wird ausgelöst, wenn eine Aufgabe in einer Liste hinzugefügt oder bearbeitet wird.",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Änderungen an einer Aufgabe lösen diesen Trigger erneut aus, daher kann dieselbe Aufgabe mehrmals ankommen."
 }

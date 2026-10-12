@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
@@ -126,8 +126,9 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                                 await fs.writeFile(stagingEntryPath, sourceCode.code, 'utf8')
                                 const { data: transpiled, error } = await tryCatch(() => denoStepTranspiler.toCommonJs({ source: sourceCode.code }))
                                 if (error !== null || transpiled.fallbackToEsm === true) {
-                                    if (error !== null) {
-                                        log.info({ codePath, error }, 'Deno step transpile failed, falling back to raw source')
+                                    const fallbackError = error ?? transpiled?.error
+                                    if (!isNil(fallbackError)) {
+                                        log.info({ codePath, error: fallbackError }, 'Deno step transpile failed, falling back to raw source')
                                     }
                                     return
                                 }

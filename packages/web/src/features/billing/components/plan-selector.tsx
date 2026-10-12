@@ -1,11 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { PurchasablePlan, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Info } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,10 +17,10 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
 import { useCancelSubscriptionGuard } from '../hooks/use-cancel-subscription-guard';
 import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
-import { useConfirmPurchaseDialogStore } from '../stores/confirm-purchase-dialog-state';
 
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
 import { KeepPlanDialog } from './keep-plan-dialog';
@@ -63,7 +62,8 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
     platform.id,
     enabled,
   );
-  const { openDialog: openConfirmDialog } = useConfirmPurchaseDialogStore();
+  const { openDialog: openConfirmDialog } =
+    billingDialogHooks.useConfirmPurchaseDialogStore();
 
   const currentPlanId = subscription?.plan.plan ?? platform.plan.plan;
   const hasScheduledChange = !isNil(subscription?.cancelAt);
@@ -75,6 +75,7 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
   const hasAnnualOption = allPlans.some(
     (plan) => plan.interval === planSelectorUtils.ANNUAL_INTERVAL,
   );
+  const annualSavedMonths = planSelectorUtils.annualSavedMonths(allPlans);
   const [cycleOverride, setCycleOverride] = useState<BillingCycle | null>(null);
   const billingCycle =
     cycleOverride ??
@@ -128,12 +129,21 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
         >
           <TabsList>
             <TabsTrigger value="month">{t('Monthly')}</TabsTrigger>
-            <TabsTrigger value="year">{t('Annually')}</TabsTrigger>
+            <TabsTrigger value="year" className="gap-1.5">
+              {t('Annually')}
+              {!isNil(annualSavedMonths) && (
+                <span className="text-xs font-medium text-accent-11">
+                  {t('Save {count, plural, =1 {1 month} other {# months}}', {
+                    count: annualSavedMonths,
+                  })}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {planSelectorUtils.PLAN_CATALOG.map((entry) => {
+        {planSelectorUtils.planCatalog().map((entry) => {
           const apiPlan =
             entry.key === 'enterprise'
               ? undefined
@@ -141,14 +151,6 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
                   plans: allPlans,
                   key: entry.key,
                   cycle: entry.key === 'free' ? 'month' : billingCycle,
-                });
-          const monthlySibling =
-            entry.key === 'enterprise' || entry.key === 'free'
-              ? undefined
-              : planSelectorUtils.findPurchasablePlan({
-                  plans: allPlans,
-                  key: entry.key,
-                  cycle: 'month',
                 });
           return (
             <PlanColumn
@@ -158,7 +160,6 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
               pricing={planSelectorUtils.computePricing({
                 entry,
                 apiPlan,
-                monthlySibling,
               })}
               currentPlanId={currentPlanId}
               hasScheduledChange={hasScheduledChange}
@@ -234,14 +235,13 @@ function PlanColumn({
   const chargeAmount = isNil(apiPlan?.price)
     ? apiPlan?.priceDisplay ?? ''
     : `$${apiPlan.price.toLocaleString()}`;
-  const features = planSelectorUtils.resolveFeatures({ entry, apiPlan });
   const handleCtaCheckout = (planId: string, action: CheckoutAction) =>
     onCheckout({
       planId,
       action,
-      planName: t(entry.name),
+      planName: entry.name,
       priceAmount: chargeAmount,
-      features: features.map((feature) => feature.label),
+      features: entry.features.map((feature) => feature.label),
     });
 
   return (
@@ -258,9 +258,9 @@ function PlanColumn({
             entry.highlighted && 'text-accent-11',
           )}
         >
-          {t(entry.name)}
+          {entry.name}
         </h3>
-        <p className="text-sm text-gray-11">{t(entry.blurb)}</p>
+        <p className="text-sm text-gray-11">{entry.blurb}</p>
       </div>
 
       <div className="flex min-h-[3.25rem] flex-col gap-1">
@@ -271,19 +271,9 @@ function PlanColumn({
               {!isNil(pricing.suffix) && (
                 <span className="text-sm text-gray-11">{pricing.suffix}</span>
               )}
-              {!isNil(pricing.freeMonths) && (
-                <Badge variant="accent" className="rounded-sm">
-                  {t(
-                    '{count, plural, =1 {1 free month} other {# free months}}',
-                    {
-                      count: pricing.freeMonths,
-                    },
-                  )}
-                </Badge>
-              )}
             </div>
-            {!isNil(pricing.annualNote) && (
-              <span className="text-xs text-gray-11">{pricing.annualNote}</span>
+            {!isNil(pricing.note) && (
+              <span className="text-xs text-gray-11">{pricing.note}</span>
             )}
           </>
         )}
@@ -306,25 +296,28 @@ function PlanColumn({
       />
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-medium">{t(entry.featuresHeader)}</span>
+        <span className="text-sm font-medium">{entry.featuresHeader}</span>
         <ul className="flex flex-col gap-2.5">
-          {features.map((feature) => (
+          {[
+            ...entry.features.slice(0, 1),
+            ...planSelectorUtils.creditTopUpFeature(apiPlan),
+            ...entry.features.slice(1),
+          ].map((feature) => (
             <li
               key={feature.label}
               className="flex items-center gap-2 text-sm text-gray-12"
             >
               <Check className="size-4 shrink-0 text-accent-11" />
-              <span className="flex-1">{t(feature.label)}</span>
-              {!isNil(feature.tooltip) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="size-3.5 shrink-0 text-gray-11" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[220px]">
-                    {t(feature.tooltip)}
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help underline decoration-gray-9 decoration-dotted underline-offset-4">
+                    {feature.label}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[220px]">
+                  {feature.tooltip}
+                </TooltipContent>
+              </Tooltip>
             </li>
           ))}
         </ul>
