@@ -86,6 +86,11 @@ const PieceSelectorPage = React.lazy(() =>
     default: m.PieceSelectorPage,
   })),
 );
+const RequiredActionsPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-sets/required-actions-page').then(
+    (m) => ({ default: m.RequiredActionsPage }),
+  ),
+);
 const PieceSetsPage = React.lazy(() =>
   import('./platform/setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
     default: m.PieceSetsTab,
@@ -249,6 +254,20 @@ export const platformRoutes = [
               <PiecesListPage />
             </SuspenseWrapper>
           </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/pieces/required-actions',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Required actions">
+          <PlanFeatureSample feature="pieces">
+            <SuspenseWrapper>
+              <RequiredActionsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),

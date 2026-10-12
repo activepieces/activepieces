@@ -402,11 +402,11 @@ function RequiredActionsEditor({
   );
 }
 
-function PiecePicker({
+export function PiecePicker({
   pieceSet,
   onPick,
 }: {
-  pieceSet: PieceSet;
+  pieceSet?: PieceSet;
   onPick: (pieceName: string) => void;
 }) {
   const [search, setSearch] = useState('');
@@ -420,7 +420,11 @@ function PiecePicker({
     .filter(
       (piece) =>
         piece.actions > 0 &&
-        isPieceVisible({ pieces: pieceSet.config.pieces, name: piece.name }) &&
+        (pieceSet === undefined ||
+          isPieceVisible({
+            pieces: pieceSet.config.pieces,
+            name: piece.name,
+          })) &&
         (query === '' || piece.displayName.toLowerCase().includes(query)),
     )
     .slice(0, MAX_PIECES_SHOWN);
@@ -429,7 +433,9 @@ function PiecePicker({
       <SearchInput
         value={search}
         onChange={setSearch}
-        placeholder={t('Search shown pieces')}
+        placeholder={
+          pieceSet === undefined ? t('Search pieces') : t('Search shown pieces')
+        }
       />
       {isLoading ? (
         <SkeletonRows count={5} className="h-10 rounded-xl" />
@@ -437,7 +443,9 @@ function PiecePicker({
         <DataFetchErrorState entity={t('pieces')} onRetry={refetch} />
       ) : matches.length === 0 ? (
         <p className="text-sm text-gray-11">
-          {t('No shown piece matches. Show a piece first to require it.')}
+          {pieceSet === undefined
+            ? t('No piece with actions matches.')
+            : t('No shown piece matches. Show a piece first to require it.')}
         </p>
       ) : (
         <ul className="flex flex-col rounded-xl border">
@@ -472,14 +480,14 @@ function PiecePicker({
   );
 }
 
-function ActionPicker({
+export function ActionPicker({
   pieceSet,
   pieceName,
   requiredNames,
   onChange,
   onBack,
 }: {
-  pieceSet: PieceSet;
+  pieceSet?: PieceSet;
   pieceName: string;
   requiredNames: string[];
   onChange: (actionNames: string[]) => void;
@@ -494,6 +502,7 @@ function ActionPicker({
     requiredNames.includes(name),
   ).length;
   const isAllowed = (actionName: string) =>
+    pieceSet === undefined ||
     pieceSetChanges.isActionAllowed({ pieceSet, pieceName, actionName });
   const toggle = (actionName: string) =>
     onChange(

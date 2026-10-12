@@ -17,6 +17,7 @@ import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
 import { SettingsIcon } from '@/components/icons/settings';
 import { Settings2Icon } from '@/components/icons/settings2';
+import { ShieldIcon } from '@/components/icons/shield';
 import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
@@ -76,6 +77,13 @@ export function PlatformNav() {
           to: '/platform/pieces/piece-sets',
           label: pieceSetTerms.get().title,
           icon: BoxIcon,
+          locked: !platform.plan.managePiecesEnabled,
+          tier: PLATFORM_FEATURES.pieces.tier,
+        },
+        {
+          to: '/platform/pieces/required-actions',
+          label: t('Required actions'),
+          icon: ShieldIcon,
           locked: !platform.plan.managePiecesEnabled,
           tier: PLATFORM_FEATURES.pieces.tier,
         },
