@@ -71,9 +71,9 @@ const GeneralPage = React.lazy(() =>
     default: m.GeneralPage,
   })),
 );
-const GlobalConnectionsTable = React.lazy(() =>
-  import('./platform/setup/connections').then((m) => ({
-    default: m.GlobalConnectionsTable,
+const GlobalConnectionsRedirect = React.lazy(() =>
+  import('./platform/connections/global-connections-redirect').then((m) => ({
+    default: m.GlobalConnectionsRedirect,
   })),
 );
 const PiecesListPage = React.lazy(() =>
@@ -285,12 +285,10 @@ export const platformRoutes = [
     path: '/platform/connections/global',
     element: (
       <PlatformLayout>
-        <PageTitle title="Global Connections">
-          <PlanFeatureSample feature="globalConnections">
-            <SuspenseWrapper>
-              <GlobalConnectionsTable />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
+        <PageTitle title="Connections">
+          <SuspenseWrapper>
+            <GlobalConnectionsRedirect />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),

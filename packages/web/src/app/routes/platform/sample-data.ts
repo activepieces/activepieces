@@ -1,10 +1,6 @@
 import { RoleType } from '@activepieces/core-utils';
 import {
   ApiKeyResponseWithoutValue,
-  AppConnectionScope,
-  AppConnectionStatus,
-  AppConnectionType,
-  AppConnectionWithoutSensitiveData,
   ApplicationEvent,
   ApplicationEventName,
   buildMockEvent,
@@ -55,37 +51,6 @@ function auditEvents(): ApplicationEvent[] {
       projectId: SAMPLE_PROJECT_ID,
     }),
     ...agedTimestamps((index + 1) * 37),
-  }));
-}
-
-function globalConnections(): AppConnectionWithoutSensitiveData[] {
-  return [
-    { displayName: 'Slack', pieceName: '@activepieces/piece-slack' },
-    {
-      displayName: 'Google Sheets',
-      pieceName: '@activepieces/piece-google-sheets',
-    },
-    { displayName: 'Salesforce', pieceName: '@activepieces/piece-salesforce' },
-    { displayName: 'HubSpot', pieceName: '@activepieces/piece-hubspot' },
-  ].map((entry, index) => ({
-    id: `sample-connection-${index}`,
-    ...agedTimestamps((index + 2) * 26 * 60),
-    externalId: `sample-connection-${index}`,
-    displayName: entry.displayName,
-    type: AppConnectionType.SECRET_TEXT,
-    pieceName: entry.pieceName,
-    pieceVersion: '0.0.1',
-    projectIds: [],
-    platformId: SAMPLE_PLATFORM_ID,
-    scope: AppConnectionScope.PLATFORM,
-    status:
-      index === 3 ? AppConnectionStatus.ERROR : AppConnectionStatus.ACTIVE,
-    ownerId: null,
-    owner: null,
-    metadata: null,
-    flowIds: null,
-    preSelectForNewProjects: false,
-    usingSecretManager: false,
   }));
 }
 
@@ -230,7 +195,6 @@ export const sampleData = {
   templatesPage: once(() => toPage(templates())),
   apiKeysPage: once(() => toPage(apiKeys())),
   auditEventsPage: once(() => toPage(auditEvents())),
-  globalConnectionsPage: once(() => toPage(globalConnections())),
   projectRolesPage: once(() => toPage(projectRoles())),
   eventDestinations: once(eventDestinations),
   secretManagers: once(secretManagers),
