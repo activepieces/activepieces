@@ -1,4 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { safeHttp } from '@activepieces/server-utils'
 
 const REQUEST_TIMEOUT_MS = 10_000
@@ -11,14 +12,22 @@ async function discoverAndRegister({ serverUrl, redirectUrl }: DiscoverAndRegist
         throw invalidConnection(`${authorizationServer} does not support Dynamic Client Registration (no registration_endpoint in its metadata). Provide a Client ID and Client Secret from the server's own documentation instead.`)
     }
 
+    const requestedAuthMethod = pickTokenEndpointAuthMethod(metadata.token_endpoint_auth_methods_supported)
     const client = await registerClient({
         registrationEndpoint: metadata.registration_endpoint,
         redirectUrl,
         scope: (metadata.scopes_supported ?? []).join(' '),
+        tokenEndpointAuthMethod: requestedAuthMethod,
     })
 
     if (isNil(client.client_secret) || client.client_secret.length === 0) {
         throw invalidConnection(`${authorizationServer} issues public OAuth2 clients (no client secret), which is not supported yet. Provide a Client ID and Client Secret manually instead.`)
+    }
+
+    const registeredAuthMethod = client.token_endpoint_auth_method ?? requestedAuthMethod
+    const authorizationMethod = TOKEN_ENDPOINT_AUTH_METHODS[registeredAuthMethod]
+    if (isNil(authorizationMethod)) {
+        throw invalidConnection(`${authorizationServer} registered the client with token_endpoint_auth_method "${registeredAuthMethod}", which is not supported. Provide a Client ID and Client Secret manually instead.`)
     }
 
     const resource = canonicalResourceUri(serverUrl)
@@ -29,7 +38,15 @@ async function discoverAndRegister({ serverUrl, redirectUrl }: DiscoverAndRegist
         clientId: client.client_id,
         clientSecret: client.client_secret,
         resource,
+        authorizationMethod,
     }
+}
+
+function pickTokenEndpointAuthMethod(supported: string[] | undefined): string {
+    const methods = supported ?? ['client_secret_basic']
+    return methods.includes('client_secret_post') && !methods.includes('client_secret_basic')
+        ? 'client_secret_post'
+        : 'client_secret_basic'
 }
 
 // An MCP server that skips RFC 9728 is its own authorization server.
@@ -69,13 +86,13 @@ async function fetchFirst<T>(candidates: string[]): Promise<T | null> {
     return null
 }
 
-async function registerClient({ registrationEndpoint, redirectUrl, scope }: RegisterClientParams): Promise<ClientRegistrationResponse> {
+async function registerClient({ registrationEndpoint, redirectUrl, scope, tokenEndpointAuthMethod }: RegisterClientParams): Promise<ClientRegistrationResponse> {
     const { data: response, error } = await tryCatch(() => safeHttp.axios.post<ClientRegistrationResponse>(registrationEndpoint, {
         client_name: 'Activepieces',
         redirect_uris: [redirectUrl],
         grant_types: ['authorization_code', 'refresh_token'],
         response_types: ['code'],
-        token_endpoint_auth_method: 'client_secret_basic',
+        token_endpoint_auth_method: tokenEndpointAuthMethod,
         ...(scope.length > 0 ? { scope } : {}),
     }, {
         headers: { 'content-type': 'application/json' },
@@ -113,6 +130,11 @@ function invalidConnection(error: string): ActivepiecesError {
     })
 }
 
+const TOKEN_ENDPOINT_AUTH_METHODS: Partial<Record<string, OAuth2AuthorizationMethod>> = {
+    client_secret_basic: OAuth2AuthorizationMethod.HEADER,
+    client_secret_post: OAuth2AuthorizationMethod.BODY,
+}
+
 export const oauth2Discovery = { discoverAndRegister }
 
 type DiscoverAndRegisterParams = {
@@ -124,6 +146,7 @@ type RegisterClientParams = {
     registrationEndpoint: string
     redirectUrl: string
     scope: string
+    tokenEndpointAuthMethod: string
 }
 
 type WithResourceIndicatorParams = {
@@ -138,6 +161,7 @@ export type DiscoveredOAuth2Client = {
     clientId: string
     clientSecret: string
     resource: string
+    authorizationMethod: OAuth2AuthorizationMethod
 }
 
 type ProtectedResourceMetadata = {
@@ -149,9 +173,11 @@ type AuthorizationServerMetadata = {
     token_endpoint: string
     registration_endpoint?: string
     scopes_supported?: string[]
+    token_endpoint_auth_methods_supported?: string[]
 }
 
 type ClientRegistrationResponse = {
     client_id: string
     client_secret?: string
+    token_endpoint_auth_method?: string
 }

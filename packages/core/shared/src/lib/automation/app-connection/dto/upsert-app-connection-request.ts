@@ -195,6 +195,7 @@ export const GetOAuth2AuthorizationUrlResponse = z.object({
         client_id: z.string(),
         client_secret: z.string(),
         resource: z.string(),
+        authorization_method: z.enum(OAuth2AuthorizationMethod),
     }).optional(),
 })
 export type GetOAuth2AuthorizationUrlResponse = z.infer<typeof GetOAuth2AuthorizationUrlResponse>

@@ -1,3 +1,4 @@
+import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGet = vi.fn()
@@ -56,6 +57,7 @@ describe('oauth2Discovery.discoverAndRegister', () => {
         expect(result.scopes).toBe('openid profile')
         expect(result.clientId).toBe('cid')
         expect(result.clientSecret).toBe('secret')
+        expect(result.authorizationMethod).toBe(OAuth2AuthorizationMethod.HEADER)
 
         const [registrationEndpoint, body] = mockPost.mock.calls[0]
         expect(registrationEndpoint).toBe('https://as.example.com/register')
@@ -74,6 +76,41 @@ describe('oauth2Discovery.discoverAndRegister', () => {
         const result = await oauth2Discovery.discoverAndRegister({ serverUrl: SERVER_URL, redirectUrl: REDIRECT_URL })
 
         expect(new URL(result.authUrl).searchParams.get('resource')).toBe(SERVER_URL)
+    })
+
+    it('registers with client_secret_post and sends credentials in the body when that is the only supported method', async () => {
+        serve({
+            'https://mcp.example.com/.well-known/oauth-protected-resource/mcp': { authorization_servers: ['https://as.example.com/'] },
+            'https://as.example.com/.well-known/oauth-authorization-server': { ...AUTHORIZATION_SERVER_METADATA, token_endpoint_auth_methods_supported: ['client_secret_post'] },
+        })
+
+        const result = await oauth2Discovery.discoverAndRegister({ serverUrl: SERVER_URL, redirectUrl: REDIRECT_URL })
+
+        expect(mockPost.mock.calls[0][1]).toMatchObject({ token_endpoint_auth_method: 'client_secret_post' })
+        expect(result.authorizationMethod).toBe(OAuth2AuthorizationMethod.BODY)
+    })
+
+    it('honours the auth method the server actually registered over the one requested', async () => {
+        serve({
+            'https://mcp.example.com/.well-known/oauth-protected-resource/mcp': { authorization_servers: ['https://as.example.com/'] },
+            'https://as.example.com/.well-known/oauth-authorization-server': AUTHORIZATION_SERVER_METADATA,
+        })
+        registers({ client_id: 'cid', client_secret: 'secret', token_endpoint_auth_method: 'client_secret_post' })
+
+        const result = await oauth2Discovery.discoverAndRegister({ serverUrl: SERVER_URL, redirectUrl: REDIRECT_URL })
+
+        expect(result.authorizationMethod).toBe(OAuth2AuthorizationMethod.BODY)
+    })
+
+    it('rejects a client registered with an auth method the token exchange cannot perform', async () => {
+        serve({
+            'https://mcp.example.com/.well-known/oauth-protected-resource/mcp': { authorization_servers: ['https://as.example.com/'] },
+            'https://as.example.com/.well-known/oauth-authorization-server': AUTHORIZATION_SERVER_METADATA,
+        })
+        registers({ client_id: 'cid', client_secret: 'secret', token_endpoint_auth_method: 'private_key_jwt' })
+
+        await expect(oauth2Discovery.discoverAndRegister({ serverUrl: SERVER_URL, redirectUrl: REDIRECT_URL }))
+            .rejects.toMatchObject({ error: { params: { error: expect.stringContaining('private_key_jwt') } } })
     })
 
     it('falls back to openid-configuration when the rfc 8414 document is absent', async () => {

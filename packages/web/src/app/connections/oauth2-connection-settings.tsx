@@ -379,6 +379,11 @@ async function openPopup({
       form.setValue('request.value.resource', result.discovered.resource, {
         shouldValidate: true,
       });
+      form.setValue(
+        'request.value.authorization_method',
+        result.discovered.authorization_method,
+        { shouldValidate: true },
+      );
     }
   } catch (error: unknown) {
     const apError = api.isError(error)
