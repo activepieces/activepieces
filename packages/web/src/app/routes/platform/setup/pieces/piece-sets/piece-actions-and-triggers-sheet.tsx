@@ -212,7 +212,9 @@ function PieceActionsAndTriggersSheetContent({
         title={t('Actions and triggers for {name}', {
           name: pieceDisplayName,
         })}
-        description={t('Choose whether every action is allowed, or only some.')}
+        description={t(
+          'Choose whether builders see every action, or only some.',
+        )}
         toolbar={
           <>
             <Tabs

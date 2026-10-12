@@ -48,6 +48,7 @@ import {
   usePieceSetProjects,
 } from './piece-set-projects-dialog';
 import { pieceSetSamples, SampleProject } from './piece-set-samples';
+import { pieceSetSummary } from './piece-set-summary';
 import { RailSection, SkeletonRows } from './policy-ui';
 import {
   PublishingRuleSentence,
@@ -248,7 +249,17 @@ function PieceSetDetails({
             <Badge variant="outline">{t('Default')}</Badge>
           ) : undefined
         }
-        description={metaParts.join(' · ')}
+        description={
+          <div className="flex flex-col gap-1">
+            <span className="text-gray-12">
+              {[
+                pieceSetSummary.newPiecesStance(pieceSet),
+                pieceSetSummary.describe(pieceSet),
+              ].join(' · ')}
+            </span>
+            <span>{metaParts.join(' · ')}</span>
+          </div>
+        }
         resources={adminPageResources.pieces}
       >
         <DropdownMenu>
@@ -298,11 +309,45 @@ function PieceSetDetails({
         main={<PieceSetPiecesTab pieceSet={pieceSet} onChange={onChange} />}
         aside={
           <SettingsPanel flush>
+            <RailSection title={t('New pieces')}>
+              <label className="flex cursor-pointer items-center justify-between gap-4">
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-sm text-gray-12">
+                    {t('Show automatically')}
+                  </span>
+                  <span className="text-xs text-gray-11">
+                    {includesNewPieces
+                      ? t(
+                          'Pieces installed later are shown in the builder.',
+                          pieceSetTerms.get(),
+                        )
+                      : t(
+                          'Pieces installed later stay hidden until you show them.',
+                        )}
+                  </span>
+                </span>
+                <Switch
+                  {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
+                  checked={includesNewPieces}
+                  disabled={piecesLoading}
+                  onCheckedChange={toggleNewPieces}
+                />
+              </label>
+            </RailSection>
+
             <RailSection title={t('Applies to')}>
               {pieceSet.isDefault && (
                 <p className="text-sm text-gray-11">
                   {t(
-                    'Every project not on another {term}.',
+                    "Projects without another {term} use this one, and new projects start here. It can't be deleted, and projects can't be removed from it: move them to another {term} instead.",
+                    pieceSetTerms.get(),
+                  )}
+                </p>
+              )}
+              {showKey && (
+                <p className="text-xs text-gray-11">
+                  {t(
+                    'Embedded projects get their {term} from the embed token at each sign-in. Changes here last until their next sign-in.',
                     pieceSetTerms.get(),
                   )}
                 </p>
@@ -350,32 +395,6 @@ function PieceSetDetails({
               >
                 {t('Change projects')}
               </Button>
-            </RailSection>
-
-            <RailSection title={t('New pieces')}>
-              <label className="flex cursor-pointer items-center justify-between gap-4">
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-sm text-gray-12">
-                    {t('Allow automatically')}
-                  </span>
-                  <span className="text-xs text-gray-11">
-                    {includesNewPieces
-                      ? t(
-                          'Pieces installed later are allowed on this {term}.',
-                          pieceSetTerms.get(),
-                        )
-                      : t(
-                          'Pieces installed later stay blocked until you allow them.',
-                        )}
-                  </span>
-                </span>
-                <Switch
-                  {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
-                  checked={includesNewPieces}
-                  disabled={piecesLoading}
-                  onCheckedChange={toggleNewPieces}
-                />
-              </label>
             </RailSection>
 
             <RailSection title={t('Publishing rule')}>
