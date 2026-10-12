@@ -401,5 +401,6 @@
   "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).": "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).",
   "Submit fires on send, Close fires when the modal is dismissed.": "Submit fires on send, Close fires when the modal is dismissed.",
   "View Submission": "Voir la soumission",
-  "View Closed": "Vue fermée"
+  "View Closed": "Vue fermée",
+  "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle."
 }
