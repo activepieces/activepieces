@@ -421,6 +421,12 @@ function PieceSetDetails({
                   ? t('Require an action')
                   : t('Edit actions')}
               </Button>
+              <Link
+                to="/platform/pieces/required-actions"
+                className="text-sm text-gray-11 underline-offset-4 hover:text-gray-12 hover:underline"
+              >
+                {t('See the rule of every {term}', pieceSetTerms.get())}
+              </Link>
             </RailSection>
 
             {showKey && (

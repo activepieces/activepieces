@@ -3722,5 +3722,17 @@
   "What builders see when they add a step. Click a tab.": "What builders see when they add a step. Click a tab.",
   "Catalog": "Catalog",
   "Customizing the piece selector is an Enterprise feature": "Customizing the piece selector is an Enterprise feature",
-  "You can try changes here. Saving them needs Enterprise.": "You can try changes here. Saving them needs Enterprise."
+  "You can try changes here. Saving them needs Enterprise.": "You can try changes here. Saving them needs Enterprise.",
+  "Already required": "Already required",
+  "Couldn't update the publishing rules": "Couldn't update the publishing rules",
+  "No piece with actions matches.": "No piece with actions matches.",
+  "Pick the actions, then the {terms} whose flows must use them before they can be published.": "Pick the actions, then the {terms} whose flows must use them before they can be published.",
+  "Piece hidden in this {term}": "Piece hidden in this {term}",
+  "Require in several {terms}": "Require in several {terms}",
+  "See the rule of every {term}": "See the rule of every {term}",
+  "{count, plural, =0 {No required actions} =1 {1 required action} other {# required actions}}": "{count, plural, =0 {No required actions} =1 {1 required action} other {# required actions}}",
+  "{count, plural, =1 {1 {term}} other {# {terms}}}": "{count, plural, =1 {1 {term}} other {# {terms}}}",
+  "{count, plural, =1 {Require in 1 {term}} other {Require in # {terms}}}": "{count, plural, =1 {Require in 1 {term}} other {Require in # {terms}}}",
+  "{count, plural, =1 {Required in 1 {term}} other {Required in # {terms}}}": "{count, plural, =1 {Required in 1 {term}} other {Required in # {terms}}}",
+  "The actions a flow must use before it can be published, {term} by {term}. Require an action in several {terms} at once, or edit one {term} at a time.": "The actions a flow must use before it can be published, {term} by {term}. Require an action in several {terms} at once, or edit one {term} at a time."
 }
