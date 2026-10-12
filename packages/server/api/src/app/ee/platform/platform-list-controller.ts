@@ -1,6 +1,5 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import { PrincipalType, ProjectWithLimitsWithPlatform } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -14,7 +13,7 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', ListProjectsForPlatforms, async (request) => {
         const loggedInUser = await userService(request.log).getOneOrFail({ id: request.principal.id })
-        const platforms = await getPlatformsForUser(loggedInUser.identityId, request.log)
+        const platforms = await platformService(request.log).listPlatformsForIdentity({ identityId: loggedInUser.identityId })
         const projects = await Promise.all(platforms.map(async (platform) => {
             const platformUser = await userService(request.log).getOneByIdentityAndPlatform({ identityId: loggedInUser.identityId, platformId: platform.id })
             assertNotNullOrUndefined(platformUser, `Platform user not found for platform ${platform.id}`)
@@ -34,10 +33,6 @@ export const platformListController: FastifyPluginAsyncZod = async (app) => {
         }))
         return projects.flat()
     })
-}
-
-async function getPlatformsForUser(identityId: string, log: FastifyBaseLogger) {
-    return platformService(log).listPlatformsForIdentity({ identityId })
 }
 
 const ListProjectsForPlatforms = {
