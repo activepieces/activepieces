@@ -64,6 +64,7 @@ const PlatformTemplatesPage = () => {
           run: (template) => templatesApi.delete(template.id),
           verb: 'delete',
           label: (count) => templatesCountLabel(count),
+          nameOf: (template) => template.name,
         });
       } finally {
         await refetch().catch(() => undefined);
@@ -80,9 +81,14 @@ const PlatformTemplatesPage = () => {
       maxSize: 40,
       header: ({ table }) => (
         <Checkbox
+          aria-label={t('Select all')}
           checked={
             table.getRowModel().rows.length > 0 &&
             table.getRowModel().rows.every((row) => row.getIsSelected())
+              ? true
+              : table.getRowModel().rows.some((row) => row.getIsSelected())
+              ? 'indeterminate'
+              : false
           }
           onCheckedChange={(value) => {
             table.toggleAllRowsSelected(!!value);
@@ -178,9 +184,11 @@ const PlatformTemplatesPage = () => {
               title={t('Delete {name}?', {
                 name: templatesLabel(selectedRows),
               })}
-              description={t(
-                'The selected templates will be permanently deleted.',
-              )}
+              description={
+                selectedRows.length === 1
+                  ? t('This template will be permanently deleted.')
+                  : t('The selected templates will be permanently deleted.')
+              }
               confirmLabel={t('Delete')}
               controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
               onConfirm={async () => {

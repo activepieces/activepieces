@@ -42,6 +42,7 @@ import {
   pieceSetQueries,
   pieceSetsApi,
 } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
@@ -49,6 +50,7 @@ import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
 
 export const PieceSetsTab = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
@@ -201,10 +203,18 @@ export const PieceSetsTab = () => {
       </AdminPageHeader>
       <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <AdminDataTable
-        emptyStateTextTitle={t('No piece sets found')}
-        emptyStateTextDescription={t(
-          'Create a piece set to control which pieces are available to specific projects',
-        )}
+        emptyStateTextTitle={
+          platform.plan.managePiecesEnabled
+            ? t('No piece sets found')
+            : t('Piece sets need a higher plan.')
+        }
+        emptyStateTextDescription={
+          platform.plan.managePiecesEnabled
+            ? t(
+                'Create a piece set to control which pieces are available to specific projects',
+              )
+            : ''
+        }
         emptyStateIcon={<Layers />}
         columns={columns}
         filters={[

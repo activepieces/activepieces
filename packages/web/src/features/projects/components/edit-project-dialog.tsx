@@ -1,12 +1,14 @@
-import { Permission } from '@activepieces/core-utils';
+import { formErrors, Permission } from '@activepieces/core-utils';
 import {
   AppConnectionWithoutSensitiveData,
   UpdateProjectPlatformRequest,
   PlatformRole,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
@@ -64,14 +66,23 @@ export function EditProjectDialog({
     });
 
   const globalConnections = globalConnectionsPage?.data ?? [];
+  const isSaving =
+    useIsMutating({ mutationKey: projectCollectionUtils.updateMutationKey }) >
+    0;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && !isSaving) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-w-md w-full" aria-describedby={undefined}>
         <DialogHeader>
-          {' '}
-          <DialogTitle>
-            {t('Edit')} {initialValues?.projectName}
+          <DialogTitle className="break-words">
+            {t('Edit {name}', { name: initialValues?.projectName ?? '' })}
           </DialogTitle>
         </DialogHeader>
 
@@ -122,13 +133,18 @@ const EditProjectForm = ({
       onClose();
     },
     (error) => {
-      mutationFeedback.error({ error, title: t("Couldn't save changes") });
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
     },
   );
 
-  const form = useForm<UpdateProjectPlatformRequest>({
+  const form = useForm<EditProjectFormValues>({
+    resolver: zodResolver(EditProjectFormSchema),
+    mode: 'onChange',
     defaultValues: {
-      displayName: initialValues?.projectName,
+      displayName: initialValues?.projectName ?? '',
       externalId: initialValues?.externalId,
       sensitive: initialValues?.sensitive ?? false,
       globalConnectionExternalIds: currentConnectionExternalIds,
@@ -141,10 +157,11 @@ const EditProjectForm = ({
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit((values) => {
+          form.clearErrors('root.serverError');
           mutate({
             projectId,
             request: {
-              displayName: values.displayName,
+              displayName: values.displayName?.trim(),
               externalId: values.externalId,
               sensitive: values.sensitive,
               globalConnectionExternalIds: values.globalConnectionExternalIds,
@@ -240,8 +257,19 @@ const EditProjectForm = ({
           />
         )}
 
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
+
         <DialogFooter className="justify-end mt-6">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isPending}
+          >
             {t('Cancel')}
           </Button>
           <Button
@@ -257,3 +285,9 @@ const EditProjectForm = ({
     </Form>
   );
 };
+
+const EditProjectFormSchema = UpdateProjectPlatformRequest.extend({
+  displayName: z.string().trim().min(1, formErrors.required),
+});
+
+type EditProjectFormValues = z.infer<typeof EditProjectFormSchema>;

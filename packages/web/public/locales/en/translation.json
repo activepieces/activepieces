@@ -3284,7 +3284,6 @@
   "{count, plural, =1 {# connection} other {# connections}}": "{count, plural, =1 {# connection} other {# connections}}",
   "{key} only serves some projects. This model doesn't run in the others.": "{key} only serves some projects. This model doesn't run in the others.",
   "Allow logins through email and password. Turn on Google or SAML before turning this off, so people can still sign in.": "Allow logins through email and password. Turn on Google or SAML before turning this off, so people can still sign in.",
-  "Allow logins through google's single sign-on functionality. Turn on email or SAML before turning this off, so people can still sign in.": "Allow logins through google's single sign-on functionality. Turn on email or SAML before turning this off, so people can still sign in.",
   "Delete Connection": "Delete Connection",
   "API Key Created": "API Key Created",
   "Add Domain": "Add Domain",
@@ -3330,5 +3329,19 @@
   "Couldn't send the invitations": "Couldn't send the invitations",
   "Platform deleted": "Platform deleted",
   "Couldn't delete the platform": "Couldn't delete the platform",
-  "This would leave no way to sign in. Turn on another sign-in method first.": "This would leave no way to sign in. Turn on another sign-in method first."
+  "This would leave no way to sign in. Turn on another sign-in method first.": "This would leave no way to sign in. Turn on another sign-in method first.",
+  "You've reached your plan's limit.": "You've reached your plan's limit.",
+  "Give specific projects their own dedicated workers.": "Give specific projects their own dedicated workers.",
+  "Select {name}": "Select {name}",
+  "This project and all its data will be permanently deleted.": "This project and all its data will be permanently deleted.",
+  "Allow logins through Google single sign-on. Turn on email or SAML before turning this off, so people can still sign in.": "Allow logins through Google single sign-on. Turn on email or SAML before turning this off, so people can still sign in.",
+  "Allow logins through Google single sign-on.": "Allow logins through Google single sign-on.",
+  "Allow logins through SAML 2.0 single sign-on.": "Allow logins through SAML 2.0 single sign-on.",
+  "This connection will be permanently deleted.": "This connection will be permanently deleted.",
+  "This template will be permanently deleted.": "This template will be permanently deleted.",
+  "Change this user's platform role and external ID.": "Change this user's platform role and external ID.",
+  "You can't deactivate or delete your own account.": "You can't deactivate or delete your own account.",
+  "Admins can't be deactivated. Change their role first.": "Admins can't be deactivated. Change their role first.",
+  "Couldn't download this piece. Check the piece name and version, then try again.": "Couldn't download this piece. Check the piece name and version, then try again.",
+  "Edit {name}": "Edit {name}"
 }

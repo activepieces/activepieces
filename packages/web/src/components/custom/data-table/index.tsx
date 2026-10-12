@@ -8,13 +8,14 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  Row,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -180,6 +181,19 @@ export function DataTable<
     ? [selectColumnDef, ...columnsInitial]
     : columnsInitial;
 
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+  const renderActionsCell = useCallback(
+    ({ row }: { row: Row<RowDataWithActions<TData>> }) => (
+      <div className="flex justify-end gap-4">
+        {actionsRef.current.map((action, index) => (
+          <React.Fragment key={index}>{action(row.original)}</React.Fragment>
+        ))}
+      </div>
+    ),
+    [],
+  );
+
   const columns =
     actions.length > 0
       ? columnsWithSelect.concat([
@@ -191,19 +205,7 @@ export function DataTable<
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title="" />
             ),
-            cell: ({ row }) => {
-              return (
-                <div className="flex justify-end gap-4">
-                  {actions.map((action, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                        {action(row.original)}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              );
-            },
+            cell: renderActionsCell,
           },
         ])
       : columnsWithSelect;
@@ -303,7 +305,7 @@ export function DataTable<
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
     () => table.getSelectedRowModel().rows.map((row) => row.original),
-    [rowSelection],
+    [rowSelection, tableData],
   );
   useEffect(() => {
     onSelectedRowsChange?.(selectedRowOriginals);

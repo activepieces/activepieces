@@ -23,6 +23,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -159,7 +160,7 @@ const InstallPieceDialog = ({
           responseData.params.message
         ) {
           form.setError('root.serverError', {
-            message: responseData.params.message,
+            message: engineFailureMessage(responseData.params.message),
           });
           return;
         }
@@ -323,18 +324,40 @@ const InstallPieceDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button
-              {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
-              loading={isPending}
-              type="submit"
-            >
-              {t('Install')}
-            </Button>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => setIsOpen(false)}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
+                loading={isPending}
+                type="submit"
+              >
+                {t('Install')}
+              </Button>
+            </DialogFooter>
           </form>
         </FormProvider>
       </DialogContent>
     </Dialog>
   );
 };
+
+function engineFailureMessage(message: string): string {
+  if (message === ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE) {
+    return t(
+      "Couldn't download this piece. Check the piece name and version, then try again.",
+    );
+  }
+  if (/^[A-Z][A-Z0-9_]+$/.test(message)) {
+    return t('Something went wrong, please try again later');
+  }
+  return message;
+}
 
 export { InstallPieceDialog };

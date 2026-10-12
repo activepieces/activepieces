@@ -10,6 +10,7 @@ import {
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
+import { toastInteraction } from '@/lib/toast-interaction';
 
 export const INTERNAL_ERROR_MESSAGE =
   'An unexpected error occurred. Please try again in a moment.';
@@ -39,6 +40,8 @@ function Toaster({ ...props }: ToasterProps) {
       theme={resolvedTheme}
       className="group"
       expand={true}
+      offset={{ bottom: toastInteraction.bottomOffset(24) }}
+      mobileOffset={{ bottom: toastInteraction.bottomOffset(16) }}
       toastOptions={{
         classNames: {
           toast: `

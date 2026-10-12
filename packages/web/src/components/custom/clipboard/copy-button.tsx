@@ -66,6 +66,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
           type="button"
           className={className}
           onClick={() => copyToClipboard()}
+          aria-label={children ? undefined : t('Copy')}
           {...props}
         >
           {content}
@@ -82,6 +83,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
             type="button"
             className={className}
             onClick={() => copyToClipboard()}
+            aria-label={t('Copy')}
             {...props}
           >
             {content}

@@ -23,10 +23,10 @@ export function SettingsPanel({
         <header
           className={cn(
             adminSurface.panelHeader,
-            'flex items-start justify-between gap-4 p-5',
+            'flex flex-wrap items-start justify-between gap-4 p-5',
           )}
         >
-          <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 flex-1 basis-60 flex-col gap-1">
             {title && (
               <h2 className="text-sm font-semibold text-gray-12">{title}</h2>
             )}

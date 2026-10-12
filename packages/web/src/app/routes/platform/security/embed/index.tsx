@@ -131,7 +131,7 @@ const EmbedPage = () => {
   return (
     <AdminPage width="content">
       <AdminPageHeader
-        title={t('Embed Onboarding')}
+        title={t('Embedding')}
         description={
           <>
             {description}{' '}

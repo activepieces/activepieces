@@ -43,37 +43,38 @@ export const UserActions = ({
   onUpdate,
 }: UserActionsProps) => {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const { data: currentUser } = userHooks.useCurrentUser();
   const isInvitation = row.type === 'invitation';
   const isSelf = !isInvitation && row.data.id === currentUser?.id;
   const isAdmin = !isInvitation && row.data.platformRole === PlatformRole.ADMIN;
   const isActive = !isInvitation && row.data.status === UserStatus.ACTIVE;
+  const disabledReason = isSelf
+    ? t("You can't deactivate or delete your own account.")
+    : isAdmin
+    ? t("Admins can't be deactivated. Change their role first.")
+    : undefined;
 
   return (
     <div className="flex justify-end">
       <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm">
+          <Button variant="ghost" size="icon-sm" aria-label={t('Open menu')}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {!isInvitation && (
-            <UpdateUserDialog
-              userId={row.data.id}
-              email={row.data.email}
-              role={row.data.platformRole}
-              externalId={row.data.externalId ?? undefined}
-              onUpdate={onUpdate}
+            <DropdownMenuItem
+              onSelect={() => {
+                setOpen(false);
+                setEditOpen(true);
+              }}
+              {...adminControl(AdminControl.USERS_EDIT_OPEN)}
             >
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                {...adminControl(AdminControl.USERS_EDIT_OPEN)}
-              >
-                <Pencil className="h-4 w-4" />
-                {t('Edit')}
-              </DropdownMenuItem>
-            </UpdateUserDialog>
+              <Pencil className="h-4 w-4" />
+              {t('Edit')}
+            </DropdownMenuItem>
           )}
           {!isInvitation && (
             <DropdownMenuItem
@@ -108,8 +109,25 @@ export const UserActions = ({
             <Trash className="h-4 w-4" />
             {t('Delete')}
           </DropdownMenuItem>
+          {disabledReason && (
+            <p className="max-w-56 px-2 py-1.5 text-xs text-gray-11">
+              {disabledReason}
+            </p>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
+      {!isInvitation && (
+        <UpdateUserDialog
+          key={`${row.data.platformRole}-${row.data.externalId ?? ''}`}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          userId={row.data.id}
+          email={row.data.email}
+          role={row.data.platformRole}
+          externalId={row.data.externalId ?? undefined}
+          onUpdate={onUpdate}
+        />
+      )}
     </div>
   );
 };

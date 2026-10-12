@@ -105,7 +105,7 @@ export function InstantSwitch({
         onUndo: () => undoTo(!next),
       });
     } else if (successMessage) {
-      toast.success(message);
+      toast.success(message, { id: message });
     }
   };
 

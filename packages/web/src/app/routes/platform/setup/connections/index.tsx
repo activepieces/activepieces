@@ -248,6 +248,7 @@ const GlobalConnectionsTable = () => {
           run: (row) => globalConnectionsApi.delete(row.id),
           verb: 'delete',
           label: connectionsLabel,
+          nameOf: (row) => row.displayName,
         });
       } finally {
         await refetchGlobalConnections().catch(() => undefined);
@@ -268,9 +269,11 @@ const GlobalConnectionsTable = () => {
                 title={t('Delete {name}?', {
                   name: connectionsLabel(selectedRows.length),
                 })}
-                description={t(
-                  'The selected connections will be permanently deleted.',
-                )}
+                description={
+                  selectedRows.length === 1
+                    ? t('This connection will be permanently deleted.')
+                    : t('The selected connections will be permanently deleted.')
+                }
                 consequence={<DeleteConnectionWarning />}
                 confirmLabel={t('Delete')}
                 controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}

@@ -147,6 +147,16 @@ async function runUndo({
     await onUndo();
     toast.success(undoneMessage ?? t('Undone'));
   } catch (caught) {
+    if (isQuotaExceeded(caught)) {
+      if (!wasShown(caught)) {
+        openPlanDialog();
+      }
+      markShown(caught);
+      toast.error(t("Couldn't undo"), {
+        description: t("You've reached your plan's limit."),
+      });
+      return;
+    }
     if (!wasShown(caught)) {
       error({ error: caught, title: t("Couldn't undo") });
     }

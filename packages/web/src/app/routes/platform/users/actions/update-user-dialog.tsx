@@ -5,7 +5,6 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 
 import { platformUserApi } from '@/api/platform-user-api';
@@ -14,10 +13,10 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -27,21 +26,22 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const UpdateUserDialog = ({
-  children,
+  open,
+  onOpenChange,
   onUpdate,
   userId,
   email,
   role,
   externalId,
 }: {
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onUpdate: (role: PlatformRole) => void;
   userId: string;
   email: string;
   role: PlatformRole;
   externalId?: string;
 }) => {
-  const [open, setOpen] = useState(false);
   const form = useForm<{ role: PlatformRole; externalId?: string }>({
     defaultValues: {
       role,
@@ -59,7 +59,7 @@ export const UpdateUserDialog = ({
     feedback: 'inline',
     onSuccess: ({ data }) => {
       onUpdate(data.platformRole);
-      setOpen(false);
+      onOpenChange(false);
     },
   });
 
@@ -68,15 +68,17 @@ export const UpdateUserDialog = ({
       open={open}
       onOpenChange={(open) => {
         form.reset();
-        setOpen(open);
+        onOpenChange(open);
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
           <DialogTitle className="break-words">
             {t('Edit {email}', { email })}
           </DialogTitle>
+          <DialogDescription>
+            {t("Change this user's platform role and external ID.")}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -121,7 +123,7 @@ export const UpdateUserDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              setOpen(false);
+              onOpenChange(false);
             }}
           >
             {t('Cancel')}

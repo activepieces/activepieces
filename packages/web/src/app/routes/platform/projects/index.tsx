@@ -80,6 +80,7 @@ export default function ProjectsPage() {
 
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
+  const projectsLoad = projectCollectionUtils.useLoadState();
 
   const setAutoCreatePersonalProjects = async (
     autoCreatePersonalProjects: boolean,
@@ -102,6 +103,7 @@ export default function ProjectsPage() {
           verb: 'delete',
           label: (count) =>
             t('{count, plural, =1 {# project} other {# projects}}', { count }),
+          nameOf: (project) => project.displayName,
           describe: deleteErrorMessage,
         });
       } finally {
@@ -175,7 +177,14 @@ export default function ProjectsPage() {
 
         return (
           <Checkbox
-            checked={allSelectableSelected || someSelectableSelected}
+            aria-label={t('Select all')}
+            checked={
+              allSelectableSelected
+                ? true
+                : someSelectableSelected
+                ? 'indeterminate'
+                : false
+            }
             onCheckedChange={(value) => {
               const isChecked = !!value;
               selectableRows.forEach((row) => row.toggleSelected(isChecked));
@@ -214,9 +223,12 @@ export default function ProjectsPage() {
 
         return (
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <div className={isDisabled ? 'cursor-not-allowed' : ''}>
                 <Checkbox
+                  aria-label={t('Select {name}', {
+                    name: row.original.displayName,
+                  })}
                   checked={isChecked}
                   disabled={isDisabled}
                   onCheckedChange={(value) => {
@@ -290,9 +302,15 @@ export default function ProjectsPage() {
                 title={t('Delete {name}?', {
                   name: projectsLabel(deletableProjects),
                 })}
-                description={t(
-                  'The selected projects and all their data will be permanently deleted.',
-                )}
+                description={
+                  deletableProjects.length === 1
+                    ? t(
+                        'This project and all its data will be permanently deleted.',
+                      )
+                    : t(
+                        'The selected projects and all their data will be permanently deleted.',
+                      )
+                }
                 consequence={
                   deletableProjects.length < selectedRows.length
                     ? t(
@@ -358,6 +376,7 @@ export default function ProjectsPage() {
               <Button
                 variant="ghost"
                 size="icon-sm"
+                aria-label={t('Edit project')}
                 {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -444,9 +463,12 @@ export default function ProjectsPage() {
           next: null,
           previous: null,
         }}
-        isLoading={false}
-        isError={false}
+        isLoading={projectsLoad.isFetching && allProjects.length === 0}
+        isError={projectsLoad.isError && allProjects.length === 0}
         errorStateEntity={t('projects')}
+        onRetry={() =>
+          projectCollectionUtils.refetchProjects().catch(() => undefined)
+        }
         clientPagination={true}
         bulkActions={bulkActions}
         actions={actions}

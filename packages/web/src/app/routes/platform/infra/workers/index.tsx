@@ -66,8 +66,12 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   return (
     <AdminPage>
       <AdminPageHeader
-        title={t('Workers')}
-        description={t('Check the health of your workers')}
+        title={section === 'worker-groups' ? t('Worker groups') : t('Workers')}
+        description={
+          section === 'worker-groups'
+            ? t('Give specific projects their own dedicated workers.')
+            : t('Check the health of your workers')
+        }
         resources={adminPageResources.workers}
       />
 

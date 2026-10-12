@@ -69,7 +69,9 @@ describe('useAdminAction', () => {
       { wrapper },
     );
     await act(() => result.current.mutateAsync());
-    expect(toast.success).toHaveBeenCalledWith('Marketing deleted');
+    expect(toast.success).toHaveBeenCalledWith('Marketing deleted', {
+      id: 'Marketing deleted',
+    });
   });
 
   it('shows one error with the server message and remembers it', async () => {
