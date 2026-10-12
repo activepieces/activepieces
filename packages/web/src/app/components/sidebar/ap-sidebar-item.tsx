@@ -38,6 +38,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const isLinkActive = isRouteActive({
     pathname,
     to: item.activeOn ?? item.to,
+    end: item.end,
   });
   const isCollapsed = state === 'collapsed' && !isMobile;
   const subItems = item.subItems ?? [];
@@ -329,6 +330,7 @@ export type SidebarItemType = {
   tier?: FeatureTier;
   subItems?: SidebarSubItemType[];
   activeOn?: string;
+  end?: boolean;
   badge?: ReactNode;
   onClick?: () => void;
 };
