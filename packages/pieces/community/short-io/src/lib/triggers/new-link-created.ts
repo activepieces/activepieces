@@ -27,6 +27,26 @@ function linkId(link: Record<string, unknown>): string {
   return String(link['idString'] ?? link['id'] ?? '');
 }
 
+function idOrderKey(id: string): string {
+  const parts = id.split('_');
+  return parts.length >= 3 ? parts.slice(2).join('_') : id;
+}
+
+function maxOrderKey(ids: string[]): string | null {
+  return ids.map(idOrderKey).reduce<string | null>((max, key) => (max === null || key > max ? key : max), null);
+}
+
+function createdAfterBaseline({ link, state }: { link: Record<string, unknown>; state: PollState }): boolean {
+  const idIsNewer = state.baselineMaxKey === null || idOrderKey(linkId(link)) > state.baselineMaxKey;
+  return idIsNewer || timeMs({ link, key: 'createdAt' }) >= state.baselineAt;
+}
+
+function backdatedSinceLastPoll({ link, state }: { link: Record<string, unknown>; state: PollState }): boolean {
+  const idIsNewer = state.baselineMaxKey !== null && idOrderKey(linkId(link)) > state.baselineMaxKey;
+  const updatedAt = timeMs({ link, key: 'updatedAt' });
+  return idIsNewer && updatedAt >= state.baselineAt && updatedAt >= state.lastPollAt - UPDATED_AT_MARGIN_MS;
+}
+
 function toEvent({ link, domain }: { link: Record<string, unknown>; domain: ShortIoDomainRef }): Record<string, unknown> {
   return {
     id: linkId(link),
@@ -80,6 +100,7 @@ async function scan({ auth, domain, seen, startToken, maxPages, stopWhenSeen, ac
   accept: (link: Record<string, unknown>) => boolean;
 }): Promise<ScanResult> {
   const found: Record<string, unknown>[] = [];
+  const pageIds: string[] = [];
   let pageToken = startToken;
   let count: number | null = null;
   for (let page = 0; page < maxPages; page++) {
@@ -89,34 +110,37 @@ async function scan({ auth, domain, seen, startToken, maxPages, stopWhenSeen, ac
       query: { limit: PAGE_SIZE, dateSortOrder: 'desc', pageToken },
     });
     count = count ?? result.count;
+    pageIds.push(...result.links.map(linkId));
     const fresh = result.links.filter((link) => !seen.has(linkId(link)) && accept(link));
     found.push(...fresh);
     pageToken = result.nextPageToken ?? undefined;
     if (!pageToken || (stopWhenSeen && fresh.length === 0)) {
-      return { found, nextToken: pageToken ?? null, exhausted: pageToken === undefined, stoppedOnSeenPage: fresh.length === 0, count };
+      return { found, pageIds, nextToken: pageToken ?? null, exhausted: pageToken === undefined, stoppedOnSeenPage: fresh.length === 0, count };
     }
   }
-  return { found, nextToken: pageToken ?? null, exhausted: false, stoppedOnSeenPage: false, count };
+  return { found, pageIds, nextToken: pageToken ?? null, exhausted: false, stoppedOnSeenPage: false, count };
 }
 
 async function baseline({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<PollState> {
   const result = await scan({ auth, domain, seen: new Set(), startToken: undefined, maxPages: MAX_PAGES, stopWhenSeen: false, accept: () => true });
-  const state: PollState = { seen: result.found.map(linkId).slice(0, SEEN_LIMIT), lastCount: result.count, lastPollAt: Date.now(), resumeToken: null };
+  const now = Date.now();
+  const ids = result.found.map(linkId);
+  const state: PollState = { seen: ids.slice(0, SEEN_LIMIT), lastCount: result.count, lastPollAt: now, resumeToken: null, baselineAt: now, baselineMaxKey: maxOrderKey(ids) };
   await store.put<PollState>(STATE_KEY, state);
   return state;
 }
 
 async function pollNewLinks({ auth, domain, store }: { auth: ShortIoAuthValue; domain: ShortIoDomainRef; store: Store }): Promise<Record<string, unknown>[]> {
   const state = await store.get<PollState>(STATE_KEY);
-  if (!state) {
+  if (!state || typeof state.baselineAt !== 'number') {
     return migrateFromLegacy({ auth, domain, store });
   }
   const now = Date.now();
   const seen = new Set(state.seen);
-  const top = await scan({ auth, domain, seen, startToken: undefined, maxPages: MAX_PAGES, stopWhenSeen: true, accept: () => true });
+  const top = await scan({ auth, domain, seen, startToken: undefined, maxPages: MAX_PAGES, stopWhenSeen: true, accept: (link) => createdAfterBaseline({ link, state }) });
   top.found.forEach((link) => seen.add(linkId(link)));
   const resumed = state.resumeToken
-    ? await scan({ auth, domain, seen, startToken: state.resumeToken, maxPages: MAX_PAGES, stopWhenSeen: false, accept: () => true })
+    ? await scan({ auth, domain, seen, startToken: state.resumeToken, maxPages: MAX_PAGES, stopWhenSeen: false, accept: (link) => createdAfterBaseline({ link, state }) })
     : null;
   resumed?.found.forEach((link) => seen.add(linkId(link)));
   const resumeToken = !top.stoppedOnSeenPage && !top.exhausted ? top.nextToken : resumed && !resumed.exhausted ? resumed.nextToken : null;
@@ -131,15 +155,15 @@ async function pollNewLinks({ auth, domain, store }: { auth: ShortIoAuthValue; d
           startToken: top.nextToken,
           maxPages: DEEP_SCAN_PAGES,
           stopWhenSeen: false,
-          accept: (link) => timeMs({ link, key: 'updatedAt' }) >= state.lastPollAt - UPDATED_AT_MARGIN_MS,
+          accept: (link) => backdatedSinceLastPoll({ link, state }),
         })
       : null;
   const emitted = [...top.found, ...(resumed?.found ?? []), ...(deep?.found ?? [])];
   const unique = [...new Map(emitted.map((link) => [linkId(link), link])).values()].sort(
     (a, b) => timeMs({ link: a, key: 'updatedAt' }) - timeMs({ link: b, key: 'updatedAt' }),
   );
-  const nextSeen = [...unique.map(linkId).reverse(), ...state.seen.filter((id) => !unique.some((link) => linkId(link) === id))].slice(0, SEEN_LIMIT);
-  await store.put<PollState>(STATE_KEY, { seen: nextSeen, lastCount: top.count ?? state.lastCount, lastPollAt: now, resumeToken });
+  const nextSeen = [...new Set([...top.pageIds, ...unique.map(linkId).reverse(), ...state.seen])].slice(0, SEEN_LIMIT);
+  await store.put<PollState>(STATE_KEY, { ...state, seen: nextSeen, lastCount: top.count ?? state.lastCount, lastPollAt: now, resumeToken });
   return unique;
 }
 
@@ -246,6 +270,13 @@ export const newLinkCreatedTrigger = createTrigger({
   },
 });
 
-type PollState = { seen: string[]; lastCount: number | null; lastPollAt: number; resumeToken: string | null };
+type PollState = {
+  seen: string[];
+  lastCount: number | null;
+  lastPollAt: number;
+  resumeToken: string | null;
+  baselineAt: number;
+  baselineMaxKey: string | null;
+};
 
-type ScanResult = { found: Record<string, unknown>[]; nextToken: string | null; exhausted: boolean; stoppedOnSeenPage: boolean; count: number | null };
+type ScanResult = { found: Record<string, unknown>[]; pageIds: string[]; nextToken: string | null; exhausted: boolean; stoppedOnSeenPage: boolean; count: number | null };
