@@ -59,6 +59,7 @@ import { pieceSetSummary } from './piece-set-summary';
 
 export function PieceSetsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
+  piecesHooks.usePrefetchPieces({});
   if (!platform.plan.managePiecesEnabled) {
     return <SamplePieceSetsList />;
   }

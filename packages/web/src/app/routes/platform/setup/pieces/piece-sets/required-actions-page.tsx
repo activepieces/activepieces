@@ -28,7 +28,7 @@ import {
   pieceSetsApi,
   pieceSetTerms,
 } from '@/features/piece-sets';
-import { pieceCacheUtils } from '@/features/pieces';
+import { pieceCacheUtils, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
@@ -45,6 +45,7 @@ import {
 
 export function RequiredActionsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
+  piecesHooks.usePrefetchPieces({});
   const locked = !platform.plan.managePiecesEnabled;
   const { data, isLoading, isError, refetch } =
     pieceSetQueries.useAllPieceSets();

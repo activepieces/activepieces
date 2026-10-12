@@ -90,6 +90,10 @@ type UsePiecesProps = {
   enabled?: boolean;
   keepPreviousResults?: boolean;
 };
+type SelectorPlatform = Pick<
+  PlatformWithoutSensitiveData,
+  'pinnedPieces' | 'pieceSelectorConfig'
+>;
 type UsePrefetchPiecesProps = {
   skipProjectFilter?: boolean;
 };
@@ -98,6 +102,11 @@ type UsePiecesSearchProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
+};
+
+export const pieceSelectorContent = {
+  categorize: categorizeStepsForSelector,
+  group: groupStepsForSelector,
 };
 
 export const piecesHooks = {
@@ -252,148 +261,31 @@ export const piecesHooks = {
         data: [],
       };
     }
-    const piecesMetadataWithoutEmptySuggestions =
-      filterOutPiecesWithNoSuggestions(metadata);
-
-    const pinnedPieces = getPinnedPieces(
-      piecesMetadataWithoutEmptySuggestions,
-      platform.pinnedPieces ?? [],
-    );
-
-    const popularPieces = getPopularPieces(
-      piecesMetadataWithoutEmptySuggestions,
-      platform.pinnedPieces ?? [],
-    );
-
-    const flowControllerPieces =
-      piecesMetadataWithoutEmptySuggestions.filter(isFlowController);
-
-    const utilityPieces =
-      piecesMetadataWithoutEmptySuggestions.filter(isUtilityPiece);
-
-    const pieceMetadataWithoutPopularOrPinnedPieces =
-      piecesMetadataWithoutEmptySuggestions.filter(
-        (p) => !popularPieces.includes(p) && !pinnedPieces.includes(p),
-      );
-
-    const appPieces =
-      pieceMetadataWithoutPopularOrPinnedPieces.filter(isAppPiece);
-
-    const utilitiesCategory = {
-      title: t('Utility'),
-      metadata: utilityPieces,
-    };
-    const flowControllerCategory = {
-      title: t('Flow Controller'),
-      metadata: flowControllerPieces,
-    };
-    const appsCategory = {
-      title: t('Apps'),
-      metadata: appPieces,
-    };
-    const popularCategory = {
-      title: t('Popular'),
-      metadata: popularPieces,
-    };
-    const allCategory = {
-      title: t('All'),
-      metadata: piecesMetadataWithoutEmptySuggestions,
-    };
-
-    switch (selectedTab) {
-      case PieceSelectorTabType.EXPLORE:
-        return {
-          isLoading: false,
-          data: getExploreTabContent(
-            piecesMetadataWithoutEmptySuggestions,
-            platform,
-            props.type,
-            environment,
-          ),
-        };
-      case PieceSelectorTabType.UTILITY:
-        return {
-          isLoading: false,
-          data: [utilitiesCategory, flowControllerCategory],
-        };
-      case PieceSelectorTabType.AI_AND_AGENTS:
-        return {
-          isLoading: false,
-          data: getAiAndAgentsPieces(piecesMetadataWithoutEmptySuggestions),
-        };
-      case PieceSelectorTabType.APPROVALS:
-        return {
-          isLoading: false,
-          data: [],
-        };
-      case PieceSelectorTabType.CUSTOM: {
-        const customTab = pieceSelectorCustomization.getCustomTab({
-          config: platform.pieceSelectorConfig,
-          customTabId: selectedCustomTabId,
-        });
-        const categories: CategorizedStepMetadataWithSuggestions[] = [];
-        const flatPieces = getPinnedPieces(
-          piecesMetadataWithoutEmptySuggestions,
-          customTab?.pieceNames ?? [],
-        );
-        if (flatPieces.length > 0) {
-          categories.push({
-            title: customTab?.title ?? t('All'),
-            metadata: flatPieces,
-          });
-        }
-        for (const section of customTab?.sections ?? []) {
-          const sectionPieces = getPinnedPieces(
-            piecesMetadataWithoutEmptySuggestions,
-            section.pieceNames,
-          );
-          if (sectionPieces.length > 0) {
-            categories.push({
-              title: section.title,
-              metadata: sectionPieces,
-            });
-          }
-        }
-        return {
-          isLoading: false,
-          data: categories,
-        };
-      }
-      case PieceSelectorTabType.APPS: {
-        const popularAppsCategory = {
-          ...popularCategory,
-          metadata: popularCategory.metadata.filter(isAppPiece),
-        };
-        const result = {
-          isLoading: false,
-          data: [popularAppsCategory, appsCategory],
-        };
-        if (pinnedPieces.length > 0) {
-          result.data.unshift({
-            title: t('Highlights'),
-            metadata: pinnedPieces,
-          });
-        }
-        return result;
-      }
-
-      case PieceSelectorTabType.NONE: {
-        if (props.shouldCaptureEvent && props.searchQuery.length > 3) {
-          capture({
-            name: TelemetryEventName.PIECE_SELECTOR_SEARCH,
-            payload: {
-              search: props.searchQuery,
-              isTrigger: props.type === 'trigger',
-              selectedActionOrTriggerName: null,
-            },
-          });
-        }
-        return {
-          isLoading: false,
-          data: allCategory.metadata.length > 0 ? [allCategory] : [],
-        };
-      }
+    if (
+      selectedTab === PieceSelectorTabType.NONE &&
+      props.shouldCaptureEvent &&
+      props.searchQuery.length > 3
+    ) {
+      capture({
+        name: TelemetryEventName.PIECE_SELECTOR_SEARCH,
+        payload: {
+          search: props.searchQuery,
+          isTrigger: props.type === 'trigger',
+          selectedActionOrTriggerName: null,
+        },
+      });
     }
+    return {
+      isLoading: false,
+      data: categorizeStepsForSelector({
+        metadata,
+        platform,
+        selectedTab,
+        selectedCustomTabId,
+        type: props.type,
+        environment: environment ?? null,
+      }),
+    };
   },
   usePieceOptions: <
     T extends
@@ -493,6 +385,155 @@ export const piecesMutations = {
   },
 };
 
+function categorizeStepsForSelector({
+  metadata,
+  platform,
+  selectedTab,
+  selectedCustomTabId,
+  type,
+  environment,
+}: {
+  metadata: StepMetadataWithSuggestions[];
+  platform: SelectorPlatform;
+  selectedTab: PieceSelectorTabType;
+  selectedCustomTabId: string | null;
+  type: 'action' | 'trigger';
+  environment: ApEnvironment | null;
+}): CategorizedStepMetadataWithSuggestions[] {
+  return groupStepsForSelector({
+    metadata: filterOutPiecesWithNoSuggestions(metadata),
+    platform,
+    selectedTab,
+    selectedCustomTabId,
+    type,
+    environment,
+  });
+}
+
+function groupStepsForSelector({
+  metadata: piecesMetadataWithoutEmptySuggestions,
+  platform,
+  selectedTab,
+  selectedCustomTabId,
+  type,
+  environment,
+}: {
+  metadata: StepMetadataWithSuggestions[];
+  platform: SelectorPlatform;
+  selectedTab: PieceSelectorTabType;
+  selectedCustomTabId: string | null;
+  type: 'action' | 'trigger';
+  environment: ApEnvironment | null;
+}): CategorizedStepMetadataWithSuggestions[] {
+  const pinnedPieces = getPinnedPieces(
+    piecesMetadataWithoutEmptySuggestions,
+    platform.pinnedPieces ?? [],
+  );
+
+  const popularPieces = getPopularPieces(
+    piecesMetadataWithoutEmptySuggestions,
+    platform.pinnedPieces ?? [],
+  );
+
+  const flowControllerPieces =
+    piecesMetadataWithoutEmptySuggestions.filter(isFlowController);
+
+  const utilityPieces =
+    piecesMetadataWithoutEmptySuggestions.filter(isUtilityPiece);
+
+  const pieceMetadataWithoutPopularOrPinnedPieces =
+    piecesMetadataWithoutEmptySuggestions.filter(
+      (p) => !popularPieces.includes(p) && !pinnedPieces.includes(p),
+    );
+
+  const appPieces =
+    pieceMetadataWithoutPopularOrPinnedPieces.filter(isAppPiece);
+
+  const utilitiesCategory = {
+    title: t('Utility'),
+    metadata: utilityPieces,
+  };
+  const flowControllerCategory = {
+    title: t('Flow Controller'),
+    metadata: flowControllerPieces,
+  };
+  const appsCategory = {
+    title: t('Apps'),
+    metadata: appPieces,
+  };
+  const popularCategory = {
+    title: t('Popular'),
+    metadata: popularPieces,
+  };
+  const allCategory = {
+    title: t('All'),
+    metadata: piecesMetadataWithoutEmptySuggestions,
+  };
+
+  switch (selectedTab) {
+    case PieceSelectorTabType.EXPLORE:
+      return getExploreTabContent(
+        piecesMetadataWithoutEmptySuggestions,
+        platform,
+        type,
+        environment,
+      );
+    case PieceSelectorTabType.UTILITY:
+      return [utilitiesCategory, flowControllerCategory];
+    case PieceSelectorTabType.AI_AND_AGENTS:
+      return getAiAndAgentsPieces(piecesMetadataWithoutEmptySuggestions);
+    case PieceSelectorTabType.APPROVALS:
+      return [];
+    case PieceSelectorTabType.CUSTOM: {
+      const customTab = pieceSelectorCustomization.getCustomTab({
+        config: platform.pieceSelectorConfig,
+        customTabId: selectedCustomTabId,
+      });
+      const categories: CategorizedStepMetadataWithSuggestions[] = [];
+      const flatPieces = getPinnedPieces(
+        piecesMetadataWithoutEmptySuggestions,
+        customTab?.pieceNames ?? [],
+      );
+      if (flatPieces.length > 0) {
+        categories.push({
+          title: customTab?.title ?? t('All'),
+          metadata: flatPieces,
+        });
+      }
+      for (const section of customTab?.sections ?? []) {
+        const sectionPieces = getPinnedPieces(
+          piecesMetadataWithoutEmptySuggestions,
+          section.pieceNames,
+        );
+        if (sectionPieces.length > 0) {
+          categories.push({
+            title: section.title,
+            metadata: sectionPieces,
+          });
+        }
+      }
+      return categories;
+    }
+    case PieceSelectorTabType.APPS: {
+      const popularAppsCategory = {
+        ...popularCategory,
+        metadata: popularCategory.metadata.filter(isAppPiece),
+      };
+      return pinnedPieces.length > 0
+        ? [
+            { title: t('Highlights'), metadata: pinnedPieces },
+            popularAppsCategory,
+            appsCategory,
+          ]
+        : [popularAppsCategory, appsCategory];
+    }
+
+    case PieceSelectorTabType.NONE: {
+      return allCategory.metadata.length > 0 ? [allCategory] : [];
+    }
+  }
+}
+
 const isPieceNotFoundError = (error: unknown) =>
   api.isError(error) && error.response?.status === 404;
 
@@ -521,7 +562,7 @@ const filterOutPiecesWithNoSuggestions = (
 
 const getExploreTabContent = (
   queryResult: StepMetadataWithSuggestions[],
-  platform: PlatformWithoutSensitiveData,
+  platform: SelectorPlatform,
   type: 'action' | 'trigger',
   environment: ApEnvironment | null,
 ) => {
