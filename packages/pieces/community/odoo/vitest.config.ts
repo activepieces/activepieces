@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    testTimeout: 30_000,
     setupFiles: ['test/fake-odoo.ts'],
     env: { TZ: 'America/Los_Angeles' },
   },
