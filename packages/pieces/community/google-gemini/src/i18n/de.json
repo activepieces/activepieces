@@ -101,5 +101,6 @@
   "None": "Keine",
   "JSON": "JSON",
   "Form Data": "Formulardaten",
-  "Raw": "Rohe"
+  "Raw": "Rohe",
+  "Saved for the whole project, so other flows that use this key join the same conversation.": "Wird für das ganze Projekt gespeichert, daher setzen andere Flows mit diesem Schlüssel dasselbe Gespräch fort."
 }

@@ -101,5 +101,6 @@
   "None": "Ninguna",
   "JSON": "JSON",
   "Form Data": "Datos de Formulario",
-  "Raw": "Rápido"
+  "Raw": "Rápido",
+  "Saved for the whole project, so other flows that use this key join the same conversation.": "Se guarda para todo el proyecto, así que otros flujos que usen esta clave continúan la misma conversación."
 }
