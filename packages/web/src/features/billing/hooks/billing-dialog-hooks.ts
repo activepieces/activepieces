@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import type { BillingCycle } from '../components/plan-selector-utils';
+import type { FeatureKey } from '../components/request-trial';
 
 const useManagePlanDialogStore = create<ManagePlanDialogStore>((set) => ({
   isOpen: false,
@@ -24,10 +25,24 @@ const usePlanSwitchSuccessDialogStore = create<PlanSwitchSuccessDialogStore>(
   }),
 );
 
+const useEnterpriseTrialDialogStore = create<EnterpriseTrialDialogStore>(
+  (set) => ({
+    payload: null,
+    openDialog: (payload) => set({ payload }),
+    closeDialog: () => set({ payload: null }),
+  }),
+);
+
 export const billingDialogHooks = {
   useManagePlanDialogStore,
   useConfirmPurchaseDialogStore,
   usePlanSwitchSuccessDialogStore,
+  useEnterpriseTrialDialogStore,
+};
+
+export type EnterpriseTrialDialogPayload = {
+  featureKey?: FeatureKey;
+  resume?: () => Promise<unknown>;
 };
 
 type PlanPurchase = {
@@ -54,5 +69,11 @@ type ConfirmPurchaseDialogStore = {
 type PlanSwitchSuccessDialogStore = {
   planId: string | null;
   openDialog: (planId: string) => void;
+  closeDialog: () => void;
+};
+
+type EnterpriseTrialDialogStore = {
+  payload: EnterpriseTrialDialogPayload | null;
+  openDialog: (payload: EnterpriseTrialDialogPayload) => void;
   closeDialog: () => void;
 };

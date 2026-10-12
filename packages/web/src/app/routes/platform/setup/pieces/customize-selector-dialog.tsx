@@ -9,7 +9,6 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
-  Gem,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -53,7 +52,12 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import {
+  EnterpriseGateState,
+  LockedGem,
+  PLATFORM_FEATURES,
+  useEnterpriseGate,
+} from '@/features/billing';
 import {
   PieceIcon,
   pieceSelectorCustomization,
@@ -74,36 +78,11 @@ export const CustomizeSelectorDialog = ({
   isEnabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
-  const gate = useFeatureGate({
-    locked: !isEnabled,
-    feature: PLATFORM_FEATURES.pieces,
+  const gate = useEnterpriseGate({
+    unlocked: isEnabled,
+    featureKey: 'PIECES',
   });
   const { capture } = useTelemetry();
-
-  if (gate.locked) {
-    return (
-      <>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            capture({
-              name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
-              payload: {
-                feature: PLATFORM_FEATURES.pieces.featureKey,
-                control: AdminControl.PIECES_SELECTOR_OPEN,
-              },
-            });
-            gate.open();
-          }}
-        >
-          <Gem className="size-3.5 shrink-0 text-accent-11" />
-          {t('Customize Selector')}
-        </Button>
-        {gate.dialog}
-      </>
-    );
-  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -112,8 +91,23 @@ export const CustomizeSelectorDialog = ({
           {...adminControl(AdminControl.PIECES_SELECTOR_OPEN)}
           variant="outline"
           size="sm"
+          onClick={() => {
+            if (gate.locked) {
+              capture({
+                name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+                payload: {
+                  feature: PLATFORM_FEATURES.pieces.featureKey,
+                  control: AdminControl.PIECES_SELECTOR_OPEN,
+                },
+              });
+            }
+          }}
         >
-          <Settings2Icon />
+          {gate.locked ? (
+            <LockedGem className="text-accent-11" />
+          ) : (
+            <Settings2Icon />
+          )}
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>
@@ -123,6 +117,7 @@ export const CustomizeSelectorDialog = ({
       >
         <SelectorTabsEditor
           key={open ? 'open' : 'closed'}
+          gate={gate}
           onClose={() => setOpen(false)}
         />
       </SheetContent>
@@ -130,7 +125,13 @@ export const CustomizeSelectorDialog = ({
   );
 };
 
-const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
+const SelectorTabsEditor = ({
+  gate,
+  onClose,
+}: {
+  gate: EnterpriseGateState;
+  onClose: () => void;
+}) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(
     platform.pieceSelectorConfig?.tabs.length
@@ -197,7 +198,9 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       return;
     }
     setValidationError(null);
-    saveMutation.mutate({ tabs: normalizedTabs }, { onSuccess: onClose });
+    gate.run(() =>
+      saveMutation.mutateAsync({ tabs: normalizedTabs }).then(onClose),
+    );
   };
 
   return (
@@ -254,6 +257,10 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           confirmLabel={t('Reset')}
           controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
           onConfirm={async () => {
+            if (gate.locked) {
+              onClose();
+              return;
+            }
             await saveMutation.mutateAsync(null);
             onClose();
           }}
@@ -276,6 +283,7 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
             onClick={handleSave}
             loading={saveMutation.isPending}
           >
+            {gate.locked && <LockedGem />}
             {t('Save')}
           </Button>
         </div>

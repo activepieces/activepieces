@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { PlatformBillingInformation } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Sparkles } from 'lucide-react';
+import { Gem } from 'lucide-react';
 
 import nonFreePlanBg from '@/assets/img/custom/non-free-plan-bg.jpg';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { billingUtils } from '../utils/billing-utils';
+
+import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
 type CurrentSubscriptionCardProps = {
   info: PlatformBillingInformation;
@@ -23,44 +26,48 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
-  const trialEndsAt = liveEnterpriseTrialEndsAt(info);
+  const trial = enterpriseTrialHooks.useTrial();
+  const trialEndsAt = trial.state === 'active' ? trial.endsAt : null;
 
-  if (!isNil(trialEndsAt)) {
+  if (!isNil(trialEndsAt) && !isPaid) {
     return (
-      <div
-        className={cn(
-          'flex flex-col gap-4 rounded-xl border border-accent-7 p-5',
-          'bg-gradient-to-r from-accent-2 to-accent-3',
-        )}
-      >
+      <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
         <div className="flex items-center gap-2 text-sm text-gray-11">
-          <Sparkles className="size-4 text-accent-11" />
+          <Gem className="size-4 text-accent-11" />
           {t('Current plan')}
         </div>
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-2">
             <span className="text-2xl font-semibold">
-              {t('Enterprise Trial')}
+              {t('Enterprise plan trial')}
             </span>
             <Badge variant="outline" className="rounded-full">
               {t('{count, plural, =1 {1 day left} other {# days left}}', {
-                count: Math.max(
-                  1,
-                  Math.ceil(dayjs(trialEndsAt).diff(dayjs(), 'hour') / 24),
-                ),
+                count: trial.daysLeft,
               })}
             </Badge>
           </span>
           <span className="text-sm text-gray-11">
-            {t('Ends {date}, then you go back to the {plan}.', {
-              date: dayjs(trialEndsAt).format('MMM D, YYYY'),
-              plan: planTitle(info),
-            })}
+            {t(
+              'Ends {date}, then you are back on the {plan} plan. Talk to our team to keep the Enterprise plan. Your credits are not affected.',
+              {
+                date: dayjs(trialEndsAt).format('MMM D'),
+                plan: trial.basePlanName,
+              },
+            )}
           </span>
         </div>
-        <Button className="w-full" onClick={onExplorePlans}>
-          {t('Upgrade')}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <EnterpriseTrialSalesLink
+            surface="enterprise_trial_billing"
+            variant="default"
+            className="flex-1"
+            label={t('Talk to sales')}
+          />
+          <Button variant="outline" className="flex-1" onClick={onExplorePlans}>
+            {t('Explore plans')}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -111,16 +118,6 @@ export const CurrentSubscriptionCard = ({
     </div>
   );
 };
-
-function liveEnterpriseTrialEndsAt(
-  info: PlatformBillingInformation,
-): string | null {
-  const endsAt = info.plan.enterpriseTrialEndsAt;
-  if (isNil(endsAt) || dayjs(endsAt).isBefore(dayjs())) {
-    return null;
-  }
-  return endsAt;
-}
 
 function planTitle(info: PlatformBillingInformation): string {
   if (!billingUtils.isPaidPlan(info.plan.plan)) {

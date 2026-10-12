@@ -38,7 +38,9 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/hooks/user-hooks', () => ({
   userHooks: {
     getCurrentUserPlatformRole: () => 'ADMIN',
-    useCurrentUser: () => ({ data: undefined }),
+    useCurrentUser: () => ({
+      data: { email: 'ada@acme.com', firstName: 'Ada', lastName: 'Lovelace' },
+    }),
   },
 }));
 vi.mock('@/hooks/authorization-hooks', () => ({
@@ -50,11 +52,21 @@ vi.mock('@/hooks/flags-hooks', () => ({
     useFlags: () => ({ data: {} }),
   },
 }));
-vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
-  billingDialogHooks: {
-    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+vi.mock(
+  '@/features/billing/hooks/billing-dialog-hooks',
+  async (importOriginal) => {
+    const actual = await importOriginal<
+      typeof import('@/features/billing/hooks/billing-dialog-hooks')
+    >();
+    return {
+      ...actual,
+      billingDialogHooks: {
+        ...actual.billingDialogHooks,
+        useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+      },
+    };
   },
-}));
+);
 vi.mock('@/features/connections', () => ({
   globalConnectionsQueries: {
     useGlobalConnections: () => ({ data: { data: [] }, isLoading: false }),
@@ -94,8 +106,7 @@ vi.mock('@/components/ui/sidebar-shadcn', () => ({
 }));
 
 import { FeatureSample } from '@/app/components/feature-sample';
-import { FeatureTeaser } from '@/app/components/feature-teaser';
-import { UpgradeFeatureDialog } from '@/features/billing';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 import { ADMIN_CONTROL_ATTRIBUTE, AdminControl } from '@/lib/admin-control';
 
@@ -126,46 +137,61 @@ beforeEach(() => {
 });
 
 describe('platform admin telemetry', () => {
-  it('reports the upgrade click from the sample overlay with its tier', () => {
-    render(
-      <FeatureSample
-        locked
-        title="Unlock Audit Logs"
-        tier="enterprise"
-        featureKey="AUDIT_LOGS"
-      >
-        <div />
-      </FeatureSample>,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /upgrade to/i }));
-    expect(
-      capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
-    ).toEqual({
-      feature: 'AUDIT_LOGS',
-      tier: 'enterprise',
-      surface: PlatformAdminSurface.SAMPLE,
-    });
-  });
-
   it('reports the sales enquiry from the sample overlay', () => {
-    edition = ApEdition.COMMUNITY;
-    render(
+    renderWithQueryClient(
       <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
         <div />
       </FeatureSample>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
+    fireEvent.click(screen.getByRole('link', { name: /talk to sales/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
     ).toEqual({ feature: 'AUDIT_LOGS', surface: PlatformAdminSurface.SAMPLE });
   });
 
-  it('reports the sales enquiry from the full page teaser', () => {
+  it('reports the sales enquiry from the sample overlay on community', () => {
     edition = ApEdition.COMMUNITY;
-    render(
-      <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
+    renderWithQueryClient(
+      <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
+        <div />
+      </FeatureSample>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
+    fireEvent.click(screen.getByRole('link', { name: /talk to sales/i }));
+    expect(
+      capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
+    ).toEqual({ feature: 'AUDIT_LOGS', surface: PlatformAdminSurface.SAMPLE });
+  });
+
+  it('opens the sales form already filled in with the viewer and the feature', () => {
+    renderWithQueryClient(
+      <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
+        <div />
+      </FeatureSample>,
+    );
+    const href = screen
+      .getByRole('link', { name: /talk to sales/i })
+      .getAttribute('href');
+    const params = new URL(href ?? '').searchParams;
+    expect(params.get('email')).toBe('ada@acme.com');
+    expect(params.get('firstName')).toBe('Ada');
+    expect(params.get('lastName')).toBe('Lovelace');
+    expect(params.get('featureKey')).toBe('AUDIT_LOGS');
+    expect(params.get('ap_cta')).toBe('app_audit_logs');
+  });
+
+  it('reports the sales enquiry from a locked page', () => {
+    edition = ApEdition.COMMUNITY;
+    renderWithQueryClient(
+      <LockedFeatureGuard
+        locked
+        featureKey="API"
+        lockTitle="Enable API Keys"
+        lockDescription=""
+      >
+        <div />
+      </LockedFeatureGuard>,
+    );
+    fireEvent.click(screen.getByRole('link', { name: /talk to sales/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
     ).toEqual({ feature: 'API', surface: PlatformAdminSurface.TEASER });
@@ -186,27 +212,6 @@ describe('platform admin telemetry', () => {
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED),
     ).toEqual({ limit: PlatformAdminLimit.TEAM_PROJECTS, used: 3, allowed: 3 });
-  });
-
-  it('names the feature by its stable key on every surface, not the title', () => {
-    render(
-      <UpgradeFeatureDialog
-        open
-        onOpenChange={vi.fn()}
-        featureKey="PROJECTS"
-        title="Unlock Projects"
-        description=""
-        tier="team"
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /upgrade plan/i }));
-    expect(
-      capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
-    ).toEqual({
-      feature: 'PROJECTS',
-      tier: 'team',
-      surface: PlatformAdminSurface.DIALOG,
-    });
   });
 
   it('stays silent while the plan still has room', () => {

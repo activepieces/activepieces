@@ -32,7 +32,7 @@ import {
   UsersCard,
   billingMutations,
   billingUtils,
-  enterpriseTrialHooks,
+  EnterpriseTrialBillingStatus,
   useCancelSubscriptionGuard,
   billingDialogHooks,
 } from '@/features/billing';
@@ -121,7 +121,6 @@ function PlanTab({ platform, info }: PlanTabProps) {
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const { cancelWithSeatCheck, deactivateUsersDialog } =
     useCancelSubscriptionGuard();
-  const trialEndsAt = enterpriseTrialHooks.useLiveTrialEndsAt();
 
   const isCloud = edition === ApEdition.CLOUD;
 
@@ -159,6 +158,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
           </AlertDescription>
         </Alert>
       )}
+      <EnterpriseTrialBillingStatus />
       <div className="flex flex-col gap-6">
         {!isCommunity && (
           <BillingSection
@@ -166,13 +166,9 @@ function PlanTab({ platform, info }: PlanTabProps) {
             description={
               <div className="flex flex-col gap-2">
                 <span>
-                  {isNil(trialEndsAt)
-                    ? t('Your current plan is {plan}.', {
-                        plan: info.autumnPlanName ?? t('Free'),
-                      })
-                    : t('You are on the Enterprise Trial until {date}.', {
-                        date: dayjs(trialEndsAt).format('MMM D, YYYY'),
-                      })}{' '}
+                  {t('Your current plan is {plan}.', {
+                    plan: info.autumnPlanName ?? t('Free'),
+                  })}{' '}
                   {t(
                     'Upgrade anytime to get more credits and unlock features.',
                   )}

@@ -34,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LockedGem, useEnterpriseGate } from '@/features/billing';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import {
   ROLE_BASES,
@@ -44,6 +45,7 @@ import {
   projectRoleApi,
   projectRoleMutations,
 } from '@/features/platform-admin';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { mutationFeedback } from '@/lib/mutation-feedback';
@@ -131,6 +133,11 @@ function RoleDialogBody({
   const [tab, setTab] = useState<RoleDialogTab>(initialTab);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const { platform } = platformHooks.useCurrentPlatform();
+  const gate = useEnterpriseGate({
+    unlocked: platform.plan.customRolesEnabled,
+    featureKey: 'CUSTOM_ROLES',
+  });
   const { mutate: upsertRole, isPending: isSaving } = save;
   const { mutateAsync: deleteRole } = useAdminAction<string>({
     verb: 'delete',
@@ -184,37 +191,42 @@ function RoleDialogBody({
     if (!canSubmit || submitting.current) {
       return;
     }
-    submitting.current = true;
     setSaveError(null);
     const roleName = name.trim();
-    upsertRole(
-      {
-        mode,
-        roleId: projectRole?.id,
-        name: roleName,
-        permissions,
-        type: RoleType.CUSTOM,
+    gate.run(
+      () => {
+        submitting.current = true;
+        upsertRole(
+          {
+            mode,
+            roleId: projectRole?.id,
+            name: roleName,
+            permissions,
+            type: RoleType.CUSTOM,
+          },
+          {
+            onSettled: () => {
+              submitting.current = false;
+            },
+            onSuccess: () => {
+              if (isCreate) {
+                adminFeedback.done({ verb: 'create', name: roleName });
+              }
+            },
+            onError: (error) => {
+              if (mutationFeedback.isQuotaExceeded(error)) {
+                mutationFeedback.error({ error });
+              }
+              setSaveError(
+                isDuplicateNameError(error)
+                  ? t('nameAlreadyTaken', { name: roleName })
+                  : mutationFeedback.message(error),
+              );
+            },
+          },
+        );
       },
-      {
-        onSettled: () => {
-          submitting.current = false;
-        },
-        onSuccess: () => {
-          if (isCreate) {
-            adminFeedback.done({ verb: 'create', name: roleName });
-          }
-        },
-        onError: (error) => {
-          if (mutationFeedback.isQuotaExceeded(error)) {
-            mutationFeedback.error({ error });
-          }
-          setSaveError(
-            isDuplicateNameError(error)
-              ? t('nameAlreadyTaken', { name: roleName })
-              : mutationFeedback.message(error),
-          );
-        },
-      },
+      { resumable: isCreate },
     );
   };
 
@@ -468,6 +480,7 @@ function RoleDialogBody({
                   : AdminControl.ROLES_EDIT_SUBMIT,
               )}
             >
+              {gate.locked && <LockedGem />}
               {isCreate ? t('Create role') : t('Save changes')}
             </Button>
           </div>

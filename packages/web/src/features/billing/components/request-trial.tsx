@@ -18,7 +18,7 @@ export const RequestTrial = ({
   buttonVariant = 'default',
   buttonSize = 'default',
 }: RequestTrialProps) => {
-  const { data: currentUser } = userHooks.useCurrentUser();
+  const salesUrl = useSalesUrl(featureKey);
   const { capture } = useTelemetry();
 
   const handleClick = () => {
@@ -32,11 +32,7 @@ export const RequestTrial = ({
       name: TelemetryEventName.SALES_HANDOFF_CLICKED,
       payload: { featureKey, surface: 'locked_feature' },
     });
-    window.open(
-      buildSalesUrl({ currentUser, featureKey }),
-      '_blank',
-      'noopener noreferrer',
-    );
+    window.open(salesUrl, '_blank', 'noopener noreferrer');
   };
 
   return (
@@ -47,24 +43,36 @@ export const RequestTrial = ({
       icon={SendIcon}
       iconSize={14}
     >
-      {t('Contact Sales')}
+      {t('Talk to sales')}
     </AnimatedIconButton>
   );
 };
+
+export function useSalesUrl(featureKey?: FeatureKey): string {
+  const { data: currentUser } = userHooks.useCurrentUser();
+  return buildSalesUrl({ currentUser, featureKey });
+}
 
 function buildSalesUrl({
   currentUser,
   featureKey,
 }: {
   currentUser: UserWithMetaInformation | null | undefined;
-  featureKey: FeatureKey;
+  featureKey: FeatureKey | undefined;
 }): string {
   const url = new URL(SALES_URL);
   url.searchParams.set('email', currentUser?.email ?? '');
   url.searchParams.set('firstName', currentUser?.firstName ?? '');
   url.searchParams.set('lastName', currentUser?.lastName ?? '');
-  url.searchParams.set('featureKey', featureKey);
-  url.searchParams.set('ap_cta', `app_${featureKey.toLowerCase()}`);
+  if (!isNil(featureKey)) {
+    url.searchParams.set('featureKey', featureKey);
+  }
+  url.searchParams.set(
+    'ap_cta',
+    isNil(featureKey)
+      ? 'app_enterprise_trial'
+      : `app_${featureKey.toLowerCase()}`,
+  );
   const sessionId = telemetryUtils.getSessionId();
   if (!isNil(sessionId)) {
     url.searchParams.set('ap_sid', sessionId);

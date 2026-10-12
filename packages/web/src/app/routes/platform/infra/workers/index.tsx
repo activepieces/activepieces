@@ -24,11 +24,11 @@ import {
   AdminPage,
   AdminPageHeader,
   AdminQueryState,
-  LockedCallout,
   StatusDot,
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
+import { EnterpriseLockedSection } from '@/app/components/enterprise-gate';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { RequestTrial } from '@/features/billing';
 import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -78,20 +77,11 @@ export default function WorkersPage({ section }: WorkersPageProps) {
       {section === 'health' &&
         isCloud &&
         fleetType === WorkerMachineType.SHARED && (
-          <LockedCallout
-            variant="inline"
-            icon={<Zap />}
-            title={t('Upgrade to Dedicated Workers')}
-            description={t(
-              'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
-            )}
-          >
-            <RequestTrial
-              featureKey="DEDICATED_WORKERS"
-              buttonVariant="default"
-              buttonSize="sm"
-            />
-          </LockedCallout>
+          <EnterpriseLockedSection
+            unlocked={false}
+            featureKey="DEDICATED_WORKERS"
+            title={t('Start every automation faster on your own workers')}
+          />
         )}
       {section === 'health' &&
         isCloud &&
@@ -147,7 +137,6 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           lockDescription={t(
             'Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest',
           )}
-          lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
         >
           <WorkerAssignmentsTab />
         </LockedFeatureGuard>
