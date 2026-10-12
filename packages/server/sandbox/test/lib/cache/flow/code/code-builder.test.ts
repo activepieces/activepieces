@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readdir, readFile, realpath, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
@@ -426,5 +426,86 @@ describe('codeBuilder atomic step builds', () => {
         const failedStepDir = codeCache(codesFolderPath).stepDir({ flowVersionId: failedArtifact.flowVersionId, stepName: failedArtifact.name })
         expect(existsSync(join(failedStepDir, 'node_modules'))).toBe(false)
         await expect(readFile(join(failedStepDir, 'index.ts'), 'utf8')).resolves.toContain('install interrupted')
+    })
+})
+
+describe('codeBuilder publication never deletes the live build', () => {
+    it('keeps the previous build fully readable through an independent builder publishing a replacement', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const stepDir = codeCache(codesFolderPath).stepDir(ref)
+        mockInstallSuccess()
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        const liveBuildDir = await realpath(stepDir)
+        await expect(readFile(join(liveBuildDir, 'index.ts'), 'utf8')).resolves.toBe(SOURCE)
+
+        const changedSource = 'export const code = async () => 43'
+        const changedArtifact = { ...artifact, sourceCode: { ...artifact.sourceCode, code: changedSource } }
+        let liveEntryDuringPublication: string | null = null
+        transpileMock.mockImplementation(async () => {
+            liveEntryDuringPublication = await readFile(join(liveBuildDir, 'index.ts'), 'utf8')
+            return { code: TRANSPILED_SOURCE }
+        })
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact: changedArtifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        expect(liveEntryDuringPublication).toBe(SOURCE)
+        await expect(readFile(join(liveBuildDir, 'index.ts'), 'utf8')).resolves.toBe(SOURCE)
+        expect(existsSync(join(liveBuildDir, 'node_modules'))).toBe(true)
+        await expect(readFile(join(stepDir, 'index.ts'), 'utf8')).resolves.toBe(changedSource)
+        expect(await realpath(stepDir)).not.toBe(liveBuildDir)
+    })
+
+    it('garbage-collects builds two generations old, keeping the current and previous ones', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{}')
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const stepDir = codeCache(codesFolderPath).stepDir(ref)
+        const buildDirs: string[] = []
+
+        for (const source of [SOURCE, 'export const code = async () => 2', 'export const code = async () => 3']) {
+            const versionArtifact = { ...artifact, sourceCode: { ...artifact.sourceCode, code: source } }
+            await expect(
+                codeBuilder(noopLog, getSettings).processCodeStep({ artifact: versionArtifact, codesFolderPath }),
+            ).resolves.toBe('success')
+            buildDirs.push(await realpath(stepDir))
+            const backdated = new Date(Date.now() - 10 * 60 * 1000)
+            for (const dir of buildDirs) {
+                if (existsSync(dir)) {
+                    await utimes(dir, backdated, backdated)
+                }
+            }
+        }
+
+        expect(existsSync(buildDirs[0])).toBe(false)
+        expect(existsSync(buildDirs[1])).toBe(true)
+        expect(await realpath(stepDir)).toBe(buildDirs[2])
+    })
+
+    it('upgrades a pre-symlink real step directory in place, preserving it for in-flight runs', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{}')
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const stepDir = codeCache(codesFolderPath).stepDir(ref)
+        await mkdir(stepDir, { recursive: true })
+        await writeFile(join(stepDir, 'index.ts'), 'legacy-layout-content', 'utf8')
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        expect((await lstat(stepDir)).isSymbolicLink()).toBe(true)
+        await expect(readFile(join(stepDir, 'index.ts'), 'utf8')).resolves.toBe(SOURCE)
+        const siblings = await readdir(join(stepDir, '..'))
+        const legacyDir = siblings.find((name) => name.includes('-build-legacy-'))
+        expect(legacyDir).toBeDefined()
+        await expect(readFile(join(stepDir, '..', legacyDir!, 'index.ts'), 'utf8')).resolves.toBe('legacy-layout-content')
     })
 })

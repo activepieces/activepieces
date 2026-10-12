@@ -38,6 +38,8 @@ const TS_CONFIG_CONTENT = `
 
 const DENO_TRANSPILER_VERSION = 'sucrase-v1'
 
+const SUPERSEDED_BUILD_MIN_AGE_MS = 5 * 60 * 1000
+
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
 
 const INVALID_DENO_ARTIFACT_TEMPLATE = `
@@ -231,17 +233,58 @@ async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Pr
 }
 
 async function swapIntoPlace({ stagingPath, targetPath }: SwapIntoPlaceParams): Promise<void> {
+    const buildPath = stagingPath.replace('-staging-', '-build-')
+    await fs.rename(stagingPath, buildPath)
+
+    const keep = new Set([path.basename(buildPath)])
+    const { data: previousTarget } = await tryCatch(() => fs.readlink(targetPath))
+    if (!isNil(previousTarget)) {
+        keep.add(path.basename(previousTarget))
+    }
+
+    const linkPath = `${buildPath}-link`
+    await tryCatch(() => rm(linkPath, { force: true }))
+    await fs.symlink(path.basename(buildPath), linkPath)
+
     const attempts = 3
     let lastError: Error | null = null
+    let published = false
     for (let attempt = 0; attempt < attempts; attempt++) {
-        await tryCatch(() => rm(targetPath, { recursive: true, force: true }))
-        const { error } = await tryCatch(() => fs.rename(stagingPath, targetPath))
+        const { error } = await tryCatch(() => fs.rename(linkPath, targetPath))
         if (error === null) {
-            return
+            published = true
+            break
         }
         lastError = error
+        const legacyDirPath = `${targetPath}-build-legacy-${nanoid()}`
+        const { error: moveError } = await tryCatch(() => fs.rename(targetPath, legacyDirPath))
+        if (moveError === null) {
+            keep.add(path.basename(legacyDirPath))
+        }
     }
-    throw new Error(`Failed to move the built code step into place at ${targetPath}: ${lastError?.message}`)
+    if (!published) {
+        throw new Error(`Failed to publish the built code step at ${targetPath}: ${lastError?.message}`)
+    }
+
+    await cleanupSupersededBuilds({ targetPath, keep })
+}
+
+async function cleanupSupersededBuilds({ targetPath, keep }: CleanupSupersededBuildsParams): Promise<void> {
+    const parentDir = path.dirname(targetPath)
+    const buildPrefix = `${path.basename(targetPath)}-build-`
+    const { data: siblings } = await tryCatch(() => fs.readdir(parentDir))
+    if (isNil(siblings)) {
+        return
+    }
+    const superseded = siblings.filter((name) => name.startsWith(buildPrefix) && !keep.has(name))
+    await Promise.all(superseded.map(async (name) => tryCatch(async () => {
+        const siblingPath = path.join(parentDir, name)
+        const { mtimeMs } = await fs.lstat(siblingPath)
+        const oldEnoughToNotBeMidPublish = Date.now() - mtimeMs > SUPERSEDED_BUILD_MIN_AGE_MS
+        if (oldEnoughToNotBeMidPublish) {
+            await rm(siblingPath, { recursive: true, force: true })
+        }
+    })))
 }
 
 async function writeInvalidArtifact({ entryPath, useDeno, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
@@ -271,6 +314,11 @@ type CompileCodeParams = {
 type SwapIntoPlaceParams = {
     stagingPath: string
     targetPath: string
+}
+
+type CleanupSupersededBuildsParams = {
+    targetPath: string
+    keep: Set<string>
 }
 
 type WriteInvalidArtifactParams = {
