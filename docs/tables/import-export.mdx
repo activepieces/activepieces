@@ -28,6 +28,7 @@ Activepieces checks the file before changing anything. If the file doesn't match
 ```json
 {
   "name": "Customers",
+  "externalId": "customers",
   "fields": [
     { "name": "Email", "type": "TEXT", "externalId": "email" },
     {
@@ -38,6 +39,7 @@ Activepieces checks the file before changing anything. If the file doesn't match
     }
   ],
   "data": {
+    "type": "CSV",
     "rows": [
       [
         { "fieldId": "email", "value": "jane@example.com" },
@@ -58,7 +60,7 @@ Each column's `type` must be one of these:
 | `DATETIME` | Date & Time |
 | `STATIC_DROPDOWN` | Dropdown. Also needs `data.options` with its values. |
 
-`externalId` is optional, but a cell's value is only imported when its `fieldId` matches a column's `externalId`. A row whose cells match no column is imported as an empty record. Rows beyond the table's record limit are dropped.
+The table and every column need an `externalId`. A cell's value is only imported when its `fieldId` matches a column's `externalId`. A row whose cells match no column is imported as an empty record. Rows beyond the table's record limit are dropped.
 
 ## Exporting
 

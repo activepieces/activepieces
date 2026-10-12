@@ -45,14 +45,6 @@ describe('tablesUtils.getTemplateError', () => {
   it.each([
     ['an exported table template', customers],
     [
-      'a template without externalIds and with non-string cell values',
-      {
-        name: 'Customers',
-        fields: [{ name: 'Email', type: 'TEXT' }],
-        data: { rows: [[{ fieldId: 'email', value: 42 }]] },
-      },
-    ],
-    [
       'a git-sync table state with no data',
       {
         name: 'Leads',
@@ -72,18 +64,47 @@ describe('tablesUtils.getTemplateError', () => {
     [
       'a file that is not a table',
       { name: 'Send a Slack message', trigger: { type: 'PIECE_TRIGGER' } },
-      'it is missing the table name or the list of columns',
+      'it has no list of columns',
+    ],
+    [
+      'a table that is not an object',
+      'Customers',
+      'one of its tables is not in the expected format',
+    ],
+    [
+      'a table with no name',
+      { ...customers, name: undefined },
+      'the table has no name',
+    ],
+    [
+      'a status that is not text',
+      { ...customers, status: true },
+      'the table status is not in the expected format',
+    ],
+    [
+      'a trigger that is not text',
+      { ...customers, trigger: { type: 'ON_NEW_RECORD' } },
+      'the table trigger is not in the expected format',
     ],
     [
       'an unsupported column type',
-      { ...customers, fields: [{ name: 'Email', type: 'NOT_A_REAL_TYPE' }] },
+      { ...customers, fields: [
+          { name: 'Email', type: 'NOT_A_REAL_TYPE', externalId: 'email' },
+        ], },
       'column "Email" has an unsupported type "NOT_A_REAL_TYPE"',
     ],
     [
       'a dropdown with no options',
       {
         ...customers,
-        fields: [{ name: 'Plan', type: 'STATIC_DROPDOWN', data: null }],
+        fields: [
+          {
+            name: 'Plan',
+            type: 'STATIC_DROPDOWN',
+            data: null,
+            externalId: 'plan',
+          },
+        ],
       },
       'column "Plan" is a dropdown with no options',
     ],
@@ -91,6 +112,24 @@ describe('tablesUtils.getTemplateError', () => {
       'a column with no name',
       { ...customers, fields: [{ type: 'TEXT' }] },
       'column 1 has no name',
+    ],
+    [
+      'a table with no externalId',
+      { ...customers, externalId: undefined },
+      'the table has no externalId',
+    ],
+    [
+      'a column with no externalId',
+      { ...customers, fields: [{ name: 'Email', type: 'TEXT' }] },
+      'column "Email" has no externalId',
+    ],
+    [
+      'a cell whose value is not text',
+      {
+        ...customers,
+        data: { type: 'CSV', rows: [[{ fieldId: 'email', value: 42 }]] },
+      },
+      'its rows are not in the expected format',
     ],
     [
       'rows that are not arrays of cells',

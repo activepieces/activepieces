@@ -136,7 +136,7 @@ function findTemplateIssue({
       'it has more than one table, but you can only import one into an existing table',
     );
   }
-  const parsed = TemplateTablesSchema.safeParse(tables);
+  const parsed = TableTemplate.array().safeParse(tables);
   if (!parsed.success) {
     const { issues } = parsed.error;
     const tableNameOrFieldsIssue = issues.find(
@@ -164,24 +164,57 @@ function describeTemplateIssue({
   tables: TableTemplate[];
 }): string {
   const [tableIndex, section, fieldIndex, key] = path;
-  if (section === 'data') {
-    return t('its rows are not in the expected format');
+  const tableKey = TableTemplate.keyof().safeParse(section);
+  if (!tableKey.success || typeof tableIndex !== 'number') {
+    return t('one of its tables is not in the expected format');
   }
-  if (
-    section !== 'fields' ||
-    typeof tableIndex !== 'number' ||
-    typeof fieldIndex !== 'number'
-  ) {
-    return t('it is missing the table name or the list of columns');
+  switch (tableKey.data) {
+    case 'externalId':
+      return t('the table has no externalId');
+    case 'data':
+      return t('its rows are not in the expected format');
+    case 'fields':
+      return describeFieldIssue({
+        fields: tables[tableIndex].fields,
+        fieldIndex,
+        key,
+      });
+    case 'name':
+      return t('the table has no name');
+    case 'status':
+      return t('the table status is not in the expected format');
+    case 'trigger':
+      return t('the table trigger is not in the expected format');
   }
-  if (key === 'name') {
-    return t('column {position} has no name', { position: fieldIndex + 1 });
+}
+
+function describeFieldIssue({
+  fields,
+  fieldIndex,
+  key,
+}: {
+  fields: TableTemplate['fields'];
+  fieldIndex: PropertyKey | undefined;
+  key: PropertyKey | undefined;
+}): string {
+  if (typeof fieldIndex !== 'number') {
+    return t('it has no list of columns');
   }
-  const name = tables[tableIndex].fields[fieldIndex]?.name;
-  if (key === 'type') {
-    return t('column "{name}" has no type', { name });
+  const name = fields[fieldIndex]?.name;
+  const fieldKey = TableTemplate.shape.fields.element.keyof().safeParse(key);
+  if (!fieldKey.success) {
+    return t('column "{name}" is not in the expected format', { name });
   }
-  return t('column "{name}" is not in the expected format', { name });
+  switch (fieldKey.data) {
+    case 'name':
+      return t('column {position} has no name', { position: fieldIndex + 1 });
+    case 'type':
+      return t('column "{name}" has no type', { name });
+    case 'externalId':
+      return t('column "{name}" has no externalId', { name });
+    case 'data':
+      return t('column "{name}" is not in the expected format', { name });
+  }
 }
 
 function findFieldIssue(field: TableTemplate['fields'][number]): string | null {
@@ -198,17 +231,6 @@ function findFieldIssue(field: TableTemplate['fields'][number]): string | null {
   }
   return null;
 }
-
-const TemplateTablesSchema = TableTemplate.pick({ name: true })
-  .extend({
-    fields: z.array(
-      TableTemplate.shape.fields.element.partial({ externalId: true }),
-    ),
-    data: z
-      .object({ rows: z.array(z.array(z.object({ fieldId: z.string() }))) })
-      .nullish(),
-  })
-  .array();
 
 export const tablesUtils = {
   getTemplateError,
