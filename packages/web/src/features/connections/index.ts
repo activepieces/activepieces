@@ -1,4 +1,5 @@
 export { appConnectionsApi } from './api/app-connections';
+export { ConnectionSearchableSelect } from './components/connection-searchable-select';
 export { ProjectSelector } from '../projects/components/projects-selector';
 export { EditGlobalConnectionDialog } from './components/edit-global-connection-dialog';
 export { RenameConnectionDialog } from './components/rename-connection-dialog';

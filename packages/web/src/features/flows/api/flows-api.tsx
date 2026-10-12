@@ -56,6 +56,16 @@ export const flowsApi = {
         return flow;
       });
   },
+  replaceConnection(
+    flowId: string,
+    request: {
+      sourceAppConnectionId: string;
+      targetAppConnectionId: string;
+      applyToPublishedVersions?: boolean;
+    },
+  ): Promise<void> {
+    return api.post<void>(`/v1/flows/${flowId}/replace-connection`, request);
+  },
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
     return api.get<SharedTemplate>(`/v1/flows/${flowId}/template`, {
       params: request,
