@@ -44,6 +44,12 @@ vi.mock('@/features/billing', () => ({
   TIER_LABELS: { plus: 'Plus' },
   useUpgradeClick: () => vi.fn(),
   RequestTrial: () => null,
+  useEnterpriseGate: ({ unlocked }: { unlocked: boolean }) => ({
+    access: unlocked ? 'entitled' : 'trial_available',
+    locked: !unlocked,
+    run: vi.fn(),
+    explain: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/platform-admin', () => {

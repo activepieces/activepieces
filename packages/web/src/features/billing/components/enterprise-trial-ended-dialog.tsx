@@ -13,10 +13,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
+import { enterpriseTrialTime } from '../utils/enterprise-trial-time';
 
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
@@ -25,12 +28,19 @@ export function EnterpriseTrialEndedDialog() {
   const trial = enterpriseTrialHooks.useTrial();
   const upgradeClick = useUpgradeClick();
   const storageKey = `${SEEN_KEY_PREFIX}${platform.id}-${
-    trial.endsAt?.toISOString() ?? 'unknown'
-  }`;
+    authenticationSession.getCurrentUserId() ?? 'unknown'
+  }-${trial.endsAt?.toISOString() ?? 'unknown'}`;
   const [seenKey, setSeenKey] = useState<string | null>(null);
   const seen = seenKey === storageKey || readSeen(storageKey);
 
-  const open = trial.state === 'ended' && trial.isPlatformAdmin && !seen;
+  const recent =
+    !isNil(trial.endsAt) &&
+    enterpriseTrialTime.calendarDaysBetween({
+      from: trial.endsAt,
+      to: Date.now(),
+    }) <= SHOW_FOR_DAYS;
+  const open =
+    trial.state === 'ended' && trial.isPlatformAdmin && recent && !seen;
   const close = () => {
     writeSeen(storageKey);
     setSeenKey(storageKey);
@@ -102,6 +112,7 @@ export function EnterpriseTrialEndedDialog() {
         </p>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
+            {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
             variant="outline"
             onClick={() => {
               close();
@@ -138,3 +149,4 @@ function writeSeen(key: string): void {
 }
 
 const SEEN_KEY_PREFIX = 'ap-enterprise-trial-ended-seen-';
+const SHOW_FOR_DAYS = 14;

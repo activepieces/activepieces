@@ -3,6 +3,7 @@ import { t } from 'i18next';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { FeatureKey, useSalesUrl } from './request-trial';
 
@@ -20,6 +21,7 @@ export function EnterpriseTrialSalesLink({
   return (
     <Button variant={variant} size={size} className={className} asChild>
       <a
+        {...adminControl(AdminControl.TRIAL_SALES_LINK)}
         href={salesUrl}
         target="_blank"
         rel="noopener noreferrer"
@@ -27,7 +29,7 @@ export function EnterpriseTrialSalesLink({
           onClick?.();
           capture({
             name: TelemetryEventName.SALES_HANDOFF_CLICKED,
-            payload: { plan: 'enterprise', surface },
+            payload: { plan: 'enterprise', surface, featureKey },
           });
         }}
       >

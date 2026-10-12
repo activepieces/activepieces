@@ -68,6 +68,7 @@ export function EnterpriseLockedSection({
   unlocked,
   featureKey,
   title,
+  description,
   className,
 }: EnterpriseLockedSectionProps) {
   const gate = useEnterpriseGate({ unlocked, featureKey });
@@ -78,7 +79,8 @@ export function EnterpriseLockedSection({
     <EnterpriseLockedCard
       access={gate.access}
       featureKey={featureKey}
-      fallbackHeadline={title}
+      headline={title}
+      description={description}
       surface={PlatformAdminSurface.TEASER}
       className={className}
     />
@@ -107,20 +109,26 @@ function LockedPreview({
   return (
     <AdminPageLockContext.Provider value={lock}>
       <InsideFeatureSampleContext.Provider value={true}>
-        {claimed ? (
-          children
-        ) : (
-          <div className="flex min-h-0 w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6">
-            {callout}
-            <div
-              inert
-              aria-hidden
-              className="pointer-events-none flex min-h-0 flex-1 select-none flex-col opacity-50 grayscale mask-b-from-40%"
-            >
-              {children}
-            </div>
+        <div
+          className={
+            claimed
+              ? 'contents'
+              : 'flex min-h-0 w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6'
+          }
+        >
+          {claimed ? null : callout}
+          <div
+            inert={!claimed}
+            aria-hidden={!claimed}
+            className={
+              claimed
+                ? 'contents'
+                : 'pointer-events-none flex min-h-0 flex-1 select-none flex-col opacity-50 grayscale mask-b-from-40%'
+            }
+          >
+            {children}
           </div>
-        )}
+        </div>
       </InsideFeatureSampleContext.Provider>
     </AdminPageLockContext.Provider>
   );
@@ -155,5 +163,6 @@ type EnterpriseLockedSectionProps = {
   unlocked: boolean;
   featureKey: FeatureKey;
   title?: string;
+  description?: string;
   className?: string;
 };

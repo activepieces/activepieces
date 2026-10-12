@@ -126,6 +126,13 @@ vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
 vi.mock('@/features/billing', () => ({
   LockedGem: () => null,
   EnterpriseTrialSalesLink: () => null,
+  PLATFORM_FEATURES: { branding: { featureKey: 'BRANDING', title: '' } },
+  useFeatureGate: () => ({
+    locked: false,
+    crown: null,
+    open: vi.fn(),
+    dialog: null,
+  }),
   useEnterpriseGate: ({ unlocked }: { unlocked: boolean }) => ({
     access: unlocked ? 'entitled' : 'trial_available',
     locked: !unlocked,
