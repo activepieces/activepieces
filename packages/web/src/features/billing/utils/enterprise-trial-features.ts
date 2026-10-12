@@ -13,6 +13,8 @@ import {
 
 import { FeatureKey } from '../components/request-trial';
 
+import { planTiers } from './plan-tiers';
+
 function list(): EnterpriseTrialFeature[] {
   return [
     {
@@ -68,6 +70,17 @@ function list(): EnterpriseTrialFeature[] {
   ];
 }
 
+function pausedAfterTrial(
+  plan: string | null | undefined,
+): EnterpriseTrialFeature[] {
+  return list().filter(
+    (feature) =>
+      !feature.featureKeys.every((featureKey) =>
+        planTiers.planIncludes({ plan, featureKey }),
+      ),
+  );
+}
+
 function name(featureKey: FeatureKey | undefined): string | null {
   if (featureKey === undefined) {
     return null;
@@ -89,7 +102,7 @@ function name(featureKey: FeatureKey | undefined): string | null {
     TEAM: t('Team projects'),
     USERS: t('Unlimited users'),
     ENVIRONMENT: t('Environments'),
-    DEDICATED_WORKERS: t('Dedicated workers'),
+    DEDICATED_WORKERS: t('Worker groups'),
     AGENTS: t('Agents'),
     ANALYTICS: t('Impact analytics'),
   };
@@ -305,6 +318,7 @@ function lockedCopyByFeature(): Partial<Record<FeatureKey, LockedFeatureCopy>> {
 
 export const enterpriseTrialFeatures = {
   list,
+  pausedAfterTrial,
   name,
   nameInSentence,
   lockedCopy,

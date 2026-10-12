@@ -4,6 +4,7 @@ import { Check, Gem } from 'lucide-react';
 
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
+import { usePlanTier } from '../hooks/use-plan-tier';
 import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
 
 import { EnterpriseTrialLockedActions } from './enterprise-trial-locked-actions';
@@ -17,6 +18,7 @@ export function EnterpriseLockedBody({
   onAction,
 }: EnterpriseLockedBodyProps) {
   const copy = enterpriseTrialFeatures.lockedCopy(featureKey);
+  const plan = usePlanTier(featureKey);
   const headline =
     copy?.headline ??
     title ??
@@ -35,7 +37,7 @@ export function EnterpriseLockedBody({
       <div className="flex flex-col gap-2 pr-6">
         <span className="flex items-center gap-2 text-sm font-medium text-accent-11">
           <Gem className="size-4" />
-          {t('Included in the Enterprise plan')}
+          {plan.label}
         </span>
         <DialogTitle className="text-xl font-semibold tracking-tight text-gray-12">
           {headline}

@@ -19,7 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { FeatureTier, TIER_LABELS } from '@/features/billing';
+import { FeatureTier, planTiers } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -239,11 +239,12 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
 function LockedText({ tier }: { tier?: FeatureTier }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const namedTier = edition === ApEdition.COMMUNITY ? undefined : tier;
-
-  return namedTier === undefined
-    ? t('Not included in your plan')
-    : t('Included in the {tier} plan', { tier: TIER_LABELS[namedTier] });
+  if (tier === undefined) {
+    return t('Not included in your plan');
+  }
+  return planTiers.includedInLabel(
+    edition === ApEdition.CLOUD ? tier : 'enterprise',
+  );
 }
 
 function LockedTooltip({ tier, disabled, children }: LockedTooltipProps) {

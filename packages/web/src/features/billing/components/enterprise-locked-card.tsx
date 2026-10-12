@@ -8,8 +8,11 @@ import { cn } from '@/lib/utils';
 
 import { ENTERPRISE_TRIAL_DAYS } from '../hooks/enterprise-trial-hooks';
 import { EnterpriseAccess } from '../hooks/use-enterprise-gate';
+import { usePlanTier } from '../hooks/use-plan-tier';
 import { enterpriseMotion } from '../utils/enterprise-motion';
 import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
+import { FeatureTier } from '../utils/feature-tier';
+import { planTiers } from '../utils/plan-tiers';
 
 import { EnterpriseTrialLockedActions } from './enterprise-trial-locked-actions';
 import { FeatureKey } from './request-trial';
@@ -31,7 +34,8 @@ export function EnterpriseLockedCard({
     enterpriseTrialFeatures.name(featureKey);
   const description = copy?.description ?? fallbackDescription;
   const benefits = showBenefits ? copy?.benefits ?? fallbackBenefits ?? [] : [];
-  const note = noteFor(access);
+  const plan = usePlanTier(featureKey);
+  const note = noteFor({ access, tier: plan.tier });
 
   return (
     <Card
@@ -52,7 +56,7 @@ export function EnterpriseLockedCard({
           )}
           <Badge variant="info">
             <Gem />
-            {t('Enterprise plan')}
+            {plan.label}
           </Badge>
         </div>
         {description && (
@@ -84,7 +88,13 @@ export function EnterpriseLockedCard({
   );
 }
 
-function noteFor(access: EnterpriseAccess): string | null {
+function noteFor({
+  access,
+  tier,
+}: {
+  access: EnterpriseAccess;
+  tier: FeatureTier;
+}): string | null {
   switch (access) {
     case 'trial_available':
       return t(
@@ -92,7 +102,7 @@ function noteFor(access: EnterpriseAccess): string | null {
         { days: ENTERPRISE_TRIAL_DAYS },
       );
     case 'ask_admin':
-      return t('Ask your admin to turn on the Enterprise plan for your team.');
+      return planTiers.askAdminText(tier);
     default:
       return null;
   }

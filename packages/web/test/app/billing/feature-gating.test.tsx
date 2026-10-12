@@ -113,7 +113,6 @@ import { CreateProjectButton } from '@/features/projects/components/create-proje
 const useEnterpriseTrialDialogStore =
   billingDialogHooks.useEnterpriseTrialDialogStore;
 
-const LIMIT_REACHED_COPY = "You've reached your team project limit";
 const SHOWCASE_VIDEO =
   'https://cdn.activepieces.com/videos/showcase/api-keys.mp4';
 
@@ -186,8 +185,8 @@ describe('create project gating', () => {
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
     expect(screen.getByText('Included in the Enterprise plan')).toBeDefined();
     expect(screen.getByRole('link', { name: /talk to sales/i })).toBeDefined();
-    expect(screen.queryByText(LIMIT_REACHED_COPY)).toBeNull();
-    expect(screen.queryByRole('button', { name: /explore plans/i })).toBeNull();
+    expect(useEnterpriseTrialDialogStore.getState().payload).toBeNull();
+    expect(screen.queryAllByRole('textbox')).toHaveLength(0);
   });
 
   it('opens the project form once the upgrade dialog finishes the blocked click', async () => {
@@ -211,7 +210,10 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.queryByText(LIMIT_REACHED_COPY)).toBeNull();
+    expect(
+      screen.getByRole('heading', { name: 'Create Project' }),
+    ).toBeDefined();
+    expect(useEnterpriseTrialDialogStore.getState().payload).toBeNull();
     expect(screen.queryAllByRole('textbox').length).toBeGreaterThan(0);
   });
 });
