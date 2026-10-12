@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { ArrowUpRight, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { AdminFetchErrorState } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   if (isError) {
     return (
       <div className="flex h-full items-center justify-center px-6">
-        <DataFetchErrorState entity={t('people')} onRetry={refetch} />
+        <AdminFetchErrorState entity={t('people')} onRetry={refetch} />
       </div>
     );
   }

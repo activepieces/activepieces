@@ -9,8 +9,11 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { adminFeedback, adminLayout } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  adminFeedback,
+  AdminFetchErrorState,
+  adminLayout,
+} from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -104,7 +107,7 @@ function PieceActionsAndTriggersSheetBody({
           <SkeletonList numberOfItems={6} className="h-10" />
         </div>
       ) : !pieceModel ? (
-        <DataFetchErrorState
+        <AdminFetchErrorState
           entity={t('actions and triggers')}
           onRetry={refetch}
         />

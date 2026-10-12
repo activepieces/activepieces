@@ -4,8 +4,11 @@ import { t } from 'i18next';
 import { CheckCircle2, ListChecks } from 'lucide-react';
 import { ReactNode } from 'react';
 
-import { StatCard, StatGrid } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  AdminFetchErrorState,
+  StatCard,
+  StatGrid,
+} from '@/app/components/admin';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +43,7 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
 
   if (isError) {
     return (
-      <DataFetchErrorState entity={t('health metrics')} onRetry={onRetry} />
+      <AdminFetchErrorState entity={t('health metrics')} onRetry={onRetry} />
     );
   }
 

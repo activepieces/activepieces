@@ -21,18 +21,18 @@ import { useSearchParams } from 'react-router-dom';
 
 import {
   AdminEmpty,
+  adminFeedback,
+  AdminFetchErrorState,
   AdminPageHeader,
+  adminPageResources,
   AdminSection,
+  adminSurface,
   ConfirmDialog,
   SettingsPanel,
   SettingsRow,
-  adminFeedback,
-  adminPageResources,
-  adminSurface,
   useAdminAction,
 } from '@/app/components/admin';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -267,7 +267,7 @@ export function ProvidersTab() {
       </AdminPageHeader>
 
       {isProvidersError ? (
-        <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
+        <AdminFetchErrorState entity={t('AI providers')} onRetry={refetch} />
       ) : configs.length === 0 ? (
         <EmptyProviders onConnect={openConnect} />
       ) : (

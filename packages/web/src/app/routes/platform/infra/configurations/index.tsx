@@ -14,15 +14,15 @@ import { Navigate } from 'react-router-dom';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import {
+  adminFeedback,
+  AdminFetchErrorState,
   AdminPage,
   AdminPageHeader,
+  adminPageResources,
   SaveBar,
-  adminFeedback,
   SettingsPanel,
   SettingsRow,
-  adminPageResources,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -51,7 +51,7 @@ export const ConfigurationsPage = () => {
     return (
       <AdminPage width="content">
         <ConfigurationsHeader />
-        <DataFetchErrorState entity={t('configurations')} onRetry={refetch} />
+        <AdminFetchErrorState entity={t('configurations')} onRetry={refetch} />
       </AdminPage>
     );
   }

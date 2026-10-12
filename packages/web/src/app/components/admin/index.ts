@@ -19,7 +19,11 @@ export { StatCard, StatGrid } from './stat-card';
 export { LockedCallout } from './locked-callout';
 export { ConfirmDialog } from './confirm-dialog';
 export { InstantSwitch } from './instant-switch';
-export { AdminQueryState } from './admin-query-state';
+export {
+  AdminFetchErrorState,
+  AdminQueryState,
+  adminFetchError,
+} from './admin-query-state';
 export {
   useAdminAction,
   adminActionCopy,

@@ -20,7 +20,7 @@ function RowAction() {
   );
 }
 
-function Page({ tick }: { tick: number }) {
+function Page({ tick, stable }: { tick: number; stable: boolean }) {
   return (
     <MemoryRouter>
       <span>{`tick ${tick}`}</span>
@@ -34,6 +34,7 @@ function Page({ tick }: { tick: number }) {
         emptyStateTextDescription=""
         emptyStateIcon={null}
         hidePagination
+        stableRowActions={stable}
         actions={[() => <RowAction />]}
       />
     </MemoryRouter>
@@ -41,12 +42,21 @@ function Page({ tick }: { tick: number }) {
 }
 
 describe('DataTable row actions', () => {
-  it('keeps the same action element when the parent re-renders', () => {
-    const { rerender } = render(<Page tick={0} />);
+  it('keeps the same action element when the parent re-renders with stable row actions', () => {
+    const { rerender } = render(<Page tick={0} stable />);
     const before = screen.getByRole('button', { name: 'clicks 0' });
     act(() => before.click());
-    rerender(<Page tick={1} />);
+    rerender(<Page tick={1} stable />);
     const after = screen.getByRole('button', { name: 'clicks 1' });
     expect(after).toBe(before);
+  });
+
+  it('remounts the action element by default, as before', () => {
+    const { rerender } = render(<Page tick={0} stable={false} />);
+    const before = screen.getByRole('button', { name: 'clicks 0' });
+    act(() => before.click());
+    rerender(<Page tick={1} stable={false} />);
+    const after = screen.getByRole('button', { name: 'clicks 0' });
+    expect(after).not.toBe(before);
   });
 });

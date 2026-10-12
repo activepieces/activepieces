@@ -80,6 +80,7 @@ interface DataTableProps<
   isLoading: boolean;
   isError: boolean;
   errorStateEntity: string;
+  errorStateDescription?: string;
   onRetry?: () => void;
   filters?: DataTableFilters<Keys>[];
   customFilters?: React.ReactNode[];
@@ -103,6 +104,8 @@ interface DataTableProps<
   bordered?: boolean;
   frameClassName?: string;
   toolbarClassName?: string;
+  stableRowActions?: boolean;
+  syncSelectionWithData?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -130,6 +133,7 @@ export function DataTable<
   isLoading,
   isError,
   errorStateEntity,
+  errorStateDescription,
   onRetry,
   onSelectedRowsChange,
   hidePagination,
@@ -150,6 +154,8 @@ export function DataTable<
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
+  stableRowActions = false,
+  syncSelectionWithData = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -205,7 +211,21 @@ export function DataTable<
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title="" />
             ),
-            cell: renderActionsCell,
+            cell: stableRowActions
+              ? renderActionsCell
+              : ({ row }) => {
+                  return (
+                    <div className="flex justify-end gap-4">
+                      {actions.map((action, index) => {
+                        return (
+                          <React.Fragment key={index}>
+                            {action(row.original)}
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  );
+                },
           },
         ])
       : columnsWithSelect;
@@ -305,7 +325,7 @@ export function DataTable<
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
     () => table.getSelectedRowModel().rows.map((row) => row.original),
-    [rowSelection, tableData],
+    [rowSelection, syncSelectionWithData ? tableData : undefined],
   );
   useEffect(() => {
     onSelectedRowsChange?.(selectedRowOriginals);
@@ -650,6 +670,7 @@ export function DataTable<
                   <DataFetchErrorState
                     entity={errorStateEntity}
                     onRetry={onRetry}
+                    description={errorStateDescription}
                   />
                 </TableCell>
               </TableRow>
