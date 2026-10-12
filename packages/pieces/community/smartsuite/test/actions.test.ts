@@ -221,6 +221,17 @@ describe('human twins share the helper', () => {
 		await expect(run(upsertRecord)({ solutionId: 's1', tableId: 't1', matchField: 'title', matchValue: 'A', fields: { s_sel: 'new', first_created: '' } })).resolves.toEqual({ action: 'created', record: { id: 'r9' } });
 		expect(seen[2]).toMatchObject({ method: 'POST', path: '/applications/t1/records/', body: { title: 'A', s_sel: 'new' } });
 	});
+	test('upsert_record formats the match value for the field type when it creates', async () => {
+		const emailTable = { ...TABLE, structure: [...TABLE.structure, { slug: 's_email', label: 'Email', field_type: 'emailfield', params: {} }] };
+		const seen = stubFetch((request: SeenRequest) => {
+			if (request.path.endsWith('/records/list/')) return { body: { items: [], total: 0 } };
+			if (request.method === 'POST') return { status: 201, body: { id: 'r9' } };
+			return { body: emailTable };
+		});
+		await run(upsertRecord)({ solutionId: 's1', tableId: 't1', matchField: 's_email', matchValue: 'a@b.co', fields: {} });
+		expect(seen[1].body).toMatchObject({ filter: { fields: [{ field: 's_email', comparison: 'is', value: 'a@b.co' }] } });
+		expect(seen[2].body).toEqual({ s_email: ['a@b.co'] });
+	});
 	test('add_comment sends the picked member as assignee', async () => {
 		const seen = stubFetch(() => ({ status: 201, body: { id: 'c1' } }));
 		await run(addComment)({ solutionId: 's1', tableId: 't1', recordId: 'r1', message: 'hi', assignedTo: 'm1' });
@@ -245,7 +256,21 @@ describe('human twins share the helper', () => {
 	});
 });
 
+describe('list limits', () => {
+	test('a list longer than the page cap fails instead of returning a partial list', async () => {
+		stubFetch((request: SeenRequest) => ({ body: { results: [{ id: request.query.get('offset') }], next: 'more' } }));
+		await expect(run(listSolutions)({})).rejects.toThrow(/more than 5000 items/);
+	});
+});
+
 describe('piece metadata', () => {
+	test('record schemas expose every table field through a dynamic map', () => {
+		for (const name of ['create_record', 'get_record_by_id']) {
+			const action = Object.values(smartsuite.actions()).find((a) => a.name === name);
+			expect(action?.outputSchema?.fields, name).toContainEqual(expect.objectContaining({ value: '', dynamicKey: true }));
+		}
+	});
+
 	test('every action has outputSchema, aiMetadata and classification', () => {
 		const actions = Object.values(smartsuite.actions()).filter((a) => a.name !== 'custom_api_call');
 		expect(actions).toHaveLength(45);

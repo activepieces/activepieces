@@ -37,7 +37,7 @@ async function smartSuitePaginatedApiCall<T>(params: SmartSuiteApiCallParams): P
 			return collected;
 		}
 	}
-	return collected;
+	throw new Error(`SmartSuite returned more than ${MAX_LIST_PAGES * PAGE_SIZE} items for ${params.operation ?? 'this list'}, so the list would be incomplete. Narrow it down (for example per record or per solution) or use Custom API Call with limit and offset.`);
 }
 
 function readListPage<T>(response: unknown): { items: T[]; hasNext: boolean } {

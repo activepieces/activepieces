@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { API_ENDPOINTS } from './constants';
 import { smartSuiteClient, SmartSuiteCredentials } from './client';
@@ -6,6 +7,10 @@ const EVENTS_PAGE_SIZE = 50;
 const MAX_EVENT_PAGES = 20;
 const MAX_SEEN_EVENT_IDS = 500;
 const RECENT_RECORDS_LIMIT = 5;
+const CLAIM_TTL_MS = 120_000;
+const CLAIM_WAIT_MS = 15_000;
+const CLAIM_POLL_MS = 200;
+const CLAIM_SETTLE_MS = 50;
 
 async function createWebhook({
 	credentials,
@@ -95,6 +100,7 @@ async function disable({ credentials, store, storeKey }: { credentials: SmartSui
 	await store.delete(storeKey);
 	await store.delete(PAGE_TOKEN_KEY);
 	await store.delete(SEEN_EVENTS_KEY);
+	await store.delete(CLAIM_KEY);
 }
 
 async function pullNewEvents({
@@ -113,6 +119,18 @@ async function pullNewEvents({
 	if (!notifiedWebhookId || (ownWebhookId && notifiedWebhookId !== ownWebhookId)) {
 		return [];
 	}
+	const owner = await claimPull({ store });
+	if (owner === null) {
+		return [];
+	}
+	try {
+		return await readEvents({ credentials, store, webhookId: notifiedWebhookId });
+	} finally {
+		await releasePull({ store, owner });
+	}
+}
+
+async function readEvents({ credentials, store, webhookId }: { credentials: SmartSuiteCredentials; store: TriggerStore; webhookId: string }): Promise<SmartSuiteEvent[]> {
 	const startToken = (await store.get<string>(PAGE_TOKEN_KEY)) ?? '';
 	const seen = new Set((await store.get<string[]>(SEEN_EVENTS_KEY)) ?? []);
 	const collected: SmartSuiteEvent[] = [];
@@ -124,7 +142,7 @@ async function pullNewEvents({
 			api: 'webhooks',
 			method: HttpMethod.POST,
 			path: API_ENDPOINTS.LIST_EVENTS,
-			body: { webhook_id: notifiedWebhookId, page_size: EVENTS_PAGE_SIZE, page_token: pageToken },
+			body: { webhook_id: webhookId, page_size: EVENTS_PAGE_SIZE, page_token: pageToken },
 			operation: 'list webhook events',
 		});
 		const events = response?.events ?? [];
@@ -149,6 +167,41 @@ async function pullNewEvents({
 	await store.put(PAGE_TOKEN_KEY, lastToken);
 	await store.put(SEEN_EVENTS_KEY, Array.from(seen).slice(-MAX_SEEN_EVENT_IDS));
 	return fresh;
+}
+
+async function claimPull({ store }: { store: TriggerStore }): Promise<string | null> {
+	const owner = randomUUID();
+	const deadline = Date.now() + CLAIM_WAIT_MS;
+	for (;;) {
+		const current = await store.get<unknown>(CLAIM_KEY);
+		if (!isPullClaim(current) || Date.now() - current.at > CLAIM_TTL_MS) {
+			await store.put<PullClaim>(CLAIM_KEY, { owner, at: Date.now() });
+			await pause(CLAIM_SETTLE_MS);
+			const settled = await store.get<unknown>(CLAIM_KEY);
+			if (isPullClaim(settled) && settled.owner === owner) {
+				return owner;
+			}
+		}
+		if (Date.now() >= deadline) {
+			return null;
+		}
+		await pause(CLAIM_POLL_MS);
+	}
+}
+
+async function releasePull({ store, owner }: { store: TriggerStore; owner: string }): Promise<void> {
+	const current = await store.get<unknown>(CLAIM_KEY);
+	if (isPullClaim(current) && current.owner === owner) {
+		await store.delete(CLAIM_KEY);
+	}
+}
+
+function isPullClaim(value: unknown): value is PullClaim {
+	return isRecord(value) && typeof value['owner'] === 'string' && typeof value['at'] === 'number';
+}
+
+function pause(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function notificationWebhookId(payload: unknown): string | undefined {
@@ -185,6 +238,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 const PAGE_TOKEN_KEY = 'pageToken';
 const SEEN_EVENTS_KEY = 'seenEventIds';
+const CLAIM_KEY = 'pullClaim';
 
 export const smartSuiteWebhooks = {
 	enable,
@@ -198,6 +252,8 @@ export const smartSuiteWebhooks = {
 };
 
 export type SmartSuiteEvent = Record<string, unknown>;
+
+type PullClaim = { owner: string; at: number };
 
 export type TriggerStore = {
 	put: <T>(key: string, value: T) => Promise<T>;

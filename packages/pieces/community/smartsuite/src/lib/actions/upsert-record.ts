@@ -12,12 +12,14 @@ async function upsert({
 	tableId,
 	matchField,
 	matchValue,
+	createMatchValue,
 	fields,
 }: {
 	credentials: SmartSuiteCredentials;
 	tableId: unknown;
 	matchField: string;
 	matchValue: string;
+	createMatchValue: unknown;
 	fields: Record<string, unknown>;
 }): Promise<{ action: 'created' | 'updated'; record: SmartSuiteRecord }> {
 	const tableSegment = smartSuiteClient.pathSegment({ value: tableId, label: 'Table' });
@@ -46,7 +48,7 @@ async function upsert({
 		credentials,
 		method: HttpMethod.POST,
 		path: `/applications/${tableSegment}/records/`,
-		body: { [matchField]: matchValue, ...fields },
+		body: { [matchField]: createMatchValue, ...fields },
 		operation: 'create record',
 	});
 	return { action: 'created', record };
@@ -59,7 +61,7 @@ export const upsertRecord = createAction({
 	description: 'Updates the record whose field matches a value, or creates it when none matches.',
 	audience: 'human',
 	aiMetadata: {
-		description: 'Builder version with solution, table and field pickers; agents should use Create or Update Record (by ID). One match: patches it. No match: creates a record with the match value plus the fields. More than one match: fails without changing anything. Not atomic: two runs at the same moment can both create. Idempotent for sequential runs with the same input.',
+		description: 'Builder version with solution, table and field pickers; agents should use Create or Update Record (by ID). One match: patches it. No match: creates a record with the match value (formatted for the field type, for example an array for email fields) plus the fields. More than one match: fails without changing anything. Not atomic: two runs at the same moment can both create. Idempotent for sequential runs with the same input.',
 		idempotent: true,
 	},
 	auth: smartsuiteAuth,
@@ -84,7 +86,9 @@ export const upsertRecord = createAction({
 		const credentials = smartSuiteClient.credentialsOf(auth);
 		const table = await smartSuiteApi.getTable({ credentials, tableId: propsValue.tableId });
 		const fields = formatRecordFields({ tableSchema: table.structure, tableValues: propsValue.fields ?? {} });
-		return upsert({ credentials, tableId: propsValue.tableId, matchField, matchValue, fields });
+		const formattedMatch = formatRecordFields({ tableSchema: table.structure, tableValues: { [matchField]: matchValue } });
+		const createMatchValue = matchField in formattedMatch ? formattedMatch[matchField] : matchValue;
+		return upsert({ credentials, tableId: propsValue.tableId, matchField, matchValue, createMatchValue, fields });
 	},
 });
 
@@ -121,6 +125,6 @@ export const upsertRecordById = createAction({
 		const matchField = smartSuiteInputs.requireText({ value: propsValue.matchField, label: 'Match Field' });
 		const matchValue = smartSuiteInputs.requireText({ value: propsValue.matchValue, label: 'Match Value' });
 		const fields = smartSuiteInputs.requireObject({ value: propsValue.fields, label: 'Fields' });
-		return upsert({ credentials: smartSuiteClient.credentialsOf(auth), tableId: propsValue.tableId, matchField, matchValue, fields });
+		return upsert({ credentials: smartSuiteClient.credentialsOf(auth), tableId: propsValue.tableId, matchField, matchValue, createMatchValue: matchValue, fields });
 	},
 });

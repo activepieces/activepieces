@@ -15,7 +15,7 @@ const rawRecordFields: Field[] = [
 	{ key: 'first_created', label: 'First Created', children: actorChildren },
 	{ key: 'last_updated', label: 'Last Updated', children: actorChildren },
 	{ key: 'autonumber', label: 'Auto Number', format: 'number' },
-	{ key: 'comments_count', label: 'Open Comments', format: 'number' },
+	{ key: 'comments_count', label: 'Open Comments', format: 'number' },	{ key: 'all_fields', label: 'All Fields', value: '', dynamicKey: true, description: 'Every field of the record keyed by field slug, including the fields specific to your table.' },
 ];
 
 const labelledRecordFields: Field[] = [
@@ -24,7 +24,7 @@ const labelledRecordFields: Field[] = [
 	{ key: 'application_id', label: 'Table ID' },
 	{ key: 'application_slug', label: 'Table Slug' },
 	{ key: 'First Created', label: 'First Created', children: actorChildren },
-	{ key: 'Last Updated', label: 'Last Updated', children: actorChildren },
+	{ key: 'Last Updated', label: 'Last Updated', children: actorChildren },	{ key: 'all_fields', label: 'All Fields', value: '', dynamicKey: true, description: 'Every field of the record keyed by its label, including the fields specific to your table.' },
 ];
 
 const solutionFields: Field[] = [
