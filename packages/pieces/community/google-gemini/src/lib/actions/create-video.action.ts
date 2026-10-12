@@ -40,8 +40,8 @@ export const createVideoAction = createAction({
       display: 'cards',
       options: {
         options: [
-          { label: 'Landscape', value: '16:9', description: '16:9' },
-          { label: 'Portrait', value: '9:16', description: '9:16' },
+          { label: 'Landscape', value: '16:9', description: '16:9', icon: 'blank' },
+          { label: 'Portrait', value: '9:16', description: '9:16', icon: 'blank' },
         ],
       },
     }),
