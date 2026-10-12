@@ -73,9 +73,9 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
 
     const loadSkillTool: ToolSet = firstSkill === undefined ? {} : {
         [LOAD_SKILL_NAME]: tool({
-            description: 'Load skills before that kind of work (silent, internal). Pass every skill the task needs in one call. Returns each playbook and the input schema of every tool in it, which you then run with ap_lazy_tool.',
+            description: 'Load skills before that kind of work (silent, internal). A loaded playbook stays in the conversation and is re-read on every later step, so load only the skills the work in front of you needs right now, together in one call, and load another when the work reaches it. Returns each playbook and the input schema of every tool in it, which you then run with ap_lazy_tool.',
             inputSchema: z.object({
-                skills: z.array(z.enum([firstSkill, ...otherSkills])).min(1).describe('Every skill this task needs, loaded together'),
+                skills: z.array(z.enum([firstSkill, ...otherSkills])).min(1).describe('The skills the work in front of you needs now, loaded together'),
             }),
             execute: async ({ skills: skillNames }) => {
                 const playbooks = await Promise.all([...new Set(skillNames)].map(async (skillName) => {
