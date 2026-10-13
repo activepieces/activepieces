@@ -144,7 +144,7 @@ export const eventStartTimeBefore = createTrigger({
       display: 'section',
       label: 'Event',
       icon: 'calendar',
-      props: ['calendar_id', 'specific_event'],
+      props: ['calendar_id', 'specific_event', 'event_id'],
     },
     {
       key: 'timing',
@@ -161,7 +161,6 @@ export const eventStartTimeBefore = createTrigger({
       description: 'Watch one event instead of the whole calendar.',
       required: false,
       defaultValue: false,
-      reveals: ['event_id'],
     }),
     event_id: googleCalendarCommon.eventDropdown(false),
     time_value: Property.Number({
