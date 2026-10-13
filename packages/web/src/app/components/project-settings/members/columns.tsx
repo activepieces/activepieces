@@ -36,6 +36,7 @@ import {
 import { projectRoleQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
@@ -175,6 +176,7 @@ const ActionsCell = ({
 }) => {
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
+  const { activeDefaultProjectIds } = platformHooks.useNewMemberSettings();
   const { data: currentUser } = userHooks.useCurrentUser();
   const isPlatformAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -197,6 +199,12 @@ const ActionsCell = ({
   const isPlatformInvitation =
     row.original.type === 'invitation' &&
     row.original.data.type === InvitationType.PLATFORM;
+
+  const stillJoinsAsDefaultProject =
+    row.original.type === 'invitation' &&
+    row.original.data.type === InvitationType.PLATFORM &&
+    row.original.data.platformRole === PlatformRole.MEMBER &&
+    activeDefaultProjectIds.includes(project.id);
 
   const deleteMember = async () => {
     if (row.original.type === 'member') {
@@ -253,7 +261,12 @@ const ActionsCell = ({
             : t('Remove Member')
         }
         message={
-          isPlatformInvitation
+          stillJoinsAsDefaultProject
+            ? t('removePlatformInviteFromDefaultProject', {
+                email: displayName,
+                projectName: project.displayName,
+              })
+            : isPlatformInvitation
             ? t('removePlatformInviteFromProject', {
                 email: displayName,
                 projectName: project.displayName,
