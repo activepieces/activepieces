@@ -3683,5 +3683,7 @@
   "{label} ({checked}/{total})": "{label} ({checked}/{total})",
   "Hidden from the builder. Flows already using it keep running.": "Hidden from the builder. Flows already using it keep running.",
   "MCP and agents get {checked} of {total} AI tools.": "MCP and agents get {checked} of {total} AI tools.",
-  "Only MCP and agents can use these. They never appear in the builder.": "Only MCP and agents can use these. They never appear in the builder."
+  "Only MCP and agents can use these. They never appear in the builder.": "Only MCP and agents can use these. They never appear in the builder.",
+  "Already in {name}": "Already in {name}",
+  "To move it out, assign it from another {term}.": "To move it out, assign it from another {term}."
 }
