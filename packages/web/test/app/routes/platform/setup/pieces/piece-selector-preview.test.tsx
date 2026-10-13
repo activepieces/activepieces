@@ -75,10 +75,14 @@ vi.mock(
 );
 vi.mock('@/features/pieces/api/pieces-api', () => ({
   piecesApi: {
-    list: async (request: { suggestionType?: string }) =>
-      request.suggestionType === undefined
-        ? SUMMARIES.map(withoutSuggestions)
-        : SUMMARIES,
+    list: async (request: { suggestionType?: string; searchQuery?: string }) =>
+      serverSearch({
+        pieces:
+          request.suggestionType === undefined
+            ? SUMMARIES.map(withoutSuggestions)
+            : SUMMARIES,
+        searchQuery: request.searchQuery,
+      }),
     get: async ({ name }: { name: string }) => ({ name, actions: {} }),
   },
 }));
@@ -96,6 +100,7 @@ import {
   usePieceMenuPreviewSteps,
 } from '@/app/routes/platform/setup/pieces/piece-selector-preview';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import { PieceSelectorTabType } from '@/features/pieces/stores/piece-selector-tabs-provider';
 import { CategorizedStepMetadataWithSuggestions } from '@/features/pieces/types';
 
@@ -169,16 +174,55 @@ describe('piece menu preview', () => {
     state.managePiecesEnabled = false;
   });
 
+  it('finds pieces by their action names, like the builder search', async () => {
+    state.pinnedPieces = [];
+    state.selectedTab = PieceSelectorTabType.NONE;
+    const builder = await builderMenu('1');
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={newQueryClient()}>
+        {children}
+      </QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () =>
+        stepsHooks.useAllStepsMetadata({
+          searchQuery: '1',
+          type: 'action',
+          enabled: true,
+        }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const preview = names(
+      pieceSelectorPreviewUtils.groupForPreview({
+        steps: pieceSelectorPreviewUtils.previewSteps({
+          steps: [],
+          query: '1',
+          searchMatches: result.current.metadata,
+        }),
+        pins: [],
+        tabs: CUSTOM_CONFIG.tabs,
+        selectedTab: PieceSelectorTabType.NONE,
+        selectedCustomTabId: null,
+      }),
+    );
+    expect(preview).toEqual(builder);
+    expect(preview.flatMap(([, pieces]) => pieces)).toContain('Slack');
+  });
+
   it('searches piece names and descriptions across every tab', () => {
     expect(
       names(
         pieceSelectorPreviewUtils.groupForPreview({
-          steps: pieceSelectorPreviewUtils.toPreviewSteps({
-            pieces: SUMMARIES.map(withoutSuggestions),
-            selectedActions: undefined,
-            aiRouterEnabled: false,
+          steps: pieceSelectorPreviewUtils.previewSteps({
+            steps: pieceSelectorPreviewUtils.toPreviewSteps({
+              pieces: SUMMARIES.map(withoutSuggestions),
+              selectedActions: undefined,
+              aiRouterEnabled: false,
+            }),
+            query: 'sheets',
+            searchMatches: undefined,
           }),
-          query: 'sheets',
           pins: [],
           tabs: CUSTOM_CONFIG.tabs,
           selectedTab: PieceSelectorTabType.NONE,
@@ -262,7 +306,6 @@ describe('piece menu preview', () => {
               selectedActions: { [pieceName('jira')]: [] },
               aiRouterEnabled: false,
             }),
-            query: '',
             pins,
             tabs: CUSTOM_CONFIG.tabs,
             selectedTab: tab,
@@ -277,11 +320,33 @@ describe('piece menu preview', () => {
   }
 });
 
+function serverSearch({
+  pieces,
+  searchQuery,
+}: {
+  pieces: PieceMetadataModelSummary[];
+  searchQuery: string | undefined;
+}): PieceMetadataModelSummary[] {
+  const needle = searchQuery?.trim().toLowerCase() ?? '';
+  if (needle === '') {
+    return pieces;
+  }
+  return SUMMARIES.filter(
+    (piece) =>
+      piece.displayName.toLowerCase().includes(needle) ||
+      (piece.suggestedActions ?? []).some((suggested) =>
+        suggested.displayName.toLowerCase().includes(needle),
+      ),
+  ).filter((piece) =>
+    pieces.some((candidate) => candidate.name === piece.name),
+  );
+}
+
 function newQueryClient(): QueryClient {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
-async function builderMenu(): Promise<[string, string[]][]> {
+async function builderMenu(searchQuery = ''): Promise<[string, string[]][]> {
   const queryClient = newQueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -289,7 +354,7 @@ async function builderMenu(): Promise<[string, string[]][]> {
   const { result } = renderHook(
     () =>
       piecesHooks.usePiecesSearch({
-        searchQuery: '',
+        searchQuery,
         type: 'action',
         shouldCaptureEvent: false,
       }),
