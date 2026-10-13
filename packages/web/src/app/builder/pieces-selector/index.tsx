@@ -1,13 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
-import { t } from 'i18next';
-import {
-  CheckCircle2Icon,
-  LayoutGridIcon,
-  PuzzleIcon,
-  SparklesIcon,
-  WrenchIcon,
-} from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -39,50 +31,6 @@ import { AITabContent } from './ai-tab-content';
 import { ApprovalsTabContent } from './approvals-tab-content';
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
-
-const getTabsList = (
-  operationType: FlowOperationType,
-  aiAndAgentsAvailable: boolean,
-) => {
-  const baseTabs = [
-    {
-      value: PieceSelectorTabType.EXPLORE,
-      name: t('Explore'),
-      icon: <LayoutGridIcon className="size-5" />,
-    },
-    {
-      value: PieceSelectorTabType.APPS,
-      name: t('Apps'),
-      icon: <PuzzleIcon className="size-5" />,
-    },
-    {
-      value: PieceSelectorTabType.UTILITY,
-      name: t('Utility'),
-      icon: <WrenchIcon className="size-5" />,
-    },
-  ];
-
-  const replaceOrAddAction = [
-    FlowOperationType.ADD_ACTION,
-    FlowOperationType.UPDATE_ACTION,
-  ].includes(operationType);
-
-  if (replaceOrAddAction && aiAndAgentsAvailable) {
-    baseTabs.splice(1, 0, {
-      value: PieceSelectorTabType.AI_AND_AGENTS,
-      name: t('AI & Agents'),
-      icon: <SparklesIcon className="size-5" />,
-    });
-  }
-  if (replaceOrAddAction) {
-    baseTabs.push({
-      value: PieceSelectorTabType.APPROVALS,
-      name: t('Approvals'),
-      icon: <CheckCircle2Icon className="size-5" />,
-    });
-  }
-  return baseTabs;
-};
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -162,7 +110,10 @@ const PieceSelectorContent = ({
   const hasAiPieceActions =
     !isNil(aiProviders) && aiProviders.length > 0 && !isAiPieceUnavailable;
   const tabsList = pieceSelectorCustomization.buildResolvedTabs({
-    availableBuiltinTabs: getTabsList(operation.type, hasAiPieceActions),
+    availableBuiltinTabs: pieceSelectorCustomization.getBuiltinTabs({
+      operationType: operation.type,
+      aiAndAgentsAvailable: hasAiPieceActions,
+    }),
     config: platform.pieceSelectorConfig,
   });
   const firstTab = tabsList[0];

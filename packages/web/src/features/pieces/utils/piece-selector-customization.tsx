@@ -1,8 +1,10 @@
 import {
+  FlowOperationType,
   PIECE_SELECTOR_BUILTIN_TABS,
   PieceSelectorConfig,
   PieceSelectorTabConfig,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 import {
   ActivityIcon,
   AppWindowIcon,
@@ -207,6 +209,53 @@ const BUILTIN_TAB_DISPLAY: Record<
   APPROVALS: { defaultLabel: 'Approvals', defaultIconKey: 'CheckCircle2' },
 };
 
+const getBuiltinTabs = ({
+  operationType,
+  aiAndAgentsAvailable,
+}: {
+  operationType: FlowOperationType;
+  aiAndAgentsAvailable: boolean;
+}): DefaultBuiltinTab[] => {
+  const baseTabs = [
+    {
+      value: PieceSelectorTabType.EXPLORE,
+      name: t('Explore'),
+      icon: <LayoutGridIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.APPS,
+      name: t('Apps'),
+      icon: <PuzzleIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.UTILITY,
+      name: t('Utility'),
+      icon: <WrenchIcon className="size-5" />,
+    },
+  ];
+
+  const replaceOrAddAction = [
+    FlowOperationType.ADD_ACTION,
+    FlowOperationType.UPDATE_ACTION,
+  ].includes(operationType);
+
+  if (replaceOrAddAction && aiAndAgentsAvailable) {
+    baseTabs.splice(1, 0, {
+      value: PieceSelectorTabType.AI_AND_AGENTS,
+      name: t('AI & Agents'),
+      icon: <SparklesIcon className="size-5" />,
+    });
+  }
+  if (replaceOrAddAction) {
+    baseTabs.push({
+      value: PieceSelectorTabType.APPROVALS,
+      name: t('Approvals'),
+      icon: <CheckCircle2Icon className="size-5" />,
+    });
+  }
+  return baseTabs;
+};
+
 const getDefaultTabConfigs = (): PieceSelectorTabConfig[] =>
   PIECE_SELECTOR_BUILTIN_TABS.map((builtinTab) => ({
     id: builtinTab,
@@ -240,6 +289,7 @@ const getCustomTab = ({
 
 export const pieceSelectorCustomization = {
   buildResolvedTabs,
+  getBuiltinTabs,
   getCustomTab,
   getDefaultTabConfigs,
   getBuiltinTabDisplay,
