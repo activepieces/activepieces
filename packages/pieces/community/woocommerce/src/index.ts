@@ -133,6 +133,12 @@ export const woocommerce = createPiece({
           }`
         ).toString('base64')}`,
       }),
+      props: {
+        url: {
+          description: "Full URL, or a path relative to your store's address.",
+          placeholder: '/wp-json/wc/v3/orders',
+        },
+      },
     }),
   ],
   triggers: triggers,
