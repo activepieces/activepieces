@@ -2,6 +2,7 @@ import { SnowflakeAuthValue, withSnowflake } from './client';
 import { identifier, qualifiedName } from './sql';
 
 const CURSOR = '__AP_CURSOR';
+const HASH = '__AP_ROW_HASH';
 const PAGE_SIZE = 1000;
 
 export async function fetchBaseline({
@@ -29,55 +30,50 @@ export async function fetchNewRows({
   table,
   column,
   after,
-  offset,
+  hash,
 }: {
   auth: SnowflakeAuthValue;
   table: string;
   column: string;
   after: string | null;
-  offset?: number;
+  hash?: string;
 }): Promise<{
   rows: Record<string, unknown>[];
   cursor: string | null;
-  offset?: number;
+  hash?: string;
 }> {
   const col = identifier({ name: column, label: 'Timestamp column' });
   const cursorExpr = `DATE_PART(EPOCH_MICROSECOND, ${col})`;
-  const strict = after !== null && offset === undefined;
-  const skip = strict ? 0 : Math.max(0, Math.floor(offset ?? 0));
-  const where =
-    after === null
-      ? `${col} IS NOT NULL`
-      : `${cursorExpr} ${strict ? '>' : '>='} ?`;
-  const sql = `SELECT t.*, ${cursorExpr} AS "${CURSOR}" FROM ${qualifiedName({
-    value: table,
-    label: 'Table',
-  })} t WHERE ${where} ORDER BY ${cursorExpr} ASC, HASH(t.*) ASC LIMIT ${PAGE_SIZE}${
-    skip > 0 ? ` OFFSET ${skip}` : ''
-  }`;
+  const rowHash = 'HASH(t.*)';
+  let where = `${col} IS NOT NULL`;
+  let binds: string[] = [];
+  if (after !== null && hash === undefined) {
+    where = `${cursorExpr} > ?`;
+    binds = [after];
+  } else if (after !== null && hash !== undefined) {
+    where = `(${cursorExpr} > ? OR (${cursorExpr} = ? AND ${rowHash} > TO_NUMBER(?)))`;
+    binds = [after, after, hash];
+  }
+  const sql = `SELECT t.*, ${cursorExpr} AS "${CURSOR}", TO_VARCHAR(${rowHash}) AS "${HASH}" FROM ${qualifiedName(
+    {
+      value: table,
+      label: 'Table',
+    }
+  )} t WHERE ${where} ORDER BY ${cursorExpr} ASC, ${rowHash} ASC LIMIT ${PAGE_SIZE}`;
   const result = await withSnowflake({
     auth,
-    fn: (session) =>
-      session.query({
-        sql,
-        binds: after === null ? [] : [after],
-        maxRows: PAGE_SIZE,
-      }),
+    fn: (session) => session.query({ sql, binds, maxRows: PAGE_SIZE }),
   });
   const rows = result.rows;
   if (rows.length === 0) {
-    return { rows: [], cursor: after, offset };
+    return { rows: [], cursor: after, hash };
   }
-  const last = cursorString(rows[rows.length - 1][CURSOR]);
-  let atLast = 0;
-  for (const row of rows) {
-    if (cursorString(row[CURSOR]) === last) atLast++;
-  }
-  const sameGroup = !strict && after !== null && last === after;
+  const lastRow = rows[rows.length - 1];
+  const last = cursorString(lastRow[CURSOR]);
   return {
     rows: rows.map(stripCursor),
     cursor: last ?? after,
-    offset: sameGroup ? skip + atLast : atLast,
+    hash: cursorString(lastRow[HASH]) ?? undefined,
   };
 }
 
@@ -107,6 +103,7 @@ export async function fetchLatestRows({
 function stripCursor(row: Record<string, unknown>): Record<string, unknown> {
   const copy = { ...row };
   delete copy[CURSOR];
+  delete copy[HASH];
   return copy;
 }
 

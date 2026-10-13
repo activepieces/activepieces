@@ -104,7 +104,7 @@ export const newRowTrigger = createTrigger({
     const auth = toAuthValue(context.auth);
     const stored = await context.store.get<{
       cursor: string | null;
-      offset?: number;
+      hash?: string;
     }>(ROW_CURSOR_STORE_KEY);
     if (!stored) {
       const cursor = await fetchBaseline({
@@ -120,12 +120,12 @@ export const newRowTrigger = createTrigger({
       table,
       column: created_at_column,
       after: stored.cursor,
-      offset: stored.offset,
+      hash: stored.hash,
     });
     if (page.rows.length > 0) {
       await context.store.put(ROW_CURSOR_STORE_KEY, {
         cursor: page.cursor,
-        offset: page.offset,
+        hash: page.hash,
       });
     }
     return page.rows;
