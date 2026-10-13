@@ -82,7 +82,6 @@ export const calendlyInviteeCreated = createTrigger({
     const response = await context.store?.get<CalendlyWebhookInformation>(
       triggerNameInStore
     );
-    console.log(response || 'nothing');
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
@@ -93,8 +92,6 @@ export const calendlyInviteeCreated = createTrigger({
         },
       };
       await httpClient.sendRequest(request);
-    } else {
-      throw Error('context store was null');
     }
   },
   async run(context) {
