@@ -9,4 +9,5 @@ export {
   projectCollectionUtils,
   projectHooks,
   projectQueryKeys,
+  projectQueryOptions,
 } from './stores/project-collection';

@@ -1,5 +1,6 @@
 import {
   CreatePieceSetRequestBody,
+  isNil,
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
@@ -10,10 +11,13 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useRef } from 'react';
 
 import { pieceCacheUtils } from '@/features/pieces';
-import { projectCollectionUtils, projectQueryKeys } from '@/features/projects';
+import {
+  projectCollectionUtils,
+  projectQueryKeys,
+  projectQueryOptions,
+} from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { mutationFeedback } from '@/lib/mutation-feedback';
@@ -108,7 +112,6 @@ export const pieceSetMutations = {
     const queryClient = useQueryClient();
     const queryKey = pieceSetKeys.one(id);
     const mutationKey = [...queryKey, 'change'];
-    const latestChange = useRef(0);
     const isLastPending = () => queryClient.isMutating({ mutationKey }) <= 1;
     const mutation = useMutation({
       mutationKey,
@@ -144,16 +147,21 @@ export const pieceSetMutations = {
           queryClient.setQueryData(queryKey, updated);
           replaceInList({ queryClient, id, update: () => updated });
         }
-        latestChange.current += 1;
+        const changeNumber = (latestChangeBySet.get(id) ?? 0) + 1;
+        latestChangeBySet.set(id, changeNumber);
         if (isUndo) {
           return;
         }
-        const changeNumber = latestChange.current;
         mutationFeedback.undo({
           message: describeChange(change),
           undoneMessage: t('Change undone'),
           onUndo: async () => {
-            if (changeNumber !== latestChange.current) {
+            if (queryClient.isMutating({ mutationKey }) > 0) {
+              throw mutationFeedback.userError(
+                t('Wait for the current change to finish, then undo.'),
+              );
+            }
+            if (changeNumber !== latestChangeBySet.get(id)) {
               throw mutationFeedback.userError(
                 t('Only the latest change can be undone'),
               );
@@ -172,6 +180,9 @@ export const pieceSetMutations = {
         mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
       onSettled: () => {
+        if (!isLastPending()) {
+          return;
+        }
         Promise.all([
           queryClient.invalidateQueries({ queryKey: pieceSetKeys.list }),
           queryClient.invalidateQueries({
@@ -228,27 +239,16 @@ export function usePieceSetProjectMoves() {
   return async ({
     pieceSetId,
     added,
-    removed,
-    defaultSetId,
-  }: ProjectMoves): Promise<void> => {
+    removed = [],
+  }: ProjectMoves): Promise<ProjectMovesResult> => {
     try {
       const results = await Promise.allSettled([
         ...(added.length > 0
           ? [pieceSetsApi.assignProjects(pieceSetId, { projectIds: added })]
           : []),
-        ...(removed.length > 0
-          ? [
-              defaultSetId === undefined
-                ? Promise.all(
-                    removed.map((projectId) =>
-                      pieceSetsApi.removeProject(pieceSetId, projectId),
-                    ),
-                  )
-                : pieceSetsApi.assignProjects(defaultSetId, {
-                    projectIds: removed,
-                  }),
-            ]
-          : []),
+        ...removed.map((projectId) =>
+          pieceSetsApi.removeProject(pieceSetId, projectId),
+        ),
       ]);
       const failure = results.find(
         (result): result is PromiseRejectedResult =>
@@ -260,6 +260,30 @@ export function usePieceSetProjectMoves() {
     } finally {
       await refreshAfterProjectChange({ queryClient });
     }
+    if (removed.length === 0) {
+      return { movedElsewhere: [] };
+    }
+    const [platforms, sets] = await Promise.all([
+      queryClient.fetchQuery(projectQueryOptions.forPlatforms()),
+      queryClient.fetchQuery({
+        queryKey: pieceSetKeys.list,
+        queryFn: () => pieceSetsApi.listAll(),
+      }),
+    ]);
+    const defaultSetId = sets.find((set) => set.isDefault)?.id;
+    const setOf = new Map(
+      platforms
+        .flatMap((entry) => entry.projects)
+        .map((project) => [project.id, project.pieceSetId]),
+    );
+    return {
+      movedElsewhere: removed.filter((projectId) => {
+        const current = setOf.get(projectId);
+        return (
+          !isNil(current) && current !== pieceSetId && current !== defaultSetId
+        );
+      }),
+    };
   };
 }
 
@@ -330,6 +354,7 @@ function isNotFound(error: unknown): boolean {
 }
 
 const MAX_RETRIES = 3;
+const latestChangeBySet = new Map<string, number>();
 
 type ChangeVariables = { change: PieceSetChange; isUndo?: boolean };
 
@@ -340,6 +365,7 @@ type FormErrorHandler = {
 type ProjectMoves = {
   pieceSetId: string;
   added: string[];
-  removed: string[];
-  defaultSetId: string | undefined;
+  removed?: string[];
 };
+
+type ProjectMovesResult = { movedElsewhere: string[] };

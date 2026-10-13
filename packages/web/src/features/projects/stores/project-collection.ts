@@ -273,6 +273,13 @@ export const projectQueryKeys = {
   forPlatforms: ['projects-for-platforms'] as const,
 };
 
+export const projectQueryOptions = {
+  forPlatforms: () => ({
+    queryKey: projectQueryKeys.forPlatforms,
+    queryFn: () => api.get<ProjectWithLimitsWithPlatform[]>('/v1/platforms'),
+  }),
+};
+
 export const getProjectName = (
   project: Pick<ProjectWithLimits, 'type' | 'displayName'>,
 ): string => {
@@ -282,12 +289,9 @@ export const getProjectName = (
 };
 export const projectHooks = {
   useProjectsForPlatforms: () => {
-    return useQuery<ProjectWithLimitsWithPlatform[], Error>({
-      queryKey: projectQueryKeys.forPlatforms,
-      queryFn: async () => {
-        return api.get<ProjectWithLimitsWithPlatform[]>('/v1/platforms');
-      },
-    });
+    return useQuery<ProjectWithLimitsWithPlatform[], Error>(
+      projectQueryOptions.forPlatforms(),
+    );
   },
   useReloadPageIfProjectIdChanged: (projectId: string) => {
     const { embedState } = useEmbedding();
