@@ -115,7 +115,7 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-pieces',
-    label: 'Platform Admin — Pieces catalog',
+    label: 'Platform Admin — Pieces',
     href: '/platform/pieces',
     icon: PuzzleIcon,
     requiresPlatformAdmin: true,
@@ -136,7 +136,7 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-piece-selector',
-    label: 'Platform Admin — Piece selector',
+    label: 'Platform Admin — Piece menu',
     href: '/platform/pieces/selector',
     icon: PuzzleIcon,
     requiresPlatformAdmin: true,

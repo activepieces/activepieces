@@ -276,7 +276,7 @@ export const platformRoutes = [
     path: '/platform/pieces/selector',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece selector">
+        <PageTitle title="Piece menu">
           <SuspenseWrapper>
             <PieceSelectorPage />
           </SuspenseWrapper>
