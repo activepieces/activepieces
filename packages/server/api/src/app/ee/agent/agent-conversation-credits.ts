@@ -1,7 +1,6 @@
-import { AIProviderName, isNil, unique } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { AgentConversation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In, IsNull } from 'typeorm'
 import { aiKeyScope } from '../../ai/ai-key-scope'
 import { AIProviderSchema } from '../../ai/ai-provider-entity'
 import { AddConversationCreditsParams, AiUsageHooks, UnpinConversationsFromKeyParams } from '../../ai/ai-usage-hooks'
@@ -29,13 +28,21 @@ export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageH
             select: { id: true, projectId: true, modelName: true },
         })
         const stale = isNil(key) ? pinned : pinned.filter((conversation) => !keyStillServes({ key, conversation }))
-        for (const modelName of unique(stale.map((conversation) => conversation.modelName ?? null))) {
-            const ids = stale.filter((conversation) => (conversation.modelName ?? null) === modelName).map((conversation) => conversation.id)
-            await repo.update(
-                { platformId, providerConfigId: configId, modelName: isNil(modelName) ? IsNull() : modelName, id: In(ids) },
-                { providerConfigId: null },
-            )
+        if (stale.length === 0) {
+            return
         }
+        await manager.query(
+            `
+            UPDATE "agent_conversation" AS conversation
+            SET "providerConfigId" = NULL
+            FROM unnest($3::varchar[], $4::varchar[]) AS stale(id, "modelName")
+            WHERE conversation."platformId" = $1
+              AND conversation."providerConfigId" = $2
+              AND conversation.id = stale.id
+              AND conversation."modelName" IS NOT DISTINCT FROM stale."modelName"
+            `,
+            [platformId, configId, stale.map((conversation) => conversation.id), stale.map((conversation) => conversation.modelName ?? null)],
+        )
     },
 })
 
