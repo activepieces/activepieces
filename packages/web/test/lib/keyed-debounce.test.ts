@@ -54,6 +54,38 @@ describe('KeyedDebounce', () => {
     });
   });
 
+  describe('whenEmpty', () => {
+    it('settles at once when no call waits', async () => {
+      const debounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });
+
+      await expect(debounce.whenEmpty()).resolves.toBeUndefined();
+    });
+
+    it('settles after the last pending call runs', async () => {
+      const debounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });
+      const events: string[] = [];
+
+      debounce.schedule({
+        key: 'step_1',
+        run: () => events.push('step_1 edit'),
+      });
+      vi.advanceTimersByTime(500);
+      debounce.schedule({
+        key: 'note_1',
+        run: () => events.push('note_1 edit'),
+      });
+      debounce
+        .whenEmpty()
+        .then(() => events.push('empty'))
+        .catch(() => undefined);
+      await vi.advanceTimersByTimeAsync(500);
+      expect(events).toEqual(['step_1 edit']);
+
+      await vi.advanceTimersByTimeAsync(500);
+      expect(events).toEqual(['step_1 edit', 'note_1 edit', 'empty']);
+    });
+  });
+
   it('sends only the latest call of a key, after the wait', () => {
     const debounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });
     const sent: string[] = [];
