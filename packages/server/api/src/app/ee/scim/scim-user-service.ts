@@ -59,9 +59,11 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        const platformRole = request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole
-            ?? await userInvitationsService(log).getAcceptedAdminOrOperatorInviteRole({ email, platformId })
-            ?? PlatformRole.MEMBER
+        const roleFromDirectory = request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole
+        const roleFromInvite = isNil(roleFromDirectory)
+            ? await userInvitationsService(log).getAcceptedAdminOrOperatorInviteRole({ email, platformId })
+            : null
+        const platformRole = roleFromDirectory ?? roleFromInvite ?? PlatformRole.MEMBER
 
         const { user } = await userService(log).getOrCreateWithProject({
             identity,
@@ -76,6 +78,10 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             platformRole,
             externalId,
         })
+
+        if (!isNil(roleFromInvite)) {
+            await userInvitationsService(log).deleteAcceptedPlatformInvites({ email, platformId })
+        }
 
         await emailService(log).sendScimUserWelcome({
             email,
