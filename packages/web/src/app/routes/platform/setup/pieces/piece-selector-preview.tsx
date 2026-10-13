@@ -13,6 +13,7 @@ import { useDebounce } from 'use-debounce';
 
 import { AdminFetchErrorState } from '@/app/components/admin';
 import { LogoPlate } from '@/components/custom/logo-plate';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +31,7 @@ import {
   CategorizedStepMetadataWithSuggestions,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/types';
+import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -46,6 +48,7 @@ export function PieceSelectorPreview({
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const { steps, actionCounts, isLoading, isError, refetch } =
     usePieceMenuPreviewSteps();
   const aiAndAgentsAvailable = useAiAndAgentsAvailable();
@@ -144,7 +147,16 @@ export function PieceSelectorPreview({
                   active={active !== null && stepId(active) === row.id}
                   pinned={isPinned({ step: row.step, pins })}
                   flashed={pieceNameOf(row.step) === flashedPiece}
-                  onActivate={() => setActiveId(row.id)}
+                  takeFocus={focusId === row.id}
+                  onSelect={() => setActiveId(row.id)}
+                  onMove={(offset) => {
+                    const ids = visibleSteps.map(stepId);
+                    const next = ids[ids.indexOf(row.id) + offset];
+                    if (next !== undefined) {
+                      setActiveId(next);
+                      setFocusId(next);
+                    }
+                  }}
                   onTogglePin={onTogglePin}
                 />
               </div>
@@ -199,7 +211,7 @@ export function PieceSelectorPreview({
                 className={cn(
                   'h-9 shrink-0 gap-1.5 rounded-md border-0 px-2.5 text-gray-11 hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-2 focus-visible:outline-accent-8 data-[state=active]:bg-gray-3 data-[state=active]:text-gray-12',
                   highlightedKeys.includes(tab.key) &&
-                    'bg-accent-3 text-accent-11 ring-2 ring-accent-8 ring-inset',
+                    'bg-accent-2 text-accent-11',
                 )}
               >
                 {tab.icon}
@@ -253,32 +265,46 @@ function PieceRow({
   active,
   pinned,
   flashed,
-  onActivate,
+  takeFocus,
+  onSelect,
+  onMove,
   onTogglePin,
 }: {
   step: StepMetadataWithSuggestions;
   active: boolean;
   pinned: boolean;
   flashed: boolean;
-  onActivate: () => void;
+  takeFocus: boolean;
+  onSelect: () => void;
+  onMove: (offset: number) => void;
   onTogglePin: (pieceName: string) => void;
 }) {
   const pieceName = pieceNameOf(step);
   return (
     <div
-      onMouseEnter={onActivate}
       className={cn(
-        'group flex h-9 min-w-0 items-center gap-1 rounded-md pr-1 transition-colors',
-        active && 'bg-gray-3',
-        flashed && 'bg-accent-3 ring-2 ring-accent-8 ring-inset',
+        'group flex h-9 min-w-0 items-center gap-1 rounded-md pr-1 transition-colors duration-300',
+        active ? 'bg-gray-3' : 'hover:bg-gray-2',
+        flashed && 'bg-accent-2',
       )}
     >
       <button
         type="button"
-        onClick={onActivate}
-        onFocus={onActivate}
+        ref={(element) => {
+          if (takeFocus && element && document.activeElement !== element) {
+            element.focus();
+            element.scrollIntoView({ block: 'nearest' });
+          }
+        }}
+        onClick={onSelect}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            onMove(event.key === 'ArrowDown' ? 1 : -1);
+          }
+        }}
         aria-pressed={active}
-        className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 text-left focus-visible:outline-2 focus-visible:outline-accent-8"
+        className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 text-left focus-visible:outline-1 focus-visible:outline-gray-8"
       >
         <LogoPlate
           src={step.logoUrl}
@@ -287,7 +313,12 @@ function PieceRow({
           border
           fallback={<PuzzleIcon className="size-3.5 text-gray-11" />}
         />
-        <span className="min-w-0 flex-1 truncate text-sm text-gray-12">
+        <span
+          className={cn(
+            'min-w-0 flex-1 truncate text-sm text-gray-12',
+            active && 'font-medium',
+          )}
+        >
           {step.displayName}
         </span>
       </button>
@@ -379,8 +410,17 @@ function StepDetails({
         <ul className="flex flex-col divide-y rounded-lg border">
           {actions.map((action) => (
             <li key={action.name} className="flex flex-col gap-0.5 px-3 py-2">
-              <span className="truncate text-sm text-gray-12">
-                {action.displayName}
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-sm text-gray-12">
+                  {action.displayName}
+                </span>
+                {action.classification && (
+                  <Badge variant="secondary" className="shrink-0 font-normal">
+                    {ACTION_CLASSIFICATION_BADGES[
+                      action.classification
+                    ].label()}
+                  </Badge>
+                )}
               </span>
               {action.description && (
                 <span className="line-clamp-1 text-xs text-gray-11">
