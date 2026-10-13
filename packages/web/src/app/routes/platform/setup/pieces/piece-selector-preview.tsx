@@ -173,7 +173,7 @@ export function PieceSelectorPreview({
       }}
       className="flex min-w-0 flex-col"
     >
-      <div className="flex flex-col gap-3 border-b p-4">
+      <div className="flex flex-col gap-3 border-b p-5">
         <div className="relative">
           <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-10" />
           <Input
@@ -234,7 +234,7 @@ function PreviewSkeleton() {
           </div>
         ))}
       </div>
-      <div className="hidden flex-col gap-3 p-4 sm:flex">
+      <div className="hidden flex-col gap-3 p-5 sm:flex">
         <div className="flex items-center gap-3">
           <Skeleton className="size-8 rounded-md" />
           <div className="flex flex-col gap-1.5">
@@ -338,7 +338,7 @@ function StepDetails({
     actions.length === 0 &&
     (isLoading || debouncedName !== pieceName);
   return (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="flex flex-col gap-3 p-5">
       <div className="flex min-w-0 items-center gap-3">
         <LogoPlate
           src={step.logoUrl}

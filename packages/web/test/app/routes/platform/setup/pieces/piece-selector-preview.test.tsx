@@ -142,7 +142,7 @@ const TABS = [
   PieceSelectorTabType.NONE,
 ];
 
-describe('piece selector preview', () => {
+describe('piece menu preview', () => {
   beforeEach(() => {
     state.selectedCustomTabId = 'crm';
     state.pieceSelectorConfig = CUSTOM_CONFIG;
@@ -228,7 +228,7 @@ function summary({
 }: {
   name: string;
   displayName: string;
-  categories?: string[];
+  categories?: PieceCategory[];
   actions?: number;
   hiddenBySet?: boolean;
 }): PieceMetadataModelSummary {
@@ -248,8 +248,9 @@ function summary({
     packageType: PackageType.REGISTRY,
     pieceType: PieceType.OFFICIAL,
     projectUsage: 0,
+    contextInfo: undefined,
     suggestedActions: hiddenBySet ? [] : suggested,
-  } as PieceMetadataModelSummary;
+  };
 }
 
 function action(displayName: string): ActionBase {
