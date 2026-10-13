@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/pieces-framework";
+import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/pieces-framework";
 import * as z from 'zod/mini'
 import qs from 'qs';
 
@@ -235,7 +235,9 @@ export const tablesCommon = {
     context: TablesApiContext;
   }) {
     const tables = await fetchAllTables({ context, externalIds: [externalId] });
-    await Promise.all(tables.map((table) => this.deleteWebhook({ tableId: table.id, webhookId, server: context.server })));
+    for (const table of tables) {
+      await this.deleteWebhook({ tableId: table.id, webhookId, server: context.server });
+    }
   },
 
   async getRecentRecords({
@@ -284,7 +286,20 @@ export const tablesCommon = {
   },
 
   async convertTableExternalIdToId(tableId: string, context: TablesApiContext) {
-    const [table] = await fetchAllTables({ context, externalIds: [tableId] });
+    const list: ListTablesRequest = {
+      externalIds: [tableId],
+      projectId: context.project.id,
+    }
+
+    const res = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/tables?${qs.stringify(list)}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+    });
+    const table = (res.body as SeekPage<Table>).data[0];
     assertNotNullOrUndefined(table, `Table with externalId ${tableId} not found`);
     return table.id;
   }

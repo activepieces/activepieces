@@ -8,6 +8,9 @@ import { deletedRecordTrigger } from '../src/lib/triggers/deleted-record';
 import { newRecordTrigger } from '../src/lib/triggers/new-record';
 import { updatedRecordTrigger } from '../src/lib/triggers/updated-record';
 
+const PAGE_SIZE = 2;
+const CURSOR_PREFIX = 'seek+/=';
+
 const { tablesApi } = vi.hoisted(() => {
   const tablesApi: FakeTablesApi = { tables: [], webhooks: [] };
   return { tablesApi };
@@ -74,6 +77,24 @@ describe.each([
 
     expect(tablesApi.webhooks).toEqual(otherFlowWebhooks);
   });
+
+  test('disabling finds the subscribed table on a later page of tables that share the externalId', async () => {
+    tablesApi.tables = [{ id: 'original-table', externalId: 'leads' }];
+    const store = memoryStore();
+
+    await trigger.onEnable(hookContext(store));
+    tablesApi.tables = [
+      { id: 'copy-3', externalId: 'leads' },
+      { id: 'copy-2', externalId: 'leads' },
+      { id: 'copy-1', externalId: 'leads' },
+      ...tablesApi.tables,
+    ];
+    const otherFlowWebhook = { id: 'other-flow-on-original', tableId: 'original-table' };
+    tablesApi.webhooks = [...tablesApi.webhooks, otherFlowWebhook];
+    await trigger.onDisable(hookContext(store));
+
+    expect(tablesApi.webhooks).toEqual([otherFlowWebhook]);
+  });
 });
 
 function answer(request: HttpRequest): unknown {
@@ -81,9 +102,18 @@ function answer(request: HttpRequest): unknown {
   const path = url.pathname.replace(/^\/api\//, '');
   const webhookPath = path.match(/^v1\/tables\/([^/]+)\/webhooks(?:\/([^/]+))?$/);
   if (request.method === HttpMethod.GET && path === 'v1/tables') {
-    const { externalIds } = qs.parse(url.search.slice(1));
-    const wanted = Array.isArray(externalIds) ? externalIds : [externalIds];
-    return { data: tablesApi.tables.filter((table) => wanted.includes(table.externalId)), next: null, previous: null };
+    const { externalIds, cursor } = qs.parse(url.search.slice(1));
+    if (!Array.isArray(externalIds)) {
+      throw new Error(`table list without an externalIds filter: ${request.url}`);
+    }
+    const matching = tablesApi.tables.filter((table) => externalIds.includes(table.externalId));
+    const offset = cursor === undefined ? 0 : pageOffset(cursor);
+    const nextOffset = offset + PAGE_SIZE;
+    return {
+      data: matching.slice(offset, nextOffset),
+      next: nextOffset < matching.length ? `${CURSOR_PREFIX}${nextOffset}` : null,
+      previous: null,
+    };
   }
   if (request.method === HttpMethod.POST && webhookPath) {
     const webhook = { id: `webhook-${randomUUID()}`, tableId: webhookPath[1] };
@@ -95,6 +125,13 @@ function answer(request: HttpRequest): unknown {
     return {};
   }
   throw new Error(`unexpected request ${request.method} ${request.url}`);
+}
+
+function pageOffset(cursor: unknown): number {
+  if (typeof cursor !== 'string' || !cursor.startsWith(CURSOR_PREFIX)) {
+    throw new Error(`cursor arrived altered: ${String(cursor)}`);
+  }
+  return Number(cursor.slice(CURSOR_PREFIX.length));
 }
 
 function hookContext(store: Store) {
