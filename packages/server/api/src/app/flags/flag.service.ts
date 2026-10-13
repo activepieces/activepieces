@@ -4,7 +4,6 @@ import { ApEdition, ApFlagId, ExecutionMode, Flag } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { googleAuth } from '../authentication/lib/google-auth'
 import { turnstile } from '../authentication/lib/turnstile'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
@@ -151,12 +150,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
                 value: {},
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.GOOGLE_AUTH_CONFIGURED,
-                value: googleAuth.isConfigured(),
                 created,
                 updated,
             },

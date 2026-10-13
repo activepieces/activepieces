@@ -8,7 +8,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
-  googleConfigured: true,
   platform: {
     id: 'p',
     googleAuthEnabled: false,
@@ -23,14 +22,7 @@ const state = vi.hoisted(() => ({
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: {
-    useFlag: (flagId: string) => ({
-      data:
-        flagId === 'GOOGLE_AUTH_CONFIGURED'
-          ? state.googleConfigured
-          : undefined,
-    }),
-  },
+  flagsHooks: { useFlag: () => ({ data: undefined }) },
 }));
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
@@ -68,7 +60,6 @@ const GOOGLE_HINT =
   'Allow logins through Google single sign-on. Turn on email or SAML before turning this off, so people can still sign in.';
 
 beforeEach(() => {
-  state.googleConfigured = true;
   state.platform = {
     ...state.platform,
     googleAuthEnabled: false,
@@ -90,15 +81,6 @@ describe('SSOPage email sign-in', () => {
     const toggle = screen.getByRole('switch', { name: 'Allowed Email Login' });
     expect(toggle.hasAttribute('disabled')).toBe(false);
     expect(screen.queryByText(HINT)).toBeNull();
-  });
-
-  it('stays on when Google sign-in is on but Google is not configured', () => {
-    state.googleConfigured = false;
-    state.platform = { ...state.platform, googleAuthEnabled: true };
-    renderPage();
-    const toggle = screen.getByRole('switch', { name: 'Allowed Email Login' });
-    expect(toggle.hasAttribute('disabled')).toBe(true);
-    expect(screen.getByText(HINT)).toBeTruthy();
   });
 });
 

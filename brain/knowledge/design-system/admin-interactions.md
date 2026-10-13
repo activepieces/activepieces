@@ -68,9 +68,9 @@ failed action does not toast the same failure again. A form that shows the error
   for permission, not-found, plan and schema-validation errors, and the generic message only for unknown
   and JS errors. An error written for the admin is thrown with `mutationFeedback.userError`.
 - Sign-in lock-out: the email, Google and SAML controls are blocked (with a hint) when they are the last
-  method; every save, confirm and Undo re-checks against freshly fetched platform data first; and the
-  platform update endpoint rejects any change that leaves no sign-in method, so a stale tab or a second
-  admin cannot get around the UI.
+  method, counting email, Google (its switch on) and SAML (connected, with a verified domain); every save,
+  confirm and Undo re-checks against freshly fetched platform data first, so a stale tab cannot get
+  around the hint.
 - Focus return to a row menu's trigger and ignoring clicks on toasts apply only inside `AdminPage`
   (`MenuFocusReturnScope`); dialogs elsewhere in the app behave as Radix does.
 - Feature locks (`PlanFeatureSample`, `LockedFeatureGuard`, `SaveBar` `locked`) follow their own rules

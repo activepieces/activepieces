@@ -42,8 +42,7 @@ const SSOPage = () => {
     const updated = await platformApi.update(request, platform.id);
     setCurrentPlatform(queryClient, updated);
   };
-  const googleConfigured = ssoRules.useGoogleConfigured();
-  const googleCanSignIn = platform.googleAuthEnabled && googleConfigured;
+  const googleCanSignIn = platform.googleAuthEnabled;
   const samlCanSignIn = samlConnected && ssoDomainVerified;
   const otherSignInEnabled = googleCanSignIn || samlCanSignIn;
   const signInOtherThanGoogle = emailAuthEnabled || samlCanSignIn;
@@ -95,10 +94,7 @@ const SSOPage = () => {
             aria-label="Google"
             checked={platform.googleAuthEnabled}
             beforeSave={(googleAuthEnabled) =>
-              ssoRules.assertSignInRemains({
-                change: { googleAuthEnabled },
-                googleConfigured,
-              })
+              ssoRules.assertSignInRemains({ googleAuthEnabled })
             }
             blockedReason={
               googleIsOnlyMethod
@@ -164,10 +160,7 @@ const SSOPage = () => {
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
             beforeSave={(next) =>
-              ssoRules.assertSignInRemains({
-                change: { emailAuthEnabled: next },
-                googleConfigured,
-              })
+              ssoRules.assertSignInRemains({ emailAuthEnabled: next })
             }
             blockedReason={
               emailIsOnlyMethod

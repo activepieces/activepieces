@@ -4,7 +4,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { EntityManager } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
-import { googleAuth } from '../authentication/lib/google-auth'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -158,26 +157,52 @@ export const platformService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-        }
-        const platform = await this.getOneOrThrow(params.id)
-        await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
-        const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
-            const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
-            const current = await platformRepo(entityManager)
-                .createQueryBuilder('platform')
-                .addSelect('platform.federatedAuthProviders')
-                .where({ id: params.id })
-                .getOneOrFail()
-            assertSsoDomainUnchanged({ current, params })
-            assertSamlDomainVerified({ current, params })
-            const changes = platformChanges({ current, params })
-            assertSignInMethodRemains({ before: current, after: { ...current, ...changes } })
-            if (Object.keys(changes).length > 0) {
-                await platformRepo(entityManager).update({ id: params.id }, changes)
+            if (!isNil(params.federatedAuthProviders.saml)) {
+                const platform = await this.getOneOrThrow(params.id)
+                if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'SSO domain must be verified before configuring SAML',
+                        },
+                    })
+                }
             }
-            const savedPlatform = await platformRepo(entityManager).findOneByOrFail({ id: params.id })
-            return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
-        })
+        }
+        const platform = params.federatedAuthProviders !== undefined
+            ? await this.getOneWithFederatedAuthOrThrow(params.id)
+            : await this.getOneOrThrow(params.id)
+        await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
+        const federatedAuthProviders = hasFederatedAuth(platform)
+            ? {
+                ...platform.federatedAuthProviders,
+                ...(params.federatedAuthProviders ?? {}),
+            }
+            : undefined
+        const updatedPlatform = {
+            ...platform,
+            ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
+            ...spreadIfDefined('name', params.name),
+            ...spreadIfDefined('primaryColor', params.primaryColor),
+            ...spreadIfNotUndefined('themeColors', params.themeColors),
+            ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
+            ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
+            ...spreadIfDefined('favIconUrl', params.favIconUrl),
+            ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
+            ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
+            ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
+            ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
+            ...spreadIfDefined(
+                'enforceAllowedAuthDomains',
+                params.enforceAllowedAuthDomains,
+            ),
+            ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
+            ...spreadIfDefined('ssoDomain', params.ssoDomain),
+            ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
+            ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+            ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
+        }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
                 platformId: params.id,
@@ -188,6 +213,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             invalidateSamlClientCache(params.id)
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
+        const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
+            const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
+            const savedPlatform = await platformRepo(entityManager).save({
+                ...updatedPlatform,
+                auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedRetentionDays : params.auditLogRetentionDays,
+            })
+            return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
+        })
         if (params.auditLogRetentionDays !== undefined && params.auditLogRetentionDays !== previousRetentionDays) {
             platformSideEffects(log).onAuditLogRetentionUpdated({
                 platformId: params.id,
@@ -426,81 +459,8 @@ function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     return rest
 }
 
-function platformChanges({ current, params }: { current: Platform, params: UpdateParams }): PlatformChanges {
-    return {
-        ...spreadIfDefined('federatedAuthProviders', isNil(params.federatedAuthProviders)
-            ? undefined
-            : { ...current.federatedAuthProviders, ...params.federatedAuthProviders }),
-        ...spreadIfDefined('name', params.name),
-        ...spreadIfDefined('primaryColor', params.primaryColor),
-        ...spreadIfNotUndefined('themeColors', params.themeColors),
-        ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
-        ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
-        ...spreadIfDefined('favIconUrl', params.favIconUrl),
-        ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
-        ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
-        ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
-        ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
-        ...spreadIfDefined('enforceAllowedAuthDomains', params.enforceAllowedAuthDomains),
-        ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
-        ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
-        ...spreadIfDefined('ssoDomain', params.ssoDomain),
-        ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
-        ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
-        ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
-        ...spreadIfNotUndefined('auditLogRetentionDays', params.auditLogRetentionDays),
-    }
-}
-
-function assertSsoDomainUnchanged({ current, params }: { current: Platform, params: UpdateParams }): void {
-    if (params.expectedSsoDomain === undefined) {
-        return
-    }
-    const expected = params.expectedSsoDomain
-    const unchanged = (current.ssoDomain ?? null) === expected.ssoDomain
-        && (current.ssoDomainVerification?.status ?? null) === (expected.verification?.status ?? null)
-        && (current.ssoDomainVerification?.record.value ?? null) === (expected.verification?.record.value ?? null)
-    if (!unchanged) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'The SSO domain changed while this request was running. Try again.',
-            },
-        })
-    }
-}
-
-function assertSamlDomainVerified({ current, params }: { current: Platform, params: UpdateParams }): void {
-    if (isNil(params.federatedAuthProviders?.saml)) {
-        return
-    }
-    if (current.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'SSO domain must be verified before configuring SAML',
-            },
-        })
-    }
-}
-
-function signInMethodCount(platform: SignInMethodsState): number {
-    const googleSignIn = platform.googleAuthEnabled && googleAuth.isConfigured()
-    const samlSignIn = !isNil(platform.federatedAuthProviders?.saml)
-        && !isNil(platform.ssoDomain)
-        && platform.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
-    return [platform.emailAuthEnabled, googleSignIn, samlSignIn].filter(Boolean).length
-}
-
-function assertSignInMethodRemains({ before, after }: { before: SignInMethodsState, after: SignInMethodsState }): void {
-    if (signInMethodCount(before) > 0 && signInMethodCount(after) === 0) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'This change would leave no way to sign in. Keep email, Google or a verified SAML sign-in turned on.',
-            },
-        })
-    }
+function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
+    return 'federatedAuthProviders' in platform
 }
 
 type AddParams = {
@@ -520,15 +480,6 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     auditLogRetentionDays: number | null | undefined
 }
 
-type PlatformChanges = Partial<Omit<Platform, 'id' | 'created' | 'updated'>>
-
-type ExpectedSsoDomain = {
-    ssoDomain: string | null
-    verification: SsoDomainVerification | null
-}
-
-type SignInMethodsState = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders' | 'ssoDomain' | 'ssoDomainVerification'>
-
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     plan?: Partial<PlatformPlanLimits>
@@ -537,7 +488,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     favIconUrl?: string
     ssoDomain?: string | null
     ssoDomainVerification?: SsoDomainVerification | null
-    expectedSsoDomain?: ExpectedSsoDomain
     userId?: UserId
     ip?: string
 }
