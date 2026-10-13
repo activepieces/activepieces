@@ -197,6 +197,7 @@ function RequireAcrossSetsSheet({
   const [pieceName, setPieceName] = useState<string | null>(null);
   const [actionNames, setActionNames] = useState<string[]>([]);
   const [selectedSetIds, setSelectedSetIds] = useState<string[]>([]);
+  const [failedSets, setFailedSets] = useState<FailedSets | null>(null);
   const dirty = actionNames.length > 0 || selectedSetIds.length > 0;
   const { requestClose, dialog } = useGuardedClose({ dirty, onClose });
   const availableSets = pieceSets.filter(
@@ -225,6 +226,7 @@ function RequireAcrossSetsSheet({
         await adminBulk.runEach({
           items: targets,
           verb: 'update',
+          feedback: 'none',
           label: (count) =>
             t('{count, plural, =1 {1 {term}} other {# {terms}}}', {
               ...pieceSetTerms.get(),
@@ -255,7 +257,17 @@ function RequireAcrossSetsSheet({
       }
     },
     onSuccess: () => onClose(),
+    handleError: (error, targets) => {
+      const partial = adminBulk.isPartialFailure(error);
+      const failed = partial
+        ? adminBulk.failedItems({ error, items: targets })
+        : targets;
+      setFailedSets({ partial, sets: failed });
+      setSelectedSetIds(failed.map((pieceSet) => pieceSet.id));
+      return true;
+    },
   });
+  const failedIds = (failedSets?.sets ?? []).map((pieceSet) => pieceSet.id);
 
   const toggleSet = (id: string) =>
     setSelectedSetIds((prev) =>
@@ -284,9 +296,11 @@ function RequireAcrossSetsSheet({
               { ...pieceSetTerms.get(), count: chosenSets.length },
             )}
             onSave={() => {
+              setFailedSets(null);
               requireInSets.mutate(chosenSets);
             }}
             onDiscard={() => {
+              setFailedSets(null);
               setPieceName(null);
               setActionNames([]);
               setSelectedSetIds([]);
@@ -323,6 +337,25 @@ function RequireAcrossSetsSheet({
               )}
             </p>
           </div>
+          {failedSets && (
+            <p role="alert" className="text-sm text-danger-11">
+              {failedSets.partial
+                ? t(
+                    "Couldn't update {names}. The other {terms} are saved; save again to retry.",
+                    {
+                      ...pieceSetTerms.get(),
+                      names: failedSets.sets
+                        .map((pieceSet) => pieceSet.name)
+                        .join(', '),
+                    },
+                  )
+                : t("Couldn't update {names}. Save again to retry.", {
+                    names: failedSets.sets
+                      .map((pieceSet) => pieceSet.name)
+                      .join(', '),
+                  })}
+            </p>
+          )}
           <ul className="flex flex-col rounded-xl border">
             {pieceSets.map((pieceSet) => {
               const hidden =
@@ -366,6 +399,11 @@ function RequireAcrossSetsSheet({
                     <span className="min-w-0 flex-1 truncate text-sm text-gray-12">
                       {pieceSet.name}
                     </span>
+                    {failedIds.includes(pieceSet.id) && (
+                      <span className="shrink-0 text-xs text-danger-11">
+                        {t('Not saved')}
+                      </span>
+                    )}
                     {hidden ? (
                       <span className="shrink-0 text-xs text-gray-11">
                         {t('Piece hidden in this {term}', pieceSetTerms.get())}
@@ -395,3 +433,5 @@ function RequireAcrossSetsSheet({
     </>
   );
 }
+
+type FailedSets = { partial: boolean; sets: PieceSet[] };

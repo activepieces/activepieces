@@ -116,6 +116,7 @@ export type BulkAction<TData extends DataWithId> = {
   render: (
     selectedRows: RowDataWithActions<TData>[],
     resetSelection: () => void,
+    selectOnly: (rowIds: string[]) => void,
   ) => React.ReactNode;
 };
 
@@ -375,6 +376,11 @@ export function DataTable<
 
   const resetSelection = () => {
     table.toggleAllRowsSelected(false);
+  };
+  const selectOnly = (rowIds: string[]) => {
+    table.setRowSelection(
+      Object.fromEntries(rowIds.map((rowId) => [rowId, true])),
+    );
   };
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -781,6 +787,7 @@ export function DataTable<
           selectedRows={selectedRowOriginals}
           actions={bulkActions}
           resetSelection={resetSelection}
+          selectOnly={selectOnly}
         />
       )}
     </div>

@@ -11,15 +11,18 @@ interface DataTableBulkActionsProps<TData> {
     render: (
       selectedRows: TData[],
       resetSelection: () => void,
+      selectOnly: (rowIds: string[]) => void,
     ) => React.ReactNode;
   }>;
   resetSelection: () => void;
+  selectOnly: (rowIds: string[]) => void;
 }
 
 export function DataTableBulkActions<TData>({
   selectedRows,
   actions,
   resetSelection,
+  selectOnly,
 }: DataTableBulkActionsProps<TData>) {
   return (
     <>
@@ -36,7 +39,7 @@ export function DataTableBulkActions<TData>({
             <div className="flex items-center gap-3 bg-panel border rounded-xl shadow-lg p-2">
               {actions.map((action, index) => (
                 <React.Fragment key={index}>
-                  {action.render(selectedRows, resetSelection)}
+                  {action.render(selectedRows, resetSelection, selectOnly)}
                 </React.Fragment>
               ))}
               <div className="border-l h-6 mx-1" />

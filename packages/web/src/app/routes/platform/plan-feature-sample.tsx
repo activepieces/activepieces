@@ -4,7 +4,8 @@ import React from 'react';
 
 import { FeatureSample } from '@/app/components/feature-sample';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { FeatureKey } from '@/features/billing';
+import { FeatureKey, LockedFeatureCopy } from '@/features/billing';
+import { pieceSetTerms } from '@/features/piece-sets';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export function PlanFeatureSample({
@@ -12,13 +13,14 @@ export function PlanFeatureSample({
   children,
 }: PlanFeatureSampleProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { isLocked, teaser } = PLAN_FEATURE_SAMPLES[feature];
+  const { isLocked, teaser, copy } = PLAN_FEATURE_SAMPLES[feature];
 
   return (
     <FeatureSample
       locked={isLocked(platform.plan)}
       title={teaser.title}
       featureKey={teaser.featureKey}
+      copy={copy?.()}
     >
       {children}
     </FeatureSample>
@@ -47,6 +49,17 @@ export function PlanFeatureGuard({
       {children}
     </LockedFeatureGuard>
   );
+}
+
+function requiredActionsCopy(): LockedFeatureCopy {
+  return {
+    headline: t('Make flows use the actions that matter'),
+    description: t(
+      'Choose the actions every flow in a {term} must use, such as an approval or a log step, before it can be published.',
+      pieceSetTerms.get(),
+    ),
+    benefits: [],
+  };
 }
 
 const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
@@ -138,6 +151,16 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
         'Hide what your teams should not use and add private pieces for your own systems.',
     },
   },
+  requiredActions: {
+    isLocked: (plan) => !plan.managePiecesEnabled,
+    teaser: {
+      featureKey: 'PIECES',
+      title: 'Require actions before flows are published',
+      description:
+        'Make every flow in a set use the actions you choose before it can be published.',
+    },
+    copy: requiredActionsCopy,
+  },
   aiProviders: {
     isLocked: (plan) => !plan.aiProvidersEnabled,
     teaser: {
@@ -160,11 +183,13 @@ type PlanFeature =
   | 'auditLogs'
   | 'eventStreaming'
   | 'pieces'
+  | 'requiredActions'
   | 'aiProviders';
 
 type PlanFeatureSampleSpec = {
   isLocked: (plan: PlatformWithoutSensitiveData['plan']) => boolean;
   teaser: PlanFeatureTeaser;
+  copy?: () => LockedFeatureCopy;
 };
 
 type PlanFeatureTeaser = {

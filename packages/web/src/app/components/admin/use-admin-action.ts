@@ -195,6 +195,7 @@ async function runEach<T>({
   label,
   nameOf,
   describe,
+  feedback = 'toast',
 }: {
   items: T[];
   run: (item: T) => Promise<unknown>;
@@ -202,6 +203,7 @@ async function runEach<T>({
   label: (count: number) => string;
   nameOf?: (item: T) => string;
   describe?: (error: unknown) => string | undefined;
+  feedback?: 'toast' | 'none';
 }): Promise<void> {
   const results = await Promise.allSettled(items.map(run));
   const failures = results.flatMap((result) =>
@@ -221,6 +223,9 @@ async function runEach<T>({
       ? nameOf(failedOnes[0])
       : label(failures.length);
   const partial = new BulkPartialFailure(failedOnes);
+  if (feedback === 'none') {
+    throw partial;
+  }
   const reason =
     describe?.(failures[0]) ?? mutationFeedback.message(failures[0]);
   mutationFeedback.error({

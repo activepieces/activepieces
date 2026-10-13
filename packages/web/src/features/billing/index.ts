@@ -40,6 +40,7 @@ export { PLATFORM_FEATURES } from './utils/platform-features';
 export { EnterpriseTrialBillingStatus } from './components/enterprise-trial-billing-status';
 export { EnterpriseTrialLockedActions } from './components/enterprise-trial-locked-actions';
 export { enterpriseTrialFeatures } from './utils/enterprise-trial-features';
+export type { LockedFeatureCopy } from './utils/enterprise-trial-features';
 export { EnterpriseTrialDialog } from './components/enterprise-trial-dialog';
 export { EnterpriseTrialEndedDialog } from './components/enterprise-trial-ended-dialog';
 export { EnterpriseTrialEndingAlert } from './components/enterprise-trial-ending-alert';
