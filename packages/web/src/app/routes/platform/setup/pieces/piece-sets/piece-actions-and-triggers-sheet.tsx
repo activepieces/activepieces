@@ -6,18 +6,18 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { AdminFetchErrorState, SaveBar } from '@/app/components/admin';
+import { SearchInput } from '@/components/custom/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   ChangePieceSet,
   PieceSetChange,
@@ -30,7 +30,6 @@ import { cn } from '@/lib/utils';
 
 import { ConfirmExcludingRequiredActionsDialog } from './confirm-excluding-required-actions';
 import {
-  CountTabs,
   PolicySheet,
   SkeletonRows,
   sameNames,
@@ -82,23 +81,22 @@ function PieceActionsAndTriggersSheetContent({
   const allActionNames = allActions.map((item) => item.data.name);
   const allTriggerNames = allTriggers.map((item) => item.data.name);
 
-  const originalMode: VisibilityMode =
+  const originallyEverything = !(
     pieceName in pieceSet.config.selectedActions ||
     pieceName in pieceSet.config.selectedTriggers
-      ? 'selected'
-      : 'all';
+  );
   const originalHiddenActions = hiddenNames({
-    mode: originalMode,
+    everything: originallyEverything,
     allNames: allActionNames,
     selected: pieceSet.config.selectedActions[pieceName],
   });
   const originalHiddenTriggers = hiddenNames({
-    mode: originalMode,
+    everything: originallyEverything,
     allNames: allTriggerNames,
     selected: pieceSet.config.selectedTriggers[pieceName],
   });
 
-  const [mode, setMode] = useState<VisibilityMode>(originalMode);
+  const [search, setSearch] = useState('');
   const [touchedHiddenActions, setTouchedHiddenActions] = useState<
     string[] | null
   >(null);
@@ -115,20 +113,24 @@ function PieceActionsAndTriggersSheetContent({
   const requiredActionNames =
     pieceSet.config.requiredActions.actions[pieceName] ?? [];
 
-  const visibleActionCount = allActionNames.filter(
+  const checkedActionCount = allActionNames.filter(
     (name) => !localHiddenActions.includes(name),
   ).length;
-  const visibleTriggerCount = allTriggerNames.filter(
+  const checkedTriggerCount = allTriggerNames.filter(
     (name) => !localHiddenTriggers.includes(name),
   ).length;
   const totalCount = allActions.length + allTriggers.length;
-  const checkedCount = visibleActionCount + visibleTriggerCount;
-  const selectAllState: boolean | 'indeterminate' =
-    checkedCount === 0
-      ? false
-      : checkedCount === totalCount
-      ? true
-      : 'indeterminate';
+  const allChecked =
+    localHiddenActions.length === 0 && localHiddenTriggers.length === 0;
+  const noneChecked =
+    totalCount > 0 && checkedActionCount + checkedTriggerCount === 0;
+
+  const hiddenChanged =
+    !sameNames(localHiddenActions, originalHiddenActions) ||
+    !sameNames(localHiddenTriggers, originalHiddenTriggers);
+  const isDirty = hiddenChanged;
+  const buildersSeeEverything =
+    allChecked && (originallyEverything || hiddenChanged);
 
   const toggleComponent = (item: ComponentItem) => {
     const flip = (names: string[]) =>
@@ -142,30 +144,39 @@ function PieceActionsAndTriggersSheetContent({
     }
   };
 
+  const toggleGroup = ({
+    type,
+    check,
+  }: {
+    type: ComponentItem['type'];
+    check: boolean;
+  }) => {
+    if (type === 'action') {
+      setTouchedHiddenActions(
+        check
+          ? []
+          : allActionNames.filter(
+              (name) => !requiredActionNames.includes(name),
+            ),
+      );
+    } else {
+      setTouchedHiddenTriggers(check ? [] : allTriggerNames);
+    }
+  };
+
   const actionNamesWith = (classifications: ActionClassification[]) =>
     allActions
       .filter(
         (item) =>
           item.data.classification !== undefined &&
-          classifications.includes(item.data.classification),
+          classifications.includes(item.data.classification) &&
+          !requiredActionNames.includes(item.data.name),
       )
       .map((item) => item.data.name);
   const destructiveNames = actionNamesWith(['DESTRUCTIVE']);
   const writeOrDestructiveNames = actionNamesWith(['WRITE', 'DESTRUCTIVE']);
   const hide = (names: string[]) =>
     setTouchedHiddenActions(unique([...localHiddenActions, ...names]));
-
-  const toggleSelectAll = () => {
-    const hideAll = checkedCount === totalCount;
-    setTouchedHiddenActions(hideAll ? allActionNames : []);
-    setTouchedHiddenTriggers(hideAll ? allTriggerNames : []);
-  };
-
-  const hiddenChanged =
-    !sameNames(localHiddenActions, originalHiddenActions) ||
-    !sameNames(localHiddenTriggers, originalHiddenTriggers);
-  const isDirty =
-    mode !== originalMode || (mode === 'selected' && hiddenChanged);
 
   const close = () => onOpenChange(false);
   const { requestClose, dialog: leaveDialog } = useGuardedClose({
@@ -174,7 +185,6 @@ function PieceActionsAndTriggersSheetContent({
   });
 
   const discard = () => {
-    setMode(originalMode);
     setTouchedHiddenActions(null);
     setTouchedHiddenTriggers(null);
   };
@@ -188,6 +198,14 @@ function PieceActionsAndTriggersSheetContent({
     }
   };
 
+  const hideWholePiece = () => {
+    saveChange({
+      type: 'visibility',
+      label: pieceDisplayName,
+      visible: { [pieceName]: false },
+    }).catch(() => undefined);
+  };
+
   const handleSave = () => {
     if (!isDirty || saving || !pieceModel) {
       return;
@@ -196,24 +214,22 @@ function PieceActionsAndTriggersSheetContent({
       type: 'components',
       pieceName,
       pieceDisplayName,
-      actions:
-        mode === 'all'
-          ? { mode: 'all' }
-          : {
-              mode: 'selected',
-              selected: allActionNames.filter(
-                (name) => !localHiddenActions.includes(name),
-              ),
-            },
-      triggers:
-        mode === 'all'
-          ? { mode: 'all' }
-          : {
-              mode: 'selected',
-              selected: allTriggerNames.filter(
-                (name) => !localHiddenTriggers.includes(name),
-              ),
-            },
+      actions: allChecked
+        ? { mode: 'all' }
+        : {
+            mode: 'selected',
+            selected: allActionNames.filter(
+              (name) => !localHiddenActions.includes(name),
+            ),
+          },
+      triggers: allChecked
+        ? { mode: 'all' }
+        : {
+            mode: 'selected',
+            selected: allTriggerNames.filter(
+              (name) => !localHiddenTriggers.includes(name),
+            ),
+          },
     };
     const excluded = pieceSetChanges.excludedRequiredActions({
       pieceSet,
@@ -226,7 +242,11 @@ function PieceActionsAndTriggersSheetContent({
     saveChange(change).catch(() => undefined);
   };
 
-  const showCheckboxes = mode === 'selected';
+  const query = search.trim().toLowerCase();
+  const matches = (item: ComponentItem) =>
+    query.length === 0 ||
+    item.data.displayName.toLowerCase().includes(query) ||
+    (item.data.description ?? '').toLowerCase().includes(query);
 
   return (
     <>
@@ -236,30 +256,50 @@ function PieceActionsAndTriggersSheetContent({
         title={t('Actions and triggers for {name}', {
           name: pieceDisplayName,
         })}
-        description={t(
-          'Choose whether builders see every action, or only some.',
-        )}
+        description={
+          pieceModel
+            ? buildersSeeSummary({
+                pieceDisplayName,
+                everything: buildersSeeEverything,
+                checkedActions: checkedActionCount,
+                totalActions: allActions.length,
+                checkedTriggers: checkedTriggerCount,
+                totalTriggers: allTriggers.length,
+              })
+            : undefined
+        }
         toolbar={
-          <>
-            <CountTabs
-              label={t('Which actions and triggers builders see')}
-              value={mode}
-              onValueChange={setMode}
-              options={[
-                { value: 'all', label: t('Show all') },
-                { value: 'selected', label: t('Show only some') },
-              ]}
-            />
-            <p className="text-xs text-gray-11">
-              {mode === 'all'
-                ? t(
-                    'Builders see every action and trigger of this piece, including ones added later.',
-                  )
-                : t(
-                    'Builders see only the checked ones. Actions and triggers added to this piece later stay hidden until you check them here.',
+          totalCount > 0 ? (
+            <>
+              <SearchInput
+                placeholder={t('Search actions and triggers')}
+                value={search}
+                onChange={setSearch}
+              />
+              {writeOrDestructiveNames.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {destructiveNames.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => hide(destructiveNames)}
+                    >
+                      {t('Hide destructive actions')}
+                    </Button>
                   )}
-            </p>
-          </>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => hide(writeOrDestructiveNames)}
+                  >
+                    {t('Hide write and destructive actions')}
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : undefined
         }
         footer={
           <SaveBar
@@ -272,43 +312,6 @@ function PieceActionsAndTriggersSheetContent({
           />
         }
       >
-        {showCheckboxes && totalCount > 0 && (
-          <label className="flex cursor-pointer items-center gap-3">
-            <Checkbox
-              checked={selectAllState}
-              onCheckedChange={toggleSelectAll}
-            />
-            <span className="text-sm font-medium">{t('Select all')}</span>
-            <span className="ml-auto text-sm text-gray-11 tabular-nums">
-              {t('{count} of {total} shown', {
-                count: checkedCount,
-                total: totalCount,
-              })}
-            </span>
-          </label>
-        )}
-        {showCheckboxes && writeOrDestructiveNames.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {destructiveNames.length > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => hide(destructiveNames)}
-              >
-                {t('Hide destructive actions')}
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => hide(writeOrDestructiveNames)}
-            >
-              {t('Hide write and destructive actions')}
-            </Button>
-          </div>
-        )}
         {isLoading ? (
           <SkeletonRows count={6} className="h-12 rounded-lg" />
         ) : isError ? (
@@ -322,26 +325,46 @@ function PieceActionsAndTriggersSheetContent({
           </p>
         ) : (
           <>
+            {noneChecked && (
+              <p className="text-sm text-gray-11">
+                {t("Builders won't see this piece's actions or triggers.")}{' '}
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0"
+                  disabled={saving}
+                  onClick={hideWholePiece}
+                >
+                  {t('Hide the whole piece instead')}
+                </Button>
+              </p>
+            )}
             {allActions.length > 0 && (
-              <ComponentSection
+              <ComponentGroup
                 label={t('Actions')}
-                items={allActions}
-                visibleCount={visibleActionCount}
+                items={allActions.filter(matches)}
+                total={allActions.length}
+                checkedCount={checkedActionCount}
                 hiddenNames={localHiddenActions}
                 requiredNames={requiredActionNames}
-                showCheckboxes={showCheckboxes}
                 onToggle={toggleComponent}
+                onToggleGroup={(check) =>
+                  toggleGroup({ type: 'action', check })
+                }
               />
             )}
             {allTriggers.length > 0 && (
-              <ComponentSection
+              <ComponentGroup
                 label={t('Triggers')}
-                items={allTriggers}
-                visibleCount={visibleTriggerCount}
+                items={allTriggers.filter(matches)}
+                total={allTriggers.length}
+                checkedCount={checkedTriggerCount}
                 hiddenNames={localHiddenTriggers}
                 requiredNames={[]}
-                showCheckboxes={showCheckboxes}
                 onToggle={toggleComponent}
+                onToggleGroup={(check) =>
+                  toggleGroup({ type: 'trigger', check })
+                }
               />
             )}
           </>
@@ -369,92 +392,178 @@ function PieceActionsAndTriggersSheetContent({
   );
 }
 
-function ComponentSection({
+function ComponentGroup({
   label,
   items,
-  visibleCount,
+  total,
+  checkedCount,
   hiddenNames,
   requiredNames,
-  showCheckboxes,
   onToggle,
-}: ComponentSectionProps) {
-  const [expanded, setExpanded] = useState(true);
-  const Chevron = expanded ? ChevronDown : ChevronRight;
+  onToggleGroup,
+}: ComponentGroupProps) {
+  const groupState: boolean | 'indeterminate' =
+    checkedCount === 0
+      ? false
+      : checkedCount === total
+      ? true
+      : 'indeterminate';
 
   return (
-    <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2">
-        <Chevron className="size-4 shrink-0 text-gray-11" />
-        <span className="text-sm font-medium text-gray-11">{label}</span>
-        <Badge variant="info" className="tabular-nums">
-          {visibleCount}/{items.length}
-        </Badge>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="flex flex-col divide-y divide-gray-6 pt-3">
-          {items.map((item) => {
-            const isHidden = hiddenNames.includes(item.data.name);
-            return (
-              <label
-                key={`${item.type}:${item.data.name}`}
-                className={cn(
-                  'flex items-start gap-3 py-3',
-                  showCheckboxes && 'cursor-pointer',
-                  showCheckboxes && isHidden && 'opacity-50',
-                )}
-              >
-                {showCheckboxes && (
-                  <span className="flex h-5 items-center">
-                    <Checkbox
-                      checked={!isHidden}
-                      onCheckedChange={() => onToggle(item)}
-                    />
-                  </span>
-                )}
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate text-sm font-medium text-gray-12">
-                    {item.data.displayName}
-                  </span>
-                  {item.data.description && (
-                    <p className="text-xs text-gray-11">
-                      {item.data.description}
-                    </p>
-                  )}
-                </div>
-                {item.data.classification !== undefined && (
-                  <Badge
-                    variant={CLASSIFICATION_VARIANT[item.data.classification]}
-                    className="shrink-0"
-                  >
-                    {ACTION_CLASSIFICATION_BADGES[
-                      item.data.classification
-                    ].label()}
-                  </Badge>
-                )}
-                {requiredNames.includes(item.data.name) && (
-                  <Badge variant="outline" className="shrink-0">
-                    {t('Required')}
-                  </Badge>
-                )}
-              </label>
-            );
+    <section className="flex flex-col">
+      <label className="flex cursor-pointer items-center gap-3 border-b border-gray-6 pb-3">
+        <Checkbox
+          checked={groupState}
+          onCheckedChange={() => onToggleGroup(checkedCount !== total)}
+        />
+        <span className="text-sm font-medium text-gray-12">
+          {t('{label} ({checked}/{total})', {
+            label,
+            checked: checkedCount,
+            total,
           })}
+        </span>
+      </label>
+      {items.length === 0 ? (
+        <p className="py-3 text-sm text-gray-11">{t('No matches.')}</p>
+      ) : (
+        <div className="flex flex-col divide-y divide-gray-6">
+          {items.map((item) => (
+            <ComponentRow
+              key={`${item.type}:${item.data.name}`}
+              item={item}
+              checked={!hiddenNames.includes(item.data.name)}
+              required={requiredNames.includes(item.data.name)}
+              onToggle={onToggle}
+            />
+          ))}
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+      )}
+    </section>
   );
 }
 
+function ComponentRow({
+  item,
+  checked,
+  required,
+  onToggle,
+}: ComponentRowProps) {
+  const checkbox = (
+    <Checkbox
+      checked={required || checked}
+      disabled={required}
+      onCheckedChange={() => onToggle(item)}
+    />
+  );
+  return (
+    <label
+      className={cn(
+        'flex items-start gap-3 py-3',
+        !required && 'cursor-pointer',
+      )}
+    >
+      <span className="flex h-5 items-center">
+        {required ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="flex">
+                {checkbox}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t(
+                "Required actions can't be hidden. Remove it from Required actions first.",
+              )}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          checkbox
+        )}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-sm text-gray-12">
+          {item.data.displayName}
+        </span>
+        {item.data.description && (
+          <p className="text-xs text-gray-11">{item.data.description}</p>
+        )}
+      </div>
+      {item.data.classification !== undefined && (
+        <Badge
+          variant={CLASSIFICATION_VARIANT[item.data.classification]}
+          className="shrink-0"
+        >
+          {ACTION_CLASSIFICATION_BADGES[item.data.classification].label()}
+        </Badge>
+      )}
+      {required && (
+        <Badge variant="outline" className="shrink-0">
+          {t('Required')}
+        </Badge>
+      )}
+    </label>
+  );
+}
+
+function buildersSeeSummary({
+  pieceDisplayName,
+  everything,
+  checkedActions,
+  totalActions,
+  checkedTriggers,
+  totalTriggers,
+}: {
+  pieceDisplayName: string;
+  everything: boolean;
+  checkedActions: number;
+  totalActions: number;
+  checkedTriggers: number;
+  totalTriggers: number;
+}): string {
+  if (everything) {
+    return t(
+      'Builders see every action and trigger in {name}, including new ones added later.',
+      { name: pieceDisplayName },
+    );
+  }
+  const later = t(
+    'New ones added to {name} later stay hidden until you check them here.',
+    { name: pieceDisplayName },
+  );
+  if (totalTriggers === 0) {
+    return `${t('Builders see {checked} of {total} actions.', {
+      checked: checkedActions,
+      total: totalActions,
+    })} ${later}`;
+  }
+  if (totalActions === 0) {
+    return `${t('Builders see {checked} of {total} triggers.', {
+      checked: checkedTriggers,
+      total: totalTriggers,
+    })} ${later}`;
+  }
+  return `${t(
+    'Builders see {actions} of {actionsTotal} actions and {triggers} of {triggersTotal} triggers.',
+    {
+      actions: checkedActions,
+      actionsTotal: totalActions,
+      triggers: checkedTriggers,
+      triggersTotal: totalTriggers,
+    },
+  )} ${later}`;
+}
+
 function hiddenNames({
-  mode,
+  everything,
   allNames,
   selected,
 }: {
-  mode: VisibilityMode;
+  everything: boolean;
   allNames: string[];
   selected: string[] | undefined;
 }): string[] {
-  if (mode !== 'selected' || selected === undefined) {
+  if (everything || selected === undefined) {
     return [];
   }
   return allNames.filter((name) => !selected.includes(name));
@@ -473,15 +582,21 @@ type ComponentItem =
   | { type: 'action'; data: ActionBase }
   | { type: 'trigger'; data: TriggerBase };
 
-type VisibilityMode = 'all' | 'selected';
-
-type ComponentSectionProps = {
+type ComponentGroupProps = {
   label: string;
   items: ComponentItem[];
-  visibleCount: number;
+  total: number;
+  checkedCount: number;
   hiddenNames: string[];
   requiredNames: string[];
-  showCheckboxes: boolean;
+  onToggle: (item: ComponentItem) => void;
+  onToggleGroup: (check: boolean) => void;
+};
+
+type ComponentRowProps = {
+  item: ComponentItem;
+  checked: boolean;
+  required: boolean;
   onToggle: (item: ComponentItem) => void;
 };
 
