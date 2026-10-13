@@ -73,6 +73,12 @@ export const calendly = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${calendlyCommon.baseUrl}`,
+          placeholder: '/users/me',
+        },
+      },
     }),
   ],
   triggers: [calendlyInviteeCreated, calendlyInviteeCanceled],
