@@ -65,11 +65,11 @@ export function PlatformNav() {
       ],
     },
     {
-      label: t('Pieces'),
+      label: t('Integrations'),
       items: [
         {
           to: '/platform/pieces',
-          label: t('Catalog'),
+          label: t('Pieces'),
           icon: PuzzleIcon,
           end: true,
         },
@@ -89,18 +89,31 @@ export function PlatformNav() {
         },
         {
           to: '/platform/pieces/selector',
-          label: t('Piece selector'),
+          label: t('Piece menu'),
           icon: CompassIcon,
+          locked: !platform.plan.managePiecesEnabled,
+          tier: PLATFORM_FEATURES.pieces.tier,
         },
         {
           to: '/platform/connections',
           label: t('Connections'),
           icon: UnplugIcon,
         },
+        ...(platform.plan.globalConnectionsEnabled
+          ? []
+          : [
+              {
+                to: '/platform/connections/global',
+                label: t('Global connections'),
+                icon: UnplugIcon,
+                locked: true,
+                tier: PLATFORM_FEATURES.globalConnections.tier,
+              },
+            ]),
       ],
     },
     {
-      label: t('Catalogue'),
+      label: t('Resources'),
       items: [
         {
           to: '/platform/templates',
