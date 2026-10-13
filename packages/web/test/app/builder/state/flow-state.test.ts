@@ -7,6 +7,7 @@ import {
   FlowStatus,
   FlowTriggerType,
   FlowVersionState,
+  NoteColorVariant,
   PopulatedFlow,
   SampleDataFileType,
 } from '@activepieces/shared';
@@ -217,6 +218,42 @@ describe('flow state pending edits', () => {
       expect.anything(),
     );
   });
+
+  it('sends an edit inside the debounce at once on a flush', async () => {
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    store.getState().flushPendingEdits();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(sentOperations()).toEqual([renameTrigger('New order')]);
+  });
+});
+
+describe('flow state note edits', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.update.mockResolvedValue(draftFlow('Order lookup'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('saves a new note when an edit of it follows within 1 s', async () => {
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(addNote());
+    await vi.advanceTimersByTimeAsync(300);
+    store.getState().applyOperation(updateNote('Call the customer'));
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(sentOperations()).toEqual([
+      addNote(),
+      updateNote('Call the customer'),
+    ]);
+  });
 });
 
 describe('flow state save retries', () => {
@@ -408,6 +445,33 @@ function saveSampleData(): FlowOperationRequest {
       stepName: 'trigger',
       payload: { orderId: 'order-1' },
       type: SampleDataFileType.OUTPUT,
+    },
+  };
+}
+
+function addNote(): FlowOperationRequest {
+  return {
+    type: FlowOperationType.ADD_NOTE,
+    request: {
+      id: 'note-1',
+      content: '',
+      color: NoteColorVariant.YELLOW,
+      position: { x: 0, y: 0 },
+      size: { width: 200, height: 200 },
+    },
+  };
+}
+
+function updateNote(content: string): FlowOperationRequest {
+  return {
+    type: FlowOperationType.UPDATE_NOTE,
+    request: {
+      id: 'note-1',
+      content,
+      ownerId: null,
+      color: NoteColorVariant.YELLOW,
+      position: { x: 0, y: 0 },
+      size: { width: 200, height: 200 },
     },
   };
 }

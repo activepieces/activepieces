@@ -44,6 +44,7 @@ export type FlowState = {
     onSuccess?: () => void,
   ) => void;
   savePendingEdits: () => Promise<void>;
+  flushPendingEdits: () => void;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleDataLocally: (params: {
     stepName: string;
@@ -240,8 +241,7 @@ export const createFlowState = (
             break;
           }
           case FlowOperationType.UPDATE_NOTE:
-          case FlowOperationType.DELETE_NOTE:
-          case FlowOperationType.ADD_NOTE: {
+          case FlowOperationType.DELETE_NOTE: {
             flowUpdatesDebounce.schedule({
               key: operation.request.id,
               run: () => addToFlowUpdatesQueue(updateRequest),
@@ -273,8 +273,11 @@ export const createFlowState = (
         return { flowVersion: newFlowVersion };
       }),
     savePendingEdits: async () => {
-      flowUpdatesDebounce.flush();
+      get().flushPendingEdits();
       await flowUpdatesQueue.drain();
+    },
+    flushPendingEdits: () => {
+      flowUpdatesDebounce.flush();
     },
     setVersion: (
       flowVersion: FlowVersion,
