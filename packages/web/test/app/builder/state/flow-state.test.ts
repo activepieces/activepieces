@@ -166,6 +166,59 @@ describe('flow state step edits', () => {
   });
 });
 
+describe('flow state pending edits', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.update.mockResolvedValue(draftFlow('Order lookup'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sends an edit inside the debounce at once', async () => {
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    await store.getState().savePendingEdits();
+
+    expect(sentOperations()).toEqual([renameTrigger('New order')]);
+  });
+
+  it('settles only after the save of the edit ends', async () => {
+    const save = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.update.mockReturnValue(save.promise);
+    const store = createStore(draftFlow('Order lookup'));
+    const settled = vi.fn();
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    const savingEdits = store.getState().savePendingEdits().then(settled);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(settled).not.toHaveBeenCalled();
+
+    save.resolve(draftFlow('Order lookup'));
+    await savingEdits;
+    expect(settled).toHaveBeenCalled();
+  });
+
+  it('fails when the save of the edit fails, and shows the failed-save message', async () => {
+    const failure = httpError({ status: 400 });
+    flowsApiMock.update.mockRejectedValue(failure);
+    flowsApiMock.get.mockResolvedValue(draftFlow('Order lookup'));
+    vi.spyOn(toast, 'error').mockReset();
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(renameTrigger('New order'));
+
+    await expect(store.getState().savePendingEdits()).rejects.toBe(failure);
+    expect(toast.error).toHaveBeenCalledWith(
+      'Your change was not saved',
+      expect.anything(),
+    );
+  });
+});
+
 describe('flow state save retries', () => {
   beforeEach(() => {
     vi.useFakeTimers();

@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -27,9 +27,13 @@ const OverwriteDraftDialog = ({
   versionNumber,
 }: OverwriteDraftDialogProps) => {
   const { checkAccess } = useAuthorization();
-  const [setVersion, setRightSidebar, flow] = useBuilderStateContext(
-    (state) => [state.setVersion, state.setRightSidebar, state.flow],
-  );
+  const [setVersion, setRightSidebar, flow, savePendingEdits] =
+    useBuilderStateContext((state) => [
+      state.setVersion,
+      state.setRightSidebar,
+      state.flow,
+      state.savePendingEdits,
+    ]);
   const { mutate: overWriteDraftWithVersion, isPending: isOverwritingDraft } =
     flowHooks.useOverWriteDraftWithVersion({
       onSuccess: (updatedFlow) => {
@@ -68,12 +72,16 @@ const OverwriteDraftDialog = ({
           <DialogClose asChild>
             <Button
               loading={isOverwritingDraft}
-              onClick={() => {
+              onClick={async () => {
+                onConfirm?.();
+                const { error: saveError } = await tryCatch(savePendingEdits);
+                if (!isNil(saveError)) {
+                  return;
+                }
                 overWriteDraftWithVersion({
                   flowId: flow.id,
                   versionId: versionId,
                 });
-                onConfirm?.();
               }}
             >
               {t('Overwrite')}
