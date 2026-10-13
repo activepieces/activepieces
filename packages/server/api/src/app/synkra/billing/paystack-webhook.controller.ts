@@ -5,6 +5,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { system } from '../../helper/system/system';
 import { AppSystemProp } from '../../helper/system/system-props';
 import { synkraSubscriptionService } from './subscription.service';
+import { synkraCreditLotService } from '../credits/credit-lot.service';
 
 export const paystackWebhookController: FastifyPluginAsyncZod = async (app) => {
   app.post(
@@ -39,6 +40,38 @@ export const paystackWebhookController: FastifyPluginAsyncZod = async (app) => {
       try {
         if (event === 'charge.success') {
           const meta = (data.metadata as Record<string, unknown>) ?? {};
+
+          // --- Add-on pack purchase ---
+          if (meta['purchaseType'] === 'addon_pack') {
+            const userId = meta['userId'] as string | undefined;
+            const platformId = meta['platformId'] as string | undefined;
+            const kind = meta['kind'] as 'ai' | 'email' | undefined;
+            const amount = meta['amount'] as number | undefined;
+            const priceZar = meta['priceZar'] as number | undefined;
+            const reference = data.reference as string | undefined;
+
+            if (!userId || !platformId || !kind || !amount || !priceZar || !reference) {
+              log.warn({ meta }, 'addon webhook: incomplete metadata');
+              return { ok: true, skipped: 'incomplete_addon_metadata' };
+            }
+
+            await synkraCreditLotService(log).createFromPurchase({
+              userId,
+              platformId,
+              kind,
+              amount,
+              priceZar,
+              paystackReference: reference,
+              metadata: { packId: meta['packId'] },
+            });
+            log.info(
+              { userId, kind, amount, reference },
+              'addon webhook: credit lot created',
+            );
+            return { ok: true, addon: true };
+          }
+
+          // --- Subscription upgrade ---
           const userId = meta['userId'] as string | undefined;
           const tier = meta['tier'] as string | undefined;
           if (!userId || !tier) {

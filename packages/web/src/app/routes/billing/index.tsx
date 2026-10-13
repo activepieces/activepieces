@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { synkraBillingHooks } from '@/features/synkra-billing';
+import { BuyCredits } from '@/features/synkra-billing/components/buy-credits';
 
 const TIER_LABELS: Record<string, string> = {
   free: 'Free', starter: 'Starter', business: 'Business', pro: 'Pro',
@@ -175,12 +176,11 @@ export function BillingManagePage() {
             </div>
             <UsageBar label={t('Emails')} used={usage.emailsUsed} limit={limits.emails ?? 0} />
             <UsageBar label={t('AI credits')} used={usage.aiOpsUsed} limit={limits.aiOps ?? 0} />
-            <UsageBar label={t('SMS')} used={usage.smsUsed} limit={limits.sms ?? 0} />
-            <UsageBar label={t('WhatsApp')} used={usage.whatsappUsed} limit={limits.whatsapp ?? 0} />
-            <UsageBar label={t('Voice')} used={usage.voiceMinutesUsed} limit={limits.voiceMinutes ?? 0} unit="min" />
           </div>
         </div>
       </div>
+
+        <BuyCredits />
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent>

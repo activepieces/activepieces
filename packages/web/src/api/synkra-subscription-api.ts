@@ -62,3 +62,45 @@ export const synkraAiApi = {
     return api.get<SynkraAiBalance>('/v1/synkra/ai/balance');
   },
 };
+
+
+// ---------- Add-on packs ----------
+export type AddonPackKind = 'ai' | 'email';
+
+export type AddonPack = {
+  id: string;
+  kind: AddonPackKind;
+  amount: number;
+  priceZar: number;
+  label: string;
+  description: string;
+};
+
+export type CreditBalance = {
+  ai: number;
+  email: number;
+  lots: {
+    id: string;
+    kind: string;
+    remaining: number;
+    purchased: number;
+    expiresAt: string;
+  }[];
+};
+
+export type PurchaseResponse = {
+  authorizationUrl: string;
+  reference: string;
+};
+
+export const synkraCreditsApi = {
+  listPacks() {
+    return api.get<{ packs: AddonPack[] }>('/v1/synkra/credits/packs');
+  },
+  getBalance() {
+    return api.get<CreditBalance>('/v1/synkra/credits/balance');
+  },
+  purchase(params: { packId: string; callbackUrl: string }) {
+    return api.post<PurchaseResponse>('/v1/synkra/credits/purchase', params);
+  },
+};

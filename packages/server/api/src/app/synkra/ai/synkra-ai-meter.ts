@@ -4,6 +4,7 @@ import { system } from '../../helper/system/system';
 import { AppSystemProp } from '../../helper/system/system-props';
 import { platformService } from '../../platform/platform.service';
 import { synkraUsageService } from '../billing/usage.service';
+import { synkraCreditLotService } from '../credits/credit-lot.service';
 
 /**
  * Synkra AI credits meter.
@@ -47,6 +48,25 @@ export const synkraAiMeter = (log: FastifyBaseLogger) => ({
       }
       const credits = tokensToCredits(params.inputTokens, params.outputTokens);
       await synkraUsageService(log).increment(platform.ownerId, 'aiOpsUsed', credits);
+
+      // If the plan allowance is exceeded, draw from purchased credit lots (FIFO).
+      try {
+        const { synkraSubscriptionService } = await import('../billing/subscription.service');
+        const { getPlanLimits } = await import('@activepieces/shared');
+        const sub = await synkraSubscriptionService(log).getOrCreateForUser(platform.ownerId);
+        const plan = getPlanLimits(sub.tier);
+        const usage = await synkraUsageService(log).getUsage(platform.ownerId);
+        const overBy = Math.max(0, usage.aiOpsUsed - plan.aiOps);
+        if (overBy > 0) {
+          // Only the marginal overflow draws from credit lots. Already-
+          // purchased credits represent this overflow going forward, so
+          // consume the credits just charged (capped at overBy).
+          const needToDraw = Math.min(credits, overBy);
+          await synkraCreditLotService(log).consume(platform.ownerId, 'ai', needToDraw);
+        }
+      } catch (err) {
+        log.warn({ err }, 'ai meter: credit lot consumption failed (non-blocking)');
+      }
       log.info(
         {
           platformId: params.platformId,
