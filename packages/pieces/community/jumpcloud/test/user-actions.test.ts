@@ -397,10 +397,6 @@ describe('Run Trigger Command', () => {
                 launched.done = true;
                 return { status: 200, body: { triggered: ['Deploy'] } };
             }
-            if (request.url === `${V1}/commands`) {
-                expect(request.queryParams).toMatchObject({ filter: 'trigger:eq:deploy' });
-                return commandList(request);
-            }
             if (request.url === `${V2}/commands/c1/systems`) {
                 return { status: 200, body: [{ id: 's1', type: 'system' }] };
             }
@@ -414,6 +410,7 @@ describe('Run Trigger Command', () => {
         expect(result).toMatchObject({ completed: true, results: [{ system_id: 's1' }] });
         const order = sendRequest.mock.calls.map(([request]) => `${request.method} ${request.url}`);
         expect(order.indexOf(`GET ${V1}/commands/c1/results`)).toBeLessThan(order.indexOf(`POST ${V1}/command/trigger/deploy`));
+        expect(sendRequest.mock.calls.find(([request]) => request.url === `${V1}/commands`)?.[0].queryParams).toMatchObject({ filter: 'trigger:eq:deploy' });
     });
 
     it('stops waiting at the deadline', async () => {
