@@ -38,7 +38,7 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 - The Run Agent step stores a tier as `{ modelTierId }` and only piece-ai 0.14.1+ forwards it. On an older step `AgentModelField` hides tiers and shows a one-line hint to update the step. Downgrading a step below 0.14.1 keeps the stored tier, and the old piece drops it, so that run uses the Default AI key.
 - A flow step has no server create hook, so `AgentModelField` writes `defaultChoice` once when the stored value is empty and the step is editable. On an old step it writes the credits default or the first key model instead of a tier.
 - A tier pick has no provider, so the knowledge-base section takes `tierPicked` and checks the Default AI key instead. Knowledge uploads always embed with that key (`knowledgeBaseService.embedderFor` → `getChatProvider`), whatever the step or agent picked, so a Default AI key that can't embed (Anthropic) breaks uploads.
-- An older managed pick can store a concrete id (`anthropic/claude-sonnet-4.6`) instead of a credits tier id. It still runs while the credits catalog has it, so the picker shows it as a Credits pick with its raw id, not Unavailable.
+- An older managed pick can store a concrete id (`anthropic/claude-sonnet-4.6`) instead of a credits tier id. It still runs while the server's managed list has it (`managedChatModelIds()` plus the published credits tiers' models), so the picker checks that same list: a listed id shows as a Credits pick with its raw id, a retired one as Unavailable.
 - The picker never writes a default by itself. An agent gets its default model from the server when it is created. An unknown pick shows an amber "Unavailable" and is never silently swapped (S11).
 
 ## Key files

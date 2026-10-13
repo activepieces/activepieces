@@ -1,5 +1,6 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
+  aiProviderUtils,
   ModelChoice,
   ModelOptions,
   ModelOptionsSurface,
@@ -308,7 +309,7 @@ function resolveCurrent({
     const tier = options.credits?.tiers.find(
       (candidate) => candidate.id === shown.modelId,
     );
-    if (isNil(tier) && !isNil(options.credits) && shown.modelId.includes('/')) {
+    if (isNil(tier) && runsOnCredits({ options, modelId: shown.modelId })) {
       return {
         kind: 'credits',
         id: shown.modelId,
@@ -363,6 +364,22 @@ function resolveCurrent({
     leading: <KeyLogo logoUrl={info.logoUrl} name={info.name} size="xxs" />,
     source: key.name,
   };
+}
+
+function runsOnCredits({
+  options,
+  modelId,
+}: {
+  options: ModelOptions;
+  modelId: string;
+}): boolean {
+  if (isNil(options.credits)) {
+    return false;
+  }
+  return (
+    aiProviderUtils.managedChatModelIds().includes(modelId) ||
+    options.credits.tiers.some((tier) => tier.model.modelId === modelId)
+  );
 }
 
 function emptyPick(): CurrentPick {

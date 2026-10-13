@@ -2,7 +2,11 @@
  * @vitest-environment jsdom
  */
 import { AIProviderName } from '@activepieces/core-utils';
-import { AIProviderModelType, ModelOptions } from '@activepieces/shared';
+import {
+  aiProviderUtils,
+  AIProviderModelType,
+  ModelOptions,
+} from '@activepieces/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({
@@ -188,21 +192,30 @@ describe('modelPickerView', () => {
     expect(detailById.size).toBe(5);
   });
 
-  it('shows an older credits pick stored as a concrete model id as credits, not unavailable', () => {
-    const shown = {
+  it('shows an older credits pick stored as a supported concrete id as credits, and a retired one as unavailable', () => {
+    const supported = aiProviderUtils.managedChatModelIds()[0];
+    const shownAs = ({ modelId }: { modelId: string }) => ({
       type: 'model' as const,
       provider: AIProviderName.ACTIVEPIECES,
       providerConfigId: 'managed',
-      modelId: 'anthropic/claude-sonnet-4.6',
-    };
-
-    expect(modelPickerView({ options, shown }).current).toMatchObject({
-      kind: 'credits',
-      label: 'anthropic/claude-sonnet-4.6',
+      modelId,
     });
+
     expect(
-      modelPickerView({ options: { ...options, credits: null }, shown })
+      modelPickerView({ options, shown: shownAs({ modelId: supported }) })
         .current,
+    ).toMatchObject({ kind: 'credits', label: supported });
+    expect(
+      modelPickerView({
+        options,
+        shown: shownAs({ modelId: 'anthropic/retired-model' }),
+      }).current,
+    ).toMatchObject({ kind: 'unavailable' });
+    expect(
+      modelPickerView({
+        options: { ...options, credits: null },
+        shown: shownAs({ modelId: supported }),
+      }).current,
     ).toMatchObject({ kind: 'unavailable' });
   });
 });
