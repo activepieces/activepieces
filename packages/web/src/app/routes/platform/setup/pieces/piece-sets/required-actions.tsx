@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import { AdminFetchErrorState, SaveBar } from '@/app/components/admin';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { SearchInput } from '@/components/custom/search-input';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,6 +29,7 @@ import {
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { AdminControl } from '@/lib/admin-control';
+import { listUtils } from '@/lib/list-utils';
 import { cn } from '@/lib/utils';
 
 import {
@@ -167,15 +169,28 @@ function RequiredActionGroupRows({
   onRemove?: (actionName: string) => void;
   onRemoveAll?: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const staleNames = group.actions
     .filter((action) => action.notInLatestPieceVersion)
     .map((action) => action.name);
+  const { visible, hiddenCount } = listUtils.cap({
+    items: group.actions,
+    limit: REQUIRED_ACTIONS_SHOWN,
+    expanded,
+  });
   return (
     <div className="flex flex-col">
       <div className="flex min-h-9 items-center gap-2.5">
         <LogoPlate src={group.logoUrl} alt="" size="xs" border />
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-12">
-          {group.displayName}
+        <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+          <span className="truncate text-sm font-medium text-gray-12">
+            {group.displayName}
+          </span>
+          <span className="shrink-0 text-xs text-gray-11 tabular-nums">
+            {t('· {count, plural, =1 {1 action} other {# actions}}', {
+              count: group.actions.length,
+            })}
+          </span>
         </span>
         {onRemoveAll && (
           <Button
@@ -190,7 +205,7 @@ function RequiredActionGroupRows({
         )}
       </div>
       <ul className="flex flex-col">
-        {group.actions.map((action) => (
+        {visible.map((action) => (
           <li
             key={action.name}
             className="flex min-h-8 min-w-0 items-center gap-2 pl-8 text-sm"
@@ -218,6 +233,16 @@ function RequiredActionGroupRows({
           </li>
         ))}
       </ul>
+      {hiddenCount > 0 && (
+        <Button
+          variant="link"
+          size="sm"
+          className="h-8 self-start pl-8 text-xs"
+          onClick={() => setExpanded(true)}
+        >
+          {t('Show all {count}', { count: group.actions.length })}
+        </Button>
+      )}
       {staleNames.length > 0 && (
         <div className="mt-1 flex items-start gap-2 rounded-xl bg-gray-3 px-3 py-2 text-xs text-gray-11">
           <Info className="mt-0.5 size-3.5 shrink-0" />
@@ -344,12 +369,30 @@ function RequiredActionsEditor({
           />
         }
       >
+        <section className="flex flex-col gap-3 border-b pb-5">
+          <h3 className="text-sm font-medium text-gray-12">
+            {t('Add an action')}
+          </h3>
+          {pickingPiece === null ? (
+            <PiecePicker pieceSet={pieceSet} onPick={setPickingPiece} />
+          ) : (
+            <ActionPicker
+              pieceSet={pieceSet}
+              pieceName={pickingPiece}
+              requiredNames={required[pickingPiece] ?? []}
+              onChange={(actionNames) =>
+                setPieceActions({ pieceName: pickingPiece, actionNames })
+              }
+              onBack={() => setPickingPiece(null)}
+            />
+          )}
+        </section>
         <PublishingRuleSentence
           count={requiredCount}
           mode={mode}
           onChange={onChange}
         />
-        {groupsLoading ? (
+        {groupsLoading && requiredActionsGroupedByPiece.length === 0 ? (
           <SkeletonRows count={2} className="h-10 rounded-xl" />
         ) : (
           requiredActionsGroupedByPiece.length > 0 && (
@@ -385,24 +428,6 @@ function RequiredActionsEditor({
             </div>
           )
         )}
-        <section className="flex flex-col gap-3 border-t pt-5">
-          <h3 className="text-sm font-medium text-gray-12">
-            {t('Add an action')}
-          </h3>
-          {pickingPiece === null ? (
-            <PiecePicker pieceSet={pieceSet} onPick={setPickingPiece} />
-          ) : (
-            <ActionPicker
-              pieceSet={pieceSet}
-              pieceName={pickingPiece}
-              requiredNames={required[pickingPiece] ?? []}
-              onChange={(actionNames) =>
-                setPieceActions({ pieceName: pickingPiece, actionNames })
-              }
-              onBack={() => setPickingPiece(null)}
-            />
-          )}
-        </section>
       </PolicySheet>
       {leaveDialog}
     </>
@@ -507,9 +532,21 @@ export function ActionPicker({
   const { pieceModel, isLoading, isError, refetch } = piecesHooks.usePiece({
     name: pieceName,
   });
+  const [search, setSearch] = useState('');
   const actions = pieceModel ? Object.values(pieceModel.actions) : [];
   const actionNames = actions.map((action) => action.name);
   const checkedCount = actionNames.filter((name) =>
+    requiredNames.includes(name),
+  ).length;
+  const query = search.trim().toLowerCase();
+  const matches = actions.filter(
+    (action) =>
+      query === '' ||
+      action.displayName.toLowerCase().includes(query) ||
+      (action.description ?? '').toLowerCase().includes(query),
+  );
+  const matchNames = matches.map((action) => action.name);
+  const checkedMatchCount = matchNames.filter((name) =>
     requiredNames.includes(name),
   ).length;
   const isAllowed = (actionName: string) =>
@@ -523,9 +560,9 @@ export function ActionPicker({
     );
   const toggleAll = () =>
     onChange(
-      checkedCount === actionNames.length
-        ? requiredNames.filter((name) => !actionNames.includes(name))
-        : unique([...requiredNames, ...actionNames]),
+      checkedMatchCount === matchNames.length
+        ? requiredNames.filter((name) => !matchNames.includes(name))
+        : unique([...requiredNames, ...matchNames]),
     );
   return (
     <>
@@ -543,54 +580,79 @@ export function ActionPicker({
         </p>
       ) : (
         <div className="flex flex-col rounded-xl border">
-          <label className="flex min-h-11 cursor-pointer items-center gap-3 border-b px-3">
-            <Checkbox
-              checked={
-                checkedCount === 0
-                  ? false
-                  : checkedCount === actionNames.length
-                  ? true
-                  : 'indeterminate'
-              }
-              onCheckedChange={toggleAll}
+          <div className="flex flex-col gap-2 border-b p-2">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder={t('Search actions')}
             />
-            <span className="flex-1 text-sm font-medium text-gray-12">
-              {t('Select all')}
-            </span>
-            <span className="text-xs text-gray-11 tabular-nums">
-              {t('{count} of {total} required', {
-                count: checkedCount,
-                total: actionNames.length,
-              })}
-            </span>
-          </label>
-          <ul className="flex flex-col">
-            {actions.map((action) => (
-              <li key={action.name} className="border-t first:border-t-0">
-                <label className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2">
-                  <Checkbox
-                    checked={requiredNames.includes(action.name)}
-                    onCheckedChange={() => toggle(action.name)}
-                  />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-sm text-gray-12">
-                      {action.displayName}
-                    </span>
-                    {action.description && (
-                      <span className="text-xs text-gray-11">
-                        {action.description}
+            <label className="flex min-h-9 cursor-pointer items-center gap-3 px-1">
+              <Checkbox
+                checked={
+                  checkedMatchCount === 0
+                    ? false
+                    : checkedMatchCount === matchNames.length
+                    ? true
+                    : 'indeterminate'
+                }
+                disabled={matchNames.length === 0}
+                onCheckedChange={toggleAll}
+              />
+              <span className="flex-1 text-sm font-medium text-gray-12">
+                {t('Select all')}
+              </span>
+              <span className="text-xs text-gray-11 tabular-nums">
+                {t('{count} of {total} required', {
+                  count: checkedCount,
+                  total: actionNames.length,
+                })}
+              </span>
+            </label>
+          </div>
+          {matches.length === 0 ? (
+            <p className="p-3 text-sm text-gray-11">{t('No matches.')}</p>
+          ) : (
+            <div
+              className="p-1"
+              style={{
+                height: Math.min(
+                  matches.length * ACTION_ROW_HEIGHT + 8,
+                  ACTION_LIST_MAX_HEIGHT,
+                ),
+              }}
+            >
+              <VirtualizedScrollArea
+                items={matches}
+                estimateSize={() => ACTION_ROW_HEIGHT}
+                getItemKey={(index) => matches[index].name}
+                renderItem={(action) => (
+                  <label className="flex h-14 min-w-0 cursor-pointer items-center gap-3 rounded-md px-2 hover:bg-gray-3">
+                    <Checkbox
+                      checked={requiredNames.includes(action.name)}
+                      onCheckedChange={() => toggle(action.name)}
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-sm text-gray-12">
+                        {action.displayName}
                       </span>
+                      {action.description && (
+                        <TextWithTooltip tooltipMessage={action.description}>
+                          <span className="truncate text-xs text-gray-11">
+                            {action.description}
+                          </span>
+                        </TextWithTooltip>
+                      )}
+                    </span>
+                    {!isAllowed(action.name) && (
+                      <Badge variant="outline" className="shrink-0">
+                        {t('Hidden')}
+                      </Badge>
                     )}
-                  </span>
-                  {!isAllowed(action.name) && (
-                    <Badge variant="outline" className="shrink-0">
-                      {t('Hidden')}
-                    </Badge>
-                  )}
-                </label>
-              </li>
-            ))}
-          </ul>
+                  </label>
+                )}
+              />
+            </div>
+          )}
         </div>
       )}
       {requiredNames.some((name) => !isAllowed(name)) && (
@@ -658,3 +720,6 @@ function splitMarked(sentence: string): {
 }
 
 const PICKER_ROW_HEIGHT = 44;
+const ACTION_ROW_HEIGHT = 56;
+const ACTION_LIST_MAX_HEIGHT = 320;
+const REQUIRED_ACTIONS_SHOWN = 5;
