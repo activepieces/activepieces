@@ -43,11 +43,8 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import { usePrefetchPiecesSection } from './use-prefetch-pieces-section';
-
 export const PiecesListTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  usePrefetchPiecesSection();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';

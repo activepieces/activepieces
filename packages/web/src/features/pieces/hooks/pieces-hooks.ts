@@ -24,6 +24,7 @@ import {
   useMutation,
   usePrefetchQuery,
   useQueries,
+  useQueryClient,
   useQuery,
   UseQueryResult,
 } from '@tanstack/react-query';
@@ -234,16 +235,30 @@ export const piecesHooks = {
       isTableQuery: true,
       skipProjectFilter: true,
     }),
-  usePrefetchPlatformCatalog: () => {
+  usePieceMenuPrefetch: () => {
     const { i18n } = useTranslation();
-    usePrefetchQuery(
-      piecesQueryOptions({
-        includeHidden: true,
-        isTableQuery: true,
-        skipProjectFilter: true,
-        locale: i18n.language as LocalesEnum,
-      }),
-    );
+    const queryClient = useQueryClient();
+    const locale = i18n.language as LocalesEnum;
+    return () => {
+      Promise.all([
+        queryClient.prefetchQuery(
+          piecesQueryOptions({
+            includeHidden: true,
+            isTableQuery: true,
+            skipProjectFilter: true,
+            locale,
+          }),
+        ),
+        queryClient.prefetchQuery(
+          piecesQueryOptions({
+            includeHidden: false,
+            isTableQuery: false,
+            skipProjectFilter: false,
+            locale,
+          }),
+        ),
+      ]).catch(() => undefined);
+    };
   },
   usePrefetchPieces: ({
     skipProjectFilter = false,
