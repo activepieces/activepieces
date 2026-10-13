@@ -32,11 +32,12 @@ ${POST_FIELDS}
       after: cursor,
       spaceIds: spaceIds.length > 0 ? spaceIds : undefined,
       postTypeIds: postTypeIds.length > 0 ? postTypeIds : undefined,
-      orderBy: 'createdAt',
+      orderBy: 'publishedAt',
       reverse: true,
     },
   });
-  return bettermodeMap.page({ value: data['posts'], map: bettermodeMap.post });
+  const page = bettermodeMap.page({ value: data['posts'], map: bettermodeMap.post });
+  return { ...page, items: page.items.filter((post) => post.published_at !== null && (post.status === null || post.status === 'PUBLISHED')) };
 }
 
 async function fetchMembersPage({

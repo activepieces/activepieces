@@ -59,7 +59,7 @@ export const newReplyTrigger = createTrigger({
       checkpoint,
       fetchPage: () => bettermodeFetchers.fetchRecentReplies({ auth: context.auth.props, spaceIds }),
     });
-    if (result.items.length > 0) {
+    if (result.items.length > 0 || (result.checkpoint.resumeCursor ?? null) !== (checkpoint.resumeCursor ?? null)) {
       await context.store.put<Checkpoint>(bettermodePolling.CHECKPOINT_KEY, result.checkpoint);
     }
     return result.items;

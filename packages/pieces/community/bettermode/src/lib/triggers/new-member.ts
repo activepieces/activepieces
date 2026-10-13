@@ -54,7 +54,7 @@ export const newMemberTrigger = createTrigger({
           limit: bettermodeFetchers.pageSize,
         }),
     });
-    if (result.items.length > 0) {
+    if (result.items.length > 0 || (result.checkpoint.resumeCursor ?? null) !== (checkpoint.resumeCursor ?? null)) {
       await context.store.put<Checkpoint>(bettermodePolling.CHECKPOINT_KEY, result.checkpoint);
     }
     return result.items;

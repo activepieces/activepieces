@@ -268,6 +268,17 @@ describe('session and transport', () => {
     expect(JSON.stringify(out)).not.toContain(MEMBER_TOKEN);
   });
 
+  it('Custom API Call reuses the stored project token instead of logging in', async () => {
+    const ctx = makeContext({
+      props: { method: 'POST', url: { url: 'https://api.bettermode.com' }, headers: {}, queryParams: {}, body_type: 'json', body: { data: { query: 'query Ping { network { id } }' } } },
+    });
+    await seedStoredToken({ store: ctx.store, token: 'stored-token' });
+    const calls = stubGraphql({ Ping: { network: { id: 'n1' } } });
+    await call({ fn: bettermode.getAction('custom_api_call')?.run, ctx });
+    expect(calls.filter((item) => item.operation === 'Login')).toHaveLength(0);
+    expect(calls.at(-1)?.headers['authorization']).toBe('Bearer stored-token');
+  });
+
   it('logs in again when the stored token has expired', async () => {
     const ctx = makeContext({ props: { post_id: 'p1' } });
     await seedStoredToken({ store: ctx.store, token: 'old-token', expiresAt: Date.now() - 1000 });
@@ -474,8 +485,8 @@ describe('dropdowns', () => {
   });
 });
 
-function postNode({ id, createdAt }: { id: string; createdAt: string }) {
-  return { id, title: id, createdAt };
+function postNode({ id, createdAt, publishedAt, status }: { id: string; createdAt: string; publishedAt?: string | null; status?: string }) {
+  return { id, title: id, createdAt, publishedAt: publishedAt === undefined ? createdAt : publishedAt, status: status ?? 'PUBLISHED' };
 }
 
 function triggerContext({ store = makeStore(), props = {} }: { store?: ReturnType<typeof makeStore>; props?: Record<string, unknown> }) {
@@ -493,7 +504,7 @@ describe('polling triggers', () => {
       lastCreatedAt: '2026-10-13T10:00:00.000Z',
       idsAtLast: ['b'],
     });
-    expect(businessCalls(calls)[0].variables).toMatchObject({ spaceIds: ['s1'], orderBy: 'createdAt', reverse: true });
+    expect(businessCalls(calls)[0].variables).toMatchObject({ spaceIds: ['s1'], orderBy: 'publishedAt', reverse: true });
   });
 
   it('new_post emits only new posts, oldest first, including same-time posts not seen yet', async () => {
@@ -559,6 +570,52 @@ describe('polling triggers', () => {
       lastCreatedAt: nodes[20].createdAt,
       idsAtLast: ['p020'],
     });
+  });
+
+  it('new_post fires for a draft created before the checkpoint and published after it', async () => {
+    stubGraphql({
+      PollPosts: {
+        posts: pageOf([
+          postNode({ id: 'old-draft', createdAt: '2026-10-13T08:00:00.000Z', publishedAt: '2026-10-13T11:00:00.000Z' }),
+          postNode({ id: 'still-draft', createdAt: '2026-10-13T10:30:00.000Z', publishedAt: null, status: 'DRAFT' }),
+          postNode({ id: 'a', createdAt: '2026-10-13T09:00:00.000Z' }),
+        ]),
+      },
+    });
+    const store = makeStore();
+    store.data.set(bettermodePolling.CHECKPOINT_KEY, { lastCreatedAt: '2026-10-13T10:00:00.000Z', idsAtLast: [] });
+    const items = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
+    expect(Array.isArray(items) ? items.map((item) => item.id) : items).toEqual(['old-draft']);
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: '2026-10-13T11:00:00.000Z', idsAtLast: ['old-draft'] });
+  });
+
+  it('does not skip records when the page budget runs out before the checkpoint', async () => {
+    const base = Date.UTC(2026, 9, 13, 12, 0, 0);
+    const at = (index: number) => new Date(base - index * 1000).toISOString();
+    const pages = Array.from({ length: 12 }, (_, pageIndex) => ({
+      body: {
+        data: {
+          posts: pageOf({
+            nodes: Array.from({ length: 50 }, (_, offset) => postNode({ id: `p${pageIndex * 50 + offset}`, createdAt: at(pageIndex * 50 + offset) })),
+            hasNextPage: true,
+            endCursor: `c${pageIndex + 1}`,
+          }),
+        },
+      },
+    }));
+    const checkpointTime = at(560);
+    const calls = stubGraphql({ PollPosts: pages });
+    const store = makeStore();
+    store.data.set(bettermodePolling.CHECKPOINT_KEY, { lastCreatedAt: checkpointTime, idsAtLast: ['p560'] });
+    const first = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
+    expect(first).toEqual([]);
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: checkpointTime, idsAtLast: ['p560'], resumeCursor: 'c10' });
+    const second = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
+    expect(businessCalls(calls).at(-1)?.variables).toMatchObject({ after: 'c11' });
+    expect(Array.isArray(second) ? second.map((item) => item.id) : second).toEqual(
+      Array.from({ length: 60 }, (_, index) => `p${559 - index}`)
+    );
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: at(500), idsAtLast: ['p500'] });
   });
 
   it('new_post on an empty community starts from now', async () => {

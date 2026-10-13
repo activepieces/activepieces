@@ -51,7 +51,15 @@ import { createDiscussionAction } from './lib/actions/create-discussion';
 import { createQuestionAction } from './lib/actions/create-question';
 import { revokeBadgeAction } from './lib/actions/revoke-badge';
 import { bettermodeAuth } from './lib/auth';
-import { assertCustomCallUrl, assertRegion, getSession, readPath } from './lib/common/client';
+import {
+  assertCustomCallUrl,
+  assertRegion,
+  BettermodeCredentials,
+  BettermodeTokenStore,
+  bindTokenStore,
+  getSession,
+  readPath,
+} from './lib/common/client';
 import { newMemberTrigger } from './lib/triggers/new-member';
 import { newPostTrigger } from './lib/triggers/new-post';
 import { newReplyTrigger } from './lib/triggers/new-reply';
@@ -109,14 +117,28 @@ export const bettermode = createPiece({
     listEventsAction,
     registerForEventAction,
     listModerationItemsAction,
-    createCustomApiCallAction({
+    withTokenStore(createCustomApiCallAction({
       baseUrl: (auth) => (auth ? assertRegion(auth.props.region) : ''),
       auth: bettermodeAuth,
       authMapping: async (auth, propsValue) => {
         assertCustomCallUrl({ region: auth.props.region, url: readPath({ value: propsValue, path: ['url', 'url'] }) });
         return { Authorization: `Bearer ${(await getSession(auth.props)).token}` };
       },
-    }),
+    })),
   ],
   triggers: [newPostTrigger, newMemberTrigger, newReplyTrigger],
 });
+
+function withTokenStore<T extends { run: unknown; test: unknown }>(action: T & { run: StoreRunner; test: StoreRunner }): T {
+  return Object.assign(action, { run: bindingStore(action.run), test: bindingStore(action.test) });
+}
+
+function bindingStore<C extends StoreContext, R>(run: (context: C) => Promise<R>): (context: C) => Promise<R> {
+  return async (context) => {
+    bindTokenStore({ credentials: context.auth.props, store: context.store });
+    return run(context);
+  };
+}
+
+type StoreContext = { auth: { props: BettermodeCredentials }; store: BettermodeTokenStore };
+type StoreRunner = (context: never) => Promise<unknown>;

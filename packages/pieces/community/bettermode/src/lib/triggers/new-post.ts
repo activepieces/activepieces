@@ -37,7 +37,7 @@ export const newPostTrigger = createTrigger({
     });
     await context.store.put<Checkpoint>(
       bettermodePolling.CHECKPOINT_KEY,
-      bettermodePolling.newestCheckpoint({ items: page.items, fallback: new Date().toISOString() })
+      bettermodePolling.newestCheckpoint({ items: page.items, fallback: new Date().toISOString(), timeField: 'published_at' })
     );
   },
   async onDisable(context) {
@@ -71,8 +71,9 @@ export const newPostTrigger = createTrigger({
           cursor,
           limit: bettermodeFetchers.pageSize,
         }),
+      timeField: 'published_at',
     });
-    if (result.items.length > 0) {
+    if (result.items.length > 0 || (result.checkpoint.resumeCursor ?? null) !== (checkpoint.resumeCursor ?? null)) {
       await context.store.put<Checkpoint>(bettermodePolling.CHECKPOINT_KEY, result.checkpoint);
     }
     return result.items;
