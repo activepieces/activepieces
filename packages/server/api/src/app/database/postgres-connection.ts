@@ -24,6 +24,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { BackgroundMigration } from './background-migration'
 import { commonProperties } from './database-connection'
 import { Migration } from './migration'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -451,6 +452,9 @@ import { AddPlatformModelTier1859000000000 } from './migration/postgres/18590000
 import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/1860000000000-AddPieceSetRequiredActions'
 import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
 import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/1863000000000-AddEventDestinationHeaders'
+import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration/postgres/1864000000000-AddPlatformTierFastAndConversationTier'
+import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
+import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -460,6 +464,10 @@ const getSslConfig = (): boolean | TlsOptions => {
         }
     }
     return false
+}
+
+export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
+    return []
 }
 
 export const getMigrations = (): (new () => Migration)[] => {
@@ -917,6 +925,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPieceSetRequiredActions1860000000000,
         AddEventDestinationEnabledAndFormat1862000000000,
         AddEventDestinationHeaders1863000000000,
+        AddPlatformTierFastAndConversationTier1864000000000,
+        AddAuditLogRetentionDaysToPlatform1865000000000,
+        AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000,
     ]
     return migrations
 }
@@ -924,7 +935,7 @@ export const getMigrations = (): (new () => Migration)[] => {
 
 export const createPostgresDataSource = (): DataSource => {
     const migrationConfig: MigrationConfig = {
-        migrationsRun: true,
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,

@@ -75,7 +75,7 @@
   "One entry per signer role defined in the template. Each signer must have an email and a role name (e.g. \"Signer 1\").": "Una entrada por rol de firma definida en la plantilla. Cada firmante debe tener un correo electrónico y un nombre de rol (por ejemplo, \"Firma 1\").",
   "Default email subject sent to all signers. Overridden by per-signer subject if set.": "Asunto de correo electrónico por defecto enviado a todos los firmantes. Reemplazado por el asunto por firma si se establece.",
   "Default email body sent to all signers. Overridden by per-signer message if set.": "Cuerpo de correo electrónico por defecto enviado a todos los firmantes. Reemplazado por mensaje por firma si se establece.",
-  "Number of days before the invite expires (3–180). Defaults to 30.": "Número de días antes de que la invitación expire (3–180). Por defecto es 30.",
+  "Number of days before the invite expires (1-180). Defaults to 30.": "Number of days before the invite expires (1-180). Defaults to 30.",
   "The unique ID of the document group template.": "El ID único de la plantilla de grupo de documentos.",
   "Name for the new document group.": "Nombre para el nuevo grupo de documentos.",
   "One entry per signer. Each signer needs an email, role name, and the document they are signing within the group. Signing order determines the step sequence.": "Una entrada por firmante. Cada firmante necesita un correo electrónico, nombre de rol y el documento que están firmando dentro del grupo. El orden de firma determina la secuencia de pasos.",

@@ -23,14 +23,9 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
 
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 const projectId = mcpUtils.isProjectScoped(mcp) ? mcp.projectId : undefined
-                const lookup = await mcpUtils.lookupPieceComponent({
-                    pieceName,
-                    componentName: actionOrTriggerName,
-                    componentType: type,
-                    projectId,
-                    platformId,
-                    log,
-                })
+                const lookupByName = (componentName: string) => mcpUtils.lookupPieceComponent({ pieceName, componentName, componentType: type, projectId, platformId, log })
+                const firstLookup = await lookupByName(actionOrTriggerName)
+                const lookup = isNil(firstLookup.closestName) ? firstLookup : await lookupByName(firstLookup.closestName)
                 if (lookup.error) {
                     return lookup.error
                 }
@@ -63,7 +58,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                         componentProps: component.props,
                         pieceName: normalized,
                         pieceVersion: piece.version,
-                        actionOrTriggerName,
+                        actionOrTriggerName: component.name,
                         auth,
                         flowId,
                         providedInput: providedInput ?? {},
@@ -136,7 +131,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     : '\nNo required inputs.'
                 const exampleSection = `\n\n🧪 Example input (fill the placeholders, then pass to ap_execute_action):\n${JSON.stringify(exampleInput, null, 2)}`
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}${requiredLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}${exampleSection}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${component.name}":${descLine}${aiHintLine}${idempotentLine}${requiredLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}${exampleSection}` }],
                     structuredContent: structured,
                 }
             }

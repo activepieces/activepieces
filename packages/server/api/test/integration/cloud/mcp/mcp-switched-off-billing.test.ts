@@ -18,7 +18,8 @@ vi.mock('../../../../src/app/platform/billing-and-telemetry', () => ({
 
 let app: FastifyInstance
 
-const SWITCHED_OFF_TOOL = 'ap_create_flow'
+const SWITCHED_OFF_TOOL = 'ap_run_action'
+const FREE_TOOL = 'ap_create_flow'
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -69,20 +70,28 @@ async function createRestrictedProject({ ctx }: { ctx: TestContext }): Promise<s
     return project.id
 }
 
-describe('a tool the selected project switched off', () => {
-    it('is not charged, while the same tool is charged where it is on', async () => {
+describe('MCP tool billing per project', () => {
+    it('does not charge a billable tool the selected project switched off', async () => {
         const ctx = await createTestContext(app)
         const restrictedProjectId = await createRestrictedProject({ ctx })
         const mcpClient = await connectAs({ ctx })
 
         await call({ mcpClient, name: 'ap_set_project_context', args: { projectId: restrictedProjectId } })
-        const refused = await call({ mcpClient, name: SWITCHED_OFF_TOOL, args: { flowName: 'blocked-flow' } })
-        await call({ mcpClient, name: 'ap_set_project_context', args: { projectId: ctx.project.id } })
-        await call({ mcpClient, name: SWITCHED_OFF_TOOL, args: { flowName: 'allowed-flow' } })
+        const refused = await call({ mcpClient, name: SWITCHED_OFF_TOOL, args: { pieceName: 'slack', actionName: 'send_channel_message' } })
 
-        await vi.waitFor(() => expect(chargedProjectIds({ toolName: SWITCHED_OFF_TOOL })).toContain(ctx.project.id))
         expect(refused).toContain('switched off')
         expect(chargedProjectIds({ toolName: SWITCHED_OFF_TOOL })).not.toContain(restrictedProjectId)
+    })
+
+    it('does not charge a free tool where it is on', async () => {
+        const ctx = await createTestContext(app)
+        const mcpClient = await connectAs({ ctx })
+
+        await call({ mcpClient, name: 'ap_set_project_context', args: { projectId: ctx.project.id } })
+        const created = await call({ mcpClient, name: FREE_TOOL, args: { flowName: 'allowed-flow' } })
+
+        expect(created).not.toContain('switched off')
+        expect(mockTrackBilling).not.toHaveBeenCalled()
     })
 })
 

@@ -7,8 +7,8 @@ import {
 } from '@activepieces/pieces-common';
 
 import { props } from '../common/props';
-import dayjs from 'dayjs';
 import { xeroAuth } from '../..';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateInvoice = createAction({
   auth: xeroAuth,
@@ -16,12 +16,13 @@ export const xeroCreateInvoice = createAction({
   classification: 'DESTRUCTIVE',
   description: 'Create Xero Invoice',
   displayName: 'Create or Update Invoice',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a new ACCREC sales invoice for a customer (resolving or creating the contact from name/email) or update an existing invoice when an invoice ID is supplied. Use this for a single sales invoice; for recurring billing use Create Repeating Sales Invoice. Supplying an invoice ID updates that record (idempotent on a fixed ID); omitting it creates a new invoice each call.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.invoiceEnvelope,
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.invoice_id(false),
@@ -30,16 +31,9 @@ export const xeroCreateInvoice = createAction({
     email: props.contact_email(false),
     line_item: Property.Object({
       displayName: 'Line Item',
-      description: 'Invoice line items',
+      description:
+        'One invoice line as key/value pairs, e.g. Description, Quantity, UnitAmount, AccountCode (such as 200 for Sales) and TaxType. Use List Accounts and List Tax Rates to find valid codes.',
       required: true,
-      defaultValue: {
-        AccountCode: 200,
-        Quantity: 0,
-        UnitAmount: 0,
-        LineAmount: 0,
-        TaxType: 'NONE',
-        Description: 'description',
-      },
     }),
     date: Property.ShortText({
       displayName: 'Date Prepared',
@@ -49,7 +43,6 @@ export const xeroCreateInvoice = createAction({
     due_date: Property.ShortText({
       displayName: 'Due Date',
       description: 'Due date of the invoice. Format example: 2019-03-11',
-      defaultValue: dayjs().format('YYYY-MM-DD'),
       required: true,
     }),
     reference: Property.ShortText({

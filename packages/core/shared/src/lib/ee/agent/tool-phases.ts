@@ -54,6 +54,8 @@ const CATALOG_ONLY_TOOL_NAMES = new Set<string>([
     'ap_search_actions',
     'ap_search_triggers',
     'ap_list_connections',
+    'ap_load_skill',
+    'ap_get_tool_schema',
 ])
 
 function taintsTurn(toolName: string): boolean {

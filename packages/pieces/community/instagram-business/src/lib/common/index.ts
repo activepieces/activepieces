@@ -41,6 +41,20 @@ const instagramBusinessAuth = PieceAuth.OAuth2({
     'pages_manage_metadata',
     'pages_messaging',
   ],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{ name?: string }>({
+        method: HttpMethod.GET,
+        url: `${INSTAGRAM_API_BASE}/me`,
+        queryParams: { fields: 'name' },
+        headers: { authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body.name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });
 
 async function graphRequest<T>({

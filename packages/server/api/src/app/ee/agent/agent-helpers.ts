@@ -8,6 +8,7 @@ import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
 import { z } from 'zod'
+import { aiModelCandidates } from '../../ai/ai-model-candidates'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -129,7 +130,11 @@ async function resolveChatProvider({ platformId, scope, log }: { platformId: str
     return chatProvider
 }
 
-async function assertRunProviderConfigured({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+    if (!isNil(modelTierId)) {
+        await aiModelCandidates(log).firstCandidate({ platformId, tierId: modelTierId, scope })
+        return
+    }
     if (isNil(provider)) {
         const chatProvider = await aiProviderService(log).getChatProviderName({ platformId, scope })
         if (isNil(chatProvider)) {
@@ -336,6 +341,7 @@ function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfi
         modelName: config.modelName ?? null,
         ...spreadIfDefined('provider', config.provider ?? undefined),
         ...spreadIfDefined('providerConfigId', config.providerConfigId ?? undefined),
+        ...spreadIfDefined('modelTierId', config.modelTierId ?? undefined),
         promptOverride: { system: config.instructions },
     }
 }
@@ -458,6 +464,6 @@ export const agentHelpers = {
     saveUserMemory,
 }
 
-type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>
+type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
 
 export type StreamingLockResult = 'acquired' | 'busy' | 'superseded'

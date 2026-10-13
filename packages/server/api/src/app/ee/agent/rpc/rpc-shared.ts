@@ -66,6 +66,7 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
         platformId: conversation.platformId,
         userId: conversation.userId,
         source: conversation.source,
+        modelTierId: conversation.modelTierId ?? null,
         ...spreadIfDefined('agent', isNil(conversation.agentId) ? undefined : {
             id: conversation.agentId,
             ...spreadIfDefined('displayName', conversation.agent?.displayName),
@@ -200,6 +201,7 @@ export type ConfiguredToolRun = {
     platformId: string
     userId: string
     source: AgentRunSource
+    modelTierId: string | null
     agent?: { id: string, displayName?: string }
 }
 

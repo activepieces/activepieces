@@ -212,7 +212,7 @@ export function createImageTools({ generate, billedAtCost, readImage, conversati
                 ...cardTitleFields,
                 caption: z.string().optional().describe('A short, fun, task-specific caption shown under the image on its card, e.g. "Neon launch banner for the spring sale" or "Friendly mascot for your onboarding emails". Describe THIS image for the user — do not use a generic label like "Generated image".'),
                 prompt: z.string().describe('Detailed description of the image to generate. Include any exact text to render verbatim.'),
-                style: z.enum(['realistic', 'graphic_text', 'brand_vector', 'abstract']).describe('The kind of image to produce'),
+                style: z.enum(['realistic', 'graphic_text', 'brand_vector', 'abstract']).describe('The kind of image to produce: "realistic" for photos, "graphic_text" for social/email/marketing graphics with readable text, "brand_vector" for logos/icons/vector graphics, "abstract" for artistic/background images.'),
                 aspectRatio: z.enum(['square', 'landscape', 'portrait']).optional().describe('Image orientation (default square)'),
                 editFileId: z.string().optional().describe(`To change an existing image instead of making a new one, the fileId of an image in this conversation: one you generated earlier, or a user attachment. Describe only the change in \`prompt\`.${describeEditableImages(conversationImages)}`),
             }),

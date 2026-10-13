@@ -10,8 +10,7 @@ describe('the history a turn leaves behind', () => {
         const progress: ModelMessage[][] = []
 
         const turn = await runAgentTurn({
-            model: updateThenConfirm(),
-            provider: AIProviderName.ANTHROPIC,
+            models: [{ model: updateThenConfirm(), provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
             systemPrompt: 'You are a test agent.',
             messages: [{ role: 'user', content: 'Change the instructions of New agent to: Reply in Arabic.' }],
             tools: {
@@ -19,13 +18,12 @@ describe('the history a turn leaves behind', () => {
             },
             allToolNames: ['ap_update_agent'],
             tier: TIER,
-            modelId: TIER.modelId,
             phaseState: { phase: 'build' },
             abortSignal: new AbortController().signal,
             log: SILENT_LOG,
             creditsLeft: async () => 100,
             sinks: {
-                drainStream: (result) => result.consumeStream(),
+                drainStream: async (result) => { await result.consumeStream(); return undefined },
                 onProgress: ({ responseMessages }) => progress.push(responseMessages),
             },
         })
@@ -39,8 +37,7 @@ describe('the history a turn leaves behind', () => {
         let saves = 0
 
         const turn = await runAgentTurn({
-            model: keepsUpdating(),
-            provider: AIProviderName.ANTHROPIC,
+            models: [{ model: keepsUpdating(), provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
             systemPrompt: 'You are a test agent.',
             messages: [{ role: 'user', content: 'Update New agent three times.' }],
             tools: {
@@ -58,12 +55,11 @@ describe('the history a turn leaves behind', () => {
             },
             allToolNames: ['ap_update_agent'],
             tier: TIER,
-            modelId: TIER.modelId,
             phaseState: { phase: 'build' },
             abortSignal: controller.signal,
             log: SILENT_LOG,
             creditsLeft: async () => 100,
-            sinks: { drainStream: (result) => result.consumeStream() },
+            sinks: { drainStream: async (result) => { await result.consumeStream(); return undefined } },
         })
 
         const toolCalls = turn.accumulatedResponseMessages.flatMap((message) => typeof message.content === 'string'

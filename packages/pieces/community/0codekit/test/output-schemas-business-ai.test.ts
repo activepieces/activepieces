@@ -1,5 +1,11 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { entityDetectionAction } from '../src/lib/actions/ai/entity-detection';
+import { languageDetectionAction } from '../src/lib/actions/ai/language-detection';
+import { moodDetectionAction } from '../src/lib/actions/ai/mood-detection';
+import { pictureObjectRecognitionAction } from '../src/lib/actions/ai/picture-object-recognition';
+import { pictureTextRecognitionAction } from '../src/lib/actions/ai/picture-text-recognition';
+import { translateTextAction } from '../src/lib/actions/ai/translate-text';
 import { lookupVatRatesAction } from '../src/lib/actions/business/lookup-vat-rates';
 import { validateBicAction } from '../src/lib/actions/business/validate-bic';
 import { validateEmailAction } from '../src/lib/actions/business/validate-email';
@@ -61,13 +67,33 @@ const CASES: SchemaCase[] = [
         props: { text: 'the cat sat', keywords: ['cat'] },
         response: { findings: [{ keyword: 'cat', contains: true, foundPositions: [4] }] },
     },
+    {
+        action: entityDetectionAction,
+        props: { text: 'Satya Nadella' },
+        response: {
+            detections: [{ text: 'Satya Nadella', category: 'Person', subCategory: null, offset: 0, length: 13, confidenceScore: 1 }],
+        },
+    },
+    { action: languageDetectionAction, props: { text: 'Bonjour' }, response: { name: 'French', iso6391Name: 'fr', confidenceScore: 1 } },
+    {
+        action: moodDetectionAction,
+        props: { text: 'I love this.' },
+        response: {
+            moodOverall: 'positive',
+            moodScore: { positive: 0.9, neutral: 0.05, negative: 0.05 },
+            moodPerSentence: [{ text: 'I love this.', mood: 'positive' }],
+        },
+    },
+    { action: pictureObjectRecognitionAction, props: { imageUrl: 'https://example.com/a.jpg' }, response: { recognizedLabels: ['iguana'] } },
+    { action: pictureTextRecognitionAction, props: { imageUrl: 'https://example.com/a.jpg' }, response: { recognizedTexts: ['Hello'] } },
+    { action: translateTextAction, props: { text: 'Good morning', resultLang: 'de' }, response: { translation: 'Guten Morgen' } },
 ];
 
 beforeEach(() => {
     sendRequest.mockReset();
 });
 
-describe('business and text output schemas', () => {
+describe('business, text and AI output schemas', () => {
     it.each(CASES.map((testCase) => [testCase.action.name, testCase]))('%s schema matches its run() output', async (_, testCase) => {
         sendRequest.mockResolvedValueOnce({ status: 200, headers: {}, body: testCase.response });
 
