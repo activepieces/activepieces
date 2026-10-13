@@ -32,7 +32,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
                     id="dashboard-content-container"
                     className="relative flex flex-col h-full bg-(--admin-page) rounded-xl shadow-panel border overflow-clip"
                   >
-                    <div className="flex flex-col flex-1 overflow-auto">
+                    <div className="flex flex-col flex-1 overflow-auto [scrollbar-gutter:stable]">
                       {children}
                     </div>
                   </div>

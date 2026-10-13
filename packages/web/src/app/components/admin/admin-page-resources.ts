@@ -108,11 +108,6 @@ export const adminPageResources = {
   ],
   embedding: [
     docs({
-      label: () => t('Embedding overview'),
-      path: 'embedding/overview',
-      control: AdminControl.EMBEDDING_DOCS_LINK,
-    }),
-    docs({
       label: () => t('Embedding admin guide'),
       path: 'admin-guide/guides/embedding',
     }),
@@ -129,19 +124,9 @@ export const adminPageResources = {
       label: () => t('Workers guide'),
       path: 'admin-guide/guides/workers',
     }),
-    docs({
-      label: () => t('Worker groups'),
-      path: 'install/configure-operate/worker-groups',
-      control: AdminControl.WORKERS_DOCS_LINK,
-    }),
   ],
   health: [
     docs({ label: () => t('Health guide'), path: 'admin-guide/guides/health' }),
-    docs({
-      label: () => t('Production setup'),
-      path: 'install/configure-operate/production-setup#what-it-looks-like',
-      control: AdminControl.HEALTH_PRODUCTION_SETUP_LINK,
-    }),
   ],
   triggers: [
     docs({

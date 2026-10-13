@@ -3237,7 +3237,6 @@
   "Secret managers guide": "Secret managers guide",
   "Audit logs guide": "Audit logs guide",
   "Event streaming guide": "Event streaming guide",
-  "Embedding overview": "Embedding overview",
   "Embedding admin guide": "Embedding admin guide",
   "SSO setup guide": "SSO setup guide",
   "SCIM provisioning": "SCIM provisioning",
@@ -3270,7 +3269,6 @@
   "The full logo in the sidebar, emails and the sign-in page.": "The full logo in the sidebar, emails and the sign-in page.",
   "The square mark used where the full logo does not fit.": "The square mark used where the full logo does not fit.",
   "The small icon in the browser tab.": "The small icon in the browser tab.",
-  "Production setup": "Production setup",
   "configurations": "configurations",
   "Needs attention": "Needs attention"
 }
