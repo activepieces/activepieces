@@ -809,6 +809,12 @@ async function applyStatusChange(params: {
             }
 
             const publishedFlowVersionId = flowToUpdate.publishedVersionId
+            if (isNil(publishedFlowVersionId) && params.newStatus === FlowStatus.ENABLED) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FLOW_OPERATION_INVALID,
+                    params: { message: 'Publish the flow before turning it on' },
+                })
+            }
             assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
             const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flowToUpdate.id,
