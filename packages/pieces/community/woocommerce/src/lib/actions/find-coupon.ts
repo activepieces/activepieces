@@ -13,7 +13,7 @@ export const wooFindCoupon = createAction({
   name: 'Find Coupon',
   classification: 'READ',
   displayName: 'Find Coupon',
-  description: 'Find a Coupon',
+  description: 'Get a coupon by its ID',
   audience: 'human',
   aiMetadata: {
     description:
@@ -25,7 +25,8 @@ export const wooFindCoupon = createAction({
   props: {
     id: Property.ShortText({
       displayName: 'Coupon ID',
-      description: 'Enter the coupon ID',
+      description: 'Find it in WooCommerce under Marketing > Coupons.',
+      placeholder: '123',
       required: true,
     }),
   },
@@ -35,7 +36,9 @@ export const wooFindCoupon = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${couponId}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${encodeURIComponent(
+        String(couponId).trim()
+      )}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,
