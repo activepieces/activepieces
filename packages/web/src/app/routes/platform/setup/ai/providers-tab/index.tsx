@@ -324,7 +324,11 @@ export function ProvidersTab() {
   );
 
   if (configs.length === 0 && !isProvidersError) {
-    return <PlanFeatureSample feature="aiProviders">{page}</PlanFeatureSample>;
+    return (
+      <PlanFeatureSample feature="aiProviders">
+        <div className="flex flex-col gap-6">{page}</div>
+      </PlanFeatureSample>
+    );
   }
   return page;
 }
