@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
@@ -60,6 +61,7 @@ function AccessContent() {
     isError,
     refetch,
   } = platformMcpHooks.usePlatformMcpServer();
+  const queryClient = useQueryClient();
   const { mutate: updateTools, mutateAsync: updateToolsAsync } =
     platformMcpHooks.useUpdatePlatformMcpTools();
 
@@ -88,6 +90,18 @@ function AccessContent() {
                   mutationFeedback.undo({
                     message: t('Changes saved'),
                     onUndo: async () => {
+                      if (
+                        queryClient.isMutating({
+                          predicate: (mutation) =>
+                            mutation.options.scope?.id === MCP_TOOLS_SCOPE,
+                        }) > 0
+                      ) {
+                        throw mutationFeedback.userError(
+                          t(
+                            'Wait for the current change to finish, then undo.',
+                          ),
+                        );
+                      }
                       const current = await platformMcpApi.get();
                       const currentTools = current.disabledTools ?? [];
                       return updateToolsAsync({
@@ -123,6 +137,8 @@ function ActivityContent() {
     </div>
   );
 }
+
+const MCP_TOOLS_SCOPE = 'platform-mcp-server-tools';
 
 type PlatformMcpSection = 'access' | 'activity';
 

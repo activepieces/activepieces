@@ -1,18 +1,20 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
 import { EmbedSubdomain, EmbedSubdomainStatus } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  cleanup,
   fireEvent,
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HostnameStep } from '@/app/routes/platform/security/embed/steps/hostname-step';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const state = vi.hoisted(() => ({ upsert: vi.fn() }));
 
@@ -47,13 +49,13 @@ function renderStep() {
 }
 
 beforeEach(() => {
-  state.upsert = vi.fn().mockRejectedValue(new Error('Hostname is taken'));
+  state.upsert = vi
+    .fn()
+    .mockRejectedValue(mutationFeedback.userError('Hostname is taken'));
 });
 
-afterEach(cleanup);
-
 describe('Embed hostname change', () => {
-  it('keeps the confirm open when saving the new domain fails', async () => {
+  it('keeps the confirm open and shows why saving the new domain failed', async () => {
     renderStep();
 
     fireEvent.change(screen.getByPlaceholderText('flows.acme.com'), {
@@ -65,11 +67,12 @@ describe('Embed hostname change', () => {
     );
 
     await waitFor(() => expect(state.upsert).toHaveBeenCalledTimes(1));
+    const confirm = screen.getByRole('dialog', {
+      name: 'Change embed domain?',
+      hidden: true,
+    });
     await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: 'Update domain' }),
-      ).toBeDefined(),
+      expect(within(confirm).getByText('Hostname is taken')).toBeDefined(),
     );
-    expect(screen.getByText('Change embed domain?')).toBeDefined();
   });
 });

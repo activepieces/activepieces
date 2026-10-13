@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
+import { CircleAlert, TriangleAlert } from 'lucide-react';
 import { ReactNode, useId, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -87,8 +87,10 @@ function ConfirmDialogBody({
 }: ConfirmDialogBodyProps) {
   const inputId = useId();
   const [typed, setTyped] = useState('');
+  const [failure, setFailure] = useState<string | null>(null);
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
+      setFailure(null);
       onPendingChange?.(true);
       await onConfirm();
     },
@@ -100,7 +102,11 @@ function ConfirmDialogBody({
       }
     },
     onError: (error) => {
-      if (!mutationFeedback.wasShown(error)) {
+      setFailure(mutationFeedback.message(error));
+      if (
+        mutationFeedback.isQuotaExceeded(error) &&
+        !mutationFeedback.wasShown(error)
+      ) {
         mutationFeedback.error({ error });
       }
     },
@@ -149,6 +155,12 @@ function ConfirmDialogBody({
             }}
           />
         </div>
+      )}
+      {failure !== null && (
+        <Alert variant="destructive">
+          <CircleAlert className="size-4" />
+          <AlertDescription>{failure}</AlertDescription>
+        </Alert>
       )}
       <DialogFooter className="mt-2">
         <Button variant="outline" disabled={isPending} onClick={onDone}>

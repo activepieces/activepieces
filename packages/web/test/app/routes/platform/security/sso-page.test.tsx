@@ -26,7 +26,9 @@ vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
     useFlag: (flagId: string) => ({
       data:
-        flagId === 'GOOGLE_AUTH_CONFIGURED' ? state.googleConfigured : undefined,
+        flagId === 'GOOGLE_AUTH_CONFIGURED'
+          ? state.googleConfigured
+          : undefined,
     }),
   },
 }));

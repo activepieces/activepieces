@@ -1,16 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PlatformMcpPage from '@/app/routes/platform/setup/mcp';
 
@@ -96,8 +91,6 @@ beforeEach(() => {
   state.onUndo = undefined;
 });
 
-afterEach(cleanup);
-
 describe('Platform MCP undo', () => {
   it('turns back on only the tools that action turned off', async () => {
     render(
@@ -108,7 +101,9 @@ describe('Platform MCP undo', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Turn off flow writes' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Turn off flow writes' }),
+    );
     await waitFor(() => expect(state.onUndo).toBeDefined());
 
     state.serverTools = ['flows_write', 'flows_delete', 'tables_write'];
