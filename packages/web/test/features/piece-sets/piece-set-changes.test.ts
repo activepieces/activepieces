@@ -40,7 +40,7 @@ describe('pieceSetChanges.apply', () => {
     });
   });
 
-  it('is idempotent, so replaying a change on fresher data is safe', () => {
+  it('is idempotent on data that already has the change', () => {
     const change = {
       type: 'visibility' as const,
       visible: { slack: false, gmail: false },
@@ -121,7 +121,7 @@ describe('pieceSetChanges.inverse', () => {
     expect(undone.config).toEqual(previous.config);
   });
 
-  it('leaves changes made by someone else in the meantime', () => {
+  it('reverts only its own pieces when applied to later data', () => {
     const previous = pieceSet();
     const change: PieceSetChange = {
       type: 'visibility',
@@ -166,6 +166,31 @@ describe('pieceSetChanges.inverse', () => {
       slack: ['send_message'],
       gmail: ['send_email'],
     });
+  });
+
+  it('brings back required actions a bulk show with triggers only dropped', () => {
+    const previous = pieceSet({
+      requiredActions: {
+        mode: RequiredActionsMode.ANY,
+        actions: { slack: ['send_message'] },
+      },
+    });
+    const change: PieceSetChange = {
+      type: 'patch',
+      visible: { slack: true },
+      actions: { slack: { mode: 'selected', selected: [] } },
+      triggers: { slack: { mode: 'all' } },
+    };
+    const changed = pieceSetChanges.apply({ pieceSet: previous, change });
+    expect(changed.config.requiredActions.actions).toEqual({});
+    const undone = pieceSetChanges.apply({
+      pieceSet: changed,
+      change: pieceSetChanges.inverse({ previous, change }),
+    });
+    expect(undone.config.requiredActions.actions).toEqual({
+      slack: ['send_message'],
+    });
+    expect(undone.config.selectedActions).toEqual({});
   });
 
   it('restores the curated actions of a piece', () => {

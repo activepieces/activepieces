@@ -121,15 +121,23 @@ function inverse({
         mode: change.mode !== undefined,
       });
     }
-    case 'patch':
+    case 'patch': {
+      const touched = unique([
+        ...Object.keys(change.visible ?? {}),
+        ...Object.keys(change.actions ?? {}),
+      ]);
       return revert({
         previous,
         visibilityOf: Object.keys(change.visible ?? {}),
         actionsOf: Object.keys(change.actions ?? {}),
         triggersOf: Object.keys(change.triggers ?? {}),
-        requiredOf: Object.keys(change.required ?? {}),
+        requiredOf: unique([
+          ...Object.keys(change.required ?? {}),
+          ...touched.filter(hadRequired),
+        ]),
         mode: change.requiredMode !== undefined,
       });
+    }
   }
 }
 
