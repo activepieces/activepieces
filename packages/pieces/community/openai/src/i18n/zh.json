@@ -234,5 +234,6 @@
   "PATCH": "PATCH",
   "PUT": "弹出",
   "DELETE": "删除",
-  "HEAD": "黑色"
+  "HEAD": "黑色",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "历史记录在整个项目中保存，因此使用此 ID 的其他流程会延续同一段对话。"
 }
