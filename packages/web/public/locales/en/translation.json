@@ -2330,14 +2330,6 @@
   "(Already added)": "(Already added)",
   "No actions found": "No actions found",
   "AI Model *": "AI Model *",
-  "No providers": "No providers",
-  "Search providers...": "Search providers...",
-  "No provider found.": "No provider found.",
-  "Select provider first": "Select provider first",
-  "No models": "No models",
-  "Select model": "Select model",
-  "Search models...": "Search models...",
-  "No model found.": "No model found.",
   "Embedding model for knowledge base: {model}": "Embedding model for knowledge base: {model}",
   "This provider does not support knowledge base embeddings.": "This provider does not support knowledge base embeddings.",
   "{context} context": "{context} context",
@@ -3222,5 +3214,6 @@
   "No models available — ask your platform admin to add a provider.": "No models available — ask your platform admin to add a provider.",
   "{input} in · {output} out": "{input} in · {output} out",
   "Couldn't load {key} models": "Couldn't load {key} models",
-  "Flows and agents that use this key will fail.": "Flows and agents that use this key will fail."
+  "Flows and agents that use this key will fail.": "Flows and agents that use this key will fail.",
+  "Update this step to the latest version to use your tiers.": "Update this step to the latest version to use your tiers."
 }

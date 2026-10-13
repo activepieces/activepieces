@@ -91,12 +91,13 @@ export const KnowledgeBaseSection = ({
   removeTool,
   onToolsUpdate,
   selectedProvider,
+  tierPicked = false,
   layout = 'card',
 }: KnowledgeBaseSectionProps) => {
   const embeddingModel = selectedProvider
     ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
     : undefined;
-  const supportsEmbeddings = !!embeddingModel;
+  const supportsEmbeddings = tierPicked || !!embeddingModel;
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
   );
@@ -192,4 +193,5 @@ type KnowledgeBaseSectionProps = {
   removeTool: (toolName: string) => void;
   onToolsUpdate: (tools: AgentTool[]) => void;
   selectedProvider?: AIProviderName;
+  tierPicked?: boolean;
 };

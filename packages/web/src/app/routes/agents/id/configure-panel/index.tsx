@@ -308,6 +308,7 @@ const ConfigureBehaviorTab = ({
             <AgentTools
               toolsField={field}
               selectedProvider={form.watch('draft.provider') ?? undefined}
+              tierPicked={!isNil(form.watch('draft.modelTierId'))}
             />
             <FormMessage />
           </FormItem>

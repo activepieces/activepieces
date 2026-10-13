@@ -35,6 +35,7 @@ export function ModelPicker({
   value,
   onChange,
   disabled = false,
+  withTiers = true,
   className,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
@@ -45,8 +46,13 @@ export function ModelPicker({
   });
   const view = useMemo(
     () =>
-      isNil(data) ? null : modelPickerView({ options: data, shown: value }),
-    [data, value],
+      isNil(data)
+        ? null
+        : modelPickerView({
+            options: withTiers ? data : { ...data, tiers: [] },
+            shown: value,
+          }),
+    [data, value, withTiers],
   );
 
   if (isLoading) {
@@ -510,5 +516,6 @@ type ModelPickerProps = {
   value: ModelChoice | null;
   onChange: (choice: ModelChoice) => void;
   disabled?: boolean;
+  withTiers?: boolean;
   className?: string;
 };

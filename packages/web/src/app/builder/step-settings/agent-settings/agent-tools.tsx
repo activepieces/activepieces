@@ -36,6 +36,7 @@ interface AgentToolsProps {
   toolsField: AgentFormField;
   disabled?: boolean;
   selectedProvider?: AIProviderName;
+  tierPicked?: boolean;
   layout?: 'card' | 'rows';
 }
 
@@ -48,6 +49,7 @@ export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
   selectedProvider,
+  tierPicked,
   layout = 'card',
 }: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
@@ -181,6 +183,7 @@ export const AgentTools = ({
           removeTool={removeTool}
           onToolsUpdate={onToolsUpdate}
           selectedProvider={selectedProvider}
+          tierPicked={tierPicked}
         />
       )}
 
