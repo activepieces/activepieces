@@ -1,4 +1,5 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, spreadIfDefined } from '@activepieces/core-utils'
+import { apDayjs } from '@activepieces/server-utils'
 import { PlatformRole, PrincipalType, ProjectType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -6,6 +7,8 @@ import { In, ObjectLiteral, Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { projectEnterpriseHooks } from '../../../../src/app/ee/projects/ee-project-hooks'
 import { personalProjectsService } from '../../../../src/app/ee/projects/personal-projects/personal-projects.service'
+import { SystemJobData, SystemJobName } from '../../../../src/app/helper/system-jobs/common'
+import { systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
 import { projectHooks } from '../../../../src/app/project/project-hooks'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockProject, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
@@ -90,7 +93,7 @@ describe('Creating personal projects for existing members', () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: false })
         const member = await saveUser({ platformId })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId }))
 
         expect(await personalProjectCountOf({ ownerId: member.id })).toBe(0)
     })
@@ -99,7 +102,7 @@ describe('Creating personal projects for existing members', () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const members = await Promise.all(Array.from({ length: 55 }, () => saveUser({ platformId })))
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId }))
 
         const counts = await Promise.all(members.map((member) => personalProjectCountOf({ ownerId: member.id })))
         expect(counts.every((count) => count === 1)).toBe(true)
@@ -122,7 +125,7 @@ describe('Creating personal projects for existing members', () => {
         const deactivated = await saveUser({ platformId, status: UserStatus.INACTIVE })
         const embedded = await saveUser({ platformId, provider: UserIdentityProvider.JWT })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId }))
 
         expect(await personalProjectCountOf({ ownerId: withProject.id })).toBe(1)
         expect(await personalProjectCountOf({ ownerId: without.id })).toBe(1)
@@ -132,7 +135,7 @@ describe('Creating personal projects for existing members', () => {
         expect(await personalProjectCountOf({ ownerId: embedded.id })).toBe(0)
     })
 
-    it('skips a member whose personal project fails and still creates the rest', async () => {
+    it('creates the rest when a member fails, then fails the attempt with only that member saved for the retry', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const members = await Promise.all(Array.from({ length: 3 }, () => saveUser({ platformId })))
         const [failing, ...others] = members
@@ -145,8 +148,9 @@ describe('Creating personal projects for existing members', () => {
             },
         }))
 
+        const run = await queueRun({ platformId })
         try {
-            await personalProjectsService(mockLog).createMissingHandler({ platformId })
+            await expect(personalProjectsService(mockLog).createMissingHandler(run)).rejects.toThrow()
         }
         finally {
             projectHooks.set(projectEnterpriseHooks)
@@ -155,13 +159,14 @@ describe('Creating personal projects for existing members', () => {
         expect(await personalProjectCountOf({ ownerId: failing.id })).toBe(0)
         const counts = await Promise.all(others.map((member) => personalProjectCountOf({ ownerId: member.id })))
         expect(counts).toStrictEqual([1, 1])
+        expect(await savedDataOf(run)).toStrictEqual({ platformId, runId: run.runId, onlyUserIds: [failing.id] })
     })
 
     it('a retry creates the failed member\'s project', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const member = await saveUser({ platformId })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId, onlyUserIds: [member.id], attemptsLeft: 2 })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId, onlyUserIds: [member.id] }))
 
         expect(await personalProjectCountOf({ ownerId: member.id })).toBe(1)
     })
@@ -171,7 +176,7 @@ describe('Creating personal projects for existing members', () => {
         const failed = await saveUser({ platformId })
         const other = await saveUser({ platformId })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId, onlyUserIds: [failed.id], attemptsLeft: 2 })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId, onlyUserIds: [failed.id] }))
 
         expect(await personalProjectCountOf({ ownerId: failed.id })).toBe(1)
         expect(await personalProjectCountOf({ ownerId: other.id })).toBe(0)
@@ -182,7 +187,7 @@ describe('Creating personal projects for existing members', () => {
         const member = await saveUser({ platformId })
         const userIds = [...Array.from({ length: 70_000 }, () => apId()), member.id]
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId, onlyUserIds: userIds, attemptsLeft: 2 })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId, onlyUserIds: userIds }))
 
         expect(await personalProjectCountOf({ ownerId: member.id })).toBe(1)
     })
@@ -192,41 +197,50 @@ describe('Creating personal projects for existing members', () => {
         const members = await Promise.all(Array.from({ length: 3 }, () => saveUser({ platformId })))
         const [reached, ...rest] = await databaseConnection().getRepository('user').find({ where: { id: In(members.map((member) => member.id)) }, order: { id: 'ASC' } })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId, afterUserId: reached.id, attemptsLeft: 2 })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId, afterUserId: reached.id }))
 
         expect(await personalProjectCountOf({ ownerId: reached.id })).toBe(0)
         const counts = await Promise.all(rest.map((member) => personalProjectCountOf({ ownerId: member.id })))
         expect(counts).toStrictEqual([1, 1])
     })
 
-    it('does not fail the job when the scan stops part-way, so the queue never reruns the whole scan', async () => {
+    it('saves its progress after each batch, so a retry after a crash resumes from there', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
-        await saveUser({ platformId })
+        await Promise.all(Array.from({ length: 51 }, () => saveUser({ platformId })))
+        const ordered = await databaseConnection().getRepository('user').find({ where: { platformId }, order: { id: 'ASC' } })
+        const run = await queueRun({ platformId })
         const originalCreateQueryBuilder = Repository.prototype.createQueryBuilder
+        let userQueries = 0
         const createQueryBuilder = vi.spyOn(Repository.prototype, 'createQueryBuilder').mockImplementation(function (this: Repository<ObjectLiteral>, ...args: Parameters<Repository<ObjectLiteral>['createQueryBuilder']>) {
-            if (this.metadata.tableName === 'user') {
+            if (this.metadata.tableName === 'user' && ++userQueries === 2) {
                 throw new Error('database blip')
             }
             return originalCreateQueryBuilder.apply(this, args)
         })
 
         try {
-            await expect(personalProjectsService(mockLog).createMissingHandler({ platformId, attemptsLeft: 0 })).resolves.toBeUndefined()
+            await expect(personalProjectsService(mockLog).createMissingHandler(run)).rejects.toThrow('database blip')
         }
         finally {
             createQueryBuilder.mockRestore()
         }
+
+        const savedAfterUserId = (await savedDataOf(run))?.afterUserId
+        const cursorIndex = ordered.findIndex((user) => user.id === savedAfterUserId)
+        expect(cursorIndex).toBeGreaterThanOrEqual(0)
+        const counts = await Promise.all(ordered.map((user) => personalProjectCountOf({ ownerId: user.id })))
+        expect(counts.slice(0, cursorIndex + 1).every((count) => count === 1)).toBe(true)
+        expect(counts.slice(cursorIndex + 1).every((count) => count === 0)).toBe(true)
+        expect(counts.slice(cursorIndex + 1).length).toBeGreaterThan(0)
     })
 
     it('never creates a second one when it runs again', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const member = await saveUser({ platformId })
 
-        await Promise.all([
-            personalProjectsService(mockLog).createMissingHandler({ platformId }),
-            personalProjectsService(mockLog).createMissingHandler({ platformId }),
-        ])
-        await personalProjectsService(mockLog).createMissingHandler({ platformId })
+        const runs = await Promise.all([queueRun({ platformId }), queueRun({ platformId })])
+        await Promise.all(runs.map((run) => personalProjectsService(mockLog).createMissingHandler(run)))
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId }))
 
         expect(await personalProjectCountOf({ ownerId: member.id })).toBe(1)
     })
@@ -236,11 +250,29 @@ describe('Creating personal projects for existing members', () => {
         const second = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const otherMember = await saveUser({ platformId: second.platformId })
 
-        await personalProjectsService(mockLog).createMissingHandler({ platformId: first.platformId })
+        await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId: first.platformId }))
 
         expect(await personalProjectCountOf({ ownerId: otherMember.id })).toBe(0)
     })
 })
+
+async function queueRun({ platformId, afterUserId, onlyUserIds }: { platformId: string, afterUserId?: string, onlyUserIds?: string[] }): Promise<SystemJobData<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>> {
+    const data = { platformId, runId: apId(), ...spreadIfDefined('afterUserId', afterUserId), ...spreadIfDefined('onlyUserIds', onlyUserIds) }
+    await systemJobsSchedule(mockLog).upsertJob({
+        job: { name: SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS, data, jobId: jobIdOf(data) },
+        schedule: { type: 'one-time', date: apDayjs().add(1, 'day') },
+    })
+    return data
+}
+
+async function savedDataOf(run: { platformId: string, runId: string }) {
+    const job = await systemJobsSchedule(mockLog).getJob<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>(jobIdOf(run))
+    return job?.data
+}
+
+function jobIdOf({ platformId, runId }: { platformId: string, runId: string }): string {
+    return `create-missing-personal-projects-${platformId}-${runId}`
+}
 
 async function setupPlatform({ projectRolesEnabled, autoCreatePersonalProjects }: { projectRolesEnabled: boolean, autoCreatePersonalProjects: boolean }) {
     const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
