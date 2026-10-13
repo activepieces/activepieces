@@ -44,11 +44,11 @@ import {
 export function PublishingRuleSentence({
   count,
   mode,
-  onModeChange,
+  onChange,
 }: {
   count: number;
   mode: RequiredActionsMode;
-  onModeChange?: (mode: RequiredActionsMode) => void;
+  onChange?: ChangePieceSet;
 }) {
   if (count === 0) {
     return (
@@ -64,43 +64,56 @@ export function PublishingRuleSentence({
       </p>
     );
   }
+  const options = publishingModes();
+  const current = options.find((option) => option.value === mode) ?? options[0];
+  const { before, marked, after } = splitMarked(current.sentence);
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-      <p className="text-sm text-gray-12">
-        {mode === RequiredActionsMode.ALL
-          ? t('A flow can be published only if it uses all of these actions:')
-          : t(
-              'A flow can be published only if it uses at least one of these actions:',
-            )}
-      </p>
-      {onModeChange && (
+    <p className="text-sm leading-7 text-gray-12">
+      {before}
+      {onChange ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="link" size="sm" className="h-auto p-0">
-              {t('Change rule')}
-              <ChevronDown />
-            </Button>
+            <button
+              type="button"
+              aria-label={t('Publishing rule: {rule}', { rule: marked })}
+              className="mx-0.5 inline-flex h-6 items-center gap-0.5 rounded-md border px-1.5 align-baseline font-medium text-gray-12 hover:bg-gray-3 focus-visible:outline-2 focus-visible:outline-accent-8"
+            >
+              {marked}
+              <ChevronDown className="size-3.5 text-gray-11" />
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-72">
-            {publishingModes().map((option) => (
+            {options.map((option) => (
               <DropdownMenuItem
                 key={option.value}
-                onSelect={() => onModeChange(option.value)}
+                onSelect={() => {
+                  if (option.value !== mode) {
+                    onChange({
+                      type: 'requiredMode',
+                      mode: option.value,
+                    }).catch(() => undefined);
+                  }
+                }}
                 className="items-start"
               >
                 <Check
                   className={cn('mt-0.5', option.value !== mode && 'opacity-0')}
                 />
                 <span className="flex flex-col">
-                  <span className="font-medium">{option.label}</span>
+                  <span className="font-medium">
+                    {splitMarked(option.sentence).marked}
+                  </span>
                   <span className="text-xs text-gray-11">{option.hint}</span>
                 </span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+      ) : (
+        <span className="font-medium">{marked}</span>
       )}
-    </div>
+      {after}
+    </p>
   );
 }
 
@@ -258,17 +271,16 @@ function RequiredActionsEditor({
   onClose: () => void;
 }) {
   const savedRequired = pieceSet.config.requiredActions.actions;
-  const savedMode = pieceSet.config.requiredActions.mode;
+  const mode = pieceSet.config.requiredActions.mode;
   const [required, setRequired] =
     useState<Record<string, string[]>>(savedRequired);
-  const [mode, setMode] = useState<RequiredActionsMode>(savedMode);
   const [pickingPiece, setPickingPiece] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const changedPieces = changedRequiredPieces({
     saved: savedRequired,
     local: required,
   });
-  const dirty = mode !== savedMode || Object.keys(changedPieces).length > 0;
+  const dirty = Object.keys(changedPieces).length > 0;
   const { requestClose, dialog: leaveDialog } = useGuardedClose({
     dirty: dirty && !saving,
     onClose,
@@ -293,7 +305,6 @@ function RequiredActionsEditor({
 
   const discard = () => {
     setRequired(savedRequired);
-    setMode(savedMode);
   };
 
   const save = async () => {
@@ -304,7 +315,6 @@ function RequiredActionsEditor({
     const saved = await onChange({
       type: 'required',
       actions: changedPieces,
-      mode: mode === savedMode ? undefined : mode,
     });
     setSaving(false);
     if (saved) {
@@ -337,7 +347,7 @@ function RequiredActionsEditor({
         <PublishingRuleSentence
           count={requiredCount}
           mode={mode}
-          onModeChange={setMode}
+          onChange={onChange}
         />
         {groupsLoading ? (
           <SkeletonRows count={2} className="h-10 rounded-xl" />
@@ -614,21 +624,37 @@ function changedRequiredPieces({
 
 function publishingModes(): {
   value: RequiredActionsMode;
-  label: string;
+  sentence: string;
   hint: string;
 }[] {
   return [
     {
       value: RequiredActionsMode.ALL,
-      label: t('All of these actions'),
+      sentence: t(
+        'A flow can be published only if it uses [all of] these actions:',
+      ),
       hint: t('Every action below has to be in the flow.'),
     },
     {
       value: RequiredActionsMode.ANY,
-      label: t('At least one of these actions'),
+      sentence: t(
+        'A flow can be published only if it uses [at least one of] these actions:',
+      ),
       hint: t('Any one of the actions below is enough.'),
     },
   ];
+}
+
+function splitMarked(sentence: string): {
+  before: string;
+  marked: string;
+  after: string;
+} {
+  const match = /^([\s\S]*?)\[([\s\S]+?)\]([\s\S]*)$/.exec(sentence);
+  if (!match) {
+    return { before: sentence, marked: '', after: '' };
+  }
+  return { before: match[1], marked: match[2], after: match[3] };
 }
 
 const PICKER_ROW_HEIGHT = 44;

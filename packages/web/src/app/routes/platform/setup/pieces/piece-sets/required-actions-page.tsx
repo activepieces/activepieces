@@ -160,7 +160,11 @@ function SetRule({
         </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <PublishingRuleSentence count={requiredCount} mode={mode} />
+        <PublishingRuleSentence
+          count={requiredCount}
+          mode={mode}
+          onChange={onChange}
+        />
         <RequiredActionsList pieceSet={pieceSet} onChange={onChange} />
       </div>
       <Button
