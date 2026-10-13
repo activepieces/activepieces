@@ -22,9 +22,18 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
             if (!connection.isInitialized) {
                 return false
             }
-            await connection.query('SELECT 1')
-            return true
-        } 
+            let timer: ReturnType<typeof setTimeout> | undefined
+            const answered = await Promise.race([
+                connection.query('SELECT 1').then(() => true),
+                new Promise<false>((resolve) => {
+                    timer = setTimeout(() => resolve(false), DATABASE_HEALTH_CHECK_TIMEOUT_MS)
+                }),
+            ]).finally(() => clearTimeout(timer))
+            if (!answered) {
+                log.warn({ timeoutMs: DATABASE_HEALTH_CHECK_TIMEOUT_MS }, 'Database health check timed out')
+            }
+            return answered
+        }
         catch (error) {
             log.warn({ error }, 'Database health check failed')
             return false
@@ -203,6 +212,7 @@ const APP_MIN_RAM_GB = 2
 const APP_MIN_DISK_GB = 30
 const WORKER_MIN_CPU_CORES = 0.5
 const WORKER_MIN_RAM_GB = 1
+const DATABASE_HEALTH_CHECK_TIMEOUT_MS = 3_000
 
 const UNKNOWN_WORKER_VERSION = 'unknown'
 
