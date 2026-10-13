@@ -5,7 +5,7 @@ import {
     textToSectionBlocks,
 } from './utils';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
-import { ExecutionType } from '@activepieces/pieces-framework';
+import { ExecutionType, isNil } from '@activepieces/pieces-framework';
 import { ChatPostMessageResponse } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from './auth-helpers';
 
@@ -60,7 +60,7 @@ export const requestAction = async (conversationId: string, context: any) => {
         );
 
         const customBlocks = context.propsValue.blocks;
-        if (customBlocks !== undefined && !Array.isArray(customBlocks)) {
+        if (!isNil(customBlocks) && !Array.isArray(customBlocks)) {
             throw new Error('Blocks must be a JSON array');
         }
 
