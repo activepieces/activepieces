@@ -168,6 +168,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 .addSelect('platform.federatedAuthProviders')
                 .where({ id: params.id })
                 .getOneOrFail()
+            assertSsoDomainUnchanged({ current, params })
             assertSamlDomainVerified({ current, params })
             const changes = platformChanges({ current, params })
             assertSignInMethodRemains({ before: current, after: { ...current, ...changes } })
@@ -451,6 +452,24 @@ function platformChanges({ current, params }: { current: Platform, params: Updat
     }
 }
 
+function assertSsoDomainUnchanged({ current, params }: { current: Platform, params: UpdateParams }): void {
+    if (params.expectedSsoDomain === undefined) {
+        return
+    }
+    const expected = params.expectedSsoDomain
+    const unchanged = (current.ssoDomain ?? null) === expected.ssoDomain
+        && (current.ssoDomainVerification?.status ?? null) === (expected.verification?.status ?? null)
+        && (current.ssoDomainVerification?.record.value ?? null) === (expected.verification?.record.value ?? null)
+    if (!unchanged) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'The SSO domain changed while this request was running. Try again.',
+            },
+        })
+    }
+}
+
 function assertSamlDomainVerified({ current, params }: { current: Platform, params: UpdateParams }): void {
     if (isNil(params.federatedAuthProviders?.saml)) {
         return
@@ -468,6 +487,7 @@ function assertSamlDomainVerified({ current, params }: { current: Platform, para
 function signInMethodCount(platform: SignInMethodsState): number {
     const googleSignIn = platform.googleAuthEnabled && googleAuth.isConfigured()
     const samlSignIn = !isNil(platform.federatedAuthProviders?.saml)
+        && !isNil(platform.ssoDomain)
         && platform.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
     return [platform.emailAuthEnabled, googleSignIn, samlSignIn].filter(Boolean).length
 }
@@ -502,7 +522,12 @@ type AssertAuditLogRetentionDaysAllowedParams = {
 
 type PlatformChanges = Partial<Omit<Platform, 'id' | 'created' | 'updated'>>
 
-type SignInMethodsState = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders' | 'ssoDomainVerification'>
+type ExpectedSsoDomain = {
+    ssoDomain: string | null
+    verification: SsoDomainVerification | null
+}
+
+type SignInMethodsState = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders' | 'ssoDomain' | 'ssoDomainVerification'>
 
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
@@ -512,6 +537,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     favIconUrl?: string
     ssoDomain?: string | null
     ssoDomainVerification?: SsoDomainVerification | null
+    expectedSsoDomain?: ExpectedSsoDomain
     userId?: UserId
     ip?: string
 }

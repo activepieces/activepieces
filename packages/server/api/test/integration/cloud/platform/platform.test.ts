@@ -1,10 +1,11 @@
 import { apId } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, Platform, PlatformRole, PrincipalType, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, Platform, PlatformRole, PrincipalType, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyInstance, LightMyRequestResponse } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EntityManager } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { authnSsoSamlService } from '../../../../src/app/ee/authentication/saml-authn/authn-sso-saml-service'
 import { system } from '../../../../src/app/helper/system/system'
 import { systemJobsQueue } from '../../../../src/app/helper/system-jobs/system-job'
 import { generateMockToken } from '../../../helpers/auth'
@@ -16,6 +17,12 @@ let app: FastifyInstance | null = null
 
 const hooks = vi.hoisted(() => ({
     beforeTransaction: undefined as (() => Promise<void>) | undefined,
+    queries: [] as string[],
+    txtRecords: [] as string[][],
+}))
+
+vi.mock('dns/promises', () => ({
+    resolveTxt: async (): Promise<string[][]> => hooks.txtRecords,
 }))
 
 vi.mock('../../../../src/app/core/db/transaction', async (importOriginal) => {
@@ -27,7 +34,20 @@ vi.mock('../../../../src/app/core/db/transaction', async (importOriginal) => {
             if (beforeTransaction !== undefined) {
                 await beforeTransaction()
             }
-            return actual.transaction(operation)
+            return actual.transaction(async (entityManager) => {
+                const runner = entityManager.queryRunner
+                if (runner === undefined) {
+                    return operation(entityManager)
+                }
+                const query = vi.spyOn(runner, 'query')
+                try {
+                    return await operation(entityManager)
+                }
+                finally {
+                    hooks.queries.push(...query.mock.calls.map((call) => String(call[0])))
+                    query.mockRestore()
+                }
+            })
         },
     }
 })
@@ -68,6 +88,8 @@ afterAll(async () => {
 
 afterEach(() => {
     hooks.beforeTransaction = undefined
+    hooks.queries = []
+    hooks.txtRecords = []
     delete process.env.AP_GOOGLE_CLIENT_ID
     delete process.env.AP_GOOGLE_CLIENT_SECRET
 })
@@ -104,6 +126,38 @@ async function mockAndSaveSamlSetup(): ReturnType<typeof mockAndSaveBasicSetup> 
             },
         },
     })
+}
+
+async function mockAndSavePendingDomainSetup(): ReturnType<typeof mockAndSaveBasicSetup> {
+    const ssoDomain = `${faker.string.alphanumeric(10).toLowerCase()}.example.com`
+    return mockAndSaveBasicSetup({
+        plan: {
+            ssoEnabled: true,
+        },
+        platform: {
+            ssoDomain,
+            ssoDomainVerification: pendingVerification(ssoDomain),
+        },
+    })
+}
+
+function pendingVerification(ssoDomain: string): SsoDomainVerification {
+    return {
+        status: SsoDomainVerificationStatus.PENDING_VERIFICATION,
+        record: {
+            type: SsoDomainVerificationRecordType.TXT,
+            name: `_activepieces-verify.${ssoDomain}`,
+            value: `activepieces-verify=${faker.string.alphanumeric(12)}`,
+        },
+        createdAt: new Date().toISOString(),
+    }
+}
+
+function appLog(): FastifyBaseLogger {
+    if (app === null) {
+        throw new Error('The test app is not running')
+    }
+    return app.log
 }
 
 async function ownerToken({ ownerId, platformId }: { ownerId: string, platformId: string }): Promise<string> {
@@ -268,7 +322,7 @@ describe('Platform API', () => {
         it('keeps a sign-in change made while a name update is in flight', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
             const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            hooks.beforeTransaction = async () => {
+            hooks.beforeTransaction = async (): Promise<void> => {
                 await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { emailAuthEnabled: false })
             }
 
@@ -284,7 +338,7 @@ describe('Platform API', () => {
         it('rejects turning off email after a concurrent change removed SAML', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
             const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            hooks.beforeTransaction = async () => {
+            hooks.beforeTransaction = async (): Promise<void> => {
                 const removeSaml = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { federatedAuthProviders: { saml: null } } })
                 expect(removeSaml?.statusCode).toBe(StatusCodes.OK)
             }
@@ -300,7 +354,7 @@ describe('Platform API', () => {
         it('rejects new SAML settings when the domain stopped being verified while the request was in flight', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
             const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            hooks.beforeTransaction = async () => {
+            hooks.beforeTransaction = async (): Promise<void> => {
                 await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { ssoDomainVerification: null })
             }
 
@@ -312,6 +366,73 @@ describe('Platform API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
             expect(response?.json().params.message).toContain('SSO domain must be verified')
+        })
+
+        it('locks the platform row before it reads and writes the update', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
+            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+
+            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { name: 'Locked rename' } })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const lockIndex = hooks.queries.findIndex((sql) => /FROM "platform"/.test(sql) && /FOR UPDATE/.test(sql))
+            const updateIndex = hooks.queries.findIndex((sql) => /^UPDATE "platform"/.test(sql))
+            expect(lockIndex).toBeGreaterThanOrEqual(0)
+            expect(updateIndex).toBeGreaterThan(lockIndex)
+        })
+
+        it('does not count SAML as a sign-in method when the platform has no SSO domain', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
+            await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { ssoDomain: null })
+            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+
+            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { emailAuthEnabled: false } })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain('no way to sign in')
+        })
+
+        it('does not mark a domain verified when the SSO domain changed during the DNS check', async () => {
+            const { mockPlatform } = await mockAndSavePendingDomainSetup()
+            hooks.txtRecords = [[mockPlatform.ssoDomainVerification?.record.value ?? '']]
+            hooks.beforeTransaction = async (): Promise<void> => {
+                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, {
+                    ssoDomain: 'victim.example.com',
+                    ssoDomainVerification: pendingVerification('victim.example.com'),
+                })
+            }
+
+            await expect(authnSsoSamlService(appLog()).verifySsoDomain({ platformId: mockPlatform.id }))
+                .rejects.toThrow()
+
+            const saved = await readPlatform(mockPlatform.id)
+            expect(saved.ssoDomain).toBe('victim.example.com')
+            expect(saved.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.PENDING_VERIFICATION)
+        })
+
+        it('marks the domain verified when nothing changed during the DNS check', async () => {
+            const { mockPlatform } = await mockAndSavePendingDomainSetup()
+            hooks.txtRecords = [[mockPlatform.ssoDomainVerification?.record.value ?? '']]
+
+            const result = await authnSsoSamlService(appLog()).verifySsoDomain({ platformId: mockPlatform.id })
+
+            expect(result.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
+        })
+
+        it('does not write a stale pending verification over a domain verified meanwhile', async () => {
+            const { mockPlatform } = await mockAndSavePendingDomainSetup()
+            const domain = mockPlatform.ssoDomain ?? ''
+            hooks.beforeTransaction = async (): Promise<void> => {
+                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, {
+                    ssoDomainVerification: { ...pendingVerification(domain), status: SsoDomainVerificationStatus.VERIFIED },
+                })
+            }
+
+            await expect(authnSsoSamlService(appLog()).updateSsoDomain({ platformId: mockPlatform.id, ssoDomain: domain }))
+                .rejects.toThrow()
+
+            const saved = await readPlatform(mockPlatform.id)
+            expect(saved.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
         })
 
         it('updates the platform logo icons', async () => {
