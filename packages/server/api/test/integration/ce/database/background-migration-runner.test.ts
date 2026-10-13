@@ -211,12 +211,16 @@ describe('withBackgroundMigrationLock', () => {
             })
             await new Promise(resolve => setTimeout(resolve, 100))
             expect(gotLock).toBe(false)
+
+            releaseMigration()
+            await runnerPromise
+            await lockWaiter
+            expect(gotLock).toBe(true)
         }
         finally {
             releaseMigration()
             await Promise.allSettled([runnerPromise, lockWaiter ?? Promise.resolve()])
         }
-        expect(gotLock).toBe(true)
     })
 
     it('acquires immediately when no migration is in-flight', async () => {
