@@ -38,9 +38,6 @@ export function ClientInstructions({
   const [methodKey, setMethodKey] = useState(client.methods[0].key);
   const method =
     client.methods.find((item) => item.key === methodKey) ?? client.methods[0];
-  const showsServerUrl = method.steps.some(
-    (step) => step.block?.kind === 'url',
-  );
   const steps = method.steps.length + 1;
 
   return (
@@ -137,14 +134,12 @@ export function ClientInstructions({
         </section>
       )}
 
-      {!showsServerUrl && (
-        <section className="flex flex-col gap-3 border-t pt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-11">
-            {t('Server URL')}
-          </h2>
-          <CopyToClipboardInput textToCopy={serverUrl} useInput />
-        </section>
-      )}
+      <section className="flex flex-col gap-3 border-t pt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-11">
+          {t('Server URL')}
+        </h2>
+        <CopyToClipboardInput textToCopy={serverUrl} useInput />
+      </section>
     </div>
   );
 }
