@@ -1,4 +1,4 @@
-import { isNil, debounce, tryCatch } from '@activepieces/core-utils';
+import { isNil, tryCatch } from '@activepieces/core-utils';
 import {
   FlowOperationRequest,
   FlowOperationType,
@@ -24,6 +24,7 @@ import {
   pieceSelectorUtils,
 } from '@/features/pieces';
 import { api } from '@/lib/api';
+import { KeyedDebounce } from '@/lib/keyed-debounce';
 import { PromiseQueue } from '@/lib/promise-queue';
 
 import { BuilderState } from '../builder-hooks';
@@ -98,12 +99,7 @@ export const createFlowState = (
       }
     });
   };
-  const debouncedAddToFlowUpdatesQueue = debounce(
-    (updateRequest: () => Promise<void>) => {
-      addToFlowUpdatesQueue(updateRequest);
-    },
-    1000,
-  );
+  const flowUpdatesDebounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });
   return {
     saving: false,
     outputSampleData: initialState.outputSampleData,
@@ -235,16 +231,19 @@ export const createFlowState = (
           }
           case FlowOperationType.UPDATE_TRIGGER:
           case FlowOperationType.UPDATE_ACTION: {
-            debouncedAddToFlowUpdatesQueue(
-              operation.request.name,
-              updateRequest,
-            );
+            flowUpdatesDebounce.schedule({
+              key: operation.request.name,
+              run: () => addToFlowUpdatesQueue(updateRequest),
+            });
             break;
           }
           case FlowOperationType.UPDATE_NOTE:
           case FlowOperationType.DELETE_NOTE:
           case FlowOperationType.ADD_NOTE: {
-            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
+            flowUpdatesDebounce.schedule({
+              key: operation.request.id,
+              run: () => addToFlowUpdatesQueue(updateRequest),
+            });
             break;
           }
           case FlowOperationType.DELETE_ACTION: {
