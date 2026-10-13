@@ -28,7 +28,11 @@ export function ConnectTab({
   );
   const home = useConnectHome({ clients, watch });
   const selected =
-    home.clients.find((client) => client.key === clientKey) ?? null;
+    home.clients.find(
+      (client) =>
+        clientKey !== null &&
+        client.key === mcpClientCatalog.resolveKey(clientKey),
+    ) ?? null;
 
   if (view === 'client' && selected !== null) {
     return (

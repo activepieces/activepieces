@@ -106,6 +106,25 @@ describe('mcpClientCatalog generated commands', () => {
   });
 });
 
+describe('mcpClientCatalog.resolveKey', () => {
+  it('sends old Windsurf links to the Devin Desktop client', () => {
+    const key = mcpClientCatalog.resolveKey('windsurf');
+    expect(key).toBe('devin');
+    expect(clientNamed(key, false)?.name).toBe('Devin Desktop');
+  });
+
+  it('keeps every current client key as it is', () => {
+    const keys = mcpClientCatalog
+      .clients({
+        serverUrl: SERVER_URL,
+        websiteName: 'Activepieces',
+        isCloud: false,
+      })
+      .map((client) => client.key);
+    expect(keys.map((key) => mcpClientCatalog.resolveKey(key))).toEqual(keys);
+  });
+});
+
 describe('mcpClientCatalog grant keys', () => {
   it('maps Devin Desktop to the windsurf grant and leaves undetected clients unmapped', () => {
     expect(clientNamed('devin', false)?.grantKey).toBe('windsurf');
