@@ -59,6 +59,9 @@ vi.mock(
 vi.mock('@/app/routes/platform/projects/columns', () => ({
   projectsTableColumns: () => [],
 }));
+vi.mock('@/app/components/enterprise-gate', () => ({
+  EnterpriseGate: ({ children }: { children: React.ReactNode }) => children,
+}));
 vi.mock('@/features/projects', () => ({
   CreateProjectButton: () => null,
   EditProjectDialog: () => null,
