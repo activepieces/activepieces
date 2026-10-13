@@ -24,11 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  pieceSetMutations,
-  pieceSetTerms,
-  useShowEmbedKey,
-} from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { pieceSetFormErrors } from './piece-set-form-errors';
@@ -50,7 +46,6 @@ const DuplicatePieceSetForm = ({
   sourceName: string;
 }) => {
   const navigate = useNavigate();
-  const showKey = useShowEmbedKey();
   const form = useForm<z.infer<typeof DuplicatePieceSetRequestBody>>({
     resolver: zodResolver(DuplicatePieceSetRequestBody),
     defaultValues: { name: t('{name} copy', { name: sourceName }) },
@@ -59,12 +54,7 @@ const DuplicatePieceSetForm = ({
 
   const { mutate: duplicateSet, isPending } =
     pieceSetMutations.useDuplicatePieceSet({
-      onError: (error) =>
-        pieceSetFormErrors.show({
-          form,
-          error,
-          showKey,
-        }),
+      onError: (error) => pieceSetFormErrors.show({ form, error }),
     });
 
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {
@@ -137,7 +127,7 @@ export const DuplicatePieceSetDialog = ({
 }: DuplicatePieceSetDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={adminLayout.dialog.sm}>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>
             {t('Duplicate {term}', pieceSetTerms.get())}

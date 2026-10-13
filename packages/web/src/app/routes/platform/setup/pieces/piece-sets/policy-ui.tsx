@@ -11,7 +11,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 export function PolicySheet({
@@ -28,22 +28,40 @@ export function PolicySheet({
       <SheetContent
         className={cn(adminLayout.sheet.md, 'flex flex-col gap-0 p-0')}
       >
-        <SheetHeader className="border-b p-5 pr-12">
+        <SheetHeader className="shrink-0 border-b px-6 py-4 pr-12">
           <SheetTitle>{title}</SheetTitle>
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
         {toolbar && (
-          <div className="flex shrink-0 flex-col gap-2 border-b p-5">
+          <div className="flex shrink-0 flex-col gap-2 border-b px-6 py-4">
             {toolbar}
           </div>
         )}
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
           {children}
         </div>
         {footer && <SheetFooter className="p-0">{footer}</SheetFooter>}
       </SheetContent>
     </Sheet>
   );
+}
+
+export function savedOrThrow(saved: Promise<boolean>): Promise<void> {
+  return saved.then((ok) => {
+    if (!ok) {
+      const error = new Error('Change not saved');
+      mutationFeedback.markShown(error);
+      throw error;
+    }
+  });
+}
+
+export function sameNames(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const names = new Set(left);
+  return right.every((name) => names.has(name));
 }
 
 export function useGuardedClose({
@@ -72,29 +90,31 @@ export function CountTabs<T extends string>({
   value,
   onValueChange,
   options,
+  label,
 }: CountTabsProps<T>) {
   return (
-    <Tabs
-      className="max-w-full min-w-0 overflow-x-auto"
-      value={value}
-      onValueChange={(next) => {
-        const option = options.find((candidate) => candidate.value === next);
-        if (option) onValueChange(option.value);
-      }}
+    <div
+      role="group"
+      aria-label={label}
+      className="inline-flex h-9 max-w-full min-w-0 items-center overflow-x-auto rounded-lg bg-gray-3 p-0.5"
     >
-      <TabsList className="w-max">
-        {options.map((option) => (
-          <TabsTrigger key={option.value} value={option.value}>
-            {option.label}
-            {option.count !== undefined && (
-              <span className="ml-1.5 text-xs text-gray-11 tabular-nums">
-                {option.count}
-              </span>
-            )}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={option.value === value}
+          onClick={() => onValueChange(option.value)}
+          className="inline-flex h-full shrink-0 items-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap text-gray-11 transition-colors hover:text-gray-12 focus-visible:outline-2 focus-visible:outline-accent-8 aria-pressed:bg-panel aria-pressed:text-gray-12 aria-pressed:shadow-xs"
+        >
+          {option.label}
+          {option.count !== undefined && (
+            <span className="text-xs text-gray-11 tabular-nums">
+              {option.count}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -140,6 +160,7 @@ type PolicySheetProps = {
 };
 
 type CountTabsProps<T extends string> = {
+  label: string;
   value: T;
   onValueChange: (value: T) => void;
   options: { value: T; label: string; count?: number }[];

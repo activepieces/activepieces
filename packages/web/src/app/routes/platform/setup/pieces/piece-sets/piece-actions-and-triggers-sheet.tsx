@@ -9,8 +9,7 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { SaveBar } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { AdminFetchErrorState, SaveBar } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,7 +18,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   ChangePieceSet,
   PieceSetChange,
@@ -31,7 +29,13 @@ import { AdminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { ConfirmExcludingRequiredActionsDialog } from './confirm-excluding-required-actions';
-import { PolicySheet, SkeletonRows, useGuardedClose } from './policy-ui';
+import {
+  CountTabs,
+  PolicySheet,
+  SkeletonRows,
+  sameNames,
+  useGuardedClose,
+} from './policy-ui';
 
 export const PieceActionsAndTriggersSheet = (
   props: PieceActionsAndTriggersSheetProps,
@@ -148,7 +152,7 @@ function PieceActionsAndTriggersSheetContent({
       .map((item) => item.data.name);
   const destructiveNames = actionNamesWith(['DESTRUCTIVE']);
   const writeOrDestructiveNames = actionNamesWith(['WRITE', 'DESTRUCTIVE']);
-  const turnOff = (names: string[]) =>
+  const hide = (names: string[]) =>
     setTouchedHiddenActions(unique([...localHiddenActions, ...names]));
 
   const toggleSelectAll = () => {
@@ -158,8 +162,8 @@ function PieceActionsAndTriggersSheetContent({
   };
 
   const hiddenChanged =
-    sortedKey(localHiddenActions) !== sortedKey(originalHiddenActions) ||
-    sortedKey(localHiddenTriggers) !== sortedKey(originalHiddenTriggers);
+    !sameNames(localHiddenActions, originalHiddenActions) ||
+    !sameNames(localHiddenTriggers, originalHiddenTriggers);
   const isDirty =
     mode !== originalMode || (mode === 'selected' && hiddenChanged);
 
@@ -237,43 +241,35 @@ function PieceActionsAndTriggersSheetContent({
         )}
         toolbar={
           <>
-            <Tabs
+            <CountTabs
+              label={t('Which actions and triggers builders see')}
               value={mode}
-              onValueChange={(value) =>
-                setMode(value === 'selected' ? 'selected' : 'all')
-              }
-            >
-              <TabsList className="w-full">
-                <TabsTrigger value="all" className="flex-1">
-                  {t('All actions & triggers')}
-                </TabsTrigger>
-                <TabsTrigger value="selected" className="flex-1">
-                  {t('Only selected')}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+              onValueChange={setMode}
+              options={[
+                { value: 'all', label: t('Show all') },
+                { value: 'selected', label: t('Show only some') },
+              ]}
+            />
             <p className="text-xs text-gray-11">
               {mode === 'all'
                 ? t(
-                    'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
+                    'Builders see every action and trigger of this piece, including ones added later.',
                   )
                 : t(
-                    'Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.',
+                    'Builders see only the checked ones. Actions and triggers added to this piece later stay hidden until you check them here.',
                   )}
             </p>
           </>
         }
         footer={
-          isDirty && (
-            <SaveBar
-              dirty={isDirty}
-              saving={saving}
-              disabled={!pieceModel}
-              onSave={handleSave}
-              onDiscard={discard}
-              saveControl={AdminControl.PIECE_SETS_COMPONENTS_SUBMIT}
-            />
-          )
+          <SaveBar
+            dirty={isDirty}
+            saving={saving}
+            disabled={!pieceModel}
+            onSave={handleSave}
+            onDiscard={discard}
+            saveControl={AdminControl.PIECE_SETS_COMPONENTS_SUBMIT}
+          />
         }
       >
         {showCheckboxes && totalCount > 0 && (
@@ -284,7 +280,7 @@ function PieceActionsAndTriggersSheetContent({
             />
             <span className="text-sm font-medium">{t('Select all')}</span>
             <span className="ml-auto text-sm text-gray-11 tabular-nums">
-              {t('{count} of {total} selected', {
+              {t('{count} of {total} shown', {
                 count: checkedCount,
                 total: totalCount,
               })}
@@ -298,32 +294,32 @@ function PieceActionsAndTriggersSheetContent({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => turnOff(destructiveNames)}
+                onClick={() => hide(destructiveNames)}
               >
-                {t('Turn off destructive actions')}
+                {t('Hide destructive actions')}
               </Button>
             )}
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => turnOff(writeOrDestructiveNames)}
+              onClick={() => hide(writeOrDestructiveNames)}
             >
-              {t('Turn off write and destructive actions')}
+              {t('Hide write and destructive actions')}
             </Button>
           </div>
         )}
         {isLoading ? (
           <SkeletonRows count={6} className="h-12 rounded-lg" />
         ) : isError ? (
-          <DataFetchErrorState
+          <AdminFetchErrorState
             entity={t('actions and triggers')}
             onRetry={refetch}
           />
         ) : totalCount === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-gray-11">
-            {t('No actions or triggers found')}
-          </div>
+          <p className="text-sm text-gray-11">
+            {t('This piece has no actions or triggers.')}
+          </p>
         ) : (
           <>
             {allActions.length > 0 && (
@@ -462,10 +458,6 @@ function hiddenNames({
     return [];
   }
   return allNames.filter((name) => !selected.includes(name));
-}
-
-function sortedKey(names: string[]): string {
-  return [...names].sort().join('|');
 }
 
 type PieceActionsAndTriggersSheetProps = {

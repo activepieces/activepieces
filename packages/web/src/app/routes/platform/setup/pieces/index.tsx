@@ -43,9 +43,11 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { usePrefetchPiecesSection } from './use-prefetch-pieces-section';
+
 export const PiecesListTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  piecesHooks.usePrefetchPieces({});
+  usePrefetchPiecesSection();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
@@ -188,7 +190,7 @@ export const PiecesListTab = () => {
   return (
     <AdminPage fill>
       <AdminPageHeader
-        title={t('Catalog')}
+        title={t('Pieces')}
         description={t('Manage the pieces that are available to your users')}
         resources={adminPageResources.pieces}
       >
