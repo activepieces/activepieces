@@ -234,6 +234,21 @@ describe('Removing a platform invite from a project', () => {
         expect(after.projectId).toBe(otherProject.id)
     })
 
+    it('keeps an expired invite expired, so it does not take a seat again', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+        const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+        await databaseConnection().getRepository('user_invitation').update({ id: invitation.id }, { updated: tenDaysAgo })
+
+        await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBeNull()
+        expect(new Date(after.updated).toISOString()).toBe(tenDaysAgo)
+    })
+
     it('is refused to a member who is not a platform admin', async () => {
         const { platformId, projectId, ownerToken } = await setupPlatform()
         const email = faker.internet.email().toLowerCase()
