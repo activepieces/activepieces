@@ -53,6 +53,7 @@ export {
 } from './hooks/enterprise-trial-hooks';
 export { LockedGem } from './components/locked-gem';
 export { PlanBadge } from './components/plan-badge';
+export { seatUtils } from './utils/seat-utils';
 export { EnterpriseLockedRow } from './components/enterprise-locked-row';
 export { EnterpriseTrialSalesLink } from './components/enterprise-trial-sales-link';
 export { EnterpriseLockedCard } from './components/enterprise-locked-card';

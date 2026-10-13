@@ -20,11 +20,7 @@ import { planTiers } from '../utils/plan-tiers';
 
 export function EnterpriseTrialPill() {
   const trial = enterpriseTrialHooks.useTrial();
-  if (
-    trial.state !== 'active' ||
-    isNil(trial.endsAt) ||
-    !trial.isPlatformAdmin
-  ) {
+  if (trial.state !== 'active' || isNil(trial.endsAt)) {
     return null;
   }
   return (
@@ -35,34 +31,43 @@ export function EnterpriseTrialPill() {
 }
 
 export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
-  if (!trial.isPlatformAdmin || trial.state !== 'active') {
+  if (trial.state !== 'active') {
     return null;
   }
+  const line = (
+    <span
+      className={cn(
+        'flex min-w-0 items-start gap-1.5 text-xs',
+        trial.endsToday ? 'text-warning-11' : 'text-gray-11',
+      )}
+    >
+      <Gem
+        className={cn(
+          'mt-px size-3.5 shrink-0',
+          trial.endsToday ? 'text-warning-11' : 'text-accent-11',
+        )}
+      />
+      <span className="flex flex-wrap gap-x-1">
+        <span className="font-medium">{t('Enterprise plan trial')}</span>
+        <span>· {enterpriseTrialCopy.sidebarDetail(trial)}</span>
+      </span>
+    </span>
+  );
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Link
-          to="/platform/billing"
-          className="min-w-0 self-start hover:underline"
-        >
-          <span
-            className={cn(
-              'flex min-w-0 items-start gap-1.5 text-xs',
-              trial.endsToday ? 'text-warning-11' : 'text-gray-11',
-            )}
+        {trial.isPlatformAdmin ? (
+          <Link
+            to="/platform/billing"
+            className="min-w-0 self-start hover:underline"
           >
-            <Gem
-              className={cn(
-                'mt-px size-3.5 shrink-0',
-                trial.endsToday ? 'text-warning-11' : 'text-accent-11',
-              )}
-            />
-            <span className="flex flex-wrap gap-x-1">
-              <span className="font-medium">{t('Enterprise plan trial')}</span>
-              <span>· {enterpriseTrialCopy.sidebarDetail(trial)}</span>
-            </span>
+            {line}
+          </Link>
+        ) : (
+          <span tabIndex={0} className="min-w-0 self-start">
+            {line}
           </span>
-        </Link>
+        )}
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-64">
         {enterpriseTrialCopy.details(trial)}
