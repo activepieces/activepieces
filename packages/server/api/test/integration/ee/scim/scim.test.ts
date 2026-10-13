@@ -5,6 +5,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { platformService } from '../../../../src/app/platform/platform.service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -715,6 +716,47 @@ describe('SCIM 2.0 API', () => {
                 headers: { authorization: bearerToken },
             })
             expect(getResponse?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('SCIM group delete and default projects', () => {
+        it('waits for a default projects save in progress, so the save cannot put the deleted project back', async () => {
+            const { bearerToken, mockPlatform } = await setupScimPlatform()
+            const createResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Groups',
+                headers: { authorization: bearerToken },
+                body: mockIdpGroup(),
+            })
+            const groupId: string = createResponse?.json().id
+            await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { defaultProjectIds: [groupId] })
+            const lockHeld = Promise.withResolvers<undefined>()
+            const releaseLock = Promise.withResolvers<undefined>()
+            const staleSave = platformService(app!.log).runWithDefaultProjectsLock({
+                platformId: mockPlatform.id,
+                fn: async () => {
+                    lockHeld.resolve(undefined)
+                    await releaseLock.promise
+                    await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { defaultProjectIds: [groupId] })
+                },
+            })
+            await lockHeld.promise
+
+            const deleteRequest = app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/scim/v2/Groups/${groupId}`,
+                headers: { authorization: bearerToken },
+            })
+            await new Promise((resolve) => setTimeout(resolve, 300))
+            const projectWhileLocked = await databaseConnection().getRepository('project').findOne({ where: { id: groupId }, withDeleted: true })
+            releaseLock.resolve(undefined)
+            await staleSave
+            const deleteResponse = await deleteRequest
+
+            expect(projectWhileLocked?.deleted).toBeNull()
+            expect(deleteResponse?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: mockPlatform.id })
+            expect(platform.defaultProjectIds).not.toContain(groupId)
         })
     })
 
