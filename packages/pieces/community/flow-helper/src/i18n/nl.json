@@ -5,5 +5,14 @@
   "Fails the flow execution with a custom message.": "Fout bij uitvoeren van de stroom met een aangepast bericht.",
   "Stops the flow immediately this step is reached.": "Stopt de stroom zodra deze stap is bereikt.",
   "Error Message": "Fout bericht",
-  "The error message to show when the flow fails.": "Het foutbericht om te laten zien wanneer de stroom mislukt."
+  "The error message to show when the flow fails.": "Het foutbericht om te laten zien wanneer de stroom mislukt.",
+  "Stop or fail a running flow, or get a link to the current run.": "Een lopende flow stoppen of laten mislukken, of een link naar de huidige run ophalen.",
+  "Gets this run's ID and a link to open it.": "Haalt de ID van deze run op en een link om deze te openen.",
+  "Ends the run at this step and marks it as failed.": "Beëindigt de run bij deze stap en markeert deze als mislukt.",
+  "Ends the run at this step and marks it as succeeded.": "Beëindigt de run bij deze stap en markeert deze als geslaagd.",
+  "Markdown": "Markdown",
+  "Outputs this run's ID and a link that opens the run.": "Geeft de ID van deze run en een link die de run opent.",
+  "The run is marked as failed here and later steps do not run. If Add Error Handler is on, the Failure branch runs and the flow continues.": "De run wordt hier als mislukt gemarkeerd en latere stappen worden niet uitgevoerd. Als Add Error Handler aan staat, wordt de tak Fout uitgevoerd en gaat de flow verder.",
+  "Shown as the run's error. Can include data from earlier steps.": "Wordt getoond als de fout van de run. Kan gegevens uit eerdere stappen bevatten.",
+  "The run ends here and is marked as succeeded. Steps after this one do not run.": "De run eindigt hier en wordt als geslaagd gemarkeerd. Stappen hierna worden niet uitgevoerd."
 }
