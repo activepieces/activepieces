@@ -139,7 +139,7 @@ const ProjectNames = ({
               {name}
             </li>
           ))}
-          {hidden > 0 && <li>{t('and {count} more', { count: hidden })}</li>}
+          {hidden > 0 && <li>{t('+{count} more', { count: hidden })}</li>}
         </ul>
       </TooltipContent>
     </Tooltip>

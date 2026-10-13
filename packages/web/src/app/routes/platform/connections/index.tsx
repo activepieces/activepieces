@@ -18,7 +18,7 @@ import {
   Unplug,
   User,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -37,11 +37,7 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { Button } from '@/components/ui/button';
-import {
-  LockedGem,
-  PLATFORM_FEATURES,
-  useFeatureGate,
-} from '@/features/billing';
+import { LockedGem, useEnterpriseGate } from '@/features/billing';
 import { piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
@@ -65,14 +61,16 @@ import { DeleteConnectionsDialog } from './delete-connections-dialog';
 export default function PlatformConnectionsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const globalLocked = !platform.plan.globalConnectionsEnabled;
-  const gate = useFeatureGate({
-    locked: globalLocked,
-    feature: PLATFORM_FEATURES.globalConnections,
+  const gate = useEnterpriseGate({
+    unlocked: !globalLocked,
+    featureKey: 'GLOBAL_CONNECTIONS',
   });
-  const access: GlobalConnectionAccess = {
-    locked: globalLocked,
-    upgrade: gate.open,
-  };
+  const explainLock = useRef(gate.explain);
+  explainLock.current = gate.explain;
+  const access: GlobalConnectionAccess = useMemo(
+    () => ({ locked: globalLocked, upgrade: () => explainLock.current() }),
+    [globalLocked],
+  );
 
   const [searchParams] = useSearchParams();
   const {
@@ -85,17 +83,18 @@ export default function PlatformConnectionsPage() {
   });
   const { data: owners } = platformAppConnectionsQueries.useOwners();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
-  const { pieces } = piecesHooks.usePieces({});
+  const { pieces } = piecesHooks.usePlatformCatalog();
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const resetBulkSelection = useRef<(() => void) | null>(null);
   const [deleting, setDeleting] = useState<PlatformAppConnectionsListItem[]>(
     [],
   );
 
   const rows = connections?.data ?? [];
   const viewing = rows.find((row) => row.id === viewingId) ?? null;
-  const refresh = () => {
+  const refresh = useCallback(() => {
     refetch().catch(() => undefined);
-  };
+  }, [refetch]);
   const filtered = FILTER_PARAMS.some((param) => searchParams.has(param));
 
   const filters: DataTableFilters<FilterKey>[] = [
@@ -163,82 +162,89 @@ export default function PlatformConnectionsPage() {
 
   const columns: ColumnDef<
     RowDataWithActions<PlatformAppConnectionsListItem>
-  >[] = [
-    {
-      accessorKey: 'displayName',
-      size: 260,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Connection')}
-          icon={Unplug}
-        />
-      ),
-      cell: ({ row }) => <ConnectionNameCell connection={row.original} />,
-    },
-    {
-      id: 'where',
-      size: 280,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Where')}
-          icon={MapPin}
-        />
-      ),
-      cell: ({ row }) => <WhereCell connection={row.original} />,
-    },
-    {
-      id: 'owner',
-      size: 180,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
-      ),
-      cell: ({ row }) => <OwnerCell owner={row.original.owner} />,
-    },
-    {
-      accessorKey: 'status',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Status')}
-          icon={Activity}
-        />
-      ),
-      cell: ({ row }) => <ConnectionStatus status={row.original.status} />,
-    },
-    {
-      accessorKey: 'updated',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Updated')}
-          icon={Clock}
-        />
-      ),
-      cell: ({ row }) => (
-        <FormattedDate date={new Date(row.original.updated)} />
-      ),
-    },
-    {
-      id: 'actions',
-      size: 110,
-      cell: ({ row }) => (
-        <div
-          className="flex items-center justify-end gap-1"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <ConnectionRowActions
-            connection={row.original}
-            access={access}
-            onChanged={refresh}
+  >[] = useMemo(
+    () => [
+      {
+        accessorKey: 'displayName',
+        size: 260,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Connection')}
+            icon={Unplug}
           />
-        </div>
-      ),
-    },
-  ];
+        ),
+        cell: ({ row }) => <ConnectionNameCell connection={row.original} />,
+      },
+      {
+        id: 'where',
+        size: 280,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Where')}
+            icon={MapPin}
+          />
+        ),
+        cell: ({ row }) => <WhereCell connection={row.original} />,
+      },
+      {
+        id: 'owner',
+        size: 180,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Owner')}
+            icon={User}
+          />
+        ),
+        cell: ({ row }) => <OwnerCell owner={row.original.owner} />,
+      },
+      {
+        accessorKey: 'status',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Status')}
+            icon={Activity}
+          />
+        ),
+        cell: ({ row }) => <ConnectionStatus status={row.original.status} />,
+      },
+      {
+        accessorKey: 'updated',
+        size: 150,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Updated')}
+            icon={Clock}
+          />
+        ),
+        cell: ({ row }) => (
+          <FormattedDate date={new Date(row.original.updated)} />
+        ),
+      },
+      {
+        id: 'actions',
+        size: 110,
+        cell: ({ row }) => (
+          <div
+            className="flex items-center justify-end gap-1"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <ConnectionRowActions
+              connection={row.original}
+              access={access}
+              onChanged={refresh}
+            />
+          </div>
+        ),
+      },
+    ],
+    [access, refresh],
+  );
 
   const bulkActions: BulkAction<PlatformAppConnectionsListItem>[] = [
     {
@@ -250,8 +256,8 @@ export default function PlatformConnectionsPage() {
             size="sm"
             className="text-danger-11 hover:text-danger-11"
             onClick={() => {
+              resetBulkSelection.current = resetSelection;
               setDeleting(selected);
-              resetSelection();
             }}
           >
             <Trash2 />
@@ -262,7 +268,7 @@ export default function PlatformConnectionsPage() {
   ];
 
   const newGlobalConnection = globalLocked ? (
-    <Button onClick={gate.open}>
+    <Button onClick={access.upgrade}>
       <LockedGem />
       {t('New global connection')}
     </Button>
@@ -309,7 +315,7 @@ export default function PlatformConnectionsPage() {
                   'Connections from every project appear here, next to the global ones you share.',
                 )
           }
-          emptyStateIcon={<Unplug className="size-14" />}
+          emptyStateIcon={<Unplug />}
           emptyStateAction={filtered ? undefined : newGlobalConnection}
           columns={columns}
           page={connections}
@@ -344,6 +350,11 @@ export default function PlatformConnectionsPage() {
           }
           refresh();
         }}
+        onFinished={() => {
+          resetBulkSelection.current?.();
+          resetBulkSelection.current = null;
+        }}
+        onPartialFailure={setDeleting}
       />
     </AdminPage>
   );
