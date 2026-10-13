@@ -47,18 +47,19 @@ export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
         >
           <span
             className={cn(
-              'flex h-5 min-w-0 items-center gap-1.5 text-xs',
+              'flex min-w-0 items-start gap-1.5 text-xs',
               trial.ending ? 'text-warning-11' : 'text-gray-11',
             )}
           >
             <Gem
               className={cn(
-                'size-3.5 shrink-0',
+                'mt-px size-3.5 shrink-0',
                 trial.ending ? 'text-warning-11' : 'text-accent-11',
               )}
             />
-            <span className="truncate">
-              {enterpriseTrialCopy.statusLine(trial)}
+            <span className="flex flex-wrap gap-x-1">
+              <span className="font-medium">{t('Enterprise plan trial')}</span>
+              <span>· {enterpriseTrialCopy.daysLeftLabel(trial)}</span>
             </span>
           </span>
         </Link>
@@ -80,23 +81,28 @@ export function EnterprisePlanIndicator() {
   if (!inTrial && !planTiers.isEnterprisePlan(platform.plan.plan)) {
     return null;
   }
+  const ending = inTrial && trial.ending;
   const row = (
     <Link
       to="/platform/billing"
       data-slot="enterprise-plan-indicator"
-      className={cn(
-        'flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors duration-150 hover:bg-gray-4',
-        inTrial && trial.ending ? 'text-warning-11' : 'text-gray-12',
-      )}
+      className="flex min-w-0 items-start gap-2.5 rounded-md px-2 py-2 transition-colors duration-150 hover:bg-gray-4"
     >
-      <Gem
-        className={cn(
-          'size-3.5 shrink-0',
-          inTrial && trial.ending ? 'text-warning-11' : 'text-accent-11',
+      <Gem className="mt-0.5 size-4 shrink-0 text-accent-11" />
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-sm font-medium text-gray-12">
+          {inTrial ? t('Enterprise plan trial') : t('Enterprise plan')}
+        </span>
+        {inTrial && (
+          <span
+            className={cn(
+              'text-xs',
+              ending ? 'text-warning-11' : 'text-gray-11',
+            )}
+          >
+            {enterpriseTrialCopy.sidebarDetail(trial)}
+          </span>
         )}
-      />
-      <span className="truncate">
-        {inTrial ? enterpriseTrialCopy.statusLine(trial) : t('Enterprise plan')}
       </span>
     </Link>
   );

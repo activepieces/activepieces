@@ -116,7 +116,7 @@ export function ProjectDashboardLayout({
         {children}
       </ProjectDashboardLayoutInner>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      {edition !== ApEdition.COMMUNITY && <EnterpriseTrialDialog />}
+      <EnterpriseTrialDialog />
     </GlobalSearchProvider>
   );
 

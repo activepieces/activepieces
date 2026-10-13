@@ -48,7 +48,7 @@ export const CurrentSubscriptionCard = ({
           </span>
           <span className="text-sm text-gray-11">
             {t(
-              'Ends {date}, then you are back on the {plan} plan. Talk to our team to keep the Enterprise plan. Your credits are not affected.',
+              'Ends {date}, then you are back on the {plan} plan. Your credits are not affected.',
               {
                 date: dayjs(trialEndsAt).format('MMM D'),
                 plan: trial.basePlanName,

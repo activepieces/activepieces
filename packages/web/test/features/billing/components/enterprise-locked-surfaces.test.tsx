@@ -109,7 +109,6 @@ const renderCard = (
 ) =>
   render(
     <EnterpriseLockedCard
-      access={access}
       featureKey={featureKey}
       surface={PlatformAdminSurface.TEASER}
     />,
@@ -129,19 +128,19 @@ beforeEach(() => {
 describe('locked card plan naming', () => {
   it('names the Team plan for a Team feature on Cloud', () => {
     renderCard('SSO');
-    expect(screen.getByText('Included in the Team plan and up')).toBeDefined();
+    expect(screen.getByText('Team plan and up')).toBeDefined();
   });
 
   it('names the Plus plan for AI Center on Cloud', () => {
     renderCard('UNIVERSAL_AI');
-    expect(screen.getByText('Included in the Plus plan and up')).toBeDefined();
+    expect(screen.getByText('Plus plan and up')).toBeDefined();
   });
 
   it('names the Enterprise plan for every feature on self-hosted Community', () => {
     edition = ApEdition.COMMUNITY;
     access = 'community';
     renderCard('SSO');
-    expect(screen.getByText('Included in the Enterprise plan')).toBeDefined();
+    expect(screen.getByText('Enterprise plan')).toBeDefined();
   });
 });
 
@@ -153,14 +152,14 @@ describe('limit reached on the plan that includes the feature', () => {
     expect(
       screen.getByText("You've reached your plan's 3 team projects"),
     ).toBeDefined();
-    expect(screen.queryByText('Included in the Team plan and up')).toBeNull();
+    expect(screen.queryByText('Team plan and up')).toBeNull();
   });
 
   it('still names the Team plan for a Free admin', () => {
     planName = 'free';
     teamProjectsLimit = 0;
     renderCard('PROJECTS');
-    expect(screen.getByText('Included in the Team plan and up')).toBeDefined();
+    expect(screen.getByText('Team plan and up')).toBeDefined();
   });
 });
 
@@ -169,9 +168,12 @@ describe('locked card actions', () => {
     renderCard('SSO');
     const buttons = screen.getAllByRole('button').map((b) => b.textContent);
     expect(buttons).toEqual([
-      'Start free 7-day Enterprise plan trial',
+      'Start free trial',
       'Explore plans',
     ]);
+    expect(
+      screen.getByText('7-day Enterprise plan trial. No credit card.'),
+    ).toBeDefined();
   });
 
   it('tags the trial and plans buttons for control-click telemetry', () => {

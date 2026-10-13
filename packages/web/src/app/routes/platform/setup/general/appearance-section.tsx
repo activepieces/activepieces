@@ -41,6 +41,7 @@ import {
   EnterpriseTrialSalesLink,
   LockedGem,
   PLATFORM_FEATURES,
+  PlanBadge,
   useEnterpriseGate,
   useFeatureGate,
 } from '@/features/billing';
@@ -304,23 +305,21 @@ export const AppearanceSection = ({
 
           <SettingsPanel
             title={t('Branding')}
+            meta={
+              brandingLocked ? <PlanBadge featureKey="BRANDING" /> : undefined
+            }
             action={
               brandingLocked ? (
-                <>
-                  <Button
-                    {...adminControl(
-                      AdminControl.GENERAL_BRANDING_UPGRADE_OPEN,
-                    )}
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={brandingFeatureGate.open}
-                  >
-                    <LockedGem />
-                    {t('Unlock branding')}
-                  </Button>
-                  {brandingFeatureGate.dialog}
-                </>
+                <Button
+                  {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={brandingFeatureGate.open}
+                >
+                  <LockedGem />
+                  {t('Unlock branding')}
+                </Button>
               ) : undefined
             }
             description={

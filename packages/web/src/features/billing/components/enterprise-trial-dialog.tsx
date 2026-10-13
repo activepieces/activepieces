@@ -1,4 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils';
+import { PlatformAdminSurface } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import confetti from 'canvas-confetti';
 import dayjs from 'dayjs';
@@ -11,7 +12,7 @@ import {
   ChevronDown,
   LoaderCircle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -29,12 +30,20 @@ import {
   ENTERPRISE_TRIAL_DAYS,
   enterpriseTrialHooks,
 } from '../hooks/enterprise-trial-hooks';
+import {
+  EnterpriseAccess,
+  useEnterpriseAccess,
+} from '../hooks/use-enterprise-gate';
+import { usePlanTier } from '../hooks/use-plan-tier';
 import { enterpriseMotion } from '../utils/enterprise-motion';
 import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
+import { FeatureTier } from '../utils/feature-tier';
+import { planTiers } from '../utils/plan-tiers';
 
-import { EnterpriseLockedBody } from './enterprise-locked-body';
 import { EnterpriseTrialEndedDialog } from './enterprise-trial-ended-dialog';
+import { EnterpriseTrialLockedActions } from './enterprise-trial-locked-actions';
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { PlanBadge } from './plan-badge';
 import { FeatureKey } from './request-trial';
 
 export function EnterpriseTrialDialog() {
@@ -48,7 +57,6 @@ export function EnterpriseTrialDialog() {
   const open = !isNil(payload);
   const result = start.data?.state;
   const view = viewFor({ result, offer });
-  const wide = view === 'start' || view === 'started';
   const close = () => {
     confetti.reset();
     closeDialog();
@@ -80,12 +88,7 @@ export function EnterpriseTrialDialog() {
       <Dialog open={open} onOpenChange={(next) => !next && close()}>
         <DialogContent
           onOpenAutoFocus={focusDialogItself}
-          className={cn(
-            'max-h-[calc(100dvh-2rem)] sm:rounded-2xl',
-            wide
-              ? 'flex flex-col gap-0 overflow-hidden p-0 sm:max-w-[60rem]'
-              : 'gap-0 overflow-y-auto p-7 sm:max-w-md',
-          )}
+          className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[60rem] sm:rounded-2xl"
         >
           {open && (
             <div
@@ -125,7 +128,7 @@ export function EnterpriseTrialDialog() {
               {view === 'used' && <TrialAlreadyUsed />}
               {view === 'unavailable' && <TrialNotStarted onClose={close} />}
               {view === 'locked' && (
-                <EnterpriseLockedBody
+                <LockedFeature
                   featureKey={payload?.featureKey}
                   onAction={close}
                 />
@@ -152,99 +155,44 @@ function StartTrial({
   onStart: () => void;
 }) {
   const trial = enterpriseTrialHooks.useTrial();
-  const features = enterpriseTrialFeatures.list();
-  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
-  const moreBelow = useMoreBelow(scroller);
   const featureName = enterpriseTrialFeatures.name(featureKey);
 
   return (
-    <>
-      <div
-        ref={setScroller}
-        tabIndex={0}
-        role="region"
-        aria-label={t('What is included')}
-        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-8"
-      >
-        <div className="flex flex-col gap-2 px-7 pt-7 pb-6 pr-14">
-          {featureName && (
-            <span className="flex items-center gap-2 text-sm font-medium text-accent-11">
-              <Gem className="size-4" />
-              {t('Try {feature} in the Enterprise plan trial', {
-                feature: featureName,
-              })}
-            </span>
-          )}
-          <DialogTitle className="text-xl font-semibold tracking-tight">
-            {t('Try the Enterprise plan free for {days} days', {
-              days: ENTERPRISE_TRIAL_DAYS,
+    <DialogFrame
+      eyebrow={
+        featureName && (
+          <span className="flex items-center gap-2 text-sm font-medium text-accent-11">
+            <Gem className="size-4" />
+            {t('Try {feature} in the Enterprise plan trial', {
+              feature: featureName,
             })}
-          </DialogTitle>
-          <DialogDescription className="text-base text-pretty">
+          </span>
+        )
+      }
+      title={t('Try the Enterprise plan free for {days} days', {
+        days: ENTERPRISE_TRIAL_DAYS,
+      })}
+      description={t(
+        'Everything in the Enterprise plan turns on for everyone on your platform. No credit card, nothing to set up.',
+      )}
+      note={
+        resumes && (
+          <p className="flex items-start gap-2.5 text-sm text-gray-12">
+            <Check className="mt-0.5 size-4 shrink-0 text-success-11" />
             {t(
-              'Everything in the Enterprise plan turns on for everyone on your platform. No credit card, nothing to set up.',
+              'We save your changes as soon as the trial starts, so nothing you did is lost.',
             )}
-          </DialogDescription>
-          {resumes && (
-            <p className="flex items-start gap-2.5 text-sm text-gray-12">
-              <Check className="mt-0.5 size-4 shrink-0 text-success-11" />
-              {t(
-                'We save your changes as soon as the trial starts, so nothing you did is lost.',
-              )}
-            </p>
-          )}
-        </div>
-
-        <div className="grid border-t md:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="flex flex-col gap-4 px-7 py-6">
-            <span className="text-sm font-medium text-gray-12">
-              {t('What is included')}
-            </span>
-            <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-              {features.map((feature) => {
-                const highlighted =
-                  featureKey !== undefined &&
-                  feature.featureKeys.includes(featureKey);
-                return (
-                  <li key={feature.title} className="flex items-start gap-2.5">
-                    <feature.icon
-                      className={cn(
-                        'mt-0.5 size-4 shrink-0',
-                        highlighted ? 'text-accent-11' : 'text-gray-9',
-                      )}
-                    />
-                    <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="text-sm font-medium text-gray-12">
-                        {feature.title}
-                      </span>
-                      <span className="text-sm leading-relaxed text-gray-11">
-                        {feature.benefit}
-                      </span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-          <aside className="flex flex-col gap-4 border-t px-7 py-6 md:border-t-0 md:border-l">
-            <span className="text-sm font-medium text-gray-12">
-              {t('How the trial works')}
-            </span>
-            <TrialTimeline basePlanName={trial.basePlanName} started={false} />
-          </aside>
-        </div>
-        {moreBelow && (
-          <div className="pointer-events-none sticky bottom-0 flex justify-center pb-3">
-            <span className="flex items-center gap-1 rounded-full border bg-gray-1 px-2.5 py-1 text-xs text-gray-11 shadow-sm">
-              <ChevronDown className="size-3.5" />
-              {t('More below')}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex shrink-0 flex-col-reverse items-stretch gap-3 border-t px-7 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <span className="flex flex-wrap items-center justify-center gap-1 text-sm text-gray-11">
+          </p>
+        )
+      }
+      mainTitle={t('What is included')}
+      main={<IncludedFeatures featureKey={featureKey} />}
+      asideTitle={t('How the trial works')}
+      aside={
+        <TrialTimeline basePlanName={trial.basePlanName} started={false} />
+      }
+      footerNote={
+        <>
           {t('Want to keep the Enterprise plan?')}
           <EnterpriseTrialSalesLink
             surface="enterprise_trial_start"
@@ -253,7 +201,9 @@ function StartTrial({
             label={t('Talk to sales')}
             featureKey={featureKey}
           />
-        </span>
+        </>
+      }
+      actions={
         <div className="flex flex-col items-stretch gap-2 sm:items-end">
           {isError && (
             <p className="text-sm text-danger-11">
@@ -266,17 +216,217 @@ function StartTrial({
             loading={isPending}
             onClick={onStart}
           >
-            <Gem />
-            {resumes
-              ? t('Start trial and save')
-              : t('Start free {days}-day Enterprise plan trial', {
-                  days: ENTERPRISE_TRIAL_DAYS,
-                })}
+            {resumes ? t('Start trial and save') : t('Start free trial')}
           </Button>
         </div>
+      }
+    />
+  );
+}
+
+function IncludedFeatures({
+  featureKey,
+}: {
+  featureKey: FeatureKey | undefined;
+}) {
+  const features = enterpriseTrialFeatures.list();
+  return (
+    <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+      {features.map((feature) => {
+        const highlighted =
+          featureKey !== undefined && feature.featureKeys.includes(featureKey);
+        return (
+          <li key={feature.title} className="flex items-start gap-2.5">
+            <feature.icon
+              className={cn(
+                'mt-0.5 size-4 shrink-0',
+                highlighted ? 'text-accent-11' : 'text-gray-9',
+              )}
+            />
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-sm font-medium text-gray-12">
+                {feature.title}
+              </span>
+              <span className="text-sm leading-relaxed text-gray-11">
+                {feature.benefit}
+              </span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function LockedFeature({
+  featureKey,
+  onAction,
+}: {
+  featureKey: FeatureKey | undefined;
+  onAction: () => void;
+}) {
+  const access = useEnterpriseAccess({ unlocked: false });
+  const plan = usePlanTier(featureKey);
+  const copy = enterpriseTrialFeatures.lockedCopy(featureKey);
+  const headline =
+    copy?.headline ??
+    enterpriseTrialFeatures.name(featureKey) ??
+    t('The Enterprise plan for your whole team');
+  const description =
+    copy?.description ??
+    t(
+      'Single sign-on, audit logs, your own AI providers and more, for everyone on your platform.',
+    );
+  const benefits = copy?.benefits ?? [];
+
+  return (
+    <DialogFrame
+      eyebrow={<PlanBadge featureKey={featureKey} />}
+      title={headline}
+      description={description}
+      mainTitle={t('What you get')}
+      main={
+        benefits.length > 0 ? (
+          <ul className="flex flex-col gap-3">
+            {benefits.map((benefit) => (
+              <li key={benefit} className="flex items-start gap-2.5 text-sm">
+                <Check className="mt-0.5 size-4 shrink-0 text-success-11" />
+                <span className="text-gray-12">{benefit}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <IncludedFeatures featureKey={featureKey} />
+        )
+      }
+      asideTitle={t('How to get it')}
+      aside={
+        <p className="text-sm leading-relaxed text-gray-11">
+          {howToGetIt({ access, tier: plan.tier })}
+        </p>
+      }
+      actions={
+        <EnterpriseTrialLockedActions
+          featureKey={featureKey}
+          surface={PlatformAdminSurface.DIALOG}
+          onAction={onAction}
+          primaryLast
+        />
+      }
+    />
+  );
+}
+
+function DialogFrame({
+  eyebrow,
+  title,
+  description,
+  note,
+  mainTitle,
+  main,
+  asideTitle,
+  aside,
+  footerNote,
+  actions,
+}: {
+  eyebrow?: ReactNode;
+  title: string;
+  description: ReactNode;
+  note?: ReactNode;
+  mainTitle?: string;
+  main?: ReactNode;
+  asideTitle?: string;
+  aside?: ReactNode;
+  footerNote?: ReactNode;
+  actions: ReactNode;
+}) {
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  const moreBelow = useMoreBelow(scroller);
+  return (
+    <>
+      <div
+        ref={setScroller}
+        tabIndex={0}
+        role="region"
+        aria-label={title}
+        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-8"
+      >
+        <div className="flex flex-col items-start gap-2 px-7 pt-7 pb-6 pr-14">
+          {eyebrow}
+          <DialogTitle className="text-xl font-semibold tracking-tight">
+            {title}
+          </DialogTitle>
+          <DialogDescription className="text-base text-pretty">
+            {description}
+          </DialogDescription>
+          {note}
+        </div>
+        {(main || aside) && (
+          <div className="grid border-t md:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="flex flex-col gap-4 px-7 py-6">
+              {mainTitle && (
+                <span className="text-sm font-medium text-gray-12">
+                  {mainTitle}
+                </span>
+              )}
+              {main}
+            </div>
+            <aside className="flex flex-col gap-4 border-t px-7 py-6 md:border-t-0 md:border-l">
+              {asideTitle && (
+                <span className="text-sm font-medium text-gray-12">
+                  {asideTitle}
+                </span>
+              )}
+              {aside}
+            </aside>
+          </div>
+        )}
+        {moreBelow && (
+          <div className="pointer-events-none sticky bottom-0 flex justify-center pb-3">
+            <span className="flex items-center gap-1 rounded-full border bg-gray-1 px-2.5 py-1 text-xs text-gray-11 shadow-sm">
+              <ChevronDown className="size-3.5" />
+              {t('More below')}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="flex shrink-0 flex-col-reverse items-stretch gap-3 border-t px-7 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <span className="flex flex-wrap items-center gap-1 text-sm text-gray-11">
+          {footerNote}
+        </span>
+        <div className="flex justify-end">{actions}</div>
       </div>
     </>
   );
+}
+
+function howToGetIt({
+  access,
+  tier,
+}: {
+  access: EnterpriseAccess;
+  tier: FeatureTier;
+}): string {
+  switch (access) {
+    case 'ask_admin':
+      return planTiers.askAdminText(tier);
+    case 'community':
+      return t(
+        'This needs the Enterprise edition. Our team can set you up with a license.',
+      );
+    case 'trial_used':
+      return t(
+        'Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.',
+      );
+    default:
+      return tier === 'enterprise'
+        ? t(
+            'Our team sets you up on the Enterprise plan and helps with the rollout.',
+          )
+        : t(
+            'Upgrade from the plans page whenever you are ready. Your flows and settings stay as they are.',
+          );
+  }
 }
 
 function TrialTimeline({
@@ -361,68 +511,54 @@ function TrialStarted({
     { label: t('Connect a secret manager'), to: '/platform/secret-managers' },
   ];
   return (
-    <>
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="flex items-start px-7 pt-7 pb-6 pr-14">
-          <div className="flex flex-col gap-2">
-            <DialogTitle className="text-xl font-semibold tracking-tight">
-              {t('Your Enterprise plan trial is on')}
-            </DialogTitle>
-            <DialogDescription className="text-base text-pretty">
-              {isNil(endsAt)
-                ? t(
-                    'Every Enterprise plan feature is unlocked for your platform.',
-                  )
-                : t('Every Enterprise plan feature is unlocked until {date}.', {
-                    date: dayjs(endsAt).format('MMM D'),
-                  })}
-            </DialogDescription>
-            {resumeState !== 'idle' && (
-              <ResumeStatus
-                state={resumeState}
-                featureName={featureName}
-                onRetry={onRetry}
-              />
-            )}
-          </div>
+    <DialogFrame
+      title={t('Your Enterprise plan trial is on')}
+      description={
+        isNil(endsAt)
+          ? t('Every Enterprise plan feature is unlocked for your platform.')
+          : t('Every Enterprise plan feature is unlocked until {date}.', {
+              date: dayjs(endsAt).format('MMM D'),
+            })
+      }
+      note={
+        resumeState !== 'idle' && (
+          <ResumeStatus
+            state={resumeState}
+            featureName={featureName}
+            onRetry={onRetry}
+          />
+        )
+      }
+      mainTitle={t('Good first steps')}
+      main={
+        <div className="flex flex-col divide-y border-y">
+          {shortcuts.map((shortcut) => (
+            <Link
+              key={shortcut.to}
+              to={shortcut.to}
+              onClick={onClose}
+              className="flex items-center justify-between py-3 text-sm text-gray-12 transition-colors duration-150 hover:text-accent-11"
+            >
+              {shortcut.label}
+              <ArrowRight className="size-4 text-gray-11" />
+            </Link>
+          ))}
         </div>
-        <div className="grid border-t md:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="flex flex-col gap-4 px-7 py-6">
-            <span className="text-sm font-medium text-gray-12">
-              {t('Good first steps')}
-            </span>
-            <div className="flex flex-col divide-y border-y">
-              {shortcuts.map((shortcut) => (
-                <Link
-                  key={shortcut.to}
-                  to={shortcut.to}
-                  onClick={onClose}
-                  className="flex items-center justify-between py-3 text-sm text-gray-12 transition-colors duration-150 hover:text-accent-11"
-                >
-                  {shortcut.label}
-                  <ArrowRight className="size-4 text-gray-11" />
-                </Link>
-              ))}
-            </div>
-          </div>
-          <aside className="flex flex-col gap-4 border-t px-7 py-6 md:border-t-0 md:border-l">
-            <span className="text-sm font-medium text-gray-12">
-              {t('Your trial')}
-            </span>
-            <TrialTimeline
-              basePlanName={trial.basePlanName}
-              started={true}
-              endsAt={isNil(endsAt) ? undefined : new Date(endsAt)}
-            />
-          </aside>
-        </div>
-      </div>
-      <div className="flex shrink-0 justify-end border-t px-7 py-5">
+      }
+      asideTitle={t('Your trial')}
+      aside={
+        <TrialTimeline
+          basePlanName={trial.basePlanName}
+          started={true}
+          endsAt={isNil(endsAt) ? undefined : new Date(endsAt)}
+        />
+      }
+      actions={
         <Button size="lg" onClick={onClose}>
           {t('Got it')}
         </Button>
-      </div>
-    </>
+      }
+    />
   );
 }
 
@@ -481,52 +617,42 @@ function ResumeStatus({
 
 function TrialAlreadyUsed() {
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2 pr-6">
-        <DialogTitle className="text-xl font-semibold tracking-tight">
-          {t('Your Enterprise plan trial was already used')}
-        </DialogTitle>
-        <DialogDescription className="text-base text-pretty">
-          {t(
-            'Each platform owner can start the Enterprise plan trial once. Talk to our team to get more time.',
-          )}
-        </DialogDescription>
-      </div>
-      <div className="flex justify-end">
+    <DialogFrame
+      title={t('Your Enterprise plan trial was already used')}
+      description={t(
+        'Each platform owner can start the Enterprise plan trial once. Talk to our team to get more time.',
+      )}
+      actions={
         <EnterpriseTrialSalesLink
           surface="enterprise_trial_used"
           variant="default"
           label={t('Talk to sales')}
         />
-      </div>
-    </div>
+      }
+    />
   );
 }
 
 function TrialNotStarted({ onClose }: { onClose: () => void }) {
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2 pr-6">
-        <DialogTitle className="text-xl font-semibold tracking-tight">
-          {t('We could not start your trial')}
-        </DialogTitle>
-        <DialogDescription className="text-base text-pretty">
-          {t(
-            'The Enterprise plan trial is not available for your platform right now. Please try again later, or talk to our team.',
-          )}
-        </DialogDescription>
-      </div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button variant="outline" onClick={onClose}>
-          {t('Close')}
-        </Button>
-        <EnterpriseTrialSalesLink
-          surface="enterprise_trial_unavailable"
-          variant="default"
-          label={t('Talk to sales')}
-        />
-      </div>
-    </div>
+    <DialogFrame
+      title={t('We could not start your trial')}
+      description={t(
+        'The Enterprise plan trial is not available for your platform right now. Please try again later, or talk to our team.',
+      )}
+      actions={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row">
+          <Button variant="outline" onClick={onClose}>
+            {t('Close')}
+          </Button>
+          <EnterpriseTrialSalesLink
+            surface="enterprise_trial_unavailable"
+            variant="default"
+            label={t('Talk to sales')}
+          />
+        </div>
+      }
+    />
   );
 }
 

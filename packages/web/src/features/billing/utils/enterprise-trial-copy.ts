@@ -3,19 +3,6 @@ import { t } from 'i18next';
 
 import type { EnterpriseTrial } from '../hooks/enterprise-trial-hooks';
 
-function statusLine(trial: EnterpriseTrial): string {
-  if (trial.endsToday) {
-    return t('Enterprise plan · trial ends today');
-  }
-  if (trial.ending) {
-    return t('Enterprise plan · trial ends tomorrow');
-  }
-  return t(
-    'Enterprise plan · trial, {count, plural, =1 {1 day left} other {# days left}}',
-    { count: trial.daysLeft },
-  );
-}
-
 function daysLeftLabel(trial: EnterpriseTrial): string {
   if (trial.endsToday) {
     return t('Ends today');
@@ -26,6 +13,20 @@ function daysLeftLabel(trial: EnterpriseTrial): string {
   return t('{count, plural, =1 {1 day left} other {# days left}}', {
     count: trial.daysLeft,
   });
+}
+
+function sidebarDetail(trial: EnterpriseTrial): string {
+  const end = dayjs(trial.endsAt);
+  if (trial.endsToday) {
+    return t('Ends today at {time}', { time: end.format('h:mm A') });
+  }
+  if (trial.ending) {
+    return t('Ends tomorrow at {time}', { time: end.format('h:mm A') });
+  }
+  return t(
+    '{count, plural, =1 {1 day left} other {# days left}}, ends {date}',
+    { count: trial.daysLeft, date: end.format('MMM D') },
+  );
 }
 
 function endsSentence(trial: EnterpriseTrial): string {
@@ -64,8 +65,8 @@ function details(trial: EnterpriseTrial): string {
 }
 
 export const enterpriseTrialCopy = {
-  statusLine,
   daysLeftLabel,
+  sidebarDetail,
   endsSentence,
   details,
 };

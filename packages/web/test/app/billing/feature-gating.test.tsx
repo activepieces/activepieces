@@ -176,16 +176,16 @@ describe('create project gating', () => {
     expect(createProject).not.toHaveBeenCalled();
   });
 
-  it('shows the same locked dialog as every other feature on community', () => {
+  it('opens the same trial dialog as every other feature on community', () => {
     edition = 'ce';
     teamProjectsLimit = 1;
     renderWithQueryClient(
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByText('Included in the Enterprise plan')).toBeDefined();
-    expect(screen.getByRole('link', { name: /talk to sales/i })).toBeDefined();
-    expect(useEnterpriseTrialDialogStore.getState().payload).toBeNull();
+    expect(
+      useEnterpriseTrialDialogStore.getState().payload?.featureKey,
+    ).toBe('PROJECTS');
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
   });
 
