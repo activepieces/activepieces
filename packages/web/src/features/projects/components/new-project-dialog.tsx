@@ -40,12 +40,15 @@ import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 type NewProjectDialogProps = {
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onCreate?: (project: ProjectWithLimits) => void;
+  limitReached?: boolean;
+  onLimitReached?: () => void;
 };
 
 export const NewProjectDialog = (props: NewProjectDialogProps) => {
@@ -86,6 +89,8 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
             globalConnections={globalConnections}
             globalConnectionsEnabled={globalConnectionsEnabled}
             onCreate={props.onCreate}
+            limitReached={props.limitReached}
+            onLimitReached={props.onLimitReached}
           />
         )}
         {isLoadingConnections && globalConnectionsEnabled && (
@@ -98,6 +103,8 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
 
 const NewProjectForm = ({
   onCreate,
+  limitReached,
+  onLimitReached,
   setOpen,
   globalConnections,
   globalConnectionsEnabled,
@@ -133,6 +140,22 @@ const NewProjectForm = ({
     },
   });
 
+  const showLimit = () => {
+    setOpen(false);
+    onLimitReached?.();
+  };
+
+  const submit = (event: React.BaseSyntheticEvent) => {
+    if (limitReached && onLimitReached) {
+      event.preventDefault();
+      showLimit();
+      return;
+    }
+    form
+      .handleSubmit(handleCreate)(event)
+      .catch(() => undefined);
+  };
+
   const handleCreate = () => {
     const values = form.getValues();
     const alertReceiverEmail = values.alertReceiverEmail?.trim();
@@ -154,6 +177,13 @@ const NewProjectForm = ({
       });
     },
     (error) => {
+      if (onLimitReached && mutationFeedback.isQuotaExceeded(error)) {
+        queryClient
+          .invalidateQueries({ queryKey: ['platform'] })
+          .catch(() => undefined);
+        showLimit();
+        return;
+      }
       console.error(error);
       internalErrorToast();
     },
@@ -162,10 +192,7 @@ const NewProjectForm = ({
   return (
     <>
       <Form {...form}>
-        <form
-          className="grid space-y-4"
-          onSubmit={(e) => form.handleSubmit(handleCreate)(e)}
-        >
+        <form className="grid space-y-4" onSubmit={submit}>
           <FormField
             name="displayName"
             render={({ field }) => (
@@ -281,7 +308,7 @@ const NewProjectForm = ({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                form.handleSubmit(handleCreate)(e);
+                submit(e);
               }}
             >
               {t('Create Project')}

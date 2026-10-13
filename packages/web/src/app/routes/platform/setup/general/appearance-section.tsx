@@ -84,6 +84,8 @@ export const AppearanceSection = ({
     ? branding.statusColors
     : platform.themeColors?.status;
 
+  const brandingLockedRef = useRef(brandingLocked);
+  brandingLockedRef.current = brandingLocked;
   const form = useForm<PlatformAppearanceSchema>({
     defaultValues: {
       name: platform.name,
@@ -94,11 +96,12 @@ export const AppearanceSection = ({
         success: storedStatusColors?.success,
       },
     },
-    resolver: zodResolver(
-      brandingLocked
-        ? PlatformAppearanceSchema.extend({ color: z.string() })
-        : PlatformAppearanceSchema,
-    ),
+    resolver: (values, context, options) =>
+      zodResolver(
+        brandingLockedRef.current
+          ? LOCKED_PREVIEW_SCHEMA
+          : PlatformAppearanceSchema,
+      )(values, context, options),
     mode: 'onChange',
   });
 
@@ -217,7 +220,12 @@ export const AppearanceSection = ({
               {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
               type="button"
               onClick={() =>
-                gate.run(() => updatePlatformAsync({ includeBranding: true }))
+                gate.run(() =>
+                  form.handleSubmit(
+                    () => updatePlatformAsync({ includeBranding: true }),
+                    rejectInvalidBranding,
+                  )(),
+                )
               }
             >
               <LockedGem />
@@ -470,6 +478,10 @@ function withStatusColors({
   };
 }
 
+function rejectInvalidBranding(): never {
+  throw new Error('Branding has fields to fix before it can be saved');
+}
+
 const PlatformAppearanceSchema = z.object({
   name: z
     .string()
@@ -480,6 +492,10 @@ const PlatformAppearanceSchema = z.object({
 });
 
 type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;
+
+const LOCKED_PREVIEW_SCHEMA = PlatformAppearanceSchema.extend({
+  color: z.string(),
+});
 
 const DEFAULT_MAX_FILE_SIZE_MB = 25;
 const EMPTY_IMAGES: BrandImages = { logo: null, icon: null, favicon: null };

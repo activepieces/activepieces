@@ -12,6 +12,7 @@ let teamProjectsLimit: number | null = 0;
 let aiProvidersEnabled = false;
 let edition = 'cloud';
 const createProject = vi.fn();
+const createProjectHandlers: { onError?: (error: unknown) => void } = {};
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -72,7 +73,13 @@ vi.mock('@/features/connections', () => ({
 vi.mock('@/features/projects', () => ({
   projectCollectionUtils: {
     invalidate: vi.fn(),
-    useCreateProject: () => ({ mutate: createProject, isPending: false }),
+    useCreateProject: (
+      _onSuccess: unknown,
+      onError: (error: unknown) => void,
+    ) => {
+      createProjectHandlers.onError = onError;
+      return { mutate: createProject, isPending: false };
+    },
   },
 }));
 vi.mock('@/components/custom/global-connection-utils', () => ({
@@ -109,6 +116,7 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const useEnterpriseTrialDialogStore =
   billingDialogHooks.useEnterpriseTrialDialogStore;
@@ -183,10 +191,55 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(
-      useEnterpriseTrialDialogStore.getState().payload?.featureKey,
-    ).toBe('PROJECTS');
+    expect(useEnterpriseTrialDialogStore.getState().payload?.featureKey).toBe(
+      'PROJECTS',
+    );
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+  });
+
+  it('shows the limit instead of creating when the limit is reached while the form is open', () => {
+    edition = 'cloud';
+    teamProjectsLimit = null;
+    const client = new QueryClient();
+    const button = () => (
+      <QueryClientProvider client={client}>
+        <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />
+      </QueryClientProvider>
+    );
+    const view = render(button());
+    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
+    const name = screen.getAllByRole('textbox')[0];
+    fireEvent.change(name, { target: { value: 'Ops' } });
+    teamProjectsLimit = 1;
+    view.rerender(button());
+    const form = name.closest('form');
+    expect(form).not.toBeNull();
+    fireEvent.submit(form ?? name);
+    expect(createProject).not.toHaveBeenCalled();
+    expect(useEnterpriseTrialDialogStore.getState().payload?.featureKey).toBe(
+      'PROJECTS',
+    );
+    expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+  });
+
+  it('shows the limit instead of a generic error when the server refuses the project', () => {
+    edition = 'cloud';
+    teamProjectsLimit = null;
+    const quota = vi
+      .spyOn(mutationFeedback, 'isQuotaExceeded')
+      .mockReturnValue(true);
+    renderWithQueryClient(
+      <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
+    act(() => {
+      createProjectHandlers.onError?.(new Error('quota'));
+    });
+    expect(useEnterpriseTrialDialogStore.getState().payload?.featureKey).toBe(
+      'PROJECTS',
+    );
+    expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+    quota.mockRestore();
   });
 
   it('opens the project form once the trial lifts the limit and resumes the blocked click', async () => {

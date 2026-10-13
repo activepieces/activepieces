@@ -108,6 +108,11 @@ export function CreateProjectButton({
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreate={onCreate}
+        limitReached={gate.locked}
+        onLimitReached={() => {
+          reportBlocked();
+          projectsGate.open();
+        }}
       />
     </>
   );
