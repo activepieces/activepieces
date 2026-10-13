@@ -86,18 +86,27 @@ describe('custom API call', () => {
     expect(calls[0].headers['api-key']).toBe(API_KEY);
     expect(calls[0].redirect).toBe('manual');
   });
-  it('connects through the address-checking dispatcher and restores the previous one', async () => {
+  it('passes the guard only on forum requests and never touches the global dispatcher', async () => {
     const { getGlobalDispatcher } = await import('undici');
     const before = getGlobalDispatcher();
     const guarded = await discourseNetwork.getGuardedDispatcher();
-    const seen: unknown[] = [];
-    vi.stubGlobal('fetch', vi.fn(async () => {
-      seen.push(getGlobalDispatcher());
+    const seen: Array<{ url: string; dispatcher: unknown; global: unknown }> = [];
+    const fetchSpy = vi.fn(async (input: string | URL, init?: RequestInit) => {
+      seen.push({ url: String(input), dispatcher: Reflect.get(Object(init), 'dispatcher'), global: getGlobalDispatcher() });
+      if (String(input).startsWith(BASE)) {
+        await fetch('https://engine.local/v1/step-files', { method: 'POST' });
+        return new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'content-type': 'application/pdf' } });
+      }
       return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
-    }));
-    await call({ fn: customCall.run, ctx: ctx({ url: '/latest.json' }) });
-    expect(seen).toEqual([guarded]);
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+    await call({ fn: customCall.run, ctx: ctx({ url: '/file.pdf' }) });
+    expect(seen.map((entry) => entry.url)).toEqual([`${BASE}/file.pdf`, 'https://engine.local/v1/step-files']);
+    expect(seen[0].dispatcher).toBe(guarded);
+    expect(seen[1].dispatcher).toBeUndefined();
+    expect(seen.every((entry) => entry.global === before)).toBe(true);
     expect(getGlobalDispatcher()).toBe(before);
+    expect(globalThis.fetch).toBe(fetchSpy);
   });
   it('accepts a full URL on the same forum', async () => {
     const calls = stubFetch([{ body: { ok: true } }]);

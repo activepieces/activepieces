@@ -39,23 +39,40 @@ export const discourseCustomApiCall = createAction({
       throw new Error(`Custom API Call only sends the API key to your forum at ${baseUrl}. Use a path such as /latest.json or a full URL on that forum.`);
     }
     await discourseNetwork.assertPublicHost(new URL(baseUrl).hostname);
-    const { getGlobalDispatcher, setGlobalDispatcher, Dispatcher } = await import('undici');
-    const guarded = await discourseNetwork.getGuardedDispatcher();
-    if (!(guarded instanceof Dispatcher)) {
-      throw new Error('Could not prepare the network guard for this request.');
-    }
-    const previous = getGlobalDispatcher();
-    setGlobalDispatcher(guarded);
+    const dispatcher = await discourseNetwork.getGuardedDispatcher();
+    const forumOrigin = new URL(baseUrl).origin;
+    const originalFetch = globalThis.fetch;
+    const guardedFetch: typeof fetch = (input, init) => {
+      if (requestOrigin(input) !== forumOrigin) {
+        return originalFetch(input, init);
+      }
+      const guardedInit: RequestInit & { dispatcher: unknown } = { ...init, dispatcher };
+      return originalFetch(input, guardedInit);
+    };
+    globalThis.fetch = guardedFetch;
     try {
       return await baseAction.run({
         ...context,
         propsValue: { ...context.propsValue, url: { ...context.propsValue.url, url: target }, followRedirects: false },
       });
     } finally {
-      setGlobalDispatcher(previous);
+      if (globalThis.fetch === guardedFetch) {
+        globalThis.fetch = originalFetch;
+      }
     }
   },
 });
+
+function requestOrigin(input: unknown): string | undefined {
+  try {
+    if (typeof input === 'string' || input instanceof URL) {
+      return new URL(input).origin;
+    }
+    return input instanceof Request ? new URL(input.url).origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function resolveTarget({ baseUrl, rawUrl }: { baseUrl: string; rawUrl: string }): string {
   if (/^[a-z][a-z0-9+.-]*:/i.test(rawUrl) || rawUrl.startsWith('//')) {
