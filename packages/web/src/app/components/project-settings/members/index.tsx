@@ -149,6 +149,7 @@ export const MembersSettings = () => {
       </div>
       <DataTable
         columns={columns}
+        getRowId={(row) => `${row.type}-${row.id}`}
         page={{
           data: filteredData,
           next: null,
