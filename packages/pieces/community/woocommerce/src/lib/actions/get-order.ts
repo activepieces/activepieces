@@ -25,7 +25,8 @@ export const wooGetOrder = createAction({
   props: {
     id: Property.ShortText({
       displayName: 'Order ID',
-      description: 'Enter the order ID',
+      description: 'The number after # in WooCommerce > Orders.',
+      placeholder: '123',
       required: true,
     }),
   },
@@ -35,7 +36,9 @@ export const wooGetOrder = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${orderId}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${encodeURIComponent(
+        String(orderId).trim()
+      )}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,
