@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitForm = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-form',
+  classification: 'WRITE',
   displayName: 'Submit Form',
   description: 'Submit form details filled by the PSU. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

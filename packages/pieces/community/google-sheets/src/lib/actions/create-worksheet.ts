@@ -8,9 +8,10 @@ import { createWorksheetActionOutputSchema } from '../output-schemas';
 export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
   name: 'create-worksheet',
+  classification: 'WRITE',
   displayName: 'Create Worksheet',
   description:'Create a new blank worksheet with a title.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Adds a new worksheet (tab) to an existing spreadsheet, optionally seeding a header row. Use when an agent needs another tab within a spreadsheet. Not idempotent — each call adds a separate worksheet even if a tab with the same title already exists.',
@@ -18,7 +19,7 @@ export const createWorksheetAction = createAction({
   },
   props: {
     includeTeamDrives: includeTeamDrivesProp(),
-    spreadsheetId: spreadsheetIdProp('Spreadsheet',''),
+    spreadsheetId: spreadsheetIdProp('Spreadsheet','The spreadsheet to add the worksheet to.'),
     title:Property.ShortText({
         displayName:'Title',
         description:'The title of the new worksheet.',
@@ -26,6 +27,7 @@ export const createWorksheetAction = createAction({
     }),
     headers:Property.Array({
         displayName:'Headers',
+        description:'Column names to write into the first row.',
         required:false
     })
    

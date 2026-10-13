@@ -9,6 +9,7 @@ const USER_SELECT = 'id,displayName,userPrincipalName,mail,givenName,surname';
 export const newDeletedUserTrigger = createTrigger({
     auth: azureAdAuth,
     name: 'new_deleted_user',
+    classification: 'READ',
     displayName: 'New Deleted User',
     description: 'Triggers when a user is deleted from Microsoft Entra ID.',
     aiMetadata: {

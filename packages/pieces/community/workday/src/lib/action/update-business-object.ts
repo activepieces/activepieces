@@ -9,6 +9,7 @@ import { requestBodyProperty, sharedModuleProps } from '../common/props';
 export const updateBusinessObject = createAction({
 	auth: workdayAuth,
 	name: 'update_business_object',
+	classification: 'WRITE',
 	displayName: 'Update Business Object',
 	description: 'Updates an existing business object by ID using the REST API.',
 	audience: 'both',

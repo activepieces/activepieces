@@ -1,0 +1,49 @@
+---
+title: "Tool Search"
+icon: "magnifying-glass"
+description: "Semantic discovery of piece actions and triggers for AI agents"
+---
+
+Tool search lets an AI agent find the right piece action or trigger by describing the task in plain language. Instead of paging through a catalog of hundreds of pieces, the agent calls [`ap_search_actions`](/mcp/tools#ap_search_actions) or [`ap_search_triggers`](/mcp/tools#ap_search_triggers) with a query like *"send a message to a Slack channel"* and gets back the few most relevant matches, ranked by semantic similarity.
+
+## The discovery workflow
+
+Search is the first step of the three-step workflow the MCP server is built around:
+
+1. **Discover** — `ap_search_actions` returns candidate actions: piece name, action name, a one-line description, whether the action needs a connection, and whether the project already has one for that piece.
+2. **Inspect** — `ap_get_piece_props` returns the full input schema for the chosen action.
+3. **Execute** — `ap_run_action` runs it once, or `ap_build_flow` wires it into a persistent automation.
+
+`ap_search_triggers` plays the same discovery role when the agent is building a flow and needs the event that should start it.
+
+## How results are ranked
+
+Every action and trigger in the piece catalog is indexed from its metadata, including [AI metadata](/build-pieces/piece-reference/ai-metadata) descriptions written specifically for agents. At query time the task description is embedded and compared against that index, and matches below a relevance threshold are dropped rather than padded — an empty result genuinely means nothing in the catalog fits, so the agent can say so instead of running a wrong tool. Actions marked human-only (`audience: 'human'`) are excluded from agent discovery.
+
+## Search modes
+
+| Mode | When | Behavior |
+|---|---|---|
+| `semantic` | An embedding model is configured | Meaning-based ranking with a relevance threshold |
+| `keyword` | No embedding model, or the embedding call failed | Lexical catalog search — the tools stay available, but matches are keyword-based |
+
+Every response includes the active `mode`, so a degraded instance is always detectable from the client side.
+
+## Availability
+
+Tool search is enabled on Activepieces Cloud. Self-hosted instances turn it on with an environment variable:
+
+```bash
+AP_TOOL_SEARCH_ENABLED=true
+```
+
+When the flag is off, `ap_search_actions` and `ap_search_triggers` are not registered on the MCP server. The flag is read live, so flipping it does not require a restart.
+
+Semantic mode needs two more things:
+
+- **An OpenAI API key** to fund the embeddings — either set `AP_OPENAI_API_KEY`, or configure OpenAI as an [AI provider](/admin-guide/guides/setup-ai-providers) in the platform admin. The environment variable takes precedence and is the simplest path for single-tenant deployments.
+- **The pgvector extension** available in your Postgres server. Activepieces creates the extension automatically at startup when the server supports it (for example the official `pgvector/pgvector` images and most managed Postgres offerings).
+
+If either is missing, tool search serves keyword mode instead of failing. The search index is built automatically on startup and kept in sync with the piece catalog — there is nothing to maintain by hand.
+
+See [Environment Variables](/install/reference/environment-variables#tool-search) for the full variable reference.

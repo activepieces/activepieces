@@ -10,6 +10,7 @@ import { discordRevokeInviteActionOutputSchema } from '../output-schemas';
 export const discordRevokeInvite = createAction({
   auth: discordAuth,
   name: 'discord_revoke_invite',
+  classification: 'DESTRUCTIVE',
   displayName: 'Revoke Invite',
   description: 'Delete (revoke) an invite by its code.',
   audience: 'ai',

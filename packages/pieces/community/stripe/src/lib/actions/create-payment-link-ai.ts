@@ -6,6 +6,7 @@ import { Stripe } from 'stripe';
 import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeCreatePaymentLinkAi = createAction({
   name: 'create_payment_link_ai',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Payment Link (Agent)',
   description: 'Create a shareable, Stripe-hosted payment link.',

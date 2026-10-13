@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
   OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
@@ -17,6 +16,7 @@ import dayjs from 'dayjs';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { adAccountIdDropdown } from '../common/props';
+import { newBoardTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof pinterestAuth>,
@@ -76,6 +76,12 @@ const polling: Polling<
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       } catch (error) {
+        // Returning a partial read would advance the checkpoint to the newest
+        // board seen, stranding the unread older ones behind it. Sample runs
+        // have no checkpoint, so best-effort is fine there.
+        if (lastFetchEpochMS) {
+          throw error;
+        }
         console.error('Error fetching boards:', error);
         break;
       }
@@ -98,6 +104,8 @@ const polling: Polling<
 export const newBoard = createTrigger({
   auth: pinterestAuth,
   name: 'newBoard',
+  classification: 'READ',
+  outputSchema: newBoardTriggerOutputSchema,
   displayName: 'New Board',
   description: 'Fires when a new board is created in the account.',
   aiMetadata: {
@@ -107,23 +115,29 @@ export const newBoard = createTrigger({
   props: {
     ad_account_id: adAccountIdDropdown,
     privacy_filter: Property.StaticDropdown({
-      displayName: 'Board Privacy Filter',
+      displayName: 'Privacy',
       required: false,
       options: {
         options: [
-          { label: 'All Boards', value: 'ALL' },
-          { label: 'Public Only', value: 'PUBLIC' },
-          { label: 'Protected Only', value: 'PROTECTED' },
-          { label: 'Secret Only', value: 'SECRET' },
+          { label: 'All', value: 'ALL' },
+          { label: 'Public', value: 'PUBLIC' },
+          { label: 'Protected', value: 'PROTECTED' },
+          { label: 'Secret', value: 'SECRET' },
           { label: 'Public and Secret', value: 'PUBLIC_AND_SECRET' },
         ],
       },
-      description: 'Filter boards by privacy setting (optional).',
+      description: 'Only boards with this privacy fire the trigger.',
     }),
     page_size: Property.Number({
       displayName: 'Page Size',
       required: false,
-      description: 'Number of boards to fetch per page (1-250, default: 25).',
+      description: 'Boards fetched per request.',
+      display: 'stepper',
+      min: 1,
+      max: 250,
+      step: 1,
+      defaultValue: 25,
+      advanced: true,
     }),
   },
   sampleData: {

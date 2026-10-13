@@ -9,6 +9,7 @@ import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common
   export const listCertificationFolderSurveys = createAction({
     auth: wedofAuth,
     name: 'listCertificationFolderSurveys',
+    classification: 'SEARCH',
     displayName: 'Liste les enquêtes selon des critères',
     description: "Récupérer l'ensemble des enquêtes de l'organisme de l'utilisateur connecté",
     audience: 'both',

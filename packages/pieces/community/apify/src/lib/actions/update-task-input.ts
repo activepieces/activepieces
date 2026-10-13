@@ -5,6 +5,7 @@ import { updateTaskInputActionOutputSchema } from '../output-schemas';
 
 export const apifyUpdateTaskInput = createAction({
   name: 'apify_update_task_input',
+  classification: 'WRITE',
   auth: apifyAuth,
   displayName: 'Update Task Input',
   description: 'Overwrites the stored input body of a saved Actor task by task ID.',

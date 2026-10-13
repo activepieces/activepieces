@@ -6,6 +6,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowListCollections = createAction({
 	auth: webflowAuth,
 	name: 'list_collections',
+	classification: 'SEARCH',
 	description: 'List all collections in a site',
 	displayName: 'List Collections',
 	audience: 'both',

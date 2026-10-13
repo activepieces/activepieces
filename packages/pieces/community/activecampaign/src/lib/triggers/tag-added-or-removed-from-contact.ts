@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newtagAddedOrRemovedFromContactTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_tag_added_or_removed_from_contact',
+	classification: 'READ',
 	displayName: 'Tag Added or Removed From Contact',
 	description: 'Triggers when a a Tag is added or removed from a Contact',
 	aiMetadata: {

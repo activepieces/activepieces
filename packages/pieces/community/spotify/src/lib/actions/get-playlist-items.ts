@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'get_playlist_items',
+  classification: 'SEARCH',
   displayName: 'Get Playlist Items',
   description: 'Retrieves the list of items in the playlist',
   audience: 'both',

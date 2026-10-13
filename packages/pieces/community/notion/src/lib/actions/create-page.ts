@@ -8,25 +8,30 @@ import { createPageActionOutputSchema } from '../output-schemas';
 export const createPage = createAction({
   auth: notionAuth,
   name: 'createPage',
+  classification: 'WRITE',
   displayName: 'Create Page',
   description:
-    'Create a new Notion page as a sub-page with custom title and content. Perfect for organizing documentation, notes, or creating structured page hierarchies.',
-  audience: 'both',
+    'Create a page inside another page, with a title and plain text.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new standalone page nested under an existing parent page, with a title and optional body content. Use when an agent must add free-form document pages (notes, docs) rather than database rows; requires the parent page id. Not idempotent: each call creates a new page even with identical title.',
     idempotent: false,
   },
   props: {
-    pageId: notionCommon.page,
+    pageId: {
+      ...notionCommon.page,
+      displayName: 'Parent Page',
+      description: 'The new page is created inside this page.',
+    },
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the page.',
+      placeholder: 'e.g. Meeting notes',
       required: false,
     }),
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content of the page.',
+      description: 'Plain text body. Markdown is not rendered.',
       required: false,
     }),
   },

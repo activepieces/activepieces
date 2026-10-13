@@ -7,6 +7,7 @@ import { folderOutputSchema } from '../../output-schemas';
 export const clickupCreateFolder = createAction({
   auth: clickupAuth,
   name: 'clickup_create_folder',
+  classification: 'WRITE',
   description: 'Create a new folder in a ClickUp space',
   audience: 'ai',
   aiMetadata: {

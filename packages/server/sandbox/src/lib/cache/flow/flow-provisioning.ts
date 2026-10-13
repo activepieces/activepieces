@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { AgentPieceTool, FailedStep, FlowActionType, flowStructureUtil, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, Step, WorkerToApiContract } from '@activepieces/shared'
+import { FailedStep, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../types'
 import { pieceCache, PieceNotFoundError } from '../pieces/piece-cache'
 import { flowBundleStore } from './flow-bundle-store'
@@ -22,8 +22,7 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
             log.warn({ error: String(bundleError), flow: { id: flow.id } }, 'Flow bundle fetch failed, falling back to resolve')
         }
         if (!isNil(bundle)) {
-            // tryFetch already wrote the compiled code to the Code Cache; nothing to compile or republish.
-            return { kind: 'ready', flowVersion: bundle.flowVersion, pieces: bundle.pieces, code: { kind: 'materialized' }, publishBundle: null }
+            return { kind: 'ready', flowVersion: bundle.flowVersion, pieces: bundle.pieces, codeSteps: extractCodeArtifacts(bundle.flowVersion), publishBundle: null }
         }
 
         const flowVersion = await flowCache(log, apiClient, basePath).getVersion({ flowVersionId: flow.versionId })
@@ -49,8 +48,7 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
             kind: 'ready',
             flowVersion,
             pieces,
-            code: { kind: 'source', steps: extractCodeArtifacts(flowVersion) },
-            // The compiled code only exists on disk after install, so the caller invokes this afterwards.
+            codeSteps: extractCodeArtifacts(flowVersion),
             publishBundle: shouldPublish ? buildPublishBundle({ log, apiClient, basePath, flowVersion, pieces, projectId: flow.projectId, platformId }) : null,
         }
     },
@@ -70,8 +68,7 @@ async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath
         pieceName: step.settings.pieceName,
         pieceVersion: step.settings.pieceVersion,
     }))
-    const agentToolPieceRefs = flowStructureUtil.getAllSteps(flowVersion.trigger).flatMap(extractAgentToolPieceRefs)
-    const uniquePieceRefs = dedupePieceRefs([...stepPieceRefs, ...agentToolPieceRefs])
+    const uniquePieceRefs = dedupePieceRefs(stepPieceRefs)
     return Promise.all(uniquePieceRefs.map((ref) =>
         pieceCache(log, apiClient, basePath, getSettings).getPiece({
             pieceName: ref.pieceName,
@@ -84,35 +81,12 @@ async function resolvePieces({ flowVersion, platformId, log, apiClient, basePath
 function buildMissingPieceFailedStep({ flowVersion, missingPiece }: BuildMissingPieceFailedStepParams): FailedStep {
     const pieceSteps = flowSteps.piece(flowVersion)
     const stepMatch = pieceSteps.find((step) => step.settings.pieceName === missingPiece.pieceName && step.settings.pieceVersion === missingPiece.pieceVersion)
-    const agentToolMatch = pieceSteps.find((step) => extractAgentToolPieceRefs(step).some((ref) => ref.pieceName === missingPiece.pieceName && ref.pieceVersion === missingPiece.pieceVersion))
-    const step = stepMatch ?? agentToolMatch ?? flowVersion.trigger
+    const step = stepMatch ?? flowVersion.trigger
     return {
         name: step.name,
         displayName: step.displayName,
         message: `The piece ${missingPiece.pieceName}@${missingPiece.pieceVersion} is not installed on this instance or has been hidden by an admin, so the flow was turned off. Install the missing piece version or update the step to an installed version, then publish and re-enable the flow.`,
     }
-}
-
-// Pieces used as agent tools live in a PIECE step's `agentTools` input, not as their own flow steps, so the
-// step-based scan above misses them and the engine would fail at runtime with the tool's piece uninstalled.
-function extractAgentToolPieceRefs(step: Step): PieceRef[] {
-    if (step.type !== FlowActionType.PIECE) {
-        return []
-    }
-    const agentTools = step.settings.input['agentTools']
-    if (!Array.isArray(agentTools)) {
-        return []
-    }
-    return agentTools.flatMap((tool: unknown) => {
-        const parsed = AgentPieceTool.safeParse(tool)
-        if (!parsed.success) {
-            return []
-        }
-        return [{
-            pieceName: parsed.data.pieceMetadata.pieceName,
-            pieceVersion: parsed.data.pieceMetadata.pieceVersion,
-        }]
-    })
 }
 
 function dedupePieceRefs(refs: PieceRef[]): PieceRef[] {
@@ -129,6 +103,7 @@ function extractCodeArtifacts(flowVersion: FlowVersion): CodeArtifact[] {
         sourceCode: step.settings.sourceCode,
         flowVersionId: flowVersion.id,
         flowVersionState: flowVersion.state,
+        useDeno: step.settings.useDeno === true,
     }))
 }
 
@@ -168,11 +143,7 @@ type BuildMissingPieceFailedStepParams = {
 
 export type PublishBundle = () => Promise<void>
 
-export type ProvisionedCode =
-    | { kind: 'materialized' }
-    | { kind: 'source', steps: CodeArtifact[] }
-
 export type ResolvedFlow =
     | { kind: 'flow-not-found' }
     | { kind: 'disabled', failedStep?: FailedStep }
-    | { kind: 'ready', flowVersion: FlowVersion, pieces: PiecePackage[], code: ProvisionedCode, publishBundle: PublishBundle | null }
+    | { kind: 'ready', flowVersion: FlowVersion, pieces: PiecePackage[], codeSteps: CodeArtifact[], publishBundle: PublishBundle | null }

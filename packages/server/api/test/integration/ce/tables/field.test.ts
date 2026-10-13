@@ -77,6 +77,22 @@ describe('Field API', () => {
             expect(body.type).toBe(FieldType.DATE)
         })
 
+        it('should create a DATETIME field', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+
+            const response = await ctx.post('/v1/fields', {
+                name: 'Datetime Field',
+                type: FieldType.DATETIME,
+                tableId: table.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const body = response?.json()
+            expect(body.name).toBe('Datetime Field')
+            expect(body.type).toBe(FieldType.DATETIME)
+        })
+
         it('should create a STATIC_DROPDOWN field with options', async () => {
             const ctx = await setup()
             const table = await createAndSaveTable(ctx)

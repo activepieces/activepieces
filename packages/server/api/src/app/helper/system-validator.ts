@@ -1,12 +1,14 @@
 import { inspect } from 'util'
-import { isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
+import { networkUtils } from './network-utils'
+import { auditLogRetentionCeiling } from './retention/audit-log-retention-ceiling'
 import { system } from './system/system'
 import { AppSystemProp, ContainerType, SystemProp } from './system/system-props'
 
@@ -28,6 +30,29 @@ function numberValidator(value: string | undefined) {
     return isValid ? true : 'Value must be a valid number'
 }
 
+function positiveIntegerValidator(value: string | undefined) {
+    const parsed = Number(value)
+    return Number.isInteger(parsed) && parsed > 0 ? true : 'Value must be a positive integer'
+}
+
+function auditLogRetentionDaysValidator(value: string | undefined) {
+    return isNil(auditLogRetentionCeiling.parse(value)) ? `Value must be a whole number of days from ${AUDIT_LOG_RETENTION_MIN_DAYS} to ${AUDIT_LOG_RETENTION_MAX_DAYS}` : true
+}
+
+function positiveFiniteNumberValidator(value: string | undefined) {
+    const parsed = isNil(value) ? Number.NaN : Number(value)
+    const isValid = Number.isFinite(parsed) && parsed > 0
+    return isValid ? true : 'Value must be a finite number greater than zero'
+}
+
+function boundedNumberValidator({ min, max }: { min: number, max: number }) {
+    return (value: string | undefined) => {
+        const parsed = Number(value)
+        const isValid = !isNil(value) && Number.isInteger(parsed) && parsed >= min && parsed <= max
+        return isValid ? true : `Value must be a whole number between ${min} and ${max}`
+    }
+}
+
 function stringValidator(value: string) {
     const isValid = typeof value === 'string' && value.length > 0
     return isValid ? true : 'Value must be a non-empty string'
@@ -35,11 +60,35 @@ function stringValidator(value: string) {
 
 function urlValidator(value: string) {
     try {
-        new URL(value)
+        const { protocol } = new URL(value)
+        if (protocol !== 'http:' && protocol !== 'https:') {
+            return 'Value must be an http or https URL'
+        }
         return true
     }
     catch {
         return 'Value must be a valid URL'
+    }
+}
+
+function assertMcpUrlHasDistinctHost(): void {
+    const mcpUrl = system.get(AppSystemProp.MCP_URL)
+    const frontendUrl = system.get(AppSystemProp.FRONTEND_URL)
+    if (isNil(mcpUrl) || isNil(frontendUrl)) {
+        return
+    }
+    const parsedMcpUrl = tryCatchSync(() => new URL(mcpUrl))
+    const parsedFrontendUrl = tryCatchSync(() => new URL(frontendUrl))
+    if (parsedMcpUrl.error || parsedFrontendUrl.error) {
+        return
+    }
+    const sameHost = parsedMcpUrl.data.host.toLowerCase() === parsedFrontendUrl.data.host.toLowerCase()
+    const sameBaseUrl = networkUtils.cleanTrailingSlash(mcpUrl) === networkUtils.cleanTrailingSlash(frontendUrl)
+    if (sameHost && !sameBaseUrl) {
+        throw new Error(JSON.stringify({
+            message: 'AP_MCP_URL and AP_FRONTEND_URL share a hostname but are not the same URL, so the server cannot tell requests for one from the other. Give AP_MCP_URL its own hostname, or leave it unset.',
+            docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
+        }))
     }
 }
 
@@ -49,20 +98,24 @@ const systemPropValidators: {
     // AppSystemProp
     [AppSystemProp.ALLOW_OPEN_SIGN_UP]: booleanValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
+    [AppSystemProp.SKIP_PREWARM_CODES]: booleanValidator,
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
     [AppSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.LOG_FILE]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
-    [AppSystemProp.CLOUD_CHAT_ROLLOUT_CAP]: numberValidator,
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
+    [AppSystemProp.MAX_BARRIER_SIGNALS]: boundedNumberValidator(maxBarrierSignalsBounds),
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
+    [AppSystemProp.AI_CREDIT_USD_VALUE]: positiveFiniteNumberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
+    [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: positiveIntegerValidator,
+    [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: positiveIntegerValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
@@ -73,6 +126,8 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
 
     [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
+    [AppSystemProp.TURNSTILE_SECRET_KEY]: stringValidator,
+    [AppSystemProp.TURNSTILE_SITE_KEY]: stringValidator,
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.OTEL_QUEUE_METRICS_ENABLED]: booleanValidator,
@@ -80,6 +135,7 @@ const systemPropValidators: {
     [AppSystemProp.AXIOM_TOKEN]: stringValidator,
     [AppSystemProp.AXIOM_DATASET]: stringValidator,
     [AppSystemProp.FRONTEND_URL]: urlValidator,
+    [AppSystemProp.MCP_URL]: urlValidator,
     [AppSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [AppSystemProp.PORT]: numberValidator,
     [AppSystemProp.CONSOLE_API_SECRET_KEY]: stringValidator,
@@ -90,6 +146,7 @@ const systemPropValidators: {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
+    [AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX]: numberValidator,
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: stringValidator,
     [AppSystemProp.CLOUD_AUTH_ENABLED]: booleanValidator,
     [AppSystemProp.CONFIG_PATH]: stringValidator,
@@ -97,6 +154,8 @@ const systemPropValidators: {
     [AppSystemProp.DEV_PIECES]: stringValidator,
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
+    [AppSystemProp.AUDIT_LOG_RETENTION_DAYS]: auditLogRetentionDaysValidator,
+    [AppSystemProp.AUDIT_LOG_RETENTION_PAUSED]: booleanValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
@@ -147,13 +206,14 @@ const systemPropValidators: {
     [AppSystemProp.TOOL_SEARCH_ENABLED]: booleanValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.ZEROBOUNCE_API_KEY]: stringValidator,
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
+    [AppSystemProp.APOLLO_API_KEY]: stringValidator,
+    [AppSystemProp.AUTUMN_CONSOLE_URL]: urlValidator,
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
     [AppSystemProp.FIREBASE_ADMIN_CREDENTIALS]: stringValidator,
     [AppSystemProp.FIREBASE_HASH_PARAMETERS]: stringValidator,
-    [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
-    [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.WORKERS]: numberValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
@@ -173,14 +233,12 @@ const systemPropValidators: {
     [AppSystemProp.CLOUDFLARE_SAAS_FALLBACK_ORIGIN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
 
-    // Secret Manager
-    [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
-
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
 
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
+    [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: booleanValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
         if (isNaN(days) || days < 0) {
@@ -305,4 +363,5 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
     }
 
+    assertMcpUrlHasDistinctHost()
 }

@@ -150,7 +150,7 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
         status: FlowRunStatus.FAILED,
         failedStep: {
             name: trigger.name,
-            displayName: trigger.displayName,
+            displayName: trigger.displayName ?? trigger.name,
             message,
         },
     })
@@ -193,6 +193,9 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
         },
         constants,
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
+    if (newPayload.output.length === 0) {
+        throw new ExecutionError('EmptyTriggerPayload', 'The trigger returned no payload, so the flow did not run', ExecutionErrorType.USER)
+    }
     return newPayload.output[0] as TriggerPayload
 }
 

@@ -1,9 +1,11 @@
-import { PassThrough } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
+import { tryCatchSync } from '@activepieces/core-utils';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import { HttpError } from './http-error';
 import { HttpHeaders } from './http-headers';
 import { HttpMessageBody } from './http-message-body';
+import { HttpMethod } from './http-method';
 import { HttpRequest } from './http-request';
 import { HttpRequestBody } from './http-request-body';
 import { HttpResponse } from './http-response';
@@ -40,7 +42,9 @@ export class FetchHttpClient extends BaseHttpClient {
     const followRedirects = request.followRedirects ?? true;
     const retries = request.retries ?? 0;
 
-    const { body, extraHeaders, isStream } = serializeBody(request.body, headers);
+    const { body, extraHeaders, isStream } = acceptsRequestBody(request.method)
+      ? serializeBody(request.body, headers)
+      : { body: undefined, extraHeaders: {}, isStream: false };
     const finalHeaders = normalizeHeaders({ ...headers, ...extraHeaders });
 
     const response = await sendWithRetries(async () => {
@@ -69,12 +73,13 @@ export class FetchHttpClient extends BaseHttpClient {
           clearTimeout(timeoutId);
         }
       }
-    }, retries);
+    }, isStream ? 0 : retries);
 
     const successCeiling = followRedirects ? 300 : 400;
     if (response.status < 200 || response.status >= successCeiling) {
-      const errorBody = await parseResponseBody(response, responseType);
-      const httpError = new HttpError(request.body, { status: response.status, responseBody: errorBody });
+      // A stream response can't carry an error message usefully; read the error body as text.
+      const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
+      const httpError = new HttpError(request.redactBodyInErrors === true ? REDACTED_BODY : request.body, { status: response.status, responseBody: errorBody });
       console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
       throw httpError;
     }
@@ -88,6 +93,12 @@ export class FetchHttpClient extends BaseHttpClient {
   }
 }
 
+const REDACTED_BODY = '[redacted]';
+
+export function acceptsRequestBody(method: HttpMethod): boolean {
+  return method !== HttpMethod.GET && method !== HttpMethod.HEAD;
+}
+
 function serializeBody(
   body: HttpRequestBody | undefined,
   headers: HttpHeaders
@@ -96,10 +107,21 @@ function serializeBody(
     return { body: undefined, extraHeaders: {}, isStream: false };
   }
   if (isNodeFormData(body)) {
+    // A buffered multipart body lets undici send Content-Length; a streamed one is sent
+    // chunked without a length, which strict multipart parsers reject with a 500. Streaming
+    // with an explicit content-length header is not an option: undici stalls or throws
+    // RequestContentLengthMismatchError on stream bodies that carry one.
+    const buffered = bufferFormDataIfSafe(body);
+    if (buffered !== null) {
+      return { body: buffered, extraHeaders: body.getHeaders(), isStream: false };
+    }
     const stream = new PassThrough();
     body.on('error', (error) => stream.destroy(error));
     body.pipe(stream);
     return { body: stream as unknown as BodyInit, extraHeaders: body.getHeaders(), isStream: true };
+  }
+  if (body instanceof Readable) {
+    return { body: body as unknown as BodyInit, extraHeaders: {}, isStream: true };
   }
   // Already a wire-ready body — pass through untouched.
   if (
@@ -123,6 +145,9 @@ async function parseResponseBody(response: Response, responseType: ResponseType)
   switch (responseType) {
     case 'arraybuffer':
       return Buffer.from(await response.arrayBuffer());
+    case 'stream':
+      // @ts-expect-error -- undici streams a Node web ReadableStream body; the DOM fetch types omit the fromWeb overload
+      return isNil(response.body) ? Readable.from([]) : Readable.fromWeb(response.body);
     case 'blob':
       return await response.blob();
     case 'text':
@@ -170,14 +195,14 @@ function backoff(attempt: number): Promise<void> {
 }
 
 function normalizeHeaders(headers: HttpHeaders): Record<string, string> {
-  const result: Record<string, string> = {};
+  const entriesByLowerCaseKey = new Map<string, [string, string]>();
   for (const [key, value] of Object.entries(headers)) {
     if (value === undefined) {
       continue;
     }
-    result[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : value;
+    entriesByLowerCaseKey.set(key.toLowerCase(), [key, Array.isArray(value) ? value.join(', ') : value]);
   }
-  return result;
+  return Object.fromEntries(entriesByLowerCaseKey.values());
 }
 
 function toHttpHeaders(headers: Headers): HttpHeaders {
@@ -186,6 +211,15 @@ function toHttpHeaders(headers: Headers): HttpHeaders {
     result[key] = value;
   });
   return result;
+}
+
+function bufferFormDataIfSafe(body: NodeFormData): Buffer | null {
+  if (!body.hasKnownLength() || body.getLengthSync() > MAX_BUFFERED_FORM_DATA_BYTES) {
+    return null;
+  }
+  // getBuffer throws on stream parts appended with an explicit knownLength; fall back to streaming.
+  const { data } = tryCatchSync(() => body.getBuffer());
+  return data;
 }
 
 function isNodeFormData(body: unknown): body is NodeFormData {
@@ -206,7 +240,12 @@ type NodeFormData = {
   getHeaders: () => Record<string, string>;
   pipe: (...args: unknown[]) => unknown;
   on: (event: 'error', listener: (error: Error) => void) => unknown;
+  hasKnownLength: () => boolean;
+  getLengthSync: () => number;
+  getBuffer: () => Buffer;
 };
+
+const MAX_BUFFERED_FORM_DATA_BYTES = 100 * 1024 * 1024;
 
 type ResponseType = NonNullable<HttpRequest['responseType']>;
 

@@ -1,13 +1,14 @@
 import {
+  acceptsRequestBody,
   AuthenticationType,
   httpClient,
-  HttpError,
   HttpHeaders,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
   HttpResponse,
   QueryParams,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import { httpOauth2Auth } from '../..';
 import {
@@ -15,7 +16,7 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { ProxyAgent } from 'undici';
 
@@ -23,6 +24,7 @@ export const httpOauth2RequestAction = createAction({
   audience: 'both',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
+  classification: 'WRITE',
   displayName: 'Send an OAuth2 Request',
   description:
     'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
@@ -53,39 +55,38 @@ export const httpOauth2RequestAction = createAction({
       displayName: 'Query Parameters',
       required: false,
     }),
-    body_type: Property.StaticDropdown({
+    body_type: Property.Dropdown({
       displayName: 'Body Type',
       required: false,
       defaultValue: 'none',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'None',
-            value: 'none',
-          },
-          {
-            label: 'Form Data',
-            value: 'form_data',
-          },
-          {
-            label: 'JSON',
-            value: 'json',
-          },
-          {
-            label: 'Raw',
-            value: 'raw',
-          },
-        ],
+      auth: httpOauth2Auth,
+      refreshers: ['method'],
+      options: async ({ method }) => {
+        if (!acceptsRequestBody(method as HttpMethod)) {
+          return {
+            disabled: true,
+            placeholder: 'Not available for GET requests',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: [
+            { label: 'None', value: 'none' },
+            { label: 'Form Data', value: 'form_data' },
+            { label: 'JSON', value: 'json' },
+            { label: 'Raw', value: 'raw' },
+          ],
+        };
       },
     }),
     body: Property.DynamicProperties({
       displayName: 'Body',
       auth: httpOauth2Auth,
-      refreshers: ['body_type'],
+      refreshers: ['body_type', 'method'],
       required: false,
-      props: async ({ body_type }) => {
-        if (!body_type) return {};
+      props: async ({ body_type, method }) => {
+        if (!body_type || !acceptsRequestBody(method as HttpMethod)) return {};
 
         const bodyTypeInput = body_type as unknown as string;
 
@@ -247,7 +248,11 @@ export const httpOauth2RequestAction = createAction({
         }
 
         let proxyBody: BodyInit | undefined;
-        if (request.body !== undefined && request.body !== null) {
+        if (
+          request.method !== HttpMethod.GET &&
+          request.method !== HttpMethod.HEAD &&
+          !isNil(request.body)
+        ) {
           if (request.body instanceof FormData) {
             proxyBody = request.body.getBuffer();
           } else if (typeof request.body === 'string') {
@@ -277,7 +282,7 @@ export const httpOauth2RequestAction = createAction({
       return handleResponse(response);
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage();
+        return toFailsafeOutput({ error, requestBody: request.body });
       }
 
       throw error;

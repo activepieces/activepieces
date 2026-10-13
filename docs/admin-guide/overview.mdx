@@ -1,23 +1,67 @@
 ---
-title: "Overview"
-icon: "hand-wave"
-description: "Manage and customize your Activepieces instance"
+title: "Enterprise Control"
+sidebarTitle: "Overview"
+description: "Give your organization AI automation without giving up control"
+icon: "crown"
 ---
 
-The **Platform Admin** is the centralized admin panel for managing your Activepieces instance. It's designed for teams and organizations that want full control over users, integrations, security, and internal automation.
+Most AI tools ask you to choose: let people move fast, or keep control. Activepieces is built so you don't have to.
 
-## What Can You Do?
+<Note icon="crown">
+Most of these controls are on paid plans. Every plan can run on Cloud or self-hosted. See [plans and pricing](https://www.activepieces.com/pricing).
+</Note>
 
-With Platform Admin, you can:
+Everything is designed around one question: **can IT hand automation to the business and still answer for it?** Who can build, which apps they can reach, where credentials live, what the AI is allowed to do, and what happened afterwards.
 
-- **Custom Branding:** Tailor the appearance of Activepieces to match your organization's identity, including colors, logos, and fonts.
+That's why regulated industries and governments run Activepieces, often fully self-hosted and network-gapped, on their own infrastructure.
 
-- **Project Management:** Create, edit, and organize projects for internal teams and users.
+## What control looks like
 
-- **Piece Management:** Control which integration pieces are available, including managing custom or internal pieces for your team's workflows.
+<CardGroup cols={2}>
+  <Card title="Who can do what" icon="users" href="/admin-guide/guides/permissions">
+    Projects, roles, and permissions, so teams are separated by default.
+  </Card>
+  <Card title="Who gets in" icon="key" href="/admin-guide/guides/sso">
+    SSO and SCIM, so access follows your identity provider.
+  </Card>
+  <Card title="Where secrets live" icon="lock" href="/admin-guide/guides/secret-managers/overview">
+    Bring your own vault. Credentials never have to sit in the product.
+  </Card>
+  <Card title="What's available" icon="puzzle-piece" href="/admin-guide/guides/manage-pieces">
+    Decide which apps and pieces your organization can use at all.
+  </Card>
+  <Card title="Which AI, on whose keys" icon="robot" href="/admin-guide/guides/setup-ai-providers">
+    Your providers, your models, your budget.
+  </Card>
+  <Card title="What happened" icon="list-check" href="/admin-guide/security/audit-logs/overview">
+    Audit logs for every meaningful action, streamable to your SIEM.
+  </Card>
+</CardGroup>
 
-- **User Management:** Add and remove users, send invitations, and assign roles and permissions.
+## Why it matters for AI
 
-- **AI Provider Management:** Configure and manage AI providers (like OpenAI, Anthropic, etc.) available for use in your flows.
+Shadow AI is the current version of shadow IT. People will automate with AI whether or not you provide a way, and the risk isn't the automation, it's not knowing it exists.
 
-- **SSO & Security:** Configure Single Sign-On (SSO) providers and manage security settings to ensure your instance is secure.
+Activepieces makes the sanctioned path the easy one:
+
+| Concern | The control |
+|---|---|
+| Data leaving your network | Self-host it, fully network-gapped |
+| Which models see your data | [Your own AI keys and providers](/admin-guide/guides/setup-ai-providers) |
+| Credentials in the wrong hands | [External secret managers](/admin-guide/guides/secret-managers/overview) |
+| Unreviewed changes reaching production | [Project releases](/admin-guide/guides/project-releases) and environments |
+| No record of what was done | [Audit logs](/admin-guide/security/audit-logs/overview) and [event streaming](/admin-guide/guides/event-streaming) |
+
+## Start here
+
+<CardGroup cols={3}>
+  <Card title="Structure projects" icon="sitemap" href="/admin-guide/guides/structure-projects">
+    Separate teams, data, and connections.
+  </Card>
+  <Card title="Set up SSO" icon="right-to-bracket" href="/admin-guide/guides/sso">
+    Sign in with your identity provider.
+  </Card>
+  <Card title="Security practices" icon="shield-check" href="/admin-guide/security/practices">
+    How we build and what we recommend.
+  </Card>
+</CardGroup>

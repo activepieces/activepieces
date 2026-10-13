@@ -129,7 +129,7 @@ Property.StaticMultiSelectDropdown({
 
 ## Dynamic Dropdown (fetches from API)
 
-> **Always pass `auth`.** Every `Property.Dropdown`, `Property.MultiSelectDropdown`, and `Property.DynamicProperties` whose `options`/`props` callback reads `auth` MUST set `auth: <pieceAuth>` (e.g. `auth: myAppAuth`). Without it, `auth` is `undefined` in the callback and the dropdown can never load. Import the auth object from the piece's `auth.ts` (or `../..`). See `packages/pieces/community/github/src/lib/common/index.ts` for the real pattern.
+> **Always pass `auth`.** Every `Property.Dropdown`, `Property.MultiSelectDropdown`, and `Property.DynamicProperties` whose `options`/`props` callback reads `auth` MUST set `auth: <pieceAuth>` (e.g. `auth: myAppAuth`). Without it, `auth` is `undefined` in the callback and the dropdown can never load. Import the auth object from `../auth` (relative to `src/lib/*`) — never from a re-export on `src/index.ts`. See `packages/pieces/community/github/src/lib/common/index.ts` for the real pattern.
 
 > **No cast needed — `auth` is already typed.** Setting `auth: myAppAuth` does double duty: it makes `auth` available in the callback *and* tells TypeScript the connection type. The framework uses that `auth` field purely to infer the type, so inside the callback `auth.secret_text` (SecretText), `auth.access_token` (OAuth2), and `auth.props.<field>` (CustomAuth) are all correctly typed — read them directly. Never write `auth as { secret_text: string }` or any cast; it's redundant and the repo bans casts. (Real no-cast examples: `airtable`, `baremetrics`, `todoist` common files.)
 

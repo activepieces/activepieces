@@ -102,12 +102,11 @@ export const RunsTable = () => {
     setHasSeededDefaultRange(true);
   }, [hasSeededDefaultRange, setSearchParams]);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     enabled: hasSeededDefaultRange,
     staleTime: 0,
     gcTime: 0,
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
     queryFn: () => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
@@ -198,7 +197,9 @@ export const RunsTable = () => {
           accessorKey: 'status',
           options: Object.values(FlowRunStatus).map((status) => {
             return {
-              label: formatUtils.convertEnumToHumanReadable(status),
+              label:
+                flowRunUtils.getStatusLabelOverride(status) ??
+                formatUtils.convertEnumToHumanReadable(status),
               value: status,
               icon: flowRunUtils.getStatusIcon(status).Icon,
             };
@@ -591,6 +592,9 @@ export const RunsTable = () => {
         columns={columns}
         page={data}
         isLoading={isLoading || isFetchingFlows}
+        isError={isError}
+        errorStateEntity={t('runs')}
+        onRetry={refetch}
         filters={customFilters.length > 0 ? [] : filters}
         bulkActions={bulkActions}
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}

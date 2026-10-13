@@ -1,12 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
+import { createContactOutputSchema } from '../output-schemas';
 
 export const createContact = createAction({
   name: 'create_contact',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Create Contact',
+  outputSchema: createContactOutputSchema,
   description: 'Add a contact to a Resend audience',
   audience: 'both',
   aiMetadata: { description: 'Adds a new contact (email plus optional name and subscription status) to a specific Resend audience. Use this to grow a mailing list; requires the target audience ID (use List Audiences to find it). Not idempotent — each call creates a new contact, so guard against re-adding the same email.', idempotent: false },
@@ -28,12 +32,6 @@ export const createContact = createAction({
     if (propsValue.last_name) body['last_name'] = propsValue.last_name;
     if (propsValue.unsubscribed !== undefined) body['unsubscribed'] = propsValue.unsubscribed;
 
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.POST,
-      url: `https://api.resend.com/audiences/${propsValue.audience_id}/contacts`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body,
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.POST, path: `/audiences/${propsValue.audience_id}/contacts`, body: body });
   },
 });

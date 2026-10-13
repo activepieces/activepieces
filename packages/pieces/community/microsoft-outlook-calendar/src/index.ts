@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { microsoftCloudProperty, getGraphBaseUrl, getMicrosoftCloudFromAuth } from './lib/common/microsoft-cloud';
+import { microsoftCloudProperty } from './lib/common/microsoft-cloud';
 import {
   createPiece,
   OAuth2PropertyValue,
@@ -26,7 +26,7 @@ export const outlookCalendarAuth = PieceAuth.OAuth2({
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
-  scope: ['User.Read', 'Calendars.ReadWrite', 'offline_access'],
+  scope: ['User.Read', 'Calendars.ReadWrite', 'offline_access', 'openid', 'email', 'profile'],
   prompt: 'omit',
 });
 

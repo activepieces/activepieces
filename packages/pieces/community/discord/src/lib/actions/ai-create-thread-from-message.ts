@@ -10,6 +10,7 @@ import { discordCreateThreadActionOutputSchema } from '../output-schemas';
 export const discordCreateThreadFromMessage = createAction({
   auth: discordAuth,
   name: 'discord_create_thread_from_message',
+  classification: 'WRITE',
   displayName: 'Create Thread from Message',
   description: 'Start a thread attached to an existing message.',
   audience: 'ai',

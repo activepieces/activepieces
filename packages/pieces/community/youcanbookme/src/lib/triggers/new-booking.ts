@@ -7,6 +7,7 @@ import { youcanbookmeAuth } from '../common/auth';
 export const newBooking = createTrigger({
   auth: youcanbookmeAuth,
   name: 'newBooking',
+  classification: 'READ',
   displayName: 'New Booking',
   description: 'Trigger when a new booking is made',
   aiMetadata: {

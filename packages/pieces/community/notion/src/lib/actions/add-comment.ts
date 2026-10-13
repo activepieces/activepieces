@@ -7,10 +7,10 @@ import { addCommentActionOutputSchema } from '../output-schemas';
 export const addComment = createAction({
   auth: notionAuth,
   name: 'add_comment',
+  classification: 'WRITE',
   displayName: 'Add Comment',
-  description:
-    'Add a comment to any Notion page to start discussions, provide feedback, or leave notes for team collaboration.',
-  audience: 'both',
+  description: 'Add a comment to a page.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Posts a new comment thread on a Notion page. Use when an agent must leave feedback or a note on a page for collaborators; requires the page id and comment text, and the integration must have comment-insert capability. Not idempotent: each call posts a separate comment.',
@@ -20,8 +20,7 @@ export const addComment = createAction({
     page_id: notionCommon.page,
     comment_text: Property.LongText({
       displayName: 'Comment Text',
-      description:
-        'Enter your comment text. Supports plain text and will be posted as a new comment thread on the selected page.',
+      description: 'Posted as a new comment thread on the page.',
       required: true,
     }),
   },

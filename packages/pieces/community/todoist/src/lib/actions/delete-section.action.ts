@@ -6,6 +6,7 @@ import { todoistAuth } from '../..';
 export const todoistDeleteSectionAction = createAction({
   auth: todoistAuth,
   name: 'todoist_delete_section',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Section',
   description: 'Delete a Todoist section and all tasks inside it.',
   audience: 'ai',

@@ -22,7 +22,7 @@ afterEach(async () => {
 
 describe('cacheState', () => {
     describe('getOrSetCache', () => {
-        it('returns cache hit from memory on second call', async () => {
+        it('returns cache hit on second call', async () => {
             const folder = uniqueFolder()
             const cs = cacheState(folder)
 
@@ -35,7 +35,6 @@ describe('cacheState', () => {
 
             expect(result1).toEqual({ cacheHit: false, state: 'installed' })
 
-            // second call should hit memory cache
             const result2 = await cacheState(folder).getOrSetCache({
                 key: 'myKey',
                 cacheMiss: () => false,
@@ -46,14 +45,12 @@ describe('cacheState', () => {
             expect(result2).toEqual({ cacheHit: true, state: 'installed' })
         })
 
-        it('returns cache hit from disk when memory has not been populated for a new folder reference', async () => {
+        it('returns cache hit from disk for a key written by saveCache', async () => {
             const folder = uniqueFolder()
 
             // Seed cache.json on disk via saveCache
             await cacheState(folder).saveCache('diskKey', 'disk-value')
 
-            // Use a fresh folder path string (same value) but the module-level `cached` already has it
-            // from saveCache. Instead, let's test disk read by using getOrSetCache on a key that was saved.
             const result = await cacheState(folder).getOrSetCache({
                 key: 'diskKey',
                 cacheMiss: () => false,
@@ -145,6 +142,35 @@ describe('cacheState', () => {
 
             const raw = await readFile(join(folder, 'cache.json'), 'utf8')
             expect(JSON.parse(raw)).toEqual({ onlyKey: 'onlyVal' })
+        })
+    })
+
+    describe('retention', () => {
+        it('holds nothing in memory between calls — disk is the only cache', async () => {
+            const folder = uniqueFolder()
+
+            await cacheState(folder).getOrSetCache({
+                key: 'retainedKey',
+                cacheMiss: () => false,
+                installFn: async () => 'first-value',
+                skipSave: () => false,
+            })
+
+            await rm(join(folder, 'cache.json'), { force: true })
+
+            let reinstalled = false
+            const result = await cacheState(folder).getOrSetCache({
+                key: 'retainedKey',
+                cacheMiss: () => false,
+                installFn: async () => {
+                    reinstalled = true
+                    return 'second-value'
+                },
+                skipSave: () => false,
+            })
+
+            expect(reinstalled).toBe(true)
+            expect(result).toEqual({ cacheHit: false, state: 'second-value' })
         })
     })
 })

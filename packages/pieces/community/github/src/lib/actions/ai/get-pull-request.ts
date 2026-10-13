@@ -8,6 +8,7 @@ import { pullRequestBodyOutputSchema } from '../../output-schemas';
 export const githubGetPullRequestAction = createAction({
   auth: githubAuth,
   name: 'get_pull_request',
+  classification: 'READ',
   displayName: 'Get Pull Request (Agent)',
   description: 'Fetches a single pull request by number.',
   audience: 'ai',

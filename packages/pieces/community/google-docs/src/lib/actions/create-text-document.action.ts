@@ -6,6 +6,7 @@ import { appendTextActionOutputSchema } from '../output-schemas';
 export const createTextDocument = createAction({
   auth: googleDocsAuth,
   name: 'create_text_document',
+  classification: 'WRITE',
   displayName: 'Create Text Document',
   description: 'Create a new Google Docs document with a title and plain text',
   audience: 'ai',

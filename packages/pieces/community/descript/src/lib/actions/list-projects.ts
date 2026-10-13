@@ -13,6 +13,7 @@ type Project = {
 export const descriptListProjectsAction = createAction({
   auth: descriptAuth,
   name: 'list_projects',
+  classification: 'SEARCH',
   displayName: 'List Projects',
   description:
     'Returns projects in your Descript Drive. Supports filtering by name, date, and creator.',

@@ -18,6 +18,7 @@ import {
 export const sendCustomVerificationEmail = createAction({
   auth: amazonSesAuth,
   name: 'send_custom_verification_email',
+  classification: 'WRITE',
   displayName: 'Send Custom Verification Email',
   description:
     'Send verification email to add an email address to SES identities',

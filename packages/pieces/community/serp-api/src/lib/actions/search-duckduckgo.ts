@@ -7,12 +7,13 @@ import { searchDuckduckgoOutputSchema } from '../output-schemas';
 export const searchDuckduckgo = createAction({
   auth: serpApiAuth,
   name: 'search_duckduckgo',
+  classification: 'SEARCH',
   displayName: 'Search DuckDuckGo',
   description: 'Run a DuckDuckGo web search for a query.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Runs a DuckDuckGo web search via SerpApi and returns organic web results (in `organic_results`) for a query. Use as a privacy-oriented alternative web engine to cross-check or supplement Google and Bing web results. Scope results to a region with the Region code. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search the web with DuckDuckGo and get ranked organic results for a query. Use as a privacy-oriented alternative web search engine to cross-check or supplement Google and Bing web results. Scope results to a region with the Region code.',
     idempotent: true,
   },
   outputSchema: searchDuckduckgoOutputSchema,

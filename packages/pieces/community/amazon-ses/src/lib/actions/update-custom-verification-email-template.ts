@@ -22,6 +22,7 @@ import {
 export const updateCustomVerificationEmailTemplate = createAction({
   auth: amazonSesAuth,
   name: 'update_custom_verification_email_template',
+  classification: 'WRITE',
   displayName: 'Update Custom Verification Email Template',
   description: 'Modify an existing custom verification email template',
   audience: 'both',

@@ -2,8 +2,10 @@ import { TriggerStrategy, createTrigger, isNil } from '@activepieces/pieces-fram
 import { jiraCloudAuth } from '../../auth';
 import { getProjects } from '../common';
 
+import { projectTriggerOutputSchema } from '../output-schemas';
 export const newProject = createTrigger({
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Triggers when a new project is created',
   aiMetadata: {
@@ -12,6 +14,7 @@ export const newProject = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: projectTriggerOutputSchema,
   props: {},
   sampleData: {
     id: '10000',
@@ -24,6 +27,9 @@ export const newProject = createTrigger({
     self: 'https://instance.atlassian.net/rest/api/3/project/10000',
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('projectIds'))) {
+      return;
+    }
     const projects = await getProjects(context.auth);
     const ids = projects.map((p) => p.id);
     await context.store.put('projectIds', JSON.stringify(ids));

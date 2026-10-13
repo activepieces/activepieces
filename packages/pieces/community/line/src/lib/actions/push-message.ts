@@ -8,6 +8,7 @@ import {
 
 export const pushMessage = createAction({
   name: 'push_message', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   auth: lineAuth2,
   displayName: 'Push Message',
   description: 'Push message to the line account',

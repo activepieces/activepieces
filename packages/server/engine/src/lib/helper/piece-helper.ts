@@ -1,18 +1,22 @@
 import path from 'path'
 import { isNil } from '@activepieces/core-utils'
 import {
+    AuthValidationServerContext,
     DropdownProperty,
     DynamicProperties,
     ExecutePropsResult,
     getAuthPropertyForValue,
+    isPieceServerContextError,
     MultiSelectDropdownProperty,
     PieceAuthProperty,
     PieceMetadata,
     PiecePropertyMap,
+    PieceServerContextError,
     pieceTranslation,
     PropertyType,
+    ServerContext,
     StaticPropsValue } from '@activepieces/pieces-framework'
-import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
+import { AppConnectionType, AppConnectionValue, EngineGenericError, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteRefreshTokenAuthOperation, ExecuteRefreshTokenAuthResponse, ExecuteResolveConnectionIdentifierOperation, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 
 const DEFAULT_REFRESH_EXPIRES_IN_SECONDS = 3300
@@ -46,6 +50,7 @@ export const pieceHelper = {
                 engineToken: constants.engineToken,
                 contextVersion: piece.getContextInfo?.().version,
                 stepNames: constants.stepNames,
+                pieceName: operation.pieceName,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -55,9 +60,8 @@ export const pieceHelper = {
             const ctx = {
                 searchValue: operation.searchValue,
                 server: {
+                    ...buildServerContext({ internalApiUrl: constants.internalApiUrl, publicApiUrl: operation.publicApiUrl }),
                     token: constants.engineToken,
-                    apiUrl: constants.internalApiUrl,
-                    publicUrl: operation.publicApiUrl,
                 },
                 project: {
                     id: constants.projectId,
@@ -73,6 +77,7 @@ export const pieceHelper = {
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
                     contextVersion: piece.getContextInfo?.().version,
+                    pieceName: operation.pieceName,
                 }),
             }
           
@@ -131,13 +136,35 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
+        const server = buildAuthValidationServerContext(params)
+        try {
+            return await validateAuth({
+                authValue: params.auth,
+                pieceAuth: piece.auth,
+                server,
+            })
+        }
+        catch (error) {
+            if (isPieceServerContextError(error)) {
+                throw new EngineGenericError('OidcTokenRequestFailedError', error.message)
+            }
+            throw error
+        }
+    },
+
+    async executeResolveConnectionIdentifier(
+        { params, devPieces }: { params: ExecuteResolveConnectionIdentifierOperation, devPieces: string[] },
+    ): Promise<ExecuteResolveConnectionIdentifierResponse> {
+        const { piece: piecePackage } = params
+
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
         const server = buildServerContext(params)
-        return  validateAuth({
+        return resolveConnectionIdentifier({
             authValue: params.auth,
+            connectionType: params.connectionType,
             pieceAuth: piece.auth,
             server,
         })
-
     },
 
     async executeRefreshTokenAuth(
@@ -280,18 +307,90 @@ const validateAuth = async ({
     }
 }
 
-type ValidateAuthParams = {
-    server: {
-        apiUrl: string
-        publicUrl: string
+const resolveConnectionIdentifier = async ({
+    server,
+    authValue,
+    connectionType,
+    pieceAuth,
+}: ResolveConnectionIdentifierParams): Promise<ExecuteResolveConnectionIdentifierResponse> => {
+    if (isNil(pieceAuth)) {
+        return { identifier: undefined }
     }
+    const usedPieceAuth = getAuthPropertyForValue({
+        authValueType: connectionType,
+        pieceAuth,
+    })
+    if (isNil(usedPieceAuth)) {
+        return { identifier: undefined }
+    }
+    switch (usedPieceAuth.type) {
+        case PropertyType.OAUTH2: {
+            if (!('access_token' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue, server }) }
+        }
+        case PropertyType.BASIC_AUTH: {
+            if (!('username' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue, server }) }
+        }
+        case PropertyType.SECRET_TEXT: {
+            if (!('secret_text' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue.secret_text, server }) }
+        }
+        case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OIDC: {
+            if (!('props' in authValue)) {
+                return { identifier: undefined }
+            }
+            return { identifier: await usedPieceAuth.getConnectionIdentifier?.({ auth: authValue.props, server }) }
+        }
+        default: {
+            return { identifier: undefined }
+        }
+    }
+}
+
+type ValidateAuthParams = {
+    server: AuthValidationServerContext
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
 }
 
-function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }) {
+type ResolveConnectionIdentifierParams = Omit<ValidateAuthParams, 'server'> & {
+    server: Omit<ServerContext, 'token'>
+    connectionType: AppConnectionType
+}
+
+function buildServerContext({ internalApiUrl, publicApiUrl }: { internalApiUrl: string, publicApiUrl: string }): Omit<ServerContext, 'token'> {
     return {
         apiUrl: internalApiUrl.endsWith('/') ? internalApiUrl : internalApiUrl + '/',
         publicUrl: publicApiUrl,
+    }
+}
+
+function buildAuthValidationServerContext({ internalApiUrl, publicApiUrl, engineToken }: { internalApiUrl: string, publicApiUrl: string, engineToken: string }): AuthValidationServerContext {
+    const server = buildServerContext({ internalApiUrl, publicApiUrl })
+    return {
+        ...server,
+        mintOidcToken: async ({ audience }) => {
+            const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${engineToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ audience }),
+            })
+            if (!response.ok) {
+                throw new PieceServerContextError(`Failed to get OIDC token: ${response.statusText}`)
+            }
+            const { token } = await response.json() as { token: string }
+            return token
+        },
     }
 }

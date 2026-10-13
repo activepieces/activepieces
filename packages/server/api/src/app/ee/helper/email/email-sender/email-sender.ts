@@ -66,11 +66,19 @@ type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
     loginLink: string
 }>
 
+type LoginCodeTemplateData = BaseEmailTemplateData<'login-code', {
+    code: string
+}>
+
 type ChatNotificationTemplateData = BaseEmailTemplateData<'chat-notification', {
     subject: string
     body: string
     senderName: string
     senderEmail: string
+}>
+
+type PlatformDeletedTemplateData = BaseEmailTemplateData<'platform-deleted', {
+    purgeDate: string
 }>
 
 export type EmailTemplateData =
@@ -81,6 +89,8 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
   | ScimUserWelcomeTemplateData
   | ChatNotificationTemplateData
+  | PlatformDeletedTemplateData
+  | LoginCodeTemplateData
 
 type SendArgs = {
     emails: string[]

@@ -5,6 +5,7 @@ import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 export const addJobAttachment = createAction({
   auth: housecallProAuth,
   name: "add_job_attachment",
+  classification: 'WRITE',
   displayName: "Add an attachment to a job",
   description: "Upload an attachment to a job",
   audience: 'both',

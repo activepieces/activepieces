@@ -16,7 +16,7 @@ import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
   pieceSelectorUtils,
-  CORE_ACTIONS_METADATA,
+  stepUtils,
   usePieceSearchContext,
 } from '@/features/pieces';
 
@@ -54,10 +54,11 @@ export const convertStepMetadataToPieceSelectorItems = (
     }
     case FlowActionType.CODE:
     case FlowActionType.LOOP_ON_ITEMS:
-    case FlowActionType.ROUTER: {
-      return CORE_ACTIONS_METADATA.filter(
-        (step) => step.type === stepMetadataWithSuggestions.type,
-      );
+    case FlowActionType.ROUTER:
+    case FlowActionType.AI_ROUTER: {
+      return stepUtils
+        .coreActionsMetadata()
+        .filter((step) => step.type === stepMetadataWithSuggestions.type);
     }
     default: {
       return [];

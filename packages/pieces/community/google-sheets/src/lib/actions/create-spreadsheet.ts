@@ -19,9 +19,10 @@ import { createSpreadsheetActionOutputSchema } from '../output-schemas';
 export const createSpreadsheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'create-spreadsheet',
+	classification: 'WRITE',
 	displayName: 'Create Spreadsheet',
 	description: 'Creates a blank spreadsheet.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Creates a new, empty Google Sheets spreadsheet with the given title, optionally inside a specified Drive folder. Use when an agent needs a fresh spreadsheet to populate. Not idempotent — each call creates a separate spreadsheet even if the title is identical.',
@@ -38,7 +39,7 @@ export const createSpreadsheetAction = createAction({
 			auth: googleSheetsAuth,
 			displayName: 'Parent Folder',
 			description:
-				'The folder to create the worksheet in.By default, the new worksheet is created in the root folder of drive.',
+				'Where to create the spreadsheet. Defaults to My Drive.',
 			required: false,
 			refreshers: ['auth', 'includeTeamDrives'],
 			options: async ({ auth, includeTeamDrives }) => {
@@ -46,7 +47,7 @@ export const createSpreadsheetAction = createAction({
 					return {
 						disabled: true,
 						options: [],
-						placeholder: 'Please authenticate first',
+						placeholder: 'Connect your account first',
 					};
 				}
 				const authProp = auth;
@@ -95,6 +96,7 @@ export const createSpreadsheetAction = createAction({
 					}),
 				};
 			},
+			advanced: true,
 		}),
 	},
 	outputSchema: createSpreadsheetActionOutputSchema,

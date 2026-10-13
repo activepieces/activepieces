@@ -9,18 +9,16 @@ import {
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
 import {
+  PrimitiveStepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
   StepMetadataWithSuggestions,
 } from '../types';
-import {
-  CORE_ACTIONS_METADATA,
-  CORE_STEP_METADATA,
-  stepUtils,
-} from '../utils/step-utils';
+import { stepUtils } from '../utils/step-utils';
 
 export const stepsHooks = {
   useStepMetadata: ({ step }: UseStepMetadata) => {
@@ -56,7 +54,9 @@ export const stepsHooks = {
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
     const { i18n } = useTranslation();
-    const projectId = authenticationSession.getProjectId()!;
+    const projectId = authenticationSession.getProjectId() ?? undefined;
+    const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
+    const aiRouterEnabled = stepUtils.hasAiRouterProvider(aiProviders);
     const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: [
         'pieces-metadata',
@@ -64,6 +64,7 @@ export const stepsHooks = {
         type,
         projectId,
         i18n.language,
+        aiRouterEnabled,
       ],
       queryFn: async () => {
         const pieces = await piecesApi.list({
@@ -94,9 +95,13 @@ export const stepsHooks = {
 
         switch (type) {
           case 'action': {
-            const filteredCoreActions = CORE_ACTIONS_METADATA.filter((step) =>
-              passSearch(searchQuery, step),
-            );
+            const filteredCoreActions = stepUtils
+              .coreActionsMetadata()
+              .filter(
+                (step) =>
+                  aiRouterEnabled || step.type !== FlowActionType.AI_ROUTER,
+              )
+              .filter((step) => passSearch(searchQuery, step));
             return [...filteredCoreActions, ...piecesMetadata];
           }
           case 'trigger':
@@ -115,7 +120,7 @@ export const stepsHooks = {
 };
 function passSearch(
   searchQuery: string | undefined,
-  data: (typeof CORE_STEP_METADATA)[keyof typeof CORE_STEP_METADATA],
+  data: PrimitiveStepMetadata,
 ) {
   if (!searchQuery) {
     return true;

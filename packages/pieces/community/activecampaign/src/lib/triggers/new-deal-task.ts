@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newDealTaskTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_deal_task',
+	classification: 'READ',
 	displayName: 'New Deal Task',
 	description: 'Triggers when a new deal task is created.',
 	aiMetadata: {

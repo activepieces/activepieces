@@ -69,6 +69,7 @@ function normalizeNerResponse(provider: string, response: any) {
 
 export const extractEntitiesAction = createAction({
   name: 'extract_entities',
+  classification: 'READ',
   displayName: 'Extract Named Entities in Text',
   description: 'Identify entities (names, places) in text using Eden AI. Supports multiple providers, languages, and models.',
   audience: 'both',

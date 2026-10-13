@@ -11,14 +11,7 @@ export const replace = createAction({
   },
   displayName: 'Replace',
   name: 'replace',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
+  classification: 'READ',
   props: {
     text: Property.ShortText({
       displayName: 'Text',

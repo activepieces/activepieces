@@ -20,6 +20,7 @@ const markdown = `
 
 export const gravityFormsNewSubmission = createTrigger({
   name: 'new-submission',
+  classification: 'READ',
   displayName: 'New Submission',
   auth: PieceAuth.None(),
   description: 'Triggers when form receives a new submission',

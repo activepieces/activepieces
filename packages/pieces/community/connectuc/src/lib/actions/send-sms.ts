@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 export const sendSmsAction = createAction({
     auth: connectucAuth,
     name: 'send-sms',
+    classification: 'WRITE',
     displayName: 'Send SMS',
     description: 'Send an SMS message through ConnectUC',
     audience: 'both',

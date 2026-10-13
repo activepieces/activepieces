@@ -8,6 +8,7 @@ import { listPullRequestsOutputSchema } from '../../output-schemas';
 export const githubListPullRequestsAction = createAction({
   auth: githubAuth,
   name: 'list_pull_requests',
+  classification: 'SEARCH',
   displayName: 'List Pull Requests (Agent)',
   description: 'Lists pull requests in a repository with optional filters.',
   audience: 'ai',

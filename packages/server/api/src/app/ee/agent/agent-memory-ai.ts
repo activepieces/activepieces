@@ -3,7 +3,7 @@ import path from 'node:path'
 import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { GetAgentMemoryResponse } from '@activepieces/shared'
-import { generateText, LanguageModel } from 'ai'
+import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentHelpers } from './agent-helpers'
@@ -27,15 +27,6 @@ const MemoriesSchema = z.object({
     memories: z.array(z.string().catch('')).catch([]),
 })
 
-async function resolveModel(platformId: string, log: FastifyBaseLogger): Promise<LanguageModel> {
-    const providerConfig = await agentHelpers.resolveChatProvider({ platformId, log })
-    return agentAiUtils.createChatModel({
-        provider: providerConfig.provider,
-        auth: providerConfig.auth as Record<string, unknown>,
-        config: providerConfig.config as Record<string, unknown>,
-        modelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider }),
-    })
-}
 
 function parseJsonObject<T>(raw: string, schema: z.ZodType<T>): T | null {
     const start = raw.indexOf('{')
@@ -54,15 +45,15 @@ function naiveSplit(text: string): GetAgentMemoryResponse {
     return agentHelpers.capMemories({ instructions: null, memories })
 }
 
-async function runMemoryLlm<T>({ platformId, system, prompt, schema, log }: {
+async function runMemoryLlm<T>({ platformId, instructions, prompt, schema, log }: {
     platformId: string
-    system: string
+    instructions: string
     prompt: string
     schema: z.ZodType<T>
     log: FastifyBaseLogger
 }): Promise<T | null> {
     const { data, error } = await tryCatch(async () => {
-        const { text: raw } = await generateText({ model: await resolveModel(platformId, log), system, prompt })
+        const { text: raw } = await generateText({ model: await agentHelpers.resolveFastModel({ platformId, surface: 'chat', scope: { type: 'platform' }, log }), instructions, prompt, temperature: 0, telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-memory' }) })
         return parseJsonObject(raw, schema)
     })
     if (!isNil(error)) {
@@ -81,7 +72,7 @@ async function extract({ platformId, text, log }: {
     if (trimmed.length === 0) {
         return { instructions: null, memories: [] }
     }
-    const parsed = await runMemoryLlm({ platformId, system: EXTRACTION_SYSTEM_PROMPT, prompt: trimmed, schema: ExtractionSchema, log })
+    const parsed = await runMemoryLlm({ platformId, instructions: EXTRACTION_SYSTEM_PROMPT, prompt: trimmed, schema: ExtractionSchema, log })
     return isNil(parsed) ? naiveSplit(trimmed) : agentHelpers.capMemories(parsed)
 }
 
@@ -99,7 +90,7 @@ async function applyInstruction({ platformId, userId, instruction, log }: {
     const currentList = current.memories.length > 0
         ? current.memories.map((memory) => `- ${memory}`).join('\n')
         : '(none yet)'
-    const parsed = await runMemoryLlm({ platformId, system: INSTRUCTION_SYSTEM_PROMPT, prompt: `Current memories:\n${currentList}\n\nInput: ${trimmed}`, schema: MemoriesSchema, log })
+    const parsed = await runMemoryLlm({ platformId, instructions: INSTRUCTION_SYSTEM_PROMPT, prompt: `Current memories:\n${currentList}\n\nInput: ${trimmed}`, schema: MemoriesSchema, log })
     const nextMemories = isNil(parsed) ? [...current.memories, trimmed] : parsed.memories
     return agentHelpers.saveUserMemory({ platformId, userId, memories: nextMemories, baseMemories: current.memories })
 }

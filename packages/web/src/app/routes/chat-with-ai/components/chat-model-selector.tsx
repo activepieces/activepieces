@@ -1,5 +1,8 @@
-import { isNil } from '@activepieces/core-utils';
-import { ACTIVEPIECES_CHAT_TIERS, aiProviderUtils } from '@activepieces/shared';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
+import {
+  aiProviderUtils,
+  CHAT_CREDITS_PER_TOOL_CALL,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDown,
@@ -23,48 +26,57 @@ import {
 import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
-const TIER_CONFIG: Record<
-  string,
-  {
-    icon: React.ComponentType<{ className?: string }>;
-    displayLabel: string;
-    description: string;
-  }
+const TIER_CONFIG: Partial<
+  Record<
+    string,
+    {
+      icon: React.ComponentType<{ className?: string }>;
+      description: string;
+    }
+  >
 > = {
   fast: {
     icon: Equal,
-    displayLabel: 'Fast',
     description: 'Quick replies for simple tasks',
   },
   smart: {
     icon: Lightbulb,
-    displayLabel: 'Expert',
     description: 'Best for everyday use',
   },
   premium: {
     icon: Rocket,
-    displayLabel: 'Heavy',
     description: 'Highest quality, a bit slower',
   },
 };
 
-function useModelOptions(): ModelOption[] {
+function useModelOptions(): {
+  options: ModelOption[];
+  defaultOptionId: string;
+} {
   const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const chatTiers = aiProviderQueries.useModelTiers('chat');
   const curatedModels = isNil(chatProvider)
     ? undefined
     : aiProviderUtils.getCuratedChatModels({ provider: chatProvider.provider });
   if (isNil(curatedModels)) {
-    return ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
-      id: tier.id,
-      ...TIER_CONFIG[tier.id],
-    }));
+    return {
+      options: chatTiers.tiers.map((tier) => ({
+        id: tier.id,
+        ...(TIER_CONFIG[tier.id] ?? { icon: Sparkles, description: null }),
+        displayLabel: tier.label,
+      })),
+      defaultOptionId: chatTiers.defaultTierId,
+    };
   }
-  return curatedModels.map((model) => ({
-    id: model.id,
-    icon: Sparkles,
-    displayLabel: model.label,
-    description: null,
-  }));
+  return {
+    options: curatedModels.map((model) => ({
+      id: model.id,
+      icon: Sparkles,
+      displayLabel: model.label,
+      description: null,
+    })),
+    defaultOptionId: curatedModels[0].id,
+  };
 }
 
 export function ChatModelSelector({
@@ -77,10 +89,14 @@ export function ChatModelSelector({
   const [open, setOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const listRef = useRef<HTMLDivElement>(null);
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const showCredits = chatProvider?.provider === AIProviderName.ACTIVEPIECES;
 
-  const options = useModelOptions();
+  const { options, defaultOptionId } = useModelOptions();
   const selectedOption =
-    options.find((option) => option.id === selectedModel) ?? options[0];
+    options.find((option) => option.id === selectedModel) ??
+    options.find((option) => option.id === defaultOptionId) ??
+    options[0];
 
   const focused =
     focusedIndex === -1 ? options.indexOf(selectedOption) : focusedIndex;
@@ -119,7 +135,7 @@ export function ChatModelSelector({
           size="sm"
           role="combobox"
           aria-expanded={open}
-          className="h-7 gap-1 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          className="h-7 gap-1 rounded-full px-2.5 text-xs text-gray-11 hover:text-gray-12"
         >
           <span>{t(selectedOption.displayLabel)}</span>
           <ChevronDown className="size-3 opacity-50" />
@@ -152,18 +168,20 @@ export function ChatModelSelector({
                   onMouseEnter={() => setFocusedIndex(index)}
                   className={cn(
                     'flex items-center gap-3 px-3 py-3.5 cursor-pointer transition-colors',
-                    isFocused && 'bg-accent',
+                    isFocused && 'bg-gray-4',
                   )}
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-background">
-                    <Icon className="size-4 text-foreground" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
+                    <Icon className="size-4 text-gray-12" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="text-sm font-medium">
-                      {t(option.displayLabel)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {t(option.displayLabel)}
+                      </span>
+                    </div>
                     {option.description && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-11">
                         {t(option.description)}
                       </span>
                     )}
@@ -178,18 +196,26 @@ export function ChatModelSelector({
               );
             })}
           </div>
-          <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
+          {showCredits && (
+            <div className="border-t px-3 py-2 text-xs text-gray-11">
+              {t(
+                'Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
+                { count: CHAT_CREDITS_PER_TOOL_CALL },
+              )}
+            </div>
+          )}
+          <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-gray-11">
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
                 <ArrowUp className="size-3" />
               </kbd>
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
                 <ArrowDown className="size-3" />
               </kbd>
               <span>{t('to navigate')}</span>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
                 <CornerDownLeft className="size-3" />
               </kbd>
               <span>{t('to select')}</span>

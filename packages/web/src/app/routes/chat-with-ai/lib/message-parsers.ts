@@ -9,6 +9,16 @@ export function normalizePieceName(piece: string): string {
     : `@activepieces/piece-${shortName}`;
 }
 
+export function isConnectionPickerData(
+  input: Record<string, unknown>,
+): input is Record<string, unknown> & ConnectionPickerData {
+  return (
+    typeof input['piece'] === 'string' &&
+    input['piece'].length > 0 &&
+    typeof input['displayName'] === 'string'
+  );
+}
+
 export function isConnectionHealthy(status: string): boolean {
   return status === AppConnectionStatus.ACTIVE;
 }
@@ -30,6 +40,26 @@ export function pickDefaultConnectionExternalId({
     return 0;
   });
   return sorted[0].externalId;
+}
+
+export function resolveConnectionCardState({
+  reconnectOnly,
+  connectionsFailed,
+  healthyCount,
+}: {
+  reconnectOnly: boolean;
+  connectionsFailed: boolean;
+  healthyCount: number;
+}): ConnectionCardState {
+  return {
+    offersOtherAccounts: !reconnectOnly && !connectionsFailed,
+    canContinue: !reconnectOnly && healthyCount > 0,
+    emptyMessage: connectionsFailed
+      ? 'loadFailed'
+      : reconnectOnly
+      ? 'pinnedAccountGone'
+      : 'noAccountYet',
+  };
 }
 
 export function getTextFromParts(parts: ChatUIMessage['parts']): string {
@@ -75,4 +105,10 @@ export type ProjectPickerData = {
     name: string;
     id: string;
   }>;
+};
+
+export type ConnectionCardState = {
+  offersOtherAccounts: boolean;
+  canContinue: boolean;
+  emptyMessage: 'loadFailed' | 'pinnedAccountGone' | 'noAccountYet';
 };

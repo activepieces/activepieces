@@ -20,14 +20,38 @@ import { findOrCreateRowActionOutputSchema } from '../output-schemas';
 export const findOrCreateRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find-or-create-row',
+	classification: 'WRITE',
 	displayName: 'Find or Create Row',
 	description: 'Look up a row by column value; if no match is found, create a new row with the provided values.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Looks up the first row in a worksheet whose value in a chosen column matches a search value and returns it, or appends a new row from the supplied values when nothing matches, flagging which happened. Use instead of Add Row when the entry may already exist and duplicates must be avoided, and Find Rows when creation is not wanted. Matching is a case-insensitive substring test unless Exact Match is on; idempotent in practice — a second call finds the row the first one created, provided that row carries the search value in the searched column.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['columnName', 'searchValue', 'matchCase', 'headerRow'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['first_row_headers', 'values'],
+		},
+	],
 	props: {
 		...commonProps,
 		columnName: columnNameProp(),
@@ -50,15 +74,17 @@ export const findOrCreateRowAction = createAction({
 		}),
 		useHeaderNames: Property.Checkbox({
 			displayName: 'Use Column Names',
-			description: 'Return found rows with header names as keys instead of A, B, C.',
+			description: 'Key each row by column name instead of A, B, C.',
 			required: false,
 			defaultValue: false,
+			advanced: true,
 		}),
 		first_row_headers: isFirstRowHeaderProp(),
 		as_string: Property.Checkbox({
 			displayName: 'As String',
-			description: 'Inserted values that are dates and formulas will be entered as strings and have no effect.',
+			description: 'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
+			advanced: true,
 		}),
 		values: rowValuesProp(),
 	},

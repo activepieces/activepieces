@@ -9,8 +9,9 @@ import { customerOutputSchema } from '../output-schemas';
 export const stripeNewCustomer = createTrigger({
   auth: stripeAuth,
   name: 'new_customer',
+  classification: 'READ',
   displayName: 'New Customer',
-  description: 'Triggers when a new customer is created',
+  description: 'Fires when a customer is created.',
   aiMetadata: {
     description:
       'Fires when a new customer is created in Stripe (the customer.created event), emitting the new customer record. Use to react to customer onboarding, such as syncing them to a CRM or sending a welcome flow.',

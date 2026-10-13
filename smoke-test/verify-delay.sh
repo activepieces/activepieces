@@ -10,7 +10,7 @@ echo "Base URL:     $BASE_URL"
 echo "Poll Timeout: ${POLL_TIMEOUT}s"
 echo ""
 
-# Sign in with existing benchmark user (created by benchmark/setup.sh)
+# Sign in with existing benchmark user (created by benchmark/setup.ts)
 echo "--- Signing in ---"
 SIGNIN_RESPONSE=$(curl -s --fail-with-body "$API_URL/authentication/sign-in" \
   -H "Content-Type: application/json" \

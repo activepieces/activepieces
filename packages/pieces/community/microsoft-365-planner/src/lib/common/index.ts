@@ -41,7 +41,7 @@ export const microsoft365PlannerAuth = PieceAuth.OAuth2({
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
-  scope: ['Tasks.ReadWrite', 'User.Read', 'Group.Read.All'],
+  scope: ['Tasks.ReadWrite', 'User.Read', 'Group.Read.All', 'openid', 'email', 'profile'],
   prompt: 'omit',
 });
 

@@ -7,6 +7,7 @@ import { updateSectionActionOutputSchema } from '../output-schemas';
 export const todoistUpdateSectionAction = createAction({
   auth: todoistAuth,
   name: 'todoist_update_section',
+  classification: 'WRITE',
   displayName: 'Update Section',
   description: 'Rename an existing Todoist section.',
   audience: 'ai',

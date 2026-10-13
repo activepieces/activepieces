@@ -5,6 +5,7 @@ import { getClient } from '../common';
 import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCancelSubscriptionAi = createAction({
   name: 'cancel_subscription_ai',
+  classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Cancel Subscription (Agent)',
   description:

@@ -9,6 +9,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const sendCampaignAction = createAction({
   auth: senderAuth,
   name: 'send_campaign',
+  classification: 'WRITE',
   displayName: 'Send Campaign',
   description: 'Trigger sending of a drafted campaign to its recipient list',
   audience: 'both',

@@ -12,6 +12,7 @@ import { createFieldActionOutputSchema } from '../output-schemas';
 export const airtableCreateFieldAction = createAction({
   auth: airtableAuth,
   name: 'create_field',
+  classification: 'WRITE',
   displayName: 'Create Field (Agent)',
   description: 'Add a new field (column) to a table.',
   audience: 'ai',

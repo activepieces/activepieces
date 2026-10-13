@@ -15,12 +15,29 @@ import { requestActionActionOutputSchema } from '../output-schemas';
 export const requestActionDirectMessageAction = createAction({
   auth: slackAuth,
   name: 'request_action_direct_message',
+  classification: 'WRITE',
   displayName: 'Request Action from A User',
   description:
     'Send a message to a user and wait until the user selects an action',
   audience: 'both',
   aiMetadata: { description: 'Send a direct message with interactive buttons to a user and pause the flow until that user clicks one of the defined actions, then resume with their choice. Use this for a human-in-the-loop decision via DM; use Request Approval in a Channel for a simple approve/disapprove gate in a channel. Sends a new message each run, so it is not idempotent.', idempotent: false },
   outputSchema: requestActionActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['userId'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text', 'actions'],
+    },
+  ],
   props: {
     userId: userId(true),
     text,

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { promotionCodeOutputSchema } from '../output-schemas';
 export const stripeGetPromotionCode = createAction({
   name: 'get_promotion_code',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Promotion Code (Agent)',
   description: 'Retrieve a promotion code by its ID.',

@@ -311,7 +311,7 @@ export async function createGoogleClient(auth: GoogleSheetsAuthValue): Promise<O
 		});
 	}
 	const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    authClient.setCredentials({ access_token: auth.access_token });
 	return authClient;
 }
 
@@ -340,6 +340,7 @@ export const googleSheetsScopes = [
 	'https://www.googleapis.com/auth/spreadsheets',
 	'https://www.googleapis.com/auth/drive.readonly',
 	'https://www.googleapis.com/auth/drive',
+	'email',
   ]
 
 export const googleSheetsAuth =[PieceAuth.OAuth2({

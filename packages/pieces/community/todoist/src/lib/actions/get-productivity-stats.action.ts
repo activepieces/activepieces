@@ -13,6 +13,7 @@ const API = 'https://api.todoist.com/api/v1';
 export const todoistGetProductivityStatsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_get_productivity_stats',
+  classification: 'READ',
   displayName: 'Get Productivity Stats',
   description: 'Retrieves the authenticated user\'s Todoist productivity statistics.',
   audience: 'ai',

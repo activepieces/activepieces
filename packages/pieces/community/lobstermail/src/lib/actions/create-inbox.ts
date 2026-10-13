@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const createInbox = createAction({
   auth: lobstermailAuth,
   name: 'create_inbox',
+  classification: 'WRITE',
   displayName: 'Create Inbox',
   description: 'Create a new email inbox on LobsterMail.',
   audience: 'both',

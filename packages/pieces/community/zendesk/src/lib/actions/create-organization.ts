@@ -1,18 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { groupIdDropdown } from '../common/props';
+import { createOrganizationOutputSchema } from '../output-schemas';
 
 export const createOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'create-organization',
+  outputSchema: createOrganizationOutputSchema,
+  classification: 'WRITE',
   displayName: 'Create Organization',
   description: 'Create a new organization record.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new organization in Zendesk; the organization name is required and must be unique. Use to onboard a new company or account, optionally setting domain names, tags, group, shared-ticket/comment visibility, and custom organization fields. Not idempotent: each call creates a distinct organization, and a duplicate name will fail validation.', idempotent: false },
   props: {
     name: Property.ShortText({
@@ -60,13 +63,9 @@ export const createOrganizationAction = createAction({
         try {
           const authentication = auth;
           const response = await httpClient.sendRequest({
-            url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+            url: `${getZendeskBaseUrl(authentication)}/organization_fields.json`,
             method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: authentication.props.email + '/token',
-              password: authentication.props.token,
-            },
+            authentication: getZendeskAuthentication(authentication),
           });
 
           const fields = (response.body as { organization_fields: Array<{
@@ -231,13 +230,9 @@ export const createOrganizationAction = createAction({
     if (organization_fields && typeof organization_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+          url: `${getZendeskBaseUrl(authentication)}/organization_fields.json`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const fieldDefinitions = (fieldsResponse.body as { organization_fields: Array<{
@@ -274,16 +269,12 @@ export const createOrganizationAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organizations.json`,
+        url: `${getZendeskBaseUrl(authentication)}/organizations.json`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           organization,
         },

@@ -2,21 +2,26 @@ import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
+import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
+import { eventDestinationRpcHandlers } from '../../event-destinations/event-destinations-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { preWarmWorkersService } from '../../flows/pre-warm-workers'
+import { EMPTY_PREWARM_RESPONSE, preWarmWorkersService } from '../../flows/pre-warm-workers'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -25,6 +30,10 @@ import { triggerSourceService } from '../../trigger/trigger-source/trigger-sourc
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+
+const FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS = 60
+
+const getFlowBundlePublishClaimKey = (flowVersionId: string): string => `flow_bundle_publish_claim:${flowVersionId}`
 
 const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
     if (isNil(assignment)) {
@@ -47,8 +56,27 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
         message: 'App could not read its release version from package.json (reported as 0.0.0); worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)',
         params: { appVersion },
     }).catch((pageError) => {
-        log.error({ pageError }, '[workerRpc#poll] Failed to send on-call page for unreadable app version')
+        log.error({ pageError }, '[workerRpc] Failed to send on-call page for unreadable app version')
     })
+}
+
+function workerVersionIsCompatible({ log, workerVersion, workerId, rpcMethod }: WorkerVersionGateParams): boolean {
+    const appVersion = apVersionUtil.getCurrentRelease()
+    if (apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
+        return true
+    }
+    const versionUnreadable = workerVersion === UNKNOWN_VERSION || appVersion === UNKNOWN_VERSION
+    const logFields = { ...spreadIfDefined('worker', isNil(workerId) ? undefined : { id: workerId }), workerVersion, appVersion }
+    if (versionUnreadable) {
+        log.error(logFields, `[workerRpc#${rpcMethod}] Withholding work — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)`)
+    }
+    else {
+        log.warn(logFields, `[workerRpc#${rpcMethod}] Withholding work — worker version does not match app; worker will idle until upgraded`)
+    }
+    if (appVersion === UNKNOWN_VERSION) {
+        pageOnceForUnreadableAppVersion(log, appVersion)
+    }
+    return false
 }
 
 export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
@@ -56,19 +84,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, assignment)
-            const workerVersion = input.workerProps.version
-            const appVersion = apVersionUtil.getCurrentRelease()
-            if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
-                const versionUnreadable = workerVersion === UNKNOWN_VERSION || appVersion === UNKNOWN_VERSION
-                if (versionUnreadable) {
-                    log.error({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)')
-                }
-                else {
-                    log.warn({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
-                }
-                if (appVersion === UNKNOWN_VERSION) {
-                    pageOnceForUnreadableAppVersion(log, appVersion)
-                }
+            if (!workerVersionIsCompatible({ log, workerVersion: input.workerProps.version, workerId: input.workerId, rpcMethod: 'poll' })) {
                 return null
             }
             const pollQueueName = getPollQueueName(assignment)
@@ -102,23 +118,39 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const platformId = await projectService(log).getPlatformId(projectId)
             const filterPayloads = await dedupeService.filterUniquePayloads(flowVersionId, payloads)
 
+            const creditsExhausted = await shouldBlockRunOnCredits({
+                platformId,
+                environment,
+                log,
+            })
+
             const flowRuns = await Promise.all(
                 filterPayloads.map((payload) =>
-                    flowRunService(log).start({
-                        flowId: flowVersion.flowId,
-                        environment,
-                        flowVersionId,
-                        payload,
-                        projectId,
-                        platformId,
-                        httpRequestId,
-                        workerHandlerId: undefined,
-                        executionType: ExecutionType.BEGIN,
-                        streamStepProgress,
-                        executeTrigger: false,
-                        parentRunId,
-                        failParentOnFailure,
-                    }),
+                    creditsExhausted
+                        ? flowRunService(log).createQuotaExceededRun({
+                            flowVersion,
+                            payload,
+                            projectId,
+                            environment,
+                            parentRunId,
+                            failParentOnFailure,
+                            shouldExecuteTriggerOnRetry: false,
+                        })
+                        : flowRunService(log).start({
+                            flowId: flowVersion.flowId,
+                            environment,
+                            flowVersionId,
+                            payload,
+                            projectId,
+                            platformId,
+                            httpRequestId,
+                            workerHandlerId: undefined,
+                            executionType: ExecutionType.BEGIN,
+                            streamStepProgress,
+                            executeTrigger: false,
+                            parentRunId,
+                            failParentOnFailure,
+                        }),
                 ),
             )
             return flowRuns
@@ -171,7 +203,30 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getPrewarmData(input) {
+            if (!workerVersionIsCompatible({ log, workerVersion: input.workerVersion, rpcMethod: 'getPrewarmData' })) {
+                return EMPTY_PREWARM_RESPONSE
+            }
             return preWarmWorkersService(log).getPrewarmData(input)
+        },
+
+        async getPrewarmScopeFile(input) {
+            const file = await fileService(log).getFile({
+                fileId: input.fileId,
+                type: FileType.PREWARM_SCOPE,
+            })
+            if (isNil(file)) {
+                return null
+            }
+            if (signedFileTransport.isEnabled(file)) {
+                assertNotNullOrUndefined(file.s3Key, 's3Key')
+                const url = await s3Helper(log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
+                return { kind: 'url', url }
+            }
+            const { data } = await fileService(log).getDataOrThrow({
+                fileId: input.fileId,
+                type: FileType.PREWARM_SCOPE,
+            })
+            return { kind: 'inline', data }
         },
 
         async extendLock(input) {
@@ -218,6 +273,16 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (getLocationForFile(FileType.FLOW_BUNDLE) !== FileLocation.S3) {
                 return { kind: 'skip' }
             }
+            // The bundle for a flowVersionId is immutable, and a burst of workers can
+            // finish provisioning the same version at once. Only the first claimer
+            // publishes; losing the claim is a normal outcome, not an error. Without
+            // this, concurrent callers race the deterministic file PK (duplicate key
+            // on the file table) and hammer the same S3 key (503 Slow Down). The
+            // claim expires so a publish that died mid-upload gets retried.
+            const claimed = await distributedStore.putIfAbsent(getFlowBundlePublishClaimKey(input.flowVersionId), 1, FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS)
+            if (!claimed) {
+                return { kind: 'skip' }
+            }
             // S3 without signed URLs: the worker streams the bytes back via uploadFlowBundle.
             if (!signedFileTransport.shouldRedirectForType(FileType.FLOW_BUNDLE)) {
                 return { kind: 'inline' }
@@ -260,16 +325,18 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 return
             }
             const platformId = await projectService(log).getPlatformId(projectId)
-            await flowService(log).update({
+            const disabledFlow = await flowService(log).update({
                 id: flowId,
                 userId: null,
                 projectId,
                 platformId,
+                emitEvents: false,
                 operation: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: { status: FlowStatus.DISABLED },
                 },
             })
+            flowSideEffects(log).onDisabledByWorker({ flow: disabledFlow, projectId, platformId })
             log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 
@@ -294,12 +361,19 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentFile(input)
         },
 
+        async readAgentFile(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).readAgentFile(input)
+        },
+
         async updateAgentProgress(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).updateAgentProgress(input)
         },
 
         async heartbeatAgentConversation(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).heartbeatAgentConversation(input)
+        },
+        async agentCreditsLeft(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).agentCreditsLeft(input)
         },
 
         async updateProjectContext(input) {
@@ -312,8 +386,72 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeAgentTool(input)
         },
 
+        async executePieceTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executePieceTool(input)
+        },
+
+        async executeKnowledgeBaseTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executeKnowledgeBaseTool(input)
+        },
+
+        async executeFlowTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executeFlowTool(input)
+        },
+
+        async updateFlowStepProgress(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).updateFlowStepProgress(input)
+        },
+
+        async resolveAiProvider(input) {
+            return aiRpcHandlers(log).resolveAiProvider(input)
+        },
+        async resolveAiModelCandidates(input) {
+            return aiRpcHandlers(log).resolveAiModelCandidates(input)
+        },
+        async reportAiKeyOutcome(input) {
+            return aiRpcHandlers(log).reportAiKeyOutcome(input)
+        },
+        async resolveEventDestinationHeaders(input) {
+            return eventDestinationRpcHandlers(log).resolveEventDestinationHeaders(input)
+        },
+        async saveFlowStepFile(input) {
+            return aiRpcHandlers(log).saveFlowStepFile(input)
+        },
+        async readFlowStepFile(input) {
+            return aiRpcHandlers(log).readFlowStepFile(input)
+        },
+        async reportAiUsage(input) {
+            return aiRpcHandlers(log).reportAiUsage(input)
+        },
+        async resumeAiStep(input) {
+            return aiRpcHandlers(log).resumeAiStep(input)
+        },
+        async resumeFlowStep(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).resumeFlowStep(input)
+        },
+
         async sendAgentEmail(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
+        },
+
+        async getPersonalizationConfig(input) {
+            return chatPersonalizationService(log).getConfigForWorker(input)
+        },
+
+        async getPersonalizationPrefillConfig(input) {
+            return chatPersonalizationService(log).getPrefillConfigForWorker(input)
+        },
+
+        async savePersonalizationResult(input) {
+            return chatPersonalizationService(log).saveResult(input)
+        },
+
+        async savePersonalizationPrefill(input) {
+            return chatPersonalizationService(log).savePrefill(input)
+        },
+
+        async sendPersonalizationProgress(input) {
+            return chatPersonalizationService(log).sendProgress(input)
         },
     }
 }
@@ -327,4 +465,11 @@ function agentRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, run
         ...spreadIfDefined('platform', isNil(ids.platformId) ? undefined : { id: ids.platformId }),
         ...spreadIfDefined('user', isNil(ids.userId) ? undefined : { id: ids.userId }),
     })
+}
+
+type WorkerVersionGateParams = {
+    log: FastifyBaseLogger
+    workerVersion: string | undefined
+    workerId?: string
+    rpcMethod: string
 }

@@ -10,6 +10,7 @@ import {
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 import { PERSON_OPTIONAL_FIELDS } from '../common/constants';
+import { updatedPersonTriggerOutputSchema } from '../output-schemas';
 
 interface PipedrivePersonV2 {
 	id: number;
@@ -79,6 +80,8 @@ interface GetPersonResponseV2 {
 export const updatedPerson = createTrigger({
 	auth: pipedriveAuth,
 	name: 'updated_person',
+	outputSchema: updatedPersonTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'Updated Person',
 	description: 'Triggers when a person is updated.',
 	aiMetadata: {

@@ -6,6 +6,7 @@ import { driveUntrashFileOutputSchema } from '../output-schemas';
 export const driveUntrashFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_untrash_file',
+  classification: 'WRITE',
   displayName: 'Restore File from Trash',
   description: 'Restore a trashed Drive file by ID back to its original location.',
   audience: 'ai',

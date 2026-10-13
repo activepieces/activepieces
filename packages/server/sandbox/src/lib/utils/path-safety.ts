@@ -15,3 +15,18 @@ export function assertSafePathSegment(value: string, field: string): void {
         })
     }
 }
+
+export function assertSafeCodeNamespace(namespace: string): void {
+    const segments = namespace.split('/')
+    if (segments.length > MAX_CODE_NAMESPACE_DEPTH) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `Invalid code namespace: "${namespace}" exceeds ${MAX_CODE_NAMESPACE_DEPTH} segments` },
+        })
+    }
+    for (const segment of segments) {
+        assertSafePathSegment(segment, 'code namespace segment')
+    }
+}
+
+const MAX_CODE_NAMESPACE_DEPTH = 2

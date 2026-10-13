@@ -1,72 +1,76 @@
-import { AIProviderName } from '@activepieces/core-utils';
-import dayjs from 'dayjs';
+import { isNil } from '@activepieces/core-utils';
+import { PlatformUsage } from '@activepieces/shared';
 import { useCallback, useState } from 'react';
 
-import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-
-import { CreditsWarning } from './chat-types';
 
 const CREDITS_WARNING_THRESHOLD = 70;
 
 export function useCreditsState() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: providers } = aiProviderQueries.useAiProviders();
 
-  const [creditsExhausted, setCreditsExhausted] = useState(false);
+  const [streamCreditsExhausted, setStreamCreditsExhausted] = useState(false);
   const [warningDismissed, setWarningDismissed] = useState(false);
 
-  const creditsWarning = warningDismissed
-    ? null
-    : computeCreditsWarning({ platform, providers });
+  const creditsExhausted =
+    streamCreditsExhausted ||
+    hasExhaustedCredits({
+      usage: platform?.usage,
+      billingEnforced: platform?.billingEnforced,
+    });
 
-  const daysUntilReset = computeDaysUntilReset(
-    platform.plan.lastFreeAiCreditsRenewalDate,
-  );
+  const creditsPercentUsed = computeCreditsPercentUsed(platform?.usage);
+  const showLowCreditsWarning =
+    platform?.billingEnforced === true &&
+    !warningDismissed &&
+    !creditsExhausted &&
+    !isNil(creditsPercentUsed) &&
+    creditsPercentUsed >= CREDITS_WARNING_THRESHOLD;
 
   const dismissCreditsWarning = useCallback(() => {
     setWarningDismissed(true);
   }, []);
 
   return {
-    creditsWarning,
-    daysUntilReset,
+    creditsPercentUsed,
+    showLowCreditsWarning,
     creditsExhausted,
-    setCreditsExhausted,
+    setCreditsExhausted: setStreamCreditsExhausted,
     warningDismissed,
     dismissCreditsWarning,
   };
 }
 
-function computeCreditsWarning({
-  platform,
-  providers,
+function hasExhaustedCredits({
+  usage,
+  billingEnforced,
 }: {
-  platform: {
-    usage?: { totalAiCreditsUsed: number; aiCreditsLimit: number };
-  };
-  providers?: { provider: string; enabledForChat?: boolean }[];
-}): CreditsWarning | null {
-  const isActivepieces = providers?.some(
-    (p) => p.provider === AIProviderName.ACTIVEPIECES && p.enabledForChat,
-  );
-  if (
-    !isActivepieces ||
-    !platform.usage ||
-    platform.usage.aiCreditsLimit <= 0
-  ) {
-    return null;
+  usage: PlatformUsage | undefined;
+  billingEnforced: boolean | undefined;
+}): boolean {
+  if (isNil(usage)) {
+    return false;
   }
-  const { totalAiCreditsUsed, aiCreditsLimit } = platform.usage;
-  const percentage = Math.round((totalAiCreditsUsed / aiCreditsLimit) * 100);
-  if (percentage < CREDITS_WARNING_THRESHOLD) {
-    return null;
-  }
-  return { percentage };
+  const appSumoExhausted =
+    !isNil(usage.appSumoAiCreditsRemaining) &&
+    usage.appSumoAiCreditsRemaining <= 0;
+  const creditsExhausted =
+    billingEnforced === true &&
+    !isNil(usage.creditsRemaining) &&
+    usage.creditsRemaining <= 0;
+  return appSumoExhausted || creditsExhausted;
 }
 
-function computeDaysUntilReset(lastRenewalDate?: string | null): number | null {
-  if (!lastRenewalDate) return null;
-  const nextReset = dayjs(lastRenewalDate).add(1, 'month');
-  return Math.max(0, nextReset.diff(dayjs(), 'day'));
+function computeCreditsPercentUsed(
+  usage: PlatformUsage | undefined,
+): number | null {
+  if (isNil(usage) || isNil(usage.creditsRemaining)) {
+    return null;
+  }
+  const { creditsUsed, creditsRemaining } = usage;
+  const total = creditsUsed + creditsRemaining;
+  if (total <= 0) {
+    return null;
+  }
+  return Math.round((creditsUsed / total) * 100);
 }

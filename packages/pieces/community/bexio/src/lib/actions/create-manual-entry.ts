@@ -7,6 +7,7 @@ import { BexioManualEntry, BexioManualEntryResponse } from '../common/types';
 export const createManualEntryAction = createAction({
   auth: bexioAuth,
   name: 'create_manual_entry',
+  classification: 'WRITE',
   displayName: 'Create Manual Entry',
   description: 'Create a manual accounting entry (single, compound, or group)',
   audience: 'both',

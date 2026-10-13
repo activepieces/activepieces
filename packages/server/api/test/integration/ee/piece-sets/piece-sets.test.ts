@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { PieceSelectionMode, PieceSet, PrincipalType } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSet, PrincipalType, RequiredActionsMode } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -41,7 +41,7 @@ async function setupPlatformWithoutPieceSets() {
     return { mockOwner, mockPlatform, token }
 }
 
-const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {}, requiredActions: { mode: RequiredActionsMode.ANY, actions: {} } }
 
 describe('Piece Sets API', () => {
     describe('Feature Gate', () => {
@@ -87,6 +87,48 @@ describe('Piece Sets API', () => {
             const body = response.json()
             expect(body.data.length).toBe(1)
             expect(body.data[0].name).toBe('My Set')
+        })
+
+        it('paginates forward and back with cursors', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            for (let i = 0; i < 5; i++) {
+                await app!.inject({
+                    method: 'POST',
+                    url: '/api/v1/piece-sets',
+                    headers: { authorization: `Bearer ${token}` },
+                    body: { name: `Set ${i}` },
+                })
+            }
+
+            const firstPage = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets?limit=2',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(firstPage.statusCode).toBe(StatusCodes.OK)
+            const firstBody = firstPage.json()
+            expect(firstBody.data.length).toBe(2)
+            expect(firstBody.next).not.toBeNull()
+
+            const secondPage = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets?limit=2&cursor=${encodeURIComponent(firstBody.next)}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(secondPage.statusCode).toBe(StatusCodes.OK)
+            const secondBody = secondPage.json()
+            expect(secondBody.data.length).toBe(2)
+            expect(secondBody.previous).not.toBeNull()
+            expect(secondBody.data.map((s: PieceSet) => s.id)).not.toEqual(firstBody.data.map((s: PieceSet) => s.id))
+
+            const backToFirstPage = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets?limit=2&cursor=${encodeURIComponent(secondBody.previous)}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(backToFirstPage.statusCode).toBe(StatusCodes.OK)
+            const backBody = backToFirstPage.json()
+            expect(backBody.data.map((s: PieceSet) => s.id)).toEqual(firstBody.data.map((s: PieceSet) => s.id))
         })
     })
 

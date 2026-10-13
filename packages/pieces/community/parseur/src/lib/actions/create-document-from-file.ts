@@ -5,6 +5,7 @@ import { parserDropdown } from '../common/properties';
 export const createDocumentFromFile = createAction({
   auth: parseurAuth,
   name: 'createDocumentFromFile',
+  classification: 'WRITE',
   displayName: 'Create Document from File',
   description: 'Creates new document in mailbox from file.',
   audience: 'both',

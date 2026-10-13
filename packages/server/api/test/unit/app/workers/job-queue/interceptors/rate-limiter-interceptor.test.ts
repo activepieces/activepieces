@@ -3,12 +3,13 @@ import { Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getConcurrencyPoolLimitKey, getConcurrencyPoolSetKey, getPlatformPlanNameKey, getProjectConcurrencyPoolKey } from '../../../../../../src/app/database/redis/keys'
+import { getConcurrencyPoolLimitKey, getConcurrencyPoolParkedKey, getConcurrencyPoolSetKey, getPlatformPlanNameKey, getProjectConcurrencyPoolKey } from '../../../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../../../src/app/database/redis-connections'
 import { system } from '../../../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../../../src/app/helper/system/system-props'
 import { rateLimiterInterceptor } from '../../../../../../src/app/workers/job-queue/interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict } from '../../../../../../src/app/workers/job-queue/job-interceptor'
+import { jobQueue } from '../../../../../../src/app/workers/job-queue/job-queue'
 
 const mockLog: FastifyBaseLogger = {
     debug: vi.fn(),
@@ -42,7 +43,7 @@ function createFlowJobData(overrides?: Record<string, unknown>) {
 }
 
 function createMockJob(overrides?: Record<string, unknown>) {
-    return { attemptsMade: 0, ...overrides } as unknown as Job
+    return { attemptsMade: 0, queueName: 'rate-limit-test-queue', ...overrides } as unknown as Job
 }
 
 function enableRateLimiter() {
@@ -79,6 +80,7 @@ describe('rateLimiterInterceptor', () => {
 
         const redis = await redisConnections.useExisting()
         await deleteKeysByPattern(redis, 'active_jobs_set:*')
+        await deleteKeysByPattern(redis, 'parked_jobs_set:*')
         await deleteKeysByPattern(redis, 'project:max-concurrent-jobs:*')
         await deleteKeysByPattern(redis, 'platform_plan:plan:*')
         await deleteKeysByPattern(redis, 'project:concurrency-pool:*')
@@ -351,8 +353,8 @@ describe('rateLimiterInterceptor', () => {
             const platformId = `plat-${crypto.randomUUID()}`
             const jobData = createFlowJobData({ platformId })
 
-            // Set plan to STANDARD (limit=5)
-            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.STANDARD)
+            // Set plan to FREE (limit=5)
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
 
             // Fill 5 slots
             for (let i = 0; i < 5; i++) {
@@ -362,6 +364,56 @@ describe('rateLimiterInterceptor', () => {
 
             // 6th should be rejected
             const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-6', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.REJECT)
+        })
+
+        it.each([
+            [PlanName.PLUS, 15],
+            [PlanName.PLUS_ANNUAL, 15],
+            [PlanName.PLUS_CHAT, 15],
+            [PlanName.TEAM, 15],
+            [PlanName.TEAM_ANNUAL, 15],
+            [PlanName.APPSUMO, 15],
+            [PlanName.ENTERPRISE, 30],
+        ])('should allow %s up to %i concurrent jobs and reject beyond it', async (planName, limit) => {
+            vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
+                return 0
+            })
+            const platformId = `plat-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ platformId })
+
+            await distributedStore.put(getPlatformPlanNameKey(platformId), planName)
+
+            for (let i = 0; i < limit; i++) {
+                const r = await rateLimiterInterceptor.preDispatch({ jobId: `job-${i}`, jobData, job: createMockJob(), log: mockLog })
+                expect(r.verdict).toBe(InterceptorVerdict.ALLOW)
+            }
+
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-overflow', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.REJECT)
+        })
+
+        it('should treat an unrecognised (legacy or bespoke) plan id as enterprise', async () => {
+            vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
+                return 0
+            })
+            const platformId = `plat-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ platformId })
+
+            await distributedStore.put(getPlatformPlanNameKey(platformId), 'old_embed_enterprise')
+
+            for (let i = 0; i < 30; i++) {
+                const r = await rateLimiterInterceptor.preDispatch({ jobId: `job-${i}`, jobData, job: createMockJob(), log: mockLog })
+                expect(r.verdict).toBe(InterceptorVerdict.ALLOW)
+            }
+
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-overflow', jobData, job: createMockJob(), log: mockLog })
             expect(result.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
@@ -375,8 +427,8 @@ describe('rateLimiterInterceptor', () => {
             const platformId = `plat-${crypto.randomUUID()}`
             const jobData = createFlowJobData({ platformId })
 
-            // Set plan to STANDARD — should be ignored on COMMUNITY
-            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.STANDARD)
+            // Set plan to FREE — should be ignored on COMMUNITY
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
 
             // Should use default (100), so 6 jobs should all pass
             for (let i = 0; i < 6; i++) {
@@ -581,6 +633,117 @@ describe('rateLimiterInterceptor', () => {
             const members = await redis.zrange(getConcurrencyPoolSetKey(poolId), 0, -1)
             expect(members).toHaveLength(1)
             expect(members[0]).toBe(`${projectId}:job-1`)
+        })
+    })
+
+    describe('parked job promotion', () => {
+        beforeEach(() => {
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
+                return 0
+            })
+        })
+
+        it('parks a rejected job in the pool parked set', async () => {
+            const jobData = createFlowJobData()
+            await rateLimiterInterceptor.preDispatch({ jobId: 'filler', jobData, job: createMockJob(), log: mockLog })
+
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'parked-1', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.REJECT)
+
+            const redis = await redisConnections.useExisting()
+            const members = await redis.zrange(getConcurrencyPoolParkedKey(jobData.projectId), 0, -1)
+            expect(members).toEqual([JSON.stringify(['rate-limit-test-queue', 'parked-1', JOB_PRIORITY.medium])])
+        })
+
+        it('removes the parked entry when the job later acquires a slot', async () => {
+            const jobData = createFlowJobData()
+            await rateLimiterInterceptor.preDispatch({ jobId: 'filler', jobData, job: createMockJob(), log: mockLog })
+            await rateLimiterInterceptor.preDispatch({ jobId: 'parked-1', jobData, job: createMockJob(), log: mockLog })
+
+            const redis = await redisConnections.useExisting()
+            await redis.del(getConcurrencyPoolSetKey(jobData.projectId))
+
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'parked-1', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.ALLOW)
+
+            const members = await redis.zrange(getConcurrencyPoolParkedKey(jobData.projectId), 0, -1)
+            expect(members).toHaveLength(0)
+        })
+
+        it('promotes a parked delayed job at its default priority when a slot releases', async () => {
+            const queueName = `rate-limit-promote-${crypto.randomUUID()}`
+            const queue = await jobQueue(mockLog).getOrCreateQueue({ queueName })
+            const jobData = createFlowJobData()
+            await queue.add('parked-1', jobData, { jobId: 'parked-1', delay: 300_000, priority: JOB_PRIORITY.lowest })
+
+            await rateLimiterInterceptor.preDispatch({ jobId: 'filler', jobData, job: createMockJob({ queueName }), log: mockLog })
+            const rejected = await rateLimiterInterceptor.preDispatch({ jobId: 'parked-1', jobData, job: createMockJob({ queueName }), log: mockLog })
+            expect(rejected.verdict).toBe(InterceptorVerdict.REJECT)
+
+            await rateLimiterInterceptor.onJobFinished({ jobId: 'filler', jobData, log: mockLog })
+
+            const promoted = await queue.getJob('parked-1')
+            expect(promoted).toBeDefined()
+            expect(await promoted?.getState()).not.toBe('delayed')
+            expect(promoted?.priority).toBe(JOB_PRIORITY.medium)
+
+            const redis = await redisConnections.useExisting()
+            const members = await redis.zrange(getConcurrencyPoolParkedKey(jobData.projectId), 0, -1)
+            expect(members).toHaveLength(0)
+
+            await queue.obliterate({ force: true })
+        })
+
+        it('drops stale parked entries and still promotes a valid one', async () => {
+            const queueName = `rate-limit-stale-${crypto.randomUUID()}`
+            const queue = await jobQueue(mockLog).getOrCreateQueue({ queueName })
+            const jobData = createFlowJobData()
+            await queue.add('parked-1', jobData, { jobId: 'parked-1', delay: 300_000, priority: JOB_PRIORITY.lowest })
+
+            await rateLimiterInterceptor.preDispatch({ jobId: 'filler', jobData, job: createMockJob({ queueName }), log: mockLog })
+            await rateLimiterInterceptor.preDispatch({ jobId: 'parked-1', jobData, job: createMockJob({ queueName }), log: mockLog })
+
+            const redis = await redisConnections.useExisting()
+            const parkedKey = getConcurrencyPoolParkedKey(jobData.projectId)
+            await redis.zadd(parkedKey, 1, 'not-json')
+            await redis.zadd(parkedKey, 2, JSON.stringify([queueName, 'missing-job', JOB_PRIORITY.medium]))
+
+            await rateLimiterInterceptor.onJobFinished({ jobId: 'filler', jobData, log: mockLog })
+
+            const promoted = await queue.getJob('parked-1')
+            expect(await promoted?.getState()).not.toBe('delayed')
+            expect(await redis.zcard(parkedKey)).toBe(0)
+
+            await queue.obliterate({ force: true })
+        })
+
+        it('pops at most three parked entries per release', async () => {
+            const jobData = createFlowJobData()
+            await rateLimiterInterceptor.preDispatch({ jobId: 'filler', jobData, job: createMockJob(), log: mockLog })
+
+            const redis = await redisConnections.useExisting()
+            const parkedKey = getConcurrencyPoolParkedKey(jobData.projectId)
+            for (let i = 0; i < 4; i++) {
+                await redis.zadd(parkedKey, i, `garbage-${i}`)
+            }
+
+            await rateLimiterInterceptor.onJobFinished({ jobId: 'filler', jobData, log: mockLog })
+
+            expect(await redis.zcard(parkedKey)).toBe(1)
+        })
+
+        it('does not touch the parked set when rate limiter is disabled', async () => {
+            disableRateLimiter()
+            const jobData = createFlowJobData()
+            const redis = await redisConnections.useExisting()
+            const parkedKey = getConcurrencyPoolParkedKey(jobData.projectId)
+            await redis.zadd(parkedKey, Date.now(), 'entry')
+
+            await rateLimiterInterceptor.onJobFinished({ jobId: 'job-1', jobData, log: mockLog })
+
+            expect(await redis.zcard(parkedKey)).toBe(1)
         })
     })
 })

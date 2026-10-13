@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findCdrAction = createAction({
     auth: connectucAuth,
     name: 'find-cdr',
+    classification: 'READ',
     displayName: 'Find CDR',
     description: 'Find a Call Detail Record (CDR) by original call ID',
     audience: 'both',

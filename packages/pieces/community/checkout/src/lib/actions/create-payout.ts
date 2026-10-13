@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createPayoutAction = createAction({
   name: 'create_payment',
+  classification: 'WRITE',
   auth: checkoutComAuth,
   displayName: 'Create Payment',
   description: 'Process and manage payments from various sources including card payments and payouts.',

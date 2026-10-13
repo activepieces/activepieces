@@ -57,8 +57,9 @@ async function enrichGmailMessage({
 export const gmailNewLabeledEmailTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_labeled_email',
+  classification: 'READ',
   displayName: 'New Labeled Email',
-  description: 'Triggers when a label is added to an email',
+  description: 'Triggers when this label is added to an email.',
   aiMetadata: {
     description:
       'Fires when the specified label is applied to an email (either newly received with the label or labeled afterward). Each event represents one message that just gained that label, with its parsed contents and label info.',
@@ -66,6 +67,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
   props: {
     label: GmailProps.label({
       required: true,
+      description: 'Emails that receive this label start the flow.',
     }),
   },
   outputSchema: newLabeledEmailTriggerOutputSchema,

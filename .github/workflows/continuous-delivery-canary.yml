@@ -3,12 +3,23 @@ name: Continuous Delivery — Canary
 on:
   workflow_dispatch:
   workflow_call:
-  # schedule:
-    # - cron: '0 9 * * *'  # Daily 9 AM UTC — scheduled runs always use the default branch,
-    #                        so this reverted canary to main and undid branch deployments
+    inputs:
+      image_tag:
+        description: 'Deploy this already-built tag instead of building a new image'
+        type: string
+        required: false
+        default: ''
+      skip_migration_check:
+        description: 'Deploy even when a pending migration is marked breaking'
+        type: boolean
+        required: false
+        default: false
+  schedule:
+    - cron: '0 9 * * *'  # Daily 9 AM UTC — scheduled runs always use the default branch
 
 jobs:
   build-image:
+    if: ${{ !inputs.image_tag }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -55,6 +66,10 @@ jobs:
 
   check-migrations:
     needs: build-image
+    if: |
+      always() &&
+      needs.build-image.result != 'failure' &&
+      inputs.skip_migration_check != true
     runs-on: ubuntu-latest
     outputs:
       has_breaking: ${{ steps.check.outputs.has_breaking }}
@@ -115,10 +130,18 @@ jobs:
 
   deploy-canary:
     needs: [build-image, check-migrations]
+    if: |
+      always() &&
+      needs.build-image.result != 'failure' &&
+      needs.check-migrations.result != 'failure'
     runs-on: ubuntu-latest
     environment:
       name: canary
     steps:
+      - name: Resolve image tag
+        id: image
+        run: echo "image_tag=${{ inputs.image_tag || needs.build-image.outputs.image_tag }}" >> $GITHUB_OUTPUT
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -138,9 +161,9 @@ jobs:
 
       - name: Deploy canary app
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
 
       - name: Deploy canary workers
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
 

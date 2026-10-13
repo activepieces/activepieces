@@ -1,11 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { flattenObject, youtrackApiCall } from '../common';
+import { createTagActionOutputSchema } from '../output-schemas';
 
 export const createTagAction = createAction({
   auth: youtrackAuth,
   name: 'create_tag',
+  classification: 'WRITE',
+  outputSchema: createTagActionOutputSchema,
   displayName: 'Create Tag',
   description: 'Creates a new tag in YouTrack.',
   audience: 'both',

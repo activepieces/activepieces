@@ -1,14 +1,17 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, pieceSetConfigUtil, requiredActionsUtil, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, QueryFailedError } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
+import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { distributedLock } from '../../../database/redis-connections'
-import { pieceSetConfig } from './piece-set-config'
+import { buildPaginator } from '../../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { projectRepo } from '../../../project/project-repo'
 import { PieceSetEntity } from './piece-set.entity'
 
-export const pieceSetRepo = repoFactory<PieceSet>(PieceSetEntity)
+export const pieceSetRepo = repoFactory(PieceSetEntity)
 
 const MAX_PIECE_SET_PAGE_SIZE = 100
 
@@ -42,6 +45,11 @@ type DeleteParams = {
     platformId: string
 }
 
+type GetForProjectParams = {
+    projectId: string
+    platformId: string
+}
+
 type AssignProjectParams = {
     pieceSet: PieceSet
     projectId: string
@@ -67,37 +75,35 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 const existing = await pieceSetRepo().findOneBy({ platformId, isDefault: true })
                 if (!isNil(existing)) return existing
 
-                await pieceSetRepo().save(pieceSetConfig.buildDefaultSet(platformId))
+                await pieceSetRepo().save(pieceSetConfigUtil.buildDefaultSet(platformId))
                 return pieceSetRepo().findOneByOrFail({ platformId, isDefault: true })
             },
         })
     },
 
+    async getForProject({ projectId, platformId }: GetForProjectParams): Promise<PieceSet> {
+        const project = await projectRepo().findOneBy({ id: projectId, platformId })
+        const pieceSetId = project?.pieceSetId ?? null
+        const assigned = isNil(pieceSetId) ? null : await pieceSetRepo().findOneBy({ id: pieceSetId, platformId })
+        return isNil(assigned) ? this.getOrCreateDefaultPieceSet(platformId) : assigned
+    },
+
     async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
         const boundedLimit = Math.min(limit, MAX_PIECE_SET_PAGE_SIZE)
-        const qb = pieceSetRepo()
-            .createQueryBuilder('ps')
-            .where('ps.platformId = :platformId', { platformId })
-            .orderBy('ps.created', 'ASC')
-            .addOrderBy('ps.id', 'ASC')
-            .take(boundedLimit + 1)
-
-        if (cursor) {
-            qb.andWhere(
-                '(ps.created, ps.id) > (SELECT created, id FROM piece_set WHERE id = :cursorId AND "platformId" = :platformId)',
-                { cursorId: cursor, platformId },
-            )
-        }
-
-        const rows = await qb.getMany()
-        const hasMore = rows.length > boundedLimit
-        const data = hasMore ? rows.slice(0, boundedLimit) : rows
-
-        return {
-            data,
-            next: hasMore ? data[data.length - 1].id : null,
-            previous: cursor ? data[0]?.id ?? null : null,
-        }
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
+        const paginator = buildPaginator({
+            entity: PieceSetEntity,
+            query: {
+                limit: boundedLimit,
+                order: 'ASC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+        const { data, cursor: newCursor } = await paginator.paginate(
+            pieceSetRepo().createQueryBuilder('piece_set').where({ platformId }),
+        )
+        return paginationHelper.createPage<PieceSet>(data, newCursor)
     },
 
     async getOne({ id, platformId }: GetOneParams): Promise<PieceSet> {
@@ -120,7 +126,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             key: resolveKey({ key, name }),
             isDefault,
             generatedForProjectId,
-            config: config ?? pieceSetConfig.emptyConfig(),
+            config: config ?? pieceSetConfigUtil.emptyConfig(),
         }))
         if (error) {
             rethrowKeyConflict(error)
@@ -131,7 +137,14 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     async update({ id, platformId, request }: UpdateParams): Promise<PieceSet> {
         const existing = await this.getOne({ id, platformId })
 
-        const updatedConfig = pieceSetConfig.applyUpdate({ current: existing.config, request })
+        const updatedConfig = pieceSetConfigUtil.applyUpdate({ current: existing.config, request })
+        const excludedRequired = requiredActionsUtil.findExcludedRequiredActions({ config: updatedConfig, requiredActions: request.requiredActions?.actions ?? {} })
+        if (Object.keys(excludedRequired).length > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: requiredActionsUtil.buildExcludedRequiredActionsErrorMessage(excludedRequired) },
+            })
+        }
 
         const { error } = await tryCatch(() => pieceSetRepo().update({ id, platformId }, {
             ...spreadIfDefined('name', request.name),
@@ -227,8 +240,7 @@ function resolveKey({ key, name }: { key?: string | null, name: string }): strin
 }
 
 function rethrowKeyConflict(error: unknown): never {
-    const driverError: unknown = error instanceof QueryFailedError ? error.driverError : undefined
-    if (typeof driverError === 'object' && driverError !== null && 'code' in driverError && driverError.code === '23505') {
+    if (isUniqueViolation(error)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: 'Piece set key already used' },

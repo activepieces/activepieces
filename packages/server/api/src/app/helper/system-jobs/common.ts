@@ -1,38 +1,28 @@
-import { FlowId, FlowRunId, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
+import { FlowId, FlowRunId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { Flow } from '@activepieces/shared'
-import { Job, JobsOptions } from 'bullmq'
+import { Job, JobsOptions, JobState } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
-    TRIAL_TRACKER = 'trial-tracker',
     RUN_TELEMETRY = 'run-telemetry',
     DELETE_FLOW = 'delete-flow',
-    AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
     HARD_DELETE_PROJECT = 'hard-delete-project',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
-    FLOW_RUN_TRACKING = 'flow-run-tracking',
+    BILLING_USAGE_REPORT = 'billing-usage-report',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
-    BUNDLE_PIECE = 'bundle-piece',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
-}
-
-type BundlePieceSystemJobData = {
-    name: string
-    version: string
+    WAITPOINT_DEADLINE_SWEEP = 'waitpoint-deadline-sweep',
+    RUN_BACKGROUND_MIGRATIONS = 'run-background-migrations',
+    AUDIT_LOG_RETENTION = 'audit-log-retention',
 }
 
 type DeleteFlowDurableSystemJobData =  {
     flow: Flow
     preDeleteDone: boolean
-}
-
-type AiCreditUpdateCheckSystemJobData = {
-    apiKeyHash: string
-    platformId: string
 }
 
 type HardDeleteProjectSystemJobData = {
@@ -43,8 +33,6 @@ type HardDeleteProjectSystemJobData = {
 
 type HardDeletePlatformSystemJobData = {
     platformId: PlatformId
-    userId: UserId
-    identityId: string
 }
 
 type ResumeDelayWaitpointSystemJobData = {
@@ -64,16 +52,16 @@ type SystemJobDataMap = {
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
-    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
-    [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
-    [SystemJobName.FLOW_RUN_TRACKING]: Record<string, never>
+    [SystemJobName.BILLING_USAGE_REPORT]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
-    [SystemJobName.BUNDLE_PIECE]: BundlePieceSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
+    [SystemJobName.WAITPOINT_DEADLINE_SWEEP]: Record<string, never>
+    [SystemJobName.RUN_BACKGROUND_MIGRATIONS]: Record<string, never>
+    [SystemJobName.AUDIT_LOG_RETENTION]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -107,7 +95,18 @@ type UpsertJobParams<T extends SystemJobName> = {
 export type SystemJobSchedule = {
     init(): Promise<void>
     startWorker(): Promise<void>
-    upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
+    upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<UpsertJobResult>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
+    getJobState(jobId: string): Promise<JobState | 'unknown'>
+    removeJob(params: { jobId: string }): Promise<void>
     close(): Promise<void>
+}
+
+export const systemJobIds = {
+    resumeDelay: ({ waitpointId }: { waitpointId: string }): string => `resume-delay-${waitpointId}`,
+    legacyResumeDelay: ({ flowRunId }: { flowRunId: FlowRunId }): string => `resume-delay-${flowRunId}`,
+}
+
+export type UpsertJobResult = {
+    status: 'added' | 'kept' | 'retried' | 'scheduler-upserted'
 }

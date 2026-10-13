@@ -99,6 +99,7 @@ const identifyAutomationOpportunities = (data: any): string[] => {
 export const mailChimpEmailOpenedTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'email_opened',
+  classification: 'READ',
   displayName: 'Email Opened',
   description: 'Fires when a recipient opens a an email in a specific campaign',
   aiMetadata: {

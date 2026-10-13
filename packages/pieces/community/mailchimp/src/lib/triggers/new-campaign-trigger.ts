@@ -51,6 +51,7 @@ const assessDeliveryStatus = (data: any): string => {
 export const mailChimpNewCampaignTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_campaign',
+  classification: 'READ',
   displayName: 'New Campaign',
   description: 'Fires when a new campaign is created or sent',
   aiMetadata: {

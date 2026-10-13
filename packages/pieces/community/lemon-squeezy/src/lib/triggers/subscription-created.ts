@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionCreatedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_created',
+  classification: 'READ',
   displayName: 'Subscription Created',
   description: 'Triggers when a new subscription is successfully created',
   aiMetadata: {

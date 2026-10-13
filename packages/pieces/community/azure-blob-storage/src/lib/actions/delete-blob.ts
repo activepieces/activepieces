@@ -6,6 +6,7 @@ import { containerProp } from '../common';
 export const deleteBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'deleteBlob',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Blob',
   description: 'Deletes the Blob at the specified location',
   audience: 'both',

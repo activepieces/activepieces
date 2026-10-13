@@ -7,12 +7,13 @@ import { searchGoogleShoppingOutputSchema } from '../output-schemas';
 export const searchGoogleShopping = createAction({
   auth: serpApiAuth,
   name: 'search_google_shopping',
+  classification: 'SEARCH',
   displayName: 'Search Google Shopping',
   description: 'Find products on Google Shopping for a query.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Google Shopping via SerpApi for products matching a query, returning results in `shopping_results` (title, price, merchant/source, rating, product_id, link). Use to compare product prices across merchants or research products. Paginate with Start (preferred on this engine). Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search Google Shopping for products matching a query, to compare prices, merchants, and ratings across stores. Use for product research or price comparison before buying. Paginate with Start (preferred on this engine).',
     idempotent: true,
   },
   outputSchema: searchGoogleShoppingOutputSchema,

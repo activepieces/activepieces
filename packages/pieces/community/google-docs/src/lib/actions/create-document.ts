@@ -6,7 +6,8 @@ import { createDocumentActionOutputSchema } from '../output-schemas';
 export const createDocument = createAction({
   auth: googleDocsAuth,
   name: 'create_document',
-  description: 'Create a document on Google Docs',
+  classification: 'WRITE',
+  description: 'Create a document on Google Docs.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -14,6 +15,22 @@ export const createDocument = createAction({
     idempotent: false,
   },
   displayName: 'Create Document',
+  propertyGroups: [
+    {
+      key: 'document',
+      display: 'section',
+      label: 'Document',
+      icon: 'file',
+      props: ['title'],
+    },
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'text',
+      props: ['body'],
+    },
+  ],
   props: {
     title: docsCommon.title,
     body: docsCommon.body,

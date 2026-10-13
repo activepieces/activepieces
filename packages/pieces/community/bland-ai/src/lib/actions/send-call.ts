@@ -6,6 +6,7 @@ import { blandApiCall } from '../common/client';
 export const sendCall = createAction({
   auth: blandAiAuth,
   name: 'send_call',
+  classification: 'WRITE',
   displayName: 'Send Call',
   description: 'Initiate an AI phone call to a recipient.',
   audience: 'both',

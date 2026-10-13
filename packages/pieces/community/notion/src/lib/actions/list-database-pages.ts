@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
@@ -9,10 +13,10 @@ const MAX_LIMIT = 100;
 export const listDatabasePages = createAction({
   auth: notionAuth,
   name: 'list_database_pages',
+  classification: 'SEARCH',
   displayName: 'List Pages',
-  description:
-    'Lists pages in a Notion database with optional field filters and pagination.',
-  audience: 'both',
+  description: 'List pages in a database, optionally filtered by field values.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Queries pages in a specific Notion database, optionally filtering by property values (combined with AND), and returns paginated results. Use when an agent needs to browse or enumerate database records rather than find a single item; requires database_id. Idempotent read-only lookup.',
@@ -24,12 +28,22 @@ export const listDatabasePages = createAction({
       displayName: 'Limit',
       required: false,
       defaultValue: DEFAULT_LIMIT,
-      description: `Number of pages to return (1-${MAX_LIMIT}).`,
+      description: 'How many pages to return, up to 100.',
+      display: 'stepper',
+      min: 1,
+      max: MAX_LIMIT,
+      step: 1,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
       required: false,
-      description: 'Pagination cursor from a previous run.',
+      description: "Next-page cursor from a previous run's output.",
+      advanced: true,
+    }),
+    filter_hint: Property.MarkDown({
+      value:
+        'Pick a database, then fill any of its fields below to filter. Empty fields are ignored.',
+      variant: MarkdownVariant.INFO,
     }),
     filterDatabaseFields: notionCommon.filterDatabaseFields,
   },

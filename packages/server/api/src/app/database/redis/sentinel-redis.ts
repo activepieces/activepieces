@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import Redis, { RedisOptions } from 'ioredis'
+import { baseRedisOptions } from './redis-options'
 import { RedisConnectionSettings } from './types'
 
 export async function createSentinelRedisConnection(settings: RedisConnectionSettings): Promise<Redis> {
@@ -24,7 +25,7 @@ export async function createSentinelRedisConnection(settings: RedisConnectionSet
     const tlsCa = readCAFile(sslCaFile)
     
     const redisOptions: RedisOptions = {
-        maxRetriesPerRequest: null,
+        ...baseRedisOptions,
         sentinels,
         name: sentinelName,
         username,

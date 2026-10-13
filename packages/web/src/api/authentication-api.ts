@@ -2,6 +2,8 @@ import { ProjectRole } from '@activepieces/core-utils';
 import {
   CreateOtpRequestBody,
   GetCurrentProjectMemberRoleQuery,
+  CompleteSignUpRequest,
+  RequestEmailCodeRequest,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
   AuthenticationResponse,
@@ -12,6 +14,7 @@ import {
   SwitchPlatformRequest,
   ThirdPartyAuthnProviderEnum,
   UserIdentity,
+  VerifyEmailCodeRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -40,6 +43,21 @@ export const authenticationApi = {
   claimThirdPartyRequest(request: ClaimTokenRequest) {
     return api.post<AuthenticationResponse>(
       '/v1/authn/federated/claim',
+      request,
+    );
+  },
+  requestEmailCode(request: RequestEmailCodeRequest) {
+    return api.post<void>('/v1/authentication/otp/request', request);
+  },
+  completeSignUp(request: CompleteSignUpRequest) {
+    return api.post<AuthenticationResponse>(
+      '/v1/authentication/complete-sign-up',
+      request,
+    );
+  },
+  verifyEmailCode(request: VerifyEmailCodeRequest) {
+    return api.post<AuthenticationResponse>(
+      '/v1/authentication/otp/verify',
       request,
     );
   },

@@ -10,6 +10,7 @@ import customHtmlPlugin from './vite-plugins/html-plugin';
 
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
+  const emitSourcemap = process.env.AP_BUILD_SOURCEMAP === 'true';
 
   const AP_TITLE = 'Activepieces';
   const AP_FAVICON = 'https://activepieces.com/favicon.ico';
@@ -76,6 +77,14 @@ export default defineConfig(({ command, mode }) => {
           },
         },
         '/revoke': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
+        },
+        '/userinfo': {
           target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
@@ -156,7 +165,7 @@ export default defineConfig(({ command, mode }) => {
       outDir: '../../dist/packages/web',
       emptyOutDir: true,
       reportCompressedSize: true,
-      sourcemap: 'hidden',
+      sourcemap: emitSourcemap ? 'hidden' : false,
       commonjsOptions: {
         transformMixedEsModules: true,
       },

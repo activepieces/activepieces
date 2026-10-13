@@ -1,35 +1,53 @@
 import { ChildProcess } from 'child_process'
 import { EventEmitter } from 'node:events'
+import { Server as HttpServer } from 'node:http'
+import { createServer as createNetServer } from 'node:net'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { EngineResponseStatus } from '@activepieces/shared'
+import { type ApLogger } from '@activepieces/server-utils'
+import { ApEnvironment, EngineResponseStatus, ExecutionMode, NetworkMode } from '@activepieces/shared'
+import { createSandboxForJob } from '../../../src/lib/create-sandbox-for-job'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
-import { Sandbox, SandboxLogger, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
+import { Sandbox, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
+import { SandboxSettings } from '../../../src/lib/types'
 
-const { treeKillMock } = vi.hoisted(() => ({
+const { treeKillMock, isolateProcessMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
+    isolateProcessMock: vi.fn(),
 }))
 
 vi.mock('tree-kill', () => ({
     default: treeKillMock,
 }))
 
+vi.mock('../../../src/lib/sandbox/isolate', () => ({
+    isolateProcess: isolateProcessMock,
+}))
+
 vi.mock('../../../src/lib/cache/cache-paths', () => ({
     cacheUtils: vi.fn(() => ({
         getGlobalCachePathLatestVersion: vi.fn(() => '/tmp/test-cache'),
+        getGlobalCacheCommonPath: vi.fn(() => '/tmp/test-cache/common'),
+        getEnginePath: vi.fn(() => '/tmp/test-cache/common/main.js'),
         getGlobalCodeCachePath: vi.fn(() => '/tmp/test-cache/codes'),
         getCustomPiecesPath: vi.fn((platformId: string) => `/tmp/test-cache/custom_pieces/${platformId}`),
     })),
 }))
 
-function createMockLogger(): SandboxLogger {
-    return {
+function createMockLogger(): ApLogger {
+    const log: ApLogger = {
+        level: 'silent',
+        silent: vi.fn(),
         info: vi.fn(),
-        debug: vi.fn(),
-        error: vi.fn(),
         warn: vi.fn(),
+        error: vi.fn(),
+        fatal: vi.fn(),
+        debug: vi.fn(),
+        trace: vi.fn(),
+        child: () => log,
     }
+    return log
 }
 
 function createTestProcessMaker() {
@@ -79,6 +97,21 @@ const startOptions = {
     flowVersionId: 'fv-1',
     platformId: 'plat-1',
     mounts: [],
+}
+
+const isolateSettings: SandboxSettings = {
+    EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS,
+    DEV_PIECES: [],
+    ENVIRONMENT: ApEnvironment.PRODUCTION,
+    REUSE_SANDBOX: undefined,
+    FLOW_TIMEOUT_SECONDS: 300,
+    MAX_FILE_SIZE_MB: 10,
+    MAX_FLOW_RUN_LOG_SIZE_MB: 10,
+    NETWORK_MODE: NetworkMode.UNRESTRICTED,
+    SANDBOX_MEMORY_LIMIT: '1048576',
+    SANDBOX_PROPAGATED_ENV_VARS: [],
+    SSRF_ALLOW_LIST: [],
+    ENFORCE_CONNECTION_PIECE_BINDING: false,
 }
 
 describe('createSandbox', () => {
@@ -156,6 +189,22 @@ describe('createSandbox', () => {
             })
         })
 
+        it('scopes code mount to a nested action-run namespace when non-reusable', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-action-run', { ...defaultOptions, reusable: false }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: 'action-runs/plat-xyz_deadbeef', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/action-runs/plat-xyz_deadbeef',
+                sandboxPath: '/root/codes/action-runs/plat-xyz_deadbeef',
+                optional: true,
+            })
+        })
+
         it('mounts full codes directory when reusable even with flowVersionId', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
@@ -204,11 +253,16 @@ describe('createSandbox', () => {
             ['.'],
             ['..'],
             ['../etc'],
-            ['a/b'],
+            ['a/b/c'],
+            ['a//b'],
+            ['/a'],
+            ['a/'],
+            ['action-runs/..'],
+            ['action-runs/../../etc'],
             ['fv\\1'],
             ['fv\0null'],
             [''],
-        ])('rejects path traversal in flowVersionId: %s', async (flowVersionId) => {
+        ])('rejects an unsafe code namespace in flowVersionId: %s', async (flowVersionId) => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
             sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker)
@@ -319,34 +373,47 @@ describe('createSandbox', () => {
             expect(createCall.env.AP_CUSTOM_PIECES_PATHS).toBeUndefined()
         })
 
-        it('does NOT crash the process when a fixed ws port is already bound — fails just that sandbox', async () => {
-            // Isolate mode pins a fixed ws port per box. Two boxes contending the same port must not
-            // let the EADDRINUSE 'error' event become an uncaught exception that kills the whole worker.
-            const log = createMockLogger()
-            const fixedPort = 53777
-            const pmA = createTestProcessMaker()
-            const pmB = createTestProcessMaker()
-            const sandboxA = createSandbox(log, 'sb-port-a', { ...defaultOptions, wsRpcPort: fixedPort }, pmA.maker)
-            const sandboxB = createSandbox(log, 'sb-port-b', { ...defaultOptions, wsRpcPort: fixedPort }, pmB.maker)
-
-            await sandboxA.start(startOptions)
-
-            let code: ErrorCode | undefined
+        it('isolate mode starts on an ephemeral port while 52001, the old fixed port for box 1, is held by another socket', async () => {
+            const blocker = createNetServer()
+            await new Promise<void>((resolve) => {
+                blocker.once('error', () => resolve())
+                blocker.listen(52001, '127.0.0.1', resolve)
+            })
             try {
-                await sandboxB.start(startOptions)
-            }
-            catch (err) {
-                code = (err as ActivepiecesError).error.code
-            }
-            // A catchable error, NOT an uncaught crash (the test process is still running).
-            expect(code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
-            // A keeps working on its port.
-            expect(pmA.getClient().connected).toBe(true)
+                testPM = createTestProcessMaker()
+                isolateProcessMock.mockReturnValue(testPM.maker)
+                sandbox = createSandboxForJob({ log: createMockLogger(), boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => isolateSettings })
 
-            await sandboxA.shutdown()
-            const clientB = pmB.getClient()
-            if (clientB?.connected) clientB.disconnect()
-        }, 20_000)
+                await sandbox.start(startOptions)
+
+                const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+                expect(Number(createCall.env.AP_SANDBOX_WS_PORT)).not.toBe(52001)
+                expect(sandbox.isReady()).toBe(true)
+            }
+            finally {
+                await new Promise<void>((resolve) => blocker.close(() => resolve()))
+            }
+        })
+
+        it('fails just that sandbox with SANDBOX_INTERNAL_ERROR when the ws listener cannot bind', async () => {
+            const listenSpy = vi.spyOn(HttpServer.prototype, 'listen').mockImplementation(function (this: HttpServer) {
+                process.nextTick(() => this.emit('error', Object.assign(new Error('listen EMFILE'), { code: 'EMFILE' })))
+                return this
+            })
+            try {
+                testPM = createTestProcessMaker()
+                sandbox = createSandbox(createMockLogger(), 'sb-bind-fail', defaultOptions, testPM.maker)
+
+                await expect(sandbox.start(startOptions)).rejects.toMatchObject({
+                    error: { code: ErrorCode.SANDBOX_INTERNAL_ERROR },
+                    message: expect.stringContaining('EMFILE'),
+                })
+                expect(testPM.maker.create).not.toHaveBeenCalled()
+            }
+            finally {
+                listenSpy.mockRestore()
+            }
+        })
 
         it('is idempotent when already connected', async () => {
             const log = createMockLogger()

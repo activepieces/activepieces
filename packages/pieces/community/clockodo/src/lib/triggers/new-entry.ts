@@ -40,6 +40,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof clockodoAuth>, u
 export default createTrigger({
   auth: clockodoAuth,
   name: 'new_entry',
+  classification: 'READ',
   displayName: 'New Entry',
   description: 'Triggers when a new time entry is created',
   aiMetadata: {

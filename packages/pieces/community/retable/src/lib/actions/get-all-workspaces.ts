@@ -7,6 +7,7 @@ import { retableCommon } from '../common';
 export const retableGetAllWorkspacesAction = createAction({
   auth: retableAuth,
   name: 'retable_get_workspaces',
+  classification: 'SEARCH',
   displayName: 'Get Workspaces',
   description: 'Gets all workspaces',
   audience: 'both',

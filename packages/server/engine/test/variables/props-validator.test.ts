@@ -111,6 +111,46 @@ describe('Property Validation', () => {
             })
         })
 
+        it('should validate required date range property', async () => {
+            const props = {
+                range: Property.DateRange({
+                    displayName: 'Date Range',
+                    required: true,
+                }),
+            }
+
+            const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { range: { preset: 'last_7_days' } },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(validErrors).toEqual({})
+
+            const { errors: nullErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { range: null },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(nullErrors).toEqual({
+                range: ['Expected date range, received: null'],
+            })
+
+            const { errors: typeErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { range: 'not a range' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(typeErrors).toEqual({
+                range: ['Expected date range, received: not a range'],
+            })
+        })
+
         it('should validate required array property', async () => {
             const props = {
                 array: Property.Array({
@@ -370,6 +410,65 @@ describe('Property Validation', () => {
             )
             expect(errors).toEqual({})
         })
+
+        it('should convert null to undefined for unset optional properties', async () => {
+            const props = {
+                staticDropdown: Property.StaticDropdown({
+                    displayName: 'Static Dropdown',
+                    required: false,
+                    options: { options: [{ label: 'A', value: 'a' }] },
+                }),
+                dropdown: Property.Dropdown({
+                    displayName: 'Dropdown',
+                    required: false,
+                    refreshers: [],
+                    options: async () => ({ options: [{ label: 'A', value: 'a' }] }),
+                }),
+                text: Property.ShortText({
+                    displayName: 'Text',
+                    required: false,
+                }),
+            }
+
+            const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+                { staticDropdown: null, dropdown: null, text: null },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticDropdown).toBeUndefined()
+            expect(processedInput.dropdown).toBeUndefined()
+            expect(processedInput.text).toBeUndefined()
+            expect(errors).toEqual({})
+        })
+
+        it('should keep selected values and null required properties unchanged', async () => {
+            const props = {
+                staticDropdown: Property.StaticDropdown({
+                    displayName: 'Static Dropdown',
+                    required: false,
+                    options: { options: [{ label: 'A', value: 'a' }] },
+                }),
+                requiredDropdown: Property.StaticDropdown({
+                    displayName: 'Required Dropdown',
+                    required: true,
+                    options: { options: [{ label: 'A', value: 'a' }] },
+                }),
+            }
+
+            const { processedInput } = await propsProcessor.applyProcessorsAndValidators(
+                { staticDropdown: 'a', requiredDropdown: null },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+
+            expect(processedInput.staticDropdown).toBe('a')
+            expect(processedInput.requiredDropdown).toBeNull()
+        })
     })
 
     describe('type validation', () => {
@@ -487,7 +586,7 @@ describe('Property Validation', () => {
             })
         })
 
-        it('should pass nil through unchanged, leaving required-ness to validation', async () => {
+        it('should map nil to undefined on optional props, leaving required-ness to validation', async () => {
             const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
                 {
                     staticMultiSelect: null,
@@ -500,7 +599,7 @@ describe('Property Validation', () => {
                 {},
             )
 
-            expect(processedInput.staticMultiSelect).toBeNull()
+            expect(processedInput.staticMultiSelect).toBeUndefined()
             expect(processedInput.multiSelect).toBeUndefined()
             expect(errors).toEqual({
                 requiredMultiSelect: ['Expected array, received: null'],

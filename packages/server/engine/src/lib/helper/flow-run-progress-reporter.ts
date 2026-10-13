@@ -143,6 +143,8 @@ export const flowRunProgressReporter = {
                 finishTime: isTerminal ? dayjs().toISOString() : undefined,
                 tags: Array.from(flowExecutorContext.tags),
                 stepsCount: flowExecutorContext.stepsCount,
+                workerHandlerId: engineConstants.workerHandlerId ?? undefined,
+                httpRequestId: engineConstants.httpRequestId ?? undefined,
             }
             await sendLogsUpdate({ engineConstants, request })
         })

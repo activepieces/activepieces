@@ -45,7 +45,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const acsUrl = await this.getAcsUrl(platformId)
             const client = await createSamlClient({ platformId, samlProvider, acsUrl })
             const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
-            return authenticationService(log).federatedAuthn({
+            const { response } = await authenticationService(log).federatedAuthn({
                 email: attributes.email,
                 firstName: attributes.firstName,
                 lastName: attributes.lastName,
@@ -54,6 +54,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 provider: UserIdentityProvider.SAML,
                 predefinedPlatformId: platformId,
             })
+            return response
         },
         async discoverByDomain(domain: string): Promise<DiscoverResult> {
             const ssoDomain = domain.trim().toLowerCase()

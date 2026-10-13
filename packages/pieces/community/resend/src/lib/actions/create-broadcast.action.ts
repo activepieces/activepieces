@@ -1,12 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { createBroadcastOutputSchema } from '../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
 
 export const createBroadcast = createAction({
   name: 'create_broadcast',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Create Broadcast',
+  outputSchema: createBroadcastOutputSchema,
   description: 'Create a new broadcast email to send to an audience',
   audience: 'both',
   aiMetadata: { description: 'Creates a draft broadcast email (subject and body) targeting a Resend audience and returns its ID. Use this to prepare a campaign; it only creates the draft and does not deliver anything — pair it with Send Broadcast to actually send. Requires the audience ID and a sender on a verified domain. Not idempotent — each call creates a new broadcast.', idempotent: false },
@@ -65,12 +69,6 @@ export const createBroadcast = createAction({
     if (propsValue.reply_to) body['reply_to'] = propsValue.reply_to;
     if (propsValue.preview_text) body['preview_text'] = propsValue.preview_text;
 
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.POST,
-      url: 'https://api.resend.com/broadcasts',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body,
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.POST, path: '/broadcasts', body: body });
   },
 });

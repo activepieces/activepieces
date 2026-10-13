@@ -12,22 +12,41 @@ import { findDocumentActionOutputSchema } from '../output-schemas';
 export const findDocumentAction = createAction({
 	auth: googleDocsAuth,
 	name: 'google-docs-find-document',
+	classification: 'SEARCH',
 	displayName: 'Find Document',
-	description: 'Search for document by name.',
+	description: 'Find a document by name, optionally creating it.',
 	audience: 'human',
 	aiMetadata: {
 		description:
 			'Searches Google Drive for a Google Docs document whose name contains the given text, optionally scoped to a folder, and returns the first match. Use when an agent has a document name but not its ID and needs to resolve it. Idempotent only when used purely for lookup; enabling "Create a new document if not found" makes it create (and optionally move) a new document on each miss, which is a mutating side effect.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['name', 'folderId'],
+		},
+		{
+			key: 'notFound',
+			display: 'section',
+			label: 'If Not Found',
+			icon: 'file',
+			props: ['createIfNotFound', 'newDocumentProps'],
+		},
+	],
 	props: {
 		name: Property.ShortText({
 			displayName: 'Document Name',
+			description: 'Matches any document whose name contains this text.',
+			placeholder: 'Q3 report',
 			required: true,
 		}),
 		folderId: folderIdProp,
 		createIfNotFound: Property.Checkbox({
-			displayName: 'Create a new document if not found?',
+			displayName: 'Create If Not Found',
 			defaultValue: false,
 			required: false,
 		}),
@@ -36,7 +55,7 @@ export const findDocumentAction = createAction({
 			displayName: 'New Document Properties',
 			required: false,
 			refreshers: ['createIfNotFound'],
-			props: async ({ auth, createIfNotFound }) => {
+			props: async ({ auth, createIfNotFound }): Promise<DynamicPropsValue> => {
 				if (!auth) return {};
 				if (!createIfNotFound) return {};
 
@@ -45,6 +64,7 @@ export const findDocumentAction = createAction({
 				if (createIfNotFound) {
 					props['content'] = Property.LongText({
 						displayName: 'Document Content',
+						placeholder: 'Agenda, decisions, action items',
 						required: true,
 					});
 				}

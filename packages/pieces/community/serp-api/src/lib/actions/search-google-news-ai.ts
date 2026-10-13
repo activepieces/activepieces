@@ -7,12 +7,13 @@ import { searchGoogleNewsAiOutputSchema } from '../output-schemas';
 export const searchGoogleNewsAi = createAction({
   auth: serpApiAuth,
   name: 'search_google_news_ai',
+  classification: 'SEARCH',
   displayName: 'Google News Search (Agent)',
   description: 'Search Google News for recent articles matching a query.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Google News via SerpApi for recent articles matching a query and returns them in `news_results`. Use to monitor brand or topic mentions in the press, surface breaking coverage, or gather current headlines. For general web results pick Search Google instead. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search Google News for recent news articles matching a query. Use to get the latest news headlines about a company, brand, person, or topic, monitor press and media mentions, or track breaking news coverage. For general web results pick Search Google instead.',
     idempotent: true,
   },
   outputSchema: searchGoogleNewsAiOutputSchema,

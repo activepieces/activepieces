@@ -7,13 +7,13 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	AppConnectionValueForAuthProperty,
 	createTrigger,
-	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { newEmailSubscriptionsTimelineTriggerOutputSchema } from '../output-schemas';
 
 type SubscriptionTimeLineResponse = {
 	hasMore: boolean;
@@ -38,7 +38,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Re
 				queryParams: qs,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth.access_token,
+					token: getHubspotAccessToken(auth),
 				},
 			});
 			hasMore = response.body.hasMore;
@@ -58,27 +58,21 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Re
 export const newEmailSubscriptionsTimelineTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-email-subscriptions-timeline',
-	displayName: 'New Email Subscriptions Timeline',
-	description: 'Triggers when a new email timeline subscription added for the portal.',
+	classification: 'READ',
+	displayName: 'New Email Subscription Change',
+	description: "Triggers when a contact's email subscription status changes.",
 	aiMetadata: {
 		description:
 			'Fires when a new email-subscription timeline event is recorded for the HubSpot portal. Each event represents one subscription change (such as a bounce, unsubscribe, or opt-in) for a recipient, including the change type, source, and the underlying event that caused it. Polls the portal-wide email subscription timeline by timestamp.',
 	},
+	outputSchema: newEmailSubscriptionsTimelineTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

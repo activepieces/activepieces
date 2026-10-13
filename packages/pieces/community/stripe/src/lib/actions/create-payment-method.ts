@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentMethodOutputSchema } from '../output-schemas';
 export const stripeCreatePaymentMethod = createAction({
   name: 'create_payment_method',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Payment Method (Agent)',
   description: 'Create a PaymentMethod from a token.',

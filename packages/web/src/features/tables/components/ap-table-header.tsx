@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -138,7 +139,7 @@ export function ApTableHeader({
                     variant="ghost"
                     className="size-6 flex items-center justify-center"
                   >
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <ChevronDown className="h-4 w-4 text-gray-11" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
@@ -205,7 +206,7 @@ export function ApTableHeader({
                         disabled={!canEdit}
                         onSelect={(e) => e.preventDefault()}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-destructive focus:text-destructive"
+                        className="text-danger-11 focus:text-danger-11"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         {t('Delete')}
@@ -224,18 +225,18 @@ export function ApTableHeader({
   const rightContent = (
     <div className="flex items-center gap-2">
       {isSaving && (
-        <div className="flex items-center gap-2 text-muted-foreground animate-in fade-in">
+        <div className="flex items-center gap-2 text-gray-11 animate-in fade-in">
           <RefreshCw className="h-4 w-4 animate-spin" />
           <span className="text-sm">{t('Saving...')}</span>
         </div>
       )}
       {lockedBy && (
-        <div className="flex items-center gap-1.5 border border-warning/50 rounded-md px-2.5 py-1 text-sm text-warning-700 dark:text-warning-300">
+        <div className="flex items-center gap-1.5 border border-warning-7 rounded-md px-2.5 py-1 text-sm text-warning-11">
           <Lock className="size-3.5 shrink-0" />
           <span>
             {t('{name} is editing', { name: lockedBy.userDisplayName })}
           </span>
-          <span className="text-warning/40">|</span>
+          <span className="text-warning-11/40">|</span>
           <button className="hover:underline font-medium" onClick={takeOver}>
             {t('Take Over')}
           </button>
@@ -294,8 +295,14 @@ export function ApTableHeader({
           open={isImportTableDialogOpen}
           setIsOpen={setIsImportTableDialogOpen}
           tableId={table.id}
-          allowedFileTypes={['json', 'csv']}
-          onImportSuccess={refreshTableState}
+          onImportSuccess={({ importedRecordsCount }) => {
+            refreshTableState();
+            if (importedRecordsCount > 0) {
+              toast.success(
+                t('recordsImported', { count: importedRecordsCount }),
+              );
+            }
+          }}
         />
       </div>
     </>

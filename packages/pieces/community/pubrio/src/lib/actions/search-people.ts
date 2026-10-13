@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const searchPeople = createAction({
   auth: pubrioAuth,
   name: 'search_people',
+  classification: 'SEARCH',
   displayName: 'Search People',
   description:
     'Search business professionals by name, title, department, seniority, or company',

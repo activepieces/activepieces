@@ -8,7 +8,7 @@ type UserMemoryWithRelations = UserMemory & {
 }
 
 export const UserMemoryEntity = new EntitySchema<UserMemoryWithRelations>({
-    name: 'user_chat_memory',
+    name: 'user_memory',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -31,7 +31,7 @@ export const UserMemoryEntity = new EntitySchema<UserMemoryWithRelations>({
     },
     indices: [
         {
-            name: 'idx_user_chat_memory_platform_user',
+            name: 'idx_user_memory_platform_user',
             columns: ['platformId', 'userId'],
             unique: true,
         },
@@ -44,7 +44,7 @@ export const UserMemoryEntity = new EntitySchema<UserMemoryWithRelations>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
-                foreignKeyConstraintName: 'fk_user_chat_memory_platform_id',
+                foreignKeyConstraintName: 'fk_user_memory_platform_id',
             },
         },
         user: {
@@ -54,7 +54,7 @@ export const UserMemoryEntity = new EntitySchema<UserMemoryWithRelations>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'userId',
-                foreignKeyConstraintName: 'fk_user_chat_memory_user_id',
+                foreignKeyConstraintName: 'fk_user_memory_user_id',
             },
         },
     },

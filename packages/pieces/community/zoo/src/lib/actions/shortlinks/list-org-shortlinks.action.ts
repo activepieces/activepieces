@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listOrgShortlinksAction = createAction({
   name: 'list_org_shortlinks',
+  classification: 'SEARCH',
   displayName: 'List Organization Shortlinks',
   description: 'List all shortlinks for your organization',
   audience: 'both',

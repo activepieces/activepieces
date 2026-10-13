@@ -1,17 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
-
-const BASE_URL = 'https://api.resend.com';
+import { resendClient } from '../common/client';
+import { sendBatchEmailsOutputSchema } from '../output-schemas';
 
 export const sendBatchEmails = createAction({
   name: 'send_batch_emails',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Send Batch Emails',
+  outputSchema: sendBatchEmailsOutputSchema,
   description: 'Send up to 100 emails in a single API call',
   audience: 'both',
   aiMetadata: { description: 'Sends up to 100 distinct emails in one Resend API call, each with its own recipient, subject, and body. Use this instead of Send Email when delivering many independent messages at once. Senders must be on verified domains; pass an idempotency key to guard against duplicate batch sends, otherwise each call sends new emails.', idempotent: false },
@@ -95,17 +93,14 @@ export const sendBatchEmails = createAction({
       extraHeaders['Idempotency-Key'] = propsValue.idempotency_key;
     }
 
-    const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
+    const response = await resendClient.sendRequest<{ data: { id: string }[] }>({
+      auth: auth.secret_text,
       method: HttpMethod.POST,
-      url: `${BASE_URL}/emails/batch`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
+      path: '/emails/batch',
       headers: extraHeaders,
       body: batch,
     });
 
-    return response.body.data;
+    return response.data;
   },
 });

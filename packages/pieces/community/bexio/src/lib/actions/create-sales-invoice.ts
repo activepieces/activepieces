@@ -6,6 +6,7 @@ import { bexioCommonProps } from '../common/props';
 export const createSalesInvoiceAction = createAction({
   auth: bexioAuth,
   name: 'create_sales_invoice',
+  classification: 'WRITE',
   displayName: 'Create Sales Invoice',
   description: 'Create a new product-based sales invoice',
   audience: 'both',

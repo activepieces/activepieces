@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const searchQuoteAction = createAction({
   auth: bexioAuth,
   name: 'search_quote',
+  classification: 'SEARCH',
   displayName: 'Search Quote',
   description: 'Search for quotes using various criteria',
   audience: 'both',

@@ -10,6 +10,7 @@ import { WebhookInformation, common } from '../common';
 export const newFile = createTrigger({
   auth: boxAuth,
   name: 'new_file',
+  classification: 'READ',
   displayName: 'New File',
   description: 'Triggers when a file is uploaded',
   aiMetadata: {

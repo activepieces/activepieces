@@ -5,6 +5,7 @@ import { addRectionToMessageAction } from './add-reaction-to-message';
 export const slackAddReaction = createAction({
   auth: slackAuth,
   name: 'slack_add_reaction',
+  classification: 'WRITE',
   displayName: 'Add Reaction',
   description: 'Add an emoji reaction to a message.',
   audience: 'ai',

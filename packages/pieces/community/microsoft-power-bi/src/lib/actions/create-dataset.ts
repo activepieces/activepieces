@@ -18,6 +18,7 @@ type DatasetMode = 'Push' | 'Streaming' | 'PushStreaming';
 export const createDatasetAction = createAction({
     auth:microsoftPowerBiAuth,
     name: 'create_dataset',
+    classification: 'WRITE',
     displayName: 'Create Dataset',
     description: 'Create a new dataset in Power BI with custom schema (Push, Streaming, or PushStreaming mode).',
     audience: 'both',

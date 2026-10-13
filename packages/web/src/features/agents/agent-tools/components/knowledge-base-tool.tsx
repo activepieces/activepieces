@@ -22,6 +22,7 @@ import { AgentKnowledgeBaseDialog } from '../knowledge-base-dialog';
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 
 import { AddKnowledgeBaseDropdown } from './add-knowledge-base-dropdown';
+import { AddRow } from './add-row';
 
 function KnowledgeBaseToolPills({
   tools,
@@ -41,14 +42,14 @@ function KnowledgeBaseToolPills({
           key={tool.toolName}
           onClick={() => setShowAddKbDialog(true, tool)}
           className={cn(
-            'group flex items-center gap-2 px-3 py-1 cursor-pointer rounded-full border bg-muted/50',
+            'group flex items-center gap-2 px-3 py-1 cursor-pointer rounded-full border bg-gray-3/50',
             disabled && 'opacity-50 pointer-events-none',
           )}
         >
           {tool.sourceType === KnowledgeBaseSourceType.FILE ? (
-            <FileText className="size-3.5 text-muted-foreground shrink-0" />
+            <FileText className="size-3.5 text-gray-11 shrink-0" />
           ) : (
-            <Table2 className="size-3.5 text-muted-foreground shrink-0" />
+            <Table2 className="size-3.5 text-gray-11 shrink-0" />
           )}
           <span className="text-xs font-medium max-w-40 truncate">
             {tool.sourceName}
@@ -66,9 +67,9 @@ function KnowledgeBaseToolPills({
                 size="icon"
                 className="
                   size-5 p-0.5
-                  text-muted-foreground
-                  hover:text-destructive
-                  hover:bg-destructive/10
+                  text-gray-11
+                  hover:text-danger-11
+                  hover:bg-danger-3
                   transition
                 "
               >
@@ -90,6 +91,7 @@ export const KnowledgeBaseSection = ({
   removeTool,
   onToolsUpdate,
   selectedProvider,
+  layout = 'card',
 }: KnowledgeBaseSectionProps) => {
   const embeddingModel = selectedProvider
     ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
@@ -103,13 +105,22 @@ export const KnowledgeBaseSection = ({
     return null;
   }
 
-  return (
-    <div className="mt-6">
-      <h2 className="text-sm font-medium">{t('Knowledge Base')}</h2>
+  const asRows = layout === 'rows';
 
-      <div className="mt-2">
+  return (
+    <div className={cn(!asRows && 'mt-6')}>
+      {!asRows && (
+        <h2 className="text-sm font-medium">{t('Knowledge Base')}</h2>
+      )}
+
+      <div className={cn(!asRows && 'mt-2')}>
         {tools.length > 0 ? (
-          <div className="border rounded-md overflow-hidden p-4">
+          <div
+            className={cn(
+              'overflow-hidden',
+              asRows ? 'rounded-[10px] border p-3' : 'border rounded-md p-4',
+            )}
+          >
             <KnowledgeBaseToolPills
               tools={tools}
               disabled={disabled}
@@ -121,21 +132,33 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground mt-3">
+              <p className="text-xs text-gray-11 mt-3">
                 {t(
                   'The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.',
                 )}
               </p>
             )}
           </div>
+        ) : asRows ? (
+          supportsEmbeddings ? (
+            <AddKnowledgeBaseDropdown disabled={disabled}>
+              <AddRow label={t('Add knowledge')} disabled={disabled} />
+            </AddKnowledgeBaseDropdown>
+          ) : (
+            <p className="text-xs leading-4 text-gray-11">
+              {t(
+                'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
+              )}
+            </p>
+          )
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
-            <div className="flex items-center justify-center h-10 w-10 rounded-full border bg-background">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-panel px-4 py-8 text-center">
+            <div className="flex items-center justify-center h-10 w-10 rounded-full border bg-gray-1">
               <BookOpen className="size-5" />
             </div>
             {supportsEmbeddings ? (
               <>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-gray-11">
                   {t(
                     'Add files or tables as knowledge sources for your agent.',
                   )}
@@ -143,7 +166,7 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-11">
                 {t(
                   'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
                 )}
@@ -163,6 +186,7 @@ export const KnowledgeBaseSection = ({
 
 type KnowledgeBaseSectionProps = {
   disabled?: boolean;
+  layout?: 'card' | 'rows';
   tools: AgentKnowledgeBaseTool[];
   allTools: AgentTool[];
   removeTool: (toolName: string) => void;

@@ -8,6 +8,7 @@ const CACHE_KEY = 'bigin_new_call_created_trigger';
 export const newCallCreated = createTrigger({
   auth: biginAuth,
   name: 'newCallCreated',
+  classification: 'READ',
   displayName: 'New Call Created',
   description: 'Triggers when a new call log is created',
   aiMetadata: {

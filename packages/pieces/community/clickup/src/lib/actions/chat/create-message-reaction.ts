@@ -8,21 +8,23 @@ import { createMessageReactionOutputSchema } from '../../output-schemas';
 export const createClickupMessageReaction = createAction({
   auth: clickupAuth,
   name: 'create_message_reaction',
-  description: 'Creates a reaction to a message in a ClickUp channel',
+  classification: 'WRITE',
+  description: 'React to a chat message with an emoji.',
   audience: 'both',
   aiMetadata: { description: 'Add an emoji reaction to a Chat message in a ClickUp workspace, given the workspace and message IDs plus the emoji. Adding the same emoji again has no additional effect, but this is a write that changes the message state.', idempotent: false },
   displayName: 'Create Message Reaction',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     message_id: Property.ShortText({
-      description: 'ID of the message to create reaction for',
+      description: 'Returned by Get Channel Messages or Create Message.',
       displayName: 'Message ID',
       required: true,
     }),
     emoji: Property.ShortText({
-      description: 'Emoji to react with',
+      description: "The emoji's name, without the colons.",
       displayName: 'Emoji',
       required: true,
+      placeholder: 'e.g. thumbsup',
     }),
   },
 
@@ -33,7 +35,7 @@ export const createClickupMessageReaction = createAction({
       HttpMethod.POST,
       `workspaces/${workspace_id}/chat/messages/${message_id}/reactions`,
       getAccessTokenOrThrow(configValue.auth),
-      { emoji },
+      { reaction: emoji },
       {}
     );
     return response.body;

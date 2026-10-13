@@ -5,6 +5,7 @@ import { invoiceninjaAuth } from '../..';
 export const getReport = createAction({
   auth: invoiceninjaAuth,
   name: 'getreport_task',
+  classification: 'SEARCH',
   displayName: 'Get Report',
   description: 'Gets report data from InvoiceNinja.',
   audience: 'both',

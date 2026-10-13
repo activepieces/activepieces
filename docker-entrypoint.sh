@@ -25,38 +25,35 @@ if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
     ")
 fi
 
-# Build PM2 ecosystem config
-APPS=""
+APP_SCRIPT="packages/server/api/dist/src/bootstrap.js"
+WORKER_SCRIPT="packages/server/worker/dist/src/bootstrap.js"
 
-if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
-    APPS="${APPS}
-    {
-        name: 'activepieces-app',
-        script: 'packages/server/api/dist/src/bootstrap.js',
-        node_args: '--enable-source-maps',
-        instances: 1,
-        exec_mode: 'fork',
-        env: { AP_CONTAINER_TYPE: 'APP' }
-    },"
-fi
+echo "Starting Activepieces (${AP_CONTAINER_TYPE} mode)"
 
-if [ "$AP_CONTAINER_TYPE" = "WORKER" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
-    APPS="${APPS}
-    {
-        name: 'activepieces-worker',
-        script: 'packages/server/worker/dist/src/bootstrap.js',
-        node_args: '--enable-source-maps',
-        instances: 1,
-        exec_mode: 'fork'
-    },"
-fi
+case "$AP_CONTAINER_TYPE" in
+    APP)
+        exec node --enable-source-maps "$APP_SCRIPT"
+        ;;
+    WORKER)
+        exec node --enable-source-maps "$WORKER_SCRIPT"
+        ;;
+    WORKER_AND_APP)
+        AP_CONTAINER_TYPE=APP node --enable-source-maps "$APP_SCRIPT" &
+        app_pid=$!
+        node --enable-source-maps "$WORKER_SCRIPT" &
+        worker_pid=$!
 
-cat > /tmp/ecosystem.config.js << ENDOFFILE
-module.exports = {
-    apps: [${APPS}
-    ]
-};
-ENDOFFILE
+        trap 'kill "$app_pid" "$worker_pid" 2>/dev/null' TERM INT
 
-echo "Starting Activepieces with PM2 (${AP_CONTAINER_TYPE} mode)"
-pm2-runtime start /tmp/ecosystem.config.js
+        while kill -0 "$app_pid" 2>/dev/null && kill -0 "$worker_pid" 2>/dev/null; do
+            sleep 1
+        done
+
+        kill "$app_pid" "$worker_pid" 2>/dev/null
+        exit 1
+        ;;
+    *)
+        echo "Unknown AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE" >&2
+        exit 1
+        ;;
+esac

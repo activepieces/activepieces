@@ -11,6 +11,7 @@ import {
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 import { PERSON_OPTIONAL_FIELDS } from '../common/constants';
+import { personMatchingFilterTriggerOutputSchema } from '../output-schemas';
 
 interface PipedrivePersonV2 {
 	id: number;
@@ -80,6 +81,8 @@ interface GetPersonResponseV2 {
 export const personMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'person-matching-filter',
+	outputSchema: personMatchingFilterTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'Person Matching Filter',
 	description: 'Triggers when a person newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {

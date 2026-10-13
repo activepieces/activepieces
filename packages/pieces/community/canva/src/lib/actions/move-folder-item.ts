@@ -9,6 +9,7 @@ import { canvaCommon, fetchUserFolders, fetchUserDesigns, fetchUserAssets } from
 export const moveFolderItem = createAction({
   auth: canvaAuth,
   name: 'move_folder_item',
+  classification: 'WRITE',
   displayName: 'Move Folder Item',
   description: 'Move an item from one folder to another in Canva',
   audience: 'both',

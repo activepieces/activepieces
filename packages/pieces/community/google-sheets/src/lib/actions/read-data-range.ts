@@ -13,48 +13,67 @@ import { readDataRangeActionOutputSchema } from '../output-schemas';
 export const readDataRangeAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'read-data-range',
+	classification: 'READ',
 	displayName: 'Read Data Range',
 	description:
 		'Read cells from a range using A1 notation (e.g. A1:D10). Returns rows and the resolved range.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Reads raw cell values from a worksheet using an A1-notation range, where leaving the range empty reads the entire worksheet, with switchable orientation (one array per row or per column) and rendering (formatted text, unformatted values, or the underlying formulas). Use when an agent needs a specific block of cells or the formulas behind them; prefer Get All Rows or Find Rows when header-keyed row objects are wanted instead of positional arrays. Read-only and idempotent.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'cells',
+			display: 'section',
+			label: 'Cells',
+			icon: 'markdown',
+			props: ['range', 'majorDimension', 'valueRenderOption'],
+		},
+	],
 	props: {
 		...commonProps,
 		range: Property.ShortText({
 			displayName: 'Range (A1 Notation)',
 			description:
-				'The cell range to read, e.g. A1:D10. Leave empty to read the entire worksheet.',
+				'The cells to read. Leave empty to read the whole worksheet.',
 			required: false,
+			placeholder: 'A1:D10',
 		}),
 		majorDimension: Property.StaticDropdown({
-			displayName: 'Major Dimension',
-			description:
-				'Whether to return rows (default) or columns. "ROWS" returns one array per row; "COLUMNS" returns one array per column.',
+			displayName: 'Return Data As',
+			description: 'Group the results one array per row, or one array per column.',
 			required: true,
 			defaultValue: Dimension.ROWS,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Rows', value: Dimension.ROWS },
-					{ label: 'Columns', value: Dimension.COLUMNS },
+					{ label: 'Rows', value: Dimension.ROWS, description: 'List per row', icon: 'text' },
+					{ label: 'Columns', value: Dimension.COLUMNS, description: 'List per column', icon: 'markdown' },
 				],
 			},
 		}),
 		valueRenderOption: Property.StaticDropdown({
-			displayName: 'Value Render Option',
-			description: 'How values should be represented in the output.',
+			displayName: 'Cell Values',
+			description: 'Return values as displayed, as raw values, or as formulas.',
 			required: true,
 			defaultValue: 'FORMATTED_VALUE',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Formatted Value', value: 'FORMATTED_VALUE' },
-					{ label: 'Unformatted Value', value: 'UNFORMATTED_VALUE' },
-					{ label: 'Formula', value: 'FORMULA' },
+					{ label: 'As displayed', value: 'FORMATTED_VALUE', description: 'Formatted text', icon: 'type' },
+					{ label: 'Raw values', value: 'UNFORMATTED_VALUE', description: 'Unformatted', icon: 'text' },
+					{ label: 'Formulas', value: 'FORMULA', description: 'Cell formulas', icon: 'code' },
 				],
 			},
 		}),

@@ -1,7 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { quickbooksAuth } from '../lib/auth';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksApiCall, quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 import {
 	QuickbooksAccount,
 	QuickbooksVendor,
@@ -12,6 +12,7 @@ import {
 export const createExpenseAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_expense',
+	classification: 'WRITE',
 	displayName: 'Create Expense',
 	description: 'Creates an expense transaction (purchase) in QuickBooks.',
 	audience: 'both',
@@ -35,27 +36,23 @@ export const createExpenseAction = createAction({
 
 				const companyId = props?.['companyId'];
 
-				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				const query = `SELECT Id, Name, AccountType FROM Account STARTPOSITION 1 MAXRESULTS 1000`;
-				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksAccount>>({
-					method: HttpMethod.GET,
-					url: `${apiUrl}/query`,
-					queryParams: { query: query, minorversion: '70' },
-					headers: {
-						Authorization: `Bearer ${access_token}`,
-						Accept: 'application/json',
-					},
+				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/account#query-an-account
+				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksAccount>>({
+					accessToken: access_token,
+					companyId,
+					query,
 				});
 
-				if (response.body.Fault) {
+				if (response.Fault) {
 					throw new Error(
-						`QuickBooks API Error fetching accounts: ${response.body.Fault.Error.map(
+						`QuickBooks API Error fetching accounts: ${response.Fault.Error.map(
 							(e: { Message: string }) => e.Message,
 						).join(', ')}`,
 					);
 				}
 
-				const accounts = response.body.QueryResponse?.['Account'] ?? [];
+				const accounts = response.QueryResponse?.['Account'] ?? [];
 				return {
 					disabled: false,
 					options: accounts.map((account) => ({
@@ -91,27 +88,23 @@ export const createExpenseAction = createAction({
 				const { access_token, props } = auth as OAuth2PropertyValue;
 
 				const companyId = props?.['companyId'];
-				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				const query = `SELECT Id, DisplayName FROM Vendor STARTPOSITION 1 MAXRESULTS 1000`;
-				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksVendor>>({
-					method: HttpMethod.GET,
-					url: `${apiUrl}/query`,
-					queryParams: { query: query, minorversion: '70' },
-					headers: {
-						Authorization: `Bearer ${access_token}`,
-						Accept: 'application/json',
-					},
+				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
+				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
+					accessToken: access_token,
+					companyId,
+					query,
 				});
 
-				if (response.body.Fault) {
+				if (response.Fault) {
 					throw new Error(
-						`QuickBooks API Error fetching vendors: ${response.body.Fault.Error.map(
+						`QuickBooks API Error fetching vendors: ${response.Fault.Error.map(
 							(e: { Message: string }) => e.Message,
 						).join(', ')}`,
 					);
 				}
 
-				const vendors = response.body.QueryResponse?.['Vendor'] ?? [];
+				const vendors = response.QueryResponse?.['Vendor'] ?? [];
 				return {
 					disabled: false,
 					options: vendors.map((vendor) => ({
@@ -171,9 +164,8 @@ export const createExpenseAction = createAction({
 
 	async run(context) {
 		const { access_token } = context.auth;
-		const companyId = context.auth.props?.['companyId'];
+		const companyId = context.auth.props?.['companyId'] as string;
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const props = context.propsValue;
 
 		const lines = (props['lineItems'] as any[]).map((line) => {
@@ -208,32 +200,27 @@ export const createExpenseAction = createAction({
 			...(props['privateNote'] && { PrivateNote: props['privateNote'] }),
 		};
 
-		const endpoint = 'purchase';
-
-		const response = await httpClient.sendRequest<{
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/purchase#create-a-purchase
+		const response = await quickbooksApiCall<{
 			Purchase: QuickbooksPurchase;
 			time: string;
 			Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
 		}>({
+			accessToken: access_token,
+			companyId,
 			method: HttpMethod.POST,
-			url: `${apiUrl}/${endpoint}`,
-			queryParams: { minorversion: '70' },
-			headers: {
-				Authorization: `Bearer ${access_token}`,
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
+			resourceUri: '/purchase',
 			body: expensePayload,
 		});
 
-		if (response.body.Fault) {
+		if (response.Fault) {
 			throw new Error(
-				`QuickBooks API Error creating expense: ${response.body.Fault.Error.map(
+				`QuickBooks API Error creating expense: ${response.Fault.Error.map(
 					(e: any) => e.Message,
-				).join(', ')} - Detail: ${response.body.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
+				).join(', ')} - Detail: ${response.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
 			);
 		}
 
-		return response.body.Purchase;
+		return response.Purchase;
 	},
 });

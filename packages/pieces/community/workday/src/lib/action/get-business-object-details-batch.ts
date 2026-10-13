@@ -9,6 +9,7 @@ import { objectIdsProperty, sharedModuleProps } from '../common/props';
 export const getBusinessObjectDetailsBatch = createAction({
 	auth: workdayAuth,
 	name: 'get_business_object_details_batch',
+	classification: 'READ',
 	displayName: 'Get Business Object Details (Batch)',
 	description:
 		'Retrieves details for one or more business objects by ID in a single step.',

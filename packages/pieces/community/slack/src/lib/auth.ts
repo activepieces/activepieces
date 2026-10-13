@@ -1,6 +1,13 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+const nameOf = (value: unknown): string | undefined => {
+  if (typeof value === 'object' && value !== null && 'name' in value && typeof value.name === 'string' && value.name.length > 0) {
+    return value.name;
+  }
+  return undefined;
+};
+
 export const slackOAuth2Auth = PieceAuth.OAuth2({
   description:
     'Authenticate via a Slack OAuth flow.',
@@ -8,6 +15,36 @@ export const slackOAuth2Auth = PieceAuth.OAuth2({
     'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,reactions:write,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites,channels:history,groups:history,chat:write,users:read,usergroups:write',
   tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
+  // Slack connects a workspace, not an email account, so show "<user> (<workspace>)":
+  // the workspace comes from team.name in the token response, the authorizing user's
+  // display name from users.info. Best-effort — falls back to the workspace alone.
+  getConnectionIdentifier: async ({ auth }) => {
+    const workspace = nameOf(auth.data['team']) ?? nameOf(auth.data['enterprise']);
+    if (!workspace) {
+      return undefined;
+    }
+    const userId = (auth.data['authed_user'] as { id?: string } | undefined)?.id;
+    if (!userId) {
+      return workspace;
+    }
+    try {
+      const response = await httpClient.sendRequest<{
+        ok: boolean;
+        user?: { name?: string; real_name?: string; profile?: { display_name?: string } };
+      }>({
+        method: HttpMethod.GET,
+        url: 'https://slack.com/api/users.info',
+        queryParams: { user: userId },
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      const user = response.body.user;
+      const name = user?.profile?.display_name || user?.real_name || user?.name;
+      return name ? `${name} (${workspace})` : workspace;
+    } catch {
+      return workspace;
+    }
+  },
   scope: [
     'channels:read',
     'channels:manage',

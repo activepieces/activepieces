@@ -1,9 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomAuth } from '../auth';
 import { intercomClient, TriggerPayload } from '../common';
+import { conversationTriggerOutputSchema } from '../output-schemas';
 
 export const conversationClosedTrigger = createTrigger({
 	name: 'conversationClosed',
+	classification: 'READ',
 	displayName: 'Conversation Closed',
 	description: 'Triggers when a conversation is closed.',
 	aiMetadata: {
@@ -11,9 +13,10 @@ export const conversationClosedTrigger = createTrigger({
 	},
 	props: {},
 	auth: intercomAuth,
+	outputSchema: conversationTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -25,11 +28,11 @@ export const conversationClosedTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.conversations.search({
 			query: {

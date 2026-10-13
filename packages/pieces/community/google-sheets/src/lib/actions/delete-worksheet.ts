@@ -8,9 +8,10 @@ import { deleteWorksheetActionOutputSchema } from '../output-schemas';
 export const deleteWorksheetAction = createAction({
     auth: googleSheetsAuth,
     name: 'delete-worksheet',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Worksheet',
     description: 'Permanently delete a specific worksheet.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: {
         description:
             'Permanently removes one worksheet (tab) from a spreadsheet, identified by its stable sheet id. Use when an agent needs to drop an entire tab and its data. Idempotent on the stable sheet id — the tab ends up absent; this is destructive and cannot be undone.',
@@ -18,8 +19,8 @@ export const deleteWorksheetAction = createAction({
     },
     props: {
         includeTeamDrives: includeTeamDrivesProp(),
-        spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The ID of the spreadsheet to use.'),
-        sheetId: sheetIdProp('Worksheet', 'The ID of the worksheet to delete.'),
+        spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to work in.'),
+        sheetId: sheetIdProp('Worksheet', 'The tab to delete.'),
     },
     outputSchema: deleteWorksheetActionOutputSchema,
     async run(context) {

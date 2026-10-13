@@ -5,6 +5,7 @@ import { getActorLastRunDatasetItemsActionOutputSchema } from '../output-schemas
 
 export const apifyGetActorLastRunDatasetItems = createAction({
   name: 'apify_get_actor_last_run_dataset_items',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Actor Last Run Dataset Items',
   description: 'Retrieves the dataset items of an Actor\'s most recent run by actor ID.',

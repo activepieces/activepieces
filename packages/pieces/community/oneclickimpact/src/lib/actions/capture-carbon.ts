@@ -5,6 +5,7 @@ import { makeRequest } from '../common/client';
 export const captureCarbon = createAction({
   auth: oneclickimpactAuth,
   name: 'captureCarbon',
+  classification: 'WRITE',
   displayName: 'Capture carbon',
   description: 'Capture carbon for yourself or on behalf of the customer',
   audience: 'both',

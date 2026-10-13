@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createANewsletter = createAction({
   auth: asknewsAuth,
   name: 'createANewsletter',
+  classification: 'WRITE',
   displayName: 'Create a Newsletter',
   description: 'Create an automated newsletter powered by news and AI',
   audience: 'both',

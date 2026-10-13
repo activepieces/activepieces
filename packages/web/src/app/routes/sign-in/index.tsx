@@ -1,7 +1,7 @@
-import { AuthFormTemplate } from '@/features/authentication';
+import { AuthLanding } from '@/features/authentication';
 
 const SignInPage: React.FC = () => {
-  return <AuthFormTemplate form={'signin'} />;
+  return <AuthLanding initialMode="signin" />;
 };
 
 SignInPage.displayName = 'SignInPage';

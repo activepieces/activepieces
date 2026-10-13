@@ -7,6 +7,7 @@ import { invoiceIdDropdown } from '../common/props';
 export const updateAnInvoice = createAction({
   auth: bokioAuth,
   name: 'updateAnInvoice',
+  classification: 'WRITE',
   displayName: 'Update an invoice',
   description: 'Updates an existing draft invoice in Bokio',
   audience: 'both',

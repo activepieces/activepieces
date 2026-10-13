@@ -8,6 +8,7 @@ import { searchCodeOutputSchema } from '../../output-schemas';
 export const githubSearchCodeAction = createAction({
   auth: githubAuth,
   name: 'search_code',
+  classification: 'SEARCH',
   displayName: 'Search Code (Agent)',
   description: 'Searches file contents across repositories.',
   audience: 'ai',

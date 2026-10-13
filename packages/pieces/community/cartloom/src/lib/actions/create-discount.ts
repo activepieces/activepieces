@@ -5,6 +5,7 @@ import { buildProductsDropdown } from '../props';
 
 export const createDiscountAction = createAction({
   name: 'create_discount',
+  classification: 'WRITE',
   auth: cartloomAuth,
   displayName: 'Create Discount',
   description: 'Create a discount in Cartloom',

@@ -6,6 +6,7 @@ import { buildPolling } from './common';
 export const newOrUpdatedContact = createTrigger({
   auth: ninjapipeAuth,
   name: 'new_or_updated_contact',
+  classification: 'READ',
   displayName: 'New or Updated Contact',
   description: 'Triggers when a contact is created or updated.',
   aiMetadata: {

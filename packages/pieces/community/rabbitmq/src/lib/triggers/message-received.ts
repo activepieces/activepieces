@@ -50,6 +50,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof rabbitmqAuth>, {
 export const messageReceived = createTrigger({
   auth: rabbitmqAuth,
   name: 'messageReceived',
+  classification: 'READ',
   displayName: 'Message Received',
   description: 'Triggers when a message is received on a RabbitMQ queue',
   aiMetadata: {

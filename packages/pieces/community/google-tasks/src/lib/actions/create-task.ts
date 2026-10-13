@@ -13,6 +13,7 @@ import { googleTasksCreateTaskOutputSchema } from '../output-schemas';
 export const googleTasksCreateTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description:
     'Create a new task in a task list, optionally as a subtask and/or positioned after a sibling.',

@@ -7,6 +7,7 @@ import { readDocumentActionOutputSchema } from '../output-schemas';
 export const getDocument = createAction({
   auth: googleDocsAuth,
   name: 'get_document',
+  classification: 'READ',
   displayName: 'Get Document',
   description: 'Get the full content and structure of a Google Docs document',
   audience: 'ai',

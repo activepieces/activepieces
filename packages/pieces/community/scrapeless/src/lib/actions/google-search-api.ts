@@ -5,6 +5,7 @@ import { createScrapelessClient } from '../services/scrapeless-api-client';
 export const googleSearchApi = createAction({
   auth: scrapelessApiAuth,
   name: 'google_search_api',
+  classification: 'SEARCH',
   displayName: 'Google Search',
   description: 'Retrieves search result data for any query.',
   audience: 'both',

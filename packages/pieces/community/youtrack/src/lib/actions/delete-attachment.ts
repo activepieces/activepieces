@@ -1,11 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, youtrackApiCall } from '../common';
+import { deleteAttachmentActionOutputSchema } from '../output-schemas';
 
 export const deleteAttachmentAction = createAction({
   auth: youtrackAuth,
   name: 'delete_attachment',
+  classification: 'DESTRUCTIVE',
+  outputSchema: deleteAttachmentActionOutputSchema,
   displayName: 'Delete Attachment',
   description: 'Deletes an attachment from an issue.',
   audience: 'both',

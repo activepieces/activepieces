@@ -12,6 +12,7 @@ import {
 export const createAppointmentAction = createAction({
 	auth: acuitySchedulingAuth,
 	name: 'create_appointment',
+	classification: 'WRITE',
 	displayName: 'Create Appointment',
 	description: 'Creates a new appointment.',
 	audience: 'both',

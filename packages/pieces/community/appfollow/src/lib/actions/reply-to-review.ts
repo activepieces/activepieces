@@ -11,6 +11,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const replyToReview = createAction({
   auth: appfollowAuth,
   name: 'replyToReview',
+  classification: 'WRITE',
   displayName: 'Reply to Review',
   description:
     'Reply to a specific review within a date range for a selected application and collection',

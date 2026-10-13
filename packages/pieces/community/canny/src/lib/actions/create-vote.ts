@@ -6,6 +6,7 @@ import { cannyRequest } from '../common/client';
 export const createVoteAction = createAction({
   auth: cannyAuth,
   name: 'create_vote',
+  classification: 'WRITE',
   displayName: 'Create Vote',
   description: 'Casts a vote on a post on behalf of a user.',
   audience: 'both',

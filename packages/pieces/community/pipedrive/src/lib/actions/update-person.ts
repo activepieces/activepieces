@@ -10,10 +10,13 @@ import {
 import { GetField, GetPersonResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isEmpty } from '@activepieces/pieces-framework';
+import { updatePersonActionOutputSchema } from '../output-schemas';
 
 export const updatePersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'update-person',
+	outputSchema: updatePersonActionOutputSchema,
+	classification: 'WRITE',
 	displayName: 'Update Person',
 	description: 'Updates an existing person.',
 	audience: 'both',

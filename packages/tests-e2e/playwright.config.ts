@@ -64,10 +64,11 @@ const config: PlaywrightTestConfig = {
   webServer: {
     command: process.env.CI
       ? 'npm run dev'
-      : 'export $(cat .env.e2e | xargs) && npm run dev',
+      : 'export $(cat packages/tests-e2e/.env.e2e | xargs) && npm run dev',
+    cwd: path.resolve(__dirname, '../..'),
     url: 'http://localhost:4200/api/v1/flags',
     reuseExistingServer: !process.env.CI,
-    timeout: 100000,
+    timeout: 300000,
     stdout: 'pipe',
   },
 };

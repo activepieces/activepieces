@@ -6,6 +6,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const setSchedule = createAction({
   auth: ReachinboxAuth,
   name: 'setSchedule',
+  classification: 'WRITE',
   displayName: 'Set Schedule',
   description: 'Update the schedule for a specific Campaign',
   audience: 'both',

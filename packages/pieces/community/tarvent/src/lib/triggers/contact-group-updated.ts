@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const contactGroupUpdatedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_contact_group_updated',
+  classification: 'READ',
   displayName: 'Contact Added Or Removed From A Group',
   description: 'Triggers when a contact is added or removed from a group.',
   aiMetadata: {

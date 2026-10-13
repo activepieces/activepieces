@@ -1,5 +1,7 @@
 import { ApFunction } from '@activepieces/core-formula';
+import { isNil } from '@activepieces/core-utils';
 import { Editor, Extension } from '@tiptap/core';
+import { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { JSONContent } from '@tiptap/react';
 
 import {
@@ -7,6 +9,10 @@ import {
   FUNCTION_SEP_NODE_TYPE,
   FUNCTION_START_NODE_TYPE,
 } from './bracket-nodes';
+
+const ZWS_CHAR = '\u200B';
+const HARD_BREAK_NODE_TYPE = 'hardBreak';
+const SLASH_ALLOWED_PREFIX_REGEX = /[\s\u200B]/;
 
 export type SlashCommandState = {
   open: boolean;
@@ -42,16 +48,15 @@ export function insertFunctionAtPos({
   const deleteLen = 1 + query.length;
   const startPos = Math.max(0, from);
 
-  const ZWS = '\u200B';
   const id = crypto.randomUUID();
   const content: JSONContent[] = [
     { type: FUNCTION_START_NODE_TYPE, attrs: { id, functionName: fn.name } },
-    { type: 'text', text: ZWS },
+    { type: 'text', text: ZWS_CHAR },
   ];
   for (let i = 0; i < fn.minArgs; i++) {
     if (i > 0) {
       content.push({ type: FUNCTION_SEP_NODE_TYPE, attrs: { openId: id } });
-      content.push({ type: 'text', text: ZWS });
+      content.push({ type: 'text', text: ZWS_CHAR });
     }
   }
   content.push({ type: FUNCTION_END_NODE_TYPE, attrs: { openId: id } });
@@ -64,6 +69,32 @@ export function insertFunctionAtPos({
     .run();
 
   editor.commands.setTextSelection(startPos + 2);
+}
+
+function isSlashAtWordStart({
+  doc,
+  slashPos,
+}: IsSlashAtWordStartParams): boolean {
+  const $slash = doc.resolve(slashPos);
+  if ($slash.parentOffset === 0) {
+    return true;
+  }
+
+  const nodeBefore = $slash.nodeBefore;
+  if (isNil(nodeBefore)) {
+    return true;
+  }
+  if (!nodeBefore.isText) {
+    return nodeBefore.type.name === HARD_BREAK_NODE_TYPE;
+  }
+
+  return SLASH_ALLOWED_PREFIX_REGEX.test((nodeBefore.text ?? '').slice(-1));
+}
+
+function closeIfOpen(handler: SlashCommandHandler) {
+  if (handler.getState().open) {
+    closeHandler(handler);
+  }
 }
 
 function closeHandler(handler: SlashCommandHandler) {
@@ -82,6 +113,15 @@ export const FunctionSlashExtension = Extension.create({
     return {};
   },
 
+  onBlur() {
+    const handler = handlerMap.get(this.editor);
+    if (!handler) return;
+
+    if (handler.getState().open) {
+      closeHandler(handler);
+    }
+  },
+
   onUpdate() {
     const handler = handlerMap.get(this.editor);
     if (!handler) return;
@@ -94,21 +134,22 @@ export const FunctionSlashExtension = Extension.create({
 
     const slashIdx = textBefore.lastIndexOf('/');
     if (slashIdx === -1) {
-      if (handler.getState().open) {
-        closeHandler(handler);
-      }
+      closeIfOpen(handler);
       return;
     }
 
     const query = textBefore.slice(slashIdx + 1);
     if (query.includes(' ') || query.includes('\n')) {
-      if (handler.getState().open) {
-        closeHandler(handler);
-      }
+      closeIfOpen(handler);
       return;
     }
 
     const slashDocPos = pos - query.length - 1;
+    if (!isSlashAtWordStart({ doc: state.doc, slashPos: slashDocPos })) {
+      closeIfOpen(handler);
+      return;
+    }
+
     const coords = this.editor.view.coordsAtPos(slashDocPos);
     const scrollTop = window.scrollY;
     const scrollLeft = window.scrollX;
@@ -135,4 +176,9 @@ export type InsertFunctionAtPosParams = {
   fn: ApFunction;
   from: number;
   query: string;
+};
+
+type IsSlashAtWordStartParams = {
+  doc: ProseMirrorNode;
+  slashPos: number;
 };

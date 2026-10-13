@@ -101,5 +101,6 @@
   "None": "Aucun",
   "JSON": "JSON",
   "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "Raw": "Brut",
+  "Saved for the whole project, so other flows that use this key join the same conversation.": "Enregistré pour tout le projet : les autres flux qui utilisent cette clé poursuivent la même conversation."
 }

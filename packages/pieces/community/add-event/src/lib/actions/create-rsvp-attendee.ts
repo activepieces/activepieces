@@ -8,6 +8,7 @@ import { AddEventRsvpAttendee } from '../common/types';
 export const addEventCreateRsvpAttendeeAction = createAction({
   auth: addEventAuth,
   name: 'create_rsvp_attendee',
+  classification: 'WRITE',
   displayName: 'Create RSVP Attendee',
   description: 'Creates a new RSVP attendee on your AddEvent event.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { pandadocAuth } from '../common';
 
 export const documentStateChanged = createTrigger({
   name: 'documentStateChanged',
+  classification: 'READ',
   displayName: 'Document State Changed',
   description: 'Triggers when a document status changes.',
   aiMetadata: {

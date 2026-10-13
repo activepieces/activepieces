@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressWithdrawals = createAction({
   name: 'get_address_withdrawals',
+  classification: 'SEARCH',
   displayName: 'Get Address Withdrawals',
   description: 'Get list of withdrawals for an address',
   audience: 'both',

@@ -5,6 +5,7 @@ import { bigCommerceApiService } from '../common/requests';
 export const getOrder = createAction({
   auth: bigcommerceAuth,
   name: 'getOrder',
+  classification: 'READ',
   displayName: 'Get Order',
   description: 'Gets details of an order',
   audience: 'both',

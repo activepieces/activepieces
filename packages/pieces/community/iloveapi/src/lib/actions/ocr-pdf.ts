@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const ocrPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'ocr_pdf',
+  classification: 'READ',
   displayName: 'OCR PDF',
   description:
     'Run OCR on a PDF to make scanned documents searchable. Supports 100+ languages.',

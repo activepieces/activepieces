@@ -7,6 +7,7 @@ import { chatbotIdDropdown } from '../common/props';
 export const sendPromptToChatbotAction = createAction({
 	auth: chatbaseAuth,
 	name: 'message_chatbot',
+	classification: 'READ',
 	displayName: 'Send Prompt to Chatbot',
 	description: 'Sends a prompt to the chatbot to generate a response.',
 	audience: 'both',

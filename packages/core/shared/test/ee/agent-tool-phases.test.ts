@@ -7,6 +7,7 @@ const ALL = [
     'ap_resolve_property_options',
     'ap_list_connections',
     'ap_explore_data',
+    'ap_validate_flow',
     'ap_show_questions',
     'ap_build_flow',
     'ap_add_step',
@@ -36,10 +37,16 @@ describe('agentToolPhases.activeToolsForPhase', () => {
     it('keeps read/discovery tools available in both phases', () => {
         const discovery = agentToolPhases.activeToolsForPhase({ phase: 'discovery', allToolNames: ALL })
         const build = agentToolPhases.activeToolsForPhase({ phase: 'build', allToolNames: ALL })
-        for (const tool of ['ap_research_pieces', 'ap_get_piece_props', 'ap_list_connections', 'ap_explore_data']) {
+        for (const tool of ['ap_research_pieces', 'ap_get_piece_props', 'ap_list_connections', 'ap_explore_data', 'ap_validate_flow']) {
             expect(discovery).toContain(tool)
             expect(build).toContain(tool)
         }
+    })
+
+    it('leaves the agent tools reachable in discovery, since nothing else flips the phase for them', () => {
+        const names = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+        const active = agentToolPhases.activeToolsForPhase({ phase: 'discovery', allToolNames: names })
+        expect(active).toEqual(names)
     })
 
     it('leaves unknown tools visible during discovery (denylist, not allowlist)', () => {

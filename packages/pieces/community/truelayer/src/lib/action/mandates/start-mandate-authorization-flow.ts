@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const startMandateAuthorizationFlow = createAction({
   auth: trueLayerCommon.auth,
   name: 'start-mandate-authorization-flow',
+  classification: 'WRITE',
   displayName: 'Start Authorization Flow',
   description: 'Start the authorization flow for a mandate. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
   audience: 'both',

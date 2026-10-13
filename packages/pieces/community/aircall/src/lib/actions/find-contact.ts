@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findContact = createAction({
   auth: aircallAuth,
   name: 'findContact',
+  classification: 'READ',
   displayName: 'Find Contact',
   description: 'Finds contact based on phone or email.',
   audience: 'both',

@@ -6,8 +6,10 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
+  ApErrorParams,
   ApFlagId,
   AppConnectionType,
+  ErrorCode,
   OAuth2GrantType,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
@@ -18,6 +20,7 @@ import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   MultiSelect,
   MultiSelectContent,
@@ -28,6 +31,7 @@ import {
   MultiSelectValue,
 } from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
+import { CommandEmpty } from '@/components/ui/command';
 import {
   FormControl,
   FormField,
@@ -39,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
@@ -74,16 +79,20 @@ function OAuth2ConnectionSettings({
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
-  const redirectUrl =
-    oauth2App.oauth2Type === AppConnectionType.CLOUD_OAUTH2
-      ? 'https://secrets.activepieces.com/redirect'
-      : thirdPartyUrl ?? 'no_redirect_url_found';
+  const redirectUrl = oauth2Utils.resolveRedirectUrl({
+    oauth2Type: oauth2App.oauth2Type,
+    platformRedirectUrl: thirdPartyUrl ?? 'no_redirect_url_found',
+  });
 
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
   const [loading, setLoading] = useState(false);
   const [scopesEditing, setScopesEditing] = useState(false);
+  const [scopeSearch, setScopeSearch] = useState('');
+  const filteredScopes = authProperty.scope.filter((scope) =>
+    scope.toLowerCase().includes(scopeSearch.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -170,7 +179,7 @@ function OAuth2ConnectionSettings({
                       <span className="leading-none">{t('Permissions')}</span>
                       <ChevronDown
                         className={cn(
-                          'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                          'h-4 w-4 shrink-0 text-gray-11 transition-transform',
                           !scopesEditing && '-rotate-90',
                         )}
                       />
@@ -184,6 +193,12 @@ function OAuth2ConnectionSettings({
                           value: scope,
                           label: scope,
                         }))}
+                        onSearch={(keyword) => setScopeSearch(keyword ?? '')}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setScopeSearch('');
+                          }
+                        }}
                       >
                         <MultiSelectTrigger>
                           {selected.length < 10 ? (
@@ -201,24 +216,31 @@ function OAuth2ConnectionSettings({
                             placeholder={t('Search permissions')}
                           />
                           <MultiSelectList>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                field.onChange(authProperty.scope.join(' '));
-                              }}
-                            >
-                              <MultiSelectItem>
-                                {t('Select All')}
-                              </MultiSelectItem>
-                            </div>
-                            {authProperty.scope.map((scope) => (
+                            {scopeSearch === '' && (
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  field.onChange(authProperty.scope.join(' '));
+                                }}
+                              >
+                                <MultiSelectItem>
+                                  {t('Select All')}
+                                </MultiSelectItem>
+                              </div>
+                            )}
+                            {filteredScopes.map((scope) => (
                               <MultiSelectItem key={scope} value={scope}>
                                 <span className="truncate min-w-0">
                                   {scope}
                                 </span>
                               </MultiSelectItem>
                             ))}
+                            {filteredScopes.length === 0 && (
+                              <CommandEmpty>
+                                {t('No results found.')}
+                              </CommandEmpty>
+                            )}
                           </MultiSelectList>
                         </MultiSelectContent>
                       </MultiSelect>
@@ -244,15 +266,19 @@ function OAuth2ConnectionSettings({
                   <input type="hidden" {...field} />
                 </FormControl>
                 <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-                  <div className="rounded-full  border border-solid p-1 flex items-center justify-center">
-                    <img src={piece.logoUrl} className="w-5 h-5"></img>
-                  </div>
+                  <LogoPlate
+                    src={piece.logoUrl}
+                    alt=""
+                    border
+                    className="size-7.5 rounded-full"
+                    innerClassName="p-1"
+                  />
                   <div className="text-sm">{piece.displayName}</div>
                   <div className="grow"></div>
                   <Button
                     size={'sm'}
                     variant={'basic'}
-                    className={cn(hasCode && 'text-destructive')}
+                    className={cn(hasCode && 'text-danger-11')}
                     disabled={!isConnectButtonEnabled}
                     loading={loading}
                     type="button"
@@ -263,6 +289,7 @@ function OAuth2ConnectionSettings({
                         );
                         openPopup({
                           redirectUrl,
+                          oauth2Type: oauth2App.oauth2Type,
                           clientId: form.getValues().request.value.client_id,
                           props: form.getValues().request.value.props,
                           pieceName: piece.name,
@@ -305,6 +332,7 @@ function parseScopeString(value: string | undefined): string[] {
 
 async function openPopup({
   redirectUrl,
+  oauth2Type,
   clientId,
   props,
   pieceName,
@@ -329,12 +357,20 @@ async function openPopup({
     authorizationUrl = result.authorizationUrl;
     codeVerifier = result.codeVerifier;
   } catch (error: unknown) {
-    form.setError('request.value.client_id', {
+    const apError = api.isError(error)
+      ? (error.response?.data as ApErrorParams | undefined)
+      : undefined;
+    form.setError('request.value.code', {
       type: 'manual',
       message:
-        error instanceof Error
-          ? error.message
-          : 'Failed to initiate OAuth2 authentication',
+        apError?.code === ErrorCode.INVALID_APP_CONNECTION
+          ? t('Connection failed with error {msg}', {
+              msg: apError.params.error,
+            })
+          : api.extractServerErrorMessage(
+              error,
+              'Failed to initiate OAuth2 authentication',
+            ),
     });
     setLoading(false);
     return;
@@ -343,6 +379,7 @@ async function openPopup({
   const { code } = await oauth2Utils.openOAuth2Popup({
     authorizationUrl,
     redirectUrl,
+    oauth2Type,
     codeVerifier,
   });
   form.setValue('request.value.code', code, { shouldValidate: true });
@@ -360,6 +397,7 @@ type OAuth2ConnectionSettingsProps = {
 
 type OpenPopupParams = {
   redirectUrl: string;
+  oauth2Type: OAuth2App['oauth2Type'];
   clientId: string;
   props: Record<string, unknown> | undefined;
   pieceName: string;

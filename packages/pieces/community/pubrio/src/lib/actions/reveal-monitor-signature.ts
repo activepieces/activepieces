@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const revealMonitorSignature = createAction({
   auth: pubrioAuth,
   name: 'reveal_monitor_signature',
+  classification: 'READ',
   displayName: 'Reveal Monitor Signature',
   description: 'Reveal the signature for a monitor (uses credits)',
   audience: 'both',

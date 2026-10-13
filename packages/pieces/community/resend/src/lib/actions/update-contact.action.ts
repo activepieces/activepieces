@@ -1,12 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
+import { updateContactOutputSchema } from '../output-schemas';
 
 export const updateContact = createAction({
   name: 'update_contact',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Update Contact',
+  outputSchema: updateContactOutputSchema,
   description: 'Update the name or subscription status of a contact in an audience',
   audience: 'both',
   aiMetadata: { description: 'Updates an existing contact\'s first name, last name, or subscribed/unsubscribed status within an audience, identified by audience ID and contact ID. Use this to change details or toggle subscription for a known contact. Idempotent — repeating with the same values leaves the contact in the same state.', idempotent: true },
@@ -38,12 +42,6 @@ export const updateContact = createAction({
       body['unsubscribed'] = propsValue.unsubscribed;
     }
 
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.PATCH,
-      url: `https://api.resend.com/audiences/${propsValue.audience_id}/contacts/${propsValue.contact_id}`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body,
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.PATCH, path: `/audiences/${propsValue.audience_id}/contacts/${propsValue.contact_id}`, body: body });
   },
 });

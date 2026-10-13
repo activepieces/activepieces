@@ -5,6 +5,7 @@ import { makeClient, tarventCommon } from '../common';
 export const generateCustomEvent = createAction({
   auth: tarventAuth,
   name: 'tarvent_generate_custom_event',
+  classification: 'WRITE',
   displayName: 'Generate A Custom Event',
   description: 'Generate a custom event in your Tarvent account.',
   audience: 'both',

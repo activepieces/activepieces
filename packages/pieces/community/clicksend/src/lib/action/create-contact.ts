@@ -13,6 +13,7 @@ function isValidEmail(email: string) {
 export const clicksendCreateContactAction = createAction({
   auth: clicksendAuth,
   name: 'create_contact',
+  classification: 'WRITE',
   description: 'Creates a new contact in a contact list.',
   audience: 'both',
   aiMetadata: {

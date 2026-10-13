@@ -1,12 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { sendBroadcastOutputSchema } from '../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
 
 export const sendBroadcast = createAction({
   name: 'send_broadcast',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Send Broadcast',
+  outputSchema: sendBroadcastOutputSchema,
   description: 'Send or schedule a broadcast email to its audience',
   audience: 'both',
   aiMetadata: { description: 'Sends an existing draft broadcast to its entire audience immediately, or schedules it for a future time, identified by broadcast ID. Use this after Create Broadcast to deliver the campaign. Not idempotent — repeating the call can dispatch the broadcast again; optionally pass an ISO 8601 time to schedule rather than send now.', idempotent: false },
@@ -23,12 +27,6 @@ export const sendBroadcast = createAction({
     const body: Record<string, unknown> = {};
     if (propsValue.scheduled_at) body['scheduled_at'] = propsValue.scheduled_at;
 
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.POST,
-      url: `https://api.resend.com/broadcasts/${propsValue.broadcast_id}/send`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body,
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.POST, path: `/broadcasts/${propsValue.broadcast_id}/send`, body: body });
   },
 });

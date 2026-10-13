@@ -7,6 +7,7 @@ import { quickAddTaskActionOutputSchema } from '../output-schemas';
 export const todoistQuickAddTaskAction = createAction({
   auth: todoistAuth,
   name: 'todoist_quick_add_task',
+  classification: 'WRITE',
   displayName: 'Quick Add Task',
   description: 'Create a task from a natural-language sentence.',
   audience: 'ai',

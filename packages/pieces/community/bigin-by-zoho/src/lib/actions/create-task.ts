@@ -8,6 +8,7 @@ import { biginApiService } from '../common/request';
 export const createTask = createAction({
   auth: biginAuth,
   name: 'createTask',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Creates a new Task',
   audience: 'both',

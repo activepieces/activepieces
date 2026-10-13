@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { priceListOutputSchema } from '../output-schemas';
 export const stripeListPrices = createAction({
   name: 'list_prices',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Prices (Agent)',
   description: 'List Stripe prices.',

@@ -17,10 +17,12 @@ import { googleDriveSearchFolder } from './lib/action/search-folder-or-file.acti
 import { googleDriveUploadFile } from './lib/action/upload-file';
 import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
+import { newOrUpdatedFile } from './lib/triggers/new-or-updated-file';
 import { setPublicAccess } from './lib/action/set-public-access';
 import { moveFileAction } from './lib/action/move-file';
 import { googleDriveDeleteFile } from './lib/action/delete-file';
 import { googleDriveTrashFile } from './lib/action/send-to-trash';
+import { driveExportFolderAsZip } from './lib/action/drive-export-folder-as-zip';
 import { googleDriveAuth, getAccessToken, GoogleDriveAuthValue } from './lib/auth';
 
 // Phase-3 audience:'ai' agent atomics (full Composio-parity agent surface)
@@ -64,7 +66,7 @@ import { driveGetAbout } from './lib/action/drive-get-about';
 export { googleDriveAuth, getAccessToken, GoogleDriveAuthValue, createGoogleClient } from './lib/auth';
 
 export const googleDrive = createPiece({
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   displayName: 'Google Drive',
@@ -83,7 +85,7 @@ export const googleDrive = createPiece({
     'abuaboud',
     'geekyme'
   ],
-  triggers: [newFile, newFolder],
+  triggers: [newFile, newFolder, newOrUpdatedFile],
   actions: [
     googleDriveCreateNewFolder,
     googleDriveCreateNewTextFile,
@@ -100,6 +102,7 @@ export const googleDrive = createPiece({
     moveFileAction,
     googleDriveDeleteFile,
     googleDriveTrashFile,
+    driveExportFolderAsZip,
     // Phase-3 audience:'ai' agent atomics (full Composio-parity agent surface)
     driveCreateFolder,
     driveCreateFileFromText,

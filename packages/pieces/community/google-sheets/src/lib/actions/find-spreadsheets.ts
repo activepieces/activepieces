@@ -12,9 +12,10 @@ import { findSpreadsheetsActionOutputSchema } from '../output-schemas';
 
 export const findSpreadsheets = createAction({
 	name: 'find_spreadsheets',
+	classification: 'SEARCH',
 	displayName: 'Find Spreadsheet(s)',
 	description: 'Find spreadsheet(s) by name.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Searches Google Drive for spreadsheets whose name matches a query (exact or contains) and returns the matches. Use to resolve a spreadsheet id from a human-readable name before acting on it. Read-only and idempotent.',
@@ -22,7 +23,7 @@ export const findSpreadsheets = createAction({
 	},
 	auth: googleSheetsAuth,
 	props: {
-		includeTeamDrives: includeTeamDrivesProp(),
+		includeTeamDrives: includeTeamDrivesProp({ advanced: false }),
 		spreadsheet_name: Property.ShortText({
 			displayName: 'Spreadsheet Name',
 			description: 'Enter the name of the spreadsheet to search for',
@@ -31,7 +32,7 @@ export const findSpreadsheets = createAction({
 		exact_match: Property.Checkbox({
 			displayName: 'Exact Match',
 			description:
-				'If true, only return spreadsheets that exactly match the name. If false, return spreadsheets that contain the name.',
+				'Only return spreadsheets whose name matches exactly.',
 			required: false,
 			defaultValue: false,
 		}),

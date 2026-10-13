@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { chargeListOutputSchema } from '../output-schemas';
 export const stripeListCharges = createAction({
   name: 'list_charges',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Charges (Agent)',
   description: 'List Stripe charges.',

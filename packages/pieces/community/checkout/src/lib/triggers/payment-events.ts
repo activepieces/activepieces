@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const paymentEventsTrigger = createTrigger({
   name: 'payment_events',
+  classification: 'READ',
   displayName: 'Payment Events',
   description: 'Trigger order fulfillment when payment is approved.',
   aiMetadata: {

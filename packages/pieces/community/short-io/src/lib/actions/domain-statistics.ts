@@ -7,6 +7,7 @@ import { domainIdDropdown } from '../common/props';
 export const domainStatisticsAction = createAction({
   auth: shortIoAuth,
   name: 'get-domain-statistics',
+  classification: 'READ',
   displayName: 'Domain Statistics',
   description: 'Retrieve usage stats (clicks, conversions) for a domain within a time period.',
   audience: 'both',

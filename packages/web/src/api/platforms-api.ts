@@ -11,7 +11,7 @@ export const platformApi = {
   createPlatform({ name }: { name: string }) {
     return api.post<AuthenticationResponse>('/v1/platforms', { name });
   },
-  deleteAccount() {
+  deletePlatform() {
     return api.delete<void>(
       `/v1/platforms/${authenticationSession.getPlatformId()}`,
     );
@@ -24,13 +24,8 @@ export const platformApi = {
     return api.get<PlatformWithoutSensitiveData>(`/v1/platforms/${platformId}`);
   },
 
-  verifyLicenseKey(licenseKey: string) {
-    const platformId = authenticationSession.getPlatformId();
-    if (!platformId) {
-      throw Error('No platform id found');
-    }
-    return api.post<void>(`/v1/license-keys/verify`, {
-      platformId,
+  activateLicenseKey(licenseKey: string) {
+    return api.post<void>(`/v1/platform-billing/activate`, {
       licenseKey,
     });
   },

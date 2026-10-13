@@ -150,7 +150,7 @@ export const sendInviteAction = createAction({
     if (subject) inviteBody['subject'] = subject;
     if (message) inviteBody['message'] = message;
     if (cc && (cc as string[]).length > 0) {
-      inviteBody['cc'] = (cc as string[]).map((email) => ({ email }));
+      inviteBody['cc'] = cc;
     }
     if (cc_subject) inviteBody['cc_subject'] = cc_subject;
     if (cc_message) inviteBody['cc_message'] = cc_message;

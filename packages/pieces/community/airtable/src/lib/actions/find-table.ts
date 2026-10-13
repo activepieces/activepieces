@@ -7,6 +7,7 @@ import { findTableActionOutputSchema } from '../output-schemas';
 export const airtableFindTableAction = createAction({
   auth: airtableAuth,
   name: 'airtable_find_table',
+  classification: 'READ',
   displayName: 'Find Table',
   description: 'Find a table in a given base by its name.',
   audience: 'both',
@@ -20,7 +21,8 @@ export const airtableFindTableAction = createAction({
     base: airtableCommon.base,
     tableName: Property.ShortText({
       displayName: 'Table Name',
-      description: 'The exact name of the table you want to find.',
+      description: 'Exact table name. Case does not matter.',
+      placeholder: 'e.g. Contacts',
       required: true,
     }),
   },

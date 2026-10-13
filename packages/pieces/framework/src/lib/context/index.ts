@@ -1,5 +1,4 @@
 import {
-  AgentPieceTool,
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
@@ -13,7 +12,6 @@ import {
 } from '@activepieces/core-piece-types';
 import type { SeekPage } from '@activepieces/core-utils';
 import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
-import { LanguageModel, Tool } from 'ai'
 import type { Readable } from 'node:stream'
 
 import {
@@ -87,6 +85,7 @@ type PollingTriggerHookContext<
 > = BaseContext<PieceAuth, TriggerProps> & {
   server: ServerContext;
   setSchedule(schedule: SetScheduleRequest): void;
+  isRepublish?: boolean;
 };
 
 type WebhookTriggerHookContext<
@@ -177,11 +176,27 @@ export type ServerContext = {
   token: string;
 };
 
+export type AuthValidationServerContext = Omit<ServerContext, 'token'> & {
+  mintOidcToken: (params: { audience: string }) => Promise<string>;
+};
+
+export class PieceServerContextError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PieceServerContextError';
+  }
+}
+
+export function isPieceServerContextError(error: unknown): error is PieceServerContextError {
+  return error instanceof Error && error.name === 'PieceServerContextError';
+}
+
 export type CreateWaitpointParams = {
   type: 'DELAY' | 'WEBHOOK';
   version?: 'V0' | 'V1';
   resumeDateTime?: string;
   responseToSend?: RespondResponse;
+  maxTestWaitMs?: number;
 };
 
 export type CreateWaitpointResult = {
@@ -195,6 +210,7 @@ export type WaitForWaitpointHook = (waitpointId: string) => void;
 
 export type RunContext = {
   id: FlowRunId;
+  canPause: boolean;
   stop: StopHook;
   /** @deprecated Use createWaitpoint + waitForWaitpoint instead */
   pause?: PauseHook;
@@ -230,7 +246,6 @@ type BaseActionContext<
   server: ServerContext;
   files: FilesService;
   output: OutputContext;
-  agent: AgentContext;
   run: RunContext;
   /** @deprecated Use waitpoint.buildResumeUrl() from createWaitpoint result instead */
   generateResumeUrl?: (params: {
@@ -261,15 +276,6 @@ export type ActionContext<
 
 
 
-export type ConstructToolParams = {
-  tools: AgentPieceTool[]
-  model: LanguageModel,
-}
-
-export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
-}
-
 export interface FilesService {
   write({
     fileName,
@@ -278,7 +284,19 @@ export interface FilesService {
     fileName: string;
     data: Buffer | Readable;
   }): Promise<string>;
+  upload({
+    fileName,
+    data,
+  }: {
+    fileName: string;
+    data: Buffer | Readable;
+  }): Promise<UploadedFile>;
 }
+
+export type UploadedFile = {
+  id: string;
+  url: string;
+};
 
 export interface ConnectionsManager {
   get(

@@ -6,6 +6,7 @@ import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 export const sendContact = createAction({
   auth: kapsoAuth,
   name: 'send_contact',
+  classification: 'WRITE',
   displayName: 'Send Contact',
   description: 'Send a contact card via WhatsApp.',
   audience: 'both',

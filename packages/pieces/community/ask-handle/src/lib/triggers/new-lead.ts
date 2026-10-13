@@ -10,6 +10,7 @@ const BASE_URL = 'https://dashboard.askhandle.com/api/v1';
 export const newLeadTrigger = createTrigger({
   auth: askHandleAuth,
   name: 'new_lead',
+  classification: 'READ',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
   aiMetadata: {

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { disputeOutputSchema } from '../output-schemas';
 export const stripeCloseDispute = createAction({
   name: 'close_dispute',
+  classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Close Dispute (Agent)',
   description: 'Concede a dispute (DESTRUCTIVE — forfeits the funds).',

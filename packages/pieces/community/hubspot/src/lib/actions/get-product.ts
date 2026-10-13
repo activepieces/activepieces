@@ -2,35 +2,37 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getProductAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-product',
+	classification: 'READ',
 	displayName: 'Get Product',
-	description: 'Gets a product.',
+	description: 'Gets a product by its ID.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetch a single HubSpot product by its product ID, returning its default and any requested additional properties. Read-only and repeatable. Use Find Product when you only know property values rather than the ID.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		productId: Property.ShortText({
 			displayName: 'Product ID',
-			description: 'The ID of the product to get.',
+			description: 'Map it from an earlier step like Find Product.',
 			required: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-											
-                    createdate, description, name, price, tax, hs_lastmodifieddate	
-																	
-					**Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.PRODUCT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {
@@ -40,7 +42,7 @@ export const getProductAction = createAction({
 
 		const defaultProductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT);
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const productDetails = await client.crm.products.basicApi.getById(productId, [
 			...defaultProductProperties,

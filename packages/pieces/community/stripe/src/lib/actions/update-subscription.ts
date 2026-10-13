@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeUpdateSubscription = createAction({
   name: 'update_subscription',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Update Subscription (Agent)',
   description: 'Update an existing Stripe subscription.',

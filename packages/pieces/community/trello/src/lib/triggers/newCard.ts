@@ -9,6 +9,7 @@ import { newCardTriggerOutputSchema } from '../output-schemas';
 export const newCardTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'new_card',
+	classification: 'READ',
 	displayName: 'New Card',
 	description: 'Trigger when a new card is created',
 	outputSchema: newCardTriggerOutputSchema,

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mysqlCommon, mysqlConnect, sanitizeColumnName } from '../common';
 import { mysqlAuth } from '../..';
+import { updateRowOutputSchema } from '../output-schemas';
 
 export default createAction({
   auth: mysqlAuth,
@@ -8,6 +9,7 @@ export default createAction({
   displayName: 'Update Row',
   description: 'Updates one or more rows in a table',
   audience: 'both',
+  outputSchema: updateRowOutputSchema,
   aiMetadata: { description: 'Updates every row in a MySQL table whose search column equals a given value, setting the supplied column-to-value pairs. Use to modify existing records matched by a single column. Idempotent: re-running with the same input writes the same values and has no additional effect.', idempotent: true },
   props: {
     timezone: mysqlCommon.timezone,

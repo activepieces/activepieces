@@ -24,7 +24,7 @@ import { HttpError } from '@/lib/api';
 
 const FormSchema = z.object({
   email: z.string().min(1, t('Please enter your email')),
-  type: z.nativeEnum(OtpType),
+  type: CreateOtpRequestBody.shape.type,
 });
 
 type FormSchema = z.infer<typeof FormSchema>;
@@ -102,7 +102,7 @@ const ResetPasswordForm = () => {
           </Form>
         )}
         <div className="mt-4 text-center text-sm">
-          <Link to="/sign-in" className="text-muted-foreground">
+          <Link to="/sign-in" className="text-gray-11">
             {t('Back to sign in')}
           </Link>
         </div>

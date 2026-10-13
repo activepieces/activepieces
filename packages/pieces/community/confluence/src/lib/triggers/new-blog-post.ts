@@ -48,6 +48,7 @@ const polling: Polling<confluenceAuthValue, { spaceId?: string }>  = {
 
 export const newBlogPostTrigger = createTrigger({
 	name: 'new-blog-post',
+	classification: 'READ',
 	displayName: 'New Blog Post',
 	description: 'Triggers when a new blog post is published in the selected space.',
 	aiMetadata: {

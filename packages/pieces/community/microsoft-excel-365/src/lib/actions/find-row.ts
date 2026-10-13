@@ -15,6 +15,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const findRowAction = createAction({
   auth: excelAuth,
   name: 'find_row',
+  classification: 'SEARCH',
   displayName: 'Find Row',
   description:
     'Locate a row by specifying a lookup column and value (e.g. find a row where “ID” = 123).',

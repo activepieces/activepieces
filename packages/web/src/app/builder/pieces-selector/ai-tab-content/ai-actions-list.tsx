@@ -83,7 +83,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
                     action: {
                       label: 'Set Up',
                       onClick: () => {
-                        navigate('/platform/setup/ai');
+                        navigate('/platform/ai');
                       },
                     },
                   });

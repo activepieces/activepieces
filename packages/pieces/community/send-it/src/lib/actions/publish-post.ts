@@ -13,6 +13,7 @@ import {
 export const publishPost = createAction({
   auth: sendItAuth,
   name: 'publish_post',
+  classification: 'WRITE',
   displayName: 'Publish Post',
   description: 'Publish content to social media platforms immediately',
   audience: 'both',

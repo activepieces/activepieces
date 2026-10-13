@@ -59,7 +59,7 @@ const MessageContent = ({
   ...props
 }: MessageContentProps) => {
   const classNames = cn(
-    'rounded-lg p-2 text-foreground break-words whitespace-normal',
+    'rounded-lg p-2 text-gray-12 break-words whitespace-normal',
     className,
   );
 
@@ -85,7 +85,7 @@ const MessageActions = ({
   ...props
 }: MessageActionsProps) => (
   <div
-    className={cn('text-muted-foreground flex items-center gap-2', className)}
+    className={cn('text-gray-11 flex items-center gap-2', className)}
     {...props}
   >
     {children}

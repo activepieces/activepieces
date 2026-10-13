@@ -104,4 +104,12 @@ describe('MCP OAuth discovery', () => {
         expect(body.issuer).toBe('https://custom-domain.com')
         expect(body.authorization_endpoint).toBe('https://custom-domain.com/authorize')
     })
+
+    it('advertises every supported client authentication method for the token and revocation endpoints', async () => {
+        const res = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server' })
+
+        const methods = expect.arrayContaining(['client_secret_post', 'client_secret_basic', 'none'])
+        expect(res.json().token_endpoint_auth_methods_supported).toEqual(methods)
+        expect(res.json().revocation_endpoint_auth_methods_supported).toEqual(methods)
+    })
 })

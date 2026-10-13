@@ -1,15 +1,16 @@
-import { AgentConversation, AgentConversationStatus, Platform, Project, User } from '@activepieces/shared'
+import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-type AgentConversationWithRelations = AgentConversation & {
+export type AgentConversationWithRelations = AgentConversation & {
     platform: Platform
     project: Project
     user: User
+    agent: Agent
 }
 
 export const AgentConversationEntity = new EntitySchema<AgentConversationWithRelations>({
-    name: 'chat_conversation',
+    name: 'agent_conversation',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -24,12 +25,33 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             ...ApIdSchema,
             nullable: false,
         },
+        flowRunId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        aiCredits: {
+            type: Number,
+            nullable: true,
+        },
+        agentId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        source: {
+            type: String,
+            nullable: false,
+            default: AgentRunSource.CHAT,
+        },
         title: {
             type: String,
             nullable: true,
         },
         modelName: {
             type: String,
+            nullable: true,
+        },
+        modelTierId: {
+            ...ApIdSchema,
             nullable: true,
         },
         status: {
@@ -61,11 +83,26 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
     },
     indices: [
         {
-            name: 'idx_chat_conversation_platform_user_created_id',
+            name: 'idx_agent_conversation_platform_user_created_id',
             columns: ['platformId', 'userId', 'created', 'id'],
         },
         {
-            name: 'idx_chat_conversation_streaming_updated',
+            name: 'idx_agent_conversation_flow_step_created',
+            columns: ['created', 'projectId'],
+            where: `source = '${AgentRunSource.FLOW_STEP}'`,
+        },
+        {
+            name: 'idx_agent_conversation_agent_runs_created_id',
+            columns: ['projectId', 'agentId', 'created', 'id'],
+            where: `source = '${AgentRunSource.FLOW_STEP}' AND "agentId" IS NOT NULL`,
+        },
+        {
+            name: 'idx_agent_conversation_agent_user_created_id',
+            columns: ['agentId', 'userId', 'created', 'id'],
+            where: '"agentId" IS NOT NULL',
+        },
+        {
+            name: 'idx_agent_conversation_streaming_updated',
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,
         },
@@ -78,7 +115,7 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
-                foreignKeyConstraintName: 'fk_chat_conversation_platform_id',
+                foreignKeyConstraintName: 'fk_agent_conversation_platform_id',
             },
         },
         project: {
@@ -88,7 +125,16 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             onDelete: 'SET NULL',
             joinColumn: {
                 name: 'projectId',
-                foreignKeyConstraintName: 'fk_chat_conversation_project_id',
+                foreignKeyConstraintName: 'fk_agent_conversation_project_id',
+            },
+        },
+        agent: {
+            type: 'many-to-one',
+            target: 'agent',
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'agentId',
+                foreignKeyConstraintName: 'fk_agent_conversation_agent_id',
             },
         },
         user: {
@@ -98,7 +144,7 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'userId',
-                foreignKeyConstraintName: 'fk_chat_conversation_user_id',
+                foreignKeyConstraintName: 'fk_agent_conversation_user_id',
             },
         },
     },

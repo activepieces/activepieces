@@ -66,6 +66,9 @@ export const apiKeyService = {
             id,
         })
     },
+    async deleteAllByPlatformId({ platformId }: DeleteAllParams): Promise<void> {
+        await repo().delete({ platformId })
+    },
 }
 
 export function generateApiKey() {
@@ -85,6 +88,10 @@ type AddParams = {
 
 type DeleteParams = {
     id: string
+    platformId: string
+}
+
+type DeleteAllParams = {
     platformId: string
 }
 

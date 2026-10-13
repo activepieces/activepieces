@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const sendSms = createAction({
   auth: famulorAuth,
   name: 'sendSms',
+  classification: 'WRITE',
   displayName: 'Send SMS',
   description: 'Send an SMS message using one of your purchased phone numbers.',
   audience: 'both',

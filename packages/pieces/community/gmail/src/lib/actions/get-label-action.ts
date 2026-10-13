@@ -6,6 +6,7 @@ import { gmailGetLabelActionOutputSchema } from '../output-schemas';
 export const gmailGetLabelAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_label',
+  classification: 'READ',
   displayName: 'Get Label',
   description:
     'Get a single label by its ID, including message and thread counts.',

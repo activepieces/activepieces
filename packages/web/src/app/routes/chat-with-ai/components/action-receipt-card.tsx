@@ -24,7 +24,7 @@ export function ActionReceiptCard({
 
   return (
     <motion.div
-      className="rounded-xl border bg-background overflow-hidden my-2"
+      className="rounded-xl border bg-gray-1 overflow-hidden my-2"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -39,22 +39,20 @@ export function ActionReceiptCard({
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-foreground truncate">
+              <span className="text-xs font-medium text-gray-12 truncate">
                 {receipt.actionDisplayName}
               </span>
               <StatusBadge isSuccess={isSuccess} />
             </div>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-xs text-muted-foreground">
-                {formattedTimestamp}
-              </span>
+              <span className="text-xs text-gray-11">{formattedTimestamp}</span>
             </div>
           </div>
         </div>
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-muted-foreground/70 break-words">
+        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-gray-11 break-words">
           {receipt.errorMessage}
         </p>
       )}
@@ -65,7 +63,7 @@ export function ActionReceiptCard({
             <button
               type="button"
               onClick={() => setOutputOpen(!outputOpen)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors"
             >
               {outputOpen ? (
                 <>
@@ -80,7 +78,7 @@ export function ActionReceiptCard({
               )}
             </button>
             <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-              <div className="mt-1.5 rounded-lg bg-muted/30 overflow-hidden">
+              <div className="mt-1.5 rounded-lg bg-gray-3/30 overflow-hidden">
                 <SimpleJsonViewer
                   data={tryParseJson(receipt.output)}
                   hideCopyButton={true}
@@ -99,17 +97,13 @@ export function ActionReceiptCard({
 function StatusBadge({ isSuccess }: { isSuccess: boolean }) {
   if (isSuccess) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-success-11">
         <Check className="h-3 w-3" />
         {t('Action completed')}
       </span>
     );
   }
-  return (
-    <span className="text-xs text-muted-foreground/70">
-      {t("Didn't go through")}
-    </span>
-  );
+  return <span className="text-xs text-gray-11">{t("Didn't go through")}</span>;
 }
 
 function formatTimestamp(timestamp: string): string {

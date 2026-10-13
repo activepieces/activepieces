@@ -8,6 +8,7 @@ import { listIssueCommentsOutputSchema } from '../../output-schemas';
 export const githubListIssueCommentsAction = createAction({
   auth: githubAuth,
   name: 'list_issue_comments',
+  classification: 'SEARCH',
   displayName: 'List Issue Comments (Agent)',
   description: 'Lists the comments on an issue or pull request.',
   audience: 'ai',

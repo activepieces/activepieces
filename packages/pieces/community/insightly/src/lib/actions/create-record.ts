@@ -18,6 +18,7 @@ import {
 export const createRecord = createAction({
     auth: insightlyAuth,
     name: 'create_record',
+    classification: 'WRITE',
     displayName: 'Create Record',
     description:
         'Create a new record in a specified Insightly object (Contact, Lead, Opportunity, etc.)',

@@ -4,6 +4,7 @@ import { assembledAuth } from '../common/auth';
 
 export const customGraphql = createAction({
   name: 'custom_graphql',
+  classification: 'WRITE',
   displayName: 'Custom GraphQL',
   description: 'Perform a custom GraphQL query',
   audience: 'both',

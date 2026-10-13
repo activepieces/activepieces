@@ -26,7 +26,11 @@ export type ClientField = {
   name: string;
 } & (
   | {
-      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
+      type:
+        | FieldType.DATE
+        | FieldType.DATETIME
+        | FieldType.NUMBER
+        | FieldType.TEXT;
     }
   | {
       type: FieldType.STATIC_DROPDOWN;
@@ -129,7 +133,13 @@ export const createApTableStore = (
         }),
       setSelectedCell: (
         selectedCell: { rowIdx: number; columnIdx: number } | null,
-      ) => set({ selectedCell }),
+      ) =>
+        set((state) =>
+          state.selectedCell?.rowIdx === selectedCell?.rowIdx &&
+          state.selectedCell?.columnIdx === selectedCell?.columnIdx
+            ? state
+            : { selectedCell },
+        ),
       fields: fields.map((field) => {
         if (field.type === FieldType.STATIC_DROPDOWN) {
           return {
@@ -159,10 +169,23 @@ export const createApTableStore = (
         recordData: Pick<ClientRecordData, 'values'>,
       ) => {
         serverState.updateRecord(recordIndex, recordData);
+        const updatedFieldIndexes = new Set(
+          recordData.values.map((cell) => cell.fieldIndex),
+        );
         return set((state) => {
           return {
             records: state.records.map((record, index) =>
-              index === recordIndex ? { ...record, ...recordData } : record,
+              index === recordIndex
+                ? {
+                    ...record,
+                    values: [
+                      ...record.values.filter(
+                        (cell) => !updatedFieldIndexes.has(cell.fieldIndex),
+                      ),
+                      ...recordData.values,
+                    ].sort((a, b) => a.fieldIndex - b.fieldIndex),
+                  }
+                : record,
             ),
           };
         });
@@ -202,7 +225,15 @@ export const createApTableStore = (
           return {
             records: state.records.map((record) => ({
               ...record,
-              values: record.values.filter((_, index) => index !== fieldIndex),
+              values: record.values
+                .filter((cell) => cell.fieldIndex !== fieldIndex)
+                .map((cell) => ({
+                  ...cell,
+                  fieldIndex:
+                    cell.fieldIndex > fieldIndex
+                      ? cell.fieldIndex - 1
+                      : cell.fieldIndex,
+                })),
             })),
             fields: state.fields.filter((_, index) => index !== fieldIndex),
           };

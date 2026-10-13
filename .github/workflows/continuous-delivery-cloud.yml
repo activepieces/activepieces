@@ -73,22 +73,23 @@ jobs:
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
   deploy-canary:
-    needs: [build-image]
+    needs: [guard, build-image]
     if: |
       always() &&
-      github.event_name != 'workflow_dispatch' &&
-      needs.build-image.result == 'skipped'
+      needs.guard.result != 'failure' &&
+      (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
     uses: ./.github/workflows/continuous-delivery-canary.yml
+    with:
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
+      skip_migration_check: ${{ github.event_name == 'workflow_dispatch' }}
     secrets: inherit
 
   promote-to-production:
     needs: [build-image, deploy-canary]
     if: |
       always() &&
-      (
-        (needs.build-image.result == 'success' && github.event_name == 'workflow_dispatch') ||
-        (needs.deploy-canary.result == 'success')
-      )
+      needs.deploy-canary.result == 'success' &&
+      (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -149,6 +150,17 @@ jobs:
           git checkout -b "$BRANCH" "$SHA"
           git push origin "$BRANCH" --force
           echo "Created $BRANCH at $SHA"
+
+      - name: Notify on-call channel
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          IMAGE_TAG: ${{ steps.image.outputs.image_tag }}
+          DEPLOY_KIND: ${{ github.event_name == 'workflow_dispatch' && 'hotfix' || 'scheduled promotion' }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚀 **Cloud production deployed** ($DEPLOY_KIND)\\n\\n**Version:** \`$IMAGE_TAG\`\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/latest\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "$WEBHOOK"
 
   # Run smoke test after scheduled promotion
   smoke-test:

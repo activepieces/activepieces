@@ -192,6 +192,7 @@ export interface QuickbooksVendor {
     Vendor1099?: boolean;
     TaxIdentifier?: string;
     TermRef?: QuickbooksRef;
+    AcctNum?: string;
     domain?: string;
     sparse?: boolean;
     MetaData?: QuickbooksMetaData;
@@ -228,6 +229,7 @@ export interface QuickbooksPurchaseLine {
     DetailType: 'AccountBasedExpenseLineDetail' | 'ItemBasedExpenseLineDetail'; // Add others if needed
     AccountBasedExpenseLineDetail?: {
         AccountRef: QuickbooksRef; // Expense Account
+        ClassRef?: QuickbooksRef; // Plus/Advanced subscriptions only
         BillableStatus?: string;
         CustomerRef?: QuickbooksRef;
         TaxCodeRef?: QuickbooksRef;
@@ -236,6 +238,7 @@ export interface QuickbooksPurchaseLine {
         ItemRef: QuickbooksRef;
         Qty?: number;
         UnitPrice?: number;
+        ClassRef?: QuickbooksRef; // Plus/Advanced subscriptions only
         BillableStatus?: string;
         CustomerRef?: QuickbooksRef;
         TaxCodeRef?: QuickbooksRef;
@@ -335,4 +338,51 @@ export interface QuickbooksEstimate {
     PrivateNote?: string;
     GlobalTaxCalculation?: string;
     ProjectRef?: QuickbooksRef;
-} 
+}
+
+export interface QuickbooksBillPaymentLine {
+    Amount: number;
+    LinkedTxn: { TxnId: string; TxnType: 'Bill' }[];
+}
+
+export interface QuickbooksBillPayment {
+    Id?: string;
+    SyncToken?: string;
+    MetaData?: QuickbooksMetaData;
+    DocNumber?: string;
+    TxnDate?: string;
+    CurrencyRef?: QuickbooksCurrencyRef;
+    PrivateNote?: string;
+    VendorRef: QuickbooksRef;
+    APAccountRef?: QuickbooksRef;
+    PayType: 'Check' | 'CreditCard';
+    CheckPayment?: { BankAccountRef: QuickbooksRef };
+    CreditCardPayment?: { CCAccountRef: QuickbooksRef };
+    TotalAmt: number;
+    Line: QuickbooksBillPaymentLine[];
+    domain?: string;
+    sparse?: boolean;
+}
+
+export interface QuickbooksTerm {
+    Id: string;
+    Name: string;
+    Active?: boolean;
+    Type?: string;
+    DueDays?: number;
+    domain?: string;
+    sparse?: boolean;
+}
+
+export interface QuickbooksPreferences {
+    Id?: string;
+    SyncToken?: string;
+    MetaData?: QuickbooksMetaData;
+    AccountingInfoPrefs?: {
+        ClassTrackingPerTxnLine?: boolean;
+        ClassTrackingPerTxn?: boolean;
+        TrackDepartments?: boolean;
+    };
+    domain?: string;
+    sparse?: boolean;
+}

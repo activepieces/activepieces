@@ -22,6 +22,7 @@ import {
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { StepShell } from '../stepper';
 
@@ -83,7 +84,7 @@ export const AllowedDomainsStep = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('Allowed websites')}</FormLabel>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-11">
                   {t(
                     'Press Enter or use a comma to add another, e.g. https://app.acme.com',
                   )}
@@ -102,7 +103,7 @@ export const AllowedDomainsStep = ({
           />
           {envAllowedOrigins && envAllowedOrigins.length > 0 && (
             <div className="mt-2 flex flex-col gap-1.5">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-11">
                 {t(
                   'These origins are also allowed automatically (configured via AP_ALLOWED_EMBED_ORIGINS):',
                 )}
@@ -121,7 +122,12 @@ export const AllowedDomainsStep = ({
             </div>
           )}
           <div className="flex justify-end mt-6">
-            <Button size="sm" type="submit" disabled={isPending}>
+            <Button
+              {...adminControl(AdminControl.EMBEDDING_ALLOWED_DOMAINS_SUBMIT)}
+              size="sm"
+              type="submit"
+              disabled={isPending}
+            >
               {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
               {t('Save')}
             </Button>

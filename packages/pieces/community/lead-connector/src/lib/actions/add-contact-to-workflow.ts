@@ -1,41 +1,20 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { addContactToWorkflow, getContacts, getWorkflows } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { addContactToWorkflow, getWorkflows } from '../common';
+import { leadConnectorProps } from '../common/props';
 import { leadConnectorAuth } from '../..';
 
 export const addContactToWorkflowAction = createAction({
   auth: leadConnectorAuth,
   name: 'add_contact_to_workflow',
+  classification: 'WRITE',
   displayName: 'Add Contact to Workflow',
   description: 'Add an existing contact to a workflow.',
   audience: 'both',
   aiMetadata: { description: 'Enrolls an existing GoHighLevel/LeadConnector contact into an automation workflow by contact ID and workflow ID. Use to trigger a workflow sequence for a known contact. Not idempotent — each call re-enrolls the contact.', idempotent: false },
   props: {
-    contact: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Contact',
-      description: 'The contact to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
-        return {
-          options: contacts.map((contact) => {
-            return {
-              label: contact.contactName,
-              value: contact.id,
-            };
-          }),
-        };
-      },
-    }),
+    contact: leadConnectorProps.contact({ required: true }),
     workflow: Property.Dropdown({
-  auth: leadConnectorAuth,
+      auth: leadConnectorAuth,
       displayName: 'Workflow',
       required: true,
       refreshers: [],
@@ -44,10 +23,11 @@ export const addContactToWorkflowAction = createAction({
           return {
             disabled: true,
             options: [],
+            placeholder: 'Connect your account first',
           };
         }
 
-        const campaigns = await getWorkflows(auth as OAuth2PropertyValue);
+        const campaigns = await getWorkflows(auth);
         return {
           options: campaigns.map((campaign: any) => {
             return {

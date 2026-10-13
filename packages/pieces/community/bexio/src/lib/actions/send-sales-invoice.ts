@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const sendSalesInvoiceAction = createAction({
   auth: bexioAuth,
   name: 'send_sales_invoice',
+  classification: 'WRITE',
   displayName: 'Send Sales Invoice',
   description: 'Send a sales invoice to an email address',
   audience: 'both',

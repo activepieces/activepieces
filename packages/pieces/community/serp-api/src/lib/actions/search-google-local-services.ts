@@ -7,12 +7,13 @@ import { searchGoogleLocalServicesOutputSchema } from '../output-schemas';
 export const searchGoogleLocalServices = createAction({
   auth: serpApiAuth,
   name: 'search_google_local_services',
+  classification: 'SEARCH',
   displayName: 'Search Google Local Services',
   description: 'Find local-services-ads providers for a service category in a region.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Google Local Services Ads via SerpApi for vetted service providers (e.g. plumbers, electricians) matching a query, returning results in `local_ads`. Requires a Data CID identifying the geographic region; this is an opaque id with no resolver in this piece, so it must be supplied by the caller. Read-only and idempotent; requires the query, the Data CID, and a SerpApi API key.',
+      'Search Google Local Services Ads for vetted local service providers (plumbers, electricians, cleaners, and similar trades) matching a query. Requires a Data CID identifying the geographic region; this is an opaque id with no resolver in this piece, so it must be supplied by the caller.',
     idempotent: true,
   },
   outputSchema: searchGoogleLocalServicesOutputSchema,

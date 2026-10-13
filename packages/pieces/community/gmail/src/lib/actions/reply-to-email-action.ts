@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
-import Mail, { Attachment } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
@@ -10,6 +10,7 @@ import { replyToEmailActionOutputSchema } from '../output-schemas';
 export const gmailReplyToEmailAction = createAction({
   auth: gmailAuth,
   name: 'reply_to_email',
+  classification: 'WRITE',
   displayName: 'Reply to Email',
   description: 'Reply to an existing email.',
   audience: 'human',
@@ -18,65 +19,95 @@ export const gmailReplyToEmailAction = createAction({
       'Sends a reply to an existing email, preserving the thread and subject and addressing the original sender (reply) or all participants (reply all). Use this to respond within a known conversation; requires the Gmail message ID of the email being answered. Not idempotent: each call sends a new reply message into the thread.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'reply_target',
+      display: 'section',
+      label: 'Reply to',
+      icon: 'reply',
+      props: ['message_id', 'reply_type'],
+    },
+    {
+      key: 'reply_content',
+      display: 'section',
+      label: 'Your Reply',
+      icon: 'text',
+      props: ['body_type', 'body', 'attachment'],
+    },
+  ],
   props: {
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
       displayName: 'Reply Type',
-      description:
-        'Choose whether to reply to sender only or to all recipients',
+      description: 'Reply to the sender only, or to everyone on the thread.',
       required: true,
       defaultValue: 'reply',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Reply (to sender only)',
+            label: 'Reply',
             value: 'reply',
+            description: 'Sender only',
+            icon: 'reply',
           },
           {
-            label: 'Reply All (to all recipients)',
+            label: 'Reply All',
             value: 'reply_all',
+            description: 'All recipients',
+            icon: 'reply-all',
           },
         ],
       },
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Plain text',
+            label: 'Plain Text',
             value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
+            description: 'Bold, links, lists',
+            icon: 'code',
           },
         ],
       },
     }),
-    body: Property.LongText({
-      displayName: 'Reply Body',
-      description: 'Your reply message content',
+    body: Property.RichText({
+      displayName: 'Body',
       required: true,
+      formatProperty: 'body_type',
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
-      description: 'Optional sender name to display',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     attachment: Property.File({
       displayName: 'Attachment',
-      description: 'Optional file to attach to your reply',
+      description: 'File to attach.',
       required: false,
     }),
     attachment_name: Property.ShortText({
       displayName: 'Attachment Name',
-      description: 'Custom name for the attachment',
+      description: 'Overrides the uploaded file name.',
+      placeholder: 'report.pdf',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: replyToEmailActionOutputSchema,
@@ -158,18 +189,13 @@ export const gmailReplyToEmailAction = createAction({
     const senderEmail = await getUserEmail(context.auth, authClient);
 
     const subjectBase64 = Buffer.from(replySubject).toString('base64');
+    const isPlainText = context.propsValue.body_type === 'plain_text';
     const mailOptions: Mail.Options = {
       to: toRecipients.join(', '),
       cc: ccRecipients.length > 0 ? ccRecipients.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
-      text:
-        context.propsValue.body_type === 'plain_text'
-          ? context.propsValue.body
-          : undefined,
-      html:
-        context.propsValue.body_type === 'html'
-          ? context.propsValue.body
-          : undefined,
+      text: isPlainText ? context.propsValue.body : undefined,
+      html: isPlainText ? undefined : context.propsValue.body,
       attachments: [],
       headers: [
         {
@@ -193,7 +219,7 @@ export const gmailReplyToEmailAction = createAction({
       const lookupResult = mime.lookup(
         context.propsValue.attachment.extension || ''
       );
-      const attachmentOption: Attachment[] = [
+      const attachmentOption: Mail.Attachment[] = [
         {
           filename:
             context.propsValue.attachment_name ??

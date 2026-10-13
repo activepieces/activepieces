@@ -9,10 +9,11 @@ const MAX_LIMIT = 100;
 export const listDatabases = createAction({
   auth: notionAuth,
   name: 'list_databases',
+  classification: 'SEARCH',
   displayName: 'List Databases',
   description:
-    'Lists Notion databases accessible by the connected account with pagination support.',
-  audience: 'both',
+    'List the databases shared with your integration, newest edits first.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists Notion databases the connected account can access, sorted by last edited time. Use when an agent needs to discover available databases before querying or writing items; supports pagination via cursor. Idempotent read-only lookup.',
@@ -21,14 +22,19 @@ export const listDatabases = createAction({
   props: {
     limit: Property.Number({
       displayName: 'Limit',
-      description: `Number of databases to retrieve (1-${MAX_LIMIT}).`,
+      description: 'How many databases to return, up to 100.',
       required: false,
       defaultValue: DEFAULT_LIMIT,
+      display: 'stepper',
+      min: 1,
+      max: MAX_LIMIT,
+      step: 1,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Pagination cursor returned from a previous execution.',
+      description: "Next-page cursor from a previous run's output.",
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

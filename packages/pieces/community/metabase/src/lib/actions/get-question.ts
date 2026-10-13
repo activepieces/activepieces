@@ -12,6 +12,7 @@ interface MetabaseParam {
 
 export const getQuestion = createAction({
   name: 'getQuestion',
+  classification: 'READ',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Get question',

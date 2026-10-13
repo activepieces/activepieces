@@ -13,6 +13,7 @@ import { listCardsInBoardActionOutputSchema } from '../../output-schemas';
 export const listCardsInBoard = createAction({
   auth: trelloAuth,
   name: 'list_cards_in_board',
+  classification: 'SEARCH',
   displayName: 'List Cards In Board (Agent)',
   description: 'List all cards on a Trello board.',
   audience: 'ai',

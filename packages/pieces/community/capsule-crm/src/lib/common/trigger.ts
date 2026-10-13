@@ -25,6 +25,7 @@ export const capsuleCrmCreateTrigger = ({
   return createTrigger({
     auth: capsuleCrmAuth,
     name: name,
+    classification: 'READ',
     displayName: displayName,
     description: description,
     aiMetadata: aiMetadata,

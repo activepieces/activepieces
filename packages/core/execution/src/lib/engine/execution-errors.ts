@@ -35,6 +35,15 @@ export class ConnectionLoadingError extends ExecutionError {
     }
 }
 
+export class ConnectionPieceMismatchError extends ExecutionError {
+    constructor(connectionName: string, pieceName: string | undefined, cause?: unknown) {
+        const message = pieceName === undefined
+            ? `connection (${connectionName}) can't be used here: this step type has no piece identity to bind to`
+            : `connection (${connectionName}) does not belong to piece (${pieceName})`
+        super('ConnectionPieceMismatch', formatMessage(message), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class ConnectionExpiredError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
         super('ConnectionExpired', formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorType.USER, cause)
@@ -121,9 +130,22 @@ export class FormulaEvaluationError extends ExecutionError {
     }
 }
 
+export class WaitpointRejectedError extends ExecutionError {
+    constructor(message: string, cause?: unknown) {
+        super('WaitpointRejectedError', formatMessage(message), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class EngineGenericError extends ExecutionError {
     constructor(name: string, message: string, cause?: unknown) {
         super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
+export class RequireError extends ExecutionError {
+    constructor(piecePath: string, cause?: unknown) {
+        const causeMessage = cause instanceof Error ? cause.message : String(cause)
+        super('RequireError', formatMessage(`Failed to require piece module at ${piecePath}: ${causeMessage}`), ExecutionErrorType.ENGINE, cause)
     }
 }
 
@@ -135,5 +157,10 @@ export class SSRFBlockedError extends ExecutionError {
             ExecutionErrorType.USER,
             cause,
         )
+    }
+}
+export class AiRouterEvaluationError extends ExecutionError {
+    constructor({ message, cause }: { message: string, cause?: unknown }) {
+        super('AiRouterEvaluationError', formatMessage(message), ExecutionErrorType.USER, cause)
     }
 }

@@ -11,6 +11,7 @@ const DEFAULT_WIQL = `SELECT [System.Id] FROM WorkItems WHERE [System.TeamProjec
 export const listWorkItemsAction = createAction({
   auth: azureDevOpsAuth,
   name: 'list_work_items',
+  classification: 'SEARCH',
   displayName: 'List Work Items',
   description: 'Lists work items from Azure DevOps using a WIQL query',
   audience: 'both',

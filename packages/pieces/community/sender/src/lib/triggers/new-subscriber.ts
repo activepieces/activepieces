@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newSubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_subscriber',
+  classification: 'READ',
   displayName: 'New Subscriber',
   description: 'Fires when a subscriber is added to any group or to account',
   aiMetadata: {

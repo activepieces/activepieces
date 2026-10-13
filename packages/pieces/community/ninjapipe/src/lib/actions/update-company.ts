@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const updateCompany = createAction({
   auth: ninjapipeAuth,
   name: 'update_company',
+  classification: 'WRITE',
   displayName: 'Update Company',
   description: 'Updates a company by ID.',
   audience: 'both',

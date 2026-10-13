@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const registrationFolderTerminated = createTrigger({
   auth: wedofAuth,
   name: 'registrationFolderTerminated',
+  classification: 'READ',
   displayName: 'Dossier de formation sort de formation',
   description:
     "Se déclenche lorsqu'un dossier de formation passe à l'état sorti de formation",

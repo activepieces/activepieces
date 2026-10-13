@@ -7,6 +7,7 @@ import { listLabelsActionOutputSchema } from '../output-schemas';
 export const todoistListLabelsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_list_labels',
+  classification: 'SEARCH',
   displayName: 'List Labels',
   description: "Lists all of the user's personal labels in Todoist.",
   audience: 'ai',

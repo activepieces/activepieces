@@ -1,26 +1,89 @@
 import {
+  AiProviderKeyStatus,
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
+  ModelOptions,
+  ModelOptionsSurface,
+  ProjectAIProvider,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
 export const aiProviderApi = {
-  list() {
-    return api.get<AIProviderWithoutSensitiveData[]>('/v1/ai-providers');
+  listForProject(projectId: string) {
+    return api.get<ProjectAIProvider[]>('/v1/ai-providers', { projectId });
   },
-  listModelsForProvider(provider: string) {
-    return api.get<AIProviderModel[]>(`/v1/ai-providers/${provider}/models`);
+  listConfigs() {
+    return api.get<AIProviderWithoutSensitiveData[]>(
+      '/v1/ai-providers/configs',
+    );
   },
-  upsert(request: CreateAIProviderRequest): Promise<void> {
-    return api.post('/v1/ai-providers', request);
+  listModelsForProvider(
+    provider: string,
+    projectId: string,
+    configId?: string,
+  ) {
+    return api.get<AIProviderModel[]>(`/v1/ai-providers/${provider}/models`, {
+      projectId,
+      ...(configId === undefined ? {} : { configId }),
+    });
+  },
+  listModelsForConfig(configId: string) {
+    return api.get<AIProviderModel[]>(
+      `/v1/ai-providers/configs/${configId}/models`,
+    );
+  },
+  listModelOptions({
+    projectId,
+    surface,
+    tierId,
+  }: {
+    projectId: string;
+    surface: ModelOptionsSurface;
+    tierId?: string;
+  }) {
+    return api.get<ModelOptions>('/v1/ai-providers/model-options', {
+      projectId,
+      surface,
+      ...(tierId === undefined ? {} : { tierId }),
+    });
+  },
+  listModelTiers() {
+    return api.get<ModelTiersResponse>('/v1/ai-providers/tiers');
+  },
+  upsert(request: CreateAIProviderRequest) {
+    return api.post<AIProviderWithoutSensitiveData>(
+      '/v1/ai-providers',
+      request,
+    );
+  },
+  recheck(providerId: string) {
+    return api.post<{ status: AiProviderKeyStatus }>(
+      `/v1/ai-providers/${providerId}/recheck`,
+      {},
+    );
   },
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {
     return api.post(`/v1/ai-providers/${providerId}`, request);
   },
-  delete(provider: string): Promise<void> {
-    return api.delete(`/v1/ai-providers/${provider}`);
+  delete(providerId: string): Promise<void> {
+    return api.delete(`/v1/ai-providers/${providerId}`);
   },
 };
+
+export type ModelTierSurface = 'chat' | 'flow';
+
+export type ModelTier = {
+  id: string;
+  label: string;
+  modelId: string;
+};
+
+export type ModelTierList = {
+  tiers: ModelTier[];
+  defaultTierId: string;
+};
+
+export type ModelTiersResponse = Record<ModelTierSurface, ModelTierList>;

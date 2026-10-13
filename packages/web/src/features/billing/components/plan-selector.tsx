@@ -1,0 +1,468 @@
+import { isNil } from '@activepieces/core-utils';
+import { PurchasablePlan, TelemetryEventName } from '@activepieces/shared';
+import { t } from 'i18next';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
+
+import { useTelemetry } from '@/components/providers/telemetry-provider';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
+
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
+import { billingMutations, billingQueries } from '../hooks/billing-hooks';
+import { useCancelSubscriptionGuard } from '../hooks/use-cancel-subscription-guard';
+import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
+
+import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
+import { KeepPlanDialog } from './keep-plan-dialog';
+import {
+  planSelectorUtils,
+  type BillingCycle,
+  type CheckoutAction,
+  type PlanCatalogEntry,
+  type PlanPricing,
+} from './plan-selector-utils';
+
+export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: plans, isLoading } = billingQueries.useListPlans(
+    platform.id,
+    enabled,
+  );
+  const { ensureSeatFloor, openSeatFloor, seatFloorDialog } =
+    usePlanSeatFloorGuard();
+  const {
+    mutate: checkout,
+    isPending,
+    variables: checkoutVariables,
+  } = billingMutations.useCheckout({
+    onDone: onSelected,
+    onSeatLimitExceeded: ({ params, targetSeats, planName }) => {
+      openSeatFloor({
+        targetSeats,
+        planName,
+        proceed: () => checkout(params),
+      });
+    },
+  });
+  const { cancelWithSeatCheck, deactivateUsersDialog } =
+    useCancelSubscriptionGuard({ onCanceled: onSelected });
+  const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const { data: subscription } = billingQueries.usePlatformSubscription(
+    platform.id,
+    enabled,
+  );
+  const { openDialog: openConfirmDialog } =
+    billingDialogHooks.useConfirmPurchaseDialogStore();
+
+  const currentPlanId = subscription?.plan.plan ?? platform.plan.plan;
+  const hasScheduledChange = !isNil(subscription?.cancelAt);
+  const downgradeWarning = planSelectorUtils.dropToFreeWarning(
+    subscription?.additionalSeats,
+  );
+  const allPlans = plans ?? [];
+  const currentPlan = allPlans.find((plan) => plan.id === currentPlanId);
+  const hasAnnualOption = allPlans.some(
+    (plan) => plan.interval === planSelectorUtils.ANNUAL_INTERVAL,
+  );
+  const annualSavedMonths = planSelectorUtils.annualSavedMonths(allPlans);
+  const [cycleOverride, setCycleOverride] = useState<BillingCycle | null>(null);
+  const billingCycle =
+    cycleOverride ??
+    (currentPlan?.interval === planSelectorUtils.ANNUAL_INTERVAL
+      ? 'year'
+      : 'month');
+
+  const proceedCheckout = (intent: CheckoutIntent) => {
+    const successUrl = planSelectorUtils.buildSuccessUrl(intent.action);
+    if (subscription?.billingPortalAvailable) {
+      openConfirmDialog({
+        planId: intent.planId,
+        planName: intent.planName,
+        priceAmount: intent.priceAmount,
+        billingCycle,
+        features: intent.features,
+        successUrl,
+      });
+      onSelected?.();
+      return;
+    }
+    checkout({ planId: intent.planId, successUrl });
+  };
+
+  const handleCheckout = (intent: CheckoutIntent) => {
+    const targetPlan = allPlans.find((plan) => plan.id === intent.planId);
+    ensureSeatFloor({
+      targetSeats: targetPlan?.includedSeats ?? null,
+      planName: intent.planName,
+      proceed: () => proceedCheckout(intent),
+    });
+  };
+
+  if (isLoading || isNil(plans)) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <PlanColumnSkeleton key={index} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {hasAnnualOption && (
+        <Tabs
+          value={billingCycle}
+          onValueChange={(value) => setCycleOverride(value as BillingCycle)}
+          className="self-center"
+        >
+          <TabsList>
+            <TabsTrigger value="month">{t('Monthly')}</TabsTrigger>
+            <TabsTrigger value="year" className="gap-1.5">
+              {t('Annually')}
+              {!isNil(annualSavedMonths) && (
+                <span className="text-xs font-medium text-accent-11">
+                  {t('Save {count, plural, =1 {1 month} other {# months}}', {
+                    count: annualSavedMonths,
+                  })}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {planSelectorUtils.planCatalog().map((entry) => {
+          const apiPlan =
+            entry.key === 'enterprise'
+              ? undefined
+              : planSelectorUtils.findPurchasablePlan({
+                  plans: allPlans,
+                  key: entry.key,
+                  cycle: entry.key === 'free' ? 'month' : billingCycle,
+                });
+          return (
+            <PlanColumn
+              key={entry.key}
+              entry={entry}
+              apiPlan={apiPlan}
+              pricing={planSelectorUtils.computePricing({
+                entry,
+                apiPlan,
+              })}
+              currentPlanId={currentPlanId}
+              hasScheduledChange={hasScheduledChange}
+              isPending={isPending}
+              checkoutPlanId={isPending ? checkoutVariables?.planId : undefined}
+              onCheckout={handleCheckout}
+              onKeepPlan={() => setIsKeepPlanOpen(true)}
+              onDowngrade={() => setIsCancelOpen(true)}
+            />
+          );
+        })}
+      </div>
+
+      {deactivateUsersDialog}
+      {seatFloorDialog}
+      <CancelSubscriptionDialog
+        open={isCancelOpen}
+        onOpenChange={setIsCancelOpen}
+        title={t('We are sorry to see you go')}
+        confirmText={t('Downgrade to Free')}
+        warning={downgradeWarning}
+        onConfirm={cancelWithSeatCheck}
+      />
+      {!isNil(subscription) && (
+        <KeepPlanDialog
+          open={isKeepPlanOpen}
+          onOpenChange={setIsKeepPlanOpen}
+          info={subscription}
+        />
+      )}
+    </div>
+  );
+}
+
+function PlanColumnSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border p-5">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+      <Skeleton className="h-9 w-28" />
+      <Skeleton className="h-9 w-full" />
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-4 w-32" />
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Skeleton key={index} className="h-4 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlanColumn({
+  entry,
+  apiPlan,
+  pricing,
+  currentPlanId,
+  hasScheduledChange,
+  isPending,
+  checkoutPlanId,
+  onCheckout,
+  onKeepPlan,
+  onDowngrade,
+}: PlanColumnProps) {
+  const isFree = entry.key === 'free';
+  const isEnterprise = entry.key === 'enterprise';
+  const isCurrent = !isNil(apiPlan) && apiPlan.id === currentPlanId;
+  const isOnPaidPlan =
+    !isNil(currentPlanId) && currentPlanId !== planSelectorUtils.FREE_PLAN_ID;
+
+  const chargeAmount = isNil(apiPlan?.price)
+    ? apiPlan?.priceDisplay ?? ''
+    : `$${apiPlan.price.toLocaleString()}`;
+  const handleCtaCheckout = (planId: string, action: CheckoutAction) =>
+    onCheckout({
+      planId,
+      action,
+      planName: entry.name,
+      priceAmount: chargeAmount,
+      features: entry.features.map((feature) => feature.label),
+    });
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-4 rounded-xl border p-5',
+        entry.highlighted && 'border-accent-9 shadow-sm',
+      )}
+    >
+      <div className="flex flex-col gap-2">
+        <h3
+          className={cn(
+            'text-lg font-semibold',
+            entry.highlighted && 'text-accent-11',
+          )}
+        >
+          {entry.name}
+        </h3>
+        <p className="text-sm text-gray-11">{entry.blurb}</p>
+      </div>
+
+      <div className="flex min-h-[3.25rem] flex-col gap-1">
+        {!isNil(pricing) && (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-3xl font-bold">{pricing.amount}</span>
+              {!isNil(pricing.suffix) && (
+                <span className="text-sm text-gray-11">{pricing.suffix}</span>
+              )}
+            </div>
+            {!isNil(pricing.note) && (
+              <span className="text-xs text-gray-11">{pricing.note}</span>
+            )}
+          </>
+        )}
+      </div>
+
+      <PlanCta
+        isFree={isFree}
+        isEnterprise={isEnterprise}
+        isCurrent={isCurrent}
+        isOnPaidPlan={isOnPaidPlan}
+        hasScheduledChange={hasScheduledChange}
+        highlighted={entry.highlighted}
+        apiPlan={apiPlan}
+        currentPlanId={currentPlanId}
+        isPending={isPending}
+        checkoutPlanId={checkoutPlanId}
+        onCheckout={handleCtaCheckout}
+        onKeepPlan={onKeepPlan}
+        onDowngrade={onDowngrade}
+      />
+
+      <div className="flex flex-col gap-3">
+        <span className="text-sm font-medium">{entry.featuresHeader}</span>
+        <ul className="flex flex-col gap-2.5">
+          {[
+            ...entry.features.slice(0, 1),
+            ...planSelectorUtils.creditTopUpFeature(apiPlan),
+            ...entry.features.slice(1),
+          ].map((feature) => (
+            <li
+              key={feature.label}
+              className="flex items-center gap-2 text-sm text-gray-12"
+            >
+              <Check className="size-4 shrink-0 text-accent-11" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help underline decoration-gray-9 decoration-dotted underline-offset-4">
+                    {feature.label}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[220px]">
+                  {feature.tooltip}
+                </TooltipContent>
+              </Tooltip>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function PlanCta({
+  isFree,
+  isEnterprise,
+  isCurrent,
+  isOnPaidPlan,
+  hasScheduledChange,
+  highlighted,
+  apiPlan,
+  currentPlanId,
+  isPending,
+  checkoutPlanId,
+  onCheckout,
+  onKeepPlan,
+  onDowngrade,
+}: PlanCtaProps) {
+  const { capture } = useTelemetry();
+  if (isEnterprise) {
+    return (
+      <Button
+        variant="default"
+        className="w-full bg-gray-12 text-gray-1 hover:bg-gray-12/90"
+        asChild
+      >
+        <a
+          {...adminControl(AdminControl.BILLING_PLAN_SALES_LINK)}
+          href={planSelectorUtils.SALES_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() =>
+            capture({
+              name: TelemetryEventName.SALES_HANDOFF_CLICKED,
+              payload: { plan: 'enterprise', surface: 'plan_selector' },
+            })
+          }
+        >
+          {t('Talk to sales')}
+        </a>
+      </Button>
+    );
+  }
+
+  if (isCurrent) {
+    if (hasScheduledChange) {
+      return (
+        <Button
+          {...adminControl(AdminControl.BILLING_PLAN_KEEP_OPEN)}
+          variant="default"
+          className="w-full"
+          onClick={onKeepPlan}
+        >
+          {t('Keep current plan')}
+        </Button>
+      );
+    }
+    return (
+      <Button variant="outline" className="w-full" disabled>
+        {t('Current plan')}
+      </Button>
+    );
+  }
+
+  if (isFree) {
+    if (!isOnPaidPlan) {
+      return (
+        <Button variant="outline" className="w-full" disabled>
+          {t('Current plan')}
+        </Button>
+      );
+    }
+    return (
+      <Button
+        {...adminControl(AdminControl.BILLING_PLAN_DOWNGRADE_OPEN)}
+        variant="outline"
+        className="w-full"
+        onClick={onDowngrade}
+      >
+        {t('Downgrade')}
+      </Button>
+    );
+  }
+
+  if (isNil(apiPlan)) {
+    return null;
+  }
+  const action = planSelectorUtils.actionFor({ currentPlanId });
+  return (
+    <Button
+      {...adminControl(AdminControl.BILLING_PLAN_PURCHASE_SUBMIT)}
+      variant={highlighted ? 'default' : 'outline'}
+      className="w-full"
+      disabled={isPending}
+      loading={apiPlan.id === checkoutPlanId}
+      onClick={() => onCheckout(apiPlan.id, action)}
+    >
+      {t('Purchase Now')}
+    </Button>
+  );
+}
+
+type PlanSelectorProps = {
+  enabled: boolean;
+  onSelected?: () => void;
+};
+
+type PlanColumnProps = {
+  entry: PlanCatalogEntry;
+  apiPlan?: PurchasablePlan;
+  pricing: PlanPricing | null;
+  currentPlanId: string | null | undefined;
+  hasScheduledChange: boolean;
+  isPending: boolean;
+  checkoutPlanId: string | undefined;
+  onCheckout: (intent: CheckoutIntent) => void;
+  onKeepPlan: () => void;
+  onDowngrade: () => void;
+};
+
+type PlanCtaProps = {
+  isFree: boolean;
+  isEnterprise: boolean;
+  isCurrent: boolean;
+  isOnPaidPlan: boolean;
+  hasScheduledChange: boolean;
+  highlighted?: boolean;
+  apiPlan?: PurchasablePlan;
+  currentPlanId: string | null | undefined;
+  isPending: boolean;
+  checkoutPlanId: string | undefined;
+  onCheckout: (planId: string, action: CheckoutAction) => void;
+  onKeepPlan: () => void;
+  onDowngrade: () => void;
+};
+
+type CheckoutIntent = {
+  planId: string;
+  action: CheckoutAction;
+  planName: string;
+  priceAmount: string;
+  features: string[];
+};

@@ -1,13 +1,14 @@
 # AI-Ready Metadata
 
-Pieces power both human flow-builders and AI agents (via the MCP server and the agent tooling). Two fields declare how an action or trigger appears to agents. They are additive — they change nothing for human users — but the catalog is now fully curated (every existing action carries them), so **new actions and triggers must ship with them**: a piece authored without AI metadata is a regression that has to be backfilled later.
+Pieces power both human flow-builders and AI agents (via the MCP server and the agent tooling). Three fields declare how an action or trigger appears to agents and to flow-builders. They are additive — they change nothing about execution — and **new actions and triggers must ship with all of them**: a piece authored without them is a regression that has to be backfilled later.
 
 | Field | Where | Shape | New code |
 |---|---|---|---|
 | `audience` | actions only | `'human' \| 'ai' \| 'both'` | **required, written explicitly** |
 | `aiMetadata` | actions **and** triggers | `{ description?: string; idempotent?: boolean }` | **required** — `{ description, idempotent }` on actions, `{ description }` on triggers |
+| `classification` | actions **and** triggers | `'READ' \| 'SEARCH' \| 'WRITE' \| 'DESTRUCTIVE'` | **required** — derived from `run()`; triggers are always `'READ'` |
 
-Both are plain values on the `createAction` / `createTrigger` object — no import is needed. Triggers accept `aiMetadata` but **not** `audience`: a trigger is an event, not an agent-callable operation.
+All three are plain values on the `createAction` / `createTrigger` object — no import is needed. Triggers accept `aiMetadata` and `classification` but **not** `audience`: a trigger is an event, not an agent-callable operation.
 
 ---
 
@@ -16,6 +17,7 @@ Both are plain values on the `createAction` / `createTrigger` object — no impo
 ```typescript
 export const createRecordAction = createAction({
   name: 'create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in My App',   // human-facing
   audience: 'both',                                // 'human' | 'ai' | 'both'
@@ -41,6 +43,7 @@ export const createRecordAction = createAction({
 ```typescript
 export const createRecordAction = createAction({
   name: 'create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in My App',
   audience: 'both',
@@ -62,7 +65,7 @@ It is written **for an agent choosing between hundreds of tools**, not for the b
 2. **When to pick it** over neighboring actions — name the materially different sibling or mode if one exists ("for bulk inserts prefer X", "use Y to search by email instead").
 3. **The key constraint** — required pairings, limits, side effects — and the retry behavior in prose ("safe to retry", "each call creates a new record").
 
-Do **not** describe the return shape (output contracts are a separate feature), do not embed worked examples, and do not pad — shorter wins for agent context.
+Keep it to the choose-me guidance — return shapes belong in output contracts (a separate feature), examples belong elsewhere, and padding costs agent context. Shorter wins.
 
 ### Deriving `idempotent`
 
@@ -81,13 +84,39 @@ Agents use this to reason about safe retries; it maps to the MCP `idempotentHint
 
 ---
 
+## `classification` — what the step does to external state
+
+Renders as a badge in the builder's piece selector (`READ`/`SEARCH`/`WRITE` as quiet grey pills, `DESTRUCTIVE` in red) and is the declared read/write signal for future consumers. Convention: place it right after `name:` in the config object.
+
+Classify from the `run()` body and the API call it makes — the name and description are hints, never evidence. **Precedence, first match wins:**
+
+| Value | Means | Typical verbs |
+|---|---|---|
+| `DESTRUCTIVE` | removes or disables external state; a retry cannot restore it | delete, purge, revoke, cancel, archive, stop/teardown of a subscription or watch |
+| `WRITE` | creates or changes external state, recoverably | create, send, post, update, upsert, move, assign, tag |
+| `SEARCH` | reads by query or enumeration, zero-or-more results, no mutation | list, search, find, query |
+| `READ` | reads a specific known resource or fixed state | get, retrieve, describe, download |
+
+Rules that settle the recurring edge cases:
+
+- **All triggers → `'READ'`**, polling and webhook alike. The badge answers "does this step change anything?"; the READ/SEARCH split is about how you address data (by id vs by query), which is meaningless for an event you did not ask for.
+- **Sending is `WRITE`, not `DESTRUCTIVE`** — a sent email/message adds state, it doesn't destroy any.
+- **AI/LLM inference or generation** that persists no artifact to an external system → `READ`. "Generate and upload/store" → `WRITE`.
+- **Pure in-flow transforms** (text/math/date/json/csv/crypto helpers) → `READ`.
+- **Key-value store style pieces**: get → `READ`, put/append → `WRITE`, delete → `DESTRUCTIVE`.
+- **One action, multiple operations** (an `operation` prop that can read *or* delete) → tag the worst case reachable.
+- **Arbitrary-operation actions** (raw SQL, raw HTTP, caller-supplied method) → `WRITE`. Factory-built actions (`createCustomApiCallAction`) are tagged at the factory level, not per piece.
+
+---
+
 ## Triggers
 
-Triggers take `aiMetadata` with `description` only — no `audience`, no `idempotent`:
+Triggers take `aiMetadata` with `description` only — no `audience`, no `idempotent` — plus `classification: 'READ'` (always, see above):
 
 ```typescript
 export const newRecordTrigger = createTrigger({
   name: 'new_record',
+  classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when a new record is created',
   aiMetadata: {
@@ -103,12 +132,12 @@ Describe **when the event fires and what one payload represents** (per record? p
 
 ## Factory-built actions and triggers
 
-If actions/triggers are produced by a shared factory (a helper that wraps `createAction`/`createTrigger`), the factory's params type must declare `audience`/`aiMetadata` and forward them into the wrapped call — otherwise the fields in your config objects silently fail to compile or never reach the framework. Add the fields to the factory's param type and pass them through.
+If actions/triggers are produced by a shared factory (a helper that wraps `createAction`/`createTrigger`), the factory's params type must declare `audience`/`aiMetadata`/`classification` and forward them into the wrapped call — otherwise the fields in your config objects silently fail to compile or never reach the framework. Add the fields to the factory's param type and pass them through.
 
 ---
 
 ## When to add this
 
-- **New actions and triggers: always.** `audience: 'both'` + `aiMetadata { description, idempotent }` on every action, `aiMetadata { description }` on every trigger.
+- **New actions and triggers: always.** `audience: 'both'` + `aiMetadata { description, idempotent }` + `classification` on every action; `aiMetadata { description }` + `classification: 'READ'` on every trigger.
 - Set `audience: 'human'` instead when the action is an ask-an-LLM wrapper, a generic transform, or otherwise meaningless as an agent tool.
 - Touching an existing untagged action anyway? Tag it while you're there.

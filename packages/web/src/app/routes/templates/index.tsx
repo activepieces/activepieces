@@ -98,9 +98,8 @@ const TemplatesPage = () => {
   return (
     <div>
       <div>
-        <div className="sticky top-0 z-10 bg-background">
+        <div className="sticky top-0 z-10 bg-gray-1">
           <PageHeader
-            showSidebarToggle={true}
             className="static"
             title={
               <>

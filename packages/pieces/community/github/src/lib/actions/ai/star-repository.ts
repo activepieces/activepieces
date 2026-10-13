@@ -7,6 +7,7 @@ import { ownerProp, repoProp, githubError } from './common';
 export const githubStarRepositoryAction = createAction({
   auth: githubAuth,
   name: 'star_repository',
+  classification: 'WRITE',
   displayName: 'Star Repository (Agent)',
   description: 'Stars a repository for the connected user.',
   audience: 'ai',

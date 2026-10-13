@@ -37,7 +37,7 @@ const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_validate_flow',
         description:
-          'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
+          'Validate one flow, or a whole solution folder including the connections between its flows and tables, without publishing',
       },
       {
         name: 'ap_research_pieces',
@@ -113,6 +113,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
       {
         name: 'ap_create_flow',
         description: 'Create a new flow',
+      },
+      {
+        name: 'ap_create_folder',
+        description: 'Create a folder to group a solution of flows and tables',
       },
       {
         name: 'ap_duplicate_flow',
@@ -259,7 +263,3 @@ export function getToolCategories({
     ),
   }));
 }
-
-export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = TOOL_CATEGORIES.filter(
-  (c) => !c.locked,
-).flatMap((c) => c.tools.map((t) => t.name));

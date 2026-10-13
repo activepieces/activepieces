@@ -6,6 +6,7 @@ import { getUserByIdActionOutputSchema } from '../output-schemas';
 export const slackGetUser = createAction({
   auth: slackAuth,
   name: 'get_user',
+  classification: 'READ',
   displayName: 'Get User',
   description: 'Get a Slack user profile by their user ID.',
   audience: 'ai',

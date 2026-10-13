@@ -5,6 +5,7 @@ import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 export const createEstimateOptionAttachment = createAction({
   auth: housecallProAuth,
   name: "create_estimate_option_attachment",
+  classification: 'WRITE',
   displayName: "Create estimate option attachment",
   description: "Upload an attachment to an estimate option",
   audience: 'both',

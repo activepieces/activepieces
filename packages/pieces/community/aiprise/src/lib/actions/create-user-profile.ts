@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const createUserProfileAction = createAction({
   auth: aipriseAuth,
   name: 'create_user_profile',
+  classification: 'WRITE',
   displayName: 'Create User Profile',
   description:
     'Creates a new user profile in AiPrise. The returned profile can then be used for repeated verifications or ongoing monitoring for the same person.',

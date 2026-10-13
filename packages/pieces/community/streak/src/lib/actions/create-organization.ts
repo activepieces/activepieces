@@ -24,6 +24,7 @@ type StreakOrganization = {
 export const createOrganizationAction = createAction({
   auth: streakAuth,
   name: 'create_organization',
+  classification: 'WRITE',
   displayName: 'Create or Find Organization',
   description:
     'Create an organization in a team. If an organization with the same domain already exists, return that organization instead of creating a duplicate.',

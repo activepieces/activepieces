@@ -6,6 +6,7 @@ import { scheduleIdProperty, sendItRequest } from '../common';
 export const triggerScheduledPost = createAction({
   auth: sendItAuth,
   name: 'trigger_scheduled_post',
+  classification: 'WRITE',
   displayName: 'Trigger Scheduled Post Now',
   description: 'Immediately publish a scheduled post',
   audience: 'both',

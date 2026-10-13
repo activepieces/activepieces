@@ -12,18 +12,21 @@ import {
 import * as z from 'zod/mini'
 
 import { wooAuth } from '../auth';
+import { createCouponOutputSchema } from '../output-schemas';
 
 export const wooCreateCoupon = createAction({
   name: 'Create Coupon',
+  classification: 'WRITE',
   displayName: 'Create Coupon',
   description: 'Create a coupon',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new discount coupon in a WooCommerce store with a code, discount type (fixed_cart, fixed_product, percent, or percent_product), amount, and minimum order amount. Use when an agent needs to issue a promotional or discount code. Not idempotent: each call posts a new coupon, and the code must be unique in the store.',
     idempotent: false,
   },
   auth: wooAuth,
+  outputSchema: createCouponOutputSchema,
   props: {
     code: Property.ShortText({
       displayName: 'Coupon code',

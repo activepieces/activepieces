@@ -7,6 +7,7 @@ import { listScheduledMessagesActionOutputSchema } from '../output-schemas';
 export const slackListScheduledMessagesAction = createAction({
   auth: slackAuth,
   name: 'slack_list_scheduled_messages',
+  classification: 'SEARCH',
   displayName: 'List Scheduled Messages',
   description: 'List pending scheduled messages.',
   audience: 'ai',

@@ -17,6 +17,7 @@ import {
 export const convertFile = createAction({
   auth: filetopdfAuth,
   name: 'convert_file',
+  classification: 'READ',
   displayName: 'Convert a File',
   description:
     'Convert an uploaded file or a public file URL to PDF. The engine is chosen automatically from the extension — Office (DOCX, XLSX, PPTX…), images, HTML, Markdown, or PDF passthrough.',

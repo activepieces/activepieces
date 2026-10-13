@@ -1,0 +1,113 @@
+import { AiProviderCredentials, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
+import { splitCloudflareGatewayModelId } from '@activepieces/core-piece-types'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { ImageModel, LanguageModel } from 'ai'
+import { createAiGateway } from 'ai-gateway-provider'
+import { withoutServerStorage } from './create-language-model'
+
+export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage: true }): ImageModel
+export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage?: false }): LanguageModel
+export function createCloudflareGatewayModel({ credentials, modelId, isImage = false, routing = 'compat', metadata, onOutcome }: CreateCloudflareGatewayModelParams): ImageModel | LanguageModel {
+    const { apiKey } = credentials.auth
+    const { vertexProject, vertexRegion } = credentials.config
+    const accountId = credentials.config.accountId ?? ''
+    const gatewayId = credentials.config.gatewayId ?? ''
+    const { provider: providerPrefix, model: actualModelId, publisher } = splitCloudflareGatewayModelId(modelId)
+    const headers = {
+        'cf-aig-authorization': `Bearer ${apiKey}`,
+        ...(isNil(metadata) ? {} : { 'cf-aig-metadata': JSON.stringify(metadata) }),
+    }
+
+    if (providerPrefix === 'openai' && !isImage) {
+        const openaiProvider = openAiGatewayProvider({ accountId, gatewayId, headers, onOutcome })
+        return withoutServerStorage({ model: openaiProvider.responses(actualModelId), providerOptionsName: 'openai' })
+    }
+
+    if (routing === 'compat') {
+        return compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId: actualModelId, onOutcome })
+    }
+
+    const aigateway = createAiGateway({ accountId, gateway: gatewayId, apiKey })
+    switch (providerPrefix) {
+        case 'anthropic':
+            return aigateway(createAnthropic({ apiKey: CF_TEMP_TOKEN, headers })(actualModelId))
+        case 'google-ai-studio':
+            return aigateway(createGoogleGenerativeAI({ apiKey: CF_TEMP_TOKEN, headers })(actualModelId))
+        case 'google-vertex-ai': {
+            if (isNil(vertexProject) || isNil(vertexRegion) || isNil(publisher)) {
+                return compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId })
+            }
+            return createGoogleGenerativeAI({
+                apiKey,
+                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
+                headers,
+            })(actualModelId)
+        }
+        case 'openai':
+            return openAiGatewayProvider({ accountId, gatewayId, headers }).imageModel(actualModelId)
+        default:
+            return compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId })
+    }
+}
+
+function compatGatewayModel({ accountId, gatewayId, headers, isImage, modelId, onOutcome }: {
+    accountId: string
+    gatewayId: string
+    headers: Record<string, string>
+    isImage: boolean
+    modelId: string
+    onOutcome?: ProviderOutcomeReporter
+}): ImageModel | LanguageModel {
+    const provider = createOpenAICompatible({
+        name: 'cloudflare',
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
+        headers,
+        ...spreadIfDefined('fetch', observedProviderFetch(onOutcome)),
+    })
+    return isImage ? provider.imageModel(modelId) : provider.chatModel(modelId)
+}
+
+function openAiGatewayProvider({ accountId, gatewayId, headers, onOutcome }: {
+    accountId: string
+    gatewayId: string
+    headers: Record<string, string>
+    onOutcome?: ProviderOutcomeReporter
+}): ReturnType<typeof createOpenAI> {
+    return createOpenAI({
+        apiKey: NO_KEY_PLACEHOLDER,
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/openai`,
+        headers,
+        fetch: withoutAuthorizationHeader(observedProviderFetch(onOutcome)),
+    })
+}
+
+function withoutAuthorizationHeader(delegate: typeof globalThis.fetch | undefined): typeof globalThis.fetch {
+    return (input, init) => {
+        const headers = new Headers(init?.headers)
+        headers.delete('Authorization')
+        return (delegate ?? globalThis.fetch)(input, { ...init, headers })
+    }
+}
+
+const NO_KEY_PLACEHOLDER = 'no-key'
+const CF_TEMP_TOKEN = 'CF_TEMP_TOKEN'
+
+export type CloudflareGatewayRouting = 'compat' | 'submodel'
+
+export type CloudflareGatewayMetadata = {
+    projectId: string
+    flowId: string
+    runId: string
+}
+
+export type CreateCloudflareGatewayModelParams = {
+    credentials: Extract<AiProviderCredentials, { provider: AIProviderName.CLOUDFLARE_GATEWAY }>
+    modelId: string
+    isImage?: boolean
+    routing?: CloudflareGatewayRouting
+    metadata?: CloudflareGatewayMetadata
+    onOutcome?: ProviderOutcomeReporter
+}

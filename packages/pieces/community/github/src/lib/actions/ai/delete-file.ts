@@ -8,6 +8,7 @@ import { fileMutationResultOutputSchema } from '../../output-schemas';
 export const githubDeleteFileAction = createAction({
   auth: githubAuth,
   name: 'delete_file',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete File (Agent)',
   description: 'Deletes a file from a repository via a commit.',
   audience: 'ai',

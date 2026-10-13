@@ -7,6 +7,7 @@ import { clientId, customFields, listId } from '../common/props';
 export const addSubscriberToListAction = createAction({
   auth: campaignMonitorAuth,
   name: 'add_subscriber_to_list',
+  classification: 'WRITE',
   displayName: 'Add Subscriber',
   description: 'Adds a new subscriber to a list.',
   audience: 'both',

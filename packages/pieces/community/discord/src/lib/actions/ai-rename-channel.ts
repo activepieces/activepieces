@@ -10,6 +10,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordRenameChannelAi = createAction({
   auth: discordAuth,
   name: 'discord_rename_channel',
+  classification: 'WRITE',
   displayName: 'Rename Channel',
   description: 'Change the name of an existing channel.',
   audience: 'ai',

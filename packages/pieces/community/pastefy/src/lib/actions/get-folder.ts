@@ -5,6 +5,7 @@ import { pastefyAuth } from '../..';
 export default createAction({
   auth: pastefyAuth,
   name: 'get_folder',
+  classification: 'READ',
   displayName: 'Get Folder',
   description: 'Retrieves information about a folder',
   audience: 'both',

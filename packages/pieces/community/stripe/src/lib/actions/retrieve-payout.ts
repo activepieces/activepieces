@@ -10,9 +10,10 @@ import { stripeCommon } from '../common';
 import { payoutOutputSchema } from '../output-schemas';
 export const stripeRetrievePayout = createAction({
   name: 'retrieve_payout',
+  classification: 'READ',
   auth: stripeAuth,
-  displayName: 'Retrieve a Payout',
-  description: 'Retrieves the details of an existing payout by its ID.',
+  displayName: 'Retrieve Payout',
+  description: "Get a payout's amount, status and arrival date.",
   audience: 'human',
   aiMetadata: {
     description:

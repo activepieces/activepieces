@@ -29,7 +29,7 @@ describe('Chat conversation stuck in STREAMING status', () => {
         const conversationId = createResponse.json().id
 
         // Set status to STREAMING with a recent updated timestamp (default behavior)
-        await db.update('chat_conversation', conversationId, {
+        await db.update('agent_conversation', conversationId, {
             status: AgentConversationStatus.STREAMING,
         })
 
@@ -47,7 +47,7 @@ describe('Chat conversation stuck in STREAMING status', () => {
 
         // Set status to STREAMING with an old updated timestamp (simulating worker crash 5 min ago, past the 2-min threshold)
         const twentyMinutesAgo = new Date(Date.now() - 5 * 60 * 1_000).toISOString()
-        await db.update('chat_conversation', conversationId, {
+        await db.update('agent_conversation', conversationId, {
             status: AgentConversationStatus.STREAMING,
             updated: twentyMinutesAgo,
         })
@@ -65,7 +65,7 @@ describe('Chat conversation stuck in STREAMING status', () => {
         const conversationId = createResponse.json().id
 
         const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1_000).toISOString()
-        await db.update('chat_conversation', conversationId, {
+        await db.update('agent_conversation', conversationId, {
             status: AgentConversationStatus.STREAMING,
             updated: twentyMinutesAgo,
         })
@@ -87,8 +87,8 @@ describe('Chat conversation stuck in STREAMING status', () => {
         const id2 = conv2.json().id
 
         const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1_000).toISOString()
-        await db.update('chat_conversation', id1, { status: AgentConversationStatus.STREAMING, updated: twentyMinutesAgo })
-        await db.update('chat_conversation', id2, { status: AgentConversationStatus.STREAMING, updated: twentyMinutesAgo })
+        await db.update('agent_conversation', id1, { status: AgentConversationStatus.STREAMING, updated: twentyMinutesAgo })
+        await db.update('agent_conversation', id2, { status: AgentConversationStatus.STREAMING, updated: twentyMinutesAgo })
 
         const get1 = await ctx.get(`${CONVERSATIONS_URL}/${id1}`)
         const get2 = await ctx.get(`${CONVERSATIONS_URL}/${id2}`)
@@ -104,7 +104,7 @@ describe('Chat conversation stuck in STREAMING status', () => {
 
         // Set status to STREAMING updated 1 minute ago (within 2-min timeout)
         const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1_000).toISOString()
-        await db.update('chat_conversation', conversationId, {
+        await db.update('agent_conversation', conversationId, {
             status: AgentConversationStatus.STREAMING,
             updated: oneMinuteAgo,
         })
@@ -121,8 +121,8 @@ describe('Chat conversation stuck in STREAMING status', () => {
         const errorConv = await ctx.post(CONVERSATIONS_URL, { title: 'Error Old' })
 
         const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1_000).toISOString()
-        await db.update('chat_conversation', idleConv.json().id, { updated: twentyMinutesAgo })
-        await db.update('chat_conversation', errorConv.json().id, {
+        await db.update('agent_conversation', idleConv.json().id, { updated: twentyMinutesAgo })
+        await db.update('agent_conversation', errorConv.json().id, {
             status: AgentConversationStatus.ERROR,
             updated: twentyMinutesAgo,
         })
@@ -140,7 +140,7 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const conversationId = (await ctx.post(CONVERSATIONS_URL, { title: 'Sweep Me' })).json().id
 
-        await db.update('chat_conversation', conversationId, {
+        await db.update('agent_conversation', conversationId, {
             status: AgentConversationStatus.STREAMING,
             updated: new Date(Date.now() - 5 * 60 * 1_000).toISOString(),
         })
@@ -148,7 +148,7 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
 
         // Read straight from the DB (not via GET, which would itself recover) to prove the sweep did it.
-        const row = await db.findOneByOrFail<{ status: string }>('chat_conversation', { id: conversationId })
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: conversationId })
         expect(row.status).toBe(AgentConversationStatus.IDLE)
     })
 
@@ -156,37 +156,37 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const conversationId = (await ctx.post(CONVERSATIONS_URL, { title: 'Still Streaming' })).json().id
 
-        await db.update('chat_conversation', conversationId, {
+        await db.update('agent_conversation', conversationId, {
             status: AgentConversationStatus.STREAMING,
             updated: new Date(Date.now() - 30 * 1_000).toISOString(),
         })
 
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
 
-        const row = await db.findOneByOrFail<{ status: string }>('chat_conversation', { id: conversationId })
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: conversationId })
         expect(row.status).toBe(AgentConversationStatus.STREAMING)
     })
 
     it('skips eval conversations even when stale', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const seedId = (await ctx.post(CONVERSATIONS_URL, { title: 'seed' })).json().id
-        const seed = await db.findOneByOrFail<{ platformId: string, userId: string }>('chat_conversation', { id: seedId })
+        const seed = await db.findOneByOrFail<{ platformId: string, userId: string }>('agent_conversation', { id: seedId })
 
         const evalId = `evalconv${apId()}`.slice(0, 21)
-        await db.save('chat_conversation', {
+        await db.save('agent_conversation', {
             id: evalId,
             platformId: seed.platformId,
             userId: seed.userId,
             status: AgentConversationStatus.STREAMING,
             messages: [],
         })
-        await db.update('chat_conversation', evalId, {
+        await db.update('agent_conversation', evalId, {
             updated: new Date(Date.now() - 10 * 60 * 1_000).toISOString(),
         })
 
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
 
-        const row = await db.findOneByOrFail<{ status: string }>('chat_conversation', { id: evalId })
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: evalId })
         expect(row.status).toBe(AgentConversationStatus.STREAMING)
     })
 })

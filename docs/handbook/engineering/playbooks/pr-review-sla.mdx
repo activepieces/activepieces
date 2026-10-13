@@ -7,7 +7,7 @@ How pull requests get a reviewer, how long a review should take, and what happen
 
 ## Code Owners → auto-assigned reviewer
 
-Every PR gets a reviewer automatically via [`.github/CODEOWNERS`](https://github.com/activepieces/activepieces/blob/main/.github/CODEOWNERS). GitHub matches the changed paths and requests review from the owning team. Each team uses **round-robin assignment** (`Settings → Teams → <team> → Code review assignment`), so exactly **one** member is picked per PR instead of pinging the whole team.
+Almost every PR gets a reviewer automatically via [`.github/CODEOWNERS`](https://github.com/activepieces/activepieces/blob/main/.github/CODEOWNERS). GitHub matches the changed paths and requests review from the owning team. Each team uses **round-robin assignment** (`Settings → Teams → <team> → Code review assignment`), so exactly **one** member is picked per PR instead of pinging the whole team.
 
 CODEOWNERS is **last-match-wins** — the most specific matching line decides the owner.
 
@@ -16,14 +16,21 @@ CODEOWNERS is **last-match-wins** — the most specific matching line decides th
 | `*` (everything else) | `@activepieces/core` | Louai, Abdul, Hazem, Ahmad, Othman |
 | `packages/pieces/` | `@activepieces/pieces` | Ahmad, Kishan, Sanket |
 | `packages/server/engine/`, `packages/server/worker/`, `packages/core/execution/` | `@activepieces/platform` | Mohammad, Chaker, Amr |
+| `bun.lock`, `brain/` | *unowned — no team requested* | — |
 
 The engine/worker/execution paths are the critical execution path and are owned by the platform team regardless of the `*` fallback.
+
+`bun.lock` and `brain/` are deliberately **unowned**: they are listed in CODEOWNERS with an empty owner column, which releases them from the `*` fallback. A PR touching only those paths requests no team and needs no code-owner approval — it still needs one approving review from any collaborator with write access. Before this, a pieces PR that merely regenerated the lockfile also blocked on a core reviewer, and a docs-only change to `brain/` pulled in core.
+
+A PR touching an unowned path **and** an owned one is unaffected: the owned path still requests its team.
 
 ### Changing ownership
 
 - **New member on a team** → add them in `Settings → Teams`. No CODEOWNERS change needed.
 - **New path with a dedicated owner** → add a line to `.github/CODEOWNERS`, more specific than `*`, pointing at a team.
+- **New path that should need no review owner** → add the path with **no owner after it**, below the `*` line. CODEOWNERS has no `!negation` syntax; an empty owner column is the only way to opt out.
 - Owners must have write access to the repo, or GitHub silently skips the assignment.
+- After any edit, check `gh api repos/activepieces/activepieces/codeowners/errors` returns `{"errors":[]}`. A line with invalid syntax is **silently skipped**, which quietly hands the path back to `*`.
 
 ## Review SLA — the expectation
 

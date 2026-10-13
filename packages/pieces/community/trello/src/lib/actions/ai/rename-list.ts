@@ -12,6 +12,7 @@ import { renameListActionOutputSchema } from '../../output-schemas';
 export const renameList = createAction({
   auth: trelloAuth,
   name: 'rename_list',
+  classification: 'WRITE',
   displayName: 'Rename List (Agent)',
   description: 'Rename a Trello list.',
   audience: 'ai',

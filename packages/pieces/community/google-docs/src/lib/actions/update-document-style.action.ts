@@ -7,6 +7,7 @@ import { updateDocumentStyleActionOutputSchema } from '../output-schemas';
 export const updateDocumentStyle = createAction({
 	auth: googleDocsAuth,
 	name: 'update_document_style',
+	classification: 'WRITE',
 	displayName: 'Update Document Style',
 	description: 'Update the page margins or other document-level style properties of a Google Docs document.',
 	audience: 'ai',

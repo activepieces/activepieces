@@ -6,6 +6,7 @@ import { driveGetSharedDriveOutputSchema } from '../output-schemas';
 export const driveGetSharedDrive = createAction({
   auth: googleDriveAuth,
   name: 'drive_get_shared_drive',
+  classification: 'READ',
   displayName: 'Get Shared Drive',
   description: 'Fetch metadata for one shared drive by ID.',
   audience: 'ai',

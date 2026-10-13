@@ -5,6 +5,7 @@ import { parseDirectoryURL } from '../common/brilliant-directories-common';
 
 export const createNewUser = createAction({
   name: 'create_new_user',
+  classification: 'WRITE',
   auth: brilliantDirectoriesAuth,
   displayName: 'Create new User',
   description: 'Creates a new user in your brilliant directories site',

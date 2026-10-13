@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createPaymentLinkAction = createAction({
   name: 'create_payment_link',
+  classification: 'WRITE',
   auth: checkoutComAuth,
   displayName: 'Create Payment Link',
   description: 'Create a Payment Link to accept and process payment details.',

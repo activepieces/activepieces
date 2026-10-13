@@ -8,6 +8,7 @@ import { listContributorsOutputSchema } from '../../output-schemas';
 export const githubListContributorsAction = createAction({
   auth: githubAuth,
   name: 'list_contributors',
+  classification: 'SEARCH',
   displayName: 'List Contributors (Agent)',
   description: 'Lists the contributors to a repository.',
   audience: 'ai',

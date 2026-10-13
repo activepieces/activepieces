@@ -7,12 +7,13 @@ import { searchGoogleLensOutputSchema } from '../output-schemas';
 export const searchGoogleLens = createAction({
   auth: serpApiAuth,
   name: 'search_google_lens',
+  classification: 'SEARCH',
   displayName: 'Search Google Lens',
   description: 'Run a reverse-image (visual) search on Google Lens for an image URL.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Runs a Google Lens reverse-image search via SerpApi for a publicly accessible image URL, returning visual matches and related content (in `visual_matches` and related keys). Use to identify what is in an image, find where an image appears online, or find visually similar items. Optionally refine with a text query. Read-only and idempotent; requires the image URL and a SerpApi API key.',
+      'Run a Google Lens reverse image search on a publicly accessible image URL to find visual matches for a picture. Use to identify what is in an image, find where an image appears online, or find visually similar items. Optionally refine with a text query.',
     idempotent: true,
   },
   outputSchema: searchGoogleLensOutputSchema,

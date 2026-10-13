@@ -1,7 +1,13 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { randomBytes, timingSafeEqual } from 'crypto';
 
 type TelegramUpdate = Record<string, unknown> & { update_id?: number };
 
@@ -10,12 +16,19 @@ type GetUpdatesResponse = {
   result: TelegramUpdate[];
 };
 
+type GetWebhookInfoResponse = {
+  ok: boolean;
+  result: {
+    url: string;
+  };
+};
+
 const UPDATE_TYPE_OPTIONS = [
   { label: 'Message', value: 'message' },
   { label: 'Edited Message', value: 'edited_message' },
   { label: 'Channel Post', value: 'channel_post' },
   { label: 'Edited Channel Post', value: 'edited_channel_post' },
-  { label: 'Callback Query (inline button tap)', value: 'callback_query' },
+  { label: 'Inline Button Tap', value: 'callback_query' },
   { label: 'Inline Query', value: 'inline_query' },
   { label: 'Chosen Inline Result', value: 'chosen_inline_result' },
   { label: 'Poll', value: 'poll' },
@@ -25,20 +38,55 @@ const UPDATE_TYPE_OPTIONS = [
   { label: 'Chat Join Request', value: 'chat_join_request' },
 ];
 
-const updateTypesDescription = `
-Telegram allows only **one webhook per bot token**, so a single Telegram trigger handles all update types for a given bot. Pick the update types this flow should listen for. Leave empty to use Telegram's default set (messages, edited channel posts, chat-member updates — **does not include callback queries**).
+const updateTypesDescription =
+  'Empty receives every update except Chat Member and reactions.';
 
-After selecting multiple types, use a Branch step downstream to fork on the update kind (e.g. \`message\` vs \`callback_query\`).
-`;
+const triggerNotesDescription = `**One webhook per bot.** Publishing another flow with this bot token stops this one. Use one flow per bot and branch on the update type.
+
+After publishing, Retest shows sample data. Test before publishing to load a real update.`;
+
+const WEBHOOK_SECRET_STORE_KEY = 'telegram_webhook_secret_token';
+
+const TELEGRAM_SECRET_HEADER = 'x-telegram-bot-api-secret-token';
+
+const SAMPLE_UPDATE: TelegramUpdate = {
+  update_id: 351114420,
+  message: {
+    chat: {
+      id: 123456789,
+      type: 'private',
+      username: 'johndoe',
+      last_name: 'Doe',
+      first_name: 'John',
+    },
+    date: 1686050152,
+    from: {
+      id: 123456789,
+      is_bot: false,
+      username: 'johndoe',
+      last_name: 'Doe',
+      first_name: 'John',
+      language_code: 'en',
+    },
+    parse_mode: 'MarkdownV2',
+    text: 'Hello world',
+    message_id: 21,
+  },
+};
 
 export const telegramNewMessage = createTrigger({
   auth: telegramBotAuth,
   name: 'new_telegram_message',
+  classification: 'READ',
   displayName: 'New Update',
   description:
-    'Triggers when the bot receives a Telegram update (message, callback query, poll answer, etc.). One trigger per bot token — Telegram does not support multiple webhooks on the same bot.',
+    'Triggers when the bot receives a Telegram update (message, callback query, poll answer, etc.).',
   aiMetadata: { description: 'Fires when the bot receives any selected Telegram update, including new or edited messages, channel posts, inline-button callback queries, poll answers, and chat-member changes. Represents a single inbound update event; since Telegram allows only one webhook per bot token, this one trigger covers all chosen update types for that bot.' },
   props: {
+    trigger_notes: Property.MarkDown({
+      value: triggerNotesDescription,
+      variant: MarkdownVariant.WARNING,
+    }),
     update_types: Property.StaticMultiSelectDropdown({
       displayName: 'Update Types',
       description: updateTypesDescription,
@@ -47,45 +95,39 @@ export const telegramNewMessage = createTrigger({
     }),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    body: {
-      message: {
-        chat: {
-          id: 55169542059,
-          type: 'private',
-          username: 'AbdallahAlwarawreh',
-          last_name: 'Alwarawreh',
-          first_name: 'Abdallah',
-        },
-        date: 1686050152,
-        from: {
-          id: 55169542059,
-          is_bot: false,
-          username: 'AbdallahAlwarawreh',
-          last_name: 'Alwarawreh',
-          first_name: 'Abdallah',
-          language_code: 'en',
-        },
-        parse_mode: 'MarkdownV2',
-        text: 'Hello world',
-        message_id: 21,
-      },
-      update_id: 351114420,
-    },
-  },
+  sampleData: SAMPLE_UPDATE,
   async onEnable(context) {
     const allowedUpdates = (context.propsValue.update_types ?? []) as string[];
+    const secretToken = randomBytes(32).toString('hex');
+    await context.store.put(WEBHOOK_SECRET_STORE_KEY, secretToken);
     await telegramCommons.subscribeWebhook(context.auth.secret_text, context.webhookUrl, {
       allowed_updates: allowedUpdates,
+      drop_pending_updates: true,
+      secret_token: secretToken,
     });
   },
   async onDisable(context) {
     await telegramCommons.unsubscribeWebhook(context.auth.secret_text);
+    await context.store.delete(WEBHOOK_SECRET_STORE_KEY);
   },
   async run(context) {
+    const expectedSecret = await context.store.get<string>(WEBHOOK_SECRET_STORE_KEY);
+    if (
+      expectedSecret &&
+      !secretTokenMatches({
+        expected: expectedSecret,
+        received: context.payload.headers[TELEGRAM_SECRET_HEADER],
+      })
+    ) {
+      return [];
+    }
     return [context.payload.body];
   },
   async test(context) {
+    const webhookInfo = await getWebhookInfo(context.auth.secret_text);
+    if (webhookInfo.result.url) {
+      return [SAMPLE_UPDATE];
+    }
     const messages = await getLastFiveMessages(context.auth.secret_text);
     return messages.result;
   },
@@ -97,5 +139,32 @@ const getLastFiveMessages = async (botToken: string) => {
     url: `https://api.telegram.org/bot${botToken}/getUpdates?offset=-5`,
   };
   const response = await httpClient.sendRequest<GetUpdatesResponse>(request);
+  return response.body;
+};
+
+function secretTokenMatches({
+  expected,
+  received,
+}: {
+  expected: string;
+  received: string | undefined;
+}): boolean {
+  if (!received) {
+    return false;
+  }
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
+
+const getWebhookInfo = async (botToken: string) => {
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
+  };
+  const response = await httpClient.sendRequest<GetWebhookInfoResponse>(request);
   return response.body;
 };

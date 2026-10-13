@@ -17,6 +17,8 @@ import { Input } from '@/components/ui/input';
 import { samlSsoApi } from '@/features/platform-admin';
 import { formatUtils } from '@/lib/format-utils';
 
+import { useStartSamlLogin } from '../hooks/use-start-saml-login';
+
 const FormValues = z.object({
   email: z.string().regex(formatUtils.emailRegex, t('Email is invalid')),
 });
@@ -25,9 +27,16 @@ type FormValues = z.infer<typeof FormValues>;
 
 type SamlLoginFormProps = {
   onBack: () => void;
+  // The auth card supplies its own back affordance, so it opts out of this
+  // one rather than showing two.
+  showBackButton?: boolean;
 };
 
-export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
+export const SamlLoginForm = ({
+  onBack,
+  showBackButton = true,
+}: SamlLoginFormProps) => {
+  const startSamlLogin = useStartSamlLogin();
   const form = useForm<FormValues>({
     resolver: zodResolver(FormValues),
     defaultValues: { email: '' },
@@ -41,9 +50,7 @@ export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
       if (!platformId) {
         throw new Error(t('No SAML provider found for this domain'));
       }
-      window.location.href = `/api/v1/authn/saml/login?platformId=${encodeURIComponent(
-        platformId,
-      )}`;
+      startSamlLogin({ platformId });
     },
     onError: (error) => {
       const message =
@@ -61,7 +68,7 @@ export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
           mutate(data);
         })}
       >
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t('Enter your email to be redirected to your SAML provider.')}
         </p>
         <FormField
@@ -92,10 +99,12 @@ export const SamlLoginForm = ({ onBack }: SamlLoginFormProps) => {
         >
           {t('Continue')}
         </Button>
-        <Button variant="ghost" type="button" onClick={onBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('Back to sign in')}
-        </Button>
+        {showBackButton && (
+          <Button variant="ghost" type="button" onClick={onBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t('Back to sign in')}
+          </Button>
+        )}
       </form>
     </Form>
   );

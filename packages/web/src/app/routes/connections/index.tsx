@@ -91,6 +91,7 @@ function AppConnectionsPage() {
   const {
     data: connections,
     isLoading: connectionsLoading,
+    isError: connectionsError,
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
@@ -102,7 +103,6 @@ function AppConnectionsPage() {
       displayName,
     },
     extraKeys: [location.search, projectId],
-    showErrorDialog: true,
   });
 
   const { mutateAsync: deleteConnections } =
@@ -178,6 +178,8 @@ function AppConnectionsPage() {
         ),
         cell: ({ row }) => {
           const isPlatformConnection = row.original.scope === 'PLATFORM';
+          const accountIdentifier =
+            appConnectionUtils.getConnectionAccountIdentifier(row.original);
           return (
             <div className="flex items-center gap-2 min-w-0">
               <CopyTextTooltip
@@ -192,9 +194,16 @@ function AppConnectionsPage() {
                   />
                 </span>
               </CopyTextTooltip>
-              <TextWithTooltip tooltipMessage={row.original.displayName}>
-                <span className="min-w-0">{row.original.displayName}</span>
-              </TextWithTooltip>
+              <div className="flex flex-col min-w-0">
+                <TextWithTooltip tooltipMessage={row.original.displayName}>
+                  <span className="min-w-0">{row.original.displayName}</span>
+                </TextWithTooltip>
+                {accountIdentifier && (
+                  <span className="truncate text-xs text-gray-11">
+                    {accountIdentifier}
+                  </span>
+                )}
+              </div>
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -272,7 +281,9 @@ function AppConnectionsPage() {
               className="text-left underline cursor-pointer"
               onClick={() => {
                 navigate(
-                  `/flows?connectionExternalId=${row.original.externalId}`,
+                  `/automations?connection=${encodeURIComponent(
+                    row.original.externalId,
+                  )}`,
                 );
               }}
             >
@@ -364,7 +375,7 @@ function AppConnectionsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
@@ -438,6 +449,9 @@ function AppConnectionsPage() {
         columns={columns}
         page={filteredData}
         isLoading={connectionsLoading}
+        isError={connectionsError}
+        errorStateEntity={t('connections')}
+        onRetry={refetch}
         filters={filters}
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}

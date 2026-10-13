@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowGetCollectionItem = createAction({
 	auth: webflowAuth,
 	name: 'get_collection_item',
+	classification: 'READ',
 	description: 'Get collection item in a collection by ID',
 	displayName: 'Get a Collection Item by ID',
 	audience: 'both',

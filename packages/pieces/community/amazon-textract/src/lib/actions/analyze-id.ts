@@ -11,6 +11,7 @@ import {
 export const analyzeId = createAction({
   auth: amazonTextractAuth,
   name: 'analyze-id',
+  classification: 'READ',
   displayName: 'Analyze ID Document',
   description:
     'Extract structured data from identity documents such as driver\'s licenses and passports. Returns fields like name, date of birth, ID number, and expiry date.',

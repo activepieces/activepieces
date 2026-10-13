@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTransactionRawTrace = createAction({
   name: 'get_transaction_raw_trace',
+  classification: 'READ',
   displayName: 'Get Transaction Raw Trace',
   description: 'Get raw trace data for a transaction',
   audience: 'both',

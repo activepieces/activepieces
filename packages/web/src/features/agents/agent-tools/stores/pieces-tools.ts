@@ -10,6 +10,8 @@ import { create } from 'zustand';
 
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
 
+import { agentToolAccount } from '../lib/agent-tool-account';
+
 type SelectedDialogPage = 'pieces-list' | 'actions-list' | 'action-inputs';
 
 interface PiecesToolDialogsState {
@@ -105,7 +107,12 @@ export const usePieceToolsDialogStore = create<PiecesToolDialogsState>(
         return false;
       }
 
-      if (!selectedAction.requireAuth || isNil(selectedPiece.auth)) {
+      if (
+        !agentToolAccount.requiresAccount({
+          pieceHasAuth: !isNil(selectedPiece.auth),
+          actionRequireAuth: selectedAction.requireAuth,
+        })
+      ) {
         return true;
       }
 

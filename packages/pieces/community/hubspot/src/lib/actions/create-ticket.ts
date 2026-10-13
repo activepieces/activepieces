@@ -2,21 +2,24 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, pipelineDropdown, pipelineStageDropdown, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createTicketAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-ticket',
+	classification: 'WRITE',
 	displayName: 'Create Ticket',
 	description: 'Creates a ticket in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot support ticket with a name, pipeline, and pipeline stage plus optional properties. Each call creates a separate ticket even for identical input, so it is not idempotent.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		ticketName: Property.ShortText({
 			displayName: 'Ticket Name',
-			description: 'The name of the ticket to create.',
+			description: 'Shown as the ticket\'s subject in HubSpot.',
 			required: true,
 		}),
 		pipelineId: pipelineDropdown({
@@ -26,7 +29,7 @@ export const createTicketAction = createAction({
 		}),
 		pipelineStageId: pipelineStageDropdown({
 			objectType: OBJECT_TYPE.TICKET,
-			displayName: 'Ticket Pipeline Stage',
+			displayName: 'Ticket Stage',
 			required: true,
 		}),
 		objectProperties : standardObjectDynamicProperties(OBJECT_TYPE.TICKET, [
@@ -36,16 +39,15 @@ export const createTicketAction = createAction({
 		]),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-            
-            subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-            
-            **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.TICKET,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {
@@ -70,7 +72,7 @@ export const createTicketAction = createAction({
 			ticketProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const createdTicket = await client.crm.tickets.basicApi.create({
 			properties: ticketProperties,

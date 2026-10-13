@@ -8,6 +8,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const enrichCompany = createAction({
   name: 'enrichCompany',
+  classification: 'READ',
   description: '',
   audience: 'both',
   aiMetadata: {

@@ -8,6 +8,7 @@ import { DynamicsCRMCommon, makeClient } from '../common';
 export const getRecordAction = createAction({
   auth: dynamicsCRMAuth,
   name: 'dynamics_crm_get_record',
+  classification: 'READ',
   displayName: 'Get Record',
   description: 'Retrieves an existing record.',
   audience: 'both',

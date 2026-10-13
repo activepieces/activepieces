@@ -7,6 +7,7 @@ import { accountId, folderId, messageId } from '../common/props';
 export const markEmailAsUnreadAction = createAction({
 	auth: zohoMailAuth,
 	name: 'mark_email_as_unread',
+	classification: 'WRITE',
 	displayName: 'Mark Emai as Unread',
 	description: 'Marks an email as unread.',
 	audience: 'both',

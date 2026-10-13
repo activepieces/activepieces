@@ -7,6 +7,7 @@ import { bitlinkDropdown, groupGuid } from '../common/props';
 export const updateBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'update_bitlink',
+  classification: 'WRITE',
   displayName: 'Update Bitlink',
   description: 'Modify properties of an existing Bitlink.',
   audience: 'both',

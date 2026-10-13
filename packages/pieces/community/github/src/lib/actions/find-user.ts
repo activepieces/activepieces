@@ -7,8 +7,9 @@ import { findUserActionOutputSchema } from '../output-schemas';
 export const githubFindUserAction = createAction({
   auth: githubAuth,
   name: 'find_user',
+  classification: 'READ',
   displayName: 'Find User',
-  description: 'Finds a user by their login name.',
+  description: 'Looks up a GitHub user by username.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,7 +19,8 @@ export const githubFindUserAction = createAction({
   props: {
     username: Property.ShortText({
       displayName: 'Username',
-      description: 'The GitHub username (login) to look up.',
+      description: 'The name after github.com/ in their profile URL.',
+      placeholder: 'octocat',
       required: true,
     }),
   },
@@ -38,8 +40,7 @@ export const githubFindUserAction = createAction({
         result: response.body,
       };
     } catch (e) {
-      const status = (e as HttpError).response.status;
-      if (status === 404) {
+      if (e instanceof HttpError && e.response.status === 404) {
         return {
           found: false,
           result: {},

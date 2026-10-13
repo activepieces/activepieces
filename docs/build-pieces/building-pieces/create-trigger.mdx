@@ -61,7 +61,7 @@ const polling: Polling<
       method: HttpMethod.GET,
       url: 'https://cloud.activepieces.com/api/v1/webhooks/aHlEaNLc6vcF1nY2XJ2ed/sync',
       headers: {
-        authorization: auth,
+        authorization: auth.secret_text,
       },
     };
     const res = await httpClient.sendRequest(request);
@@ -84,13 +84,11 @@ export const newFlavorCreated = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

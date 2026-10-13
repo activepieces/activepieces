@@ -4,6 +4,7 @@ import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { endClient, getClient, getProtocolBackwardCompatibility } from '../common';
 import { sftpAuth } from '../auth';
 import { getSftpError } from './common';
+import { deleteFolderActionOutputSchema } from '../output-schemas';
 
 async function deleteFolderFTP(client: FTPClient, directoryPath: string, recursive: boolean) {
   if (recursive) {
@@ -21,6 +22,7 @@ export const deleteFolderAction = createAction({
   audience: 'both',
   auth: sftpAuth,
   name: 'deleteFolder',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Folder',
   description: 'Deletes an existing folder at given path.',
   aiMetadata: { description: 'Deletes a directory at a given remote path on the connected FTP, FTPS or SFTP server, either only when it is empty or, with the recursive option enabled, together with every nested subfolder and file. Use this for directories; use Delete File to remove a single file. Recursive deletion is permanent and unrecoverable, so verify the path first; idempotent in that it converges on the folder being absent, and a repeat call on an already-missing path just reports an error.', idempotent: true },
@@ -38,6 +40,7 @@ export const deleteFolderAction = createAction({
         'Enable this option to delete the folder and all its contents, including subfolders and files.',
     }),
   },
+  outputSchema: deleteFolderActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const directoryPath = context.propsValue.folderPath;

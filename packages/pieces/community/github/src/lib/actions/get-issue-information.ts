@@ -7,19 +7,29 @@ import { issueActionOutputSchema } from '../output-schemas';
 export const githubGetIssueInformation = createAction({
   auth: githubAuth,
   name: 'getIssueInformation',
-  displayName: 'Get issue information',
-  description: 'Grabs information from a specific issue',
+  classification: 'READ',
+  displayName: 'Get Issue Information',
+  description: "Gets an issue's details by its number.",
   audience: 'human',
   aiMetadata: {
     description:
       'Fetches the full details of a single issue in a repository by its issue number. Use when you already know the issue number and need its current state, title, body, labels, or assignees. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue',
+      icon: 'inbox',
+      props: ['repository', 'issue_number'],
+    },
+  ],
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({
       displayName: 'Issue Number',
-      description: 'The number of the issue you want to get information from',
+      description: 'The number shown after # on GitHub.',
       required: true,
     }),
   },

@@ -6,6 +6,7 @@ import { getTableSchemaActionOutputSchema } from '../output-schemas';
 
 export const getTableSchema = createAction({
     name: 'get_table_schema',
+    classification: 'READ',
     displayName: 'Get Table Schema',
     description: 'Returns the column definitions for a specific table',
     audience: 'both',

@@ -5,6 +5,7 @@ import { addOnUidDropdown } from '../common/dropdowns';
 
 export const addAddonUsageAction = createAction({
   name: 'add_addon_usage',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Add Usage for Add-on',
   description:

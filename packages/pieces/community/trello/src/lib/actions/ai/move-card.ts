@@ -12,6 +12,7 @@ import { moveCardActionOutputSchema } from '../../output-schemas';
 export const moveCard = createAction({
   auth: trelloAuth,
   name: 'move_card',
+  classification: 'WRITE',
   displayName: 'Move Card (Agent)',
   description: 'Move a Trello card to a different list.',
   audience: 'ai',

@@ -6,6 +6,7 @@ import { eventOutputSchema } from '../output-schemas';
 const {
   eventId: _omitEventId,
   calendar_id: _omitCalendarId,
+  hint: _omitHint,
   guests_can_modify: _omitGuestsCanModify,
   guests_can_invite_others: _omitGuestsCanInviteOthers,
   guests_can_see_other_guests: _omitGuestsCanSeeOtherGuests,
@@ -49,6 +50,7 @@ const props = {
 export const aiUpdateEvent = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_update_event',
+  classification: 'WRITE',
   displayName: 'Update Event',
   description:
     'Update fields of an existing Google Calendar event by ID using a safe get-then-merge; fields you leave unset keep their current values.',
@@ -65,6 +67,7 @@ export const aiUpdateEvent = createAction({
       ...context,
       propsValue: {
         ...context.propsValue,
+        hint: undefined,
         eventId: context.propsValue.event_id,
         guests_can_modify: toOptionalBoolean(
           context.propsValue.guests_can_modify

@@ -4,10 +4,12 @@ import { ApEdition, ApFlagId, ExecutionMode, Flag } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { turnstile } from '../authentication/lib/turnstile'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { domainHelper } from '../helper/domain-helper'
+import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
@@ -36,6 +38,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EMAIL_CODE_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
@@ -45,7 +48,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.FLOW_RUN_TIME_SECONDS,
                 ApFlagId.SHOW_COMMUNITY,
                 ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                ApFlagId.TELEMETRY_ENABLED,
                 ApFlagId.TEMPLATES_PROJECT_ID,
                 ApFlagId.TERMS_OF_SERVICE_URL,
                 ApFlagId.THEME,
@@ -98,30 +100,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CAN_BUY_AI_CREDITS,
-                value: !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY)),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_BILLING_PAGE,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,
                 created,
@@ -142,6 +120,18 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AUDIT_LOG_RETENTION_DAYS,
+                value: auditLogRetentionCeiling.get(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AUDIT_LOG_RETENTION_PAUSED,
+                value: system.getBoolean(AppSystemProp.AUDIT_LOG_RETENTION_PAUSED) === true,
                 created,
                 updated,
             },
@@ -176,6 +166,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+                value: system.getEdition() === ApEdition.CLOUD && turnstile.isConfigured(),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.THEME,
                 value: defaultTheme,
                 created,
@@ -206,12 +202,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.TELEMETRY_ENABLED,
-                value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.TOOL_SEARCH_ENABLED,
                 value: isToolSearchEnabled(),
                 created,
@@ -222,6 +212,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 value: await domainHelper.getPublicUrl({
                     path: '',
                 }),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MCP_URL,
+                value: domainHelper.getMcpUrl({ path: '' }),
                 created,
                 updated,
             },
@@ -310,6 +306,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.TURNSTILE_SITE_KEY,
+                value: turnstile.siteKey() ?? null,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PGVECTOR_AVAILABLE,
                 value: await knowledgeBaseSchema.isVectorExtensionInstalled(),
                 created,
@@ -356,7 +358,6 @@ function getSupportedAppWebhooks(): string[] {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
-    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, string[]>

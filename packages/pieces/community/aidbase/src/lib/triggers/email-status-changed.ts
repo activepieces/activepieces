@@ -9,6 +9,7 @@ import { emailInboxDropdown } from '../common/props';
 export const emailStatusChanged = createTrigger({
   auth: aidbaseAuth,
   name: 'email_status_changed',
+  classification: 'READ',
   displayName: 'Email Status Changed',
   description: 'Fires when the status of an email changes.',
   aiMetadata: {

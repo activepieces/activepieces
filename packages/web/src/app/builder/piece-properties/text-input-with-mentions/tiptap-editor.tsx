@@ -3,7 +3,7 @@ import {
   formulaEvaluator,
   typeCheckTiptapDoc,
 } from '@activepieces/core-formula';
-import { isNil } from '@activepieces/core-utils';
+import { isNil, spreadIfDefined } from '@activepieces/core-utils';
 import { flowStructureUtil } from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
@@ -18,7 +18,15 @@ import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { t } from 'i18next';
-import { ChevronRight, XCircle } from 'lucide-react';
+import {
+  Bold,
+  ChevronRight,
+  Italic,
+  Link as LinkIcon,
+  List,
+  Underline,
+  XCircle,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
@@ -47,6 +55,7 @@ import {
   FUNCTION_END_NODE_TYPE,
   FUNCTION_SEP_NODE_TYPE,
 } from './extensions/bracket-nodes';
+import { getFormulaBackspaceTransaction } from './extensions/formula-backspace';
 import {
   FunctionSlashExtension,
   SlashCommandState,
@@ -56,12 +65,24 @@ import {
 import { textMentionUtils } from './text-input-utils';
 
 type TiptapEditorProps = {
+  id?: string;
+  ariaLabel?: string;
   className?: string;
+  wrapperClassName?: string;
   initialValue?: unknown;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   enableMarkdown?: boolean;
+  autoFocus?: boolean;
+  /**
+   * 'html' turns the editor into a rich-text WYSIWYG (StarterKit core set) whose
+   * value is serialized to/from HTML with mentions kept as {{...}} tokens.
+   * Defaults to 'text' (plain value via the mention text converter).
+   */
+  outputFormat?: 'text' | 'html';
+  /** Overrides the editor's initial min-height (e.g. 'min-h-20' for LONG_TEXT props). */
+  minHeightClassName?: string;
 };
 
 const INITIAL_SLASH_STATE: SlashCommandState = {
@@ -73,15 +94,17 @@ const INITIAL_SLASH_STATE: SlashCommandState = {
 
 function getExtensions({
   enableMarkdown,
+  isHtml,
   placeholder,
 }: {
   placeholder?: string;
   enableMarkdown?: boolean;
+  isHtml?: boolean;
 }): Extensions {
   const baseExtensions = [
     Placeholder.configure({
       placeholder: placeholder,
-      emptyNodeClass: 'before:text-muted-foreground opacity-75',
+      emptyNodeClass: 'before:text-gray-11 opacity-75',
     }),
     Mention.configure({
       suggestion: { char: '' },
@@ -96,6 +119,20 @@ function getExtensions({
     FunctionArgSeparatorNode,
     FunctionSlashExtension,
   ];
+
+  if (isHtml) {
+    return [
+      ...baseExtensions,
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        blockquote: false,
+        codeBlock: false,
+        code: false,
+        horizontalRule: false,
+        link: { openOnClick: false },
+      }),
+    ] as Extensions;
+  }
 
   if (enableMarkdown) {
     return [
@@ -114,14 +151,97 @@ function getExtensions({
   ] as Extensions;
 }
 
+function applyLink(editor: import('@tiptap/react').Editor): void {
+  const previousUrl = (editor.getAttributes('link')?.['href'] as string) ?? '';
+  const url = window.prompt(t('Link URL'), previousUrl || 'https://');
+  if (url === null) {
+    return;
+  }
+  if (url.trim().length === 0) {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    return;
+  }
+  editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+}
+
+function RichTextToolbar({
+  editor,
+}: {
+  editor: import('@tiptap/react').Editor;
+}) {
+  const buttons = [
+    {
+      key: 'bold',
+      label: t('Bold'),
+      icon: Bold,
+      run: () => editor.chain().focus().toggleBold().run(),
+    },
+    {
+      key: 'italic',
+      label: t('Italic'),
+      icon: Italic,
+      run: () => editor.chain().focus().toggleItalic().run(),
+    },
+    {
+      key: 'underline',
+      label: t('Underline'),
+      icon: Underline,
+      run: () => editor.chain().focus().toggleUnderline().run(),
+    },
+    {
+      key: 'bulletList',
+      label: t('Bullet list'),
+      icon: List,
+      run: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    {
+      key: 'link',
+      label: t('Link'),
+      icon: LinkIcon,
+      run: () => applyLink(editor),
+    },
+  ];
+  return (
+    <div className="flex items-center gap-0.5 border-b border-gray-6 px-1.5 py-1">
+      {buttons.map(({ key, label, icon: Icon, run }) => {
+        const active = editor.isActive(key);
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-label={label}
+            title={label}
+            aria-pressed={active}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={run}
+            className={cn(
+              'flex size-7 items-center justify-center rounded text-gray-11 outline-none transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8/50',
+              active && 'bg-gray-3 text-gray-12',
+            )}
+          >
+            <Icon className="size-4" />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export const TiptapEditor = ({
+  id,
+  ariaLabel,
   className,
+  wrapperClassName,
   initialValue,
   onChange,
   disabled,
   placeholder,
   enableMarkdown,
+  autoFocus,
+  outputFormat,
+  minHeightClassName,
 }: TiptapEditorProps) => {
+  const isHtml = outputFormat === 'html';
   const { embedState } = useEmbedding();
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
@@ -201,43 +321,32 @@ export const TiptapEditor = ({
 
   const editor = useEditor({
     editable: !disabled,
-    extensions: getExtensions({ placeholder, enableMarkdown }),
-    content: {
-      type: 'doc',
-      content: textMentionUtils.convertTextToTipTapJsonContent(
-        convertToText(initialValue),
-        steps,
-        stepsMetadata,
-        variableByName,
-      ),
-    },
+    autofocus: autoFocus ? 'end' : false,
+    extensions: getExtensions({
+      placeholder,
+      enableMarkdown,
+      isHtml,
+    }),
+    content: isHtml
+      ? convertToText(initialValue)
+      : {
+          type: 'doc',
+          content: textMentionUtils.convertTextToTipTapJsonContent(
+            convertToText(initialValue),
+            steps,
+            stepsMetadata,
+            variableByName,
+          ),
+        },
     editorProps: {
       handleKeyDown: (view, event) => {
         if (event.key === 'Backspace') {
-          const { state } = view;
-          const { from, to } = state.selection;
-          if (from === to) {
-            const $from = state.doc.resolve(from);
-            const nodeBefore = $from.nodeBefore;
-            if (
-              nodeBefore &&
-              nodeBefore.type.name === FUNCTION_START_NODE_TYPE
-            ) {
-              const fnId = nodeBefore.attrs.id as string;
-              const fnStartPos = from - nodeBefore.nodeSize;
-              let fnEndPos = -1;
-              state.doc.descendants((node, pos) => {
-                if (
-                  node.type.name === FUNCTION_END_NODE_TYPE &&
-                  node.attrs.openId === fnId
-                ) {
-                  fnEndPos = pos;
-                }
-              });
-              const deleteTo = fnEndPos >= 0 ? fnEndPos + 1 : from;
-              view.dispatch(state.tr.delete(fnStartPos, deleteTo));
-              return true;
-            }
+          const formulaTr = getFormulaBackspaceTransaction({
+            state: view.state,
+          });
+          if (formulaTr) {
+            view.dispatch(formulaTr);
+            return true;
           }
         }
 
@@ -353,14 +462,28 @@ export const TiptapEditor = ({
         return true;
       },
       attributes: {
+        ...spreadIfDefined('id', id),
+        ...spreadIfDefined('aria-label', ariaLabel),
+        role: 'textbox',
+        'aria-multiline': 'true',
         class: cn(
-          className ?? cn(inputClass, 'py-2 h-[unset] block   min-h-9  '),
+          isHtml
+            ? 'block min-h-20 max-h-72 overflow-y-auto px-2.5 py-2 outline-none'
+            : className ??
+                cn(
+                  inputClass,
+                  'py-2 h-[unset] block',
+                  minHeightClassName ?? 'min-h-9',
+                ),
           textMentionUtils.inputWithMentionsCssClass,
           { 'cursor-not-allowed opacity-50': disabled },
         ),
       },
     },
     onCreate: ({ editor: e }) => {
+      if (isHtml) {
+        convertMentionTokensToNodes(e, steps, stepsMetadata, variableByName);
+      }
       const editorContent = e.getJSON();
       setHasFunctions(docHasFunctions(e));
       setTypeErrors(collectTypeErrors(editorContent));
@@ -371,8 +494,9 @@ export const TiptapEditor = ({
     },
     onUpdate: ({ editor: e }) => {
       const editorContent = e.getJSON();
-      const textResult =
-        textMentionUtils.convertTiptapJsonToText(editorContent);
+      const textResult = isHtml
+        ? serializeHtmlWithMentions(e)
+        : textMentionUtils.convertTiptapJsonToText(editorContent);
       if (onChange) onChange(textResult);
       const nowHasFunctions = docHasFunctions(e);
       setHasFunctions(nowHasFunctions);
@@ -452,18 +576,27 @@ export const TiptapEditor = ({
   const showPreview = isFocused && hasFunctions;
 
   return (
-    <div className="relative w-full" ref={editorWrapperRef}>
+    <div
+      className={cn(
+        'relative w-full',
+        isHtml &&
+          'overflow-hidden rounded-md border border-gray-6 bg-transparent transition-[color,box-shadow] focus-within:border-gray-8 focus-within:ring-[1px] focus-within:ring-gray-8/50',
+        wrapperClassName,
+      )}
+      ref={editorWrapperRef}
+    >
+      {isHtml && !disabled && <RichTextToolbar editor={editor} />}
       <EditorContent editor={editor} />
 
       {showPreview && (
         <div
-          className="absolute left-0 right-0 top-full z-50 rounded-b-md border border-t-0 border-border bg-background shadow-md text-[13px]"
+          className="absolute left-0 right-0 top-full z-50 rounded-b-md border border-t-0 border-gray-6 bg-gray-1 shadow-md text-[13px]"
           onMouseDown={(e) => e.preventDefault()}
         >
           {(typeErrors.length > 0 || previewErrorMsg) && (
-            <div className="border-b border-border">
+            <div className="border-b border-gray-6">
               <div className="flex items-center justify-between px-3 py-2">
-                <span className="flex items-center gap-1.5 text-destructive font-medium text-xs">
+                <span className="flex items-center gap-1.5 text-danger-11 font-medium text-xs">
                   <XCircle className="size-3" />
                   {t('Error')}
                 </span>
@@ -476,7 +609,7 @@ export const TiptapEditor = ({
                     .join('\n')}
                 />
               </div>
-              <div className="px-3 pb-2 text-destructive break-all whitespace-pre-wrap space-y-0.5">
+              <div className="px-3 pb-2 text-danger-11 break-all whitespace-pre-wrap space-y-0.5">
                 {typeErrors.map((err, i) => (
                   <div key={i}>{err}</div>
                 ))}
@@ -499,11 +632,9 @@ export const TiptapEditor = ({
               />
             </div>
 
-            <div className="px-3 pb-2 text-foreground break-all whitespace-pre-wrap">
+            <div className="px-3 pb-2 text-gray-12 break-all whitespace-pre-wrap">
               {previewResult || (
-                <span className="text-muted-foreground italic">
-                  {t('empty')}
-                </span>
+                <span className="text-gray-11 italic">{t('empty')}</span>
               )}
             </div>
           </div>
@@ -572,6 +703,88 @@ function convertToText(value: unknown): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'number') return value.toString();
   return JSON.stringify(value);
+}
+
+type CreateMentionArgs = Parameters<
+  typeof textMentionUtils.createMentionNodeFromText
+>;
+
+// HTML output: serialize the doc, then collapse mention badges back to their
+// {{...}} server token so the engine resolves them (the editor shows badges,
+// the stored value stays a portable HTML string with tokens).
+function serializeHtmlWithMentions(
+  editor: import('@tiptap/react').Editor,
+): string {
+  if (editor.isEmpty) return '';
+  const html = editor.getHTML();
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  parsed.querySelectorAll('[data-type="mention"]').forEach((element) => {
+    let serverValue = element.getAttribute('serverValue') ?? '';
+    if (serverValue.length === 0) {
+      const labelAttr = element.getAttribute('data-label');
+      if (labelAttr) {
+        try {
+          serverValue = JSON.parse(labelAttr).serverValue ?? '';
+        } catch {
+          serverValue = '';
+        }
+      }
+    }
+    element.replaceWith(parsed.createTextNode(serverValue));
+  });
+  return parsed.body.innerHTML;
+}
+
+// HTML input: TipTap parses the saved HTML to a doc with {{...}} as plain text;
+// convert each token back into a mention badge so it renders like everywhere else.
+function convertMentionTokensToNodes(
+  editor: import('@tiptap/react').Editor,
+  steps: CreateMentionArgs[1],
+  stepsMetadata: CreateMentionArgs[2],
+  variableByName: CreateMentionArgs[3],
+): void {
+  const matches: { from: number; to: number; token: string }[] = [];
+  editor.state.doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) {
+      return;
+    }
+    const tokenRegex = /\{\{[^}]+\}\}/g;
+    let match: RegExpExecArray | null;
+    while ((match = tokenRegex.exec(node.text)) !== null) {
+      matches.push({
+        from: pos + match.index,
+        to: pos + match.index + match[0].length,
+        token: match[0],
+      });
+    }
+  });
+  if (matches.length === 0) {
+    return;
+  }
+  let tr = editor.state.tr;
+  // Replace largest position first so earlier positions stay valid.
+  for (let index = matches.length - 1; index >= 0; index--) {
+    const { from, to, token } = matches[index];
+    const mentionNode = textMentionUtils.createMentionNodeFromText(
+      token,
+      steps,
+      stepsMetadata,
+      variableByName,
+    );
+    if (isNil(mentionNode)) {
+      continue;
+    }
+    try {
+      tr = tr.replaceWith(
+        from,
+        to,
+        editor.state.schema.nodeFromJSON(mentionNode),
+      );
+    } catch {
+      // Leave the raw token in place if it can't be turned into a node.
+    }
+  }
+  editor.view.dispatch(tr);
 }
 
 function applyTypeErrors(
@@ -743,3 +956,5 @@ function flattenSampleData(
 
   return result;
 }
+
+export type { TiptapEditorProps };

@@ -5,6 +5,7 @@ import { EmailClient, EmailMessage } from '@azure/communication-email';
 export const sendEmail = createAction({
   auth: azureCommunicationServiceAuth,
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send a text or HTML email',
   audience: 'both',

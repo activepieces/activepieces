@@ -10,6 +10,7 @@ import { fetchEntityTypesForReading } from '../common/drupal-entities';
 export const drupalListEntitiesAction = createAction({
   auth: drupalAuth,
   name: 'drupal-list-entities',
+  classification: 'SEARCH',
   displayName: 'List Entities',
   description: 'List entities from Drupal using JSON:API',
   audience: 'both',

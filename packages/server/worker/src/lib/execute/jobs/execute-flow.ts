@@ -1,10 +1,11 @@
 import { inspect } from 'node:util'
-import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { onCallService } from '@activepieces/server-utils'
-import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowRunStatus, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { onCallService, wideEvent } from '@activepieces/server-utils'
+import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowActionType, FlowRunStatus, flowStructureUtil, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -12,7 +13,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         const timeoutInSeconds = workerSettings.getSettings().FLOW_TIMEOUT_SECONDS
 
         const { data: resolved, error: provisionError } = await tryCatch(() =>
-            ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
+            ctx.resolver.resolve({ platformId: data.platformId, internalApiUrl: ctx.internalApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
         )
         if (provisionError) {
             await reportFlowStatus({ ctx, data, status: FlowRunStatus.INTERNAL_ERROR, internalError: toInternalError(RunInternalErrorSource.WORKER, provisionError) })
@@ -88,11 +89,11 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
+            if (isSandboxTimeout(e)) {
+                await reportFlowStatus({ ctx, data, status: FlowRunStatus.TIMEOUT })
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.TIMEOUT }
+            }
             if (e instanceof ActivepiecesError) {
-                if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
-                    await reportFlowStatus({ ctx, data, status: FlowRunStatus.TIMEOUT })
-                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.TIMEOUT }
-                }
                 if (e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE) {
                     await reportFlowStatus({ ctx, data, status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED })
                     return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.MEMORY_ISSUE }
@@ -100,6 +101,21 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 if (e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED) {
                     await reportFlowStatus({ ctx, data, status: FlowRunStatus.LOG_SIZE_EXCEEDED })
                     return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED }
+                }
+                if (e.error.code === ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE) {
+                    const { pieceName, pieceVersion } = e.error.params
+                    const owner = findStepOwningPiece({ flowVersion, pieceName, pieceVersion })
+                    await reportFlowStatus({
+                        ctx,
+                        data,
+                        status: FlowRunStatus.FAILED,
+                        failedStep: {
+                            name: owner.name,
+                            displayName: owner.displayName,
+                            message: `Piece "${pieceName}@${pieceVersion}" is unavailable in this environment (bundle not accessible). Confirm the piece and version are installed and visible in this project, or update the step to a supported version.`,
+                        },
+                    })
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
                 }
             }
             await reportFlowStatus({ ctx, data, status: FlowRunStatus.INTERNAL_ERROR, internalError: toInternalError(RunInternalErrorSource.WORKER, e) })
@@ -149,6 +165,15 @@ function buildFlowOperation(
     }
 }
 
+function findStepOwningPiece({ flowVersion, pieceName, pieceVersion }: FindStepOwningPieceParams): { name: string, displayName: string } {
+    const match = flowStructureUtil.getAllSteps(flowVersion.trigger).find(step => {
+        if (step.type !== FlowActionType.PIECE) return false
+        return step.settings.pieceName === pieceName && step.settings.pieceVersion === pieceVersion
+    })
+    if (match) return { name: match.name, displayName: match.displayName }
+    return { name: flowVersion.trigger.name, displayName: flowVersion.trigger.displayName }
+}
+
 function toInternalError(source: RunInternalErrorSource, error: unknown): RunInternalError {
     const isApError = error instanceof ActivepiecesError
     const base = error instanceof Error
@@ -163,6 +188,8 @@ function toInternalError(source: RunInternalErrorSource, error: unknown): RunInt
 }
 
 async function reportFlowStatus({ ctx, data, status, internalError, failedStep }: ReportFlowStatusParams): Promise<void> {
+    const willRetry = status === FlowRunStatus.INTERNAL_ERROR && !ctx.lastAttempt
+    recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment: data.environment, failedStepName: failedStep?.name })
     // A status report has no log file of its own; carry logsFileId only for an internalError the server may
     // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
@@ -174,15 +201,32 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         ...(isNil(internalError) ? {} : { logsFileId: data.logsFileId }),
         internalError,
         failedStep,
+        willRetry,
+        ...spreadIfDefined('workerHandlerId', data.workerHandlerId ?? undefined),
+        ...spreadIfDefined('httpRequestId', data.httpRequestId),
     })
 
     if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {
         onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
-            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
+            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId, willRetry },
         }).catch((e) => ctx.log.error({ flowRun: { id: data.runId }, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
     }
+}
+
+function recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment, failedStepName }: RecordRunOutcomeParams): void {
+    wideEvent.set({ flowRun: { status, willRetry, environment } })
+    if (!isNil(failedStepName)) {
+        wideEvent.set({ step: { name: failedStepName } })
+    }
+    if (isNil(internalError)) {
+        return
+    }
+    wideEvent.set({ flowRun: { internalErrorSource: internalError.source, ...spreadIfDefined('internalErrorCode', internalError.code) } })
+    const error = new Error(internalError.message)
+    error.stack = internalError.message
+    wideEvent.error(error)
 }
 
 function isDedicatedWorker(): boolean {
@@ -195,4 +239,18 @@ type ReportFlowStatusParams = {
     status: FlowRunStatus
     internalError?: RunInternalError
     failedStep?: FailedStep
+}
+
+type RecordRunOutcomeParams = {
+    status: FlowRunStatus
+    internalError?: RunInternalError
+    willRetry: boolean
+    environment: ExecuteFlowJobData['environment']
+    failedStepName?: string
+}
+
+type FindStepOwningPieceParams = {
+    flowVersion: FlowVersion
+    pieceName: string
+    pieceVersion: string
 }

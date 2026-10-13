@@ -16,6 +16,6 @@ export const excelAuth = PieceAuth.OAuth2({
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
-  scope: ['Files.ReadWrite', 'Sites.ReadWrite.All', 'offline_access'],
+  scope: ['Files.ReadWrite', 'Sites.ReadWrite.All', 'offline_access', 'openid', 'email', 'profile'],
   prompt: 'omit',
 });

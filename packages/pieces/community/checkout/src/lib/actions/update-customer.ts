@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updateCustomerAction = createAction({
   name: 'update_customer',
+  classification: 'WRITE',
   auth: checkoutComAuth,
   displayName: 'Update Customer',
   description: 'Update existing customer or their metadata.',

@@ -2,10 +2,13 @@ import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { getNoteActionOutputSchema } from '../output-schemas';
 
 export const getNoteAction = createAction({
 	auth: pipedriveAuth,
 	name: 'get-note',
+	outputSchema: getNoteActionOutputSchema,
+	classification: 'READ',
 	displayName: 'Retrieve a Note',
 	description: 'Finds a note by ID.',
 	audience: 'both',

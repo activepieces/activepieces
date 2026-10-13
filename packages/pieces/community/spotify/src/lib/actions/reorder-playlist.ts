@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'reorder_playlist',
+  classification: 'WRITE',
   displayName: 'Reorder playlist',
   description: 'Reorders items in the playlist',
   audience: 'both',

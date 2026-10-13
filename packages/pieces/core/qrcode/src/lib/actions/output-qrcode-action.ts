@@ -4,6 +4,7 @@ import { toBuffer } from 'qrcode';
 export const outputQrcodeAction = createAction({
   audience: 'both',
   name: 'text_to_qrcode',
+  classification: 'READ',
   displayName: 'Text to QR Code',
   description: 'Convert text to QR code',
   aiMetadata: { description: 'Encodes a text string (URL, plain text, or any short payload) into a QR code image and returns it as a PNG file; this piece has no counterpart action for decoding or reading a QR code. Takes only the text content - no size, margin, or color options - and throws if the content exceeds the QR format\'s few-kilobyte capacity ceiling; deterministic and idempotent.', idempotent: true },

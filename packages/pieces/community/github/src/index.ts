@@ -97,6 +97,7 @@ import { githubStarRepositoryAction } from './lib/actions/ai/star-repository';
 import { githubUnstarRepositoryAction } from './lib/actions/ai/unstar-repository';
 import { githubListStarredRepositoriesAction } from './lib/actions/ai/list-starred-repositories';
 import { githubCheckRepositoryStarredAction } from './lib/actions/ai/check-repository-starred';
+import { githubTriggerWorkflowDispatchAction } from './lib/actions/trigger-workflow-dispatch';
 
 import { githubAuth } from './lib/auth';
 
@@ -105,7 +106,7 @@ export const github = createPiece({
   description:
     'Developer platform that allows developers to create, store, manage and share their code',
 
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: githubAuth,
@@ -127,6 +128,7 @@ export const github = createPiece({
     githubFindIssueAction,
     githubFindUserAction,
     githubCreateGistAction,
+    githubTriggerWorkflowDispatchAction,
     // AI agent atomics (audience: 'ai')
     githubCreateIssueAiAction,
     githubGetIssueAiAction,

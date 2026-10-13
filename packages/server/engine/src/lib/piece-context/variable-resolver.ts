@@ -1,4 +1,5 @@
 import { EngineGenericError, ExecutionError, FetchError, VariableNotFoundError } from '@activepieces/shared'
+import { retryFetch } from '../api/retry-fetch'
 import { utils } from '../utils'
 
 export const createVariableResolver = ({ projectId: _projectId, engineToken, apiUrl }: CreateVariableResolverParams): VariableResolver => {
@@ -7,7 +8,7 @@ export const createVariableResolver = ({ projectId: _projectId, engineToken, api
             const url = `${apiUrl}v1/worker/variables/${encodeURIComponent(name)}`
 
             const { data: value, error: fetchError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                const response = await fetch(url, {
+                const response = await retryFetch(url, {
                     method: 'GET',
                     headers: {
                         Authorization: `Bearer ${engineToken}`,

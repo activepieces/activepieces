@@ -10,6 +10,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordAddReaction = createAction({
   auth: discordAuth,
   name: 'discord_add_reaction',
+  classification: 'WRITE',
   displayName: 'Add Reaction',
   description: "Add the bot's reaction emoji to a message.",
   audience: 'ai',

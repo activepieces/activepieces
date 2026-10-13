@@ -41,6 +41,8 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             externalIds: request.query.externalIds,
             folderId: request.query.folderId,
             folderIds: request.query.folderIds,
+            sortBy: request.query.sortBy,
+            order: request.query.order,
         })
     })
 
@@ -92,6 +94,16 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
         return tableService.exportTable({
             projectId: request.projectId,
             id: request.params.id,
+        })
+    })
+
+    fastify.get('/:id/export/csv', ExportTableCsvRequest, async (request) => {
+        return tableService.exportTableCsvToFile({
+            projectId: request.projectId,
+            platformId: request.principal.platform.id,
+            id: request.params.id,
+            includeHeaders: request.query.includeHeaders !== 'false',
+            log: request.log,
         })
     })
 
@@ -232,6 +244,33 @@ const ExportTableRequest = {
         }),
         response: {
             [StatusCodes.OK]: ExportTableResponse,
+        },
+    },
+}
+
+const ExportTableCsvRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
+    },
+    schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Export a table as a CSV file and return its download URL',
+        params: z.object({
+            id: z.string(),
+        }),
+        querystring: z.object({
+            includeHeaders: z.enum(['true', 'false']).optional(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.object({
+                url: z.string(),
+                name: z.string(),
+                rowCount: z.number(),
+            }),
         },
     },
 }

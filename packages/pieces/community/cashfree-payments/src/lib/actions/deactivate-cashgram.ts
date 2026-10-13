@@ -5,6 +5,7 @@ import { cashfreePaymentsAuth, generateCashgramToken, validateAuthCredentials } 
 export const deactivateCashgram = createAction({
   auth: cashfreePaymentsAuth,
   name: 'deactivate-cashgram',
+  classification: 'DESTRUCTIVE',
   displayName: 'Deactivate Cashgram',
   description: 'Deactivate a Cashgram to prevent further redemptions using Cashfree',
   audience: 'both',

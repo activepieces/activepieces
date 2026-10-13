@@ -44,6 +44,8 @@ type Settings = {
     ENVIRONMENT: string
     APP_WEBHOOK_SECRETS: string
     MAX_FLOW_RUN_LOG_SIZE_MB: number
+    FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?: number
+    FLOW_RUN_LOG_SLICE_THRESHOLD_KB?: number
     MAX_FILE_SIZE_MB: number
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]
@@ -55,6 +57,7 @@ type Settings = {
     EDITION: string
     NETWORK_MODE: NetworkMode
     SSRF_ALLOW_LIST: string[]
+    ENFORCE_CONNECTION_PIECE_BINDING: boolean
     REUSE_SANDBOX: string | undefined
 }
 
@@ -82,6 +85,7 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
         EDITION: 'community',
         NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
+        ENFORCE_CONNECTION_PIECE_BINDING: false,
         REUSE_SANDBOX: undefined,
     }
     return { ...base, ...overrides }
@@ -167,6 +171,30 @@ describe('createSandboxForJob', () => {
             expect('AP_EGRESS_PROXY_URL' in env).toBe(false)
         })
 
+        it('forwards the run-log threshold vars only when the API sent them', () => {
+            const missing = buildSettings()
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => missing })
+            expect('AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB' in createSandboxMock.mock.calls[0][2].env).toBe(false)
+            expect('AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB' in createSandboxMock.mock.calls[0][2].env).toBe(false)
+
+            const present = buildSettings({ FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB: 50, FLOW_RUN_LOG_SLICE_THRESHOLD_KB: 64 })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => present })
+            expect(createSandboxMock.mock.calls[1][2].env).toMatchObject({
+                AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB: '50',
+                AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB: '64',
+            })
+        })
+
+        it('forwards AP_ENFORCE_CONNECTION_PIECE_BINDING only when enabled', () => {
+            const disabled = buildSettings({ ENFORCE_CONNECTION_PIECE_BINDING: false })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => disabled })
+            expect('AP_ENFORCE_CONNECTION_PIECE_BINDING' in createSandboxMock.mock.calls[0][2].env).toBe(false)
+
+            const enabled = buildSettings({ ENFORCE_CONNECTION_PIECE_BINDING: true })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => enabled })
+            expect(createSandboxMock.mock.calls[1][2].env.AP_ENFORCE_CONNECTION_PIECE_BINDING).toBe('true')
+        })
+
         it('omits AP_DEV_PIECES when DEV_PIECES is empty', () => {
             const settings = buildSettings({ DEV_PIECES: [] })
             createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
@@ -183,6 +211,22 @@ describe('createSandboxForJob', () => {
             expect(env.AP_DEV_PIECES).toBe('a,b,c')
         })
 
+        it('forwards AP_DENO_PATH from process.env without needing SANDBOX_PROPAGATED_ENV_VARS', () => {
+            const originalProcessEnv = { ...process.env }
+            try {
+                process.env.AP_DENO_PATH = '/usr/local/bin/deno'
+                createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => buildSettings({}) })
+                expect(createSandboxMock.mock.calls[0][2].env.AP_DENO_PATH).toBe('/usr/local/bin/deno')
+
+                delete process.env.AP_DENO_PATH
+                createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => buildSettings({}) })
+                expect('AP_DENO_PATH' in createSandboxMock.mock.calls[1][2].env).toBe(false)
+            }
+            finally {
+                process.env = originalProcessEnv
+            }
+        })
+
         it('only propagates env vars that exist in process.env (no undefined leak)', () => {
             const originalProcessEnv = { ...process.env }
             try {
@@ -196,6 +240,7 @@ describe('createSandboxForJob', () => {
                 const env = createSandboxMock.mock.calls[0][2].env
                 expect(env.PROPAGATED_YES).toBe('forwarded')
                 expect('PROPAGATED_NO' in env).toBe(false)
+                expect(env.AP_SANDBOX_PROPAGATED_ENV_VARS).toBe('PROPAGATED_YES,PROPAGATED_NO')
             }
             finally {
                 process.env = originalProcessEnv

@@ -125,6 +125,7 @@ const calculateOrderMetrics = (data: any): any => {
 export const mailChimpNewOrderTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_order',
+  classification: 'READ',
   displayName: 'New Order',
   description: 'Fires when a new order is created in the connected store',
   aiMetadata: {

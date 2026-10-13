@@ -1,51 +1,132 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { pollybotAuth } from '../auth';
-import { baseUrl, leadStatusOptions, formatError } from '../common/common';
+import {
+  baseUrl,
+  leadStatusOptions,
+  leadPriorityOptions,
+  preferredMethodOptions,
+  urgencyOptions,
+  formatError,
+} from '../common/common';
 
 export const updateLead = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'update_lead',
   displayName: 'Update Lead',
   description: 'Updates an existing lead. Supports partial updates.',
   audience: 'both',
-  aiMetadata: { description: 'Update an existing lead in the configured PollyBot chatbot, identified by its lead ID, with a partial set of fields (name, email, phone, source, status, metadata); metadata is merged into existing data. Use when modifying a known lead. Requires at least one field to change. Idempotent: repeating the same update yields the same final state.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Update an existing lead in the configured PollyBot chatbot. Replaces provided fields, leaves omitted fields intact. Requires at least one field to change.',
+    idempotent: true,
+  },
   auth: pollybotAuth,
   props: {
     id: Property.ShortText({
       displayName: 'Lead ID',
       required: true,
-      description: 'The unique identifier of the lead to update.',
+      description: 'The unique ID of the lead to update.',
     }),
-    name: Property.ShortText({ displayName: 'Name', required: false }),
-    email: Property.ShortText({ displayName: 'Email', required: false }),
-    phone: Property.ShortText({ displayName: 'Phone', required: false }),
-    source: Property.ShortText({ displayName: 'Source', required: false }),
+    name: Property.ShortText({
+      displayName: 'Name',
+      required: false,
+      description: 'The full name of the lead (1-100 characters).',
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      required: false,
+      description: 'Valid email address. Must be unique for this chatbot.',
+    }),
+    phone: Property.ShortText({
+      displayName: 'Phone',
+      required: false,
+      description: "The lead's phone number (maximum 20 characters).",
+    }),
+    discord: Property.ShortText({
+      displayName: 'Discord',
+      required: false,
+      description:
+        "The lead's Discord username or handle (maximum 50 characters).",
+    }),
+    company: Property.ShortText({
+      displayName: 'Company',
+      required: false,
+      description: 'The company or organization name (maximum 100 characters).',
+    }),
+    message: Property.LongText({
+      displayName: 'Message',
+      required: false,
+      description:
+        'The inquiry or message submitted by the lead (maximum 1000 characters).',
+    }),
+    preferredMethod: Property.StaticDropdown({
+      displayName: 'Preferred Method',
+      required: false,
+      options: {
+        options: Object.entries(preferredMethodOptions).map(
+          ([value, label]) => ({ label, value })
+        ),
+      },
+      description: 'The contact method preferred by the lead.',
+    }),
+    urgency: Property.StaticDropdown({
+      displayName: 'Urgency',
+      required: false,
+      options: {
+        options: Object.entries(urgencyOptions).map(([value, label]) => ({
+          label,
+          value,
+        })),
+      },
+      description: 'The urgency level reported by the lead.',
+    }),
     status: Property.StaticDropdown({
       displayName: 'Status',
       required: false,
       options: {
-        options: Object.entries(leadStatusOptions).map(([value, label]) => ({ label, value })),
+        options: Object.entries(leadStatusOptions).map(([value, label]) => ({
+          label,
+          value,
+        })),
       },
+      description: 'Update the pipeline status of the lead.',
     }),
-    metadata: Property.Json({
-      displayName: 'Metadata',
+    priority: Property.StaticDropdown({
+      displayName: 'Priority',
       required: false,
-      description: 'Update or add custom data. Metadata is merged with existing data.',
+      options: {
+        options: Object.entries(leadPriorityOptions).map(([value, label]) => ({
+          label,
+          value,
+        })),
+      },
+      description: 'Update the priority level of the lead.',
+    }),
+    notes: Property.LongText({
+      displayName: 'Notes',
+      required: false,
+      description: 'Internal notes regarding the lead (maximum 2000 characters).' 
+    }),
+    customFields: Property.Json({
+      displayName: 'Custom Fields',
+      required: false,
+      description: 'Replaces the stored customFields object entirely.',
+    }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      required: false,
+      description: 'Replaces the stored tags array entirely.',
     }),
   },
   async run({ auth, propsValue }) {
-    const { id, name, email, phone, source, status, metadata } = propsValue;
+    const { id, ...fieldsToUpdate } = propsValue;
 
-    // Construct request body - only include provided fields
-    const requestBody: Record<string, unknown> = {};
-
-    if (name) requestBody['name'] = name;
-    if (email) requestBody['email'] = email;
-    if (phone) requestBody['phone'] = phone;
-    if (source) requestBody['source'] = source;
-    if (status) requestBody['status'] = status;
-    if (metadata) requestBody['metadata'] = metadata;
+    // Filter out undefined/null/empty to only send requested updates
+    const requestBody = Object.fromEntries(
+      Object.entries(fieldsToUpdate).filter(
+        ([_, v]) => v !== undefined && v !== null && v !== ''
+      )
+    );
 
     if (Object.keys(requestBody).length === 0) {
       throw new Error('At least one field must be provided to update.');

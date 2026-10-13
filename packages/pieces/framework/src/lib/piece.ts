@@ -50,7 +50,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
       categories: this.categories,
       description: this.description,
       authors: this.authors,
-      auth: this.auth,
+      auth: withConnectionIdentifierFlag(this.auth),
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
       deprecated: this.deprecated,
@@ -131,6 +131,19 @@ type PieceEventProcessors = {
 type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n' | 'getContextInfo'> & {
   authors?: PieceMetadata['authors']
   i18n?: PieceMetadata['i18n']
+}
+
+function withConnectionIdentifierFlag(
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
+): PieceAuthProperty | PieceAuthProperty[] | undefined {
+  if (auth === undefined) {
+    return undefined;
+  }
+  return Array.isArray(auth) ? auth.map(flagConnectionIdentifier) : flagConnectionIdentifier(auth);
+}
+
+function flagConnectionIdentifier(auth: PieceAuthProperty): PieceAuthProperty {
+  return { ...auth, hasConnectionIdentifier: auth.getConnectionIdentifier !== undefined };
 }
 
 function isValidSimpleSemver(version: string): boolean {

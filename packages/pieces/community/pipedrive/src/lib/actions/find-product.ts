@@ -8,10 +8,13 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField } from '../common/types'; 
 import { isNil } from '@activepieces/pieces-framework'; 
+import { findProductActionOutputSchema } from '../output-schemas';
 
 export const findProductAction = createAction({
     auth: pipedriveAuth,
     name: 'find-product',
+    outputSchema: findProductActionOutputSchema,
+    classification: 'SEARCH',
     displayName: 'Find Product',
     description: 'Finds a product by name ',
     audience: 'both',

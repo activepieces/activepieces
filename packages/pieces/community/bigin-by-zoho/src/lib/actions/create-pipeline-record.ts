@@ -7,6 +7,7 @@ import { biginApiService } from '../common/request';
 export const createPipelineRecord = createAction({
   auth: biginAuth,
   name: 'createPipeline',
+  classification: 'WRITE',
   displayName: 'Create Pipeline',
   description: 'Creates a new pipeline record in Bigin',
   audience: 'both',

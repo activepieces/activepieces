@@ -23,22 +23,40 @@ import { insertRowActionOutputSchema } from '../output-schemas';
 export const insertRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'insert_row',
+	classification: 'WRITE',
 	description: 'Add a new row of data to a specific spreadsheet.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Appends a single new row to the end of a worksheet. Use when an agent needs to record one new entry into a Google Sheet. Requires a spreadsheet and sheet to be selected; values map to columns either positionally or by header name. Not idempotent — calling it again appends another row.',
 		idempotent: false,
 	},
 	displayName: 'Add Row',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['first_row_headers', 'values'],
+		},
+	],
 	props: {
 		...commonProps,
 		first_row_headers: isFirstRowHeaderProp(),
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered strings and have no effect',
+				'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
+			advanced: true,
 		}),
 		values: rowValuesProp(),
 	},

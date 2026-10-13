@@ -1,35 +1,133 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy } = vi.hoisted(() => ({
+const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
+    mockGetFlowRun: vi.fn(),
+    mockResumeFromWaitpoint: vi.fn().mockResolvedValue({ stale: false }),
+}))
+
+vi.mock('../../../../../src/app/flows/flow-run/flow-run-service', () => ({
+    flowRunService: () => ({ getOneOrThrow: mockGetFlowRun, getOne: mockGetFlowRun }),
+}))
+
+vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
+    resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
+}))
+
+const { mockSet, mockSetParameters, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+    mockSave: vi.fn(),
     mockSet: vi.fn(),
+    mockSetParameters: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
-    mockExecute: vi.fn().mockResolvedValue({ affected: 1 }),
+    mockExecute: vi.fn().mockResolvedValue({ raw: [{ id: 'conv-1' }] }),
     mockFindOneBy: vi.fn().mockResolvedValue(null),
+    mockFindOne: vi.fn().mockResolvedValue(null),
+    mockTrack: vi.fn().mockResolvedValue(undefined),
+    mockSendConversationUpdate: vi.fn(),
+}))
+
+const { mockAssertProjectSwitchKeepsKey, mockResolveFastModel } = vi.hoisted(() => ({
+    mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
+    mockResolveFastModel: vi.fn().mockResolvedValue({}),
+}))
+
+const { mockGetFileOrThrow, mockKbSearch, mockIsSearchable } = vi.hoisted(() => ({
+    mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1', displayName: 'Employee Handbook' }),
+    mockKbSearch: vi.fn().mockResolvedValue([]),
+    mockIsSearchable: vi.fn().mockResolvedValue(true),
+}))
+
+vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
+    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch, isSearchable: mockIsSearchable }),
+}))
+
+const { mockEmbed } = vi.hoisted(() => ({
+    mockEmbed: vi.fn().mockResolvedValue({ embedding: new Array(768).fill(0.1) }),
+}))
+
+vi.mock('ai', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    embed: () => mockEmbed(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
     agentApprovalGate: {},
 }))
 
+const { mockGetOneWithoutValue } = vi.hoisted(() => ({
+    mockGetOneWithoutValue: vi.fn().mockResolvedValue(null),
+}))
+
+vi.mock('../../../../../src/app/app-connection/app-connection-service/app-connection-service', () => ({
+    appConnectionService: () => ({ getOneWithoutValue: mockGetOneWithoutValue }),
+}))
+
+const { mockRunResolved, mockResolveInput, mockUpdateStepProgress } = vi.hoisted(() => ({
+    mockRunResolved: vi.fn().mockResolvedValue({ result: { ok: true }, resolvedInput: {} }),
+    mockResolveInput: vi.fn().mockResolvedValue({ resolvedInput: { to: 'jane@customer.com' }, actionDisplayName: 'Send Email' }),
+    mockUpdateStepProgress: vi.fn(),
+}))
+
+vi.mock('../../../../../src/app/flows/flow-run/engine-run-callback-service', () => ({
+    engineRunCallbackService: () => ({ updateStepProgress: mockUpdateStepProgress }),
+}))
+
+vi.mock('../../../../../src/app/ee/agent/tools/piece-tool-runner', () => ({
+    pieceToolRunner: { runResolved: mockRunResolved, resolveInput: mockResolveInput, withoutCredential: (input: Record<string, unknown>) => input },
+}))
+
+const { mockGetOnePopulated } = vi.hoisted(() => ({
+    mockGetOnePopulated: vi.fn(),
+}))
+
+vi.mock('../../../../../src/app/flows/flow/flow.service', () => ({
+    flowService: () => ({ getOnePopulated: mockGetOnePopulated, getOnePopulatedOrThrow: mockGetOnePopulatedOrThrow }),
+}))
+
+const { mockRunFlowAsTool, mockGetOnePopulatedOrThrow } = vi.hoisted(() => ({
+    mockRunFlowAsTool: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] }),
+    mockGetOnePopulatedOrThrow: vi.fn(),
+}))
+
+vi.mock('../../../../../src/app/mcp/mcp-server-builder', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    runFlowAsTool: mockRunFlowAsTool,
+}))
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    aiUtils: { createModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
+}))
+
 type QueryBuilderMock = {
     update: () => QueryBuilderMock
     set: (values: unknown) => QueryBuilderMock
+    setParameters: (params: unknown) => QueryBuilderMock
     where: (sql: string, params: unknown) => QueryBuilderMock
     andWhere: (sql: string, params: unknown) => QueryBuilderMock
-    execute: () => Promise<{ affected: number }>
+    returning: (columns: string) => QueryBuilderMock
+    execute: () => Promise<{ raw?: unknown[] }>
 }
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
+        assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
+        surfaceOf: () => 'flow',
+        resolveFastModel: mockResolveFastModel,
+        resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
+            findOne: mockFindOne,
+            save: mockSave,
             createQueryBuilder: (): QueryBuilderMock => {
                 const builder: QueryBuilderMock = {
                     update: () => builder,
                     set: (values) => { mockSet(values); return builder },
+                    setParameters: (params) => { mockSetParameters(params); return builder },
                     where: (_sql, params) => { mockWhere(params); return builder },
                     andWhere: (_sql, params) => { mockAndWhere(params); return builder },
+                    returning: () => builder,
                     execute: mockExecute,
                 }
                 return builder
@@ -38,14 +136,19 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     },
 }))
 
-vi.mock('../../../../../src/app/ee/agent/agent-sync-job', () => ({
-    chatAnalyticsTelemetry: () => ({ sendConversationUpdate: vi.fn(), sendMessageBillingEvent: vi.fn() }),
+vi.mock('../../../../../src/app/ee/agent/chat-analytics-sync', () => ({
+    chatAnalyticsTelemetry: () => ({ sendConversationUpdate: mockSendConversationUpdate }),
 }))
+
+vi.mock('../../../../../src/app/ee/agent/chat-tool-billing', () => ({
+    chatToolBilling: { chargeForLatestTurn: mockTrack },
+}))
+
+const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
 
 async function callUpdateChatProgress(input: { conversationId: string, runId?: string, uiMessages: unknown[], messages?: unknown[] }): Promise<void> {
-    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
     await agentRpcHandlers(noopLogger as never).updateAgentProgress(input)
 }
 
@@ -84,8 +187,7 @@ describe('agentRpcHandlers.updateAgentProgress — incremental LLM message persi
     })
 })
 
-async function callSaveChatMessages(input: { conversationId: string, runId?: string, messages: unknown[], uiMessages: unknown[] }): Promise<void> {
-    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+async function callSaveChatMessages(input: { conversationId: string, runId?: string, messages: unknown[], uiMessages: unknown[], answeredBy?: { provider: string, modelId: string } }): Promise<void> {
     await agentRpcHandlers(noopLogger as never).saveAgentMessages(input as never)
 }
 
@@ -93,6 +195,7 @@ describe('agentRpcHandlers.saveAgentMessages — no-shrink guard against context
     beforeEach(() => {
         mockSet.mockClear()
         mockFindOneBy.mockReset()
+        mockFindOneBy.mockResolvedValue(null)
     })
 
     it('refuses to overwrite messages with a SHORTER history (the aborted-turn clobber)', async () => {
@@ -129,5 +232,631 @@ describe('agentRpcHandlers.saveAgentMessages — no-shrink guard against context
         expect(updates).not.toHaveProperty('messages')
         expect(updates).not.toHaveProperty('uiMessages')
         expect(updates.status).toBe('ERROR')
+    })
+})
+
+describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer owns', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+        mockFindOneBy.mockReset()
+        mockExecute.mockReset()
+        mockTrack.mockClear()
+        mockSendConversationUpdate.mockClear()
+    })
+
+    it('does not bill when the fenced save was rejected (preempted by a newer run)', async () => {
+        mockExecute.mockResolvedValue({ raw: [] })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
+
+        expect(mockTrack).not.toHaveBeenCalled()
+        expect(mockSendConversationUpdate).not.toHaveBeenCalled()
+    })
+
+    it('bills under the owning run id when the save landed', async () => {
+        mockExecute.mockResolvedValue({ raw: [{ id: 'conv-1' }] })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
+
+        expect(mockTrack).toHaveBeenCalledTimes(1)
+        expect(mockTrack.mock.calls[0][0]).toMatchObject({ runId: 'run-1' })
+    })
+
+    it('bills a platform tier turn against the model that answered it', async () => {
+        mockExecute.mockResolvedValue({ raw: [{ id: 'conv-1' }] })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }], answeredBy: { provider: 'openai', modelId: 'gpt-4o' } })
+
+        expect(mockTrack.mock.calls[0][0]).toMatchObject({ answeredBy: { provider: 'openai', modelId: 'gpt-4o' } })
+    })
+
+    it('does not bill when the write returned nothing, on any driver', async () => {
+        mockExecute.mockResolvedValue({})
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
+
+        await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
+
+        expect(mockTrack).not.toHaveBeenCalled()
+    })
+})
+
+async function callExecuteAgentTool(input: { toolName: string, source: string }): Promise<unknown> {
+    return agentRpcHandlers(noopLogger as never).executeAgentTool({
+        toolName: input.toolName,
+        toolInput: {},
+        platformId: 'plat-1',
+        userId: 'user-1',
+        source: input.source as never,
+    })
+}
+
+describe('agentRpcHandlers.executeAgentTool — chat-only tools are refused off the chat surface', () => {
+    it.each(['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection', '__flow_write_check'])(
+        'refuses %s for a FLOW_STEP run',
+        async (toolName) => {
+            await expect(callExecuteAgentTool({ toolName, source: 'FLOW_STEP' })).rejects.toThrow()
+        },
+    )
+
+    it('refuses an unknown __ tool too, so a new one is never exposed by default', async () => {
+        await expect(callExecuteAgentTool({ toolName: '__some_future_tool', source: 'FLOW_STEP' })).rejects.toThrow()
+    })
+
+    it('lets a CHAT run through to the normal handler', async () => {
+        await expect(callExecuteAgentTool({ toolName: '__cancel_check', source: 'CHAT' })).resolves.toEqual({ result: false })
+    })
+})
+
+async function callUpdateProjectContext(input: { conversationId: string, runId?: string, projectId: string | null }): Promise<void> {
+    await agentRpcHandlers(noopLogger as never).updateProjectContext(input as never)
+}
+
+describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its own project', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockResolvedValue(undefined)
+    })
+
+    it('refuses to move a flow-step run to another project', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        await expect(callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })).rejects.toThrow()
+        expect(mockSet).not.toHaveBeenCalled()
+    })
+
+    it('allows a flow-step run to reaffirm the project it already belongs to', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-own' })
+
+        expect(mockSet).toHaveBeenCalled()
+    })
+
+    it('leaves chat runs free to switch project, which is a feature there', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'CHAT', projectId: 'proj-own' })
+
+        await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })
+
+        expect(mockSet).toHaveBeenCalled()
+    })
+
+    it('keeps a chat run out of a project its running key excludes', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'CHAT', projectId: 'proj-own', platformId: 'plat-1' })
+        mockAssertProjectSwitchKeepsKey.mockRejectedValue(new Error('key not available there'))
+
+        await expect(callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })).rejects.toThrow()
+        expect(mockSet).not.toHaveBeenCalled()
+    })
+})
+
+async function callGetAgentConfigFor(input: Record<string, unknown>): Promise<unknown> {
+    return agentRpcHandlers(noopLogger as never).getAgentConfig(input as never)
+}
+
+describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conversation on first use', () => {
+    beforeEach(() => {
+        mockSave.mockClear()
+        mockFindOneBy.mockReset()
+    })
+
+    it('creates the row with the owner and project the job carried', async () => {
+        mockFindOneBy.mockResolvedValue(null)
+        mockSave.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+
+        await callGetAgentConfigFor({
+            conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
+            userMessage: 'do a thing', modelName: null,
+            source: 'FLOW_STEP', projectId: 'proj-1',
+        }).catch(() => undefined)
+
+        expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
+            id: 'conv-1',
+            source: 'FLOW_STEP',
+            projectId: 'proj-1',
+            userId: 'owner-1',
+        }))
+    })
+
+    it('does not create a second row when the run is retried', async () => {
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'owner-1', messages: [] })
+
+        await callGetAgentConfigFor({
+            conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
+            userMessage: 'do a thing', modelName: null,
+            source: 'FLOW_STEP', projectId: 'proj-1',
+        }).catch(() => undefined)
+
+        expect(mockSave).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a flow-step target', () => {
+    it('refuses ap_remember for a flow-step run', async () => {
+
+        await expect(agentRpcHandlers(noopLogger as never).executeAgentTool({
+            toolName: 'ap_remember',
+            toolInput: { memory: 'the owner likes concise replies' },
+            platformId: 'plat-1',
+            userId: 'owner-1',
+            conversationId: 'conv-1',
+            source: 'FLOW_STEP',
+        } as never)).rejects.toThrow()
+    })
+})
+
+describe('agentRpcHandlers.executePieceTool — a configured action runs in its own project', () => {
+    const GMAIL_SEND = { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', pieceVersion: '0.1.0' }
+
+    async function runPieceTool(conversation: unknown) {
+        mockRunResolved.mockClear()
+        mockResolveInput.mockClear()
+        mockFindOne.mockResolvedValue(conversation)
+        mockGetOneWithoutValue.mockResolvedValue({ id: 'ac-1', externalId: 'conn-1', displayName: 'Sales Inbox' })
+        return agentRpcHandlers(noopLogger as never).executePieceTool({
+            conversationId: 'conv-1',
+            toolName: 'send_email',
+            instruction: 'email the summary',
+            modelId: 'eu.anthropic.claude-sonnet-4-6',
+            piece: { ...GMAIL_SEND, predefinedInput: { auth: 'conn-1', fields: {} } },
+        })
+    }
+
+    it('runs the action in the conversation\'s own project', async () => {
+        await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1' })
+
+        expect(mockRunResolved).toHaveBeenCalledTimes(1)
+        expect(mockRunResolved.mock.calls[0][0].projectId).toBe('proj-1')
+    })
+
+    it('names the account it ran as, so the receipt can say whose it was', async () => {
+        const response = await runPieceTool({ id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' })
+
+        expect(response.connectionLabel).toBe('Sales Inbox')
+    })
+
+    it('refuses when the conversation is a chat', async () => {
+        await expect(runPieceTool({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so the action is never run unscoped', async () => {
+        await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    describe('the model the fast round reuses', () => {
+        it('is the model the worker says the turn resolved, never a name stored on the conversation or the agent', async () => {
+            const agent = { draft: { modelName: 'draft-model' }, published: { modelName: 'published-model' } }
+
+            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent })
+
+            expect(mockResolveFastModel.mock.calls.at(-1)?.[0]).toMatchObject({ fallbackModelId: 'eu.anthropic.claude-sonnet-4-6' })
+        })
+    })
+})
+
+describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a flow tool, scoped to its own project', () => {
+    // runFlowTool primes the conversation lookups for the whole describe; without this the
+    // primed value outlives it and a later describe resolves someone else's conversation.
+    afterEach(() => {
+        mockFindOne.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue(null)
+    })
+
+    async function runFlowTool(conversation: unknown, flowId = 'flow-1', flowVersionId?: string) {
+        mockRunFlowAsTool.mockClear()
+        mockGetOnePopulated.mockClear()
+        mockFindOneBy.mockResolvedValue(conversation)
+        mockFindOne.mockResolvedValue(conversation)
+        return agentRpcHandlers(noopLogger as never).executeFlowTool({
+            conversationId: 'conv-1',
+            toolName: 'run_subflow',
+            flowId,
+            ...(flowVersionId === undefined ? {} : { flowVersionId }),
+            toolInput: { foo: 'bar' },
+            returnsResponse: false,
+        })
+    }
+
+    it('refuses a CHAT conversation, never touching the flow lookup or execution', async () => {
+        await expect(runFlowTool({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockGetOnePopulated).not.toHaveBeenCalled()
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so the flow lookup is never left unscoped', async () => {
+        await expect(runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockGetOnePopulated).not.toHaveBeenCalled()
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flowId that does not belong to the conversation\'s own project (cross-project)', async () => {
+        mockGetOnePopulated.mockResolvedValue(null)
+
+        await expect(runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' }, 'flow-in-other-project')).rejects.toThrow()
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-in-other-project', projectId: 'proj-own' })
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('runs the flow scoped to the conversation\'s own project when everything checks out', async () => {
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-1', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own' })
+        expect(mockRunFlowAsTool).toHaveBeenCalledTimes(1)
+    })
+
+    it('translates with the exact version whose schema the model was shown, not whatever is published now', async () => {
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-advertised', publishedVersionId: 'v-newer', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' }, 'flow-1', 'v-advertised')
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own', versionId: 'v-advertised' })
+        expect(mockGetOnePopulatedOrThrow).not.toHaveBeenCalled()
+        const [call] = mockRunFlowAsTool.mock.calls
+        expect(call[0].flow.version.id).toBe('v-advertised')
+        expect(call[0].properties.map((property: { name: string }) => property.name)).toEqual(['Email Sender'])
+    })
+
+    it('falls back to the runnable version for a run enqueued before the version was pinned', async () => {
+        mockGetOnePopulatedOrThrow.mockClear()
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-draft', publishedVersionId: 'v-published', fields: ['Renamed In Draft'] }))
+        mockGetOnePopulatedOrThrow.mockResolvedValue(flowWithFields({ versionId: 'v-published', publishedVersionId: 'v-published', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        expect(mockGetOnePopulatedOrThrow).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own', versionId: 'v-published' })
+        const [call] = mockRunFlowAsTool.mock.calls
+        expect(call[0].properties.map((property: { name: string }) => property.name)).toEqual(['Email Sender'])
+        expect(call[0].flow.version.id).toBe('v-published')
+    })
+
+    it('runs the draft directly when nothing has been published yet', async () => {
+        mockGetOnePopulatedOrThrow.mockClear()
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-draft', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        expect(mockGetOnePopulatedOrThrow).not.toHaveBeenCalled()
+        const [call] = mockRunFlowAsTool.mock.calls
+        expect(call[0].flow.version.id).toBe('v-draft')
+    })
+})
+
+function flowWithFields({ versionId, publishedVersionId, fields }: { versionId: string, publishedVersionId?: string, fields: string[] }) {
+    return {
+        id: 'flow-1',
+        ...(publishedVersionId === undefined ? {} : { publishedVersionId }),
+        version: {
+            id: versionId,
+            displayName: 'My Flow',
+            trigger: {
+                settings: {
+                    input: {
+                        toolName: 'run_subflow',
+                        toolDescription: 'runs a subflow',
+                        returnsResponse: false,
+                        inputSchema: fields.map((name) => ({ name, type: 'Text', required: false })),
+                    },
+                },
+            },
+        },
+    }
+}
+
+describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may report progress', () => {
+
+    let progressConversation = 0
+    async function report(conversation: unknown) {
+        mockUpdateStepProgress.mockClear()
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOne.mockResolvedValue(conversation)
+        return agentRpcHandlers(noopLogger as never).updateFlowStepProgress({ conversationId: `conv-${++progressConversation}`, flowRunId: 'run-1', output: { steps: [] }, sequence: 1 })
+    }
+
+    it('emits into the project the conversation belongs to, not one the caller named', async () => {
+        await report({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        expect(mockUpdateStepProgress).toHaveBeenCalledTimes(1)
+        expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
+    })
+
+
+
+
+    it('refuses when the conversation is a chat', async () => {
+        await expect(report({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockUpdateStepProgress).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project', async () => {
+        await expect(report({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockUpdateStepProgress).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a flow', () => {
+    async function resume(conversation: unknown) {
+        mockResumeFromWaitpoint.mockClear()
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue(conversation)
+        return agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: { success: true },
+        })
+    }
+
+    it('releases the waitpoint for a flow-step run, scoped to that run\'s own project', async () => {
+        await resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-1', projectId: 'proj-1' })
+        expect(mockResumeFromWaitpoint).toHaveBeenCalledWith({
+            flowRunId: 'run-1',
+            waitpointId: 'wp-1',
+            resumePayload: { body: { success: true }, headers: {}, queryParams: {} },
+        })
+    })
+
+    it('does not fail the job when the flow run is gone, so the real error is not masked', async () => {
+        mockResumeFromWaitpoint.mockClear()
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-gone', waitpointId: 'wp-1', output: { success: true },
+        })).resolves.toBeUndefined()
+
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('still looks the flow run up inside the conversation\'s own project', async () => {
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        await agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-elsewhere', waitpointId: 'wp-1', output: {},
+        })
+
+        expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-elsewhere', projectId: 'proj-own' })
+    })
+
+    it('does not fail the job when the run disappears while resuming, which the pre-check cannot catch', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'flow_run', entityId: 'run-1', message: 'Flow run not found' },
+        }))
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).resolves.toBeUndefined()
+    })
+
+    it('still fails on a not-found that is not the flow run, so unrelated faults stay visible', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'waitpoint', entityId: 'wp-1', message: 'Waitpoint not found' },
+        }))
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).rejects.toThrow(ActivepiecesError)
+    })
+
+    it('still fails on any other resume error, so a real fault is never swallowed', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new Error('lock timed out'))
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).rejects.toThrow('lock timed out')
+    })
+
+    it('sends an empty queryParams, so this path can never approve anything', async () => {
+        await resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+
+        const { resumePayload } = mockResumeFromWaitpoint.mock.calls[0][0]
+        expect(resumePayload.queryParams).toEqual({})
+    })
+
+    it('refuses when the conversation is a chat', async () => {
+        await expect(resume({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('refuses when the conversation does not exist', async () => {
+        await expect(resume(null)).rejects.toThrow()
+
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so the run lookup is never left unscoped', async () => {
+        await expect(resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockGetFlowRun).not.toHaveBeenCalled()
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may search, and only its own project\'s knowledge base', () => {
+    async function search(conversation: unknown) {
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockFindOneBy.mockResolvedValue(conversation)
+        return agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+    }
+
+    it('refuses a CHAT conversation, never reaching the knowledge base', async () => {
+        await expect(search({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1', platformId: 'plat-1' })).rejects.toThrow()
+
+        expect(mockGetFileOrThrow).not.toHaveBeenCalled()
+        expect(mockKbSearch).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so no query is ever left unscoped', async () => {
+        await expect(search({ id: 'conv-1', source: 'FLOW_STEP', projectId: null, platformId: 'plat-1' })).rejects.toThrow()
+
+        expect(mockGetFileOrThrow).not.toHaveBeenCalled()
+        expect(mockKbSearch).not.toHaveBeenCalled()
+    })
+
+    it('scopes both the file lookup and the search to the conversation\'s own project', async () => {
+        await search({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+
+        expect(mockGetFileOrThrow).toHaveBeenCalledWith({ projectId: 'proj-own', id: 'kb-1' })
+        expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'proj-own' }))
+    })
+})
+
+describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding is truncated to what the knowledge base stores', () => {
+    it('searches with a vector cut to the stored size rather than the provider\'s own', async () => {
+        mockEmbed.mockResolvedValueOnce({ embedding: new Array(1536).fill(0.1) })
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+
+        await agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+
+        expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ queryEmbedding: expect.objectContaining({ length: 768 }) }))
+    })
+})
+
+describe('agentRpcHandlers.executePieceTool — which account a configured action runs as', () => {
+    const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1' }
+    const PINNED = 'conn-author-pinned'
+
+    async function run({ pinnedExists, pinnedAuth = PINNED }: { pinnedExists: boolean, pinnedAuth?: string }) {
+        mockResolveInput.mockClear()
+        mockGetOneWithoutValue.mockClear()
+        mockFindOne.mockResolvedValue(AGENT_CHAT)
+        mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
+        const response = await agentRpcHandlers(noopLogger as never).executePieceTool({
+            conversationId: 'conv-1',
+            toolName: 'gmail-send_email',
+            instruction: 'email the summary',
+            piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email', predefinedInput: { auth: pinnedAuth, fields: {} } },
+        })
+        return { call: mockResolveInput.mock.calls[0][0], response, lookup: mockGetOneWithoutValue.mock.calls[0]?.[0] }
+    }
+
+    it('hands the pinned account to dynamic property resolution, so a dropdown has one to list options with', async () => {
+        const { call } = await run({ pinnedExists: true })
+
+        expect(call.connectionExternalId).toBe(PINNED)
+    })
+
+    it('looks the account up inside the conversation project only', async () => {
+        const { lookup } = await run({ pinnedExists: true })
+
+        expect(lookup).toMatchObject({ projectId: 'proj-1', platformId: 'plat-1', externalId: PINNED })
+    })
+
+    it('still runs as the pinned account when it cannot be named, rather than picking another one', async () => {
+        const { call, response } = await run({ pinnedExists: false })
+
+        expect(call.connectionExternalId).toBe(PINNED)
+        expect(response.connectionLabel).toBeUndefined()
+    })
+
+    it('asks for no account when the author pinned none', async () => {
+        const { call } = await run({ pinnedExists: false, pinnedAuth: '' })
+
+        expect(call.connectionExternalId).toBeUndefined()
+    })
+})
+
+describe('agentRpcHandlers.saveAgentMessages: a failed turn leaves a visible reply', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+        mockSetParameters.mockClear()
+        mockAndWhere.mockClear()
+        mockFindOneBy.mockReset()
+    })
+
+    it('appends the failure and restores a user message that never got stored, in the transcript and the model context', async () => {
+        mockFindOneBy.mockResolvedValue({ messages: [], uiMessages: [] })
+
+        await agentRpcHandlers(noopLogger as never).saveAgentMessages({
+            conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [],
+            failure: { message: 'provider is down', userMessage: 'Do my hiring' },
+        } as never)
+
+        const updates = mockSet.mock.calls[0][0]
+        const params = mockSetParameters.mock.calls[0][0]
+        expect(updates.status).toBe('ERROR')
+        expect(typeof updates.uiMessages).toBe('function')
+        expect(typeof updates.messages).toBe('function')
+        expect(JSON.parse(params.failureUiMessages)).toEqual([
+            { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] },
+            { role: 'assistant', parts: [{ type: 'text', text: 'provider is down' }] },
+        ])
+        expect(JSON.parse(params.failureModelMessages)).toEqual([{ role: 'user', content: 'Do my hiring' }])
+    })
+
+    it('appends only the failure reply when the user message is already the last stored one', async () => {
+        const storedUser = { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] }
+        mockFindOneBy.mockResolvedValue({ messages: [{ role: 'user' }], uiMessages: [storedUser] })
+
+        await agentRpcHandlers(noopLogger as never).saveAgentMessages({
+            conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [],
+            failure: { message: 'boom', userMessage: 'Do my hiring' },
+        } as never)
+
+        expect(mockSet.mock.calls[0][0].messages).toBeUndefined()
+        expect(JSON.parse(mockSetParameters.mock.calls[0][0].failureUiMessages)).toEqual([
+            { role: 'assistant', parts: [{ type: 'text', text: 'boom' }] },
+        ])
+    })
+
+    it('only saves progress while the turn is still streaming, so a late progress save cannot wipe the failure reply', async () => {
+        await agentRpcHandlers(noopLogger as never).updateAgentProgress({
+            conversationId: 'conv-1', runId: 'run-1', uiMessages: [],
+        } as never)
+
+        expect(mockAndWhere).toHaveBeenCalledWith({ streamingStatus: 'STREAMING' })
     })
 })

@@ -1,19 +1,22 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { transaction } from '../core/db/transaction'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
+import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
-import { userInvitationsService } from './user-invitation.service'
+import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
 
 export const invitationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -36,16 +39,46 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         const status = await shouldAutoAcceptInvitation(request.principal, request.body, platformId, request.log) ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(platformId, request.body)
 
-        const invitation = await userInvitationsService(request.log).create({
+        const invitationRecordParams = {
             email,
             type,
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
             projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
-            invitationExpirySeconds: dayjs.duration(7, 'days').asSeconds(),
             status,
+        }
+
+        const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
+        const userInvitationRecord = wouldAddNewUser
+            ? await transaction(async (entityManager) => {
+                const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
+                    email,
+                    platformId,
+                    entityManager,
+                })
+                await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
+                return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
+            })
+            : await userInvitationsService(request.log).createInvitationRecord(invitationRecordParams)
+
+        const invitation = await userInvitationsService(request.log).finalizeInvitation({
+            userInvitation: userInvitationRecord,
+            invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
         })
+        rejectedPromiseHandler(trackInviteSent({
+            principal: request.principal,
+            platformId,
+            event: {
+                name: TelemetryEventName.INVITE_SENT,
+                payload: {
+                    platformId,
+                    type: type === InvitationType.PLATFORM ? 'platform' : 'project',
+                    role: type === InvitationType.PLATFORM ? request.body.platformRole ?? undefined : projectRole?.name,
+                },
+            },
+            log: request.log,
+        }), request.log)
         await reply.status(StatusCodes.CREATED).send(invitation)
     })
 
@@ -67,11 +100,11 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
         const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
-        await userInvitationsService(request.log).accept({
+        const { registered } = await userInvitationsService(request.log).accept({
             invitationId: invitation.id,
             platformId: invitation.platformId,
         })
-        await reply.status(StatusCodes.OK).send(invitation)
+        await reply.status(StatusCodes.OK).send({ ...invitation, registered })
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
@@ -167,6 +200,14 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
 }
 
 
+async function trackInviteSent({ principal, platformId, event, log }: TrackInviteSentParams): Promise<void> {
+    if (principal.type === PrincipalType.USER) {
+        await telemetry(log).trackUser({ userId: principal.id, platformId, event })
+        return
+    }
+    await telemetry(log).trackPlatform({ platformId, event })
+}
+
 const ListUserInvitationsRequestParams = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
@@ -226,4 +267,11 @@ const UpsertUserInvitationRequestParams = {
             [StatusCodes.CREATED]: UserInvitationWithLink,
         },
     },
+}
+
+type TrackInviteSentParams = {
+    principal: Principal
+    platformId: string
+    event: TelemetryEvent
+    log: FastifyBaseLogger
 }

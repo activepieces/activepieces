@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const search = createAction({
   name: 'search',
+  classification: 'SEARCH',
   displayName: 'Search',
   description: 'Search for addresses, transactions, blocks, or tokens',
   audience: 'both',

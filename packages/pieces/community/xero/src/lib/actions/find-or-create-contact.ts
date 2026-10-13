@@ -7,10 +7,13 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroInput } from '../common/client';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroFindOrCreateContact = createAction({
   auth: xeroAuth,
   name: 'xero_find_or_create_contact',
+  classification: 'WRITE',
   displayName: 'Find or Create Contact',
   description: 'Finds or creates a specific contact.',
   audience: 'both',
@@ -19,6 +22,7 @@ export const xeroFindOrCreateContact = createAction({
       'Look up a Xero contact by exact name and return it if it exists, otherwise create it. Pick this to de-duplicate contacts before invoicing so re-runs reuse the same record instead of creating duplicates. Idempotent on the contact name: the same name always resolves to the same contact.',
     idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.contactEnvelope,
   props: {
     tenant_id: props.tenant_id,
     name: props.contact_name(true),
@@ -28,7 +32,7 @@ export const xeroFindOrCreateContact = createAction({
     const { tenant_id, name, email } = context.propsValue;
 
     const baseUrl = 'https://api.xero.com/api.xro/2.0/Contacts';
-    const where = `Name="${name?.replace(/"/g, '\\"')}"`;
+    const where = `Name=${xeroInput.whereString({ value: name ?? '' })}`;
 
     const findRequest: HttpRequest = {
       method: HttpMethod.GET,

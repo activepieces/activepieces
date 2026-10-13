@@ -6,6 +6,7 @@ import { gmailAiSendEmailActionOutputSchema } from '../output-schemas';
 export const gmailAiSendEmailAction = createAction({
   auth: gmailAuth,
   name: 'gmail_send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send an email through a Gmail account',
   audience: 'ai',

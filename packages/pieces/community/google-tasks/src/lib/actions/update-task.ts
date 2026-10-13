@@ -12,6 +12,7 @@ import { googleTasksUpdateTaskOutputSchema } from '../output-schemas';
 export const googleTasksUpdateTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'update_task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Edit an existing task — title, notes, due date, or status.',
   audience: 'ai',

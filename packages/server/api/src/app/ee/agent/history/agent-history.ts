@@ -1,5 +1,7 @@
-import { AgentHistoryMessage, AgentHistoryToolCall, agentPersistenceUtils } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { AgentConversation, AgentHistoryMessage, AgentHistoryToolCall, agentPersistenceUtils, PersistedAgentMessage } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
 
 function reconstructAgentHistory(messages: ModelMessage[]): AgentHistoryMessage[] {
     const result: AgentHistoryMessage[] = []
@@ -97,6 +99,15 @@ function extractTextFromContent(content: unknown): string {
     return text
 }
 
+function resolveMessages({ conversation, log }: { conversation: AgentConversation, log: FastifyBaseLogger }): PersistedAgentMessage[] {
+    if (isNil(conversation.uiMessages)) {
+        log.error({ conversation: { id: conversation.id } }, 'Agent conversation has null uiMessages')
+        return []
+    }
+    return conversation.uiMessages
+}
+
 export const agentHistory = {
     reconstruct: reconstructAgentHistory,
+    resolveMessages,
 }

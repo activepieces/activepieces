@@ -5,6 +5,7 @@ import { leadConnectorAuth } from '../..';
 export const searchContactsAction = createAction({
   auth: leadConnectorAuth,
   name: 'search_contacts',
+  classification: 'SEARCH',
   displayName: 'Search Contacts',
   description: 'Search for contacts with a search query.',
   audience: 'both',
@@ -12,8 +13,10 @@ export const searchContactsAction = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'The value you want to search for.',
+      description:
+        'Matched against name, email, phone and more. Up to 100 results.',
       required: true,
+      placeholder: 'jane@example.com',
     }),
   },
 

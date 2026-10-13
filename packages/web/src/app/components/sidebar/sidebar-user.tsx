@@ -6,7 +6,6 @@ import { useState } from 'react';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +25,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import AccountSettingsDialog from '../account-settings';
+import { AccountSettingsDialog } from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
@@ -34,7 +33,6 @@ export function SidebarUser() {
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { reset } = useTelemetry();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   if (!user || embedState.isEmbedded) {
@@ -44,7 +42,6 @@ export function SidebarUser() {
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
-    reset();
   };
 
   return (
@@ -53,7 +50,7 @@ export function SidebarUser() {
         <DropdownMenu modal>
           <DropdownMenuTrigger asChild className="w-full">
             <SidebarMenuButton className="h-10! pl-2! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-2!">
-              <div className="size-[18px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
+              <div className="size-[22px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
                 <UserAvatar
                   className={cn('size-full object-cover', {
                     'scale-150': isNil(user.imageUrl),
@@ -61,7 +58,7 @@ export function SidebarUser() {
                   name={user.firstName + ' ' + user.lastName}
                   email={user.email}
                   imageUrl={user.imageUrl}
-                  size={18}
+                  size={22}
                   disableTooltip={true}
                 />
               </div>

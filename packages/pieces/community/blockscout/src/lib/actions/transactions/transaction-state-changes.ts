@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const getTransactionStateChanges = createAction({
   name: 'get_transaction_state_changes',
+  classification: 'SEARCH',
   displayName: 'Get Transaction State Changes',
   description: 'Get list of state changes in a transaction',
   audience: 'both',

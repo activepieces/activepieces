@@ -3,10 +3,12 @@ import { InferenceClient } from '@huggingface/inference';
 import type { TextToImageInput } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
+import { createImageOutputSchema } from '../output-schemas';
 
 export const createImage = createAction({
   audience: 'both',
   name: 'create_image',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Create Image',
   description:
@@ -16,6 +18,7 @@ export const createImage = createAction({
       'Generates an image from a text prompt with a Hugging Face text-to-image diffusion model (Stable Diffusion, FLUX and similar), sized by an aspect-ratio preset or custom width and height, and tuned by a quality preset that maps to a denoising-step count. This is the only action here that produces an image; the vision actions image_classification, object_detection, and document_question_answering consume one instead. A non-empty prompt is required; not idempotent: each call renders a new image, and unless an explicit seed is supplied the result differs every run.',
     idempotent: false,
   },
+  outputSchema: createImageOutputSchema,
   props: {
     useCase: Property.StaticDropdown({
       displayName: 'Use Case',

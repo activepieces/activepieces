@@ -8,6 +8,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { listProjects } from './lib/actions/list-projects';
 import { getProjectHead } from './lib/actions/get-project-head';
 import { runPrompt } from './lib/actions/run-prompt';
+import { getCurrentAccount } from './lib/actions/get-current-account';
 
 export const prompthubAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -39,13 +40,14 @@ export const prompthub = createPiece({
   description:
     'Integrate with PromptHub projects, retrieve heads, and run prompts.',
   auth: prompthubAuth,
-  minimumSupportedRelease: '0.63.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/prompthub.png',
   authors: ['sparkybug'],
   actions: [
     listProjects,
     getProjectHead,
     runPrompt,
+    getCurrentAccount,
     createCustomApiCallAction({
       auth: prompthubAuth,
       baseUrl: () => 'https://app.prompthub.us/api/v1',

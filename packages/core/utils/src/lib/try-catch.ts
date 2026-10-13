@@ -36,6 +36,14 @@ export function tryCatchSync<T, E = Error>(
     }
 }
 
-export type TypedResult<T> =
-    | { success: true, data: T }
-    | { success: false, message: string }
+export function toError(value: unknown): Error {
+    if (value instanceof Error) {
+        return value
+    }
+    if (typeof value === 'string') {
+        return new Error(value)
+    }
+    const { data: serialized } = tryCatchSync(() => JSON.stringify(value))
+    return new Error(serialized ?? String(value))
+}
+

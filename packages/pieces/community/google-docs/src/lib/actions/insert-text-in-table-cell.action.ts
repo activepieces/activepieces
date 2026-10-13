@@ -7,6 +7,7 @@ import { insertTextInTableCellActionOutputSchema } from '../output-schemas';
 export const insertTextInTableCell = createAction({
   auth: googleDocsAuth,
   name: 'insert_text_in_table_cell',
+  classification: 'WRITE',
   displayName: 'Insert Text in Table Cell',
   description: 'Insert text into a specific table cell in a Google Docs document',
   audience: 'ai',

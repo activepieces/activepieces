@@ -9,22 +9,34 @@ import { newDirectMessageTriggerOutputSchema } from '../output-schemas';
 export const newDirectMessageTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-direct-message',
+	classification: 'READ',
 	displayName: 'New Direct Message',
 	description: 'Triggers when a message was posted in a direct message channel.',
 	aiMetadata: {
 		description:
 			'Fires when a new message is posted in a direct message (im) channel with the connected Slack app. Bot messages and the connected user\'s own messages can be optionally ignored. The event payload is the Slack message event, including its channel, text, and sender.',
 	},
+	propertyGroups: [
+		{
+			key: 'filters',
+			display: 'section',
+			label: 'Filters',
+			icon: 'filter',
+			props: ['info', 'ignoreBots', 'ignoreSelfMessages'],
+		},
+	],
 	props: {
 		info: appWebhookSetupInfo,
 		ignoreBots: Property.Checkbox({
-			displayName: 'Ignore Bot Messages ?',
-			required: true,
+			displayName: 'Ignore Bot Messages',
+			description: 'Skip messages posted by bots and apps.',
+			required: false,
 			defaultValue: false,
 		}),
 		ignoreSelfMessages: Property.Checkbox({
-			displayName: 'Ignore Message from Yourself ?',
-			required: true,
+			displayName: 'Ignore My Own Messages',
+			description: 'Skip messages sent by the connected user. Needs a user token.',
+			required: false,
 			defaultValue: false,
 		}),
 	},

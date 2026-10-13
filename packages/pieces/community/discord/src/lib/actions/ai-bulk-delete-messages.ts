@@ -10,6 +10,7 @@ import { discordBulkDeleteMessagesActionOutputSchema } from '../output-schemas';
 export const discordBulkDeleteMessages = createAction({
   auth: discordAuth,
   name: 'discord_bulk_delete_messages',
+  classification: 'DESTRUCTIVE',
   displayName: 'Bulk Delete Messages',
   description: 'Delete 2-100 recent messages from a channel in one call.',
   audience: 'ai',

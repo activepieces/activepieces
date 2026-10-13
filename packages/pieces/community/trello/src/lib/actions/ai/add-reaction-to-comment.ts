@@ -12,6 +12,7 @@ import { addReactionToCommentActionOutputSchema } from '../../output-schemas';
 export const addReactionToComment = createAction({
   auth: trelloAuth,
   name: 'add_reaction_to_comment',
+  classification: 'WRITE',
   displayName: 'Add Reaction To Comment (Agent)',
   description: 'React (emoji) to a Trello comment.',
   audience: 'ai',

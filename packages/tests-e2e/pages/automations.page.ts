@@ -14,7 +14,8 @@ export class AutomationsPage extends BasePage {
     await this.page.waitForURL(
       (url) =>
         !url.pathname.includes('/sign-in') &&
-        !url.pathname.includes('/sign-up'),
+        !url.pathname.includes('/sign-up') &&
+        !url.pathname.includes('/create-platform'),
       { timeout: 15000 },
     );
     await this.visit();
