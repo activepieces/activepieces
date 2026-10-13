@@ -263,7 +263,7 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Required actions">
-          <PlanFeatureSample feature="pieces">
+          <PlanFeatureSample feature="requiredActions">
             <SuspenseWrapper>
               <RequiredActionsPage />
             </SuspenseWrapper>

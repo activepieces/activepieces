@@ -3689,5 +3689,10 @@
   "Check what builders, MCP and agents can use.": "Check what builders, MCP and agents can use.",
   "Search actions": "Search actions",
   "· {count, plural, =1 {1 action} other {# actions}}": "· {count, plural, =1 {1 action} other {# actions}}",
-  "Leaves this view": "Leaves this view"
+  "Leaves this view": "Leaves this view",
+  "Couldn't update {names}. Save again to retry.": "Couldn't update {names}. Save again to retry.",
+  "Couldn't update {names}. The other {terms} are saved; save again to retry.": "Couldn't update {names}. The other {terms} are saved; save again to retry.",
+  "Make flows use the actions that matter": "Make flows use the actions that matter",
+  "Not saved": "Not saved",
+  "Choose the actions every flow in a {term} must use, such as an approval or a log step, before it can be published.": "Choose the actions every flow in a {term} must use, such as an approval or a log step, before it can be published."
 }

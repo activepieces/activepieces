@@ -166,7 +166,7 @@ const buildResolvedTabs = ({
         acc.push({
           key: builtin.value,
           type: builtin.value,
-          name: tabConfig.title ?? builtin.name,
+          name: tabConfig.title?.trim() ? tabConfig.title : builtin.name,
           icon: renderIcon(tabConfig.icon) ?? builtin.icon,
         });
         return acc;
