@@ -53,7 +53,9 @@ export const runTriggerCommandAction = createAction({
         if (triggerName.length === 0) {
             throw new Error('Enter the Trigger Name of the command.');
         }
-        const waitMs = context.propsValue.waitForResults === true ? validateWait(context.propsValue.waitSeconds) * 1000 : 0;
+        const waitForResults = context.propsValue.waitForResults === true;
+        const waitMs = waitForResults ? validateWait(context.propsValue.waitSeconds) * 1000 : 0;
+        const earlier = waitForResults ? await snapshotResults({ auth, triggerName }) : new Set<string>();
         const launchedAt = Date.now() - CLOCK_SKEW_MS;
         const response = await jumpcloudApi.send<unknown>({
             auth,
@@ -67,13 +69,12 @@ export const runTriggerCommandAction = createAction({
                 `No JumpCloud command uses the trigger name "${triggerName}". Set the command's Launch Event to Run on Trigger (webhook) with this Trigger Name.`,
             );
         }
-        if (context.propsValue.waitForResults !== true) {
+        if (!waitForResults) {
             return { trigger_name: triggerName, command_ids: commandIds, waited: false, completed: false, results: [] };
         }
-        const earlier = new Set((await Promise.all(commandIds.map((commandId) => fetchRecords({ auth, commandId })))).flat().map(resultKey));
         const targets = await Promise.all(commandIds.map(async (commandId) => ({ commandId, systemIds: await fetchTargetSystems({ auth, commandId, skip: 0 }) })));
         const deadline = Date.now() + waitMs;
-        const results = await waitForResults({ auth, targets, launchedAt, earlier, deadline });
+        const results = await pollResults({ auth, targets, launchedAt, earlier, deadline });
         return {
             trigger_name: triggerName,
             command_ids: commandIds,
@@ -84,14 +85,14 @@ export const runTriggerCommandAction = createAction({
     },
 });
 
-async function waitForResults({ auth, targets, launchedAt, earlier, deadline }: WaitParams): Promise<FlatObject[]> {
+async function pollResults({ auth, targets, launchedAt, earlier, deadline }: WaitParams): Promise<FlatObject[]> {
     const lists = await Promise.all(targets.map(({ commandId }) => fetchResults({ auth, commandId, launchedAt, earlier })));
     const results = lists.flat();
     if (allReported({ targets, results }) || Date.now() + COMMAND_POLL_SECONDS * 1000 > deadline) {
         return results;
     }
     await sleep(COMMAND_POLL_SECONDS * 1000);
-    return waitForResults({ auth, targets, launchedAt, earlier, deadline });
+    return pollResults({ auth, targets, launchedAt, earlier, deadline });
 }
 
 function allReported({ targets, results }: { targets: CommandTargets[]; results: FlatObject[] }): boolean {
@@ -136,7 +137,30 @@ async function fetchResults({ auth, commandId, launchedAt, earlier }: { auth: Co
         .map((record) => jumpcloudOutput.flattenCommandResult({ commandId, record }));
 }
 
-// Results already listed right after the launch belong to an earlier run, even inside the clock skew window.
+// Results listed before the launch belong to an earlier run, even inside the clock skew window.
+async function snapshotResults({ auth, triggerName }: { auth: ConnectionProps; triggerName: string }): Promise<Set<string>> {
+    const commandIds = await fetchTriggerCommandIds({ auth, triggerName, skip: 0 });
+    const records = await Promise.all(commandIds.map((commandId) => fetchRecords({ auth, commandId })));
+    return new Set(records.flat().map(resultKey));
+}
+
+async function fetchTriggerCommandIds({ auth, triggerName, skip }: { auth: ConnectionProps; triggerName: string; skip: number }): Promise<string[]> {
+    const page = await jumpcloudApi.fetchListPage({
+        auth,
+        method: HttpMethod.GET,
+        path: '/commands',
+        queryParams: { filter: `trigger:$eq:${triggerName}`, fields: 'trigger', limit: String(TARGET_PAGE_SIZE), skip: String(skip) },
+    });
+    const ids = page.items.flatMap((record) => {
+        const id = record['_id'] ?? record['id'];
+        return record['trigger'] === triggerName && typeof id === 'string' && id.length > 0 ? [id] : [];
+    });
+    if (page.items.length < TARGET_PAGE_SIZE) {
+        return ids;
+    }
+    return [...ids, ...(await fetchTriggerCommandIds({ auth, triggerName, skip: skip + page.items.length }))];
+}
+
 function resultKey(record: ApiRecord): string {
     const id = record['_id'] ?? record['id'];
     return typeof id === 'string' && id.length > 0 ? id : `${String(record['systemId'])}|${String(record['requestTime'])}`;
