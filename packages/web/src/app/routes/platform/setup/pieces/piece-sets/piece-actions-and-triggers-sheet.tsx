@@ -4,7 +4,7 @@ import {
   ActionClassification,
   TriggerBase,
 } from '@activepieces/pieces-framework';
-import { PieceSet } from '@activepieces/shared';
+import { PieceAudienceFilter, PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
@@ -56,6 +56,7 @@ function PieceActionsAndTriggersSheetContent({
   const { pieceModel, isLoading, isError, refetch } = piecesHooks.usePiece({
     name: pieceName,
     enabled: open,
+    audience: PieceAudienceFilter.ALL,
   });
 
   const allActions = useMemo<ComponentItem[]>(
@@ -79,6 +80,10 @@ function PieceActionsAndTriggersSheetContent({
     [pieceModel],
   );
   const allActionNames = allActions.map((item) => item.data.name);
+  const regularActions = allActions.filter((item) => !isAiTool(item));
+  const aiTools = allActions.filter(isAiTool);
+  const regularActionNames = regularActions.map((item) => item.data.name);
+  const aiToolNames = aiTools.map((item) => item.data.name);
   const allTriggerNames = allTriggers.map((item) => item.data.name);
 
   const originallyEverything = !(
@@ -113,9 +118,10 @@ function PieceActionsAndTriggersSheetContent({
   const requiredActionNames =
     pieceSet.config.requiredActions.actions[pieceName] ?? [];
 
-  const checkedActionCount = allActionNames.filter(
-    (name) => !localHiddenActions.includes(name),
-  ).length;
+  const countChecked = (names: string[]) =>
+    names.filter((name) => !localHiddenActions.includes(name)).length;
+  const checkedActionCount = countChecked(regularActionNames);
+  const checkedAiToolCount = countChecked(aiToolNames);
   const checkedTriggerCount = allTriggerNames.filter(
     (name) => !localHiddenTriggers.includes(name),
   ).length;
@@ -123,7 +129,8 @@ function PieceActionsAndTriggersSheetContent({
   const allChecked =
     localHiddenActions.length === 0 && localHiddenTriggers.length === 0;
   const noneChecked =
-    totalCount > 0 && checkedActionCount + checkedTriggerCount === 0;
+    totalCount > 0 &&
+    checkedActionCount + checkedAiToolCount + checkedTriggerCount === 0;
 
   const hiddenChanged =
     !sameNames(localHiddenActions, originalHiddenActions) ||
@@ -144,28 +151,24 @@ function PieceActionsAndTriggersSheetContent({
     }
   };
 
-  const toggleGroup = ({
-    type,
+  const toggleActionGroup = ({
+    names,
     check,
   }: {
-    type: ComponentItem['type'];
+    names: string[];
     check: boolean;
-  }) => {
-    if (type === 'action') {
-      setTouchedHiddenActions(
-        check
-          ? []
-          : allActionNames.filter(
-              (name) => !requiredActionNames.includes(name),
-            ),
-      );
-    } else {
-      setTouchedHiddenTriggers(check ? [] : allTriggerNames);
-    }
-  };
+  }) =>
+    setTouchedHiddenActions(
+      check
+        ? localHiddenActions.filter((name) => !names.includes(name))
+        : unique([
+            ...localHiddenActions,
+            ...names.filter((name) => !requiredActionNames.includes(name)),
+          ]),
+    );
 
   const actionNamesWith = (classifications: ActionClassification[]) =>
-    allActions
+    regularActions
       .filter(
         (item) =>
           item.data.classification !== undefined &&
@@ -210,27 +213,14 @@ function PieceActionsAndTriggersSheetContent({
     if (!isDirty || saving || !pieceModel) {
       return;
     }
-    const change: PieceSetChange = {
-      type: 'components',
+    const change = pieceSetChanges.componentsChange({
       pieceName,
       pieceDisplayName,
-      actions: allChecked
-        ? { mode: 'all' }
-        : {
-            mode: 'selected',
-            selected: allActionNames.filter(
-              (name) => !localHiddenActions.includes(name),
-            ),
-          },
-      triggers: allChecked
-        ? { mode: 'all' }
-        : {
-            mode: 'selected',
-            selected: allTriggerNames.filter(
-              (name) => !localHiddenTriggers.includes(name),
-            ),
-          },
-    };
+      actionNames: allActionNames,
+      triggerNames: allTriggerNames,
+      hiddenActions: localHiddenActions,
+      hiddenTriggers: localHiddenTriggers,
+    });
     const excluded = pieceSetChanges.excludedRequiredActions({
       pieceSet,
       change,
@@ -262,7 +252,9 @@ function PieceActionsAndTriggersSheetContent({
                 pieceDisplayName,
                 everything: buildersSeeEverything,
                 checkedActions: checkedActionCount,
-                totalActions: allActions.length,
+                totalActions: regularActions.length,
+                checkedAiTools: checkedAiToolCount,
+                totalAiTools: aiTools.length,
                 checkedTriggers: checkedTriggerCount,
                 totalTriggers: allTriggers.length,
               })
@@ -271,6 +263,13 @@ function PieceActionsAndTriggersSheetContent({
         toolbar={
           totalCount > 0 ? (
             <>
+              {!allChecked && (
+                <p className="text-xs text-gray-11">
+                  {t(
+                    'Hidden from the builder. Flows already using it keep running.',
+                  )}
+                </p>
+              )}
               <SearchInput
                 placeholder={t('Search actions and triggers')}
                 value={search}
@@ -339,17 +338,34 @@ function PieceActionsAndTriggersSheetContent({
                 </Button>
               </p>
             )}
-            {allActions.length > 0 && (
+            {regularActions.length > 0 && (
               <ComponentGroup
                 label={t('Actions')}
-                items={allActions.filter(matches)}
-                total={allActions.length}
+                items={regularActions.filter(matches)}
+                total={regularActions.length}
                 checkedCount={checkedActionCount}
                 hiddenNames={localHiddenActions}
                 requiredNames={requiredActionNames}
                 onToggle={toggleComponent}
                 onToggleGroup={(check) =>
-                  toggleGroup({ type: 'action', check })
+                  toggleActionGroup({ names: regularActionNames, check })
+                }
+              />
+            )}
+            {aiTools.length > 0 && (
+              <ComponentGroup
+                label={t('AI tools')}
+                note={t(
+                  'Only MCP and agents can use these. They never appear in the builder.',
+                )}
+                items={aiTools.filter(matches)}
+                total={aiTools.length}
+                checkedCount={checkedAiToolCount}
+                hiddenNames={localHiddenActions}
+                requiredNames={requiredActionNames}
+                onToggle={toggleComponent}
+                onToggleGroup={(check) =>
+                  toggleActionGroup({ names: aiToolNames, check })
                 }
               />
             )}
@@ -363,7 +379,7 @@ function PieceActionsAndTriggersSheetContent({
                 requiredNames={[]}
                 onToggle={toggleComponent}
                 onToggleGroup={(check) =>
-                  toggleGroup({ type: 'trigger', check })
+                  setTouchedHiddenTriggers(check ? [] : allTriggerNames)
                 }
               />
             )}
@@ -394,6 +410,7 @@ function PieceActionsAndTriggersSheetContent({
 
 function ComponentGroup({
   label,
+  note,
   items,
   total,
   checkedCount,
@@ -424,6 +441,7 @@ function ComponentGroup({
           })}
         </span>
       </label>
+      {note && <p className="pt-2 text-xs text-gray-11">{note}</p>}
       {items.length === 0 ? (
         <p className="py-3 text-sm text-gray-11">{t('No matches.')}</p>
       ) : (
@@ -511,6 +529,8 @@ function buildersSeeSummary({
   everything,
   checkedActions,
   totalActions,
+  checkedAiTools,
+  totalAiTools,
   checkedTriggers,
   totalTriggers,
 }: {
@@ -518,32 +538,68 @@ function buildersSeeSummary({
   everything: boolean;
   checkedActions: number;
   totalActions: number;
+  checkedAiTools: number;
+  totalAiTools: number;
   checkedTriggers: number;
   totalTriggers: number;
 }): string {
+  const aiTools =
+    totalAiTools > 0
+      ? t('MCP and agents get {checked} of {total} AI tools.', {
+          checked: checkedAiTools,
+          total: totalAiTools,
+        })
+      : null;
   if (everything) {
-    return t(
-      'Builders see every action and trigger in {name}, including new ones added later.',
-      { name: pieceDisplayName },
-    );
+    return joinSentences([
+      t(
+        'Builders see every action and trigger in {name}, including new ones added later.',
+        { name: pieceDisplayName },
+      ),
+      aiTools,
+    ]);
   }
-  const later = t(
-    'New ones added to {name} later stay hidden until you check them here.',
-    { name: pieceDisplayName },
-  );
+  return joinSentences([
+    builderSentence({
+      checkedActions,
+      totalActions,
+      checkedTriggers,
+      totalTriggers,
+    }),
+    aiTools,
+    t('New ones added to {name} later stay hidden until you check them here.', {
+      name: pieceDisplayName,
+    }),
+  ]);
+}
+
+function builderSentence({
+  checkedActions,
+  totalActions,
+  checkedTriggers,
+  totalTriggers,
+}: {
+  checkedActions: number;
+  totalActions: number;
+  checkedTriggers: number;
+  totalTriggers: number;
+}): string | null {
+  if (totalActions === 0 && totalTriggers === 0) {
+    return null;
+  }
   if (totalTriggers === 0) {
-    return `${t('Builders see {checked} of {total} actions.', {
+    return t('Builders see {checked} of {total} actions.', {
       checked: checkedActions,
       total: totalActions,
-    })} ${later}`;
+    });
   }
   if (totalActions === 0) {
-    return `${t('Builders see {checked} of {total} triggers.', {
+    return t('Builders see {checked} of {total} triggers.', {
       checked: checkedTriggers,
       total: totalTriggers,
-    })} ${later}`;
+    });
   }
-  return `${t(
+  return t(
     'Builders see {actions} of {actionsTotal} actions and {triggers} of {triggersTotal} triggers.',
     {
       actions: checkedActions,
@@ -551,7 +607,15 @@ function buildersSeeSummary({
       triggers: checkedTriggers,
       triggersTotal: totalTriggers,
     },
-  )} ${later}`;
+  );
+}
+
+function joinSentences(sentences: (string | null)[]): string {
+  return sentences.filter((sentence) => sentence !== null).join(' ');
+}
+
+function isAiTool(item: ComponentItem): boolean {
+  return item.type === 'action' && item.data.audience === 'ai';
 }
 
 function hiddenNames({
@@ -584,6 +648,7 @@ type ComponentItem =
 
 type ComponentGroupProps = {
   label: string;
+  note?: string;
   items: ComponentItem[];
   total: number;
   checkedCount: number;

@@ -2,6 +2,7 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   ComponentSelection,
   isPieceVisible,
+  PieceAudienceFilter,
   PieceSet,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -58,8 +59,12 @@ export const PieceSetPiecesTab = ({
   pieceSet,
   onChange,
 }: PieceSetPiecesTabProps) => {
-  const { pieces, isLoading, isError, refetch } =
-    piecesHooks.usePlatformCatalog();
+  const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
+    includeHidden: true,
+    isTableQuery: true,
+    skipProjectFilter: true,
+    audience: PieceAudienceFilter.ALL,
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get(SEARCH_PARAM) ?? '';
   const [segment, setSegment] = useState<Segment>('all');
@@ -342,6 +347,11 @@ export const PieceSetPiecesTab = ({
             { value: 'blocked', label: t('Hidden'), count: counts?.blocked },
           ]}
         />
+        {segment === 'blocked' && (
+          <p className="basis-full text-xs text-gray-11">
+            {t('Hidden from the builder. Flows already using it keep running.')}
+          </p>
+        )}
       </div>
 
       {body}
