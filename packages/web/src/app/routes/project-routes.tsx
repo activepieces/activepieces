@@ -9,6 +9,7 @@ import { ApTableStateProvider } from '@/features/tables';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
+import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
@@ -291,20 +292,26 @@ export const projectRoutes = [
   },
   {
     path: '/mcp-server/pieces',
-    element: <LegacyPiecesRedirect />,
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <LegacyPiecesRedirect />
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
   },
   {
     path: '/mcp-server/:tab?',
     element: (
-      <ProjectDashboardLayout>
-        <McpReachGuard>
-          <PageTitle title="MCP Server">
-            <SuspenseWrapper>
-              <McpServerPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </McpReachGuard>
-      </ProjectDashboardLayout>
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <ProjectDashboardLayout>
+          <McpReachGuard>
+            <PageTitle title="MCP Server">
+              <SuspenseWrapper>
+                <McpServerPage />
+              </SuspenseWrapper>
+            </PageTitle>
+          </McpReachGuard>
+        </ProjectDashboardLayout>
+      </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
 ];
