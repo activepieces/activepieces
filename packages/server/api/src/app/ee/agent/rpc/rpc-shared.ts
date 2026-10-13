@@ -87,14 +87,7 @@ export async function loadOrStartConversation({ conversationId, platformId, user
     if (source !== AgentRunSource.FLOW_STEP) {
         return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
     }
-    const existing = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
-    if (!isNil(existing)) {
-        if (existing.platformId !== platformId || existing.userId !== userId || existing.source !== AgentRunSource.FLOW_STEP) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
-        }
-        return existing
-    }
-    return agentHelpers.conversationRepo().save({
+    await agentHelpers.conversationRepo().createQueryBuilder().insert().values({
         id: conversationId,
         platformId,
         projectId: projectId ?? null,
@@ -106,7 +99,13 @@ export async function loadOrStartConversation({ conversationId, platformId, user
         modelName: modelName ?? null,
         messages: [],
         status: AgentConversationStatus.IDLE,
-    })
+    }).orIgnore().execute()
+    const conversation = await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId })
+    const ownedByThisRun = conversation.platformId === platformId && conversation.userId === userId && conversation.source === AgentRunSource.FLOW_STEP
+    if (!ownedByThisRun) {
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
+    }
+    return conversation
 }
 
 export async function confinedRunFor({ conversationId }: { conversationId?: string }): Promise<ConfinedRun> {
