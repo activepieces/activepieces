@@ -33,10 +33,35 @@ function truncate({ text, max }: { text: string, max: number }): string {
     return collapsed.length > max ? `${collapsed.slice(0, max - 1)}…` : collapsed
 }
 
+function sumCost({ costs }: { costs: Array<number | null> }): number | null {
+    if (costs.some((cost) => cost === null)) {
+        return null
+    }
+    return costs.reduce<number>((total, cost) => total + (cost ?? 0), 0)
+}
+
+function formatUsd(cost: number | null): string {
+    if (cost === null) {
+        return '—'
+    }
+    return `$${cost < 1 ? cost.toFixed(4) : cost.toFixed(2)}`
+}
+
+function costDelta({ baseline, candidate }: { baseline: number | null, candidate: number | null }): string | null {
+    if (baseline === null || candidate === null || baseline === 0) {
+        return null
+    }
+    const percent = Math.round(((candidate - baseline) / baseline) * 100)
+    return `${percent > 0 ? '+' : percent < 0 ? '−' : '±'}${Math.abs(percent)}%`
+}
+
 export const evalFormat = {
     expectedLabelMatch,
     judgeAgreement,
     truncate,
+    sumCost,
+    formatUsd,
+    costDelta,
 }
 
 export type AgreementRates = {

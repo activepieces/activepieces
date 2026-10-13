@@ -19,6 +19,29 @@ export const newReactionAdded = createTrigger({
     description:
       'Fires when an emoji reaction is added to a message in the Slack workspace. Can be optionally filtered to specific emojis, a specific user, or specific channels. The event payload identifies the user who added the reaction, the emoji name, and the message item it was added to.',
   },
+  propertyGroups: [
+    {
+      key: 'reaction_emoji',
+      display: 'section',
+      label: 'Reaction',
+      icon: 'tag',
+      props: ['webhookInfo', 'emojis'],
+    },
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['user'],
+    },
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channels'],
+    },
+  ],
   props: {
     webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,

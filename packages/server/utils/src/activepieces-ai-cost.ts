@@ -250,6 +250,7 @@ export const activepiecesAiCost = {
     billedEmbeddingModel,
     reportFixedCredits,
     reportProviderCost,
+    openRouterCostOf,
 }
 
 type BillingContext = {
