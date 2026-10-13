@@ -6,17 +6,21 @@ import { repoRoot } from '../core/repo-root'
 const STORE_DIR = path.join(repoRoot, '.agent-eval')
 const RUN_FILE = path.join(STORE_DIR, 'last-run.json')
 const DECISIONS_FILE = path.join(STORE_DIR, 'decisions.json')
+const RUN_FORMAT_VERSION = 2
 
-function writeRun(run: RunResult): void {
+function writeRun(run: Omit<RunResult, 'version'>): RunResult {
+    const versioned: RunResult = { ...run, version: RUN_FORMAT_VERSION }
     mkdirSync(STORE_DIR, { recursive: true })
-    writeFileSync(RUN_FILE, JSON.stringify(run, null, 2))
+    writeFileSync(RUN_FILE, JSON.stringify(versioned, null, 2))
+    return versioned
 }
 
 function readRun(): RunResult | null {
     if (!existsSync(RUN_FILE)) {
         return null
     }
-    return JSON.parse(readFileSync(RUN_FILE, 'utf-8')) as RunResult
+    const cached: RunResult = JSON.parse(readFileSync(RUN_FILE, 'utf-8'))
+    return cached.version === RUN_FORMAT_VERSION ? cached : null
 }
 
 function appendDecision(decision: ReviewDecision): void {
@@ -40,12 +44,14 @@ export type FixtureComparison = {
 }
 
 export type RunResult = {
+    version: number
     at: string
     provider: string
-    modelId: string
+    baselineModelId: string
+    candidateModelId: string
     baselineLabel: string
     candidateLabel: string
-    changed: boolean
+    promptChanged: boolean
     comparisons: FixtureComparison[]
 }
 
@@ -53,6 +59,10 @@ export type ReviewDecision = {
     at: string
     verdict: 'proceed' | 'stop'
     candidateLabel: string
+    baselineModelId: string
+    candidateModelId: string
+    baselineCostUsd: number | null
+    candidateCostUsd: number | null
     baselinePassed: number
     candidatePassed: number
     total: number

@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import Table from 'cli-table3'
 import inquirer from 'inquirer'
 import { evalFormat } from '../core/eval-format'
+import { EvalReportEntry } from '../core/report'
 import { evalStore, FixtureComparison, RunResult } from './store'
 
 async function review({ run }: { run: RunResult }): Promise<ReviewOutcome> {
@@ -80,6 +81,7 @@ async function decide({ run, verdict }: { run: RunResult, verdict: 'proceed' | '
         return null
     }
     const { note } = await inquirer.prompt<{ note: string }>([{ type: 'input', name: 'note', message: 'Note (optional)' }])
+    const totals = runTotals(run)
 
     const improvements = run.comparisons.filter((comparison) => comparison.delta === 'improved').map((comparison) => comparison.id)
     const regressions = run.comparisons.filter((comparison) => comparison.delta === 'regressed').map((comparison) => comparison.id)
@@ -87,8 +89,12 @@ async function decide({ run, verdict }: { run: RunResult, verdict: 'proceed' | '
         at: new Date().toISOString(),
         verdict,
         candidateLabel: run.candidateLabel,
-        baselinePassed: run.comparisons.filter((comparison) => comparison.baseline.passed).length,
-        candidatePassed: run.comparisons.filter((comparison) => comparison.candidate.passed).length,
+        baselineModelId: run.baselineModelId,
+        candidateModelId: run.candidateModelId,
+        baselineCostUsd: totals.baseline.costUsd,
+        candidateCostUsd: totals.candidate.costUsd,
+        baselinePassed: totals.baseline.passed,
+        candidatePassed: totals.candidate.passed,
         total: run.comparisons.length,
         regressions,
         improvements,
@@ -99,9 +105,9 @@ async function decide({ run, verdict }: { run: RunResult, verdict: 'proceed' | '
 }
 
 function printDashboard(run: RunResult): void {
-    const table = new Table({ head: ['fixture', 'baseline', 'candidate', 'Δ'].map((header) => chalk.bold(header)), style: { head: [], border: [] } })
+    const table = new Table({ head: ['fixture', 'baseline', 'candidate', 'Δ', 'baseline $', 'candidate $'].map((header) => chalk.bold(header)), style: { head: [], border: [] } })
     for (const comparison of run.comparisons) {
-        table.push([comparison.id, verdictCell(comparison.baseline.passed), verdictCell(comparison.candidate.passed), deltaBadge(comparison.delta)])
+        table.push([comparison.id, verdictCell(comparison.baseline.passed), verdictCell(comparison.candidate.passed), deltaBadge(comparison.delta), evalFormat.formatUsd(comparison.baseline.costUsd), evalFormat.formatUsd(comparison.candidate.costUsd)])
     }
 
     const improved = run.comparisons.filter((comparison) => comparison.delta === 'improved').length
@@ -111,16 +117,50 @@ function printDashboard(run: RunResult): void {
 
     console.log('')
     console.log(chalk.bold.cyan('  Activepieces · Chat Prompt Eval — Review'))
-    console.log(`  ${chalk.dim('baseline')}  ${run.baselineLabel}`)
-    console.log(`  ${chalk.dim('candidate')} ${run.candidateLabel}`)
-    console.log(`  ${chalk.dim('model')}     ${run.provider} · ${run.modelId}   ${chalk.dim('ran')} ${run.at}`)
-    if (!run.changed) {
-        console.log(chalk.yellow('  ⚠ no prompt changes detected — baseline and candidate are identical'))
+    console.log(`  ${chalk.dim('baseline')}  ${run.baselineLabel} · ${run.provider} · ${run.baselineModelId}`)
+    console.log(`  ${chalk.dim('candidate')} ${run.candidateLabel} · ${run.provider} · ${run.candidateModelId}   ${chalk.dim('ran')} ${run.at}`)
+    if (!isChanged(run)) {
+        console.log(chalk.yellow('  ⚠ no prompt or model changes detected — baseline and candidate are identical'))
+    }
+    if (run.promptChanged && run.baselineModelId !== run.candidateModelId) {
+        console.log(chalk.yellow('  ⚠ both the prompt and the model differ — the comparison mixes two variables'))
     }
     console.log(table.toString())
     console.log(`  ${chalk.dim('expected-label match')}  baseline TPR ${baselineCalibration.tpr.toFixed(2)}/TNR ${baselineCalibration.tnr.toFixed(2)}   candidate TPR ${candidateCalibration.tpr.toFixed(2)}/TNR ${candidateCalibration.tnr.toFixed(2)}`)
+    const totals = runTotals(run)
+    console.log(`  ${chalk.dim('score · cost')}  baseline ${armSummary(totals.baseline)}   candidate ${armSummary(totals.candidate)}${costDeltaSuffix({ run, totals })}`)
+    console.log(`  ${chalk.dim('judge cost')}    baseline ${evalFormat.formatUsd(totals.baseline.judgeCostUsd)}   candidate ${evalFormat.formatUsd(totals.candidate.judgeCostUsd)} ${chalk.dim('(not counted above)')}`)
     console.log(`  ${headline({ improved, regressed })}`)
     console.log('')
+}
+
+function armSummary(totals: ArmTotals): string {
+    return `${totals.passed}/${totals.total} · ${evalFormat.formatUsd(totals.costUsd)}`
+}
+
+function costDeltaSuffix({ run, totals }: { run: RunResult, totals: RunTotals }): string {
+    const delta = evalFormat.costDelta({ baseline: totals.baseline.costUsd, candidate: totals.candidate.costUsd })
+    return delta === null || !isChanged(run) ? '' : ` ${chalk.bold(`(${delta} cost)`)}`
+}
+
+function isChanged(run: RunResult): boolean {
+    return run.promptChanged || run.baselineModelId !== run.candidateModelId
+}
+
+function runTotals(run: RunResult): RunTotals {
+    return {
+        baseline: armTotals(run.comparisons.map((comparison) => comparison.baseline)),
+        candidate: armTotals(run.comparisons.map((comparison) => comparison.candidate)),
+    }
+}
+
+function armTotals(entries: EvalReportEntry[]): ArmTotals {
+    return {
+        passed: entries.filter((entry) => entry.passed).length,
+        total: entries.length,
+        costUsd: evalFormat.sumCost({ costs: entries.map((entry) => entry.costUsd) }),
+        judgeCostUsd: evalFormat.sumCost({ costs: entries.map((entry) => entry.judgeCostUsd) }),
+    }
 }
 
 function printFixtureDetail({ run, comparison }: { run: RunResult, comparison: FixtureComparison }): void {
@@ -147,7 +187,7 @@ function printFixtureDetail({ run, comparison }: { run: RunResult, comparison: F
     }
 
     printTranscript('baseline transcript', baseline.transcript)
-    if (run.changed) {
+    if (isChanged(run)) {
         printTranscript('candidate transcript', candidate.transcript)
     }
 }
@@ -200,3 +240,12 @@ export const evalReview = {
 export type ReviewOutcome =
     | { kind: 'exit', code: number }
     | { kind: 'rerun' }
+
+type ArmTotals = {
+    passed: number
+    total: number
+    costUsd: number | null
+    judgeCostUsd: number | null
+}
+
+type RunTotals = { baseline: ArmTotals, candidate: ArmTotals }
