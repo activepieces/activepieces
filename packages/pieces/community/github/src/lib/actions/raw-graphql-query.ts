@@ -7,8 +7,8 @@ import { githubAuthHelpers, GithubAuthValue } from '../common/auth-helpers';
 export const githubRawGraphqlQuery = createAction({
   name: 'rawGraphqlQuery',
   classification: 'WRITE',
-  displayName: 'Raw GraphQL query',
-  description: 'Perform a raw GraphQL query',
+  displayName: 'Raw GraphQL Query',
+  description: 'Sends a GraphQL query or mutation to GitHub.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -17,9 +17,27 @@ export const githubRawGraphqlQuery = createAction({
   },
   auth: githubAuth,
   props: {
-    query: Property.LongText({ displayName: 'Query', required: true }),
-    variables: Property.Object({ displayName: 'Parameters', required: false }),
+    query: Property.LongText({
+      displayName: 'Query',
+      description: 'A query or mutation in GraphQL syntax.',
+      placeholder: 'query { viewer { login } }',
+      required: true,
+    }),
+    variables: Property.Object({
+      displayName: 'Variables',
+      description: 'Values for the $variables your query declares.',
+      required: false,
+    }),
   },
+  propertyGroups: [
+    {
+      key: 'request',
+      display: 'section',
+      label: 'GraphQL request',
+      icon: 'code',
+      props: ['query', 'variables'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const token = await githubAuthHelpers.getBearerToken(
       auth as GithubAuthValue

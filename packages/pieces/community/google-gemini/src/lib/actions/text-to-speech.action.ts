@@ -14,6 +14,10 @@ export const textToSpeechAction = createAction({
   displayName: 'Text to Speech',
   description: 'Turn text into a spoken WAV audio file.',
   aiMetadata: { description: 'Synthesizes spoken audio from input text using a Gemini TTS model and one of roughly thirty prebuilt named voices, returning a WAV file. This is the audio-output sibling of generate_content: use it when the flow needs speech instead of text, and create_video when it needs video. Requires a TTS-capable model, which the model dropdown restricts to. Not idempotent: each call renders a new audio file.', idempotent: false },
+  propertyGroups: [
+    { key: 'script', display: 'section', label: 'Script', icon: 'text', props: ['text'] },
+    { key: 'speaker', display: 'section', label: 'Speaker', icon: 'user', props: ['model', 'voice'] },
+  ],
   props: {
     text: Property.LongText({
       displayName: 'Text',
