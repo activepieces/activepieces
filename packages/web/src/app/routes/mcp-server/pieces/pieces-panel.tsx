@@ -189,7 +189,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
       <EnterpriseLockedSection
         unlocked={false}
         featureKey="PIECES"
-        title={t('Choose which pieces connected clients can reach')}
+        line={t('Choosing which pieces connected clients can reach is locked.')}
       />
     );
   }

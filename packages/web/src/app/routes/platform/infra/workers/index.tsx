@@ -80,9 +80,8 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           <EnterpriseLockedSection
             unlocked={false}
             featureKey="DEDICATED_WORKERS"
-            title={t('Start every automation faster on your own workers')}
-            description={t(
-              'Your automations run on shared workers today. Dedicated workers stay warm and ready, so every flow starts faster.',
+            line={t(
+              'Your automations run on shared workers. Dedicated workers start every flow faster.',
             )}
           />
         )}
