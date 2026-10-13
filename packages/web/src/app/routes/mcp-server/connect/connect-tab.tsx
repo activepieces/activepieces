@@ -26,15 +26,16 @@ export function ConnectTab({
     () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
     [serverUrl, websiteName, isCloud],
   );
-  const home = useConnectHome({ clients, watch });
   const selected =
-    home.clients.find(
+    clients.find(
       (client) =>
         clientKey !== null &&
         client.key === mcpClientCatalog.resolveKey(clientKey),
     ) ?? null;
+  const isSetupOpen = view === 'client' && selected !== null;
+  const home = useConnectHome({ clients, watch, isSetupOpen });
 
-  if (view === 'client' && selected !== null) {
+  if (isSetupOpen && selected !== null) {
     return (
       <ClientInstructions
         key={selected.key}

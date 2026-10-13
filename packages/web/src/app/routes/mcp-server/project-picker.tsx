@@ -50,6 +50,7 @@ export function ProjectPicker({
     selectedId: projectId,
     limit: VISIBLE_LIMIT,
   });
+  const duplicates = projectPickerUtils.duplicateNames(visible);
 
   const changeOpen = (next: boolean) => {
     setOpen(next);
@@ -106,6 +107,11 @@ export function ProjectPicker({
                     iconClassName="size-4.5 text-xs"
                     maxLengthToNotShowTooltip={24}
                   />
+                  {duplicates.has(getProjectName(project)) && (
+                    <span className="truncate text-xs text-gray-11">
+                      {project.externalId ?? project.id}
+                    </span>
+                  )}
                   <Check
                     className={cn('ml-auto size-4', {
                       'opacity-0': project.id !== projectId,
