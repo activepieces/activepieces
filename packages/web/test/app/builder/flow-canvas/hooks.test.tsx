@@ -2,17 +2,20 @@
 import {
   EmptyTrigger,
   FlowOperationRequest,
+  FlowDraftUpdatedEvent,
   FlowOperationStatus,
   FlowOperationType,
   FlowStatus,
   FlowTriggerType,
   FlowVersionState,
   PopulatedFlow,
+  WebsocketClientEvent,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { io } from 'socket.io-client';
+import { Toaster, toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -21,6 +24,7 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
+import { editorSession } from '@/lib/editor-session';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -40,7 +44,43 @@ const flowsApiMock = vi.hoisted(() => ({
   get: vi.fn<(flowId: string) => Promise<PopulatedFlow>>(),
 }));
 
+const socketHarness = vi.hoisted(() => {
+  type ClientHandler = (payload: unknown) => void;
+  const handlers: Record<string, ClientHandler[]> = {};
+  const socket = {
+    on: (event: string, handler: ClientHandler) => {
+      (handlers[event] ??= []).push(handler);
+      return socket;
+    },
+    off: (event: string, handler: ClientHandler) => {
+      handlers[event] = (handlers[event] ?? []).filter(
+        (registered) => registered !== handler,
+      );
+      return socket;
+    },
+  };
+  const sendFromServer = ({
+    event,
+    payload,
+  }: {
+    event: string;
+    payload: unknown;
+  }) => {
+    (handlers[event] ?? []).forEach((handler) => handler(payload));
+  };
+  const reset = () => {
+    for (const key of Object.keys(handlers)) {
+      delete handlers[key];
+    }
+  };
+  return { socket, sendFromServer, reset };
+});
+
 vi.mock('i18next', () => ({ t: (key: string) => key }));
+
+vi.mock('@/components/providers/socket-provider', () => ({
+  useSocket: () => socketHarness.socket,
+}));
 
 vi.mock('@/features/flows/api/flows-api', () => ({
   flowsApi: flowsApiMock,
@@ -53,7 +93,9 @@ describe('useFlushPendingEditsOnLeave', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
     flowsApiMock.update.mockReset();
-    flowsApiMock.update.mockResolvedValue(flowWithDraftVersion('draft-1'));
+    flowsApiMock.update.mockResolvedValue(
+      flowWithDraftVersion({ versionId: 'draft-1' }),
+    );
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -67,7 +109,7 @@ describe('useFlushPendingEditsOnLeave', () => {
   });
 
   it('sends a pending edit when the tab becomes hidden', async () => {
-    const store = createStore(flowWithDraftVersion('draft-1'));
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     mount(store);
 
     store.getState().applyOperation(renameTrigger('New order'));
@@ -80,7 +122,7 @@ describe('useFlushPendingEditsOnLeave', () => {
   it('sends a pending edit when the builder unmounts, and the save completes after it', async () => {
     const save = Promise.withResolvers<PopulatedFlow>();
     flowsApiMock.update.mockReturnValue(save.promise);
-    const store = createStore(flowWithDraftVersion('draft-1'));
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     mount(store);
 
     store.getState().applyOperation(renameTrigger('New order'));
@@ -88,7 +130,7 @@ describe('useFlushPendingEditsOnLeave', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(sentOperations()).toEqual([renameTrigger('New order')]);
 
-    save.resolve(flowWithDraftVersion('draft-2'));
+    save.resolve(flowWithDraftVersion({ versionId: 'draft-2' }));
     await vi.advanceTimersByTimeAsync(0);
     expect(store.getState().flowVersion.id).toBe('draft-2');
     expect(store.getState().saving).toBe(false);
@@ -104,6 +146,185 @@ describe('useFlushPendingEditsOnLeave', () => {
     });
   }
 });
+
+describe('useRefreshDraftOnPush', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    socketHarness.reset();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    vi.spyOn(toast, 'info');
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('shows the newest draft after a push from a different Editor Session', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed in a different tab',
+      }),
+    );
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).toHaveBeenCalledWith('flow-1');
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed in a different tab',
+    );
+    expect(toast.info).toHaveBeenCalledWith(
+      'This flow was changed in a different tab or by a different editor. You see the newest version.',
+      expect.anything(),
+    );
+  });
+
+  it('ignores a push with the Editor Session id of the tab', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    sendDraftPush({
+      flowId: 'flow-1',
+      editorSessionId: editorSession.getId(),
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
+  });
+
+  it('ignores a push for a different flow', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-2', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
+  });
+
+  it('shows the newest draft after a push with no Editor Session id', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed by an agent',
+      }),
+    );
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed by an agent',
+    );
+  });
+
+  it('fetches the draft only after the save of the pending edit ends, then shows the fetched draft', async () => {
+    const save = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.update.mockReturnValue(save.promise);
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed in a different tab',
+      }),
+    );
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(sentOperations()).toEqual([renameTrigger('New order')]);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+
+    save.resolve(flowWithDraftVersion({ versionId: 'draft-1' }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(flowsApiMock.get).toHaveBeenCalledWith('flow-1');
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed in a different tab',
+    );
+  });
+
+  it('shows one toast for a burst of pushes', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed by an agent',
+      }),
+    );
+    mount(store);
+
+    for (let push = 0; push < 3; push++) {
+      sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
+      await vi.advanceTimersByTimeAsync(100);
+    }
+
+    expect(shownToasts()).toHaveLength(1);
+  });
+
+  it('shows the error toast and not the refresh toast when the fetch fails', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockRejectedValue(new Error('Network Error'));
+    vi.spyOn(toast, 'error');
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(toast.error).toHaveBeenCalledWith(
+      'Something went wrong',
+      expect.anything(),
+    );
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(store.getState().flowVersion.displayName).toBe('Order lookup');
+  });
+
+  function mount(store: BuilderStore) {
+    act(() => {
+      root.render(
+        <BuilderStateContext.Provider value={store}>
+          <DraftPushWatcher />
+          <Toaster />
+        </BuilderStateContext.Provider>,
+      );
+    });
+  }
+});
+
+function shownToasts() {
+  return document.querySelectorAll('[data-sonner-toast]');
+}
+
+function DraftPushWatcher() {
+  flowCanvasHooks.useRefreshDraftOnPush();
+  return null;
+}
+
+function sendDraftPush(event: FlowDraftUpdatedEvent) {
+  act(() => {
+    socketHarness.sendFromServer({
+      event: WebsocketClientEvent.FLOW_DRAFT_UPDATED,
+      payload: event,
+    });
+  });
+}
 
 function LeaveWatcher() {
   flowCanvasHooks.useFlushPendingEditsOnLeave();
@@ -146,7 +367,13 @@ function createStore(flow: PopulatedFlow): BuilderStore {
   });
 }
 
-function flowWithDraftVersion(versionId: string): PopulatedFlow {
+function flowWithDraftVersion({
+  versionId,
+  displayName = 'Order lookup',
+}: {
+  versionId: string;
+  displayName?: string;
+}): PopulatedFlow {
   const trigger: EmptyTrigger = {
     name: 'trigger',
     valid: false,
@@ -175,7 +402,7 @@ function flowWithDraftVersion(versionId: string): PopulatedFlow {
       created: '2026-01-01T00:00:00.000Z',
       updated: '2026-01-01T00:00:00.000Z',
       flowId: 'flow-1',
-      displayName: 'Order lookup',
+      displayName,
       trigger,
       updatedBy: null,
       valid: false,
