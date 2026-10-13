@@ -2,6 +2,7 @@ import { ErrorCode, isNil, ProjectId, spreadIfDefined, tryCatch } from '@activep
 import { onCallService } from '@activepieces/server-utils'
 import { FlowVersion, LATEST_FLOW_SCHEMA_VERSION } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { IsNull } from 'typeorm'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
@@ -41,12 +42,16 @@ export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
 
-        await flowVersionRepo().update(flowVersion.id, {
+        await flowVersionRepo().update({
+            id: flowVersion.id,
+            schemaVersion: flowVersion.schemaVersion ?? IsNull(),
+        }, {
             schemaVersion: migratedFlowVersion.schemaVersion,
             ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
             connectionIds: migratedFlowVersion.connectionIds,
             agentIds: migratedFlowVersion.agentIds,
             backupFiles,
+            updated: () => '"updated"',
         })
         log.info('Flow version migration completed')
         return migratedFlowVersion
