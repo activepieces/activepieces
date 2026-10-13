@@ -33,7 +33,11 @@ export const googleDriveListFiles = createAction({
       displayName: 'Folder Depth',
       description: '1 lists only this folder; 2 adds its subfolders, and so on.',
       required: false,
-      defaultValue: 1
+      defaultValue: 1,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
 
     downloadFiles: Property.Checkbox({
