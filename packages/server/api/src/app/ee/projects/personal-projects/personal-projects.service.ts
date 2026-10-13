@@ -1,7 +1,6 @@
-import { apId, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { apDayjs } from '@activepieces/server-utils'
+import { apId, assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
+import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { PersonalProjectsSummary, ProjectType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
-import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -16,8 +15,8 @@ import { userRepo } from '../../../user/user-service'
 
 const projectRepo = repoFactory(ProjectEntity)
 const CREATE_MISSING_BATCH_SIZE = 50
-const CREATE_MISSING_RETRY_ATTEMPTS = 5
-const CREATE_MISSING_RETRY_DELAY_MINUTES = 5
+const CREATE_MISSING_ATTEMPTS = 10
+const CREATE_MISSING_RETRY_DELAY = apDayjsDuration(5, 'minute').asMilliseconds()
 
 export const personalProjectsService = (log: FastifyBaseLogger) => ({
     async summary({ platformId }: PlatformParams): Promise<PersonalProjectsSummary> {
@@ -35,7 +34,7 @@ export const personalProjectsService = (log: FastifyBaseLogger) => ({
             fn: async () => {
                 const platform = await platformService(log).getOneOrThrow(platformId)
                 await platformService(log).update({ id: platformId, autoCreatePersonalProjects: true })
-                const { error } = await tryCatch(() => scheduleCreateMissing({ platformId, date: apDayjs(), log }))
+                const { error } = await tryCatch(() => scheduleCreateMissing({ platformId, log }))
                 if (!isNil(error)) {
                     await platformService(log).update({ id: platformId, autoCreatePersonalProjects: platform.autoCreatePersonalProjects })
                     throw error
@@ -43,74 +42,69 @@ export const personalProjectsService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async createMissingHandler({ platformId, onlyUserIds, afterUserId: resumeAfterUserId, attemptsLeft }: SystemJobData<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>): Promise<void> {
-        let afterUserId: string | null = resumeAfterUserId ?? null
-        let failedUserIds: string[] = []
-        const { error } = await tryCatch(async () => {
-            for (;;) {
-                const batch: CreatedBatch = await distributedLock(log).runExclusive({
-                    key: `create-missing-personal-projects:${platformId}`,
-                    timeoutInSeconds: 120,
-                    fn: () => createNextBatch({ platformId, afterUserId, onlyUserIds, log }),
-                })
-                failedUserIds = [...failedUserIds, ...batch.failedUserIds]
-                if (isNil(batch.lastUserId)) {
-                    return
-                }
-                afterUserId = batch.lastUserId
+    async createMissingHandler(data: SystemJobData<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>): Promise<void> {
+        const job = await systemJobsSchedule(log).getJob<SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS>(createMissingJobId(data))
+        assertNotNullOrUndefined(job, 'job is required')
+        let progress = data
+        for (;;) {
+            const batch: CreatedBatch = await distributedLock(log).runExclusive({
+                key: `create-missing-personal-projects:${data.platformId}`,
+                timeoutInSeconds: 120,
+                fn: () => createNextBatch({ platformId: data.platformId, afterUserId: progress.afterUserId ?? null, onlyUserIds: progress.onlyUserIds, log }),
+            })
+            if (batch.turnedOff) {
+                return
             }
-        })
-        const remainingAttempts = attemptsLeft ?? CREATE_MISSING_RETRY_ATTEMPTS
-        if (failedUserIds.length > 0) {
-            await scheduleFollowUp({ platformId, onlyUserIds: failedUserIds, attemptsLeft: remainingAttempts, log })
+            if (isNil(batch.lastUserId)) {
+                break
+            }
+            progress = {
+                ...progress,
+                afterUserId: batch.lastUserId,
+                failedUserIds: [...progress.failedUserIds ?? [], ...batch.failedUserIds],
+            }
+            await job.updateData(progress)
         }
-        if (!isNil(error)) {
-            log.warn({ platform: { id: platformId }, user: { id: afterUserId }, error }, '[personalProjects#createMissing] Stopped part-way, resuming from the last member reached')
-            await scheduleFollowUp({ platformId, onlyUserIds, afterUserId: afterUserId ?? undefined, attemptsLeft: remainingAttempts, log })
+        const failedUserIds = progress.failedUserIds ?? []
+        if (failedUserIds.length === 0) {
+            return
         }
+        await job.updateData({ platformId: data.platformId, runId: data.runId, onlyUserIds: failedUserIds })
+        throw new Error(`[personalProjects#createMissing] Could not create a personal project for ${failedUserIds.length} member(s), retrying only them`)
     },
 })
 
-async function scheduleFollowUp({ platformId, onlyUserIds, afterUserId, attemptsLeft, log }: ScheduleFollowUpParams): Promise<void> {
-    if (attemptsLeft === 0) {
-        log.error({ platform: { id: platformId }, users: { ids: onlyUserIds }, user: { id: afterUserId } }, '[personalProjects#createMissing] Giving up on creating the remaining personal projects')
-        return
-    }
-    await scheduleCreateMissing({
-        platformId,
-        date: apDayjs().add(CREATE_MISSING_RETRY_DELAY_MINUTES, 'minute'),
-        data: { onlyUserIds, afterUserId, attemptsLeft: attemptsLeft - 1 },
-        log,
-    })
-}
-
-async function scheduleCreateMissing({ platformId, date, data, log }: ScheduleCreateMissingParams): Promise<void> {
+async function scheduleCreateMissing({ platformId, log }: ScheduleCreateMissingParams): Promise<void> {
+    const data = { platformId, runId: apId() }
     await systemJobsSchedule(log).upsertJob({
         job: {
             name: SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS,
-            data: {
-                platformId,
-                ...spreadIfDefined('onlyUserIds', data?.onlyUserIds),
-                ...spreadIfDefined('afterUserId', data?.afterUserId),
-                ...spreadIfDefined('attemptsLeft', data?.attemptsLeft),
-            },
-            jobId: `create-missing-personal-projects-${platformId}-${apId()}`,
+            data,
+            jobId: createMissingJobId(data),
         },
         schedule: {
             type: 'one-time',
-            date,
+            date: apDayjs(),
         },
         customConfig: {
-            attempts: 1,
+            attempts: CREATE_MISSING_ATTEMPTS,
+            backoff: {
+                type: 'fixed',
+                delay: CREATE_MISSING_RETRY_DELAY,
+            },
         },
     })
+}
+
+function createMissingJobId({ platformId, runId }: CreateMissingRunParams): string {
+    return `create-missing-personal-projects-${platformId}-${runId}`
 }
 
 async function createNextBatch({ platformId, afterUserId, onlyUserIds, log }: CreateNextBatchParams): Promise<CreatedBatch> {
     const platform = await platformService(log).getOneOrThrow(platformId)
     if (!platform.autoCreatePersonalProjects) {
         log.info({ platform: { id: platformId } }, '[personalProjects#createMissing] Personal projects were turned off, stopping')
-        return { lastUserId: null, failedUserIds: [] }
+        return { lastUserId: null, failedUserIds: [], turnedOff: true }
     }
     const query = membersWithoutPersonalProjectQuery({ platformId })
     if (!isNil(afterUserId)) {
@@ -135,6 +129,7 @@ async function createNextBatch({ platformId, afterUserId, onlyUserIds, log }: Cr
     return {
         lastUserId: members.at(-1)?.userId ?? null,
         failedUserIds: results.filter((result) => result.failed).map((result) => result.userId),
+        turnedOff: false,
     }
 }
 
@@ -191,28 +186,20 @@ type MemberResult = {
     failed: boolean
 }
 
+type ScheduleCreateMissingParams = {
+    platformId: string
+    log: FastifyBaseLogger
+}
+
+type CreateMissingRunParams = {
+    platformId: string
+    runId: string
+}
+
 type CreatedBatch = {
     lastUserId: string | null
     failedUserIds: string[]
-}
-
-type ScheduleCreateMissingParams = {
-    platformId: string
-    date: Dayjs
-    data?: {
-        onlyUserIds?: string[]
-        afterUserId?: string
-        attemptsLeft?: number
-    }
-    log: FastifyBaseLogger
-}
-
-type ScheduleFollowUpParams = {
-    platformId: string
-    onlyUserIds?: string[]
-    afterUserId?: string
-    attemptsLeft: number
-    log: FastifyBaseLogger
+    turnedOff: boolean
 }
 
 type MemberWithoutPersonalProject = {
