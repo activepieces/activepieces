@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import {
+  BranchExecutionType,
   CodeAction,
   EmptyTrigger,
   FlowActionType,
@@ -11,6 +12,8 @@ import {
   FlowTriggerType,
   FlowVersionState,
   PopulatedFlow,
+  RouterExecutionType,
+  StepLocationRelativeToParent,
   flowOperations,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -48,6 +51,7 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { StepSettingsPanel } from '@/app/builder/step-settings/step-settings-panel';
+import { RightSideBarType } from '@/app/builder/types';
 
 globalThis.ResizeObserver = class {
   observe() {}
@@ -63,6 +67,7 @@ describe('StepSettingsPanel', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("shows an agent's change to the open step, and the person's next edit keeps it", async () => {
@@ -160,6 +165,66 @@ describe('StepSettingsPanel', () => {
 
     expect(screen.getByDisplayValue('customerEmailAddress')).toBe(focusedField);
     expect(document.activeElement).toBe(focusedField);
+  });
+
+  it('closes the panel when a different writer deletes the open step', () => {
+    const flow = draftFlow({
+      lookUpOrderInput: { customerEmail: '{{trigger.email}}' },
+    });
+    const store = createStore(flow);
+    store.getState().selectStepByName('step_2');
+    renderPanel(store);
+    expect(screen.getByDisplayValue('recipient')).toBeTruthy();
+    const consoleError = vi.spyOn(console, 'error');
+
+    act(() => {
+      store.getState().applyDraftRefresh(draftWithoutSendReceipt(flow));
+    });
+
+    expect(screen.queryByDisplayValue('recipient')).toBeNull();
+    expect(store.getState()).toMatchObject({
+      selectedStep: null,
+      rightSidebar: RightSideBarType.NONE,
+      selectedBranchIndex: null,
+    });
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it('keeps the versions list open when a different writer deletes the selected step', () => {
+    const flow = draftFlow({
+      lookUpOrderInput: { customerEmail: '{{trigger.email}}' },
+    });
+    const store = createStore(flow);
+    store.getState().selectStepByName('step_2');
+    store.getState().setRightSidebar(RightSideBarType.VERSIONS);
+
+    store.getState().applyDraftRefresh(draftWithoutSendReceipt(flow));
+
+    expect(store.getState()).toMatchObject({
+      selectedStep: null,
+      rightSidebar: RightSideBarType.VERSIONS,
+      selectedBranchIndex: null,
+    });
+  });
+
+  it('keeps the open sidebar and the selected branch when the open step stays', () => {
+    const store = createStore(
+      flowWithRouter({ routerDisplayName: 'Route by country' }),
+    );
+    store.getState().selectStepByName('step_3');
+    store.getState().setSelectedBranchIndex(1);
+
+    store
+      .getState()
+      .applyDraftRefresh(
+        flowWithRouter({ routerDisplayName: 'Route by region' }),
+      );
+
+    expect(store.getState()).toMatchObject({
+      selectedStep: 'step_3',
+      rightSidebar: RightSideBarType.PIECE_SETTINGS,
+      selectedBranchIndex: 1,
+    });
   });
 });
 
@@ -267,6 +332,59 @@ function draftFromServer({
     flow.version,
   );
   return PopulatedFlow.parse(JSON.parse(JSON.stringify({ ...flow, version })));
+}
+
+function draftWithoutSendReceipt(flow: PopulatedFlow): PopulatedFlow {
+  return draftFromServer({
+    flow,
+    operations: [
+      {
+        type: FlowOperationType.DELETE_ACTION,
+        request: { names: ['step_2'] },
+      },
+    ],
+  });
+}
+
+function flowWithRouter({
+  routerDisplayName,
+}: {
+  routerDisplayName: string;
+}): PopulatedFlow {
+  return draftFromServer({
+    flow: draftFlow({
+      lookUpOrderInput: { customerEmail: '{{trigger.email}}' },
+    }),
+    operations: [
+      {
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          parentStep: 'step_2',
+          stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+          action: {
+            name: 'step_3',
+            type: FlowActionType.ROUTER,
+            displayName: routerDisplayName,
+            valid: true,
+            settings: {
+              executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+              branches: [
+                {
+                  branchName: 'Europe',
+                  branchType: BranchExecutionType.CONDITION,
+                  conditions: [[]],
+                },
+                {
+                  branchName: 'Otherwise',
+                  branchType: BranchExecutionType.FALLBACK,
+                },
+              ],
+            },
+          },
+        },
+      },
+    ],
+  });
 }
 
 function sendReceiptStep(input: Record<string, string>): CodeAction {

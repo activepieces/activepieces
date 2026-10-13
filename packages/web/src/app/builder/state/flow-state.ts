@@ -145,17 +145,36 @@ export const createFlowState = (
     },
     setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
     applyDraftRefresh: (flow: PopulatedFlow) =>
-      set((state) => ({
-        flow,
-        flowVersion: flow.version,
-        draftRefreshCount: hasSelectedStepChanged({
-          selectedStep: state.selectedStep,
-          currentVersion: state.flowVersion,
-          refreshedVersion: flow.version,
-        })
-          ? state.draftRefreshCount + 1
-          : state.draftRefreshCount,
-      })),
+      set((state) => {
+        if (
+          isSelectedStepGone({
+            selectedStep: state.selectedStep,
+            refreshedVersion: flow.version,
+          })
+        ) {
+          return {
+            flow,
+            flowVersion: flow.version,
+            selectedStep: null,
+            selectedBranchIndex: null,
+            rightSidebar:
+              state.rightSidebar === RightSideBarType.PIECE_SETTINGS
+                ? RightSideBarType.NONE
+                : state.rightSidebar,
+          };
+        }
+        return {
+          flow,
+          flowVersion: flow.version,
+          draftRefreshCount: hasSelectedStepChanged({
+            selectedStep: state.selectedStep,
+            currentVersion: state.flowVersion,
+            refreshedVersion: flow.version,
+          })
+            ? state.draftRefreshCount + 1
+            : state.draftRefreshCount,
+        };
+      }),
     draftRefreshCount: 0,
     setSampleDataLocally: ({
       stepName,
@@ -597,6 +616,19 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
     },
   });
 };
+
+function isSelectedStepGone({
+  selectedStep,
+  refreshedVersion,
+}: {
+  selectedStep: string | null;
+  refreshedVersion: FlowVersion;
+}): boolean {
+  return (
+    !isNil(selectedStep) &&
+    isNil(flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger))
+  );
+}
 
 function hasSelectedStepChanged({
   selectedStep,
