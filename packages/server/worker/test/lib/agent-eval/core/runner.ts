@@ -3,8 +3,9 @@ import { AIProviderName, aiProviderCredentials, tryCatch } from '@activepieces/c
 import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared';
 import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
 import { evalCalibration } from './calibration'
+import { costCapture } from './cost-capture'
 import { evalFormat, JudgeAgreement } from './eval-format'
-import { ChatEvalFixture } from './fixture'
+import { ChatEvalFixture, ChatEvalFixtureModel } from './fixture'
 import { llmJudge } from './llm-judge'
 import { evalPrompts } from './prompts'
 import { replayExecutor, ReplayExecutor } from './replay-executor'
@@ -73,14 +74,15 @@ async function cleanupAuth(): Promise<void> {
     mintedKeyPromise = null
 }
 
-async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeatsFromEnv() }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, repeats?: number }): Promise<EvalReportEntry> {
+async function evaluateFixture({ fixture, systemPrompt, guides, modelId, repeats = repeatsFromEnv() }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, modelId?: string, repeats?: number }): Promise<EvalReportEntry> {
     const auth = await resolveAuth()
     if (!auth) {
         throw new Error(`No OpenRouter key found. Set ${OPENROUTER_INFERENCE_ENV} or ${OPENROUTER_PROVISION_ENV} to run the eval.`)
     }
 
-    const judge = llmJudge.create({ provider: fixture.model.provider, modelId: judgeModelId(), auth })
-    const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, systemPrompt, guides, auth, judge }).catch((error: unknown) => crashedRun({ error })) })
+    const model = effectiveModel({ fixture, modelId })
+    const judge = llmJudge.create({ provider: model.provider, modelId: judgeModelId(), auth })
+    const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge }).catch((error: unknown) => crashedRun({ error })) })
     const passes = runs.filter((run) => run.passed).length
     const assertionsHeldEveryRun = runs.every((run) => run.assertions.every((assertion) => assertion.pass))
     const shown = runs.find((run) => !run.passed) ?? runs[0]
@@ -89,8 +91,8 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
         id: fixture.id,
         kind: fixture.kind,
         description: fixture.description,
-        provider: fixture.model.provider,
-        modelId: fixture.model.modelId,
+        provider: model.provider,
+        modelId: model.modelId,
         judgeModelId: judgeModelId(),
         runs: runs.length,
         passes,
@@ -98,6 +100,8 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
         assertions: shown.assertions,
         judge: shown.judge,
         transcript: shown.transcript,
+        costUsd: evalFormat.sumCost({ costs: runs.map((run) => run.costUsd) }),
+        judgeCostUsd: judge.costUsd(),
         runVerdicts: runs.map((run) => ({ passed: run.passed, assertions: run.assertions, judge: run.judge })),
     }
 }
@@ -120,7 +124,7 @@ async function measureJudgeAgreement(): Promise<JudgeAgreement | null> {
 }
 
 function crashedRun({ error }: { error: unknown }): SingleRun {
-    return { passed: false, assertions: [crashCheck({ error, when: 'This repeat crashed before it could be graded' })], judge: [], transcript: '' }
+    return { passed: false, assertions: [crashCheck({ error, when: 'This repeat crashed before it could be graded' })], judge: [], transcript: '', costUsd: null }
 }
 
 function crashCheck({ error, when }: { error: unknown, when: string }): { label: string, pass: boolean, reason: string } {
@@ -142,8 +146,17 @@ function failedEntry({ fixture, error }: { fixture: ChatEvalFixture, error: unkn
         assertions,
         judge: [],
         transcript: '',
+        costUsd: null,
+        judgeCostUsd: null,
         runVerdicts: [{ passed: false, assertions, judge: [] }],
     }
+}
+
+function effectiveModel({ fixture, modelId }: { fixture: ChatEvalFixture, modelId?: string }): ChatEvalFixtureModel {
+    if (!modelId) {
+        return fixture.model
+    }
+    return { ...fixture.model, modelId, tier: { ...fixture.model.tier, modelId } }
 }
 
 function judgeModelId(): string {
@@ -163,8 +176,8 @@ async function runSequentially<T>({ times, run }: { times: number, run: () => Pr
     return results
 }
 
-async function evaluateOnce({ fixture, systemPrompt, guides, auth, judge }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown>, judge: Judge }): Promise<SingleRun> {
-    const transcript = await runTurn({ fixture, systemPrompt, guides, auth })
+async function evaluateOnce({ fixture, model, systemPrompt, guides, auth, judge }: { fixture: ChatEvalFixture, model: ChatEvalFixtureModel, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown>, judge: Judge }): Promise<SingleRun> {
+    const transcript = await runTurn({ fixture, model, systemPrompt, guides, auth })
     const assertions = fixture.assertions.map((assertion) => {
         const outcome = transcriptAssertions.runAssertion(transcript.result, assertion)
         return { label: assertion.type, pass: outcome.pass, reason: outcome.reason }
@@ -186,14 +199,15 @@ async function evaluateOnce({ fixture, systemPrompt, guides, auth, judge }: { fi
         assertions,
         judge: verdicts,
         transcript: transcript.text,
+        costUsd: transcript.costUsd,
     }
 }
 
-async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown> }): Promise<{ result: AgentTurnResult, text: string }> {
+async function runTurn({ fixture, model, systemPrompt, guides, auth }: { fixture: ChatEvalFixture, model: ChatEvalFixtureModel, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown> }): Promise<{ result: AgentTurnResult, text: string, costUsd: number | null }> {
     const replay = replayExecutor.create({ recordedToolCalls: fixture.recordedToolCalls })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const tools = buildEvalToolSet({ replay })
-    const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: fixture.model.provider, auth, config: {} }), modelId: fixture.model.modelId })
+    const tracked = costCapture.track({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: model.provider, auth, config: {} }), modelId: model.modelId }) })
     const messages: ModelMessage[] = [
         ...fixture.initialMessages,
         ...fixture.userTurns.map((content) => ({ role: 'user' as const, content })),
@@ -201,12 +215,12 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
 
     const capturedErrors: unknown[] = []
     const { data: result, error: turnError } = await tryCatch(() => runAgentTurn({
-        models: [{ model, provider: fixture.model.provider, modelId: fixture.model.tier.modelId, thinkingBudget: fixture.model.tier.thinkingBudget }],
+        models: [{ model: tracked.model, provider: model.provider, modelId: model.tier.modelId, thinkingBudget: model.tier.thinkingBudget }],
         systemPrompt: systemPrompt ?? evalPrompts.loadSystemPrompt(),
         messages,
         tools,
         allToolNames: Object.keys(tools),
-        tier: fixture.model.tier,
+        tier: model.tier,
         phaseState,
         skills: { surface: 'CHAT', guides: guides ?? evalPrompts.loadGuides() },
         abortSignal: new AbortController().signal,
@@ -228,7 +242,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
         const cause = capturedErrors[0] ?? turnError
         throw new Error(`Chat turn produced no output. Underlying provider error: ${cause instanceof Error ? cause.message : String(cause)}`, { cause: cause instanceof Error ? cause : undefined })
     }
-    return { result, text: renderTranscript(result) }
+    return { result, text: renderTranscript(result), costUsd: tracked.costUsd() }
 }
 
 function buildEvalToolSet({ replay }: { replay: ReplayExecutor }): ToolSet {
@@ -305,4 +319,4 @@ type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
 
 type Judge = ReturnType<typeof llmJudge.create>
 
-type SingleRun = Pick<EvalReportEntry, 'passed' | 'assertions' | 'judge' | 'transcript'>
+type SingleRun = Pick<EvalReportEntry, 'passed' | 'assertions' | 'judge' | 'transcript' | 'costUsd'>

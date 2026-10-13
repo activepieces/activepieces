@@ -30,8 +30,22 @@ A clean working tree means baseline == candidate (it runs once and says "no prom
 | *(none)* | Re-open the cached run instantly (runs live only if there's no cache yet). No LLM cost. |
 | `--fresh` | You edited the prompt and want fresh results. |
 | `--candidate <path>` | A/B an explicit prompt file instead of your working tree. |
+| `--baseline-model <id>` | Run the baseline arm on another OpenRouter model (default: the fixture model). |
+| `--candidate-model <id>` | Run the candidate arm on another OpenRouter model (default: the fixture model). |
+| `--limit <n>` | Run only the first `n` fixtures — try a model cheaply before the full suite. |
+| `--only <ids>` | Run only these fixtures (comma-separated ids). |
 
 For a non-interactive pass/fail gate (scripts/CI), use `npm run agent-evals:ci`.
+
+## Compare models
+
+```bash
+npm run agent-evals -- --baseline-model anthropic/claude-sonnet-4.6 --candidate-model openai/gpt-5.2
+```
+
+Each arm is a prompt plus a model. With a clean working tree only the model differs; if the prompt changed too, the dashboard warns that the comparison mixes two variables. Model ids are OpenRouter slugs, run through the same chat turn (`runAgentTurn`), prompt, skills and tools as production chat.
+
+The dashboard shows score and cost per arm. **Cost** is what OpenRouter reported for the agent's own calls, summed over every repeat; `—` means at least one call reported no cost. Judge cost is shown on its own line and is not counted in the comparison.
 
 ## In the reviewer
 
