@@ -13,6 +13,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
+import { platformMcpApi } from './platform-mcp-api';
 import { platformMcpHooks } from './platform-mcp-hooks';
 
 export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
@@ -77,6 +78,8 @@ function AccessContent() {
           scope="platform"
           onUpdateDisabledTools={({ tools, onSettled }) => {
             const previous = mcpServer.disabledTools ?? [];
+            const disabled = tools.filter((tool) => !previous.includes(tool));
+            const enabled = previous.filter((tool) => !tools.includes(tool));
             updateTools(
               { disabledTools: tools },
               {
@@ -84,7 +87,20 @@ function AccessContent() {
                 onSuccess: () =>
                   mutationFeedback.undo({
                     message: t('Changes saved'),
-                    onUndo: () => updateToolsAsync({ disabledTools: previous }),
+                    onUndo: async () => {
+                      const current = await platformMcpApi.get();
+                      const currentTools = current.disabledTools ?? [];
+                      return updateToolsAsync({
+                        disabledTools: [
+                          ...currentTools.filter(
+                            (tool) => !disabled.includes(tool),
+                          ),
+                          ...enabled.filter(
+                            (tool) => !currentTools.includes(tool),
+                          ),
+                        ],
+                      });
+                    },
                   }),
               },
             );

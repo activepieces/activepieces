@@ -42,12 +42,13 @@ const SSOPage = () => {
     const updated = await platformApi.update(request, platform.id);
     setCurrentPlatform(queryClient, updated);
   };
+  const googleConfigured = ssoRules.useGoogleConfigured();
+  const googleCanSignIn = platform.googleAuthEnabled && googleConfigured;
   const samlCanSignIn = samlConnected && ssoDomainVerified;
-  const otherSignInEnabled = platform.googleAuthEnabled || samlCanSignIn;
+  const otherSignInEnabled = googleCanSignIn || samlCanSignIn;
   const signInOtherThanGoogle = emailAuthEnabled || samlCanSignIn;
   const emailIsOnlyMethod = emailAuthEnabled && !otherSignInEnabled;
-  const googleIsOnlyMethod =
-    platform.googleAuthEnabled && !signInOtherThanGoogle;
+  const googleIsOnlyMethod = googleCanSignIn && !signInOtherThanGoogle;
 
   return (
     <AdminPage width="content">
@@ -94,7 +95,10 @@ const SSOPage = () => {
             aria-label="Google"
             checked={platform.googleAuthEnabled}
             beforeSave={(googleAuthEnabled) =>
-              ssoRules.assertSignInRemains({ googleAuthEnabled })
+              ssoRules.assertSignInRemains({
+                change: { googleAuthEnabled },
+                googleConfigured,
+              })
             }
             blockedReason={
               googleIsOnlyMethod
@@ -160,7 +164,10 @@ const SSOPage = () => {
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
             beforeSave={(next) =>
-              ssoRules.assertSignInRemains({ emailAuthEnabled: next })
+              ssoRules.assertSignInRemains({
+                change: { emailAuthEnabled: next },
+                googleConfigured,
+              })
             }
             blockedReason={
               emailIsOnlyMethod

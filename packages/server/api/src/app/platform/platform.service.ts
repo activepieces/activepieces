@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { EntityManager } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
+import { googleAuth } from '../authentication/lib/google-auth'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -203,13 +204,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
         }
-        if (touchesSignInMethods(params)) {
-            const current = await this.getOneWithFederatedAuthOrThrow(params.id)
-            assertSignInMethodRemains({
-                before: current,
-                after: { ...current, ...updatedPlatform, federatedAuthProviders: federatedAuthProviders ?? current.federatedAuthProviders },
-            })
-        }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
                 platformId: params.id,
@@ -222,8 +216,12 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platform: { id: params.id } }, 'Platform updated')
         const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
             const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
+            const signInMethods = touchesSignInMethods(params)
+                ? await checkedSignInMethods({ entityManager, params })
+                : {}
             const savedPlatform = await platformRepo(entityManager).save({
                 ...updatedPlatform,
+                ...signInMethods,
                 auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedRetentionDays : params.auditLogRetentionDays,
             })
             return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
@@ -474,10 +472,29 @@ function touchesSignInMethods(params: UpdateParams): boolean {
         || params.ssoDomainVerification !== undefined
 }
 
+async function checkedSignInMethods({ entityManager, params }: { entityManager: EntityManager, params: UpdateParams }): Promise<SignInMethodsState> {
+    const current = await platformRepo(entityManager)
+        .createQueryBuilder('platform')
+        .addSelect('platform.federatedAuthProviders')
+        .where({ id: params.id })
+        .getOneOrFail()
+    const after: SignInMethodsState = {
+        emailAuthEnabled: params.emailAuthEnabled ?? current.emailAuthEnabled,
+        googleAuthEnabled: params.googleAuthEnabled ?? current.googleAuthEnabled,
+        federatedAuthProviders: isNil(params.federatedAuthProviders)
+            ? current.federatedAuthProviders
+            : { ...current.federatedAuthProviders, ...params.federatedAuthProviders },
+        ssoDomainVerification: params.ssoDomainVerification ?? current.ssoDomainVerification,
+    }
+    assertSignInMethodRemains({ before: current, after })
+    return after
+}
+
 function signInMethodCount(platform: SignInMethodsState): number {
+    const googleSignIn = platform.googleAuthEnabled && googleAuth.isConfigured()
     const samlSignIn = !isNil(platform.federatedAuthProviders?.saml)
         && platform.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
-    return [platform.emailAuthEnabled, platform.googleAuthEnabled, samlSignIn].filter(Boolean).length
+    return [platform.emailAuthEnabled, googleSignIn, samlSignIn].filter(Boolean).length
 }
 
 function assertSignInMethodRemains({ before, after }: { before: SignInMethodsState, after: SignInMethodsState }): void {

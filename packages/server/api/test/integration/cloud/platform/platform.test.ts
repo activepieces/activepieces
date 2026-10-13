@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -46,10 +46,21 @@ beforeAll(async () => {
 afterAll(async () => {
     await teardownTestEnvironment()
 })
+
+afterEach(() => {
+    delete process.env.AP_GOOGLE_CLIENT_ID
+    delete process.env.AP_GOOGLE_CLIENT_SECRET
+})
+
+function configureGoogleSignIn(): void {
+    process.env.AP_GOOGLE_CLIENT_ID = 'test-google-client-id'
+    process.env.AP_GOOGLE_CLIENT_SECRET = 'test-google-client-secret'
+}
 describe('Platform API', () => {
     describe('update platform endpoint', () => {
         it('patches a platform by id', async () => {
             // arrange
+            configureGoogleSignIn()
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
@@ -129,7 +140,8 @@ describe('Platform API', () => {
             expect(response?.json().params.message).toContain('no way to sign in')
         })
 
-        it('turns off email sign-in while Google sign-in stays on', async () => {
+        it('turns off email sign-in while configured Google sign-in stays on', async () => {
+            configureGoogleSignIn()
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 platform: {
                     emailAuthEnabled: true,
@@ -151,6 +163,83 @@ describe('Platform API', () => {
             })
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json().emailAuthEnabled).toBe(false)
+        })
+
+        it('rejects turning off email when Google sign-in is on but not configured', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain('no way to sign in')
+        })
+
+        it('keeps one sign-in method when email and SAML are turned off at the same time', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    ssoEnabled: true,
+                },
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: false,
+                    ssoDomain: 'race-test.example.com',
+                    ssoDomainVerification: {
+                        status: SsoDomainVerificationStatus.VERIFIED,
+                        record: {
+                            type: SsoDomainVerificationRecordType.TXT,
+                            name: '_activepieces-verify.race-test.example.com',
+                            value: 'activepieces-verify=test-token',
+                        },
+                        createdAt: new Date().toISOString(),
+                    },
+                    federatedAuthProviders: {
+                        saml: {
+                            idpCertificate: faker.internet.password(),
+                            idpMetadata: faker.internet.password(),
+                        },
+                    },
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const update = (body: UpdatePlatformRequestBody) => app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body,
+            })
+            const responses = await Promise.all([
+                update({ emailAuthEnabled: false }),
+                update({ federatedAuthProviders: { saml: null } }),
+            ])
+            const statusCodes = responses.map((response) => response?.statusCode).sort()
+            expect(statusCodes).toEqual([StatusCodes.OK, StatusCodes.CONFLICT].sort())
+            const saved = await databaseConnection().getRepository('platform')
+                .createQueryBuilder('platform')
+                .addSelect('platform.federatedAuthProviders')
+                .where({ id: mockPlatform.id })
+                .getOneOrFail()
+            expect(saved.emailAuthEnabled || saved.federatedAuthProviders?.saml).toBeTruthy()
         })
 
         it('updates the platform logo icons', async () => {
@@ -198,6 +287,7 @@ describe('Platform API', () => {
         }),
 
         it('updates platform with boolean and array fields via multipart form data', async () => {
+            configureGoogleSignIn()
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
