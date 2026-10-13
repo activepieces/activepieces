@@ -71,6 +71,7 @@ const BuilderPage = () => {
   }, [removeAllStepTestsListeners]);
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   flowCanvasHooks.useFlushPendingEditsOnLeave();
+  flowCanvasHooks.useRefreshDraftOnPush();
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);

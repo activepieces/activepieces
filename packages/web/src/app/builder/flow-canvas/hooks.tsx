@@ -1,5 +1,6 @@
 import { Permission, isNil } from '@activepieces/core-utils';
 import {
+  FlowDraftUpdatedEvent,
   FlowRunStatus,
   WebsocketClientEvent,
   RunEnvironment,
@@ -10,6 +11,7 @@ import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 import { useLocation, usePrevious } from 'react-use';
+import { toast } from 'sonner';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -18,6 +20,7 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { editorSession } from '@/lib/editor-session';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
@@ -112,6 +115,38 @@ const useFlushPendingEditsOnLeave = () => {
       flushPendingEdits();
     };
   }, [flushPendingEdits]);
+};
+
+const useRefreshDraftOnPush = () => {
+  const socket = useSocket();
+  const [flowId, refreshDraft] = useBuilderStateContext((state) => [
+    state.flow.id,
+    state.refreshDraft,
+  ]);
+  useEffect(() => {
+    const refreshOnPush = (event: FlowDraftUpdatedEvent) => {
+      if (
+        event.flowId !== flowId ||
+        event.editorSessionId === editorSession.getId()
+      ) {
+        return;
+      }
+      refreshDraft()
+        .then(() => {
+          toast.info(
+            t(
+              'This flow was changed in a different tab or by a different editor. You see the newest version.',
+            ),
+            { id: 'flow-draft-refreshed' },
+          );
+        })
+        .catch(() => undefined);
+    };
+    socket.on(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
+    return () => {
+      socket.off(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
+    };
+  }, [socket, flowId, refreshDraft]);
 };
 
 export const useSwitchToDraft = () => {
@@ -248,6 +283,7 @@ export const flowCanvasHooks = {
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
   useFlushPendingEditsOnLeave,
+  useRefreshDraftOnPush,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
   useResizeCanvas,
