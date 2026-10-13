@@ -177,9 +177,7 @@ function RoleDialogBody({
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {isCreate && (
-            <p className="text-xss font-medium uppercase tracking-wider text-gray-11">
-              {t('New role')}
-            </p>
+            <p className="text-xs font-medium text-gray-11">{t('New role')}</p>
           )}
           {isCreate ? (
             <>
@@ -192,7 +190,7 @@ function RoleDialogBody({
                   setSaveError(null);
                 }}
                 placeholder={t('Role name')}
-                className="h-9 max-w-xs"
+                className="max-w-xs"
               />
             </>
           ) : (
@@ -209,7 +207,7 @@ function RoleDialogBody({
                   }}
                   tooltipContent={isBuiltIn ? '' : t('Rename role')}
                   className={cn(
-                    'min-w-0 rounded-sm px-1 py-0.5',
+                    'min-w-0 rounded-md px-1 py-0.5',
                     !isBuiltIn &&
                       !isRenaming &&
                       'cursor-text hover:bg-gray-3 hover:text-gray-11',
@@ -224,10 +222,7 @@ function RoleDialogBody({
                   />
                 )}
               </span>
-              <Badge
-                variant={isBuiltIn ? 'accent' : 'inverted'}
-                className="shrink-0 text-xss uppercase tracking-wider"
-              >
+              <Badge variant={isBuiltIn ? 'secondary' : 'info'} className="">
                 {isBuiltIn ? t('Built in') : t('Custom')}
               </Badge>
             </DialogTitle>
@@ -242,11 +237,7 @@ function RoleDialogBody({
           {!isCreate && !isBuiltIn && projectRole && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-8 shrink-0 p-0"
-                >
+                <Button variant="ghost" size="icon-sm">
                   <MoreHorizontal className="size-4" />
                   <span className="sr-only">{t('More')}</span>
                 </Button>
@@ -290,7 +281,7 @@ function RoleDialogBody({
             </DropdownMenu>
           )}
           <DialogClose asChild>
-            <Button variant="ghost" size="sm" className="size-8 shrink-0 p-0">
+            <Button variant="ghost" size="icon-sm">
               <X className="size-4" />
               <span className="sr-only">{t('Close')}</span>
             </Button>
@@ -303,15 +294,15 @@ function RoleDialogBody({
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-3">
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-11">{t('Based on')}</span>
-              <div className="inline-flex items-center rounded-md bg-gray-3 p-1">
+              <div className="inline-flex items-center rounded-lg bg-gray-3 p-1">
                 {ROLE_BASES.map((roleBase) => (
                   <Button
                     key={roleBase}
                     type="button"
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                     className={cn(
-                      'h-7 rounded-sm px-3 text-gray-11',
+                      'rounded-sm text-gray-11',
                       base === roleBase &&
                         'bg-panel text-gray-12 shadow-xs hover:bg-panel',
                     )}

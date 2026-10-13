@@ -183,8 +183,8 @@ const GenerateHandlerFlowCard = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
-      <span className="flex size-10 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
+    <div className="flex flex-col items-center gap-3 rounded-xl border p-6 text-center">
+      <span className="flex size-10 items-center justify-center rounded-xl bg-accent-3 text-accent-11">
         <Workflow className="size-[18px]" />
       </span>
       <div className="flex max-w-[460px] flex-col gap-1">
@@ -216,7 +216,7 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
   const { data: flow } = flowHooks.useGetFlow({ flowId });
 
   return (
-    <div className="flex w-full items-center gap-3 rounded-lg border p-4">
+    <div className="flex w-full items-center gap-3 rounded-xl border p-4">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
         <Workflow className="size-4" />
       </span>
@@ -226,10 +226,7 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
         </span>
       </div>
       {!isNil(flow) && (
-        <Badge
-          className="rounded-md"
-          variant={isNil(flow.publishedVersionId) ? 'warning' : 'success'}
-        >
+        <Badge variant={isNil(flow.publishedVersionId) ? 'warning' : 'success'}>
           {isNil(flow.publishedVersionId) ? t('Draft') : t('Published')}
         </Badge>
       )}

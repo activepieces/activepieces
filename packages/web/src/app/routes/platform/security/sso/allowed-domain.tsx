@@ -128,14 +128,11 @@ export const AllowedDomainDialog = ({
                         {...field}
                         id={`allowedAuthDomains.${index}`}
                         placeholder={t('example.com')}
-                        className="rounded-sm"
                       />
                       <Button
                         type="button"
                         onClick={() => remove(index)}
                         variant="outline"
-                        size="sm"
-                        className="h-10"
                       >
                         <X className="w-4 h-4" />
                       </Button>

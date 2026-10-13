@@ -47,12 +47,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0"
-                onClick={onSeeRuns}
-              >
+              <Button variant="ghost" size="icon-xs" onClick={onSeeRuns}>
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -72,7 +67,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                   <TooltipTrigger asChild>
                     <div
                       className={cn(
-                        'flex-1 h-full rounded-sm transition-colors',
+                        'flex-1 h-full rounded-md transition-colors',
                         healthy
                           ? 'bg-success-9 hover:bg-success-9/80'
                           : 'bg-danger-9 hover:bg-danger-9/80',

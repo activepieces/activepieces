@@ -396,7 +396,7 @@ export function DataTable<
             'flex-1 min-h-0 overflow-auto': virtualizeRows,
           },
           bordered &&
-            'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+            'rounded-xl border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
         )}
       >
         <Table
@@ -679,7 +679,7 @@ export function DataTable<
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger size="sm" className="w-[70px]">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />

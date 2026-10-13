@@ -144,10 +144,7 @@ export function buildActivityColumns({
             <span className="truncate">{row.original.projectName}</span>
           </Badge>
           {projectType !== undefined && (
-            <Badge
-              variant="accent"
-              className="shrink-0 text-xss font-normal text-gray-11"
-            >
+            <Badge variant="secondary" className="font-normal text-gray-11">
               {projectType === ProjectType.PERSONAL ? t('Personal') : t('Team')}
             </Badge>
           )}

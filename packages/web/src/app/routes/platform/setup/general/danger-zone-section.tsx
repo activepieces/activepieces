@@ -17,7 +17,7 @@ export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-base font-semibold">{t('Danger zone')}</h2>
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border px-4 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border px-4 py-3.5">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-sm font-medium">{t('Delete platform')}</span>
           <span className="text-sm text-gray-11">
