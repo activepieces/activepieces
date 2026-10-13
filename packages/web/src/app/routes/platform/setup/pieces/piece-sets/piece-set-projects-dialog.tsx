@@ -16,10 +16,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
   pieceSetQueries,
   pieceSetTerms,
+  projectPieceSet,
   usePieceSetProjectMoves,
 } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
@@ -46,7 +52,9 @@ export const usePieceSetProjects = (pieceSet: PieceSet) => {
   );
   const assignedProjects = useMemo(
     () =>
-      allProjects.filter((project) => isAssignedToSet({ pieceSet, project })),
+      allProjects.filter((project) =>
+        projectPieceSet.isAssignedToSet({ pieceSet, project }),
+      ),
     [allProjects, pieceSet],
   );
   return { allProjects, assignedProjects, isLoading, isError, refetch };
@@ -227,28 +235,46 @@ const AssignProjectsForm = ({
               estimateSize={() => PROJECT_ROW_HEIGHT}
               getItemKey={(index) => visibleProjects[index].id}
               renderItem={(project) => {
-                const locked =
-                  pieceSet.isDefault && isAssignedToSet({ pieceSet, project });
-                const currentSetId = project.pieceSetId ?? defaultSetId;
+                const row = projectPieceSet.assignRow({
+                  pieceSet,
+                  project,
+                  defaultSetId,
+                  setNames,
+                });
                 return (
                   <label className="flex h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 hover:bg-gray-3 has-disabled:cursor-default has-disabled:opacity-60">
                     <Checkbox
                       checked={selected.has(project.id)}
-                      disabled={locked}
+                      disabled={row.locked}
                       onCheckedChange={() => toggleProject(project.id)}
                     />
                     <ProjectAvatar project={project} size="sm" />
                     <span className="min-w-0 truncate text-sm">
                       {project.displayName}
                     </span>
-                    {!isAssignedToSet({ pieceSet, project }) &&
-                      currentSetId !== undefined && (
-                        <span className="ml-auto shrink-0 text-xs text-gray-11">
-                          {t('Currently: {name}', {
-                            name: setNames.get(currentSetId) ?? '',
-                          })}
-                        </span>
-                      )}
+                    {row.lockedIn !== null && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            tabIndex={0}
+                            className="ml-auto shrink-0 rounded-sm text-xs text-gray-11 focus-visible:outline-2 focus-visible:outline-accent-8"
+                          >
+                            {t('Already in {name}', { name: row.lockedIn })}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {t(
+                            'To move it out, assign it from another {term}.',
+                            pieceSetTerms.get(),
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {row.currentlyIn !== null && (
+                      <span className="ml-auto shrink-0 text-xs text-gray-11">
+                        {t('Currently: {name}', { name: row.currentlyIn })}
+                      </span>
+                    )}
                   </label>
                 );
               }}
@@ -289,19 +315,6 @@ const AssignProjectsForm = ({
     </>
   );
 };
-
-function isAssignedToSet({
-  pieceSet,
-  project,
-}: {
-  pieceSet: PieceSet;
-  project: ProjectWithLimits;
-}): boolean {
-  if (pieceSet.isDefault) {
-    return project.pieceSetId === pieceSet.id || isNil(project.pieceSetId);
-  }
-  return project.pieceSetId === pieceSet.id;
-}
 
 function assignedFirst({
   projects,
