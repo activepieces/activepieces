@@ -158,7 +158,7 @@ function useSaveShortcut({
         return;
       }
       event.preventDefault();
-      if (event.repeat || hasOpenModal()) {
+      if (event.repeat || hasOpenModal(root)) {
         return;
       }
       if (latest.current.canSave && ownsShortcut(root)) {
@@ -203,12 +203,11 @@ function isSaveShortcut(event: KeyboardEvent): boolean {
   );
 }
 
-function hasOpenModal(): boolean {
-  return (
-    document.querySelector(
-      '[data-slot="dialog-content"][data-state="open"], [data-slot="sheet-content"][data-state="open"], [data-slot="select-content"][data-state="open"], [role="alertdialog"][data-state="open"]',
-    ) !== null
+function hasOpenModal(root: HTMLElement): boolean {
+  const openModals = document.querySelectorAll(
+    '[data-slot="dialog-content"][data-state="open"], [data-slot="sheet-content"][data-state="open"], [data-slot="select-content"][data-state="open"], [role="alertdialog"][data-state="open"]',
   );
+  return [...openModals].some((modal) => !modal.contains(root));
 }
 
 function ownsShortcut(root: HTMLElement): boolean {
