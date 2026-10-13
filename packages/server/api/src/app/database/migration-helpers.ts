@@ -8,18 +8,34 @@ import { DatabaseType } from './database-type'
 import { distributedLock } from './redis-connections'
 
 export const migrationHelpers = {
+    assertBackgroundMigrationComplete,
     createIndexConcurrently,
     dropIndexConcurrently,
-    requireBackgroundMigrationComplete,
+    withBackgroundMigrationLock,
 }
 
-async function requireBackgroundMigrationComplete<T>({
+async function assertBackgroundMigrationComplete({
     queryRunner,
+    migration,
+}: {
+    queryRunner: QueryRunner
+    migration: new () => BackgroundMigration
+}): Promise<void> {
+    const name = new migration().name
+    const rows = await queryRunner.query(
+        `SELECT 1 FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1 AND "executed_at" IS NOT NULL`,
+        [name],
+    )
+    if (rows.length === 0) {
+        throw new BackgroundMigrationNotCompleteError(migration)
+    }
+}
+
+async function withBackgroundMigrationLock<T>({
     log,
     migration,
     fn,
 }: {
-    queryRunner: QueryRunner
     log: FastifyBaseLogger
     migration: new () => BackgroundMigration
     fn: () => Promise<T>
@@ -28,16 +44,7 @@ async function requireBackgroundMigrationComplete<T>({
     return distributedLock(log).runExclusive({
         key: backgroundMigrationLockKey(name),
         timeoutInSeconds: BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS,
-        fn: async () => {
-            const rows = await queryRunner.query(
-                `SELECT 1 FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1 AND "executed_at" IS NOT NULL`,
-                [name],
-            )
-            if (rows.length === 0) {
-                throw new BackgroundMigrationNotCompleteError(migration)
-            }
-            return fn()
-        },
+        fn,
     })
 }
 
