@@ -12,6 +12,17 @@ vi.mock('@/features/agents', () => ({
   PROVIDER_EMBEDDING_MODELS: { openai: 'text-embedding-3-small' },
 }));
 
+const chat = vi.hoisted(() => ({ provider: undefined as string | undefined }));
+
+vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
+  aiProviderQueries: {
+    useChatProvider: () => ({
+      data:
+        chat.provider === undefined ? undefined : { provider: chat.provider },
+    }),
+  },
+}));
+
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: true }) },
 }));
@@ -32,7 +43,7 @@ vi.mock(
     }: {
       children?: React.ReactNode;
     }) => <div data-testid="add-knowledge">{children}</div>,
-  })
+  }),
 );
 
 vi.mock('@/features/agents/agent-tools/components/add-row', () => ({
@@ -70,7 +81,7 @@ function render({
         onToolsUpdate={vi.fn()}
         selectedProvider={selectedProvider}
         tierPicked={tierPicked}
-      />
+      />,
     );
   });
 }
@@ -80,6 +91,7 @@ function canAddKnowledge(): boolean {
 }
 
 beforeEach(() => {
+  chat.provider = undefined;
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -93,10 +105,20 @@ afterEach(() => {
 });
 
 describe('adding knowledge to an agent', () => {
-  it('is offered on a tier pick, which has no provider of its own', () => {
+  it('is offered on a tier pick when the Default AI key can embed', () => {
+    chat.provider = AIProviderName.OPENAI;
+
     render({ tierPicked: true });
 
     expect(canAddKnowledge()).toBe(true);
+  });
+
+  it('is explained on a tier pick when the Default AI key cannot embed', () => {
+    chat.provider = AIProviderName.ANTHROPIC;
+
+    render({ tierPicked: true, selectedProvider: AIProviderName.OPENAI });
+
+    expect(canAddKnowledge()).toBe(false);
   });
 
   it('is offered on a provider with an embedding model', () => {

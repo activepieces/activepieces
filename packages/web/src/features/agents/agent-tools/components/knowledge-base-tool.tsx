@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AgentKnowledgeBaseTool,
   AgentTool,
@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PROVIDER_EMBEDDING_MODELS } from '@/features/agents';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -94,10 +95,12 @@ export const KnowledgeBaseSection = ({
   tierPicked = false,
   layout = 'card',
 }: KnowledgeBaseSectionProps) => {
-  const embeddingModel = selectedProvider
-    ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
-    : undefined;
-  const supportsEmbeddings = tierPicked || !!embeddingModel;
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const embeddingProvider = tierPicked
+    ? chatProvider?.provider
+    : selectedProvider;
+  const supportsEmbeddings =
+    !isNil(embeddingProvider) && !!PROVIDER_EMBEDDING_MODELS[embeddingProvider];
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
   );

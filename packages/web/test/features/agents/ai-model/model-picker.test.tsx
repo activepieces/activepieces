@@ -187,4 +187,22 @@ describe('modelPickerView', () => {
     expect(detailById.get('credits:smart')?.showPrices).toBe(false);
     expect(detailById.size).toBe(5);
   });
+
+  it('shows an older credits pick stored as a concrete model id as credits, not unavailable', () => {
+    const shown = {
+      type: 'model' as const,
+      provider: AIProviderName.ACTIVEPIECES,
+      providerConfigId: 'managed',
+      modelId: 'anthropic/claude-sonnet-4.6',
+    };
+
+    expect(modelPickerView({ options, shown }).current).toMatchObject({
+      kind: 'credits',
+      label: 'anthropic/claude-sonnet-4.6',
+    });
+    expect(
+      modelPickerView({ options: { ...options, credits: null }, shown })
+        .current,
+    ).toMatchObject({ kind: 'unavailable' });
+  });
 });

@@ -308,6 +308,15 @@ function resolveCurrent({
     const tier = options.credits?.tiers.find(
       (candidate) => candidate.id === shown.modelId,
     );
+    if (isNil(tier) && !isNil(options.credits) && shown.modelId.includes('/')) {
+      return {
+        kind: 'credits',
+        id: shown.modelId,
+        label: shown.modelId,
+        leading: <CreditTile tierId={shown.modelId} size="sm" />,
+        source: t('Credits'),
+      };
+    }
     return isNil(tier)
       ? unavailablePick({ label: shown.modelId })
       : {
