@@ -23,14 +23,30 @@ function bucket(key: string): number {
 }
 
 async function baseline({ store }: { store: Store }): Promise<Set<string>> {
-  const groups = await Promise.all(Array.from({ length: 32 }, (_, index) => store.get<string[]>(`baseline:${index}`)));
-  return new Set(groups.flatMap((group) => group ?? []));
+  const roots = await Promise.all(Array.from({ length: 32 }, (_, index) => store.get<BaselineRoot>(`baseline:${index}`)));
+  const groups = await Promise.all(roots.map(async (root, index) => {
+    if (!root) return [];
+    if (Array.isArray(root)) return root;
+    if (!Number.isSafeInteger(root.chunks) || root.chunks < 1) throw new Error('Famulor polling baseline is invalid. The checkpoint was preserved.');
+    const chunks = await Promise.all(Array.from({ length: root.chunks }, (_, page) => store.get<string[]>(`baseline:${index}:chunk:${page}`)));
+    if (chunks.some((chunk) => !Array.isArray(chunk))) throw new Error('Famulor polling baseline is incomplete. The checkpoint was preserved.');
+    return chunks.flatMap((chunk) => chunk ?? []);
+  }));
+  return new Set(groups.flat());
 }
 
 async function saveBaseline({ store, keys }: { store: Store; keys: Set<string> }): Promise<void> {
   const groups: string[][] = Array.from({ length: 32 }, () => []);
   for (const key of keys) groups[bucket(key)].push(key);
-  await Promise.all(groups.map((group, index) => store.put(`baseline:${index}`, group)));
+  await Promise.all(groups.map(async (group, index) => {
+    if (group.length <= BASELINE_CHUNK_SIZE) {
+      await store.put(`baseline:${index}`, group);
+      return;
+    }
+    const chunks = Math.ceil(group.length / BASELINE_CHUNK_SIZE);
+    await Promise.all(Array.from({ length: chunks }, (_, page) => store.put(`baseline:${index}:chunk:${page}`, group.slice(page * BASELINE_CHUNK_SIZE, (page + 1) * BASELINE_CHUNK_SIZE))));
+    await store.put(`baseline:${index}`, { chunks });
+  }));
 }
 
 async function items({ token, definition, since, campaignId, test }: { token: string; definition: PollDefinition; since: number; campaignId?: string; test?: boolean }): Promise<PollItem[]> {
@@ -129,3 +145,5 @@ export { createPollingTrigger };
 export type PollDefinition = { name: string; displayName: string; description: string; path: string; timeField?: string; query?: Record<string, string>; completed?: boolean; campaign?: boolean; snapshot?: boolean; messaging?: boolean; once?: boolean; ordered?: boolean; unpaged?: boolean; dataKey?: string };
 type PollItem = { time: number; key: string; record: Record<string, unknown> };
 type Checkpoint = { started: number; time: number; generation?: string };
+type BaselineRoot = string[] | { chunks: number };
+const BASELINE_CHUNK_SIZE = 1800;
