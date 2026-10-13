@@ -34,8 +34,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
-import { usePrefetchPiecesSection } from '../use-prefetch-pieces-section';
-
 import { pieceSetSamples } from './piece-set-samples';
 import { PolicySheet, useGuardedClose } from './policy-ui';
 import {
@@ -48,7 +46,6 @@ import {
 
 export function RequiredActionsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  usePrefetchPiecesSection();
   const locked = !platform.plan.managePiecesEnabled;
   const { data, isLoading, isError, refetch } =
     pieceSetQueries.useAllPieceSets();
@@ -249,7 +246,7 @@ function RequireAcrossSetsSheet({
           },
         });
       } finally {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
+        pieceCacheUtils.invalidateProjectPieceCaches(queryClient);
         await queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
       }
     },

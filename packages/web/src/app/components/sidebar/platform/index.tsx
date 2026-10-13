@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { PLATFORM_FEATURES } from '@/features/billing';
 import { pieceSetTerms } from '@/features/piece-sets';
+import { piecesHooks } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -39,6 +40,8 @@ export function PlatformNav() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
+  const prefetchPieceMenu = piecesHooks.usePieceMenuPrefetch();
+  const groupLabels = platformGroupLabels();
   const groups: { label: string; items: PlatformNavItem[] }[] = [
     {
       label: t('Platform'),
@@ -65,7 +68,7 @@ export function PlatformNav() {
       ],
     },
     {
-      label: t('Integrations'),
+      label: groupLabels.integrations,
       items: [
         {
           to: '/platform/pieces',
@@ -91,6 +94,7 @@ export function PlatformNav() {
           to: '/platform/pieces/selector',
           label: t('Piece menu'),
           icon: CompassIcon,
+          onIntent: prefetchPieceMenu,
           locked: !platform.plan.managePiecesEnabled,
           tier: PLATFORM_FEATURES.pieces.tier,
         },
@@ -99,21 +103,10 @@ export function PlatformNav() {
           label: t('Connections'),
           icon: UnplugIcon,
         },
-        ...(platform.plan.globalConnectionsEnabled
-          ? []
-          : [
-              {
-                to: '/platform/connections/global',
-                label: t('Global connections'),
-                icon: UnplugIcon,
-                locked: true,
-                tier: PLATFORM_FEATURES.globalConnections.tier,
-              },
-            ]),
       ],
     },
     {
-      label: t('Resources'),
+      label: groupLabels.resources,
       items: [
         {
           to: '/platform/templates',
@@ -306,6 +299,7 @@ export function PlatformNav() {
                   tier={item.tier}
                   subItems={item.subItems}
                   end={item.end}
+                  onIntent={item.onIntent}
                 />
               ))}
             </SidebarMenu>
@@ -316,7 +310,14 @@ export function PlatformNav() {
   );
 }
 
+function platformGroupLabels() {
+  return {
+    integrations: t('Integrations'),
+    resources: t('Resources'),
+  };
+}
+
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems' | 'end'
+  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems' | 'end' | 'onIntent'
 >;

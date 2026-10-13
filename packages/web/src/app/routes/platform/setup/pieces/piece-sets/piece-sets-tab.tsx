@@ -55,8 +55,6 @@ import { projectHooks } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import { usePrefetchPiecesSection } from '../use-prefetch-pieces-section';
-
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
@@ -65,7 +63,6 @@ import { pieceSetSummary } from './piece-set-summary';
 
 export function PieceSetsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
-  usePrefetchPiecesSection();
   if (!platform.plan.managePiecesEnabled) {
     return <SamplePieceSetsList />;
   }
