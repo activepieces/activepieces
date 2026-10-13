@@ -98,7 +98,6 @@ const SamlWizard = ({
   const domainVerified =
     platform.ssoDomainVerification?.status ===
     SsoDomainVerificationStatus.VERIFIED;
-  const googleConfigured = ssoRules.useGoogleConfigured();
   const [step, setStep] = useState<WizardStep>(
     connected || !domainVerified ? 'domain' : 'saml',
   );
@@ -107,10 +106,7 @@ const SamlWizard = ({
     verb: 'turnOff',
     name: t('SAML sign-in'),
     run: async () => {
-      await ssoRules.assertSignInRemains({
-        change: { samlConnected: false },
-        googleConfigured,
-      });
+      await ssoRules.assertSignInRemains({ samlConnected: false });
       await platformApi.update(
         { federatedAuthProviders: { saml: null } },
         platform.id,
@@ -121,9 +117,7 @@ const SamlWizard = ({
   });
 
   const samlIsLastMethod =
-    connected &&
-    !platform.emailAuthEnabled &&
-    !(platform.googleAuthEnabled && googleConfigured);
+    connected && !platform.emailAuthEnabled && !platform.googleAuthEnabled;
   const disableAction = connected
     ? {
         onDisable: () => disableSaml.mutateAsync(),
@@ -219,12 +213,11 @@ const DomainStep = ({
   canProceed: boolean;
   disableAction: DisableAction;
 }) => {
-  const googleConfigured = ssoRules.useGoogleConfigured();
   const domainChangeBlocked =
     Boolean(platform.ssoDomain) &&
     Boolean(platform.federatedAuthProviders?.saml) &&
     !platform.emailAuthEnabled &&
-    !(platform.googleAuthEnabled && googleConfigured);
+    !platform.googleAuthEnabled;
   const form = useForm<SsoDomainFormValues>({
     resolver: zodResolver(SsoDomainFormValues),
     defaultValues: { ssoDomain: platform.ssoDomain ?? '' },
@@ -240,10 +233,7 @@ const DomainStep = ({
     verb: 'save',
     run: async (values) => {
       if (platform.ssoDomain) {
-        await ssoRules.assertSignInRemains({
-          change: { domainChanges: true },
-          googleConfigured,
-        });
+        await ssoRules.assertSignInRemains({ domainChanges: true });
       }
       await samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase());
       await refetch();
@@ -396,11 +386,10 @@ const SamlStep = ({
     ApFlagId.SAML_AUTH_ACS_URL,
   );
 
-  const googleConfigured = ssoRules.useGoogleConfigured();
   const samlIsOnlyMethod =
     !!platform.federatedAuthProviders?.saml &&
     !platform.emailAuthEnabled &&
-    !(platform.googleAuthEnabled && googleConfigured);
+    !platform.googleAuthEnabled;
   const [settingsToConfirm, setSettingsToConfirm] =
     useState<Saml2FormValues | null>(null);
   const { mutateAsync, isPending } = useAdminAction<UpdatePlatformRequestBody>({

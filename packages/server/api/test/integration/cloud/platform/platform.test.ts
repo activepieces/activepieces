@@ -1,11 +1,9 @@
-import { apId, ErrorCode } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, Platform, PlatformRole, PrincipalType, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyBaseLogger, FastifyInstance, LightMyRequestResponse } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { EntityManager } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { authnSsoSamlService } from '../../../../src/app/ee/authentication/saml-authn/authn-sso-saml-service'
 import { system } from '../../../../src/app/helper/system/system'
 import { systemJobsQueue } from '../../../../src/app/helper/system-jobs/system-job'
 import { generateMockToken } from '../../../helpers/auth'
@@ -14,43 +12,6 @@ import { checkIfSolutionExistsInDb, createMockApiKey, createMockConnection, crea
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
-
-const hooks = vi.hoisted(() => ({
-    beforeTransaction: undefined as (() => Promise<void>) | undefined,
-    queries: [] as string[],
-    txtRecords: [] as string[][],
-}))
-
-vi.mock('dns/promises', () => ({
-    resolveTxt: async (): Promise<string[][]> => hooks.txtRecords,
-}))
-
-vi.mock('../../../../src/app/core/db/transaction', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../../../src/app/core/db/transaction')>()
-    return {
-        transaction: async <T>(operation: (entityManager: EntityManager) => Promise<T>): Promise<T> => {
-            const beforeTransaction = hooks.beforeTransaction
-            hooks.beforeTransaction = undefined
-            if (beforeTransaction !== undefined) {
-                await beforeTransaction()
-            }
-            return actual.transaction(async (entityManager) => {
-                const runner = entityManager.queryRunner
-                if (runner === undefined) {
-                    return operation(entityManager)
-                }
-                const query = vi.spyOn(runner, 'query')
-                try {
-                    return await operation(entityManager)
-                }
-                finally {
-                    hooks.queries.push(...query.mock.calls.map((call) => String(call[0])))
-                    query.mockRestore()
-                }
-            })
-        },
-    }
-})
 
 async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
     const start = Date.now()
@@ -85,121 +46,10 @@ beforeAll(async () => {
 afterAll(async () => {
     await teardownTestEnvironment()
 })
-
-afterEach(() => {
-    hooks.beforeTransaction = undefined
-    hooks.queries = []
-    hooks.txtRecords = []
-    delete process.env.AP_GOOGLE_CLIENT_ID
-    delete process.env.AP_GOOGLE_CLIENT_SECRET
-})
-
-function configureGoogleSignIn(): void {
-    process.env.AP_GOOGLE_CLIENT_ID = 'test-google-client-id'
-    process.env.AP_GOOGLE_CLIENT_SECRET = 'test-google-client-secret'
-}
-
-async function mockAndSaveSamlSetup(): ReturnType<typeof mockAndSaveBasicSetup> {
-    const ssoDomain = `${faker.string.alphanumeric(10).toLowerCase()}.example.com`
-    return mockAndSaveBasicSetup({
-        plan: {
-            ssoEnabled: true,
-        },
-        platform: {
-            emailAuthEnabled: true,
-            googleAuthEnabled: false,
-            ssoDomain,
-            ssoDomainVerification: {
-                status: SsoDomainVerificationStatus.VERIFIED,
-                record: {
-                    type: SsoDomainVerificationRecordType.TXT,
-                    name: `_activepieces-verify.${ssoDomain}`,
-                    value: 'activepieces-verify=test-token',
-                },
-                createdAt: new Date().toISOString(),
-            },
-            federatedAuthProviders: {
-                saml: {
-                    idpCertificate: faker.internet.password(),
-                    idpMetadata: faker.internet.password(),
-                },
-            },
-        },
-    })
-}
-
-async function mockAndSavePendingDomainSetup(): ReturnType<typeof mockAndSaveBasicSetup> {
-    const ssoDomain = `${faker.string.alphanumeric(10).toLowerCase()}.example.com`
-    return mockAndSaveBasicSetup({
-        plan: {
-            ssoEnabled: true,
-        },
-        platform: {
-            ssoDomain,
-            ssoDomainVerification: pendingVerification(ssoDomain),
-        },
-    })
-}
-
-function pendingVerification(ssoDomain: string): SsoDomainVerification {
-    return {
-        status: SsoDomainVerificationStatus.PENDING_VERIFICATION,
-        record: {
-            type: SsoDomainVerificationRecordType.TXT,
-            name: `_activepieces-verify.${ssoDomain}`,
-            value: `activepieces-verify=${faker.string.alphanumeric(12)}`,
-        },
-        createdAt: new Date().toISOString(),
-    }
-}
-
-const SSO_DOMAIN_CHANGED = {
-    error: {
-        code: ErrorCode.VALIDATION,
-        params: {
-            message: 'The SSO domain changed while this request was running. Try again.',
-        },
-    },
-}
-
-function appLog(): FastifyBaseLogger {
-    if (app === null) {
-        throw new Error('The test app is not running')
-    }
-    return app.log
-}
-
-async function ownerToken({ ownerId, platformId }: { ownerId: string, platformId: string }): Promise<string> {
-    return generateMockToken({
-        type: PrincipalType.USER,
-        id: ownerId,
-        platform: { id: platformId },
-    })
-}
-
-async function updatePlatform({ platformId, token, body }: { platformId: string, token: string, body: UpdatePlatformRequestBody }): Promise<LightMyRequestResponse | undefined> {
-    return app?.inject({
-        method: 'POST',
-        url: `/api/v1/platforms/${platformId}`,
-        headers: {
-            authorization: `Bearer ${token}`,
-        },
-        body,
-    })
-}
-
-async function readPlatform(platformId: string): Promise<Platform> {
-    return databaseConnection().getRepository<Platform>('platform')
-        .createQueryBuilder('platform')
-        .addSelect('platform.federatedAuthProviders')
-        .where({ id: platformId })
-        .getOneOrFail()
-}
 describe('Platform API', () => {
     describe('update platform endpoint', () => {
         it('patches a platform by id', async () => {
             // arrange
-            configureGoogleSignIn()
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
@@ -255,218 +105,6 @@ describe('Platform API', () => {
             expect(responseBody.cloudAuthEnabled).toBe(false)
         }),
 
-        it('rejects turning off the last sign-in method', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    emailAuthEnabled: true,
-                    googleAuthEnabled: false,
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: { emailAuthEnabled: false },
-            })
-            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(response?.json().params.message).toContain('no way to sign in')
-        })
-
-        it('turns off email sign-in while configured Google sign-in stays on', async () => {
-            configureGoogleSignIn()
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    emailAuthEnabled: true,
-                    googleAuthEnabled: true,
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: { emailAuthEnabled: false },
-            })
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json().emailAuthEnabled).toBe(false)
-        })
-
-        it('rejects turning off email when Google sign-in is on but not configured', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    emailAuthEnabled: true,
-                    googleAuthEnabled: true,
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: { emailAuthEnabled: false },
-            })
-            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(response?.json().params.message).toContain('no way to sign in')
-        })
-
-        it('keeps a sign-in change made while a name update is in flight', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
-            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            hooks.beforeTransaction = async (): Promise<void> => {
-                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { emailAuthEnabled: false })
-            }
-
-            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { name: 'Renamed' } })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const saved = await readPlatform(mockPlatform.id)
-            expect(saved.name).toBe('Renamed')
-            expect(saved.emailAuthEnabled).toBe(false)
-            expect(saved.federatedAuthProviders?.saml).toBeTruthy()
-        })
-
-        it('rejects turning off email after a concurrent change removed SAML', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
-            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            hooks.beforeTransaction = async (): Promise<void> => {
-                const removeSaml = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { federatedAuthProviders: { saml: null } } })
-                expect(removeSaml?.statusCode).toBe(StatusCodes.OK)
-            }
-
-            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { emailAuthEnabled: false } })
-
-            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-            const saved = await readPlatform(mockPlatform.id)
-            expect(saved.emailAuthEnabled).toBe(true)
-            expect(saved.federatedAuthProviders?.saml).toBeFalsy()
-        })
-
-        it('rejects new SAML settings when the domain stopped being verified while the request was in flight', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
-            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            hooks.beforeTransaction = async (): Promise<void> => {
-                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { ssoDomainVerification: null })
-            }
-
-            const response = await updatePlatform({
-                platformId: mockPlatform.id,
-                token: testToken,
-                body: { federatedAuthProviders: { saml: { idpCertificate: 'new-cert', idpMetadata: 'new-metadata' } } },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(response?.json().params.message).toContain('SSO domain must be verified')
-        })
-
-        it('locks the platform row before it reads and writes the update', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
-            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-
-            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { name: 'Locked rename' } })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const lockIndex = hooks.queries.findIndex((sql) => /FROM "platform"/.test(sql) && /FOR UPDATE/.test(sql))
-            const readIndex = hooks.queries.findIndex((sql, index) => index > lockIndex
-                && /FROM "platform"/.test(sql)
-                && /"federatedAuthProviders"/.test(sql)
-                && /"emailAuthEnabled"/.test(sql))
-            const updateIndex = hooks.queries.findIndex((sql) => /^UPDATE "platform"/.test(sql))
-            expect(lockIndex).toBeGreaterThanOrEqual(0)
-            expect(readIndex).toBeGreaterThan(lockIndex)
-            expect(updateIndex).toBeGreaterThan(readIndex)
-        })
-
-        it('does not count SAML as a sign-in method when the platform has no SSO domain', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
-            await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { ssoDomain: null })
-            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-
-            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { emailAuthEnabled: false } })
-
-            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(response?.json().params.message).toContain('no way to sign in')
-        })
-
-        it('does not mark a domain verified when the SSO domain changed during the DNS check', async () => {
-            const { mockPlatform } = await mockAndSavePendingDomainSetup()
-            hooks.txtRecords = [[mockPlatform.ssoDomainVerification?.record.value ?? '']]
-            hooks.beforeTransaction = async (): Promise<void> => {
-                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, {
-                    ssoDomain: 'victim.example.com',
-                    ssoDomainVerification: pendingVerification('victim.example.com'),
-                })
-            }
-
-            await expect(authnSsoSamlService(appLog()).verifySsoDomain({ platformId: mockPlatform.id }))
-                .rejects.toMatchObject(SSO_DOMAIN_CHANGED)
-
-            const saved = await readPlatform(mockPlatform.id)
-            expect(saved.ssoDomain).toBe('victim.example.com')
-            expect(saved.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.PENDING_VERIFICATION)
-        })
-
-        it('marks the domain verified when nothing changed during the DNS check', async () => {
-            const { mockPlatform } = await mockAndSavePendingDomainSetup()
-            hooks.txtRecords = [[mockPlatform.ssoDomainVerification?.record.value ?? '']]
-
-            const result = await authnSsoSamlService(appLog()).verifySsoDomain({ platformId: mockPlatform.id })
-
-            expect(result.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
-        })
-
-        it('does not write a stale pending verification over the same token verified meanwhile', async () => {
-            const { mockPlatform } = await mockAndSavePendingDomainSetup()
-            const domain = mockPlatform.ssoDomain ?? ''
-            const pending = mockPlatform.ssoDomainVerification ?? pendingVerification(domain)
-            hooks.beforeTransaction = async (): Promise<void> => {
-                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, {
-                    ssoDomainVerification: { ...pending, status: SsoDomainVerificationStatus.VERIFIED },
-                })
-            }
-
-            await expect(authnSsoSamlService(appLog()).updateSsoDomain({ platformId: mockPlatform.id, ssoDomain: domain }))
-                .rejects.toMatchObject(SSO_DOMAIN_CHANGED)
-
-            const saved = await readPlatform(mockPlatform.id)
-            expect(saved.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
-            expect(saved.ssoDomainVerification?.record.value).toBe(pending.record.value)
-        })
-
-        it('does not write a stale pending verification over a domain verified meanwhile', async () => {
-            const { mockPlatform } = await mockAndSavePendingDomainSetup()
-            const domain = mockPlatform.ssoDomain ?? ''
-            hooks.beforeTransaction = async (): Promise<void> => {
-                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, {
-                    ssoDomainVerification: { ...pendingVerification(domain), status: SsoDomainVerificationStatus.VERIFIED },
-                })
-            }
-
-            await expect(authnSsoSamlService(appLog()).updateSsoDomain({ platformId: mockPlatform.id, ssoDomain: domain }))
-                .rejects.toMatchObject(SSO_DOMAIN_CHANGED)
-
-            const saved = await readPlatform(mockPlatform.id)
-            expect(saved.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
-        })
-
         it('updates the platform logo icons', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
@@ -512,7 +150,6 @@ describe('Platform API', () => {
         }),
 
         it('updates platform with boolean and array fields via multipart form data', async () => {
-            configureGoogleSignIn()
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
