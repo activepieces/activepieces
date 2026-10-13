@@ -42,8 +42,6 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { pat
           epochMilliSeconds: dayjs(modTime).valueOf(),
         };
       });
-    } catch (err) {
-      return [];
     } finally {
       if (client) {
         await endClient(client, auth.props.protocol);

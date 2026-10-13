@@ -28,6 +28,7 @@ Triggers define how and when a flow starts. The module handles registration, eve
 - **Renewal jobs** re-register expiring webhook pieces via the ON_RENEW hook.
 - **`*/X` cron is not "every X minutes"** — it means "minutes divisible by X", so it double-fires at :00 and :X for X > 30 and gaps unevenly when X doesn't divide 60. Use `INTERVAL`/`intervalMs` for a rolling interval; reserve cron for wall-clock schedules. This bit the default poll schedule until GIT-1632.
 - **Trigger health** (`triggerRunStats`): Redis key `trigger_run:{platformId}:{pieceName}:{date}:{status}`, 14-day retention, shown in Platform Admin (Cloud).
+- **A polling `items` that catches its own connect or auth error and returns `[]` hides the outage.** The worker counts the poll COMPLETED, logs no warning and the flow stays enabled, so a rotated password looks like an empty folder. Let it throw: `pollingHelper.poll` fails before it writes `lastPoll`, the poll counts FAILED with a worker warn, and the next good poll catches up on everything missed. SFTP New File was fixed this way (ENG-796); dozens of community triggers still swallow errors the same way.
 
 ### Editions
 All four strategies available in CE/EE/Cloud. Cloud additionally surfaces trigger health stats in Platform Admin.
