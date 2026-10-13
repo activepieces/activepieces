@@ -7,6 +7,7 @@ import { telegramSendMessageActionOutputSchema } from '../output-schemas';
 export const telegramSendMessage = createAction({
   auth: telegramBotAuth,
   name: 'telegram_send_message',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a text message to a Telegram chat, group, or channel.',
   audience: 'ai',

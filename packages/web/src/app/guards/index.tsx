@@ -19,6 +19,7 @@ import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-us
 import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
+import { AgentsFlagGuard } from './agents-flag-guard';
 import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
@@ -62,15 +63,17 @@ const agentRoutes = [
     path: '/agents',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <ProjectDashboardLayout>
-          <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
-            <PageTitle title="Agents">
-              <Suspense fallback={<RouteLoadingBar />}>
-                <AgentsPage />
-              </Suspense>
-            </PageTitle>
-          </RoutePermissionGuard>
-        </ProjectDashboardLayout>
+        <AgentsFlagGuard>
+          <ProjectDashboardLayout>
+            <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+              <PageTitle title="Agents">
+                <Suspense fallback={<RouteLoadingBar />}>
+                  <AgentsPage />
+                </Suspense>
+              </PageTitle>
+            </RoutePermissionGuard>
+          </ProjectDashboardLayout>
+        </AgentsFlagGuard>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },

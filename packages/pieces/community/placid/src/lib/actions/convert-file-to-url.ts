@@ -7,6 +7,7 @@ import FormData from 'form-data';
 export const convertFileToUrl = createAction({
 	auth: placidAuth,
 	name: 'convert_file_to_url',
+	classification: 'WRITE',
 	displayName: 'Convert File to URL',
 	description: 'Convert uploaded file(s) into media URL(s) consumable by Placid templates.',
 	audience: 'both',

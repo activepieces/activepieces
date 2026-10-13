@@ -69,6 +69,7 @@ function normalizeImageGenerationResponse(provider: string, response: any) {
 export const imageGenerationAction = createAction({
   auth: edenAiAuth,
   name: 'image_generation',
+  classification: 'READ',
   displayName: 'Image Generation',
   description: 'Create images from text prompts using Eden AI. Supports multiple providers, models, and resolutions.',
   audience: 'both',

@@ -10,6 +10,7 @@ import { sendEmailOutputSchema } from '../output-schemas';
 export const sendEmail = createAction({
   auth: resendAuth,
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   outputSchema: sendEmailOutputSchema,
   description: 'Send a text or HTML email',

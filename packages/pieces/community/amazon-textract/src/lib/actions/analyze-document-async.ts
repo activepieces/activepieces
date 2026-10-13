@@ -16,6 +16,7 @@ const TIMEOUT_MS = 5 * 60 * 1000;
 export const analyzeDocumentAsync = createAction({
   auth: amazonTextractAuth,
   name: 'analyze-document-async',
+  classification: 'READ',
   displayName: 'Analyze Document from S3 (Multi-Page)',
   description:
     'Extract text, forms, tables, and signatures from a PDF or TIFF stored in S3. Works with both single-page and multi-page documents. This action waits for processing to finish and returns all results automatically — no extra steps needed.',

@@ -46,22 +46,22 @@ export enum timeFormat {
   format14 = 'X',
 }
 
-export enum timeFormatLabel {
-  format00 = 'DDD MMM DD YYYY HH:mm:ss (Sun Sep 17 2023 11:23:58)',
-  format01 = 'DDD MMM DD HH:mm:ss YYYY (Sun Sep 17 11:23:58 2023)',
-  format02 = 'MMMM DD YYYY HH:mm:ss (September 17 2023 11:23:58)',
-  format03 = 'MMMM DD YYYY (September 17 2023)',
-  format04 = 'MMM DD YYYY (Sep 17 2023)',
-  format05 = 'YYYY-MM-DDTHH:mm:ss (2023-09-17T11:23:58) ',
-  format06 = 'YYYY-MM-DD HH:mm:ss (2023-09-17 11:23:58)',
-  format07 = 'YYYY-MM-DD (2023-09-17)',
-  format08 = 'MM-DD-YYYY (09-17-2023)',
-  format09 = 'MM/DD/YYYY (09/17/2023)',
-  format10 = 'MM/DD/YY (09/17/23)',
-  format11 = 'DD-MM-YYYY (17-09-2023)',
-  format12 = 'DD/MM/YYYY (17/09/2023)',
-  format13 = 'DD/MM/YY (17/09/23)',
-  format14 = 'X (1694949838)',
+export enum timeFormatExample {
+  format00 = 'Sun Sep 17 2023 11:23:58',
+  format01 = 'Sun Sep 17 11:23:58 2023',
+  format02 = 'September 17 2023 11:23:58',
+  format03 = 'September 17 2023',
+  format04 = 'Sep 17 2023',
+  format05 = '2023-09-17T11:23:58',
+  format06 = '2023-09-17 11:23:58',
+  format07 = '2023-09-17',
+  format08 = '09-17-2023',
+  format09 = '09/17/2023',
+  format10 = '09/17/23',
+  format11 = '17-09-2023',
+  format12 = '17/09/2023',
+  format13 = '17/09/23',
+  format14 = '1694949838',
 }
 
 
@@ -102,36 +102,93 @@ export function parseDate(date: string, format: string): dayjs.Dayjs {
   }
   return djs;
 }
-export const timeFormatDescription = `Here's what each part of the format (e.g., YYYY) represents:
-\nYYYY : Year (4 digits) - Example: 2023
-\nYY : Year (2 digits) - Example: 23
-\nMMMM : Month (full name) - Example: September
-\nMMM : Month (short name) - Example: Sep
-\nMM : Month (2 digits) - Example: 09
-\nDDDD : Day (full name) - Example: Sunday
-\nDDD : Day (short name) - Example: Sun
-\nDD : Day (2 digits) - Example: 17
-\nHH : Hour (2 digits) - Example: 11
-\nmm : Minute (2 digits) - Example: 23
-\nss : Second (2 digits) - Example: 58
-\nX : Time in Unix format - Example: 1694949838`;
+export const inputFormatDescription =
+  'Pick how your date is written.';
+export const outputFormatDescription =
+  'Pick how the result should look.';
+export const dateInputDescription =
+  'Usually a value from a previous step, in the format below.';
+export const timeInputDescription = '24-hour clock, HH:mm.';
+export const timeInputPlaceholder = '14:30';
+export const useCurrentTimeDescription =
+  'Ignore the Time field and use the current time of day.';
 
 export const optionalTimeFormats = [
-  { label: timeFormatLabel.format00, value: timeFormat.format00 },
-  { label: timeFormatLabel.format01, value: timeFormat.format01 },
-  { label: timeFormatLabel.format02, value: timeFormat.format02 },
-  { label: timeFormatLabel.format03, value: timeFormat.format03 },
-  { label: timeFormatLabel.format04, value: timeFormat.format04 },
-  { label: timeFormatLabel.format05, value: timeFormat.format05 },
-  { label: timeFormatLabel.format06, value: timeFormat.format06 },
-  { label: timeFormatLabel.format07, value: timeFormat.format07 },
-  { label: timeFormatLabel.format08, value: timeFormat.format08 },
-  { label: timeFormatLabel.format09, value: timeFormat.format09 },
-  { label: timeFormatLabel.format10, value: timeFormat.format10 },
-  { label: timeFormatLabel.format11, value: timeFormat.format11 },
-  { label: timeFormatLabel.format12, value: timeFormat.format12 },
-  { label: timeFormatLabel.format13, value: timeFormat.format13 },
-  { label: timeFormatLabel.format14, value: timeFormat.format14 },
+  {
+    label: timeFormatExample.format00,
+    value: timeFormat.format00,
+    description: timeFormat.format00,
+  },
+  {
+    label: timeFormatExample.format01,
+    value: timeFormat.format01,
+    description: timeFormat.format01,
+  },
+  {
+    label: timeFormatExample.format02,
+    value: timeFormat.format02,
+    description: timeFormat.format02,
+  },
+  {
+    label: timeFormatExample.format03,
+    value: timeFormat.format03,
+    description: timeFormat.format03,
+  },
+  {
+    label: timeFormatExample.format04,
+    value: timeFormat.format04,
+    description: timeFormat.format04,
+  },
+  {
+    label: timeFormatExample.format05,
+    value: timeFormat.format05,
+    description: timeFormat.format05,
+  },
+  {
+    label: timeFormatExample.format06,
+    value: timeFormat.format06,
+    description: timeFormat.format06,
+  },
+  {
+    label: timeFormatExample.format07,
+    value: timeFormat.format07,
+    description: timeFormat.format07,
+  },
+  {
+    label: timeFormatExample.format08,
+    value: timeFormat.format08,
+    description: timeFormat.format08,
+  },
+  {
+    label: timeFormatExample.format09,
+    value: timeFormat.format09,
+    description: timeFormat.format09,
+  },
+  {
+    label: timeFormatExample.format10,
+    value: timeFormat.format10,
+    description: timeFormat.format10,
+  },
+  {
+    label: timeFormatExample.format11,
+    value: timeFormat.format11,
+    description: timeFormat.format11,
+  },
+  {
+    label: timeFormatExample.format12,
+    value: timeFormat.format12,
+    description: timeFormat.format12,
+  },
+  {
+    label: timeFormatExample.format13,
+    value: timeFormat.format13,
+    description: timeFormat.format13,
+  },
+  {
+    label: timeFormatExample.format14,
+    value: timeFormat.format14,
+    description: 'X (Unix timestamp)',
+  },
 ];
 
 export const timeZoneOptions = [

@@ -5,6 +5,7 @@ import { bettermodeAuth } from '../auth';
 
 export const createDiscussionAction = createAction({
   name: 'create_discussion',
+  classification: 'WRITE',
   auth: bettermodeAuth,
   displayName: 'Create Discussion Post',
   description: 'Create a new discussion post in a space',

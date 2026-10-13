@@ -13,6 +13,7 @@ import { googleTasksMoveTaskOutputSchema } from '../output-schemas';
 export const googleTasksMoveTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'move_task',
+  classification: 'WRITE',
   displayName: 'Move Task',
   description:
     'Reposition or reparent a task within its list, or move it to another list.',

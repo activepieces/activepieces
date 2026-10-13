@@ -9,6 +9,7 @@ import { cardMovedTriggerOutputSchema } from '../output-schemas';
 export const cardMovedTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'card_moved_to_list',
+	classification: 'READ',
 	displayName: 'Card Moved to list',
 	description: 'Trigger when a card is moved to the list specified',
 	outputSchema: cardMovedTriggerOutputSchema,

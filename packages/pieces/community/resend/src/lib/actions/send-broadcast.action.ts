@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendBroadcastOutputSchema } from '../output-schemas';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
 
 export const sendBroadcast = createAction({
   name: 'send_broadcast',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Send Broadcast',
   outputSchema: sendBroadcastOutputSchema,
@@ -25,12 +27,6 @@ export const sendBroadcast = createAction({
     const body: Record<string, unknown> = {};
     if (propsValue.scheduled_at) body['scheduled_at'] = propsValue.scheduled_at;
 
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.POST,
-      url: `https://api.resend.com/broadcasts/${propsValue.broadcast_id}/send`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body,
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.POST, path: `/broadcasts/${propsValue.broadcast_id}/send`, body: body });
   },
 });

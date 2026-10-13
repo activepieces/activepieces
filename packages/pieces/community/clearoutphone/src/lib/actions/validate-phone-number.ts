@@ -5,6 +5,7 @@ import { clearoutphoneAuth } from '../common/auth';
 export const validatePhoneNumber = createAction({
   auth: clearoutphoneAuth,
   name: 'validatePhoneNumber',
+  classification: 'READ',
   displayName: 'Validate Phone Number',
   description:
     'Validate a phone number and retrieve comprehensive information using ClearoutPhone API',

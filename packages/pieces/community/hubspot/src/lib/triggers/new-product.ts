@@ -1,8 +1,7 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -13,16 +12,17 @@ import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
@@ -78,8 +78,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newProductTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-product',
+	classification: 'READ',
 	displayName: 'New Product',
-	description: 'Triggers when new product is available.',
+	description: 'Triggers when a new product is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new product is created in the HubSpot product library. Each event represents one product record with properties such as name, description, price, and tax. Polls for products by creation date; does not fire on updates to existing products.',
@@ -87,18 +88,17 @@ export const newProductTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                        
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.PRODUCT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

@@ -8,6 +8,7 @@ import { searchUsersOutputSchema } from '../../output-schemas';
 export const githubSearchUsersAction = createAction({
   auth: githubAuth,
   name: 'search_users',
+  classification: 'SEARCH',
   displayName: 'Search Users (Agent)',
   description: 'Searches GitHub users and organizations.',
   audience: 'ai',

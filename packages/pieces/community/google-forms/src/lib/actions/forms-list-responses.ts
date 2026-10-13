@@ -10,6 +10,7 @@ import { formsListResponsesActionOutputSchema } from '../output-schemas';
 export const formsListResponses = createAction({
   auth: googleFormsAuth,
   name: 'forms_list_responses',
+  classification: 'SEARCH',
   displayName: 'List Form Responses',
   description:
     'List submitted responses for a form, with each response\'s responseId, timestamps, and answers keyed by questionId.',

@@ -1,9 +1,8 @@
 import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	createTrigger,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -14,11 +13,12 @@ import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
 
+import { crmObjectOutputSchema } from '../output-schemas';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ additionalPropertiesToRetrieve?: string[] | string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
@@ -74,8 +74,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ a
 export const newOrUpdatedProductTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-product',
-	displayName: 'Product Recently Created or Updated',
-	description: 'Triggers when a product recently created or updated.',
+	classification: 'READ',
+	displayName: 'New or Updated Product',
+	description: 'Triggers when a product is created or updated.',
 	aiMetadata: {
 		description:
 			'Fires when a product is created or modified in the HubSpot product library. Each event represents one product record with properties such as name, description, price, and tax. Polls by last-modified date, so both new and edited products trigger it.',
@@ -83,18 +84,17 @@ export const newOrUpdatedProductTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                                    
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.PRODUCT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

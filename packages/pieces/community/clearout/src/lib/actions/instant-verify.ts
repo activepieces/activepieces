@@ -4,6 +4,7 @@ import { clearoutAuth } from '../auth';
 
 export const instantVerifyAction = createAction({
   name: 'instant_verify',
+  classification: 'READ',
   auth: clearoutAuth,
   displayName: 'Instant Verify',
   description: 'Instant Verify an email address',

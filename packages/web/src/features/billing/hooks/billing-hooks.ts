@@ -26,7 +26,8 @@ import { api } from '@/lib/api';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { planSelectorUtils } from '../components/plan-selector-utils';
-import { usePlanSwitchSuccessDialogStore } from '../stores/plan-switch-success-dialog-state';
+
+import { billingDialogHooks } from './billing-dialog-hooks';
 
 export const PLATFORM_BILLING_SUBSCRIPTION_KEY = [
   'platform-billing-subscription',
@@ -60,7 +61,9 @@ export const billingMutations = {
           window.open(checkoutUrl, '_blank');
         } else {
           refreshBillingCaches(queryClient);
-          usePlanSwitchSuccessDialogStore.getState().openDialog(planId);
+          billingDialogHooks.usePlanSwitchSuccessDialogStore
+            .getState()
+            .openDialog(planId);
         }
         onDone?.();
       },
@@ -218,7 +221,7 @@ export const billingMutations = {
     return useMutation({
       mutationFn: async () => {
         const { url } = await platformBillingApi.setupPayment({
-          redirectUrl: `${window.location.origin}/platform/setup/billing/success?action=setup`,
+          redirectUrl: `${window.location.origin}/platform/billing/success?action=setup`,
         });
         if (url) {
           window.open(url, '_blank');
@@ -264,7 +267,6 @@ export const billingQueries = {
       queryKey: billingKeys.projectsUsage(platformId, params),
       queryFn: () => platformBillingApi.getProjectsUsage(params),
       enabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
 };

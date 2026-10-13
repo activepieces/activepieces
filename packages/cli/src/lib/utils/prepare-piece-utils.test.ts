@@ -89,6 +89,16 @@ describe('rewriteManifestForBundle', () => {
         expect(manifestOf(distPath).dependencies).toEqual({ pg: '8.11.3' })
     })
 
+    it('publishes forked entry bundles alongside the main bundle', () => {
+        const { distPath, repoRoot } = setup({ oracledb: '6.10.0' })
+
+        rewriteManifestForBundle({ distPath, external: ['oracledb'], repoRoot, extraBundleFiles: ['src/oracle-runner.js'] })
+
+        const manifest = manifestOf(distPath)
+        expect(manifest.files).toEqual(['src/index.js', 'src/oracle-runner.js', 'package.json', 'src/i18n'])
+        expect(manifest.bundleForkedEntries).toBeUndefined()
+    })
+
     it('leaves an optional peer dependency out instead of failing on it', () => {
         const { distPath, repoRoot } = setup({ pg: '8.11.3' })
 

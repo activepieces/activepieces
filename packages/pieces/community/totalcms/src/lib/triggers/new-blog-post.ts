@@ -1,78 +1,63 @@
-import {
-  TriggerStrategy,
-  createTrigger,
-  Property,
-  PiecePropValueSchema,
-  AppConnectionValueForAuthProperty,
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { TotalCMSAuthType, cmsAuth } from '../auth';
-import { getContent } from '../api';
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof cmsAuth>,
-  { slug: string }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue }) => {
-    const slug = propsValue.slug;
-    const posts = await getContent(auth, 'blog', slug);
-
-    return posts.data.map((post: { permalink: string }) => ({
-      id: post.permalink,
-      data: post,
-    }));
-  },
-};
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { cmsAuth } from '../auth';
+import { totalcmsPolling } from '../common/polling';
+import { totalcmsProps } from '../common/props';
+import { totalcmsOutputSchemas } from '../output-schemas';
+import { totalcmsSamples } from './samples';
 
 export const newBlogPost = createTrigger({
+  auth: cmsAuth,
   name: 'new_blog_post',
+  classification: 'READ',
   displayName: 'New Blog Post',
-  description: 'Triggers when a new blog post is published',
+  description: 'Triggers when a new post is added to a blog.',
   aiMetadata: {
-    description: 'Fires when a new blog post appears in the specified Total CMS blog (identified by its CMS ID). Polls the blog and emits one event per newly published post, deduplicated by permalink.',
+    description:
+      'Fires once for each new post added to a Total CMS blog collection, with the full post (content included). Drafts are skipped unless Include Drafts is on; a post created as a draft and published later is not reported again.',
   },
   type: TriggerStrategy.POLLING,
   props: {
-    slug: Property.ShortText({
-      displayName: 'CMS ID',
-      description: 'The CMS ID of the content to retrieve',
-      required: true,
+    collection: totalcmsProps.collection({ displayName: 'Blog', description: 'The blog collection to watch.', schemas: ['blog'] }),
+    include_drafts: Property.Checkbox({
+      displayName: 'Include Drafts',
+      description: 'Also trigger for posts saved as drafts.',
+      required: false,
+      defaultValue: false,
     }),
   },
-  sampleData: {},
-  onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth as TotalCMSAuthType,
+  sampleData: totalcmsSamples.blogPost,
+  outputSchema: totalcmsOutputSchemas.blogPost,
+  async onEnable(context) {
+    await totalcmsPolling.enable({
+      auth: context.auth,
       store: context.store,
-      propsValue: context.propsValue,
+      collection: context.propsValue.collection,
+      field: 'created',
+      isRepublish: context.isRepublish,
     });
   },
-  onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth as TotalCMSAuthType,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+  async onDisable(context) {
+    await totalcmsPolling.disable({ store: context.store });
   },
-  run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth as TotalCMSAuthType,
+  async run(context) {
+    const posts = await totalcmsPolling.poll({
+      auth: context.auth,
       store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
+      collection: context.propsValue.collection,
+      field: 'created',
     });
+    return posts.filter((post) => keepPost({ post, includeDrafts: context.propsValue.include_drafts === true }));
   },
-  test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth as TotalCMSAuthType,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
+  async test(context) {
+    return totalcmsPolling.sample({
+      auth: context.auth,
+      collection: context.propsValue.collection,
+      field: 'created',
+      keep: (post) => keepPost({ post, includeDrafts: context.propsValue.include_drafts === true }),
     });
   },
 });
+
+function keepPost({ post, includeDrafts }: { post: Record<string, unknown>; includeDrafts: boolean }): boolean {
+  return includeDrafts || post['draft'] !== true;
+}

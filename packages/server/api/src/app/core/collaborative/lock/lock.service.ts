@@ -5,10 +5,10 @@ const LOCK_TTL_SECONDS = 60
 const KEY_PREFIX = 'lock:'
 
 export const lockService = (log: FastifyBaseLogger) => ({
-    async acquire({ resourceId, userId, userDisplayName, force }: AcquireParams): Promise<AcquireResult> {
+    async acquire({ resourceId, projectId, userId, userDisplayName, force }: AcquireParams): Promise<AcquireResult> {
         log.debug({ resourceId, user: { id: userId }, force }, '[Lock] Attempting to acquire lock')
         const redis = await redisConnections.useExisting()
-        const key = KEY_PREFIX + resourceId
+        const key = buildKey({ resourceId, projectId })
         const value = JSON.stringify({ userId, userDisplayName })
 
         if (force) {
@@ -36,10 +36,10 @@ export const lockService = (log: FastifyBaseLogger) => ({
         return { acquired: false, lock }
     },
 
-    async release({ resourceId, userId }: ReleaseParams): Promise<boolean> {
+    async release({ resourceId, projectId, userId }: ReleaseParams): Promise<boolean> {
         log.debug({ resourceId, user: { id: userId } }, '[Lock] Attempting to release lock')
         const redis = await redisConnections.useExisting()
-        const key = KEY_PREFIX + resourceId
+        const key = buildKey({ resourceId, projectId })
         const existing = await redis.get(key)
         if (existing) {
             const lock: LockValue = JSON.parse(existing)
@@ -56,22 +56,32 @@ export const lockService = (log: FastifyBaseLogger) => ({
         return false
     },
 
-    async getLock({ resourceId }: GetLockParams): Promise<LockValue | null> {
+    async getLock({ resourceId, projectId }: GetLockParams): Promise<LockValue | null> {
         const redis = await redisConnections.useExisting()
-        const existing = await redis.get(KEY_PREFIX + resourceId)
+        const existing = await redis.get(buildKey({ resourceId, projectId }))
         const lock = existing ? JSON.parse(existing) : null
         log.debug({ resourceId, hasLock: !!lock }, '[Lock] Get lock')
         return lock
     },
 })
 
+function buildKey({ resourceId, projectId }: KeyParams): string {
+    return `${KEY_PREFIX}${projectId}:${resourceId}`
+}
+
 type LockValue = {
     userId: string
     userDisplayName: string
 }
 
+type KeyParams = {
+    resourceId: string
+    projectId: string
+}
+
 type AcquireParams = {
     resourceId: string
+    projectId: string
     userId: string
     userDisplayName: string
     force?: boolean
@@ -84,9 +94,11 @@ type AcquireResult = {
 
 type ReleaseParams = {
     resourceId: string
+    projectId: string
     userId: string
 }
 
 type GetLockParams = {
     resourceId: string
+    projectId: string
 }

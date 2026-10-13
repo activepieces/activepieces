@@ -7,6 +7,7 @@ import { containerProp } from '../common';
 export const readBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'readBlob',
+  classification: 'READ',
   displayName: 'Read Blob',
   description: 'Read the Blob at the specified lcoation',
   audience: 'both',

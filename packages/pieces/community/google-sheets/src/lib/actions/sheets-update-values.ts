@@ -11,6 +11,7 @@ import { sheetsUpdateValuesActionOutputSchema } from '../output-schemas';
 export const sheetsUpdateValues = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_update_values',
+	classification: 'WRITE',
 	displayName: 'Write Cell Range',
 	description: 'Write a 2D array of values into a worksheet at a specific A1 range.',
 	audience: 'ai',

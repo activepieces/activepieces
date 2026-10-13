@@ -10,6 +10,7 @@ import { ShopifyAuth } from '../common/types';
 
 export const newAbandonedCheckout = createTrigger({
   name: 'new_abandoned_checkout',
+  classification: 'READ',
   auth: shopifyAuth,
   displayName: 'New Abandoned Checkout',
   description: 'Triggers when a checkout is abandoned.',

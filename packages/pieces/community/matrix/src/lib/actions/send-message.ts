@@ -5,6 +5,7 @@ import { matrixAuth } from '../..';
 export const sendMessage = createAction({
   auth: matrixAuth,
   name: 'send_message',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message to a room',
   audience: 'both',

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { checkoutSessionOutputSchema } from '../output-schemas';
 export const stripeGetCheckoutSession = createAction({
   name: 'get_checkout_session',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Checkout Session (Agent)',
   description: 'Retrieve a Stripe Checkout Session by its ID.',

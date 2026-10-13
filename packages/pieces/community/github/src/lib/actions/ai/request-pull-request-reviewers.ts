@@ -8,6 +8,7 @@ import { pullRequestBodyOutputSchema } from '../../output-schemas';
 export const githubRequestPullRequestReviewersAction = createAction({
   auth: githubAuth,
   name: 'request_pull_request_reviewers',
+  classification: 'WRITE',
   displayName: 'Request Pull Request Reviewers (Agent)',
   description: 'Requests reviews from users or teams on a pull request.',
   audience: 'ai',

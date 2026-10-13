@@ -7,6 +7,7 @@ import { lineItemsProps } from '../common/props';
 export const createInvoice = createAction({
   auth: bokioAuth,
   name: 'createInvoice',
+  classification: 'WRITE',
   displayName: 'Create Invoice',
   description: 'Creates a new draft invoice in Bokio',
   audience: 'both',

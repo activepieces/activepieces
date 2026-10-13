@@ -7,6 +7,7 @@ import { labelsArrayOutputSchema } from '../../output-schemas';
 export const githubAddLabelsToIssueAiAction = createAction({
   auth: githubAuth,
   name: 'add_labels_to_issue_ai',
+  classification: 'WRITE',
   displayName: 'Add Labels to Issue (Agent)',
   description: 'Adds labels to an issue without removing existing ones.',
   audience: 'ai',

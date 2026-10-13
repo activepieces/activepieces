@@ -5,6 +5,7 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 export const createRefund = createAction({
   auth: cashfreePaymentsAuth,
   name: 'create-refund',
+  classification: 'DESTRUCTIVE',
   displayName: 'Create Refund',
   description: 'Initiate a refund for a Cashfree order. Refunds can only be initiated within six months of the original transaction.',
   audience: 'both',

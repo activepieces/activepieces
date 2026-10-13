@@ -12,6 +12,7 @@ import {
 export const convertHtml = createAction({
   auth: filetopdfAuth,
   name: 'convert_html',
+  classification: 'READ',
   displayName: 'Convert HTML',
   description: 'Render a raw HTML string (with optional CSS) to PDF using Chromium.',
   audience: 'both',

@@ -1,18 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { findLatestCommentOutputSchema } from '../output-schemas';
 
 interface ZendeskComment {
   id: number;
   type: string;
   body: string;
   html_body: string;
-  plain_text_body: string;
+  plain_body: string;
   public: boolean;
   author_id: number;
   created_at: string;
@@ -32,9 +33,11 @@ interface ZendeskCommentsResponse {
 export const findLatestCommentAction = createAction({
   auth: zendeskAuth,
   name: 'find-latest-comment',
+  outputSchema: findLatestCommentOutputSchema,
+  classification: 'READ',
   displayName: 'Find Latest Comment',
   description: 'Find the latest comment on a ticket.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieves the most recent comment on a specified ticket, including the comment body, author, timestamp, and any attachments. Useful for extracting the latest response in a ticket thread or analyzing recent customer communication.', idempotent: true },
   props: {
     ticket_id: ticketIdDropdown,
@@ -50,7 +53,7 @@ export const findLatestCommentAction = createAction({
     const { ticket_id, include_private } = propsValue;
 
     try {
-      let url: string | undefined = `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/comments?sort_order=desc`;
+      let url: string | undefined = `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}/comments?sort_order=desc`;
       let latestComment: ZendeskComment | undefined;
       let isFirstPage = true;
 
@@ -59,11 +62,7 @@ export const findLatestCommentAction = createAction({
         const response = await httpClient.sendRequest<ZendeskCommentsResponse & { next_page?: string }>({
           url: currentUrl,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const comments = response.body.comments || [];

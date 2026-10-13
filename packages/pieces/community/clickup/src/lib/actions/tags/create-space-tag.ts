@@ -6,6 +6,7 @@ import { clickupAuth } from '../../auth';
 export const clickupCreateSpaceTag = createAction({
   auth: clickupAuth,
   name: 'clickup_create_space_tag',
+  classification: 'WRITE',
   description: 'Create a new tag in a ClickUp space',
   audience: 'ai',
   aiMetadata: {

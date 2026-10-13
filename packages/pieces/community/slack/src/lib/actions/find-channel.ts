@@ -7,6 +7,7 @@ import { findChannelActionOutputSchema } from '../output-schemas';
 export const findChannelAction = createAction({
   auth: slackAuth,
   name: 'slack_find_channel',
+  classification: 'SEARCH',
   displayName: 'Find Channel',
   description: 'Finds a channel by name and returns its ID.',
   audience: 'ai',

@@ -8,6 +8,7 @@ import { searchRepositoriesOutputSchema } from '../../output-schemas';
 export const githubSearchRepositoriesAction = createAction({
   auth: githubAuth,
   name: 'search_repositories',
+  classification: 'SEARCH',
   displayName: 'Search Repositories (Agent)',
   description: 'Searches public/accessible repositories with a query.',
   audience: 'ai',

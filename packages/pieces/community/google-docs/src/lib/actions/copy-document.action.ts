@@ -7,6 +7,7 @@ import { copyDocumentActionOutputSchema } from '../output-schemas';
 export const copyDocument = createAction({
 	auth: googleDocsAuth,
 	name: 'copy_document',
+	classification: 'WRITE',
 	displayName: 'Copy Document',
 	description: 'Create a copy of an existing Google Docs document.',
 	audience: 'ai',

@@ -9,6 +9,7 @@ import { WorkbookWorksheet } from '@microsoft/microsoft-graph-types';
 export const findWorksheetAction = createAction({
   auth: excelAuth,
   name: 'find-worksheet',
+  classification: 'SEARCH',
   displayName: 'Find Worksheet',
   description: 'Finds an existing worksheet by name.',
   audience: 'both',

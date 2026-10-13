@@ -17,6 +17,7 @@ import { insertRowAtTopActionOutputSchema } from '../output-schemas';
 export const insertRowAtTopAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'insert-row-at-top',
+	classification: 'WRITE',
 	displayName: 'Add Row at Top',
 	description: 'Inserts a new row at the top of a worksheet, just below the header row.',
 	audience: 'human',
@@ -25,19 +26,36 @@ export const insertRowAtTopAction = createAction({
 			'Inserts a blank row near the top of a worksheet and writes the supplied values into it, shifting every existing row below it down by one; the insertion point defaults to just under row 1 but can be moved with Insert After Row. Use when newest-first ordering matters — prefer Add Row to append at the bottom, which is cheaper and does not renumber existing rows. Not idempotent: each call inserts another row and shifts the rest down again.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['insertAfterRow', 'first_row_headers', 'values'],
+		},
+	],
 	props: {
 		...commonProps,
 		first_row_headers: isFirstRowHeaderProp(),
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered as strings and have no effect.',
+				'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
+			advanced: true,
 		}),
 		insertAfterRow: Property.Number({
 			displayName: 'Insert After Row',
 			description:
-				'The row above which the new row will be inserted. Defaults to 1 (insert right under row 1, which is the header in most sheets).',
+				'Insert the new row below this row. Defaults to 1, the header row.',
 			required: false,
 			defaultValue: 1,
 		}),

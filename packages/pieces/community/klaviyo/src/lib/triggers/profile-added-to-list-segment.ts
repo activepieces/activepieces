@@ -209,6 +209,7 @@ const polling: Polling<KlaviyoAuthValue, StaticPropsValue<typeof props>> = {
 export const profileAddedToListOrSegmentTrigger = createTrigger({
   auth: klaviyoAuth,
   name: 'profile_added_to_list_or_segment',
+  classification: 'READ',
   displayName: 'Profile Added to List/Segment',
   description: 'Triggers when a profile is added to a specific list or segment.',
   aiMetadata: {

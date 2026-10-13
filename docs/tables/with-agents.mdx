@@ -1,0 +1,31 @@
+---
+title: "Using tables with agents"
+sidebarTitle: "Use with agents"
+description: "Give an agent your data to look things up in"
+icon: "robot"
+---
+
+A table can be attached to an [agent](/agents/overview) as a **knowledge base**, letting it look things up before deciding what to do.
+
+## Why not just put it in the instructions
+
+You could paste your product list into an agent's instructions. It works until the list changes, and then you have two versions of the truth and one of them is wrong.
+
+A table stays live. Update a row and the agent's next answer reflects it, with no edit to the agent.
+
+## Good candidates
+
+- Product or pricing data
+- Customer or account records
+- Policies, rules, approved wording
+- Anything a person would look up rather than memorise
+
+## Adding one
+
+In the agent editor, find the **Knowledge Base** section and choose **Add Table Source**. Files work the same way through **Add File Source**, for content that isn't already in a table. The section only shows when [knowledge is available](/agents/knowledge) for your database and model provider.
+
+## Instructions still matter
+
+A knowledge base tells the agent *what it can look up*, not *when to*. Say so in the [instructions](/agents/create):
+
+> Before answering pricing questions, check the pricing table. Never quote a figure that isn't in it.

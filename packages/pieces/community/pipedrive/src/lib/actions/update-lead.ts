@@ -9,10 +9,13 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField, GetLeadResponse } from '../common/types';
 import dayjs from 'dayjs';
+import { updateLeadActionOutputSchema } from '../output-schemas';
 
 export const updateLeadAction = createAction({
 	auth: pipedriveAuth,
 	name: 'update-lead',
+	outputSchema: updateLeadActionOutputSchema,
+	classification: 'WRITE',
 	displayName: 'Update Lead',
 	description: 'Updates an existing lead.',
 	audience: 'both',

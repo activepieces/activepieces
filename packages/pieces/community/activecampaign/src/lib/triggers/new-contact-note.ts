@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newContactNoteTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_contact_note',
+	classification: 'READ',
 	displayName: 'New Contact Note',
 	description: 'Triggers when a new contact note is added.',
 	aiMetadata: {

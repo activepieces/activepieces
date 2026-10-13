@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { authenticationApi } from '@/api/authentication-api';
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -37,24 +38,26 @@ const RedirectPage: React.FC = React.memo(() => {
           const data = await authenticationApi.claimThirdPartyRequest({
             providerName,
             code,
+            attribution: acquisitionUtils.getAcquisitionParams(),
           });
           authenticationSession.saveResponse(data, false);
-          if (isNil(data.projectId)) {
+          if (isNil(data.platformId)) {
             navigate('/create-platform');
             return;
           }
           navigate(from);
         } catch (e) {
-          if (
-            api.isError(e) &&
-            (e.response?.data as { code: ErrorCode })?.code ===
-              ErrorCode.INVITATION_ONLY_SIGN_UP
-          ) {
+          const errorCode = api.isError(e)
+            ? (e.response?.data as { code: ErrorCode })?.code
+            : undefined;
+          if (errorCode === ErrorCode.INVITATION_ONLY_SIGN_UP) {
             toast(t('Invitation only sign up'), {
               description: t(
                 'Please ask your administrator to add you to the organization.',
               ),
             });
+          } else if (errorCode === ErrorCode.INVALID_CREDENTIALS) {
+            toast(t('Sign-in failed'));
           } else {
             internalErrorToast();
           }

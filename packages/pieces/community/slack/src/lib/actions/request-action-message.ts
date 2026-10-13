@@ -1,22 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  text,
-  slackChannel,
-  username,
-  actions,
-  singleSelectChannelInfo,
-  threadTs,
-  mentionOriginFlow,
-} from '../common/props';
+import { profilePicture, text, slackChannel, onlyBotChannels, username, actions, singleSelectChannelInfo, threadTs, mentionOriginFlow, replyBroadcast } from '../common/props';
 import { requestAction } from '../common/request-action';
 import { requestActionActionOutputSchema } from '../output-schemas';
 
 export const requestActionMessageAction = createAction({
   auth: slackAuth,
   name: 'request_action_message',
+  classification: 'WRITE',
   displayName: 'Request Action in A Channel',
   description:
     'Send a message in a channel and wait until an action is selected',
@@ -27,20 +19,32 @@ export const requestActionMessageAction = createAction({
     idempotent: false,
   },
   outputSchema: requestActionActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text', 'actions', 'threadTs'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     text,
     actions,
     threadTs,
     username,
     profilePicture,
-    replyBroadcast: Property.Checkbox({
-      displayName: 'Broadcast reply to channel',
-      description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
-      required: false,
-      defaultValue: false,
-    }),
+    replyBroadcast,
     mentionOriginFlow,
   },
   async run(context) {

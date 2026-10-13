@@ -1,8 +1,10 @@
 import {
   ApFlagId,
   ColorName,
+  PICKABLE_COLOR_NAMES,
   PlatformRole,
   PROJECT_COLOR_PALETTE,
+  PROJECT_COLOR_SWATCH,
   ProjectIcon,
   ProjectType,
 } from '@activepieces/shared';
@@ -27,6 +29,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -39,6 +42,7 @@ export type FormValues = {
   externalId?: string;
   maxConcurrentJobs?: number | null;
   activeFlowsLimit?: number | null;
+  sensitive?: boolean;
 };
 
 type GeneralSettingsProps = {
@@ -59,7 +63,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
   const showGeneralSettings = project.type === ProjectType.TEAM;
   const showExternalIdSettings =
     platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN;
-  const colorOptions = Object.values(ColorName);
+  const colorOptions = PICKABLE_COLOR_NAMES;
 
   return (
     <Form {...form}>
@@ -107,8 +111,9 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                                 size="icon"
                                 className={cn(
                                   'h-8 w-8 rounded-sm transition-all hover:scale-110 p-0',
-                                  currentColor === colorName &&
-                                    'ring-2 ring-offset-2 ring-foreground',
+                                  PROJECT_COLOR_SWATCH[currentColor] ===
+                                    PROJECT_COLOR_SWATCH[colorName] &&
+                                    'ring-2 ring-offset-2 ring-offset-panel ring-gray-12',
                                 )}
                                 style={{
                                   backgroundColor:
@@ -163,9 +168,35 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                   className="h-10 font-mono"
                   disabled={form.formState.disabled}
                 />
-                <FormDescription className="text-xs text-muted-foreground">
+                <FormDescription className="text-xs text-gray-11">
                   {t('Used to identify the project based on your SaaS ID')}
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {platform.plan.environmentsEnabled && (
+          <FormField
+            name="sensitive"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+                <div className="space-y-1">
+                  <Label htmlFor="sensitive" className="text-sm font-medium">
+                    {t('Sensitive Project')}
+                  </Label>
+                  <FormDescription className="text-xs text-gray-11">
+                    {t(
+                      'When enabled, publishing flows in this project requires approval.',
+                    )}
+                  </FormDescription>
+                </div>
+                <Switch
+                  id="sensitive"
+                  checked={!!field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={form.formState.disabled}
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -204,7 +235,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     onClear={() => field.onChange(null)}
                     disabled={form.formState.disabled || !isRateLimiterEnabled}
                   />
-                  <FormDescription className="text-xs text-muted-foreground">
+                  <FormDescription className="text-xs text-gray-11">
                     {isRateLimiterEnabled === false
                       ? t(
                           'The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.',
@@ -245,7 +276,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     onClear={() => field.onChange(null)}
                     disabled={form.formState.disabled}
                   />
-                  <FormDescription className="text-xs text-muted-foreground">
+                  <FormDescription className="text-xs text-gray-11">
                     {t(
                       'Maximum number of enabled flows in this project. Leave empty for no limit.',
                     )}

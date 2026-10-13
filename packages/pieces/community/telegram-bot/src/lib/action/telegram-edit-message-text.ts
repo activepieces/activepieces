@@ -7,6 +7,7 @@ import { telegramEditMessageTextActionOutputSchema } from '../output-schemas';
 export const telegramEditMessageText = createAction({
   auth: telegramBotAuth,
   name: 'telegram_edit_message_text',
+  classification: 'WRITE',
   displayName: 'Edit Message Text',
   description: 'Edit the text of a message the bot already sent.',
   audience: 'ai',

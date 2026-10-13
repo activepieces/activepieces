@@ -726,12 +726,15 @@ export async function callSalesforceApi<T extends HttpMessageBody>(
 	method: HttpMethod,
 	authentication: OAuth2PropertyValue,
 	url: string,
-	body: Record<string, unknown> | undefined
+	body: Record<string, unknown> | unknown[] | string | undefined,
+	options?: { headers?: Record<string, string>; responseType?: 'arraybuffer' | 'json' | 'text' }
 ): Promise<HttpResponse<T>> {
 	return await httpClient.sendRequest<T>({
 		method: method,
 		url: `${authentication.data['instance_url']}${url}`,
 		body,
+		headers: options?.headers,
+		responseType: options?.responseType,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: authentication['access_token'],

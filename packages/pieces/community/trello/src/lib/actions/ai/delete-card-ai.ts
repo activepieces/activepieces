@@ -10,6 +10,7 @@ import { trelloAuth } from '../../..';
 export const deleteCardAi = createAction({
   auth: trelloAuth,
   name: 'delete_card_ai',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Card (Agent)',
   description: 'Permanently delete a Trello card by ID.',
   audience: 'ai',

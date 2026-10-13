@@ -7,6 +7,7 @@ import { domainIdDropdown } from '../common/props';
 export const getLinkByPathAction = createAction({
   auth: shortIoAuth,
   name: 'get-short-link-info-by-path',
+  classification: 'READ',
   displayName: 'Get Link by Path',
   description: 'Retrieve detailed information about a short link using its domain and path.',
   audience: 'both',

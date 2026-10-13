@@ -59,6 +59,7 @@ const polling: Polling<
 
 export const updatedPageTrigger = createTrigger({
 	name: 'updated-page',
+	classification: 'READ',
 	displayName: 'Updated Page',
 	description: 'Triggers when an existing page is updated (version > 1).',
 	aiMetadata: {

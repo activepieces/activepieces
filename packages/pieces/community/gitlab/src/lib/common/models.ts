@@ -1,57 +1,45 @@
-export interface ListProjectsRequest {
-  membership?: boolean;
-  simple?: boolean;
-}
-export interface ProjectWebhookRequest {
+export type ProjectWebhookRequest = {
   url: string;
-  confidential_issues_events?: boolean;
-  confidential_note_events?: boolean;
-  deployment_events?: boolean;
-  enable_ssl_verification?: boolean;
+  token?: string;
   issues_events?: boolean;
-  job_events?: boolean;
-  merge_requests_events?: boolean;
-  note_events?: boolean;
-  pipeline_events?: boolean;
-  push_events_branch_filter?: string;
+  confidential_issues_events?: boolean;
   push_events?: boolean;
-  releases_events?: boolean;
-  tag_push_events?: boolean;
-  wiki_page_events?: boolean;
-  token?: boolean;
-}
-export interface CreateProjectIssueRequest {
-  title: string;
-  description?: string;
-}
-export interface ProjectWebhook {
-  id: string;
-}
-export interface GitlabProject {
-  id: string;
-  description?: string;
+  enable_ssl_verification?: boolean;
+};
+
+export type ProjectWebhook = {
+  id: number;
+  url: string;
+};
+
+export type GitlabProjectSummary = {
+  id: number;
   name: string;
-  name_with_namespace: string;
-  path: string;
+  name_with_namespace?: string;
   path_with_namespace: string;
-  created_at: string;
-  default_branch: string;
-  tag_list?: string[];
-  topics?: string[];
-  ssh_url_to_repo: string;
-  http_url_to_repo: string;
+};
+
+export type GitlabIssue = {
+  id: number;
+  iid: number;
+  project_id: number;
+  title: string;
   web_url: string;
-  avatar_url?: string;
-  star_count: number;
-  last_activity_at: string;
-  namespace: {
-    id: number;
-    name: string;
-    path: string;
-    kind: string;
-    full_path: string;
-    parent_id?: string;
-    avatar_url?: string;
-    web_url: string;
-  };
-}
+};
+
+export type GitlabNote = {
+  id: number;
+  body: string;
+};
+
+export type GitlabUserStatus = {
+  emoji: string | null;
+  message: string | null;
+  availability: string | null;
+  clear_status_at: string | null;
+};
+
+export type GitlabDiff = {
+  diff?: string;
+  [key: string]: unknown;
+};

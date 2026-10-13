@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const clearRowAction = createAction({
     auth: excelAuth,
     name: 'clear_row',
+    classification: 'DESTRUCTIVE',
     displayName: 'Clear Row by ID',
     description: 'Clear contents/formatting of an entire row by its ID.',
     audience: 'both',

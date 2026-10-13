@@ -8,6 +8,7 @@ import { findTaskActionOutputSchema } from '../output-schemas';
 export const todoistFindTaskAiAction = createAction({
   auth: todoistAuth,
   name: 'todoist_find_task',
+  classification: 'READ',
   displayName: 'Find Task',
   description: 'Find an active task by its exact name.',
   audience: 'ai',

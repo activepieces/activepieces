@@ -7,6 +7,7 @@ import { listChannelMembersActionOutputSchema } from '../output-schemas';
 export const listChannelMembersAction = createAction({
   auth: slackAuth,
   name: 'slack_list_channel_members',
+  classification: 'SEARCH',
   displayName: 'List Channel Members',
   description: 'Lists the user IDs of the members of a channel.',
   audience: 'ai',

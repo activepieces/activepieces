@@ -1,12 +1,14 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mailerLiteAuth } from '../..';
+import { mailerLiteAuth } from '../auth';
+import { addOrUpdateSubscriberOutputSchema } from '../output-schemas';
 import { mailerLiteCommon } from '../common';
 import dayjs from 'dayjs';
 
 export const createOrUpdateSubscriber = createAction({
 	auth: mailerLiteAuth,
 	name: 'add_or_update_subscriber',
+	classification: 'WRITE',
 	displayName: 'Add or Update subscriber',
 	description: 'Create a new subscriber or updates an existing one if the email already exists.',
 	audience: 'both',
@@ -15,6 +17,7 @@ export const createOrUpdateSubscriber = createAction({
 			'Upsert a MailerLite subscriber by email: creates the contact if the email is new, otherwise updates the existing record (status, custom fields, group membership, opt-in metadata). Use this to add or sync a contact when you only have their email. Idempotent — keyed on email, so repeating with the same input converges on the same subscriber state.',
 		idempotent: true,
 	},
+	outputSchema: addOrUpdateSubscriberOutputSchema,
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',

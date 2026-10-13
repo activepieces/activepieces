@@ -8,6 +8,7 @@ import { issueBodyOutputSchema } from '../../output-schemas';
 export const githubAddAssigneesToIssueAction = createAction({
   auth: githubAuth,
   name: 'add_assignees_to_issue',
+  classification: 'WRITE',
   displayName: 'Add Assignees to Issue (Agent)',
   description: 'Assigns users to an issue or pull request.',
   audience: 'ai',

@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { polling, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { polling, FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { crawlWebsiteActionOutputSchema } from '../output-schemas';
 
 export const crawlWebsite = createAction({
   auth: firecrawlAuth,
   name: 'crawl_website',
+  classification: 'SEARCH',
   displayName: 'Crawl Website',
   description: 'Crawl a website starting from a base URL and return the content of many pages.',
   audience: 'ai',
@@ -74,6 +75,7 @@ export const crawlWebsite = createAction({
       crawlEntireDomain: false,
       maxDiscoveryDepth: 10,
       scrapeOptions,
+      origin: FIRECRAWL_ORIGIN,
     };
     if (propsValue.limit !== undefined) {
       body['limit'] = propsValue.limit;

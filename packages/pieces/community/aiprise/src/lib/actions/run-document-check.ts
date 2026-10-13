@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const runDocumentCheckAction = createAction({
   auth: aipriseAuth,
   name: 'run_document_check',
+  classification: 'WRITE',
   displayName: 'Run Business Document Check',
   description:
     'Runs a verification check on a document belonging to an existing business profile. AiPrise will process the uploaded file against the checks defined in the chosen template.',

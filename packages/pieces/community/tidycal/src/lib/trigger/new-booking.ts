@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 export const tidycalnewbooking = createTrigger({
   auth: tidyCalAuth,
   name: 'new_booking',
+  classification: 'READ',
   displayName: 'New Booking',
   description: 'Triggers when a new booking is created',
   aiMetadata: {

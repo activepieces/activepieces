@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const merchantAccountGetTransactions = createAction({
   auth: trueLayerCommon.auth,
   name: 'merchant-account-get-transactions',
+  classification: 'SEARCH',
   displayName: 'Get Transactions',
   description: 'Get the transactions of a single merchant account. If pagination is missing, add a header `tl-enable-pagination: true` to enable pagination.',
   audience: 'both',

@@ -25,7 +25,7 @@ function createRowHash(rowData: unknown[]): string {
 // Helper function to get all worksheet rows with error handling
 async function getWorksheetRows(auth: AppConnectionValueForAuthProperty<typeof excelAuth>, workbookId: string, worksheetId: string, drivePath: string): Promise<(string | number | boolean)[][]> {
     try {
-        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath);
+        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath, auth.props?.['cloud']);
     } catch (error) {
         throw new Error(`Failed to fetch worksheet rows: ${error}`);
     }
@@ -106,6 +106,7 @@ const polling: Polling<
 export const updatedRowTrigger = createTrigger({
     auth: excelAuth,
     name: triggerName,
+    classification: 'READ',
     displayName: 'Updated Row',
     description: 'Fires when a row (in a worksheet) is added or updated.',
     aiMetadata: {

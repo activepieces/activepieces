@@ -6,6 +6,7 @@ import {
     pipedriveCommon,
 } from '../common';
 import { isNil } from '@activepieces/pieces-framework';
+import { newNoteTriggerOutputSchema } from '../output-schemas';
 
 interface PipedriveNoteV2 {
     id: number;
@@ -40,6 +41,8 @@ interface GetNoteResponseV2 {
 export const newNoteTrigger = createTrigger({
     auth: pipedriveAuth,
     name: 'new-note',
+    outputSchema: newNoteTriggerOutputSchema,
+    classification: 'READ',
     displayName: 'New Note',
     description: 'Triggers when a new note is created.',
     aiMetadata: {

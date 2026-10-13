@@ -54,6 +54,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleSheetsAuth
 export const newSpreadsheetTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'new-spreadsheet',
+	classification: 'READ',
 	displayName: 'New Spreadsheet',
 	description: 'Triggers when a new spreadsheet is created.',
 	aiMetadata: {
@@ -62,7 +63,7 @@ export const newSpreadsheetTrigger = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	props: {
-		includeTeamDrives: includeTeamDrivesProp(),
+		includeTeamDrives: includeTeamDrivesProp({ advanced: false }),
 	},
 	outputSchema: newSpreadsheetTriggerOutputSchema,
 	async onEnable(context) {

@@ -51,6 +51,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof vimeoAuth>, Prop
 
 export const newVideoByUser = createTrigger({
   name: 'new_video_by_user',
+  classification: 'READ',
   displayName: 'New Video by User',
   description: 'Triggers when another specified user adds a video',
   aiMetadata: {

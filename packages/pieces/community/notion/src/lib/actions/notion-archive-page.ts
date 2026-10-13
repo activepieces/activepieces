@@ -7,6 +7,7 @@ import { notionArchivePageActionOutputSchema } from '../output-schemas';
 export const notionArchivePage = createAction({
   auth: notionAuth,
   name: 'notion_archive_page',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive or Restore Page',
   description:
     'Archives (trashes) or restores any page or database row by id via its archived flag.',

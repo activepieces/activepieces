@@ -7,6 +7,7 @@ import { makeRequest, normalizeProfileIds } from '../common/client';
 export const removeProfileFromList = createAction({
   auth: klaviyoAuth,
   name: 'removeProfileFromList',
+  classification: 'WRITE',
   displayName: 'Remove Profile from List',
   description: 'Remove profiles from a specific list.',
   audience: 'both',

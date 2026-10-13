@@ -16,7 +16,7 @@ export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
         permission: Permission.WRITE_TABLE,
         description: 'Permanently delete a table and all its data.',
         inputSchema: deleteTableInput.shape,
-        annotations: { destructiveHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId } = deleteTableInput.parse(args)

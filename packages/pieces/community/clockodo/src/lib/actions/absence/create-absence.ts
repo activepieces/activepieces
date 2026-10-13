@@ -11,6 +11,7 @@ import { clockodoAuth } from '../../auth';
 export default createAction({
   auth: clockodoAuth,
   name: 'create_absence',
+  classification: 'WRITE',
   displayName: 'Create Absence',
   description: 'Creates a absence in clockodo',
   audience: 'both',

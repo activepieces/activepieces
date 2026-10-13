@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const walletSegment = createAction({
   auth: chainAwareAuth,
   name: 'walletSegment',
+  classification: 'READ',
   displayName: 'Wallet Segment',
   description: 'Get wallet behaviour information',
   audience: 'both',

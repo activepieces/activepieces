@@ -9,6 +9,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { domainHelper } from '../helper/domain-helper'
+import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
@@ -37,6 +38,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EMAIL_CODE_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
@@ -46,7 +48,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.FLOW_RUN_TIME_SECONDS,
                 ApFlagId.SHOW_COMMUNITY,
                 ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                ApFlagId.TELEMETRY_ENABLED,
                 ApFlagId.TEMPLATES_PROJECT_ID,
                 ApFlagId.TERMS_OF_SERVICE_URL,
                 ApFlagId.THEME,
@@ -123,6 +124,18 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.AUDIT_LOG_RETENTION_DAYS,
+                value: auditLogRetentionCeiling.get(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AUDIT_LOG_RETENTION_PAUSED,
+                value: system.getBoolean(AppSystemProp.AUDIT_LOG_RETENTION_PAUSED) === true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(AppSystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
@@ -149,6 +162,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.EMAIL_AUTH_ENABLED,
                 value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+                value: system.getEdition() === ApEdition.CLOUD && turnstile.isConfigured(),
                 created,
                 updated,
             },
@@ -183,12 +202,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.TELEMETRY_ENABLED,
-                value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.TOOL_SEARCH_ENABLED,
                 value: isToolSearchEnabled(),
                 created,
@@ -199,6 +212,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 value: await domainHelper.getPublicUrl({
                     path: '',
                 }),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MCP_URL,
+                value: domainHelper.getMcpUrl({ path: '' }),
                 created,
                 updated,
             },
@@ -339,7 +358,6 @@ function getSupportedAppWebhooks(): string[] {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
-    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, string[]>

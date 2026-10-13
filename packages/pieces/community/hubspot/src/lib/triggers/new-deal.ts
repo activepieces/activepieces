@@ -1,25 +1,26 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultProductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);
@@ -74,8 +75,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newDealTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-deal',
+	classification: 'READ',
 	displayName: 'New Deal',
-	description: 'Trigger when a new deal is added.',
+	description: 'Triggers when a new deal is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new deal is created in HubSpot. Each event represents one deal record with properties such as deal name, type, amount, close date, owner, forecast, and associated contacts. Polls for deals by creation date; does not fire on updates to existing deals.',
@@ -83,18 +85,17 @@ export const newDealTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-					dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-                            
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.DEAL,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

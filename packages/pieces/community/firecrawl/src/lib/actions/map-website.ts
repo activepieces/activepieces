@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { FIRECRAWL_API_BASE_URL } from '../common/common';
+import { FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
 import { mapWebsiteActionOutputSchema } from '../output-schemas';
 
 export const mapWebsite = createAction({
   auth: firecrawlAuth,
   name: 'map_website',
+  classification: 'SEARCH',
   displayName: 'Map Website',
   description: 'Discover and return the list of URLs reachable from a website.',
   audience: 'ai',
@@ -46,6 +47,7 @@ export const mapWebsite = createAction({
       sitemap: 'include',
       includeSubdomains: propsValue.includeSubdomains,
       limit: propsValue.limit,
+      origin: FIRECRAWL_ORIGIN,
     };
     if (propsValue.search) {
       body['search'] = propsValue.search;

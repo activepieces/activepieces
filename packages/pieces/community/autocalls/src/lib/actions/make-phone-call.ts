@@ -6,6 +6,7 @@ import { baseApiUrl } from '../..';
 export const makePhoneCall = createAction({
   auth:autocallsAuth,
   name: 'makePhoneCall',
+  classification: 'WRITE',
   displayName: 'Make Phone Call',
   description: "Call a customer by it's phone number using an assistant from our platform.",
   audience: 'both',

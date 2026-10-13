@@ -11,6 +11,7 @@ import { exportSheetActionOutputSchema } from '../output-schemas';
 
 export const exportSheetAction = createAction({
   name: 'export_sheet',
+  classification: 'READ',
   displayName: 'Export Worksheet',
   description: 'Download a worksheet as a CSV or TSV file.',
   audience: 'human',
@@ -20,6 +21,22 @@ export const exportSheetAction = createAction({
     idempotent: true,
   },
   auth: googleSheetsAuth,
+  propertyGroups: [
+    {
+      key: 'spreadsheet',
+      display: 'section',
+      label: 'Spreadsheet',
+      icon: 'file',
+      props: ['spreadsheetId', 'sheetId'],
+    },
+    {
+      key: 'export',
+      display: 'section',
+      label: 'Export',
+      icon: 'paperclip',
+      props: ['format', 'returnAsText'],
+    },
+  ],
   props: {
     ...commonProps,
     format: Property.StaticDropdown({

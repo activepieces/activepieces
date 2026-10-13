@@ -42,6 +42,7 @@ const newTaskPolling: Polling<
 export const newTask = createTrigger({
   auth: meistertaskAuth,
   name: 'new_task',
+  classification: 'READ',
   displayName: 'New Task',
   description: 'Triggers when a task is created or changed.',
   aiMetadata: {

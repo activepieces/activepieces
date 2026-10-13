@@ -19,7 +19,7 @@ export const additionActionOutputSchema = wholeNumberOutput(
 export const subtractionActionOutputSchema = wholeNumberOutput(
   'difference',
   'Difference',
-  'The second number minus the first number.',
+  'The starting number minus the number to subtract.',
 );
 
 export const multiplicationActionOutputSchema = wholeNumberOutput(
@@ -43,5 +43,5 @@ export const moduloActionOutputSchema = wholeNumberOutput(
 export const generateRandomActionOutputSchema = wholeNumberOutput(
   'randomNumber',
   'Random Number',
-  'A pseudo-random integer between the two numbers, inclusive.',
+  'A random whole number between the minimum and maximum, both included.',
 );

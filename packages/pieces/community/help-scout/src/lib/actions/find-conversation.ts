@@ -7,6 +7,7 @@ import { mailboxIdDropdown, userIdDropdown } from '../common/props';
 export const findConversation = createAction({
   auth: helpScoutAuth,
   name: 'find_conversation',
+  classification: 'SEARCH',
   displayName: 'Find Conversation',
   description: 'Finds an existing conversation using provided filter.',
   audience: 'both',

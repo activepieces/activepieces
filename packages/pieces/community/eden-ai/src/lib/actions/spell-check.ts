@@ -164,6 +164,7 @@ function normalizeSpellCheckResponse(provider: string, response: any) {
 
 export const spellCheckAction = createAction({
   name: 'spell_check',
+  classification: 'READ',
   auth: edenAiAuth,
   displayName: 'Spell Check',
   description: 'Identify and correct spelling or grammar errors using Eden AI. Supports multiple providers, languages, and models.',

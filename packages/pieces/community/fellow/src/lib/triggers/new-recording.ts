@@ -63,6 +63,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof fellowAuth>, Rec
 
 export const newRecordingTrigger = createTrigger({
     name: 'new-recording',
+    classification: 'READ',
     auth: fellowAuth,
     displayName: 'New Recording',
     description: 'Triggers when a new recording is created.',

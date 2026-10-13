@@ -13,8 +13,8 @@ test.describe('Webhooks', () => {
       trigger: 'Catch Webhook'
     });
 
-    const webhookInput = page.locator('input.grow.bg-background');
-    const webhookUrl = await webhookInput.inputValue();
+    const webhookUrlBlock = page.getByTestId('markdown-code-block');
+    const webhookUrl = (await webhookUrlBlock.textContent())?.trim() ?? '';
     const runVersion = Math.floor(Math.random() * 100000);
     const urlWithParams = `${webhookUrl}/sync?targetRunVersion=${runVersion}`;
 

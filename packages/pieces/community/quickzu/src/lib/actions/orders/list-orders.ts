@@ -5,6 +5,7 @@ import { makeClient } from '../../common';
 export const listOrdersAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_orders',
+  classification: 'SEARCH',
   displayName: 'List Orders',
   description: 'Retrieves orders of store.',
   audience: 'both',

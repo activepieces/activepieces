@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 
 export const takeScreenshotAction = createAction({
 	name: 'take-screenshot',
+	classification: 'READ',
 	auth: airtopAuth,
 	displayName: 'Take Screenshot',
 	description: 'Captures a screenshot of the current window.',

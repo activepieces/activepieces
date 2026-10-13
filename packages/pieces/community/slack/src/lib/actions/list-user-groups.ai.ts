@@ -7,6 +7,7 @@ import { listUserGroupsActionOutputSchema } from '../output-schemas';
 export const slackListUserGroups = createAction({
   auth: slackAuth,
   name: 'list_user_groups',
+  classification: 'SEARCH',
   displayName: 'List User Groups',
   description: 'List all Slack user groups (subteams) in the workspace.',
   audience: 'ai',

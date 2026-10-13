@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getBlocks = createAction({
   name: 'get_blocks',
+  classification: 'SEARCH',
   displayName: 'Get Blocks',
   description: 'Get list of blocks',
   audience: 'both',

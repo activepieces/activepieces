@@ -7,6 +7,7 @@ import { createTaskCommentOutputSchema } from '../../output-schemas';
 export const clickupCreateTaskComment = createAction({
   auth: clickupAuth,
   name: 'clickup_create_task_comment',
+  classification: 'WRITE',
   description: 'Creates a comment on a task in ClickUp',
   audience: 'ai',
   aiMetadata: {

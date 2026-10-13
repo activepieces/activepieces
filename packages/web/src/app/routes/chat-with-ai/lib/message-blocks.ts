@@ -1,3 +1,4 @@
+import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
 import { BatchProgressData } from '@activepieces/shared';
 
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
@@ -150,7 +151,12 @@ export function buildMessageBlocks({
     if (p.type === 'text' && p.text.length > 0) {
       endSegment();
       hasText = true;
-      result.push({ kind: 'text', text: p.text });
+      const previous = result[result.length - 1];
+      if (previous?.kind === 'text') {
+        previous.text += p.text;
+      } else {
+        result.push({ kind: 'text', text: p.text });
+      }
     } else if (p.type === 'reasoning') {
       flushPendingDescription();
       const thinking = ensureThinking();
@@ -188,7 +194,11 @@ export function buildMessageBlocks({
         const memory = (
           p.input as { memory?: string } | undefined
         )?.memory?.trim();
-        if (memory && p.state === 'output-available') {
+        if (
+          memory &&
+          p.state === 'output-available' &&
+          !memorySaveDeclined(p.output)
+        ) {
           result.push({ kind: 'memory-saved', memory });
         }
         continue;
@@ -239,6 +249,11 @@ export function buildMessageBlocks({
 // cards into one collapsed `card-group` so the timeline stays calm; a lone card
 // renders unchanged. Recurses into a build's children, which render through the
 // same block pipeline.
+function memorySaveDeclined(output: unknown): boolean {
+  const parsed = parseToJsonIfPossible(output);
+  return isObject(parsed) && parsed['saved'] === false;
+}
+
 function groupAdjacentCards(blocks: MessageBlock[]): MessageBlock[] {
   const out: MessageBlock[] = [];
   let run: OutcomeCardBlock[] = [];

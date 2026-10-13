@@ -18,6 +18,7 @@ type FailedPayload = {
 export const postFailed = createTrigger({
   auth: sendItAuth,
   name: 'post_failed',
+  classification: 'READ',
   displayName: 'Post Failed',
   description: 'Triggers when a post fails to publish to a platform',
   aiMetadata: {

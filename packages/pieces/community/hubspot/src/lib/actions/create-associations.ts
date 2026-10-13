@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	fromObjectTypeAssociationDropdown,
@@ -9,44 +9,47 @@ import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
 import { chunk } from '@activepieces/pieces-framework';
+import { createAssociationsOutputSchema } from '../output-schemas';
 
 export const createAssociationsAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-associations',
+	classification: 'WRITE',
 	displayName: 'Create Associations',
-	description: 'Creates associations between objects',
+	description: 'Links a record to one or more other records.',
 	audience: 'both',
 	aiMetadata: { description: 'Link one source HubSpot object (e.g. a company) to one or more target objects using a specific association type, batching the targets. Re-running with the same inputs re-applies the same association without creating duplicates. Use Remove Associations to undo a link.', idempotent: true },
+	outputSchema: createAssociationsOutputSchema,
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',
-			description: 'The ID of the object being associated.',
+			description: 'Map it from an earlier Find or Get step.',
 			required: true,
 		}),
 		fromObjectType: fromObjectTypeAssociationDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
 			displayName: 'From Object Type',
 			required: true,
-			description: 'The type of the object being associated.',
+			description: 'The object type of that record.',
 		}),
 		toObjectType: fromObjectTypeAssociationDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
 			displayName: 'To Object Type',
 			required: true,
-			description: 'Type of the objects the from object is being associated with.',
+			description: 'The object type of the records to link to.',
 		}),
 		associationType: associationTypeDropdown,
 		toObjectIds: toObjectIdsDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
-			displayName: 'To Object IDs',
+			displayName: 'To Records',
 			required: true,
-			description: 'The ID\'sof the objects the from object is being associated with',
+			description: 'The records to link to.',
 		}),
 	},
 	async run(context) {
 		const { fromObjectId, fromObjectType, toObjectType, associationType } = context.propsValue;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		if(context.propsValue.toObjectIds === undefined) {
 			throw new Error('Please provide To Object IDs');

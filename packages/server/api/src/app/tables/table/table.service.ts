@@ -8,9 +8,10 @@ import { projectStateService } from '../../ee/projects/project-release/project-s
 import { fileService } from '../../file/file.service'
 import { enforceByteLimit, filesService } from '../../file/files-service'
 import { getFolderIdFromRequest } from '../../flows/flow/flow.service'
+import { flowFolderService } from '../../flows/folder/folder.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { Order } from '../../helper/pagination/paginator'
+import { CURSOR_SELECT_PREFIX, Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { fieldService } from '../field/field.service'
@@ -46,7 +47,8 @@ export const tableService = {
         }
         return table
     },
-    async list({ projectId, cursor, limit, name, externalIds, folderId, folderIds, includeRowCount }: ListParams): Promise<SeekPage<Table & { rowCount?: number }>> {
+    async list({ projectId, cursor, limit, name, externalIds, folderId, folderIds, includeRowCount, sortBy, order }: ListParams): Promise<SeekPage<Table & { rowCount?: number }>> {
+        assertSortIsNotCombinedWithCursor({ sortBy, cursor })
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
         const paginator = buildPaginator({
@@ -85,9 +87,15 @@ export const tableService = {
             }, 'rowCount')
         }
 
+        if (!isNil(sortBy)) {
+            const nameSortAlias = `${CURSOR_SELECT_PREFIX}name`
+            queryBuilder.addSelect('LOWER(COALESCE("table"."name", \'\'))', nameSortAlias)
+            queryBuilder.addOrderBy(nameSortAlias, order ?? 'ASC')
+        }
+
         const paginationResult = await paginator.paginate<Table & { rowCount?: number }>(queryBuilder)
 
-        return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
+        return paginationHelper.createPage(paginationResult.data, isNil(sortBy) ? paginationResult.cursor : null)
     },
 
     async getOneOrThrow({
@@ -332,12 +340,15 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
-
+        const folderId = request.folderId === UncategorizedFolderId ? null : request.folderId
+        if (!isNil(folderId)) {
+            await flowFolderService(system.globalLogger()).getOneOrThrow({ projectId, folderId })
+        }
         const updateData: Record<string, unknown> = {
             ...spreadIfDefined('name', request.name),
             ...spreadIfDefined('trigger', request.trigger),
             ...spreadIfDefined('status', request.status),
-            folderId: request.folderId,
+            folderId,
         }
 
         await tableRepo().update({ id, projectId }, updateData)
@@ -356,6 +367,16 @@ export const tableService = {
 const EXPORT_BATCH_SIZE = 2000
 
 const CELL_EDGE_CHARS = /^[\s\u0000-\u001F\u007F-\u009F]+|[\s\u0000-\u001F\u007F-\u009F]+$/g
+
+function assertSortIsNotCombinedWithCursor({ sortBy, cursor }: { sortBy: 'NAME' | undefined, cursor: string | undefined }): void {
+    if (isNil(sortBy) || isNil(cursor)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.GENERIC_ERROR,
+        params: { message: 'sortBy cannot be combined with cursor' },
+    })
+}
 
 async function fetchRecordPage({ tableId, projectId, afterCursor }: FetchRecordPageParams): Promise<FetchRecordPageResult> {
     const paginator = buildPaginator({
@@ -421,6 +442,8 @@ type ListParams = {
     folderId: string | undefined
     folderIds?: string[] | undefined
     includeRowCount?: boolean
+    sortBy?: 'NAME'
+    order?: 'ASC' | 'DESC'
 }
 
 type GetByIdParams = {

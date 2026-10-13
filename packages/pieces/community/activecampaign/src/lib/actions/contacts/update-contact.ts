@@ -6,6 +6,7 @@ import { CreateContactRequest } from '../../common/types';
 export const updateContactAction = createAction({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_update_contact',
+	classification: 'WRITE',
 	displayName: 'Update Contact',
 	description: 'Updates an existing contact.',
 	audience: 'both',

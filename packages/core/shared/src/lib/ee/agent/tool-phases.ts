@@ -7,6 +7,7 @@
 
 const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_build_flow',
+    'ap_create_folder',
     'ap_create_flow',
     'ap_add_step',
     'ap_update_step',
@@ -17,7 +18,6 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_delete_branch',
     'ap_test_flow',
     'ap_test_step',
-    'ap_validate_flow',
     'ap_validate_step_config',
     'ap_execute_action',
     'ap_discover_action_auth',
@@ -49,6 +49,19 @@ const CHAT_HIDDEN_TOOL_NAMES = new Set<string>([
     'ap_setup_guide',
 ])
 
+const CATALOG_ONLY_TOOL_NAMES = new Set<string>([
+    'ap_research_pieces',
+    'ap_search_actions',
+    'ap_search_triggers',
+    'ap_list_connections',
+    'ap_load_skill',
+    'ap_get_tool_schema',
+])
+
+function taintsTurn(toolName: string): boolean {
+    return !CATALOG_ONLY_TOOL_NAMES.has(toolName)
+}
+
 function activeToolsForPhase({ phase, allToolNames }: {
     phase: AgentPhase
     allToolNames: string[]
@@ -67,10 +80,17 @@ function isAgentHiddenTool(toolName: string): boolean {
     return CHAT_HIDDEN_TOOL_NAMES.has(toolName)
 }
 
+// A saved agent may rewrite itself in its own conversation; the platform assistant and the
+// builder may also reach for other agents. The worker decides which of these to hand the model
+// and the server decides which to run, so both read the same two lists.
+export const AGENT_SELF_EDIT_TOOLS: readonly string[] = ['ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+export const AGENT_SURFACE_TOOLS: readonly string[] = ['ap_list_agents', 'ap_create_agent', ...AGENT_SELF_EDIT_TOOLS]
+
 export type AgentPhase = 'discovery' | 'build'
 
 export const agentToolPhases = {
     activeToolsForPhase,
     isBuildOnlyTool,
     isAgentHiddenTool,
+    taintsTurn,
 }

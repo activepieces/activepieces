@@ -1,0 +1,39 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "packages/web": {
+      "entry": [
+        "src/polyfills.ts",
+        "src/features/*/index.ts",
+        "vite-plugins/**/*.{js,mjs}",
+        "scripts/**/*.{js,mjs}",
+        "test/**/*.{test,spec}.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignore": [
+        "src/components/ui/**",
+        "src/components/prompt-kit/**"
+      ],
+      "ignoreDependencies": [
+        "tw-animate-css",
+        "tailwindcss"
+      ],
+      "ignoreBinaries": [
+        "dwebp",
+        "sips",
+        "cwebp"
+      ]
+    }
+  },
+  "ignoreWorkspaces": [
+    "packages/pieces/**",
+    "packages/cli",
+    "packages/tests-e2e",
+    "packages/ee/embed-sdk",
+    "packages/server/**",
+    "packages/core/**"
+  ],
+  "ignoreExportsUsedInFile": true
+}

@@ -16,6 +16,7 @@ import { sheetsAddRowAtTopActionOutputSchema } from '../output-schemas';
 export const sheetsAddRowAtTop = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_add_row_at_top',
+	classification: 'WRITE',
 	displayName: 'Add Row at Top',
 	description: 'Insert a new row near the top of a worksheet, just below the header row.',
 	audience: 'ai',

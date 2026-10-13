@@ -7,6 +7,7 @@ import { retableCommon } from '../common';
 export const retableCreateProjectAction = createAction({
   auth: retableAuth,
   name: 'retable_create_project',
+  classification: 'WRITE',
   displayName: 'Create a Project',
   description: 'Creates a project in the given workspace',
   audience: 'both',

@@ -8,6 +8,7 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
+import { useState } from 'react';
 
 import { RightSideBarType } from '@/app/builder/types';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -17,12 +18,20 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowHooks } from '@/features/flows';
+import { flowHooks, flowsApi } from '@/features/flows';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
+import { runDiscard } from './discard-draft';
 import LargeWidgetWrapper from './large-widget-wrapper';
+import {
+  FailedRequiredActionsCheck,
+  RequiredActionsDialog,
+  useRequiredActionsCheck,
+} from './required-actions-dialog';
 
 const PublishFlowReminderWidget = () => {
   const [
@@ -54,20 +63,32 @@ const PublishFlowReminderWidget = () => {
     run,
     isSaving,
   });
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { project } = projectCollectionUtils.useCurrentProject();
+  const { checkAccess } = useAuthorization();
+  const canBypassApproval = checkAccess(
+    Permission.PUBLISH_SENSITIVE_FLOW_ACCESS,
+  );
+  const requiresApproval =
+    platform.plan.environmentsEnabled &&
+    project.sensitive &&
+    !canBypassApproval;
   const { mutate: discardChange, isPending: isDiscardingChanges } = useMutation(
     {
-      mutationFn: async () => {
-        if (!flow.publishedVersionId) {
-          return;
-        }
-        await overWriteDraftWithVersion({
-          flowId: flow.id,
-          versionId: flow.publishedVersionId,
-        });
-        await publish();
-      },
+      mutationFn: () =>
+        runDiscard({
+          flow,
+          overWriteDraftWithVersion,
+          fetchFlow: flowsApi.get,
+          setFlow,
+          setVersion,
+        }),
     },
   );
+  const { checkRequiredActions, explainServerRejection } =
+    useRequiredActionsCheck();
+  const [failedRequiredActionsCheck, setFailedRequiredActionsCheck] =
+    useState<FailedRequiredActionsCheck | null>(null);
   const { mutateAsync: publish } = flowHooks.useChangeFlowStatus({
     flowId: flow.id,
     change: 'publish',
@@ -76,7 +97,22 @@ const PublishFlowReminderWidget = () => {
       setVersion(updatedFlow.version);
     },
     setIsPublishing: setIsPublishing,
+    onRequiredActionsMissing: (params) => {
+      explainServerRejection(params)
+        .then(setFailedRequiredActionsCheck)
+        .catch(() => undefined);
+    },
   });
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    const failedCheck = await checkRequiredActions(flowVersion);
+    if (failedCheck) {
+      setIsPublishing(false);
+      setFailedRequiredActionsCheck(failedCheck);
+      return;
+    }
+    await publish();
+  };
   const { mutateAsync: overWriteDraftWithVersion } =
     flowHooks.useOverWriteDraftWithVersion({
       onSuccess: (updatedFlow) => {
@@ -101,14 +137,14 @@ const PublishFlowReminderWidget = () => {
         {showLoading ? loadingText : t('You have unpublished changes')}
       </div>
       {showLoading ? (
-        <LoadingSpinner className="size-5 stroke-foreground" />
+        <LoadingSpinner className="size-5 stroke-gray-12" />
       ) : (
         <div className="flex items-center gap-2">
           {!isNil(flow.publishedVersionId) && !isSaving && (
             <Button
               size="sm"
               variant="ghost"
-              className="hover:bg-gray-300/10 text-foreground"
+              className="hover:bg-gray-4 text-gray-12"
               onClick={() => discardChange()}
             >
               {t('Discard changes')}
@@ -117,7 +153,7 @@ const PublishFlowReminderWidget = () => {
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="tooltip-wrapper">
+              <div>
                 <Button
                   size="sm"
                   variant="default"
@@ -125,10 +161,10 @@ const PublishFlowReminderWidget = () => {
                   loading={isSaving}
                   //for e2e tests
                   name="Publish"
-                  onClick={() => publish()}
+                  onClick={handlePublish}
                   disabled={!isValid}
                 >
-                  {t('Publish')}
+                  {requiresApproval ? t('Request approval') : t('Publish')}
                 </Button>
               </div>
             </TooltipTrigger>
@@ -139,6 +175,10 @@ const PublishFlowReminderWidget = () => {
           </Tooltip>
         </div>
       )}
+      <RequiredActionsDialog
+        failedCheck={failedRequiredActionsCheck}
+        onClose={() => setFailedRequiredActionsCheck(null)}
+      />
     </LargeWidgetWrapper>
   );
 };

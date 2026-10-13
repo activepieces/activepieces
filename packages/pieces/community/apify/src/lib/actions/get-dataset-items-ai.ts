@@ -5,6 +5,7 @@ import { getDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const apifyGetDatasetItems = createAction({
   name: 'apify_get_dataset_items',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Dataset Items',
   description: 'Retrieves stored result items from an Apify dataset by dataset ID.',

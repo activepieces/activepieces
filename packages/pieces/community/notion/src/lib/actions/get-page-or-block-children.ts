@@ -13,8 +13,9 @@ import { getPageOrBlockChildrenActionOutputSchema } from '../output-schemas';
 export const getPageOrBlockChildren = createAction({
   auth: notionAuth,
   name: 'getPageOrBlockChildren',
-  displayName: 'Get block content',
-  description: 'Retrieve the actual content of a page (represented by blocks).',
+  classification: 'READ',
+  displayName: 'Get Block Content',
+  description: "Read a page's content as blocks or as Markdown.",
   audience: 'human',
   aiMetadata: {
     description:
@@ -23,18 +24,20 @@ export const getPageOrBlockChildren = createAction({
   },
   props: {
     parentId: Property.ShortText({
-      displayName: 'Page or parent block ID',
+      displayName: 'Page or Block ID',
+      description: 'Paste the ID, or map a page from a previous step.',
       required: true,
+      placeholder: 'e.g. 1d4805e9774b8056820bc1083bff77e3',
     }),
     markdown: Property.Checkbox({
       displayName: 'Markdown',
-      description: 'Convert Notion JSON blocks to Markdown',
-      required: true,
+      description: 'Return the content as Markdown instead of blocks.',
+      required: false,
       defaultValue: false,
     }),
     dynamic: Property.DynamicProperties({
       auth: notionAuth,
-      displayName: 'Dynamic properties',
+      displayName: 'Dynamic Properties',
       refreshers: ['markdown'],
       required: true,
       props: async ({ markdown }) => {
@@ -44,7 +47,7 @@ export const getPageOrBlockChildren = createAction({
         const fields: DynamicPropsValue = {
           depth: Property.Number({
             displayName: 'Depth',
-            description: 'Recursively retrieve children up to this depth',
+            description: 'How many levels of nested blocks to include.',
             required: true,
             defaultValue: 1,
           }),

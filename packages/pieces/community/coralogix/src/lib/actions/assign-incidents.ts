@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const assignIncidents = createAction({
   auth: coralogixAuth,
   name: 'assignIncidents',
+  classification: 'WRITE',
   displayName: 'Assign Incidents',
   description: 'Assign one or more Coralogix incidents to a specific user.',
   audience: 'both',

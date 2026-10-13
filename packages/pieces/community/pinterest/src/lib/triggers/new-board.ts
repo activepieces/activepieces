@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
   OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
@@ -105,6 +104,7 @@ const polling: Polling<
 export const newBoard = createTrigger({
   auth: pinterestAuth,
   name: 'newBoard',
+  classification: 'READ',
   outputSchema: newBoardTriggerOutputSchema,
   displayName: 'New Board',
   description: 'Fires when a new board is created in the account.',
@@ -115,23 +115,29 @@ export const newBoard = createTrigger({
   props: {
     ad_account_id: adAccountIdDropdown,
     privacy_filter: Property.StaticDropdown({
-      displayName: 'Board Privacy Filter',
+      displayName: 'Privacy',
       required: false,
       options: {
         options: [
-          { label: 'All Boards', value: 'ALL' },
-          { label: 'Public Only', value: 'PUBLIC' },
-          { label: 'Protected Only', value: 'PROTECTED' },
-          { label: 'Secret Only', value: 'SECRET' },
+          { label: 'All', value: 'ALL' },
+          { label: 'Public', value: 'PUBLIC' },
+          { label: 'Protected', value: 'PROTECTED' },
+          { label: 'Secret', value: 'SECRET' },
           { label: 'Public and Secret', value: 'PUBLIC_AND_SECRET' },
         ],
       },
-      description: 'Filter boards by privacy setting (optional).',
+      description: 'Only boards with this privacy fire the trigger.',
     }),
     page_size: Property.Number({
       displayName: 'Page Size',
       required: false,
-      description: 'Number of boards to fetch per page (1-250, default: 25).',
+      description: 'Boards fetched per request.',
+      display: 'stepper',
+      min: 1,
+      max: 250,
+      step: 1,
+      defaultValue: 25,
+      advanced: true,
     }),
   },
   sampleData: {

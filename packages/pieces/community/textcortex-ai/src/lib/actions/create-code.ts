@@ -7,6 +7,7 @@ import { PROGRAMMING_LANGUAGES, API_ENDPOINTS, AI_MODELS } from '../common/commo
 export const createCode = createAction({
   auth: textcortexAuth,
   name: 'create_code',
+  classification: 'READ',
   displayName: 'Create Code',
   description: 'Generate code in a specified programming language based on instructions.',
   audience: 'both',

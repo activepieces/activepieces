@@ -16,6 +16,7 @@ interface Emoji {
 export const discordListEmojis = createAction({
   auth: discordAuth,
   name: 'discord_list_emojis',
+  classification: 'SEARCH',
   displayName: 'List Emojis',
   description: 'List a guild\'s custom emojis.',
   audience: 'ai',

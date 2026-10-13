@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 export const tidycalnewcontact = createTrigger({
   auth: tidyCalAuth,
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
   aiMetadata: {

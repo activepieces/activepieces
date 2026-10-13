@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     fromObjectTypeAssociationDropdown,
@@ -9,44 +9,47 @@ import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
 import { chunk } from '@activepieces/pieces-framework';
+import { removeAssociationsOutputSchema } from '../output-schemas';
 
 export const removeAssociationsAction = createAction({
     auth: hubspotAuth,
     name: 'remove-associations',
+    classification: 'WRITE',
     displayName: 'Remove Associations',
-    description: 'Removes associations between objects',
+    description: 'Unlinks a record from one or more linked records.',
     audience: 'both',
     aiMetadata: { description: 'Remove the labeled association of a specific type between one source HubSpot object and one or more target objects, batching the targets. Removing an already-absent association is harmless, so it is idempotent on the end state. Use Create Associations to add links.', idempotent: true },
+    outputSchema: removeAssociationsOutputSchema,
     props: {
         fromObjectId: Property.ShortText({
             displayName: 'From Object ID',
-            description: 'The ID of the object you want to remove the association from.',
+            description: 'Map it from an earlier Find or Get step.',
             required: true,
         }),
         fromObjectType: fromObjectTypeAssociationDropdown({
             objectType: OBJECT_TYPE.COMPANY,
             displayName: 'From Object Type',
             required: true,
-            description: 'The type of the object you want to remove the association from.',
+            description: 'The object type of that record.',
         }),
         toObjectType: fromObjectTypeAssociationDropdown({
             objectType: OBJECT_TYPE.COMPANY,
             displayName: 'To Object Type',
             required: true,
-            description: "Type of the currently associated objects that you're removing the association from.",
+            description: 'The object type of the linked records.',
         }),
         associationType: associationTypeDropdown,
         toObjectIds: toObjectIdsDropdown({
             objectType: OBJECT_TYPE.COMPANY,
-            displayName: 'To Object IDs',
-            description: 'The IDs of the currently associated objects that you\'re removing the association from.',
+            displayName: 'To Records',
+            description: 'The linked records to unlink.',
             required: true,
         }),
     },
     async run(context) {
         const { fromObjectId, fromObjectType, toObjectType, associationType } = context.propsValue;
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         if(context.propsValue.toObjectIds === undefined) {            
             throw new Error('Please provide To Object IDs');

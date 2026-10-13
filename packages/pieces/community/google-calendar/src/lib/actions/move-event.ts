@@ -12,6 +12,7 @@ import { moveEventActionOutputSchema } from '../output-schemas';
 export const moveEvent = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_move_event',
+  classification: 'WRITE',
   displayName: 'Move Event to Another Calendar',
   description:
     'Moves an existing event from one calendar to another, preserving its event ID and metadata.',

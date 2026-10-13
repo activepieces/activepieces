@@ -59,7 +59,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        const user = await userService(log).getOrCreateWithProject({
+        const { user } = await userService(log).getOrCreateWithProject({
             identity,
             platformId,
         })

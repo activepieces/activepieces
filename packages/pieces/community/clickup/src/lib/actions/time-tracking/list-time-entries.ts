@@ -10,6 +10,7 @@ import { listTimeEntriesOutputSchema } from '../../output-schemas';
 export const clickupListTimeEntries = createAction({
   auth: clickupAuth,
   name: 'clickup_list_time_entries',
+  classification: 'SEARCH',
   displayName: 'List Time Entries',
   description: 'Retrieves time entries filtered by start and end date.',
   audience: 'ai',

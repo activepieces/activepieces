@@ -19,6 +19,7 @@ import { sheetsFindOrCreateRowActionOutputSchema } from '../output-schemas';
 export const sheetsFindOrCreateRow = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_find_or_create_row',
+	classification: 'WRITE',
 	displayName: 'Find or Create Row',
 	description:
 		'Look up a row by column value; if no match is found, create a new row with the provided values.',

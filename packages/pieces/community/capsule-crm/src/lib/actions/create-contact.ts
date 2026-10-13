@@ -11,6 +11,7 @@ import { CreatePartyParams } from '../common/types';
 export const createContactAction = createAction({
   auth: capsuleCrmAuth,
   name: 'create_contact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Create a new Person or Organisation in Capsule CRM.',
   audience: 'both',

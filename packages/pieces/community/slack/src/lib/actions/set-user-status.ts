@@ -9,25 +9,39 @@ import { updateProfileActionOutputSchema } from '../output-schemas';
 export const setUserStatusAction = createAction({
   auth: slackAuth,
   name: 'slack-set-user-status',
+  classification: 'WRITE',
   displayName: 'Set User Status',
-  description: "Sets a user's custom status",
+  description: "Sets the connected user's status. Needs a user token.",
   audience: 'human',
   aiMetadata: { description: "Set the authenticated user's custom status text and optional emoji, optionally with a Unix-timestamp expiration; requires a user token, not a bot token. This overwrites any existing status, so re-running with the same input is idempotent. Status text is capped at 100 characters.", idempotent: true },
   outputSchema: updateProfileActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'status',
+      display: 'section',
+      label: 'Status',
+      icon: 'user',
+      props: ['text', 'emoji', 'expiration'],
+    },
+  ],
   props: {
     text: Property.ShortText({
-      displayName: 'Text',
+      displayName: 'Status Text',
+      description: 'Up to 100 characters.',
+      placeholder: 'In a meeting',
       required: true,
+      width: 'half',
     }),
     emoji: Property.ShortText({
       displayName: 'Emoji',
       required: false,
-      description:
-        'Emoji shortname (standard or custom), e.g. :tada: or :train:',
+      description: 'Emoji name with colons.',
+      placeholder: ':calendar:',
+      width: 'half',
     }),
     expiration: Property.Number({
-      displayName: 'Expires at',
-      description: 'Unix timestamp - if not set, the status will not expire',
+      displayName: 'Expires At',
+      description: 'Unix timestamp in seconds. Empty keeps the status until cleared.',
       required: false,
     }),
   },

@@ -15,6 +15,7 @@ interface CreateWorksheetResponse {
 export const createWorksheetAction = createAction({
   auth: excelAuth,
   name: 'create_worksheet',
+  classification: 'WRITE',
   displayName: 'Create Worksheet',
   description:
     'Add a new worksheet (tab) to an existing workbook with optional default headers.',

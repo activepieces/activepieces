@@ -7,6 +7,7 @@ import { notionGetUserActionOutputSchema } from '../output-schemas';
 export const notionGetUser = createAction({
   auth: notionAuth,
   name: 'notion_get_user',
+  classification: 'READ',
   displayName: 'Get User',
   description: "Fetches a single workspace user's details by id.",
   audience: 'ai',

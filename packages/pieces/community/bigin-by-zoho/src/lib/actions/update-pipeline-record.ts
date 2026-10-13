@@ -7,6 +7,7 @@ import { formatDateOnly } from '../common/helpers';
 export const updatePipelineRecord = createAction({
   auth: biginAuth,
   name: 'updatePipeline',
+  classification: 'WRITE',
   displayName: 'Update Pipeline',
   description: 'updates a pipeline record in Bigin',
   audience: 'both',

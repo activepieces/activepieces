@@ -6,6 +6,7 @@ import { callGraphApi, flattenUser } from '../common';
 export const getEnabledUsersAction = createAction({
     auth: azureAdAuth,
     name: 'get_enabled_users',
+    classification: 'SEARCH',
     displayName: 'Get Enabled Users',
     description: 'Retrieves a single page of enabled users (accountEnabled eq true).',
     audience: 'both',

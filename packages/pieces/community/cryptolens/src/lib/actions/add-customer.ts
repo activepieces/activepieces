@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common/client';
 import { cryptolensAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { addCustomerActionOutputSchema } from '../output-schemas';
 
 export const addCustomer = createAction({
   auth: cryptolensAuth,
@@ -13,6 +14,7 @@ export const addCustomer = createAction({
     description: 'Creates a new customer record in a Cryptolens account, optionally enabling a customer portal so the customer can self-manage their licenses and device activations. Use to onboard a license holder before associating keys with them. Requires name, email, and company name; not idempotent — each call creates a separate customer.',
     idempotent: false,
   },
+  outputSchema: addCustomerActionOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Name',

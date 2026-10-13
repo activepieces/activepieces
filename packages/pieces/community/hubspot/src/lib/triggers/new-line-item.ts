@@ -1,8 +1,7 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -13,16 +12,17 @@ import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
@@ -78,8 +78,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-line-item',
+	classification: 'READ',
 	displayName: 'New Line Item',
-	description: 'Triggers when new line item is available.',
+	description: 'Triggers when a new line item is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new line item is created in HubSpot. Each event represents one line item with properties such as name, price, quantity, amount, discount, tax, SKU, and linked product. Polls for line items by creation date; does not fire on updates to existing line items.',
@@ -87,18 +88,17 @@ export const newLineItemTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                    
-                    name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months           
-                        
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.LINE_ITEM,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

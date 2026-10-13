@@ -23,6 +23,7 @@ import { updateMultipleRowsActionOutputSchema } from '../output-schemas';
 export const updateMultipleRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'update-multiple-rows',
+  classification: 'WRITE',
   displayName: 'Update Multiple Rows',
   description: 'Updates multiple rows in a specific spreadsheet.',
   audience: 'human',
@@ -31,8 +32,28 @@ export const updateMultipleRowsAction = createAction({
       'Overwrites several existing rows in one batch call, each targeted by its own row id. Use when an agent needs to apply edits to multiple known rows efficiently rather than calling Update Row repeatedly. Idempotent — re-running with the same row ids and values produces the same sheet state; rows without a row id are skipped.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'spreadsheet',
+      display: 'section',
+      label: 'Spreadsheet',
+      icon: 'file',
+      props: ['spreadsheetId', 'sheetId'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['empty_fields_info', 'headerRow', 'values'],
+    },
+  ],
   props: {
     ...commonProps,
+    empty_fields_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     values: Property.DynamicProperties({
       auth: googleSheetsAuth,
       displayName: 'Values',
@@ -67,7 +88,7 @@ export const updateMultipleRowsAction = createAction({
         //check for empty headers
         if (Object.keys(firstRow).length === 0) {
           fields['markdown'] = Property.MarkDown({
-            value: `We couldn't find any headers in the selected spreadsheet or worksheet. Please add headers to the sheet and refresh the page to reflect the columns.`,
+            value: `No headers found in this worksheet. Add a header row, then reselect the worksheet to load its columns.`,
             variant: MarkdownVariant.INFO,
           });
         } else {
@@ -75,8 +96,8 @@ export const updateMultipleRowsAction = createAction({
             [key: string]: any;
           } = {
             rowId: Property.Number({
-              displayName: 'Row Id',
-              description: 'The row id to update',
+              displayName: 'Row Number',
+              description: 'The row to update, counting from 1.',
               required: true,
             }),
           };
@@ -102,12 +123,13 @@ export const updateMultipleRowsAction = createAction({
     as_string: Property.Checkbox({
       displayName: 'As String',
       description:
-        'Inserted values that are dates and formulas will be entered as strings and have no effect',
+        'Store dates and formulas as plain text instead of evaluating them.',
       required: false,
+      advanced: true,
     }),
     headerRow: Property.Number({
       displayName: 'Header Row',
-      description: 'Which row contains the headers?',
+      description: 'The row that contains the column names.',
       required: true,
       defaultValue: 1,
     }),

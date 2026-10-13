@@ -11,6 +11,7 @@ import { listCardAttachmentsAiActionOutputSchema } from '../../output-schemas';
 export const listCardAttachmentsAi = createAction({
   auth: trelloAuth,
   name: 'list_card_attachments_ai',
+  classification: 'SEARCH',
   displayName: 'List Card Attachments (Agent)',
   description: 'List all attachments on a Trello card.',
   audience: 'ai',

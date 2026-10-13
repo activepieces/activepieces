@@ -57,6 +57,7 @@ import { common, getScopeAndKey, PieceStoreScope } from './common';
 export const storageAddtoList = createAction({
   audience: 'both',
 	name: 'add_to_list',
+	classification: 'WRITE',
 	displayName: 'Add To List',
 	description: 'Add Items to a list.',
 	aiMetadata: { description: 'Pushes items onto the array stored under a key, creating the list when the key is empty; an optional ignore-if-exists mode skips items already present, matched by deep equality. Use it to accumulate records across runs; prefer Put to replace the whole array, or Append when the stored value is a string. Requires the key (max 128 characters), a list of values, and the Store Scope, fails if the existing value is not an array, caps the stored list at 512 KB, and is not idempotent unless ignore-if-exists is on.', idempotent: false },

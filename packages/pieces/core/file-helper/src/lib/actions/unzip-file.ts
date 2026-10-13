@@ -10,43 +10,42 @@ import {
   getMimeType,
   EntryGetDataOptions,
 } from '@zip.js/zip.js';
+import { unzipFileActionOutputSchema } from '../output-schemas';
 
 interface Result {
   file: string;
   filePath: string;
 }
 
-const maxResultsDescription = `
-Throw an error if zip file has more than expected entries.
-- This is a safe measure when working with untrusted zip files.
-- Exclude this field or set to 0 to skip this check.
-`;
-
 export const unzipFile = createAction({
   audience: 'both',
   name: 'unzipFile',
+  classification: 'READ',
   displayName: 'Unzip File',
-  description: 'Unzip compressed zip file',
-  aiMetadata: { description: 'Extracts every file entry from a zip archive, writing each one out as its own file; supports password-protected archives. Use it to reach the contents of a zip attachment before processing them; use Zip Files for the reverse direction. Set Max Results to throw when an untrusted archive exceeds that entry count; directory entries are skipped, a wrong or missing password makes extraction fail, and the source archive is unchanged, so it is idempotent.', idempotent: true },
+  description: 'Extract every file inside a zip archive.',
+  aiMetadata: { description: 'Extracts every file entry from a zip archive, writing each one out as its own file; supports password-protected archives. Use it to reach the contents of a zip attachment before processing them; use Zip Files for the reverse direction. Set Max Files to throw when an untrusted archive exceeds that entry count; directory entries are skipped, a wrong or missing password makes extraction fail, and the source archive is unchanged, so it is idempotent.', idempotent: true },
+  outputSchema: unzipFileActionOutputSchema,
   props: {
     file: Property.File({
       displayName: 'Zip File',
+      description: 'Pick a zip from an earlier step or paste a URL to download.',
       required: true,
     }),
     maxResults: Property.Number({
-      displayName: 'Max Results',
-      description: maxResultsDescription,
+      displayName: 'Max Files',
+      description: 'Fail if the zip holds more files than this. 0 or empty: no limit.',
       defaultValue: 0,
       required: false,
+      advanced: true,
     }),
     usePassword: Property.Checkbox({
-      displayName: 'Use password',
-      description: 'Enable if the zip file is password protected',
+      displayName: 'Use Password',
+      description: 'Turn on if the zip needs a password to open.',
       required: false,
       defaultValue: false,
     }),
     passwordOptions: Property.DynamicProperties({
-      displayName: 'Password options',
+      displayName: 'Password Options',
       auth: PieceAuth.None(),
       required: false,
       refreshers: ['usePassword'],
@@ -71,14 +70,17 @@ export const unzipFile = createAction({
     const zipReader = new ZipReader(new BlobReader(blob));
     const entries = await zipReader.getEntries();
 
+    const fileEntries = entries.filter((entry) => !entry.directory);
+
     const maxResults = context.propsValue.maxResults || 0;
 
-    if (maxResults !== 0 && entries.length > maxResults) {
+    if (maxResults !== 0 && fileEntries.length > maxResults) {
       await zipReader.close();
-      throw `Zip file contains more entries than allowed: ${entries.length}`;
+      throw new Error(
+        `Zip file contains more files than allowed: ${fileEntries.length}`
+      );
     }
 
-    // Prepare options for getData, including password if provided
     const getDataOptions: EntryGetDataOptions = {};
     if (context.propsValue.usePassword) {
       const password = context.propsValue.passwordOptions?.[
@@ -89,28 +91,26 @@ export const unzipFile = createAction({
 
     const results: Result[] = [];
 
-    for (const entry of entries) {
-      if (!entry.directory) {
-        const mimeType = getMimeType(entry.filename);
+    for (const entry of fileEntries) {
+      const mimeType = getMimeType(entry.filename);
 
-        const blob = await entry.getData(
-          new BlobWriter(mimeType),
-          getDataOptions
-        );
-        const arrayBuffer = await blob.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+      const blob = await entry.getData(
+        new BlobWriter(mimeType),
+        getDataOptions
+      );
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
-        const fileBaseName = entry.filename.split('/').pop() || entry.filename;
-        const fileReference = await context.files.write({
-          data: buffer,
-          fileName: fileBaseName,
-        });
+      const fileBaseName = entry.filename.split('/').pop() || entry.filename;
+      const fileReference = await context.files.write({
+        data: buffer,
+        fileName: fileBaseName,
+      });
 
-        results.push({
-          file: fileReference,
-          filePath: entry.filename,
-        });
-      }
+      results.push({
+        file: fileReference,
+        filePath: entry.filename,
+      });
     }
 
     await zipReader.close();

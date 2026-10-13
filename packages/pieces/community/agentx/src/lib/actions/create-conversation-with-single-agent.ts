@@ -8,6 +8,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createConversationWithSingleAgent = createAction({
   auth: AgentXAuth,
   name: 'createConversationWithSingleAgent',
+  classification: 'WRITE',
   displayName: 'Create Conversation With Single Agent',
   description: 'Create a new conversation with a specific Agent by ID.',
   audience: 'both',

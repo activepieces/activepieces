@@ -18,6 +18,7 @@ import { telegramSendPhotoOrVideoActionOutputSchema } from '../output-schemas';
 export const telegramSendPhotoOrVideo = createAction({
   auth: telegramBotAuth,
   name: 'telegram_send_photo_or_video',
+  classification: 'WRITE',
   displayName: 'Send Photo, Video, Sticker or GIF',
   description:
     'Send a single photo, video, sticker, or animated GIF to a Telegram chat.',

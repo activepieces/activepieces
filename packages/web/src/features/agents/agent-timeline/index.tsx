@@ -27,17 +27,17 @@ export const AgentTimeline = ({
   agentResult,
   className = '',
 }: AgentTimelineProps) => {
-  if (isNil(agentResult)) {
+  if (isNil(agentResult) || isNil(agentResult.steps)) {
     return <p>{t('No agent output available')}</p>;
   }
 
   return (
     <div className={`h-full flex w-full flex-col ${className}`}>
       <ScrollArea className="flex-1 min-h-0 relative">
-        <div className="absolute left-2 top-4 bottom-8 w-px bg-border" />
+        <div className="absolute left-2 top-4 bottom-8 w-px bg-gray-6" />
 
         <div className="space-y-7 pb-4">
-          {agentResult.prompt.length > 0 && (
+          {(agentResult.prompt?.length ?? 0) > 0 && (
             <PromptBlock prompt={agentResult.prompt} />
           )}
 

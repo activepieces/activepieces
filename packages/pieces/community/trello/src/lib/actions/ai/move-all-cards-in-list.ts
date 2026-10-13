@@ -11,6 +11,7 @@ import { withAuthParams, rethrowTrelloError } from './ai-common';
 export const moveAllCardsInList = createAction({
   auth: trelloAuth,
   name: 'move_all_cards_in_list',
+  classification: 'WRITE',
   displayName: 'Move All Cards In List (Agent)',
   description: 'Move every card from one Trello list to another.',
   audience: 'ai',

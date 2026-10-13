@@ -1,18 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { addCommentToTicketOutputSchema } from '../output-schemas';
 
 export const addCommentToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'add-comment-to-ticket',
+  outputSchema: addCommentToTicketOutputSchema,
+  classification: 'WRITE',
   displayName: 'Add Comment to Ticket',
   description: 'Append a public/private comment to a ticket.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Appends a comment to an existing ticket identified by ticket ID, as either plain text or HTML, defaulting to public (visible to the requester) unless marked private. Use to reply on a ticket, post an internal note, or attach files via upload tokens. The author is the authenticated user unless an author email is supplied (resolved to a user ID). Not idempotent: each call adds a new comment.', idempotent: false },
   props: {
     ticket_id: ticketIdDropdown,
@@ -66,17 +69,11 @@ export const addCommentToTicketAction = createAction({
     const resolveUserByEmail = async (email: string) => {
       try {
         const response = await httpClient.sendRequest({
-          url: `https://${
-            authentication.props.subdomain
-          }.zendesk.com/api/v2/users/search.json?query=email:${encodeURIComponent(
+          url: `${getZendeskBaseUrl(authentication)}/users/search.json?query=email:${encodeURIComponent(
             email
           )}`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const users = (response.body as { users: Array<{ id: number }> }).users;
@@ -125,16 +122,12 @@ export const addCommentToTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}.json`,
+        url: `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           ticket,
         },

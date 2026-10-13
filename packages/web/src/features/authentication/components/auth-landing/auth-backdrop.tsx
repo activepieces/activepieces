@@ -14,6 +14,7 @@ import {
   Workflow,
 } from 'lucide-react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function AuthBackdrop() {
@@ -23,14 +24,14 @@ export function AuthBackdrop() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 flex select-none overflow-hidden bg-sidebar animate-in fade-in duration-700"
+      className="pointer-events-none absolute inset-0 flex select-none overflow-hidden bg-gray-2 animate-in fade-in duration-700"
     >
       <SidebarFacsimile logoUrl={logoUrl} />
       <div className="min-w-0 flex-1 p-1.5">
-        <div className="flex h-full flex-col overflow-hidden rounded-xl border bg-background shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center gap-2 border-b px-5 py-3 text-sm text-muted-foreground">
+        <div className="flex h-full flex-col overflow-hidden rounded-xl border bg-gray-1 shadow-panel">
+          <div className="flex items-center gap-2 border-b px-5 py-3 text-sm text-gray-11">
             <MessageCircle className="size-4" />
-            <span className="font-medium text-foreground/80">
+            <span className="font-medium text-gray-12/80">
               Daily Stripe summary
             </span>
           </div>
@@ -60,14 +61,14 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
   return (
     <div className="hidden w-60 shrink-0 flex-col gap-4 px-3 py-3 lg:flex">
       <div className="flex items-center gap-2 rounded-md px-1.5 py-1">
-        <img src={logoUrl} alt="" className="size-5 object-contain" />
-        <span className="truncate text-sm font-medium text-foreground/80">
+        <LogoPlate src={logoUrl} className="size-5 rounded-sm p-px" />
+        <span className="truncate text-sm font-medium text-gray-12/80">
           Acme Inc
         </span>
-        <ChevronsUpDown className="ml-auto size-3.5 text-muted-foreground" />
+        <ChevronsUpDown className="ml-auto size-3.5 text-gray-11" />
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-medium text-primary-foreground shadow-sm">
+      <div className="flex items-center gap-2 rounded-lg bg-accent-9 px-2.5 py-2 text-sm font-medium text-on-accent shadow-sm">
         <Plus className="size-4" strokeWidth={2.5} />
         New chat
       </div>
@@ -78,8 +79,8 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
             key={label}
             className={
               active
-                ? 'flex items-center gap-2.5 rounded-md bg-accent px-2.5 py-1.5 text-sm font-medium text-accent-foreground'
-                : 'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground'
+                ? 'flex items-center gap-2.5 rounded-md bg-gray-4 px-2.5 py-1.5 text-sm font-medium text-gray-12'
+                : 'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-gray-11'
             }
           >
             <Icon className="size-4" />
@@ -89,7 +90,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
       </div>
 
       <div className="flex min-h-0 flex-col gap-1">
-        <span className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
+        <span className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-gray-11">
           Recent
         </span>
         {RECENT_CHATS.map((title, index) => (
@@ -97,8 +98,8 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
             key={title}
             className={
               index === 0
-                ? 'truncate rounded-md bg-accent px-2.5 py-1.5 text-[13px] text-accent-foreground'
-                : 'truncate rounded-md px-2.5 py-1.5 text-[13px] text-muted-foreground'
+                ? 'truncate rounded-md bg-gray-4 px-2.5 py-1.5 text-[13px] text-gray-12'
+                : 'truncate rounded-md px-2.5 py-1.5 text-[13px] text-gray-11'
             }
           >
             {title}
@@ -107,8 +108,8 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
       </div>
 
       <div className="mt-auto flex items-center gap-2 rounded-md px-1.5 py-1">
-        <div className="size-6 rounded-full bg-muted" />
-        <div className="h-2.5 w-20 rounded-full bg-muted" />
+        <div className="size-6 rounded-full bg-gray-3" />
+        <div className="h-2.5 w-20 rounded-full bg-gray-3" />
       </div>
     </div>
   );
@@ -117,7 +118,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
 function UserTurn({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-muted px-4 py-3 text-[15px] leading-relaxed text-foreground/80">
+      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-gray-3 px-4 py-3 text-[15px] leading-relaxed text-gray-12/80">
         {text}
       </div>
     </div>
@@ -128,22 +129,20 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
   return (
     <div className="space-y-3">
       {turn.activity && (
-        <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-foreground/70">
+        <span className="inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/70">
           <Sparkles className="size-3" />
           {turn.activity}
         </span>
       )}
-      <p className="text-[15px] leading-relaxed text-foreground/75">
-        {turn.text}
-      </p>
+      <p className="text-[15px] leading-relaxed text-gray-12/75">{turn.text}</p>
       {turn.steps && (
-        <div className="space-y-1.5 rounded-xl border bg-muted/30 p-3">
+        <div className="space-y-1.5 rounded-xl border bg-gray-3/30 p-3">
           {turn.steps.map((step) => (
             <div
               key={step}
-              className="flex items-center gap-2 text-[13px] text-foreground/70"
+              className="flex items-center gap-2 text-[13px] text-gray-12/70"
             >
-              <Check className="size-3.5 text-primary" strokeWidth={3} />
+              <Check className="size-3.5 text-accent-11" strokeWidth={3} />
               {step}
             </div>
           ))}
@@ -155,20 +154,20 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
 
 function ComposerFacsimile() {
   return (
-    <div className="rounded-2xl border border-foreground/20 bg-background px-4 pb-2.5 pt-3.5">
-      <p className="text-sm text-muted-foreground">
+    <div className="rounded-2xl border border-gray-6 bg-gray-1 px-4 pb-2.5 pt-3.5">
+      <p className="text-sm text-gray-11">
         Tell me what you need... (@ to mention, : for emoji)
       </p>
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full text-gray-11">
             <Paperclip className="size-4" />
           </div>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full text-gray-11">
             <Mic className="size-4" />
           </div>
         </div>
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-9 text-on-accent">
           <ArrowUp className="size-4" />
         </div>
       </div>

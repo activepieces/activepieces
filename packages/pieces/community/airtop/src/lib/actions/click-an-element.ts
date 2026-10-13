@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const clickAction = createAction({
 	name: 'click',
+	classification: 'WRITE',
 	auth: airtopAuth,
 	displayName: 'Click',
 	description: 'Execute a click interaction in a specific browser window.',

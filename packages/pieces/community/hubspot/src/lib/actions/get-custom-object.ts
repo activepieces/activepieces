@@ -2,32 +2,37 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-custom-object',
+	classification: 'READ',
 	displayName: 'Get Custom Object',
-	description: 'Gets a custom object.',
+	description: 'Gets a custom object record by its ID.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single custom-object record by its ID for a chosen custom object type, returning the requested properties. Use when you already have the record ID and the custom object type; for standard CRM objects use the dedicated Get Contact / Deal / Company / Ticket actions instead. Read-only and idempotent.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		customObjectType: customObjectDropdown,
 		customObjectId: Property.ShortText({
 			displayName: 'Custom Object ID',
-			description: 'The ID of the custom object to get.',
+			description: 'Map it from an earlier step like Find Custom Object.',
 			required: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                  
-                    hs_object_id, hs_lastmodifieddate, hs_createdate   
-      
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: hs_object_id, hs_lastmodifieddate, hs_createdate.
+
+Pick more under **Advanced**.`,
 		}),
-		additionalPropertiesToRetrieve: customObjectPropertiesDropdown('Additional Properties to Retrieve', false),
+		additionalPropertiesToRetrieve: customObjectPropertiesDropdown({
+			displayName: 'Additional Properties to Retrieve',
+			required: false,
+			advanced: true,
+		}),
 	},
 	async run(context) {
 		const customObjectType = context.propsValue.customObjectType as string;
@@ -47,7 +52,7 @@ export const getCustomObjectAction = createAction({
 			propertiesToRetrieve = [];
 		}
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const customObjectDetails = await client.crm.objects.basicApi.getById(
 			customObjectType,

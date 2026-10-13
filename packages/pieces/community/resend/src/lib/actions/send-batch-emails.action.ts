@@ -1,16 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { sendBatchEmailsOutputSchema } from '../output-schemas';
-
-const BASE_URL = 'https://api.resend.com';
 
 export const sendBatchEmails = createAction({
   name: 'send_batch_emails',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Send Batch Emails',
   outputSchema: sendBatchEmailsOutputSchema,
@@ -97,17 +93,14 @@ export const sendBatchEmails = createAction({
       extraHeaders['Idempotency-Key'] = propsValue.idempotency_key;
     }
 
-    const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
+    const response = await resendClient.sendRequest<{ data: { id: string }[] }>({
+      auth: auth.secret_text,
       method: HttpMethod.POST,
-      url: `${BASE_URL}/emails/batch`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
+      path: '/emails/batch',
       headers: extraHeaders,
       body: batch,
     });
 
-    return response.body.data;
+    return response.data;
   },
 });

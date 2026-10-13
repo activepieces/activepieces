@@ -30,11 +30,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -43,6 +45,7 @@ interface EditProjectDialogProps {
   initialValues?: {
     projectName?: string;
     externalId?: string;
+    sensitive?: boolean;
   };
 }
 
@@ -131,6 +134,7 @@ const EditProjectForm = ({
     defaultValues: {
       displayName: initialValues?.projectName,
       externalId: initialValues?.externalId,
+      sensitive: initialValues?.sensitive ?? false,
       globalConnectionExternalIds: currentConnectionExternalIds,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -146,6 +150,7 @@ const EditProjectForm = ({
             request: {
               displayName: values.displayName,
               externalId: values.externalId,
+              sensitive: values.sensitive,
               globalConnectionExternalIds: values.globalConnectionExternalIds,
             },
           });
@@ -190,6 +195,32 @@ const EditProjectForm = ({
             />
           )}
 
+        {platform.plan.environmentsEnabled &&
+          platformRole === PlatformRole.ADMIN && (
+            <FormField
+              name="sensitive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                    <FormDescription>
+                      {t(
+                        'When enabled, publishing flows in this project requires approval.',
+                      )}
+                    </FormDescription>
+                  </div>
+                  <Switch
+                    id="sensitive"
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                    {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
         {globalConnectionsEnabled && (
           <FormField
             name="globalConnectionExternalIds"
@@ -219,7 +250,12 @@ const EditProjectForm = ({
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" disabled={isPending} loading={isPending}>
+          <Button
+            type="submit"
+            disabled={isPending}
+            loading={isPending}
+            {...adminControl(AdminControl.PROJECTS_EDIT_SUBMIT)}
+          >
             {t('Save')}
           </Button>
         </DialogFooter>

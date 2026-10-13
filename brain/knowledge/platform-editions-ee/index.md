@@ -7,7 +7,7 @@ icon: 🏢
 How Activepieces' tenancy (Platform → Project) and Community/Enterprise split work. Rule of thumb: CE never imports `src/app/ee/`; CE declares hook interfaces via `hooksFactory.create<T>(ceDefault)`, EE injects the real impl via `.set(eeImpl)` in the `app.ts` edition switch. Plan flags and numeric limits on `PlatformPlan` — projected from the platform's Autumn billing customer — gate features per-endpoint with `platformMustHaveFeatureEnabled()` (HTTP 402).
 
 ### Platform (CE)
-Top-level tenant namespace; every install has ≥1. Owns branding (logos, theme colors, favicon), auth config (email toggle, allowed domains, SSO providers), pinned pieces, and piece-selector tab layout. Entity `platform`; `platformService` (create/update, `getOneWithPlanAndUsageOrThrow`). Endpoints under `/v1/platforms/:id`. Gotcha: sensitive SSO/SAML secrets stripped → `PlatformWithoutSensitiveData`; SAML config change invalidates the SAML client cache; DELETE is Cloud-only (async hard-delete job). All editions.
+Top-level tenant namespace; every install has ≥1. Owns branding (logos, one brand colour plus optional danger, warning and success colours, favicon), auth config (email toggle, allowed domains, SSO providers), pinned pieces, and piece-selector tab layout. Entity `platform`; `platformService` (create/update, `getOneWithPlanAndUsageOrThrow`). Endpoints under `/v1/platforms/:id`. Gotcha: sensitive SSO/SAML secrets stripped → `PlatformWithoutSensitiveData`; SAML config change invalidates the SAML client cache; DELETE is Cloud-only (async hard-delete job). All editions.
 
 ### Project (CE)
 Workspace inside a platform holding flows, connections, tables. `PERSONAL` (auto-created per user) or `TEAM` (EE). Always scoped by `platformId`; soft-delete via `deleted`. `projectService`; entity `project`. Gotcha: `projectHooks.postCreate` is the CE→EE seam — EE creates the `ProjectPlan`, sets piece filters, subscribes alert receiver. `externalId` maps projects to an embedder's own IDs.
@@ -22,7 +22,7 @@ All commercial modules live under `src/app/ee/`, registered only for EE/Cloud in
 Adds members, roles, git-sync releases, per-project piece sets on top of CE projects. RBAC: `rbacService.assertPrincipalAccessToProject()` branches by principal (USER→member role, ENGINE→projectId match, SERVICE→platform match). 3 default roles (ADMIN/EDITOR/VIEWER) + custom roles (`customRolesEnabled`) over 26 permissions. `ProjectRelease` (GIT_BRANCH/MANUAL/ROLLBACK) diffs then applies state atomically under a memory lock; gated by `environmentsEnabled`. Optional `workerGroupId` routes a project's flow jobs to a dedicated worker pool (`workerGroupsEnabled`).
 
 ### Embed / Signing Keys
-Platform admin configures embedded workflows at `/platform/security/embed` (Cloud: 4 steps incl. Cloudflare hostname + DNS; CE/EE: 2 steps). Core is RSA-4096 signing keys (`/v1/signing-keys`, platform-admin only): private key returned exactly once, only public key stored. Vendor signs JWTs (RS256, `kid` = key id); AP verifies on `POST /v1/managed-authn/external-token`. `platform.allowedEmbedOrigins`, merged with the `AP_ALLOWED_EMBED_ORIGINS` env list, drives the CSP `frame-ancestors` header. Gated by `plan.embeddingEnabled`.
+Platform admin configures embedded workflows at `/platform/embedding` (Cloud: 4 steps incl. Cloudflare hostname + DNS; CE/EE: 2 steps). Core is RSA-4096 signing keys (`/v1/signing-keys`, platform-admin only): private key returned exactly once, only public key stored. Vendor signs JWTs (RS256, `kid` = key id); AP verifies on `POST /v1/managed-authn/external-token`. `platform.allowedEmbedOrigins`, merged with the `AP_ALLOWED_EMBED_ORIGINS` env list, drives the CSP `frame-ancestors` header. Gated by `plan.embeddingEnabled`.
 - *Avoid:* `allowedEmbedDomains` — the old field name, gone.
 
 ### License Keys
@@ -47,3 +47,4 @@ Activation/recovery handle for a self-hosted platform's Autumn billing identity 
 - **License Keys** — activating self-hosted EE
 - **Embed** — signing keys, external tokens, the Cloudflare subdomain, and the frame-ancestors CSP
 - **Platform Copilot** — retired; kept for the migration trail
+- **Console** — the internal admin dashboard in its own repo: two Supabase projects, four auth hooks, and migrations that only print SQL

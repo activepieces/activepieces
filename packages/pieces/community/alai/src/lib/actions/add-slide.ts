@@ -6,6 +6,7 @@ import { presentationId } from '../common/props';
 export const addSlide = createAction({
   auth: alaiAuth,
   name: 'addSlide',
+  classification: 'WRITE',
   displayName: 'Add Slide',
   description: 'Add a new slide to an existing presentation.',
   audience: 'both',

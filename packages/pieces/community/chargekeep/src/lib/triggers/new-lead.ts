@@ -5,6 +5,7 @@ import { chargekeepCommon } from '../common/common';
 export const newLead = createTrigger({
   auth: chargekeepAuth,
   name: 'new_lead',
+  classification: 'READ',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
   aiMetadata: {

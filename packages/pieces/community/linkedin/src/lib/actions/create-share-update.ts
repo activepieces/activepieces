@@ -1,30 +1,41 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Image, linkedinCommon, santizeText } from '../common';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { linkedinCommon, publishMemberPost } from '../common';
 import { linkedinAuth } from '../..';
 import { createShareUpdateActionOutputSchema } from '../output-schemas';
 
 export const createShareUpdate = createAction({
   auth: linkedinAuth,
   name: 'create_share_update',
+  classification: 'WRITE',
   displayName: 'Create Share Update',
-  description: 'Create a share update on LinkedIn',
-  audience: 'both',
+  description: 'Post on your personal LinkedIn profile',
+  audience: 'human',
   aiMetadata: {
     description:
       "Publishes a new post to the authenticated user's personal LinkedIn profile, with optional image, link preview, and visibility setting. Use this to share content as an individual member (not a company page — use Create Company Update for that). Not idempotent: each call creates a separate post, so calling it again with the same text produces a duplicate.",
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'post',
+      display: 'section',
+      label: 'Post',
+      icon: 'text',
+      props: ['text', 'visibility', 'imageUrl'],
+    },
+    {
+      key: 'link_preview',
+      display: 'section',
+      label: 'Link Preview',
+      icon: 'paperclip',
+      props: ['link_preview_info', 'link', 'linkTitle', 'linkDescription'],
+    },
+  ],
   props: {
     text: linkedinCommon.text,
     visibility: linkedinCommon.visibility,
-    imageUrl: linkedinCommon.imageUrl,
+    imageUrl: linkedinCommon.postImage,
+    link_preview_info: linkedinCommon.linkPreviewInfo,
     link: linkedinCommon.link,
     linkTitle: linkedinCommon.linkTitle,
     linkDescription: linkedinCommon.linkDescription,
@@ -32,46 +43,18 @@ export const createShareUpdate = createAction({
   outputSchema: createShareUpdateActionOutputSchema,
 
   run: async (context) => {
-    
-    const token = context.auth.data.id_token;
-    const decoded: JwtPayload = jwt.decode(token) as JwtPayload;
-    const imageUrl = context.propsValue.imageUrl;
-    const { text, link, linkDescription, linkTitle, visibility } =
+    const { text, link, linkDescription, linkTitle, visibility, imageUrl } =
       context.propsValue;
-    let image: Image | undefined;
-    if (imageUrl) {
-      image = await linkedinCommon.uploadImage(
-        context.auth.access_token,
-        `person:${decoded.sub}`,
-        imageUrl
-      );
-    }
 
-    const requestBody = linkedinCommon.generatePostRequestBody({
-      urn: `person:${decoded.sub}`,
-      text: santizeText(text),
-      link,
-      linkDescription,
-      linkTitle,
+    return await publishMemberPost({
+      accessToken: context.auth.access_token,
+      idToken: context.auth.data.id_token,
+      text,
       visibility,
-      image,
+      imageFile: imageUrl,
+      link,
+      linkTitle,
+      linkDescription,
     });
-    const createPostHeaders: any = linkedinCommon.linkedinHeaders;
-
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${linkedinCommon.baseUrl}/rest/posts`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      headers: createPostHeaders,
-      body: requestBody,
-    };
-
-    const response = await httpClient.sendRequest(request);
-    return {
-      success: true,
-    };
   },
 });

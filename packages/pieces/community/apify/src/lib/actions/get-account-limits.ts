@@ -5,6 +5,7 @@ import { getAccountLimitsActionOutputSchema } from '../output-schemas';
 
 export const apifyGetAccountLimits = createAction({
   name: 'apify_get_account_limits',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Account Limits',
   description: 'Retrieves the authenticated account\'s plan limits and current usage.',

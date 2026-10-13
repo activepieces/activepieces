@@ -5,6 +5,7 @@ import { getDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const getDatasetItems = createAction({
   name: 'getDatasetItems',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Dataset Items',
   description: 'Retrieves items from a dataset.',

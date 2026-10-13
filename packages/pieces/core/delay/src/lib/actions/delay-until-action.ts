@@ -7,6 +7,7 @@ import { delayUntilActionOutputSchema } from '../output-schemas';
 export const delayUntilAction = createAction({
   audience: 'both',
   name: 'delay_until',
+  classification: 'READ',
   displayName: 'Delay Until',
   description:
     'Delays the execution of the next action until a given timestamp',
@@ -20,14 +21,14 @@ export const delayUntilAction = createAction({
     },
   },
   props: {
-    markdown: Property.MarkDown({
-      value: markdownDescription,
-    }),
     delayUntilTimestamp: Property.DateTime({
       displayName: 'Date and Time',
-      description:
-        'Specifies the date and time until which the execution of the next action should be delayed. It supports multiple formats, including ISO format.',
+      description: 'A time without a timezone is read as UTC.',
+      placeholder: '2026-08-05T14:30:00Z',
       required: true,
+    }),
+    markdown: Property.MarkDown({
+      value: markdownDescription,
     }),
   },
   outputSchema: delayUntilActionOutputSchema,
@@ -40,13 +41,11 @@ export const delayUntilAction = createAction({
         success: true,
       };
     } else if (delayInMs <= 0) {
-      // resume immediately
       return {
         delayTill: delayTill,
         success: true,
       };
     } else if (delayInMs > 1 * 60 * 1000) {
-      // use flow pause
       const currentTime = new Date();
       const futureTime = dayjs(currentTime.getTime() + delayInMs);
       const waitpoint = await ctx.run.createWaitpoint({
@@ -56,7 +55,6 @@ export const delayUntilAction = createAction({
       ctx.run.waitForWaitpoint(waitpoint.id);
       return {};
     } else {
-      // use setTimeout for delayTill between 0 and 5 seconds
       await new Promise((resolve) => setTimeout(resolve, delayInMs));
       return {
         delayTill: delayTill,

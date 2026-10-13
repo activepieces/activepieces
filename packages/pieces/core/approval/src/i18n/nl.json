@@ -5,5 +5,6 @@
   "Pauses the flow and wait for the approval from the user": "Onderbreekt de stroom en wacht op de goedkeuring van de gebruiker",
   "Create links only without pausing the flow, use wait for approval to pause": "Maak links aan zonder de flow te onderbreken, gebruik wachten op goedkeuring",
   "Markdown": "Markdown",
-  "Please use Manual Task feature instead from 0.48.0 and above": "Gebruik de handmatige takenfunctie vanaf 0.48.0 en hoger"
+  "This piece is legacy but still supported. For a new flow, prefer the approval actions in the Approvals tab, which deliver the request and wait for the answer in one step.": "This piece is legacy but still supported. For a new flow, prefer the approval actions in the Approvals tab, which deliver the request and wait for the answer in one step.",
+  "This piece is legacy but still supported. Unlike the approval actions in the Approvals tab, it hands out a link without pausing the flow.": "This piece is legacy but still supported. Unlike the approval actions in the Approvals tab, it hands out a link without pausing the flow."
 }

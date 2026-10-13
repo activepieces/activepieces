@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
 import { listContactsOutputSchema } from '../output-schemas';
 
 export const listContacts = createAction({
   name: 'list_contacts',
+  classification: 'SEARCH',
   auth: resendAuth,
   displayName: 'List Contacts',
   outputSchema: listContactsOutputSchema,
@@ -16,7 +18,7 @@ export const listContacts = createAction({
     audience_id: resendProps.audienceId,
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest<{
+    const response = await resendClient.sendRequest<{
       data: {
         id: string;
         email: string;
@@ -25,11 +27,7 @@ export const listContacts = createAction({
         created_at: string;
         unsubscribed: boolean;
       }[];
-    }>({
-      method: HttpMethod.GET,
-      url: `https://api.resend.com/audiences/${propsValue.audience_id}/contacts`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-    });
-    return response.body.data;
+    }>({ auth: auth.secret_text, method: HttpMethod.GET, path: `/audiences/${propsValue.audience_id}/contacts` });
+    return response.data;
   },
 });

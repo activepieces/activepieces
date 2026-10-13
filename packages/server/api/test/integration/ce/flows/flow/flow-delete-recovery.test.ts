@@ -1,0 +1,254 @@
+import { apId } from '@activepieces/core-utils'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { Flow, FlowOperationStatus, FlowStatus, FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { Job } from 'bullmq'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { flowSideEffects } from '../../../../../src/app/flows/flow/flow-service-side-effects'
+import { flowBackgroundJobs } from '../../../../../src/app/flows/flow/flow.jobs'
+import { InterceptorVerdict } from '../../../../../src/app/workers/job-queue/job-interceptor'
+import { zombiePollingInterceptor } from '../../../../../src/app/workers/job-queue/interceptors/zombie-polling-interceptor'
+import { db } from '../../../../helpers/db'
+import { createMockFlow, createMockFlowVersion } from '../../../../helpers/mocks'
+import { createTestContext, TestContext } from '../../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
+
+let app: FastifyInstance | null = null
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+async function savePublishedFlow(ctx: TestContext, flow?: Partial<Flow>): Promise<Flow> {
+    const mockFlow = createMockFlow({
+        projectId: ctx.project.id,
+        status: FlowStatus.ENABLED,
+        ...flow,
+    })
+    await db.save('flow', mockFlow)
+    const mockVersion = createMockFlowVersion({ flowId: mockFlow.id })
+    await db.save('flow_version', mockVersion)
+    await db.update('flow', mockFlow.id, { publishedVersionId: mockVersion.id })
+    return mockFlow
+}
+
+async function waitForRowToDisappear(flowId: string): Promise<Flow | null> {
+    for (let attempt = 0; attempt < 40; attempt++) {
+        const row = await db.findOneBy<Flow>('flow', { id: flowId })
+        if (row === null) {
+            return null
+        }
+        await new Promise(resolve => setTimeout(resolve, 100))
+    }
+    return db.findOneBy<Flow>('flow', { id: flowId })
+}
+
+async function savePollingFlowWithLiveTrigger(ctx: TestContext, flow?: Partial<Flow>): Promise<{ flowId: string, flowVersionId: string }> {
+    const mockFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED, ...flow })
+    await db.save('flow', mockFlow)
+    const mockVersion = createMockFlowVersion({ flowId: mockFlow.id })
+    await db.save('flow_version', mockVersion)
+    await db.update('flow', mockFlow.id, { publishedVersionId: mockVersion.id })
+    await db.save('trigger_source', {
+        id: apId(),
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        flowId: mockFlow.id,
+        flowVersionId: mockVersion.id,
+        projectId: ctx.project.id,
+        pieceName: '@activepieces/piece-schedule',
+        pieceVersion: '0.1.0',
+        triggerName: 'every_hour',
+        type: TriggerStrategy.POLLING,
+        simulate: false,
+        schedule: null,
+        deleted: null,
+    })
+    return { flowId: mockFlow.id, flowVersionId: mockVersion.id }
+}
+
+async function dispatchPollingJob(ctx: TestContext, flowId: string, flowVersionId: string): Promise<InterceptorVerdict> {
+    const result = await zombiePollingInterceptor.preDispatch({
+        jobId: apId(),
+        jobData: {
+            jobType: WorkerJobType.EXECUTE_POLLING,
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            flowId,
+            flowVersionId,
+            triggerType: FlowTriggerType.PIECE,
+        },
+        job: {} as Job,
+        log: app!.log,
+    })
+    return result.verdict
+}
+
+describe('Flow deletion recovery', () => {
+    it('disables the flow before the delete job runs, so its trigger stops firing', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx)
+
+        const response = await ctx.delete(`/v1/flows/${flow.id}`)
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const row = await db.findOneBy<Flow>('flow', { id: flow.id })
+        expect(row?.status ?? FlowStatus.DISABLED).toBe(FlowStatus.DISABLED)
+    })
+
+    it('accepts a second delete for a flow already stranded in DELETING', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+
+        const response = await ctx.delete(`/v1/flows/${flow.id}`)
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        expect(await waitForRowToDisappear(flow.id)).toBeNull()
+    })
+
+    it('reaps a flow whose delete job was lost, without a user asking again', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+        await db.update('flow', flow.id, { updated: dayjs().subtract(1, 'day').toISOString() })
+
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
+
+        expect(await waitForRowToDisappear(flow.id)).toBeNull()
+    })
+
+    it('discards the polling job of a flow being deleted, so it stops firing runs', async () => {
+        const ctx = await createTestContext(app!)
+        const { flowId, flowVersionId } = await savePollingFlowWithLiveTrigger(ctx, { operationStatus: FlowOperationStatus.DELETING })
+
+        expect(await dispatchPollingJob(ctx, flowId, flowVersionId)).toBe(InterceptorVerdict.DISCARD)
+    })
+
+    it('still dispatches the polling job of a flow that is not being deleted', async () => {
+        const ctx = await createTestContext(app!)
+        const { flowId, flowVersionId } = await savePollingFlowWithLiveTrigger(ctx)
+
+        expect(await dispatchPollingJob(ctx, flowId, flowVersionId)).toBe(InterceptorVerdict.ALLOW)
+    })
+
+    it('tears the trigger source down even though delete() already wrote DISABLED', async () => {
+        const ctx = await createTestContext(app!)
+        const { flowId } = await savePollingFlowWithLiveTrigger(ctx, { status: FlowStatus.DISABLED })
+        const flowToDelete = await db.findOneByOrFail<Flow>('flow', { id: flowId })
+
+        await flowSideEffects(app!.log).preDelete({ flowToDelete })
+
+        const triggerSource = await db.findOneBy<{ deleted: string | null }>('trigger_source', { flowId })
+        expect(triggerSource).toBeNull()
+    })
+
+    it('keeps reaping the rest when one flow cannot be reclaimed', async () => {
+        const ctx = await createTestContext(app!)
+        const doomed = createMockFlow({
+            projectId: ctx.project.id,
+            status: FlowStatus.DISABLED,
+            operationStatus: FlowOperationStatus.DELETING,
+        })
+        await db.save('flow', doomed)
+        const doomedVersion = createMockFlowVersion({ flowId: doomed.id })
+        await db.save('flow_version', doomedVersion)
+        await db.update('flow', doomed.id, { publishedVersionId: doomedVersion.id })
+        await db.save('trigger_source', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            flowId: doomed.id,
+            flowVersionId: apId(),
+            projectId: ctx.project.id,
+            pieceName: '@activepieces/piece-schedule',
+            pieceVersion: '0.1.0',
+            triggerName: 'every_hour',
+            type: TriggerStrategy.POLLING,
+            simulate: false,
+            schedule: null,
+        })
+        const healthy = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+        await db.update('flow', doomed.id, { updated: dayjs().subtract(2, 'hour').toISOString() })
+        await db.update('flow', healthy.id, { updated: dayjs().subtract(2, 'hour').toISOString() })
+
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
+
+        expect(await waitForRowToDisappear(healthy.id)).toBeNull()
+        expect(await db.findOneBy<Flow>('flow', { id: doomed.id })).not.toBeNull()
+    })
+
+    it('is gone to every reader the moment the request returns, not when the job lands', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+
+        const opened = await ctx.get(`/v1/flows/${flow.id}`)
+        const listed = await ctx.get('/v1/flows', { projectId: ctx.project.id })
+
+        expect(opened?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect(listed?.json().data.map((f: Flow) => f.id)).not.toContain(flow.id)
+    })
+
+    it('frees the external id so the flow can be recreated while the tombstone lingers', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+
+        const response = await ctx.post('/v1/flows', {
+            displayName: 'recreated',
+            projectId: ctx.project.id,
+            externalId: flow.externalId,
+        }, { query: { projectId: ctx.project.id } })
+
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        expect(response?.json().externalId).toBe(flow.externalId)
+    })
+
+    it('survives concurrent deletes and a reaper pass racing the same flow', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx)
+
+        const responses = await Promise.all([
+            ctx.delete(`/v1/flows/${flow.id}`),
+            ctx.delete(`/v1/flows/${flow.id}`),
+            ctx.delete(`/v1/flows/${flow.id}`),
+            flowBackgroundJobs(app!.log).reapTombstonedFlows(),
+        ])
+
+        for (const response of responses.slice(0, 3)) {
+            expect(response).not.toBeUndefined()
+            expect([StatusCodes.NO_CONTENT, StatusCodes.NOT_FOUND]).toContain((response as { statusCode: number }).statusCode)
+        }
+        expect(await waitForRowToDisappear(flow.id)).toBeNull()
+        expect(await db.findBy('flow_version', { flowId: flow.id })).toHaveLength(0)
+        expect(await db.findBy('trigger_source', { flowId: flow.id })).toHaveLength(0)
+    })
+
+    it('is safe to tear the trigger source down twice', async () => {
+        const ctx = await createTestContext(app!)
+        const { flowId } = await savePollingFlowWithLiveTrigger(ctx, { status: FlowStatus.DISABLED })
+        const flowToDelete = await db.findOneByOrFail<Flow>('flow', { id: flowId })
+
+        await flowSideEffects(app!.log).preDelete({ flowToDelete })
+        const afterFirst = await db.findBy('trigger_source', { flowId })
+
+        await flowSideEffects(app!.log).preDelete({ flowToDelete })
+        const afterSecond = await db.findBy('trigger_source', { flowId })
+
+        expect(afterFirst).toHaveLength(0)
+        expect(afterSecond).toHaveLength(0)
+    })
+
+    it('reclaims a just-requested deletion rather than waiting on a clock', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
+
+        expect(await waitForRowToDisappear(flow.id)).toBeNull()
+    })
+})

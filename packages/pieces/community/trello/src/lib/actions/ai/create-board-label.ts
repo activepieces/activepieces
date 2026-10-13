@@ -13,6 +13,7 @@ import { createBoardLabelActionOutputSchema } from '../../output-schemas';
 export const createBoardLabel = createAction({
   auth: trelloAuth,
   name: 'create_board_label',
+  classification: 'WRITE',
   displayName: 'Create Board Label (Agent)',
   description: 'Define a reusable label on a Trello board.',
   audience: 'ai',

@@ -7,6 +7,7 @@ import { notionSearchActionOutputSchema } from '../output-schemas';
 export const notionSearch = createAction({
   auth: notionAuth,
   name: 'notion_search',
+  classification: 'SEARCH',
   displayName: 'Search Pages and Databases',
   description:
     'Searches the workspace by title for pages and/or databases shared with the integration, with exact or partial matching.',

@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const clearRangeAction = createAction({
   auth: excelAuth,
   name: 'clear_range',
+  classification: 'DESTRUCTIVE',
   displayName: 'Clear Cells by Range',
   description: 'Clear a block of cells (range) content or formatting.',
   audience: 'both',

@@ -8,6 +8,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 export const createCustomer = createAction({
   auth: housecallProAuth,
   name: 'create_customer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Creates a new customer in Housecall Pro.',
   audience: 'both',

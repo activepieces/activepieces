@@ -3,6 +3,7 @@ import { chainalysisApiAuth } from '../..';
 
 export const checkAddressSanction = createAction({
   name: 'checkAddressSanction',
+  classification: 'READ',
   displayName: 'Check Address Sanctions',
   description: 'Check if an address is sanctioned',
   audience: 'both',

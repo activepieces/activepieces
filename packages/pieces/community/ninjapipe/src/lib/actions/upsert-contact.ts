@@ -6,6 +6,7 @@ import { ninjapipeApiCall, extractItems, flattenCustomFields, getAuth, ninjapipe
 export const upsertContact = createAction({
   auth: ninjapipeAuth,
   name: 'upsert_contact',
+  classification: 'WRITE',
   displayName: 'Upsert Contact',
   description: 'Creates a contact or updates an existing one by email.',
   audience: 'both',

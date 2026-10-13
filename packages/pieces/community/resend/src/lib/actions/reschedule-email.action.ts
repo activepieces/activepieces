@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { rescheduleEmailOutputSchema } from '../output-schemas';
 
 export const rescheduleEmail = createAction({
   name: 'reschedule_email',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Reschedule Email',
   outputSchema: rescheduleEmailOutputSchema,
@@ -24,12 +26,6 @@ export const rescheduleEmail = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.PATCH,
-      url: `https://api.resend.com/emails/${propsValue.email_id}`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body: { scheduled_at: propsValue.scheduled_at },
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.PATCH, path: `/emails/${propsValue.email_id}`, body: { scheduled_at: propsValue.scheduled_at } });
   },
 });

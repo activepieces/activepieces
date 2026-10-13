@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-time-entry-trigger';
 export const newTimeEntryTrigger = createTrigger({
 	auth: clockifyAuth,
 	name: 'new-time-entry',
+	classification: 'READ',
 	displayName: 'New Time Entry',
 	description: 'Triggers when a new time entry is created.',
 	aiMetadata: {

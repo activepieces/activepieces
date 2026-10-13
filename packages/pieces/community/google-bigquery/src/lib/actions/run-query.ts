@@ -26,6 +26,7 @@ interface QueryResponse {
 export const runQueryAction = createAction({
   auth: bigQueryAuth,
   name: 'run_query',
+  classification: 'WRITE',
   displayName: 'Run a Query',
   description:
     'Execute a SQL query on BigQuery and return the results as flat rows',

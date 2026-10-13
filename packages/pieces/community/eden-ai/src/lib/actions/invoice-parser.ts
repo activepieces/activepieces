@@ -174,6 +174,7 @@ function normalizeFinancialParserResponse(provider: string, response: any) {
 export const invoiceParserAction = createAction({
   auth: edenAiAuth,
   name: 'invoice_parser',
+  classification: 'READ',
   displayName: 'Invoice Parser',
   description: 'Extract structured invoice data from files using Eden AI. Supports multiple providers, languages, and document types.',
   audience: 'both',

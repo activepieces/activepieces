@@ -4,6 +4,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 export const stripHtmlContent = createAction({
   audience: 'both',
   name: 'stripHtml',
+  classification: 'READ',
   displayName: 'Remove HTML Tags',
   description: 'Removes every HTML tag and returns plain text',
   aiMetadata: {

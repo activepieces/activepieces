@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const createContactNote = createAction({
   auth: tarventAuth,
   name: 'tarvent_create_contact_note',
+  classification: 'WRITE',
   displayName: 'Add Note To Contact',
   description: 'Adds a note to a contact.',
   audience: 'both',

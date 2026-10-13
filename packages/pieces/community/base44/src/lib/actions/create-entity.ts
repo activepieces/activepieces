@@ -5,6 +5,7 @@ import { createClient, Base44Error, type Base44Client } from '@base44/sdk';
 export const createEntity = createAction({
   auth: base44Auth,
   name: 'create_entity',
+  classification: 'WRITE',
   displayName: 'Create Entity',
   description: 'Creates an entity (record) in your Base44 app',
   audience: 'both',

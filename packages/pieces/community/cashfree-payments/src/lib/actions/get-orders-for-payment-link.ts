@@ -5,6 +5,7 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 export const getOrdersForPaymentLink = createAction({
   auth: cashfreePaymentsAuth,
   name: 'get-orders-for-payment-link',
+  classification: 'SEARCH',
   displayName: 'Get Orders for Payment Link',
   description: 'View all order details for a payment link in Cashfree Payment Gateway',
   audience: 'both',

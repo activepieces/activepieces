@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-task-trigger';
 export const newTaskTrigger = createTrigger({
 	auth: clockifyAuth,
 	name: 'new-task',
+	classification: 'READ',
 	displayName: 'New Task',
 	description: 'Triggers when a new task is created in specified project.',
 	aiMetadata: {

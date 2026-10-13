@@ -5,6 +5,7 @@ import { iLoveApi } from '../common/client';
 export const voidSignatureAction = createAction({
   auth: iloveapiAuth,
   name: 'void_signature',
+  classification: 'DESTRUCTIVE',
   displayName: 'Void Signature',
   description:
     'Cancel an in-progress signature request. The document becomes inaccessible to all signers.',

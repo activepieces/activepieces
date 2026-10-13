@@ -1,11 +1,9 @@
-import { Nullable, OptionalArrayFromQuery } from '@activepieces/core-utils'
+import { Nullable, OptionalArrayFromQuery, SAFE_EXTERNAL_ID_PATTERN } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../../form-errors'
 import { FieldState } from '../../project-release/project-state'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
-
-const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/
 
 export const CreateTableRequest = z.object({
     projectId: z.string(),
@@ -52,6 +50,8 @@ export const ListTablesRequest = z.object({
     externalIds: OptionalArrayFromQuery(z.string()),
     folderId: z.string().optional(),
     folderIds: OptionalArrayFromQuery(z.string()),
+    sortBy: z.enum(['NAME']).optional(),
+    order: z.enum(['ASC', 'DESC']).optional(),
 })
 
 export type ListTablesRequest = z.infer<typeof ListTablesRequest>

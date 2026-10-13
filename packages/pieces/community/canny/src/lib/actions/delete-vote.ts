@@ -6,6 +6,7 @@ import { cannyRequest } from '../common/client';
 export const deleteVoteAction = createAction({
   auth: cannyAuth,
   name: 'delete_vote',
+  classification: 'WRITE',
   displayName: 'Delete Vote',
   description: 'Removes a vote from a post for a given user.',
   audience: 'both',

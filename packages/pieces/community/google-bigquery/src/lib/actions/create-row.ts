@@ -33,6 +33,7 @@ function fieldToProperty(field: BQField) {
 export const createRowAction = createAction({
   auth: bigQueryAuth,
   name: 'create_row',
+  classification: 'WRITE',
   displayName: 'Create Row',
   description:
     'Creates a single new row in a BigQuery table. Column fields are loaded from the table schema.',

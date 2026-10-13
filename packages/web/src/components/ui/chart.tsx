@@ -4,7 +4,7 @@ import * as RechartsPrimitive from 'recharts';
 import { cn } from '@/lib/utils';
 
 // Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: '', dark: '.dark' } as const;
+const THEMES = { light: '', dark: "[data-theme='dark']" } as const;
 
 export type ChartConfig = {
   [k in string]: {
@@ -53,7 +53,7 @@ function ChartContainer({
         data-slot="chart"
         data-chart={chartId}
         className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-gray-11 [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-gray-6/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-gray-6 [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-gray-6 [&_.recharts-radial-bar-background-sector]:fill-gray-3 [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-gray-3 [&_.recharts-reference-line_[stroke='#ccc']]:stroke-gray-6 [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
           className,
         )}
         {...props}
@@ -171,7 +171,7 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        'grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl',
+        'grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-gray-6/50 bg-panel px-2.5 py-1.5 text-xs shadow-xl',
         className,
       )}
     >
@@ -188,7 +188,7 @@ function ChartTooltipContent({
               <div
                 key={item.dataKey}
                 className={cn(
-                  'flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground',
+                  'flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-gray-11',
                   indicator === 'dot' && 'items-center',
                 )}
               >
@@ -228,12 +228,12 @@ function ChartTooltipContent({
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
-                        <span className="text-muted-foreground">
+                        <span className="text-gray-11">
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
                       {item.value && (
-                        <span className="font-mono font-medium text-foreground tabular-nums">
+                        <span className="font-mono font-medium text-gray-12 tabular-nums">
                           {item.value.toLocaleString()}
                         </span>
                       )}
@@ -285,7 +285,7 @@ function ChartLegendContent({
             <div
               key={item.value}
               className={cn(
-                'flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground',
+                'flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-gray-11',
               )}
             >
               {itemConfig?.icon && !hideIcon ? (

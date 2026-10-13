@@ -6,6 +6,7 @@ import { freeBusyActionOutputSchema } from '../output-schemas';
 export const aiFindBusyPeriods = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_find_busy_periods',
+  classification: 'SEARCH',
   displayName: 'Find Busy Periods',
   description:
     'Return the raw busy time blocks of one or more calendars within a window, via the freebusy query.',

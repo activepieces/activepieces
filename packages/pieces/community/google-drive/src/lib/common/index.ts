@@ -27,7 +27,7 @@ async function fetchFolderDropdownOptions({
     return {
       disabled: true,
       options: [],
-      placeholder: 'Please authenticate first',
+      placeholder: 'Connect your Google account first',
     };
   }
   const accessToken = await getAccessToken(auth);
@@ -71,7 +71,7 @@ async function fetchFolderDropdownOptions({
   return {
     disabled: false,
     placeholder: truncated
-      ? `Showing first ${folders.length} matches — type to narrow the list, or switch to Dynamic value to paste an ID.`
+      ? `Showing the first ${folders.length} matches. Type to narrow the list, or paste an ID with Dynamic value.`
       : undefined,
     options: folders.map((folder: { id: string; name: string }) => {
       return {
@@ -82,32 +82,46 @@ async function fetchFolderDropdownOptions({
   };
 }
 
+function parentFolderDropdown({
+  displayName,
+  description,
+}: {
+  displayName: string;
+  description: string;
+}) {
+  return Property.Dropdown({
+    displayName,
+    description,
+    required: false,
+    auth: googleDriveAuth,
+    refreshers: ['include_team_drives'],
+    refreshOnSearch: true,
+    options: async ({ auth, include_team_drives }, ctx) =>
+      fetchFolderDropdownOptions({
+        auth: auth as GoogleDriveAuthValue | undefined,
+        searchValue: ctx?.searchValue,
+        includeTeamDrives: include_team_drives as boolean | undefined,
+      }),
+  });
+}
+
 export const common = {
   properties: {
-    parentFolder: Property.Dropdown({
+    parentFolder: parentFolderDropdown({
       displayName: 'Parent Folder',
       description:
-        "The Drive folder to target. Leave empty to use the root of My Drive. Type in the box to search your Drive by folder name. If the folder still isn't listed, switch this field to 'Dynamic value' (the toggle next to the field) and paste the folder ID — you can copy it from the folder's URL in Drive, after /folders/ (e.g. https://drive.google.com/drive/folders/<FOLDER_ID>).",
-      required: false,
-      auth: googleDriveAuth,
-      refreshers: ['include_team_drives'],
-      refreshOnSearch: true,
-      options: async ({ auth, include_team_drives }, ctx) =>
-        fetchFolderDropdownOptions({
-          auth: auth as GoogleDriveAuthValue | undefined,
-          searchValue: ctx?.searchValue,
-          includeTeamDrives: include_team_drives as boolean | undefined,
-        }),
+        'Leave empty for the root of My Drive. Type to search by folder name.',
     }),
     include_team_drives: Property.Checkbox({
       displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
+      description: 'Also include shared drives, not only My Drive.',
       defaultValue: false,
       required: false,
     }),
   },
 
+  parentFolderDropdown,
+  escapeDriveQueryLiteral,
   fetchFolderDropdownOptions,
 
   async getFiles(
@@ -116,6 +130,10 @@ export const common = {
       parent?: string;
       createdTime?: string | number | Date;
       createdTimeOp?: string;
+      changedSince?: string | number | Date;
+      mimeTypes?: string[];
+      excludeShortcuts?: boolean;
+      maxPages?: number;
       includeTeamDrive?: boolean;
     },
     order?: string
@@ -125,20 +143,39 @@ export const common = {
     const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const q: string[] = [];
-    if (search?.parent) q.push(`'${search.parent}' in parents`);
+    if (search?.parent)
+      q.push(`'${escapeDriveQueryLiteral(search.parent)}' in parents`);
     if (search?.createdTime)
       q.push(
         `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
           search.createdTime
         ).format()}'`
       );
+    if (search?.changedSince) {
+      const changedSince = dayjs(search.changedSince).format();
+      q.push(
+        `(modifiedTime > '${changedSince}' or createdTime > '${changedSince}')`
+      );
+    }
+    if (search?.mimeTypes?.length)
+      q.push(
+        `(${search.mimeTypes
+          .map(
+            (mimeType) => `mimeType='${escapeDriveQueryLiteral(mimeType)}'`
+          )
+          .join(' or ')})`
+      );
+    if (search?.excludeShortcuts)
+      q.push(`mimeType!='application/vnd.google-apps.shortcut'`);
     q.push(`trashed = false`);
     const allFiles: any[] = [];
     let pageToken: string | undefined = undefined;
+    let pagesFetched = 0;
     do {
       const listParams: Record<string, any> = {
         q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
-        fields: 'nextPageToken, files(id, name, mimeType, webViewLink, kind, createdTime)',
+        fields:
+          'nextPageToken, files(id, name, mimeType, webViewLink, kind, createdTime, modifiedTime)',
         orderBy: order ?? 'createdTime desc',
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,
@@ -148,6 +185,8 @@ export const common = {
       const response = await drive.files.list(listParams);
       allFiles.push(...(response.data.files ?? []));
       pageToken = response.data.nextPageToken ?? undefined;
+      pagesFetched += 1;
+      if (search?.maxPages && pagesFetched >= search.maxPages) break;
     } while (pageToken);
 
     return allFiles;
@@ -168,7 +207,8 @@ export const common = {
     const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const q: string[] = [`mimeType='application/vnd.google-apps.folder'`];
-    if (search?.parent) q.push(`'${search.parent}' in parents`);
+    if (search?.parent)
+      q.push(`'${escapeDriveQueryLiteral(search.parent)}' in parents`);
     if (search?.createdTime)
       q.push(
         `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(

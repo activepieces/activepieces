@@ -8,32 +8,50 @@ import { findRowByNumActionOutputSchema } from '../output-schemas';
 export const findRowByNumAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find_row_by_num',
-	displayName: 'Get Single Row by ID',
-	description: 'Retrieve a specific row using its unique ID.',
+	classification: 'READ',
+	displayName: 'Get Row by Number',
+	description: 'Retrieve one row by its row number.',
 	audience: 'human',
 	aiMetadata: {
 		description:
 			'Reads a single row from a worksheet by its row number, optionally keyed by header names instead of column letters. Use when an agent already knows the exact row to fetch. Read-only and idempotent.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'target_row',
+			display: 'section',
+			label: 'Row',
+			icon: 'markdown',
+			props: ['rowNumber', 'headerRow'],
+		},
+	],
 	props: {
 		...commonProps,
 		rowNumber: Property.Number({
 			displayName: 'Row Number',
-			description: 'Enter the row number you want to retrieve',
+			description: 'The row to retrieve, counting from 1.',
 			required: true,
 		}),
 		headerRow: Property.Number({
-			displayName: 'Header Row Number',
-			description: 'Enter the row number where your column headers are located (usually row 1).',
+			displayName: 'Header Row',
+			description: 'The row that contains the column names.',
 			required: true,
 			defaultValue: 1,
 		}),
 		useHeaderNames: Property.Checkbox({
 			displayName: 'Use Column Names',
-			description: 'Use column names as keys instead of A, B, C.',
+			description: 'Key each row by column name instead of A, B, C.',
 			required: false,
 			defaultValue: true,
+			advanced: true,
 		}),
 	},
 	outputSchema: findRowByNumActionOutputSchema,

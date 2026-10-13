@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
+import { aiCostReporter, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -10,43 +10,52 @@ import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-pro
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
+import { installAiKeyHealthReporter } from './ai/ai-key-health-reporter'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { aiToolConfigModule } from './ai/ai-tool-config.module'
+import { aiUsageHooks } from './ai/ai-usage-hooks'
+import { aiUsageService } from './ai/ai-usage-service'
+import { platformModelTierModule } from './ai/platform-model-tier.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { otpModule } from './authentication/otp/otp-module'
+import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
+import { backgroundMigrationRunner } from './database/background-migration-runner'
 import { distributedLock, redisConnections } from './database/redis-connections'
+import { agentConversationCreditsHooks } from './ee/agent/agent-conversation-credits'
 import { agentEvalModule } from './ee/agent/agent-eval-controller'
 import { agentHelpers } from './ee/agent/agent-helpers'
+import { assertAgentsResolveInProject } from './ee/agent/agent-service'
 import { agentModule } from './ee/agent/agent.module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
-import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
-import { billingUsageReportModule } from './ee/billing-usage-report/billing-usage-report-module'
-import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
+import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.module'
+import { eeFlowPublishHook } from './ee/flows/flow-approval/flow-publish-hook'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { appearanceHelper } from './ee/helper/appearance-helper'
+import { licenseKeyUsageReportModule } from './ee/license-key-usage-report/license-key-usage-report-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
+import { pieceSetRequiredActions } from './ee/pieces/piece-set/piece-set-required-actions'
 import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
@@ -54,6 +63,7 @@ import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates
 import { autumnBillingProvider } from './ee/platform/platform-plan/billing-providers/autumn-billing'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { platformTeardownJobs } from './ee/platform/platform-teardown-jobs'
+import { eventDestinationEntitlementHooks } from './ee/platform-webhooks/event-destination-entitlement-hooks'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
@@ -67,13 +77,15 @@ import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { userModule } from './ee/users/user.module'
+import { eventDestinationHooks } from './event-destinations/event-destinations-hooks'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
+import { flowPublishHooks, publishHooksFactory } from './flows/flow/flow-publish-hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
-import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
+import { pieceUpgradeModule } from './flows/flow-version/piece-upgrade.module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
@@ -85,24 +97,27 @@ import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
-import { systemJobsSchedule } from './helper/system-jobs/system-job'
+import { SystemJobBackoff, systemJobsSchedule } from './helper/system-jobs/system-job'
 import { systemSnapshot } from './helper/system-snapshot'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
+import { mcpActivityController } from './mcp/activity/mcp-activity-controller'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
+import { mcpOAuthGrantsController } from './mcp/oauth/token/mcp-oauth-grants.controller'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { billingProvider } from './platform/billing-provider'
+import { piecesReportModule } from './platform/pieces-report/pieces-report.module'
+import { platformConfigurationModule } from './platform/platform-configuration.module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
-import { teamsBotModule } from './teams-bot/teams-bot.module'
 import { templateModule } from './template/template.module'
 import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
@@ -110,6 +125,8 @@ import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
+import { resumePageHooks } from './waitpoints/resume-page-hooks'
+import { sweepOverdueDeadlines } from './waitpoints/waitpoint-deadline-sweep'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
@@ -216,7 +233,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
-    await app.register(teamsBotModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
@@ -239,9 +255,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(authenticationModule)
     await app.register(triggerModule)
     await app.register(platformModule)
+    await app.register(piecesReportModule)
+    await app.register(platformConfigurationModule)
     await app.register(humanInputModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
+    await app.register(mcpOAuthGrantsController)
+    await app.register(mcpActivityController)
     await app.register(agentsModule)
     await app.register(platformUserModule)
     await app.register(alertsModule)
@@ -251,7 +271,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(oidcModule)
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
-    await app.register(billingUsageReportModule)
+    await app.register(platformModelTierModule)
+    await app.register(licenseKeyUsageReportModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
     await app.register(userModule)
@@ -283,6 +304,25 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         },
     })
 
+    systemJobHandlers.registerJobHandler(SystemJobName.WAITPOINT_DEADLINE_SWEEP, async () => {
+        await sweepOverdueDeadlines({ log: app.log })
+    })
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
+            data: {},
+            jobId: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '* * * * *',
+        },
+    })
+
+    systemJobHandlers.registerJobHandler(SystemJobName.RUN_BACKGROUND_MIGRATIONS, async () => {
+        await backgroundMigrationRunner.run({ log: app.log })
+    })
+
     app.get(
         '/redirect',
         async (
@@ -310,9 +350,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(adminPlatformModule)
+            await app.register(pieceUpgradeModule)
             await app.register(adminPlatformTemplatesCloudModule)
-            await app.register(appCredentialModule)
-            await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
             await app.register(platformPlanModule)
             await app.register(projectMemberModule)
@@ -325,6 +364,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(passwordlessAuthModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
@@ -336,6 +376,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(flowApprovalModule)
             await app.register(embedSubdomainModule)
             await app.register(agentModule)
             await app.register(agentEvalModule)
@@ -343,12 +384,17 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
+            aiUsageHooks.set(agentConversationCreditsHooks)
+            eventDestinationHooks.set(eventDestinationEntitlementHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(pieceUpgradeModule)
             await app.register(platformPlanModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
@@ -371,6 +417,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(globalConnectionModule)
             await app.register(secretManagersModule)
             await app.register(scimModule)
+            await app.register(flowApprovalModule)
             await app.register(embedSubdomainModule)
             await app.register(agentModule)
             await app.register(agentEvalModule)
@@ -378,8 +425,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
+            aiUsageHooks.set(agentConversationCreditsHooks)
+            eventDestinationHooks.set(eventDestinationEntitlementHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
@@ -436,9 +487,18 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const pieces = process.env.AP_DEV_PIECES
 
     assertReleaseReadable(app.log)
+    aiCostReporter.install({
+        log: app.log,
+        report: (request) => aiUsageService(app.log).report(request),
+        pageWebhookUrl: () => system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
+    })
+    installAiKeyHealthReporter(app.log)
     systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
+    dispatchBackgroundMigrations(app.log).catch(error => {
+        app.log.warn({ error: error instanceof Error ? error.message : String(error) }, '[appPostBoot] Failed to dispatch background migrations job; next pod boot will retry')
+    })
     if (environment === ApEnvironment.DEVELOPMENT) {
         app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
@@ -448,6 +508,24 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         )
     }
     void startDevPieceWatcher(app)
+}
+
+async function dispatchBackgroundMigrations(log: FastifyBaseLogger): Promise<void> {
+    await systemJobsSchedule(log).upsertJob({
+        job: {
+            name: SystemJobName.RUN_BACKGROUND_MIGRATIONS,
+            data: {},
+            jobId: SystemJobName.RUN_BACKGROUND_MIGRATIONS,
+        },
+        schedule: {
+            type: 'one-time',
+            date: apDayjs(),
+        },
+        customConfig: {
+            attempts: 10,
+            backoff: { type: SystemJobBackoff.instantBurstThenExponential, delay: 0 },
+        },
+    })
 }
 
 // Front-loads the release-read failure signal to boot time. Without this the only alert is
@@ -482,6 +560,8 @@ function extractProjectId(principal: { projectId?: string } | null | undefined):
 function registerOpenApiSchemas() {
     globalRegistry.add(FlowCreatedEvent, { id: ApplicationEventName.FLOW_CREATED })
     globalRegistry.add(FlowUpdatedEvent, { id: ApplicationEventName.FLOW_UPDATED })
+    globalRegistry.add(FlowPiecesUpgradedEvent, { id: ApplicationEventName.FLOW_PIECES_UPGRADED })
+    globalRegistry.add(FlowPiecesRevertedEvent, { id: ApplicationEventName.FLOW_PIECES_REVERTED })
     globalRegistry.add(FlowDeletedEvent, { id: ApplicationEventName.FLOW_DELETED })
     globalRegistry.add(FlowPublishedEvent, { id: ApplicationEventName.FLOW_PUBLISHED })
     globalRegistry.add(FlowActivatedEvent, { id: ApplicationEventName.FLOW_ACTIVATED })
@@ -499,6 +579,7 @@ function registerOpenApiSchemas() {
     globalRegistry.add(UserPasswordResetEvent, { id: ApplicationEventName.USER_PASSWORD_RESET })
     globalRegistry.add(UserEmailVerifiedEvent, { id: ApplicationEventName.USER_EMAIL_VERIFIED })
     globalRegistry.add(SigningKeyEvent, { id: ApplicationEventName.SIGNING_KEY_CREATED })
+    globalRegistry.add(AuditLogRetentionUpdatedEvent, { id: ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED })
     globalRegistry.add(ProjectRoleEvent, { id: ApplicationEventName.PROJECT_ROLE_CREATED })
     globalRegistry.add(ProjectReleaseEvent, { id: ApplicationEventName.PROJECT_RELEASE_CREATED })
     globalRegistry.add(Template, { id: 'template' })
@@ -514,6 +595,7 @@ function registerOpenApiSchemas() {
     globalRegistry.add(GitRepoWithoutSensitiveData, { id: 'git-repo' })
     globalRegistry.add(ProjectRelease, { id: 'project-release' })
     globalRegistry.add(AddAllowedEmbedOriginsRequestBody, { id: 'embedding' })
+    globalRegistry.add(VariableWithoutSensitiveData, { id: 'variable' })
 }
 
 const REDIRECT_HTML_TEMPLATE = `<!DOCTYPE html>

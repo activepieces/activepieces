@@ -1,16 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PDFDocument } from 'pdf-lib';
+import { mergePdfsActionOutputSchema } from '../output-schemas';
 
 export const mergePdfs = createAction({
   audience: 'both',
   name: 'mergePdfs',
+  classification: 'READ',
   displayName: 'Merge PDFs',
-  description: 'Merges multiple PDF files into a single PDF document.',
+  description: 'Merge two or more PDF files into one document.',
   aiMetadata: { description: 'Concatenates two or more PDF files into one new PDF, keeping the order in which the files are listed. Use it to join separate documents; use Extract PDF Pages to pull out or resequence pages inside a single document, and Image to PDF first if a source is an image rather than a PDF. Requires at least 2 files and each filename must end in .pdf; the source files are never modified and repeating the call produces the same merged content, so idempotent.', idempotent: true },
+  outputSchema: mergePdfsActionOutputSchema,
   props: {
     pdfFiles: Property.Array({
       displayName: 'PDF Files',
-      description: 'Array of PDF files to merge',
+      description: 'Add the files in the order they should appear.',
       required: true,
       properties: {
         file: Property.File({
@@ -21,9 +24,10 @@ export const mergePdfs = createAction({
     }),
     outputFileName: Property.ShortText({
       displayName: 'Output File Name',
-      description: 'Name for the merged PDF file (without extension)',
+      description: 'File name for the merged PDF, without the extension.',
       required: false,
       defaultValue: 'merged-document',
+      advanced: true,
     }),
   },
   async run(context) {

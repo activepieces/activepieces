@@ -48,7 +48,7 @@ export function SvgPreview({ svg }: { svg: string }) {
       label={t('SVG')}
       actions={actions}
       toolbar={
-        <div className="border-b border-border px-3 py-2">
+        <div className="border-b border-gray-6 px-3 py-2">
           <Tabs
             value={tab}
             onValueChange={(v) => setTab(v as 'preview' | 'code')}

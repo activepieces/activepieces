@@ -4,6 +4,7 @@ import { chartlyAuth } from '../common/auth';
 export const getChartAction = createAction({
   auth: chartlyAuth,
   name: 'get_chart',
+  classification: 'READ',
   displayName: 'Get Chart',
   description: 'Retrieve a previously created chart by its ID. Returns cached image data optimized for sharing.',
   audience: 'both',

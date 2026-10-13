@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionPausedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_paused',
+  classification: 'READ',
   displayName: 'Subscription Paused',
   description: 'Triggers when a subscription\'s payment collection is paused',
   aiMetadata: {

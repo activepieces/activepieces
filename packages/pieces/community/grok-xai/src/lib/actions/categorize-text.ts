@@ -16,6 +16,7 @@ import {
   XaiResponse,
   CategorizationResult
 } from '../common/utils';
+import { categorizeTextActionOutputSchema } from '../output-schemas';
 import * as z from 'zod/mini'
 
 interface Category {
@@ -27,6 +28,7 @@ export const categorizeText = createAction({
   audience: 'both',
   auth: grokAuth,
   name: 'categorize_text',
+  classification: 'READ',
   displayName: 'Categorize Text',
   description: 'Assign categories to input text based on custom or predefined labels.',
   aiMetadata: { description: 'Classifies one block of text against a caller-defined list of categories, each supplied as a name plus a description, returning the chosen labels with the model reasoning and optional per-category confidence scores; a flag switches it between single-label and multi-label assignment, and an optional context search lets the model consult the web before deciding. Pick it when the goal is sorting text into a known label set, rather than pulling values out of it (extract_data_from_text) or generating free-form output (ask_grok). Non-empty text and at least one category are required; not idempotent: each call is a fresh model completion and the assigned labels can vary between runs.', idempotent: false },
@@ -98,6 +100,7 @@ export const categorizeText = createAction({
       },
     }),
   },
+  outputSchema: categorizeTextActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),

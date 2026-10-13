@@ -10,7 +10,10 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     testTimeout: 60000,
-    hookTimeout: 60000,
+    // Every integration file boots a server in beforeAll — seconds locally, but the suites boot in
+    // parallel forks and a loaded CI runner has pushed that past a minute. The timeout is here to
+    // catch a hang, and two minutes still catches one.
+    hookTimeout: 120000,
     pool: 'forks',
     setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],

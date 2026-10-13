@@ -45,6 +45,7 @@ const polling: Polling<
 export const updatedChangeTask = createTrigger({
   auth: freshserviceAuth,
   name: 'updated_change_task',
+  classification: 'READ',
   displayName: 'Updated Change Task',
   description: 'Triggers when a task on a specific change request is updated. Note: newly created tasks may also fire this trigger because their updated_at matches created_at.',
   aiMetadata: {

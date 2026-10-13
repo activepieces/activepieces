@@ -1,5 +1,5 @@
 import { AgentPromptOverride, AgentRunSource } from '@activepieces/core-execution'
-import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
 import { MAX_AGENT_TEXT_LENGTH } from './agent'
@@ -173,18 +173,9 @@ export const PersistedAgentMessageSchema = z.object({
     parts: z.array(PersistedAgentPartSchema),
     thinkingDurationMs: z.number().optional(),
     feedback: AgentMessageFeedbackSchema.optional(),
+    tainted: z.boolean().optional(),
 })
 
-export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
-export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema>
-export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
-export type PersistedThinkingStatusPart = z.infer<typeof PersistedThinkingStatusPartSchema>
-export type PersistedActionReceiptPart = z.infer<typeof PersistedActionReceiptPartSchema>
-export type PersistedBuildPlanPart = z.infer<typeof PersistedBuildPlanPartSchema>
-export type PersistedSourceUrlPart = z.infer<typeof PersistedSourceUrlPartSchema>
-export type PersistedSourceDocumentPart = z.infer<typeof PersistedSourceDocumentPartSchema>
-export type PersistedImagePart = z.infer<typeof PersistedImagePartSchema>
-export type PersistedFilePart = z.infer<typeof PersistedFilePartSchema>
 export type PersistedAgentPart = z.infer<typeof PersistedAgentPartSchema>
 export type PersistedAgentMessage = z.infer<typeof PersistedAgentMessageSchema>
 export type AgentMessageFeedback = z.infer<typeof AgentMessageFeedbackSchema>
@@ -197,15 +188,24 @@ export enum AgentConversationStatus {
 
 export { AgentRunSource }
 
+export const AgentRunFlowReference = z.object({
+    flowRunId: z.string(),
+    flowId: z.string(),
+    displayName: z.string(),
+})
+
 export const AgentConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
     projectId: Nullable(z.string()),
     userId: z.string(),
     agentId: Nullable(z.string()),
+    flowRunId: Nullable(z.string()),
+    aiCredits: Nullable(z.number().int()),
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
+    modelTierId: Nullable(ApId),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
@@ -213,18 +213,28 @@ export const AgentConversation = z.object({
     summary: Nullable(z.string()),
     summarizedUpToIndex: Nullable(z.number().int()),
 })
+
+export const AgentRunListItem = AgentConversation.extend({
+    flow: Nullable(AgentRunFlowReference),
+})
 export type AgentConversation = z.infer<typeof AgentConversation>
+export type AgentRunFlowReference = z.infer<typeof AgentRunFlowReference>
+export type AgentRunListItem = z.infer<typeof AgentRunListItem>
 
 export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    modelTierId: z.optional(Nullable(ApId)),
     agentId: z.optional(z.string()),
+    builder: z.optional(z.boolean()),
+    projectId: z.optional(z.string()),
 })
 export type CreateAgentConversationRequest = z.infer<typeof CreateAgentConversationRequest>
 
 export const UpdateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    modelTierId: z.optional(Nullable(ApId)),
 })
 export type UpdateAgentConversationRequest = z.infer<typeof UpdateAgentConversationRequest>
 
@@ -249,9 +259,6 @@ export const UpdateAgentMemoryRequest = z.object({
 })
 export type UpdateAgentMemoryRequest = z.infer<typeof UpdateAgentMemoryRequest>
 
-export const CHAT_BYOK_CREDIT_WEIGHT = 1
-export const CHAT_CREDITS_PER_TOOL_CALL = 1
-
 export const ImportAgentMemoryRequest = z.object({
     text: z.string(),
 })
@@ -262,10 +269,14 @@ export const InstructAgentMemoryRequest = z.object({
 })
 export type InstructAgentMemoryRequest = z.infer<typeof InstructAgentMemoryRequest>
 
+export const AgentMessageSource = z.enum(['onboarding'])
+export type AgentMessageSource = z.infer<typeof AgentMessageSource>
+
 export const SendAgentMessageRequest = z.object({
     content: z.string().max(MAX_AGENT_TEXT_LENGTH),
     runId: z.string().optional(),
     files: z.array(AgentMessageFile).max(10).optional(),
+    messageSource: AgentMessageSource.optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },
@@ -319,6 +330,7 @@ export type AgentToolOutputs = {
     ap_show_project_picker: { displayed: boolean }
     ap_show_questions: { displayed: boolean }
     ap_show_quick_replies: { displayed: boolean }
+    ap_show_showcase: { displayed: boolean }
     ap_update_thinking_status: { success: boolean }
 }
 
@@ -368,5 +380,8 @@ export { CHAT_ALLOWED_MIME_TYPES }
 
 export * from './agent'
 export { agentToolClassification } from './tool-classification'
-export { agentToolPhases, type AgentPhase } from './tool-phases'
+export { CHAT_CREDITS_PER_TOOL_CALL, chatBilling, type ChatToolCall, type TurnCredits } from './chat-billing'
+export { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, agentToolPhases, type AgentPhase } from './tool-phases'
+export { AGENT_SKILLS, agentToolSkills, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SKILLS_NOTE_HEADING, type AgentSkill, type SkillSurface } from './tool-skills'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
+export * from './chat-personalization'

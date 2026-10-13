@@ -6,6 +6,7 @@ import { callGraphApi, flattenUser, userDropdown } from '../common';
 export const getUserByIdAction = createAction({
     auth: azureAdAuth,
     name: 'get_user_by_id',
+    classification: 'READ',
     displayName: 'Get User by ID',
     description: 'Retrieves an Azure AD user by object ID or user principal name.',
     audience: 'both',

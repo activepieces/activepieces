@@ -7,6 +7,7 @@ import { deleteMultipleRowsActionOutputSchema } from '../output-schemas';
 export const deleteMultipleRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'delete-multiple-rows',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Multiple Rows',
 	description:
 		'Deletes a contiguous range of rows, or a list of specific row numbers. Row numbers are 1-based.',
@@ -16,12 +17,28 @@ export const deleteMultipleRowsAction = createAction({
 			'Permanently deletes rows from a worksheet in one batch, in either of two modes: a contiguous range given by starting and ending row, or a comma-separated list of specific 1-based row numbers. Use instead of Delete Row when several rows must go at once, and Clear Row(s) instead when the rows should stay in place with only their contents erased. Not idempotent — surviving rows renumber after each deletion, so repeating the same call removes different rows; re-resolve the targets before any retry.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'target_rows',
+			display: 'section',
+			label: 'Rows',
+			icon: 'markdown',
+			props: ['mode', 'startingRow', 'endingRow', 'rowNumbers'],
+		},
+	],
 	props: {
 		...commonProps,
 		mode: Property.StaticDropdown({
 			displayName: 'Mode',
 			description:
-				'Choose whether to delete a contiguous range (start/end) or a comma-separated list of row numbers.',
+				'Delete a range of rows, or a list of specific row numbers.',
 			required: true,
 			defaultValue: 'range',
 			options: {
@@ -45,8 +62,9 @@ export const deleteMultipleRowsAction = createAction({
 		rowNumbers: Property.ShortText({
 			displayName: 'Row Numbers',
 			description:
-				'Comma-separated row numbers to delete (used in "Specific Row Numbers" mode), e.g. "3, 5, 8".',
+				'Comma-separated row numbers to delete.',
 			required: false,
+			placeholder: '3, 5, 8',
 		}),
 	},
 	outputSchema: deleteMultipleRowsActionOutputSchema,

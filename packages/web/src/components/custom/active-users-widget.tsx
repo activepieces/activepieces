@@ -9,14 +9,14 @@ import { ApAvatar } from './ap-avatar';
 const MAX_VISIBLE_AVATARS = 5;
 const AVATAR_SIZE = 28;
 const BORDER_COLORS = [
-  'hsl(var(--destructive-500))',
-  'hsl(var(--chart-1))',
-  'hsl(var(--warning-500))',
-  'hsl(var(--success-500))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--primary))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--chart-4))',
+  'var(--swatch-1-mark)',
+  'var(--swatch-3-mark)',
+  'var(--swatch-4-mark)',
+  'var(--swatch-6-mark)',
+  'var(--swatch-8-mark)',
+  'var(--swatch-9-mark)',
+  'var(--swatch-11-mark)',
+  'var(--swatch-12-mark)',
 ];
 
 function getBorderColor(userId: string): string {
@@ -52,7 +52,7 @@ export function ActiveUsersWidget({ resourceId }: ActiveUsersWidgetProps) {
         <Tooltip>
           <TooltipTrigger asChild>
             <div
-              className="flex items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground border"
+              className="flex items-center justify-center rounded-full bg-gray-3 text-xs font-medium text-gray-11 border"
               style={{ width: `${AVATAR_SIZE}px`, height: `${AVATAR_SIZE}px` }}
             >
               +{overflowCount}

@@ -23,15 +23,20 @@ export const MembersSettings = () => {
   const {
     projectMembers,
     isLoading: projectMembersIsPending,
+    isError: projectMembersFailed,
     refetch: refetchProjectMembers,
   } = projectMembersHooks.useProjectMembers();
   const {
     invitations,
     isLoading: invitationsIsPending,
+    isError: invitationsFailed,
     refetch: refetchInvitations,
   } = userInvitationsHooks.useInvitations();
-  const { data: platformUsersData, isLoading: platformUsersIsPending } =
-    platformUserHooks.useUsers();
+  const {
+    data: platformUsersData,
+    isLoading: platformUsersIsPending,
+    isError: platformUsersFailed,
+  } = platformUserHooks.useUsers();
 
   const [filterValue, setFilterValue] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -154,6 +159,11 @@ export const MembersSettings = () => {
           invitationsIsPending ||
           platformUsersIsPending
         }
+        isError={
+          projectMembersFailed || invitationsFailed || platformUsersFailed
+        }
+        errorStateEntity={t('members')}
+        onRetry={refetch}
         hidePagination={true}
         emptyStateTextTitle={t('No members found')}
         emptyStateTextDescription={t(

@@ -4,6 +4,7 @@ import { wonderchatAuth } from '../..';
 
 export const addPage = createAction({
   name: 'addPage',
+  classification: 'WRITE',
   displayName: 'Add Page',
   description: 'Add new pages to your chatbot’s knowledge base.',
   audience: 'both',

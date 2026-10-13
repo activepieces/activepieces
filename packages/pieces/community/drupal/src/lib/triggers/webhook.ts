@@ -14,6 +14,7 @@ const webhookStoreKey = (id: string) => `_drupal_webhook_trigger_${id}`;
 export const drupalWebhook = createTrigger({
   auth: drupalAuth,
   name: 'drupalWebhook',
+  classification: 'READ',
   displayName: 'Webhook',
   description: 'A webhook that the Drupal site can call to trigger a flow.',
   aiMetadata: {

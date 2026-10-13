@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findCustomer = createAction({
   auth: bokioAuth,
   name: 'findCustomer',
+  classification: 'SEARCH',
   displayName: 'Find Customer',
   description: 'Find customers in Bokio by filtering and pagination',
   audience: 'both',

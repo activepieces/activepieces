@@ -6,6 +6,7 @@ import { findRowsOutputSchema } from '../output-schemas';
 export const findRows = createAction({
   auth: postgresAuth,
   name: 'find-rows',
+  classification: 'SEARCH',
   displayName: 'Find Rows',
   description: 'Reads rows from a table',
   audience: 'both',

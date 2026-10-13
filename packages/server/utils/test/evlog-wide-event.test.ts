@@ -76,6 +76,32 @@ describe('wideEvent', () => {
         expect((err as Error).message).toBe('something went wrong')
     })
 
+    it('error() keeps a thrown object\'s payload, which is the only place it survives', () => {
+        const logger = makeMockLogger()
+        wideEvent.run({
+            logger,
+            fn: () => {
+                wideEvent.error({ code: 'TOOL_FAILED', tool: 'ap_web_search' })
+            },
+        })
+        const [err] = logger._errors[0]
+        expect((err as Error).message).toContain('TOOL_FAILED')
+        expect((err as Error).message).toContain('ap_web_search')
+    })
+
+    it('error() does not throw on a value it cannot serialize', () => {
+        const logger = makeMockLogger()
+        const cyclic: Record<string, unknown> = {}
+        cyclic['self'] = cyclic
+        wideEvent.run({
+            logger,
+            fn: () => {
+                wideEvent.error(cyclic)
+            },
+        })
+        expect(logger._errors).toHaveLength(1)
+    })
+
     it('error() passes an existing Error directly', () => {
         const logger = makeMockLogger()
         const original = new Error('original')

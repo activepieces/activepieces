@@ -56,6 +56,7 @@ const sampleData = {
 export const newUserTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-user',
+	classification: 'READ',
 	displayName: 'New User',
 	description: 'Triggers when a new user is created / first joins your org.',
 	aiMetadata: {
@@ -92,7 +93,6 @@ export const newUserTrigger = createTrigger({
 	run: async (context) => {
 		const payloadBody = context.payload.body as PayloadBody;
 
-		// check if it's emoji message
 		if (payloadBody.event.type !== 'team_join') {
 			return [];
 		}

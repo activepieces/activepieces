@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
+  classification: 'WRITE',
   displayName: 'Add or Update Contact',
   description: 'Creates a new contact.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { platformFilterProperty, sendItRequest } from '../common';
 export const listScheduledPosts = createAction({
   auth: sendItAuth,
   name: 'list_scheduled_posts',
+  classification: 'SEARCH',
   displayName: 'List Scheduled Posts',
   description: 'Get a list of pending scheduled posts',
   audience: 'both',

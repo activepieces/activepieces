@@ -13,6 +13,7 @@ const STORE_KEY = '_chargebee_customer_created_webhook_id';
 export const customerCreated = createTrigger({
   auth: chargebeeAuth,
   name: 'customer_created',
+  classification: 'READ',
   displayName: 'Customer Created',
   description: 'Triggers when a new customer is created in Chargebee.',
   aiMetadata: {

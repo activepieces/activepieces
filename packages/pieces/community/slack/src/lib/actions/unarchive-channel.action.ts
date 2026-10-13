@@ -6,6 +6,7 @@ import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 export const unarchiveChannelAction = createAction({
   auth: slackAuth,
   name: 'slack_unarchive_channel',
+  classification: 'WRITE',
   displayName: 'Unarchive Channel',
   description: 'Reopens an archived channel.',
   audience: 'ai',

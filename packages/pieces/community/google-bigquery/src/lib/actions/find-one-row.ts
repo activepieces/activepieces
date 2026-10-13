@@ -24,6 +24,7 @@ interface QueryResponse {
 export const findOneRowAction = createAction({
   auth: bigQueryAuth,
   name: 'find_one_row',
+  classification: 'SEARCH',
   displayName: 'Find One Row',
   description:
     'Find a single row by specifying a WHERE clause and an optional ORDER BY. Returns the first matching row, or empty if none found.',

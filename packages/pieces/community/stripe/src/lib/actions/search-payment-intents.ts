@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { paymentIntentSearchOutputSchema } from '../output-schemas';
 export const stripeSearchPaymentIntents = createAction({
   name: 'search_payment_intents',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Payment Intents (Agent)',
   description: 'Search PaymentIntents with a Stripe search query.',

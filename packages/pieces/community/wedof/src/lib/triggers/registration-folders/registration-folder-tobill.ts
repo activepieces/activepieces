@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const registrationFolderTobill = createTrigger({
   auth: wedofAuth,
   name: 'registrationFolderTobill',
+  classification: 'READ',
   displayName: 'Dossier de formation à facturer',
   description:
     "Se déclenche lorsqu'un dossier de formation est prêt à être facturé (service fait validé)",

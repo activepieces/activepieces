@@ -14,6 +14,7 @@ interface ListDesignsResponse {
 export const findDesign = createAction({
   auth: canvaAuth,
   name: 'find_design',
+  classification: 'SEARCH',
   displayName: 'Find Design',
   description: 'Search and list designs from your Canva library. Use this to find existing designs before creating new ones.',
   audience: 'both',

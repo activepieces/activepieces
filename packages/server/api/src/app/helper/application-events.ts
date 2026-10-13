@@ -59,7 +59,7 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
             } as ApplicationEvent
-            listener(projectId, event)
+            rejectedPromiseHandler(Promise.resolve(listener(projectId, event)), log)
         }
     },
 })

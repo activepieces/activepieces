@@ -18,6 +18,7 @@ const copyLimitationsNote =
 export const copyWorksheetAction = createAction({
   auth: excelAuth,
   name: 'copy_worksheet',
+  classification: 'WRITE',
   displayName: 'Copy Worksheet',
   description:
     'Duplicate a worksheet into a new worksheet, in the same workbook or a different one. Copies values, formulas, and number formats.',

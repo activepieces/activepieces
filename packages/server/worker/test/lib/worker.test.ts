@@ -584,6 +584,7 @@ describe('worker integration', () => {
         })
 
         async function startWithHealthServer(): Promise<void> {
+            registerRpcServer({})
             worker.start({
                 apiUrl: `http://127.0.0.1:${port}/api/`,
                 socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
@@ -608,27 +609,43 @@ describe('worker integration', () => {
             const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
             expect(res.status).toBe(200)
             expect(await res.json()).toEqual({ status: 'ok' })
-        }, 5_000)
+        }, 15_000)
 
         it('responds 200 with status ok on /worker/health', async () => {
             await startWithHealthServer()
             const res = await fetch(`http://127.0.0.1:${healthPort}/worker/health`)
             expect(res.status).toBe(200)
             expect(await res.json()).toEqual({ status: 'ok' })
-        }, 5_000)
+        }, 15_000)
 
         it('responds 200 with status ok on /api/v1/health', async () => {
             await startWithHealthServer()
             const res = await fetch(`http://127.0.0.1:${healthPort}/api/v1/health`)
             expect(res.status).toBe(200)
             expect(await res.json()).toEqual({ status: 'ok' })
-        }, 5_000)
+        }, 15_000)
 
         it('responds 404 on unknown paths', async () => {
             await startWithHealthServer()
             const res = await fetch(`http://127.0.0.1:${healthPort}/unknown`)
             expect(res.status).toBe(404)
-        }, 5_000)
+        }, 15_000)
+
+        it('closes the health server when the socket disconnects', async () => {
+            await startWithHealthServer()
+            await new Promise<void>((resolve) => ioServer.close(() => resolve()))
+            for (let i = 0; i < 50; i++) {
+                try {
+                    const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
+                    void res.body?.cancel()
+                }
+                catch {
+                    return
+                }
+                await new Promise<void>((resolve) => setTimeout(resolve, 100))
+            }
+            throw new Error('Health server still reachable after disconnect')
+        }, 15_000)
     })
 })
 

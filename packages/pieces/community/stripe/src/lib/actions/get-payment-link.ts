@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeGetPaymentLink = createAction({
   name: 'get_payment_link',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Payment Link (Agent)',
   description: 'Retrieve a Stripe payment link by its ID.',

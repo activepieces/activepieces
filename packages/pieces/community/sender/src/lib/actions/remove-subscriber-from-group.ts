@@ -10,6 +10,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const removeSubscriberFromGroupAction = createAction({
   auth: senderAuth,
   name: 'remove_subscriber_from_group',
+  classification: 'WRITE',
   displayName: 'Remove Subscriber from Group',
   description: 'Remove a subscriber from a specific group',
   audience: 'both',

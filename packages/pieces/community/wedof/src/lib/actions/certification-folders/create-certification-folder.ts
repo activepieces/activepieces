@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const createCertificationFolder = createAction({
   auth: wedofAuth,
   name: 'createCertificationFolder',
+  classification: 'WRITE',
   displayName: "Créer un dossier de certification hors CPF",
   description: "Permet de créer un nouveau dossier de certification",
   audience: 'both',

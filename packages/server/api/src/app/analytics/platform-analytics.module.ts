@@ -20,13 +20,20 @@ const platformAnalyticsController: FastifyPluginAsyncZod = async (app) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
         const { timePeriod } = request.query
-        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id, timePeriod)
+        return platformAnalyticsReportService(request.log).getReportForUser({
+            platformId: platform.id,
+            userId: id,
+            timePeriod,
+        })
     })
 
     app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).refreshReport(platform.id)
+        return platformAnalyticsReportService(request.log).refreshReportForUser({
+            platformId: platform.id,
+            userId: id,
+        })
     })
 
     app.post('/mark-outdated', MarkAsOutdatedRequest, async (request) => {

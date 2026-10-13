@@ -3,7 +3,7 @@ import {
   formulaEvaluator,
   typeCheckTiptapDoc,
 } from '@activepieces/core-formula';
-import { isNil } from '@activepieces/core-utils';
+import { isNil, spreadIfDefined } from '@activepieces/core-utils';
 import { flowStructureUtil } from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
@@ -65,6 +65,8 @@ import {
 import { textMentionUtils } from './text-input-utils';
 
 type TiptapEditorProps = {
+  id?: string;
+  ariaLabel?: string;
   className?: string;
   wrapperClassName?: string;
   initialValue?: unknown;
@@ -79,6 +81,8 @@ type TiptapEditorProps = {
    * Defaults to 'text' (plain value via the mention text converter).
    */
   outputFormat?: 'text' | 'html';
+  /** Overrides the editor's initial min-height (e.g. 'min-h-20' for LONG_TEXT props). */
+  minHeightClassName?: string;
 };
 
 const INITIAL_SLASH_STATE: SlashCommandState = {
@@ -100,7 +104,7 @@ function getExtensions({
   const baseExtensions = [
     Placeholder.configure({
       placeholder: placeholder,
-      emptyNodeClass: 'before:text-muted-foreground opacity-75',
+      emptyNodeClass: 'before:text-gray-11 opacity-75',
     }),
     Mention.configure({
       suggestion: { char: '' },
@@ -198,7 +202,7 @@ function RichTextToolbar({
     },
   ];
   return (
-    <div className="flex items-center gap-0.5 border-b border-input px-1.5 py-1">
+    <div className="flex items-center gap-0.5 border-b border-gray-6 px-1.5 py-1">
       {buttons.map(({ key, label, icon: Icon, run }) => {
         const active = editor.isActive(key);
         return (
@@ -211,8 +215,8 @@ function RichTextToolbar({
             onMouseDown={(event) => event.preventDefault()}
             onClick={run}
             className={cn(
-              'flex size-7 items-center justify-center rounded text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50',
-              active && 'bg-muted text-foreground',
+              'flex size-7 items-center justify-center rounded text-gray-11 outline-none transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8/50',
+              active && 'bg-gray-3 text-gray-12',
             )}
           >
             <Icon className="size-4" />
@@ -224,6 +228,8 @@ function RichTextToolbar({
 }
 
 export const TiptapEditor = ({
+  id,
+  ariaLabel,
   className,
   wrapperClassName,
   initialValue,
@@ -233,6 +239,7 @@ export const TiptapEditor = ({
   enableMarkdown,
   autoFocus,
   outputFormat,
+  minHeightClassName,
 }: TiptapEditorProps) => {
   const isHtml = outputFormat === 'html';
   const { embedState } = useEmbedding();
@@ -455,10 +462,19 @@ export const TiptapEditor = ({
         return true;
       },
       attributes: {
+        ...spreadIfDefined('id', id),
+        ...spreadIfDefined('aria-label', ariaLabel),
+        role: 'textbox',
+        'aria-multiline': 'true',
         class: cn(
           isHtml
             ? 'block min-h-20 max-h-72 overflow-y-auto px-2.5 py-2 outline-none'
-            : className ?? cn(inputClass, 'py-2 h-[unset] block   min-h-9  '),
+            : className ??
+                cn(
+                  inputClass,
+                  'py-2 h-[unset] block',
+                  minHeightClassName ?? 'min-h-9',
+                ),
           textMentionUtils.inputWithMentionsCssClass,
           { 'cursor-not-allowed opacity-50': disabled },
         ),
@@ -564,7 +580,7 @@ export const TiptapEditor = ({
       className={cn(
         'relative w-full',
         isHtml &&
-          'overflow-hidden rounded-md border border-input bg-transparent transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[1px] focus-within:ring-ring/50',
+          'overflow-hidden rounded-md border border-gray-6 bg-transparent transition-[color,box-shadow] focus-within:border-gray-8 focus-within:ring-[1px] focus-within:ring-gray-8/50',
         wrapperClassName,
       )}
       ref={editorWrapperRef}
@@ -574,13 +590,13 @@ export const TiptapEditor = ({
 
       {showPreview && (
         <div
-          className="absolute left-0 right-0 top-full z-50 rounded-b-md border border-t-0 border-border bg-background shadow-md text-[13px]"
+          className="absolute left-0 right-0 top-full z-50 rounded-b-md border border-t-0 border-gray-6 bg-gray-1 shadow-md text-[13px]"
           onMouseDown={(e) => e.preventDefault()}
         >
           {(typeErrors.length > 0 || previewErrorMsg) && (
-            <div className="border-b border-border">
+            <div className="border-b border-gray-6">
               <div className="flex items-center justify-between px-3 py-2">
-                <span className="flex items-center gap-1.5 text-destructive font-medium text-xs">
+                <span className="flex items-center gap-1.5 text-danger-11 font-medium text-xs">
                   <XCircle className="size-3" />
                   {t('Error')}
                 </span>
@@ -593,7 +609,7 @@ export const TiptapEditor = ({
                     .join('\n')}
                 />
               </div>
-              <div className="px-3 pb-2 text-destructive break-all whitespace-pre-wrap space-y-0.5">
+              <div className="px-3 pb-2 text-danger-11 break-all whitespace-pre-wrap space-y-0.5">
                 {typeErrors.map((err, i) => (
                   <div key={i}>{err}</div>
                 ))}
@@ -616,11 +632,9 @@ export const TiptapEditor = ({
               />
             </div>
 
-            <div className="px-3 pb-2 text-foreground break-all whitespace-pre-wrap">
+            <div className="px-3 pb-2 text-gray-12 break-all whitespace-pre-wrap">
               {previewResult || (
-                <span className="text-muted-foreground italic">
-                  {t('empty')}
-                </span>
+                <span className="text-gray-11 italic">{t('empty')}</span>
               )}
             </div>
           </div>
@@ -942,3 +956,5 @@ function flattenSampleData(
 
   return result;
 }
+
+export type { TiptapEditorProps };

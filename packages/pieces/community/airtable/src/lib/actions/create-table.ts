@@ -7,6 +7,7 @@ import { createTableActionOutputSchema } from '../output-schemas';
 export const airtableCreateTableAction = createAction({
   auth: airtableAuth,
   name: 'airtable_create_table',
+  classification: 'WRITE',
   displayName: 'Create Table',
   description: 'Create a new table in an existing base.',
   audience: 'human',
@@ -20,18 +21,18 @@ export const airtableCreateTableAction = createAction({
     base: airtableCommon.base,
     name: Property.ShortText({
       displayName: 'Table Name',
-      description: 'The name for the new table.',
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'An optional description for the new table.',
+      description: 'Shown under the table name in Airtable.',
       required: false,
+      advanced: true,
     }),
     fields: Property.Json({
       displayName: 'Fields',
       description:
-        'A JSON array of fields for the new table. The first field in the array will become the primary field.',
+        'Fields for the table. The first one becomes the primary field.',
       required: true,
       defaultValue: [
         {

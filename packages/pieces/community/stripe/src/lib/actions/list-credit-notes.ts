@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { creditNoteListOutputSchema } from '../output-schemas';
 export const stripeListCreditNotes = createAction({
   name: 'list_credit_notes',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Credit Notes (Agent)',
   description: 'List Stripe credit notes.',

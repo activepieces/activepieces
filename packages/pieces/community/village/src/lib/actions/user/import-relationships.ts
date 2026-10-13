@@ -23,6 +23,7 @@ type PersonRow = {
 export const importRelationships = createAction({
   auth: villageAuth,
   name: 'import_relationships',
+  classification: 'WRITE',
   displayName: 'Import Relationships',
   description:
     "Import manual relationships to expand your network graph — useful for adding people you know but aren't connected to digitally. Provide email addresses or LinkedIn URLs with optional scores (0-10); higher scores indicate stronger relationships. Max 1000 per request.",

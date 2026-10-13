@@ -7,6 +7,7 @@ import { sheetsUpdateSheetPropertiesActionOutputSchema } from '../output-schemas
 export const sheetsUpdateSheetProperties = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_update_sheet_properties',
+	classification: 'WRITE',
 	displayName: 'Update Worksheet Properties',
 	description: 'Update a worksheet\'s frozen rows/columns, tab color, or hidden state.',
 	audience: 'ai',

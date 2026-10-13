@@ -6,6 +6,7 @@ import { robotIdDropdown, robotParameters } from '../common/props';
 
 export const runRobotAction = createAction({
   name: 'run-robot',
+  classification: 'WRITE',
   auth: browseAiAuth,
   displayName: 'Run a Robot',
   description:

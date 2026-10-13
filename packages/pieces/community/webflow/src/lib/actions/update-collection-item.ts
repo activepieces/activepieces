@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowUpdateCollectionItem = createAction({
 	auth: webflowAuth,
 	name: 'update_collection_item',
+	classification: 'WRITE',
 	description: 'Update collection item',
 	displayName: 'Update an item in a collection',
 	audience: 'both',

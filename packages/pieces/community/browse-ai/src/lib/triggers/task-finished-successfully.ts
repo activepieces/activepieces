@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'browse-ai-task_finished_successfully';
 export const taskFinishedSuccessfullyTrigger = createTrigger({
   auth: browseAiAuth,
   name: 'task_finished_successfully',
+  classification: 'READ',
   displayName: 'Task Finished Successfully',
   description:
     'Triggers when a robot finishes a task successfully.',

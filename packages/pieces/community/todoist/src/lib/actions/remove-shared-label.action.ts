@@ -6,6 +6,7 @@ import { todoistAuth } from '../..';
 export const todoistRemoveSharedLabelAction = createAction({
   auth: todoistAuth,
   name: 'todoist_remove_shared_label',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove Shared Label',
   description: 'Removes a shared (workspace) label from all tasks in Todoist.',
   audience: 'ai',

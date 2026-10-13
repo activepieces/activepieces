@@ -8,10 +8,9 @@ import {
   flowStructureUtil,
   FlowVersion,
   LoopOnItemsAction,
-  RouterAction,
+  BranchedAction,
   StepLocationRelativeToParent,
   FlowTrigger,
-  FlowTriggerType,
   Note,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -136,8 +135,8 @@ const createStepGraph: (params: {
     nodes: [stepNode, graphEndNode],
     edges:
       step.type !== FlowActionType.LOOP_ON_ITEMS &&
-      step.type !== FlowActionType.ROUTER &&
-      !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      !flowStructureUtil.isBranchedAction(step) &&
+      !flowStructureUtil.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
   };
@@ -162,9 +161,9 @@ const buildFlowGraph: (params: {
   const childGraph =
     step.type === FlowActionType.LOOP_ON_ITEMS
       ? buildLoopChildGraph({ step, orientation })
-      : step.type === FlowActionType.ROUTER
+      : flowStructureUtil.isBranchedAction(step)
       ? buildRouterChildGraph({ step, orientation })
-      : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      : flowStructureUtil.hasContinueOnFailureBranches(step)
       ? buildContinueOnFailureBranchesGraph({ step, orientation })
       : null;
 
@@ -377,7 +376,7 @@ const buildRouterChildGraph = ({
   step,
   orientation,
 }: {
-  step: RouterAction;
+  step: BranchedAction;
   orientation: CanvasOrientation;
 }) => {
   const layout = getLayout(orientation);
@@ -636,31 +635,6 @@ const createAddOperationFromAddButtonData = (data: ApButtonData) => {
   } as const;
 };
 
-const isSkipped = (stepName: string, trigger: FlowTrigger) => {
-  const step = flowStructureUtil.getStep(stepName, trigger);
-  if (
-    isNil(step) ||
-    step.type === FlowTriggerType.EMPTY ||
-    step.type === FlowTriggerType.PIECE
-  ) {
-    return false;
-  }
-  const skippedParents = flowStructureUtil
-    .findPathToStep(trigger, stepName)
-    .filter(
-      (stepInPath) =>
-        stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
-        stepInPath.type === FlowActionType.ROUTER ||
-        sharedFlowCanvasUtils.hasContinueOnFailureBranches(stepInPath),
-    )
-    .filter((parentInPath) =>
-      flowStructureUtil.isChildOf(parentInPath, stepName),
-    )
-    .filter((parent) => parent.skip);
-
-  return skippedParents.length > 0 || !!step.skip;
-};
-
 const getStepStatus = (
   stepName: string | undefined,
   run: FlowRun | null,
@@ -749,7 +723,6 @@ export const flowCanvasUtils = {
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
   createAddOperationFromAddButtonData,
-  isSkipped,
   getStepStatus,
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,

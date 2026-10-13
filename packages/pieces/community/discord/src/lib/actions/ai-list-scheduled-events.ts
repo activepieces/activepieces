@@ -20,6 +20,7 @@ interface ScheduledEvent {
 export const discordListScheduledEvents = createAction({
   auth: discordAuth,
   name: 'discord_list_scheduled_events',
+  classification: 'SEARCH',
   displayName: 'List Scheduled Events',
   description: 'List the scheduled events of a guild.',
   audience: 'ai',

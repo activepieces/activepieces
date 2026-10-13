@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 
 import { Property, createAction } from '@activepieces/pieces-framework';
 
@@ -13,14 +13,17 @@ import {
 } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createDealAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-deal',
+	classification: 'WRITE',
 	displayName: 'Create Deal',
-	description: 'Creates a new deal in Hubspot.',
+	description: 'Creates a deal in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Creates a new deal in HubSpot, requiring a deal name plus a pipeline and stage, and returns the created deal. Use to open a new opportunity; use Update Deal to modify an existing one. Not idempotent: each call creates a separate deal, so guard against duplicates.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		dealname: Property.ShortText({
 			displayName: 'Deal Name',
@@ -43,16 +46,15 @@ export const createDealAction = createAction({
 		]),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                        
-              dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-                                                
-              **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.DEAL,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {
@@ -72,7 +74,7 @@ export const createDealAction = createAction({
 			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const createdDeal = await client.crm.deals.basicApi.create({
 			properties: dealProperties,

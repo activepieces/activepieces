@@ -5,6 +5,7 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 export const getAllRefundsForOrder = createAction({
   auth: cashfreePaymentsAuth,
   name: 'get-all-refunds-for-order',
+  classification: 'SEARCH',
   displayName: 'Get All Refunds for Order',
   description: 'Fetch all refunds processed against an order in Cashfree Payment Gateway',
   audience: 'both',

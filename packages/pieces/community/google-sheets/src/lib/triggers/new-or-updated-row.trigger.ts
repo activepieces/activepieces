@@ -31,6 +31,7 @@ const ALL_COLUMNS = 'all_columns';
 export const newOrUpdatedRowTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'google-sheets-new-or-updated-row',
+	classification: 'READ',
 	displayName: 'New or Updated Row',
 	description: 'Triggers when a new row is added or modified in a spreadsheet.',
 	aiMetadata: {
@@ -46,7 +47,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		trigger_column: Property.Dropdown({
 			auth: googleSheetsAuth,
 			displayName: 'Trigger Column',
-			description: `Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.`,
+			description: 'Fire only when this column changes. Any Column fires on any cell.',
 			required: false,
 			refreshers: ['spreadsheetId', 'sheetId'],
 			defaultValue: ALL_COLUMNS,
@@ -55,7 +56,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 					return {
 						disabled: true,
 						options: [],
-						placeholder: `Please select sheet first`,
+						placeholder: `Select a worksheet first`,
 					};
 				}
 

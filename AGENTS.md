@@ -59,9 +59,10 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Query Error Handling
 
-- **Global error dialog via `meta`** — `app.tsx` has a `QueryCache.onError` handler that shows an error dialog when `query.meta?.showErrorDialog` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorDialog: true }` to the query options.
-- **Do NOT add** `showErrorDialog` to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
-- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, it should have `meta: { showErrorDialog: true }`.
+- **A failed fetch is reported in place, never as a toast.** When adding a `useQuery` that fetches primary page data (table rows, list data), render `DataFetchErrorState` (`components/custom/data-fetch-error-state.tsx`) where the rows would go: pass `isError` / `errorStateEntity` / `onRetry` to `DataTable`, or branch on `isError` ahead of the empty state in a custom list. `errorStateEntity` is the already-translated, lowercase noun that reads inside "Trouble loading {entity}".
+- **There is no global error toast.** `QueryCache.onError` in `query-client.ts` only `console.error`s. A toast on top of the placeholder is two notifications for one failure, and a toast on its own leaves an empty table behind that reads as data loss.
+- **Do NOT add** an error state to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
+- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, that surface needs the placeholder.
 
 ## Key Utilities (`@activepieces/shared`)
 
@@ -100,7 +101,7 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
   - **`🧩 area/core-pieces`** — for core pieces (under `packages/pieces/core/`)
 - **Always fill the "Breaking change?" section of the PR template** — tick exactly one box (the `breaking-change-check` CI job fails if it is left unedited). A change is breaking if a self-hoster or API consumer must take action: removed/renamed API fields or endpoints, dropped columns, new required fields, removed/required env vars, or default/limit/behaviour changes. If it is breaking:
   - also apply the **`⛓️‍💥 breaking-change`** label (in addition to the primary label above), and
-  - add an entry to `docs/install/reference/breaking-changes.mdx` describing what changed and the action required. CI enforces that the label and the docs entry travel together.
+  - add the entry at the top of `docs/install/reference/breaking-changes-unreleased.mdx` (a hidden page) describing what changed and the action required; the release moves it onto the Breaking Changes page under the release that ships it. Never write a version heading by hand. CI enforces that the label and the entry travel together.
 - **Non-rollbackable migrations are a separate axis** from customer-facing breaking changes: a migration that runs destructive DDL (`DROP TABLE`/`DROP COLUMN`, `ADD ... NOT NULL` without `DEFAULT`, etc.) must set `breaking = true` on the migration class — this is the rollback-safety flag (used by `rollback-migrations.ts` and the release rollback note), enforced by `check-migration-rollback.ts`. It does **not** by itself require the `⛓️‍💥 breaking-change` label; decide that from the upgrade-impact question above.
 
 ## Database Migrations

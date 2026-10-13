@@ -6,6 +6,7 @@ import { baseApiUrl } from '../..';
 export const addLead = createAction({
   auth:autocallsAuth,
   name: 'addLead',
+  classification: 'WRITE',
   displayName: 'Add lead to a campaign',
   description: "Add lead to an outbound campaign, to be called by an assistant from our platform.",
   audience: 'both',

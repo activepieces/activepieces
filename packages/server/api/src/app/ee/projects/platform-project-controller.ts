@@ -33,6 +33,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
             globalConnectionExternalIds: request.body.globalConnectionExternalIds ?? undefined,
             alertReceiverEmail: request.body.alertReceiverEmail ?? undefined,
+            sensitive: request.body.sensitive ?? undefined,
         })
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
@@ -139,14 +140,6 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             params: {
                 entityType: 'project',
                 entityId: projectId,
-            },
-        })
-    }
-    if (project.type === ProjectType.PERSONAL) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'Personal projects cannot be deleted',
             },
         })
     }

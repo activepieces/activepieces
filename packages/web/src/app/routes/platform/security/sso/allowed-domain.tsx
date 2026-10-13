@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
@@ -83,7 +84,12 @@ export const AllowedDomainDialog = ({
       }}
     >
       <DialogTrigger asChild>
-        <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
+        <Button
+          {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
+          size={'sm'}
+          variant={'basic'}
+          onClick={() => setOpen(true)}
+        >
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>
@@ -105,7 +111,7 @@ export const AllowedDomainDialog = ({
             })}
           >
             <div className="flex flex-col gap-1">
-              <div className="text-muted-foreground text-sm">
+              <div className="text-gray-11 text-sm">
                 {t(
                   'Enter the allowed domains for the users to authenticate with. An empty list will allow all domains.',
                 )}
@@ -162,6 +168,7 @@ export const AllowedDomainDialog = ({
                 {t('Cancel')}
               </Button>
               <Button
+                {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_SUBMIT)}
                 loading={isPending}
                 disabled={!form.formState.isValid}
                 type="submit"

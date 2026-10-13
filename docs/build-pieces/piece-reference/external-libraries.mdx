@@ -4,7 +4,7 @@ icon: 'npm'
 description: "Learn how to install and use external libraries."
 ---
 
-The Activepieces repository is structured as a monorepo, employing Nx as its build tool.
+The Activepieces repository is structured as a monorepo, employing Turbo as its build tool.
 
 To keep our main `package.json` as light as possible, we keep libraries that are only used for a piece in the piece `package.json` . This means when adding a new library you should navigate to the piece folder and install the library with our package manager `bun`
 
@@ -21,7 +21,7 @@ Guidelines:
 
 ## Dependency Pinning
 
-When pieces are built for publishing, all dependency versions — including **transitive dependencies** (dependencies of your dependencies) — are automatically pinned to the exact versions resolved in the monorepo's `bun.lock` file.
+When pieces are built for publishing, all dependency versions, including **transitive dependencies** (dependencies of your dependencies), are automatically pinned to the exact versions resolved in the monorepo's `bun.lock` file.
 
 This means:
 - You don't need to worry about manually pinning transitive dependency versions.

@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddresses = createAction({
   name: 'get_addresses',
+  classification: 'SEARCH',
   displayName: 'Get Addresses',
   description: 'Get list of native coin holders',
   audience: 'both',

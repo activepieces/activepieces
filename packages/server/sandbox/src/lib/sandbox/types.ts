@@ -1,5 +1,5 @@
 import { ChildProcess } from 'child_process'
-import { EngineOperation, EngineOperationType, EngineResponse } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, EngineResponse, WorkerRpcContract } from '@activepieces/shared'
 
 export type SandboxMount = {
     hostPath: string
@@ -55,11 +55,11 @@ export type SandboxInitOptions = {
     basePath: string
     command?: string[]
     baseMounts?: SandboxMount[]
-    wsRpcPort?: number
 }
 
 export type SandboxOptions = {
     timeoutInSeconds: number
+    engineRpc?: WorkerRpcContract
 }
 
 export type SandboxLogger = {

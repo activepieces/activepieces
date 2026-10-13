@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentMethodOutputSchema } from '../output-schemas';
 export const stripeGetPaymentMethod = createAction({
   name: 'get_payment_method',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Payment Method (Agent)',
   description: 'Retrieve a PaymentMethod by its ID.',

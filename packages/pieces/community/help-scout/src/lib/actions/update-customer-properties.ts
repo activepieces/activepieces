@@ -8,6 +8,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const updateCustomerProperties = createAction({
   auth: helpScoutAuth,
   name: 'update_customer_properties',
+  classification: 'WRITE',
   displayName: 'Update Customer Properties',
   description: `Updates customer's properties.`,
   audience: 'both',

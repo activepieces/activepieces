@@ -7,6 +7,7 @@ import { issueBodyOutputSchema } from '../../output-schemas';
 export const githubGetIssueAiAction = createAction({
   auth: githubAuth,
   name: 'get_issue_ai',
+  classification: 'READ',
   displayName: 'Get Issue (Agent)',
   description: 'Fetches the full details of a single issue by number.',
   audience: 'ai',

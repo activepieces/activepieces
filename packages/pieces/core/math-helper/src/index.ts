@@ -6,13 +6,9 @@ import { modulo } from './lib/actions/modulo';
 import { multiplication } from './lib/actions/multiplication';
 import { subtraction } from './lib/actions/subtraction';
 
-const markdownDescription = `
-Perform mathematical operations.
-`;
-
 export const math = createPiece({
   displayName: 'Math Helper',
-  description: markdownDescription,
+  description: 'Add, subtract, multiply, divide, or pick a random number.',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/math-helper.svg',

@@ -8,6 +8,7 @@ import { pullRequestBodyOutputSchema } from '../../output-schemas';
 export const githubCreatePullRequestAction = createAction({
   auth: githubAuth,
   name: 'create_pull_request',
+  classification: 'WRITE',
   displayName: 'Create Pull Request (Agent)',
   description: 'Opens a pull request between two branches.',
   audience: 'ai',

@@ -269,12 +269,12 @@ export const addNewContact = createAction({
       context.auth.props.email,
       context.auth.props.secret_text
     );
-    const response = await makeRequest(
+    const response = await makeRequest({
       accessToken,
-      HttpMethod.POST,
-      '/add_contact',
-      body
-    );
+      method: HttpMethod.POST,
+      path: '/add_contact',
+      body,
+    });
 
     return response;
   },

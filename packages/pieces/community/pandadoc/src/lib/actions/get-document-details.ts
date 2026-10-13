@@ -5,6 +5,7 @@ import { documentDropdown } from '../common/dynamic-dropdowns';
 
 export const getDocumentDetails = createAction({
   name: 'getDocumentDetails',
+  classification: 'READ',
   displayName: 'Get Document',
   description: 'Retrieves comprehensive document data.',
   audience: 'both',

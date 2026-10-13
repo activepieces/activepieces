@@ -6,6 +6,7 @@ import { isNil } from '@activepieces/pieces-framework';
 
 export const updateLead = createAction({
   name: 'updateLead',
+  classification: 'WRITE',
   displayName: 'Update Lead',
   description: 'Update a lead.',
   audience: 'both',

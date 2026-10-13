@@ -12,6 +12,7 @@ const STORE_KEY = 'coralogix_seen_incident_ids';
 export const newIncident = createTrigger({
   auth: coralogixAuth,
   name: 'newIncident',
+  classification: 'READ',
   displayName: 'New Incident',
   description:
     'Triggers when a new incident appears in Coralogix. Polls on a schedule — ideal for paging on-call, creating Jira tickets, or posting to Slack.',

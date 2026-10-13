@@ -8,6 +8,7 @@ import { createHash } from 'crypto';
 
 export default createTrigger({
   name: 'playlist_items_changed',
+  classification: 'READ',
   displayName: 'Playlist Items Changed',
   description: 'Triggers when the items of a playlist change',
   aiMetadata: {

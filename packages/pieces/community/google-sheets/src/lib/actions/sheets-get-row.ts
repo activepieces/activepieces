@@ -11,6 +11,7 @@ import { sheetsGetRowActionOutputSchema } from '../output-schemas';
 export const sheetsGetRow = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_get_row',
+	classification: 'READ',
 	displayName: 'Get Row by Number',
 	description: 'Retrieve a single row by its row number.',
 	audience: 'ai',

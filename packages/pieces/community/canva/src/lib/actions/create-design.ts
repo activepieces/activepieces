@@ -10,6 +10,7 @@ import { canvaCommon, CanvaDesignCreateRequest, CanvaDesignResponse, fetchUserAs
 export const createDesign = createAction({
   auth: canvaAuth,
   name: 'create_design',
+  classification: 'WRITE',
   displayName: 'Create Design',
   description: 'Create a new Canva design using preset design types or custom dimensions. Blank designs are automatically deleted if not edited within 7 days.',
   audience: 'both',

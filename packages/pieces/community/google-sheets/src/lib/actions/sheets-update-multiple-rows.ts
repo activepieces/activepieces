@@ -15,6 +15,7 @@ import { sheetsUpdateMultipleRowsActionOutputSchema } from '../output-schemas';
 export const sheetsUpdateMultipleRows = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_update_multiple_rows',
+	classification: 'WRITE',
 	displayName: 'Update Multiple Rows',
 	description: 'Update several existing rows in one batch call.',
 	audience: 'ai',

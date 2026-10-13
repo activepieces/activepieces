@@ -39,6 +39,7 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
+import { AiRouterRoutes } from './ai-router-routes';
 import { truncatedInputUtils } from './truncated-input-utils';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
@@ -144,10 +145,8 @@ export const FlowStepInputOutput = () => {
   if (message) {
     return (
       <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
-        <Info size={36} className="text-muted-foreground" />
-        <h4 className="px-6 text-sm text-center text-muted-foreground">
-          {message}
-        </h4>
+        <Info size={36} className="text-gray-11" />
+        <h4 className="px-6 text-sm text-center text-gray-11">{message}</h4>
       </div>
     );
   }
@@ -160,14 +159,14 @@ export const FlowStepInputOutput = () => {
           <ClosePanelButton />
         </div>
         <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-          <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
+          <div className="flex items-center justify-center size-12 rounded-full bg-gray-3 text-gray-11">
             <Info className="size-6" />
           </div>
           <div className="flex flex-col gap-1.5 max-w-[280px]">
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-sm font-medium text-gray-12">
               {t("This step didn't run")}
             </span>
-            <span className="text-xs text-muted-foreground leading-relaxed">
+            <span className="text-xs text-gray-11 leading-relaxed">
               {t(
                 'This step was skipped during this run, no input or output was captured.',
               )}
@@ -270,7 +269,14 @@ export const FlowStepInputOutput = () => {
               />
             </TabsContent>
           )}
-          <TabsContent value="output">
+          <TabsContent value="output" className="flex flex-col gap-3">
+            {selectedStep.type === FlowActionType.AI_ROUTER &&
+              !isStepRunning && (
+                <AiRouterRoutes
+                  output={selectedStepOutput.output}
+                  input={selectedStepOutput.input}
+                />
+              )}
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
             ) : slicedOutputRef ? (
@@ -310,14 +316,14 @@ const InternalErrorPanel = ({
   <ScrollArea className="h-full">
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <ShieldAlert className="w-4 h-4 text-destructive shrink-0" />
+        <ShieldAlert className="w-4 h-4 text-danger-11 shrink-0" />
         <span className="text-sm font-medium">{t('Internal error')}</span>
         <Badge variant="outline" className="gap-1">
           <ShieldAlert className="w-3 h-3" />
           {t('Platform Admin Only')}
         </Badge>
       </div>
-      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+      <div className="flex flex-col gap-1 text-xs text-gray-11">
         <span>
           {t('Source')}: {internalError.source}
         </span>
@@ -331,7 +337,7 @@ const InternalErrorPanel = ({
           {formatUtils.formatDate(new Date(internalError.occurredAt))}
         </span>
       </div>
-      <pre className="text-xs bg-muted rounded-md p-3 whitespace-pre-wrap break-words font-mono">
+      <pre className="text-xs bg-gray-3 rounded-md p-3 whitespace-pre-wrap break-words font-mono">
         {internalError.message}
       </pre>
     </div>
@@ -339,8 +345,8 @@ const InternalErrorPanel = ({
 );
 
 const TruncatedInputNotice = () => (
-  <div className="flex items-start gap-2 p-3 bg-muted rounded-md text-sm">
-    <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+  <div className="flex items-start gap-2 p-3 bg-gray-3 rounded-md text-sm">
+    <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
     <span>
       {t(
         'Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values.',
@@ -349,7 +355,7 @@ const TruncatedInputNotice = () => (
         href="https://www.activepieces.com/docs/install/troubleshooting/truncated-logs"
         target="_blank"
         rel="noreferrer"
-        className="text-primary underline"
+        className="text-accent-11 underline"
       >
         {t('Learn more')}
       </a>
@@ -362,9 +368,9 @@ const SlicedOutputDownload = ({
 }: {
   slicedOutputRef: LogSliceRef;
 }) => (
-  <div className="flex flex-col gap-3 p-4 bg-muted rounded-md">
+  <div className="flex flex-col gap-3 p-4 bg-gray-3 rounded-md">
     <div className="flex items-start gap-2 text-sm">
-      <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+      <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
       <span>
         {t(
           'Output is too large to display inline ({size}). Download to inspect.',

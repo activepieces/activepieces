@@ -13,6 +13,7 @@ import { createListActionOutputSchema } from '../../output-schemas';
 export const createList = createAction({
   auth: trelloAuth,
   name: 'create_list',
+  classification: 'WRITE',
   displayName: 'Create List (Agent)',
   description: 'Create a list (column) on a Trello board.',
   audience: 'ai',

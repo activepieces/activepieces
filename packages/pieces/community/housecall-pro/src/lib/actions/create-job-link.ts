@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createJobLink = createAction({
   auth: housecallProAuth,
   name: "create_job_link",
+  classification: 'WRITE',
   displayName: "Create Job Link",
   description: "Create a new job link",
   audience: 'both',

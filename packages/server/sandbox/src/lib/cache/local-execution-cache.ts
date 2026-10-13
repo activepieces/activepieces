@@ -13,8 +13,9 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
     async provision({
         pieces,
         codeSteps,
-        publicApiUrl,
+        internalApiUrl,
         engineToken,
+        bestEffort,
     }: ProvisionParams): Promise<void> {
         await wideEvent.timed({
             name: 'provision',
@@ -55,8 +56,9 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                             await pieceInstaller(log, basePath, getSettings).install({
                                 pieces: uniquePieces,
                                 includeFilters: true,
-                                publicApiUrl,
+                                internalApiUrl,
                                 engineToken,
+                                bestEffort,
                             })
                             log.info({
                                 pieces: uniquePieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
@@ -112,6 +114,7 @@ type InstallCodeStepParams = {
 type ProvisionParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
+    bestEffort?: boolean
 }

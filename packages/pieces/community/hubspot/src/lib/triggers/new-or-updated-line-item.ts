@@ -1,9 +1,8 @@
 import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	createTrigger,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -14,11 +13,12 @@ import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
 
+import { crmObjectOutputSchema } from '../output-schemas';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ additionalPropertiesToRetrieve?: string[] | string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
@@ -74,8 +74,9 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ a
 export const newOrUpdatedLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-line-item',
-	displayName: 'Line Item Recently Created or Updated',
-	description: 'Triggers when a line item recently created or updated.',
+	classification: 'READ',
+	displayName: 'New or Updated Line Item',
+	description: 'Triggers when a line item is created or updated.',
 	aiMetadata: {
 		description:
 			'Fires when a line item is created or modified in HubSpot. Each event represents one line item with properties such as name, price, quantity, amount, discount, tax, SKU, and linked product. Polls by last-modified date, so both new and edited line items trigger it.',
@@ -83,18 +84,17 @@ export const newOrUpdatedLineItemTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months           
-                                    
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.LINE_ITEM,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);
