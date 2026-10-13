@@ -42,11 +42,15 @@ async function discoverAndRegister({ serverUrl, redirectUrl }: DiscoverAndRegist
     }
 }
 
-function pickTokenEndpointAuthMethod(supported: string[] | undefined): string {
+function pickTokenEndpointAuthMethod(supported: string[] | undefined): TokenEndpointAuthMethod {
     const methods = supported ?? ['client_secret_basic']
-    return methods.includes('client_secret_post') && !methods.includes('client_secret_basic')
-        ? 'client_secret_post'
-        : 'client_secret_basic'
+    if (methods.includes('client_secret_basic')) {
+        return 'client_secret_basic'
+    }
+    if (methods.includes('client_secret_post')) {
+        return 'client_secret_post'
+    }
+    return 'client_secret_basic'
 }
 
 // An MCP server that skips RFC 9728 is its own authorization server.
@@ -137,6 +141,8 @@ const TOKEN_ENDPOINT_AUTH_METHODS: Partial<Record<string, OAuth2AuthorizationMet
 
 export const oauth2Discovery = { discoverAndRegister }
 
+type TokenEndpointAuthMethod = 'client_secret_basic' | 'client_secret_post'
+
 type DiscoverAndRegisterParams = {
     serverUrl: string
     redirectUrl: string
@@ -146,7 +152,7 @@ type RegisterClientParams = {
     registrationEndpoint: string
     redirectUrl: string
     scope: string
-    tokenEndpointAuthMethod: string
+    tokenEndpointAuthMethod: TokenEndpointAuthMethod
 }
 
 type WithResourceIndicatorParams = {
