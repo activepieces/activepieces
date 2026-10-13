@@ -260,6 +260,7 @@ A background migration that fails every retry stops the app from booting. The gu
 - **A brand-new hot-path index in the same release as the code that needs it can leave the app on seq scans while background CIC builds.** Only applies when there's *no* prior covering index for the query. Fixes: (a) ship the CIC in a prior release so it's built by the time the code lands (verify via `pendingCount` on `/v1/health/system`), or (b) put the CIC in the blocking track so the index is present when the app starts serving. Reshapes (replacing existing indexes) don't hit this — the old index keeps queries fast while new one builds.
 - **Same-name migration in both folders would run twice.** The two history tables are independent — a rename or folder move without a seed-row migration double-executes on customers that already ran it in the old track.
 - **Background migrations run on API pods only.** Workers don't register system-job handlers. Deployments with zero API pods will never finish backfills; not a supported topology, worth flagging if it comes up.
+- **`check-migrations` and `db-migration` build their database with `src/migrate.ts`, not `typeorm migration:run`.** The CLI runs only the blocking track, so it reports every entity index that a background migration builds as drift. `migrate.ts` runs `runMigrationsWithCatchup` and then the background track, the boot order, through the same `distributedLock` as boot. It ends with `process.exit`: on memory Redis the lock starts redis-memory-server, whose open connection would keep the step from exiting, and the library's killer process stops `redis-server` once the parent is gone.
 
 ## Key files
 
@@ -269,6 +270,7 @@ A background migration that fails every retry stops the app from booting. The gu
 - `packages/server/api/src/app/database/background-migration.ts` — the `BackgroundMigration` interface.
 - `packages/server/api/src/app/database/migration-helpers.ts` — `assertBackgroundMigrationComplete`, `createIndexConcurrently`.
 - `packages/server/api/src/app/database/background-migration-runner.ts` — the BullMQ handler.
+- `packages/server/api/src/migrate.ts` — both tracks in one process, for `check-migrations` and `db-migration`.
 - `tools/scripts/check-migration-rollback.ts` — the CI check.
 
 ## Related pages
