@@ -20,12 +20,14 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { platformApi } from '@/api/platforms-api';
 import {
+  AdminFetchErrorState,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
   SaveBar,
   SettingsPanel,
   adminPageResources,
@@ -35,25 +37,19 @@ import {
 import { EnterpriseLockedSection } from '@/app/components/enterprise-gate';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { useEnterpriseGate } from '@/features/billing';
 import {
   pieceSelectorCustomization,
@@ -71,46 +67,30 @@ import {
   pieceSelectorPreviewUtils,
 } from './piece-selector-preview';
 
-const borderlessInputClass =
-  'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
-
 export function PieceSelectorPage() {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const queryClient = useQueryClient();
   const canEdit = platform.plan.managePiecesEnabled;
   const gate = useEnterpriseGate({ unlocked: canEdit, featureKey: 'PIECES' });
-  const hasCustomMenu = (platform.pieceSelectorConfig?.tabs.length ?? 0) > 0;
-  const savedTabs = hasCustomMenu
-    ? platform.pieceSelectorConfig?.tabs ?? []
-    : pieceSelectorCustomization.getDefaultTabConfigs();
+  const savedTabs = savedTabsOf(platform.pieceSelectorConfig);
   const savedPins = platform.pinnedPieces ?? [];
-  const [tabs, setDraftTabs] = useState<PieceSelectorTabConfig[]>(savedTabs);
+  const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(savedTabs);
   const [pins, setPins] = useState<string[]>(savedPins);
-  const [focus, setFocus] = useState<{ key: string | null; version: number }>({
-    key: null,
-    version: 0,
-  });
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const [flashedKey, setFlashedKey] = useState<string | null>(null);
-  const [flashedPiece, setFlashedPiece] = useState<string | null>(null);
+  const [flashedKey, flashTab] = useFlash<string>();
+  const [flashedPiece, flashPiece] = useFlash<string>();
+  const [newTabId, setNewTabId] = useState<string | null>(null);
+  const {
+    pieces,
+    isLoading: piecesLoading,
+    isError: piecesError,
+    refetch: refetchPieces,
+  } = piecesHooks.usePieces({
+    includeHidden: true,
+    skipProjectFilter: true,
+  });
 
-  const showInPreview = (key: string) =>
-    setFocus((prev) => ({ key, version: prev.version + 1 }));
-  const flashTab = (key: string) => {
-    setFlashedKey(key);
-    window.setTimeout(
-      () => setFlashedKey((current) => (current === key ? null : current)),
-      FLASH_MS,
-    );
-  };
-  const flashPiece = (pieceName: string) => {
-    setFlashedPiece(pieceName);
-    window.setTimeout(
-      () =>
-        setFlashedPiece((current) => (current === pieceName ? null : current)),
-      FLASH_MS,
-    );
-  };
   const togglePin = (pieceName: string) => {
     setPins((prev) =>
       prev.includes(pieceName)
@@ -119,11 +99,6 @@ export function PieceSelectorPage() {
     );
     flashPiece(pieceName);
   };
-  const [newTabId, setNewTabId] = useState<string | null>(null);
-  const { pieces } = piecesHooks.usePieces({
-    includeHidden: true,
-    skipProjectFilter: true,
-  });
 
   const refreshPlatform = async () => {
     await refetch();
@@ -139,15 +114,24 @@ export function PieceSelectorPage() {
       await refreshPlatform();
     },
   });
+  const reset = useAdminAction({
+    verb: 'reset',
+    name: t('Piece selector'),
+    run: async () => {
+      await platformApi.update({ pieceSelectorConfig: null }, platform.id);
+      await refreshPlatform();
+    },
+    onSuccess: () => {
+      setTabs(pieceSelectorCustomization.getDefaultTabConfigs());
+      setPreviewKey(PieceSelectorTabType.EXPLORE);
+    },
+  });
 
   const tabsDirty = serializeTabs(tabs) !== serializeTabs(savedTabs);
   const pinsDirty = pins.join('|') !== savedPins.join('|');
   const dirty = tabsDirty || pinsDirty;
   const validationError = validateTabs(normalizeTabs(tabs));
-
-  const setTabs = (
-    update: (prev: PieceSelectorTabConfig[]) => PieceSelectorTabConfig[],
-  ) => setDraftTabs(update);
+  const hasCustomMenu = (platform.pieceSelectorConfig?.tabs.length ?? 0) > 0;
 
   const updateTab = (
     tab: PieceSelectorTabConfig,
@@ -161,7 +145,7 @@ export function PieceSelectorPage() {
     const key = pieceSelectorPreviewUtils.tabKey(tab);
     flashTab(key);
     if (patch.hidden !== true) {
-      showInPreview(key);
+      setPreviewKey(key);
     }
   };
 
@@ -171,7 +155,7 @@ export function PieceSelectorPage() {
   const addCustomTab = () => {
     const id = apId();
     setNewTabId(id);
-    showInPreview(id);
+    setPreviewKey(id);
     flashTab(id);
     setTabs((prev) => [
       ...prev,
@@ -188,7 +172,7 @@ export function PieceSelectorPage() {
   };
 
   const discard = () => {
-    setDraftTabs(savedTabs);
+    setTabs(savedTabs);
     setPins(savedPins);
   };
 
@@ -205,168 +189,271 @@ export function PieceSelectorPage() {
             : platform.pieceSelectorConfig ?? null,
           pinnedPieces: pins,
         })
-        .then(() => setDraftTabs(normalizedTabs)),
+        .then(() => setTabs(normalizedTabs)),
     );
   };
 
-  const resetToDefault = () => {
-    setDraftTabs(pieceSelectorCustomization.getDefaultTabConfigs());
-    showInPreview(PieceSelectorTabType.EXPLORE);
-  };
-
   return (
-    <form
-      className="flex min-h-0 flex-1 flex-col"
-      onSubmit={(event) => {
-        event.preventDefault();
-        handleSave();
-      }}
-    >
-      <AdminPage
-        footer={
-          <SaveBar
-            dirty={dirty}
-            saving={save.isPending}
-            disabled={validationError !== null}
-            error={dirty ? validationError : null}
-            onDiscard={discard}
-            saveControl={AdminControl.PIECES_SELECTOR_SUBMIT}
-          />
-        }
-      >
-        <AdminPageHeader
-          title={t('Piece selector')}
-          description={t(
-            'This is the menu builders see when they add a step. Reorder, rename or hide its tabs, group pieces into custom tabs, and pin the pieces they reach for most. The preview updates as you go.',
-          )}
-          resources={adminPageResources.pieces}
-        ></AdminPageHeader>
-
-        <EnterpriseLockedSection
-          unlocked={canEdit}
-          featureKey="PIECES"
-          title={t('Customizing the piece selector is an Enterprise feature')}
-          description={t(
-            'You can try changes here. Saving them needs Enterprise.',
-          )}
+    <AdminPage
+      footer={
+        <SaveBar
+          dirty={dirty}
+          saving={save.isPending}
+          disabled={validationError !== null}
+          error={dirty ? validationError : null}
+          onSave={handleSave}
+          onDiscard={discard}
+          saveControl={AdminControl.PIECES_SELECTOR_SUBMIT}
         />
+      }
+    >
+      <AdminPageHeader
+        title={t('Piece selector')}
+        description={t(
+          'This is the menu builders see when they add a step. Reorder, rename or hide its tabs, group pieces into custom tabs, and pin the pieces they reach for most. The preview updates as you go.',
+        )}
+        resources={adminPageResources.pieces}
+      />
 
-        <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <EnterpriseLockedSection
+        unlocked={canEdit}
+        featureKey="PIECES"
+        title={t('Customizing the piece selector is an Enterprise feature')}
+        description={t(
+          'You can try changes here. Saving them needs Enterprise.',
+        )}
+      />
+
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <SettingsPanel
+          flush
+          className="min-w-0 xl:sticky xl:top-6"
+          title={t('What builders see')}
+          description={t(
+            'Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.',
+          )}
+        >
+          <PieceSelectorPreview
+            tabs={tabs}
+            pins={pins}
+            selectedKey={previewKey}
+            onSelect={setPreviewKey}
+            highlightedKeys={[hoveredKey, flashedKey].filter(
+              (key): key is string => key !== null,
+            )}
+            flashedPiece={flashedPiece}
+            onTogglePin={togglePin}
+          />
+        </SettingsPanel>
+        <div className="flex min-w-0 flex-col gap-6">
           <SettingsPanel
             flush
-            className="min-w-0 xl:sticky xl:top-6"
-            title={t('What builders see')}
+            title={t('Tabs')}
             description={t(
-              'Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.',
+              'Drag to reorder. Point at a tab to find it in the preview, click it to open it there.',
             )}
-          >
-            <PieceSelectorPreview
-              tabs={tabs}
-              pins={pins}
-              focus={focus}
-              highlightedKeys={[hoveredKey, flashedKey].filter(
-                (key): key is string => key !== null,
-              )}
-              flashedPiece={flashedPiece}
-              onTogglePin={togglePin}
-            />
-          </SettingsPanel>
-          <div className="flex min-w-0 flex-col gap-6">
-            <SettingsPanel
-              flush
-              title={t('Tabs')}
-              description={t(
-                'Drag to reorder. Point at a tab to find it in the preview, click it to open it there.',
-              )}
-              action={
+            action={
+              <ConfirmDialog
+                title={t('Reset to default?')}
+                description={t(
+                  'The piece selector will return to its default layout.',
+                )}
+                consequence={t(
+                  'All your custom tabs and sections will be permanently removed.',
+                )}
+                confirmLabel={t('Reset')}
+                controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
+                onConfirm={() => gate.run(() => reset.mutateAsync())}
+              >
                 <Button
                   {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={resetToDefault}
+                  disabled={!hasCustomMenu && !tabsDirty}
                 >
                   <RotateCcw />
                   {t('Reset')}
                 </Button>
-              }
-            >
-              <div className="flex flex-col gap-3 p-4">
-                <Sortable
-                  value={tabs}
-                  onValueChange={(next) => setTabs(() => next)}
+              </ConfirmDialog>
+            }
+          >
+            <div className="flex flex-col gap-3 p-5">
+              <Sortable value={tabs} onValueChange={(next) => setTabs(next)}>
+                <div
+                  className={cn(
+                    adminSurface.listFrame,
+                    'flex flex-col divide-y overflow-hidden',
+                    adminSurface.divider,
+                  )}
                 >
-                  <div
-                    className={cn(
-                      adminSurface.listFrame,
-                      'flex flex-col divide-y overflow-hidden',
-                      adminSurface.divider,
-                    )}
-                  >
-                    {tabs.map((tab) => (
-                      <SortableItem key={tab.id} value={tab.id} asChild>
-                        <div
-                          onMouseEnter={() =>
-                            setHoveredKey(pieceSelectorPreviewUtils.tabKey(tab))
+                  {tabs.map((tab) => (
+                    <SortableItem key={tab.id} value={tab.id} asChild>
+                      <div
+                        onMouseEnter={() =>
+                          setHoveredKey(pieceSelectorPreviewUtils.tabKey(tab))
+                        }
+                        onMouseLeave={() => setHoveredKey(null)}
+                        onFocusCapture={() =>
+                          setHoveredKey(pieceSelectorPreviewUtils.tabKey(tab))
+                        }
+                        onBlurCapture={() => setHoveredKey(null)}
+                        onClickCapture={() => {
+                          if (!tab.hidden) {
+                            setPreviewKey(
+                              pieceSelectorPreviewUtils.tabKey(tab),
+                            );
                           }
-                          onMouseLeave={() => setHoveredKey(null)}
-                          onClickCapture={() => {
-                            if (!tab.hidden) {
-                              showInPreview(
-                                pieceSelectorPreviewUtils.tabKey(tab),
-                              );
-                            }
-                          }}
-                        >
-                          <TabCard
-                            tab={tab}
-                            isNew={tab.id === newTabId}
-                            pieces={pieces ?? []}
-                            onChange={(patch) => updateTab(tab, patch)}
-                            onRemove={() => removeTab(tab.id)}
-                          />
-                        </div>
-                      </SortableItem>
-                    ))}
-                  </div>
-                </Sortable>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="self-start"
-                  onClick={addCustomTab}
-                >
-                  <Plus />
-                  {t('Add custom tab')}
-                </Button>
-              </div>
-            </SettingsPanel>
-            <PinnedPiecesPanel
-              pins={pins}
-              pieces={pieces ?? []}
-              onChange={(next) => {
-                setPins(next);
-                showInPreview(PieceSelectorTabType.EXPLORE);
-              }}
-            />
-          </div>
+                        }}
+                      >
+                        <TabCard
+                          tab={tab}
+                          isNew={tab.id === newTabId}
+                          pieces={pieces ?? []}
+                          piecesLoading={piecesLoading}
+                          onChange={(patch) => updateTab(tab, patch)}
+                          onRemove={() => removeTab(tab.id)}
+                        />
+                      </div>
+                    </SortableItem>
+                  ))}
+                </div>
+              </Sortable>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={addCustomTab}
+              >
+                <Plus />
+                {t('Add custom tab')}
+              </Button>
+            </div>
+          </SettingsPanel>
+          <PinnedPiecesPanel
+            pins={pins}
+            pieces={pieces ?? []}
+            isLoading={piecesLoading}
+            isError={piecesError && pieces === undefined}
+            onRetry={refetchPieces}
+            onChange={(next) => {
+              setPins(next);
+              setPreviewKey(PieceSelectorTabType.EXPLORE);
+            }}
+          />
         </div>
-      </AdminPage>
-    </form>
+      </div>
+    </AdminPage>
   );
+}
+
+function useFlash<T>(): [T | null, (value: T) => void] {
+  const [value, setValue] = useState<T | null>(null);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const flash = (next: T) => {
+    window.clearTimeout(timer.current);
+    setValue(next);
+    timer.current = window.setTimeout(() => setValue(null), FLASH_MS);
+  };
+  return [value, flash];
+}
+
+function savedTabsOf(
+  config: PieceSelectorConfig | null | undefined,
+): PieceSelectorTabConfig[] {
+  return config && config.tabs.length > 0
+    ? config.tabs
+    : pieceSelectorCustomization.getDefaultTabConfigs();
 }
 
 function PinnedPiecesPanel({
   pins,
   pieces,
+  isLoading,
+  isError,
+  onRetry,
   onChange,
 }: {
   pins: string[];
   pieces: PieceMetadataModelSummary[];
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => unknown;
   onChange: (pins: string[]) => void;
 }) {
   const byName = new Map(pieces.map((piece) => [piece.name, piece]));
+  const body = (() => {
+    if (isError) {
+      return <AdminFetchErrorState entity={t('pieces')} onRetry={onRetry} />;
+    }
+    if (isLoading && pins.length > 0) {
+      return (
+        <div className="flex flex-col gap-2">
+          {pins.map((name) => (
+            <Skeleton key={name} className="h-11 w-full rounded-lg" />
+          ))}
+        </div>
+      );
+    }
+    if (pins.length === 0) {
+      return (
+        <p className="text-sm text-gray-11">
+          {t(
+            'No pinned pieces. Pin the ones your builders reach for most, so they open Explore first.',
+          )}
+        </p>
+      );
+    }
+    return (
+      <Sortable
+        value={pins.map((name) => ({ id: name }))}
+        onValueChange={(next) => onChange(next.map((item) => item.id))}
+      >
+        <ul
+          className={cn(
+            adminSurface.listFrame,
+            'flex flex-col divide-y overflow-hidden',
+            adminSurface.divider,
+          )}
+        >
+          {pins.map((name) => {
+            const piece = byName.get(name);
+            return (
+              <SortableItem key={name} value={name} asChild>
+                <li className="flex h-11 min-w-0 items-center gap-2 px-2 text-sm">
+                  <SortableDragHandle
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t('Drag to reorder')}
+                  >
+                    <GripVertical />
+                  </SortableDragHandle>
+                  <LogoPlate src={piece?.logoUrl} alt="" size="xs" border />
+                  <span className="min-w-0 flex-1 truncate text-gray-12">
+                    {piece?.displayName ?? t('Unavailable piece')}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t('Unpin {name}', {
+                      name: piece?.displayName ?? name,
+                    })}
+                    onClick={() => onChange(pins.filter((pin) => pin !== name))}
+                  >
+                    <X />
+                  </Button>
+                </li>
+              </SortableItem>
+            );
+          })}
+        </ul>
+      </Sortable>
+    );
+  })();
   return (
     <SettingsPanel
       flush
@@ -375,64 +462,11 @@ function PinnedPiecesPanel({
         'Shown first in the Explore tab, in this order. Drag to reorder.',
       )}
     >
-      <div className="flex flex-col gap-3 p-4">
-        {pins.length === 0 ? (
-          <p className="text-sm text-gray-11">
-            {t(
-              'No pinned pieces. Pin the ones your builders reach for most, so they open Explore first.',
-            )}
-          </p>
-        ) : (
-          <Sortable
-            value={pins.map((name) => ({ id: name }))}
-            onValueChange={(next) => onChange(next.map((item) => item.id))}
-          >
-            <ul
-              className={cn(
-                adminSurface.listFrame,
-                'flex flex-col divide-y overflow-hidden',
-                adminSurface.divider,
-              )}
-            >
-              {pins.map((name) => {
-                const piece = byName.get(name);
-                return (
-                  <SortableItem key={name} value={name} asChild>
-                    <li className="flex h-11 min-w-0 items-center gap-2 px-2 text-sm">
-                      <SortableDragHandle
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={t('Drag to reorder')}
-                      >
-                        <GripVertical />
-                      </SortableDragHandle>
-                      <LogoPlate src={piece?.logoUrl} alt="" size="xs" border />
-                      <span className="min-w-0 flex-1 truncate text-gray-12">
-                        {piece?.displayName ?? name}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={t('Unpin {name}', {
-                          name: piece?.displayName ?? name,
-                        })}
-                        onClick={() =>
-                          onChange(pins.filter((pin) => pin !== name))
-                        }
-                      >
-                        <X />
-                      </Button>
-                    </li>
-                  </SortableItem>
-                );
-              })}
-            </ul>
-          </Sortable>
-        )}
+      <div className="flex flex-col gap-3 p-5">
+        {body}
         <PiecePickerButton
           pieces={pieces}
+          disabled={isLoading || isError}
           selectedPieceNames={pins}
           onChange={onChange}
           label={t('Pin pieces')}
@@ -497,6 +531,7 @@ function serializeTabs(tabs: PieceSelectorTabConfig[]): string {
 const TabCard = ({
   tab,
   pieces,
+  piecesLoading,
   isNew,
   onChange,
   onRemove,
@@ -504,6 +539,7 @@ const TabCard = ({
   tab: PieceSelectorTabConfig;
   isNew: boolean;
   pieces: PieceMetadataModelSummary[];
+  piecesLoading: boolean;
   onChange: (patch: Partial<PieceSelectorTabConfig>) => void;
   onRemove: () => void;
 }) => {
@@ -608,6 +644,7 @@ const TabCard = ({
             label={t('Pieces')}
             hint={t('Shown at the top of the tab')}
             pieces={pieces}
+            disabled={piecesLoading}
             selectedPieceNames={tab.pieceNames ?? []}
             onChange={(pieceNames) => onChange({ pieceNames })}
           />
@@ -630,6 +667,7 @@ const TabCard = ({
                 />
                 <PiecePickerButton
                   pieces={pieces}
+                  disabled={piecesLoading}
                   selectedPieceNames={section.pieceNames}
                   onChange={(pieceNames) =>
                     updateSection(section.id, { pieceNames })
@@ -639,7 +677,7 @@ const TabCard = ({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="shrink-0 text-gray-11 hover:text-danger-11"
+                  className="shrink-0 text-gray-11"
                   onClick={() => removeSection(section.id)}
                   aria-label={t('Delete section')}
                 >
@@ -664,7 +702,7 @@ const TabCard = ({
               type="button"
               variant="ghost"
               size="sm"
-              className="text-danger-11 hover:bg-danger-3 hover:text-danger-11"
+              className="text-gray-11"
               onClick={onRemove}
             >
               <Trash2 />
@@ -681,12 +719,14 @@ const PiecesPickerRow = ({
   label,
   hint,
   pieces,
+  disabled,
   selectedPieceNames,
   onChange,
 }: {
   label: string;
   hint: string;
   pieces: PieceMetadataModelSummary[];
+  disabled: boolean;
   selectedPieceNames: string[];
   onChange: (pieceNames: string[]) => void;
 }) => {
@@ -698,6 +738,7 @@ const PiecesPickerRow = ({
       </div>
       <PiecePickerButton
         pieces={pieces}
+        disabled={disabled}
         selectedPieceNames={selectedPieceNames}
         onChange={onChange}
       />
@@ -752,46 +793,67 @@ const TabIconPicker = ({
 
 const PiecePickerButton = ({
   pieces,
+  disabled,
   selectedPieceNames,
   onChange,
   label,
   icon,
 }: {
   pieces: PieceMetadataModelSummary[];
+  disabled: boolean;
   selectedPieceNames: string[];
   onChange: (pieceNames: string[]) => void;
   label?: string;
   icon?: ReactNode;
 }) => {
+  const [query, setQuery] = useState('');
   const piecesByName = useMemo(
     () => new Map(pieces.map((piece) => [piece.name, piece])),
     [pieces],
   );
+  const selected = useMemo(
+    () => new Set(selectedPieceNames),
+    [selectedPieceNames],
+  );
   const selectedPieces = selectedPieceNames
     .map((name) => piecesByName.get(name))
     .filter((piece): piece is PieceMetadataModelSummary => !!piece);
+  const needle = query.trim().toLowerCase();
+  const matches = useMemo(
+    () =>
+      needle === ''
+        ? pieces
+        : pieces.filter((piece) =>
+            piece.displayName.toLowerCase().includes(needle),
+          ),
+    [pieces, needle],
+  );
 
   const togglePiece = (name: string) =>
     onChange(
-      selectedPieceNames.includes(name)
+      selected.has(name)
         ? selectedPieceNames.filter((candidate) => candidate !== name)
         : [...selectedPieceNames, name],
     );
 
   return (
-    <Popover>
+    <Popover onOpenChange={(open) => !open && setQuery('')}>
       <PopoverTrigger asChild>
         <Button
           type="button"
           variant="outline"
           size="sm"
+          disabled={disabled}
           className={cn(
             'shrink-0 whitespace-nowrap font-normal',
             label !== undefined && 'self-start',
           )}
         >
           {icon}
-          {label ?? t('{count} pieces', { count: selectedPieceNames.length })}
+          {label ??
+            t('{count, plural, =1 {1 piece} other {# pieces}}', {
+              count: selectedPieceNames.length,
+            })}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
@@ -801,7 +863,7 @@ const PiecePickerButton = ({
               value={selectedPieces.map((piece) => ({ id: piece.name }))}
               onValueChange={(items) => onChange(items.map((item) => item.id))}
             >
-              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+              <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
                 {selectedPieces.map((piece) => (
                   <SortableItem key={piece.name} value={piece.name} asChild>
                     <div className="flex items-center gap-2 rounded-lg px-1 py-0.5">
@@ -836,32 +898,51 @@ const PiecePickerButton = ({
             </Sortable>
           </div>
         )}
-        <Command>
-          <CommandInput placeholder={t('Search pieces')} />
-          <CommandList>
-            <CommandEmpty>{t('No pieces found')}</CommandEmpty>
-            <CommandGroup>
-              {pieces.map((piece) => {
-                const isSelected = selectedPieceNames.includes(piece.name);
+        <div className="border-b p-2">
+          <Input
+            type="search"
+            value={query}
+            placeholder={t('Search pieces')}
+            aria-label={t('Search pieces')}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
+        {matches.length === 0 ? (
+          <p className="p-3 text-sm text-gray-11">{t('No pieces found')}</p>
+        ) : (
+          <div className="h-72 p-1">
+            <VirtualizedScrollArea
+              items={matches}
+              estimateSize={() => PICKER_ROW_HEIGHT}
+              getItemKey={(index) => matches[index].name}
+              renderItem={(piece) => {
+                const isSelected = selected.has(piece.name);
                 return (
-                  <CommandItem
-                    key={piece.name}
-                    value={piece.displayName}
-                    onSelect={() => togglePiece(piece.name)}
-                    className="flex items-center gap-2"
+                  <button
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => togglePiece(piece.name)}
+                    className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-gray-3 focus-visible:outline-2 focus-visible:outline-accent-8"
                   >
                     <LogoPlate src={piece.logoUrl} alt="" size="xs" border />
-                    <span className="grow truncate">{piece.displayName}</span>
-                    {isSelected && <Check className="size-4 text-accent-11" />}
-                  </CommandItem>
+                    <span className="min-w-0 grow truncate">
+                      {piece.displayName}
+                    </span>
+                    {isSelected && (
+                      <Check className="size-4 shrink-0 text-accent-11" />
+                    )}
+                  </button>
                 );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+              }}
+            />
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
 };
 
 const FLASH_MS = 1400;
+const PICKER_ROW_HEIGHT = 36;
+const borderlessInputClass =
+  'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';

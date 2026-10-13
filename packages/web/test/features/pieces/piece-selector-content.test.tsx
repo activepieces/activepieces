@@ -81,6 +81,8 @@ import {
 } from '@/features/pieces/hooks/pieces-hooks';
 import { PieceSelectorTabType } from '@/features/pieces/stores/piece-selector-tabs-provider';
 
+import { legacyPieceSelectorGrouping } from './legacy-piece-selector-grouping';
+
 const PIECES: StepMetadataWithSuggestions[] = [
   piece({ name: 'google-sheets', displayName: 'Google Sheets' }),
   piece({ name: 'slack', displayName: 'Slack' }),
@@ -117,6 +119,16 @@ const PIECES: StepMetadataWithSuggestions[] = [
   primitive({ type: FlowActionType.ROUTER, displayName: 'Router' }),
   primitive({ type: FlowActionType.LOOP_ON_ITEMS, displayName: 'Loop' }),
   primitive({ type: FlowActionType.AI_ROUTER, displayName: 'AI Router' }),
+];
+
+const ALL_TABS = [
+  PieceSelectorTabType.EXPLORE,
+  PieceSelectorTabType.APPS,
+  PieceSelectorTabType.UTILITY,
+  PieceSelectorTabType.AI_AND_AGENTS,
+  PieceSelectorTabType.APPROVALS,
+  PieceSelectorTabType.CUSTOM,
+  PieceSelectorTabType.NONE,
 ];
 
 const CUSTOM_CONFIG: PieceSelectorConfig = {
@@ -251,34 +263,55 @@ describe('add step menu grouping', () => {
     expect(builderMenu()).toEqual([]);
   });
 
-  it('the admin preview groups pieces exactly as the builder does', () => {
-    const tabs = [
-      PieceSelectorTabType.EXPLORE,
-      PieceSelectorTabType.APPS,
-      PieceSelectorTabType.UTILITY,
-      PieceSelectorTabType.AI_AND_AGENTS,
-      PieceSelectorTabType.APPROVALS,
-      PieceSelectorTabType.CUSTOM,
-      PieceSelectorTabType.NONE,
-    ];
-    state.pinnedPieces = [pieceName('trello'), pieceName('slack')];
-    state.pieceSelectorConfig = CUSTOM_CONFIG;
-    state.selectedCustomTabId = 'crm';
-    for (const tab of tabs) {
-      state.selectedTab = tab;
+  for (const environment of [undefined, ApEnvironment.DEVELOPMENT]) {
+    for (const pins of [[], [pieceName('trello'), pieceName('slack')]]) {
+      it(`groups every tab like the base implementation${
+        environment ? ' in development' : ''
+      }${pins.length > 0 ? ' with pinned pieces' : ''}`, () => {
+        state.environment = environment;
+        state.pinnedPieces = pins;
+        state.pieceSelectorConfig = CUSTOM_CONFIG;
+        state.selectedCustomTabId = 'crm';
+        for (const tab of ALL_TABS) {
+          state.selectedTab = tab;
+          expect(builderCategories()).toEqual(
+            legacyPieceSelectorGrouping({
+              metadata: PIECES,
+              platform: {
+                pinnedPieces: pins,
+                pieceSelectorConfig: CUSTOM_CONFIG,
+              },
+              selectedTab: tab,
+              selectedCustomTabId: 'crm',
+              type: 'action',
+              environment: environment ?? null,
+            }),
+          );
+        }
+      });
+    }
+  }
+
+  it('categorize is the suggestion filter followed by group', () => {
+    for (const tab of ALL_TABS) {
+      const input = {
+        platform: {
+          pinnedPieces: [pieceName('trello')],
+          pieceSelectorConfig: CUSTOM_CONFIG,
+        },
+        selectedTab: tab,
+        selectedCustomTabId: 'crm',
+        type: 'action' as const,
+        environment: null,
+      };
       expect(
-        pieceSelectorContent.categorize({
-          metadata: PIECES,
-          platform: {
-            pinnedPieces: state.pinnedPieces,
-            pieceSelectorConfig: CUSTOM_CONFIG,
-          },
-          selectedTab: tab,
-          selectedCustomTabId: 'crm',
-          type: 'action',
-          environment: null,
+        pieceSelectorContent.categorize({ ...input, metadata: PIECES }),
+      ).toEqual(
+        pieceSelectorContent.group({
+          ...input,
+          metadata: PIECES.filter(hasSuggestions),
         }),
-      ).toEqual(builderCategories());
+      );
     }
   });
 });
