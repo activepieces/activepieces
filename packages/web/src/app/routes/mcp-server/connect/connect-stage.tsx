@@ -209,7 +209,7 @@ function AppWall({ logos, rows }: { logos: string[]; rows: number }) {
       {Array.from({ length: rows }, (_, row) => (
         <div key={row} className="flex h-16 items-center justify-between">
           {Array.from({ length: WALL_COLUMNS }, (_, column) => {
-            const logo = logos[row * WALL_COLUMNS + column];
+            const logo = logos[column * rows + row];
             return (
               <span
                 key={column}
