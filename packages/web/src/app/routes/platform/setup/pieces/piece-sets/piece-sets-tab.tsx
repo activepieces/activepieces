@@ -362,6 +362,7 @@ function PieceSetsList({
         isError={isError}
         errorStateEntity={t('piece {terms}', pieceSetTerms.get())}
         onRetry={onRetry}
+        virtualizeRows
         hidePagination
       />
       <CreatePieceSetDialog

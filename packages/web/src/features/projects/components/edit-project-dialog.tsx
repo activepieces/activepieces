@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SkeletonList } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -97,10 +97,8 @@ export function EditProjectDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {(!globalConnectionsEnabled || !isLoadingConnections) &&
-        pieceSetField?.status !== 'loading' ? (
+        {!globalConnectionsEnabled || !isLoadingConnections ? (
           <EditProjectForm
-            key={pieceSetField?.status ?? 'none'}
             onClose={onClose}
             projectId={projectId}
             initialValues={initialValues}
@@ -274,6 +272,12 @@ const EditProjectForm = ({
             />
           )}
 
+        {pieceSetField?.status === 'loading' && (
+          <Skeleton
+            aria-label={t('Loading')}
+            className="h-20 w-full rounded-lg"
+          />
+        )}
         {pieceSetField?.status === 'error' && pieceSetField.render()}
         {readyField && (
           <FormField
@@ -281,7 +285,7 @@ const EditProjectForm = ({
             render={({ field }) => (
               <FormItem>
                 {readyField.render({
-                  value: field.value,
+                  value: field.value ?? readyField.initialValue,
                   onChange: field.onChange,
                   disabled: field.disabled,
                 })}
