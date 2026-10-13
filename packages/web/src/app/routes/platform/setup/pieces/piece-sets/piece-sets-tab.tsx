@@ -7,8 +7,13 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
+  Box,
+  Clock,
   Copy,
+  FolderKanban,
+  Hash,
   Layers,
+  PackagePlus,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -44,12 +49,13 @@ import {
   pieceSetMutations,
   pieceSetQueries,
   pieceSetTerms,
-  useShowEmbedKey,
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { projectHooks } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import { usePrefetchPiecesSection } from '../use-prefetch-pieces-section';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
@@ -59,7 +65,7 @@ import { pieceSetSummary } from './piece-set-summary';
 
 export function PieceSetsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
-  piecesHooks.usePrefetchPieces({});
+  usePrefetchPiecesSection();
   if (!platform.plan.managePiecesEnabled) {
     return <SamplePieceSetsList />;
   }
@@ -67,6 +73,7 @@ export function PieceSetsTab() {
 }
 
 function LivePieceSetsList() {
+  const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: pieceSets,
     isLoading,
@@ -79,9 +86,11 @@ function LivePieceSetsList() {
     () =>
       countProjectsPerSet({
         pieceSets: pieceSets ?? [],
-        projects: platformsData?.flatMap((p) => p.projects),
+        projects: platformsData
+          ?.flatMap((entry) => entry.projects)
+          .filter((project) => project.platformId === platform.id),
       }),
-    [pieceSets, platformsData],
+    [pieceSets, platformsData, platform.id],
   );
   return (
     <PieceSetsList
@@ -96,11 +105,7 @@ function LivePieceSetsList() {
 }
 
 function SamplePieceSetsList() {
-  const { pieces: catalog } = piecesHooks.usePieces({
-    includeHidden: true,
-    isTableQuery: true,
-    skipProjectFilter: true,
-  });
+  const { pieces: catalog } = piecesHooks.usePlatformCatalog();
   const pieceSets = useMemo(
     () =>
       pieceSetSamples.samplePieceSets({
@@ -130,7 +135,6 @@ function PieceSetsList({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const search = searchParams.get(SEARCH_PARAM) ?? '';
-  const showKey = useShowEmbedKey();
   const [creating, setCreating] = useState(false);
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
   const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
@@ -148,9 +152,9 @@ function PieceSetsList({
     return pieceSets.filter(
       (set) =>
         set.name.toLowerCase().includes(query) ||
-        (showKey && (set.key ?? '').toLowerCase().includes(query)),
+        (set.key ?? '').toLowerCase().includes(query),
     );
-  }, [pieceSets, search, showKey]);
+  }, [pieceSets, search]);
 
   const openSet = (set: PieceSet) =>
     navigate(`/platform/pieces/piece-sets/${set.id}`);
@@ -164,6 +168,7 @@ function PieceSetsList({
           <DataTableColumnHeader
             column={column}
             title={pieceSetTerms.get().Term}
+            icon={Box}
           />
         ),
         cell: ({ row }) => (
@@ -188,7 +193,11 @@ function PieceSetsList({
         id: 'newPieces',
         size: 190,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('New pieces')} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('New pieces')}
+            icon={PackagePlus}
+          />
         ),
         cell: ({ row }) =>
           row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL ? (
@@ -197,12 +206,16 @@ function PieceSetsList({
             <StatusDot tone="neutral">{t('Hidden until shown')}</StatusDot>
           ),
       },
-      ...(showKey ? [embedKeyColumn()] : []),
+      embedKeyColumn(),
       {
         id: 'appliesTo',
         size: 170,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Applies to')} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('Projects')}
+            icon={FolderKanban}
+          />
         ),
         cell: ({ row }) => {
           if (row.original.isDefault) {
@@ -232,7 +245,11 @@ function PieceSetsList({
         accessorKey: 'updated',
         size: 140,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Updated')} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('Updated')}
+            icon={Clock}
+          />
         ),
         cell: ({ row }) => (
           <FormattedDate
@@ -291,7 +308,7 @@ function PieceSetsList({
         ),
       },
     ],
-    [projectCounts, projectsLoading, showKey],
+    [projectCounts, projectsLoading],
   );
 
   const newSetButton = (
@@ -337,9 +354,7 @@ function PieceSetsList({
         filters={[
           {
             type: 'input',
-            title: showKey
-              ? t('Search by name or embed key')
-              : t('Search by name'),
+            title: t('Search by name or embed key'),
             accessorKey: SEARCH_PARAM,
             icon: Search,
           },
@@ -411,7 +426,11 @@ function embedKeyColumn(): ColumnDef<RowDataWithActions<PieceSet>> {
     accessorKey: 'key',
     size: 150,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Embed key')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Embed key')}
+        icon={Hash}
+      />
     ),
     cell: ({ row }) =>
       row.original.key ? (
@@ -435,13 +454,14 @@ function countProjectsPerSet({
     return new Map();
   }
   const defaultSetId = pieceSets.find((set) => set.isDefault)?.id;
-  return projects.reduce((counts, project) => {
+  const counts = new Map<string, number>(pieceSets.map((set) => [set.id, 0]));
+  for (const project of projects) {
     const setId = project.pieceSetId ?? defaultSetId;
-    if (isNil(setId)) {
-      return counts;
+    if (!isNil(setId)) {
+      counts.set(setId, (counts.get(setId) ?? 0) + 1);
     }
-    return new Map(counts).set(setId, (counts.get(setId) ?? 0) + 1);
-  }, new Map<string, number>(pieceSets.map((set) => [set.id, 0])));
+  }
+  return counts;
 }
 
 const SEARCH_PARAM = 'name';

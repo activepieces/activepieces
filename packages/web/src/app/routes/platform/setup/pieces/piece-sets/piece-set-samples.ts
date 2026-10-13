@@ -6,9 +6,10 @@ import {
   ProjectWithLimits,
   RequiredActionsMode,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 function samplePieceSets({ pieceNames }: { pieceNames: string[] }): PieceSet[] {
-  return SAMPLES.map((sample) =>
+  return sampleSpecs().map((sample) =>
     toPieceSet({
       sample,
       exceptions: sampleExceptions({ sample, pieceNames }),
@@ -27,7 +28,7 @@ function samplePieceSet({
 }
 
 function sampleProjects(id: string): SampleProject[] {
-  const sample = SAMPLES.find((candidate) => candidate.id === id);
+  const sample = sampleSpecs().find((candidate) => candidate.id === id);
   return (sample?.projects ?? []).map((displayName, index) => ({
     id: `${id}-project-${index}`,
     displayName,
@@ -37,7 +38,9 @@ function sampleProjects(id: string): SampleProject[] {
 }
 
 function sampleProjectCounts(): Map<string, number> {
-  return new Map(SAMPLES.map((sample) => [sample.id, sample.projects.length]));
+  return new Map(
+    sampleSpecs().map((sample) => [sample.id, sample.projects.length]),
+  );
 }
 
 function sampleExceptions({
@@ -91,41 +94,53 @@ const SAMPLE_COLORS = [
   ColorName.PINK,
 ];
 
-const SAMPLES: SampleSpec[] = [
-  {
-    id: 'sample-default',
-    name: 'Default',
-    key: null,
-    isDefault: true,
-    mode: PieceSelectionMode.INCLUDE_ALL,
-    share: 0.1,
-    fromEnd: false,
-    daysAgo: 2,
-    projects: ['Marketing', 'Sales ops', 'Engineering', 'People team'],
-  },
-  {
-    id: 'sample-finance',
-    name: 'Finance',
-    key: 'finance',
-    isDefault: false,
-    mode: PieceSelectionMode.EXCLUDE_ALL,
-    share: 0.3,
-    fromEnd: false,
-    daysAgo: 9,
-    projects: ['Accounts payable', 'Payroll', 'Treasury'],
-  },
-  {
-    id: 'sample-support',
-    name: 'Customer support',
-    key: 'support',
-    isDefault: false,
-    mode: PieceSelectionMode.EXCLUDE_ALL,
-    share: 0.5,
-    fromEnd: true,
-    daysAgo: 21,
-    projects: ['Help desk', 'Escalations', 'Returns', 'Onboarding'],
-  },
-];
+function sampleSpecs(): SampleSpec[] {
+  return [
+    {
+      id: 'sample-default',
+      name: t('Default'),
+      key: null,
+      isDefault: true,
+      mode: PieceSelectionMode.INCLUDE_ALL,
+      share: 0.1,
+      fromEnd: false,
+      daysAgo: 2,
+      projects: [
+        t('Marketing'),
+        t('Sales ops'),
+        t('Engineering'),
+        t('People team'),
+      ],
+    },
+    {
+      id: 'sample-finance',
+      name: t('Finance'),
+      key: 'finance',
+      isDefault: false,
+      mode: PieceSelectionMode.EXCLUDE_ALL,
+      share: 0.3,
+      fromEnd: false,
+      daysAgo: 9,
+      projects: [t('Accounts payable'), t('Payroll'), t('Treasury')],
+    },
+    {
+      id: 'sample-support',
+      name: t('Customer support'),
+      key: 'support',
+      isDefault: false,
+      mode: PieceSelectionMode.EXCLUDE_ALL,
+      share: 0.5,
+      fromEnd: true,
+      daysAgo: 21,
+      projects: [
+        t('Help desk'),
+        t('Escalations'),
+        t('Returns'),
+        t('Onboarding'),
+      ],
+    },
+  ];
+}
 
 export const pieceSetSamples = {
   samplePieceSets,
