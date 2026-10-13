@@ -1,19 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const process = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
-const resolveAuth = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
+const { googleDocumentAiApi } = await import('../../../src/lib/common/api');
+const { googleDocumentAiUtils } = await import('../../../src/lib/common/utils');
+const { processDocumentAction: processDocument } = await import('../../../src/lib/actions/process-document');
 
-vi.mock('../../../src/lib/common/client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../src/lib/common/client')>();
-  return { ...actual, GoogleDocumentAiApi: { ...actual.GoogleDocumentAiApi, process } };
-});
-vi.mock('../../../src/lib/common/token', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../src/lib/common/token')>();
-  return { ...actual, resolveAuth };
-});
-
-const { processDocument } = await import('../../../src/lib/actions/process-document');
-const { DEFAULT_FIELD_MASK } = await import('../../../src/lib/common/document');
+const process = vi.spyOn(googleDocumentAiApi, 'processDocument');
+const resolveAuth = vi.spyOn(googleDocumentAiApi, 'resolveAuth');
+const { DEFAULT_FIELD_MASK } = googleDocumentAiUtils;
 
 const AUTH = { accessToken: 't', projectId: 'my-project', location: 'us' };
 const PROCESSOR = 'projects/my-project/locations/us/processors/abc';

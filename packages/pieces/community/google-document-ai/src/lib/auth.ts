@@ -1,9 +1,10 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth, Property } from '@activepieces/pieces-framework';
 
-import { validateServiceAccountConnection } from './common/service-account';
+import { googleDocumentAiApi } from './common/api';
+import { googleDocumentAiClient } from './common/client';
 
 const locationDescription =
-  'Multi-region where your processors live: `us` or `eu` (the Document AI console shows it next to each processor). Other regional locations work too when Google offers them for your processor type.';
+	'Multi-region where your processors live: `us` or `eu` (the Document AI console shows it next to each processor). Other regional locations work too when Google offers them for your processor type.';
 
 const serviceAccountInstructions = `
 Connect with a **service account** from **your own** Google Cloud project (recommended: flows run without anyone signing in):
@@ -23,57 +24,72 @@ Sign in with a Google account that can use Document AI in **your own** Google Cl
 4. Paste the **Client ID** and **Client Secret**, fill in the **Project ID** and the processors' **location**, then sign in.
 `.trim();
 
-export const DOCUMENT_AI_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
-
-export const googleDocumentAiScopes = [DOCUMENT_AI_SCOPE, 'email'];
-
-export const DEFAULT_LOCATION = 'us';
+export const googleDocumentAiScopes = [googleDocumentAiClient.DOCUMENT_AI_SCOPE, 'email'];
 
 export const googleDocumentAiServiceAccount = PieceAuth.CustomAuth({
-  displayName: 'Service Account (Recommended)',
-  description: serviceAccountInstructions,
-  required: true,
-  props: {
-    keyFile: PieceAuth.SecretText({
-      displayName: 'Service Account Key (JSON)',
-      description: 'The full content of the key file downloaded from Google Cloud (starts with `{ "type": "service_account", …`).',
-      required: true,
-    }),
-    location: Property.ShortText({
-      displayName: 'Location',
-      description: locationDescription,
-      required: true,
-      defaultValue: DEFAULT_LOCATION,
-    }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID (Override)',
-      description: 'Only when the processors live in a project other than the key file\'s `project_id`.',
-      required: false,
-    }),
-  },
-  validate: async ({ auth }) => validateServiceAccountConnection(auth),
+	displayName: 'Service Account (Recommended)',
+	description: serviceAccountInstructions,
+	required: true,
+	props: {
+		keyFile: PieceAuth.SecretText({
+			displayName: 'Service Account Key (JSON)',
+			description:
+				'The full content of the key file downloaded from Google Cloud (starts with `{ "type": "service_account", …`).',
+			required: true,
+		}),
+		location: Property.ShortText({
+			displayName: 'Location',
+			description: locationDescription,
+			required: true,
+			defaultValue: googleDocumentAiClient.DEFAULT_LOCATION,
+		}),
+		projectId: Property.ShortText({
+			displayName: 'Project ID (Override)',
+			description:
+				"Only when the processors live in a project other than the key file's `project_id`.",
+			required: false,
+		}),
+	},
+	validate: async ({ auth }) => {
+		try {
+			const resolved = await googleDocumentAiApi.resolveAuth({
+				auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth },
+			});
+			const processors = await googleDocumentAiApi.listProcessors({ auth: resolved });
+			if (processors.length === 0) {
+				return {
+					valid: false,
+					error: `No processors found in project ${resolved.projectId}, location ${resolved.location}. Create one in Document AI → Processors, or check the location (us / eu).`,
+				};
+			}
+			return { valid: true };
+		} catch (error) {
+			return { valid: false, error: error instanceof Error ? error.message : String(error) };
+		}
+	},
 });
 
 export const googleDocumentAiOAuth2 = PieceAuth.OAuth2({
-  displayName: 'Google Account (OAuth2)',
-  description: oauthInstructions,
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: googleDocumentAiScopes,
-  props: {
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'Google Cloud project that owns the processors (the ID, e.g. `my-company-prod`, not the number or the name).',
-      required: true,
-    }),
-    location: Property.ShortText({
-      displayName: 'Location',
-      description: locationDescription,
-      required: true,
-      defaultValue: DEFAULT_LOCATION,
-    }),
-  },
+	displayName: 'Google Account (OAuth2)',
+	description: oauthInstructions,
+	authUrl: 'https://accounts.google.com/o/oauth2/auth',
+	tokenUrl: 'https://oauth2.googleapis.com/token',
+	required: true,
+	scope: googleDocumentAiScopes,
+	props: {
+		projectId: Property.ShortText({
+			displayName: 'Project ID',
+			description:
+				'Google Cloud project that owns the processors (the ID, e.g. `my-company-prod`, not the number or the name).',
+			required: true,
+		}),
+		location: Property.ShortText({
+			displayName: 'Location',
+			description: locationDescription,
+			required: true,
+			defaultValue: googleDocumentAiClient.DEFAULT_LOCATION,
+		}),
+	},
 });
 
 export const googleDocumentAiAuth = [googleDocumentAiServiceAccount, googleDocumentAiOAuth2];
