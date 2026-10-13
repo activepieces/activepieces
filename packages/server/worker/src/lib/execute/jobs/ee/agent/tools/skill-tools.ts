@@ -123,21 +123,31 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
                 }
                 return target.execute(input, options)
             },
-            toModelOutput: ({ toolCallId, input, output }) => lazyToolModelOutput({ output, reroutedTool: wasRerouted(toolCallId) ? input.tool : undefined }),
+            toModelOutput: ({ toolCallId, input, output }) => lazyToolModelOutput({
+                output: registry[input.tool]?.toModelOutput?.({ toolCallId, input: input.input, output }) ?? asModelOutput(output),
+                reroutedTool: wasRerouted(toolCallId) ? input.tool : undefined,
+            }),
         }),
     }
 }
 
-function lazyToolModelOutput({ output, reroutedTool }: { output: JSONValue | undefined, reroutedTool: string | undefined }): ToolResultPart['output'] {
-    const note = isNil(reroutedTool) ? undefined : `Note: "${reroutedTool}" is not attached to you, so calling it by its own name does not work. It ran this time; next time call ${LAZY_TOOL_NAME} with tool: "${reroutedTool}" and its arguments as input.`
-    if (typeof output === 'string') {
-        return { type: 'text', value: isNil(note) ? output : `${output}\n\n${note}` }
+function asModelOutput(output: JSONValue | undefined): ToolResultPart['output'] {
+    return typeof output === 'string' ? { type: 'text', value: output } : { type: 'json', value: output ?? null }
+}
+
+function lazyToolModelOutput({ output, reroutedTool }: { output: ToolResultPart['output'], reroutedTool: string | undefined }): ToolResultPart['output'] {
+    if (isNil(reroutedTool)) {
+        return output
     }
-    const value = output ?? null
-    if (isNil(note)) {
-        return { type: 'json', value }
+    const note = `Note: "${reroutedTool}" is not attached to you, so calling it by its own name does not work. It ran this time; next time call ${LAZY_TOOL_NAME} with tool: "${reroutedTool}" and its arguments as input.`
+    if (output.type === 'text') {
+        return { type: 'text', value: `${output.value}\n\n${note}` }
     }
-    return { type: 'json', value: isObject(value) && !Array.isArray(value) ? { ...value, note } : { result: value, note } }
+    if (output.type === 'json') {
+        const value = output.value
+        return { type: 'json', value: isObject(value) && !Array.isArray(value) ? { ...value, note } : { result: value, note } }
+    }
+    return output
 }
 
 function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSet, canAffordPaidTool: () => boolean }): Schema<LazyToolInput> {

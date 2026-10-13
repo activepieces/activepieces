@@ -79,7 +79,8 @@ async function runTask({ deps, title, brief, taskId, progressId }: {
     const turn = isNil(finish.result) && endedCleanly({ turn: workTurn, abortSignal })
         ? await continueTurn({ title, turnParams, previous: workTurn, request: REPORT_REQUEST, overrides: { stepCeiling: REPORT_STEPS } })
         : workTurn
-    const result = finish.result ?? fallbackResult(turn)
+    const reported = finish.result ?? fallbackResult(turn)
+    const result = abortSignal.aborted ? stoppedResult(reported) : reported
     const activity = finalActivity({ title, turn, result, startedAt })
     await saveTaskResult({
         finishTask,
@@ -205,6 +206,10 @@ function finishTool(finish: { result?: TaskResult }): ToolSet {
     }
 }
 
+function stoppedResult(reported: TaskResult): TaskResult {
+    return { ...reported, status: 'failed', summary: `Stopped by the user before it finished. ${reported.summary}` }
+}
+
 function fallbackResult(turn: AgentTurnResult): TaskResult {
     const lastMessage = lastText(turn.uiParts)
     return {
@@ -227,10 +232,9 @@ function runningActivity({ title, uiParts, startedAt }: { title: string, uiParts
 }
 
 function finalActivity({ title, turn, result, startedAt }: { title: string, turn: AgentTurnResult, result: TaskResult, startedAt: Date }): SubagentActivity {
-    const stoppedEarly = turn.streamError !== null || outOfBudget(turn) || turn.truncatedAfterRetries
     return {
         ...runningActivity({ title, uiParts: turn.uiParts, startedAt }),
-        status: stoppedEarly ? 'failed' : result.status,
+        status: result.status,
         artifacts: result.artifacts,
         summary: result.summary,
         ...(isNil(result.needs) ? {} : { needs: result.needs }),
@@ -312,6 +316,7 @@ const REPORT_STEPS = 2
 
 const NOT_FOR_TASKS = [
     TASK_TOOL_NAME,
+    'ap_retry_run',
     ...AGENT_SURFACE_TOOLS,
     'ap_update_thinking_status',
     'ap_send_email',

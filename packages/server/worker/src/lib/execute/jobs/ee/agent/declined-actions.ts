@@ -1,5 +1,5 @@
-import { isNil } from '@activepieces/core-utils'
-import { AgentEventEmitter } from './tools/tool-primitives'
+import { isNil, omit } from '@activepieces/core-utils'
+import { AgentEventEmitter, stableStringify } from './tools/tool-primitives'
 
 function create({ eventEmitter }: { eventEmitter: AgentEventEmitter }): DeclinedActions {
     const declined = new Set<string>()
@@ -12,7 +12,7 @@ function create({ eventEmitter }: { eventEmitter: AgentEventEmitter }): Declined
         eventEmitter: {
             ...eventEmitter,
             emitActionPreview: (data) => {
-                actionByGate.set(data.toolCallId, `${data.pieceName}:${data.actionName}`)
+                actionByGate.set(data.toolCallId, `${data.pieceName}:${data.actionName}:${stableStringify(omit(data.input, CARD_LABEL_KEYS))}`)
                 if (!isDeclined(data.toolCallId)) {
                     eventEmitter.emitActionPreview(data)
                 }
@@ -37,3 +37,5 @@ type DeclinedActions = {
     isDeclined: (gateId: string) => boolean
     recordDecision: (input: { gateId: string, approved: boolean }) => void
 }
+
+const CARD_LABEL_KEYS = ['title', 'activeTitle', 'doneTitle']

@@ -88,6 +88,21 @@ describe('createTaskSubagentTools', () => {
         expect(result).toMatchObject({ status: 'done', summary: 'Asana costs $13.49 a seat.' })
     })
 
+    it('reports a task the user stopped as stopped, even after it filed a result', async () => {
+        const controller = new AbortController()
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Built.', artifacts: [] }, EXECUTION_OPTIONS)
+            controller.abort()
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, abortSignal: controller.signal, tools: toolSet(['ap_build_flow']) })
+
+        const result = await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        expect(result).toMatchObject({ status: 'failed', activity: { status: 'failed' } })
+        expect(finishTask).toHaveBeenCalledWith(expect.objectContaining({ status: 'FAILED' }))
+    })
+
     it('picks up where it was cut off and finishes in the same task', async () => {
         runAgentTurn
             .mockResolvedValueOnce({ ...turnResult(), streamError: new Error('stream dropped') })
@@ -212,12 +227,13 @@ describe('createTaskSubagentTools', () => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
             return turnResult()
         })
-        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow', 'ap_update_thinking_status', 'ap_send_email']) })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow', 'ap_update_thinking_status', 'ap_send_email', 'ap_retry_run']) })
 
         await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
 
         expect(Object.keys(runAgentTurn.mock.calls[0][0].tools)).not.toContain('ap_update_thinking_status')
         expect(Object.keys(runAgentTurn.mock.calls[0][0].tools)).not.toContain('ap_send_email')
+        expect(Object.keys(runAgentTurn.mock.calls[0][0].tools)).not.toContain('ap_retry_run')
     })
 
     it('shows the latest step title on the card when the task sends no status', async () => {

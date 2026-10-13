@@ -232,6 +232,23 @@ describe('ap_lazy_tool', () => {
         expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_rename_flow"')
     })
 
+    it('shows the model what the target tool chooses to show, not its full output', async () => {
+        const surface = buildSkillSurface({
+            tools: {
+                ...stubTools(CHAT_TOOL_NAMES),
+                ap_rename_flow: tool({ description: 'Rename a flow.', inputSchema: z.object({ flowId: z.string() }), execute: async () => ({ renamed: true, internal: 'big' }), toModelOutput: () => ({ type: 'text', value: 'renamed' }) }),
+            },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+
+        const shown = surface.tools[LAZY_TOOL_NAME]?.toModelOutput?.({ toolCallId: 'call-1', input: { tool: 'ap_rename_flow', input: { flowId: 'f1' } }, output: { renamed: true, internal: 'big' } })
+
+        expect(shown).toEqual({ type: 'text', value: 'renamed' })
+    })
+
     it('hands a JSON-schema tool its input unchanged', async () => {
         const execute = vi.fn(async () => ({ renamed: true }))
         await executeWrapped({ surface: surfaceWithJsonSchemaTool(execute), toolName: 'ap_rename_flow', input: { flowId: 'f1' } })
