@@ -134,6 +134,10 @@ async function createNextBatch({ platformId, afterUserId, onlyUserIds, log }: Cr
 }
 
 async function createPersonalProject({ platformId, member, log }: CreatePersonalProjectParams): Promise<void> {
+    const user = await userRepo().findOneBy({ id: member.userId })
+    if (isNil(user) || user.platformId !== platformId || user.status !== UserStatus.ACTIVE) {
+        return
+    }
     const project = await projectService(log).create({
         displayName: member.firstName + '\'s Project',
         ownerId: member.userId,
