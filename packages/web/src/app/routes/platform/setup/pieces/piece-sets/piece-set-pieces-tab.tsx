@@ -283,7 +283,15 @@ export const PieceSetPiecesTab = ({
             </div>
           )}
         </div>
-        <div className="h-[36rem] border-t border-gray-6">
+        <div
+          className="border-t border-gray-6"
+          style={{
+            height: Math.min(
+              visiblePieces.length * ROW_HEIGHT,
+              MAX_LIST_HEIGHT,
+            ),
+          }}
+        >
           <VirtualizedScrollArea
             items={visiblePieces}
             estimateSize={() => ROW_HEIGHT}
@@ -642,6 +650,7 @@ function emptySegmentDescription(segment: Segment): string {
 
 const SEARCH_PARAM = 'displayName';
 const ROW_HEIGHT = 56;
+const MAX_LIST_HEIGHT = 576;
 
 type PieceAccess = 'allowed' | 'limited' | 'blocked';
 type Segment = PieceAccess | 'all';
