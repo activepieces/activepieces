@@ -1,8 +1,12 @@
 import { QueryRunner } from 'typeorm'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
-import { DatabaseType } from '../../database-type'
+import { BACKGROUND_MIGRATIONS_TABLE } from '../../background-migration-runner'
 import { Migration } from '../../migration'
+import { migrationHelpers } from '../../migration-helpers'
+import {
+    FLOW_RUN_BARRIER_INDEXES,
+    FLOW_RUN_LEGACY_LIST_INDEXES,
+    ReshapeFlowRunListIndexesForBarrierChildren1867000000000,
+} from './background/1867000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 
 export class AddBarrierChildAttribution1867000000000 implements Migration {
     name = 'AddBarrierChildAttribution1867000000000'
@@ -19,70 +23,20 @@ export class AddBarrierChildAttribution1867000000000 implements Migration {
             ALTER TABLE "flow_run"
             ADD COLUMN IF NOT EXISTS "dispatchIndex" integer
         `)
-
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_parent_waitpoint_id"
-            ON "flow_run" ("parentWaitpointId", "projectId", "dispatchIndex", "status")
-            WHERE "parentWaitpointId" IS NOT NULL
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_env_status_created_archived_parent_waitpoint"
-            ON "flow_run" ("projectId", "environment", "status", "created" DESC, "archivedAt", "parentWaitpointId")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_env_created_archived_status_parent_waitpoint"
-            ON "flow_run" ("projectId", "environment", "created" DESC, "archivedAt", "status")
-            WHERE "parentWaitpointId" IS NULL
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_env_flow_created_archived_parent_waitpoint"
-            ON "flow_run" ("projectId", "environment", "flowId", "created" DESC, "archivedAt")
-            WHERE "parentWaitpointId" IS NULL
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_env_flow_status_created_parent_waitpoint"
-            ON "flow_run" ("projectId", "environment", "flowId", "status", "created" DESC, "archivedAt")
-            WHERE "parentWaitpointId" IS NULL
-        `)
-
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_status_created_archived_at"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_created_status_archived_at"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_created_archived_at"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_flow_id_created_archived_at"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_flow_id_status_created_archived_at"`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_id_environment_status_created_archived_at"
-            ON "flow_run" ("projectId", "environment", "status", "created" DESC, "archivedAt")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_id_environment_created_status_archived_at"
-            ON "flow_run" ("projectId", "environment", "created" DESC, "archivedAt", "status")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_id_environment_created_archived_at"
-            ON "flow_run" ("projectId", "environment", "created" DESC, "archivedAt")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_id_environment_flow_id_created_archived_at"
-            ON "flow_run" ("projectId", "environment", "flowId", "created" DESC, "archivedAt")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_run_project_id_environment_flow_id_status_created_archived_at"
-            ON "flow_run" ("projectId", "environment", "flowId", "status", "created" DESC, "archivedAt")
-        `)
-
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_env_flow_status_created_parent_waitpoint"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_env_flow_created_archived_parent_waitpoint"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_env_created_archived_status_parent_waitpoint"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_env_status_created_archived_parent_waitpoint"`)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_parent_waitpoint_id"`)
-
+        for (const index of FLOW_RUN_LEGACY_LIST_INDEXES) {
+            await migrationHelpers.createIndexConcurrently({ queryRunner, table: 'flow_run', ...index })
+        }
+        for (const index of FLOW_RUN_BARRIER_INDEXES) {
+            await migrationHelpers.dropIndexConcurrently({ queryRunner, name: index.name })
+        }
+        await queryRunner.query(
+            `DELETE FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1`,
+            [new ReshapeFlowRunListIndexesForBarrierChildren1867000000000().name],
+        )
         await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "dispatchIndex"')
         await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "parentWaitpointId"')
     }
 }
-
-const concurrently = (): string => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE ? '' : 'CONCURRENTLY'
