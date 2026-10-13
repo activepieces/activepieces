@@ -10,7 +10,13 @@ import {
   PieceType,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,11 +26,13 @@ const state = vi.hoisted(
     selectedCustomTabId: string | null;
     pinnedPieces: string[];
     pieceSelectorConfig: unknown;
+    managePiecesEnabled: boolean;
   } => ({
     selectedTab: 'EXPLORE',
     selectedCustomTabId: null,
     pinnedPieces: [],
     pieceSelectorConfig: null,
+    managePiecesEnabled: false,
   }),
 );
 
@@ -42,7 +50,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
       platform: {
-        plan: {},
+        plan: { managePiecesEnabled: state.managePiecesEnabled },
         pinnedPieces: state.pinnedPieces,
         pieceSelectorConfig: state.pieceSelectorConfig,
       },
@@ -71,10 +79,22 @@ vi.mock('@/features/pieces/api/pieces-api', () => ({
       request.suggestionType === undefined
         ? SUMMARIES.map(withoutSuggestions)
         : SUMMARIES,
+    get: async ({ name }: { name: string }) => ({ name, actions: {} }),
+  },
+}));
+vi.mock('@/features/piece-sets/api/piece-sets-api', () => ({
+  pieceSetsApi: {
+    getForProject: async () => ({
+      config: { selectedActions: { [pieceName('jira')]: [] } },
+    }),
   },
 }));
 
-import { pieceSelectorPreviewUtils } from '@/app/routes/platform/setup/pieces/piece-selector-preview';
+import {
+  PieceSelectorPreview,
+  pieceSelectorPreviewUtils,
+  usePieceMenuPreviewSteps,
+} from '@/app/routes/platform/setup/pieces/piece-selector-preview';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { PieceSelectorTabType } from '@/features/pieces/stores/piece-selector-tabs-provider';
 import { CategorizedStepMetadataWithSuggestions } from '@/features/pieces/types';
@@ -146,6 +166,85 @@ describe('piece menu preview', () => {
   beforeEach(() => {
     state.selectedCustomTabId = 'crm';
     state.pieceSelectorConfig = CUSTOM_CONFIG;
+    state.managePiecesEnabled = false;
+  });
+
+  it('searches piece names and descriptions across every tab', () => {
+    expect(
+      names(
+        pieceSelectorPreviewUtils.groupForPreview({
+          steps: pieceSelectorPreviewUtils.toPreviewSteps({
+            pieces: SUMMARIES.map(withoutSuggestions),
+            selectedActions: undefined,
+            aiRouterEnabled: false,
+          }),
+          query: 'sheets',
+          pins: [],
+          tabs: CUSTOM_CONFIG.tabs,
+          selectedTab: PieceSelectorTabType.NONE,
+          selectedCustomTabId: null,
+        }),
+      ),
+    ).toEqual([['All', ['Google Sheets']]]);
+  });
+
+  it('shows the configured tabs, hides AI & Agents without AI, and reports clicks', async () => {
+    const onSelect = vi.fn();
+    render(
+      <QueryClientProvider client={newQueryClient()}>
+        <PieceSelectorPreview
+          tabs={[
+            ...CUSTOM_CONFIG.tabs,
+            {
+              id: 'APPS',
+              kind: 'BUILTIN',
+              builtinTab: 'APPS',
+              title: 'Integrations',
+              hidden: false,
+            },
+            {
+              id: 'UTILITY',
+              kind: 'BUILTIN',
+              builtinTab: 'UTILITY',
+              hidden: true,
+            },
+          ]}
+          pins={[]}
+          selectedKey={null}
+          onSelect={onSelect}
+          highlightedKeys={[]}
+          flashedPiece={null}
+          onTogglePin={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+    const tabs = await screen.findAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'CRM',
+      'Integrations',
+      'Explore',
+      'Approvals',
+    ]);
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Integrations' }));
+    expect(onSelect).toHaveBeenCalledWith('APPS');
+  });
+
+  it('leaves out pieces whose actions the project set hides', async () => {
+    state.managePiecesEnabled = true;
+    const { result } = renderHook(() => usePieceMenuPreviewSteps(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={newQueryClient()}>
+          {children}
+        </QueryClientProvider>
+      ),
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const shown = result.current.steps.map((step) => step.displayName);
+    expect(shown).toContain('Slack');
+    expect(shown).not.toContain('Jira');
+    expect(shown).not.toContain('Webflow');
+    expect(result.current.actionCounts.get(pieceName('jira'))).toBe(0);
+    expect(result.current.actionCounts.get(pieceName('slack'))).toBe(2);
   });
 
   for (const pins of [[], [pieceName('trello'), pieceName('slack')]]) {
@@ -178,10 +277,12 @@ describe('piece menu preview', () => {
   }
 });
 
+function newQueryClient(): QueryClient {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
+
 async function builderMenu(): Promise<[string, string[]][]> {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+  const queryClient = newQueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
