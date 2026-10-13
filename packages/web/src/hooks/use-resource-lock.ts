@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   ResourceLockedEvent,
   ResourceUnlockedEvent,
@@ -10,7 +11,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
-function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
+function useResourceLock({
+  resourceId,
+  onTakeOver,
+  onLockFreed,
+}: UseResourceLockParams) {
   const socket = useSocket();
   const currentUserId = authenticationSession.getCurrentUserId();
   const isOwner = useRef(false);
@@ -18,10 +23,8 @@ function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
   // registers ownership on this socket, replacing the previous full-page
   // reload (which broke the embed SDK handshake inside an iframe)
   const [lockSession, setLockSession] = useState(0);
-  const [lockedBy, setLockedBy] = useState<{
-    userId: string;
-    userDisplayName: string;
-  } | null>(null);
+  const [lockedBy, setLockedBy] = useState<LockHolder | null>(null);
+  const acquiresFreedLock = !isNil(onLockFreed);
 
   useEffect(() => {
     const handleLocked = (event: ResourceLockedEvent) => {
@@ -33,7 +36,7 @@ function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
       }
     };
     const handleUnlocked = (event: ResourceUnlockedEvent) => {
-      if (event.resourceId === resourceId) {
+      if (event.resourceId === resourceId && !acquiresFreedLock) {
         setLockedBy(null);
       }
     };
@@ -45,7 +48,38 @@ function useResourceLock({ resourceId, onTakeOver }: UseResourceLockParams) {
       socket.off(WebsocketClientEvent.RESOURCE_LOCKED, handleLocked);
       socket.off(WebsocketClientEvent.RESOURCE_UNLOCKED, handleUnlocked);
     };
-  }, [resourceId, socket, currentUserId]);
+  }, [resourceId, socket, currentUserId, acquiresFreedLock]);
+
+  useEffect(() => {
+    if (isNil(onLockFreed) || isNil(lockedBy)) {
+      return;
+    }
+    const acquireFreedLock = (event: ResourceUnlockedEvent) => {
+      if (event.resourceId !== resourceId) {
+        return;
+      }
+      socket.emit(
+        WebsocketServerEvent.LOCK_RESOURCE,
+        { resourceId },
+        (response: LockResourceResponse) => {
+          if (!isNil(response.lock)) {
+            setLockedBy(response.lock);
+            return;
+          }
+          isOwner.current = response.acquired;
+          onLockFreed()
+            .then(() =>
+              setLockedBy((holder) => (holder === lockedBy ? null : holder)),
+            )
+            .catch(() => undefined);
+        },
+      );
+    };
+    socket.on(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
+    return () => {
+      socket.off(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
+    };
+  }, [resourceId, socket, lockedBy, onLockFreed]);
 
   useEffect(() => {
     socket.emit(
@@ -108,4 +142,7 @@ export { useResourceLock };
 type UseResourceLockParams = {
   resourceId: string;
   onTakeOver?: () => void | Promise<void>;
+  onLockFreed?: () => Promise<void>;
 };
+
+type LockHolder = NonNullable<LockResourceResponse['lock']>;

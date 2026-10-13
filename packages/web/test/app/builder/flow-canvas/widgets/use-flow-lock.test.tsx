@@ -59,11 +59,18 @@ vi.mock('@/hooks/authorization-hooks', () => ({
   useAuthorization: () => ({ checkAccess: () => harness.canEditFlow }),
 }));
 
-vi.mock('@/app/builder/flow-canvas/hooks', () => ({
-  flowCanvasHooks: {
-    useSwitchToDraft: () => ({ switchToDraft: harness.switchToDraft }),
-  },
-}));
+vi.mock('@/app/builder/flow-canvas/hooks', async (importOriginal) => {
+  const original = await importOriginal<
+    typeof import('@/app/builder/flow-canvas/hooks')
+  >();
+  return {
+    ...original,
+    flowCanvasHooks: {
+      ...original.flowCanvasHooks,
+      useSwitchToDraft: () => ({ switchToDraft: harness.switchToDraft }),
+    },
+  };
+});
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
