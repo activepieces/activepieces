@@ -462,19 +462,19 @@ function PieceRow({
           </span>
         </span>
       </button>
-      <span
-        className={cn(
-          'hidden shrink-0 text-sm tabular-nums md:inline',
-          access === 'limited' ? 'text-accent-11' : 'text-gray-11',
-        )}
-      >
-        {summary}
-      </span>
       {required > 0 && (
         <Badge variant="outline" className="shrink-0">
           {t('requiredCount', { count: required })}
         </Badge>
       )}
+      <span
+        className={cn(
+          'hidden w-32 shrink-0 truncate text-sm tabular-nums md:inline',
+          access === 'limited' ? 'text-accent-11' : 'text-gray-11',
+        )}
+      >
+        {summary}
+      </span>
       <InstantSwitch
         controlId={AdminControl.PIECE_SETS_PIECE_TOGGLE}
         aria-label={t('Show {name} in the builder', {
