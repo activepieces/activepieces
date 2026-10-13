@@ -69,37 +69,52 @@ export function ConnectPage({ home }: { home: ConnectHome }) {
 
 function TryAsking() {
   const prompts = [
-    t('Which of my flows failed this week, and why?'),
-    t('List my tables and summarize the newest rows.'),
-    t('Build a flow that posts new form leads to Slack.'),
+    t('Read my Linear tickets and organize them into a roadmap.'),
+    t('Update all my meetings for today.'),
+    t('Summarize this week’s Salesforce deals that changed stage.'),
   ];
   return (
-    <section className="mx-auto flex w-full max-w-[1144px] flex-wrap items-center justify-center gap-x-2 gap-y-1.5">
-      <h2 className="pr-1 text-sm text-gray-11">{t('Try asking')}</h2>
-      {prompts.map((prompt) => (
-        <CopyButton
-          key={prompt}
-          textToCopy={prompt}
-          variant="ghost"
-          size="sm"
-          className="h-auto max-w-full whitespace-normal py-1.5 text-left font-normal text-gray-12"
-        >
-          {prompt}
-        </CopyButton>
-      ))}
+    <section className="mx-auto flex w-full max-w-[1144px] flex-col items-center gap-1.5">
+      <h2 className="text-xs text-gray-11">{t('Try asking')}</h2>
+      <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1.5">
+        {prompts.map((prompt) => (
+          <CopyButton
+            key={prompt}
+            textToCopy={prompt}
+            variant="ghost"
+            size="sm"
+            className="h-auto max-w-full whitespace-normal py-1.5 text-left font-normal text-gray-12"
+          >
+            {prompt}
+          </CopyButton>
+        ))}
+      </div>
     </section>
   );
 }
 
 function pickWallLogos(pieces: { name: string; logoUrl: string }[]): string[] {
-  const rank = (name: string) => {
-    const index = POPULAR_PIECES.indexOf(name.replace(PIECE_PREFIX, ''));
-    return index === -1 ? POPULAR_PIECES.length : index;
-  };
-  const logos = [...pieces]
-    .sort((a, b) => rank(a.name) - rank(b.name))
-    .map((piece) => piece.logoUrl);
-  return [...new Set(logos)].slice(0, WALL_SIZE);
+  const logoByName = new Map(
+    pieces.map((piece) => [
+      piece.name.replace(PIECE_PREFIX, ''),
+      piece.logoUrl,
+    ]),
+  );
+  const listed = new Set([...WALL_FRONT, ...WALL_BACK]);
+  const pick = (names: string[]) =>
+    names.flatMap((name) => {
+      const logo = logoByName.get(name);
+      return logo ? [logo] : [];
+    });
+  const back = pick(WALL_BACK).slice(0, WALL_BACK_SLOTS);
+  const others = [...logoByName.entries()]
+    .filter(([name]) => !listed.has(name))
+    .map(([, logo]) => logo);
+  const front = [...pick(WALL_FRONT), ...others].slice(
+    0,
+    WALL_SIZE - back.length,
+  );
+  return [...new Set([...front, ...back])];
 }
 
 function appsSubline({ total, brand }: { total: number; brand: string }) {
@@ -129,40 +144,45 @@ function keepTogether(text: string): string {
 const NO_BREAK_SPACE = '\u00a0';
 const EXACT_COUNT_LIMIT = 20;
 const PIECE_PREFIX = '@activepieces/piece-';
-const POPULAR_PIECES = [
+const WALL_FRONT = [
   'slack',
+  'microsoft-teams',
+  'salesforce',
   'gmail',
-  'google-sheets',
+  'microsoft-outlook',
+  'google-drive',
+  'hubspot',
+  'jira-cloud',
+  'linear',
   'notion',
   'github',
-  'hubspot',
-  'google-drive',
+  'zendesk',
+  'google-calendar',
+  'asana',
+  'confluence',
+  'microsoft-excel-365',
+  'google-sheets',
   'airtable',
   'stripe',
-  'salesforce',
-  'google-calendar',
-  'discord',
-  'trello',
-  'asana',
-  'shopify',
-  'linear',
-  'jira-cloud',
-  'microsoft-teams',
-  'telegram-bot',
-  'whatsapp',
-  'dropbox',
-  'mailchimp',
-  'zendesk',
   'intercom',
+  'freshdesk',
+  'pipedrive',
+  'microsoft-onedrive',
+  'dropbox',
   'monday',
   'clickup',
-  'todoist',
-  'google-docs',
-  'youtube',
-  'linkedin',
-  'openai',
-  'outlook',
+  'shopify',
+  'mailchimp',
   'calendly',
+  'google-docs',
+];
+const WALL_BACK_SLOTS = 6;
+const WALL_BACK = [
+  'telegram-bot',
+  'whatsapp',
+  'discord',
+  'trello',
+  'youtube',
+  'todoist',
   'typeform',
-  'pipedrive',
 ];
