@@ -101,7 +101,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                     if (worker.workerGroupScope === WorkerGroupScope.PLATFORM) {
                         return !isNil(platformWorkerGroupId) && worker.workerGroupId === platformWorkerGroupId
                     }
-                    if (worker.workerGroupScope === WorkerGroupScope.PROJECT) {
+                    if (worker.workerGroupScope === WorkerGroupScope.PROJECT || worker.workerGroupScope === WorkerGroupScope.FLOW) {
                         return true
                     }
                     return isNil(platformWorkerGroupId)

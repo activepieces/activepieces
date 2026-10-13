@@ -1,14 +1,22 @@
 import { isNil } from '@activepieces/core-utils'
 import { WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 
-const parseWorkerGroupValue = ({ value, projectWorker }: { value: string | undefined, projectWorker: boolean }): WorkerGroupAssignment | null => {
+const parseWorkerGroupValue = ({ value, projectWorker, scope }: ParseWorkerGroupValueParams): WorkerGroupAssignment | null => {
     if (isNil(value) || value.length === 0) {
         return null
     }
     return {
-        scope: projectWorker ? WorkerGroupScope.PROJECT : WorkerGroupScope.PLATFORM,
+        scope: resolveScope({ projectWorker, scope }),
         id: value,
     }
+}
+
+const resolveScope = ({ projectWorker, scope }: { projectWorker: boolean, scope: string | undefined }): WorkerGroupScope => {
+    const explicitScope = Object.values(WorkerGroupScope).find((knownScope) => knownScope === scope)
+    if (!isNil(explicitScope)) {
+        return explicitScope
+    }
+    return projectWorker ? WorkerGroupScope.PROJECT : WorkerGroupScope.PLATFORM
 }
 
 const getPlatformGroupQueueName = (workerGroupId: string): string => {
@@ -20,10 +28,15 @@ const getProjectGroupQueueName = (workerGroupId: string): string => {
     return `project-${workerGroupId}-jobs`
 }
 
+const getFlowGroupQueueName = (workerGroupId: string): string => {
+    return `flow-${workerGroupId}-jobs`
+}
+
 export const workerGroupQueues = {
     parseWorkerGroupValue,
     getPlatformGroupQueueName,
     getProjectGroupQueueName,
+    getFlowGroupQueueName,
 }
 
 export const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
@@ -34,4 +47,10 @@ export const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
 export type WorkerGroupAssignment = {
     scope: WorkerGroupScope
     id: string
+}
+
+type ParseWorkerGroupValueParams = {
+    value: string | undefined
+    projectWorker: boolean
+    scope: string | undefined
 }

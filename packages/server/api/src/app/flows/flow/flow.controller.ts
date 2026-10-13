@@ -1,4 +1,4 @@
-import { ApId, Permission, SeekPage, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, ErrorCode, isNil, Permission, SeekPage, UserId } from '@activepieces/core-utils'
 import { CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -12,9 +12,13 @@ import { platformPlanService } from '../../ee/platform/platform-plan/platform-pl
 import { projectLimitsService } from '../../ee/projects/project-plan/project-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { networkUtils } from '../../helper/network-utils'
+import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { flowWorkerGroupService } from '../../workers/worker-groups/flow-worker-group.service'
+import { platformWorkerGroupService } from '../../workers/worker-groups/platform-worker-group.service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
+import { flowRepo } from './flow.repo'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -164,6 +168,36 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+
+    app.post('/:id/worker-group', UpdateFlowWorkerGroupRequestOptions, async (request, reply) => {
+        const flow = await flowRepo().findOneBy({ id: request.params.id })
+        const platformId = isNil(flow) ? null : await projectService(request.log).getPlatformId(flow.projectId)
+        if (isNil(flow) || platformId !== request.principal.platform.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: request.params.id,
+                    entityType: 'flow',
+                },
+            })
+        }
+        const workerGroupsEnabled = await platformWorkerGroupService(request.log).isWorkerGroupsEnabled({ platformId })
+        if (!workerGroupsEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Worker groups are not enabled for this platform',
+                },
+            })
+        }
+        await flowWorkerGroupService(request.log).assignFlowToGroup({
+            flowId: flow.id,
+            projectId: flow.projectId,
+            platformId,
+            workerGroupId: request.body.workerGroupId,
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
 }
 
 function actorUserId(request: FastifyRequest): UserId | undefined {
@@ -299,7 +333,7 @@ const GetFlowRequestOptions = {
 const DeleteFlowRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FlowEntity,
@@ -315,5 +349,22 @@ const DeleteFlowRequestOptions = {
         response: {
             [StatusCodes.NO_CONTENT]: z.never(),
         },
+    },
+}
+
+const UpdateFlowWorkerGroupRequestOptions = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Assign a flow to a worker group',
+        params: z.object({
+            id: ApId,
+        }),
+        body: z.object({
+            workerGroupId: z.string().nullable(),
+        }),
     },
 }
