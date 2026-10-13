@@ -2,7 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType, ProjectType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ObjectLiteral, Repository } from 'typeorm'
+import { In, ObjectLiteral, Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { projectEnterpriseHooks } from '../../../../src/app/ee/projects/ee-project-hooks'
 import { personalProjectsService } from '../../../../src/app/ee/projects/personal-projects/personal-projects.service'
@@ -190,7 +190,7 @@ describe('Creating personal projects for existing members', () => {
     it('a resumed run starts after the last member the stopped run reached', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const members = await Promise.all(Array.from({ length: 3 }, () => saveUser({ platformId })))
-        const [reached, ...rest] = [...members].sort((a, b) => a.id.localeCompare(b.id))
+        const [reached, ...rest] = await databaseConnection().getRepository('user').find({ where: { id: In(members.map((member) => member.id)) }, order: { id: 'ASC' } })
 
         await personalProjectsService(mockLog).createMissingHandler({ platformId, afterUserId: reached.id, attemptsLeft: 2 })
 
