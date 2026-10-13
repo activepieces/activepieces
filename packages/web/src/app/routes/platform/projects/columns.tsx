@@ -188,7 +188,7 @@ function DefaultProjectBadge() {
     <Tooltip>
       <TooltipTrigger asChild>
         <Badge
-          variant="accent"
+          variant="secondary"
           className="h-4 px-1.5 py-0 text-xss leading-none"
         >
           {t('Default')}
