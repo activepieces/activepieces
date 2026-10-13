@@ -282,12 +282,9 @@ function PieceActionsAndTriggersSheetContent({
         }
         footer={
           <div className="flex w-full flex-col">
-            <div
-              aria-live="polite"
-              className="flex h-32 shrink-0 flex-col gap-1 overflow-y-auto border-t px-6 py-3"
-            >
+            <div aria-live="polite">
               {pieceModel && totalCount > 0 && (
-                <>
+                <div className="flex max-h-32 shrink-0 flex-col gap-1 overflow-y-auto border-t px-6 py-3">
                   <p className="text-sm text-gray-12">
                     {buildersSeeSummary({
                       pieceDisplayName,
@@ -324,7 +321,7 @@ function PieceActionsAndTriggersSheetContent({
                       </p>
                     )
                   )}
-                </>
+                </div>
               )}
             </div>
             <SaveBar

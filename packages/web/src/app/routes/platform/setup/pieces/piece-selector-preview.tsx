@@ -123,10 +123,12 @@ export function PieceSelectorPreview({
       return <PreviewSkeleton />;
     }
     if (rows.length === 0) {
-      return <p className="p-5 text-sm text-gray-11">{emptyMessage}</p>;
+      return (
+        <p className="min-h-48 p-5 text-sm text-gray-11">{emptyMessage}</p>
+      );
     }
     return (
-      <div className="grid h-96 min-h-0 grid-cols-1 grid-rows-[minmax(0,1fr)] sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+      <div className="grid max-h-96 min-h-48 grid-cols-1 grid-rows-[minmax(0,1fr)] sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
         <VirtualizedScrollArea
           className="min-h-0 sm:border-r"
           items={rows}
@@ -234,7 +236,7 @@ export function PieceSelectorPreview({
 
 function PreviewSkeleton() {
   return (
-    <div className="grid h-96 grid-cols-1 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+    <div className="grid max-h-96 min-h-48 grid-cols-1 overflow-hidden sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
       <div className="flex flex-col p-2 sm:border-r">
         <div className="flex h-8 items-end px-2 pb-1">
           <Skeleton className="h-3 w-16 rounded-sm" />

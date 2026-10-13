@@ -60,6 +60,7 @@ import {
 } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { listUtils } from '@/lib/list-utils';
 import { cn } from '@/lib/utils';
 
 import {
@@ -939,7 +940,17 @@ const PiecePickerButton = ({
             {matches.length === 0 ? (
               <p className="p-3 text-sm text-gray-11">{t('No pieces found')}</p>
             ) : (
-              <div className="h-72 p-1">
+              <div
+                className="p-1"
+                style={{
+                  height: listUtils.cappedHeight({
+                    count: matches.length,
+                    rowHeight: PICKER_ROW_HEIGHT,
+                    padding: 8,
+                    max: PICKER_MAX_HEIGHT,
+                  }),
+                }}
+              >
                 <VirtualizedScrollArea
                   items={matches}
                   estimateSize={() => PICKER_ROW_HEIGHT}
@@ -980,6 +991,7 @@ const PiecePickerButton = ({
 
 const FLASH_MS = 700;
 const PICKER_ROW_HEIGHT = 36;
+const PICKER_MAX_HEIGHT = 288;
 const borderlessInputClass =
   'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
 
