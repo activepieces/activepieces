@@ -119,6 +119,7 @@ export function EnterpriseTrialDialog() {
               {view === 'started' && (
                 <TrialStarted
                   endsAt={start.data?.endsAt ?? null}
+                  startedAt={start.data?.startedAt ?? null}
                   featureKey={payload?.featureKey}
                   resumeState={resumeState}
                   onRetry={() => finishBlockedWork().catch(() => undefined)}
@@ -432,22 +433,30 @@ function howToGetIt({
 function TrialTimeline({
   basePlanName,
   started,
+  startedAt,
   endsAt,
 }: {
   basePlanName: string;
   started: boolean;
+  startedAt?: Date;
   endsAt?: Date;
 }) {
   const endDate = dayjs(endsAt ?? dayjs().add(ENTERPRISE_TRIAL_DAYS, 'day'));
   const steps = [
-    ...(started
-      ? []
-      : [
-          {
-            when: t('Today'),
-            what: t('Everything turns on. Your credits stay the same.'),
-          },
-        ]),
+    started
+      ? {
+          when: t('Today · {date}', {
+            date: dayjs(startedAt ?? undefined).format('MMM D'),
+          }),
+          what: t(
+            'Your Enterprise plan trial started. Everything is unlocked for {days} days.',
+            { days: ENTERPRISE_TRIAL_DAYS },
+          ),
+        }
+      : {
+          when: t('Today'),
+          what: t('Everything turns on. Your credits stay the same.'),
+        },
     {
       when: endDate.subtract(1, 'day').format('MMM D'),
       what: t('We remind you the day before it ends.'),
@@ -466,11 +475,13 @@ function TrialTimeline({
         <li key={step.when} className="flex gap-3">
           <span className="flex flex-col items-center">
             <span className="grid size-4 shrink-0 place-items-center">
-              {index === 0 && !started ? (
+              {index === 0 && !started && (
                 <Check className="size-4 text-success-11" />
-              ) : (
-                <span className="size-2 rounded-full bg-gray-8" />
               )}
+              {index === 0 && started && (
+                <span className="size-2.5 rounded-full bg-accent-9" />
+              )}
+              {index > 0 && <span className="size-2 rounded-full bg-gray-8" />}
             </span>
             {index < steps.length - 1 && (
               <span className="my-1 w-px flex-1 bg-gray-6" />
@@ -492,12 +503,14 @@ function TrialTimeline({
 
 function TrialStarted({
   endsAt,
+  startedAt,
   featureKey,
   resumeState,
   onRetry,
   onClose,
 }: {
   endsAt: string | null;
+  startedAt: string | null;
   featureKey: FeatureKey | undefined;
   resumeState: ResumeState;
   onRetry: () => void;
@@ -550,6 +563,7 @@ function TrialStarted({
         <TrialTimeline
           basePlanName={trial.basePlanName}
           started={true}
+          startedAt={isNil(startedAt) ? undefined : new Date(startedAt)}
           endsAt={isNil(endsAt) ? undefined : new Date(endsAt)}
         />
       }

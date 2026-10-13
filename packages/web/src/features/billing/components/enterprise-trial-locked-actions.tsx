@@ -23,6 +23,7 @@ export function EnterpriseTrialLockedActions({
   onAction,
   primaryLast = false,
   compact = false,
+  finePrintBelow = false,
 }: EnterpriseTrialLockedActionsProps) {
   const size = compact ? 'sm' : 'default';
   const access = useEnterpriseAccess({ unlocked: false });
@@ -65,8 +66,14 @@ export function EnterpriseTrialLockedActions({
 
   if (access === 'trial_available') {
     return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-x-4 gap-y-3',
+          finePrintBelow && '@3xl:flex-col @3xl:items-end @3xl:gap-y-1.5',
+        )}
+      >
         <div className="flex flex-wrap items-center gap-2">
+          {primaryLast && explorePlans(compact ? 'link' : 'outline')}
           <Button
             {...adminControl(AdminControl.TRIAL_START_OPEN)}
             size={size}
@@ -77,7 +84,7 @@ export function EnterpriseTrialLockedActions({
           >
             {t('Start free trial')}
           </Button>
-          {explorePlans(compact ? 'link' : 'outline')}
+          {!primaryLast && explorePlans(compact ? 'link' : 'outline')}
         </div>
         {!compact && (
           <span className="text-xs text-gray-11">
@@ -108,27 +115,21 @@ export function EnterpriseTrialLockedActions({
 
   if (plan.tier !== 'enterprise') {
     return (
-      <div
-        className={cn(
-          'flex flex-wrap items-center gap-x-4 gap-y-2',
-          primaryLast && 'flex-row-reverse',
-        )}
-      >
-        {explorePlans('default')}
-        {salesLink('link')}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {primaryLast ? salesLink('link') : explorePlans('default')}
+        {primaryLast ? explorePlans('default') : salesLink('link')}
       </div>
     );
   }
 
   return (
-    <div
-      className={cn(
-        'flex flex-wrap items-center gap-2',
-        primaryLast && 'flex-row-reverse',
-      )}
-    >
-      {salesLink('default')}
-      {explorePlans(compact ? 'link' : 'outline')}
+    <div className="flex flex-wrap items-center gap-2">
+      {primaryLast
+        ? explorePlans(compact ? 'link' : 'outline')
+        : salesLink('default')}
+      {primaryLast
+        ? salesLink('default')
+        : explorePlans(compact ? 'link' : 'outline')}
     </div>
   );
 }
@@ -139,4 +140,5 @@ type EnterpriseTrialLockedActionsProps = {
   onAction?: () => void;
   primaryLast?: boolean;
   compact?: boolean;
+  finePrintBelow?: boolean;
 };
