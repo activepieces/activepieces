@@ -85,7 +85,7 @@ export function ProjectPicker({
             onValueChange={setSearch}
             placeholder={t('Search projects...')}
           />
-          <CommandList>
+          <CommandList className="overflow-y-auto">
             <CommandEmpty>{t('No projects found')}</CommandEmpty>
             <CommandGroup>
               {visible.map((project) => (
