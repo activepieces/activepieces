@@ -34,6 +34,7 @@ afterAll(async () => {
 
 afterEach(() => {
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
 })
 
 describe('Templates when cloud.activepieces.com is unreachable', () => {
@@ -66,6 +67,23 @@ describe('Templates when cloud.activepieces.com is unreachable', () => {
         const response = await ctx.get(`/v1/templates/${apId()}`)
 
         expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+
+    it('GET /v1/templates and /categories fall back when the cloud stalls past the timeout', async () => {
+        const ctx = await createTestContext(app)
+        const abortSignalTimeout = AbortSignal.timeout.bind(AbortSignal)
+        vi.spyOn(AbortSignal, 'timeout').mockImplementation(() => abortSignalTimeout(1))
+        stubCloudFetch((init) => new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(init.signal?.reason))
+        }))
+
+        const categories = await ctx.get('/v1/templates/categories')
+        const templates = await ctx.get('/v1/templates')
+
+        expect(categories.statusCode).toBe(StatusCodes.OK)
+        expect(templates.statusCode).toBe(StatusCodes.OK)
+        expect(templates.json().data).toEqual([])
+        expect(AbortSignal.timeout).toHaveBeenCalled()
     })
 })
 
@@ -120,12 +138,12 @@ describe('Templates when cloud.activepieces.com is reachable', () => {
     })
 })
 
-function stubCloudFetch(respond: () => Promise<Response>): void {
+function stubCloudFetch(respond: (init?: RequestInit) => Promise<Response>): void {
     const realFetch = globalThis.fetch
     vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) => {
         const url = input instanceof Request ? input.url : String(input)
         if (url.startsWith(CLOUD_TEMPLATES_URL)) {
-            return respond()
+            return respond(init)
         }
         return realFetch(input, init)
     })
