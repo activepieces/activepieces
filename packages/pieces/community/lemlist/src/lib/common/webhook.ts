@@ -1,5 +1,6 @@
 import { randomBytes, timingSafeEqual } from 'crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { isLemlistStatus, isRecord, lemlistApiCall } from './client';
 import { lemlistInput } from './input';
 import { lemlistResults } from './results';
@@ -163,6 +164,7 @@ async function receive({
       return undefined;
     }
     await store.put(dedupeKey(storeKey), [...seen, activityId].slice(-MAX_REMEMBERED_ACTIVITIES));
+    return { ...activity, [DEDUPE_KEY_PROPERTY]: activityId };
   }
   return activity;
 }

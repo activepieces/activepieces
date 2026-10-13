@@ -285,3 +285,28 @@ describe('metadata', () => {
     }
   });
 });
+
+describe('review fixes', () => {
+  it('upsert contact with overwrite sends supplied empty fields so they are cleared', async () => {
+    const calls = stubFetch([{ body: { _id: 'ctc_1' } }]);
+    await call({ fn: upsertContactAction.run, ctx: makeContext({ props: { email: 'jane@example.com', phone: '', jobTitle: undefined, update_strategy: 'overwrite' } }) });
+    expect(calls[0].body).toEqual({ email: 'jane@example.com', phone: '' });
+  });
+
+  it('upsert contact without overwrite still drops empty fields', async () => {
+    const calls = stubFetch([{ body: { _id: 'ctc_1' } }]);
+    await call({ fn: upsertContactAction.run, ctx: makeContext({ props: { email: 'jane@example.com', phone: '', update_strategy: 'overwriteIgnoreEmpty' } }) });
+    expect(calls[0].body).toEqual({ email: 'jane@example.com' });
+  });
+
+  it('upsert company with overwrite sends supplied empty fields but never an empty identifier', async () => {
+    const calls = stubFetch([{ body: { _id: 'cpn_1' } }]);
+    await call({ fn: upsertCompanyAction.run, ctx: makeContext({ props: { domain: 'acme.com', linkedinUrl: '', industry: '', update_strategy: 'overwrite' } }) });
+    expect(calls[0].body).toEqual({ domain: 'acme.com', industry: '' });
+  });
+
+  it('update task offers no empty priority option, so an omitted priority means unchanged', () => {
+    const options = (updateTaskAction.props.priority as unknown as { options: { options: { value: string }[] } }).options.options;
+    expect(options.map((o) => o.value)).toEqual(['0', '1', '2']);
+  });
+});

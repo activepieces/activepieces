@@ -258,7 +258,7 @@ describe('webhook triggers', () => {
       fn: newActivity.run,
       ctx: triggerContext({ store, body: { _id: 'act_1', type: 'emailsReplied', createdAt: now, secret: 'expected-secret' } }),
     });
-    expect(out).toEqual([{ _id: 'act_1', type: 'emailsReplied', createdAt: now }]);
+    expect(out).toEqual([{ _id: 'act_1', type: 'emailsReplied', createdAt: now, _dedupe_key: 'act_1' }]);
   });
 
   it('run drops forged deliveries (missing or wrong secret)', async () => {
@@ -273,7 +273,7 @@ describe('webhook triggers', () => {
     const store = makeStore();
     store.data.set('lemlist_new_activity_trigger_key', { webhookId: 'hoo_legacy' });
     const out = await call({ fn: newActivity.run, ctx: triggerContext({ store, body: { _id: 'act_9', type: 'x', createdAt: now } }) });
-    expect(out).toEqual([{ _id: 'act_9', type: 'x', createdAt: now }]);
+    expect(out).toEqual([{ _id: 'act_9', type: 'x', createdAt: now, _dedupe_key: 'act_9' }]);
   });
 
   it('run dedupes by activity _id', async () => {

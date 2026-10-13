@@ -119,8 +119,9 @@ export const updateTaskAction = createAction({
     message: Property.LongText({ displayName: 'Instructions', required: false }),
     priority: Property.StaticDropdown({
       displayName: 'Priority',
+      description: 'Leave empty to keep the current priority.',
       required: false,
-      options: { disabled: false, options: PRIORITIES },
+      options: { disabled: false, options: PRIORITIES.filter((option) => option.value !== '') },
     }),
     done: Property.Checkbox({ displayName: 'Done', required: false }),
   },

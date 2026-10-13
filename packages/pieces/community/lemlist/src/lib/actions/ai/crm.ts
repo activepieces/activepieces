@@ -20,6 +20,29 @@ function updateStrategyProp() {
   });
 }
 
+function upsertBody({
+  record,
+  keys,
+  identityKeys,
+  updateStrategy,
+}: {
+  record: Record<string, unknown>;
+  keys: readonly string[];
+  identityKeys: readonly string[];
+  updateStrategy: unknown;
+}): Record<string, unknown> {
+  const picked = lemlistInput.pick({ record, keys });
+  const body = lemlistInput.compact(picked);
+  if (updateStrategy === 'overwrite') {
+    for (const [key, value] of Object.entries(picked)) {
+      if (!identityKeys.includes(key) && typeof value === 'string' && value.trim().length === 0) {
+        body[key] = '';
+      }
+    }
+  }
+  return body;
+}
+
 function contactPath(value: unknown): string {
   return `/contacts/${lemlistInput.contactIdOrEmailSegment({ value, label: 'Contact ID or Email' })}`;
 }
@@ -68,9 +91,12 @@ export const upsertContactAction = createAction({
   outputSchema: lemlistSchemas.upsertResult,
   async run({ auth, propsValue }) {
     const { update_strategy } = propsValue;
-    const body = lemlistInput.compact(
-      lemlistInput.pick({ record: propsValue, keys: ['email', 'linkedinUrl', 'firstName', 'lastName', 'jobTitle', 'phone', 'companyDomain', 'location'] }),
-    );
+    const body = upsertBody({
+      record: propsValue,
+      keys: ['email', 'linkedinUrl', 'firstName', 'lastName', 'jobTitle', 'phone', 'companyDomain', 'location'],
+      identityKeys: ['email', 'linkedinUrl'],
+      updateStrategy: update_strategy,
+    });
     if (body['email'] === undefined && body['linkedinUrl'] === undefined) {
       throw new Error('Provide an Email or a LinkedIn URL to identify the contact.');
     }
@@ -257,9 +283,12 @@ export const upsertCompanyAction = createAction({
   outputSchema: lemlistSchemas.upsertResult,
   async run({ auth, propsValue }) {
     const { update_strategy } = propsValue;
-    const body = lemlistInput.compact(
-      lemlistInput.pick({ record: propsValue, keys: ['domain', 'linkedinUrl', 'name', 'industry', 'location', 'size', 'description'] }),
-    );
+    const body = upsertBody({
+      record: propsValue,
+      keys: ['domain', 'linkedinUrl', 'name', 'industry', 'location', 'size', 'description'],
+      identityKeys: ['domain', 'linkedinUrl'],
+      updateStrategy: update_strategy,
+    });
     if (body['domain'] === undefined && body['linkedinUrl'] === undefined) {
       throw new Error('Provide a Domain or a LinkedIn URL to identify the company.');
     }
