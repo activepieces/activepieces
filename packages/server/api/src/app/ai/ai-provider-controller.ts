@@ -26,6 +26,12 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             configId: request.params.id,
         })
     })
+    app.get('/configs/:id/suggested-models', ListSuggestedModelsForConfig, async (request) => {
+        return aiProviderService(app.log).suggestModelsForConfig({
+            platformId: request.principal.platform.id,
+            configId: request.params.id,
+        })
+    })
     app.get('/tiers', ListModelTiers, async () => ({
         flow: modelTierCatalog.current('flow'),
         chat: modelTierCatalog.current('chat'),
@@ -95,6 +101,20 @@ const ListModelsForConfig = {
         }),
         response: {
             [StatusCodes.OK]: z.array(AIProviderModel),
+        },
+    },
+}
+
+const ListSuggestedModelsForConfig = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        params: z.object({
+            id: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.array(z.string()),
         },
     },
 }

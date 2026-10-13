@@ -91,6 +91,11 @@ export function ConfigDetail({
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
   });
+  const { data: suggestedModelIds = [] } = useQuery({
+    queryKey: [...aiProviderKeys.configModels(config.id), 'suggested'],
+    queryFn: () => aiProviderApi.listSuggestedModelsForConfig(config.id),
+    enabled: manualModels,
+  });
   const selectableModels = [
     ...models,
     ...draft.modelIds
@@ -311,6 +316,7 @@ export function ConfigDetail({
         {manualModels ? (
           <ManualModelList
             models={draft.models}
+            suggestedModelIds={suggestedModelIds}
             onChange={(models) => setDraft({ ...draft, models })}
           />
         ) : (
