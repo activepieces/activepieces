@@ -86,10 +86,7 @@ export function PieceSelectorPage() {
     isLoading: piecesLoading,
     isError: piecesError,
     refetch: refetchPieces,
-  } = piecesHooks.usePieces({
-    includeHidden: true,
-    skipProjectFilter: true,
-  });
+  } = piecesHooks.usePlatformCatalog();
 
   const togglePin = (pieceName: string) => {
     setPins((prev) =>
@@ -116,7 +113,7 @@ export function PieceSelectorPage() {
   });
   const reset = useAdminAction({
     verb: 'reset',
-    name: t('Piece selector'),
+    name: t('Piece menu'),
     run: async () => {
       await platformApi.update({ pieceSelectorConfig: null }, platform.id);
       await refreshPlatform();
@@ -208,9 +205,9 @@ export function PieceSelectorPage() {
       }
     >
       <AdminPageHeader
-        title={t('Piece selector')}
+        title={t('Piece menu')}
         description={t(
-          'This is the menu builders see when they add a step. Reorder, rename or hide its tabs, group pieces into custom tabs, and pin the pieces they reach for most. The preview updates as you go.',
+          'Choose how pieces are organized when builders add a step: tabs, sections and pinned pieces.',
         )}
         resources={adminPageResources.pieces}
       />
@@ -218,7 +215,7 @@ export function PieceSelectorPage() {
       <EnterpriseLockedSection
         unlocked={canEdit}
         featureKey="PIECES"
-        title={t('Customizing the piece selector is an Enterprise feature')}
+        title={t('Customizing the piece menu is an Enterprise feature')}
         description={t(
           'You can try changes here. Saving them needs Enterprise.',
         )}
@@ -256,7 +253,7 @@ export function PieceSelectorPage() {
               <ConfirmDialog
                 title={t('Reset to default?')}
                 description={t(
-                  'The piece selector will return to its default layout.',
+                  'The piece menu will return to its default layout.',
                 )}
                 consequence={t(
                   'All your custom tabs and sections will be permanently removed.',
