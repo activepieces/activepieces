@@ -3287,5 +3287,7 @@
   "Made": "Made",
   "{count, plural, =1 {1 source} other {# sources}}": "{count, plural, =1 {1 source} other {# sources}}",
   "Read {page}": "Read {page}",
-  "Searched “{query}”": "Searched “{query}”"
+  "Searched “{query}”": "Searched “{query}”",
+  "Your change was not saved": "Your change was not saved",
+  "The builder now shows the last saved version of the flow.": "The builder now shows the last saved version of the flow."
 }

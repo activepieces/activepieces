@@ -1,4 +1,4 @@
-import { isNil, debounce } from '@activepieces/core-utils';
+import { isNil, debounce, tryCatch } from '@activepieces/core-utils';
 import {
   FlowOperationRequest,
   FlowOperationType,
@@ -11,15 +11,19 @@ import {
   FlowTriggerType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { toast } from 'sonner';
 import { StoreApi } from 'zustand';
 
 import { RightSideBarType } from '@/app/builder/types';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowsApi, sampleDataHooks } from '@/features/flows';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
   pieceSelectorUtils,
 } from '@/features/pieces';
+import { api } from '@/lib/api';
 import { PromiseQueue } from '@/lib/promise-queue';
 
 import { BuilderState } from '../builder-hooks';
@@ -85,9 +89,18 @@ export const createFlowState = (
   set: StoreApi<BuilderState>['setState'],
 ): FlowState => {
   const flowUpdatesQueue = new PromiseQueue();
+  const addToFlowUpdatesQueue = (task: () => Promise<void>) => {
+    flowUpdatesQueue.add(async () => {
+      try {
+        await task();
+      } finally {
+        set({ saving: flowUpdatesQueue.size() !== 0 });
+      }
+    });
+  };
   const debouncedAddToFlowUpdatesQueue = debounce(
     (updateRequest: () => Promise<void>) => {
-      flowUpdatesQueue.add(updateRequest);
+      addToFlowUpdatesQueue(updateRequest);
     },
     1000,
   );
@@ -184,7 +197,6 @@ export const createFlowState = (
             const { version: serverFlowVersion } = await flowsApi.update(
               state.flow.id,
               operation,
-              true,
             );
             if (operation.type === FlowOperationType.SAVE_SAMPLE_DATA) {
               sampleDataHooks.invalidateSampleData(
@@ -205,19 +217,20 @@ export const createFlowState = (
                   id: serverFlowVersion.id,
                   state: serverFlowVersion.state,
                 },
-                saving: flowUpdatesQueue.size() !== 0,
               };
             });
             onSuccess?.();
           } catch (error) {
             console.error(error);
-            flowUpdatesQueue.halt();
+            showFailedSaveToast(error);
+            addToFlowUpdatesQueue(() => refetchDraft(get));
+            throw error;
           }
         };
 
         switch (operation.type) {
           case FlowOperationType.SAVE_SAMPLE_DATA: {
-            flowUpdatesQueue.add(updateRequest);
+            addToFlowUpdatesQueue(updateRequest);
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:
@@ -248,11 +261,11 @@ export const createFlowState = (
                 outputSampleData,
               };
             });
-            flowUpdatesQueue.add(updateRequest);
+            addToFlowUpdatesQueue(updateRequest);
             break;
           }
           default: {
-            flowUpdatesQueue.add(updateRequest);
+            addToFlowUpdatesQueue(updateRequest);
           }
         }
 
@@ -420,6 +433,29 @@ export const createFlowState = (
     },
   };
 };
+
+async function refetchDraft(get: StoreApi<BuilderState>['getState']) {
+  const { flow, setFlow, setVersion } = get();
+  const { data: serverFlow, error } = await tryCatch(() =>
+    flowsApi.get(flow.id),
+  );
+  if (error !== null) {
+    internalErrorToast();
+    throw error;
+  }
+  setFlow(serverFlow);
+  setVersion(serverFlow.version);
+}
+
+function showFailedSaveToast(error: unknown) {
+  toast.error(t('Your change was not saved'), {
+    id: 'failed-flow-save',
+    description:
+      api.serverErrorMessage(error) ??
+      t('The builder now shows the last saved version of the flow.'),
+  });
+}
+
 /**Because the server creates the sample data files ids and we need to update the local flow version with the new sample data files ids so when an update happens again in the future it doesn't get unset */
 const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
   operation,
