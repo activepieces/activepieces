@@ -226,10 +226,7 @@ export function PieceSelectorPage() {
       <EnterpriseLockedSection
         unlocked={canEdit}
         featureKey="PIECES"
-        title={t('Customizing the piece menu is an Enterprise feature')}
-        description={t(
-          'You can try changes here. Saving them needs Enterprise.',
-        )}
+        line={t('Saving the piece menu is locked. You can try changes here.')}
       />
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
