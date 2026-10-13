@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FindOptionsWhere, In } from 'typeorm'
 import { websocketService } from '../../../core/websockets.service'
 import { fileService } from '../../../file/file.service'
+import { flowSideEffects } from '../../../flows/flow/flow-service-side-effects'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { projectService } from '../../../project/project-service'
@@ -63,14 +64,19 @@ async function migrateFlow({ log, flow, useDeno }: { log: FastifyBaseLogger, flo
     const targetVersionIds = unique([latestVersion.id, ...isNil(flow.publishedVersionId) ? [] : [flow.publishedVersionId]])
     let versionsMigrated = 0
     let publishedVersionMigrated = false
+    let latestVersionMigrated = false
     for (const versionId of targetVersionIds) {
         const migrated = await setUseDenoOnVersion({ versionId, useDeno })
         versionsMigrated += migrated
         publishedVersionMigrated = publishedVersionMigrated || (migrated > 0 && versionId === flow.publishedVersionId)
+        latestVersionMigrated = latestVersionMigrated || (migrated > 0 && versionId === latestVersion.id)
     }
 
     if (publishedVersionMigrated && !isNil(flow.publishedVersionId)) {
         await refreshWorkersForPublishedVersion({ log, flow, publishedVersionId: flow.publishedVersionId })
+    }
+    if (latestVersionMigrated) {
+        await flowSideEffects(log).onDraftWritten({ flowId: flow.id, projectId: flow.projectId, editorSessionId: null })
     }
     return { versionsMigrated, notified: publishedVersionMigrated }
 }
