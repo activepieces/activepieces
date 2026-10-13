@@ -240,20 +240,21 @@ public async up(q: QueryRunner): Promise<void> {
 
 ### Rollback choreography when a blocking migration pairs with a background one
 
-A blocking `down()` that touches the same tables/indexes/columns a background migration touches can race the still-running runner on another pod. `withBackgroundMigrationLock` is the primitive for this — it acquires the per-migration lock without checking the completion row.
+`withBackgroundMigrationLock` acquires the per-migration lock without checking the completion row. `down()` uses this instead of `assertBackgroundMigrationComplete` because rollback must proceed even when the backfill never ran, failed, or was quiesced mid-run — otherwise a release with an incomplete background migration becomes un-rollbackable.
 
-**Why `down()` uses a different helper than `up()`:** `assertBackgroundMigrationComplete` would throw if the backfill never ran, failed, or was stopped (API pods scaled to zero mid-run). Operators need rollback to proceed in exactly those cases — otherwise a release containing a never-completed background migration becomes un-rollbackable. The lock is what matters for `down()`; the completion predicate is actively wrong there.
-
-Pattern:
+**When `down()` needs the lock — only if its DDL touches objects a background migration also touches:**
+- Same-release reshape pair (blocking adds columns, background CIC on same table): **lock**.
+- `DROP COLUMN foo` while a background `BackfillFoo` could be in-flight: **lock**.
+- Dependency-style pair (M1's up calls `assertBackgroundMigrationComplete(B)` + does `SET NOT NULL`; down drops NOT NULL): **no lock** — B is already complete and won't re-run.
+- Any blocking migration whose paired background touches disjoint objects: **no lock**.
 
 ```ts
 public async down(q: QueryRunner): Promise<void> {
     await migrationHelpers.withBackgroundMigrationLock({
         log: system.globalLogger(),
-        migration: ReshapeFooIndexes, // the paired background migration
+        migration: ReshapeFooIndexes,
         fn: async () => {
-            await q.query(`...restore old indexes...`)
-            await q.query(`...drop new indexes...`)
+            await q.query(`...restore old indexes, drop new ones...`)
             await q.query(`DELETE FROM background_migrations WHERE name = $1`, [new ReshapeFooIndexes().name])
             await q.query(`ALTER TABLE foo DROP COLUMN bar`)
         },
@@ -261,17 +262,12 @@ public async down(q: QueryRunner): Promise<void> {
 }
 ```
 
-What this guarantees:
-- If the runner is in-flight on `ReshapeFooIndexes`, `down()` waits for `runOne` to return before proceeding. No concurrent DDL on the same table.
-- The lock is a Redis distributed lock — serialises across all pods, not just within one process.
-- Deleting the `background_migrations` row is a deliberate per-migration choice: it tells a future re-upgrade to re-run the reshape. Omit it if your `down()` is leaving the background work's effects intact.
+Deleting the `background_migrations` row is a per-migration choice — tells re-upgrade to re-run the reshape. Omit if `down()` leaves the background work's effects intact.
 
-Runbook caveat the pattern does NOT replace:
-- The lock wait is bounded. `distributedLockFactory` configures RedLock with `retryCount * retryDelay = (timeout / 200) * 200ms`, so for the 240s lock timeout the helper gives up after ~4 minutes and throws. If `down()` is waiting on an in-flight long backfill, it won't block for the backfill's full duration — the operator sees an acquire-failure error well before. When that happens, scale API pods to 0 (quiesces the runner), re-run `rollback-migrations.ts`, then redeploy the older version. The lock is a backstop against racy rolling rollbacks, not a license to perform them.
-
-What this does NOT solve:
-- A background migration that already made destructive data changes (uuid migration, column type change) cannot be rolled back by the framework. The data stays post-rollback. The only "undo" is to ship a new background migration with the reverse logic — or accept the data residue.
-- Rolling back release N whose background migration B has already completed: B's data changes persist, its `background_migrations` row persists, and a future re-deploy of N skips B. If that's wrong for your migration, delete B's row in the paired blocking's `down()`.
+**Caveats:**
+- Lock wait is bounded at ~4 min (`distributedLockFactory` passes `retryCount * retryDelay = (timeout / 200) * 200ms` into RedLock). If `down()` races a long in-flight backfill, the helper throws rather than waits for the full duration. Fix: scale API pods to 0 (quiesces the runner), re-run `rollback-migrations.ts`, redeploy.
+- Destructive data changes a background migration already made (uuid migration, type change) cannot be rolled back by the framework. Ship a reverse-fix background migration or accept the residue.
+- Rolling back release N with its background migration B already completed: B's data and row persist; re-deploy of N skips B. If wrong for your case, delete B's row in `down()`.
 
 ### Recovery — permanently failing background migrations
 
