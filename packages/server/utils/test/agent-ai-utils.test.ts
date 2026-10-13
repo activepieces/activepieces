@@ -487,7 +487,7 @@ describe('buildProviderOptions', () => {
     })
 
     for (const provider of [AIProviderName.ANTHROPIC, AIProviderName.BEDROCK]) {
-        for (const modelId of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-4-8', 'anthropic.claude-opus-5-5', 'claude-fable-5-1']) {
+        for (const modelId of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-haiku-5-5', 'claude-mythos-5-1', 'anthropic.claude-opus-5-5', 'claude-fable-5-1']) {
             it(`keeps ${modelId} on ${provider} thinking at low effort instead of sending disabled`, () => {
                 const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: true })
                 expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' }, effort: 'low' })
