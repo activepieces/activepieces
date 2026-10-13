@@ -533,7 +533,9 @@ Activepieces
         destructive={false}
         onConfirm={async () => {
           if (settingsToConfirm) {
-            await saveSettings(settingsToConfirm);
+            await mutateAsync({
+              federatedAuthProviders: { saml: settingsToConfirm },
+            });
           }
         }}
       />

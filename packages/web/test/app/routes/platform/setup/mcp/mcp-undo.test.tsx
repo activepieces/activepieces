@@ -113,4 +113,26 @@ describe('Platform MCP undo', () => {
       disabledTools: ['tables_write'],
     });
   });
+
+  it('refuses a second Undo while the first is still running', async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <PlatformMcpPage section="access" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Turn off flow writes' }),
+    );
+    await waitFor(() => expect(state.onUndo).toBeDefined());
+
+    const first = state.onUndo?.();
+    await expect(state.onUndo?.()).rejects.toThrow(
+      'Wait for the current change to finish, then undo.',
+    );
+    await first;
+
+    expect(state.updateAsync).toHaveBeenCalledTimes(1);
+  });
 });

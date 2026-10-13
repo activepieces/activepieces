@@ -19,6 +19,7 @@ function signInMethodCount({
   const googleSignIn = state.googleAuthEnabled && googleConfigured;
   const samlSignIn =
     state.samlConnected &&
+    state.hasSsoDomain &&
     state.ssoDomainVerification?.status ===
       SsoDomainVerificationStatus.VERIFIED;
   return [state.emailAuthEnabled, googleSignIn, samlSignIn].filter(Boolean)
@@ -30,6 +31,7 @@ function stateOf(platform: PlatformWithoutSensitiveData): SignInState {
     emailAuthEnabled: platform.emailAuthEnabled,
     googleAuthEnabled: platform.googleAuthEnabled,
     samlConnected: !!platform.federatedAuthProviders?.saml,
+    hasSsoDomain: !!platform.ssoDomain,
     ssoDomainVerification: platform.ssoDomainVerification ?? null,
   };
 }
@@ -72,6 +74,7 @@ type SignInState = {
   emailAuthEnabled: boolean;
   googleAuthEnabled: boolean;
   samlConnected: boolean;
+  hasSsoDomain: boolean;
   ssoDomainVerification: PlatformWithoutSensitiveData['ssoDomainVerification'];
 };
 
