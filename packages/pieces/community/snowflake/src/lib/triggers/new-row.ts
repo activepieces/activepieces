@@ -60,7 +60,7 @@ export const newRowTrigger = createTrigger({
     'Triggers when a new row is inserted into the selected table. Uses a timestamp column you choose to detect rows added since the last check.',
   aiMetadata: {
     description:
-      'Fires once per row whose chosen "created at" timestamp is later than the newest one already seen, oldest first, up to 1000 rows per poll (the rest follow on the next poll). Rows with an empty timestamp, or inserted with a timestamp older than the last seen one, never fire.',
+      'Fires once per row whose chosen "created at" timestamp is later than the newest one already seen, oldest first, up to 1000 rows per poll (all rows sharing one exact timestamp are sent together, up to 10,000) (the rest follow on the next poll). Rows with an empty timestamp, or inserted with a timestamp older than the last seen one, never fire.',
   },
   outputSchema: rowTriggerOutputSchema,
   props,
@@ -102,10 +102,9 @@ export const newRowTrigger = createTrigger({
   async run(context) {
     const { table, created_at_column } = context.propsValue;
     const auth = toAuthValue(context.auth);
-    const stored = await context.store.get<{
-      cursor: string | null;
-      hash?: string;
-    }>(ROW_CURSOR_STORE_KEY);
+    const stored = await context.store.get<{ cursor: string | null }>(
+      ROW_CURSOR_STORE_KEY
+    );
     if (!stored) {
       const cursor = await fetchBaseline({
         auth,
@@ -120,13 +119,9 @@ export const newRowTrigger = createTrigger({
       table,
       column: created_at_column,
       after: stored.cursor,
-      hash: stored.hash,
     });
     if (page.rows.length > 0) {
-      await context.store.put(ROW_CURSOR_STORE_KEY, {
-        cursor: page.cursor,
-        hash: page.hash,
-      });
+      await context.store.put(ROW_CURSOR_STORE_KEY, { cursor: page.cursor });
     }
     return page.rows;
   },

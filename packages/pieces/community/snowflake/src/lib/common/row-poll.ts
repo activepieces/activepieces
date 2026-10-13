@@ -2,8 +2,8 @@ import { SnowflakeAuthValue, withSnowflake } from './client';
 import { identifier, qualifiedName } from './sql';
 
 const CURSOR = '__AP_CURSOR';
-const HASH = '__AP_ROW_HASH';
 const PAGE_SIZE = 1000;
+const GROUP_LIMIT = 10000;
 
 export async function fetchBaseline({
   auth,
@@ -30,51 +30,54 @@ export async function fetchNewRows({
   table,
   column,
   after,
-  hash,
 }: {
   auth: SnowflakeAuthValue;
   table: string;
   column: string;
   after: string | null;
-  hash?: string;
-}): Promise<{
-  rows: Record<string, unknown>[];
-  cursor: string | null;
-  hash?: string;
-}> {
+}): Promise<{ rows: Record<string, unknown>[]; cursor: string | null }> {
   const col = identifier({ name: column, label: 'Timestamp column' });
   const cursorExpr = `DATE_PART(EPOCH_MICROSECOND, ${col})`;
-  const rowHash = 'HASH(t.*)';
-  let where = `${col} IS NOT NULL`;
-  let binds: string[] = [];
-  if (after !== null && hash === undefined) {
-    where = `${cursorExpr} > ?`;
-    binds = [after];
-  } else if (after !== null && hash !== undefined) {
-    where = `(${cursorExpr} > ? OR (${cursorExpr} = ? AND ${rowHash} > TO_NUMBER(?)))`;
-    binds = [after, after, hash];
-  }
-  const sql = `SELECT t.*, ${cursorExpr} AS "${CURSOR}", TO_VARCHAR(${rowHash}) AS "${HASH}" FROM ${qualifiedName(
-    {
-      value: table,
-      label: 'Table',
-    }
-  )} t WHERE ${where} ORDER BY ${cursorExpr} ASC, ${rowHash} ASC LIMIT ${PAGE_SIZE}`;
-  const result = await withSnowflake({
+  const from = `SELECT t.*, ${cursorExpr} AS "${CURSOR}" FROM ${qualifiedName({
+    value: table,
+    label: 'Table',
+  })} t`;
+  const where = after === null ? `${col} IS NOT NULL` : `${cursorExpr} > ?`;
+  const page = await withSnowflake({
     auth,
-    fn: (session) => session.query({ sql, binds, maxRows: PAGE_SIZE }),
+    fn: (session) =>
+      session.query({
+        sql: `${from} WHERE ${where} ORDER BY ${cursorExpr} ASC LIMIT ${PAGE_SIZE}`,
+        binds: after === null ? [] : [after],
+        maxRows: PAGE_SIZE,
+      }),
   });
-  const rows = result.rows;
-  if (rows.length === 0) {
-    return { rows: [], cursor: after, hash };
+  let rows = page.rows;
+  if (rows.length === PAGE_SIZE) {
+    const lastCursor = cursorString(rows[rows.length - 1][CURSOR]);
+    const trimmed = rows.filter(
+      (row) => cursorString(row[CURSOR]) !== lastCursor
+    );
+    if (trimmed.length > 0) {
+      rows = trimmed;
+    } else if (lastCursor !== null) {
+      const group = await withSnowflake({
+        auth,
+        fn: (session) =>
+          session.query({
+            sql: `${from} WHERE ${cursorExpr} = ? LIMIT ${GROUP_LIMIT}`,
+            binds: [lastCursor],
+            maxRows: GROUP_LIMIT,
+          }),
+      });
+      rows = group.rows;
+    }
   }
-  const lastRow = rows[rows.length - 1];
-  const last = cursorString(lastRow[CURSOR]);
-  return {
-    rows: rows.map(stripCursor),
-    cursor: last ?? after,
-    hash: cursorString(lastRow[HASH]) ?? undefined,
-  };
+  if (rows.length === 0) {
+    return { rows: [], cursor: after };
+  }
+  const cursor = cursorString(rows[rows.length - 1][CURSOR]);
+  return { rows: rows.map(stripCursor), cursor: cursor ?? after };
 }
 
 export async function fetchLatestRows({
@@ -103,7 +106,6 @@ export async function fetchLatestRows({
 function stripCursor(row: Record<string, unknown>): Record<string, unknown> {
   const copy = { ...row };
   delete copy[CURSOR];
-  delete copy[HASH];
   return copy;
 }
 

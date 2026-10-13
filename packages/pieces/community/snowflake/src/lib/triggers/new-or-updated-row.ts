@@ -60,7 +60,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
     'Triggers when a row is inserted or updated in the selected table. Uses an "updated at" timestamp column you choose — any row whose timestamp is newer than the last check will fire the trigger.',
   aiMetadata: {
     description:
-      'Fires once per row whose chosen "updated at" timestamp moved past the newest one already seen (inserts and updates alike), oldest first, up to 1000 rows per poll. The column must be refreshed on every change; a row updated without advancing it does not fire.',
+      'Fires once per row whose chosen "updated at" timestamp moved past the newest one already seen (inserts and updates alike), oldest first, up to 1000 rows per poll (all rows sharing one exact timestamp are sent together, up to 10,000). The column must be refreshed on every change; a row updated without advancing it does not fire.',
   },
   outputSchema: rowTriggerOutputSchema,
   props,
@@ -102,10 +102,9 @@ export const newOrUpdatedRowTrigger = createTrigger({
   async run(context) {
     const { table, updated_at_column } = context.propsValue;
     const auth = toAuthValue(context.auth);
-    const stored = await context.store.get<{
-      cursor: string | null;
-      hash?: string;
-    }>(ROW_CURSOR_STORE_KEY);
+    const stored = await context.store.get<{ cursor: string | null }>(
+      ROW_CURSOR_STORE_KEY
+    );
     if (!stored) {
       const cursor = await fetchBaseline({
         auth,
@@ -120,13 +119,9 @@ export const newOrUpdatedRowTrigger = createTrigger({
       table,
       column: updated_at_column,
       after: stored.cursor,
-      hash: stored.hash,
     });
     if (page.rows.length > 0) {
-      await context.store.put(ROW_CURSOR_STORE_KEY, {
-        cursor: page.cursor,
-        hash: page.hash,
-      });
+      await context.store.put(ROW_CURSOR_STORE_KEY, { cursor: page.cursor });
     }
     return page.rows;
   },
