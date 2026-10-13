@@ -1055,49 +1055,87 @@ async function createNewDraftIfVersionIsPublished({
     userId: UserId | null
     log: FastifyBaseLogger
 }): Promise<{ version: FlowVersion, createdNewDraft: boolean }> {
-    let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+    const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
         flowId,
         versionId: undefined,
     })
-    const createdNewDraft = lastVersion.state === FlowVersionState.LOCKED
-    if (lastVersion.state === FlowVersionState.LOCKED) {
-        const lockedVersion = lastVersion
-        const operations: FlowOperationRequest[] = [{
-            type: FlowOperationType.IMPORT_FLOW,
-            request: lockedVersion,
-        }]
-        if (
-            lockedVersion.trigger.type === FlowTriggerType.PIECE &&
-            !isNil(lockedVersion.trigger.settings.sampleData)
-        ) {
-            operations.push({
-                type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-                request: {
-                    stepName: lockedVersion.trigger.name,
-                    sampleDataSettings: lockedVersion.trigger.settings.sampleData,
-                },
-            })
+    if (lastVersion.state !== FlowVersionState.LOCKED) {
+        return { version: lastVersion, createdNewDraft: false }
+    }
+    return transaction(async (entityManager) => {
+        await flowRepo(entityManager)
+            .createQueryBuilder('flow')
+            .setLock('for_no_key_update')
+            .select('flow.id')
+            .where({ id: flowId, projectId })
+            .getOne()
+        const lastVersionUnderLock = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId,
+            versionId: undefined,
+            entityManager,
+        })
+        if (lastVersionUnderLock.state !== FlowVersionState.LOCKED) {
+            return { version: lastVersionUnderLock, createdNewDraft: false }
         }
-        lastVersion = await transaction(async (entityManager) => {
-            let draftVersion = await flowVersionService(log).createEmptyVersion({
-                flowId,
-                displayName: lockedVersion.displayName,
-                notes: lockedVersion.notes,
-                schemaVersion: lockedVersion.schemaVersion,
-                entityManager,
-            })
-            for (const operation of operations) {
-                draftVersion = await flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: draftVersion,
-                    userOperation: operation,
-                    entityManager,
-                })
-            }
-            return draftVersion
+        const draftVersion = await createDraftFromLockedVersion({
+            lockedVersion: lastVersionUnderLock,
+            projectId,
+            platformId,
+            userId,
+            entityManager,
+            log,
+        })
+        return { version: draftVersion, createdNewDraft: true }
+    })
+}
+
+async function createDraftFromLockedVersion({
+    lockedVersion,
+    projectId,
+    platformId,
+    userId,
+    entityManager,
+    log,
+}: {
+    lockedVersion: FlowVersion
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId | null
+    entityManager: EntityManager
+    log: FastifyBaseLogger
+}): Promise<FlowVersion> {
+    const operations: FlowOperationRequest[] = [{
+        type: FlowOperationType.IMPORT_FLOW,
+        request: lockedVersion,
+    }]
+    if (
+        lockedVersion.trigger.type === FlowTriggerType.PIECE &&
+        !isNil(lockedVersion.trigger.settings.sampleData)
+    ) {
+        operations.push({
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+                stepName: lockedVersion.trigger.name,
+                sampleDataSettings: lockedVersion.trigger.settings.sampleData,
+            },
         })
     }
-    return { version: lastVersion, createdNewDraft }
+    let draftVersion = await flowVersionService(log).createEmptyVersion({
+        flowId: lockedVersion.flowId,
+        displayName: lockedVersion.displayName,
+        notes: lockedVersion.notes,
+        schemaVersion: lockedVersion.schemaVersion,
+        entityManager,
+    })
+    for (const operation of operations) {
+        draftVersion = await flowVersionService(log).applyOperation({
+            userId,
+            projectId,
+            platformId,
+            flowVersion: draftVersion,
+            userOperation: operation,
+            entityManager,
+        })
+    }
+    return draftVersion
 }
