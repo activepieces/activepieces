@@ -276,6 +276,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         const latestRole = latestInvitation?.platformRole
         return latestRole === PlatformRole.ADMIN || latestRole === PlatformRole.OPERATOR ? latestRole : null
     },
+    async deleteAcceptedPlatformInvites({ email, platformId }: DeleteAcceptedPlatformInvitesParams): Promise<void> {
+        await repo().createQueryBuilder()
+            .delete()
+            .where('LOWER("email") = :email', { email: email.toLowerCase().trim() })
+            .andWhere({ platformId, type: InvitationType.PLATFORM, status: InvitationStatus.ACCEPTED })
+            .execute()
+    },
     async hasAnyAcceptedInvitationsForEmail({ email }: { email: string }): Promise<boolean> {
         const count = await repo().createQueryBuilder('user_invitation')
             .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
@@ -423,6 +430,11 @@ type GetOneByPlatformIdAndEmailParams = {
     email: string
     platformId: string
     projectId: string | null
+}
+
+type DeleteAcceptedPlatformInvitesParams = {
+    email: string
+    platformId: string
 }
 
 type GetAcceptedAdminOrOperatorInviteRoleParams = {
