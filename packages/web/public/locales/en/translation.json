@@ -3680,5 +3680,8 @@
   "No matches.": "No matches.",
   "Required actions can't be hidden. Remove it from Required actions first.": "Required actions can't be hidden. Remove it from Required actions first.",
   "Search actions and triggers": "Search actions and triggers",
-  "{label} ({checked}/{total})": "{label} ({checked}/{total})"
+  "{label} ({checked}/{total})": "{label} ({checked}/{total})",
+  "Hidden from the builder. Flows already using it keep running.": "Hidden from the builder. Flows already using it keep running.",
+  "MCP and agents get {checked} of {total} AI tools.": "MCP and agents get {checked} of {total} AI tools.",
+  "Only MCP and agents can use these. They never appear in the builder.": "Only MCP and agents can use these. They never appear in the builder."
 }
