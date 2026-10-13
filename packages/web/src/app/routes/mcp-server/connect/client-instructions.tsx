@@ -1,224 +1,307 @@
+import { McpOAuthGrant } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ExternalLink, MessageSquare, Plug } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
+import { ReactNode, useState } from 'react';
 
 import { BackLink } from '@/components/custom/back-link';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { ClientIcon } from '../client-icon';
-import { CatalogClient, SetupInstruction } from '../mcp-client-catalog';
+import {
+  CatalogClient,
+  mcpClientCatalog,
+  SetupStep as SetupStepModel,
+} from '../mcp-client-catalog';
 import { useMcpNav } from '../mcp-nav';
-import { PageBand } from '../page-band';
+
+import { connectStatus } from './connect-status';
+import { SetupCodeBlock } from './setup-code-block';
 
 export function ClientInstructions({
   client,
+  grants,
   serverUrl,
   isReachableFromInternet,
-  totalClients,
 }: {
   client: CatalogClient;
+  grants: McpOAuthGrant[] | undefined;
   serverUrl: string;
   isReachableFromInternet: boolean;
-  totalClients: number;
 }) {
   const nav = useMcpNav();
+  const { websiteName } = flagsHooks.useWebsiteBranding();
+  const [methodKey, setMethodKey] = useState(client.methods[0].key);
+  const method =
+    client.methods.find((item) => item.key === methodKey) ?? client.methods[0];
+  const showsServerUrl = method.steps.some(
+    (step) => step.block?.kind === 'url',
+  );
+  const steps = method.steps.length + 1;
+
   return (
-    <div className="flex flex-col bg-gray-1">
-      <div className="border-b">
-        <PageBand className="flex flex-col gap-4.5 pb-6 pt-8">
-          <BackLink label={t('All clients')} onClick={nav.showLanding} />
-          <div className="flex flex-wrap items-center gap-4">
-            <ClientIcon icon={client.icon} className="size-13 rounded-xl" />
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <h1 className="text-2xl font-semibold leading-8 tracking-tight">
-                {client.name}
-              </h1>
-              <span className="text-sm text-gray-11">{client.subtitle}</span>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <a href={client.docsUrl} target="_blank" rel="noreferrer">
-                <ExternalLink />
-                {t('{client} docs', { client: client.name })}
-              </a>
-            </Button>
+    <div className="mx-auto flex w-full max-w-[760px] flex-col gap-8 px-6 pb-16 pt-8">
+      <div className="flex flex-col gap-6">
+        <BackLink label={t('All clients')} onClick={nav.showLanding} />
+        <header className="flex flex-wrap items-center gap-4">
+          <ClientIcon icon={client.icon} className="size-14 rounded-2xl" />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {client.name}
+            </h1>
+            <span className="text-sm text-gray-11">
+              {clientSubtitle(client)}
+            </span>
           </div>
-        </PageBand>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="order-last basis-full justify-start px-0 sm:order-none sm:basis-auto sm:px-3"
+            asChild
+          >
+            <a href={client.docsUrl} target="_blank" rel="noreferrer">
+              {t('{client} docs', { client: client.name })}
+              <ArrowUpRight />
+            </a>
+          </Button>
+        </header>
+        <ConnectionStatus
+          clientName={client.name}
+          grants={grants}
+          onManage={() => nav.showTab('connections')}
+        />
       </div>
 
-      <PageBand className="flex flex-col gap-8 pb-10 pt-8 lg:flex-row">
-        <div className="flex min-w-0 flex-1 flex-col">
-          {client.setupVideoUrl && (
-            <div className="mb-8 flex flex-col gap-2">
-              <span className="text-xs font-semibold text-gray-11">
-                {t('Watch the full setup')}
-              </span>
-              <video
-                src={client.setupVideoUrl}
-                controls
-                preload="metadata"
-                playsInline
-                data-theme="dark"
-                className="w-full rounded-md border bg-gray-1"
-              />
-            </div>
-          )}
-          {client.instructions.map((instruction, index) => (
-            <SetupInstructionItem
-              key={instruction.title}
+      <div className="flex flex-col gap-6">
+        {client.methods.length > 1 && (
+          <div className="flex flex-col gap-2.5">
+            <Tabs value={method.key} onValueChange={setMethodKey}>
+              <TabsList className="h-auto w-full flex-wrap justify-start sm:w-auto">
+                {client.methods.map((item, index) => (
+                  <TabsTrigger
+                    key={item.key}
+                    value={item.key}
+                    className="h-8 gap-1.5"
+                  >
+                    {item.label}
+                    {index === 0 && (
+                      <span className="rounded-full bg-accent-3 px-1.5 py-0.5 text-xs font-medium leading-none text-accent-11">
+                        {t('Recommended')}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <p className="text-sm text-gray-11">{method.hint}</p>
+          </div>
+        )}
+        {client.methods.length === 1 && (
+          <p className="text-sm text-gray-11">{method.hint}</p>
+        )}
+
+        <ol key={method.key} className="flex flex-col">
+          {method.steps.map((step, index) => (
+            <SetupStep
+              key={index}
               number={index + 1}
-              instruction={instruction}
-              config={index === 0 ? client.config : undefined}
-              isLast={index === client.instructions.length - 1}
+              isLast={false}
+              step={step}
               isReachableFromInternet={isReachableFromInternet}
             />
           ))}
-        </div>
+          <CheckStep
+            number={steps}
+            prompts={mcpClientCatalog.checkPrompts(websiteName)}
+          />
+        </ol>
+      </div>
 
-        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[344px]">
-          <div className="flex flex-col gap-2.5 rounded-md border p-4.5">
-            <span className="text-xs font-semibold text-gray-11">
-              {t('Server URL')}
-            </span>
-            <span className="break-all font-mono text-xs leading-normal">
-              {serverUrl}
-            </span>
-            <div className="flex items-center gap-2 pt-1">
-              <CopyButton textToCopy={serverUrl} variant="default" size="sm">
-                {t('Copy link')}
-              </CopyButton>
-              {client.config && (
-                <CopyButton
-                  textToCopy={client.config.snippet}
-                  variant="outline"
-                  size="sm"
-                >
-                  {t('Copy config')}
-                </CopyButton>
-              )}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={nav.showBrowse}
-            className="flex items-center gap-2.5 rounded-md border px-4 py-3.5 text-left transition-colors hover:border-gray-8"
-          >
-            <Plug className="size-4 shrink-0 text-gray-11" />
-            <span className="flex-1 text-sm text-gray-11">
-              {t('Using something else?')}
-            </span>
-            <span className="shrink-0 text-sm font-semibold text-accent-11">
-              {t('All {total} clients', { total: totalClients })}
-            </span>
-          </button>
-        </div>
-      </PageBand>
+      {client.setupVideoUrl && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-11">
+            {t('Watch the full setup')}
+          </h2>
+          <video
+            src={client.setupVideoUrl}
+            controls
+            preload="metadata"
+            playsInline
+            data-theme="dark"
+            className="w-full rounded-xl border bg-gray-1"
+          />
+        </section>
+      )}
+
+      {!showsServerUrl && (
+        <section className="flex flex-col gap-3 border-t pt-8">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-11">
+            {t('Server URL')}
+          </h2>
+          <CopyToClipboardInput textToCopy={serverUrl} useInput />
+        </section>
+      )}
     </div>
   );
 }
 
-function SetupInstructionItem({
+function ConnectionStatus({
+  clientName,
+  grants,
+  onManage,
+}: {
+  clientName: string;
+  grants: McpOAuthGrant[] | undefined;
+  onManage: () => void;
+}) {
+  if (grants) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border border-success-6 bg-success-2 px-4 py-3">
+        <span className="size-2 shrink-0 rounded-full bg-success-10" />
+        <span className="flex-1 text-sm">
+          <span className="font-semibold">
+            {t('{client} is connected', { client: clientName })}
+          </span>
+          <span className="text-gray-11"> · {connectStatus.usage(grants)}</span>
+        </span>
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0"
+          onClick={onManage}
+        >
+          {t('Manage')}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border bg-panel px-4 py-3"
+    >
+      <span className="relative flex size-2 shrink-0">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-9 opacity-60 motion-reduce:hidden" />
+        <span className="relative inline-flex size-2 rounded-full bg-accent-10" />
+      </span>
+      <span className="flex-1 text-sm font-medium">
+        {t('Waiting for {client} to sign in…', { client: clientName })}
+      </span>
+      <span className="hidden text-xs text-gray-11 sm:inline">
+        {t('This page updates on its own.')}
+      </span>
+    </div>
+  );
+}
+
+function SetupStep({
   number,
-  instruction,
-  config,
   isLast,
+  step,
   isReachableFromInternet,
 }: {
   number: number;
-  instruction: SetupInstruction;
-  config?: { label: string; snippet: string };
   isLast: boolean;
+  step: SetupStepModel;
   isReachableFromInternet: boolean;
 }) {
-  const blockedByPrivateUrl =
-    instruction.action?.requiresInternetReachableUrl === true &&
+  const isBlocked =
+    step.action?.requiresInternetReachableUrl === true &&
     !isReachableFromInternet;
-
   return (
-    <div className="flex gap-4">
-      <div className="flex w-6 shrink-0 flex-col items-center gap-1.5">
-        <span className="flex size-5.5 shrink-0 items-center justify-center rounded-full bg-gray-12 text-xs font-semibold text-gray-1">
-          {number}
-        </span>
-        {!isLast && <div className="w-px flex-1 bg-gray-6" />}
-      </div>
-      <div
-        className={cn('flex min-w-0 flex-1 flex-col gap-3', {
-          'pb-7': !isLast,
-        })}
-      >
-        <div className="flex flex-col gap-0.5">
-          <span className="text-base font-semibold">{instruction.title}</span>
-          <span className="text-sm text-gray-11">{instruction.body}</span>
-        </div>
-        {instruction.command && <TerminalBlock command={instruction.command} />}
-        {instruction.action && (
-          <Button
-            size="sm"
-            className="self-start"
-            disabled={blockedByPrivateUrl}
-            asChild={!blockedByPrivateUrl}
-          >
-            {blockedByPrivateUrl ? (
-              <span>{instruction.action.label}</span>
-            ) : (
-              <a href={instruction.action.href}>{instruction.action.label}</a>
-            )}
-          </Button>
-        )}
-        {blockedByPrivateUrl && (
-          <span className="text-sm leading-relaxed text-gray-11">
-            {t(
-              'Your server URL is not reachable from the internet, so this client cannot dial it.',
-            )}
-          </span>
-        )}
-        {instruction.prompts && (
-          <div className="flex flex-col gap-2">
-            {instruction.prompts.map((prompt) => (
-              <span
-                key={prompt}
-                className="flex items-center gap-2.5 rounded-md border px-3.5 py-2.5 text-sm"
-              >
-                <MessageSquare className="size-3.5 shrink-0 text-gray-11" />
-                {prompt}
-              </span>
-            ))}
-          </div>
-        )}
-        {config && (
-          <CollapsibleJson json={config.snippet} label={config.label} />
-        )}
-      </div>
-    </div>
+    <StepRail number={number} isLast={isLast}>
+      <p className="pt-1 text-sm text-gray-12">{step.body}</p>
+      {step.block && <SetupCodeBlock block={step.block} />}
+      {step.action && (
+        <Button
+          size="sm"
+          className="self-start"
+          disabled={isBlocked}
+          asChild={!isBlocked}
+        >
+          {isBlocked ? (
+            <span>{step.action.label}</span>
+          ) : (
+            <a href={step.action.href} target="_blank" rel="noreferrer">
+              {step.action.label}
+              <ArrowUpRight />
+            </a>
+          )}
+        </Button>
+      )}
+      {isBlocked && (
+        <p className="text-sm text-gray-11">
+          {t(
+            'Your server URL is not reachable from the internet, so this client cannot dial it.',
+          )}
+        </p>
+      )}
+    </StepRail>
   );
 }
 
-function TerminalBlock({ command }: { command: string }) {
+function CheckStep({ number, prompts }: { number: number; prompts: string[] }) {
   return (
-    <div data-theme="dark" className="flex flex-col overflow-hidden rounded-xl">
-      <div className="flex items-center gap-2 bg-gray-3 px-3.5 py-2">
-        <span className="flex-1 text-xs font-semibold text-gray-11">
-          {t('Terminal')}
-        </span>
-        <CopyButton
-          textToCopy={command}
-          variant="ghost"
-          size="sm"
-          className="h-auto gap-1.5 rounded-md bg-gray-4 px-2.5 py-1 text-xs text-gray-12/80 hover:bg-gray-5 hover:text-gray-12"
-        >
-          {t('Copy')}
-        </CopyButton>
+    <StepRail number={number} isLast>
+      <div className="flex flex-col gap-1 pt-1">
+        <p className="text-sm font-semibold">{t('Check it works')}</p>
+        <p className="text-sm text-gray-11">
+          {t('Ask one of these. If it answers with your tools, you’re set.')}
+        </p>
       </div>
-      <div className="flex items-start gap-3 overflow-x-auto bg-gray-2 px-4 py-4">
-        <span className="shrink-0 font-mono text-xs leading-relaxed text-success-11">
-          $
-        </span>
-        <pre className="min-w-0 whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-gray-12/80">
-          {command}
-        </pre>
+      <div className="flex flex-col gap-2">
+        {prompts.map((prompt) => (
+          <CopyButton
+            key={prompt}
+            textToCopy={prompt}
+            variant="outline"
+            className="h-auto justify-start whitespace-normal rounded-xl bg-panel px-3.5 py-2.5 text-left font-normal"
+          >
+            {prompt}
+          </CopyButton>
+        ))}
       </div>
-    </div>
+    </StepRail>
   );
+}
+
+function StepRail({
+  number,
+  isLast,
+  children,
+}: {
+  number: number;
+  isLast: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <li className="grid grid-cols-[28px_minmax(0,1fr)] gap-x-4">
+      <div className="flex flex-col items-center">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full border bg-panel text-xs font-semibold tabular-nums">
+          {number}
+        </span>
+        {!isLast && <span className="mt-2 w-px flex-1 bg-gray-6" />}
+      </div>
+      <div className={cn('flex min-w-0 flex-col gap-3', !isLast && 'pb-7')}>
+        {children}
+      </div>
+    </li>
+  );
+}
+
+function clientSubtitle(client: CatalogClient): string {
+  switch (client.kind) {
+    case 'chat':
+      return t('Chat app · needs a public HTTPS address');
+    case 'agent':
+      return t('Coding agent · runs locally');
+    case 'editor':
+      return t('Code editor · runs locally');
+    case 'other':
+      return t('Streamable HTTP · OAuth');
+  }
 }
