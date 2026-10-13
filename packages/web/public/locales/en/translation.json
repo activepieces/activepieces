@@ -3659,7 +3659,6 @@
   "Ask it to do something, or add another client.": "Ask it to do something, or add another client.",
   "Ask one of these. If it answers with your tools, you’re set.": "Ask one of these. If it answers with your tools, you’re set.",
   "Ask the agent": "Ask the agent",
-  "Build a flow that posts new form leads to Slack.": "Build a flow that posts new form leads to Slack.",
   "Chat app": "Chat app",
   "Chat app · needs a public HTTPS address": "Chat app · needs a public HTTPS address",
   "Choose OAuth, select Create as a plugin, then sign in to {brand} and approve the project.": "Choose OAuth, select Create as a plugin, then sign in to {brand} and approve the project.",
@@ -3681,7 +3680,6 @@
   "In ChatGPT, open Plugins, select +, then Add custom MCP server. Paste this URL under Connection.": "In ChatGPT, open Plugins, select +, then Add custom MCP server. Paste this URL under Connection.",
   "Inside Gemini CLI, sign in and approve the project.": "Inside Gemini CLI, sign in and approve the project.",
   "JSON config": "JSON config",
-  "List my tables and summarize the newest rows.": "List my tables and summarize the newest rows.",
   "Log in to {brand} and approve the project.": "Log in to {brand} and approve the project.",
   "Manage": "Manage",
   "Manage {client}": "Manage {client}",
@@ -3726,12 +3724,14 @@
   "Used {ago}": "Used {ago}",
   "Waiting for {client} to sign in…": "Waiting for {client} to sign in…",
   "What {brand} tools do you have? List a few things you could run for me.": "What {brand} tools do you have? List a few things you could run for me.",
-  "Which of my flows failed this week, and why?": "Which of my flows failed this week, and why?",
   "Works in Claude on the web, Claude Desktop and Cowork.": "Works in Claude on the web, Claude Desktop and Cowork.",
   "Works with any client that speaks Streamable HTTP.": "Works with any client that speaks Streamable HTTP.",
   "Your AI is connected to {brand}": "Your AI is connected to {brand}",
   "Your browser opens on the first tool call. Sign in to {brand} and approve the project.": "Your browser opens on the first tool call. Sign in to {brand} and approve the project.",
   "{agent} writes the config, then walks you through signing in.": "{agent} writes the config, then walks you through signing in.",
   "{brand} is listed in the Claude directory.": "{brand} is listed in the Claude directory.",
-  "{client} is connected": "{client} is connected"
+  "{client} is connected": "{client} is connected",
+  "Read my Linear tickets and organize them into a roadmap.": "Read my Linear tickets and organize them into a roadmap.",
+  "Update all my meetings for today.": "Update all my meetings for today.",
+  "Summarize this week’s Salesforce deals that changed stage.": "Summarize this week’s Salesforce deals that changed stage."
 }
