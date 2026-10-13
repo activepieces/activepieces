@@ -332,6 +332,7 @@ export const flowCanvasHooks = {
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
   useFlushPendingEditsOnLeave,
+  useRefreshDraftAndMakeNewDraftEditable,
   useRefreshDraftOnPush,
   useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,

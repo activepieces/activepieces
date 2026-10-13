@@ -87,11 +87,22 @@ vi.mock('@/lib/authentication-session', () => ({
 
 const RESOURCE_ID = 'flow-1';
 const OTHER_USER = { userId: 'other-user', userDisplayName: 'Other User' };
+const THIRD_USER = { userId: 'third-user', userDisplayName: 'Third User' };
 
 let latestHookResult: ReturnType<typeof useResourceLock> | null = null;
 
-function Probe({ onTakeOver }: { onTakeOver: () => void }) {
-  latestHookResult = useResourceLock({ resourceId: RESOURCE_ID, onTakeOver });
+function Probe({
+  onTakeOver,
+  onLockFreed,
+}: {
+  onTakeOver: () => void;
+  onLockFreed?: () => Promise<void>;
+}) {
+  latestHookResult = useResourceLock({
+    resourceId: RESOURCE_ID,
+    onTakeOver,
+    onLockFreed,
+  });
   return null;
 }
 
@@ -260,6 +271,7 @@ describe('useResourceLock takeOver', () => {
       });
     });
     expect(latestHookResult?.lockedBy).toBeNull();
+    expect(lockEmits()).toHaveLength(1);
   });
 
   it('does not release the lock during re-acquire when a stale owner takes over', async () => {
@@ -315,3 +327,164 @@ describe('useResourceLock takeOver', () => {
     expect(reloadSpy).not.toHaveBeenCalled();
   });
 });
+
+describe('useResourceLock with onLockFreed', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    socketState.reset();
+    latestHookResult = null;
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('takes a freed lock, and stops waiting only after the callback ends', async () => {
+    const callbackRun = Promise.withResolvers<void>();
+    const onLockFreed = vi.fn(() => callbackRun.promise);
+    await mountWaitingFor({ onLockFreed, holder: OTHER_USER });
+
+    await freeTheLock();
+    const freedLockAcquire = lockEmits()[1];
+    expect(freedLockAcquire.payload).toEqual({ resourceId: RESOURCE_ID });
+    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+
+    await act(async () => {
+      freedLockAcquire.ack?.({ acquired: true, lock: null });
+    });
+    expect(onLockFreed).toHaveBeenCalledTimes(1);
+    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+
+    await act(async () => {
+      callbackRun.resolve();
+    });
+    expect(latestHookResult?.lockedBy).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(unlockEmits()).toEqual([
+      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+    ]);
+  });
+
+  it('shows the user who took the freed lock first, and does not call the callback', async () => {
+    const onLockFreed = vi.fn(() => Promise.resolve());
+    await mountWaitingFor({ onLockFreed, holder: OTHER_USER });
+
+    await freeTheLock();
+    await act(async () => {
+      lockEmits()[1].ack?.({ acquired: false, lock: THIRD_USER });
+    });
+
+    expect(latestHookResult?.lockedBy).toEqual(THIRD_USER);
+    expect(onLockFreed).not.toHaveBeenCalled();
+  });
+
+  it('runs the callback and stops waiting, without the lock, when the server denies the lock and names no holder', async () => {
+    const onLockFreed = vi.fn(() => Promise.resolve());
+    await mountWaitingFor({ onLockFreed, holder: OTHER_USER });
+
+    await freeTheLock();
+    await act(async () => {
+      lockEmits()[1].ack?.({ acquired: false, lock: null });
+    });
+
+    expect(onLockFreed).toHaveBeenCalledTimes(1);
+    expect(latestHookResult?.lockedBy).toBeNull();
+    await act(async () => {
+      root.unmount();
+    });
+    expect(unlockEmits()).toHaveLength(0);
+  });
+
+  it('keeps a user who takes over while the callback runs', async () => {
+    const callbackRun = Promise.withResolvers<void>();
+    await mountWaitingFor({
+      onLockFreed: () => callbackRun.promise,
+      holder: OTHER_USER,
+    });
+
+    await freeTheLock();
+    await act(async () => {
+      lockEmits()[1].ack?.({ acquired: true, lock: null });
+    });
+    await act(async () => {
+      socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
+        resourceId: RESOURCE_ID,
+        ...THIRD_USER,
+      });
+    });
+    await act(async () => {
+      callbackRun.resolve();
+    });
+
+    expect(latestHookResult?.lockedBy).toEqual(THIRD_USER);
+  });
+
+  it('keeps waiting for the lock when the callback fails', async () => {
+    await mountWaitingFor({
+      onLockFreed: () => Promise.reject(new Error('Network Error')),
+      holder: OTHER_USER,
+    });
+
+    await freeTheLock();
+    await act(async () => {
+      lockEmits()[1].ack?.({ acquired: true, lock: null });
+    });
+
+    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+  });
+
+  it('does not take a freed lock when the tab does not wait for it', async () => {
+    const onLockFreed = vi.fn(() => Promise.resolve());
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} onLockFreed={onLockFreed} />);
+    });
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: true, lock: null });
+    });
+
+    await freeTheLock();
+
+    expect(lockEmits()).toHaveLength(1);
+    expect(onLockFreed).not.toHaveBeenCalled();
+  });
+
+  async function mountWaitingFor({
+    onLockFreed,
+    holder,
+  }: {
+    onLockFreed: () => Promise<void>;
+    holder: { userId: string; userDisplayName: string };
+  }) {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} onLockFreed={onLockFreed} />);
+    });
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: false, lock: holder });
+    });
+  }
+});
+
+async function freeTheLock() {
+  await act(async () => {
+    socketState.dispatch(WebsocketClientEvent.RESOURCE_UNLOCKED, {
+      resourceId: RESOURCE_ID,
+    });
+  });
+}
+
+function unlockEmits() {
+  return socketState.emitCalls.filter(
+    (call) => call.event === WebsocketServerEvent.UNLOCK_RESOURCE,
+  );
+}

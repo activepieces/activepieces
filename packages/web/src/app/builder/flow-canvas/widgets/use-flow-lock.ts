@@ -22,6 +22,8 @@ function useFlowLock() {
   const readonlySetByLock = useRef(false);
   const navigate = useNavigate();
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
+  const refreshDraftAndMakeNewDraftEditable =
+    flowCanvasHooks.useRefreshDraftAndMakeNewDraftEditable();
   const { checkAccess } = useAuthorization();
   const canEditFlow = checkAccess(Permission.WRITE_FLOW);
 
@@ -56,9 +58,17 @@ function useFlowLock() {
     switchToDraft,
   ]);
 
+  const onLockFreed = useCallback(async () => {
+    const applied = await refreshDraftAndMakeNewDraftEditable();
+    if (!applied) {
+      readonlySetByLock.current = false;
+    }
+  }, [refreshDraftAndMakeNewDraftEditable]);
+
   const { lockedBy, takeOver } = useResourceLock({
     resourceId: flowId,
     onTakeOver,
+    onLockFreed,
   });
 
   useEffect(() => {
