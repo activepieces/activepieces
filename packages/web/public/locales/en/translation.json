@@ -3673,5 +3673,9 @@
   "Piece menu": "Piece menu",
   "Resources": "Resources",
   "The piece menu will return to its default layout.": "The piece menu will return to its default layout.",
-  "Key {embedKey}": "Key {embedKey}"
+  "Key {embedKey}": "Key {embedKey}",
+  "Couldn't load the {terms}.": "Couldn't load the {terms}.",
+  "Projects saved": "Projects saved",
+  "The project was saved, but its {term} wasn't changed: {message}": "The project was saved, but its {term} wasn't changed: {message}",
+  "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed.": "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed."
 }
