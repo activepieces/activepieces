@@ -15,10 +15,12 @@ function useFlowLock() {
     state.setReadOnly,
   ]);
   const run = useBuilderStateContext((state) => state.run);
-  const [showsNewestVersion, refreshDraft] = useBuilderStateContext((state) => [
-    state.showsNewestVersion(),
-    state.refreshDraft,
-  ]);
+  const [showsNewestVersion, refreshDraft, savePendingEdits] =
+    useBuilderStateContext((state) => [
+      state.showsNewestVersion(),
+      state.refreshDraft,
+      state.savePendingEdits,
+    ]);
   const readonlySetByLock = useRef(false);
   const navigate = useNavigate();
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
@@ -69,6 +71,7 @@ function useFlowLock() {
     resourceId: flowId,
     onTakeOver,
     onLockFreed,
+    beforeRelease: savePendingEdits,
   });
 
   useEffect(() => {

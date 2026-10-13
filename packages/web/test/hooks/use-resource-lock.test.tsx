@@ -94,14 +94,17 @@ let latestHookResult: ReturnType<typeof useResourceLock> | null = null;
 function Probe({
   onTakeOver,
   onLockFreed,
+  beforeRelease,
 }: {
   onTakeOver: () => void;
   onLockFreed?: () => Promise<void>;
+  beforeRelease?: () => Promise<void>;
 }) {
   latestHookResult = useResourceLock({
     resourceId: RESOURCE_ID,
     onTakeOver,
     onLockFreed,
+    beforeRelease,
   });
   return null;
 }
@@ -471,6 +474,107 @@ describe('useResourceLock with onLockFreed', () => {
     });
     await act(async () => {
       lockEmits()[0].ack?.({ acquired: false, lock: holder });
+    });
+  }
+});
+
+describe('useResourceLock with beforeRelease', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    socketState.reset();
+    latestHookResult = null;
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('releases the lock on unmount only after beforeRelease ends', async () => {
+    const pendingSave = Promise.withResolvers<void>();
+    const beforeRelease = vi.fn(() => pendingSave.promise);
+    await mountOwning({ beforeRelease });
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(beforeRelease).toHaveBeenCalledTimes(1);
+    expect(unlockEmits()).toHaveLength(0);
+
+    await act(async () => {
+      pendingSave.resolve();
+    });
+    expect(unlockEmits()).toEqual([
+      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+    ]);
+  });
+
+  it('still releases the lock when beforeRelease fails', async () => {
+    await mountOwning({
+      beforeRelease: () => Promise.reject(new Error('Network Error')),
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+
+    expect(unlockEmits()).toHaveLength(1);
+  });
+
+  it('keeps the lock when the same resource mounts again before beforeRelease ends', async () => {
+    const pendingSave = Promise.withResolvers<void>();
+    await mountOwning({ beforeRelease: () => pendingSave.promise });
+    await act(async () => {
+      root.unmount();
+    });
+
+    root = createRoot(container);
+    await mountOwning({ beforeRelease: () => Promise.resolve() });
+    await act(async () => {
+      pendingSave.resolve();
+    });
+    expect(unlockEmits()).toHaveLength(0);
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(unlockEmits()).toHaveLength(1);
+  });
+
+  it('does not run beforeRelease when the tab does not own the lock', async () => {
+    const beforeRelease = vi.fn(() => Promise.resolve());
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} beforeRelease={beforeRelease} />);
+    });
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: false, lock: OTHER_USER });
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+
+    expect(beforeRelease).not.toHaveBeenCalled();
+    expect(unlockEmits()).toHaveLength(0);
+  });
+
+  async function mountOwning({
+    beforeRelease,
+  }: {
+    beforeRelease: () => Promise<void>;
+  }) {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} beforeRelease={beforeRelease} />);
+    });
+    await act(async () => {
+      lockEmits().at(-1)?.ack?.({ acquired: true, lock: null });
     });
   }
 });
