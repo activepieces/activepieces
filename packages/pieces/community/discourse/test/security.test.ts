@@ -86,6 +86,19 @@ describe('custom API call', () => {
     expect(calls[0].headers['api-key']).toBe(API_KEY);
     expect(calls[0].redirect).toBe('manual');
   });
+  it('connects through the address-checking dispatcher and restores the previous one', async () => {
+    const { getGlobalDispatcher } = await import('undici');
+    const before = getGlobalDispatcher();
+    const guarded = await discourseNetwork.getGuardedDispatcher();
+    const seen: unknown[] = [];
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      seen.push(getGlobalDispatcher());
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    }));
+    await call({ fn: customCall.run, ctx: ctx({ url: '/latest.json' }) });
+    expect(seen).toEqual([guarded]);
+    expect(getGlobalDispatcher()).toBe(before);
+  });
   it('accepts a full URL on the same forum', async () => {
     const calls = stubFetch([{ body: { ok: true } }]);
     await call({ fn: customCall.run, ctx: ctx({ url: `${BASE}/site.json` }) });

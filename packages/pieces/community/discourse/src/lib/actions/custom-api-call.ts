@@ -39,10 +39,21 @@ export const discourseCustomApiCall = createAction({
       throw new Error(`Custom API Call only sends the API key to your forum at ${baseUrl}. Use a path such as /latest.json or a full URL on that forum.`);
     }
     await discourseNetwork.assertPublicHost(new URL(baseUrl).hostname);
-    return baseAction.run({
-      ...context,
-      propsValue: { ...context.propsValue, url: { ...context.propsValue.url, url: target }, followRedirects: false },
-    });
+    const { getGlobalDispatcher, setGlobalDispatcher, Dispatcher } = await import('undici');
+    const guarded = await discourseNetwork.getGuardedDispatcher();
+    if (!(guarded instanceof Dispatcher)) {
+      throw new Error('Could not prepare the network guard for this request.');
+    }
+    const previous = getGlobalDispatcher();
+    setGlobalDispatcher(guarded);
+    try {
+      return await baseAction.run({
+        ...context,
+        propsValue: { ...context.propsValue, url: { ...context.propsValue.url, url: target }, followRedirects: false },
+      });
+    } finally {
+      setGlobalDispatcher(previous);
+    }
   },
 });
 
