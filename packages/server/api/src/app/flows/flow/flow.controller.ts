@@ -1,5 +1,5 @@
 import { ApId, Permission, SeekPage, UserId } from '@activepieces/core-utils'
-import { CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
+import { CountFlowsRequest, CreateFlowRequest, EDITOR_SESSION_ID_HEADER, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -95,6 +95,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             operation: cleanOperation(request.body),
             previousFlow: flow,
             ip: networkUtils.clientIp(request),
+            editorSessionId: editorSessionIdOf(request),
         })
     })
 
@@ -168,6 +169,11 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
 
 function actorUserId(request: FastifyRequest): UserId | undefined {
     return request.principal.type === PrincipalType.USER ? request.principal.id : undefined
+}
+
+function editorSessionIdOf(request: FastifyRequest): string | null {
+    const header = request.headers[EDITOR_SESSION_ID_HEADER]
+    return typeof header === 'string' ? header : null
 }
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
