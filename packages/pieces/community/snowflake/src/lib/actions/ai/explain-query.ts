@@ -2,7 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../../auth';
 import { toAuthValue, withSnowflake } from '../../common';
 import { explainOutputSchema } from '../../common/output-schemas';
-import { assertReadOnlyStatement, toBind } from '../../common/sql';
+import {
+  assertReadOnlyStatement,
+  firstKeyword,
+  toBind,
+} from '../../common/sql';
 
 export const explainQueryAction = createAction({
   name: 'explain_query',
@@ -32,7 +36,7 @@ export const explainQueryAction = createAction({
   },
   async run(context) {
     const statement = assertReadOnlyStatement(context.propsValue.sql);
-    const first = statement.trim().split(/\s+/)[0].toUpperCase();
+    const first = firstKeyword(statement);
     if (first !== 'SELECT' && first !== 'WITH') {
       throw new Error('Explain Query only accepts SELECT or WITH queries.');
     }

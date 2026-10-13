@@ -22,6 +22,16 @@ export function buildMerge({
       )} must also be included in the row values.`
     );
   }
+  const nullKeys = keyColumns.filter(
+    (key) => values[key] === null || values[key] === undefined
+  );
+  if (nullKeys.length > 0) {
+    throw new Error(
+      `Key column(s) ${nullKeys.join(
+        ', '
+      )} must have a value; a NULL key never matches an existing row, so the upsert would insert a duplicate.`
+    );
+  }
   const updateColumns = columns.filter(
     (column) => !keyColumns.includes(column)
   );

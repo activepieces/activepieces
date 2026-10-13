@@ -355,6 +355,11 @@ export function assertReadOnlyStatement(sql: string): string {
   return body;
 }
 
+export function firstKeyword(sql: string): string | undefined {
+  const { code } = stripSql(sql);
+  return code.toUpperCase().match(/[A-Z_][A-Z0-9_$]*/)?.[0];
+}
+
 function stripSql(sql: string): { code: string; body: string } {
   let code = '';
   let i = 0;

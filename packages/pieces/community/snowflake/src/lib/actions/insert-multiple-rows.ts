@@ -38,7 +38,11 @@ export const insertMultipleRowsAction = createAction({
       throw new Error('Rows must be a non-empty array.');
     }
     const parsedRows = parseRowArray({ value: rows, label: 'Row' });
-    const { sql, binds } = buildInsert({ table, rows: parsedRows });
+    const { sql, binds } = buildInsert({
+      table,
+      rows: parsedRows,
+      exactColumnNames: true,
+    });
     const result = await withSnowflake({
       auth: toAuthValue(context.auth),
       fn: (session) => session.query({ sql, binds }),

@@ -3,6 +3,7 @@ import { QueryResult, SnowflakeSession } from './client';
 import {
   identifier,
   qualifiedName,
+  quoteIdentifier,
   sqlString,
   toBind,
   valuePlaceholder,
@@ -25,9 +26,11 @@ export function dmlCount({
 export function buildInsert({
   table,
   rows,
+  exactColumnNames = false,
 }: {
   table: string;
   rows: Record<string, unknown>[];
+  exactColumnNames?: boolean;
 }): { sql: string; binds: Bind[] } {
   if (rows.length === 0) {
     throw new Error('Provide at least one row to insert.');
@@ -51,7 +54,11 @@ export function buildInsert({
   });
   const target = qualifiedName({ value: table, label: 'Table' });
   const columnList = columns
-    .map((column) => identifier({ name: column, label: 'Column' }))
+    .map((column) =>
+      exactColumnNames
+        ? quoteIdentifier(column)
+        : identifier({ name: column, label: 'Column' })
+    )
     .join(', ');
   const binds: Bind[] = [];
   const hasJson = rows.some((row) =>

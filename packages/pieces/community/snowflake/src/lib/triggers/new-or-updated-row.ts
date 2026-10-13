@@ -82,6 +82,12 @@ export const newOrUpdatedRowTrigger = createTrigger({
     });
   },
   async onEnable(context) {
+    if (
+      context.isRepublish &&
+      (await context.store.get(ROW_CURSOR_STORE_KEY))
+    ) {
+      return;
+    }
     const { table, updated_at_column } = context.propsValue;
     const cursor = await fetchBaseline({
       auth: toAuthValue(context.auth),
@@ -96,9 +102,10 @@ export const newOrUpdatedRowTrigger = createTrigger({
   async run(context) {
     const { table, updated_at_column } = context.propsValue;
     const auth = toAuthValue(context.auth);
-    const stored = await context.store.get<{ cursor: string | null }>(
-      ROW_CURSOR_STORE_KEY
-    );
+    const stored = await context.store.get<{
+      cursor: string | null;
+      offset?: number;
+    }>(ROW_CURSOR_STORE_KEY);
     if (!stored) {
       const cursor = await fetchBaseline({
         auth,
@@ -113,9 +120,13 @@ export const newOrUpdatedRowTrigger = createTrigger({
       table,
       column: updated_at_column,
       after: stored.cursor,
+      offset: stored.offset,
     });
     if (page.rows.length > 0) {
-      await context.store.put(ROW_CURSOR_STORE_KEY, { cursor: page.cursor });
+      await context.store.put(ROW_CURSOR_STORE_KEY, {
+        cursor: page.cursor,
+        offset: page.offset,
+      });
     }
     return page.rows;
   },

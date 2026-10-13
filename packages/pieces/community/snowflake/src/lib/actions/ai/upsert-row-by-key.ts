@@ -16,7 +16,7 @@ export const upsertRowByKeyAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates or updates one row with MERGE, matching on the given key column(s), which must also appear in Row. Returns how many rows were inserted and updated. Running it again with the same values leaves the same row, so it is safe to retry.',
+      'Creates or updates one row with MERGE, matching on the given key column(s), which must also appear in Row. Returns how many rows were inserted and updated. Running it again with the same values leaves the same row, so it is safe to retry. Key values must not be null.',
     idempotent: true,
   },
   outputSchema: upsertOutputSchema,

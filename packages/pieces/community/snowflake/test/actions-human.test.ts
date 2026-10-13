@@ -56,8 +56,14 @@ describe('human actions', () => {
   it('insert_multiple_rows stores objects as JSON', async () => {
     respond({ match: /INSERT/, rows: [{ 'number of rows inserted': 2 }] });
     const out = await runAction({ action: insertMultipleRowsAction, propsValue: { ...table, rows: [{ A: 1, J: { x: 1 } }, '{"A": 2, "J": null}'] } });
-    expect(lastCall().sql).toBe('INSERT INTO DB.PUBLIC.ORDERS (A, J) SELECT ?, PARSE_JSON(?) UNION ALL SELECT ?, ?');
+    expect(lastCall().sql).toBe('INSERT INTO DB.PUBLIC.ORDERS ("A", "J") SELECT ?, PARSE_JSON(?) UNION ALL SELECT ?, ?');
     expect(out).toEqual({ success: true, rows_inserted: 2 });
+  });
+
+  it('insert_multiple_rows keeps the exact case of column names', async () => {
+    respond({ match: /INSERT/, rows: [{ 'number of rows inserted': 1 }] });
+    await runAction({ action: insertMultipleRowsAction, propsValue: { ...table, rows: [{ name: 'Alice' }] } });
+    expect(lastCall().sql).toBe('INSERT INTO DB.PUBLIC.ORDERS ("name") VALUES (?)');
   });
 
   it('update_row refuses an empty WHERE unless confirmed', async () => {

@@ -43,21 +43,44 @@ describe.each([
     respond({ match: /WHERE DATE_PART/, rows: rowsWithCursor([101, 102]) });
     const out = await hookOf({ trigger: trigger, hook: 'run' })(context({ propsValue: props, store: mem.store }));
     expect(lastCall()).toEqual({
-      sql: 'SELECT t.*, DATE_PART(EPOCH_MICROSECOND, TS) AS "__AP_CURSOR" FROM DB.PUBLIC.T t WHERE DATE_PART(EPOCH_MICROSECOND, TS) > ? ORDER BY DATE_PART(EPOCH_MICROSECOND, TS) ASC LIMIT 1000',
+      sql: 'SELECT t.*, DATE_PART(EPOCH_MICROSECOND, TS) AS "__AP_CURSOR" FROM DB.PUBLIC.T t WHERE DATE_PART(EPOCH_MICROSECOND, TS) > ? ORDER BY DATE_PART(EPOCH_MICROSECOND, TS) ASC, HASH(t.*) ASC LIMIT 1000',
       binds: ['100'],
     });
     expect(out).toEqual([{ ID: 0 }, { ID: 1 }]);
-    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: '102' });
+    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: '102', offset: 1 });
   });
 
-  it('holds back trailing ties on a full page so none are lost', async () => {
+  it('pages through more than 1000 rows sharing one timestamp', async () => {
     const mem = memoryStore();
     mem.data.set('snowflake_row_cursor', { cursor: '1' });
-    const cursors = Array.from({ length: 1000 }, (_, i) => (i < 998 ? 10 + i : 5000));
-    respond({ match: /WHERE DATE_PART/, rows: rowsWithCursor(cursors) });
-    const out = await hookOf({ trigger: trigger, hook: 'run' })(context({ propsValue: props, store: mem.store }));
-    expect(out).toHaveLength(998);
-    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: String(10 + 997) });
+    respond({ match: /> \?/, rows: rowsWithCursor(Array.from({ length: 1000 }, () => 50)) });
+    const first = await hookOf({ trigger: trigger, hook: 'run' })(context({ propsValue: props, store: mem.store }));
+    expect(first).toHaveLength(1000);
+    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: '50', offset: 1000 });
+    respond({ match: />= \? .* OFFSET 1000$/, rows: rowsWithCursor([50, 50, 60]) });
+    const second = await hookOf({ trigger: trigger, hook: 'run' })(context({ propsValue: props, store: mem.store }));
+    expect(lastCall()).toEqual({
+      sql: 'SELECT t.*, DATE_PART(EPOCH_MICROSECOND, TS) AS "__AP_CURSOR" FROM DB.PUBLIC.T t WHERE DATE_PART(EPOCH_MICROSECOND, TS) >= ? ORDER BY DATE_PART(EPOCH_MICROSECOND, TS) ASC, HASH(t.*) ASC LIMIT 1000 OFFSET 1000',
+      binds: ['50'],
+    });
+    expect(second).toHaveLength(3);
+    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: '60', offset: 1 });
+  });
+
+  it('keeps counting the offset while one timestamp spans several pages', async () => {
+    const mem = memoryStore();
+    mem.data.set('snowflake_row_cursor', { cursor: '50', offset: 1000 });
+    respond({ match: /OFFSET 1000$/, rows: rowsWithCursor(Array.from({ length: 1000 }, () => 50)) });
+    await hookOf({ trigger: trigger, hook: 'run' })(context({ propsValue: props, store: mem.store }));
+    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: '50', offset: 2000 });
+  });
+
+  it('keeps the saved cursor on republish', async () => {
+    const mem = memoryStore();
+    mem.data.set('snowflake_row_cursor', { cursor: '7', offset: 2 });
+    await hookOf({ trigger: trigger, hook: 'onEnable' })({ ...context({ propsValue: props, store: mem.store }), isRepublish: true });
+    expect(userCalls()).toHaveLength(0);
+    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: '7', offset: 2 });
   });
 
   it('keeps the cursor when nothing is new', async () => {

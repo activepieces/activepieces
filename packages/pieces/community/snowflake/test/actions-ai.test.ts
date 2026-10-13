@@ -56,6 +56,12 @@ describe('query actions', () => {
     await expect(runAction({ action: explainQueryAction, propsValue: { sql: 'SHOW TABLES' } })).rejects.toThrow('SELECT or WITH');
   });
 
+  it('explain_query accepts queries with leading comments', async () => {
+    respond({ match: /EXPLAIN/, rows: [{ content: '{}' }] });
+    await runAction({ action: explainQueryAction, propsValue: { sql: '-- daily report\n/* v2 */ SELECT 1' } });
+    expect(lastCall().sql).toBe('EXPLAIN USING JSON -- daily report\n/* v2 */ SELECT 1');
+  });
+
   it('get_query_status returns status and optional rows', async () => {
     respond({ match: /RESULT_SCAN/, rows: [{ A: 1 }] });
     const out = await runAction({ action: getQueryStatusAction, propsValue: { queryId: QID, includeResults: true } });
@@ -134,6 +140,11 @@ describe('row actions', () => {
     const out = await runAction({ action: upsertRowByKeyAction, propsValue: { table: 'T', keyColumns: ['ID'], row: { ID: 1, NAME: 'x' } } });
     expect(lastCall().sql).toContain('ON target.ID = source.C0');
     expect(out).toEqual({ rowsInserted: 1, rowsUpdated: 0, queryId: QID });
+  });
+
+  it('upsert_row_by_key rejects null key values so retries cannot duplicate', async () => {
+    await expect(runAction({ action: upsertRowByKeyAction, propsValue: { table: 'T', keyColumns: ['ID'], row: { ID: null, NAME: 'Alice' } } })).rejects.toThrow('must have a value');
+    expect(userCalls().some((call) => call.sql.includes('MERGE'))).toBe(false);
   });
 
   it('update_row_by_key runs in a transaction and rolls back on duplicates', async () => {

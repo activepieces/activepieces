@@ -29,19 +29,35 @@ export async function fetchNewRows({
   table,
   column,
   after,
+  offset,
 }: {
   auth: SnowflakeAuthValue;
   table: string;
   column: string;
   after: string | null;
-}): Promise<{ rows: Record<string, unknown>[]; cursor: string | null }> {
+  offset?: number;
+}): Promise<{
+  rows: Record<string, unknown>[];
+  cursor: string | null;
+  offset?: number;
+}> {
   const col = identifier({ name: column, label: 'Timestamp column' });
   const cursorExpr = `DATE_PART(EPOCH_MICROSECOND, ${col})`;
-  const where = after === null ? `${col} IS NOT NULL` : `${cursorExpr} > ?`;
+  // Without an offset the cursor is a baseline: everything at that timestamp
+  // was already seen. With an offset, `offset` rows at that timestamp were
+  // already emitted, so rows sharing one timestamp can span several pages.
+  const strict = after !== null && offset === undefined;
+  const skip = strict ? 0 : Math.max(0, Math.floor(offset ?? 0));
+  const where =
+    after === null
+      ? `${col} IS NOT NULL`
+      : `${cursorExpr} ${strict ? '>' : '>='} ?`;
   const sql = `SELECT t.*, ${cursorExpr} AS "${CURSOR}" FROM ${qualifiedName({
     value: table,
     label: 'Table',
-  })} t WHERE ${where} ORDER BY ${cursorExpr} ASC LIMIT ${PAGE_SIZE}`;
+  })} t WHERE ${where} ORDER BY ${cursorExpr} ASC, HASH(t.*) ASC LIMIT ${PAGE_SIZE}${
+    skip > 0 ? ` OFFSET ${skip}` : ''
+  }`;
   const result = await withSnowflake({
     auth,
     fn: (session) =>
@@ -51,21 +67,20 @@ export async function fetchNewRows({
         maxRows: PAGE_SIZE,
       }),
   });
-  let rows = result.rows;
-  if (rows.length === PAGE_SIZE) {
-    const lastCursor = cursorString(rows[rows.length - 1][CURSOR]);
-    const trimmed = rows.filter(
-      (row) => cursorString(row[CURSOR]) !== lastCursor
-    );
-    if (trimmed.length > 0) rows = trimmed;
-  }
+  const rows = result.rows;
   if (rows.length === 0) {
-    return { rows: [], cursor: after };
+    return { rows: [], cursor: after, offset };
   }
-  const cursor = cursorString(rows[rows.length - 1][CURSOR]);
+  const last = cursorString(rows[rows.length - 1][CURSOR]);
+  let atLast = 0;
+  for (const row of rows) {
+    if (cursorString(row[CURSOR]) === last) atLast++;
+  }
+  const sameGroup = !strict && after !== null && last === after;
   return {
     rows: rows.map(stripCursor),
-    cursor: cursor ?? after,
+    cursor: last ?? after,
+    offset: sameGroup ? skip + atLast : atLast,
   };
 }
 
