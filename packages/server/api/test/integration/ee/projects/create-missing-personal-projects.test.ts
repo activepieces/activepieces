@@ -234,6 +234,30 @@ describe('Creating personal projects for existing members', () => {
         expect(counts.slice(cursorIndex + 1).length).toBeGreaterThan(0)
     })
 
+    it('skips a member removed from the platform after the batch picked them', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        const members = await Promise.all(Array.from({ length: 2 }, () => saveUser({ platformId })))
+        const [first, second] = await databaseConnection().getRepository('user').find({ where: { id: In(members.map((member) => member.id)) }, order: { id: 'ASC' } })
+        projectHooks.set((log) => ({
+            postCreate: async (project, context) => {
+                if (project.ownerId === first.id) {
+                    await databaseConnection().getRepository('user').update({ id: second.id }, { platformId: null })
+                }
+                await projectEnterpriseHooks(log).postCreate(project, context)
+            },
+        }))
+
+        try {
+            await personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId }))
+        }
+        finally {
+            projectHooks.set(projectEnterpriseHooks)
+        }
+
+        expect(await personalProjectCountOf({ ownerId: first.id })).toBe(1)
+        expect(await personalProjectCountOf({ ownerId: second.id })).toBe(0)
+    })
+
     it('never creates a second one when it runs again', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const member = await saveUser({ platformId })
