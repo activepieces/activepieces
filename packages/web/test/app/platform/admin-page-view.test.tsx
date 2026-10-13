@@ -25,8 +25,10 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: ApEdition.CLOUD }) },
 }));
-vi.mock('@/features/billing/stores/manage-plan-dialog-state', () => ({
-  useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
+  billingDialogHooks: {
+    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
+  },
 }));
 vi.mock('@/app/components/platform-layout', () => ({
   PlatformLayout: ({ children }: React.PropsWithChildren) => <>{children}</>,

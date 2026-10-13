@@ -2,7 +2,7 @@
   "Chat, images, audio and embeddings from OpenAI models.": "OpenAI モデルによるチャット、画像、音声、埋め込み。",
   "To get your API key:\n\n1. Go to https://platform.openai.com/api-keys\n2. Click **Create new secret key** and copy it.\n\nAdd credit to your OpenAI account first, or every request fails with a 429 quota error.\n": "API キーの取得方法:\n\n1. https://platform.openai.com/api-keys にアクセスします\n2. **Create new secret key** をクリックしてキーをコピーします。\n\n先に OpenAI アカウントにクレジットを追加してください。追加しないと、すべてのリクエストが 429 クォータエラーで失敗します。\n",
   "Ask ChatGPT": "チャットGPTに聞く",
-  "Ask Assistant": "アシスタントに聞く",
+  "Ask Assistant (Deprecated)": "Ask Assistant (Deprecated)",
   "Vision Prompt": "画像について質問",
   "Extract Structured Data": "構造化データの抽出",
   "Moderate Text": "テキストをモデレートする",
@@ -48,6 +48,7 @@
   "Frequency Penalty": "頻度ペナルティ",
   "Presence Penalty": "存在ペナルティ",
   "Roles": "ロール",
+  "Markdown": "Markdown",
   "Assistant": "アシスタント",
   "Image": "画像",
   "Detail": "詳細",
@@ -90,6 +91,7 @@
   "From -2 to 2. Higher values make the model repeat itself less.": "-2 から 2。値が高いほど、モデルが同じ内容を繰り返しにくくなります。",
   "From -2 to 2. Higher values push the model toward new topics.": "-2 から 2。値が高いほど、モデルが新しい話題に移りやすくなります。",
   "Messages sent before the question, such as a system instruction.": "質問の前に送信するメッセージ（システム指示など）。",
+  "OpenAI shut down the Assistants API, so this action no longer works. Use the **Ask ChatGPT** action instead and put your assistant's instructions in its **Roles** field.": "OpenAI shut down the Assistants API, so this action no longer works. Use the **Ask ChatGPT** action instead and put your assistant's instructions in its **Roles** field.",
   "An assistant from your OpenAI account.": "OpenAI アカウントのアシスタント。",
   "What you want the assistant to answer or do.": "アシスタントに答えてほしいこと、またはしてほしいこと。",
   "The picture to ask about.": "質問の対象となる画像。",
@@ -234,5 +236,6 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation."
 }

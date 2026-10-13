@@ -32,8 +32,28 @@ export const updateMultipleRowsAction = createAction({
       'Overwrites several existing rows in one batch call, each targeted by its own row id. Use when an agent needs to apply edits to multiple known rows efficiently rather than calling Update Row repeatedly. Idempotent — re-running with the same row ids and values produces the same sheet state; rows without a row id are skipped.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'spreadsheet',
+      display: 'section',
+      label: 'Spreadsheet',
+      icon: 'file',
+      props: ['spreadsheetId', 'sheetId'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['empty_fields_info', 'headerRow', 'values'],
+    },
+  ],
   props: {
     ...commonProps,
+    empty_fields_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     values: Property.DynamicProperties({
       auth: googleSheetsAuth,
       displayName: 'Values',

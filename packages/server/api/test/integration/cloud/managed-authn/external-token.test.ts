@@ -1,4 +1,5 @@
 import { apId, ProjectRole } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
 import { DefaultProjectRole, PieceSelectionMode, PiecesFilterType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -81,6 +82,38 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
+        })
+
+        it('never asks ZeroBounce about a managed-auth sign-up, since the platform vouches for it', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await db.save('signing_key', mockSigningKey)
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+            })
+            process.env.AP_ZEROBOUNCE_API_KEY = 'test-api-key'
+            const answer = vi.spyOn(safeHttp.axios, 'get')
+
+            try {
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: '/api/v1/managed-authn/external-token',
+                    body: {
+                        externalAccessToken: mockExternalToken,
+                    },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                expect(response?.json()?.verified).toBe(true)
+                expect(answer).not.toHaveBeenCalled()
+            }
+            finally {
+                delete process.env.AP_ZEROBOUNCE_API_KEY
+                answer.mockRestore()
+            }
         })
 
         it('Creates new project', async () => {

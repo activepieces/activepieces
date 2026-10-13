@@ -71,6 +71,23 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             : models
     },
 
+    async listKeysForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectKeyModels[]> {
+        const rows = await listVisibleRows({ platformId, log })
+        const scope: ProviderScope = { type: 'project', projectId }
+        const ranked = rankRows({ rows: rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope })), scope })
+        const chatRowId = pickChatRow(ranked)?.id
+        return Promise.all(ranked.map(async (row) => {
+            const { data } = row.provider === AIProviderName.ACTIVEPIECES
+                ? { data: null }
+                : await tryCatch(() => fetchModels({ aiProvider: row, platformId, log }))
+            return {
+                row,
+                isChatKey: row.id === chatRowId,
+                models: isNil(data) ? null : data.filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id })),
+            }
+        }))
+    },
+
     async listModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderModel[]> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId })
         return fetchModels({ aiProvider, platformId, log })
@@ -124,6 +141,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return
         }
 
+        await this.assertAiProvidersPlan(platformId)
         await assertDisplayNameIsFree({ platformId, provider: aiProvider.provider, displayName: request.displayName, exceptId: providerId })
 
         const config = request.config ?? aiProvider.config
@@ -175,6 +193,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return chatProvider?.provider ?? null
     },
 
+    async getChatKey({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<AIProviderSchema | null> {
+        return findAvailableChatProviderRow({ platformId, scope, log })
+    },
+
+    async findRunKeyId({ platformId, provider, scope, preferredConfigId, entityManager }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, preferredConfigId?: string, entityManager?: EntityManager }): Promise<string | null> {
+        const rows = await aiProviderRepo(entityManager).findBy({ platformId, provider })
+        const eligible = rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope }))
+        const preferred = eligible.find((row) => row.id === preferredConfigId)
+        return (preferred ?? rankRows({ rows: eligible, scope })[0])?.id ?? null
+    },
+
     async getChatProvider({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
         const chatProvider = await findAvailableChatProviderRow({ platformId, scope, log })
         if (isNil(chatProvider)) {
@@ -198,7 +227,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
-            await platformModelTierService.assertKeyCanBeDeleted({ manager, platformId, configId: providerId })
+            await platformModelTierService.removeKeyFromTiers({ manager, platformId, configId: providerId })
             return deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
         })
         await revokeKeyIfManaged({ row: deleted, log })
@@ -292,6 +321,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async assertModelAllowed({ platformId, provider, scope, configId, modelId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string, modelId: string }): Promise<void> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
         this.assertKeyAllowsModel({ key: aiProvider, modelId })
+    },
+    async assertAiProvidersPlan(platformId: PlatformId): Promise<void> {
+        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.aiProvidersEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: { message: 'AI providers are not included in your plan' },
+            })
+        }
     },
     assertKeyAllowsModel({ key, modelId }: { key: Pick<AIProviderSchema, 'modelScope' | 'modelIds'>, modelId: string }): void {
         if (!aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId })) {
@@ -682,3 +720,9 @@ function getModelsCacheKey({ provider, auth, config }: { provider: AIProviderNam
 }
 
 export type { ProviderScope }
+
+export type ProjectKeyModels = {
+    row: AIProviderSchema
+    isChatKey: boolean
+    models: AIProviderModel[] | null
+}
