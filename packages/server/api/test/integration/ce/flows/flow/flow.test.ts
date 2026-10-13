@@ -209,7 +209,10 @@ describe('Flow API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
-            expect(response?.json()).toMatchObject({ code: ErrorCode.FLOW_OPERATION_INVALID })
+            expect(response?.json()).toMatchObject({
+                code: ErrorCode.FLOW_OPERATION_INVALID,
+                params: { message: 'Publish the flow before turning it on' },
+            })
 
             const disableResponse = await ctx.post(`/v1/flows/${flowId}`, {
                 type: FlowOperationType.CHANGE_STATUS,
