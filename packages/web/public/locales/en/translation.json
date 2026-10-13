@@ -71,6 +71,7 @@
   "Platform invite": "Platform invite",
   "Invited to the platform with this project.": "Invited to the platform with this project.",
   "Remove from this project?": "Remove from this project?",
+  "removePlatformInviteFromDefaultProject": "{projectName} is a default project, so {email} will still join it when they accept.",
   "removePlatformInviteFromProject": "{email} won't join {projectName} when they accept. Their platform invite stays, so they still join the platform.",
   "inviteJoinsDefaultsAndPersonal": "New members also join the {defaultProjects} as Editors and get a personal project.",
   "They'll get a personal project to start in.": "They'll get a personal project to start in.",
