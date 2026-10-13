@@ -17,15 +17,17 @@ export function useConnectWatch(): ConnectWatch {
 export function useConnectHome({
   clients,
   watch,
+  isSetupOpen,
 }: {
   clients: CatalogClient[];
   watch: ConnectWatch;
+  isSetupOpen: boolean;
 }) {
   const userId = authenticationSession.getCurrentUserId();
   const grantsQuery = mcpGrantsQueries.useAllGrants({
     request: userId === null ? {} : { memberIds: [userId] },
     refetchInterval: () =>
-      watch.until !== null && Date.now() < watch.until
+      isWatching({ until: watch.until, isSetupOpen, now: Date.now() })
         ? WATCH_INTERVAL_MS
         : false,
   });
@@ -43,6 +45,18 @@ export function useConnectHome({
     isGrantsError: grantsQuery.isError,
     refetchGrants: grantsQuery.refetch,
   };
+}
+
+function isWatching({
+  until,
+  isSetupOpen,
+  now,
+}: {
+  until: number | null;
+  isSetupOpen: boolean;
+  now: number;
+}): boolean {
+  return isSetupOpen || (until !== null && now < until);
 }
 
 function groupByClient({
@@ -71,6 +85,8 @@ function sortByLastUsed(grants: McpOAuthGrant[]): McpOAuthGrant[] {
 
 const WATCH_INTERVAL_MS = 4000;
 const WATCH_DURATION_MS = 10 * 60 * 1000;
+
+export const connectWatchUtils = { isWatching };
 
 export type ConnectHome = ReturnType<typeof useConnectHome>;
 
