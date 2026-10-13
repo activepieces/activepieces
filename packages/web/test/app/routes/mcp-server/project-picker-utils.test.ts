@@ -9,8 +9,12 @@ const { projectPickerUtils } = await import(
   '@/app/routes/mcp-server/project-picker-utils'
 );
 
-function project(id: string, displayName: string) {
-  return { id, displayName, type: ProjectType.TEAM };
+function project(
+  id: string,
+  displayName: string,
+  externalId: string | null = null,
+) {
+  return { id, displayName, type: ProjectType.TEAM, externalId };
 }
 
 const PROJECTS = [
@@ -65,5 +69,41 @@ describe('projectPickerUtils.filter', () => {
         limit: 50,
       }),
     ).toEqual({ visible: [], total: 0 });
+  });
+
+  it('matches the project id and external id, so same-named projects stay reachable', () => {
+    const twins = Array.from({ length: 80 }, (_, index) =>
+      project(`twin-${index}`, 'Acme', `acme-${index}`),
+    );
+    expect(
+      projectPickerUtils
+        .filter({
+          projects: twins,
+          search: 'acme-73',
+          selectedId: null,
+          limit: 50,
+        })
+        .visible.map((item) => item.id),
+    ).toEqual(['twin-73']);
+    expect(
+      projectPickerUtils
+        .filter({
+          projects: twins,
+          search: 'twin-61',
+          selectedId: null,
+          limit: 50,
+        })
+        .visible.map((item) => item.id),
+    ).toEqual(['twin-61']);
+  });
+
+  it('flags names shared by more than one visible project', () => {
+    expect(
+      projectPickerUtils.duplicateNames([
+        project('a', 'Acme'),
+        project('b', 'Acme'),
+        project('c', 'Beta'),
+      ]),
+    ).toEqual(new Set(['Acme']));
   });
 });
