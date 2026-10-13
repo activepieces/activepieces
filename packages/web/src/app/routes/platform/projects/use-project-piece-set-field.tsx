@@ -5,7 +5,9 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { Button } from '@/components/ui/button';
 import { FormControl, FormDescription, FormLabel } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import {
   PieceSetSelect,
   pieceSetTerms,
@@ -16,13 +18,18 @@ import {
 import { PieceSetField } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export function useProjectPieceSetField({
   project,
   pieceSets,
+  isError,
+  onRetry,
 }: {
   project: ProjectWithLimits | undefined;
   pieceSets: PieceSet[] | undefined;
+  isError: boolean;
+  onRetry: () => unknown;
 }): PieceSetField | undefined {
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
@@ -35,15 +42,40 @@ export function useProjectPieceSetField({
   ) {
     return undefined;
   }
+  if (pieceSets === undefined && isError) {
+    return {
+      status: 'error',
+      render: () => (
+        <div className="flex flex-col gap-2">
+          <Label>{pieceSetTerms.get().titleSingular}</Label>
+          <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+            <span className="text-sm text-gray-11">
+              {t("Couldn't load the {terms}.", pieceSetTerms.get())}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                Promise.resolve(onRetry()).catch(() => undefined);
+              }}
+            >
+              {t('Try again')}
+            </Button>
+          </div>
+        </div>
+      ),
+    };
+  }
   if (pieceSets === undefined) {
-    return { isLoading: true };
+    return { status: 'loading' };
   }
   const initialValue = projectPieceSet.currentSetId({
     pieceSetId: project.pieceSetId,
     pieceSets,
   });
   return {
-    isLoading: false,
+    status: 'ready',
     initialValue,
     render: ({ value, onChange, disabled }) => (
       <>
@@ -67,12 +99,13 @@ export function useProjectPieceSetField({
         </FormControl>
       </>
     ),
-    save: (toSetId) =>
-      moveProjects({
-        pieceSetId: toSetId,
-        added: [project.id],
-        removed: [],
-        defaultSetId: undefined,
+    save: async (toSetId) => {
+      await moveProjects({ pieceSetId: toSetId, added: [project.id] });
+    },
+    saveFailedMessage: (error) =>
+      t("The project was saved, but its {term} wasn't changed: {message}", {
+        ...pieceSetTerms.get(),
+        message: mutationFeedback.message(error),
       }),
   };
 }
