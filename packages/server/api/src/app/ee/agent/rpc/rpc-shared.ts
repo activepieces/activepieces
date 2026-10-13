@@ -87,26 +87,13 @@ export async function loadOrStartConversation({ conversationId, platformId, user
     if (source !== AgentRunSource.FLOW_STEP) {
         return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
     }
-    const existing = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
-    if (!isNil(existing)) {
-        if (existing.platformId !== platformId || existing.userId !== userId || existing.source !== AgentRunSource.FLOW_STEP) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
-        }
-        return existing
+    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+        ?? await insertFlowStepConversation({ conversationId, platformId, userId, projectId, modelName, agentId, flowRunId })
+    const ownedByThisRun = conversation.platformId === platformId && conversation.userId === userId && conversation.source === AgentRunSource.FLOW_STEP
+    if (!ownedByThisRun) {
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
     }
-    return agentHelpers.conversationRepo().save({
-        id: conversationId,
-        platformId,
-        projectId: projectId ?? null,
-        userId,
-        source: AgentRunSource.FLOW_STEP,
-        agentId: agentId ?? null,
-        flowRunId: flowRunId ?? null,
-        title: null,
-        modelName: modelName ?? null,
-        messages: [],
-        status: AgentConversationStatus.IDLE,
-    })
+    return conversation
 }
 
 export async function confinedRunFor({ conversationId }: { conversationId?: string }): Promise<ConfinedRun> {
@@ -294,6 +281,31 @@ export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcom
         connection: {},
         log,
     })
+}
+
+async function insertFlowStepConversation({ conversationId, platformId, userId, projectId, modelName, agentId, flowRunId }: {
+    conversationId: string
+    platformId: string
+    userId: string
+    projectId?: string | null
+    modelName?: string | null
+    agentId?: string
+    flowRunId?: string
+}): Promise<AgentConversation> {
+    await agentHelpers.conversationRepo().createQueryBuilder().insert().values({
+        id: conversationId,
+        platformId,
+        projectId: projectId ?? null,
+        userId,
+        source: AgentRunSource.FLOW_STEP,
+        agentId: agentId ?? null,
+        flowRunId: flowRunId ?? null,
+        title: null,
+        modelName: modelName ?? null,
+        messages: [],
+        status: AgentConversationStatus.IDLE,
+    }).orIgnore().execute()
+    return agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId })
 }
 
 function turnReadKey({ conversationId, runId }: { conversationId: string, runId: string }): string {

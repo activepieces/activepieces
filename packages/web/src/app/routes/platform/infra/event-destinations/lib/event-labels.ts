@@ -33,6 +33,9 @@ export const buildEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.USER_PASSWORD_RESET]: t('User password reset'),
     [ApplicationEventName.USER_EMAIL_VERIFIED]: t('User email verified'),
     [ApplicationEventName.SIGNING_KEY_CREATED]: t('Signing key created'),
+    [ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED]: t(
+      'Audit log retention updated',
+    ),
     [ApplicationEventName.PROJECT_ROLE_CREATED]: t('Project role created'),
     [ApplicationEventName.PROJECT_ROLE_UPDATED]: t('Project role updated'),
     [ApplicationEventName.PROJECT_ROLE_DELETED]: t('Project role deleted'),

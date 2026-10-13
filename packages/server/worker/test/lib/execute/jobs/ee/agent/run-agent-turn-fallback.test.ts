@@ -65,6 +65,19 @@ describe('a platform tier chat turn', () => {
         expect(main.doStreamCalls).toHaveLength(1)
     })
 
+    it('names the fast model as the one that answered when the turn ends on the fast step', async () => {
+        const main = answeringModel('from main')
+
+        const turn = await runTurn({
+            models: [tierModel({ modelId: 'main', model: main })],
+            fastModel: tierModel({ modelId: 'fast', model: answeringModel('from fast') }),
+        })
+
+        expect(turn.answeredBy.modelId).toBe('fast')
+        expect(main.doStreamCalls).toHaveLength(0)
+        expect(textOf(turn)).toBe('from fast')
+    })
+
     it('drops a failing fast model and answers on the same main model', async () => {
         const turn = await runTurn({
             models: [tierModel({ modelId: 'main', model: answeringModel('from main') }), tierModel({ modelId: 'backup', model: answeringModel('from backup') })],

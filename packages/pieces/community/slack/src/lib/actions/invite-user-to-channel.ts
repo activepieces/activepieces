@@ -14,6 +14,22 @@ export const inviteUserToChannelAction = createAction({
 	audience: 'human',
 	aiMetadata: { description: 'Add an existing workspace user to an existing channel as a member. Both the channel and the user must already exist. Effectively idempotent in result since a user already in the channel stays a member, though Slack returns an error if they are already present.', idempotent: false },
 	outputSchema: channelResponseOutputSchema,
+	propertyGroups: [
+		{
+			key: 'channel_picker',
+			display: 'section',
+			label: 'Channel',
+			icon: 'markdown',
+			props: ['info', 'onlyBotChannels', 'channel'],
+		},
+		{
+			key: 'user_picker',
+			display: 'section',
+			label: 'User',
+			icon: 'user',
+			props: ['userId'],
+		},
+	],
 	props: {
 		info: singleSelectChannelInfo,
 		onlyBotChannels,

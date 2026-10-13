@@ -357,6 +357,22 @@ export function createCustomApiCallAction<
       }),
       ...extraProps,
     },
+    propertyGroups: [
+      {
+        key: 'request',
+        display: 'section',
+        label: 'Request',
+        icon: 'send',
+        props: ['method', 'url', 'headers', 'queryParams'],
+      },
+      {
+        key: 'payload',
+        display: 'section',
+        label: 'Data to send',
+        icon: 'code',
+        props: ['body_type', 'body'],
+      },
+    ],
 
     run: async (context) => {
       const {

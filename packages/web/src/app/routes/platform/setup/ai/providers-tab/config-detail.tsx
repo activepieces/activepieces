@@ -33,7 +33,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
+import {
+  KeyScopeImpact,
+  modelMeta,
+} from '@/features/agents/ai-model/model-meta';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
+import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -62,7 +68,7 @@ export function ConfigDetail({
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
-  onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
+  onSave: (request: UpdateAIProviderRequest) => Promise<{ error: unknown }>;
   onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
@@ -71,6 +77,9 @@ export function ConfigDetail({
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [scopeImpact, setScopeImpact] = useState<KeyScopeImpact[]>([]);
+  const { data: tiers } = platformModelTierQueries.useAdminList();
+  const { data: allConfigs } = aiProviderQueries.useAiProviderConfigs();
   const leavingOnPurpose = useRef(false);
   const saveInFlight = useRef(false);
 
@@ -120,7 +129,30 @@ export function ConfigDetail({
       ? projects.length - draft.projectIds.length
       : draft.projectIds.length;
 
-  const save = async () => {
+  const requestSave = () => {
+    if (nameMissing || saveInFlight.current) {
+      return;
+    }
+    const impact = modelMeta.keyScopeImpact({
+      tiers: tiers ?? [],
+      configsById: new Map(
+        (allConfigs ?? []).map((other) => [other.id, other]),
+      ),
+      config: {
+        ...config,
+        projectScope: draft.projectScope,
+        projectIds: draft.projectIds,
+      },
+      projectIds: projects.map((project) => project.id),
+    });
+    if (impact.length > 0) {
+      setScopeImpact(impact);
+      return;
+    }
+    return save();
+  };
+
+  const save = async (): Promise<boolean> => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
@@ -128,11 +160,11 @@ export function ConfigDetail({
       ? manualConfigParse.data
       : undefined;
     if (nameMissing || saveInFlight.current) {
-      return;
+      return false;
     }
     saveInFlight.current = true;
     try {
-      await onSave({
+      const { error } = await onSave({
         displayName: draft.name.trim(),
         modelScope: draft.modelScope,
         modelIds: manualModels
@@ -146,6 +178,7 @@ export function ConfigDetail({
             }
           : {}),
       });
+      return error === null || error === undefined;
     } finally {
       saveInFlight.current = false;
     }
@@ -348,7 +381,7 @@ export function ConfigDetail({
               {t('Delete this key')}
             </p>
             <p className="mt-1 text-sm text-gray-11">
-              {t('Steps and agents using it will stop working.')}
+              {t('Flows and agents that use it will fail.')}
             </p>
           </div>
           <Button
@@ -366,9 +399,10 @@ export function ConfigDetail({
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           title={t('Delete {name}', { name: config.name })}
-          message={t('Steps and agents using this key will stop working.')}
+          message={t('Flows and agents that use this key will fail.')}
           entityName={config.name}
           showToast={true}
+          onError={() => undefined}
           controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
           mutationFn={async () => {
             await onDelete();
@@ -394,8 +428,8 @@ export function ConfigDetail({
               loading={isSaving}
               disabled={nameMissing || isSaving}
               keyboardShortcut="S"
-              onKeyboardShortcut={save}
-              onClick={save}
+              onKeyboardShortcut={requestSave}
+              onClick={requestSave}
               {...adminControl(AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT)}
             >
               {t('Save')}
@@ -404,6 +438,34 @@ export function ConfigDetail({
         </div>
       )}
 
+      <ConfirmationDeleteDialog
+        open={scopeImpact.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setScopeImpact([]);
+          }
+        }}
+        title={t('Change which projects can use {name}?', {
+          name: config.name,
+        })}
+        message={
+          <ul className="flex list-disc flex-col gap-1 pl-5">
+            {scopeImpact.map((impact) => (
+              <li key={impact.tierName}>{scopeImpactText(impact)}</li>
+            ))}
+          </ul>
+        }
+        entityName={config.name}
+        isDanger={false}
+        buttonText={t('Save anyway')}
+        showToast={false}
+        mutationFn={async () => {
+          if (!(await save())) {
+            throw new Error('Saving the key failed');
+          }
+        }}
+      />
+
       <LeaveWithoutSavingDialog
         open={leaveBlocker.state === 'blocked'}
         onKeepEditing={() => leaveBlocker.reset?.()}
@@ -411,6 +473,19 @@ export function ConfigDetail({
       />
     </div>
   );
+}
+
+function scopeImpactText(impact: KeyScopeImpact): string {
+  if (impact.lostProjects > 0) {
+    return t('tierLosesProjects', {
+      tier: impact.tierName,
+      count: impact.lostProjects,
+    });
+  }
+  return t('tierFallbackSkippedInMoreProjects', {
+    tier: impact.tierName,
+    count: impact.skippedProjects,
+  });
 }
 
 function ScopeTabs({

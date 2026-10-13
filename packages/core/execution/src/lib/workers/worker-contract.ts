@@ -454,6 +454,7 @@ export type ResolveAiProviderRequest = {
     platformId: string
     provider: AIProviderName
     providerConfigId?: string
+    modelId?: string
 }
 
 export type ResolveAiProviderResponse = AiProviderCredentials & {

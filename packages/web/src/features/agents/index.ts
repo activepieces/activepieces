@@ -11,6 +11,7 @@ export { PieceActionsList } from './agent-tools/piece-tool-dialog/dialog-pages/p
 export { PiecesList } from './agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
 export { usePieceToolsDialogStore } from './agent-tools/stores/pieces-tools';
 export { AIModelSelector, PROVIDER_EMBEDDING_MODELS } from './ai-model';
+export { ModelPicker } from './ai-model/model-picker';
 export { SUPPORTED_AI_PROVIDERS } from './ai-providers';
 export type { AiProviderInfo } from './ai-providers';
 export { AgentStructuredOutput } from './structured-output';

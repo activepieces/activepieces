@@ -70,7 +70,7 @@
   "Restore an email message from Trash.": "Restore an email message from Trash.",
   "Rename, recolor, or change the visibility of a user label.": "Rename, recolor, or change the visibility of a user label.",
   "Add and/or remove labels across every message in a thread in a single call.": "Add and/or remove labels across every message in a thread in a single call.",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "To": "宛先",
   "Cc": "Cc",
   "Bcc": "Bcc",
