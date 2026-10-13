@@ -10,21 +10,21 @@ import {
 } from '@/components/ui/tooltip';
 import {
   PieceSetSelect,
-  pieceSetKeys,
   pieceSetTerms,
   projectPieceSet,
-  useShowEmbedKey,
+  usePieceSetProjectMoves,
 } from '@/features/piece-sets';
-import { projectCollectionUtils } from '@/features/projects';
 
 export function ProjectPieceSetCell({
   project,
   pieceSets,
+  showEmbedNote,
 }: {
   project: ProjectWithLimits;
   pieceSets: PieceSet[];
+  showEmbedNote: boolean;
 }) {
-  const showEmbedNote = useShowEmbedKey() && !!project.externalId;
+  const moveProjects = usePieceSetProjectMoves();
   const current = projectPieceSet.currentSetId({
     pieceSetId: project.pieceSetId,
     pieceSets,
@@ -32,16 +32,13 @@ export function ProjectPieceSetCell({
   const moveProject = useAdminAction<string>({
     verb: 'update',
     name: project.displayName,
-    run: async (toSetId) => {
-      await projectPieceSet.move({
-        projectId: project.id,
-        fromSetId: current,
-        toSetId,
-        pieceSets,
-      });
-      await projectCollectionUtils.refetchProjects();
-    },
-    invalidate: [pieceSetKeys.all, ['projects-for-platforms']],
+    run: (toSetId) =>
+      moveProjects({
+        pieceSetId: toSetId,
+        added: [project.id],
+        removed: [],
+        defaultSetId: undefined,
+      }),
   });
 
   return (
@@ -50,7 +47,11 @@ export function ProjectPieceSetCell({
         value={current}
         pieceSets={pieceSets}
         disabled={moveProject.isPending || pieceSets.length === 0}
-        onValueChange={(next) => moveProject.mutate(next)}
+        onValueChange={(next) => {
+          if (next !== current) {
+            moveProject.mutate(next);
+          }
+        }}
         className="h-8 w-44"
         aria-label={t('{Term} for {name}', {
           ...pieceSetTerms.get(),
@@ -60,10 +61,13 @@ export function ProjectPieceSetCell({
       {showEmbedNote && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info
-              className="size-4 shrink-0 text-gray-11"
+            <button
+              type="button"
+              className="shrink-0 rounded-sm text-gray-11 focus-visible:outline-2 focus-visible:outline-accent-8"
               aria-label={t('Set by the embed token')}
-            />
+            >
+              <Info className="size-4" />
+            </button>
           </TooltipTrigger>
           <TooltipContent className="max-w-64">
             {t(

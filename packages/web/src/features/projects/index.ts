@@ -8,4 +8,5 @@ export {
   getProjectName,
   projectCollectionUtils,
   projectHooks,
+  projectQueryKeys,
 } from './stores/project-collection';

@@ -269,6 +269,10 @@ export const projectCollectionUtils = {
   },
 };
 
+export const projectQueryKeys = {
+  forPlatforms: ['projects-for-platforms'] as const,
+};
+
 export const getProjectName = (
   project: Pick<ProjectWithLimits, 'type' | 'displayName'>,
 ): string => {
@@ -279,7 +283,7 @@ export const getProjectName = (
 export const projectHooks = {
   useProjectsForPlatforms: () => {
     return useQuery<ProjectWithLimitsWithPlatform[], Error>({
-      queryKey: ['projects-for-platforms'],
+      queryKey: projectQueryKeys.forPlatforms,
       queryFn: async () => {
         return api.get<ProjectWithLimitsWithPlatform[]>('/v1/platforms');
       },

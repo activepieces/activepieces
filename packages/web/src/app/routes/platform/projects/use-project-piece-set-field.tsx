@@ -3,19 +3,17 @@ import {
   PlatformRole,
   ProjectWithLimits,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import { FormDescription } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { FormControl, FormDescription, FormLabel } from '@/components/ui/form';
 import {
   PieceSetSelect,
-  pieceSetKeys,
   pieceSetTerms,
   projectPieceSet,
+  usePieceSetProjectMoves,
   useShowEmbedKey,
 } from '@/features/piece-sets';
-import { PieceSetField, projectCollectionUtils } from '@/features/projects';
+import { PieceSetField } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
@@ -28,25 +26,28 @@ export function useProjectPieceSetField({
 }): PieceSetField | undefined {
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
-  const queryClient = useQueryClient();
+  const moveProjects = usePieceSetProjectMoves();
   const showEmbedNote = useShowEmbedKey() && !!project?.externalId;
   if (
     project === undefined ||
-    pieceSets === undefined ||
     !platform.plan.managePiecesEnabled ||
     platformRole !== PlatformRole.ADMIN
   ) {
     return undefined;
+  }
+  if (pieceSets === undefined) {
+    return { isLoading: true };
   }
   const initialValue = projectPieceSet.currentSetId({
     pieceSetId: project.pieceSetId,
     pieceSets,
   });
   return {
+    isLoading: false,
     initialValue,
     render: ({ value, onChange, disabled }) => (
       <>
-        <Label htmlFor="pieceSetId">{pieceSetTerms.get().titleSingular}</Label>
+        <FormLabel>{pieceSetTerms.get().titleSingular}</FormLabel>
         <FormDescription>
           {showEmbedNote
             ? t(
@@ -55,27 +56,23 @@ export function useProjectPieceSetField({
               )
             : t('Decides which pieces builders in this project see.')}
         </FormDescription>
-        <PieceSetSelect
-          value={value}
-          onValueChange={onChange}
-          pieceSets={pieceSets}
-          disabled={disabled}
-          className="w-full"
-          aria-label={pieceSetTerms.get().titleSingular}
-        />
+        <FormControl>
+          <PieceSetSelect
+            value={value}
+            onValueChange={onChange}
+            pieceSets={pieceSets}
+            disabled={disabled}
+            className="w-full"
+          />
+        </FormControl>
       </>
     ),
-    save: async (toSetId) => {
-      await projectPieceSet.move({
-        projectId: project.id,
-        fromSetId: initialValue,
-        toSetId,
-        pieceSets,
-      });
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
-        projectCollectionUtils.refetchProjects(),
-      ]);
-    },
+    save: (toSetId) =>
+      moveProjects({
+        pieceSetId: toSetId,
+        added: [project.id],
+        removed: [],
+        defaultSetId: undefined,
+      }),
   };
 }
