@@ -5,15 +5,19 @@ import {
   FlowDraftUpdatedEvent,
   FlowOperationStatus,
   FlowOperationType,
+  FlowRun,
+  FlowRunStatus,
   FlowStatus,
   FlowTriggerType,
+  FlowVersion,
   FlowVersionState,
   Note,
   NoteColorVariant,
   PopulatedFlow,
+  RunEnvironment,
   WebsocketClientEvent,
 } from '@activepieces/shared';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { io } from 'socket.io-client';
@@ -26,6 +30,7 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
+import { useFlowLock } from '@/app/builder/flow-canvas/widgets/use-flow-lock';
 import { editorSession } from '@/lib/editor-session';
 
 declare global {
@@ -80,7 +85,31 @@ const socketHarness = vi.hoisted(() => {
   return { socket, sendFromServer, reset };
 });
 
+const authorizationHarness = vi.hoisted(() => ({ canEditFlow: true }));
+
+const lockHarness = vi.hoisted((): { lockedBy: LockHolder | null } => ({
+  lockedBy: null,
+}));
+
 vi.mock('i18next', () => ({ t: (key: string) => key }));
+
+vi.mock('@/hooks/use-resource-lock', () => ({
+  useResourceLock: () => ({
+    lockedBy: lockHarness.lockedBy,
+    takeOver: () => undefined,
+  }),
+}));
+
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router-dom')>()),
+  useNavigate: () => () => undefined,
+}));
+
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useAuthorization: () => ({
+    checkAccess: () => authorizationHarness.canEditFlow,
+  }),
+}));
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketHarness.socket,
@@ -158,6 +187,8 @@ describe('useRefreshDraftOnPush', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
     socketHarness.reset();
+    authorizationHarness.canEditFlow = true;
+    lockHarness.lockedBy = null;
     flowsApiMock.update.mockReset();
     flowsApiMock.get.mockReset();
     vi.spyOn(toast, 'info');
@@ -321,6 +352,119 @@ describe('useRefreshDraftOnPush', () => {
     expect(shownToasts()).toHaveLength(1);
   });
 
+  it('ignores a push while the tab shows a run', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    store.getState().setRun(testRun(), store.getState().flowVersion);
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+    expect(shownToasts()).toHaveLength(0);
+  });
+
+  it('ignores a push while the tab shows an older version', async () => {
+    const flow = flowWithDraftVersion({ versionId: 'draft-1' });
+    const store = createStore(flow);
+    store
+      .getState()
+      .setVersion(lockedVersion({ flow, versionId: 'version-1' }));
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+    expect(store.getState().flowVersion.id).toBe('version-1');
+    expect(shownToasts()).toHaveLength(0);
+  });
+
+  it('shows the new draft in a read-only tab on the published version with no draft, and makes the tab editable', async () => {
+    const store = createStore(publishedFlowWithNoDraft());
+    store.getState().setReadOnly(true);
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Changed by an agent',
+      }),
+    );
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState()).toMatchObject({
+      readonly: false,
+      flowVersion: { id: 'draft-1', displayName: 'Changed by an agent' },
+    });
+    expect(shownToasts()).toHaveLength(1);
+  });
+
+  it('keeps the tab read-only for a person who cannot edit the flow when a new draft arrives', async () => {
+    authorizationHarness.canEditFlow = false;
+    const store = createStore(publishedFlowWithNoDraft());
+    store.getState().setReadOnly(true);
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({ versionId: 'draft-1' }),
+    );
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState()).toMatchObject({
+      readonly: true,
+      flowVersion: { id: 'draft-1' },
+    });
+  });
+
+  it('keeps the tab read-only while a different user holds the lock and a new draft arrives', async () => {
+    lockHarness.lockedBy = { userId: 'user-2', userDisplayName: 'Sam Lee' };
+    const store = createStore(publishedFlowWithNoDraft());
+    store.getState().setReadOnly(true);
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({ versionId: 'draft-1' }),
+    );
+    act(() => {
+      root.render(
+        <QueryClientProvider client={new QueryClient()}>
+          <BuilderStateContext.Provider value={store}>
+            <DraftPushWatcherWithFlowLock />
+          </BuilderStateContext.Provider>
+        </QueryClientProvider>,
+      );
+    });
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState()).toMatchObject({
+      readonly: true,
+      flowVersion: { id: 'draft-1' },
+    });
+  });
+
+  it('shows no toast when the builder unmounts before the refresh ends', async () => {
+    const response = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.get.mockReturnValue(response.promise);
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
+    await vi.advanceTimersByTimeAsync(0);
+    act(() => root.unmount());
+    response.resolve(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed by an agent',
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(toast.info).not.toHaveBeenCalled();
+  });
+
   it('shows the error toast and not the refresh toast when the fetch fails', async () => {
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     flowsApiMock.get.mockRejectedValue(new Error('Network Error'));
@@ -357,6 +501,7 @@ describe('useRefreshDraftOnReconnectAndReturn', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
     socketHarness.reset();
+    authorizationHarness.canEditFlow = true;
     flowsApiMock.update.mockReset();
     flowsApiMock.get.mockReset();
     flowsApiMock.get.mockResolvedValue(
@@ -431,6 +576,48 @@ describe('useRefreshDraftOnReconnectAndReturn', () => {
     expect(shownToasts()).toHaveLength(0);
   });
 
+  it('does not refresh a run view when the tab becomes visible again', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    store.getState().setRun(testRun(), store.getState().flowVersion);
+    mount(store);
+
+    showTab();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+    expect(store.getState().flowVersion.displayName).toBe('Order lookup');
+  });
+
+  it('shows a new draft in a read-only tab on the published version when the tab becomes visible again, and makes the tab editable', async () => {
+    const store = createStore(publishedFlowWithNoDraft());
+    store.getState().setReadOnly(true);
+    mount(store);
+
+    showTab();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState()).toMatchObject({
+      readonly: false,
+      flowVersion: { id: 'draft-1' },
+    });
+  });
+
+  it('does not refresh an older version on a socket reconnect', async () => {
+    socketHarness.socket.connected = true;
+    const flow = flowWithDraftVersion({ versionId: 'draft-1' });
+    const store = createStore(flow);
+    store
+      .getState()
+      .setVersion(lockedVersion({ flow, versionId: 'version-1' }));
+    mount(store);
+
+    connectSocket();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+    expect(store.getState().flowVersion.id).toBe('version-1');
+  });
+
   it('does not refresh when the tab becomes hidden', async () => {
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     mount(store);
@@ -458,6 +645,12 @@ function shownToasts() {
 }
 
 function DraftPushWatcher() {
+  flowCanvasHooks.useRefreshDraftOnPush();
+  return null;
+}
+
+function DraftPushWatcherWithFlowLock() {
+  useFlowLock();
   flowCanvasHooks.useRefreshDraftOnPush();
   return null;
 }
@@ -528,6 +721,43 @@ function createStore(flow: PopulatedFlow): BuilderStore {
   });
 }
 
+function publishedFlowWithNoDraft(): PopulatedFlow {
+  const flow = flowWithDraftVersion({ versionId: 'version-1' });
+  return {
+    ...flow,
+    publishedVersionId: 'version-1',
+    version: lockedVersion({ flow, versionId: 'version-1' }),
+  };
+}
+
+function lockedVersion({
+  flow,
+  versionId,
+}: {
+  flow: PopulatedFlow;
+  versionId: string;
+}): FlowVersion {
+  return { ...flow.version, id: versionId, state: FlowVersionState.LOCKED };
+}
+
+function testRun(): FlowRun {
+  return {
+    id: 'run-1',
+    created: '2026-01-01T00:00:00.000Z',
+    updated: '2026-01-01T00:00:00.000Z',
+    projectId: 'project-1',
+    flowId: 'flow-1',
+    flowVersionId: 'draft-1',
+    failParentOnFailure: false,
+    logsFileId: null,
+    status: FlowRunStatus.SUCCEEDED,
+    environment: RunEnvironment.TESTING,
+    steps: {},
+    tags: [],
+    archivedAt: null,
+  };
+}
+
 function agentNotes(count: number): Note[] {
   return Array.from({ length: count }, (_, index) => ({
     id: `note-${index + 1}`,
@@ -591,3 +821,5 @@ function flowWithDraftVersion({
     },
   };
 }
+
+type LockHolder = { userId: string; userDisplayName: string };

@@ -7,11 +7,14 @@ import {
   FlowOperationRequest,
   FlowOperationStatus,
   FlowOperationType,
+  FlowRun,
+  FlowRunStatus,
   FlowStatus,
   FlowTriggerType,
   FlowVersionState,
   NoteColorVariant,
   PopulatedFlow,
+  RunEnvironment,
   SampleDataFileType,
   flowOperations,
 } from '@activepieces/shared';
@@ -719,6 +722,69 @@ describe('flow state draft refresh', () => {
     });
   });
 
+  it('does not replace a run that the tab opens while the draft request runs', async () => {
+    const response = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.get.mockReturnValue(response.promise);
+    const store = createStore(flowWithLookUpOrderStep());
+
+    const refresh = store.getState().refreshDraft();
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().setRun(testRun(), {
+      ...store.getState().flowVersion,
+      displayName: 'Order lookup at the time of the run',
+    });
+    response.resolve(
+      withDisplayName({
+        flow: flowWithLookUpOrderStep(),
+        displayName: 'Order lookup by an agent',
+      }),
+    );
+
+    await expect(refresh).resolves.toBe(false);
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Order lookup at the time of the run',
+    );
+  });
+
+  it('ignores the published version that the tab opens after its own save created the draft', async () => {
+    const published = publishedFlowWithNoDraft();
+    flowsApiMock.update.mockResolvedValue(flowWithLookUpOrderStep());
+    flowsApiMock.get.mockResolvedValue(flowWithLookUpOrderStep());
+    const store = createStore(published);
+
+    store.getState().applyOperation(changeName('Order lookup by email'));
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().setVersion(published.version);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(false);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('ignores the published version that the tab opens after it showed a new draft', async () => {
+    const published = publishedFlowWithNoDraft();
+    flowsApiMock.get.mockResolvedValue(flowWithLookUpOrderStep());
+    const store = createStore(published);
+
+    store.getState().setVersion(flowWithLookUpOrderStep().version);
+    store.getState().setVersion(published.version);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(false);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('ignores a version under review that the tab opened by its id', async () => {
+    const published = publishedFlowWithNoDraft();
+    const underReview: PopulatedFlow = {
+      ...published,
+      version: { ...published.version, id: 'version-2' },
+    };
+    flowsApiMock.get.mockResolvedValue(flowWithLookUpOrderStep());
+    const store = createStore(underReview);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(false);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
   it('sends one GET at a time when a refresh starts as the previous refresh ends', async () => {
     const server = serveDraft(flowWithLookUpOrderStep());
     let getsInFlight = 0;
@@ -744,6 +810,24 @@ describe('flow state draft refresh', () => {
     expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
   });
 });
+
+function testRun(): FlowRun {
+  return {
+    id: 'run-1',
+    created: '2026-01-01T00:00:00.000Z',
+    updated: '2026-01-01T00:00:00.000Z',
+    projectId: 'project-1',
+    flowId: 'flow-1',
+    flowVersionId: 'draft-1',
+    failParentOnFailure: false,
+    logsFileId: null,
+    status: FlowRunStatus.SUCCEEDED,
+    environment: RunEnvironment.TESTING,
+    steps: {},
+    tags: [],
+    archivedAt: null,
+  };
+}
 
 function withDisplayName({
   flow,
@@ -772,6 +856,19 @@ function serveDraft(flow: PopulatedFlow) {
   );
   flowsApiMock.get.mockImplementation(async () => currentFlow());
   return { currentFlow };
+}
+
+function publishedFlowWithNoDraft(): PopulatedFlow {
+  const flow = flowWithLookUpOrderStep();
+  return {
+    ...flow,
+    publishedVersionId: 'version-1',
+    version: {
+      ...flow.version,
+      id: 'version-1',
+      state: FlowVersionState.LOCKED,
+    },
+  };
 }
 
 function flowWithLookUpOrderStep(): PopulatedFlow {

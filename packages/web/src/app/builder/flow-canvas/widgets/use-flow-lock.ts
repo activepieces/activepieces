@@ -1,5 +1,4 @@
 import { isNil, Permission } from '@activepieces/core-utils';
-import { FlowVersionState } from '@activepieces/shared';
 import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,8 +16,7 @@ function useFlowLock() {
   ]);
   const run = useBuilderStateContext((state) => state.run);
   const [showsNewestVersion, refreshDraft] = useBuilderStateContext((state) => [
-    state.flowVersion.state === FlowVersionState.DRAFT ||
-      state.flowVersion.id === state.flow.version.id,
+    state.showsNewestVersion(),
     state.refreshDraft,
   ]);
   const readonlySetByLock = useRef(false);
@@ -38,7 +36,11 @@ function useFlowLock() {
       navigate(`/flows/${flowId}`);
     } else if (showsNewestVersion) {
       refreshDraft()
-        .then(() => setReadOnly(!canEditFlow))
+        .then((applied) => {
+          if (applied) {
+            setReadOnly(!canEditFlow);
+          }
+        })
         .catch(() => undefined);
     } else {
       switchToDraft();

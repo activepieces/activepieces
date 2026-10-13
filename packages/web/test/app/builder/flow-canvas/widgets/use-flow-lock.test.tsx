@@ -174,6 +174,36 @@ describe('useFlowLock take-over', () => {
     expect(store.getState().readonly).toBe(true);
   });
 
+  it('keeps a run read-only when the person opens it while the take-over request runs', async () => {
+    const flow = draftFlow({ customerEmail: '{{trigger.email}}' });
+    const store = createStore({ flow });
+    const response = Promise.withResolvers<PopulatedFlow>();
+    harness.getFlow.mockReturnValue(response.promise);
+    renderFlowLock(store);
+
+    await takeOver();
+    act(() => {
+      store.getState().setRun(flowRun(), store.getState().flowVersion);
+    });
+    await act(async () => {
+      response.resolve(
+        draftFlow({ customerEmail: '{{trigger.customerEmail}}' }),
+      );
+    });
+
+    expect(store.getState()).toMatchObject({
+      readonly: true,
+      run: { id: 'run-1' },
+      flowVersion: {
+        trigger: {
+          nextAction: {
+            settings: { input: { customerEmail: '{{trigger.email}}' } },
+          },
+        },
+      },
+    });
+  });
+
   it('switches to the draft when an older version is being viewed', async () => {
     const flow = draftFlow({ customerEmail: '{{trigger.email}}' });
     renderFlowLock(
