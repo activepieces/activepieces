@@ -1,5 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { aiProviderUtils } from '@activepieces/shared'
+import { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { SystemModelMessage } from 'ai'
 
@@ -16,7 +17,7 @@ function buildProviderOptions({ provider, tier, modelId, disableThinking = false
     }
 }
 
-function anthropicThinking({ thinkingBudget, modelId, disableThinking }: { thinkingBudget: number, modelId: string, disableThinking: boolean }): AnthropicThinkingDirective {
+function anthropicThinking({ thinkingBudget, modelId, disableThinking }: { thinkingBudget: number, modelId: string, disableThinking: boolean }): Pick<AnthropicLanguageModelOptions, 'thinking' | 'effort'> {
     if (ADAPTIVE_ONLY_ANTHROPIC_MODELS.some((family) => modelId.includes(family))) {
         return disableThinking ? { thinking: { type: 'adaptive' }, effort: 'low' } : { thinking: { type: 'adaptive' } }
     }
@@ -46,11 +47,6 @@ export const agentProviderOptions = {
 }
 
 const ADAPTIVE_ONLY_ANTHROPIC_MODELS = ['claude-opus-4-7', 'claude-opus-4-8', 'claude-opus-5', 'claude-sonnet-5', 'claude-haiku-5', 'claude-fable-5', 'claude-mythos-5']
-
-type AnthropicThinkingDirective =
-    | { thinking: { type: 'adaptive' }, effort?: 'low' }
-    | { thinking: { type: 'disabled' } }
-    | { thinking: { type: 'enabled', budgetTokens: number } }
 
 type OpenRouterReasoningDirective =
     | { enabled: false }
