@@ -337,24 +337,38 @@ export default function PlatformConnectionsPage() {
         connection={viewing}
         access={access}
         onChanged={refresh}
-        onDelete={(connection) => setDeleting([connection])}
+        onDelete={(connection) => {
+          resetBulkSelection.current = null;
+          setDeleting([connection]);
+        }}
         onOpenChange={(open) => !open && setViewingId(null)}
       />
       <DeleteConnectionsDialog
         connections={deleting}
         open={deleting.length > 0}
-        onOpenChange={(open) => !open && setDeleting([])}
-        onDeleted={() => {
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleting([]);
+            resetBulkSelection.current = null;
+          }
+        }}
+        onDeleted={refresh}
+        onFinished={() => {
           if (deleting.some((connection) => connection.id === viewingId)) {
             setViewingId(null);
           }
-          refresh();
-        }}
-        onFinished={() => {
           resetBulkSelection.current?.();
           resetBulkSelection.current = null;
         }}
-        onPartialFailure={setDeleting}
+        onPartialFailure={(failed) => {
+          const viewingDeleted =
+            deleting.some((connection) => connection.id === viewingId) &&
+            !failed.some((connection) => connection.id === viewingId);
+          if (viewingDeleted) {
+            setViewingId(null);
+          }
+          setDeleting(failed);
+        }}
       />
     </AdminPage>
   );
