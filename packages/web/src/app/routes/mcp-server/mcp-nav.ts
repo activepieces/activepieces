@@ -46,9 +46,7 @@ export function buildToolsParams({
 }
 
 function toTab(value: string | undefined): McpTab {
-  return value === 'connections' || value === 'tools' || value === 'activity'
-    ? value
-    : 'connect';
+  return value === 'connections' || value === 'tools' ? value : 'connect';
 }
 
 function toSegment(value: string | null): McpToolSegment {
@@ -61,7 +59,7 @@ function toProjectId(value: string | null): string | null {
 
 const DEFAULT_SEGMENT: McpToolSegment = 'built-in';
 
-export type McpTab = 'connect' | 'tools' | 'connections' | 'activity';
+export type McpTab = 'connect' | 'tools' | 'connections';
 
 export type McpToolSegment = 'built-in' | 'pieces';
 
