@@ -3599,7 +3599,6 @@
   "Shown first in the Explore tab, in this order. Drag to reorder.": "Shown first in the Explore tab, in this order. Drag to reorder.",
   "Tabs": "Tabs",
   "Unpin {name}": "Unpin {name}",
-  "You can try changes here. Saving them needs Enterprise.": "You can try changes here. Saving them needs Enterprise.",
   "Couldn't update the publishing rules": "Couldn't update the publishing rules",
   "No piece with actions matches.": "No piece with actions matches.",
   "Pick the actions, then the {terms} whose flows must use them before they can be published.": "Pick the actions, then the {terms} whose flows must use them before they can be published.",
@@ -3667,7 +3666,6 @@
   "Payroll": "Payroll",
   "Show all": "Show all",
   "Choose how pieces are organized when builders add a step: tabs, sections and pinned pieces.": "Choose how pieces are organized when builders add a step: tabs, sections and pinned pieces.",
-  "Customizing the piece menu is an Enterprise feature": "Customizing the piece menu is an Enterprise feature",
   "Integrations": "Integrations",
   "Piece menu": "Piece menu",
   "Resources": "Resources",
@@ -3677,5 +3675,7 @@
   "Projects saved": "Projects saved",
   "The project was saved, but its {term} wasn't changed: {message}": "The project was saved, but its {term} wasn't changed: {message}",
   "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed.": "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed.",
-  "Click a tab, search, or select a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.": "Click a tab, search, or select a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied."
+  "Click a tab, search, or select a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.": "Click a tab, search, or select a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.",
+  "Global connections are locked.": "Global connections are locked.",
+  "Saving the piece menu is locked. You can try changes here.": "Saving the piece menu is locked. You can try changes here."
 }

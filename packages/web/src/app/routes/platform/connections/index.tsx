@@ -295,6 +295,7 @@ export default function PlatformConnectionsPage() {
       <EnterpriseLockedSection
         unlocked={!globalLocked}
         featureKey="GLOBAL_CONNECTIONS"
+        line={t('Global connections are locked.')}
       />
       <div className="flex flex-col gap-2">
         {owners?.truncated && (
