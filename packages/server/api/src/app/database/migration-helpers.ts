@@ -8,27 +8,37 @@ import { DatabaseType } from './database-type'
 import { distributedLock } from './redis-connections'
 
 export const migrationHelpers = {
-    assertBackgroundMigrationComplete,
     createIndexConcurrently,
     dropIndexConcurrently,
-    withBackgroundMigrationLock,
+    requireBackgroundMigrationComplete,
 }
 
-async function assertBackgroundMigrationComplete({
+async function requireBackgroundMigrationComplete<T>({
     queryRunner,
+    log,
     migration,
+    fn,
 }: {
     queryRunner: QueryRunner
+    log: FastifyBaseLogger
     migration: new () => BackgroundMigration
-}): Promise<void> {
+    fn: () => Promise<T>
+}): Promise<T> {
     const name = new migration().name
-    const rows = await queryRunner.query(
-        `SELECT 1 FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1 AND "executed_at" IS NOT NULL`,
-        [name],
-    )
-    if (rows.length === 0) {
-        throw new BackgroundMigrationNotCompleteError(migration)
-    }
+    return distributedLock(log).runExclusive({
+        key: backgroundMigrationLockKey(name),
+        timeoutInSeconds: BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS,
+        fn: async () => {
+            const rows = await queryRunner.query(
+                `SELECT 1 FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1 AND "executed_at" IS NOT NULL`,
+                [name],
+            )
+            if (rows.length === 0) {
+                throw new BackgroundMigrationNotCompleteError(migration)
+            }
+            return fn()
+        },
+    })
 }
 
 async function createIndexConcurrently({
@@ -88,22 +98,6 @@ async function dropIndexConcurrently({
     await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "${name}"`)
 }
 
-async function withBackgroundMigrationLock<T>({
-    log,
-    migration,
-    fn,
-}: {
-    log: FastifyBaseLogger
-    migration: new () => BackgroundMigration
-    fn: () => Promise<T>
-}): Promise<T> {
-    const name = new migration().name
-    return distributedLock(log).runExclusive({
-        key: backgroundMigrationLockKey(name),
-        timeoutInSeconds: BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS,
-        fn,
-    })
-}
 
 const isPGlite = (): boolean => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
 

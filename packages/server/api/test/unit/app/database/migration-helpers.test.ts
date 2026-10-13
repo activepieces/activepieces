@@ -1,6 +1,5 @@
 import { QueryRunner } from 'typeorm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BackgroundMigration } from '../../../../src/app/database/background-migration'
 import { DatabaseType } from '../../../../src/app/database/database-type'
 import { migrationHelpers } from '../../../../src/app/database/migration-helpers'
 import { system } from '../../../../src/app/helper/system/system'
@@ -69,30 +68,6 @@ describe('dropIndexConcurrently', () => {
         const queryRunner = mockQueryRunner([])
         await migrationHelpers.dropIndexConcurrently({ queryRunner, name: 'idx_foo' })
         expect(queryRunner.query).toHaveBeenCalledWith(`DROP INDEX  IF EXISTS "idx_foo"`)
-    })
-})
-
-describe('assertBackgroundMigrationComplete', () => {
-    class TestBackfill implements BackgroundMigration {
-        name = 'TestBackfill1234'
-        release = '0.91.0'
-        transaction = false as const
-        public async up(): Promise<void> { /* no-op */ }
-        public async down(): Promise<void> { /* no-op */ }
-    }
-
-    it('resolves when the row is present', async () => {
-        const queryRunner = mockQueryRunner([{}])
-        await expect(
-            migrationHelpers.assertBackgroundMigrationComplete({ queryRunner, migration: TestBackfill }),
-        ).resolves.toBeUndefined()
-    })
-
-    it('throws when the row is absent', async () => {
-        const queryRunner = mockQueryRunner([])
-        await expect(
-            migrationHelpers.assertBackgroundMigrationComplete({ queryRunner, migration: TestBackfill }),
-        ).rejects.toThrow(/TestBackfill1234.*has not completed/)
     })
 })
 

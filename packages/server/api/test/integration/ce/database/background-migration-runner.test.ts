@@ -75,12 +75,14 @@ describe('backgroundMigrationRunner', () => {
         expect(upCalls).toBe(1)
     })
 
-    it('assertBackgroundMigrationComplete gates a blocking migration until the backfill runs', async () => {
+    it('requireBackgroundMigrationComplete gates a blocking migration until the backfill runs', async () => {
         const backfill = makeTestMigration({ name: `GateBackfill${Date.now()}` })
         const contract = async (queryRunner: QueryRunner): Promise<void> => {
-            await migrationHelpers.assertBackgroundMigrationComplete({
+            await migrationHelpers.requireBackgroundMigrationComplete({
                 queryRunner,
+                log: app!.log,
                 migration: backfill,
+                fn: async () => { /* no-op */ },
             })
         }
         const preRun = databaseConnection().createQueryRunner()
@@ -102,7 +104,7 @@ describe('backgroundMigrationRunner', () => {
         }
     })
 
-    it('assertBackgroundMigrationComplete rejects a backfill that only failed', async () => {
+    it('requireBackgroundMigrationComplete rejects a backfill that only failed', async () => {
         const backfill = makeTestMigration({
             name: `FailedGate${Date.now()}`,
             up: async () => { throw new Error('kaboom') },
@@ -113,14 +115,34 @@ describe('backgroundMigrationRunner', () => {
 
         const queryRunner = databaseConnection().createQueryRunner()
         try {
-            await expect(migrationHelpers.assertBackgroundMigrationComplete({
+            await expect(migrationHelpers.requireBackgroundMigrationComplete({
                 queryRunner,
+                log: app!.log,
                 migration: backfill,
+                fn: async () => { /* no-op */ },
             })).rejects.toThrow(/FailedGate.*has not completed/)
         }
         finally {
             await queryRunner.release()
         }
+    })
+
+    it('requireBackgroundMigrationComplete does not invoke fn when the backfill is incomplete', async () => {
+        const backfill = makeTestMigration({ name: `NoFnOnIncomplete${Date.now()}` })
+        let fnInvoked = false
+        const queryRunner = databaseConnection().createQueryRunner()
+        try {
+            await expect(migrationHelpers.requireBackgroundMigrationComplete({
+                queryRunner,
+                log: app!.log,
+                migration: backfill,
+                fn: async () => { fnInvoked = true },
+            })).rejects.toBeInstanceOf(Error)
+        }
+        finally {
+            await queryRunner.release()
+        }
+        expect(fnInvoked).toBe(false)
     })
 
     it('reports pending count via getStatus', async () => {
@@ -187,7 +209,7 @@ describe('runMigrationsWithCatchup', () => {
     })
 })
 
-describe('withBackgroundMigrationLock', () => {
+describe('requireBackgroundMigrationComplete lock behavior', () => {
     it('serializes a concurrent runOne against the lock', async () => {
         let migrationStarted = false
         let releaseMigration: () => void = () => undefined
@@ -200,37 +222,47 @@ describe('withBackgroundMigrationLock', () => {
             },
         })
         const runnerPromise = backgroundMigrationRunner.run({ log: app!.log, migrations: [SlowMigration] })
-        let gotLock = false
-        let lockWaiter: Promise<void> | null = null
+        let fnInvoked = false
+        let waiter: Promise<void> | null = null
         try {
             await waitFor(() => migrationStarted, 2_000)
-            lockWaiter = migrationHelpers.withBackgroundMigrationLock({
+            const queryRunner = databaseConnection().createQueryRunner()
+            waiter = migrationHelpers.requireBackgroundMigrationComplete({
+                queryRunner,
                 log: app!.log,
                 migration: SlowMigration,
-                fn: async () => { gotLock = true },
-            })
+                fn: async () => { fnInvoked = true },
+            }).finally(() => queryRunner.release())
             await new Promise(resolve => setTimeout(resolve, 100))
-            expect(gotLock).toBe(false)
+            expect(fnInvoked).toBe(false)
 
             releaseMigration()
             await runnerPromise
-            await lockWaiter
-            expect(gotLock).toBe(true)
+            await waiter
+            expect(fnInvoked).toBe(true)
         }
         finally {
             releaseMigration()
-            await Promise.allSettled([runnerPromise, lockWaiter ?? Promise.resolve()])
+            await Promise.allSettled([runnerPromise, waiter ?? Promise.resolve()])
         }
     })
 
-    it('acquires immediately when no migration is in-flight', async () => {
-        const Any = makeTestMigration({ name: `IdleLock${Date.now()}` })
+    it('acquires immediately after a completed migration', async () => {
+        const Done = makeTestMigration({ name: `IdleLock${Date.now()}` })
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [Done] })
+        const queryRunner = databaseConnection().createQueryRunner()
         const start = Date.now()
-        await migrationHelpers.withBackgroundMigrationLock({
-            log: app!.log,
-            migration: Any,
-            fn: async () => { /* no-op */ },
-        })
+        try {
+            await migrationHelpers.requireBackgroundMigrationComplete({
+                queryRunner,
+                log: app!.log,
+                migration: Done,
+                fn: async () => { /* no-op */ },
+            })
+        }
+        finally {
+            await queryRunner.release()
+        }
         const elapsed = Date.now() - start
         expect(elapsed).toBeLessThan(500)
     })

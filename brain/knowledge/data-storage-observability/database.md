@@ -65,11 +65,11 @@ Blocking runs under a Redis lock at boot — anything more than seconds blocks e
 
 ### Cross-track dependency
 
-**Any blocking migration that depends on a background backfill MUST call `migrationHelpers.assertBackgroundMigrationComplete({ queryRunner, migration: TheBackfill })` as the first statement of `up()`.** No exceptions — not for `DROP COLUMN`, not for `SET NOT NULL`, not for `USING INDEX`, not for `VALIDATE CONSTRAINT`.
+**Any blocking migration that depends on a background backfill MUST wrap its dependent DDL in `migrationHelpers.requireBackgroundMigrationComplete({ queryRunner, log, migration: TheBackfill, fn })`.** No exceptions — not for `DROP COLUMN`, not for `SET NOT NULL`, not for `USING INDEX`, not for `VALIDATE CONSTRAINT`.
 
-The guard is what triggers boot catchup. Catchup only reacts to the typed `BackgroundMigrationNotCompleteError` the guard throws; a raw Postgres error (nulls hitting `SET NOT NULL`, missing index hitting `USING INDEX`, orphans hitting `VALIDATE CONSTRAINT`) is NOT recognized as a cross-track failure — catchup rethrows it and boot wedges in a restart loop. The guard is the only way for the catchup to know which backfill to run.
+The helper does two things atomically: (1) acquires the per-migration distributed lock so a still-running background runner on another pod cannot race the DDL, and (2) verifies the completion row exists, throwing `BackgroundMigrationNotCompleteError` otherwise. Boot catchup only reacts to this typed error — a raw Postgres error (nulls hitting `SET NOT NULL`, missing index hitting `USING INDEX`, orphans hitting `VALIDATE CONSTRAINT`) is NOT recognized as a cross-track failure, so catchup rethrows it and boot wedges in a restart loop. The helper is the only way for catchup to know which backfill to run AND the only way to serialise against an in-flight runner.
 
-The guard also prevents the silently dangerous cases (`DROP COLUMN`, `DELETE FROM`) that Postgres won't error on at all.
+It also prevents the silently dangerous cases (`DROP COLUMN`, `DELETE FROM`) that Postgres won't error on at all.
 
 Contract DDL and its backfill ship in **different releases**. Same-release attempts fail boot, catchup runs the backfill, retries — this is the intended path.
 
@@ -221,15 +221,18 @@ public async up(q: QueryRunner): Promise<void> {
 }
 ```
 
-Step 3 — blocking, release N+1 (guard implies both backfill and validate are done, so `SET NOT NULL` is metadata-only):
+Step 3 — blocking, release N+1 (helper implies both backfill and validate are done, so `SET NOT NULL` is metadata-only):
 ```ts
 public async up(q: QueryRunner): Promise<void> {
-    await migrationHelpers.assertBackgroundMigrationComplete({
+    await migrationHelpers.requireBackgroundMigrationComplete({
         queryRunner: q,
+        log: system.globalLogger(),
         migration: BackfillAndValidateFooColNulls, // the single background migration above
+        fn: async () => {
+            await q.query(`ALTER TABLE foo ALTER COLUMN col SET NOT NULL`)
+            await q.query(`ALTER TABLE foo DROP CONSTRAINT foo_col_not_null`)
+        },
     })
-    await q.query(`ALTER TABLE foo ALTER COLUMN col SET NOT NULL`)
-    await q.query(`ALTER TABLE foo DROP CONSTRAINT foo_col_not_null`)
 }
 ```
 
@@ -240,13 +243,14 @@ public async up(q: QueryRunner): Promise<void> {
 
 ### Rollback choreography when a blocking migration pairs with a background one
 
-A blocking `down()` that touches the same tables/indexes/columns a background migration touches can race the still-running runner on another pod. The runner holds a Redis distributed lock keyed by migration name while executing — `down()` must acquire the same lock before issuing its own DDL, otherwise rollback and the background job can issue conflicting operations concurrently.
+A blocking `down()` that touches the same tables/indexes/columns a background migration touches can race the still-running runner on another pod. The same `requireBackgroundMigrationComplete` helper used in `up()` is the right primitive here too — it acquires the per-migration lock, so `down()`'s DDL serialises with any in-flight runner.
 
 Pattern:
 
 ```ts
 public async down(q: QueryRunner): Promise<void> {
-    await migrationHelpers.withBackgroundMigrationLock({
+    await migrationHelpers.requireBackgroundMigrationComplete({
+        queryRunner: q,
         log: system.globalLogger(),
         migration: ReshapeFooIndexes, // the paired background migration
         fn: async () => {
@@ -300,7 +304,7 @@ A background migration that fails every retry stops the app from booting. The gu
 - `packages/server/api/src/app/database/postgres-connection.ts` — `getMigrations()`, `getBackgroundMigrations()`.
 - `packages/server/api/src/app/database/migration.ts` — the `Migration` interface.
 - `packages/server/api/src/app/database/background-migration.ts` — the `BackgroundMigration` interface.
-- `packages/server/api/src/app/database/migration-helpers.ts` — `assertBackgroundMigrationComplete`, `createIndexConcurrently`.
+- `packages/server/api/src/app/database/migration-helpers.ts` — `requireBackgroundMigrationComplete`, `createIndexConcurrently`, `dropIndexConcurrently`.
 - `packages/server/api/src/app/database/background-migration-runner.ts` — the BullMQ handler.
 - `tools/scripts/check-migration-rollback.ts` — the CI check.
 
