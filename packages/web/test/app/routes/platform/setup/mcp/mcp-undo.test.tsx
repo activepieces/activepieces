@@ -11,6 +11,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PlatformMcpPage from '@/app/routes/platform/setup/mcp';
@@ -28,6 +29,9 @@ const state = vi.hoisted(() => ({
 vi.mock('i18next', () => ({
   t: (key: string, values?: Record<string, string>) =>
     key.replace(/\{(\w+)\}/g, (_, name: string) => values?.[name] ?? ''),
+}));
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
@@ -211,6 +215,24 @@ describe('Platform MCP undo locking', () => {
           .hasAttribute('disabled'),
       ).toBe(false),
     );
+  });
+});
+
+describe('Platform MCP failed undo', () => {
+  it('tells the admin when Undo could not read the tools', async () => {
+    renderAccessPage();
+    await waitFor(() => expect(state.onUndo).toBeDefined());
+    state.get = () => Promise.reject(new Error('network down'));
+
+    await expect(state.onUndo?.()).rejects.toThrow('network down');
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't undo",
+        expect.anything(),
+      ),
+    );
+    expect(state.updateAsync).not.toHaveBeenCalled();
   });
 });
 

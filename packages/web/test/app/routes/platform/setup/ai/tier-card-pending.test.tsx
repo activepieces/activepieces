@@ -12,6 +12,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import * as React from 'react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TierCard } from '@/app/routes/platform/setup/ai/tiers-tab/tier-card';
@@ -329,6 +330,24 @@ describe('TierCard Undo', () => {
       id: 'expert',
       request: { entries: [SONNET, HAIKU] },
     });
+  });
+
+  it('tells the admin when Undo could not read the tier', async () => {
+    const queryClient = new QueryClient();
+    renderCard(queryClient);
+    fireEvent.click(menuItem('Remove') ?? document.body);
+    await waitFor(() => expect(state.onUndo).toBeDefined());
+    state.listAdmin = () => Promise.reject(new Error('network down'));
+
+    await expect(state.onUndo?.()).rejects.toThrow('network down');
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't undo",
+        expect.anything(),
+      ),
+    );
+    expect(state.undoAsync).not.toHaveBeenCalled();
   });
 
   it('puts the removed model back into the tier as the server has it now', async () => {

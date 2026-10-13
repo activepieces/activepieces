@@ -113,7 +113,8 @@ export function TierCard({
         },
       });
     },
-    onError: (error) => mutationFeedback.markShown(error),
+    onError: (error) =>
+      mutationFeedback.error({ error, title: t("Couldn't undo") }),
   });
   const tierWrites = {
     mutationKey: platformModelTierKeys.admin,

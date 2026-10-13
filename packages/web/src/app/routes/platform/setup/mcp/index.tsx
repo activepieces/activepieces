@@ -90,7 +90,8 @@ function AccessContent() {
       });
     },
     onSuccess: () => refetch(),
-    onError: (error) => mutationFeedback.markShown(error),
+    onError: (error) =>
+      mutationFeedback.error({ error, title: t("Couldn't undo") }),
   });
   const undoingChange = useIsMutating({ mutationKey: MCP_UNDO_KEY }) > 0;
 
