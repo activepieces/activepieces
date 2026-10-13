@@ -43,6 +43,7 @@ export type FlowState = {
     operation: FlowOperationRequest,
     onSuccess?: () => void,
   ) => void;
+  savePendingEdits: () => Promise<void>;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleDataLocally: (params: {
     stepName: string;
@@ -271,6 +272,10 @@ export const createFlowState = (
 
         return { flowVersion: newFlowVersion };
       }),
+    savePendingEdits: async () => {
+      flowUpdatesDebounce.flush();
+      await flowUpdatesQueue.drain();
+    },
     setVersion: (
       flowVersion: FlowVersion,
       shouldReselectInitialStep: boolean = true,
