@@ -21,6 +21,7 @@ const state = vi.hoisted(() => ({
   updateAsync: vi.fn(),
   undoAsync: vi.fn(),
   serverTiers: [] as PlatformModelTier[],
+  listAdmin: undefined as (() => Promise<PlatformModelTier[]>) | undefined,
   onUndo: undefined as (() => Promise<unknown>) | undefined,
 }));
 
@@ -47,7 +48,7 @@ vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
 }));
 vi.mock('@/features/platform-admin/api/platform-model-tier-api', () => ({
   platformModelTierApi: {
-    listAdmin: () => Promise.resolve(state.serverTiers),
+    listAdmin: () => state.listAdmin?.() ?? Promise.resolve(state.serverTiers),
   },
 }));
 vi.mock('@/lib/mutation-feedback', async (importOriginal) => {
@@ -187,6 +188,7 @@ beforeEach(() => {
   state.updateAsync = vi.fn().mockResolvedValue(tier([SONNET]));
   state.undoAsync = vi.fn().mockResolvedValue(tier([SONNET, HAIKU]));
   state.serverTiers = [];
+  state.listAdmin = undefined;
   state.onUndo = undefined;
 });
 
@@ -292,6 +294,41 @@ describe('TierCard Undo', () => {
     await first;
 
     expect(state.undoAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks edits while Undo reads the tier and until it saves', async () => {
+    const queryClient = new QueryClient();
+    let answer: (tiers: PlatformModelTier[]) => void = () => undefined;
+    renderCard(queryClient);
+    fireEvent.click(menuItem('Remove') ?? document.body);
+    await waitFor(() => expect(state.onUndo).toBeDefined());
+    state.listAdmin = () =>
+      new Promise((resolve) => {
+        answer = resolve;
+      });
+
+    let undone: Promise<unknown> | undefined;
+    act(() => {
+      undone = state.onUndo?.();
+    });
+
+    await waitFor(() => {
+      for (const trigger of screen.getAllByRole('button', {
+        name: 'Model actions',
+      })) {
+        expect(trigger.hasAttribute('disabled')).toBe(true);
+      }
+    });
+    expect(menuItem('Delete')?.getAttribute('aria-disabled')).toBe('true');
+
+    await act(async () => {
+      answer([tier([SONNET])]);
+      await undone;
+    });
+    expect(state.undoAsync).toHaveBeenCalledWith({
+      id: 'expert',
+      request: { entries: [SONNET, HAIKU] },
+    });
   });
 
   it('puts the removed model back into the tier as the server has it now', async () => {

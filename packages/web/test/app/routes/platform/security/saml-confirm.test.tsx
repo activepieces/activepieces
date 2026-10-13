@@ -21,7 +21,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
-const state = vi.hoisted(() => ({ update: vi.fn() }));
+const state = vi.hoisted(() => ({ update: vi.fn(), updateDomain: vi.fn() }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 vi.mock('sonner', () => ({
@@ -33,10 +33,15 @@ vi.mock('@/hooks/flags-hooks', () => ({
 vi.mock('@/api/platforms-api', () => ({
   platformApi: {
     update: (...args: unknown[]) => state.update(...args),
-    getCurrentPlatform: vi.fn(),
+    getCurrentPlatform: () =>
+      Promise.resolve({ ...PLATFORM, emailAuthEnabled: true }),
   },
 }));
-vi.mock('@/features/platform-admin', () => ({ samlSsoApi: {} }));
+vi.mock('@/features/platform-admin', () => ({
+  samlSsoApi: {
+    updateSsoDomain: (...args: unknown[]) => state.updateDomain(...args),
+  },
+}));
 
 const PLATFORM = {
   id: 'p',
@@ -64,6 +69,48 @@ beforeEach(() => {
     .mockRejectedValue(
       mutationFeedback.userError('The IdP metadata is invalid'),
     );
+  state.updateDomain = vi
+    .fn()
+    .mockRejectedValue(mutationFeedback.userError('That domain is taken'));
+});
+
+describe('Update SSO domain confirm', () => {
+  it('stays open and shows why the domain change failed', async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ConfigureSamlDialog
+          platform={PLATFORM}
+          connected
+          refetch={() => Promise.resolve()}
+        />
+      </QueryClientProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.change(await screen.findByLabelText('Domain'), {
+      target: { value: 'acme.io' },
+    });
+    fireEvent.submit(screen.getByRole('button', { name: 'Update domain' }));
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Update SSO domain?',
+      hidden: true,
+    });
+    fireEvent.click(
+      within(confirm).getByRole('button', {
+        name: 'Update domain',
+        hidden: true,
+      }),
+    );
+
+    await waitFor(() => expect(state.updateDomain).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(within(confirm).getByText('That domain is taken')).toBeDefined(),
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Update SSO domain?', hidden: true }),
+    ).toBe(confirm);
+    expect(screen.getAllByText('That domain is taken')).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
 });
 
 describe('New SAML settings confirm', () => {

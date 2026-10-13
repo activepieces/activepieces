@@ -240,11 +240,12 @@ const DomainStep = ({
     },
     feedback: 'inline',
     handleError: (error) => {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: mutationFeedback.message(error),
-      });
-      setShowUpdateWarning(false);
+      if (!showUpdateWarning) {
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
+        });
+      }
       return true;
     },
     onSuccess: () => setShowUpdateWarning(false),
