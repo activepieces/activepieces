@@ -3,6 +3,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { FeatureKey } from '../components/request-trial';
+import { enterpriseDocs } from '../utils/enterprise-docs';
 
 import { billingDialogHooks } from './billing-dialog-hooks';
 import { enterpriseTrialHooks } from './enterprise-trial-hooks';
@@ -53,7 +54,7 @@ export function useEnterpriseGate({
       return;
     }
     if (access === 'community') {
-      window.open(ENTERPRISE_DOCUMENTATION_URL, '_blank', 'noopener');
+      window.open(enterpriseDocs.switchToEnterpriseUrl, '_blank', 'noopener');
       return;
     }
     const resumable = options?.resumable ?? true;
@@ -67,9 +68,6 @@ export function useEnterpriseGate({
 
   return { access, locked, run, explain };
 }
-
-const ENTERPRISE_DOCUMENTATION_URL =
-  'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
 
 export type EnterpriseAccess =
   | 'entitled'

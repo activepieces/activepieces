@@ -2020,7 +2020,6 @@
   "Piece Set": "Piece Set",
   "Projects assigned to this set will be reassigned to the default set.": "Projects assigned to this set will be reassigned to the default set.",
   "A piece set decides which pieces (actions/triggers) a project can see. It can also set required actions that a flow must include before it can be published.": "A piece set decides which pieces (actions/triggers) a project can see. It can also set required actions that a flow must include before it can be published.",
-  "Piece sets need a higher plan.": "Piece sets need a higher plan.",
   "No piece sets found": "No piece sets found",
   "Create a piece set to control which pieces are available to specific projects": "Create a piece set to control which pieces are available to specific projects",
   "Set Name": "Set Name",
@@ -3460,7 +3459,6 @@
   "Thanks for trying the Enterprise plan": "Thanks for trying the Enterprise plan",
   "The Enterprise plan for your whole team": "The Enterprise plan for your whole team",
   "The Enterprise plan trial is not available for your platform right now. Please try again later, or talk to our team.": "The Enterprise plan trial is not available for your platform right now. Please try again later, or talk to our team.",
-  "The {plan} plan": "The {plan} plan",
   "Try it now. Saving needs the Enterprise plan.": "Try it now. Saving needs the Enterprise plan.",
   "Try the Enterprise plan free for {days} days": "Try the Enterprise plan free for {days} days",
   "Try your logo and colors here. The preview is only for you until you save it with the Enterprise plan.": "Try your logo and colors here. The preview is only for you until you save it with the Enterprise plan.",
@@ -3530,5 +3528,9 @@
   "Hiding pieces from your users is locked.": "Hiding pieces from your users is locked.",
   "Your automations run on shared workers. Dedicated workers start every flow faster.": "Your automations run on shared workers. Dedicated workers start every flow faster.",
   "Today · {date}": "Today · {date}",
-  "Your Enterprise plan trial started. Everything is unlocked for {days} days.": "Your Enterprise plan trial started. Everything is unlocked for {days} days."
+  "Your Enterprise plan trial started. Everything is unlocked for {days} days.": "Your Enterprise plan trial started. Everything is unlocked for {days} days.",
+  "No piece sets yet": "No piece sets yet",
+  "Read the docs": "Read the docs",
+  "Contact sales to unlock the piece selector": "Contact sales to unlock the piece selector",
+  "Contact sales to unlock custom roles": "Contact sales to unlock custom roles"
 }

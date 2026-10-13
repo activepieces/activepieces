@@ -208,7 +208,7 @@ export const PieceSetsTab = () => {
         emptyStateTextTitle={
           platform.plan.managePiecesEnabled
             ? t('No piece sets found')
-            : t('Piece sets need a higher plan.')
+            : t('No piece sets yet')
         }
         emptyStateTextDescription={
           platform.plan.managePiecesEnabled

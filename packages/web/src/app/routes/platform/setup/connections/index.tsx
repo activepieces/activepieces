@@ -231,6 +231,7 @@ const GlobalConnectionsTable = () => {
     gcTime: 0,
   });
   const isSample = !platform.plan.globalConnectionsEnabled;
+  const samplePage = useMemo(() => sampleData.globalConnectionsPage(), []);
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -349,7 +350,7 @@ const GlobalConnectionsTable = () => {
         )}
         emptyStateIcon={<Globe />}
         columns={columns}
-        page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
+        page={isSample ? samplePage : globalConnections}
         isLoading={isSample ? false : isLoadingGlobalConnections}
         isError={isGlobalConnectionsError}
         errorStateEntity={t('connections')}

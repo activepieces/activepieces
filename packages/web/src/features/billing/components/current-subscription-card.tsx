@@ -56,22 +56,11 @@ export const CurrentSubscriptionCard = ({
             )}
           </span>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <EnterpriseTrialSalesLink
-            surface="enterprise_trial_billing"
-            variant="default"
-            className="flex-1"
-            label={t('Talk to sales')}
-          />
-          <Button
-            {...adminControl(AdminControl.BILLING_PLANS_OPEN)}
-            variant="outline"
-            className="flex-1"
-            onClick={onExplorePlans}
-          >
-            {t('Explore plans')}
-          </Button>
-        </div>
+        <EnterpriseTrialSalesLink
+          surface="enterprise_trial_billing"
+          variant="default"
+          label={t('Talk to sales')}
+        />
       </div>
     );
   }

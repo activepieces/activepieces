@@ -46,11 +46,7 @@ export function EnterpriseTrialEndedDialog() {
     setSeenKey(storageKey);
   };
   const paused = enterpriseTrialFeatures.pausedAfterTrial(platform.plan.plan);
-  const kept = [
-    t('Flows, connections and data'),
-    t('Your credits'),
-    t('The {plan} plan', { plan: trial.basePlanName }),
-  ];
+  const kept = [t('Flows, connections and data'), t('Your credits')];
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>

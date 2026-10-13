@@ -240,7 +240,7 @@ describe('lean locked row for partly locked pages', () => {
     renderRow();
     expect(
       screen.getAllByRole('button').map((button) => button.textContent),
-    ).toEqual(['Start free trial', 'Explore plans']);
+    ).toEqual(['Explore plans', 'Start free trial']);
     expect(
       screen.queryByText('7-day Enterprise plan trial. No credit card.'),
     ).toBeNull();

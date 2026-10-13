@@ -34,6 +34,7 @@ export function BillingPageShell({
         url: EDITION_GUIDE_URL,
         label: t('How to switch to the Enterprise edition'),
       }}
+      showContactSales={false}
     >
       <BillingPageContent header={header}>{children}</BillingPageContent>
     </LockedFeatureGuard>

@@ -32,6 +32,7 @@ export function EnterpriseLockedRow({
         featureKey={featureKey}
         surface={surface}
         compact
+        primaryLast
       />
     </div>
   );
