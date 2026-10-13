@@ -265,7 +265,7 @@ What this guarantees:
 - Deleting the `background_migrations` row is a deliberate per-migration choice: it tells a future re-upgrade to re-run the reshape. Omit it if your `down()` is leaving the background work's effects intact.
 
 Runbook caveat the pattern does NOT replace:
-- A reshape mid-run holds the lock. If the backfill takes an hour, `down()` waits an hour. Production rollback should still **scale API pods to 0 first** so the runner is quiesced, then run `rollback-migrations.ts`, then redeploy the older version. The lock is a backstop against racy rolling rollbacks, not a license to perform them.
+- The lock wait is bounded. `distributedLockFactory` configures RedLock with `retryCount * retryDelay = (timeout / 200) * 200ms`, so for the 240s lock timeout the helper gives up after ~4 minutes and throws. If `down()` is waiting on an in-flight long backfill, it won't block for the backfill's full duration — the operator sees an acquire-failure error well before. When that happens, scale API pods to 0 (quiesces the runner), re-run `rollback-migrations.ts`, then redeploy the older version. The lock is a backstop against racy rolling rollbacks, not a license to perform them.
 
 What this does NOT solve:
 - A background migration that already made destructive data changes (uuid migration, column type change) cannot be rolled back by the framework. The data stays post-rollback. The only "undo" is to ship a new background migration with the reverse logic — or accept the data residue.

@@ -200,20 +200,22 @@ describe('withBackgroundMigrationLock', () => {
             },
         })
         const runnerPromise = backgroundMigrationRunner.run({ log: app!.log, migrations: [SlowMigration] })
-        await waitFor(() => migrationStarted, 2_000)
-
         let gotLock = false
-        const lockWaiter = migrationHelpers.withBackgroundMigrationLock({
-            log: app!.log,
-            migration: SlowMigration,
-            fn: async () => { gotLock = true },
-        })
-        await new Promise(resolve => setTimeout(resolve, 100))
-        expect(gotLock).toBe(false)
-
-        releaseMigration()
-        await runnerPromise
-        await lockWaiter
+        let lockWaiter: Promise<void> | null = null
+        try {
+            await waitFor(() => migrationStarted, 2_000)
+            lockWaiter = migrationHelpers.withBackgroundMigrationLock({
+                log: app!.log,
+                migration: SlowMigration,
+                fn: async () => { gotLock = true },
+            })
+            await new Promise(resolve => setTimeout(resolve, 100))
+            expect(gotLock).toBe(false)
+        }
+        finally {
+            releaseMigration()
+            await Promise.allSettled([runnerPromise, lockWaiter ?? Promise.resolve()])
+        }
         expect(gotLock).toBe(true)
     })
 
