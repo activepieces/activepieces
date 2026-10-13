@@ -8,11 +8,11 @@
   "The error message to show when the flow fails.": "フローが失敗したときに表示されるエラーメッセージ。",
   "Stop or fail a running flow, or get a link to the current run.": "実行中のフローを停止または失敗させるか、現在の実行へのリンクを取得します。",
   "Gets this run's ID and a link to open it.": "この実行のIDと、それを開くリンクを取得します。",
-  "Ends the run at this step and marks it as failed.": "このステップで実行を終了し、失敗としてマークします。",
+  "Fails this step with your error message.": "指定したエラーメッセージでこのステップを失敗させます。",
   "Ends the run at this step and marks it as succeeded.": "このステップで実行を終了し、成功としてマークします。",
   "Markdown": "Markdown",
   "Outputs this run's ID and a link that opens the run.": "この実行のIDと、実行を開くリンクを出力します。",
-  "The run is marked as failed here and later steps do not run. If Add Error Handler is on, the Failure branch runs and the flow continues.": "実行はここで失敗としてマークされ、以降のステップは実行されません。「エラーハンドリングを追加」がオンの場合は、「失敗」ブランチが実行され、フローは続行されます。",
-  "Shown as the run's error. Can include data from earlier steps.": "実行のエラーとして表示されます。前のステップのデータを含めることができます。",
+  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "実行はここで失敗し、以降のステップは実行されません。「エラーハンドリングを追加」がオンの場合は、このステップだけが失敗します。「失敗」ブランチが実行され、フローは続行されます。",
+  "Shown as the step's error. Can include data from earlier steps.": "ステップのエラーとして表示されます。前のステップのデータを含めることができます。",
   "The run ends here and is marked as succeeded. Steps after this one do not run.": "実行はここで終了し、成功としてマークされます。以降のステップは実行されません。"
 }

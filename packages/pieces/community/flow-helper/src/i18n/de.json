@@ -8,11 +8,11 @@
   "The error message to show when the flow fails.": "Die Fehlermeldung, die angezeigt wird, wenn der Fluss fehlschlägt.",
   "Stop or fail a running flow, or get a link to the current run.": "Einen laufenden Flow stoppen oder fehlschlagen lassen oder einen Link zum aktuellen Lauf abrufen.",
   "Gets this run's ID and a link to open it.": "Ruft die ID dieses Laufs und einen Link zum Öffnen ab.",
-  "Ends the run at this step and marks it as failed.": "Beendet den Lauf bei diesem Schritt und markiert ihn als fehlgeschlagen.",
+  "Fails this step with your error message.": "Lässt diesen Schritt mit Ihrer Fehlermeldung fehlschlagen.",
   "Ends the run at this step and marks it as succeeded.": "Beendet den Lauf bei diesem Schritt und markiert ihn als erfolgreich.",
   "Markdown": "Markdown",
   "Outputs this run's ID and a link that opens the run.": "Gibt die ID dieses Laufs und einen Link aus, der den Lauf öffnet.",
-  "The run is marked as failed here and later steps do not run. If Add Error Handler is on, the Failure branch runs and the flow continues.": "Der Lauf wird hier als fehlgeschlagen markiert und spätere Schritte werden nicht ausgeführt. Wenn Add Error Handler aktiviert ist, läuft der Zweig Fehler und der Flow wird fortgesetzt.",
-  "Shown as the run's error. Can include data from earlier steps.": "Wird als Fehler des Laufs angezeigt. Kann Daten aus früheren Schritten enthalten.",
+  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "Der Lauf schlägt hier fehl und spätere Schritte werden nicht ausgeführt. Wenn Add Error Handler aktiviert ist, schlägt nur dieser Schritt fehl. Der Zweig Fehler läuft und der Flow wird fortgesetzt.",
+  "Shown as the step's error. Can include data from earlier steps.": "Wird als Fehler des Schritts angezeigt. Kann Daten aus früheren Schritten enthalten.",
   "The run ends here and is marked as succeeded. Steps after this one do not run.": "Der Lauf endet hier und wird als erfolgreich markiert. Schritte danach werden nicht ausgeführt."
 }
