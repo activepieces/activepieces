@@ -2,6 +2,7 @@
 import {
   EmptyTrigger,
   FlowOperationStatus,
+  FlowOperationType,
   FlowRun,
   FlowRunStatus,
   FlowStatus,
@@ -279,6 +280,65 @@ describe('useFlowLock when the holder frees the Resource Lock', () => {
   });
 });
 
+describe('useFlowLock when this tab holds the Resource Lock and leaves', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    socketHarness.reset();
+    flowsApiMock.get.mockReset();
+    flowsApiMock.update.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('releases the lock only after its pending edit is saved, so the next holder refreshes onto that edit', async () => {
+    const lastSave = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.update.mockReturnValue(lastSave.promise);
+    const store = createStore(draftFlow({ displayName: 'Order lookup' }));
+    const { unmount } = renderFlowLock(store);
+    await answerLockRequest({ acquired: true, lock: null });
+
+    act(() => {
+      store.getState().applyOperation({
+        type: FlowOperationType.CHANGE_NAME,
+        request: { displayName: 'Last edit of the holder' },
+      });
+    });
+    unmount();
+    await settle();
+    expect(flowsApiMock.update).toHaveBeenCalledTimes(1);
+    expect(unlockRequests()).toHaveLength(0);
+
+    lastSave.resolve(draftFlow({ displayName: 'Last edit of the holder' }));
+    await settle();
+    expect(unlockRequests()).toEqual([
+      expect.objectContaining({ payload: { resourceId: 'flow-1' } }),
+    ]);
+  });
+
+  it('releases the lock when its last save fails', async () => {
+    flowsApiMock.update.mockRejectedValue(new Error('Bad Request'));
+    const store = createStore(draftFlow({ displayName: 'Order lookup' }));
+    const { unmount } = renderFlowLock(store);
+    await answerLockRequest({ acquired: true, lock: null });
+    flowsApiMock.get.mockResolvedValue(
+      draftFlow({ displayName: 'Order lookup' }),
+    );
+
+    act(() => {
+      store.getState().applyOperation({
+        type: FlowOperationType.CHANGE_NAME,
+        request: { displayName: 'Last edit of the holder' },
+      });
+    });
+    unmount();
+    await settle();
+
+    expect(unlockRequests()).toHaveLength(1);
+  });
+});
+
 function renderFlowLock(store: BuilderStore) {
   return renderHook(
     () => {
@@ -300,6 +360,12 @@ function renderFlowLock(store: BuilderStore) {
 function lockRequests() {
   return socketHarness.emitCalls.filter(
     (call) => call.event === WebsocketServerEvent.LOCK_RESOURCE,
+  );
+}
+
+function unlockRequests() {
+  return socketHarness.emitCalls.filter(
+    (call) => call.event === WebsocketServerEvent.UNLOCK_RESOURCE,
   );
 }
 

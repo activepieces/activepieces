@@ -11,10 +11,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
+const latestAcquireByResource = new Map<string, symbol>();
+
 function useResourceLock({
   resourceId,
   onTakeOver,
   onLockFreed,
+  beforeRelease,
 }: UseResourceLockParams) {
   const socket = useSocket();
   const currentUserId = authenticationSession.getCurrentUserId();
@@ -25,6 +28,8 @@ function useResourceLock({
   const [lockSession, setLockSession] = useState(0);
   const [lockedBy, setLockedBy] = useState<LockHolder | null>(null);
   const acquiresFreedLock = !isNil(onLockFreed);
+  const beforeReleaseRef = useRef(beforeRelease);
+  beforeReleaseRef.current = beforeRelease;
 
   useEffect(() => {
     const handleLocked = (event: ResourceLockedEvent) => {
@@ -82,6 +87,8 @@ function useResourceLock({
   }, [resourceId, socket, lockedBy, onLockFreed]);
 
   useEffect(() => {
+    const acquire = Symbol(resourceId);
+    latestAcquireByResource.set(resourceId, acquire);
     socket.emit(
       WebsocketServerEvent.LOCK_RESOURCE,
       { resourceId },
@@ -113,8 +120,17 @@ function useResourceLock({
     return () => {
       clearInterval(heartbeat);
       if (isOwner.current) {
-        socket.emit(WebsocketServerEvent.UNLOCK_RESOURCE, { resourceId });
         isOwner.current = false;
+        releaseAfter({
+          beforeRelease: beforeReleaseRef.current,
+          release: () => {
+            if (latestAcquireByResource.get(resourceId) !== acquire) {
+              return;
+            }
+            latestAcquireByResource.delete(resourceId);
+            socket.emit(WebsocketServerEvent.UNLOCK_RESOURCE, { resourceId });
+          },
+        });
       }
     };
   }, [resourceId, socket, lockSession]);
@@ -137,12 +153,29 @@ function useResourceLock({
   return { lockedBy, takeOver };
 }
 
+function releaseAfter({
+  beforeRelease,
+  release,
+}: {
+  beforeRelease: (() => Promise<void>) | undefined;
+  release: () => void;
+}) {
+  if (isNil(beforeRelease)) {
+    release();
+    return;
+  }
+  beforeRelease()
+    .finally(release)
+    .catch(() => undefined);
+}
+
 export { useResourceLock };
 
 type UseResourceLockParams = {
   resourceId: string;
   onTakeOver?: () => void | Promise<void>;
   onLockFreed?: () => Promise<void>;
+  beforeRelease?: () => Promise<void>;
 };
 
 type LockHolder = NonNullable<LockResourceResponse['lock']>;
