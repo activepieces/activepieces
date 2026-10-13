@@ -1,29 +1,34 @@
 import { Mutex } from 'async-mutex';
 
 export class PromiseQueue {
-  private queue: (() => Promise<unknown>)[] = [];
   private lock: Mutex = new Mutex();
-  private halted = false;
+  private waiting = 0;
+  private unsettled = new Set<Promise<void>>();
 
-  add(promise: () => Promise<unknown>) {
-    this.queue.push(promise);
-    this.run();
-  }
-
-  halt() {
-    this.halted = true;
-  }
-  size() {
-    return this.queue.length;
-  }
-
-  private run() {
-    this.lock.runExclusive(async () => {
-      const promise = this.queue.shift()!;
-      if (this.halted) {
-        return;
-      }
-      await promise();
+  add(task: () => Promise<unknown>) {
+    this.waiting++;
+    const completion = this.lock.runExclusive(async () => {
+      this.waiting--;
+      await task();
     });
+    this.unsettled.add(completion);
+    const forget = () => {
+      this.unsettled.delete(completion);
+    };
+    completion.then(forget, forget);
+  }
+
+  size() {
+    return this.waiting;
+  }
+
+  async drain(): Promise<void> {
+    const results = await Promise.allSettled([...this.unsettled]);
+    const failure = results.find(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+    if (failure) {
+      throw failure.reason;
+    }
   }
 }
