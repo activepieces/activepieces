@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { updateOrderOutputSchema } from '../output-schemas';
 
 export const wooUpdateOrder = createAction({
@@ -100,9 +101,7 @@ export const wooUpdateOrder = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.PUT,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${encodeURIComponent(
-        String(id).trim()
-      )}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${wooPathId.encode({ id, label: 'Order ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { getOrderOutputSchema } from '../output-schemas';
 
 export const wooGetOrder = createAction({
@@ -36,9 +37,7 @@ export const wooGetOrder = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${encodeURIComponent(
-        String(orderId).trim()
-      )}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${wooPathId.encode({ id: orderId, label: 'Order ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

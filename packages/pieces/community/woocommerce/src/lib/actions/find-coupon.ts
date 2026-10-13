@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { findCouponOutputSchema } from '../output-schemas';
 
 export const wooFindCoupon = createAction({
@@ -36,9 +37,7 @@ export const wooFindCoupon = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${encodeURIComponent(
-        String(couponId).trim()
-      )}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${wooPathId.encode({ id: couponId, label: 'Coupon ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

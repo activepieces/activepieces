@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { addOrderNoteOutputSchema } from '../output-schemas';
 
 export const wooAddOrderNote = createAction({
@@ -64,9 +65,7 @@ export const wooAddOrderNote = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${encodeURIComponent(
-        String(id).trim()
-      )}/notes`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${wooPathId.encode({ id, label: 'Order ID' })}/notes`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

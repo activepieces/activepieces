@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { updateProductOutputSchema } from '../output-schemas';
 
 export const wooUpdateProduct = createAction({
@@ -132,7 +133,7 @@ export const wooUpdateProduct = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.PUT,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${encodeURIComponent(String(id).trim())}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${wooPathId.encode({ id, label: 'Product ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

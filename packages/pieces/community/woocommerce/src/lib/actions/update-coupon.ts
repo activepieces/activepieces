@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { updateCouponOutputSchema } from '../output-schemas';
 
 export const wooUpdateCoupon = createAction({
@@ -130,7 +131,7 @@ export const wooUpdateCoupon = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.PUT,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${encodeURIComponent(String(id).trim())}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/coupons/${wooPathId.encode({ id, label: 'Coupon ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,
