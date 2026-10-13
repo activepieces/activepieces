@@ -59,9 +59,11 @@ export const synkraSubscriptionService = (_log: FastifyBaseLogger) => ({
   },
 
   async cancelByPaystackCode(code: string): Promise<void> {
+    // Scheduled cancel: user keeps access until currentPeriodEnd.
+    // Only cancelAtPeriodEnd changes. Status stays active.
     await repo().update(
       { paystackSubscriptionCode: code },
-      { status: 'cancelled', cancelAtPeriodEnd: true } as never,
+      { cancelAtPeriodEnd: true } as never,
     );
   },
 
