@@ -80,7 +80,9 @@ export function DefaultProjectsSection() {
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-base font-medium">{t('Default projects')}</h2>
           <p className="max-w-2xl text-sm text-gray-11">
-            {t('New Members join these as Editors.')}
+            {t(
+              'New Members join these as Editors, including anyone who signs up through open sign-up or SSO.',
+            )}
           </p>
         </div>
         <AnimatedIconButton
