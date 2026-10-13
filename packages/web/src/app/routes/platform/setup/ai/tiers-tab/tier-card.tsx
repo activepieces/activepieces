@@ -4,7 +4,12 @@ import {
   PlatformModelTierEntry,
   UpdatePlatformModelTierRequest,
 } from '@activepieces/shared';
-import { Mutation, useIsMutating, useQueryClient } from '@tanstack/react-query';
+import {
+  Mutation,
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowDown,
@@ -78,6 +83,38 @@ export function TierCard({
   const { mutateAsync: undoAsync } = platformModelTierMutations.useUpdate({
     feedback: 'silent',
   });
+  const { mutateAsync: restoreRemoved } = useMutation({
+    mutationKey: platformModelTierKeys.admin,
+    mutationFn: async ({
+      removed,
+      position,
+    }: {
+      id: string;
+      removed: PlatformModelTierEntry;
+      position: number;
+    }) => {
+      const fresh = (await platformModelTierApi.listAdmin()).find(
+        (candidate) => candidate.id === tier.id,
+      );
+      if (fresh === undefined) {
+        throw mutationFeedback.userError(
+          t('It no longer exists. Refresh the page and try again.'),
+        );
+      }
+      const current = fresh.entries;
+      if (current.some((entry) => modelMeta.sameEntry(entry, removed))) {
+        return;
+      }
+      const at = Math.min(position, current.length);
+      await undoAsync({
+        id: tier.id,
+        request: {
+          entries: [...current.slice(0, at), removed, ...current.slice(at)],
+        },
+      });
+    },
+    onError: (error) => mutationFeedback.markShown(error),
+  });
   const tierWrites = {
     mutationKey: platformModelTierKeys.admin,
     predicate: (mutation: Mutation<unknown, Error, unknown, unknown>) =>
@@ -127,31 +164,7 @@ export function TierCard({
             }
             undoing.current = true;
             try {
-              const fresh = (await platformModelTierApi.listAdmin()).find(
-                (candidate) => candidate.id === tier.id,
-              );
-              if (fresh === undefined) {
-                throw mutationFeedback.userError(
-                  t('It no longer exists. Refresh the page and try again.'),
-                );
-              }
-              const current = fresh.entries;
-              if (
-                current.some((entry) => modelMeta.sameEntry(entry, removed))
-              ) {
-                return;
-              }
-              const at = Math.min(position, current.length);
-              await undoAsync({
-                id: tier.id,
-                request: {
-                  entries: [
-                    ...current.slice(0, at),
-                    removed,
-                    ...current.slice(at),
-                  ],
-                },
-              });
+              await restoreRemoved({ id: tier.id, removed, position });
             } finally {
               undoing.current = false;
             }

@@ -50,13 +50,6 @@ export const AllowedDomainDialog = ({
     defaultValues: formValuesOf(platform),
     resolver: zodResolver(AllowedDomainsFormValues),
   });
-  const openDialog = (next: boolean) => {
-    if (next) {
-      form.reset(formValuesOf(platform));
-    }
-    setOpen(next);
-  };
-
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'allowedAuthDomains',
@@ -71,6 +64,15 @@ export const AllowedDomainDialog = ({
     feedback: 'inline',
     onSuccess: () => setOpen(false),
   });
+  const openDialog = (next: boolean) => {
+    if (!next && isPending) {
+      return;
+    }
+    if (next) {
+      form.reset(formValuesOf(platform));
+    }
+    setOpen(next);
+  };
 
   return (
     <Dialog open={open} onOpenChange={openDialog}>
@@ -179,7 +181,8 @@ export const AllowedDomainDialog = ({
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => openDialog(false)}
+                disabled={isPending}
                 type="button"
               >
                 {t('Cancel')}
