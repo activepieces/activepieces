@@ -90,8 +90,12 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   };
 
   const hoverHandlers = {
-    onMouseEnter: () => iconRef.current?.startAnimation?.(),
+    onMouseEnter: () => {
+      iconRef.current?.startAnimation?.();
+      item.onIntent?.();
+    },
     onMouseLeave: () => iconRef.current?.stopAnimation?.(),
+    onFocus: () => item.onIntent?.(),
   };
 
   const plainIcon = item.icon && renderIcon({ Icon: item.icon, ref: iconRef });
@@ -333,6 +337,7 @@ export type SidebarItemType = {
   end?: boolean;
   badge?: ReactNode;
   onClick?: () => void;
+  onIntent?: () => void;
 };
 
 type ExpandOverride = {
