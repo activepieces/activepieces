@@ -16,7 +16,7 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
         }
 
         const flow = await flowRepo().findOne({
-            select: ['workerGroupId'],
+            select: ['id', 'workerGroupId'],
             where: { id: flowId },
         })
 
@@ -31,7 +31,7 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
 
     async assignFlowToGroup({ flowId, projectId, platformId, workerGroupId }: AssignFlowToGroupParams): Promise<void> {
         const flow = await flowRepo().findOneOrFail({
-            select: ['workerGroupId'],
+            select: ['id', 'workerGroupId'],
             where: { id: flowId, projectId },
         })
         const previousGroupId = flow.workerGroupId ?? null
