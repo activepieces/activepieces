@@ -1,5 +1,6 @@
-import { isNil, tryCatch } from '@activepieces/core-utils';
+import { isNil, tryCatch, deepEquals, prune } from '@activepieces/core-utils';
 import {
+  FlowAction,
   FlowOperationRequest,
   FlowOperationType,
   FlowVersion,
@@ -8,6 +9,7 @@ import {
   flowOperations,
   flowStructureUtil,
   StepSettings,
+  FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
@@ -146,7 +148,13 @@ export const createFlowState = (
       set((state) => ({
         flow,
         flowVersion: flow.version,
-        draftRefreshCount: state.draftRefreshCount + 1,
+        draftRefreshCount: hasSelectedStepChanged({
+          selectedStep: state.selectedStep,
+          currentVersion: state.flowVersion,
+          refreshedVersion: flow.version,
+        })
+          ? state.draftRefreshCount + 1
+          : state.draftRefreshCount,
       })),
     draftRefreshCount: 0,
     setSampleDataLocally: ({
@@ -589,6 +597,41 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
     },
   });
 };
+
+function hasSelectedStepChanged({
+  selectedStep,
+  currentVersion,
+  refreshedVersion,
+}: {
+  selectedStep: string | null;
+  currentVersion: FlowVersion;
+  refreshedVersion: FlowVersion;
+}): boolean {
+  if (isNil(selectedStep)) {
+    return false;
+  }
+  return !deepEquals({
+    a: stepFormContent(
+      flowStructureUtil.getStep(selectedStep, currentVersion.trigger),
+    ),
+    b: stepFormContent(
+      flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger),
+    ),
+  });
+}
+
+function stepFormContent(step: FlowAction | FlowTrigger | undefined) {
+  if (isNil(step)) {
+    return undefined;
+  }
+  const { sampleData: _, ...settings } = step.settings;
+  return prune({
+    type: step.type,
+    displayName: step.displayName,
+    skip: 'skip' in step ? step.skip : undefined,
+    settings,
+  });
+}
 
 const SAVE_RETRY_DELAYS_MS = [1000, 2000, 4000];
 

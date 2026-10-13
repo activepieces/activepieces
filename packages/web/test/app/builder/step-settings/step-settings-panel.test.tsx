@@ -11,6 +11,7 @@ import {
   FlowTriggerType,
   FlowVersionState,
   PopulatedFlow,
+  flowOperations,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen } from '@testing-library/react';
@@ -66,7 +67,7 @@ describe('StepSettingsPanel', () => {
 
   it("shows an agent's change to the open step, and the person's next edit keeps it", async () => {
     const store = createStore(
-      draftFlow({ customerEmail: '{{trigger.email}}' }),
+      draftFlow({ lookUpOrderInput: { customerEmail: '{{trigger.email}}' } }),
     );
     store.getState().selectStepByName('step_1');
     renderPanel(store);
@@ -75,8 +76,10 @@ describe('StepSettingsPanel', () => {
     act(() => {
       store.getState().applyDraftRefresh(
         draftFlow({
-          customerEmail: '{{trigger.email}}',
-          orderId: '{{trigger.order}}',
+          lookUpOrderInput: {
+            customerEmail: '{{trigger.email}}',
+            orderId: '{{trigger.order}}',
+          },
         }),
       );
     });
@@ -94,6 +97,69 @@ describe('StepSettingsPanel', () => {
       customerEmailAddress: '{{trigger.email}}',
       orderId: '{{trigger.order}}',
     });
+  });
+
+  it('keeps the open form and its focus when an agent changes a different step', async () => {
+    const store = createStore(
+      draftFlow({ lookUpOrderInput: { customerEmail: '{{trigger.email}}' } }),
+    );
+    store.getState().selectStepByName('step_1');
+    renderPanel(store);
+    const focusedField = screen.getByDisplayValue('customerEmail');
+    act(() => {
+      focusedField.focus();
+    });
+
+    await act(async () => {
+      store.getState().applyDraftRefresh(
+        draftFlow({
+          lookUpOrderInput: { customerEmail: '{{trigger.email}}' },
+          sendReceiptInput: { recipient: '{{trigger.billingEmail}}' },
+        }),
+      );
+    });
+
+    expect(screen.getByDisplayValue('customerEmail')).toBe(focusedField);
+    expect(document.activeElement).toBe(focusedField);
+  });
+
+  it("keeps the open form when the refresh carries the person's own saved edit", async () => {
+    const flow = draftFlow({
+      lookUpOrderInput: { customerEmail: '{{trigger.email}}' },
+    });
+    const store = createStore(flow);
+    store.getState().selectStepByName('step_1');
+    renderPanel(store);
+    const focusedField = screen.getByDisplayValue('customerEmail');
+    act(() => {
+      focusedField.focus();
+    });
+    fireEvent.change(focusedField, {
+      target: { value: 'customerEmailAddress' },
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    await act(async () => {
+      store.getState().applyDraftRefresh(
+        draftFromServer({
+          flow,
+          operations: [
+            ...savedOperations,
+            {
+              type: FlowOperationType.UPDATE_ACTION,
+              request: sendReceiptStep({
+                recipient: '{{trigger.billingEmail}}',
+              }),
+            },
+          ],
+        }),
+      );
+    });
+
+    expect(screen.getByDisplayValue('customerEmailAddress')).toBe(focusedField);
+    expect(document.activeElement).toBe(focusedField);
   });
 });
 
@@ -134,21 +200,17 @@ function lastSavedStepInput() {
     : undefined;
 }
 
-function draftFlow(input: Record<string, string>): PopulatedFlow {
-  const codeStep: CodeAction = {
-    name: 'step_1',
-    valid: true,
-    displayName: 'Look up order',
-    lastUpdatedDate: '2026-01-01T00:00:00.000Z',
-    type: FlowActionType.CODE,
-    settings: {
-      sourceCode: {
-        code: 'export const code = async (inputs) => inputs;',
-        packageJson: '{}',
-      },
-      input,
-      errorHandlingOptions: {},
-    },
+function draftFlow({
+  lookUpOrderInput,
+  sendReceiptInput = { recipient: '{{trigger.email}}' },
+}: DraftFlowParams): PopulatedFlow {
+  const lookUpOrder: CodeAction = {
+    ...codeStep({
+      name: 'step_1',
+      displayName: 'Look up order',
+      input: lookUpOrderInput,
+    }),
+    nextAction: sendReceiptStep(sendReceiptInput),
   };
   const trigger: EmptyTrigger = {
     name: 'trigger',
@@ -157,7 +219,7 @@ function draftFlow(input: Record<string, string>): PopulatedFlow {
     type: FlowTriggerType.EMPTY,
     settings: {},
     lastUpdatedDate: '2026-01-01T00:00:00.000Z',
-    nextAction: codeStep,
+    nextAction: lookUpOrder,
   };
   return {
     id: 'flow-1',
@@ -192,3 +254,52 @@ function draftFlow(input: Record<string, string>): PopulatedFlow {
     },
   };
 }
+
+function draftFromServer({
+  flow,
+  operations,
+}: {
+  flow: PopulatedFlow;
+  operations: FlowOperationRequest[];
+}): PopulatedFlow {
+  const version = operations.reduce(
+    (draft, operation) => flowOperations.apply(draft, operation),
+    flow.version,
+  );
+  return PopulatedFlow.parse(JSON.parse(JSON.stringify({ ...flow, version })));
+}
+
+function sendReceiptStep(input: Record<string, string>): CodeAction {
+  return codeStep({ name: 'step_2', displayName: 'Send receipt', input });
+}
+
+function codeStep({
+  name,
+  displayName,
+  input,
+}: {
+  name: string;
+  displayName: string;
+  input: Record<string, string>;
+}): CodeAction {
+  return {
+    name,
+    valid: true,
+    displayName,
+    lastUpdatedDate: '2026-01-01T00:00:00.000Z',
+    type: FlowActionType.CODE,
+    settings: {
+      sourceCode: {
+        code: 'export const code = async (inputs) => inputs;',
+        packageJson: '{}',
+      },
+      input,
+      errorHandlingOptions: {},
+    },
+  };
+}
+
+type DraftFlowParams = {
+  lookUpOrderInput: Record<string, string>;
+  sendReceiptInput?: Record<string, string>;
+};
