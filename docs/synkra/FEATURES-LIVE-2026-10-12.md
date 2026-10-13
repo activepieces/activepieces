@@ -1,5 +1,5 @@
 # Synkra Flow — Feature Inventory
-# 12 October 2026
+# 12–13 October 2026
 
 Honest categorization. Three tiers:
   A. CONFIRMED WORKING — we have seen it work in a browser
@@ -28,6 +28,15 @@ These were verified in a real browser on 12 Oct 2026.
 - Password reset flow (AP native)
 - Session management (AP native)
 
+### Onboarding (verified 13 Oct)
+- Welcome screen at /onboarding
+- Use case selection (7 options)
+- Start point selection (scratch / template / explore)
+- Connect tools step — shows real piece recommendations based on use cases
+- Redirect to destination: builder / templates / automations based on choice
+- Wizard is 4 steps, no placeholders, no empty panels
+- Redirect logic confirmed: new users → /onboarding, existing users skip
+
 ---
 
 ## TIER B — DEPLOYED, UNTESTED
@@ -35,15 +44,6 @@ These were verified in a real browser on 12 Oct 2026.
 All of this code is IN the current build (commit 40d2cfff).
 None of it has been verified in a browser since deployment.
 Treat every line below as "probably works but unconfirmed."
-
-### Onboarding (added this session, never tested in browser)
-- Welcome screen at /onboarding
-- Use case selection (7 options)
-- Start point selection (scratch / template / explore)
-- Connect tools step (recommended integrations)
-- Build workflow step (opens builder)
-- Redirect logic: new users go to /onboarding, existing users skip
-- Persistence: synkra_onboarding table tracks step, use case, skipped, completed
 
 ### Builder nudge (new, never tested)
 - Dismissable tip inside the flow builder
