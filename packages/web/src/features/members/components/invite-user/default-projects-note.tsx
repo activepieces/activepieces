@@ -30,11 +30,12 @@ export function DefaultProjectsNote({
     ) : null;
   }
 
-  const [before, after] = t(
+  const [before, after] = (
     getsPersonalProject
-      ? 'inviteJoinsDefaultsAndPersonal'
-      : 'inviteJoinsDefaults',
-    { defaultProjects: LINK_PLACEHOLDER },
+      ? t('inviteJoinsDefaultsAndPersonal', {
+          defaultProjects: LINK_PLACEHOLDER,
+        })
+      : t('inviteJoinsDefaults', { defaultProjects: LINK_PLACEHOLDER })
   ).split(LINK_PLACEHOLDER);
 
   return (
