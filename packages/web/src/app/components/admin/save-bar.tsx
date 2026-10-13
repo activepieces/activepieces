@@ -57,6 +57,13 @@ export function SaveBar({
     rootRef.current?.closest('form')?.requestSubmit();
   };
   const canSave = showSave && (saveEnabled ?? dirty) && !disabled && !saving;
+  const visible =
+    dirty ||
+    saving ||
+    Boolean(error) ||
+    locked !== undefined ||
+    status !== undefined ||
+    children !== undefined;
   useSaveShortcut({ rootRef, canSave, onSave: saveNow });
   useToastClearance(rootRef);
 
@@ -65,6 +72,7 @@ export function SaveBar({
       ref={rootRef}
       data-slot="save-bar"
       data-dirty={dirty}
+      hidden={!visible}
       className={cn(adminSurface.saveBar, 'sticky bottom-0 z-20 mt-auto')}
     >
       <div

@@ -46,6 +46,51 @@ function pressSave() {
   });
 }
 
+function saveBar(): HTMLElement {
+  const bar = document.querySelector<HTMLElement>('[data-slot="save-bar"]');
+  if (!bar) {
+    throw new Error('save bar not rendered');
+  }
+  return bar;
+}
+
+describe('SaveBar visibility', () => {
+  it('stays hidden while nothing has changed', () => {
+    render(<SaveBar dirty={false} saving={false} guardNavigation={false} />);
+    expect(saveBar().hidden).toBe(true);
+  });
+
+  it('shows while there are changes, while saving and after a failed save', () => {
+    const { rerender } = render(
+      <SaveBar dirty saving={false} guardNavigation={false} />,
+    );
+    expect(saveBar().hidden).toBe(false);
+    rerender(<SaveBar dirty={false} saving guardNavigation={false} />);
+    expect(saveBar().hidden).toBe(false);
+    rerender(
+      <SaveBar
+        dirty={false}
+        saving={false}
+        error="Name is taken"
+        guardNavigation={false}
+      />,
+    );
+    expect(saveBar().hidden).toBe(false);
+  });
+
+  it('keeps its status and actions visible on a page that always needs them', () => {
+    render(
+      <SaveBar
+        dirty={false}
+        saving={false}
+        status={<span>{'Step 1 of 2'}</span>}
+        guardNavigation={false}
+      />,
+    );
+    expect(saveBar().hidden).toBe(false);
+  });
+});
+
 describe('SaveBar leave guard', () => {
   it('asks before leaving with unsaved changes', async () => {
     const router = mountWithRouter(
