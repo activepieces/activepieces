@@ -72,13 +72,10 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         await markTurnAsHavingRead({ conversationId: input.conversationId, ...spreadIfDefined('runId', input.runId) })
         const { projectId, platformId } = conversation
         const file = await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const embeddingModel = () => agentHelpers.resolveEmbeddingModel({
+        const embeddingModel = () => knowledgeBaseService(log).embeddingModelFor({
             platformId,
-            scope: { type: 'project', projectId },
+            projectId,
             billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: input.conversationId },
-            log,
-            ...spreadIfDefined('provider', input.provider),
-            ...spreadIfDefined('providerConfigId', input.providerConfigId),
         })
         const { error: backfillError } = await tryCatch(() => knowledgeBaseService(log).embedMissingChunks({
             projectId,

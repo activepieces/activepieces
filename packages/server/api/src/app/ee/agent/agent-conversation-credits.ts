@@ -1,5 +1,10 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AgentConversation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { AddConversationCreditsParams, AiUsageHooks } from '../../ai/ai-usage-hooks'
+import { In } from 'typeorm'
+import { aiKeyScope } from '../../ai/ai-key-scope'
+import { AIProviderSchema } from '../../ai/ai-provider-entity'
+import { AddConversationCreditsParams, AiUsageHooks, UnpinConversationsFromKeyParams } from '../../ai/ai-usage-hooks'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers } from './agent-helpers'
 
@@ -17,4 +22,26 @@ export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageH
             .where('id = :conversationId', { conversationId })
             .execute()
     },
+    async unpinConversationsFromKey({ manager, platformId, configId, key }: UnpinConversationsFromKeyParams): Promise<void> {
+        const repo = manager.getRepository(AgentConversationEntity)
+        const pinned = await repo.find({
+            where: { platformId, providerConfigId: configId },
+            select: { id: true, projectId: true, modelName: true },
+        })
+        const stale = isNil(key) ? pinned : pinned.filter((conversation) => !keyStillServes({ key, conversation }))
+        if (stale.length === 0) {
+            return
+        }
+        await repo.update({ platformId, id: In(stale.map((conversation) => conversation.id)) }, { providerConfigId: null })
+    },
 })
+
+function keyStillServes({ key, conversation }: { key: AIProviderSchema, conversation: Pick<AgentConversation, 'projectId' | 'modelName'> }): boolean {
+    const servesProject = isNil(conversation.projectId)
+        ? key.projectScope === 'all'
+        : aiKeyScope.rowAllowsScope({ row: key, scope: { type: 'project', projectId: conversation.projectId } })
+    const servesModel = isNil(conversation.modelName)
+        || key.provider === AIProviderName.ACTIVEPIECES
+        || aiKeyScope.keyOffersModel({ key, modelId: conversation.modelName })
+    return servesProject && servesModel
+}

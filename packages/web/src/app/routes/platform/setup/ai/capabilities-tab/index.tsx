@@ -6,7 +6,14 @@ import {
   AiToolConfigWithoutSensitiveData,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Globe, Image, LucideIcon, Search, Trash2 } from 'lucide-react';
+import {
+  Database,
+  Globe,
+  Image,
+  LucideIcon,
+  Search,
+  Trash2,
+} from 'lucide-react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -214,4 +221,5 @@ const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
   [AiToolCapability.WEB_SEARCH]: Search,
   [AiToolCapability.WEB_SCRAPING]: Globe,
   [AiToolCapability.IMAGE_GENERATION]: Image,
+  [AiToolCapability.EMBEDDINGS]: Database,
 };

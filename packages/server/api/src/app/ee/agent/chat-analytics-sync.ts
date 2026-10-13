@@ -91,7 +91,7 @@ async function resolveLicenseKeysByPlatform({ platformIds }: {
 }
 
 function chatProviderCacheKey(conversation: AgentConversation): string {
-    return `${conversation.platformId}:${conversation.projectId ?? ''}`
+    return `${conversation.platformId}:${conversation.projectId ?? ''}:${conversation.providerConfigId ?? ''}`
 }
 
 async function resolveLookups({ conversations, log }: {
@@ -107,7 +107,7 @@ async function resolveLookups({ conversations, log }: {
         Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, string | null]> => [platformId, await resolvePlatformName({ platformId, log })])),
         Promise.all(uniqueScopes.map(async (conversation): Promise<[string, AIProviderName | null]> => [
             chatProviderCacheKey(conversation),
-            await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log }),
+            await resolveProviderName({ conversation, log }),
         ])),
         agentModelTier(log).mainModelsOf({ conversations }),
     ])
@@ -186,7 +186,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
     const tierKey = agentTierCandidates.tierCacheKey({ platformId: conversation.platformId, tierId: conversation.modelTierId ?? '' })
     const tierModel = tierCache?.has(tierKey) ? tierCache.get(tierKey) ?? null : await agentModelTier(log).mainModelOf({ conversation })
-    const provider = tierModel?.provider ?? providerCache?.get(chatProviderCacheKey(conversation)) ?? await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log })
+    const provider = tierModel?.provider ?? providerCache?.get(chatProviderCacheKey(conversation)) ?? await resolveProviderName({ conversation, log })
 
     const messages = agentHistory.resolveMessages({ conversation, log })
 
@@ -244,8 +244,8 @@ async function resolvePlatformName({ platformId, log }: { platformId: string, lo
     return result.error ? null : result.data.name
 }
 
-async function resolveProviderName({ platformId, projectId, log }: { platformId: string, projectId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
-    const result = await tryCatch(() => agentHelpers.resolveChatProviderName({ platformId, projectId, log }))
+async function resolveProviderName({ conversation, log }: { conversation: AgentConversation, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const result = await tryCatch(() => agentHelpers.resolveConversationProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, providerConfigId: conversation.providerConfigId ?? null, log }))
     return result.error ? null : result.data
 }
 

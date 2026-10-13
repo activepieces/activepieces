@@ -39,7 +39,7 @@ const { mockGetFileOrThrow, mockKbSearch, mockIsSearchable } = vi.hoisted(() => 
 }))
 
 vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
-    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch, isSearchable: mockIsSearchable }),
+    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch, isSearchable: mockIsSearchable, embeddingModelFor: async () => ({ model: {}, providerOptions: {} }) }),
 }))
 
 const { mockEmbed } = vi.hoisted(() => ({
@@ -115,7 +115,6 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         surfaceOf: () => 'flow',
         resolveFastModel: mockResolveFastModel,
-        resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
             findOne: mockFindOne,

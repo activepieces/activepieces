@@ -28,9 +28,10 @@ async function chargeForLatestTurn({ conversation, runId, answeredBy, log }: Cha
     const turnIndex = messages.filter((message) => message.role === PersistedAgentRole.USER).length
     const idempotencyScope = runId ?? turnIndex
     const tierModel = isNil(conversation.modelTierId) ? null : answeredBy ?? await agentModelTier(log).mainModelOf({ conversation })
-    const provider = tierModel?.provider ?? await agentHelpers.resolveChatProviderName({
+    const provider = tierModel?.provider ?? await agentHelpers.resolveConversationProviderName({
         platformId: conversation.platformId,
         projectId: conversation.projectId ?? null,
+        providerConfigId: conversation.providerConfigId ?? null,
         log,
     })
     const surface = agentHelpers.surfaceOf({ source: conversation.source })

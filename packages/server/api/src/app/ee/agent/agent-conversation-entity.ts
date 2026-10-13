@@ -54,6 +54,10 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             ...ApIdSchema,
             nullable: true,
         },
+        providerConfigId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         status: {
             type: String,
             nullable: false,

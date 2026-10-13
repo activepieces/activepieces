@@ -11,6 +11,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { agentApprovalGate } from './agent-approval-gate'
+import { agentChatModel } from './agent-chat-model'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity } from './agent-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
@@ -56,17 +57,28 @@ async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityMa
     return locked.projectId
 }
 
-async function modelChoiceFrom({ platformId, projectId, modelName, modelTierId, log }: { platformId: string, projectId: string | null, modelName: string | null | undefined, modelTierId: string | null | undefined, log: FastifyBaseLogger }): Promise<ModelChoice> {
+async function modelChoiceFrom({ platformId, projectId, request, log }: { platformId: string, projectId: string | null, request: ModelChoiceRequest, log: FastifyBaseLogger }): Promise<ModelChoice> {
+    const { modelName, modelTierId, providerConfigId } = request
     if (!isNil(modelTierId)) {
         await agentModelTier(log).assertUsable({ platformId, tierId: modelTierId, scope: isNil(projectId) ? { type: 'platform' } : { type: 'project', projectId } })
-        return { modelTierId, modelName: null }
+        return { modelTierId, modelName: null, providerConfigId: null }
+    }
+    if (!isNil(providerConfigId)) {
+        if (isNil(modelName)) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A model picked on a key needs its model name' } })
+        }
+        if (!isNil(projectId)) {
+            await agentChatModel(log).assertOffered({ platformId, projectId, providerConfigId, modelName })
+        }
+        return { providerConfigId, modelName, modelTierId: null }
     }
     if (!isNil(modelName)) {
-        return { modelName, modelTierId: null }
+        return { modelName, modelTierId: null, providerConfigId: null }
     }
     return {
-        ...(modelName === null ? { modelName: null } : {}),
+        ...(modelName === null ? { modelName: null, providerConfigId: null } : {}),
         ...(modelTierId === null ? { modelTierId: null } : {}),
+        ...(providerConfigId === null ? { providerConfigId: null } : {}),
     }
 }
 
@@ -79,12 +91,15 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
-        const modelChoice = await modelChoiceFrom({ platformId, projectId: agent?.projectId ?? builderProjectId, modelName: request.modelName, modelTierId: request.modelTierId, log })
+        const chatProjectId = !builder && isNil(agent) && !isNil(request.projectId)
+            ? await reachableProjectOrThrow({ projectId: request.projectId, platformId, userId, log })
+            : null
+        const modelChoice = await modelChoiceFrom({ platformId, projectId: agent?.projectId ?? builderProjectId ?? chatProjectId, request, log })
         const conversation = await transaction(async (entityManager) => entityManager.getRepository(AgentConversationEntity).save({
             id: id ?? apId(),
             platformId,
             projectId: isNil(agent)
-                ? builderProjectId
+                ? builderProjectId ?? chatProjectId
                 : await projectStillHoldingAgent({ agentId: agent.id, authorisedProjectId: agent.projectId, entityManager }),
             userId,
             agentId: agent?.id ?? null,
@@ -92,6 +107,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             title: request.title ?? null,
             modelName: modelChoice.modelName ?? null,
             modelTierId: modelChoice.modelTierId ?? null,
+            providerConfigId: modelChoice.providerConfigId ?? null,
             messages: [],
         }))
         log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation created')
@@ -223,7 +239,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const conversation = await this.getConversationOrThrow({ id, platformId, userId })
         const updates = {
             ...spreadIfDefined('title', request.title),
-            ...await modelChoiceFrom({ platformId, projectId: conversation.projectId ?? null, modelName: request.modelName, modelTierId: request.modelTierId, log }),
+            ...await modelChoiceFrom({ platformId, projectId: conversation.projectId ?? null, request, log }),
         }
 
         if (Object.keys(updates).length > 0) {
@@ -320,14 +336,18 @@ async function resolveBuilderProject({ agent, requestedProjectId, platformId, us
             params: { message: 'A builder conversation needs either an agentId to change or a projectId to build in' },
         })
     }
+    return reachableProjectOrThrow({ projectId: requestedProjectId, platformId, userId, log })
+}
+
+async function reachableProjectOrThrow({ projectId, platformId, userId, log }: { projectId: string, platformId: string, userId: string, log: FastifyBaseLogger }): Promise<string> {
     const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
-    if (!projects.some((project) => project.id === requestedProjectId)) {
+    if (!projects.some((project) => project.id === projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: requestedProjectId, entityType: 'Project' },
+            params: { entityId: projectId, entityType: 'Project' },
         })
     }
-    return requestedProjectId
+    return projectId
 }
 
 type ConversationIdentifier = {
@@ -348,4 +368,7 @@ type SetMessageFeedbackParams = ConversationIdentifier & {
 type ModelChoice = {
     modelName?: string | null
     modelTierId?: string | null
+    providerConfigId?: string | null
 }
+
+type ModelChoiceRequest = Pick<UpdateAgentConversationRequest, 'modelName' | 'modelTierId' | 'providerConfigId'>

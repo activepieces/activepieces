@@ -93,6 +93,18 @@ function resolveNamedModelId({ provider, modelName, surface, modelScope, modelId
     return requested
 }
 
+function resolvePinnedModelId({ provider, modelName, config, modelScope, modelIds, log }: { provider: AIProviderName, modelName: string, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[], log: FastifyBaseLogger }): string | null {
+    if (provider === AIProviderName.OPENROUTER && isTierId({ modelName })) {
+        return findTier({ tierId: modelName, surface: 'chat' })?.modelId ?? null
+    }
+    const catalog = manualTextModelCatalog({ config })
+    if (!isNil(catalog) && !catalog.includes(modelName)) {
+        return null
+    }
+    const { data } = tryCatchSync(() => resolveNamedModelId({ provider, modelName, surface: 'chat', modelScope, modelIds, log }))
+    return data ?? null
+}
+
 function resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
     const catalog = manualTextModelCatalog({ config })
     if (!isNil(catalog)) {
@@ -136,6 +148,8 @@ export const agentModelResolution = {
     resolveRunTier,
     nativeModelIdFor,
     resolveNamedModelId,
+    resolvePinnedModelId,
+    isTierId,
     resolveModelIdForProvider,
     defaultModelIdForProvider,
     resolveModelIdForAnalytics,
