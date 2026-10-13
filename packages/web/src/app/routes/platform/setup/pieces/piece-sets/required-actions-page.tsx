@@ -19,22 +19,25 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   ChangePieceSet,
   pieceSetChanges,
   pieceSetKeys,
-  pieceSetMutations,
   pieceSetQueries,
   pieceSetsApi,
   pieceSetTerms,
+  usePieceSetChange,
 } from '@/features/piece-sets';
-import { pieceCacheUtils, piecesHooks } from '@/features/pieces';
+import { pieceCacheUtils } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { usePrefetchPiecesSection } from '../use-prefetch-pieces-section';
+
 import { pieceSetSamples } from './piece-set-samples';
-import { PolicySheet, SkeletonRows, useGuardedClose } from './policy-ui';
+import { PolicySheet, useGuardedClose } from './policy-ui';
 import {
   ActionPicker,
   PiecePicker,
@@ -45,7 +48,7 @@ import {
 
 export function RequiredActionsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  piecesHooks.usePrefetchPieces({});
+  usePrefetchPiecesSection();
   const locked = !platform.plan.managePiecesEnabled;
   const { data, isLoading, isError, refetch } =
     pieceSetQueries.useAllPieceSets();
@@ -76,9 +79,10 @@ export function RequiredActionsPage() {
       <AdminQueryState
         isLoading={!locked && isLoading}
         isError={!locked && isError}
+        hasData={data !== undefined}
         onRetry={refetch}
         entity={pieceSetTerms.get().terms}
-        skeleton={<SkeletonRows count={4} className="h-24 rounded-xl" />}
+        skeleton={<SetRulesSkeleton />}
       >
         <SettingsPanel flush>
           {pieceSets.map((pieceSet) =>
@@ -104,13 +108,28 @@ export function RequiredActionsPage() {
   );
 }
 
+function SetRulesSkeleton() {
+  return (
+    <SettingsPanel flush>
+      {Array.from({ length: 3 }, (_, index) => (
+        <div
+          key={index}
+          className="flex flex-col gap-3 p-5 md:flex-row md:items-start md:gap-6"
+        >
+          <div className="flex flex-col gap-1.5 md:w-56 md:shrink-0">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <Skeleton className="h-4 flex-1" />
+          <Skeleton className="h-8 w-28" />
+        </div>
+      ))}
+    </SettingsPanel>
+  );
+}
+
 function LiveSetRule({ pieceSet }: { pieceSet: PieceSet }) {
-  const { mutateAsync } = pieceSetMutations.useChangePieceSet(pieceSet.id);
-  const change: ChangePieceSet = (next) =>
-    mutateAsync({ change: next }).then(
-      () => true,
-      () => false,
-    );
+  const change = usePieceSetChange(pieceSet.id);
   return <SetRule pieceSet={pieceSet} onChange={change} />;
 }
 
@@ -144,17 +163,7 @@ function SetRule({
         </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <PublishingRuleSentence
-          count={requiredCount}
-          mode={mode}
-          onModeChange={(next) => {
-            if (next !== mode) {
-              onChange({ type: 'requiredMode', mode: next }).catch(
-                () => undefined,
-              );
-            }
-          }}
-        />
+        <PublishingRuleSentence count={requiredCount} mode={mode} />
         <RequiredActionsList pieceSet={pieceSet} onChange={onChange} />
       </div>
       <Button
@@ -265,26 +274,24 @@ function RequireAcrossSetsSheet({
           pieceSetTerms.get(),
         )}
         footer={
-          dirty && (
-            <SaveBar
-              dirty={dirty}
-              saving={requireInSets.isPending}
-              disabled={actionNames.length === 0 || chosenSets.length === 0}
-              saveLabel={t(
-                '{count, plural, =1 {Require in 1 {term}} other {Require in # {terms}}}',
-                { ...pieceSetTerms.get(), count: chosenSets.length },
-              )}
-              onSave={() => {
-                requireInSets.mutate(chosenSets);
-              }}
-              onDiscard={() => {
-                setPieceName(null);
-                setActionNames([]);
-                setSelectedSetIds([]);
-              }}
-              saveControl={AdminControl.PIECE_SETS_REQUIRED_BULK_SUBMIT}
-            />
-          )
+          <SaveBar
+            dirty={dirty}
+            saving={requireInSets.isPending}
+            disabled={actionNames.length === 0 || chosenSets.length === 0}
+            saveLabel={t(
+              '{count, plural, =1 {Require in 1 {term}} other {Require in # {terms}}}',
+              { ...pieceSetTerms.get(), count: chosenSets.length },
+            )}
+            onSave={() => {
+              requireInSets.mutate(chosenSets);
+            }}
+            onDiscard={() => {
+              setPieceName(null);
+              setActionNames([]);
+              setSelectedSetIds([]);
+            }}
+            saveControl={AdminControl.PIECE_SETS_REQUIRED_BULK_SUBMIT}
+          />
         }
       >
         <section className="flex flex-col gap-3">
@@ -304,9 +311,17 @@ function RequireAcrossSetsSheet({
           )}
         </section>
         <section className="flex flex-col gap-3 border-t pt-5">
-          <h3 className="text-sm font-medium text-gray-12">
-            {pieceSetTerms.get().Terms}
-          </h3>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-sm font-medium text-gray-12">
+              {pieceSetTerms.get().Terms}
+            </h3>
+            <p className="text-xs text-gray-11">
+              {t(
+                'In a {term} that hides some of these actions, requiring them shows them again.',
+                pieceSetTerms.get(),
+              )}
+            </p>
+          </div>
           <ul className="flex flex-col rounded-xl border">
             {pieceSets.map((pieceSet) => {
               const hidden =
@@ -323,6 +338,17 @@ function RequireAcrossSetsSheet({
                     pieceSet.config.requiredActions.actions[pieceName] ?? []
                   ).includes(name),
                 );
+              const reshown =
+                pieceName === null || hidden
+                  ? 0
+                  : actionNames.filter(
+                      (actionName) =>
+                        !pieceSetChanges.isActionAllowed({
+                          pieceSet,
+                          pieceName,
+                          actionName,
+                        }),
+                    ).length;
               return (
                 <li key={pieceSet.id} className="border-t first:border-t-0">
                   <label
@@ -343,11 +369,18 @@ function RequireAcrossSetsSheet({
                       <span className="shrink-0 text-xs text-gray-11">
                         {t('Piece hidden in this {term}', pieceSetTerms.get())}
                       </span>
+                    ) : alreadyRequired ? (
+                      <Badge variant="outline" className="shrink-0">
+                        {t('Required')}
+                      </Badge>
                     ) : (
-                      alreadyRequired && (
-                        <Badge variant="outline" className="shrink-0">
-                          {t('Already required')}
-                        </Badge>
+                      reshown > 0 && (
+                        <span className="shrink-0 text-xs text-gray-11">
+                          {t(
+                            '{count, plural, =1 {Also shows 1 hidden action} other {Also shows # hidden actions}}',
+                            { count: reshown },
+                          )}
+                        </span>
                       )
                     )}
                   </label>

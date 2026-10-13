@@ -6,10 +6,10 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, Check, ChevronDown, Info, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { SaveBar } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { AdminFetchErrorState, SaveBar } from '@/app/components/admin';
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { SearchInput } from '@/components/custom/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,16 +20,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
   ChangePieceSet,
   pieceSetChanges,
   pieceSetTerms,
 } from '@/features/piece-sets';
-import { PieceIcon, piecesHooks } from '@/features/pieces';
+import { piecesHooks } from '@/features/pieces';
 import { AdminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
-import { PolicySheet, SkeletonRows, useGuardedClose } from './policy-ui';
+import {
+  PolicySheet,
+  SkeletonRows,
+  sameNames,
+  useGuardedClose,
+} from './policy-ui';
 import {
   RequiredActionGroup,
   useRequiredActionsGroupedByPiece,
@@ -58,23 +64,25 @@ export function PublishingRuleSentence({
       </p>
     );
   }
-  const label = mode === RequiredActionsMode.ALL ? t('all') : t('at least one');
   return (
-    <p className="text-sm leading-6 text-gray-12">
-      {t('A flow can be published only if it uses')}{' '}
-      {onModeChange ? (
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <p className="text-sm text-gray-12">
+        {mode === RequiredActionsMode.ALL
+          ? t('A flow can be published only if it uses all of these actions:')
+          : t(
+              'A flow can be published only if it uses at least one of these actions:',
+            )}
+      </p>
+      {onModeChange && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center gap-0.5 rounded-md bg-accent-3 px-1.5 font-medium text-accent-11 outline-hidden hover:bg-accent-4 focus-visible:ring-2 focus-visible:ring-gray-8"
-            >
-              {label}
-              <ChevronDown className="size-3.5" />
-            </button>
+            <Button variant="link" size="sm" className="h-auto p-0">
+              {t('Change rule')}
+              <ChevronDown />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-72">
-            {MODES.map((option) => (
+            {publishingModes().map((option) => (
               <DropdownMenuItem
                 key={option.value}
                 onSelect={() => onModeChange(option.value)}
@@ -84,18 +92,15 @@ export function PublishingRuleSentence({
                   className={cn('mt-0.5', option.value !== mode && 'opacity-0')}
                 />
                 <span className="flex flex-col">
-                  <span className="font-medium">{option.label()}</span>
-                  <span className="text-xs text-gray-11">{option.hint()}</span>
+                  <span className="font-medium">{option.label}</span>
+                  <span className="text-xs text-gray-11">{option.hint}</span>
                 </span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-      ) : (
-        <span className="font-medium">{label}</span>
-      )}{' '}
-      {t('of these actions:')}
-    </p>
+      )}
+    </div>
   );
 }
 
@@ -155,13 +160,7 @@ function RequiredActionGroupRows({
   return (
     <div className="flex flex-col">
       <div className="flex min-h-9 items-center gap-2.5">
-        <PieceIcon
-          size="xs"
-          border
-          displayName={group.displayName}
-          logoUrl={group.logoUrl}
-          showTooltip={false}
-        />
+        <LogoPlate src={group.logoUrl} alt="" size="xs" border />
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-12">
           {group.displayName}
         </span>
@@ -169,7 +168,7 @@ function RequiredActionGroupRows({
           <Button
             variant="ghost"
             size="sm"
-            className="text-danger-11 hover:text-danger-11"
+            className="text-gray-11"
             onClick={onRemoveAll}
           >
             <Trash2 />
@@ -324,17 +323,15 @@ function RequiredActionsEditor({
           pieceSetTerms.get(),
         )}
         footer={
-          dirty && (
-            <SaveBar
-              dirty={dirty}
-              saving={saving}
-              onSave={() => {
-                save().catch(() => undefined);
-              }}
-              onDiscard={discard}
-              saveControl={AdminControl.PIECE_SETS_REQUIRED_SUBMIT}
-            />
-          )
+          <SaveBar
+            dirty={dirty}
+            saving={saving}
+            onSave={() => {
+              save().catch(() => undefined);
+            }}
+            onDiscard={discard}
+            saveControl={AdminControl.PIECE_SETS_REQUIRED_SUBMIT}
+          />
         }
       >
         <PublishingRuleSentence
@@ -410,24 +407,66 @@ export function PiecePicker({
   onPick: (pieceName: string) => void;
 }) {
   const [search, setSearch] = useState('');
-  const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
-    includeHidden: true,
-    isTableQuery: true,
-    skipProjectFilter: true,
-  });
+  const { pieces, isLoading, isError, refetch } =
+    piecesHooks.usePlatformCatalog();
   const query = search.trim().toLowerCase();
-  const matches = (pieces ?? [])
-    .filter(
-      (piece) =>
-        piece.actions > 0 &&
-        (pieceSet === undefined ||
-          isPieceVisible({
-            pieces: pieceSet.config.pieces,
-            name: piece.name,
-          })) &&
-        (query === '' || piece.displayName.toLowerCase().includes(query)),
-    )
-    .slice(0, MAX_PIECES_SHOWN);
+  const matches = useMemo(
+    () =>
+      (pieces ?? []).filter(
+        (piece) =>
+          piece.actions > 0 &&
+          (pieceSet === undefined ||
+            isPieceVisible({
+              pieces: pieceSet.config.pieces,
+              name: piece.name,
+            })) &&
+          (query === '' || piece.displayName.toLowerCase().includes(query)),
+      ),
+    [pieces, pieceSet, query],
+  );
+  const body = (() => {
+    if (isError && pieces === undefined) {
+      return <AdminFetchErrorState entity={t('pieces')} onRetry={refetch} />;
+    }
+    if (isLoading) {
+      return <SkeletonRows count={5} className="h-11 rounded-xl" />;
+    }
+    if (matches.length === 0) {
+      return (
+        <p className="text-sm text-gray-11">
+          {pieceSet === undefined
+            ? t('No piece with actions matches.')
+            : t('No shown piece matches. Show a piece first to require it.')}
+        </p>
+      );
+    }
+    return (
+      <div className="h-80 rounded-xl border p-1">
+        <VirtualizedScrollArea
+          items={matches}
+          estimateSize={() => PICKER_ROW_HEIGHT}
+          getItemKey={(index) => matches[index].name}
+          renderItem={(piece) => (
+            <button
+              type="button"
+              onClick={() => onPick(piece.name)}
+              className="flex h-11 w-full min-w-0 items-center gap-2.5 rounded-md px-2 text-left text-sm hover:bg-gray-3 focus-visible:outline-2 focus-visible:outline-accent-8"
+            >
+              <LogoPlate src={piece.logoUrl} alt="" size="xs" border />
+              <span className="min-w-0 flex-1 truncate font-medium text-gray-12">
+                {piece.displayName}
+              </span>
+              <span className="text-xs text-gray-11 tabular-nums">
+                {t('{count, plural, =1 {1 action} other {# actions}}', {
+                  count: piece.actions,
+                })}
+              </span>
+            </button>
+          )}
+        />
+      </div>
+    );
+  })();
   return (
     <>
       <SearchInput
@@ -437,45 +476,7 @@ export function PiecePicker({
           pieceSet === undefined ? t('Search pieces') : t('Search shown pieces')
         }
       />
-      {isLoading ? (
-        <SkeletonRows count={5} className="h-10 rounded-xl" />
-      ) : isError ? (
-        <DataFetchErrorState entity={t('pieces')} onRetry={refetch} />
-      ) : matches.length === 0 ? (
-        <p className="text-sm text-gray-11">
-          {pieceSet === undefined
-            ? t('No piece with actions matches.')
-            : t('No shown piece matches. Show a piece first to require it.')}
-        </p>
-      ) : (
-        <ul className="flex flex-col rounded-xl border">
-          {matches.map((piece) => (
-            <li key={piece.name} className="border-t first:border-t-0">
-              <button
-                type="button"
-                onClick={() => onPick(piece.name)}
-                className="flex h-11 w-full min-w-0 items-center gap-2.5 px-3 text-left text-sm outline-hidden hover:bg-gray-2 focus-visible:bg-gray-2"
-              >
-                <PieceIcon
-                  size="xs"
-                  border
-                  displayName={piece.displayName}
-                  logoUrl={piece.logoUrl}
-                  showTooltip={false}
-                />
-                <span className="min-w-0 flex-1 truncate font-medium text-gray-12">
-                  {piece.displayName}
-                </span>
-                <span className="text-xs text-gray-11 tabular-nums">
-                  {t('{count, plural, =1 {1 action} other {# actions}}', {
-                    count: piece.actions,
-                  })}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {body}
     </>
   );
 }
@@ -525,7 +526,7 @@ export function ActionPicker({
       {isLoading ? (
         <SkeletonRows count={5} className="h-10 rounded-xl" />
       ) : isError ? (
-        <DataFetchErrorState entity={t('actions')} onRetry={refetch} />
+        <AdminFetchErrorState entity={t('actions')} onRetry={refetch} />
       ) : actions.length === 0 ? (
         <p className="text-sm text-gray-11">
           {t('This piece has no actions.')}
@@ -547,7 +548,7 @@ export function ActionPicker({
               {t('Select all')}
             </span>
             <span className="text-xs text-gray-11 tabular-nums">
-              {t('{count} of {total} selected', {
+              {t('{count} of {total} required', {
                 count: checkedCount,
                 total: actionNames.length,
               })}
@@ -573,7 +574,7 @@ export function ActionPicker({
                   </span>
                   {!isAllowed(action.name) && (
                     <Badge variant="outline" className="shrink-0">
-                      {t('Hidden for now')}
+                      {t('Hidden')}
                     </Badge>
                   )}
                 </label>
@@ -605,32 +606,29 @@ function changedRequiredPieces({
     unique([...Object.keys(saved), ...Object.keys(local)])
       .filter(
         (pieceName) =>
-          sortedKey(saved[pieceName] ?? []) !==
-          sortedKey(local[pieceName] ?? []),
+          !sameNames(saved[pieceName] ?? [], local[pieceName] ?? []),
       )
       .map((pieceName) => [pieceName, local[pieceName] ?? []]),
   );
 }
 
-function sortedKey(names: string[]): string {
-  return [...names].sort().join('|');
+function publishingModes(): {
+  value: RequiredActionsMode;
+  label: string;
+  hint: string;
+}[] {
+  return [
+    {
+      value: RequiredActionsMode.ALL,
+      label: t('All of these actions'),
+      hint: t('Every action below has to be in the flow.'),
+    },
+    {
+      value: RequiredActionsMode.ANY,
+      label: t('At least one of these actions'),
+      hint: t('Any one of the actions below is enough.'),
+    },
+  ];
 }
 
-const MAX_PIECES_SHOWN = 40;
-
-const MODES: {
-  value: RequiredActionsMode;
-  label: () => string;
-  hint: () => string;
-}[] = [
-  {
-    value: RequiredActionsMode.ALL,
-    label: () => t('All of these actions'),
-    hint: () => t('Every action below has to be in the flow.'),
-  },
-  {
-    value: RequiredActionsMode.ANY,
-    label: () => t('At least one of these actions'),
-    hint: () => t('Any one of the actions below is enough.'),
-  },
-];
+const PICKER_ROW_HEIGHT = 44;

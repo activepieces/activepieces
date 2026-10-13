@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 
 import { ConfirmDialog } from '@/app/components/admin';
+import { InstantSwitchConfirm } from '@/app/components/admin/instant-switch';
 import { RequiredActionGroupHeader } from '@/features/piece-sets';
 
 import { useRequiredActionsGroupedByPiece } from './use-required-actions-grouped-by-piece';
@@ -42,6 +43,33 @@ export function ConfirmExcludingRequiredActionsDialog({
       onConfirm={onConfirm}
     />
   );
+}
+
+export function excludingRequiredActionsConfirm({
+  excludedRequiredActions,
+  reason,
+}: {
+  excludedRequiredActions: Record<string, string[]>;
+  reason: ExcludingReason;
+}): InstantSwitchConfirm | null {
+  const actionCount = Object.values(excludedRequiredActions).flat().length;
+  if (actionCount === 0) {
+    return null;
+  }
+  return {
+    title: t('Remove required actions?'),
+    description:
+      reason === 'removePieces'
+        ? t('blockingPiecesRemovesRequiredActions', { actionCount })
+        : t('limitingActionsRemovesRequiredActions', { actionCount }),
+    consequence: (
+      <ExcludedRequiredActionsList
+        excludedRequiredActions={excludedRequiredActions}
+      />
+    ),
+    confirmLabel: t('Save and remove'),
+    destructive: false,
+  };
 }
 
 function ExcludedRequiredActionsList({

@@ -6,15 +6,16 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import {
   AdminEmpty,
+  AdminFetchErrorState,
   AdminPage,
   AdminPageHeader,
+  InstantSwitch,
   SettingsPanel,
   adminPageResources,
   ConfirmDialog,
 } from '@/app/components/admin';
 import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,20 +27,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import {
   ChangePieceSet,
   pieceSetChanges,
   pieceSetMutations,
   pieceSetQueries,
   pieceSetTerms,
-  useShowEmbedKey,
+  usePieceSetChange,
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
@@ -50,7 +51,7 @@ import {
 } from './piece-set-projects-dialog';
 import { pieceSetSamples, SampleProject } from './piece-set-samples';
 import { pieceSetSummary } from './piece-set-summary';
-import { RailSection, SkeletonRows } from './policy-ui';
+import { RailSection, SkeletonRows, savedOrThrow } from './policy-ui';
 import {
   PublishingRuleSentence,
   RequiredActionsList,
@@ -109,7 +110,7 @@ function LivePieceSetDetails({ id }: { id: string }) {
           title={pieceSetTerms.get().titleSingular}
         />
         <SettingsPanel flush>
-          <DataFetchErrorState
+          <AdminFetchErrorState
             entity={t('this {term}', pieceSetTerms.get())}
             onRetry={refetch}
           />
@@ -126,29 +127,23 @@ function LivePieceSetDetails({ id }: { id: string }) {
 }
 
 function LivePieceSetEditor({ pieceSet }: { pieceSet: PieceSet }) {
-  const { mutateAsync } = pieceSetMutations.useChangePieceSet(pieceSet.id);
-  const { assignedProjects, isLoading } = usePieceSetProjects(pieceSet);
-  const change: ChangePieceSet = (next) =>
-    mutateAsync({ change: next }).then(
-      () => true,
-      () => false,
-    );
+  const change = usePieceSetChange(pieceSet.id);
+  const { assignedProjects, isLoading, isError, refetch } =
+    usePieceSetProjects(pieceSet);
   return (
     <PieceSetDetails
       pieceSet={pieceSet}
       onChange={change}
       assignedProjects={assignedProjects}
       projectsLoading={isLoading}
+      projectsFailed={isError}
+      onRetryProjects={refetch}
     />
   );
 }
 
 function SamplePieceSetDetails({ id }: { id: string }) {
-  const { pieces, isLoading } = piecesHooks.usePieces({
-    includeHidden: true,
-    isTableQuery: true,
-    skipProjectFilter: true,
-  });
+  const { pieces, isLoading } = piecesHooks.usePlatformCatalog();
   if (isLoading) {
     return <PieceSetDetailsSkeleton />;
   }
@@ -165,6 +160,7 @@ function SamplePieceSetDetails({ id }: { id: string }) {
       onChange={async () => false}
       assignedProjects={pieceSetSamples.sampleProjects(sample.id)}
       projectsLoading={false}
+      projectsFailed={false}
     />
   );
 }
@@ -175,10 +171,41 @@ function PieceSetDetailsSkeleton() {
       <AdminPageHeader
         back={backLink()}
         title={<Skeleton className="h-8 w-48" />}
+        description={<Skeleton className="h-4 w-72" />}
       />
       <DetailsColumns
-        main={<SkeletonRows count={8} className="h-12 rounded-xl" />}
-        aside={<SkeletonRows count={3} className="h-24 rounded-xl" />}
+        main={
+          <SettingsPanel flush>
+            <div className="flex flex-col gap-2 p-5">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-80 max-w-full" />
+            </div>
+            <div className="flex items-center gap-3 p-5">
+              <Skeleton className="h-9 flex-1" />
+              <Skeleton className="h-9 w-64" />
+            </div>
+            <div className="flex flex-col px-4 py-1">
+              {Array.from({ length: 8 }, (_, index) => (
+                <div key={index} className="flex h-12 items-center gap-3">
+                  <Skeleton className="size-4 rounded-sm" />
+                  <Skeleton className="size-6 rounded-md" />
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="ml-auto h-5 w-9 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </SettingsPanel>
+        }
+        aside={
+          <SettingsPanel flush>
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="flex flex-col gap-3 p-5">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ))}
+          </SettingsPanel>
+        }
       />
     </AdminPage>
   );
@@ -189,23 +216,24 @@ function PieceSetDetails({
   onChange,
   assignedProjects,
   projectsLoading,
+  projectsFailed,
+  onRetryProjects,
 }: {
   pieceSet: PieceSet;
   onChange: ChangePieceSet;
   assignedProjects: SampleProject[];
   projectsLoading: boolean;
+  projectsFailed: boolean;
+  onRetryProjects?: () => unknown;
 }) {
+  const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [assigning, setAssigning] = useState(false);
   const [editing, setEditing] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editingRequired, setEditingRequired] = useState(false);
-  const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
-    includeHidden: true,
-    isTableQuery: true,
-    skipProjectFilter: true,
-  });
+  const { pieces, isLoading: piecesLoading } = piecesHooks.usePlatformCatalog();
   const { mutateAsync: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const includesNewPieces =
@@ -213,23 +241,29 @@ function PieceSetDetails({
   const requiredCount = pieceSetChanges.countRequiredActions(pieceSet.config);
   const requiredMode = pieceSet.config.requiredActions.mode;
 
+  const piecesFailed = !piecesLoading && !pieces;
   const toggleNewPieces = (include: boolean) => {
-    if (!pieces) return;
-    onChange({
-      type: 'newPieces',
-      include,
-      knownPieceNames: pieces.map((piece) => piece.name),
-    }).catch(() => undefined);
+    if (!pieces) {
+      return Promise.reject(
+        mutationFeedback.userError(
+          t('The pieces list did not load. Refresh the page and try again.'),
+        ),
+      );
+    }
+    return savedOrThrow(
+      onChange({
+        type: 'newPieces',
+        include,
+        knownPieceNames: pieces.map((piece) => piece.name),
+      }),
+    );
   };
 
-  const showKey = useShowEmbedKey();
   const metaParts = [
-    showKey
-      ? pieceSet.key
-        ? t('Key {key}', { key: pieceSet.key })
-        : t('No key')
-      : null,
-    projectsLoading
+    pieceSet.key
+      ? t('Key {embedKey}', { embedKey: pieceSet.key })
+      : t('No key'),
+    projectsLoading || projectsFailed
       ? null
       : t('{count, plural, =1 {1 project} other {# projects}}', {
           count: assignedProjects.length,
@@ -315,27 +349,33 @@ function PieceSetDetails({
                   <span className="text-sm text-gray-12">
                     {t('Show automatically')}
                   </span>
-                  <span className="text-xs text-gray-11">
-                    {includesNewPieces
+                  <span
+                    id={NEW_PIECES_HINT_ID}
+                    className="text-xs text-gray-11"
+                  >
+                    {piecesFailed
                       ? t(
-                          'Pieces installed later are shown in the builder.',
-                          pieceSetTerms.get(),
+                          'The pieces list did not load. Refresh the page to change this.',
                         )
+                      : includesNewPieces
+                      ? t('Pieces installed later are shown in the builder.')
                       : t(
                           'Pieces installed later stay hidden until you show them.',
                         )}
                   </span>
                 </span>
-                <Switch
-                  {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
+                <InstantSwitch
+                  controlId={AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE}
+                  aria-label={t('Show new pieces automatically')}
+                  aria-describedby={NEW_PIECES_HINT_ID}
                   checked={includesNewPieces}
-                  disabled={piecesLoading}
+                  disabled={piecesLoading || piecesFailed}
                   onCheckedChange={toggleNewPieces}
                 />
               </label>
             </RailSection>
 
-            <RailSection title={t('Applies to')}>
+            <RailSection title={t('Projects')}>
               {pieceSet.isDefault && (
                 <p className="text-sm text-gray-11">
                   {t(
@@ -344,7 +384,7 @@ function PieceSetDetails({
                   )}
                 </p>
               )}
-              {showKey && (
+              {platform.plan.embeddingEnabled && (
                 <p className="text-xs text-gray-11">
                   {t(
                     'Embedded projects get their {term} from the embed token at each sign-in. Changes here last until their next sign-in.',
@@ -352,7 +392,12 @@ function PieceSetDetails({
                   )}
                 </p>
               )}
-              {projectsLoading ? (
+              {projectsFailed ? (
+                <AdminFetchErrorState
+                  entity={t('projects')}
+                  onRetry={onRetryProjects}
+                />
+              ) : projectsLoading ? (
                 <SkeletonRows count={2} className="h-7 rounded-lg" />
               ) : assignedProjects.length > 0 ? (
                 <ul className="flex flex-wrap gap-1.5">
@@ -393,7 +438,7 @@ function PieceSetDetails({
                 className="self-start"
                 onClick={() => setAssigning(true)}
               >
-                {t('Change projects')}
+                {t('Assign projects')}
               </Button>
             </RailSection>
 
@@ -401,13 +446,6 @@ function PieceSetDetails({
               <PublishingRuleSentence
                 count={requiredCount}
                 mode={requiredMode}
-                onModeChange={(mode) => {
-                  if (mode !== requiredMode) {
-                    onChange({ type: 'requiredMode', mode }).catch(
-                      () => undefined,
-                    );
-                  }
-                }}
               />
               <RequiredActionsList pieceSet={pieceSet} onChange={onChange} />
               <Button
@@ -429,20 +467,18 @@ function PieceSetDetails({
               </Link>
             </RailSection>
 
-            {showKey && (
-              <RailSection title={t('Embed key')}>
-                {pieceSet.key ? (
-                  <CopyToClipboardInput textToCopy={pieceSet.key} useInput />
-                ) : (
-                  <p className="text-sm text-gray-11">
-                    {t(
-                      'No embed key. Add one in Edit details to use this {term} from the embed SDK.',
-                      pieceSetTerms.get(),
-                    )}
-                  </p>
-                )}
-              </RailSection>
-            )}
+            <RailSection title={t('Embed key')}>
+              {pieceSet.key ? (
+                <CopyToClipboardInput textToCopy={pieceSet.key} useInput />
+              ) : (
+                <p className="text-sm text-gray-11">
+                  {t(
+                    'No embed key. Add one in Edit details to use this {term} from the embed SDK.',
+                    pieceSetTerms.get(),
+                  )}
+                </p>
+              )}
+            </RailSection>
           </SettingsPanel>
         }
       />
@@ -484,7 +520,7 @@ function PieceSetDetails({
           pieceSetTerms.get(),
         )}
         consequence={
-          projectsLoading
+          projectsLoading || projectsFailed
             ? t('Its projects move to the Default {term}.', pieceSetTerms.get())
             : t(
                 '{count, plural, =0 {No projects use this {term}.} =1 {1 project moves to the Default {term}.} other {# projects move to the Default {term}.}}',
@@ -511,9 +547,9 @@ function DetailsColumns({
   aside: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
       <div className="flex min-w-0 flex-col gap-6">{main}</div>
-      <aside className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-6">
+      <aside className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-6">
         {aside}
       </aside>
     </div>
@@ -531,3 +567,4 @@ PieceSetDetailsPage.displayName = 'PieceSetDetailsPage';
 export { PieceSetDetailsPage };
 
 const MAX_PROJECT_CHIPS = 8;
+const NEW_PIECES_HINT_ID = 'piece-set-new-pieces-hint';
