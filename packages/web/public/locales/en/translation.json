@@ -26,7 +26,7 @@
   "Support": "Support",
   "New members won't join {project} anymore. Current members keep their access.": "New members won't join {project} anymore. Current members keep their access.",
   "Remove {project} from default projects?": "Remove {project} from default projects?",
-  "New Members join these as Editors.": "New Members join these as Editors.",
+  "New Members join these as Editors, including anyone who signs up through open sign-up or SSO.": "New Members join these as Editors, including anyone who signs up through open sign-up or SSO.",
   "removeDefaultProjectsMessage": "{count, plural, =1 {New members won't join {projects} anymore. Current members keep their access.} other {New members won't join {projects} anymore. Current members keep their access.}}",
   "removeDefaultProjectsTitle": "{count, plural, =1 {Remove 1 default project?} other {Remove # default projects?}}",
   "showAllDefaultProjects": "Show all {count} projects",
