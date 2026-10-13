@@ -58,7 +58,6 @@ function LockedFeatureTeaser({
   return (
     <div className="flex w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6 in-data-[slot=admin-page]:p-0 md:in-data-[slot=admin-page]:p-0">
       <EnterpriseLockedCard
-        access={gate.access}
         featureKey={featureKey}
         fallbackHeadline={t(title)}
         fallbackDescription={t(description)}

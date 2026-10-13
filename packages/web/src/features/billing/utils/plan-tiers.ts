@@ -68,6 +68,17 @@ function includedInLabel(tier: FeatureTier): string {
   }
 }
 
+function badgeLabel(tier: FeatureTier): string {
+  switch (tier) {
+    case 'plus':
+      return t('Plus plan and up');
+    case 'team':
+      return t('Team plan and up');
+    case 'enterprise':
+      return t('Enterprise plan');
+  }
+}
+
 function askAdminText(tier: FeatureTier): string {
   switch (tier) {
     case 'plus':
@@ -90,6 +101,7 @@ export const planTiers = {
   planIncludes,
   namedTier,
   includedInLabel,
+  badgeLabel,
   askAdminText,
 };
 

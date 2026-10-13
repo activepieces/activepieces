@@ -19,14 +19,14 @@ export function usePlanTier(featureKey: FeatureKey | undefined): PlanTierInfo {
     !isNil(projectLimit) &&
     projectLimit > 0 &&
     planTiers.planIncludes({ plan: platform.plan.plan, featureKey });
+  const limitReached = t(
+    "You've reached your plan's {count, plural, =1 {1 team project} other {# team projects}}",
+    { count: projectLimit ?? 0 },
+  );
   return {
     tier,
-    label: reachedOwnPlanLimit
-      ? t(
-          "You've reached your plan's {count, plural, =1 {1 team project} other {# team projects}}",
-          { count: projectLimit },
-        )
-      : planTiers.includedInLabel(tier),
+    label: reachedOwnPlanLimit ? limitReached : planTiers.includedInLabel(tier),
+    badge: reachedOwnPlanLimit ? limitReached : planTiers.badgeLabel(tier),
     reachedOwnPlanLimit,
     isCloud: edition === ApEdition.CLOUD,
     isCommunity: edition === ApEdition.COMMUNITY,
@@ -40,6 +40,7 @@ function isProjectsFeature(featureKey: FeatureKey | undefined): boolean {
 export type PlanTierInfo = {
   tier: FeatureTier;
   label: string;
+  badge: string;
   reachedOwnPlanLimit: boolean;
   isCloud: boolean;
   isCommunity: boolean;

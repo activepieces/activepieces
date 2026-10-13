@@ -52,7 +52,6 @@ export function EnterpriseGate(props: EnterpriseGateProps) {
     <LockedPreview
       callout={
         <EnterpriseLockedCard
-          access={gate.access}
           featureKey={props.featureKey}
           fallbackHeadline={props.title}
           surface={PlatformAdminSurface.SAMPLE}
@@ -77,7 +76,6 @@ export function EnterpriseLockedSection({
   }
   return (
     <EnterpriseLockedCard
-      access={gate.access}
       featureKey={featureKey}
       headline={title}
       description={description}

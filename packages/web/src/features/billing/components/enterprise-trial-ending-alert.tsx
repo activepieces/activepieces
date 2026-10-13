@@ -46,53 +46,42 @@ export function EnterpriseTrialEndingAlert() {
   const ending = trial.ending;
   const tone = trial.endsToday ? TONE.today : TONE.soon;
 
+  const title = ending
+    ? enterpriseTrialCopy.endsSentence(trial)
+    : trial.extended
+    ? t('Your Enterprise plan trial was extended until {date}.', {
+        date: dayjs(trial.endsAt).format('MMM D'),
+      })
+    : t('You are on a free trial of the Enterprise plan until {date}.', {
+        date: dayjs(trial.endsAt).format('MMM D'),
+      });
+  const detail = ending
+    ? t(
+        'Want to keep the Enterprise plan? Talk to our team. Nothing is deleted either way.',
+      )
+    : t(
+        'Single sign-on, audit logs, your own AI providers and every other Enterprise plan feature are on for your whole platform.',
+      );
+
   return (
     <div className={cn(DASHBOARD_CONTENT_PADDING_X, 'w-full pt-3')}>
       <div
         role="status"
         data-slot="enterprise-trial-banner"
         className={cn(
-          'flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border px-3 py-2.5 text-sm',
+          'flex items-start gap-3 rounded-xl border py-3 pr-2 pl-4 text-sm',
           tone.surface,
           enterpriseMotion.appear,
         )}
       >
-        <Gem className={cn('size-4 shrink-0', tone.icon)} />
-        <p className="min-w-0 flex-1 basis-64 text-gray-12">
-          {ending ? (
-            <>
-              <span className="font-medium">
-                {enterpriseTrialCopy.endsSentence(trial)}
-              </span>{' '}
-              <span className="text-gray-11">
-                {t(
-                  'Want to keep the Enterprise plan? Talk to our team. Nothing is deleted either way.',
-                )}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="font-medium">
-                {trial.extended
-                  ? t('Your Enterprise plan trial was extended until {date}.', {
-                      date: dayjs(trial.endsAt).format('MMM D'),
-                    })
-                  : t(
-                      'You are on a free trial of the Enterprise plan until {date}.',
-                      { date: dayjs(trial.endsAt).format('MMM D') },
-                    )}
-              </span>{' '}
-              <span className="text-gray-11">
-                {t(
-                  'Single sign-on, audit logs, your own AI providers and every other Enterprise plan feature are on for your whole platform.',
-                )}
-              </span>
-            </>
-          )}
-        </p>
-        <div className="flex shrink-0 items-center gap-2">
+        <Gem className={cn('mt-0.5 size-4 shrink-0', tone.icon)} />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex min-w-0 flex-1 basis-72 flex-col gap-0.5">
+            <p className="font-medium text-gray-12">{title}</p>
+            <p className="text-pretty text-gray-11">{detail}</p>
+          </div>
           {ending && (
-            <>
+            <div className="flex shrink-0 items-center gap-2">
               <Button
                 {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
                 variant="outline"
@@ -111,21 +100,21 @@ export function EnterpriseTrialEndingAlert() {
                 className={tone.primary}
                 label={t('Talk to sales')}
               />
-            </>
+            </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={ending ? t('Dismiss for today') : t('Dismiss')}
-            className={tone.dismiss}
-            onClick={() => {
-              writeFlag(dismissKey);
-              setDismissedKey(dismissKey);
-            }}
-          >
-            <X className="size-3.5" />
-          </Button>
         </div>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label={ending ? t('Dismiss for today') : t('Dismiss')}
+          className={cn('shrink-0', tone.dismiss)}
+          onClick={() => {
+            writeFlag(dismissKey);
+            setDismissedKey(dismissKey);
+          }}
+        >
+          <X className="size-3.5" />
+        </Button>
       </div>
     </div>
   );

@@ -294,23 +294,22 @@ describe('enterprise plan indicator', () => {
   it('shows the trial and the calendar days left to admins', () => {
     trial = midTrial();
     renderInRouter(<EnterprisePlanIndicator />);
+    expect(screen.getByText('Enterprise plan trial')).toBeDefined();
     expect(
-      screen.getByText('Enterprise plan · trial, 4 days left'),
+      screen.getByText(
+        `4 days left, ends ${dayjs(trial.endsAt).format('MMM D')}`,
+      ),
     ).toBeDefined();
   });
 
-  it('uses the same wording as the banner on the last two days', () => {
+  it('names the end time on the last two days', () => {
     trial = endsTomorrow();
     const view = renderInRouter(<EnterprisePlanIndicator />);
-    expect(
-      screen.getByText('Enterprise plan · trial ends tomorrow'),
-    ).toBeDefined();
+    expect(screen.getByText('Ends tomorrow at 6:00 PM')).toBeDefined();
     view.unmount();
     trial = endsToday();
     renderInRouter(<EnterprisePlanIndicator />);
-    expect(
-      screen.getByText('Enterprise plan · trial ends today'),
-    ).toBeDefined();
+    expect(screen.getByText('Ends today at 11:50 PM')).toBeDefined();
   });
 
   it('says Enterprise plan on any paid Enterprise plan id', () => {
@@ -348,9 +347,8 @@ describe('credits card trial line', () => {
   it('shows the trial line to admins with the shared wording', () => {
     trial = midTrial();
     renderInRouter(<EnterpriseTrialPill />);
-    expect(
-      screen.getByText('Enterprise plan · trial, 4 days left'),
-    ).toBeDefined();
+    expect(screen.getByText('Enterprise plan trial')).toBeDefined();
+    expect(screen.getByText('· 4 days left')).toBeDefined();
   });
 
   it('never shows the trial line or pill to members', () => {

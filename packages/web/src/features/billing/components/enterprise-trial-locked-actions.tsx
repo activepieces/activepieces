@@ -1,10 +1,11 @@
 import { PlatformAdminSurface, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Gem, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { ENTERPRISE_TRIAL_DAYS } from '../hooks/enterprise-trial-hooks';
@@ -20,7 +21,7 @@ export function EnterpriseTrialLockedActions({
   featureKey,
   surface,
   onAction,
-  compact = false,
+  primaryLast = false,
 }: EnterpriseTrialLockedActionsProps) {
   const access = useEnterpriseAccess({ unlocked: false });
   const plan = usePlanTier(featureKey);
@@ -50,7 +51,7 @@ export function EnterpriseTrialLockedActions({
   );
 
   if (access === 'ask_admin') {
-    return compact ? null : (
+    return (
       <p className="flex items-center gap-2 text-sm text-gray-11">
         <UserRound className="size-4 shrink-0" />
         {planTiers.askAdminText(plan.tier)}
@@ -60,7 +61,7 @@ export function EnterpriseTrialLockedActions({
 
   if (access === 'trial_available') {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Button
             {...adminControl(AdminControl.TRIAL_START_OPEN)}
@@ -69,18 +70,15 @@ export function EnterpriseTrialLockedActions({
               openDialog({ featureKey });
             }}
           >
-            <Gem />
-            {t('Start free {days}-day Enterprise plan trial', {
-              days: ENTERPRISE_TRIAL_DAYS,
-            })}
+            {t('Start free trial')}
           </Button>
           {explorePlans('outline')}
         </div>
-        {!compact && (
-          <span className="text-xs text-gray-11">
-            {t('No credit card. One click to start. Nothing is deleted.')}
-          </span>
-        )}
+        <span className="text-xs text-gray-11">
+          {t('{days}-day Enterprise plan trial. No credit card.', {
+            days: ENTERPRISE_TRIAL_DAYS,
+          })}
+        </span>
       </div>
     );
   }
@@ -102,7 +100,12 @@ export function EnterpriseTrialLockedActions({
 
   if (plan.tier !== 'enterprise') {
     return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-x-4 gap-y-2',
+          primaryLast && 'flex-row-reverse',
+        )}
+      >
         {explorePlans('default')}
         {salesLink('link')}
       </div>
@@ -110,7 +113,12 @@ export function EnterpriseTrialLockedActions({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-2',
+        primaryLast && 'flex-row-reverse',
+      )}
+    >
       {salesLink('default')}
       {explorePlans('outline')}
     </div>
@@ -121,5 +129,5 @@ type EnterpriseTrialLockedActionsProps = {
   featureKey?: FeatureKey;
   surface: PlatformAdminSurface;
   onAction?: () => void;
-  compact?: boolean;
+  primaryLast?: boolean;
 };
