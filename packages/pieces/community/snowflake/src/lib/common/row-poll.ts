@@ -43,9 +43,6 @@ export async function fetchNewRows({
 }> {
   const col = identifier({ name: column, label: 'Timestamp column' });
   const cursorExpr = `DATE_PART(EPOCH_MICROSECOND, ${col})`;
-  // Without an offset the cursor is a baseline: everything at that timestamp
-  // was already seen. With an offset, `offset` rows at that timestamp were
-  // already emitted, so rows sharing one timestamp can span several pages.
   const strict = after !== null && offset === undefined;
   const skip = strict ? 0 : Math.max(0, Math.floor(offset ?? 0));
   const where =
