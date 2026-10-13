@@ -1,12 +1,9 @@
 import { isNil, PieceSet, ProjectWithLimits } from '@activepieces/shared';
+import { useIsMutating, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
-import {
-  AdminFetchErrorState,
-  adminLayout,
-  useAdminAction,
-} from '@/app/components/admin';
+import { AdminFetchErrorState, adminLayout } from '@/app/components/admin';
 import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,6 +25,7 @@ import {
 import { projectHooks } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { SkeletonRows } from './policy-ui';
 
@@ -61,6 +59,7 @@ export const PieceSetProjectsDialog = ({
 }: PieceSetProjectsDialogProps) => {
   const { allProjects, assignedProjects, isLoading, isError, refetch } =
     usePieceSetProjects(pieceSet);
+  const saving = useIsMutating({ mutationKey: saveKey(pieceSet.id) }) > 0;
   const body = (() => {
     if (isError) {
       return (
@@ -93,7 +92,14 @@ export const PieceSetProjectsDialog = ({
     );
   })();
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!saving) {
+          onOpenChange(next);
+        }
+      }}
+    >
       <DialogContent className={adminLayout.dialog.md}>{body}</DialogContent>
     </Dialog>
   );
@@ -117,15 +123,20 @@ const AssignProjectsForm = ({
   const [orderedProjects] = useState(() =>
     assignedFirst({ projects: allProjects, assignedIds: serverAssignedIds }),
   );
-  const { data: pieceSets = [] } = pieceSetQueries.useAllPieceSets();
+  const {
+    data: pieceSets,
+    isLoading: setsLoading,
+    isError: setsFailed,
+    refetch: refetchSets,
+  } = pieceSetQueries.useAllPieceSets();
   const moveProjects = usePieceSetProjectMoves();
-  const defaultSetId = pieceSets.find((set) => set.isDefault)?.id;
+  const defaultSetId = pieceSets?.find((set) => set.isDefault)?.id;
   const projectsById = useMemo(
     () => new Map(allProjects.map((project) => [project.id, project])),
     [allProjects],
   );
   const setNames = useMemo(
-    () => new Map(pieceSets.map((set) => [set.id, set.name])),
+    () => new Map((pieceSets ?? []).map((set) => [set.id, set.name])),
     [pieceSets],
   );
 
@@ -148,17 +159,27 @@ const AssignProjectsForm = ({
           project.displayName.toLowerCase().includes(needle),
         );
 
-  const save = useAdminAction({
-    verb: 'save',
-    messages: { failed: t("Some project changes weren't saved") },
-    run: () =>
-      moveProjects({
-        pieceSetId: pieceSet.id,
-        added,
-        removed,
-        defaultSetId,
+  const save = useMutation({
+    mutationKey: saveKey(pieceSet.id),
+    mutationFn: () => moveProjects({ pieceSetId: pieceSet.id, added, removed }),
+    onSuccess: ({ movedElsewhere }) => {
+      if (movedElsewhere.length > 0) {
+        mutationFeedback.success(
+          t(
+            '{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed.',
+            { ...pieceSetTerms.get(), count: movedElsewhere.length },
+          ),
+        );
+      } else {
+        mutationFeedback.success(t('Projects saved'));
+      }
+      onOpenChange(false);
+    },
+    onError: (error) =>
+      mutationFeedback.error({
+        error,
+        title: t("Some project changes weren't saved"),
       }),
-    onSuccess: () => onOpenChange(false),
   });
 
   const toggleProject = (projectId: string) =>
@@ -235,6 +256,12 @@ const AssignProjectsForm = ({
           </div>
         )}
       </div>
+      {setsFailed && (
+        <AdminFetchErrorState
+          entity={pieceSetTerms.get().terms}
+          onRetry={refetchSets}
+        />
+      )}
       {movingCount > 0 && (
         <p className="text-xs text-warning-11">
           {t('projectsMovingFromOtherSets', { count: movingCount })}
@@ -253,7 +280,7 @@ const AssignProjectsForm = ({
           {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
           type="button"
           loading={save.isPending}
-          disabled={!dirty}
+          disabled={!dirty || setsLoading || setsFailed}
           onClick={() => save.mutate()}
         >
           {t('Save')}
@@ -288,6 +315,10 @@ function assignedFirst({
     ...projects.filter((project) => assigned.has(project.id)),
     ...projects.filter((project) => !assigned.has(project.id)),
   ];
+}
+
+function saveKey(pieceSetId: string) {
+  return ['piece-set-projects-save', pieceSetId];
 }
 
 const PROJECT_ROW_HEIGHT = 40;
