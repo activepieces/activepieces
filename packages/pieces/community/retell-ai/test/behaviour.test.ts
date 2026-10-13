@@ -282,6 +282,7 @@ describe('dropdowns', () => {
     const result = toDropdown(await loadOptions(agentIdDropdown({ displayName: 'Agent' })));
     expect(calls.map((call) => call.url.searchParams.get('pagination_key'))).toEqual([null, 'p2']);
     expect(result.options.map((option) => option.value)).toEqual(['a1', 'a2']);
+    expect(calls.every((call) => JSON.stringify(call.body ?? '').includes('voice'))).toBe(true);
   });
 
   it('agent dropdown stops after 10 pages', async () => {
@@ -365,14 +366,12 @@ describe('webhook triggers', () => {
     expect(await runTrigger({ trigger: callAnalyzedTrigger, context: triggerContext({ payload: unsigned }) })).toEqual([]);
   });
 
-  it('keeps the dedupe list bounded', async () => {
+  it('stores one dedupe entry per call, so different calls never overwrite each other', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(now);
     const store = makeStore();
-    store.data.set('retell_call_ended_deliveries', Array.from({ length: 500 }, (_, i) => `old_${i}:call_ended`));
     await runTrigger({ trigger: callEndedTrigger, context: triggerContext({ payload: signedPayload({ event: 'call_ended' }), store }) });
-    const kept = store.data.get('retell_call_ended_deliveries');
-    expect(Array.isArray(kept) && kept.length).toBe(500);
-    expect(Array.isArray(kept) && kept[kept.length - 1]).toBe('call_1:call_ended');
+    expect(store.data.get('retell_call_ended_call_1')).toBe(true);
+    expect(store.data.has('retell_call_ended_deliveries')).toBe(false);
   });
 
   it('sample data matches the real {event, call} shape', () => {

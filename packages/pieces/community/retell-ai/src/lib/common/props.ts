@@ -44,9 +44,9 @@ export const agentIdDropdown = ({ displayName, required = false }: { displayName
         return { disabled: true, options: [], placeholder: 'Connect your Retell AI account first' };
       }
       try {
-        const { agents } = await listAllAgents({ apiKey: apiKeyOf(auth) });
+        const { agents } = await listAllAgents({ apiKey: apiKeyOf(auth), channel: 'voice' });
         if (agents.length === 0) {
-          return { disabled: true, options: [], placeholder: 'No agents found in your workspace.' };
+          return { disabled: true, options: [], placeholder: 'No voice agents found in your workspace.' };
         }
         return {
           disabled: false,

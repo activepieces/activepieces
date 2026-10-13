@@ -59,13 +59,13 @@ export async function handleRetellWebhook({
   if (typeof callId !== 'string' || callId.length === 0) {
     return [];
   }
-  const deliveryKey = `${callId}:${event}`;
-  const storeKey = `retell_${event}_deliveries`;
-  const seen = (await store.get<string[]>(storeKey)) ?? [];
-  if (seen.includes(deliveryKey)) {
+  // One store entry per call and event, so deliveries for different calls never overwrite each other.
+  // The piece store has no compare-and-set; at-most-once by design (see PR thread).
+  const deliveryKey = `retell_${event}_${callId}`.slice(0, MAX_STORE_KEY_LENGTH);
+  if ((await store.get<boolean>(deliveryKey)) !== null) {
     return [];
   }
-  await store.put(storeKey, [...seen, deliveryKey].slice(-MAX_REMEMBERED_DELIVERIES));
+  await store.put(deliveryKey, true);
   return [{ event, call: body['call'] }];
 }
 
@@ -109,7 +109,7 @@ function parseBody(body: unknown): Record<string, unknown> | undefined {
   return undefined;
 }
 
-const MAX_REMEMBERED_DELIVERIES = 500;
+const MAX_STORE_KEY_LENGTH = 128;
 const REPLAY_WINDOW_MS = 15 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
 
