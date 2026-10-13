@@ -5,16 +5,17 @@ import {
     FlowStatus,
     FlowVersion,
     FlowVersionState,
+    LATEST_FLOW_SCHEMA_VERSION,
     NoteColorVariant,
     PopulatedFlow,
     UncategorizedFolderId,
-    WebsocketClientEvent,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { websocketService } from '../../../../../src/app/core/websockets.service'
 import { flowService } from '../../../../../src/app/flows/flow/flow.service'
 import { db } from '../../../../helpers/db'
+import { draftPushes } from '../../../../helpers/draft-push'
 import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
@@ -38,7 +39,7 @@ describe('Draft Push', () => {
         it.each(draftWrites)('sends FLOW_DRAFT_UPDATED with the editor session id to the project room after $type', async ({ build }) => {
             const ctx = await setup()
             const flow = await createFlow(ctx)
-            const pushes = captureDraftPushes()
+            const pushes = draftPushes.capture()
 
             const response = await applyOperation({
                 ctx,
@@ -57,7 +58,7 @@ describe('Draft Push', () => {
         it('sends a null editor session id when the request has no header', async () => {
             const ctx = await setup()
             const flow = await createFlow(ctx)
-            const pushes = captureDraftPushes()
+            const pushes = draftPushes.capture()
 
             const response = await applyOperation({
                 ctx,
@@ -75,7 +76,7 @@ describe('Draft Push', () => {
         it.each(nonDraftWrites)('sends no push for $type', async ({ build }) => {
             const ctx = await setup()
             const flow = await createFlow(ctx)
-            const pushes = captureDraftPushes()
+            const pushes = draftPushes.capture()
 
             const response = await applyOperation({
                 ctx,
@@ -97,7 +98,7 @@ describe('Draft Push', () => {
                 operation: { type: FlowOperationType.LOCK_AND_PUBLISH, request: { status: FlowStatus.DISABLED } },
             })
             expect(publishResponse.statusCode).toBe(StatusCodes.OK)
-            const pushes = captureDraftPushes()
+            const pushes = draftPushes.capture()
 
             const response = await applyOperation({
                 ctx,
@@ -118,7 +119,7 @@ describe('Draft Push', () => {
             const ctx = await setup()
             const flow = await createFlow(ctx)
             const draftNamesAtPush: Promise<string[]>[] = []
-            spyOnDraftPushes(() => {
+            draftPushes.observe(() => {
                 draftNamesAtPush.push(readDraftNames(flow.id))
             })
 
@@ -136,7 +137,7 @@ describe('Draft Push', () => {
         it('sends a push with a null editor session id when emitEvents is false', async () => {
             const ctx = await createTestContext(app)
             const flow = await createFlow(ctx)
-            const pushes = captureDraftPushes()
+            const pushes = draftPushes.capture()
 
             await flowService(app.log).update({
                 id: flow.id,
@@ -176,6 +177,42 @@ describe('Draft Push', () => {
             )
         })
     })
+
+    describe('writes that are not Draft Writes', () => {
+        it('sends no push when a read migrates the draft to the latest schema version', async () => {
+            const ctx = await createTestContext(app)
+            const flow = await createFlow(ctx)
+            await db.update('flow_version', flow.version.id, { schemaVersion: '20' })
+            const pushes = draftPushes.capture()
+
+            const response = await ctx.get(`/v1/flows/${flow.id}`)
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const storedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: flow.version.id })
+            expect(storedVersion.schemaVersion).toBe(LATEST_FLOW_SCHEMA_VERSION)
+            expect(pushes).toEqual([])
+        })
+
+        it('sends no push when a new flow gets its empty draft', async () => {
+            const ctx = await createTestContext(app)
+            const pushes = draftPushes.capture()
+
+            await createFlow(ctx)
+
+            expect(pushes).toEqual([])
+        })
+
+        it('sends no push when a flow is deleted', async () => {
+            const ctx = await createTestContext(app)
+            const flow = await createFlow(ctx)
+            const pushes = draftPushes.capture()
+
+            const response = await ctx.delete(`/v1/flows/${flow.id}`)
+
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(pushes).toEqual([])
+        })
+    })
 })
 
 const draftWrites: WriteCase[] = [
@@ -210,28 +247,6 @@ function applyOperation({ ctx, flowId, operation, editorSessionId }: ApplyOperat
     })
 }
 
-function captureDraftPushes(): DraftPush[] {
-    const pushes: DraftPush[] = []
-    spyOnDraftPushes((push) => {
-        pushes.push(push)
-    })
-    return pushes
-}
-
-function spyOnDraftPushes(onPush: (push: DraftPush) => void): void {
-    const realTo = websocketService.to
-    vi.spyOn(websocketService, 'to').mockImplementation((room) => {
-        const operator = realTo(room)
-        vi.spyOn(operator, 'emit').mockImplementation((event, ...args) => {
-            if (event === WebsocketClientEvent.FLOW_DRAFT_UPDATED) {
-                onPush({ room, payload: args[0] })
-            }
-            return true
-        })
-        return operator
-    })
-}
-
 async function readDraftNames(flowId: string): Promise<string[]> {
     const versions = await db.findBy<FlowVersion>('flow_version', { flowId })
     return versions.map((version) => version.displayName)
@@ -247,9 +262,4 @@ type ApplyOperationParams = {
 type WriteCase = {
     type: FlowOperationType
     build: (ctx: TestContext) => FlowOperationRequest
-}
-
-type DraftPush = {
-    room: string
-    payload: unknown
 }

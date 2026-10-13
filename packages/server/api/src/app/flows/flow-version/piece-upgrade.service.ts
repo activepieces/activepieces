@@ -1,10 +1,11 @@
-import { isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { FlowId, FlowVersionId, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { ApplicationEventName, Flow, FlowAction, FlowActionType, FlowPiecesUpgradedEvent, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventEntity } from '../../ee/audit-logs/audit-event-entity'
 import { applicationEvents } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
+import { flowSideEffects } from '../flow/flow-service-side-effects'
 import { flowRepo } from '../flow/flow.repo'
 import { FlowVersionEntity } from './flow-version-entity'
 import { pieceUpgradeRegister } from './piece-upgrade-register'
@@ -100,6 +101,8 @@ async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceU
         }
         revertedSteps.push(...await revertFlowVersion({ flow, platformId, flowVersion, versionReverts, log }))
     }
+    const latestVersion = await findLatestVersion(flowId)
+    await sendDraftPushIfLatestVersionChanged({ flow, changedSteps: revertedSteps, latestVersionId: latestVersion?.id, log })
     return { flowId, found: true, upgradedSteps: revertedSteps }
 }
 
@@ -169,7 +172,7 @@ async function upgradeFlow({ flowId, projectId, log }: UpgradeFlowParams): Promi
         return { flowId, found: false, upgradedSteps: [] }
     }
     const platformId = await projectService(log).getPlatformId(flow.projectId)
-    const latestVersion = await flowVersionRepo().findOne({ where: { flowId }, order: { created: 'DESC' } })
+    const latestVersion = await findLatestVersion(flowId)
     const versions = [latestVersion]
     if (!isNil(flow.publishedVersionId) && flow.publishedVersionId !== latestVersion?.id) {
         versions.push(await flowVersionRepo().findOneBy({ id: flow.publishedVersionId }))
@@ -181,7 +184,19 @@ async function upgradeFlow({ flowId, projectId, log }: UpgradeFlowParams): Promi
         }
         upgradedSteps.push(...await upgradeFlowVersion({ flow, platformId, flowVersion: version, log }))
     }
+    await sendDraftPushIfLatestVersionChanged({ flow, changedSteps: upgradedSteps, latestVersionId: latestVersion?.id, log })
     return { flowId, found: true, upgradedSteps }
+}
+
+async function findLatestVersion(flowId: FlowId): Promise<FlowVersion | null> {
+    return flowVersionRepo().findOne({ where: { flowId }, order: { created: 'DESC' } })
+}
+
+async function sendDraftPushIfLatestVersionChanged({ flow, changedSteps, latestVersionId, log }: SendDraftPushIfLatestVersionChangedParams): Promise<void> {
+    if (!changedSteps.some((step) => step.flowVersionId === latestVersionId)) {
+        return
+    }
+    await flowSideEffects(log).onDraftWritten({ flowId: flow.id, projectId: flow.projectId, editorSessionId: null })
 }
 
 async function upgradeFlowVersion({ flow, platformId, flowVersion, log }: UpgradeFlowVersionParams): Promise<UpgradedStep[]> {
@@ -316,8 +331,9 @@ async function updateTriggerIfUnchanged({ flowVersion, newTrigger }: UpdateTrigg
         .set({ trigger: newTrigger })
         .where('id = :id', { id: flowVersion.id })
         .andWhere('trigger = CAST(:snapshot AS jsonb)', { snapshot: JSON.stringify(flowVersion.trigger) })
+        .returning(['id'])
         .execute()
-    return updateResult.affected === 1
+    return updateResult.raw?.length === 1
 }
 
 function getUsedStepName(step: FlowAction | FlowTrigger): string | undefined {
@@ -418,6 +434,13 @@ type SendUpgradeAuditEventParams = {
     flowId: string
     flowVersionId: string
     decisions: StepUpgradeDecision[]
+    log: FastifyBaseLogger
+}
+
+type SendDraftPushIfLatestVersionChangedParams = {
+    flow: Flow
+    changedSteps: UpgradedStep[]
+    latestVersionId: FlowVersionId | undefined
     log: FastifyBaseLogger
 }
 

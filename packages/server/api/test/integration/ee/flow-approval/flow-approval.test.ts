@@ -1,6 +1,7 @@
 import {
     apId,
     DefaultProjectRole,
+    EDITOR_SESSION_ID_HEADER,
     Flow,
     FlowApprovalRequest,
     FlowApprovalRequestState,
@@ -10,10 +11,11 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { flowApprovalRequestService } from '../../../../src/app/ee/flows/flow-approval/flow-approval-request.service'
 import { eeFlowPublishHook } from '../../../../src/app/ee/flows/flow-approval/flow-publish-hook'
 import { db } from '../../../helpers/db'
+import { DraftPush, draftPushes } from '../../../helpers/draft-push'
 import {
     createMockFlow,
     createMockFlowVersion,
@@ -89,6 +91,11 @@ async function seedPendingApproval(ctx: TestContext, submitterId: string): Promi
     }
     await db.save('flow_approval_request', approval)
     return { flow, version, approval }
+}
+
+async function readVersionState(versionId: string): Promise<FlowVersionState> {
+    const storedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: versionId })
+    return storedVersion.state
 }
 
 describe('flow-approval — routing', () => {
@@ -316,6 +323,72 @@ describe('flow-approval — withdraw', () => {
         expect(row).toBeNull()
         const reloadedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: version.id })
         expect(reloadedVersion.state).toBe(FlowVersionState.DRAFT)
+    })
+
+    describe('Draft Push', () => {
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        it('sends a Draft Push with the editor session id after the version returns to DRAFT', async () => {
+            const ctx = await setupSensitiveCtx()
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const { flow, version, approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+            const pushes: DraftPush[] = []
+            const versionStatesAtPush: Promise<FlowVersionState>[] = []
+            draftPushes.observe((push) => {
+                pushes.push(push)
+                versionStatesAtPush.push(readVersionState(version.id))
+            })
+
+            const response = await memberCtx.inject({
+                method: 'POST',
+                url: `/api/v1/flow-approval-requests/${approval.id}/withdraw`,
+                headers: { [EDITOR_SESSION_ID_HEADER]: 'editor-session-1' },
+                body: {},
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(pushes).toEqual([{
+                room: ctx.project.id,
+                payload: { flowId: flow.id, editorSessionId: 'editor-session-1' },
+            }])
+            expect(await Promise.all(versionStatesAtPush)).toEqual([FlowVersionState.DRAFT])
+        })
+
+        it('sends a null editor session id when the request has no header', async () => {
+            const ctx = await setupSensitiveCtx()
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const { flow, approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+            const pushes = draftPushes.capture()
+
+            const response = await memberCtx.post(`/v1/flow-approval-requests/${approval.id}/withdraw`, {})
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(pushes).toEqual([{
+                room: ctx.project.id,
+                payload: { flowId: flow.id, editorSessionId: null },
+            }])
+        })
+
+        it('sends no push when the request is no longer pending', async () => {
+            const ctx = await setupSensitiveCtx()
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const { approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+            await db.update('flow_approval_request', approval.id, { state: FlowApprovalRequestState.REJECTED })
+            const pushes = draftPushes.capture()
+
+            const response = await memberCtx.post(`/v1/flow-approval-requests/${approval.id}/withdraw`, {})
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(pushes).toEqual([])
+        })
     })
 })
 
