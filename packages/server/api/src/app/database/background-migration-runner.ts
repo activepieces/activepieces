@@ -18,12 +18,10 @@ export const backgroundMigrationRunner = {
         log,
         migrations,
         dataSource,
-        lock,
     }: {
         log: FastifyBaseLogger
         migrations?: (new () => BackgroundMigration)[]
         dataSource?: DataSource
-        lock?: MigrationLock
     }): Promise<void> {
         const ds = dataSource ?? databaseConnection()
         const source = migrations ?? getBackgroundMigrations()
@@ -36,20 +34,17 @@ export const backgroundMigrationRunner = {
         log.info({ migration: { pendingCount: pending.length } }, '[backgroundMigrationRunner] Starting run')
         wideEvent.set({ migration: { pendingCount: pending.length } })
 
-        const migrationLock = lock ?? distributedLock(log)
         for (const migration of pending) {
-            await runOne({ migration, log, dataSource: ds, lock: migrationLock })
+            await runOne({ migration, log, dataSource: ds })
         }
     },
 
     async runMigrationsWithCatchup({
         dataSource,
         log,
-        lock,
     }: {
         dataSource: DataSource
         log: FastifyBaseLogger
-        lock?: MigrationLock
     }): Promise<void> {
         await ensureBackgroundMigrationsTable(dataSource)
         for (let attempt = 1; attempt <= MAX_CATCHUP_ATTEMPTS; attempt++) {
@@ -59,7 +54,7 @@ export const backgroundMigrationRunner = {
             const name = new error.migration().name
             log.info({ migration: { name } }, '[runMigrationsWithCatchup] Catching up prior-release backfill before retrying blocking migrations')
             const { error: catchupError } = await tryCatch(async () =>
-                backgroundMigrationRunner.run({ log, migrations: [error.migration], dataSource, lock }),
+                backgroundMigrationRunner.run({ log, migrations: [error.migration], dataSource }),
             )
             if (catchupError) {
                 throw new Error(
@@ -104,14 +99,12 @@ async function runOne({
     migration,
     log,
     dataSource,
-    lock,
 }: {
     migration: BackgroundMigration
     log: FastifyBaseLogger
     dataSource: DataSource
-    lock: MigrationLock
 }): Promise<void> {
-    await lock.runExclusive({
+    await distributedLock(log).runExclusive({
         key: `background_migration:${migration.name}`,
         timeoutInSeconds: RUN_LOCK_TIMEOUT_SECONDS,
         fn: async () => {
@@ -222,8 +215,6 @@ const MAX_CATCHUP_ATTEMPTS = 10
 const RUN_LOCK_TIMEOUT_SECONDS = 240
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
-
-export type MigrationLock = Pick<ReturnType<typeof distributedLock>, 'runExclusive'>
 
 export type FailedBackgroundMigration = {
     name: string
