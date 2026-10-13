@@ -24,6 +24,7 @@ import {
   pieceSelectorUtils,
 } from '@/features/pieces';
 import { api } from '@/lib/api';
+import { wait } from '@/lib/dom-utils';
 import { KeyedDebounce } from '@/lib/keyed-debounce';
 import { PromiseQueue } from '@/lib/promise-queue';
 
@@ -190,10 +191,10 @@ export const createFlowState = (
         set({ saving: true });
         const updateRequest = async () => {
           try {
-            const { version: serverFlowVersion } = await flowsApi.update(
-              state.flow.id,
+            const { version: serverFlowVersion } = await saveOperation({
+              flowId: state.flow.id,
               operation,
-            );
+            });
             if (operation.type === FlowOperationType.SAVE_SAMPLE_DATA) {
               sampleDataHooks.invalidateSampleData(
                 serverFlowVersion.id,
@@ -446,6 +447,55 @@ async function refetchDraft(get: StoreApi<BuilderState>['getState']) {
   setVersion(serverFlow.version);
 }
 
+function saveOperation({
+  flowId,
+  operation,
+}: {
+  flowId: string;
+  operation: FlowOperationRequest;
+}): Promise<PopulatedFlow> {
+  return sendWithRetries({
+    send: () => flowsApi.update(flowId, operation),
+    retryDelaysMs: IDEMPOTENT_OPERATION_TYPES.includes(operation.type)
+      ? SAVE_RETRY_DELAYS_MS
+      : [],
+  });
+}
+
+async function sendWithRetries({
+  send,
+  retryDelaysMs,
+}: {
+  send: () => Promise<PopulatedFlow>;
+  retryDelaysMs: number[];
+}): Promise<PopulatedFlow> {
+  const { data: savedFlow, error } = await tryCatch(send);
+  if (error === null) {
+    return savedFlow;
+  }
+  const [delayMs, ...laterDelaysMs] = retryDelaysMs;
+  if (isNil(delayMs) || !isTransientSaveError(error)) {
+    throw error;
+  }
+  await wait(delayMs);
+  return sendWithRetries({ send, retryDelaysMs: laterDelaysMs });
+}
+
+function isTransientSaveError(error: unknown) {
+  if (!api.isError(error)) {
+    return false;
+  }
+  if (isNil(error.response)) {
+    return true;
+  }
+  const { status } = error.response;
+  return (
+    status === api.httpStatus.RequestTimeout ||
+    status === api.httpStatus.TooManyRequests ||
+    status >= api.httpStatus.InternalServerError
+  );
+}
+
 function showFailedSaveToast(error: unknown) {
   toast.error(t('Your change was not saved'), {
     id: 'failed-flow-save',
@@ -488,3 +538,15 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
     },
   });
 };
+
+const SAVE_RETRY_DELAYS_MS = [1000, 2000, 4000];
+
+const IDEMPOTENT_OPERATION_TYPES = [
+  FlowOperationType.UPDATE_ACTION,
+  FlowOperationType.UPDATE_TRIGGER,
+  FlowOperationType.UPDATE_NOTE,
+  FlowOperationType.CHANGE_NAME,
+  FlowOperationType.SET_SKIP_ACTION,
+  FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+  FlowOperationType.IMPORT_FLOW,
+];

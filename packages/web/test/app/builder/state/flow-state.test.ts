@@ -8,6 +8,7 @@ import {
   FlowTriggerType,
   FlowVersionState,
   PopulatedFlow,
+  SampleDataFileType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
@@ -37,7 +38,7 @@ describe('flow state save path', () => {
 
   it('saves the next edit after a failed save', async () => {
     flowsApiMock.update
-      .mockRejectedValueOnce(new Error('Network Error'))
+      .mockRejectedValueOnce(httpError({ status: 400 }))
       .mockResolvedValue(draftFlow('Second name'));
     flowsApiMock.get.mockResolvedValue(draftFlow('Order lookup'));
     const store = createStore(draftFlow('Order lookup'));
@@ -55,7 +56,7 @@ describe('flow state save path', () => {
 
   it('sends the saves behind a failed save before it refetches the draft', async () => {
     flowsApiMock.update
-      .mockRejectedValueOnce(new Error('Network Error'))
+      .mockRejectedValueOnce(httpError({ status: 400 }))
       .mockResolvedValue(draftFlow('Second name'));
     flowsApiMock.get.mockResolvedValue(draftFlow('Second name'));
     const store = createStore(draftFlow('Order lookup'));
@@ -93,7 +94,7 @@ describe('flow state save path', () => {
   });
 
   it('shows the draft on the server after a failed save', async () => {
-    flowsApiMock.update.mockRejectedValue(new Error('Network Error'));
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
     flowsApiMock.get.mockResolvedValue(draftFlow('Name on the server'));
     const store = createStore(draftFlow('Order lookup'));
 
@@ -105,7 +106,7 @@ describe('flow state save path', () => {
   });
 
   it('clears the saving flag after a failed save', async () => {
-    flowsApiMock.update.mockRejectedValue(new Error('Network Error'));
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
     flowsApiMock.get.mockResolvedValue(draftFlow('Order lookup'));
     const store = createStore(draftFlow('Order lookup'));
 
@@ -117,7 +118,7 @@ describe('flow state save path', () => {
   });
 
   it('shows an error when the draft refetch after a failed save fails', async () => {
-    flowsApiMock.update.mockRejectedValue(new Error('Network Error'));
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
     flowsApiMock.get.mockRejectedValue(new Error('Network Error'));
     const store = createStore(draftFlow('Order lookup'));
 
@@ -165,16 +166,161 @@ describe('flow state step edits', () => {
   });
 });
 
+describe('flow state save retries', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    flowsApiMock.get.mockResolvedValue(draftFlow('Name on the server'));
+    vi.spyOn(toast, 'error').mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('retries a save with no response after 1 s, 2 s and 4 s', async () => {
+    const start = Date.now();
+    const attemptTimes: number[] = [];
+    flowsApiMock.update.mockImplementation(async () => {
+      attemptTimes.push(Date.now() - start);
+      throw networkError();
+    });
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('First name'));
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(attemptTimes).toEqual([0, 1000, 3000, 7000]);
+  });
+
+  it.each([408, 429, 500, 503])(
+    'retries a save with a %i status',
+    async (status) => {
+      flowsApiMock.update.mockRejectedValue(httpError({ status }));
+      const store = createStore(draftFlow('Order lookup'));
+
+      store.getState().applyOperation(changeName('First name'));
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(flowsApiMock.update).toHaveBeenCalledTimes(4);
+    },
+  );
+
+  it.each([400, 404, 409])(
+    'never retries a save with a %i status',
+    async (status) => {
+      flowsApiMock.update.mockRejectedValue(httpError({ status }));
+      const store = createStore(draftFlow('Order lookup'));
+
+      store.getState().applyOperation(changeName('First name'));
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(flowsApiMock.update).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('keeps the edit when a retry succeeds', async () => {
+    flowsApiMock.update
+      .mockRejectedValueOnce(networkError())
+      .mockResolvedValue(draftFlow('First name'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('First name'));
+    await vi.advanceTimersByTimeAsync(500);
+    expect(store.getState().saving).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(store.getState().flowVersion.displayName).toBe('First name');
+    expect(store.getState().saving).toBe(false);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('sends later saves after the retries, in order', async () => {
+    flowsApiMock.update
+      .mockRejectedValueOnce(networkError())
+      .mockRejectedValueOnce(networkError())
+      .mockResolvedValue(draftFlow('Second name'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('First name'));
+    store.getState().applyOperation(changeName('Second name'));
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(sentOperations()).toEqual([
+      changeName('First name'),
+      changeName('First name'),
+      changeName('First name'),
+      changeName('Second name'),
+    ]);
+  });
+
+  it('runs the failure path after the last retry', async () => {
+    flowsApiMock.update.mockRejectedValue(networkError());
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('First name'));
+    await vi.advanceTimersByTimeAsync(6_999);
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(toast.error).toHaveBeenCalledWith(
+      'Your change was not saved',
+      expect.anything(),
+    );
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Name on the server',
+    );
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+    expect(store.getState().saving).toBe(false);
+  });
+
+  it.each([deleteBranch(), deleteSteps(), saveSampleData()])(
+    'never retries a $type save',
+    async (operation) => {
+      flowsApiMock.update.mockRejectedValue(networkError());
+      const store = createStore(draftFlow('Order lookup'));
+
+      store.getState().applyOperation(operation);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(toast.error).toHaveBeenCalledWith(
+        'Your change was not saved',
+        expect.anything(),
+      );
+
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(flowsApiMock.update).toHaveBeenCalledTimes(1);
+    },
+  );
+});
+
+function networkError() {
+  return new AxiosError('Network Error', AxiosError.ERR_NETWORK, undefined, {});
+}
+
 function serverError(message: string) {
+  return httpError({
+    status: 400,
+    data: { code: 'FLOW_OPERATION_INVALID', params: { message } },
+  });
+}
+
+function httpError({ status, data = {} }: { status: number; data?: unknown }) {
   return new AxiosError(
-    'Request failed with status code 400',
-    AxiosError.ERR_BAD_REQUEST,
+    `Request failed with status code ${status}`,
+    status >= 500 ? AxiosError.ERR_BAD_RESPONSE : AxiosError.ERR_BAD_REQUEST,
     undefined,
-    undefined,
+    {},
     {
-      data: { code: 'FLOW_OPERATION_INVALID', params: { message } },
-      status: 400,
-      statusText: 'Bad Request',
+      data,
+      status,
+      statusText: '',
       headers: {},
       config: { headers: new AxiosHeaders() },
     },
@@ -185,6 +331,31 @@ function changeName(displayName: string): FlowOperationRequest {
   return {
     type: FlowOperationType.CHANGE_NAME,
     request: { displayName },
+  };
+}
+
+function deleteBranch(): FlowOperationRequest {
+  return {
+    type: FlowOperationType.DELETE_BRANCH,
+    request: { stepName: 'step_1', branchIndex: 0 },
+  };
+}
+
+function deleteSteps(): FlowOperationRequest {
+  return {
+    type: FlowOperationType.DELETE_ACTION,
+    request: { names: ['step_1'] },
+  };
+}
+
+function saveSampleData(): FlowOperationRequest {
+  return {
+    type: FlowOperationType.SAVE_SAMPLE_DATA,
+    request: {
+      stepName: 'trigger',
+      payload: { orderId: 'order-1' },
+      type: SampleDataFileType.OUTPUT,
+    },
   };
 }
 
