@@ -93,6 +93,21 @@ describe('New members join default projects', () => {
         expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.EDITOR })
     })
 
+    it('uses up the accepted invite once SCIM takes its role, so re-creating them later without a role makes a Member', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+        const email = `${apId()}@example.com`
+        await savePlatformInvite({ email, platformId: mockPlatform.id, platformRole: PlatformRole.ADMIN })
+
+        const first = await createScimUser({ platformId: mockPlatform.id, email })
+        expect(await databaseConnection().getRepository('user_invitation').countBy({ email, platformId: mockPlatform.id })).toBe(0)
+        await databaseConnection().getRepository('user').update({ id: first?.json().id }, { platformId: null })
+        const second = await createScimUser({ platformId: mockPlatform.id, email })
+
+        const recreated = await databaseConnection().getRepository('user').findOneByOrFail({ id: second?.json().id })
+        expect(recreated.platformRole).toBe(PlatformRole.MEMBER)
+    })
+
     it('keeps the role SCIM sends over an accepted Admin invite, and adds a Member to the default projects', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({ plan: { projectRolesEnabled: true, scimEnabled: true }, project: { type: ProjectType.TEAM } })
         await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
@@ -104,6 +119,7 @@ describe('New members join default projects', () => {
         const user = await databaseConnection().getRepository('user').findOneByOrFail({ id: response?.json().id })
         expect(user.platformRole).toBe(PlatformRole.MEMBER)
         expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.EDITOR })
+        expect(await databaseConnection().getRepository('user_invitation').countBy({ email, platformId: mockPlatform.id })).toBe(1)
     })
 
     it('does not add a SCIM user created as Admin to the default projects', async () => {
