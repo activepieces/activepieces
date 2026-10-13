@@ -252,7 +252,9 @@ describe('Run Trigger Command', () => {
     const base = { instructions: undefined, variables: { env: 'prod' }, waitForResults: false, waitSeconds: 60 };
 
     it('launches the commands and returns their IDs', async () => {
-        sendRequest.mockResolvedValue({ status: 200, body: { triggered: ['c1', 'c2'] } });
+        sendRequest.mockImplementation(async (request: Request) =>
+            request.url === `${V1}/commands` ? commandList(request) : { status: 200, body: { triggered: ['Deploy', 'Cleanup'] } },
+        );
 
         const result = await runTriggerCommandAction.run(context<typeof runTriggerCommandAction.props>({ ...base, triggerName: ' deploy app ' }));
 
@@ -261,7 +263,9 @@ describe('Run Trigger Command', () => {
     });
 
     it('explains a trigger name that launches nothing', async () => {
-        sendRequest.mockResolvedValue({ status: 200, body: { triggered: [] } });
+        sendRequest.mockImplementation(async (request: Request) =>
+            request.url === `${V1}/commands` ? { status: 200, body: { totalCount: 0, results: [] } } : { status: 200, body: { triggered: [] } },
+        );
 
         await expect(
             runTriggerCommandAction.run(context<typeof runTriggerCommandAction.props>({ ...base, triggerName: 'nope' })),
@@ -272,8 +276,11 @@ describe('Run Trigger Command', () => {
         vi.useFakeTimers();
         const resultsCalls = { count: 0 };
         sendRequest.mockImplementation(async (request: Request) => {
+            if (request.url === `${V1}/commands`) {
+                return commandList(request);
+            }
             if (request.method === HttpMethod.POST) {
-                return { status: 200, body: { triggered: ['c1'] } };
+                return { status: 200, body: { triggered: ['Deploy'] } };
             }
             if (request.url === `${V2}/commands/c1/systems`) {
                 return { status: 200, body: [{ id: 's1', type: 'system' }] };
@@ -303,8 +310,11 @@ describe('Run Trigger Command', () => {
         vi.useFakeTimers();
         const resultsCalls = { count: 0 };
         sendRequest.mockImplementation(async (request: Request) => {
+            if (request.url === `${V1}/commands`) {
+                return commandList(request);
+            }
             if (request.method === HttpMethod.POST) {
-                return { status: 200, body: { triggered: ['c1'] } };
+                return { status: 200, body: { triggered: ['Deploy'] } };
             }
             if (request.url === `${V2}/commands/c1/systems`) {
                 return { status: 200, body: [{ id: 's1', type: 'system' }, { id: 's2', type: 'system' }] };
@@ -332,8 +342,11 @@ describe('Run Trigger Command', () => {
     it('ignores results from earlier runs of the command', async () => {
         vi.useFakeTimers();
         sendRequest.mockImplementation(async (request: Request) => {
+            if (request.url === `${V1}/commands`) {
+                return commandList(request);
+            }
             if (request.method === HttpMethod.POST) {
-                return { status: 200, body: { triggered: ['c1'] } };
+                return { status: 200, body: { triggered: ['Deploy'] } };
             }
             if (request.url === `${V2}/commands/c1/systems`) {
                 return { status: 200, body: [{ id: 's1', type: 'system' }] };
@@ -353,14 +366,14 @@ describe('Run Trigger Command', () => {
         vi.useFakeTimers();
         const recent = commandResult({ systemId: 's1', system: 'mac-01', requestTime: new Date(Date.now() - 3000).toISOString() });
         sendRequest.mockImplementation(async (request: Request) => {
+            if (request.url === `${V1}/commands`) {
+                return commandList(request);
+            }
             if (request.method === HttpMethod.POST) {
-                return { status: 200, body: { triggered: ['c1'] } };
+                return { status: 200, body: { triggered: ['Deploy'] } };
             }
             if (request.url === `${V2}/commands/c1/systems`) {
                 return { status: 200, body: [{ id: 's1', type: 'system' }] };
-            }
-            if (request.url === `${V1}/commands`) {
-                return { status: 200, body: { totalCount: 1, results: [{ _id: 'c1', trigger: 'deploy' }] } };
             }
             return { status: 200, body: [recent] };
         });
@@ -377,13 +390,16 @@ describe('Run Trigger Command', () => {
         vi.useFakeTimers();
         const launched = { done: false };
         sendRequest.mockImplementation(async (request: Request) => {
+            if (request.url === `${V1}/commands`) {
+                return commandList(request);
+            }
             if (request.method === HttpMethod.POST) {
                 launched.done = true;
-                return { status: 200, body: { triggered: ['c1'] } };
+                return { status: 200, body: { triggered: ['Deploy'] } };
             }
             if (request.url === `${V1}/commands`) {
-                expect(request.queryParams).toMatchObject({ filter: 'trigger:$eq:deploy' });
-                return { status: 200, body: { totalCount: 1, results: [{ _id: 'c1', trigger: 'deploy' }] } };
+                expect(request.queryParams).toMatchObject({ filter: 'trigger:eq:deploy' });
+                return commandList(request);
             }
             if (request.url === `${V2}/commands/c1/systems`) {
                 return { status: 200, body: [{ id: 's1', type: 'system' }] };
@@ -403,8 +419,11 @@ describe('Run Trigger Command', () => {
     it('stops waiting at the deadline', async () => {
         vi.useFakeTimers();
         sendRequest.mockImplementation(async (request: Request) => {
+            if (request.url === `${V1}/commands`) {
+                return commandList(request);
+            }
             if (request.method === HttpMethod.POST) {
-                return { status: 200, body: { triggered: ['c1'] } };
+                return { status: 200, body: { triggered: ['Deploy'] } };
             }
             return { status: 200, body: [] };
         });
@@ -415,11 +434,13 @@ describe('Run Trigger Command', () => {
         await vi.advanceTimersByTimeAsync(20000);
 
         expect(await pending).toMatchObject({ waited: true, completed: false, results: [] });
-        expect(sendRequest.mock.calls.filter(([request]) => request.url === `${V1}/commands/c1/results`)).toHaveLength(3);
+        expect(sendRequest.mock.calls.filter(([request]) => request.url === `${V1}/commands/c1/results`)).toHaveLength(4);
     });
 
     it.each([1, 301])('rejects a wait of %s seconds', async (waitSeconds) => {
-        sendRequest.mockResolvedValue({ status: 200, body: { triggered: ['c1'] } });
+        sendRequest.mockImplementation(async (request: Request) =>
+            request.url === `${V1}/commands` ? commandList(request) : { status: 200, body: { triggered: ['Deploy'] } },
+        );
 
         await expect(
             runTriggerCommandAction.run(
@@ -460,6 +481,21 @@ function readList({ output, key }: { output: unknown; key: string }): unknown[] 
 
 function context<Props extends InputPropertyMap>(propsValue: StaticPropsValue<Props>) {
     return { ...createMockActionContext<Props>({ propsValue }), auth: CONNECTION };
+}
+
+// JumpCloud's trigger endpoint answers with command names, so the lookup maps them back to IDs.
+function commandList(request: Request) {
+    const trigger = String(request.queryParams?.['filter'] ?? '').replace('trigger:eq:', '');
+    return {
+        status: 200,
+        body: {
+            totalCount: 2,
+            results: [
+                { _id: 'c1', name: 'Deploy', trigger },
+                { _id: 'c2', name: 'Cleanup', trigger },
+            ],
+        },
+    };
 }
 
 function commandResult({ systemId, system, requestTime }: { systemId: string; system: string; requestTime: string }) {

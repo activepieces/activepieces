@@ -55,7 +55,8 @@ export const runTriggerCommandAction = createAction({
         }
         const waitForResults = context.propsValue.waitForResults === true;
         const waitMs = waitForResults ? validateWait(context.propsValue.waitSeconds) * 1000 : 0;
-        const earlier = waitForResults ? await snapshotResults({ auth, triggerName }) : new Set<string>();
+        const commands = await fetchTriggerCommands({ auth, triggerName, skip: 0 });
+        const earlier = waitForResults ? await snapshotResults({ auth, commandIds: commands.map((command) => command.id) }) : new Set<string>();
         const launchedAt = Date.now() - CLOCK_SKEW_MS;
         const response = await jumpcloudApi.send<unknown>({
             auth,
@@ -63,12 +64,14 @@ export const runTriggerCommandAction = createAction({
             path: `/command/trigger/${encodeURIComponent(triggerName)}`,
             body: context.propsValue.variables ?? {},
         });
-        const commandIds = readTriggered(response);
-        if (commandIds.length === 0) {
+        // JumpCloud answers with the names of the launched commands, not their IDs.
+        const launchedNames = readTriggered(response);
+        if (launchedNames.length === 0) {
             throw new Error(
                 `No JumpCloud command uses the trigger name "${triggerName}". Set the command's Launch Event to Run on Trigger (webhook) with this Trigger Name.`,
             );
         }
+        const commandIds = commands.filter((command) => launchedNames.includes(command.name)).map((command) => command.id);
         if (!waitForResults) {
             return { trigger_name: triggerName, command_ids: commandIds, waited: false, completed: false, results: [] };
         }
@@ -138,27 +141,27 @@ async function fetchResults({ auth, commandId, launchedAt, earlier }: { auth: Co
 }
 
 // Results listed before the launch belong to an earlier run, even inside the clock skew window.
-async function snapshotResults({ auth, triggerName }: { auth: ConnectionProps; triggerName: string }): Promise<Set<string>> {
-    const commandIds = await fetchTriggerCommandIds({ auth, triggerName, skip: 0 });
+async function snapshotResults({ auth, commandIds }: { auth: ConnectionProps; commandIds: string[] }): Promise<Set<string>> {
     const records = await Promise.all(commandIds.map((commandId) => fetchRecords({ auth, commandId })));
     return new Set(records.flat().map(resultKey));
 }
 
-async function fetchTriggerCommandIds({ auth, triggerName, skip }: { auth: ConnectionProps; triggerName: string; skip: number }): Promise<string[]> {
+async function fetchTriggerCommands({ auth, triggerName, skip }: { auth: ConnectionProps; triggerName: string; skip: number }): Promise<TriggerCommand[]> {
     const page = await jumpcloudApi.fetchListPage({
         auth,
         method: HttpMethod.GET,
         path: '/commands',
-        queryParams: { filter: `trigger:$eq:${triggerName}`, fields: 'trigger', limit: String(TARGET_PAGE_SIZE), skip: String(skip) },
+        queryParams: { filter: `trigger:eq:${triggerName}`, fields: 'name trigger', limit: String(TARGET_PAGE_SIZE), skip: String(skip) },
     });
-    const ids = page.items.flatMap((record) => {
+    const commands = page.items.flatMap((record) => {
         const id = record['_id'] ?? record['id'];
-        return record['trigger'] === triggerName && typeof id === 'string' && id.length > 0 ? [id] : [];
+        const name = record['name'];
+        return record['trigger'] === triggerName && typeof id === 'string' && id.length > 0 && typeof name === 'string' ? [{ id, name }] : [];
     });
     if (page.items.length < TARGET_PAGE_SIZE) {
-        return ids;
+        return commands;
     }
-    return [...ids, ...(await fetchTriggerCommandIds({ auth, triggerName, skip: skip + page.items.length }))];
+    return [...commands, ...(await fetchTriggerCommands({ auth, triggerName, skip: skip + page.items.length }))];
 }
 
 function resultKey(record: ApiRecord): string {
@@ -170,7 +173,7 @@ function readTriggered(body: unknown): string[] {
     if (!jumpcloudApi.isRecord(body) || !Array.isArray(body['triggered'])) {
         return [];
     }
-    return body['triggered'].filter((id): id is string => typeof id === 'string' && id.length > 0);
+    return body['triggered'].filter((name): name is string => typeof name === 'string' && name.length > 0);
 }
 
 function validateWait(value: number | undefined): number {
@@ -187,6 +190,11 @@ function sleep(ms: number): Promise<void> {
 
 const CLOCK_SKEW_MS = 10_000;
 const TARGET_PAGE_SIZE = 100;
+
+type TriggerCommand = {
+    id: string;
+    name: string;
+};
 
 type CommandTargets = {
     commandId: string;
