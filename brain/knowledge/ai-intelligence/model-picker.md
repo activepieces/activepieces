@@ -33,8 +33,14 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 - A stored deleted tier shows its live replacement ("Moved"), because the runtime follows `replacedBy` too. The picker sends its stored `tierId` and `movedTiers` follows only that chain; without a `tierId` it is empty.
 - On chat, a key with a typed-in model list (Vertex, Custom) offers exactly that list, not the curated list. The chat runner (`agentModelResolution`) picks only from the manual list, so a curated model outside it would be silently swapped.
 - A stored model that the admin hid with the specific-models toggle shows "Hidden by admin". It still runs, because the toggle is not enforced at run time.
+- `surface='flow'` turns off the tool-calling filter (`callsTools` in `aiModelOptionsService`), so it is only for text AI steps. The Run Agent step needs tools, so it uses `surface='agent'`.
+- The Run Agent step does not go through `/v1/ai/execute`. Its piece posts to `/v1/agents/runs`, and the agent runtime resolves the model (`getAgentConfig` → `agentModelTier.resolveRun`). Steps pin an exact piece version, so a field the piece learns to forward reaches only steps on that version or newer.
+- The Run Agent step stores a tier as `{ modelTierId }` and only piece-ai 0.14.1+ forwards it. On an older step `AgentModelField` hides tiers and shows a one-line hint to update the step. Downgrading a step below 0.14.1 keeps the stored tier, and the old piece drops it, so that run uses the Default AI key.
+- A flow step has no server create hook, so `AgentModelField` writes `defaultChoice` once when the stored value is empty and the step is editable. On an old step it writes the credits default or the first key model instead of a tier.
+- A tier pick has no provider. The knowledge-base section takes `tierPicked` and offers knowledge anyway, because the server picks the embedding key for a tier run.
 - The picker never writes a default by itself. An agent gets its default model from the server when it is created. An unknown pick shows an amber "Unavailable" and is never silently swapped (S11).
 
 ## Key files
 - `packages/web/src/features/agents/ai-model/`: `ModelPicker`, `ModelPickerPopover`, `ModelDetailCard`
 - `packages/server/api/src/app/ai/`: `aiModelOptionsService`
+- `packages/web/src/app/builder/step-settings/agent-settings/`: `AgentModelField`, `agentModelUtils` (the Run Agent step)
