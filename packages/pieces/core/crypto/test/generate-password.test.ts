@@ -31,6 +31,16 @@ describe('generatePassword', () => {
     expect([...password].every((ch) => charset.includes(ch))).toBe(true);
   });
 
+  test('never uses Math.random to pick characters', async () => {
+    const mathRandom = vi.spyOn(Math, 'random');
+    const ctx = createMockActionContext({
+      propsValue: { length: 64, characterSet: 'alphanumeric-symbols' },
+    });
+    await generatePassword.run(ctx);
+    expect(mathRandom).not.toHaveBeenCalled();
+    mathRandom.mockRestore();
+  });
+
   test('throws on invalid length (> 256)', async () => {
     const ctx = createMockActionContext({
       propsValue: { length: 300, characterSet: 'alphanumeric' },
