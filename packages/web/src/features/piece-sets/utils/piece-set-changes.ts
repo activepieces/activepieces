@@ -359,6 +359,44 @@ function isActionAllowed({
   );
 }
 
+function componentsChange({
+  pieceName,
+  pieceDisplayName,
+  actionNames,
+  triggerNames,
+  hiddenActions,
+  hiddenTriggers,
+}: {
+  pieceName: string;
+  pieceDisplayName: string;
+  actionNames: string[];
+  triggerNames: string[];
+  hiddenActions: string[];
+  hiddenTriggers: string[];
+}): PieceSetChange {
+  const everything = hiddenActions.length === 0 && hiddenTriggers.length === 0;
+  const selection = ({
+    names,
+    hidden,
+  }: {
+    names: string[];
+    hidden: string[];
+  }): ComponentSelection =>
+    everything
+      ? { mode: 'all' }
+      : {
+          mode: 'selected',
+          selected: names.filter((name) => !hidden.includes(name)),
+        };
+  return {
+    type: 'components',
+    pieceName,
+    pieceDisplayName,
+    actions: selection({ names: actionNames, hidden: hiddenActions }),
+    triggers: selection({ names: triggerNames, hidden: hiddenTriggers }),
+  };
+}
+
 function countRequiredActions(config: PieceSet['config']): number {
   return Object.values(config.requiredActions.actions).flat().length;
 }
@@ -370,6 +408,7 @@ export const pieceSetChanges = {
   excludedRequiredActions,
   isActionAllowed,
   countRequiredActions,
+  componentsChange,
 };
 
 export type PieceSetChange =

@@ -1,4 +1,5 @@
 import {
+  isComponentVisible,
   PieceSelectionMode,
   PieceSet,
   RequiredActionsMode,
@@ -365,5 +366,55 @@ describe('pieceSetChanges required actions', () => {
         },
       }),
     ).toEqual({ slack: ['create_channel'] });
+  });
+});
+
+describe('pieceSetChanges.componentsChange', () => {
+  const airtable = {
+    pieceName: 'airtable',
+    pieceDisplayName: 'Airtable',
+    actionNames: ['create_record', 'delete_record', 'create_record_ai'],
+    triggerNames: ['new_record'],
+  };
+  const visibleActions = (hiddenActions: string[]) => {
+    const next = pieceSetChanges.apply({
+      pieceSet: pieceSet(),
+      change: pieceSetChanges.componentsChange({
+        ...airtable,
+        hiddenActions,
+        hiddenTriggers: [],
+      }),
+    });
+    return airtable.actionNames.filter((name) =>
+      isComponentVisible({
+        selected: next.config.selectedActions.airtable,
+        name,
+      }),
+    );
+  };
+
+  it('keeps an AI tool visible after limiting regular actions', () => {
+    expect(visibleActions(['delete_record'])).toEqual([
+      'create_record',
+      'create_record_ai',
+    ]);
+  });
+
+  it('hides an AI tool once it is unchecked', () => {
+    expect(visibleActions(['delete_record', 'create_record_ai'])).toEqual([
+      'create_record',
+    ]);
+  });
+
+  it('saves every action and trigger when nothing is unchecked', () => {
+    const change = pieceSetChanges.componentsChange({
+      ...airtable,
+      hiddenActions: [],
+      hiddenTriggers: [],
+    });
+    expect(change).toMatchObject({
+      actions: { mode: 'all' },
+      triggers: { mode: 'all' },
+    });
   });
 });

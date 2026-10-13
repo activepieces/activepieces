@@ -10,6 +10,7 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
+  PieceAudienceFilter,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,
@@ -75,6 +76,7 @@ type UsePieceProps = {
   version?: string;
   enabled?: boolean;
   projectId?: string;
+  audience?: PieceAudienceFilter;
 };
 
 type UseMultiplePiecesProps = {
@@ -90,6 +92,7 @@ type UsePiecesProps = {
   suggestionType?: SuggestionType;
   enabled?: boolean;
   keepPreviousResults?: boolean;
+  audience?: PieceAudienceFilter;
 };
 type SelectorPlatform = Pick<
   PlatformWithoutSensitiveData,
@@ -111,16 +114,23 @@ export const pieceSelectorContent = {
 };
 
 export const piecesHooks = {
-  usePiece: ({ name, version, enabled = true, projectId }: UsePieceProps) => {
+  usePiece: ({
+    name,
+    version,
+    enabled = true,
+    projectId,
+    audience,
+  }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version, i18n.language, projectId],
+      queryKey: ['piece', name, version, i18n.language, projectId, audience],
       queryFn: () =>
         piecesApi.get({
           name,
           version,
           locale: i18n.language as LocalesEnum,
           projectId,
+          audience,
         }),
       staleTime: Infinity,
       enabled,
@@ -206,6 +216,7 @@ export const piecesHooks = {
     suggestionType,
     enabled = true,
     keepPreviousResults = false,
+    audience,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModelSummary[], Error>({
@@ -218,6 +229,7 @@ export const piecesHooks = {
         suggestionType,
         locale: i18n.language as LocalesEnum,
         keepPreviousResults,
+        audience,
       }),
       enabled,
     });
@@ -743,6 +755,7 @@ function piecesQueryOptions({
   suggestionType,
   locale,
   keepPreviousResults = false,
+  audience,
 }: {
   projectId?: string;
   searchQuery?: string;
@@ -752,6 +765,7 @@ function piecesQueryOptions({
   suggestionType?: SuggestionType;
   locale: LocalesEnum;
   keepPreviousResults?: boolean;
+  audience?: PieceAudienceFilter;
 }) {
   const queriedProjectId = skipProjectFilter
     ? undefined
@@ -765,6 +779,7 @@ function piecesQueryOptions({
       skipProjectFilter,
       suggestionType,
       locale,
+      audience,
     ],
     queryFn: () =>
       piecesApi.list({
@@ -773,6 +788,7 @@ function piecesQueryOptions({
         includeHidden,
         suggestionType,
         locale,
+        audience,
       }),
     staleTime: searchQuery ? SEARCH_RESULTS_STALE_TIME_MS : Infinity,
     ...(keepPreviousResults
