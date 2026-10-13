@@ -33,6 +33,7 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 - A stored deleted tier shows its live replacement ("Moved"), because the runtime follows `replacedBy` too. The picker sends its stored `tierId` and `movedTiers` follows only that chain; without a `tierId` it is empty.
 - On chat, a key with a typed-in model list (Vertex, Custom) offers exactly that list, not the curated list. The chat runner (`agentModelResolution`) picks only from the manual list, so a curated model outside it would be silently swapped.
 - A stored model that the admin hid with the specific-models toggle shows "Hidden by admin". It still runs, because the toggle is not enforced at run time.
+- **Don't use `defaultChoice` on a hot run path.** `aiModelOptionsService.list` fetches every key's model list and skips a key whose list fails, so a flaky provider API (or a fake test key) can leave `defaultChoice` null, or point it somewhere else. The chat run path (`agentChatModel.defaultPick`) checks the Default tier and the Default AI key without listing models, and only falls back to `list` when neither exists.
 - The picker never writes a default by itself. An agent gets its default model from the server when it is created. An unknown pick shows an amber "Unavailable" and is never silently swapped (S11).
 
 ## Key files
