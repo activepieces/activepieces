@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/pieces-framework";
+import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/pieces-framework";
 import * as z from 'zod/mini'
 import qs from 'qs';
 
@@ -37,7 +37,7 @@ export const tablesCommon = {
     refreshers: [],
     options: async (_propsValue, context) => {
       try {
-        const tables = await fetchAllTables(context);
+        const tables = await fetchAllTables({ context });
         if (!Array.isArray(tables) || tables.length === 0) {
           return {
             options: [],
@@ -225,6 +225,19 @@ export const tablesCommon = {
     return response.body;
   },
 
+  async deleteWebhookFromTablesWithExternalId({
+    externalId,
+    webhookId,
+    context,
+  }: {
+    externalId: string;
+    webhookId: string;
+    context: TablesApiContext;
+  }) {
+    const tables = await fetchAllTables({ context, externalIds: [externalId] });
+    await Promise.all(tables.map((table) => this.deleteWebhook({ tableId: table.id, webhookId, server: context.server })));
+  },
+
   async getRecentRecords({
     tableId,
     limit = 5,
@@ -270,30 +283,18 @@ export const tablesCommon = {
     }
   },
 
-  async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string }, project: { id: string } }) {
-    const list: ListTablesRequest = {
-      externalIds: [tableId],
-      projectId: context.project.id,
-    }
-
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${context.server.apiUrl}v1/tables?${qs.stringify(list)}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.server.token,
-      },
-    });
-    const table = (res.body as SeekPage<Table>).data[0];
+  async convertTableExternalIdToId(tableId: string, context: TablesApiContext) {
+    const [table] = await fetchAllTables({ context, externalIds: [tableId] });
     assertNotNullOrUndefined(table, `Table with externalId ${tableId} not found`);
     return table.id;
   }
 }
 
-const fetchAllTables = async (context: { server: { apiUrl: string, token: string }, project: { id: string } }): Promise<Table[]> => {
+const fetchAllTables = async ({ context, externalIds }: { context: TablesApiContext, externalIds?: string[] }): Promise<Table[]> => {
+  const query = { limit: 100, projectId: context.project.id, externalIds };
   const res = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: `${context.server.apiUrl}v1/tables?limit=100&projectId=${context.project.id}`,
+    url: `${context.server.apiUrl}v1/tables?${qs.stringify(query)}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: context.server.token,
@@ -308,7 +309,7 @@ const fetchAllTables = async (context: { server: { apiUrl: string, token: string
   while (next) {
     const nextPage = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100&projectId=${context.project.id}`,
+      url: `${context.server.apiUrl}v1/tables?${qs.stringify({ ...query, cursor: next })}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
@@ -320,3 +321,5 @@ const fetchAllTables = async (context: { server: { apiUrl: string, token: string
   }
   return tables;
 }
+
+type TablesApiContext = { server: { apiUrl: string, token: string }, project: { id: string } };
