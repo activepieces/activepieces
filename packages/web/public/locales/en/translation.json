@@ -3737,5 +3737,6 @@
   "Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.": "Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.",
   "Search pieces in the preview": "Search pieces in the preview",
   "Tabs builders see": "Tabs builders see",
-  "{count, plural, =0 {No actions} =1 {1 action} other {# actions}}": "{count, plural, =0 {No actions} =1 {1 action} other {# actions}}"
+  "{count, plural, =0 {No actions} =1 {1 action} other {# actions}}": "{count, plural, =0 {No actions} =1 {1 action} other {# actions}}",
+  "Unavailable piece": "Unavailable piece"
 }

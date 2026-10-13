@@ -1,23 +1,22 @@
+import { isNil } from '@activepieces/core-utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { FlowActionType, PieceSelectorTabConfig } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  CheckCircle2Icon,
-  LayoutGridIcon,
-  Pin,
-  PinOff,
-  PuzzleIcon,
-  SearchIcon,
-  SparklesIcon,
-  WrenchIcon,
-} from 'lucide-react';
-import { ReactNode, useMemo, useState } from 'react';
+  FlowActionType,
+  FlowOperationType,
+  PieceSelectorTabConfig,
+  PieceSetConfig,
+} from '@activepieces/shared';
+import { t } from 'i18next';
+import { Pin, PinOff, PuzzleIcon, SearchIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
+import { AdminFetchErrorState } from '@/app/components/admin';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { pieceSetQueries } from '@/features/piece-sets';
 import {
@@ -37,64 +36,59 @@ import { cn } from '@/lib/utils';
 
 export function PieceSelectorPreview({
   tabs,
-  focus,
-  ...rest
-}: PieceSelectorPreviewProps) {
-  return (
-    <PreviewBody
-      key={focus.version}
-      tabs={tabs}
-      initialKey={focus.key}
-      {...rest}
-    />
-  );
-}
-
-function PreviewBody({
-  tabs,
   pins,
-  initialKey,
+  selectedKey,
+  onSelect,
   highlightedKeys,
   flashedPiece,
   onTogglePin,
-}: Omit<PieceSelectorPreviewProps, 'focus'> & { initialKey: string | null }) {
+}: PieceSelectorPreviewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const resolved = resolveTabs(tabs);
-  const [selectedKey, setSelectedKey] = useState(initialKey);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const { steps, actionCounts, isLoading, isError, refetch } =
+    usePreviewSteps();
+  const aiAndAgentsAvailable = useAiAndAgentsAvailable();
+  const resolved = pieceSelectorCustomization.buildResolvedTabs({
+    availableBuiltinTabs: pieceSelectorCustomization.getBuiltinTabs({
+      operationType: FlowOperationType.ADD_ACTION,
+      aiAndAgentsAvailable,
+    }),
+    config: { tabs },
+  });
   const selected =
     resolved.find((tab) => tab.key === selectedKey) ?? resolved[0] ?? null;
-  const [activeName, setActiveName] = useState<string | null>(null);
   const searching = searchQuery.trim() !== '';
-  const { steps: allSteps, actionCounts, isLoading } = usePreviewSteps();
-  const selectedTab = searching
-    ? PieceSelectorTabType.NONE
-    : selected?.type ?? PieceSelectorTabType.NONE;
-  const customTabId = selected?.customTabId ?? null;
-  const visible = useMemo(
-    () => filterBySearch({ steps: allSteps, query: debouncedQuery }),
-    [allSteps, debouncedQuery],
-  );
+  const selectedType = selected?.type ?? null;
+  const selectedCustomTabId = selected?.customTabId ?? null;
   const categories = useMemo(
     () =>
-      searching || selected !== null
-        ? pieceSelectorContent
-            .group({
-              metadata: visible,
-              platform: { pinnedPieces: pins, pieceSelectorConfig: { tabs } },
-              selectedTab,
-              selectedCustomTabId: customTabId,
-              type: 'action',
-              environment: null,
-            })
-            .filter((category) => category.metadata.length > 0)
-        : [],
-    [visible, pins, tabs, selectedTab, customTabId, searching, selected],
+      groupForPreview({
+        steps,
+        query: debouncedQuery,
+        pins,
+        tabs,
+        selectedTab: searching ? PieceSelectorTabType.NONE : selectedType,
+        selectedCustomTabId,
+      }),
+    [
+      steps,
+      debouncedQuery,
+      pins,
+      tabs,
+      searching,
+      selectedType,
+      selectedCustomTabId,
+    ],
   );
   const rows = useMemo(() => toRows(categories), [categories]);
-  const steps = categories.flatMap((category) => category.metadata);
+  const visibleSteps = rows.flatMap((row) =>
+    row.kind === 'step' ? [row.step] : [],
+  );
   const active =
-    steps.find((step) => step.displayName === activeName) ?? steps[0] ?? null;
+    visibleSteps.find((step) => stepId(step) === activeId) ??
+    visibleSteps[0] ??
+    null;
 
   const emptyMessage = (() => {
     if (searching) {
@@ -114,12 +108,76 @@ function PreviewBody({
     return t('No pieces here yet.');
   })();
 
+  const body = (() => {
+    if (isError && steps.length === 0) {
+      return (
+        <div className="p-5">
+          <AdminFetchErrorState entity={t('pieces')} onRetry={refetch} />
+        </div>
+      );
+    }
+    if (isLoading) {
+      return <PreviewSkeleton />;
+    }
+    if (rows.length === 0) {
+      return <p className="p-5 text-sm text-gray-11">{emptyMessage}</p>;
+    }
+    return (
+      <div className="grid h-96 min-h-0 grid-cols-1 grid-rows-[minmax(0,1fr)] sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+        <VirtualizedScrollArea
+          className="min-h-0 sm:border-r"
+          items={rows}
+          estimateSize={(index) =>
+            rows[index].kind === 'header' ? HEADER_HEIGHT : ROW_HEIGHT
+          }
+          getItemKey={(index) => rows[index].key}
+          overscan={8}
+          renderItem={(row) =>
+            row.kind === 'header' ? (
+              <div className="flex h-8 items-end px-4 pb-1 text-xs font-medium text-gray-11">
+                {row.title}
+              </div>
+            ) : (
+              <div className="px-2">
+                <PieceRow
+                  step={row.step}
+                  active={active !== null && stepId(active) === row.id}
+                  pinned={isPinned({ step: row.step, pins })}
+                  flashed={pieceNameOf(row.step) === flashedPiece}
+                  onActivate={() => setActiveId(row.id)}
+                  onTogglePin={onTogglePin}
+                />
+              </div>
+            )
+          }
+        />
+        <div className="hidden min-h-0 overflow-y-auto sm:block">
+          {active && (
+            <StepDetails
+              step={active}
+              actionCount={actionCounts.get(pieceNameOf(active) ?? '') ?? 0}
+            />
+          )}
+        </div>
+      </div>
+    );
+  })();
+
   return (
-    <div className="flex min-w-0 flex-col">
+    <Tabs
+      value={searching ? '' : selected?.key ?? ''}
+      onValueChange={(key) => {
+        setSearchQuery('');
+        setActiveId(null);
+        onSelect(key);
+      }}
+      className="flex min-w-0 flex-col"
+    >
       <div className="flex flex-col gap-3 border-b p-4">
         <div className="relative">
           <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-10" />
           <Input
+            type="search"
             value={searchQuery}
             placeholder={t('Search')}
             aria-label={t('Search pieces in the preview')}
@@ -128,107 +186,63 @@ function PreviewBody({
           />
         </div>
         {resolved.length > 0 && (
-          <div
-            role="tablist"
+          <TabsList
+            variant="outline"
             aria-label={t('Tabs builders see')}
-            className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex w-full justify-start gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {resolved.map((tab) => {
-              const isSelected = !searching && tab.key === selected?.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedKey(tab.key);
-                    setActiveName(null);
-                  }}
-                  className={cn(
-                    'flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-sm text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-2 focus-visible:outline-accent-8 [&_svg]:size-4',
-                    isSelected && 'bg-gray-3 font-medium text-gray-12',
-                    highlightedKeys.includes(tab.key) &&
-                      'bg-accent-3 text-accent-11 ring-2 ring-accent-8 ring-inset',
-                  )}
-                >
-                  {tab.icon}
-                  {tab.name}
-                </button>
-              );
-            })}
-          </div>
+            {resolved.map((tab) => (
+              <TabsTrigger
+                key={tab.key}
+                value={tab.key}
+                variant="outline"
+                className={cn(
+                  'h-9 shrink-0 gap-1.5 rounded-md border-0 px-2.5 text-gray-11 hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-2 focus-visible:outline-accent-8 data-[state=active]:bg-gray-3 data-[state=active]:text-gray-12',
+                  highlightedKeys.includes(tab.key) &&
+                    'bg-accent-3 text-accent-11 ring-2 ring-accent-8 ring-inset',
+                )}
+              >
+                {tab.icon}
+                {tab.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
         )}
       </div>
-      <div className="grid h-96 min-h-0 grid-cols-1 grid-rows-[minmax(0,1fr)] sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
-        {isLoading ? (
-          <>
-            <div className="flex flex-col p-2 sm:border-r">
-              <div className="flex h-8 items-end px-2 pb-1">
-                <Skeleton className="h-3 w-16 rounded-sm" />
-              </div>
-              {Array.from({ length: 9 }, (_, index) => (
-                <div key={index} className="flex h-9 items-center gap-2.5 px-2">
-                  <Skeleton className="size-6.25 rounded-md" />
-                  <Skeleton className="h-3.5 w-32 rounded-sm" />
-                </div>
-              ))}
-            </div>
-            <div className="hidden flex-col gap-3 p-4 sm:flex">
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-7.5 rounded-md" />
-                <div className="flex flex-col gap-1.5">
-                  <Skeleton className="h-3.5 w-28 rounded-sm" />
-                  <Skeleton className="h-3 w-16 rounded-sm" />
-                </div>
-              </div>
-              <Skeleton className="h-48 w-full rounded-lg" />
-            </div>
-          </>
-        ) : categories.length === 0 ? (
-          <p className="p-5 text-sm text-gray-11 sm:col-span-2">
-            {emptyMessage}
-          </p>
-        ) : (
-          <>
-            <VirtualizedScrollArea
-              className="min-h-0 sm:border-r"
-              items={rows}
-              estimateSize={(index) =>
-                rows[index].kind === 'header' ? HEADER_HEIGHT : ROW_HEIGHT
-              }
-              getItemKey={(index) => rows[index].key}
-              overscan={8}
-              renderItem={(row) =>
-                row.kind === 'header' ? (
-                  <div className="flex h-8 items-end px-4 pb-1 text-xs font-medium text-gray-11">
-                    {row.title}
-                  </div>
-                ) : (
-                  <div className="px-2">
-                    <PieceRow
-                      step={row.step}
-                      active={active?.displayName === row.step.displayName}
-                      pinned={isPinned({ step: row.step, pins })}
-                      flashed={pieceNameOf(row.step) === flashedPiece}
-                      onActivate={() => setActiveName(row.step.displayName)}
-                      onTogglePin={onTogglePin}
-                    />
-                  </div>
-                )
-              }
-            />
-            <div className="hidden min-h-0 overflow-y-auto sm:block">
-              {active && (
-                <StepDetails
-                  step={active}
-                  actionCount={actionCounts.get(pieceNameOf(active) ?? '') ?? 0}
-                />
-              )}
-            </div>
-          </>
-        )}
+      {searching || selected === null ? (
+        body
+      ) : (
+        <TabsContent value={selected.key} className="mt-0">
+          {body}
+        </TabsContent>
+      )}
+    </Tabs>
+  );
+}
+
+function PreviewSkeleton() {
+  return (
+    <div className="grid h-96 grid-cols-1 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+      <div className="flex flex-col p-2 sm:border-r">
+        <div className="flex h-8 items-end px-2 pb-1">
+          <Skeleton className="h-3 w-16 rounded-sm" />
+        </div>
+        {Array.from({ length: 9 }, (_, index) => (
+          <div key={index} className="flex h-9 items-center gap-2.5 px-2">
+            <Skeleton className="size-6 rounded-md" />
+            <Skeleton className="h-3.5 w-32 rounded-sm" />
+          </div>
+        ))}
+      </div>
+      <div className="hidden flex-col gap-3 p-4 sm:flex">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-8 rounded-md" />
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-3.5 w-28 rounded-sm" />
+            <Skeleton className="h-3 w-16 rounded-sm" />
+          </div>
+        </div>
+        <Skeleton className="h-48 w-full rounded-lg" />
       </div>
     </div>
   );
@@ -253,23 +267,30 @@ function PieceRow({
   return (
     <div
       onMouseEnter={onActivate}
-      onFocus={onActivate}
       className={cn(
-        'group flex h-9 min-w-0 items-center gap-2.5 rounded-md px-2 transition-colors',
+        'group flex h-9 min-w-0 items-center gap-1 rounded-md pr-1 transition-colors',
         active && 'bg-gray-3',
         flashed && 'bg-accent-3 ring-2 ring-accent-8 ring-inset',
       )}
     >
-      <LogoPlate
-        src={step.logoUrl}
-        alt=""
-        size="xs"
-        border
-        fallback={<PuzzleIcon className="size-3.5 text-gray-11" />}
-      />
-      <span className="min-w-0 flex-1 truncate text-sm text-gray-12">
-        {step.displayName}
-      </span>
+      <button
+        type="button"
+        onClick={onActivate}
+        onFocus={onActivate}
+        aria-pressed={active}
+        className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 text-left focus-visible:outline-2 focus-visible:outline-accent-8"
+      >
+        <LogoPlate
+          src={step.logoUrl}
+          alt=""
+          size="xs"
+          border
+          fallback={<PuzzleIcon className="size-3.5 text-gray-11" />}
+        />
+        <span className="min-w-0 flex-1 truncate text-sm text-gray-12">
+          {step.displayName}
+        </span>
+      </button>
       {pieceName !== null && (
         <Button
           type="button"
@@ -283,7 +304,7 @@ function PieceRow({
           className={cn(
             'shrink-0 text-gray-11',
             !pinned &&
-              'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+              'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100',
           )}
           onClick={() => onTogglePin(pieceName)}
         >
@@ -312,7 +333,10 @@ function StepDetails({
     pieceName !== null && pieceModel?.name === pieceName
       ? Object.values(pieceModel.actions)
       : [];
-  const loadingActions = pieceName !== null && actions.length === 0;
+  const loadingActions =
+    pieceName !== null &&
+    actions.length === 0 &&
+    (isLoading || debouncedName !== pieceName);
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex min-w-0 items-center gap-3">
@@ -339,12 +363,12 @@ function StepDetails({
       </div>
       {pieceName === null ? (
         <p className="text-sm text-gray-11">{step.description}</p>
-      ) : loadingActions && (isLoading || debouncedName !== pieceName) ? (
+      ) : loadingActions ? (
         <div className="flex flex-col divide-y rounded-lg border">
           {Array.from(
             { length: Math.min(Math.max(actionCount, 1), 5) },
             (_, index) => (
-              <div key={index} className="flex flex-col gap-1.5 px-3 py-2.5">
+              <div key={index} className="flex flex-col gap-1.5 px-3 py-2">
                 <Skeleton className="h-3.5 w-40 rounded-sm" />
                 <Skeleton className="h-3 w-56 rounded-sm" />
               </div>
@@ -371,61 +395,123 @@ function StepDetails({
   );
 }
 
-function usePreviewSteps(): {
-  steps: StepMetadataWithSuggestions[];
-  actionCounts: Map<string, number>;
-  isLoading: boolean;
-} {
-  const { pieces, isLoading } = piecesHooks.usePieces({});
-  const { data: pieceSet, isLoading: isLoadingPieceSet } =
-    pieceSetQueries.useProjectPieceSet(authenticationSession.getProjectId());
+function useAiAndAgentsAvailable(): boolean {
+  const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
+  const {
+    pieceModel,
+    isError,
+    isSuccess: isLoaded,
+  } = piecesHooks.usePiece({
+    name: AI_PIECE_NAME,
+    projectId: authenticationSession.getProjectId() ?? undefined,
+  });
+  const unavailable =
+    isError ||
+    (isLoaded && Object.keys(pieceModel?.actions ?? {}).length === 0);
+  return !isNil(aiProviders) && aiProviders.length > 0 && !unavailable;
+}
+
+function usePreviewSteps() {
+  const {
+    pieces,
+    isLoading,
+    isError: isPiecesError,
+    refetch,
+  } = piecesHooks.usePieces({});
+  const {
+    data: pieceSet,
+    isLoading: isLoadingPieceSet,
+    isError: isPieceSetError,
+  } = pieceSetQueries.useProjectPieceSet(authenticationSession.getProjectId());
   const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
   const aiRouterEnabled = stepUtils.hasAiRouterProvider(aiProviders);
   const selectedActions = pieceSet?.config.selectedActions;
   const actionCounts = useMemo(
-    () =>
-      new Map(
-        (pieces ?? []).map((piece) => [
-          piece.name,
-          selectedActions?.[piece.name]?.length ?? piece.actions,
-        ]),
-      ),
+    () => countActions({ pieces: pieces ?? [], selectedActions }),
     [pieces, selectedActions],
   );
   const steps = useMemo(
     () =>
       toPreviewSteps({
         pieces: pieces ?? [],
-        actionCounts,
+        selectedActions,
         aiRouterEnabled,
       }),
-    [pieces, actionCounts, aiRouterEnabled],
+    [pieces, selectedActions, aiRouterEnabled],
   );
   return {
     steps,
     actionCounts,
     isLoading: isLoading || isLoadingPieceSet,
+    isError: isPiecesError || isPieceSetError,
+    refetch,
   };
+}
+
+function countActions({
+  pieces,
+  selectedActions,
+}: {
+  pieces: PieceMetadataModelSummary[];
+  selectedActions: PieceSetConfig['selectedActions'] | undefined;
+}): Map<string, number> {
+  return new Map(
+    pieces.map((piece) => [
+      piece.name,
+      selectedActions?.[piece.name]?.length ?? piece.actions,
+    ]),
+  );
 }
 
 function toPreviewSteps({
   pieces,
-  actionCounts,
+  selectedActions,
   aiRouterEnabled,
 }: {
   pieces: PieceMetadataModelSummary[];
-  actionCounts: Map<string, number>;
+  selectedActions: PieceSetConfig['selectedActions'] | undefined;
   aiRouterEnabled: boolean;
 }): StepMetadataWithSuggestions[] {
+  const counts = countActions({ pieces, selectedActions });
   const coreSteps = stepUtils
     .coreActionsMetadata()
     .filter(
       (step) => aiRouterEnabled || step.type !== FlowActionType.AI_ROUTER,
     );
   const pieceSteps = pieces
-    .filter((piece) => (actionCounts.get(piece.name) ?? 0) > 0)
+    .filter((piece) => (counts.get(piece.name) ?? 0) > 0)
     .map((piece) => stepUtils.mapPieceToMetadata({ piece, type: 'action' }));
   return [...coreSteps, ...pieceSteps];
+}
+
+function groupForPreview({
+  steps,
+  query,
+  pins,
+  tabs,
+  selectedTab,
+  selectedCustomTabId,
+}: {
+  steps: StepMetadataWithSuggestions[];
+  query: string;
+  pins: string[];
+  tabs: PieceSelectorTabConfig[];
+  selectedTab: PieceSelectorTabType | null;
+  selectedCustomTabId: string | null;
+}): CategorizedStepMetadataWithSuggestions[] {
+  if (selectedTab === null) {
+    return [];
+  }
+  return pieceSelectorContent
+    .group({
+      metadata: filterBySearch({ steps, query }),
+      platform: { pinnedPieces: pins, pieceSelectorConfig: { tabs } },
+      selectedTab,
+      selectedCustomTabId,
+      type: 'action',
+      environment: null,
+    })
+    .filter((category) => category.metadata.length > 0);
 }
 
 function filterBySearch({
@@ -458,9 +544,14 @@ function toRows(
     ...category.metadata.map((step, index) => ({
       kind: 'step' as const,
       key: `step-${categoryIndex}-${index}`,
+      id: stepId(step),
       step,
     })),
   ]);
+}
+
+function stepId(step: StepMetadataWithSuggestions): string {
+  return pieceNameOf(step) ?? step.type;
 }
 
 function pieceNameOf(step: StepMetadataWithSuggestions): string | null {
@@ -478,64 +569,34 @@ function isPinned({
   return pieceName !== null && pins.includes(pieceName);
 }
 
-function resolveTabs(tabs: PieceSelectorTabConfig[]) {
-  return pieceSelectorCustomization.buildResolvedTabs({
-    availableBuiltinTabs: builtinTabs(),
-    config: { tabs },
-  });
-}
-
-function builtinTabs(): {
-  value: PieceSelectorTabType;
-  name: string;
-  icon: ReactNode;
-}[] {
-  return [
-    {
-      value: PieceSelectorTabType.EXPLORE,
-      name: t('Explore'),
-      icon: <LayoutGridIcon />,
-    },
-    {
-      value: PieceSelectorTabType.AI_AND_AGENTS,
-      name: t('AI & Agents'),
-      icon: <SparklesIcon />,
-    },
-    {
-      value: PieceSelectorTabType.APPS,
-      name: t('Apps'),
-      icon: <PuzzleIcon />,
-    },
-    {
-      value: PieceSelectorTabType.UTILITY,
-      name: t('Utility'),
-      icon: <WrenchIcon />,
-    },
-    {
-      value: PieceSelectorTabType.APPROVALS,
-      name: t('Approvals'),
-      icon: <CheckCircle2Icon />,
-    },
-  ];
-}
-
 function tabKey(tab: PieceSelectorTabConfig): string {
   return tab.kind === 'BUILTIN' ? tab.builtinTab ?? tab.id : tab.id;
 }
 
+const AI_PIECE_NAME = '@activepieces/piece-ai';
 const HEADER_HEIGHT = 32;
 const ROW_HEIGHT = 36;
 
-export const pieceSelectorPreviewUtils = { tabKey };
+export const pieceSelectorPreviewUtils = {
+  tabKey,
+  toPreviewSteps,
+  groupForPreview,
+};
 
 type PreviewRow =
   | { kind: 'header'; key: string; title: string }
-  | { kind: 'step'; key: string; step: StepMetadataWithSuggestions };
+  | {
+      kind: 'step';
+      key: string;
+      id: string;
+      step: StepMetadataWithSuggestions;
+    };
 
 type PieceSelectorPreviewProps = {
   tabs: PieceSelectorTabConfig[];
   pins: string[];
-  focus: { key: string | null; version: number };
+  selectedKey: string | null;
+  onSelect: (key: string) => void;
   highlightedKeys: string[];
   flashedPiece: string | null;
   onTogglePin: (pieceName: string) => void;
