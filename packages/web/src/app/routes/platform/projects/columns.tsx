@@ -187,12 +187,7 @@ function DefaultProjectBadge() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge
-          variant="secondary"
-          className="h-4 px-1.5 py-0 text-xss leading-none"
-        >
-          {t('Default')}
-        </Badge>
+        <Badge variant="secondary">{t('Default')}</Badge>
       </TooltipTrigger>
       <TooltipContent side="top">
         {t('All new members join this project as Editors.')}
