@@ -344,6 +344,13 @@ describe('enterprise plan indicator', () => {
 });
 
 describe('credits card trial line', () => {
+  it('shows members the trial end as plain text without the Billing link', () => {
+    trial = { ...midTrial(), isPlatformAdmin: false };
+    renderInRouter(<EnterpriseTrialPill />);
+    expect(screen.getByText('Enterprise plan trial')).toBeDefined();
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
   it('shows the trial line to admins with the shared wording', () => {
     trial = midTrial();
     renderInRouter(<EnterpriseTrialPill />);

@@ -203,6 +203,29 @@ export const AppearanceSection = ({
     },
   });
 
+  const brandingIsComplete = (): boolean => {
+    const check = PlatformAppearanceSchema.safeParse(form.getValues());
+    if (check.success) {
+      return true;
+    }
+    for (const issue of check.error.issues) {
+      const [field, status] = issue.path;
+      if (field === 'color') {
+        form.setError('color', { type: 'manual', message: issue.message });
+      }
+      if (
+        field === 'statusColors' &&
+        (status === 'danger' || status === 'warning' || status === 'success')
+      ) {
+        form.setError(`statusColors.${status}`, {
+          type: 'manual',
+          message: issue.message,
+        });
+      }
+    }
+    return false;
+  };
+
   const lockedSave: SaveBarLock | undefined = previewingLockedBranding
     ? {
         message: t('Try it now. Saving needs the Enterprise plan.'),
@@ -219,14 +242,17 @@ export const AppearanceSection = ({
             <Button
               {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
               type="button"
-              onClick={() =>
+              onClick={() => {
+                if (!brandingIsComplete()) {
+                  return;
+                }
                 gate.run(() =>
                   form.handleSubmit(
                     () => updatePlatformAsync({ includeBranding: true }),
                     rejectInvalidBranding,
                   )(),
-                )
-              }
+                );
+              }}
             >
               <LockedGem />
               {t('Save branding')}

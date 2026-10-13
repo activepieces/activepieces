@@ -141,7 +141,9 @@ describe('one trial dialog for every locked feature', () => {
     expect(screen.getByText('What you get')).toBeDefined();
     expect(screen.getByText('How to get it')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Explore plans' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'Start free trial' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Start free trial' }),
+    ).toBeNull();
   });
 
   it('uses the same dialog on Community and points to sales', () => {
