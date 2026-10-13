@@ -471,11 +471,22 @@ export function actionForm(operation: Operation): {
         ],
       },
     });
+    const parameterToggle = branchFields.has("body_parameters")
+      ? ["body_parameters__enabled"]
+      : [];
+    if (parameterToggle.length)
+      props["body_parameters__enabled"] = Property.Checkbox({
+        displayName: "Add parameters",
+        description:
+          "Render Liquid expressions in a written message, even when Parameters is empty.",
+        required: false,
+        defaultValue: false,
+      });
     props["content"] = Property.DynamicProperties({
       auth: birdAuth,
       displayName: "Message content",
       required: false,
-      refreshers: ["content_mode", "content_input_mode"],
+      refreshers: ["content_mode", "content_input_mode", ...parameterToggle],
       props: async (values) => {
         const mode =
           operation.contentModes.find(
@@ -483,7 +494,11 @@ export function actionForm(operation: Operation): {
           ) ?? operation.contentModes[0];
         const fields = renderFields(
           operation,
-          mode.fields,
+          mode.fields.filter(
+            (key) =>
+              key !== "body_parameters" ||
+              values["body_parameters__enabled"] === true,
+          ),
           values["content_input_mode"] === "json" ? "json" : "fields",
           mode.value,
         );
@@ -499,7 +514,12 @@ export function actionForm(operation: Operation): {
       key: "content",
       display: "section",
       label: "Content",
-      props: ["content_mode", "content_input_mode", "content"],
+      props: [
+        "content_mode",
+        "content_input_mode",
+        ...parameterToggle,
+        "content",
+      ],
     });
   }
   for (const field of ordered) {

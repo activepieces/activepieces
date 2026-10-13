@@ -159,6 +159,12 @@ export function normalizeFormProps(
   const result: Record<string, unknown> = {};
   for (const field of operation.fields) {
     if (values[`${field.key}__enabled`] === false) continue;
+    if (
+      field.key === "body_parameters" &&
+      branchFields.has(field.key) &&
+      values[`${field.key}__enabled`] !== true
+    )
+      continue;
     if (mode && branchFields.has(field.key) && !mode.fields.includes(field.key))
       continue;
     const directListArray =
