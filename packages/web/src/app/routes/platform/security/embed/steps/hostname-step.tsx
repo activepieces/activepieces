@@ -127,7 +127,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
       await mutateAsync({ hostname: hostnameValue.trim() });
     } catch (error) {
       setErrorMessage(mutationFeedback.message(error));
-      setConfirmOpen(false);
+      throw error;
     }
   };
 

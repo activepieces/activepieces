@@ -158,7 +158,7 @@ export function ConfigDetail({
     return save();
   };
 
-  const save = async (): Promise<boolean> => {
+  const save = async (): Promise<unknown> => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
@@ -166,7 +166,7 @@ export function ConfigDetail({
       ? manualConfigParse.data
       : undefined;
     if (nameMissing || saveInFlight.current) {
-      return false;
+      return null;
     }
     saveInFlight.current = true;
     try {
@@ -185,7 +185,7 @@ export function ConfigDetail({
           : {}),
       });
       setSaveError(error ? mutationFeedback.message(error) : null);
-      return error === null || error === undefined;
+      return error ?? null;
     } finally {
       saveInFlight.current = false;
     }
@@ -198,7 +198,10 @@ export function ConfigDetail({
     if (saveInFlight.current) {
       throw mutationFeedback.userError(t('A save is already in progress.'));
     }
-    await save();
+    const error = await save();
+    if (error !== null) {
+      throw error;
+    }
   };
 
   return (

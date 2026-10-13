@@ -4,6 +4,7 @@ import {
   PlatformModelTierEntry,
   UpdatePlatformModelTierRequest,
 } from '@activepieces/shared';
+import { Mutation, useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowDown,
@@ -44,7 +45,10 @@ import {
   modelMeta,
   ToolsVerdict,
 } from '@/features/agents/ai-model/model-meta';
-import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
+import {
+  platformModelTierKeys,
+  platformModelTierMutations,
+} from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
@@ -66,11 +70,19 @@ export function TierCard({
   onMoveUp,
   onMoveDown,
 }: TierCardProps) {
-  const { mutateAsync: updateAsync, isPending } =
-    platformModelTierMutations.useUpdate({ feedback: 'errorsOnly' });
+  const queryClient = useQueryClient();
+  const { mutateAsync: updateAsync } = platformModelTierMutations.useUpdate({
+    feedback: 'errorsOnly',
+  });
   const { mutateAsync: undoAsync } = platformModelTierMutations.useUpdate({
     feedback: 'silent',
   });
+  const tierWrites = {
+    mutationKey: platformModelTierKeys.admin,
+    predicate: (mutation: Mutation<unknown, Error, unknown, unknown>) =>
+      writesTier({ variables: mutation.state.variables, tierId: tier.id }),
+  };
+  const writing = useIsMutating(tierWrites) > 0;
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -100,6 +112,13 @@ export function TierCard({
             tier: tier.name,
           }),
           onUndo: () => {
+            if (queryClient.isMutating(tierWrites) > 0) {
+              return Promise.reject(
+                mutationFeedback.userError(
+                  t('Wait for the current change to finish, then undo.'),
+                ),
+              );
+            }
             const current = latestEntries.current;
             if (current.some((entry) => modelMeta.sameEntry(entry, removed))) {
               return Promise.resolve();
@@ -245,6 +264,7 @@ export function TierCard({
             </DropdownMenuItem>
             {!tier.isDefault && (
               <DropdownMenuItem
+                disabled={writing}
                 onSelect={() => save({ isDefault: true })}
                 {...adminControl(AdminControl.AI_TIER_DEFAULT_SELECT)}
               >
@@ -254,6 +274,7 @@ export function TierCard({
             )}
             {!tier.isFast && (
               <DropdownMenuItem
+                disabled={writing}
                 onSelect={() => save({ isFast: true })}
                 {...adminControl(AdminControl.AI_TIER_FAST_SELECT)}
               >
@@ -351,6 +372,7 @@ export function TierCard({
                   })}
                   menu={
                     <RowMenu
+                      disabled={writing}
                       isMain={isMain}
                       canMoveUp={position > 0}
                       canMoveDown={position < tier.entries.length - 1}
@@ -434,7 +456,7 @@ export function TierCard({
                   variant="outline"
                   size="sm"
                   className="shrink-0"
-                  disabled={isPending}
+                  disabled={writing}
                   {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
                 >
                   <Plus className="size-4" />
@@ -451,7 +473,7 @@ export function TierCard({
                   variant="ghost"
                   size="sm"
                   className="text-gray-11"
-                  disabled={isPending}
+                  disabled={writing}
                   {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
                 >
                   <Plus className="size-4" />
@@ -547,6 +569,7 @@ function TierTag({
 }
 
 function RowMenu({
+  disabled,
   isMain,
   canMoveUp,
   canMoveDown,
@@ -555,6 +578,7 @@ function RowMenu({
   onMoveDown,
   onRemove,
 }: {
+  disabled: boolean;
   isMain: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
@@ -570,6 +594,7 @@ function RowMenu({
           variant="ghost"
           size="icon-xs"
           className="shrink-0 text-gray-10"
+          disabled={disabled}
           aria-label={t('Model actions')}
         >
           <MoreHorizontal className="size-3.5" />
@@ -608,6 +633,21 @@ function RowMenu({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function writesTier({
+  variables,
+  tierId,
+}: {
+  variables: unknown;
+  tierId: string;
+}): boolean {
+  return (
+    typeof variables === 'object' &&
+    variables !== null &&
+    'id' in variables &&
+    variables.id === tierId
   );
 }
 

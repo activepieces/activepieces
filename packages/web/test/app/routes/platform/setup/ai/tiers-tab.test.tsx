@@ -10,7 +10,13 @@ import {
   PlatformModelTier,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -103,9 +109,9 @@ function mutation() {
   return { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false };
 }
 
-function renderTab() {
+function renderTab(queryClient = new QueryClient()) {
   return render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <TooltipProvider>
           <TiersTab />
@@ -261,6 +267,53 @@ describe('TiersTab states', () => {
     renderTab();
     expect(screen.getByRole('region', { name: 'Expert' })).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Expert' })).toBeDefined();
+  });
+
+  it("blocks a tier's model controls while that tier has a pending write", async () => {
+    state.tiers = {
+      ...state.tiers,
+      data: [
+        tier('expert', {
+          name: 'Expert',
+          entries: [{ configId: 'k1', modelId: 'sonnet' }],
+        }),
+        tier('quick', {
+          name: 'Quick',
+          entries: [{ configId: 'k1', modelId: 'haiku' }],
+        }),
+      ],
+    };
+    const queryClient = new QueryClient();
+    queryClient
+      .getMutationCache()
+      .build(queryClient, {
+        mutationKey: ['platform-model-tiers', 'admin'],
+        mutationFn: () => new Promise(() => undefined),
+      })
+      .execute({ id: 'expert', request: { entries: [] } })
+      .catch(() => undefined);
+
+    renderTab(queryClient);
+
+    const expert = screen.getByRole('region', { name: 'Expert' });
+    const quick = screen.getByRole('region', { name: 'Quick' });
+    await waitFor(() =>
+      expect(
+        within(expert)
+          .getByRole('button', { name: 'Model actions' })
+          .hasAttribute('disabled'),
+      ).toBe(true),
+    );
+    expect(
+      within(expert)
+        .getByRole('button', { name: 'Add fallback' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      within(quick)
+        .getByRole('button', { name: 'Model actions' })
+        .hasAttribute('disabled'),
+    ).toBe(false);
   });
 
   it('tells the admin builders only see tiers when specific models are hidden', () => {
