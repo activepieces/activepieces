@@ -87,10 +87,9 @@ vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-status', () => ({
   KeyStatusBadge: () => null,
 }));
 
-vi.mock(
-  '@/app/routes/platform/setup/ai/providers-tab/model-selection-panel',
-  () => ({ ModelSelectionPanel: () => null }),
-);
+vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-model-list', () => ({
+  KeyModelList: () => null,
+}));
 
 vi.mock(
   '@/app/routes/platform/setup/ai/providers-tab/project-selection-panel',
@@ -198,11 +197,12 @@ describe('ConfigDetail save (manual models)', () => {
   };
 
   const flipTypeBadge = (modelId: string) => {
-    const chip = Array.from(container.querySelectorAll('span')).find(
-      (candidate) => candidate.textContent?.startsWith(modelId),
-    );
-    const badge = chip?.querySelector<HTMLButtonElement>(
-      'button[title="Model Type"]',
+    const badge = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        'button[title="Model Type"]',
+      ),
+    ).find((candidate) =>
+      candidate.parentElement?.textContent?.startsWith(modelId),
     );
     expect(badge).toBeDefined();
     act(() => {

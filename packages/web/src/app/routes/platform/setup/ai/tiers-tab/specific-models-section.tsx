@@ -33,11 +33,10 @@ import { platformModelTierMutations } from '@/features/platform-admin/hooks/plat
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { ModelDetailRow } from '../components/model-detail-row';
 import { SectionHeader } from '../components/section-header';
 import { KeyStatusBadge } from '../providers-tab/key-status';
 import { ProviderLogo } from '../providers-tab/provider-logo';
-
-import { ModelDetailRow } from './model-detail-row';
 
 export function SpecificModelsSection({
   tiers,
