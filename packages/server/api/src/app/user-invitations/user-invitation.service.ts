@@ -100,7 +100,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await repo().update({ id, platformId, type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
+        await repo().update({ id, platformId, type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null, updated: () => '"updated"' })
         return this.getOneOrThrow({ id, platformId })
     },
     async detachProjectRoleFromPlatformInvites({ projectRoleId, entityManager }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
