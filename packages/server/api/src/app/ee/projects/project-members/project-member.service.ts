@@ -67,7 +67,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         if (liveTeamProjects.length === 0) {
             return
         }
-        const projectRole = await projectRoleService.getOneOrThrow({ name: projectRoleName, platformId })
+        const projectRole = await projectRoleService.getOneOrThrow({ name: projectRoleName, platformId, entityManager })
         const now = dayjs().toISOString()
         const projectMembers: NewProjectMember[] = liveTeamProjects.map((project) => ({
             id: apId(),
