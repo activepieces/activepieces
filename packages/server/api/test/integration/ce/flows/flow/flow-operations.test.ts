@@ -1,4 +1,5 @@
 import {
+    Flow,
     FlowActionType,
     flowOperations,
     FlowOperationType,
@@ -15,6 +16,10 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { SelectQueryBuilder } from 'typeorm'
+import { MockInstance } from 'vitest'
+import { flowService } from '../../../../../src/app/flows/flow/flow.service'
+import { flowVersionRepo } from '../../../../../src/app/flows/flow-version/flow-version.service'
 import { db } from '../../../../helpers/db'
 import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 import {
@@ -24,7 +29,7 @@ import {
     createMockPieceMetadata,
     createMockProject,
 } from '../../../../helpers/mocks'
-import { createTestContext } from '../../../../helpers/test-context'
+import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -932,6 +937,94 @@ describe('Flow Operations API', () => {
         })
     })
 
+    describe('two Draft Writes on a flow with no draft', () => {
+        it('applies the second write to the draft that the first write created', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await seedFlowWithOnlyALockedVersion(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const differentWriteSpy = runADifferentWriteAfterTheNextRead({ ctx, flowId: flow.id })
+
+            try {
+                const updated = await flowService(app!.log).update({
+                    id: flow.id,
+                    userId: ctx.user.id,
+                    projectId: ctx.project.id,
+                    platformId: ctx.platform.id,
+                    operation: {
+                        type: FlowOperationType.CHANGE_NAME,
+                        request: { displayName: 'Renamed by the second write' },
+                    },
+                    previousFlow,
+                })
+
+                const drafts = await db.findBy<FlowVersion>('flow_version', {
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(drafts).toHaveLength(1)
+                expect(drafts[0].displayName).toBe('Renamed by the second write')
+                expect(updated.version.id).toBe(drafts[0].id)
+            }
+            finally {
+                differentWriteSpy.mockRestore()
+            }
+        })
+
+        it('never deletes the draft that a different write created when its own operation fails', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await seedFlowWithOnlyALockedVersion(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const differentWriteSpy = runADifferentWriteAfterTheNextRead({ ctx, flowId: flow.id })
+            const originalApply = flowOperations.apply
+            const applySpy = vi.spyOn(flowOperations, 'apply').mockImplementation((flowVersion, operation) => {
+                if (operation.type === FlowOperationType.CHANGE_NAME && operation.request.displayName === 'Rejected rename') {
+                    throw new Error('user operation failed')
+                }
+                return originalApply(flowVersion, operation)
+            })
+
+            try {
+                await expect(flowService(app!.log).update({
+                    id: flow.id,
+                    userId: ctx.user.id,
+                    projectId: ctx.project.id,
+                    platformId: ctx.platform.id,
+                    operation: {
+                        type: FlowOperationType.CHANGE_NAME,
+                        request: { displayName: 'Rejected rename' },
+                    },
+                    previousFlow,
+                })).rejects.toThrow('user operation failed')
+
+                const drafts = await db.findBy<FlowVersion>('flow_version', {
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(drafts).toHaveLength(1)
+                expect(drafts[0].displayName).toBe('Renamed by the first write')
+            }
+            finally {
+                applySpy.mockRestore()
+                differentWriteSpy.mockRestore()
+            }
+        })
+
+        it('locks the flow row FOR NO KEY UPDATE when it creates a draft, so a second write waits and reads that draft', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await seedFlowWithOnlyALockedVersion(ctx)
+            const setLock = vi.spyOn(SelectQueryBuilder.prototype, 'setLock')
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.CHANGE_NAME,
+                request: { displayName: 'Renamed' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(setLock.mock.calls.map(([mode]) => mode)).toContain('for_no_key_update')
+            setLock.mockRestore()
+        })
+    })
+
     describe('GET /v1/flows/:flowId/versions', () => {
         it('should list flow versions', async () => {
             const ctx = await createTestContext(app!)
@@ -954,3 +1047,32 @@ describe('Flow Operations API', () => {
         })
     })
 })
+
+async function seedFlowWithOnlyALockedVersion(ctx: TestContext): Promise<Flow> {
+    const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+    await db.save('flow', flow)
+    await db.save('flow_version', createMockFlowVersion({
+        flowId: flow.id,
+        state: FlowVersionState.LOCKED,
+        valid: true,
+    }))
+    return flow
+}
+
+function runADifferentWriteAfterTheNextRead({ ctx, flowId }: { ctx: TestContext, flowId: string }): MockInstance {
+    const repo = flowVersionRepo()
+    const realFindOne = repo.findOne.bind(repo)
+    let differentWriteDone = false
+    return vi.spyOn(repo, 'findOne').mockImplementation(async (options) => {
+        const row = await realFindOne(options)
+        if (!differentWriteDone && row?.flowId === flowId) {
+            differentWriteDone = true
+            const response = await ctx.post(`/v1/flows/${flowId}`, {
+                type: FlowOperationType.CHANGE_NAME,
+                request: { displayName: 'Renamed by the first write' },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        }
+        return row
+    })
+}
