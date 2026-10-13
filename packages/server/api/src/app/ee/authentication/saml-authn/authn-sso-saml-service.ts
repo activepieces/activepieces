@@ -104,7 +104,12 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const current = await platformService(log).getOneOrThrow(platformId)
             const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
 
-            await platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification })
+            await platformService(log).update({
+                id: platformId,
+                ssoDomain: value,
+                ssoDomainVerification: verification,
+                expectedSsoDomain: { ssoDomain: current.ssoDomain ?? null, verification: current.ssoDomainVerification ?? null },
+            })
             return { ssoDomain: value, ssoDomainVerification: verification }
         },
         async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<SsoDomainState> {
@@ -130,7 +135,11 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 ...platform.ssoDomainVerification,
                 status: SsoDomainVerificationStatus.VERIFIED,
             }
-            const updated = await platformService(log).update({ id: platformId, ssoDomainVerification: verified })
+            const updated = await platformService(log).update({
+                id: platformId,
+                ssoDomainVerification: verified,
+                expectedSsoDomain: { ssoDomain: platform.ssoDomain, verification: platform.ssoDomainVerification },
+            })
             return { ssoDomain: updated.ssoDomain ?? null, ssoDomainVerification: updated.ssoDomainVerification ?? null }
         },
         async expirePendingSsoDomains(): Promise<void> {
