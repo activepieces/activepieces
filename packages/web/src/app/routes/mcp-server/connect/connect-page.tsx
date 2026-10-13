@@ -1,8 +1,11 @@
 import { t } from 'i18next';
+import { ArrowRight } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Button } from '@/components/ui/button';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -12,7 +15,13 @@ import { ConnectCard } from './connect-card';
 import { ConnectStage, WALL_SIZE } from './connect-stage';
 import { ConnectHome } from './use-connect-home';
 
-export function ConnectPage({ home }: { home: ConnectHome }) {
+export function ConnectPage({
+  home,
+  serverUrl,
+}: {
+  home: ConnectHome;
+  serverUrl: string;
+}) {
   const { websiteName, logos } = flagsHooks.useWebsiteBranding();
   const { pieces } = piecesHooks.usePieces({});
   const nav = useMcpNav();
@@ -26,7 +35,7 @@ export function ConnectPage({ home }: { home: ConnectHome }) {
   const showConnections = () => nav.showTab('connections');
 
   return (
-    <div className="@container mx-auto flex w-full max-w-page-band flex-col gap-10 px-4 pb-16 pt-10">
+    <div className="@container mx-auto flex w-full max-w-page-band flex-col gap-8 px-4 pb-16 pt-8">
       <header className="mx-auto flex max-w-[760px] flex-col items-center gap-2.5 text-center">
         <h1 className="text-balance text-3xl font-semibold tracking-tight">
           {isConnected
@@ -38,6 +47,17 @@ export function ConnectPage({ home }: { home: ConnectHome }) {
             ? t('Ask it to do something, or add another client.')
             : appsSubline({ total: pieces?.length ?? 0, brand })}
         </p>
+        <div className="mt-1.5 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+          <div className="w-full max-w-[380px]">
+            <CopyToClipboardInput textToCopy={serverUrl} useInput />
+          </div>
+          {isConnected && (
+            <Button variant="link" size="sm" onClick={showConnections}>
+              {t('Manage connections')}
+              <ArrowRight />
+            </Button>
+          )}
+        </div>
       </header>
 
       {home.isGrantsError && (

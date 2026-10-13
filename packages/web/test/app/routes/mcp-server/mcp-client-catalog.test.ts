@@ -46,7 +46,26 @@ describe('mcpClientCatalog cloud overrides', () => {
 
   it('leaves clients without a cloud listing untouched', () => {
     expect(clientNamed('codex', true)).toEqual(clientNamed('codex', false));
-    expect(clientNamed('cursor', true)).toEqual(clientNamed('cursor', false));
+  });
+
+  it('points Cursor docs at its directory listing on cloud only', () => {
+    expect(clientNamed('cursor', true)?.docsUrl).toBe(
+      'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
+    );
+    expect(clientNamed('cursor', false)?.docsUrl).toBe(
+      'https://cursor.com/docs/mcp',
+    );
+    expect(clientNamed('cursor', true)?.methods).toEqual(
+      clientNamed('cursor', false)?.methods,
+    );
+  });
+
+  it('offers a Gemini CLI config file with httpUrl', () => {
+    const config = method('gemini-cli', 'config');
+    expect(config?.steps[0].block?.label).toBe('~/.gemini/settings.json');
+    expect(JSON.parse(config?.steps[0].block?.text ?? '{}')).toEqual({
+      mcpServers: { activepieces: { httpUrl: SERVER_URL } },
+    });
   });
 });
 
