@@ -1,7 +1,5 @@
 import {
-  FlowAction,
   FlowActionType,
-  FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
@@ -12,7 +10,6 @@ import { usePrevious } from 'react-use';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
-import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
 import { RightSideBarType } from '@/app/builder/types';
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/custom/show-powered-by';
@@ -34,7 +31,7 @@ import { BuilderBanner } from './flow-canvas/widgets/builder-banner';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
-import { StepSettingsContainer } from './step-settings';
+import { StepSettingsPanel } from './step-settings/step-settings-panel';
 const animateResizeClassName = `transition-all `;
 
 const SPLIT_MODE_INITIAL_OPEN_SIZE_PX = 1000;
@@ -46,7 +43,6 @@ const SPLIT_MODE_COLLAPSE_THRESHOLD_PX = 700;
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const [
-    flowVersion,
     rightSidebar,
     selectedStepName,
     removeAllStepTestsListeners,
@@ -56,7 +52,6 @@ const BuilderPage = () => {
     setStepDataPanelView,
     setStepDataPanelOpen,
   ] = useBuilderStateContext((state) => [
-    state.flowVersion,
     state.rightSidebar,
     state.selectedStep,
     state.removeAllStepTestsListeners,
@@ -222,21 +217,10 @@ const BuilderPage = () => {
           }}
         >
           <div ref={rightSidePanelRef} className="h-full w-full">
-            {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              selectedStep && (
-                <StepSettingsProvider
-                  pieceModel={pieceModel}
-                  pieceModelNotFound={pieceModelNotFound}
-                  selectedStep={selectedStep}
-                  key={constructContainerKey({
-                    flowVersionId: flowVersion.id,
-                    step: selectedStep,
-                    hasPieceModelLoaded: !!pieceModel,
-                  })}
-                >
-                  <StepSettingsContainer />
-                </StepSettingsProvider>
-              )}
+            <StepSettingsPanel
+              pieceModel={pieceModel}
+              pieceModelNotFound={pieceModelNotFound}
+            />
             {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}
           </div>
@@ -250,37 +234,3 @@ const BuilderPage = () => {
 
 BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };
-
-function constructContainerKey({
-  flowVersionId,
-  step,
-  hasPieceModelLoaded,
-}: {
-  flowVersionId: string;
-  step?: FlowAction | FlowTrigger;
-  hasPieceModelLoaded: boolean;
-}) {
-  const stepName = step?.name;
-  const triggerOrActionName =
-    step?.type === FlowTriggerType.PIECE
-      ? step?.settings.triggerName
-      : step?.settings.actionName;
-  const pieceName =
-    step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
-      ? step?.settings.pieceName
-      : undefined;
-  const pieceVersion =
-    step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
-      ? step?.settings.pieceVersion
-      : undefined;
-  //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
-  const isSkipped =
-    step?.type != FlowTriggerType.EMPTY &&
-    step?.type != FlowTriggerType.PIECE &&
-    step?.skip;
-  return `${flowVersionId}-${stepName ?? ''}-${triggerOrActionName ?? ''}-${
-    pieceName ?? ''
-  }-${pieceVersion ?? ''}-${'skipped-' + !!isSkipped}-${
-    hasPieceModelLoaded ? 'loaded' : 'not-loaded'
-  }`;
-}
