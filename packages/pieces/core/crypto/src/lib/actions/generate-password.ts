@@ -2,6 +2,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
+import { randomInt } from 'crypto';
 import { generatePasswordActionOutputSchema } from '../output-schemas';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
@@ -46,7 +47,7 @@ export const generatePassword = createAction({
     const length = context.propsValue.length;
 
     for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
+      const randomIndex = randomInt(charset.length);
       password += charset[randomIndex];
     }
 
