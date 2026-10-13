@@ -10,9 +10,6 @@ import { AppConnectionType } from '@activepieces/pieces-framework';
 import { loadSnowflakeSdk } from './sdk';
 import { normalizePrivateKey } from './private-key';
 
-export const DEFAULT_APPLICATION_NAME = 'ActivePieces';
-export const MAX_STATEMENT_TIMEOUT_SECONDS = 540;
-
 export function buildConnectionOptions({
   auth,
   application = DEFAULT_APPLICATION_NAME,
@@ -232,6 +229,9 @@ function emptyToUndefined(value: string | undefined): string | undefined {
   const trimmed = value.trim();
   return trimmed === '' ? undefined : trimmed;
 }
+
+export const DEFAULT_APPLICATION_NAME = 'ActivePieces';
+export const MAX_STATEMENT_TIMEOUT_SECONDS = 540;
 
 const ACCOUNT_IDENTIFIER_HINT =
   'Could not reach the Snowflake account. The Account Identifier looks wrong: use the orgname-accountname form (Snowflake console > your profile > Account > View account details), or a legacy locator with its region such as xy12345.us-east-2.aws.';
