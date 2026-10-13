@@ -107,8 +107,8 @@ function resolveModelIdForProvider({ provider, selectedModel, surface, config, m
     return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }
 
-function defaultModelIdForProvider({ provider, surface }: { provider: AIProviderName, surface: ModelTierSurface }): string | null {
-    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelTierCatalog.current(surface).defaultTierId, surface }))
+function defaultModelIdForProvider({ provider, surface, config, modelScope, modelIds }: { provider: AIProviderName, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string | null {
+    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelTierCatalog.current(surface).defaultTierId, surface, config, modelScope, modelIds }))
     return data
 }
 

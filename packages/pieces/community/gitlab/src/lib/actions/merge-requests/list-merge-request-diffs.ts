@@ -9,8 +9,6 @@ import {
 } from '../../common/props';
 import { diffListOutputSchema } from '../../output-schemas';
 
-export const MAX_DIFF_CHARS = 20_000;
-
 export function capDiff(
   diff: GitlabDiff
 ): GitlabDiff & { diffTruncated: boolean } {
@@ -53,3 +51,5 @@ export const listMergeRequestDiffsAction = createAction({
     return { ...result, items: result.items.map(capDiff) };
   },
 });
+
+export const MAX_DIFF_CHARS = 20_000;

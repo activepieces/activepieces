@@ -15,7 +15,6 @@ import {
 import { ProjectWebhook } from '../common/models';
 import { issueEventOutputSchema } from '../output-schemas';
 
-export const ISSUE_TRIGGER_STORE_KEY = 'gitlab_issue_trigger';
 const sampleData = {
   object_kind: 'issue',
   event_type: 'issue',
@@ -284,3 +283,5 @@ interface WebhookInformation {
   projectId: number | string;
   token?: string;
 }
+
+export const ISSUE_TRIGGER_STORE_KEY = 'gitlab_issue_trigger';
