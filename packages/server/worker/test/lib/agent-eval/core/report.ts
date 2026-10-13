@@ -59,6 +59,7 @@ export type EvalReportEntry = {
     judge: JudgeVerdictEntry[]
     transcript: string
     costUsd: number | null
+    knownCostUsd: number
     judgeCostUsd: number | null
     runVerdicts: Array<{ passed: boolean, assertions: AssertionEntry[], judge: JudgeVerdictEntry[] }>
 }

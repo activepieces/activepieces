@@ -15,7 +15,10 @@ async function runFresh(options: RunOptions): Promise<RunResult> {
     }
     console.log(chalk.dim('  running live evals (baseline vs candidate)…'))
     const view = evalProgressView.create()
-    const { run, remaining, spentUsd } = await evalRun.run({ ...options, onProgress: view.update }).finally(view.stop)
+    const { run, remaining, spentUsd, uncosted } = await evalRun.run({ ...options, onProgress: view.update }).finally(view.stop)
+    if (uncosted.length > 0) {
+        console.log(chalk.yellow(`  spend is a lower bound: a crashed repeat left the cost of ${uncosted.join(', ')} unknown`))
+    }
     if (remaining > 0) {
         console.log(chalk.yellow(`  stopped at the $${options.maxCostUsd} cap ($${spentUsd.toFixed(2)} spent) after ${run.comparisons.length} of ${run.comparisons.length + remaining} fixtures, rerun with a higher --max-cost and without --fresh to resume`))
     }

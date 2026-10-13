@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { FixtureDelta } from '../core/eval-format'
 import { EvalReportEntry } from '../core/report'
@@ -27,7 +27,9 @@ function readRun(): RunResult | null {
 
 function writePartial(partial: PartialRun): void {
     mkdirSync(STORE_DIR, { recursive: true })
-    writeFileSync(PARTIAL_FILE, JSON.stringify(partial, null, 2))
+    const tempFile = `${PARTIAL_FILE}.tmp`
+    writeFileSync(tempFile, JSON.stringify(partial, null, 2))
+    renameSync(tempFile, PARTIAL_FILE)
 }
 
 function readPartial(): PartialRun | null {
@@ -70,6 +72,7 @@ export type PartialRun = {
 export type PartialEntry = {
     fixtureHash: string
     spentUsd: number
+    costComplete: boolean
     comparison: FixtureComparison
 }
 

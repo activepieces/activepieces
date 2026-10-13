@@ -106,6 +106,7 @@ async function evaluateFixture({ fixture, systemPrompt, guides, modelId, repeats
         judge: shown.judge,
         transcript: shown.transcript,
         costUsd: evalFormat.sumCost({ costs: runs.map((run) => run.costUsd) }),
+        knownCostUsd: runs.reduce((total, run) => total + (run.costUsd ?? 0), 0),
         judgeCostUsd: judge.costUsd(),
         runVerdicts: runs.map((run) => ({ passed: run.passed, assertions: run.assertions, judge: run.judge })),
     }
@@ -152,6 +153,7 @@ function failedEntry({ fixture, error }: { fixture: ChatEvalFixture, error: unkn
         judge: [],
         transcript: '',
         costUsd: null,
+        knownCostUsd: 0,
         judgeCostUsd: null,
         runVerdicts: [{ passed: false, assertions, judge: [] }],
     }
