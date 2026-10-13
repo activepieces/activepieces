@@ -578,6 +578,7 @@ function DisplayToolCard({
       ? (parsedOutput.data as Record<string, unknown>)
       : undefined;
   const toolCallId = chatPartUtils.getToolCallId(part);
+  if (toolOutput?.['notShown'] === true) return null;
 
   switch (toolName) {
     case 'ap_show_connection_required':

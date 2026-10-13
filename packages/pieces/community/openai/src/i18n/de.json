@@ -2,7 +2,7 @@
   "Chat, images, audio and embeddings from OpenAI models.": "Chat, Bilder, Audio und Embeddings mit OpenAI-Modellen.",
   "To get your API key:\n\n1. Go to https://platform.openai.com/api-keys\n2. Click **Create new secret key** and copy it.\n\nAdd credit to your OpenAI account first, or every request fails with a 429 quota error.\n": "So erhalten Sie Ihren API-Schlüssel:\n\n1. Öffnen Sie https://platform.openai.com/api-keys\n2. Klicken Sie auf **Create new secret key** und kopieren Sie den Schlüssel.\n\nLaden Sie zuerst Guthaben auf Ihr OpenAI-Konto, sonst schlägt jede Anfrage mit einem 429-Kontingentfehler fehl.\n",
   "Ask ChatGPT": "ChatGPT fragen",
-  "Ask Assistant": "Assistent fragen",
+  "Ask Assistant (Deprecated)": "Ask Assistant (Deprecated)",
   "Vision Prompt": "Vision Prompt",
   "Extract Structured Data": "Strukturierte Daten extrahieren",
   "Moderate Text": "Text moderieren",
@@ -48,6 +48,7 @@
   "Frequency Penalty": "Frequenzstrafe",
   "Presence Penalty": "Präsenzstrafe",
   "Roles": "Rollen",
+  "Markdown": "Markdown",
   "Assistant": "Assistent",
   "Image": "Bild",
   "Detail": "Details",
@@ -90,6 +91,7 @@
   "From -2 to 2. Higher values make the model repeat itself less.": "Von -2 bis 2. Höhere Werte sorgen dafür, dass sich das Modell seltener wiederholt.",
   "From -2 to 2. Higher values push the model toward new topics.": "Von -2 bis 2. Höhere Werte lenken das Modell zu neuen Themen.",
   "Messages sent before the question, such as a system instruction.": "Nachrichten, die vor der Frage gesendet werden, z. B. eine Systemanweisung.",
+  "OpenAI shut down the Assistants API, so this action no longer works. Use the **Ask ChatGPT** action instead and put your assistant's instructions in its **Roles** field.": "OpenAI shut down the Assistants API, so this action no longer works. Use the **Ask ChatGPT** action instead and put your assistant's instructions in its **Roles** field.",
   "An assistant from your OpenAI account.": "Ein Assistent aus Ihrem OpenAI-Konto.",
   "What you want the assistant to answer or do.": "Was der Assistent beantworten oder tun soll.",
   "The picture to ask about.": "Das Bild, zu dem Sie eine Frage haben.",
@@ -234,5 +236,6 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation."
 }

@@ -9,18 +9,34 @@ export const denoStepTranspiler = {
         const result = await deno.run({
             body: `
 ${SUCRASE_SOURCE}
-    const transformed = globalThis.__apSucrase.transform(${JSON.stringify(source)}, {
+    const transpile = (src) => globalThis.__apSucrase.transform(src, {
         transforms: ['typescript', 'imports'],
         disableESTransforms: true,
         production: true,
     }).code.replace(/^"use strict";/, '');
+    let transformed = null;
+    let transformError = null;
+    try {
+        transformed = transpile(${JSON.stringify(source)});
+    }
+    catch {
+        try {
+            transformed = transpile(';' + ${JSON.stringify(source)});
+        }
+        catch (retryError) {
+            transformError = retryError;
+        }
+    }
     let result;
     try {
+        if (transformed === null) {
+            throw transformError;
+        }
         new Function(transformed);
         result = { code: transformed };
     }
-    catch {
-        result = { fallbackToEsm: true };
+    catch (error) {
+        result = { fallbackToEsm: true, error: String(error && error.message ? error.message : error) };
     }
 `,
             permissions: [],
@@ -51,7 +67,9 @@ type ToCommonJsParams = {
 export type TranspileResult = {
     code: string
     fallbackToEsm?: undefined
+    error?: undefined
 } | {
     code?: undefined
     fallbackToEsm: true
+    error?: string
 }
