@@ -175,11 +175,11 @@ function ProjectDashboardLayoutInner({
                 !isEmbedded && 'rounded-xl shadow-panel border',
               )}
             >
+              <EnterpriseTrialEndingAlert />
               {!hideHeader && (
                 <ProjectDashboardLayoutHeader key={currentProjectId} />
               )}
               <CreditsUsageAlert />
-              <EnterpriseTrialEndingAlert />
               <div className="flex-1 overflow-auto">{children}</div>
             </div>
           </div>
