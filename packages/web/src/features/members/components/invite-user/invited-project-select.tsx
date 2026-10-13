@@ -45,7 +45,7 @@ export function InvitedProjectSelect({
               <span className="truncate">{project.displayName}</span>
               {activeDefaultProjectIds.includes(project.id) && (
                 <Badge
-                  variant="accent"
+                  variant="secondary"
                   className="h-4 shrink-0 px-1.5 py-0 text-xss leading-none"
                 >
                   {t('Default')}
