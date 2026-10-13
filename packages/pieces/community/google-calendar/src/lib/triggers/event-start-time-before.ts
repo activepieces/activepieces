@@ -138,6 +138,22 @@ export const eventStartTimeBefore = createTrigger({
   aiMetadata: {
     description: 'Fires a configurable lead time (in minutes, hours, or days) before an event in the selected calendar begins, acting as a pre-event reminder. Each fired item is the upcoming event. Can watch all events or a single specific event.',
   },
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'calendar',
+      props: ['calendar_id', 'specific_event'],
+    },
+    {
+      key: 'timing',
+      display: 'section',
+      label: 'Timing',
+      icon: 'calendar',
+      props: ['time_value', 'time_unit'],
+    },
+  ],
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
@@ -145,6 +161,7 @@ export const eventStartTimeBefore = createTrigger({
       description: 'Watch one event instead of the whole calendar.',
       required: false,
       defaultValue: false,
+      reveals: ['event_id'],
     }),
     event_id: googleCalendarCommon.eventDropdown(false),
     time_value: Property.Number({
@@ -157,11 +174,12 @@ export const eventStartTimeBefore = createTrigger({
       displayName: 'Time Unit',
       description: 'Unit for Time Before.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Minutes', value: 'minutes' },
-          { label: 'Hours', value: 'hours' },
-          { label: 'Days', value: 'days' },
+          { label: 'Minutes', value: 'minutes', description: 'Short notice', icon: 'calendar' },
+          { label: 'Hours', value: 'hours', description: 'Longer notice', icon: 'calendar' },
+          { label: 'Days', value: 'days', description: 'Longest notice', icon: 'calendar' },
         ],
       },
       defaultValue: 'minutes',

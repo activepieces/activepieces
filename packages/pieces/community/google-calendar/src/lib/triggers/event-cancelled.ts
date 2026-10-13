@@ -133,6 +133,15 @@ export const eventCancelled = createTrigger({
   aiMetadata: {
     description: 'Fires when an event in the selected calendar transitions to a cancelled (or deleted) state, detected by polling. Each fired item is the cancelled event; can optionally be filtered by cancellation reason (deleted, attendee declined, rescheduled, other) and scoped to a single specific event.',
   },
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'calendar',
+      props: ['calendar_id', 'specific_event'],
+    },
+  ],
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
@@ -140,6 +149,7 @@ export const eventCancelled = createTrigger({
       description: 'Watch one event instead of the whole calendar.',
       required: false,
       defaultValue: false,
+      reveals: ['event_id'],
     }),
     event_id: googleCalendarCommon.eventDropdown(false),
     cancellation_reason: Property.StaticMultiSelectDropdown({
