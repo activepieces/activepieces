@@ -1,19 +1,13 @@
 import { isNil } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore } from '../../../database/redis-connections'
-import { getPlatformGroupQueueName, QueueName } from '../../../workers/job'
-import { platformQueueMigrationService } from '../../../workers/platform-queue-migration.service'
-import { platformPlanRepo } from './platform-plan.service'
+import { distributedStore } from '../../database/redis-connections'
+import { platformPlanRepo } from '../../ee/platform/platform-plan/platform-plan.service'
+import { QueueName } from '../job'
+import { platformQueueMigrationService } from './queue-migration.service'
+import { workerGroupQueues } from './worker-group-queues'
 
-export const CANARY_WORKER_GROUP_ID = 'canary'
-
-const NO_WORKER_GROUP_SENTINEL = '__none__'
-const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
-const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id:v2`
-const getWorkerGroupsEnabledCacheKey = (platformId: string): string => `platform:${platformId}:worker_groups_enabled`
-
-export const workerGroupService = (log: FastifyBaseLogger) => ({
+export const platformWorkerGroupService = (log: FastifyBaseLogger) => ({
     async isWorkerGroupsEnabled({ platformId }: { platformId: string }): Promise<boolean> {
         const cached = await distributedStore.get<string>(getWorkerGroupsEnabledCacheKey(platformId))
         if (!isNil(cached)) {
@@ -70,9 +64,17 @@ export const workerGroupService = (log: FastifyBaseLogger) => ({
     },
 
     async moveJobsToTargetQueue({ platformId, workerGroupId }: { platformId: string, workerGroupId: string | null }): Promise<void> {
-        const currentGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
-        const targetQueue = isNil(workerGroupId) ? QueueName.WORKER_JOBS : getPlatformGroupQueueName(workerGroupId)
-        const fromQueueName = isNil(currentGroupId) ? QueueName.WORKER_JOBS : getPlatformGroupQueueName(currentGroupId)
+        const currentGroupId = await platformWorkerGroupService(log).getWorkerGroupId({ platformId })
+        const targetQueue = isNil(workerGroupId) ? QueueName.WORKER_JOBS : workerGroupQueues.getPlatformGroupQueueName(workerGroupId)
+        const fromQueueName = isNil(currentGroupId) ? QueueName.WORKER_JOBS : workerGroupQueues.getPlatformGroupQueueName(currentGroupId)
         await platformQueueMigrationService(log).migrateJobs({ fromQueueName, toQueueName: targetQueue, platformId })
     },
 })
+
+const getWorkerGroupCacheKey = (platformId: string): string => `platform:${platformId}:worker_group_id:v2`
+const getWorkerGroupsEnabledCacheKey = (platformId: string): string => `platform:${platformId}:worker_groups_enabled`
+
+export const CANARY_WORKER_GROUP_ID = 'canary'
+
+const NO_WORKER_GROUP_SENTINEL = '__none__'
+const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
