@@ -671,6 +671,90 @@ describe('flow state draft refresh after a failed save', () => {
   });
 });
 
+describe('flow state draft refresh', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('waits for a pause in the typing before it fetches the draft again', async () => {
+    const server = serveDraft(
+      withDisplayName({
+        flow: flowWithLookUpOrderStep(),
+        displayName: 'Order lookup by an agent',
+      }),
+    );
+    const firstResponse = Promise.withResolvers<void>();
+    flowsApiMock.get.mockImplementationOnce(async () => {
+      const draftBeforeTheTyping = server.currentFlow();
+      await firstResponse.promise;
+      return draftBeforeTheTyping;
+    });
+    const store = createStore(flowWithLookUpOrderStep());
+
+    const refresh = store.getState().refreshDraft();
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().applyOperation(renameTrigger('N'));
+    firstResponse.resolve();
+    for (const displayName of ['Ne', 'New', 'New o', 'New order']) {
+      await vi.advanceTimersByTimeAsync(300);
+      store.getState().applyOperation(renameTrigger(displayName));
+    }
+    await vi.advanceTimersByTimeAsync(300);
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await refresh;
+
+    expect(sentOperations()).toEqual([renameTrigger('New order')]);
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+    expect(store.getState().flowVersion).toMatchObject({
+      displayName: 'Order lookup by an agent',
+      trigger: { displayName: 'New order' },
+    });
+  });
+
+  it('sends one GET at a time when a refresh starts as the previous refresh ends', async () => {
+    const server = serveDraft(flowWithLookUpOrderStep());
+    let getsInFlight = 0;
+    let mostGetsInFlight = 0;
+    flowsApiMock.get.mockImplementation(async () => {
+      getsInFlight++;
+      mostGetsInFlight = Math.max(mostGetsInFlight, getsInFlight);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      getsInFlight--;
+      return server.currentFlow();
+    });
+    const store = createStore(flowWithLookUpOrderStep());
+
+    const firstRefresh = store.getState().refreshDraft();
+    const queuedRefresh = store.getState().refreshDraft();
+    const refreshAsTheFirstEnds = firstRefresh.then(() =>
+      store.getState().refreshDraft(),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+    await Promise.all([queuedRefresh, refreshAsTheFirstEnds]);
+
+    expect(mostGetsInFlight).toBe(1);
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+function withDisplayName({
+  flow,
+  displayName,
+}: {
+  flow: PopulatedFlow;
+  displayName: string;
+}): PopulatedFlow {
+  return { ...flow, version: { ...flow.version, displayName } };
+}
+
 function serveDraft(flow: PopulatedFlow) {
   let draft = flow.version;
   const currentFlow = (): PopulatedFlow => ({ ...flow, version: draft });

@@ -8,6 +8,8 @@ import {
   FlowStatus,
   FlowTriggerType,
   FlowVersionState,
+  Note,
+  NoteColorVariant,
   PopulatedFlow,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -279,6 +281,44 @@ describe('useRefreshDraftOnPush', () => {
     expect(shownToasts()).toHaveLength(1);
   });
 
+  it('sends two GETs for a chat that saves six times in 12 s, and shows each save in one toast', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    const firstResponse = Promise.withResolvers<void>();
+    let agentSaves = 0;
+    flowsApiMock.get.mockImplementation(async () => {
+      const draft = flowWithDraftVersion({
+        versionId: 'draft-1',
+        notes: agentNotes(agentSaves),
+      });
+      await firstResponse.promise;
+      return draft;
+    });
+    mount(store);
+
+    for (let save = 1; save <= 6; save++) {
+      agentSaves = save;
+      sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
+      await vi.advanceTimersByTimeAsync(2000);
+    }
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+
+    firstResponse.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+    expect(
+      store.getState().flowVersion.notes.map((note) => note.content),
+    ).toEqual([
+      'Agent save 1',
+      'Agent save 2',
+      'Agent save 3',
+      'Agent save 4',
+      'Agent save 5',
+      'Agent save 6',
+    ]);
+    expect(shownToasts()).toHaveLength(1);
+  });
+
   it('shows the error toast and not the refresh toast when the fetch fails', async () => {
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     flowsApiMock.get.mockRejectedValue(new Error('Network Error'));
@@ -367,12 +407,27 @@ function createStore(flow: PopulatedFlow): BuilderStore {
   });
 }
 
+function agentNotes(count: number): Note[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `note-${index + 1}`,
+    content: `Agent save ${index + 1}`,
+    ownerId: null,
+    color: NoteColorVariant.YELLOW,
+    position: { x: 0, y: index * 200 },
+    size: { width: 200, height: 200 },
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  }));
+}
+
 function flowWithDraftVersion({
   versionId,
   displayName = 'Order lookup',
+  notes = [],
 }: {
   versionId: string;
   displayName?: string;
+  notes?: Note[];
 }): PopulatedFlow {
   const trigger: EmptyTrigger = {
     name: 'trigger',
@@ -411,7 +466,7 @@ function flowWithDraftVersion({
       state: FlowVersionState.DRAFT,
       connectionIds: [],
       backupFiles: null,
-      notes: [],
+      notes,
     },
   };
 }

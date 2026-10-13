@@ -118,6 +118,9 @@ export const createFlowState = (
     flowUpdatesDebounce.flush();
     addToFlowUpdatesQueue(task);
   };
+  const refreshDraft = coalesceRuns(() =>
+    saveThenRefreshDraft({ get, flowUpdatesQueue, flowUpdatesDebounce }),
+  );
   return {
     saving: false,
     outputSampleData: initialState.outputSampleData,
@@ -331,8 +334,7 @@ export const createFlowState = (
     flushPendingEdits: () => {
       flowUpdatesDebounce.flush();
     },
-    refreshDraft: () =>
-      saveThenRefreshDraft({ get, flowUpdatesQueue, flowUpdatesDebounce }),
+    refreshDraft,
     setVersion: (
       flowVersion: FlowVersion,
       shouldReselectInitialStep: boolean = true,
@@ -496,6 +498,33 @@ export const createFlowState = (
   };
 };
 
+function coalesceRuns(run: () => Promise<void>): () => Promise<void> {
+  let running: Promise<void> | null = null;
+  let queued: Promise<void> | null = null;
+  const start = (): Promise<void> => {
+    const current = run().finally(() => {
+      running = null;
+    });
+    running = current;
+    return current;
+  };
+  const startAfter = async (previous: Promise<void>): Promise<void> => {
+    await tryCatch(() => previous);
+    queued = null;
+    return start();
+  };
+  return () => {
+    if (!isNil(queued)) {
+      return queued;
+    }
+    if (isNil(running)) {
+      return start();
+    }
+    queued = startAfter(running);
+    return queued;
+  };
+}
+
 async function saveThenRefreshDraft({
   get,
   flowUpdatesQueue,
@@ -506,6 +535,22 @@ async function saveThenRefreshDraft({
   flowUpdatesDebounce: KeyedDebounce;
 }): Promise<void> {
   await tryCatch(() => get().savePendingEdits());
+  return fetchDraftAndApplyWithNoPendingEdits({
+    get,
+    flowUpdatesQueue,
+    flowUpdatesDebounce,
+  });
+}
+
+async function fetchDraftAndApplyWithNoPendingEdits({
+  get,
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): Promise<void> {
   const { flow, flowVersion: versionAtRequest } = get();
   const { data: serverFlow, error } = await tryCatch(() =>
     failAfterTimeout(() => flowsApi.get(flow.id)),
@@ -517,12 +562,40 @@ async function saveThenRefreshDraft({
   const { flowVersion, applyDraftRefresh } = get();
   if (
     flowVersion !== versionAtRequest ||
-    !flowUpdatesDebounce.isEmpty() ||
-    !flowUpdatesQueue.isIdle()
+    hasPendingEdits({ flowUpdatesQueue, flowUpdatesDebounce })
   ) {
-    return saveThenRefreshDraft({ get, flowUpdatesQueue, flowUpdatesDebounce });
+    await waitForPendingEditsToSave({ flowUpdatesQueue, flowUpdatesDebounce });
+    return fetchDraftAndApplyWithNoPendingEdits({
+      get,
+      flowUpdatesQueue,
+      flowUpdatesDebounce,
+    });
   }
   applyDraftRefresh(serverFlow);
+}
+
+async function waitForPendingEditsToSave({
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): Promise<void> {
+  await flowUpdatesDebounce.whenEmpty();
+  await tryCatch(() => flowUpdatesQueue.drain());
+  if (hasPendingEdits({ flowUpdatesQueue, flowUpdatesDebounce })) {
+    return waitForPendingEditsToSave({ flowUpdatesQueue, flowUpdatesDebounce });
+  }
+}
+
+function hasPendingEdits({
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): boolean {
+  return !flowUpdatesDebounce.isEmpty() || !flowUpdatesQueue.isIdle();
 }
 
 function saveOperation({
