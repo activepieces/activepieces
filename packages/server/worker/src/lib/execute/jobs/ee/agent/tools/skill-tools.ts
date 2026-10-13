@@ -123,8 +123,8 @@ function createSkillTools({ registry, surface, guides, onSkillLoaded, canAffordP
                 }
                 return target.execute(input, options)
             },
-            toModelOutput: ({ toolCallId, input, output }) => lazyToolModelOutput({
-                output: registry[input.tool]?.toModelOutput?.({ toolCallId, input: input.input, output }) ?? asModelOutput(output),
+            toModelOutput: async ({ toolCallId, input, output }) => lazyToolModelOutput({
+                output: await registry[input.tool]?.toModelOutput?.({ toolCallId, input: input.input, output }) ?? asModelOutput(output),
                 reroutedTool: wasRerouted(toolCallId) ? input.tool : undefined,
             }),
         }),

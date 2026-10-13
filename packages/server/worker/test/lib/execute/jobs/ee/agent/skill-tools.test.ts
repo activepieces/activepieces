@@ -244,7 +244,7 @@ describe('ap_lazy_tool', () => {
             canAffordPaidTool: () => true,
         })
 
-        const shown = surface.tools[LAZY_TOOL_NAME]?.toModelOutput?.({ toolCallId: 'call-1', input: { tool: 'ap_rename_flow', input: { flowId: 'f1' } }, output: { renamed: true, internal: 'big' } })
+        const shown = await surface.tools[LAZY_TOOL_NAME]?.toModelOutput?.({ toolCallId: 'call-1', input: { tool: 'ap_rename_flow', input: { flowId: 'f1' } }, output: { renamed: true, internal: 'big' } })
 
         expect(shown).toEqual({ type: 'text', value: 'renamed' })
     })
