@@ -28,7 +28,15 @@ const usePlanSwitchSuccessDialogStore = create<PlanSwitchSuccessDialogStore>(
 const useEnterpriseTrialDialogStore = create<EnterpriseTrialDialogStore>(
   (set) => ({
     payload: null,
-    openDialog: (payload) => set({ payload }),
+    returnFocus: null,
+    openDialog: (payload) =>
+      set({
+        payload,
+        returnFocus:
+          document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null,
+      }),
     closeDialog: () => set({ payload: null }),
   }),
 );
@@ -74,6 +82,7 @@ type PlanSwitchSuccessDialogStore = {
 
 type EnterpriseTrialDialogStore = {
   payload: EnterpriseTrialDialogPayload | null;
+  returnFocus: HTMLElement | null;
   openDialog: (payload: EnterpriseTrialDialogPayload) => void;
   closeDialog: () => void;
 };

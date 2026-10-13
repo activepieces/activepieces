@@ -62,6 +62,7 @@ export function CreateProjectButton({
     className,
     crown: projectsGate.crown,
     locked: projectsGate.locked,
+    expanded: createOpen,
     onClick: () => {
       if (!gate.locked) {
         setCreateOpen(true);
@@ -135,10 +136,13 @@ function triggerFor({
   className,
   crown,
   locked,
+  expanded,
   onClick,
 }: TriggerForParams) {
   const control = {
     ...adminControl(locked ? undefined : AdminControl.PROJECTS_NEW_OPEN),
+    'aria-haspopup': DIALOG_POPUP,
+    'aria-expanded': expanded,
     onClick,
   };
   switch (variant) {
@@ -191,6 +195,8 @@ function triggerFor({
   }
 }
 
+const DIALOG_POPUP: React.AriaAttributes['aria-haspopup'] = 'dialog';
+
 type CreateProjectButtonVariant = 'icon' | 'full' | 'sidebar-menu';
 
 type TriggerForParams = {
@@ -198,6 +204,7 @@ type TriggerForParams = {
   className?: string;
   crown: React.ReactNode;
   locked: boolean;
+  expanded: boolean;
   onClick?: () => void;
 };
 

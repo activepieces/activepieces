@@ -335,16 +335,11 @@ export function ProvidersTab() {
     </>
   );
 
-  return (
-    <AdminPage width="content">
-      {configs.length === 0 && !isProvidersError ? (
-        <PlanFeatureSample feature="aiProviders">
-          <div className="flex flex-col gap-6">{content}</div>
-        </PlanFeatureSample>
-      ) : (
-        content
-      )}
-    </AdminPage>
+  const page = <AdminPage width="content">{content}</AdminPage>;
+  return configs.length === 0 && !isProvidersError ? (
+    <PlanFeatureSample feature="aiProviders">{page}</PlanFeatureSample>
+  ) : (
+    page
   );
 }
 

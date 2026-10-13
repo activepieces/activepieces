@@ -348,7 +348,11 @@ describe('credits card trial line', () => {
     trial = midTrial();
     renderInRouter(<EnterpriseTrialPill />);
     expect(screen.getByText('Enterprise plan trial')).toBeDefined();
-    expect(screen.getByText('· 4 days left')).toBeDefined();
+    expect(
+      screen.getByText(
+        `· 4 days left, ends ${dayjs(trial.endsAt).format('MMM D')}`,
+      ),
+    ).toBeDefined();
   });
 
   it('never shows the trial line or pill to members', () => {

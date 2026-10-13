@@ -17,6 +17,7 @@ export function EnterpriseLockedCard({
   fallbackDescription,
   fallbackBenefits,
   showBenefits = false,
+  showContactSales = true,
   surface,
   className,
 }: EnterpriseLockedCardProps) {
@@ -73,6 +74,7 @@ export function EnterpriseLockedCard({
             surface={surface}
             primaryLast
             finePrintBelow
+            showContactSales={showContactSales}
           />
         </div>
       </div>
@@ -86,6 +88,7 @@ type EnterpriseLockedCardProps = {
   fallbackDescription?: string;
   fallbackBenefits?: string[];
   showBenefits?: boolean;
+  showContactSales?: boolean;
   surface: PlatformAdminSurface;
   className?: string;
 };

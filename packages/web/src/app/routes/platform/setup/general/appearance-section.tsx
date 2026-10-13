@@ -207,7 +207,7 @@ export const AppearanceSection = ({
         action:
           edition === ApEdition.COMMUNITY ? (
             <EnterpriseTrialSalesLink
-              surface="enterprise_locked"
+              surface="locked_feature"
               variant="default"
               label={t('Talk to sales')}
               featureKey="BRANDING"
@@ -311,7 +311,7 @@ export const AppearanceSection = ({
             action={
               brandingLocked ? (
                 <Button
-                  {...adminControl(AdminControl.GENERAL_BRANDING_UPGRADE_OPEN)}
+                  {...adminControl(AdminControl.TRIAL_START_OPEN)}
                   type="button"
                   size="sm"
                   variant="outline"
